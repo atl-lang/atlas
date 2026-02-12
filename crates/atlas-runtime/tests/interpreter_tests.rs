@@ -966,9 +966,287 @@ fn test_runtime_error_modulo_by_zero() {
     }
 }
 
-// Note: AT0007 (Invalid numeric result) is checked after arithmetic operations
-// but in practice it's difficult to trigger without very large numbers that
-// the parser may not accept. The checks are in place in the interpreter.
+// ============================================================================
+// Numeric Semantics Tests (Phase 10)
+// ============================================================================
+
+#[test]
+fn test_numeric_zero_divided_by_zero() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 0 / 0;
+        x
+    "#;
+
+    // 0/0 should trigger divide by zero error, not NaN error
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+            assert!(diags[0].message.contains("Divide by zero"));
+        }
+        Ok(val) => panic!("Expected divide by zero error for 0/0, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_overflow_multiplication() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let huge1: number = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let huge2: number = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let result: number = huge1 * huge2;
+        result
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0007");
+            assert!(diags[0].message.contains("Invalid numeric result"));
+        }
+        Ok(val) => panic!("Expected invalid numeric result error, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_overflow_addition() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let huge: number = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let result: number = huge + huge;
+        result
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0007");
+        }
+        Ok(val) => panic!("Expected invalid numeric result error for overflow, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_underflow_subtraction() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let huge: number = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let neg: number = -179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let result: number = neg - huge;
+        result
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0007");
+        }
+        Ok(val) => panic!("Expected invalid numeric result error for underflow, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_negative_divide_by_zero() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = -10 / 0;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+        }
+        Ok(val) => panic!("Expected divide by zero error, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_modulo_zero_by_zero() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 0 % 0;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+        }
+        Ok(val) => panic!("Expected divide by zero error for 0%0, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_very_large_division() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let huge: number = 179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        let tiny: number = 0.0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001;
+        let result: number = huge / tiny;
+        result
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0007");
+        }
+        Ok(val) => panic!("Expected invalid numeric result error, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_valid_large_numbers() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 100000000000000000000000000;
+        let y: number = 200000000000000000000000000;
+        let z: number = x + y;
+        z
+    "#;
+
+    // This should work - still within valid range
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => {
+            assert!(n > 0.0);
+            assert!(n.is_finite());
+        }
+        Ok(val) => panic!("Expected Number, got {:?}", val),
+        Err(e) => panic!("Expected valid result for large but finite numbers, got error: {:?}", e),
+    }
+}
+
+#[test]
+fn test_numeric_valid_division() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 100 / 10;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 10.0),
+        _ => panic!("Expected Number(10.0)"),
+    }
+}
+
+#[test]
+fn test_numeric_valid_small_division() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 1 / 1000000000000000000000000;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => {
+            assert!(n > 0.0);
+            assert!(n.is_finite());
+        }
+        Ok(val) => panic!("Expected Number, got {:?}", val),
+        Err(e) => panic!("Expected valid small number, got error: {:?}", e),
+    }
+}
+
+#[test]
+fn test_numeric_error_in_expression() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 5 + (10 / 0);
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+        }
+        Ok(val) => panic!("Expected divide by zero in expression, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_error_in_function() {
+    let runtime = Atlas::new();
+    let code = r#"
+        fn compute(a: number) -> number {
+            return a * a * a;
+        }
+        let big: number = 100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
+        compute(big)
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0007");
+        }
+        Ok(val) => panic!("Expected overflow in function, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_error_propagation() {
+    let runtime = Atlas::new();
+    let code = r#"
+        fn bad() -> number {
+            return 1 / 0;
+        }
+
+        fn caller() -> number {
+            return bad() + 5;
+        }
+
+        caller()
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+        }
+        Ok(val) => panic!("Expected error propagation through call stack, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_numeric_multiplication_by_zero_valid() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let large: number = 9999999999999999999999999999999;
+        let x: number = large * 0;
+        x
+    "#;
+
+    // Multiplication by zero should give 0, not overflow
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 0.0),
+        Ok(val) => panic!("Expected Number(0.0), got {:?}", val),
+        Err(e) => panic!("Expected valid result, got error: {:?}", e),
+    }
+}
+
+#[test]
+fn test_numeric_negative_modulo() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = -10 % 3;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => {
+            assert!(n.is_finite());
+            // Rust's % operator preserves sign of left operand
+            assert_eq!(n, -1.0);
+        }
+        _ => panic!("Expected valid modulo result"),
+    }
+}
 
 #[test]
 fn test_runtime_error_array_out_of_bounds_code() {
