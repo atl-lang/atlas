@@ -36,6 +36,9 @@ pub struct Block {
 pub enum Stmt {
     VarDecl(VarDecl),
     Assign(Assign),
+    CompoundAssign(CompoundAssign),
+    Increment(IncrementStmt),
+    Decrement(DecrementStmt),
     If(IfStmt),
     While(WhileStmt),
     For(ForStmt),
@@ -57,6 +60,31 @@ pub struct Assign {
     pub target: AssignTarget,
     pub value: Expr,
     pub span: Span,
+}
+
+pub struct CompoundAssign {
+    pub target: AssignTarget,
+    pub op: CompoundOp,
+    pub value: Expr,
+    pub span: Span,
+}
+
+pub struct IncrementStmt {
+    pub target: AssignTarget,
+    pub span: Span,
+}
+
+pub struct DecrementStmt {
+    pub target: AssignTarget,
+    pub span: Span,
+}
+
+pub enum CompoundOp {
+    AddAssign,  // +=
+    SubAssign,  // -=
+    MulAssign,  // *=
+    DivAssign,  // /=
+    ModAssign,  // %=
 }
 
 pub enum AssignTarget {
@@ -197,6 +225,9 @@ impl Stmt {
         match self {
             Stmt::VarDecl(v) => v.span,
             Stmt::Assign(a) => a.span,
+            Stmt::CompoundAssign(c) => c.span,
+            Stmt::Increment(i) => i.span,
+            Stmt::Decrement(d) => d.span,
             Stmt::If(i) => i.span,
             Stmt::While(w) => w.span,
             Stmt::For(f) => f.span,

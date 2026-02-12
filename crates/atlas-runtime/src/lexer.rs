@@ -88,19 +88,51 @@ impl Lexer {
             ';' => self.make_token(TokenKind::Semicolon, ";"),
             ',' => self.make_token(TokenKind::Comma, ","),
             ':' => self.make_token(TokenKind::Colon, ":"),
-            '+' => self.make_token(TokenKind::Plus, "+"),
-            '*' => self.make_token(TokenKind::Star, "*"),
-            '/' => self.make_token(TokenKind::Slash, "/"),
-            '%' => self.make_token(TokenKind::Percent, "%"),
 
-            // Two-character tokens
+            // Operators with potential compound forms
+            '+' => {
+                if self.match_char('+') {
+                    self.make_token(TokenKind::PlusPlus, "++")
+                } else if self.match_char('=') {
+                    self.make_token(TokenKind::PlusEqual, "+=")
+                } else {
+                    self.make_token(TokenKind::Plus, "+")
+                }
+            }
             '-' => {
-                if self.match_char('>') {
+                if self.match_char('-') {
+                    self.make_token(TokenKind::MinusMinus, "--")
+                } else if self.match_char('=') {
+                    self.make_token(TokenKind::MinusEqual, "-=")
+                } else if self.match_char('>') {
                     self.make_token(TokenKind::Arrow, "->")
                 } else {
                     self.make_token(TokenKind::Minus, "-")
                 }
             }
+            '*' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::StarEqual, "*=")
+                } else {
+                    self.make_token(TokenKind::Star, "*")
+                }
+            }
+            '/' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::SlashEqual, "/=")
+                } else {
+                    self.make_token(TokenKind::Slash, "/")
+                }
+            }
+            '%' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::PercentEqual, "%=")
+                } else {
+                    self.make_token(TokenKind::Percent, "%")
+                }
+            }
+
+            // Two-character tokens
             '=' => {
                 if self.match_char('=') {
                     self.make_token(TokenKind::EqualEqual, "==")
@@ -632,6 +664,52 @@ mod tests {
         assert_eq!(tokens[1].kind, TokenKind::Error);
         assert_eq!(tokens[2].kind, TokenKind::Error);
         assert_eq!(diags.len(), 3);
+    }
+
+    #[test]
+    fn test_compound_assignment_operators() {
+        let mut lexer = Lexer::new("+= -= *= /= %=");
+        let (tokens, _) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::PlusEqual);
+        assert_eq!(tokens[0].lexeme, "+=");
+        assert_eq!(tokens[1].kind, TokenKind::MinusEqual);
+        assert_eq!(tokens[1].lexeme, "-=");
+        assert_eq!(tokens[2].kind, TokenKind::StarEqual);
+        assert_eq!(tokens[2].lexeme, "*=");
+        assert_eq!(tokens[3].kind, TokenKind::SlashEqual);
+        assert_eq!(tokens[3].lexeme, "/=");
+        assert_eq!(tokens[4].kind, TokenKind::PercentEqual);
+        assert_eq!(tokens[4].lexeme, "%=");
+    }
+
+    #[test]
+    fn test_increment_decrement_operators() {
+        let mut lexer = Lexer::new("++ --");
+        let (tokens, _) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::PlusPlus);
+        assert_eq!(tokens[0].lexeme, "++");
+        assert_eq!(tokens[1].kind, TokenKind::MinusMinus);
+        assert_eq!(tokens[1].lexeme, "--");
+    }
+
+    #[test]
+    fn test_operator_disambiguation() {
+        // Make sure += doesn't get lexed as + =
+        let mut lexer = Lexer::new("x+=1");
+        let (tokens, _) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Identifier);
+        assert_eq!(tokens[1].kind, TokenKind::PlusEqual);
+        assert_eq!(tokens[2].kind, TokenKind::Number);
+
+        // Make sure ++ doesn't get lexed as + +
+        let mut lexer = Lexer::new("x++");
+        let (tokens, _) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Identifier);
+        assert_eq!(tokens[1].kind, TokenKind::PlusPlus);
     }
 
     #[test]

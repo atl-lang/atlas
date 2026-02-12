@@ -172,12 +172,56 @@ impl Parser {
             TokenKind::Break => self.parse_break_stmt(),
             TokenKind::Continue => self.parse_continue_stmt(),
             _ => {
-                // Check if it's an assignment or expression statement
-                if self.is_assignment() {
-                    self.parse_assign_stmt()
-                } else {
-                    self.parse_expr_stmt()
-                }
+                // Parse expression then check for assignment operators
+                self.parse_assign_or_expr_stmt()
+            }
+        }
+    }
+
+    fn parse_assign_or_expr_stmt(&mut self) -> Result<Stmt, ()> {
+        let expr = self.parse_expression()?;
+
+        match self.peek().kind {
+            TokenKind::Equal => {
+                self.advance(); // consume =
+                let value = self.parse_expression()?;
+                let target = self.expr_to_assign_target(expr)?;
+                self.consume(TokenKind::Semicolon, "Expected ';'")?;
+                Ok(Stmt::Assign(Assign { target, value, span }))
+            }
+            TokenKind::PlusEqual | TokenKind::MinusEqual |
+            TokenKind::StarEqual | TokenKind::SlashEqual |
+            TokenKind::PercentEqual => {
+                let op_token = self.advance();
+                let op = match op_token.kind {
+                    TokenKind::PlusEqual => CompoundOp::AddAssign,
+                    TokenKind::MinusEqual => CompoundOp::SubAssign,
+                    TokenKind::StarEqual => CompoundOp::MulAssign,
+                    TokenKind::SlashEqual => CompoundOp::DivAssign,
+                    TokenKind::PercentEqual => CompoundOp::ModAssign,
+                    _ => unreachable!(),
+                };
+                let value = self.parse_expression()?;
+                let target = self.expr_to_assign_target(expr)?;
+                self.consume(TokenKind::Semicolon, "Expected ';'")?;
+                Ok(Stmt::CompoundAssign(CompoundAssign { target, op, value, span }))
+            }
+            TokenKind::PlusPlus => {
+                self.advance(); // consume ++
+                let target = self.expr_to_assign_target(expr)?;
+                self.consume(TokenKind::Semicolon, "Expected ';'")?;
+                Ok(Stmt::Increment(IncrementStmt { target, span }))
+            }
+            TokenKind::MinusMinus => {
+                self.advance(); // consume --
+                let target = self.expr_to_assign_target(expr)?;
+                self.consume(TokenKind::Semicolon, "Expected ';'")?;
+                Ok(Stmt::Decrement(DecrementStmt { target, span }))
+            }
+            _ => {
+                // It's an expression statement
+                self.consume(TokenKind::Semicolon, "Expected ';'")?;
+                Ok(Stmt::Expr(ExprStmt { expr, span }))
             }
         }
     }

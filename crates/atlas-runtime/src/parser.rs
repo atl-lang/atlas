@@ -199,35 +199,97 @@ impl Parser {
         let expr = self.parse_expression()?;
         let expr_span = expr.span();
 
-        // Check if this is an assignment
-        if self.match_token(TokenKind::Equal) {
-            let target = match expr {
-                Expr::Identifier(ident) => AssignTarget::Name(ident),
-                Expr::Index(idx) => AssignTarget::Index {
-                    target: idx.target,
-                    index: idx.index,
-                    span: idx.span,
-                },
-                _ => {
-                    self.error("Invalid assignment target");
-                    return Err(());
-                }
-            };
+        // Check what follows the expression
+        let next_kind = self.peek().kind;
 
-            let value = self.parse_expression()?;
-            let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after assignment")?.span;
+        match next_kind {
+            // Regular assignment: x = value
+            TokenKind::Equal => {
+                self.advance(); // consume =
+                let target = self.expr_to_assign_target(expr)?;
+                let value = self.parse_expression()?;
+                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after assignment")?.span;
 
-            Ok(Stmt::Assign(Assign {
-                target,
-                value,
-                span: expr_span.merge(end_span),
-            }))
-        } else {
-            let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after expression")?.span;
-            Ok(Stmt::Expr(ExprStmt {
-                expr,
-                span: expr_span.merge(end_span),
-            }))
+                Ok(Stmt::Assign(Assign {
+                    target,
+                    value,
+                    span: expr_span.merge(end_span),
+                }))
+            }
+
+            // Compound assignment: x += value, x -= value, etc.
+            TokenKind::PlusEqual | TokenKind::MinusEqual | TokenKind::StarEqual
+            | TokenKind::SlashEqual | TokenKind::PercentEqual => {
+                let op_token = self.advance();
+                let op = match op_token.kind {
+                    TokenKind::PlusEqual => CompoundOp::AddAssign,
+                    TokenKind::MinusEqual => CompoundOp::SubAssign,
+                    TokenKind::StarEqual => CompoundOp::MulAssign,
+                    TokenKind::SlashEqual => CompoundOp::DivAssign,
+                    TokenKind::PercentEqual => CompoundOp::ModAssign,
+                    _ => unreachable!(),
+                };
+
+                let target = self.expr_to_assign_target(expr)?;
+                let value = self.parse_expression()?;
+                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after compound assignment")?.span;
+
+                Ok(Stmt::CompoundAssign(CompoundAssign {
+                    target,
+                    op,
+                    value,
+                    span: expr_span.merge(end_span),
+                }))
+            }
+
+            // Increment: x++
+            TokenKind::PlusPlus => {
+                self.advance(); // consume ++
+                let target = self.expr_to_assign_target(expr)?;
+                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after increment")?.span;
+
+                Ok(Stmt::Increment(IncrementStmt {
+                    target,
+                    span: expr_span.merge(end_span),
+                }))
+            }
+
+            // Decrement: x--
+            TokenKind::MinusMinus => {
+                self.advance(); // consume --
+                let target = self.expr_to_assign_target(expr)?;
+                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after decrement")?.span;
+
+                Ok(Stmt::Decrement(DecrementStmt {
+                    target,
+                    span: expr_span.merge(end_span),
+                }))
+            }
+
+            // Expression statement
+            _ => {
+                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after expression")?.span;
+                Ok(Stmt::Expr(ExprStmt {
+                    expr,
+                    span: expr_span.merge(end_span),
+                }))
+            }
+        }
+    }
+
+    /// Convert an expression to an assignment target
+    fn expr_to_assign_target(&mut self, expr: Expr) -> Result<AssignTarget, ()> {
+        match expr {
+            Expr::Identifier(ident) => Ok(AssignTarget::Name(ident)),
+            Expr::Index(idx) => Ok(AssignTarget::Index {
+                target: idx.target,
+                index: idx.index,
+                span: idx.span,
+            }),
+            _ => {
+                self.error("Invalid assignment target");
+                Err(())
+            }
         }
     }
 
@@ -308,47 +370,69 @@ impl Parser {
         self.consume(TokenKind::Semicolon, "Expected ';' after for condition")?;
 
         // Parse step - create dummy if missing
-        // Step can be an assignment (statement) or expression
+        // Step can be assignment, compound assignment, increment, decrement, or expression
         let step = if !self.check(TokenKind::RightParen) {
-            // Try to parse as assignment first (identifier = expr)
-            if self.check(TokenKind::Identifier) {
-                let expr = self.parse_expression()?;
+            let expr = self.parse_expression()?;
+            let start_span = expr.span();
 
-                // Check if next token is =, if so it's an assignment
-                if self.check(TokenKind::Equal) {
+            // Check what follows the expression
+            match self.peek().kind {
+                TokenKind::Equal => {
                     self.advance(); // consume =
                     let value = self.parse_expression()?;
-                    let stmt_span = expr.span();
-
-                    // Extract identifier from expr
-                    let target = match expr {
-                        Expr::Identifier(id) => AssignTarget::Name(id),
-                        Expr::Index(idx) => AssignTarget::Index {
-                            target: idx.target,
-                            index: idx.index,
-                            span: idx.span,
-                        },
-                        _ => {
-                            self.error("Invalid assignment target");
-                            return Err(());
-                        }
-                    };
-
+                    let target = self.expr_to_assign_target(expr)?;
                     Box::new(Stmt::Assign(Assign {
                         target,
                         value,
-                        span: stmt_span,
+                        span: start_span,
                     }))
-                } else {
-                    // Not an assignment, just an expression
-                    let expr_span = expr.span();
-                    Box::new(Stmt::Expr(ExprStmt { expr, span: expr_span }))
                 }
-            } else {
-                // Not an identifier, just parse as expression
-                let expr = self.parse_expression()?;
-                let expr_span = expr.span();
-                Box::new(Stmt::Expr(ExprStmt { expr, span: expr_span }))
+                TokenKind::PlusEqual
+                | TokenKind::MinusEqual
+                | TokenKind::StarEqual
+                | TokenKind::SlashEqual
+                | TokenKind::PercentEqual => {
+                    let op_token = self.advance();
+                    let op = match op_token.kind {
+                        TokenKind::PlusEqual => CompoundOp::AddAssign,
+                        TokenKind::MinusEqual => CompoundOp::SubAssign,
+                        TokenKind::StarEqual => CompoundOp::MulAssign,
+                        TokenKind::SlashEqual => CompoundOp::DivAssign,
+                        TokenKind::PercentEqual => CompoundOp::ModAssign,
+                        _ => unreachable!(),
+                    };
+                    let value = self.parse_expression()?;
+                    let target = self.expr_to_assign_target(expr)?;
+                    Box::new(Stmt::CompoundAssign(CompoundAssign {
+                        target,
+                        op,
+                        value,
+                        span: start_span,
+                    }))
+                }
+                TokenKind::PlusPlus => {
+                    self.advance(); // consume ++
+                    let target = self.expr_to_assign_target(expr)?;
+                    Box::new(Stmt::Increment(IncrementStmt {
+                        target,
+                        span: start_span,
+                    }))
+                }
+                TokenKind::MinusMinus => {
+                    self.advance(); // consume --
+                    let target = self.expr_to_assign_target(expr)?;
+                    Box::new(Stmt::Decrement(DecrementStmt {
+                        target,
+                        span: start_span,
+                    }))
+                }
+                _ => {
+                    // Just an expression statement
+                    Box::new(Stmt::Expr(ExprStmt {
+                        expr,
+                        span: start_span,
+                    }))
+                }
             }
         } else {
             Box::new(Stmt::Expr(ExprStmt {

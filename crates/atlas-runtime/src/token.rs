@@ -102,6 +102,24 @@ pub enum TokenKind {
     /// `||` (logical or)
     PipePipe,
 
+    // Compound assignment operators
+    /// `+=` (add and assign)
+    PlusEqual,
+    /// `-=` (subtract and assign)
+    MinusEqual,
+    /// `*=` (multiply and assign)
+    StarEqual,
+    /// `/=` (divide and assign)
+    SlashEqual,
+    /// `%=` (modulo and assign)
+    PercentEqual,
+
+    // Increment/decrement operators
+    /// `++` (increment)
+    PlusPlus,
+    /// `--` (decrement)
+    MinusMinus,
+
     // Punctuation
     /// `=` (assignment)
     Equal,
@@ -191,6 +209,13 @@ impl TokenKind {
             TokenKind::GreaterEqual => ">=",
             TokenKind::AmpAmp => "&&",
             TokenKind::PipePipe => "||",
+            TokenKind::PlusEqual => "+=",
+            TokenKind::MinusEqual => "-=",
+            TokenKind::StarEqual => "*=",
+            TokenKind::SlashEqual => "/=",
+            TokenKind::PercentEqual => "%=",
+            TokenKind::PlusPlus => "++",
+            TokenKind::MinusMinus => "--",
             TokenKind::Equal => "=",
             TokenKind::LeftParen => "(",
             TokenKind::RightParen => ")",

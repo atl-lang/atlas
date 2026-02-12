@@ -93,6 +93,9 @@ pub struct Block {
 pub enum Stmt {
     VarDecl(VarDecl),
     Assign(Assign),
+    CompoundAssign(CompoundAssign),
+    Increment(IncrementStmt),
+    Decrement(DecrementStmt),
     If(IfStmt),
     While(WhileStmt),
     For(ForStmt),
@@ -129,6 +132,39 @@ pub enum AssignTarget {
         index: Box<Expr>,
         span: Span,
     },
+}
+
+/// Compound assignment operators
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum CompoundOp {
+    AddAssign,    // +=
+    SubAssign,    // -=
+    MulAssign,    // *=
+    DivAssign,    // /=
+    ModAssign,    // %=
+}
+
+/// Compound assignment statement (+=, -=, *=, /=, %=)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct CompoundAssign {
+    pub target: AssignTarget,
+    pub op: CompoundOp,
+    pub value: Expr,
+    pub span: Span,
+}
+
+/// Increment statement (++)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct IncrementStmt {
+    pub target: AssignTarget,
+    pub span: Span,
+}
+
+/// Decrement statement (--)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DecrementStmt {
+    pub target: AssignTarget,
+    pub span: Span,
 }
 
 /// If statement
@@ -307,6 +343,9 @@ impl Stmt {
         match self {
             Stmt::VarDecl(v) => v.span,
             Stmt::Assign(a) => a.span,
+            Stmt::CompoundAssign(c) => c.span,
+            Stmt::Increment(i) => i.span,
+            Stmt::Decrement(d) => d.span,
             Stmt::If(i) => i.span,
             Stmt::While(w) => w.span,
             Stmt::For(f) => f.span,

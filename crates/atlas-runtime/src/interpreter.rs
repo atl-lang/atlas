@@ -8,9 +8,9 @@
 //! - Block scoping with shadowing
 
 use crate::ast::{
-    Assign, AssignTarget, BinaryExpr, BinaryOp, Block, CallExpr, Expr, ForStmt,
-    IfStmt, IndexExpr, Item, Literal, Param, Program, ReturnStmt, Stmt, UnaryExpr, UnaryOp,
-    VarDecl, WhileStmt,
+    Assign, AssignTarget, BinaryExpr, BinaryOp, Block, CallExpr, CompoundAssign, CompoundOp,
+    DecrementStmt, Expr, ForStmt, IfStmt, IncrementStmt, IndexExpr, Item, Literal, Param,
+    Program, ReturnStmt, Stmt, UnaryExpr, UnaryOp, VarDecl, WhileStmt,
 };
 use crate::value::{FunctionRef, RuntimeError, Value};
 use std::collections::HashMap;
@@ -101,6 +101,9 @@ impl Interpreter {
         match stmt {
             Stmt::VarDecl(var) => self.eval_var_decl(var),
             Stmt::Assign(assign) => self.eval_assign(assign),
+            Stmt::CompoundAssign(compound) => self.eval_compound_assign(compound),
+            Stmt::Increment(inc) => self.eval_increment(inc),
+            Stmt::Decrement(dec) => self.eval_decrement(dec),
             Stmt::If(if_stmt) => self.eval_if(if_stmt),
             Stmt::While(while_stmt) => self.eval_while(while_stmt),
             Stmt::For(for_stmt) => self.eval_for(for_stmt),
@@ -137,6 +140,144 @@ impl Interpreter {
                 let arr_val = self.eval_expr(target)?;
                 let idx_val = self.eval_expr(index)?;
                 self.set_array_element(arr_val, idx_val, value)?;
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    /// Evaluate a compound assignment (+=, -=, *=, /=, %=)
+    fn eval_compound_assign(&mut self, compound: &CompoundAssign) -> Result<Value, RuntimeError> {
+        // Get current value
+        let current = match &compound.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.get_array_element(arr_val, idx_val)?
+            }
+        };
+
+        // Get the value to apply
+        let value = self.eval_expr(&compound.value)?;
+
+        // Perform the operation
+        let result = match (&current, &value) {
+            (Value::Number(a), Value::Number(b)) => {
+                let res = match compound.op {
+                    CompoundOp::AddAssign => a + b,
+                    CompoundOp::SubAssign => a - b,
+                    CompoundOp::MulAssign => a * b,
+                    CompoundOp::DivAssign => {
+                        if b == &0.0 {
+                            return Err(RuntimeError::DivideByZero);
+                        }
+                        a / b
+                    }
+                    CompoundOp::ModAssign => {
+                        if b == &0.0 {
+                            return Err(RuntimeError::DivideByZero);
+                        }
+                        a % b
+                    }
+                };
+
+                if res.is_nan() || res.is_infinite() {
+                    return Err(RuntimeError::InvalidNumericResult);
+                }
+
+                Value::Number(res)
+            }
+            _ => return Err(RuntimeError::TypeError("Compound assignment requires numbers".to_string())),
+        };
+
+        // Store the result
+        match &compound.target {
+            AssignTarget::Name(id) => {
+                self.set_variable(&id.name, result)?;
+            }
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.set_array_element(arr_val, idx_val, result)?;
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    /// Evaluate an increment (++)
+    fn eval_increment(&mut self, inc: &IncrementStmt) -> Result<Value, RuntimeError> {
+        // Get current value
+        let current = match &inc.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.get_array_element(arr_val, idx_val)?
+            }
+        };
+
+        // Increment by 1
+        let result = match current {
+            Value::Number(n) => {
+                let res = n + 1.0;
+                if res.is_nan() || res.is_infinite() {
+                    return Err(RuntimeError::InvalidNumericResult);
+                }
+                Value::Number(res)
+            }
+            _ => return Err(RuntimeError::TypeError("Increment requires number".to_string())),
+        };
+
+        // Store the result
+        match &inc.target {
+            AssignTarget::Name(id) => {
+                self.set_variable(&id.name, result)?;
+            }
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.set_array_element(arr_val, idx_val, result)?;
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    /// Evaluate a decrement (--)
+    fn eval_decrement(&mut self, dec: &DecrementStmt) -> Result<Value, RuntimeError> {
+        // Get current value
+        let current = match &dec.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.get_array_element(arr_val, idx_val)?
+            }
+        };
+
+        // Decrement by 1
+        let result = match current {
+            Value::Number(n) => {
+                let res = n - 1.0;
+                if res.is_nan() || res.is_infinite() {
+                    return Err(RuntimeError::InvalidNumericResult);
+                }
+                Value::Number(res)
+            }
+            _ => return Err(RuntimeError::TypeError("Decrement requires number".to_string())),
+        };
+
+        // Store the result
+        match &dec.target {
+            AssignTarget::Name(id) => {
+                self.set_variable(&id.name, result)?;
+            }
+            AssignTarget::Index { target, index, .. } => {
+                let arr_val = self.eval_expr(target.as_ref())?;
+                let idx_val = self.eval_expr(index.as_ref())?;
+                self.set_array_element(arr_val, idx_val, result)?;
             }
         }
 
@@ -592,6 +733,30 @@ impl Interpreter {
     }
 
     /// Set an array element
+    /// Get an array element by index
+    fn get_array_element(&self, arr: Value, idx: Value) -> Result<Value, RuntimeError> {
+        if let Value::Array(arr) = arr {
+            if let Value::Number(n) = idx {
+                let index_val = n as i64;
+                if n.fract() != 0.0 || n < 0.0 {
+                    return Err(RuntimeError::InvalidIndex);
+                }
+
+                let borrowed = arr.borrow();
+                if index_val >= 0 && (index_val as usize) < borrowed.len() {
+                    Ok(borrowed[index_val as usize].clone())
+                } else {
+                    Err(RuntimeError::OutOfBounds)
+                }
+            } else {
+                Err(RuntimeError::InvalidIndex)
+            }
+        } else {
+            Err(RuntimeError::TypeError("Cannot index non-array".to_string()))
+        }
+    }
+
+    /// Set an array element by index
     fn set_array_element(
         &self,
         arr: Value,

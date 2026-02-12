@@ -193,6 +193,19 @@ impl Binder {
                 self.bind_assign_target(&assign.target);
                 self.bind_expr(&assign.value);
             }
+            Stmt::CompoundAssign(compound) => {
+                // Bind compound assignment target and value
+                self.bind_assign_target(&compound.target);
+                self.bind_expr(&compound.value);
+            }
+            Stmt::Increment(inc) => {
+                // Bind increment target
+                self.bind_assign_target(&inc.target);
+            }
+            Stmt::Decrement(dec) => {
+                // Bind decrement target
+                self.bind_assign_target(&dec.target);
+            }
             Stmt::If(if_stmt) => {
                 self.bind_expr(&if_stmt.cond);
                 self.bind_block(&if_stmt.then_block);

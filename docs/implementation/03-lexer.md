@@ -25,6 +25,10 @@ pub enum TokenKind {
     EqualEqual, BangEqual, Less, LessEqual, Greater, GreaterEqual,
     AmpAmp, PipePipe,
 
+    // Compound assignment & increment/decrement
+    PlusEqual, MinusEqual, StarEqual, SlashEqual, PercentEqual,
+    PlusPlus, MinusMinus,
+
     // Punctuation
     Equal, LeftParen, RightParen, LeftBrace, RightBrace,
     LeftBracket, RightBracket, Semicolon, Comma, Colon, Arrow,
@@ -115,13 +119,43 @@ impl Lexer {
             ';' => self.make_token(TokenKind::Semicolon, ";"),
             ',' => self.make_token(TokenKind::Comma, ","),
             ':' => self.make_token(TokenKind::Colon, ":"),
-            '+' => self.make_token(TokenKind::Plus, "+"),
-            '*' => self.make_token(TokenKind::Star, "*"),
-            '/' => self.make_token(TokenKind::Slash, "/"),
-            '%' => self.make_token(TokenKind::Percent, "%"),
+            '+' => {
+                if self.match_char('+') {
+                    self.make_token(TokenKind::PlusPlus, "++")
+                } else if self.match_char('=') {
+                    self.make_token(TokenKind::PlusEqual, "+=")
+                } else {
+                    self.make_token(TokenKind::Plus, "+")
+                }
+            }
+            '*' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::StarEqual, "*=")
+                } else {
+                    self.make_token(TokenKind::Star, "*")
+                }
+            }
+            '/' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::SlashEqual, "/=")
+                } else {
+                    self.make_token(TokenKind::Slash, "/")
+                }
+            }
+            '%' => {
+                if self.match_char('=') {
+                    self.make_token(TokenKind::PercentEqual, "%=")
+                } else {
+                    self.make_token(TokenKind::Percent, "%")
+                }
+            }
             '-' => {
-                if self.match_char('>') {
+                if self.match_char('-') {
+                    self.make_token(TokenKind::MinusMinus, "--")
+                } else if self.match_char('>') {
                     self.make_token(TokenKind::Arrow, "->")
+                } else if self.match_char('=') {
+                    self.make_token(TokenKind::MinusEqual, "-=")
                 } else {
                     self.make_token(TokenKind::Minus, "-")
                 }
@@ -267,3 +301,5 @@ fn skip_whitespace_and_comments(&mut self) {
 - **Span tracking:** Every token has accurate line/column for diagnostics
 - **String escapes:** `\n \r \t \\ \"` only (v0.1)
 - **Comments:** Both `//` and `/* */` supported
+- **Operator lookahead:** Uses `match_char()` to distinguish `+`, `++`, and `+=`
+- **Scientific notation:** Number format supports `1.5e10`, `2e-3`, etc.

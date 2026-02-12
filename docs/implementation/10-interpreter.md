@@ -64,8 +64,139 @@ impl Interpreter {
                 }
                 Ok(Value::Null)
             }
+            Stmt::CompoundAssign(compound) => {
+                self.eval_compound_assign(compound)
+            }
+            Stmt::Increment(inc) => {
+                self.eval_increment(inc)
+            }
+            Stmt::Decrement(dec) => {
+                self.eval_decrement(dec)
+            }
             Stmt::Expr(expr_stmt) => self.eval_expr(&expr_stmt.expr),
             _ => Ok(Value::Null),
+        }
+    }
+
+    fn eval_compound_assign(&mut self, compound: &CompoundAssign) -> Result<Value, RuntimeError> {
+        // Get current value
+        let current = match &compound.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr = self.eval_expr(target)?;
+                let idx = self.eval_expr(index)?;
+                self.get_array_element(arr, idx)?
+            }
+        };
+
+        // Evaluate new value
+        let rhs = self.eval_expr(&compound.value)?;
+
+        // Apply operation
+        let result = match (&current, &rhs) {
+            (Value::Number(a), Value::Number(b)) => {
+                let value = match compound.op {
+                    CompoundOp::AddAssign => a + b,
+                    CompoundOp::SubAssign => a - b,
+                    CompoundOp::MulAssign => a * b,
+                    CompoundOp::DivAssign => {
+                        if b == &0.0 {
+                            return Err(RuntimeError::DivideByZero);
+                        }
+                        a / b
+                    }
+                    CompoundOp::ModAssign => {
+                        if b == &0.0 {
+                            return Err(RuntimeError::DivideByZero);
+                        }
+                        a % b
+                    }
+                };
+
+                if value.is_nan() || value.is_infinite() {
+                    return Err(RuntimeError::InvalidNumericResult);
+                }
+                Value::Number(value)
+            }
+            _ => return Err(RuntimeError::TypeError),
+        };
+
+        // Store result
+        match &compound.target {
+            AssignTarget::Name(id) => {
+                self.set_variable(&id.name, result)?;
+            }
+            AssignTarget::Index { target, index, .. } => {
+                let arr = self.eval_expr(target)?;
+                let idx = self.eval_expr(index)?;
+                self.set_array_element(arr, idx, result)?;
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    fn eval_increment(&mut self, inc: &IncrementStmt) -> Result<Value, RuntimeError> {
+        let current = match &inc.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr = self.eval_expr(target)?;
+                let idx = self.eval_expr(index)?;
+                self.get_array_element(arr, idx)?
+            }
+        };
+
+        if let Value::Number(n) = current {
+            let result = n + 1.0;
+            if result.is_nan() || result.is_infinite() {
+                return Err(RuntimeError::InvalidNumericResult);
+            }
+
+            match &inc.target {
+                AssignTarget::Name(id) => {
+                    self.set_variable(&id.name, Value::Number(result))?;
+                }
+                AssignTarget::Index { target, index, .. } => {
+                    let arr = self.eval_expr(target)?;
+                    let idx = self.eval_expr(index)?;
+                    self.set_array_element(arr, idx, Value::Number(result))?;
+                }
+            }
+            Ok(Value::Null)
+        } else {
+            Err(RuntimeError::TypeError)
+        }
+    }
+
+    fn eval_decrement(&mut self, dec: &DecrementStmt) -> Result<Value, RuntimeError> {
+        let current = match &dec.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name)?,
+            AssignTarget::Index { target, index, .. } => {
+                let arr = self.eval_expr(target)?;
+                let idx = self.eval_expr(index)?;
+                self.get_array_element(arr, idx)?
+            }
+        };
+
+        if let Value::Number(n) = current {
+            let result = n - 1.0;
+            if result.is_nan() || result.is_infinite() {
+                return Err(RuntimeError::InvalidNumericResult);
+            }
+
+            match &dec.target {
+                AssignTarget::Name(id) => {
+                    self.set_variable(&id.name, Value::Number(result))?;
+                }
+                AssignTarget::Index { target, index, .. } => {
+                    let arr = self.eval_expr(target)?;
+                    let idx = self.eval_expr(index)?;
+                    self.set_array_element(arr, idx, Value::Number(result))?;
+                }
+            }
+            Ok(Value::Null)
+        } else {
+            Err(RuntimeError::TypeError)
         }
     }
 

@@ -253,6 +253,120 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             }
+            Stmt::CompoundAssign(compound) => {
+                let value_type = self.check_expr(&compound.value);
+                let target_type = self.check_assign_target(&compound.target);
+
+                // Compound assignment requires both sides to be numbers (allow Unknown for error recovery)
+                if !matches!(target_type, Type::Number | Type::Unknown) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            &format!(
+                                "Compound assignment requires number type, found {}",
+                                target_type.display_name()
+                            ),
+                            compound.span,
+                        )
+                        .with_label("type mismatch"),
+                    );
+                }
+
+                if !matches!(value_type, Type::Number | Type::Unknown) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            &format!(
+                                "Compound assignment requires number value, found {}",
+                                value_type.display_name()
+                            ),
+                            compound.span,
+                        )
+                        .with_label("type mismatch"),
+                    );
+                }
+
+                // Check mutability
+                if let AssignTarget::Name(id) = &compound.target {
+                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
+                        if !symbol.mutable {
+                            let diag = Diagnostic::error_with_code(
+                                "AT3003",
+                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                id.span,
+                            )
+                            .with_label("immutable variable");
+                            self.diagnostics.push(diag);
+                        }
+                    }
+                }
+            }
+            Stmt::Increment(inc) => {
+                let target_type = self.check_assign_target(&inc.target);
+
+                // Increment requires number type (allow Unknown for error recovery)
+                if !matches!(target_type, Type::Number | Type::Unknown) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            &format!(
+                                "Increment requires number type, found {}",
+                                target_type.display_name()
+                            ),
+                            inc.span,
+                        )
+                        .with_label("type mismatch"),
+                    );
+                }
+
+                // Check mutability
+                if let AssignTarget::Name(id) = &inc.target {
+                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
+                        if !symbol.mutable {
+                            let diag = Diagnostic::error_with_code(
+                                "AT3003",
+                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                id.span,
+                            )
+                            .with_label("immutable variable");
+                            self.diagnostics.push(diag);
+                        }
+                    }
+                }
+            }
+            Stmt::Decrement(dec) => {
+                let target_type = self.check_assign_target(&dec.target);
+
+                // Decrement requires number type (allow Unknown for error recovery)
+                if !matches!(target_type, Type::Number | Type::Unknown) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            &format!(
+                                "Decrement requires number type, found {}",
+                                target_type.display_name()
+                            ),
+                            dec.span,
+                        )
+                        .with_label("type mismatch"),
+                    );
+                }
+
+                // Check mutability
+                if let AssignTarget::Name(id) = &dec.target {
+                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
+                        if !symbol.mutable {
+                            let diag = Diagnostic::error_with_code(
+                                "AT3003",
+                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                id.span,
+                            )
+                            .with_label("immutable variable");
+                            self.diagnostics.push(diag);
+                        }
+                    }
+                }
+            }
             Stmt::If(if_stmt) => {
                 let cond_type = self.check_expr(&if_stmt.cond);
                 if cond_type != Type::Bool && cond_type != Type::Unknown {

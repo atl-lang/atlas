@@ -1805,6 +1805,304 @@ fn test_array_aliasing_self_reference() {
 }
 
 // ============================================================================
+// Compound Assignment Tests
+// ============================================================================
+
+#[test]
+fn test_compound_add_assign() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 10;
+        x += 5;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 15.0),
+        _ => panic!("Expected Number(15.0)"),
+    }
+}
+
+#[test]
+fn test_compound_sub_assign() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 20;
+        x -= 8;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 12.0),
+        _ => panic!("Expected Number(12.0)"),
+    }
+}
+
+#[test]
+fn test_compound_mul_assign() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 7;
+        x *= 3;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 21.0),
+        _ => panic!("Expected Number(21.0)"),
+    }
+}
+
+#[test]
+fn test_compound_div_assign() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 50;
+        x /= 5;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 10.0),
+        _ => panic!("Expected Number(10.0)"),
+    }
+}
+
+#[test]
+fn test_compound_mod_assign() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 17;
+        x %= 5;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 2.0),
+        _ => panic!("Expected Number(2.0)"),
+    }
+}
+
+#[test]
+fn test_compound_chained() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 10;
+        x += 5;
+        x *= 2;
+        x -= 10;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 20.0), // (10 + 5) * 2 - 10 = 20
+        _ => panic!("Expected Number(20.0)"),
+    }
+}
+
+#[test]
+fn test_compound_array_element() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let arr: number[] = [10, 20, 30];
+        arr[1] += 5;
+        arr[1]
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 25.0),
+        _ => panic!("Expected Number(25.0)"),
+    }
+}
+
+#[test]
+fn test_compound_divide_by_zero() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 10;
+        x /= 0;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT0005");
+        }
+        Ok(val) => panic!("Expected divide by zero error, got {:?}", val),
+    }
+}
+
+// ============================================================================
+// Increment/Decrement Tests
+// ============================================================================
+
+#[test]
+fn test_increment() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 5;
+        x++;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 6.0),
+        _ => panic!("Expected Number(6.0)"),
+    }
+}
+
+#[test]
+fn test_decrement() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 10;
+        x--;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 9.0),
+        _ => panic!("Expected Number(9.0)"),
+    }
+}
+
+#[test]
+fn test_increment_multiple() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 0;
+        x++;
+        x++;
+        x++;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 3.0),
+        _ => panic!("Expected Number(3.0)"),
+    }
+}
+
+#[test]
+fn test_decrement_multiple() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var x: number = 10;
+        x--;
+        x--;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 8.0),
+        _ => panic!("Expected Number(8.0)"),
+    }
+}
+
+#[test]
+fn test_increment_array_element() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let arr: number[] = [5, 10, 15];
+        arr[0]++;
+        arr[0]
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 6.0),
+        _ => panic!("Expected Number(6.0)"),
+    }
+}
+
+#[test]
+fn test_decrement_array_element() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let arr: number[] = [5, 10, 15];
+        arr[2]--;
+        arr[2]
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 14.0),
+        _ => panic!("Expected Number(14.0)"),
+    }
+}
+
+#[test]
+fn test_increment_in_loop() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var sum: number = 0;
+        var i: number = 0;
+        while (i < 5) {
+            sum += i;
+            i++;
+        }
+        sum
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 10.0), // 0 + 1 + 2 + 3 + 4
+        _ => panic!("Expected Number(10.0)"),
+    }
+}
+
+#[test]
+fn test_for_loop_with_increment() {
+    let runtime = Atlas::new();
+    let code = r#"
+        var sum: number = 0;
+        for (var i: number = 0; i < 5; i++) {
+            sum += i;
+        }
+        sum
+    "#;
+
+    match runtime.eval(code) {
+        Ok(Value::Number(n)) => assert_eq!(n, 10.0),
+        _ => panic!("Expected Number(10.0)"),
+    }
+}
+
+#[test]
+fn test_immutable_increment_error() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 5;
+        x++;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT3003"); // Cannot modify immutable
+        }
+        Ok(val) => panic!("Expected immutability error, got {:?}", val),
+    }
+}
+
+#[test]
+fn test_compound_assign_immutable_error() {
+    let runtime = Atlas::new();
+    let code = r#"
+        let x: number = 10;
+        x += 5;
+        x
+    "#;
+
+    match runtime.eval(code) {
+        Err(diags) => {
+            assert!(!diags.is_empty());
+            assert_eq!(diags[0].code, "AT3003");
+        }
+        Ok(val) => panic!("Expected immutability error, got {:?}", val),
+    }
+}
+
+// ============================================================================
 // Complex Integration Tests
 // ============================================================================
 
