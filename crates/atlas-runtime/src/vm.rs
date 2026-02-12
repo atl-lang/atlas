@@ -12,15 +12,38 @@ use std::collections::HashMap;
 use std::rc::Rc;
 
 /// Call frame for function calls
+///
+/// Each function call creates a new frame that tracks:
+/// - Where to return to (return_ip)
+/// - Where the function's local variables start on the stack (stack_base)
+/// - How many locals the function has (local_count)
+///
+/// The main/top-level code also has a frame ("<main>") with stack_base = 0.
+///
+/// ## Stack Layout Example
+///
+/// ```text
+/// Stack with two frames (main called function "add"):
+///
+/// [global1][global2] | [func_ptr][arg1][arg2][local1]
+///  ^                  ^
+///  main frame base    add frame base
+/// ```
+///
+/// Local variable access is frame-relative:
+/// - GetLocal 0 in main -> stack[0]
+/// - GetLocal 0 in add -> stack[stack_base + 0]
 #[derive(Debug, Clone)]
 pub struct CallFrame {
-    /// Function name (for debugging)
+    /// Function name (for debugging and error messages)
     pub function_name: String,
-    /// Return instruction pointer
+    /// Instruction pointer to return to after function completes
     pub return_ip: usize,
-    /// Base of local variables on stack
+    /// Stack index where this frame's local variables begin
+    ///
+    /// Local variable N is at stack[stack_base + N]
     pub stack_base: usize,
-    /// Number of local variables
+    /// Number of local variables in this frame
     pub local_count: usize,
 }
 
@@ -41,9 +64,17 @@ pub struct VM {
 impl VM {
     /// Create a new VM with bytecode
     pub fn new(bytecode: Bytecode) -> Self {
+        // Create an initial "main" frame for top-level code
+        let main_frame = CallFrame {
+            function_name: "<main>".to_string(),
+            return_ip: 0,
+            stack_base: 0,
+            local_count: 0,
+        };
+
         Self {
             stack: Vec::with_capacity(256),
-            frames: Vec::new(),
+            frames: vec![main_frame],
             globals: HashMap::new(),
             bytecode,
             ip: 0,
@@ -77,22 +108,26 @@ impl VM {
                 // ===== Variables =====
                 Opcode::GetLocal => {
                     let index = self.read_u16() as usize;
-                    if index >= self.stack.len() {
+                    let base = self.current_frame().stack_base;
+                    let absolute_index = base + index;
+                    if absolute_index >= self.stack.len() {
                         return Err(RuntimeError::StackUnderflow);
                     }
-                    let value = self.stack[index].clone();
+                    let value = self.stack[absolute_index].clone();
                     self.push(value);
                 }
                 Opcode::SetLocal => {
                     let index = self.read_u16() as usize;
+                    let base = self.current_frame().stack_base;
+                    let absolute_index = base + index;
                     let value = self.peek(0).clone();
-                    if index >= self.stack.len() {
+                    if absolute_index >= self.stack.len() {
                         // Need to extend stack
-                        while self.stack.len() <= index {
+                        while self.stack.len() <= absolute_index {
                             self.stack.push(Value::Null);
                         }
                     }
-                    self.stack[index] = value;
+                    self.stack[absolute_index] = value;
                 }
                 Opcode::GetGlobal => {
                     let name_index = self.read_u16() as usize;
@@ -238,9 +273,71 @@ impl VM {
                 }
 
                 // ===== Functions =====
-                Opcode::Call | Opcode::Return => {
-                    // TODO: Function calls in next phase
-                    return Err(RuntimeError::UnknownOpcode);
+                Opcode::Call => {
+                    let arg_count = self.read_u8() as usize;
+
+                    // Get the function value from stack (it's below the arguments)
+                    let function = self.peek(arg_count).clone();
+
+                    match function {
+                        Value::Function(func) => {
+                            // Create a new call frame
+                            let frame = CallFrame {
+                                function_name: func.name.clone(),
+                                return_ip: self.ip,
+                                stack_base: self.stack.len() - arg_count,
+                                local_count: func.arity,
+                            };
+
+                            // Verify argument count matches
+                            if arg_count != func.arity {
+                                return Err(RuntimeError::TypeError(format!(
+                                    "Function {} expects {} arguments, got {}",
+                                    func.name, func.arity, arg_count
+                                )));
+                            }
+
+                            // Push the frame
+                            self.frames.push(frame);
+
+                            // Jump to function bytecode
+                            self.ip = func.bytecode_offset;
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError(format!(
+                                "Cannot call non-function value"
+                            )));
+                        }
+                    }
+                }
+                Opcode::Return => {
+                    // Pop the return value from stack (if any)
+                    let return_value = if self.stack.is_empty() {
+                        Value::Null
+                    } else {
+                        self.pop()
+                    };
+
+                    // Pop the call frame
+                    let frame = self.frames.pop();
+
+                    if let Some(f) = frame {
+                        // Clean up the stack (remove locals and function value)
+                        while self.stack.len() > f.stack_base {
+                            self.stack.pop();
+                        }
+
+                        // Restore IP to return address
+                        self.ip = f.return_ip;
+
+                        // Push return value
+                        self.push(return_value);
+                    } else {
+                        // Returning from main - we're done
+                        // Push the return value and halt
+                        self.push(return_value);
+                        break;
+                    }
                 }
 
                 // ===== Arrays =====
@@ -379,6 +476,11 @@ impl VM {
     fn read_i16(&mut self) -> i16 {
         self.read_u16() as i16
     }
+
+    /// Get the current call frame
+    fn current_frame(&self) -> &CallFrame {
+        self.frames.last().expect("No call frame available")
+    }
 }
 
 impl Default for VM {
@@ -512,5 +614,398 @@ mod tests {
 
         let result = execute_source("!false;").unwrap();
         assert_eq!(result, Some(Value::Bool(true)));
+    }
+
+    // ===== Constants Pool Loading Tests =====
+
+    #[test]
+    fn test_vm_load_number_constant() {
+        // Test loading a number constant from pool
+        let result = execute_source("123.456;").unwrap();
+        assert_eq!(result, Some(Value::Number(123.456)));
+    }
+
+    #[test]
+    fn test_vm_load_string_constant() {
+        // Test loading a string constant from pool
+        let result = execute_source("\"hello world\";").unwrap();
+        if let Some(Value::String(s)) = result {
+            assert_eq!(s.as_ref(), "hello world");
+        } else {
+            panic!("Expected string value");
+        }
+    }
+
+    #[test]
+    fn test_vm_load_multiple_constants() {
+        // Test that multiple constants can be loaded and used
+        let result = execute_source("1; 2; 3;").unwrap();
+        // Should return the last value
+        assert_eq!(result, Some(Value::Number(3.0)));
+    }
+
+    #[test]
+    fn test_vm_constants_in_expression() {
+        // Test using multiple constants in a single expression
+        let result = execute_source("10 + 20 + 30;").unwrap();
+        assert_eq!(result, Some(Value::Number(60.0)));
+    }
+
+    #[test]
+    fn test_vm_constant_reuse() {
+        // Test that the same constant value can be used multiple times
+        let result = execute_source("let x = 5; let y = 5; x + y;").unwrap();
+        assert_eq!(result, Some(Value::Number(10.0)));
+    }
+
+    #[test]
+    fn test_vm_large_constant_index() {
+        // Test that larger constant indices work correctly
+        // Create many variables to populate the constant pool
+        let mut source = String::new();
+        for i in 0..100 {
+            source.push_str(&format!("let x{} = {}; ", i, i));
+        }
+        source.push_str("x99;");
+
+        let result = execute_source(&source).unwrap();
+        assert_eq!(result, Some(Value::Number(99.0)));
+    }
+
+    #[test]
+    fn test_vm_string_constants_in_variables() {
+        // Test that string constants work properly with variables
+        let result = execute_source("let s = \"test\"; s;").unwrap();
+        if let Some(Value::String(s)) = result {
+            assert_eq!(s.as_ref(), "test");
+        } else {
+            panic!("Expected string value");
+        }
+    }
+
+    #[test]
+    fn test_vm_mixed_constant_types() {
+        // Test mixing different constant types
+        let result = execute_source(
+            r#"
+            let n = 42;
+            let s = "hello";
+            let b = true;
+            n;
+        "#,
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(42.0)));
+    }
+
+    #[test]
+    fn test_vm_constant_bounds_check() {
+        // Create bytecode with an invalid constant index
+        let mut bytecode = Bytecode::new();
+        bytecode.add_constant(Value::Number(1.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(999); // Index out of bounds
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run();
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_vm_empty_constant_pool() {
+        // Test VM with no constants (only opcodes that don't need them)
+        let mut bytecode = Bytecode::new();
+        bytecode.emit(Opcode::True, crate::span::Span::dummy());
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Bool(true)));
+        assert_eq!(vm.bytecode.constants.len(), 0);
+    }
+
+    // ===== Stack Frame Tests =====
+
+    #[test]
+    fn test_vm_initial_main_frame() {
+        // Test that VM starts with a main frame
+        let bytecode = Bytecode::new();
+        let vm = VM::new(bytecode);
+
+        assert_eq!(vm.frames.len(), 1);
+        assert_eq!(vm.frames[0].function_name, "<main>");
+        assert_eq!(vm.frames[0].stack_base, 0);
+        assert_eq!(vm.frames[0].local_count, 0);
+    }
+
+    #[test]
+    fn test_vm_frame_relative_locals() {
+        // Test that locals are accessed relative to frame base
+        // Simulate: let x = 10; let y = 20; x + y;
+        let mut bytecode = Bytecode::new();
+
+        // Push 10 onto stack (will become local 0)
+        let idx_10 = bytecode.add_constant(Value::Number(10.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_10);
+
+        // Push 20 onto stack (will become local 1)
+        let idx_20 = bytecode.add_constant(Value::Number(20.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_20);
+
+        // Get local 0 (should be 10)
+        bytecode.emit(Opcode::GetLocal, crate::span::Span::dummy());
+        bytecode.emit_u16(0);
+
+        // Get local 1 (should be 20)
+        bytecode.emit(Opcode::GetLocal, crate::span::Span::dummy());
+        bytecode.emit_u16(1);
+
+        // Add them
+        bytecode.emit(Opcode::Add, crate::span::Span::dummy());
+
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Number(30.0)));
+    }
+
+    #[test]
+    fn test_vm_return_from_main() {
+        // Test that RETURN from main frame terminates execution
+        let mut bytecode = Bytecode::new();
+
+        // Push a value
+        let idx = bytecode.add_constant(Value::Number(42.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx);
+
+        // Return from main
+        bytecode.emit(Opcode::Return, crate::span::Span::dummy());
+
+        // This should never execute
+        bytecode.emit(Opcode::Null, crate::span::Span::dummy());
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Number(42.0)));
+    }
+
+    #[test]
+    fn test_vm_call_frame_creation() {
+        use crate::value::FunctionRef;
+
+        // Test that CALL creates a new frame
+        let mut bytecode = Bytecode::new();
+
+        // Create a simple function that just returns 42
+        // Function starts at offset 10
+        let function_offset = 10;
+
+        // Main code: push function, call it
+        let func_ref = FunctionRef {
+            name: "test_func".to_string(),
+            arity: 0,
+            bytecode_offset: function_offset,
+        };
+        let func_idx = bytecode.add_constant(Value::Function(func_ref));
+
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(func_idx);
+
+        // Call with 0 arguments
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(0);
+
+        // After return, halt
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        // Pad to offset 10
+        while bytecode.instructions.len() < function_offset {
+            bytecode.emit_u8(0);
+        }
+
+        // Function body: push 42 and return
+        let idx_42 = bytecode.add_constant(Value::Number(42.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_42);
+        bytecode.emit(Opcode::Return, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Number(42.0)));
+    }
+
+    #[test]
+    fn test_vm_call_with_arguments() {
+        use crate::value::FunctionRef;
+
+        // Test function call with arguments
+        let mut bytecode = Bytecode::new();
+
+        // Function: fn add(a, b) -> a + b
+        let function_offset = 20;
+
+        // Main code: push function, push args (5, 3), call
+        let func_ref = FunctionRef {
+            name: "add".to_string(),
+            arity: 2,
+            bytecode_offset: function_offset,
+        };
+        let func_idx = bytecode.add_constant(Value::Function(func_ref));
+
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(func_idx);
+
+        // Push arguments
+        let idx_5 = bytecode.add_constant(Value::Number(5.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_5);
+
+        let idx_3 = bytecode.add_constant(Value::Number(3.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_3);
+
+        // Call with 2 arguments
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(2);
+
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        // Pad to function offset
+        while bytecode.instructions.len() < function_offset {
+            bytecode.emit_u8(0);
+        }
+
+        // Function body: GetLocal 0, GetLocal 1, Add, Return
+        bytecode.emit(Opcode::GetLocal, crate::span::Span::dummy());
+        bytecode.emit_u16(0);
+        bytecode.emit(Opcode::GetLocal, crate::span::Span::dummy());
+        bytecode.emit_u16(1);
+        bytecode.emit(Opcode::Add, crate::span::Span::dummy());
+        bytecode.emit(Opcode::Return, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Number(8.0)));
+    }
+
+    #[test]
+    fn test_vm_call_wrong_arity() {
+        use crate::value::FunctionRef;
+
+        // Test that calling with wrong number of args fails
+        let mut bytecode = Bytecode::new();
+
+        let func_ref = FunctionRef {
+            name: "test".to_string(),
+            arity: 2, // Expects 2 args
+            bytecode_offset: 10,
+        };
+        let func_idx = bytecode.add_constant(Value::Function(func_ref));
+
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(func_idx);
+
+        // Only push 1 argument
+        bytecode.emit(Opcode::Null, crate::span::Span::dummy());
+
+        // Call with 1 argument (should fail)
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(1);
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            RuntimeError::TypeError(msg) => assert!(msg.contains("expects 2 arguments")),
+            _ => panic!("Expected TypeError"),
+        }
+    }
+
+    #[test]
+    fn test_vm_call_non_function() {
+        // Test that calling a non-function value fails
+        let mut bytecode = Bytecode::new();
+
+        // Push a number (not a function)
+        let idx = bytecode.add_constant(Value::Number(42.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx);
+
+        // Try to call it
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(0);
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            RuntimeError::TypeError(msg) => assert!(msg.contains("Cannot call non-function")),
+            _ => panic!("Expected TypeError"),
+        }
+    }
+
+    #[test]
+    fn test_vm_nested_calls() {
+        use crate::value::FunctionRef;
+
+        // Test nested function calls: main -> f1 -> f2
+        let mut bytecode = Bytecode::new();
+
+        let f1_offset = 30;
+        let f2_offset = 50;
+
+        // Main: call f1
+        let f1_ref = FunctionRef {
+            name: "f1".to_string(),
+            arity: 0,
+            bytecode_offset: f1_offset,
+        };
+        let f1_idx = bytecode.add_constant(Value::Function(f1_ref));
+
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(f1_idx);
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(0);
+        bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
+
+        // Pad to f1_offset
+        while bytecode.instructions.len() < f1_offset {
+            bytecode.emit_u8(0);
+        }
+
+        // f1: call f2
+        let f2_ref = FunctionRef {
+            name: "f2".to_string(),
+            arity: 0,
+            bytecode_offset: f2_offset,
+        };
+        let f2_idx = bytecode.add_constant(Value::Function(f2_ref));
+
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(f2_idx);
+        bytecode.emit(Opcode::Call, crate::span::Span::dummy());
+        bytecode.emit_u8(0);
+        bytecode.emit(Opcode::Return, crate::span::Span::dummy());
+
+        // Pad to f2_offset
+        while bytecode.instructions.len() < f2_offset {
+            bytecode.emit_u8(0);
+        }
+
+        // f2: return 100
+        let idx_100 = bytecode.add_constant(Value::Number(100.0));
+        bytecode.emit(Opcode::Constant, crate::span::Span::dummy());
+        bytecode.emit_u16(idx_100);
+        bytecode.emit(Opcode::Return, crate::span::Span::dummy());
+
+        let mut vm = VM::new(bytecode);
+        let result = vm.run().unwrap();
+        assert_eq!(result, Some(Value::Number(100.0)));
     }
 }

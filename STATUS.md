@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete
+**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM In Progress
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/bytecode-vm/phase-02-vm.md
-**Next Phase:** `phases/bytecode-vm/phase-06-constants-pool.md`
+**Last Completed:** phases/bytecode-vm/phase-07-stack-frames.md
+**Next Phase:** `phases/bytecode-vm/phase-08-branching.md`
 
-**What to implement:** Constant pool optimization and management
+**What to implement:** Implement conditional and loop control flow in bytecode
 
 ---
 
@@ -29,9 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Bytecode & VM Phase 06 (Constants Pool):**
+**For Bytecode & VM Phase 08 (Branching):**
 - `docs/implementation/11-bytecode.md` - Bytecode implementation guide
-- Current bytecode.rs implementation
+- Current bytecode.rs, compiler.rs, and vm.rs implementations
 
 ---
 
@@ -103,15 +103,13 @@
 ### 7. REPL (1/1) ✅ COMPLETE
 - ✅ phases/interpreter/phase-02-repl.md
 
-### 8. Bytecode & VM (3/17)
+### 8. Bytecode & VM (5/17)
 - ✅ phase-03-bytecode-format.md
 - ✅ phase-01-bytecode-compiler.md
 - ✅ phase-02-vm.md
-- ⬜ phase-06-constants-pool.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-01-bytecode-compiler.md
-- ⬜ phase-02-vm.md
-- ⬜ phase-06-constants-pool.md
-- ⬜ phase-07-stack-frames.md
+- ✅ phase-06-constants-pool.md
+- ✅ phase-07-stack-frames.md
+- ⬜ phase-08-branching.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-08-branching.md
 - ⬜ phase-09-vm-errors.md
 - ⬜ phase-10-bytecode-serialization.md
@@ -156,7 +154,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 48/88 phases (55%)
+**Total Progress:** 50/88 phases (57%)
 
 ---
 

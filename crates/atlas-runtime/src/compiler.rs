@@ -711,4 +711,163 @@ mod tests {
             .position(|&b| b == Opcode::Not as u8);
         assert!(not_pos.is_some(), "Not opcode not found");
     }
+
+    // ===== Constants Pool Compilation Tests =====
+
+    #[test]
+    fn test_compile_number_to_constant_pool() {
+        // Verify numbers are added to constant pool, not inlined
+        let bytecode = compile_source("42; 3.14; -1.5;");
+
+        // Should have 3 number constants (including the one for -1.5)
+        assert!(bytecode.constants.len() >= 2); // At least 42 and 3.14
+        assert_eq!(bytecode.constants[0], Value::Number(42.0));
+        assert_eq!(bytecode.constants[1], Value::Number(3.14));
+    }
+
+    #[test]
+    fn test_compile_string_to_constant_pool() {
+        // Verify strings are added to constant pool
+        let bytecode = compile_source("\"hello\"; \"world\";");
+
+        // Should have at least 2 string constants
+        assert!(bytecode.constants.len() >= 2);
+        if let Value::String(s) = &bytecode.constants[0] {
+            assert_eq!(s.as_ref(), "hello");
+        } else {
+            panic!("Expected string constant");
+        }
+        if let Value::String(s) = &bytecode.constants[1] {
+            assert_eq!(s.as_ref(), "world");
+        } else {
+            panic!("Expected string constant");
+        }
+    }
+
+    #[test]
+    fn test_compile_variable_names_to_constant_pool() {
+        // Variable names for globals should be in constant pool
+        let bytecode = compile_source("let x = 10; let y = 20;");
+
+        // Should have: 10, "x", 20, "y" in constants
+        assert!(bytecode.constants.len() >= 4);
+
+        // Verify we have number and string constants
+        let has_number = bytecode.constants.iter().any(|c| matches!(c, Value::Number(_)));
+        let has_string = bytecode.constants.iter().any(|c| matches!(c, Value::String(_)));
+        assert!(has_number, "Should have number constants");
+        assert!(has_string, "Should have string constants for variable names");
+    }
+
+    #[test]
+    fn test_compile_constant_indices_sequential() {
+        // Verify that constants are indexed sequentially
+        let bytecode = compile_source("1; 2; 3; 4; 5;");
+
+        // Should have at least 5 constants
+        assert!(bytecode.constants.len() >= 5);
+
+        // All should be numbers
+        for i in 0..5 {
+            assert!(matches!(bytecode.constants[i], Value::Number(_)));
+        }
+    }
+
+    #[test]
+    fn test_compile_repeated_constants() {
+        // Test that repeated values create separate constant entries
+        let bytecode = compile_source("42; 42; 42;");
+
+        // Current implementation doesn't deduplicate, so should have 3 entries
+        let count_42 = bytecode
+            .constants
+            .iter()
+            .filter(|&c| *c == Value::Number(42.0))
+            .count();
+        assert_eq!(count_42, 3, "Should store 42 three times");
+    }
+
+    #[test]
+    fn test_compile_mixed_constant_types() {
+        // Test that different types are properly added to constant pool
+        let bytecode = compile_source(r#"42; "hello"; 3.14; "world"; -1;"#);
+
+        // Should have mix of numbers and strings
+        let number_count = bytecode
+            .constants
+            .iter()
+            .filter(|c| matches!(c, Value::Number(_)))
+            .count();
+        let string_count = bytecode
+            .constants
+            .iter()
+            .filter(|c| matches!(c, Value::String(_)))
+            .count();
+
+        assert!(number_count >= 3, "Should have at least 3 number constants");
+        assert!(string_count >= 2, "Should have at least 2 string constants");
+    }
+
+    #[test]
+    fn test_compile_constant_in_arithmetic() {
+        // Test that constants in arithmetic are properly pooled
+        let bytecode = compile_source("1 + 2 + 3;");
+
+        // Should have 3 number constants
+        assert!(bytecode.constants.len() >= 3);
+        assert_eq!(bytecode.constants[0], Value::Number(1.0));
+        assert_eq!(bytecode.constants[1], Value::Number(2.0));
+        assert_eq!(bytecode.constants[2], Value::Number(3.0));
+    }
+
+    #[test]
+    fn test_compile_large_number_constant() {
+        // Test that large numbers are handled correctly
+        let bytecode = compile_source("999999999.123456789;");
+
+        assert!(bytecode.constants.len() >= 1);
+        assert_eq!(bytecode.constants[0], Value::Number(999999999.123456789));
+    }
+
+    #[test]
+    fn test_compile_empty_string_constant() {
+        // Test that empty strings work
+        let bytecode = compile_source("\"\";");
+
+        assert!(bytecode.constants.len() >= 1);
+        if let Value::String(s) = &bytecode.constants[0] {
+            assert_eq!(s.as_ref(), "");
+        } else {
+            panic!("Expected empty string constant");
+        }
+    }
+
+    #[test]
+    fn test_compile_long_string_constant() {
+        // Test that long strings work
+        let long_str = "a".repeat(1000);
+        let source = format!(r#""{}";"#, long_str);
+        let bytecode = compile_source(&source);
+
+        assert!(bytecode.constants.len() >= 1);
+        if let Value::String(s) = &bytecode.constants[0] {
+            assert_eq!(s.len(), 1000);
+        } else {
+            panic!("Expected long string constant");
+        }
+    }
+
+    #[test]
+    fn test_compile_constant_pool_size() {
+        // Test that we can handle a reasonable number of constants
+        let mut source = String::new();
+        for i in 0..100 {
+            source.push_str(&format!("{}; ", i));
+        }
+
+        let bytecode = compile_source(&source);
+
+        // Should have at least 100 constants
+        assert!(bytecode.constants.len() >= 100);
+    }
 }

@@ -438,4 +438,137 @@ mod tests {
         assert_eq!(bytecode.constants.len(), 2);
         assert_eq!(bytecode.debug_info.len(), 4);
     }
+
+    // ===== Constants Pool Specific Tests =====
+
+    #[test]
+    fn test_constant_pool_indexing() {
+        use std::rc::Rc;
+        let mut bytecode = Bytecode::new();
+
+        // Add multiple constants of different types
+        let idx0 = bytecode.add_constant(Value::Number(42.0));
+        let idx1 = bytecode.add_constant(Value::String(Rc::new("hello".to_string())));
+        let idx2 = bytecode.add_constant(Value::Bool(true));
+        let idx3 = bytecode.add_constant(Value::Null);
+
+        // Verify sequential indexing
+        assert_eq!(idx0, 0);
+        assert_eq!(idx1, 1);
+        assert_eq!(idx2, 2);
+        assert_eq!(idx3, 3);
+
+        // Verify values are stored correctly
+        assert_eq!(bytecode.constants[0], Value::Number(42.0));
+        assert_eq!(
+            bytecode.constants[1],
+            Value::String(Rc::new("hello".to_string()))
+        );
+        assert_eq!(bytecode.constants[2], Value::Bool(true));
+        assert_eq!(bytecode.constants[3], Value::Null);
+    }
+
+    #[test]
+    fn test_constant_pool_multiple_same_values() {
+        // Test that adding the same value multiple times creates separate entries
+        // (no deduplication in current implementation)
+        let mut bytecode = Bytecode::new();
+
+        let idx1 = bytecode.add_constant(Value::Number(42.0));
+        let idx2 = bytecode.add_constant(Value::Number(42.0));
+        let idx3 = bytecode.add_constant(Value::Number(42.0));
+
+        assert_eq!(idx1, 0);
+        assert_eq!(idx2, 1);
+        assert_eq!(idx3, 2);
+        assert_eq!(bytecode.constants.len(), 3);
+    }
+
+    #[test]
+    fn test_constant_pool_large() {
+        // Test that we can handle a large constant pool
+        let mut bytecode = Bytecode::new();
+
+        for i in 0..1000 {
+            let idx = bytecode.add_constant(Value::Number(i as f64));
+            assert_eq!(idx, i as u16);
+        }
+
+        assert_eq!(bytecode.constants.len(), 1000);
+        assert_eq!(bytecode.constants[500], Value::Number(500.0));
+    }
+
+    #[test]
+    fn test_constant_pool_mixed_types() {
+        use std::rc::Rc;
+        let mut bytecode = Bytecode::new();
+
+        // Add a variety of constant types
+        bytecode.add_constant(Value::Number(1.0));
+        bytecode.add_constant(Value::String(Rc::new("a".to_string())));
+        bytecode.add_constant(Value::Number(2.0));
+        bytecode.add_constant(Value::Bool(false));
+        bytecode.add_constant(Value::String(Rc::new("b".to_string())));
+        bytecode.add_constant(Value::Null);
+        bytecode.add_constant(Value::Number(3.0));
+        bytecode.add_constant(Value::Bool(true));
+
+        assert_eq!(bytecode.constants.len(), 8);
+
+        // Verify types are preserved
+        assert!(matches!(bytecode.constants[0], Value::Number(_)));
+        assert!(matches!(bytecode.constants[1], Value::String(_)));
+        assert!(matches!(bytecode.constants[2], Value::Number(_)));
+        assert!(matches!(bytecode.constants[3], Value::Bool(false)));
+        assert!(matches!(bytecode.constants[4], Value::String(_)));
+        assert!(matches!(bytecode.constants[5], Value::Null));
+        assert!(matches!(bytecode.constants[6], Value::Number(_)));
+        assert!(matches!(bytecode.constants[7], Value::Bool(true)));
+    }
+
+    #[test]
+    fn test_constant_loading_sequence() {
+        // Test complete sequence of adding and using constants
+        let mut bytecode = Bytecode::new();
+
+        let num_idx = bytecode.add_constant(Value::Number(100.0));
+        let str_idx = bytecode.add_constant(Value::string("test"));
+
+        // Emit instructions to load these constants
+        bytecode.emit(Opcode::Constant, Span::dummy());
+        bytecode.emit_u16(num_idx);
+        bytecode.emit(Opcode::Constant, Span::dummy());
+        bytecode.emit_u16(str_idx);
+        bytecode.emit(Opcode::Halt, Span::dummy());
+
+        // Verify bytecode structure
+        assert_eq!(bytecode.constants.len(), 2);
+        assert_eq!(bytecode.instructions.len(), 7); // Constant + u16 + Constant + u16 + Halt
+
+        // Verify the constant references in bytecode
+        let idx1_bytes = ((bytecode.instructions[1] as u16) << 8) | (bytecode.instructions[2] as u16);
+        let idx2_bytes = ((bytecode.instructions[4] as u16) << 8) | (bytecode.instructions[5] as u16);
+
+        assert_eq!(idx1_bytes, num_idx);
+        assert_eq!(idx2_bytes, str_idx);
+    }
+
+    #[test]
+    fn test_constant_pool_edge_values() {
+        use std::rc::Rc;
+        let mut bytecode = Bytecode::new();
+
+        // Test edge case values
+        bytecode.add_constant(Value::Number(0.0));
+        bytecode.add_constant(Value::Number(-0.0));
+        bytecode.add_constant(Value::Number(f64::MIN));
+        bytecode.add_constant(Value::Number(f64::MAX));
+        bytecode.add_constant(Value::String(Rc::new("".to_string()))); // Empty string
+        bytecode.add_constant(Value::String(Rc::new("a".repeat(1000)))); // Long string
+
+        assert_eq!(bytecode.constants.len(), 6);
+        assert_eq!(bytecode.constants[0], Value::Number(0.0));
+        assert_eq!(bytecode.constants[2], Value::Number(f64::MIN));
+        assert_eq!(bytecode.constants[3], Value::Number(f64::MAX));
+    }
 }
