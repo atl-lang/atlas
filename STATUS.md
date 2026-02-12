@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete! All 10 Frontend Phases Done (Lexer + Parser + AST + Keywords)
+**Status:** Frontend Complete + Typing Phase 01 (Symbol Binding)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/frontend/phase-10-keyword-enforcement.md
-**Next Phase:** `phases/typing/phase-01-binder.md`
+**Last Completed:** phases/typing/phase-01-binder.md
+**Next Phase:** `phases/typing/phase-02-typechecker.md`
 
-**What to implement:** Build symbol table and bind identifiers to their declarations
+**What to implement:** Enforce strict typing rules on the bound AST
 
 ---
 
@@ -28,10 +28,11 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Typing Phase 01:**
+**For Typing Phase 02:**
 - `docs/implementation/02-core-types.md` - Core type definitions
-- `docs/implementation/06-symbol-table.md` - Symbol table implementation guide
+- `docs/implementation/07-typechecker.md` - Type checker implementation guide
 - `Atlas-SPEC.md` - Language specification
+- `docs/diagnostics.md` - Diagnostic codes
 
 ---
 
@@ -75,9 +76,9 @@
 - ✅ phase-09-keyword-policy-tests.md
 - ✅ phase-10-keyword-enforcement.md
 
-### 4. Typing & Binding (0/22)
-- ⬜ phase-01-binder.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-02-typechecker.md
+### 4. Typing & Binding (1/22)
+- ✅ phase-01-binder.md
+- ⬜ phase-02-typechecker.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-05-type-rules-tests.md
 - ⬜ phase-06-scope-shadowing-tests.md
 - ⬜ phase-07-nullability-rules.md
@@ -162,7 +163,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 25/101 phases (25%)
+**Total Progress:** 26/101 phases (26%)
 
 ---
 

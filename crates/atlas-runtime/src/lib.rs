@@ -11,6 +11,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 // Public API modules
 pub mod ast;
+pub mod binder;
 pub mod bytecode;
 pub mod compiler;
 pub mod diagnostic;
@@ -33,6 +34,7 @@ pub mod vm;
 pub mod test_utils;
 
 // Re-export commonly used types
+pub use binder::Binder;
 pub use bytecode::{Bytecode, Opcode};
 pub use compiler::Compiler;
 pub use diagnostic::{
@@ -45,7 +47,7 @@ pub use parser::Parser;
 pub use repl::{ReplCore, ReplResult};
 pub use runtime::{Atlas, RuntimeResult};
 pub use span::Span;
-pub use symbol::{Symbol, SymbolTable};
+pub use symbol::{Symbol, SymbolKind, SymbolTable};
 pub use token::{Token, TokenKind};
 pub use typechecker::TypeChecker;
 pub use types::Type;

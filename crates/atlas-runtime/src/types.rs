@@ -5,16 +5,16 @@ use serde::{Deserialize, Serialize};
 /// Type representation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Type {
-    /// Integer type
-    Int,
-    /// Float type
-    Float,
+    /// Number type (unified int/float)
+    Number,
     /// String type
     String,
     /// Boolean type
     Bool,
     /// Null type
     Null,
+    /// Void type (for functions that return nothing)
+    Void,
     /// Array type
     Array(Box<Type>),
     /// Function type
@@ -36,11 +36,11 @@ impl Type {
     /// Get a human-readable name for this type
     pub fn display_name(&self) -> String {
         match self {
-            Type::Int => "int".to_string(),
-            Type::Float => "float".to_string(),
+            Type::Number => "number".to_string(),
             Type::String => "string".to_string(),
             Type::Bool => "bool".to_string(),
             Type::Null => "null".to_string(),
+            Type::Void => "void".to_string(),
             Type::Array(inner) => format!("{}[]", inner.display_name()),
             Type::Function { .. } => "function".to_string(),
             Type::Unknown => "?".to_string(),
@@ -54,13 +54,25 @@ mod tests {
 
     #[test]
     fn test_type_display() {
-        assert_eq!(Type::Int.display_name(), "int");
+        assert_eq!(Type::Number.display_name(), "number");
         assert_eq!(Type::String.display_name(), "string");
+        assert_eq!(Type::Bool.display_name(), "bool");
+        assert_eq!(Type::Null.display_name(), "null");
+        assert_eq!(Type::Void.display_name(), "void");
     }
 
     #[test]
     fn test_array_type() {
-        let arr_type = Type::Array(Box::new(Type::Int));
-        assert_eq!(arr_type.display_name(), "int[]");
+        let arr_type = Type::Array(Box::new(Type::Number));
+        assert_eq!(arr_type.display_name(), "number[]");
+    }
+
+    #[test]
+    fn test_function_type() {
+        let func_type = Type::Function {
+            params: vec![Type::Number, Type::String],
+            return_type: Box::new(Type::Bool),
+        };
+        assert_eq!(func_type.display_name(), "function");
     }
 }
