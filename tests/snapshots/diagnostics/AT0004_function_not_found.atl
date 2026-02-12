@@ -1,0 +1,2 @@
+// AT0004: Function not found
+unknownFunction(42);

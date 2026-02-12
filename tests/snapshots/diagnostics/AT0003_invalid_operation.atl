@@ -1,0 +1,2 @@
+// AT0003: Invalid operation - adding number and string
+let result = 5 + "text";

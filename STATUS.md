@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Diagnostics Phase 03 Complete → Next phase TBD
+**Status:** Diagnostics Core Complete + Frontend Phase 03 Complete
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/typing/phase-03-diagnostics-pipeline.md
-**Next Phase:** `phases/typing/phase-04-diagnostic-normalization.md`
+**Last Completed:** phases/frontend/phase-03-ast-build.md
+**Next Phase:** `phases/frontend/phase-01-lexer.md`
 
-**What to implement:** Define normalization rules for consistent diagnostic output
+**What to implement:** Implement lexical analyzer to tokenize Atlas source code
 
 ---
 
@@ -28,8 +28,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Foundation Phase 09:**
-- `docs/runtime-api.md` - Runtime API design and signatures
+**For Frontend Phase 01:**
+- `docs/implementation/02-core-types.md` - Core type definitions
+- `docs/implementation/03-lexer.md` - Lexer implementation guide
 
 ---
 
@@ -55,15 +56,15 @@
 - ✅ phase-10-runtime-api-tests.md
 - ✅ phase-11-runtime-api-evolution.md
 
-### 2. Diagnostics Core (1/4)
+### 2. Diagnostics Core (4/4) ✅ COMPLETE
 - ✅ phase-03-diagnostics-pipeline.md
-- ⬜ phase-04-diagnostic-normalization.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-08-diagnostics-versioning.md
-- ⬜ phase-09-diagnostics-snapshots.md
+- ✅ phase-04-diagnostic-normalization.md
+- ✅ phase-08-diagnostics-versioning.md
+- ✅ phase-09-diagnostics-snapshots.md
 
-### 3. Frontend (0/10)
-- ⬜ phase-03-ast-build.md
-- ⬜ phase-01-lexer.md
+### 3. Frontend (1/10)
+- ✅ phase-03-ast-build.md
+- ⬜ phase-01-lexer.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-02-parser.md
 - ⬜ phase-04-parser-errors.md
 - ⬜ phase-05-grammar-conformance.md
@@ -160,7 +161,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 12/101 phases (12%)
+**Total Progress:** 16/101 phases (16%)
 
 ---
 

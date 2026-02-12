@@ -1,0 +1,4 @@
+// AW0001: Unused variable warning
+func test() {
+    let unusedVar = 42;
+}

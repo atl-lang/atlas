@@ -1,0 +1,2 @@
+// Type mismatch error test
+let x: number = "hello";

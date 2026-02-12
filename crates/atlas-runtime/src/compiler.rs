@@ -36,9 +36,7 @@ mod tests {
     #[test]
     fn test_compiler_creation() {
         let mut compiler = Compiler::new();
-        let program = Program {
-            statements: Vec::new(),
-        };
+        let program = Program { items: Vec::new() };
         let bytecode = compiler.compile(&program).unwrap();
         assert_eq!(bytecode.instructions.len(), 0);
     }

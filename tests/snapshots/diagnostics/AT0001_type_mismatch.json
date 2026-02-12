@@ -1,0 +1,12 @@
+{
+  "diag_version": 1,
+  "level": "error",
+  "code": "AT0001",
+  "message": "Type mismatch",
+  "file": "AT0001_type_mismatch.atl",
+  "line": 2,
+  "column": 17,
+  "length": 7,
+  "snippet": "let x: number = \"hello\";",
+  "label": "expected number, found string"
+}

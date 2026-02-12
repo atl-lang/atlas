@@ -1,0 +1,2 @@
+// AT0001: Type mismatch - assigning string to number
+let x: number = "hello";

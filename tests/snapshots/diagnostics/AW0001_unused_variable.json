@@ -1,0 +1,12 @@
+{
+  "diag_version": 1,
+  "level": "warning",
+  "code": "AW0001",
+  "message": "Unused variable",
+  "file": "AW0001_unused_variable.atl",
+  "line": 3,
+  "column": 9,
+  "length": 9,
+  "snippet": "    let unusedVar = 42;",
+  "label": "variable is never used"
+}

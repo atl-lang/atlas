@@ -28,11 +28,16 @@ pub mod types;
 pub mod value;
 pub mod vm;
 
+// Test utilities (only available in test builds)
+#[cfg(test)]
+pub mod test_utils;
+
 // Re-export commonly used types
 pub use bytecode::{Bytecode, Opcode};
 pub use compiler::Compiler;
 pub use diagnostic::{
-    error_codes, sort_diagnostics, Diagnostic, DiagnosticLevel, RelatedLocation, DIAG_VERSION,
+    error_codes, normalizer, sort_diagnostics, Diagnostic, DiagnosticLevel, RelatedLocation,
+    DIAG_VERSION,
 };
 pub use interpreter::Interpreter;
 pub use lexer::Lexer;

@@ -3,6 +3,8 @@
 //! All errors and warnings flow through the unified Diagnostic type,
 //! ensuring consistent formatting across compiler, interpreter, and VM.
 
+pub mod normalizer;
+
 use crate::span::Span;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -411,5 +413,48 @@ mod tests {
     fn test_diagnostic_level_display() {
         assert_eq!(DiagnosticLevel::Error.to_string(), "error");
         assert_eq!(DiagnosticLevel::Warning.to_string(), "warning");
+    }
+
+    #[test]
+    fn test_diagnostic_version_always_present() {
+        // Test that version is always set in all diagnostic constructors
+        let error = Diagnostic::error("test", Span::new(0, 1));
+        assert_eq!(error.diag_version, DIAG_VERSION);
+
+        let error_with_code = Diagnostic::error_with_code("AT0001", "test", Span::new(0, 1));
+        assert_eq!(error_with_code.diag_version, DIAG_VERSION);
+
+        let warning = Diagnostic::warning("test", Span::new(0, 1));
+        assert_eq!(warning.diag_version, DIAG_VERSION);
+
+        let warning_with_code = Diagnostic::warning_with_code("AW0001", "test", Span::new(0, 1));
+        assert_eq!(warning_with_code.diag_version, DIAG_VERSION);
+    }
+
+    #[test]
+    fn test_diagnostic_version_in_json() {
+        // Test that version appears in JSON output
+        let diag = Diagnostic::error("test", Span::new(0, 1));
+        let json = diag.to_json_string().unwrap();
+
+        assert!(
+            json.contains(&format!("\"diag_version\": {}", DIAG_VERSION)),
+            "JSON output should contain diag_version field: {}",
+            json
+        );
+    }
+
+    #[test]
+    fn test_diagnostic_version_deserialization() {
+        // Test that version can be round-tripped through JSON
+        let diag = Diagnostic::error_with_code("AT0001", "test", Span::new(0, 1))
+            .with_file("test.atlas")
+            .with_line(1);
+
+        let json = diag.to_json_string().unwrap();
+        let deserialized: Diagnostic = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(deserialized.diag_version, DIAG_VERSION);
+        assert_eq!(deserialized, diag);
     }
 }

@@ -18,9 +18,7 @@ impl Parser {
     /// Parse tokens into an AST
     pub fn parse(&mut self) -> Result<Program, Vec<Diagnostic>> {
         // Placeholder implementation
-        Ok(Program {
-            statements: Vec::new(),
-        })
+        Ok(Program { items: Vec::new() })
     }
 }
 
@@ -32,6 +30,6 @@ mod tests {
     fn test_parser_creation() {
         let mut parser = Parser::new(Vec::new());
         let program = parser.parse().unwrap();
-        assert_eq!(program.statements.len(), 0);
+        assert_eq!(program.items.len(), 0);
     }
 }

@@ -1,0 +1,12 @@
+{
+  "diag_version": 1,
+  "level": "error",
+  "code": "AT0004",
+  "message": "Function not found",
+  "file": "AT0004_function_not_found.atl",
+  "line": 2,
+  "column": 1,
+  "length": 15,
+  "snippet": "unknownFunction(42);",
+  "label": "function not defined in scope"
+}

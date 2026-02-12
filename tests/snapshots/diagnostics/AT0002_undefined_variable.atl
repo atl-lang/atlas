@@ -1,0 +1,2 @@
+// AT0002: Undefined variable reference
+let x = unknownVar;

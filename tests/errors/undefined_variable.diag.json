@@ -1,0 +1,14 @@
+[
+  {
+    "diag_version": 1,
+    "level": "error",
+    "code": "AT0002",
+    "message": "Undefined variable",
+    "file": "undefined_variable.atl",
+    "line": 2,
+    "column": 7,
+    "length": 10,
+    "snippet": "print(unknownVar);",
+    "label": "variable not found in scope"
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "diag_version": 1,
+  "level": "error",
+  "code": "AT0003",
+  "message": "Invalid operation",
+  "file": "AT0003_invalid_operation.atl",
+  "line": 2,
+  "column": 14,
+  "length": 11,
+  "snippet": "let result = 5 + \"text\";",
+  "label": "cannot add number and string"
+}
