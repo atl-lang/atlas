@@ -62,6 +62,10 @@
 - Top-level function declarations are hoisted (can be called before definition).
 - Variables must be declared before use (no forward reference).
 - `for` initializer variables are scoped to the loop body.
+- Compound assignment (`+=`, `-=`, etc.) is only valid on mutable variables (`var`).
+- Increment/decrement (`++`, `--`) is only valid on mutable variables (`var`).
+- Pre-increment/decrement returns the new value; post-increment/decrement returns the old value.
+- Increment/decrement operators are statements, not expressions (cannot be used in larger expressions).
 
 ## Runtime Model
 - Value representation and memory model are defined in `docs/runtime.md`.
@@ -72,7 +76,11 @@
 - Detailed value model: `docs/value-model.md`.
 
 ## Literals
-- Number: `123`, `3.14`, `1e10`, `1.5e-3` (supports scientific notation)
+- Number: `123`, `3.14`, `1e10`, `1.5e-3`, `1e874` (supports scientific notation with arbitrary exponents)
+  - Integer: `42`, `0`, `-5`
+  - Decimal: `3.14`, `0.5`, `-2.7`
+  - Scientific: `1e10` (10 billion), `1.5e-3` (0.0015), `6.022e23` (Avogadro's number)
+  - All numbers are 64-bit floating-point (IEEE 754)
 - String: `"hello"`
 - Boolean: `true`, `false`
 - Null: `null`
@@ -85,6 +93,13 @@
 - Arithmetic: `+ - * / %`
 - Comparison: `== != < <= > >=`
 - Logical: `&& || !`
+- Unary: `-expr` (negation), `!expr` (logical not)
+- Increment/Decrement (statements, not expressions):
+  - Pre-increment: `++var` (increments, returns new value)
+  - Pre-decrement: `--var` (decrements, returns new value)
+  - Post-increment: `var++` (increments, returns old value)
+  - Post-decrement: `var--` (decrements, returns old value)
+  - Note: Only valid as standalone statements, not within expressions
 - Grouping: `(expr)`
 - Call: `fnName(arg1, arg2)`
 - Index: `arr[i]`
@@ -104,8 +119,19 @@
   - `var name: type = expr;`
   - `let name = expr;` (type inferred)
 - Assignment:
-  - `name = expr;`
-  - `arr[i] = expr;`
+  - Simple: `name = expr;`
+  - Array element: `arr[i] = expr;`
+  - Compound assignment (mutable variables only):
+    - `var += expr;` (addition)
+    - `var -= expr;` (subtraction)
+    - `var *= expr;` (multiplication)
+    - `var /= expr;` (division)
+    - `var %= expr;` (modulo)
+- Increment/Decrement (mutable variables only):
+  - Pre-increment: `++var;` (increments by 1, returns new value)
+  - Pre-decrement: `--var;` (decrements by 1, returns new value)
+  - Post-increment: `var++;` (increments by 1, returns old value)
+  - Post-decrement: `var--;` (decrements by 1, returns old value)
 - Function declaration:
   - `fn add(a: number, b: number) -> number { return a + b; }`
 - If:
@@ -114,6 +140,7 @@
   - `while (cond) { ... }`
 - For (simple):
   - `for (let i = 0; i < 10; i = i + 1) { ... }`
+  - `for (var i = 0; i < 10; i++) { ... }` (with increment operator)
 - Return:
   - `return expr;`
 
@@ -126,18 +153,26 @@ fn_decl        = "fn" ident "(" [ params ] ")" "->" type block ;
 params         = param { "," param } ;
 param          = ident ":" type ;
 
-stmt           = var_decl | assign_stmt | if_stmt | while_stmt | for_stmt
+stmt           = var_decl | assign_stmt | compound_assign_stmt | increment_stmt
+               | decrement_stmt | if_stmt | while_stmt | for_stmt
                | return_stmt | break_stmt | continue_stmt | expr_stmt ;
 
 var_decl       = ("let" | "var") ident [ ":" type ] "=" expr ";" ;
 assign_stmt    = assign_target "=" expr ";" ;
 assign_expr    = assign_target "=" expr ;
 assign_target  = ident { "[" expr "]" } ;
+compound_assign_stmt = ident compound_op expr ";" ;
+compound_op    = "+=" | "-=" | "*=" | "/=" | "%=" ;
+increment_stmt = ( "++" ident | ident "++" ) ";" ;
+decrement_stmt = ( "--" ident | ident "--" ) ";" ;
 if_stmt        = "if" "(" expr ")" block [ "else" block ] ;
 while_stmt     = "while" "(" expr ")" block ;
 for_stmt       = "for" "(" [ for_init ] ";" [ expr ] ";" [ for_step ] ")" block ;
 for_init       = var_decl_no_semi | assign_expr ;
-for_step       = assign_expr ;
+for_step       = assign_expr | compound_assign_expr | increment_expr | decrement_expr ;
+compound_assign_expr = ident compound_op expr ;
+increment_expr = "++" ident | ident "++" ;
+decrement_expr = "--" ident | ident "--" ;
 var_decl_no_semi = ("let" | "var") ident [ ":" type ] "=" expr ;
 return_stmt    = "return" [ expr ] ";" ;
 break_stmt     = "break" ";" ;
