@@ -2,6 +2,39 @@
 
 use crate::value::{RuntimeError, Value};
 
+/// Check if a function name is a builtin
+pub fn is_builtin(name: &str) -> bool {
+    matches!(name, "print" | "len" | "str")
+}
+
+/// Call a builtin function
+pub fn call_builtin(name: &str, args: &[Value]) -> Result<Value, RuntimeError> {
+    match name {
+        "print" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument);
+            }
+            print(&args[0]);
+            Ok(Value::Null)
+        }
+        "len" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument);
+            }
+            let length = len(&args[0])?;
+            Ok(Value::Number(length))
+        }
+        "str" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument);
+            }
+            let s = str(&args[0]);
+            Ok(Value::string(s))
+        }
+        _ => Err(RuntimeError::UnknownFunction(name.to_string())),
+    }
+}
+
 /// Print a value to stdout
 pub fn print(value: &Value) {
     println!("{}", value.to_display_string());
