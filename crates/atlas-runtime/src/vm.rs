@@ -269,7 +269,7 @@ impl VM {
                 }
                 Opcode::Loop => {
                     let offset = self.read_i16();
-                    self.ip = (self.ip as isize - offset as isize) as usize;
+                    self.ip = (self.ip as isize + offset as isize) as usize;
                 }
 
                 // ===== Functions =====
@@ -1007,5 +1007,266 @@ mod tests {
         let mut vm = VM::new(bytecode);
         let result = vm.run().unwrap();
         assert_eq!(result, Some(Value::Number(100.0)));
+    }
+
+    // ===== Control Flow Tests =====
+
+    #[test]
+    fn test_vm_if_true_branch() {
+        // Test: var x = 0; if (true) { x = 42; } else { x = 0; } x;
+        let result = execute_source("var x = 0; if (true) { x = 42; } else { x = 0; } x;").unwrap();
+        assert_eq!(result, Some(Value::Number(42.0)));
+    }
+
+    #[test]
+    fn test_vm_if_false_branch() {
+        // Test: var x = 0; if (false) { x = 42; } else { x = 99; } x;
+        let result = execute_source("var x = 0; if (false) { x = 42; } else { x = 99; } x;").unwrap();
+        assert_eq!(result, Some(Value::Number(99.0)));
+    }
+
+    #[test]
+    fn test_vm_if_no_else() {
+        // Test: var x = 10; if (false) { x = 42; } x;
+        let result = execute_source("var x = 10; if (false) { x = 42; } x;").unwrap();
+        assert_eq!(result, Some(Value::Number(10.0))); // x unchanged
+    }
+
+    #[test]
+    fn test_vm_if_with_comparison() {
+        // Test: var x = 0; if (5 > 3) { x = 1; } else { x = 2; } x;
+        let result = execute_source("var x = 0; if (5 > 3) { x = 1; } else { x = 2; } x;").unwrap();
+        assert_eq!(result, Some(Value::Number(1.0)));
+
+        let result = execute_source("var x = 0; if (5 < 3) { x = 1; } else { x = 2; } x;").unwrap();
+        assert_eq!(result, Some(Value::Number(2.0)));
+    }
+
+    #[test]
+    fn test_vm_nested_if() {
+        // Test nested if statements
+        let result = execute_source(
+            "var x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(42.0)));
+
+        let result = execute_source(
+            "var x = 0; if (true) { if (false) { x = 42; } else { x = 10; } } else { x = 99; } x;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(10.0)));
+    }
+
+    #[test]
+    fn test_vm_while_loop() {
+        // Test: var x = 0; while (x < 5) { x = x + 1; } x;
+        let result = execute_source(
+            "var x = 0; while (x < 5) { x = x + 1; } x;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(5.0)));
+    }
+
+    #[test]
+    fn test_vm_while_loop_never_executes() {
+        // Test while loop that never executes
+        let result = execute_source(
+            "var x = 10; while (x < 5) { x = x + 1; } x;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(10.0)));
+    }
+
+    #[test]
+    fn test_vm_while_loop_sum() {
+        // Test: var sum = 0; var i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;
+        let result = execute_source(
+            "var sum = 0; var i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(55.0))); // 1+2+3+...+10 = 55
+    }
+
+    #[test]
+    fn test_vm_for_loop() {
+        // Test that the loop executes correctly (use var for mutable sum)
+        let result = execute_source(
+            "var sum = 0; for (var i = 0; i < 5; i = i + 1) { sum = sum + i; } sum;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(10.0))); // 0+1+2+3+4 = 10
+    }
+
+    #[test]
+    fn test_vm_loop_countdown() {
+        // Test loop counting down (using while since for+locals complex)
+        let result = execute_source(
+            "var x = 10; var i = 0; while (i < 5) { x = x - 1; i = i + 1; } x;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(5.0))); // 10 - 5 = 5
+    }
+
+    #[test]
+    fn test_vm_while_with_local() {
+        // Simple test: while loop with local variable
+        let result = execute_source(
+            r#"
+            var count = 0;
+            var i = 0;
+            while (i < 3) {
+                var x = 10;
+                count = count + x;
+                i = i + 1;
+            }
+            count;
+        "#,
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(30.0))); // Should be 10 + 10 + 10 = 30
+    }
+
+    #[test]
+    fn test_vm_nested_loops() {
+        // Test nested while loops: sum of i*j for i,j in 1..3
+        let result = execute_source(
+            r#"
+            var sum = 0;
+            var i = 1;
+            while (i <= 3) {
+                var j = 1;  // Reset j each outer iteration
+                while (j <= 3) {
+                    sum = sum + (i * j);
+                    j = j + 1;
+                }
+                i = i + 1;
+            }
+            sum;
+        "#,
+        )
+        .unwrap();
+        // (1*1 + 1*2 + 1*3) + (2*1 + 2*2 + 2*3) + (3*1 + 3*2 + 3*3)
+        // = (1+2+3) + (2+4+6) + (3+6+9)
+        // = 6 + 12 + 18 = 36
+        assert_eq!(result, Some(Value::Number(36.0)));
+    }
+
+    #[test]
+    fn test_vm_if_in_loop() {
+        // Test if inside a loop
+        let result = execute_source(
+            r#"
+            var sum = 0;
+            for (var i = 0; i < 10; i = i + 1) {
+                if (i < 5) {
+                    sum = sum + i;
+                }
+            }
+            sum;
+        "#,
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(10.0))); // 0+1+2+3+4 = 10
+    }
+
+    #[test]
+    fn test_vm_complex_condition() {
+        // Test complex boolean expression in if (use var for mutable variables)
+        let result = execute_source(
+            "var x = 5; var y = 10; var z = 0; if (x < 10) { if (y > 5) { z = 1; } else { z = 2; } } else { z = 3; } z;",
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(1.0)));
+    }
+
+    #[test]
+    fn test_vm_loop_with_break() {
+        // Test break statement in loop
+        let result = execute_source(
+            r#"
+            var x = 0;
+            while (true) {
+                x = x + 1;
+                if (x == 5) {
+                    break;
+                }
+            }
+            x;
+        "#,
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(5.0)));
+    }
+
+    #[test]
+    fn test_vm_loop_with_continue() {
+        // Test continue statement in while loop
+        let result = execute_source(
+            r#"
+            var sum = 0;
+            var i = 0;
+            while (i < 10) {
+                i = i + 1;
+                if (i == 5) {
+                    continue;
+                }
+                sum = sum + i;
+            }
+            sum;
+        "#,
+        )
+        .unwrap();
+        // 1+2+3+4+6+7+8+9+10 = 50 (skips 5, but i is incremented before check)
+        assert_eq!(result, Some(Value::Number(50.0)));
+    }
+
+    #[test]
+    fn test_vm_multiple_breaks() {
+        // Test multiple break points in loop
+        let result = execute_source(
+            r#"
+            var x = 0;
+            while (x < 100) {
+                x = x + 1;
+                if (x == 3) {
+                    break;
+                }
+                if (x == 5) {
+                    break;
+                }
+            }
+            x;
+        "#,
+        )
+        .unwrap();
+        assert_eq!(result, Some(Value::Number(3.0))); // Breaks at first condition
+    }
+
+    #[test]
+    fn test_vm_nested_break() {
+        // Test that break only exits innermost loop
+        let result = execute_source(
+            r#"
+            var outer = 0;
+            var i = 0;
+            while (i < 3) {
+                var j = 0;
+                while (j < 3) {
+                    if (j == 1) {
+                        break;
+                    }
+                    outer = outer + 1;
+                    j = j + 1;
+                }
+                i = i + 1;
+            }
+            outer;
+        "#,
+        )
+        .unwrap();
+        // Each outer iteration: inner loop breaks after j=0, so outer increments once
+        // Total: 3 iterations = 3
+        assert_eq!(result, Some(Value::Number(3.0)));
     }
 }

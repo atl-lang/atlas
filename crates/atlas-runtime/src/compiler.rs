@@ -79,7 +79,12 @@ impl Compiler {
     fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), Vec<Diagnostic>> {
         match stmt {
             Stmt::VarDecl(decl) => self.compile_var_decl(decl),
-            Stmt::Assign(assign) => self.compile_assign(assign),
+            Stmt::Assign(assign) => {
+                // Compile assignment and pop the result (statement context)
+                self.compile_assign(assign)?;
+                self.bytecode.emit(Opcode::Pop, assign.span);
+                Ok(())
+            }
             Stmt::Expr(expr_stmt) => {
                 // Compile expression and pop the result (statement context)
                 self.compile_expr(&expr_stmt.expr)?;
@@ -113,12 +118,17 @@ impl Compiler {
         self.compile_expr(&decl.init)?;
 
         if self.scope_depth == 0 {
-            // Global variable - use SetGlobal
+            // Global variable - use SetGlobal then Pop
+            // SetGlobal uses peek() to support assignment expressions like x = y = 5,
+            // but for variable declarations we need to pop the value to avoid polluting
+            // the stack (which would corrupt local variable indices)
             let name_idx = self.bytecode.add_constant(Value::string(&decl.name.name));
             self.bytecode.emit(Opcode::SetGlobal, decl.span);
             self.bytecode.emit_u16(name_idx);
+            self.bytecode.emit(Opcode::Pop, decl.span);
         } else {
             // Local variable - add to locals list
+            // Value stays on stack (locals are stack-allocated)
             self.locals.push(Local {
                 name: decl.name.name.clone(),
                 depth: self.scope_depth,
@@ -312,9 +322,10 @@ impl Compiler {
         self.compile_block(&while_stmt.body)?;
 
         // Loop back to start
-        let offset = self.bytecode.current_offset() - loop_start + 2;
+        // Negative offset to jump backward
+        let offset = loop_start as isize - (self.bytecode.current_offset() as isize + 3);
         self.bytecode.emit(Opcode::Loop, while_stmt.span);
-        self.bytecode.emit_i16(-(offset as i16));
+        self.bytecode.emit_i16(offset as i16);
 
         // Patch exit jump
         self.bytecode.patch_jump(exit_jump);
@@ -359,9 +370,10 @@ impl Compiler {
         self.compile_stmt(&for_stmt.step)?;
 
         // Loop back to condition
-        let offset = self.bytecode.current_offset() - loop_start + 2;
+        // Negative offset to jump backward
+        let offset = loop_start as isize - (self.bytecode.current_offset() as isize + 3);
         self.bytecode.emit(Opcode::Loop, for_stmt.span);
-        self.bytecode.emit_i16(-(offset as i16));
+        self.bytecode.emit_i16(offset as i16);
 
         // Patch exit jump
         self.bytecode.patch_jump(exit_jump);
@@ -401,9 +413,10 @@ impl Compiler {
     fn compile_continue(&mut self, span: Span) -> Result<(), Vec<Diagnostic>> {
         if let Some(loop_ctx) = self.loops.last() {
             // Jump back to loop start
-            let offset = self.bytecode.current_offset() - loop_ctx.start_offset + 2;
+            // Negative offset to jump backward
+            let offset = loop_ctx.start_offset as isize - (self.bytecode.current_offset() as isize + 3);
             self.bytecode.emit(Opcode::Loop, span);
-            self.bytecode.emit_i16(-(offset as i16));
+            self.bytecode.emit_i16(offset as i16);
             Ok(())
         } else {
             // Error: continue outside loop (would be caught by typechecker)

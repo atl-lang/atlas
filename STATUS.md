@@ -1,16 +1,18 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM In Progress
+**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM In Progress (Phase 08 Complete)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/bytecode-vm/phase-07-stack-frames.md
-**Next Phase:** `phases/bytecode-vm/phase-08-branching.md`
+**Last Completed:** phases/bytecode-vm/phase-08-branching.md
+**Next Phase:** `phases/bytecode-vm/phase-09-vm-errors.md`
 
-**What to implement:** Implement conditional and loop control flow in bytecode
+**What to implement:** Align VM runtime errors with interpreter diagnostics and stack traces
+
+**Status Note:** Phase 08 found and fixed critical bug where global variable declarations left values on stack, corrupting local variable indices. All control flow tests now pass.
 
 ---
 
@@ -29,9 +31,10 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Bytecode & VM Phase 08 (Branching):**
-- `docs/implementation/11-bytecode.md` - Bytecode implementation guide
-- Current bytecode.rs, compiler.rs, and vm.rs implementations
+**For Bytecode & VM Phase 09 (VM Errors):**
+- `docs/diagnostics.md` - Diagnostic specification
+- `docs/runtime.md` - Runtime documentation
+- Current vm.rs and value.rs implementations
 
 ---
 
@@ -103,13 +106,14 @@
 ### 7. REPL (1/1) ✅ COMPLETE
 - ✅ phases/interpreter/phase-02-repl.md
 
-### 8. Bytecode & VM (5/17)
+### 8. Bytecode & VM (6/17)
 - ✅ phase-03-bytecode-format.md
 - ✅ phase-01-bytecode-compiler.md
 - ✅ phase-02-vm.md
 - ✅ phase-06-constants-pool.md
 - ✅ phase-07-stack-frames.md
-- ⬜ phase-08-branching.md ⬅️ **YOU ARE HERE**
+- ✅ phase-08-branching.md
+- ⬜ phase-09-vm-errors.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-08-branching.md
 - ⬜ phase-09-vm-errors.md
 - ⬜ phase-10-bytecode-serialization.md
@@ -154,7 +158,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 50/88 phases (57%)
+**Total Progress:** 51/88 phases (58%)
 
 ---
 
