@@ -1,0 +1,36 @@
+# Rust
+/target/
+**/*.rs.bk
+*.pdb
+Cargo.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+*.profraw
+*.profdata
+
+# Build artifacts
+/release/
+/dist/
+
+# Temporary files
+*.tmp
+*.temp
+.*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude Code
+/.claude/
+
+# Logs
+*.log

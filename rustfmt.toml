@@ -1,0 +1,10 @@
+# Atlas Rustfmt Configuration
+# We use rustfmt defaults with minimal overrides
+
+# Edition alignment
+edition = "2021"
+
+# Consistent with style.md: "Keep lines under 100 chars where practical"
+max_width = 100
+
+# Use default settings for everything else
