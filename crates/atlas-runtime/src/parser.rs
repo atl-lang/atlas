@@ -684,14 +684,24 @@ impl Parser {
         let span = token.span;
 
         let name = match token.lexeme.as_str() {
-            "number" | "string" | "bool" | "null" => token.lexeme.clone(),
+            "number" | "string" | "bool" | "null" | "void" => token.lexeme.clone(),
             _ => {
                 self.error("Unknown type");
                 return Err(());
             }
         };
 
-        Ok(TypeRef::Named(name, span))
+        let mut type_ref = TypeRef::Named(name, span);
+
+        // Handle array type syntax: type[]
+        while self.match_token(TokenKind::LeftBracket) {
+            let rbracket_token = self.consume(TokenKind::RightBracket, "Expected ']' after '[' in array type")?;
+            let end_span = rbracket_token.span;
+            let full_span = Span::new(span.start, end_span.end);
+            type_ref = TypeRef::Array(Box::new(type_ref), full_span);
+        }
+
+        Ok(type_ref)
     }
 
     // === Helper methods ===

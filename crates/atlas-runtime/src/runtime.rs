@@ -63,7 +63,8 @@ impl Atlas {
     /// let result = runtime.eval("1 + 2");
     /// match result {
     ///     Ok(Value::Number(n)) => assert_eq!(n, 3.0),
-    ///     Err(diagnostics) => eprintln!("Error: {:?}", diagnostics),
+    ///     Err(diagnostics) => panic!("Error: {:?}", diagnostics),
+    ///     Ok(_) => panic!("Unexpected value"),
     /// }
     /// ```
     pub fn eval(&self, source: &str) -> RuntimeResult<Value> {

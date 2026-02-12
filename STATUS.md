@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/interpreter/phase-01-interpreter-core.md
-**Next Phase:** `phases/interpreter/phase-04-arrays-mutation.md`
+**Last Completed:** phases/interpreter/phase-04-arrays-mutation.md
+**Next Phase:** `phases/interpreter/phase-05-function-calls.md`
 
-**What to implement:** Array mutation semantics and element assignment tests
+**What to implement:** Function calls, user-defined functions, and function call semantics
 
 ---
 
@@ -28,8 +28,8 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Interpreter Phase 04:**
-- `docs/implementation/09-value-model.md` - Value model with array semantics
+**For Interpreter Phase 05:**
+- `docs/implementation/09-value-model.md` - Value model with function references
 - `docs/implementation/10-interpreter.md` - Interpreter implementation guide
 - `Atlas-SPEC.md` - Language specification
 
@@ -90,10 +90,10 @@
 - ✅ phase-03-runtime-values.md
 - ✅ phase-07-value-model-tests.md
 
-### 6. Interpreter (1/8)
+### 6. Interpreter (2/8)
 - ✅ phase-01-interpreter-core.md
-- ⬜ phase-04-arrays-mutation.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-05-function-calls.md
+- ✅ phase-04-arrays-mutation.md
+- ⬜ phase-05-function-calls.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-06-control-flow.md
 - ⬜ phase-08-runtime-errors.md
 - ⬜ phase-09-array-aliasing-tests.md
@@ -153,7 +153,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 37/88 phases (42%)
+**Total Progress:** 38/88 phases (43%)
 
 ---
 
