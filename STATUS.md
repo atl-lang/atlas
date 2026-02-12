@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/bytecode-vm/phase-01-bytecode-compiler.md
-**Next Phase:** `phases/bytecode-vm/phase-02-vm.md`
+**Last Completed:** phases/bytecode-vm/phase-02-vm.md
+**Next Phase:** `phases/bytecode-vm/phase-06-constants-pool.md`
 
-**What to implement:** Stack-based bytecode interpreter/VM
+**What to implement:** Constant pool optimization and management
 
 ---
 
@@ -29,9 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Bytecode & VM Phase 02 (VM):**
-- `docs/implementation/12-vm.md` - VM implementation guide
-- `docs/implementation/09-value-model.md` - Value model documentation
+**For Bytecode & VM Phase 06 (Constants Pool):**
+- `docs/implementation/11-bytecode.md` - Bytecode implementation guide
+- Current bytecode.rs implementation
 
 ---
 
@@ -103,10 +103,11 @@
 ### 7. REPL (1/1) ✅ COMPLETE
 - ✅ phases/interpreter/phase-02-repl.md
 
-### 8. Bytecode & VM (2/17)
+### 8. Bytecode & VM (3/17)
 - ✅ phase-03-bytecode-format.md
 - ✅ phase-01-bytecode-compiler.md
-- ⬜ phase-02-vm.md ⬅️ **YOU ARE HERE**
+- ✅ phase-02-vm.md
+- ⬜ phase-06-constants-pool.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-01-bytecode-compiler.md
 - ⬜ phase-02-vm.md
 - ⬜ phase-06-constants-pool.md
@@ -155,7 +156,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 47/88 phases (53%)
+**Total Progress:** 48/88 phases (55%)
 
 ---
 
