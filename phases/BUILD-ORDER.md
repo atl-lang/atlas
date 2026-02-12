@@ -44,22 +44,13 @@ This is the canonical build order for AI agents. Execute phases in order. Do not
 ## 4. Typing & Binding
 1. `phases/typing/phase-01-binder.md`
 2. `phases/typing/phase-02-typechecker.md`
-3. `phases/typing/phase-05-type-rules-tests.md`
-4. `phases/typing/phase-06-scope-shadowing-tests.md`
-5. `phases/typing/phase-07-nullability-rules.md`
-6. `phases/typing/phase-10-function-return-analysis.md`
-7. `phases/typing/phase-11-typecheck-dump-versioning.md`
-8. `phases/typing/phase-12-control-flow-legality.md`
-9. `phases/typing/phase-13-related-spans.md`
-10. `phases/typing/phase-14-warnings.md`
-11. `phases/typing/phase-15-warning-tests.md`
-12. `phases/typing/phase-16-top-level-order-tests.md`
-13. `phases/typing/phase-17-operator-rule-tests.md`
-14. `phases/typing/phase-18-string-semantics-tests.md`
-15. `phases/typing/phase-19-related-span-coverage.md`
-16. `phases/typing/phase-20-diagnostic-normalization-tests.md`
-17. `phases/typing/phase-21-numeric-edge-tests.md`
-18. `phases/typing/phase-22-diagnostic-ordering-tests.md`
+3. `phases/typing/phase-06-scopes-shadowing.md`
+4. `phases/typing/phase-07-nullability.md`
+5. `phases/typing/phase-10-function-returns.md`
+6. `phases/typing/phase-14-warnings.md`
+7. `phases/typing/phase-13-diagnostics.md`
+8. `phases/typing/phase-18-semantic-edge-cases.md`
+9. `phases/typing/phase-11-typecheck-stability.md`
 
 ## 5. Runtime Values
 1. `phases/interpreter/phase-03-runtime-values.md`

@@ -76,24 +76,30 @@ impl SymbolTable {
     }
 
     /// Define a symbol in the current scope
-    /// Returns Err if symbol already exists in current scope
-    pub fn define(&mut self, symbol: Symbol) -> Result<(), String> {
+    /// Returns Err with existing symbol if symbol already exists in current scope
+    pub fn define(&mut self, symbol: Symbol) -> Result<(), (String, Option<Symbol>)> {
         if let Some(scope) = self.scopes.last_mut() {
-            if scope.contains_key(&symbol.name) {
-                return Err(format!("Symbol '{}' is already defined in this scope", symbol.name));
+            if let Some(existing) = scope.get(&symbol.name) {
+                return Err((
+                    format!("Symbol '{}' is already defined in this scope", symbol.name),
+                    Some(existing.clone()),
+                ));
             }
             scope.insert(symbol.name.clone(), symbol);
             Ok(())
         } else {
-            Err("No scope to define symbol in".to_string())
+            Err(("No scope to define symbol in".to_string(), None))
         }
     }
 
     /// Define a top-level function (hoisted)
-    /// Returns Err if function already exists
-    pub fn define_function(&mut self, symbol: Symbol) -> Result<(), String> {
-        if self.functions.contains_key(&symbol.name) {
-            return Err(format!("Function '{}' is already defined", symbol.name));
+    /// Returns Err with existing symbol if function already exists
+    pub fn define_function(&mut self, symbol: Symbol) -> Result<(), (String, Option<Symbol>)> {
+        if let Some(existing) = self.functions.get(&symbol.name) {
+            return Err((
+                format!("Function '{}' is already defined", symbol.name),
+                Some(existing.clone()),
+            ));
         }
         self.functions.insert(symbol.name.clone(), symbol);
         Ok(())
@@ -169,7 +175,8 @@ mod tests {
         });
 
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("already defined"));
+        let (msg, _) = result.unwrap_err();
+        assert!(msg.contains("already defined"));
     }
 
     #[test]

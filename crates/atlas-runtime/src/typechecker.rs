@@ -8,8 +8,10 @@
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
-use crate::symbol::SymbolTable;
+use crate::span::Span;
+use crate::symbol::{SymbolKind, SymbolTable};
 use crate::types::Type;
+use std::collections::{HashMap, HashSet};
 
 /// Type checker state
 pub struct TypeChecker<'a> {
@@ -19,8 +21,14 @@ pub struct TypeChecker<'a> {
     diagnostics: Vec<Diagnostic>,
     /// Current function's return type (for return statement checking)
     current_function_return_type: Option<Type>,
+    /// Current function's name and return type span (for related locations)
+    current_function_info: Option<(String, Span)>,
     /// Whether we're inside a loop (for break/continue checking)
     in_loop: bool,
+    /// Declared symbols in current function (name -> (span, kind))
+    declared_symbols: HashMap<String, (Span, SymbolKind)>,
+    /// Used symbols in current function
+    used_symbols: HashSet<String>,
 }
 
 impl<'a> TypeChecker<'a> {
@@ -30,7 +38,10 @@ impl<'a> TypeChecker<'a> {
             symbol_table,
             diagnostics: Vec::new(),
             current_function_return_type: None,
+            current_function_info: None,
             in_loop: false,
+            declared_symbols: HashMap::new(),
+            used_symbols: HashSet::new(),
         }
     }
 
@@ -39,6 +50,7 @@ impl<'a> TypeChecker<'a> {
         for item in &program.items {
             self.check_item(item);
         }
+
         std::mem::take(&mut self.diagnostics)
     }
 
@@ -54,6 +66,19 @@ impl<'a> TypeChecker<'a> {
     fn check_function(&mut self, func: &FunctionDecl) {
         let return_type = self.resolve_type_ref(&func.return_type);
         self.current_function_return_type = Some(return_type.clone());
+        self.current_function_info = Some((func.name.name.clone(), func.name.span));
+
+        // Clear tracking for this function
+        self.declared_symbols.clear();
+        self.used_symbols.clear();
+
+        // Track parameters
+        for param in &func.params {
+            self.declared_symbols.insert(
+                param.name.name.clone(),
+                (param.name.span, SymbolKind::Parameter),
+            );
+        }
 
         self.check_block(&func.body);
 
@@ -71,13 +96,62 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
+        // Emit warnings for unused variables/parameters
+        self.emit_unused_warnings();
+
         self.current_function_return_type = None;
+        self.current_function_info = None;
+    }
+
+    /// Emit warnings for unused symbols
+    fn emit_unused_warnings(&mut self) {
+        for (name, (span, kind)) in &self.declared_symbols {
+            // Skip if symbol starts with underscore (suppression)
+            if name.starts_with('_') {
+                continue;
+            }
+
+            // Skip if used
+            if self.used_symbols.contains(name) {
+                continue;
+            }
+
+            // Emit warning based on symbol kind
+            let message = match kind {
+                SymbolKind::Variable => format!("Unused variable '{}'", name),
+                SymbolKind::Parameter => format!("Unused parameter '{}'", name),
+                _ => continue,
+            };
+
+            self.diagnostics.push(
+                Diagnostic::warning_with_code("AT2001", &message, *span)
+                    .with_label("declared here but never used")
+            );
+        }
     }
 
     /// Check a block
     fn check_block(&mut self, block: &Block) {
+        let mut found_return = false;
         for stmt in &block.statements {
+            if found_return {
+                // Code after return is unreachable
+                self.diagnostics.push(
+                    Diagnostic::warning_with_code(
+                        "AT2002",
+                        "Unreachable code",
+                        stmt.span(),
+                    )
+                    .with_label("this code will never execute")
+                );
+            }
+
             self.check_statement(stmt);
+
+            // Check if this statement always returns
+            if matches!(stmt, Stmt::Return(_)) {
+                found_return = true;
+            }
         }
     }
 
@@ -111,6 +185,12 @@ impl<'a> TypeChecker<'a> {
     fn check_statement(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDecl(var) => {
+                // Track this variable declaration
+                self.declared_symbols.insert(
+                    var.name.name.clone(),
+                    (var.name.span, SymbolKind::Variable),
+                );
+
                 let init_type = self.check_expr(&var.init);
 
                 if let Some(type_ref) = &var.type_ref {
@@ -154,14 +234,21 @@ impl<'a> TypeChecker<'a> {
                 if let AssignTarget::Name(id) = &assign.target {
                     if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                         if !symbol.mutable {
-                            self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3003",
-                                    &format!("Cannot assign to immutable variable '{}'", id.name),
-                                    id.span,
-                                )
-                                .with_label("immutable variable"),
-                            );
+                            let diag = Diagnostic::error_with_code(
+                                "AT3003",
+                                &format!("Cannot assign to immutable variable '{}'", id.name),
+                                id.span,
+                            )
+                            .with_label("immutable variable")
+                            .with_related_location(crate::diagnostic::RelatedLocation {
+                                file: "<input>".to_string(),
+                                line: 1,
+                                column: symbol.span.start + 1,
+                                length: symbol.span.end.saturating_sub(symbol.span.start),
+                                message: format!("'{}' declared here as immutable", symbol.name),
+                            });
+
+                            self.diagnostics.push(diag);
                         }
                     }
                 }
@@ -250,18 +337,29 @@ impl<'a> TypeChecker<'a> {
 
                 let expected = self.current_function_return_type.as_ref().unwrap();
                 if !return_type.is_assignable_to(expected) {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            &format!(
-                                "Return type mismatch: expected {}, found {}",
-                                expected.display_name(),
-                                return_type.display_name()
-                            ),
-                            ret.span,
-                        )
-                        .with_label("type mismatch"),
-                    );
+                    let mut diag = Diagnostic::error_with_code(
+                        "AT3001",
+                        &format!(
+                            "Return type mismatch: expected {}, found {}",
+                            expected.display_name(),
+                            return_type.display_name()
+                        ),
+                        ret.span,
+                    )
+                    .with_label("type mismatch");
+
+                    // Add related location for function declaration
+                    if let Some((func_name, func_span)) = &self.current_function_info {
+                        diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                            file: "<input>".to_string(),
+                            line: 1,
+                            column: func_span.start + 1,
+                            length: func_span.end.saturating_sub(func_span.start),
+                            message: format!("function '{}' declared here", func_name),
+                        });
+                    }
+
+                    self.diagnostics.push(diag);
                 }
             }
             Stmt::Break(span) => {
@@ -356,6 +454,9 @@ impl<'a> TypeChecker<'a> {
                 Literal::Null => Type::Null,
             },
             Expr::Identifier(id) => {
+                // Track that this symbol was used
+                self.used_symbols.insert(id.name.clone());
+
                 if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                     symbol.ty.clone()
                 } else {
@@ -703,7 +804,7 @@ mod tests {
 
     #[test]
     fn test_valid_variable() {
-        let diagnostics = typecheck_source("let x: number = 42;");
+        let diagnostics = typecheck_source("let _x: number = 42;");
         assert_eq!(diagnostics.len(), 0);
     }
 

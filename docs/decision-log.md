@@ -25,6 +25,14 @@ This log captures irreversible or high-impact design decisions. Update when a ne
 - Errors emitted before warnings.
 - Diagnostics include `diag_version` and optional related spans.
 
+## Warning Implementation (Unused Variables/Code)
+- TypeChecker maintains internal `declared_symbols` and `used_symbols` tracking per function.
+- Rationale: Binder creates/destroys scopes during binding phase, before type checking runs. Scopes are gone by the time TypeChecker needs to check for unused symbols.
+- Symbol table remains immutable during type checking; usage tracking is TypeChecker's responsibility.
+- Symbol struct has no `used` field - keeps Symbol focused on type information, TypeChecker focused on analysis.
+- Warnings emitted at end of each function scope, not globally.
+- AI-friendly: Clear separation of concerns, no unused fields to cause confusion.
+
 ## Prelude
 - Built-ins `print`, `len`, `str` always in scope.
 - Global shadowing of prelude names is illegal (`AT1012`).

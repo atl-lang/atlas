@@ -6,11 +6,16 @@ Type checking strategy with inference and strict rules.
 
 ```rust
 // typechecker.rs
+use std::collections::{HashMap, HashSet};
+
 pub struct TypeChecker<'a> {
     symbol_table: &'a SymbolTable,
     diagnostics: Vec<Diagnostic>,
     current_function_return_type: Option<Type>,
     in_loop: bool,
+    // Warning tracking (added in phase-14-warnings)
+    declared_symbols: HashMap<String, (Span, SymbolKind)>,  // Per-function tracking
+    used_symbols: HashSet<String>,                            // Per-function tracking
 }
 
 impl<'a> TypeChecker<'a> {

@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete + Typing Phases 01-10 (Binding, Type Checking, Rules & Return Analysis)
+**Status:** Frontend Complete + Typing Phases 01-07 (Binding, Type Checking, Scopes, Nullability, Returns, Warnings & Diagnostics)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/typing/phase-10-function-return-analysis.md
-**Next Phase:** `phases/typing/phase-11-typecheck-dump-versioning.md`
+**Last Completed:** phases/typing/phase-13-diagnostics.md
+**Next Phase:** `phases/typing/phase-18-semantic-edge-cases.md`
 
-**What to implement:** Stabilize JSON schema version for typecheck dumps
+**What to implement:** Handle and test edge cases for string semantics and numeric operations
 
 ---
 
@@ -28,9 +28,10 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Typing Phase 11:**
-- `docs/typecheck-dump.md` - Typecheck dump format
-- `docs/diagnostics.md` - Diagnostic versioning
+**For Typing Phase 18:**
+- `Atlas-SPEC.md` - Language specification
+- `docs/diagnostics.md` - Diagnostic specification
+- `docs/implementation/07-typechecker.md` - Type checker implementation
 
 ---
 
@@ -74,25 +75,16 @@
 - ✅ phase-09-keyword-policy-tests.md
 - ✅ phase-10-keyword-enforcement.md
 
-### 4. Typing & Binding (6/22)
+### 4. Typing & Binding (7/9)
 - ✅ phase-01-binder.md
 - ✅ phase-02-typechecker.md
-- ✅ phase-05-type-rules-tests.md
-- ✅ phase-06-scope-shadowing-tests.md
-- ✅ phase-07-nullability-rules.md
-- ✅ phase-10-function-return-analysis.md
-- ⬜ phase-11-typecheck-dump-versioning.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-12-control-flow-legality.md
-- ⬜ phase-13-related-spans.md
-- ⬜ phase-14-warnings.md
-- ⬜ phase-15-warning-tests.md
-- ⬜ phase-16-top-level-order-tests.md
-- ⬜ phase-17-operator-rule-tests.md
-- ⬜ phase-18-string-semantics-tests.md
-- ⬜ phase-19-related-span-coverage.md
-- ⬜ phase-20-diagnostic-normalization-tests.md
-- ⬜ phase-21-numeric-edge-tests.md
-- ⬜ phase-22-diagnostic-ordering-tests.md
+- ✅ phase-03-scopes-shadowing.md
+- ✅ phase-04-nullability.md
+- ✅ phase-05-function-returns.md
+- ✅ phase-06-warnings.md
+- ✅ phase-07-diagnostics.md
+- ⬜ phase-08-semantic-edge-cases.md ⬅️ **YOU ARE HERE**
+- ⬜ phase-09-typecheck-stability.md
 
 ### 5. Runtime Values (0/2)
 - ⬜ phase-03-runtime-values.md
@@ -161,7 +153,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 31/101 phases (31%)
+**Total Progress:** 32/88 phases (36%)
 
 ---
 
@@ -192,12 +184,13 @@ Change date at top of file to current date
 
 ### Example Handoff:
 ```markdown
-**Last Completed:** phases/foundation/phase-01-overview.md
-**Next Phase:** phases/foundation/phase-02-workspace-layout.md
-**What to implement:** Define exact directory structure and create workspace folders
+**Last Completed:** phases/typing/phase-14-warnings.md
+**Next Phase:** phases/typing/phase-13-diagnostics.md
+**What to implement:** Implement related spans, diagnostic normalization, and ordering guarantees with comprehensive tests
 
-**For Foundation Phase 02:**
-- `docs/implementation/01-project-structure.md` - Workspace layout
+**For Typing Phase 13:**
+- `docs/diagnostics.md` - Diagnostic specification
+- `Atlas-SPEC.md` - Language specification
 ```
 
 ---
@@ -229,12 +222,20 @@ Change date at top of file to current date
 
 ## 🚨 Important Notes
 
+### Phase Restructure (2026-02-12)
+**The typing phases were restructured to merge test-only phases into implementation phases.**
+- Old structure: 22 phases (10 were test-only)
+- New structure: 9 phases (each includes implementation + tests)
+- See `PHASE_RESTRUCTURE_PLAN.md` for full details
+- Archived phases in `phases/typing/archive/pre-restructure/`
+
 ### For AI Agents:
 1. **Always read STATUS.md first** - This is your entry point
 2. **Follow BUILD-ORDER.md sequence** - Don't skip phases
 3. **Check exit criteria** - Each phase file lists what "done" means
 4. **Update this file** - Use handoff protocol when complete
 5. **Read implementation guides** - Use mapping table above
+6. **Each phase = implementation + tests** - Don't just write tests, build features!
 
 ### For Humans:
 - Point AI agents to this file: "Read STATUS.md and continue from where we left off"

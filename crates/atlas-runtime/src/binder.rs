@@ -67,11 +67,22 @@ impl Binder {
             span: func.name.span,
         };
 
-        if let Err(e) = self.symbol_table.define_function(symbol) {
-            self.diagnostics.push(
-                Diagnostic::error_with_code("AT2003", &e, func.name.span)
-                    .with_label("redeclaration"),
-            );
+        if let Err((msg, existing)) = self.symbol_table.define_function(symbol) {
+            let mut diag = Diagnostic::error_with_code("AT2003", &msg, func.name.span)
+                .with_label("redeclaration");
+
+            // Add related location if we have the existing symbol
+            if let Some(existing_symbol) = existing {
+                diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                    file: "<input>".to_string(),
+                    line: 1,
+                    column: existing_symbol.span.start + 1,
+                    length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                    message: format!("'{}' first defined here", existing_symbol.name),
+                });
+            }
+
+            self.diagnostics.push(diag);
         }
     }
 
@@ -97,13 +108,24 @@ impl Binder {
                 mutable: false,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
-            };
+                };
 
-            if let Err(e) = self.symbol_table.define(symbol) {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code("AT2003", &e, param.name.span)
-                        .with_label("parameter redeclaration"),
-                );
+            if let Err((msg, existing)) = self.symbol_table.define(symbol) {
+                let mut diag = Diagnostic::error_with_code("AT2003", &msg, param.name.span)
+                    .with_label("parameter redeclaration");
+
+                // Add related location if we have the existing symbol
+                if let Some(existing_symbol) = existing {
+                    diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                        file: "<input>".to_string(),
+                        line: 1,
+                        column: existing_symbol.span.start + 1,
+                        length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                        message: format!("'{}' first defined here", existing_symbol.name),
+                    });
+                }
+
+                self.diagnostics.push(diag);
             }
         }
 
@@ -146,13 +168,24 @@ impl Binder {
                     mutable: var.mutable,
                     kind: SymbolKind::Variable,
                     span: var.name.span,
-                };
+                        };
 
-                if let Err(e) = self.symbol_table.define(symbol) {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code("AT2003", &e, var.name.span)
-                            .with_label("variable redeclaration"),
-                    );
+                if let Err((msg, existing)) = self.symbol_table.define(symbol) {
+                    let mut diag = Diagnostic::error_with_code("AT2003", &msg, var.name.span)
+                        .with_label("variable redeclaration");
+
+                    // Add related location if we have the existing symbol
+                    if let Some(existing_symbol) = existing {
+                        diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                            file: "<input>".to_string(),
+                            line: 1,
+                            column: existing_symbol.span.start + 1,
+                            length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                            message: format!("'{}' first defined here", existing_symbol.name),
+                        });
+                    }
+
+                    self.diagnostics.push(diag);
                 }
             }
             Stmt::Assign(assign) => {

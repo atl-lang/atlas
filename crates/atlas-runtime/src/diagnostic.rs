@@ -98,17 +98,12 @@ impl Diagnostic {
             line: 1,
             column: span.start + 1,
             length: span.end.saturating_sub(span.start),
-            snippet: String::new(),
-            label: String::new(),
+            snippet: "".to_string(),
+            label: "".to_string(),
             notes: Vec::new(),
             related: Vec::new(),
             help: None,
         }
-    }
-
-    /// Create a new error diagnostic (uses generic error code)
-    pub fn error(message: impl Into<String>, span: Span) -> Self {
-        Self::error_with_code("AT9999", message, span)
     }
 
     /// Create a new warning diagnostic with code
@@ -132,6 +127,11 @@ impl Diagnostic {
             related: Vec::new(),
             help: None,
         }
+    }
+
+    /// Create a new error diagnostic (uses generic error code)
+    pub fn error(message: impl Into<String>, span: Span) -> Self {
+        Self::error_with_code("AT9999", message, span)
     }
 
     /// Create a new warning diagnostic (uses generic warning code)
