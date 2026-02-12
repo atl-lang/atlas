@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete + Typing Phases 01-06 (Binding, Type Checking, Type Rules & Scoping Tests)
+**Status:** Frontend Complete + Typing Phases 01-07 (Binding, Type Checking, Rules & Nullability Tests)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/typing/phase-06-scope-shadowing-tests.md
-**Next Phase:** `phases/typing/phase-07-nullability-rules.md`
+**Last Completed:** phases/typing/phase-07-nullability-rules.md
+**Next Phase:** `phases/typing/phase-10-function-return-analysis.md`
 
-**What to implement:** Tests for explicit null rules and null type usage
+**What to implement:** Control-flow-aware return analysis for functions
 
 ---
 
@@ -28,10 +28,10 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Typing Phase 07:**
-- `docs/implementation/02-core-types.md` - Core type definitions
+**For Typing Phase 10:**
 - `docs/implementation/07-typechecker.md` - Type checker implementation
-- `Atlas-SPEC.md` - Language specification (nullability rules)
+- `Atlas-SPEC.md` - Language specification (control flow rules)
+- `docs/diagnostics.md` - Diagnostic codes
 
 ---
 
@@ -75,13 +75,13 @@
 - ✅ phase-09-keyword-policy-tests.md
 - ✅ phase-10-keyword-enforcement.md
 
-### 4. Typing & Binding (4/22)
+### 4. Typing & Binding (5/22)
 - ✅ phase-01-binder.md
 - ✅ phase-02-typechecker.md
 - ✅ phase-05-type-rules-tests.md
 - ✅ phase-06-scope-shadowing-tests.md
-- ⬜ phase-07-nullability-rules.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-10-function-return-analysis.md
+- ✅ phase-07-nullability-rules.md
+- ⬜ phase-10-function-return-analysis.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-11-typecheck-dump-versioning.md
 - ⬜ phase-12-control-flow-legality.md
 - ⬜ phase-13-related-spans.md
@@ -162,7 +162,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 29/101 phases (29%)
+**Total Progress:** 30/101 phases (30%)
 
 ---
 
