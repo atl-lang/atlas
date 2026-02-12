@@ -6,7 +6,6 @@
 use atlas_runtime::diagnostic::{normalizer::normalize_diagnostics_for_testing, Diagnostic};
 use atlas_runtime::span::Span;
 use std::fs;
-use std::path::PathBuf;
 
 /// Load expected diagnostic JSON from a file
 fn load_expected_diagnostics(path: &str) -> Vec<Diagnostic> {

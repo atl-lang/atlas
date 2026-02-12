@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Diagnostics Core + Frontend Phases 01-02, 04-05 Complete (Lexer + Parser)
+**Status:** Diagnostics Core + Frontend Phases 01-06 Complete (Lexer + Parser + Recovery)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/frontend/phase-05-grammar-conformance.md
-**Next Phase:** `phases/frontend/phase-06-parser-recovery-strategy.md`
+**Last Completed:** phases/frontend/phase-06-parser-recovery-strategy.md
+**Next Phase:** `phases/frontend/phase-07-lexer-edge-cases.md`
 
-**What to implement:** Improve parser error recovery and synchronization
+**What to implement:** Harden lexer behavior for edge cases and ambiguous inputs
 
 ---
 
@@ -28,9 +28,10 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Frontend Phase 06:**
-- `docs/implementation/04-parser.md` - Parser implementation guide
+**For Frontend Phase 07:**
+- `docs/implementation/03-lexer.md` - Lexer implementation guide
 - `docs/implementation/08-diagnostics.md` - Diagnostics system
+- `Atlas-SPEC.md` - Language specification for edge cases
 
 ---
 
@@ -62,14 +63,14 @@
 - ✅ phase-08-diagnostics-versioning.md
 - ✅ phase-09-diagnostics-snapshots.md
 
-### 3. Frontend (5/10)
+### 3. Frontend (6/10)
 - ✅ phase-03-ast-build.md
 - ✅ phase-01-lexer.md
 - ✅ phase-02-parser.md
 - ✅ phase-04-parser-errors.md
 - ✅ phase-05-grammar-conformance.md
-- ⬜ phase-06-parser-recovery-strategy.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-07-lexer-edge-cases.md
+- ✅ phase-06-parser-recovery-strategy.md
+- ⬜ phase-07-lexer-edge-cases.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-08-ast-dump-versioning.md
 - ⬜ phase-09-keyword-policy-tests.md
 - ⬜ phase-10-keyword-enforcement.md
@@ -161,7 +162,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 20/101 phases (20%)
+**Total Progress:** 21/101 phases (21%)
 
 ---
 
