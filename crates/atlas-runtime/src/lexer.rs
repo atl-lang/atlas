@@ -182,13 +182,16 @@ impl Lexer {
                         }
                     } else if self.peek_next() == Some('*') {
                         // Multi-line comment
+                        let comment_start_line = self.line;
                         self.advance(); // /
                         self.advance(); // *
 
+                        let mut terminated = false;
                         while !self.is_at_end() {
                             if self.peek() == '*' && self.peek_next() == Some('/') {
                                 self.advance(); // *
                                 self.advance(); // /
+                                terminated = true;
                                 break;
                             }
                             if self.peek() == '\n' {
@@ -196,6 +199,21 @@ impl Lexer {
                                 self.column = 1;
                             }
                             self.advance();
+                        }
+
+                        // Report error if comment was not terminated
+                        if !terminated {
+                            let span = Span {
+                                start: self.start_pos,
+                                end: self.current,
+                            };
+                            let snippet = self.get_line_snippet(comment_start_line);
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code("AT1004", "Unterminated multi-line comment", span)
+                                    .with_line(comment_start_line as usize)
+                                    .with_snippet(snippet)
+                                    .with_label("comment starts here"),
+                            );
                         }
                     } else {
                         return;
@@ -209,6 +227,8 @@ impl Lexer {
     /// Scan a string literal
     fn string(&mut self) -> Token {
         let mut value = String::new();
+        let mut has_error = false;
+        let mut error_token = None;
 
         while !self.is_at_end() && self.peek() != '"' {
             if self.peek() == '\n' {
@@ -219,17 +239,24 @@ impl Lexer {
             if self.peek() == '\\' {
                 self.advance(); // consume backslash
                 if self.is_at_end() {
-                    return self.error_token("Unterminated string literal");
+                    return self.error_unterminated_string();
                 }
 
-                let escaped = match self.peek() {
+                let escape_char = self.peek();
+                let escaped = match escape_char {
                     'n' => '\n',
                     'r' => '\r',
                     't' => '\t',
                     '\\' => '\\',
                     '"' => '"',
-                    c => {
-                        return self.error_token(&format!("Invalid escape sequence '\\{}'", c));
+                    _ => {
+                        // Record error but continue parsing to find end of string
+                        if !has_error {
+                            error_token = Some(self.error_invalid_escape(escape_char));
+                            has_error = true;
+                        }
+                        self.advance(); // consume the invalid character
+                        continue; // Skip adding to value
                     }
                 };
 
@@ -241,11 +268,17 @@ impl Lexer {
         }
 
         if self.is_at_end() {
-            return self.error_token("Unterminated string literal");
+            return self.error_unterminated_string();
         }
 
         self.advance(); // Closing "
-        self.make_token(TokenKind::String, &value)
+
+        // If we had an error, return that instead of a valid token
+        if let Some(err) = error_token {
+            err
+        } else {
+            self.make_token(TokenKind::String, &value)
+        }
     }
 
     /// Scan a number literal (integer or float)
@@ -356,8 +389,8 @@ impl Lexer {
         }
     }
 
-    /// Create an error token and record a diagnostic
-    fn error_token(&mut self, message: &str) -> Token {
+    /// Create an error token and record a diagnostic with a specific code
+    fn error_token_with_code(&mut self, code: &str, message: &str) -> Token {
         let span = Span {
             start: self.start_pos,
             end: self.current.max(self.start_pos + 1),
@@ -368,7 +401,7 @@ impl Lexer {
 
         // Record diagnostic
         self.diagnostics.push(
-            Diagnostic::error_with_code("AT1000", message, span)
+            Diagnostic::error_with_code(code, message, span)
                 .with_line(self.start_line as usize)
                 .with_snippet(snippet)
                 .with_label("lexer error"),
@@ -379,6 +412,24 @@ impl Lexer {
             lexeme: message.to_string(),
             span,
         }
+    }
+
+    /// Create an error token for invalid/unexpected characters (AT1001)
+    fn error_token(&mut self, message: &str) -> Token {
+        self.error_token_with_code("AT1001", message)
+    }
+
+    /// Create an error token for unterminated strings (AT1002)
+    fn error_unterminated_string(&mut self) -> Token {
+        self.error_token_with_code("AT1002", "Unterminated string literal")
+    }
+
+    /// Create an error token for invalid escape sequences (AT1003)
+    fn error_invalid_escape(&mut self, escape_char: char) -> Token {
+        self.error_token_with_code(
+            "AT1003",
+            &format!("Invalid escape sequence '\\{}'", escape_char),
+        )
     }
 
     /// Get the source line for a given line number
@@ -579,5 +630,273 @@ mod tests {
         assert_eq!(tokens[0].kind, TokenKind::Error);
         assert_eq!(diagnostics.len(), 1);
         assert!(diagnostics[0].message.contains("|"));
+    }
+
+    // === Edge Case Tests (Phase 07) ===
+    // These tests validate lexer behavior for edge cases and invalid inputs
+
+    #[test]
+    fn test_unterminated_string_basic() {
+        let mut lexer = Lexer::new(r#""hello"#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1002");
+        assert!(diagnostics[0].message.contains("Unterminated string"));
+    }
+
+    #[test]
+    fn test_unterminated_string_with_newline() {
+        let mut lexer = Lexer::new("\"hello\nworld");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1002");
+    }
+
+    #[test]
+    fn test_unterminated_string_with_escape() {
+        let mut lexer = Lexer::new(r#""hello\n"#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1002");
+    }
+
+    #[test]
+    fn test_unterminated_string_ends_with_backslash() {
+        let mut lexer = Lexer::new(r#""hello\"#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1002");
+    }
+
+    #[test]
+    fn test_invalid_escape_sequence_x() {
+        let mut lexer = Lexer::new(r#""hello\x""#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1003");
+        assert!(diagnostics[0].message.contains("\\x"));
+    }
+
+    #[test]
+    fn test_invalid_escape_sequence_0() {
+        let mut lexer = Lexer::new(r#""test\0""#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1003");
+        assert!(diagnostics[0].message.contains("\\0"));
+    }
+
+    #[test]
+    fn test_invalid_escape_sequence_u() {
+        let mut lexer = Lexer::new(r#""unicode\u1234""#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1003");
+        assert!(diagnostics[0].message.contains("\\u"));
+    }
+
+    #[test]
+    fn test_invalid_escape_sequence_a() {
+        let mut lexer = Lexer::new(r#""alert\a""#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1003");
+        assert!(diagnostics[0].message.contains("\\a"));
+    }
+
+    #[test]
+    fn test_valid_escape_sequences() {
+        let mut lexer = Lexer::new(r#""a\nb\tc\rd\\e\"f""#);
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::String);
+        assert_eq!(diagnostics.len(), 0);
+        assert_eq!(tokens[0].lexeme, "a\nb\tc\rd\\e\"f");
+    }
+
+    #[test]
+    fn test_unexpected_character_at() {
+        let mut lexer = Lexer::new("@");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+        assert!(diagnostics[0].message.contains("@"));
+    }
+
+    #[test]
+    fn test_unexpected_character_hash() {
+        let mut lexer = Lexer::new("#");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+        assert!(diagnostics[0].message.contains("#"));
+    }
+
+    #[test]
+    fn test_unexpected_character_dollar() {
+        let mut lexer = Lexer::new("$");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+    }
+
+    #[test]
+    fn test_unexpected_character_tilde() {
+        let mut lexer = Lexer::new("~");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+    }
+
+    #[test]
+    fn test_unexpected_character_backtick() {
+        let mut lexer = Lexer::new("`");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+    }
+
+    #[test]
+    fn test_single_ampersand_error_code() {
+        let mut lexer = Lexer::new("&");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+        assert!(diagnostics[0].message.contains("&"));
+    }
+
+    #[test]
+    fn test_single_pipe_error_code() {
+        let mut lexer = Lexer::new("|");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(tokens[0].kind, TokenKind::Error);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+        assert!(diagnostics[0].message.contains("|"));
+    }
+
+    #[test]
+    fn test_unterminated_multiline_comment() {
+        let mut lexer = Lexer::new("/* This comment never ends");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        // Should have EOF token
+        assert_eq!(tokens[0].kind, TokenKind::Eof);
+        // Should have diagnostic for unterminated comment
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1004");
+        assert!(diagnostics[0].message.contains("Unterminated multi-line comment"));
+    }
+
+    #[test]
+    fn test_unterminated_multiline_comment_with_content() {
+        let mut lexer = Lexer::new("let x = 5;\n/* Comment\nmore comment");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        // Should tokenize "let x = 5;" then hit unterminated comment
+        assert_eq!(tokens[0].kind, TokenKind::Let);
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1004");
+    }
+
+    #[test]
+    fn test_multiple_errors_in_source() {
+        let mut lexer = Lexer::new(r#""unterminated @ $ "#);
+        let (_tokens, diagnostics) = lexer.tokenize();
+
+        // Should report multiple errors
+        assert!(diagnostics.len() >= 1);
+        // First error should be unterminated string
+        assert_eq!(diagnostics[0].code, "AT1002");
+    }
+
+    #[test]
+    fn test_error_recovery_continues_lexing() {
+        let mut lexer = Lexer::new("@ let x = 5;");
+        let (tokens, diagnostics) = lexer.tokenize();
+
+        // Should report error for @ but continue lexing
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+
+        // Should still lex "let x = 5;"
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Let));
+        assert!(tokens.iter().any(|t| t.kind == TokenKind::Identifier));
+    }
+
+    #[test]
+    fn test_precise_span_for_invalid_character() {
+        let mut lexer = Lexer::new("let @ x");
+        let (_tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1001");
+
+        // The error should be reported with proper location
+        // Column should be around 5 (1-indexed, after "let ")
+        assert!(diagnostics[0].column >= 5);
+        assert!(diagnostics[0].length >= 1);
+    }
+
+    #[test]
+    fn test_precise_span_for_unterminated_string() {
+        let mut lexer = Lexer::new(r#"let x = "test"#);
+        let (_tokens, diagnostics) = lexer.tokenize();
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1002");
+
+        // The error should be reported with proper location
+        // Column should be around 9 (1-indexed, at opening quote)
+        assert!(diagnostics[0].column >= 9);
+        assert!(diagnostics[0].length >= 4); // "test
+    }
+
+    #[test]
+    fn test_lexer_reports_first_error_cleanly() {
+        // Ensure lexer reports the first error without crashing
+        let test_cases = vec![
+            (r#""unterminated"#, "AT1002"),
+            (r#""invalid\x""#, "AT1003"),
+            ("@", "AT1001"),
+            ("/* unterminated", "AT1004"),
+        ];
+
+        for (source, expected_code) in test_cases {
+            let mut lexer = Lexer::new(source);
+            let (_, diagnostics) = lexer.tokenize();
+
+            assert!(diagnostics.len() >= 1, "Expected error for: {}", source);
+            assert_eq!(diagnostics[0].code, expected_code, "Wrong code for: {}", source);
+        }
     }
 }

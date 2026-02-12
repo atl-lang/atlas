@@ -1,0 +1,4 @@
+// Test: Single pipe instead of || (AT1001)
+if (x | y) {
+    print("wrong");
+}

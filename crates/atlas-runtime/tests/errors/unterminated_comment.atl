@@ -1,0 +1,4 @@
+// Test: Unterminated multi-line comment (AT1004)
+let x = 42;
+/* This comment never closes
+let y = 10;

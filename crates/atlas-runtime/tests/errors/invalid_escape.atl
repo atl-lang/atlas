@@ -1,0 +1,2 @@
+// Test: Invalid escape sequence (AT1003)
+let path = "C:\path\to\file";

@@ -1,0 +1,2 @@
+// Test: Unterminated string literal (AT1002)
+let message = "This string never ends

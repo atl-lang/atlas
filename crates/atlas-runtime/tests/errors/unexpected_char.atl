@@ -1,0 +1,4 @@
+// Test: Unexpected characters (AT1001)
+let x = 5 @ 3;
+let y = $100;
+let z = #tag;
