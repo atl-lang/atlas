@@ -4,6 +4,7 @@
 Implement function calls, stack frames, and return semantics in the interpreter.
 
 ## Inputs
+- `Atlas-SPEC.md` (for function syntax and semantics)
 - `docs/runtime.md`
 
 ## Deliverables

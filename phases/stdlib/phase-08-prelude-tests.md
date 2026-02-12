@@ -4,6 +4,7 @@
 Add tests to validate prelude availability and shadowing rules.
 
 ## Inputs
+- `Atlas-SPEC.md` (for correct Atlas syntax in test code)
 - `docs/prelude.md`
 - `docs/prelude-test-plan.md`
 

@@ -4,6 +4,7 @@
 Validate array aliasing and mutation visibility.
 
 ## Inputs
+- `Atlas-SPEC.md` (for correct Atlas test syntax)
 - `docs/array-aliasing.md`
 
 ## Deliverables

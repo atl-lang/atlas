@@ -4,6 +4,7 @@
 Validate CLI end-to-end execution and error handling.
 
 ## Inputs
+- `Atlas-SPEC.md` (for correct Atlas syntax in test fixtures)
 - `docs/cli-e2e.md`
 
 ## Deliverables

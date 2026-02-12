@@ -4,6 +4,7 @@
 Implement array literals, indexing, and mutation semantics.
 
 ## Inputs
+- `Atlas-SPEC.md` (for correct Atlas syntax)
 - `docs/runtime.md`
 - `docs/value-model.md`
 

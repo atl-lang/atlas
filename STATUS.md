@@ -8,7 +8,7 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/interpreter/phase-11-repl-state-tests.md
-**Next Phase:** `phases/repl/phase-02-repl.md`
+**Next Phase:** `phases/interpreter/phase-02-repl.md`
 
 **What to implement:** Full REPL CLI with interactive prompt and history
 
@@ -21,16 +21,18 @@
 1. **Read this file first** (`STATUS.md`) - Understand current state
 2. **Read the next phase file** (see "Current Phase" above)
 3. **Read implementation guides** (see "Implementation Files Needed" below)
-4. **Implement the phase**
-5. **Update this file** (see "Handoff Protocol" below)
+4. **⚠️ FOR PHASES WITH TEST CODE: Always read `Atlas-SPEC.md` to verify correct syntax!**
+5. **Implement the phase**
+6. **Update this file** (see "Handoff Protocol" below)
 
 ---
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For REPL Phase 02:**
+**For Interpreter Phase 02 (REPL):**
+- `Atlas-SPEC.md` - Language specification (CRITICAL: verify syntax before implementation!)
 - `docs/implementation/14-repl.md` - REPL implementation guide
-- `Atlas-SPEC.md` - Language specification (for REPL behavior)
+- `docs/repl.md` - REPL specification
 
 ---
 
@@ -100,7 +102,7 @@
 - ✅ phase-11-repl-state-tests.md
 
 ### 7. REPL (0/1)
-- ⬜ phase-02-repl.md ⬅️ **YOU ARE HERE**
+- ⬜ phases/interpreter/phase-02-repl.md ⬅️ **YOU ARE HERE**
 
 ### 8. Bytecode & VM (0/17)
 - ⬜ phase-03-bytecode-format.md
@@ -232,10 +234,11 @@ Change date at top of file to current date
 ### For AI Agents:
 1. **Always read STATUS.md first** - This is your entry point
 2. **Follow BUILD-ORDER.md sequence** - Don't skip phases
-3. **Check exit criteria** - Each phase file lists what "done" means
-4. **Update this file** - Use handoff protocol when complete
-5. **Read implementation guides** - Use mapping table above
-6. **Each phase = implementation + tests** - Don't just write tests, build features!
+3. **⚠️ CRITICAL: Read Atlas-SPEC.md for any phase writing Atlas code** - Verify syntax (function signatures, let/var, semicolons) before implementation
+4. **Check exit criteria** - Each phase file lists what "done" means
+5. **Update this file** - Use handoff protocol when complete
+6. **Read implementation guides** - Use mapping table above
+7. **Each phase = implementation + tests** - Don't just write tests, build features!
 
 ### For Humans:
 - Point AI agents to this file: "Read STATUS.md and continue from where we left off"
