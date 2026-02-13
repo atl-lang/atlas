@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/lsp/phase-04-lsp-completion.md
-**Next Phase:** `phases/lsp/phase-05-lsp-formatting.md`
+**Last Completed:** phases/lsp/phase-05-lsp-formatting.md
+**Next Phase:** `phases/lsp/phase-06-lsp-testing.md`
 
-**What to implement:** Code formatting
+**What to implement:** LSP integration testing and editor validation
 
 ---
 
@@ -29,9 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For LSP Phase 05:**
+**For LSP Phase 06:**
 - `docs/implementation/16-lsp.md` - LSP implementation guide
-- `phases/lsp/phase-05-lsp-formatting.md` - Phase implementation guide
+- `phases/lsp/phase-06-lsp-testing.md` - Phase implementation guide
 
 ---
 
@@ -144,13 +144,13 @@
 - ✅ phase-09-json-dump-stability-tests.md
 - ✅ phase-10-cli-e2e-tests.md
 
-### 11. LSP (4/6)
+### 11. LSP (5/6)
 - ✅ phase-01-lsp-foundation.md
 - ✅ phase-02-lsp-diagnostics.md
 - ✅ phase-03-lsp-navigation.md
 - ✅ phase-04-lsp-completion.md
-- ⬜ phase-05-lsp-formatting.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-06-lsp-testing.md
+- ✅ phase-05-lsp-formatting.md
+- ⬜ phase-06-lsp-testing.md ⬅️ **YOU ARE HERE**
 
 ### 12. Polish (0/7)
 - ⬜ phase-01-polish.md
@@ -161,7 +161,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 84/93 phases (90%)
+**Total Progress:** 85/93 phases (91%)
 
 ---
 

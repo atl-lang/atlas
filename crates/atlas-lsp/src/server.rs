@@ -52,6 +52,8 @@ impl LanguageServer for AtlasLspServer {
                     work_done_progress_options: WorkDoneProgressOptions::default(),
                     completion_item: None,
                 }),
+                document_formatting_provider: Some(OneOf::Left(true)),
+                document_range_formatting_provider: Some(OneOf::Left(true)),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -213,6 +215,34 @@ impl LanguageServer for AtlasLspServer {
                 doc.symbols.as_ref(),
             );
             return Ok(Some(CompletionResponse::Array(completions)));
+        }
+
+        Ok(None)
+    }
+
+    async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
+        let uri = params.text_document.uri;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            let edits = crate::formatting::format_document(&doc.text);
+            return Ok(Some(edits));
+        }
+
+        Ok(None)
+    }
+
+    async fn range_formatting(
+        &self,
+        params: DocumentRangeFormattingParams,
+    ) -> Result<Option<Vec<TextEdit>>> {
+        let uri = params.text_document.uri;
+        let range = params.range;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            let edits = crate::formatting::format_range(&doc.text, range);
+            return Ok(Some(edits));
         }
 
         Ok(None)
