@@ -4,6 +4,7 @@
 **Blocks:** Result<T,E> usage, Option<T> handling, robust error handling
 **Estimated Effort:** 2-3 weeks
 **Complexity:** High
+**Design:** ✅ Complete - see `docs/design/pattern-matching.md` and `Atlas-SPEC.md`
 
 ---
 

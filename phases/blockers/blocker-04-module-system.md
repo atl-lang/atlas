@@ -4,6 +4,7 @@
 **Blocks:** Package management, code organization, 15+ phases
 **Estimated Effort:** 3-4 weeks
 **Complexity:** Very High
+**Design:** ✅ Complete - see `docs/design/modules.md` and `Atlas-SPEC.md`
 
 ---
 

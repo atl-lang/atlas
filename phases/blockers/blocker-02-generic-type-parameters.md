@@ -4,6 +4,7 @@
 **Blocks:** Result<T,E>, HashMap<K,V>, Option<T>, and 15+ phases
 **Estimated Effort:** 4-6 weeks
 **Complexity:** Very High
+**Design:** ✅ Complete - see `docs/design/generics.md` and `Atlas-SPEC.md`
 
 ---
 
