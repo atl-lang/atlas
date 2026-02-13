@@ -12,13 +12,14 @@ use std::path::Path;
 ///
 /// Compiles an Atlas source file to bytecode (.atb).
 /// If `disasm` is true, prints disassembled bytecode to stdout.
-pub fn run(file_path: &str, disasm: bool) -> Result<()> {
+/// If `json_output` is true, diagnostics are printed in JSON format.
+pub fn run(file_path: &str, disasm: bool, json_output: bool) -> Result<()> {
     // Read source file
     let source = fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
 
     // Compile to bytecode
-    let bytecode = compile_source(&source, file_path)?;
+    let bytecode = compile_source(&source, file_path, json_output)?;
 
     // Generate output path (.atl -> .atb)
     let output_path = Path::new(file_path).with_extension("atb");
@@ -41,16 +42,15 @@ pub fn run(file_path: &str, disasm: bool) -> Result<()> {
 /// Compile source code to bytecode
 ///
 /// Performs full compilation pipeline: lex -> parse -> bind -> typecheck -> compile
-fn compile_source(source: &str, _file_path: &str) -> Result<Bytecode> {
+/// If `json_output` is true, diagnostics are printed in JSON format.
+fn compile_source(source: &str, _file_path: &str, json_output: bool) -> Result<Bytecode> {
     // Lex the source code
     let mut lexer = Lexer::new(source);
     let (tokens, lex_diagnostics) = lexer.tokenize();
 
     if !lex_diagnostics.is_empty() {
-        return Err(anyhow::anyhow!(
-            "Lexer errors:\n{}",
-            format_diagnostics(&lex_diagnostics)
-        ));
+        print_errors(&lex_diagnostics, json_output);
+        return Err(anyhow::anyhow!("Lexer errors"));
     }
 
     // Parse tokens into AST
@@ -58,10 +58,8 @@ fn compile_source(source: &str, _file_path: &str) -> Result<Bytecode> {
     let (ast, parse_diagnostics) = parser.parse();
 
     if !parse_diagnostics.is_empty() {
-        return Err(anyhow::anyhow!(
-            "Parse errors:\n{}",
-            format_diagnostics(&parse_diagnostics)
-        ));
+        print_errors(&parse_diagnostics, json_output);
+        return Err(anyhow::anyhow!("Parse errors"));
     }
 
     // Bind symbols
@@ -69,10 +67,8 @@ fn compile_source(source: &str, _file_path: &str) -> Result<Bytecode> {
     let (symbol_table, bind_diagnostics) = binder.bind(&ast);
 
     if !bind_diagnostics.is_empty() {
-        return Err(anyhow::anyhow!(
-            "Binding errors:\n{}",
-            format_diagnostics(&bind_diagnostics)
-        ));
+        print_errors(&bind_diagnostics, json_output);
+        return Err(anyhow::anyhow!("Binding errors"));
     }
 
     // Type check
@@ -80,31 +76,31 @@ fn compile_source(source: &str, _file_path: &str) -> Result<Bytecode> {
     let typecheck_diagnostics = typechecker.check(&ast);
 
     if !typecheck_diagnostics.is_empty() {
-        return Err(anyhow::anyhow!(
-            "Type errors:\n{}",
-            format_diagnostics(&typecheck_diagnostics)
-        ));
+        print_errors(&typecheck_diagnostics, json_output);
+        return Err(anyhow::anyhow!("Type errors"));
     }
 
     // Compile to bytecode
     let mut compiler = Compiler::new();
-    let bytecode = compiler
-        .compile(&ast)
-        .map_err(|diagnostics| {
-            anyhow::anyhow!(
-                "Compilation errors:\n{}",
-                format_diagnostics(&diagnostics)
-            )
-        })?;
+    let bytecode = compiler.compile(&ast).map_err(|diagnostics| {
+        print_errors(&diagnostics, json_output);
+        anyhow::anyhow!("Compilation errors")
+    })?;
 
     Ok(bytecode)
 }
 
-/// Format diagnostics for display
-fn format_diagnostics(diagnostics: &[atlas_runtime::Diagnostic]) -> String {
-    diagnostics
-        .iter()
-        .map(|d| format!("{:?}", d))
-        .collect::<Vec<_>>()
-        .join("\n")
+/// Print diagnostics in JSON or human-readable format
+fn print_errors(diagnostics: &[atlas_runtime::Diagnostic], json_output: bool) {
+    if json_output {
+        // JSON format to stdout
+        for diag in diagnostics {
+            println!("{}", diag.to_json_string().unwrap());
+        }
+    } else {
+        // Human-readable format to stderr
+        for diag in diagnostics {
+            eprintln!("{:?}", diag);
+        }
+    }
 }

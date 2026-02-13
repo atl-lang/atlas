@@ -18,11 +18,17 @@ enum Commands {
     Run {
         /// Path to the Atlas source file
         file: String,
+        /// Output diagnostics in JSON format
+        #[arg(long)]
+        json: bool,
     },
     /// Type-check an Atlas source file without running
     Check {
         /// Path to the Atlas source file
         file: String,
+        /// Output diagnostics in JSON format
+        #[arg(long)]
+        json: bool,
     },
     /// Compile an Atlas source file to bytecode
     Build {
@@ -31,6 +37,9 @@ enum Commands {
         /// Disassemble bytecode and print to stdout
         #[arg(long)]
         disasm: bool,
+        /// Output diagnostics in JSON format
+        #[arg(long)]
+        json: bool,
     },
     /// Start an interactive REPL
     Repl {
@@ -44,14 +53,14 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Run { file } => {
-            commands::run::run(&file)?;
+        Commands::Run { file, json } => {
+            commands::run::run(&file, json)?;
         }
-        Commands::Check { file } => {
-            commands::check::run(&file)?;
+        Commands::Check { file, json } => {
+            commands::check::run(&file, json)?;
         }
-        Commands::Build { file, disasm } => {
-            commands::build::run(&file, disasm)?;
+        Commands::Build { file, disasm, json } => {
+            commands::build::run(&file, disasm, json)?;
         }
         Commands::Repl { tui } => {
             commands::repl::run(tui)?;
@@ -80,6 +89,16 @@ mod tests {
         match cli.command {
             Commands::Repl { tui } => assert!(tui),
             _ => panic!("Expected Repl command"),
+        }
+    }
+
+    #[test]
+    fn test_cli_json_flag() {
+        // Verify JSON flag is parsed correctly
+        let cli = Cli::parse_from(["atlas", "check", "file.atl", "--json"]);
+        match cli.command {
+            Commands::Check { json, .. } => assert!(json),
+            _ => panic!("Expected Check command"),
         }
     }
 }

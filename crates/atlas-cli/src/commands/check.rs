@@ -7,7 +7,8 @@ use std::fs;
 /// Type-check an Atlas source file without executing it
 ///
 /// Performs lexing, parsing, binding, and type-checking, reporting any errors.
-pub fn run(file_path: &str) -> Result<()> {
+/// If `json_output` is true, diagnostics are printed in JSON format.
+pub fn run(file_path: &str, json_output: bool) -> Result<()> {
     // Read source file
     let source = fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
@@ -17,7 +18,7 @@ pub fn run(file_path: &str) -> Result<()> {
     let (tokens, lex_diagnostics) = lexer.tokenize();
 
     if !lex_diagnostics.is_empty() {
-        print_diagnostics(&lex_diagnostics, &source, file_path);
+        print_diagnostics(&lex_diagnostics, &source, file_path, json_output);
         return Err(anyhow::anyhow!("Type checking failed"));
     }
 
@@ -26,7 +27,7 @@ pub fn run(file_path: &str) -> Result<()> {
     let (ast, parse_diagnostics) = parser.parse();
 
     if !parse_diagnostics.is_empty() {
-        print_diagnostics(&parse_diagnostics, &source, file_path);
+        print_diagnostics(&parse_diagnostics, &source, file_path, json_output);
         return Err(anyhow::anyhow!("Type checking failed"));
     }
 
@@ -35,7 +36,7 @@ pub fn run(file_path: &str) -> Result<()> {
     let (symbol_table, bind_diagnostics) = binder.bind(&ast);
 
     if !bind_diagnostics.is_empty() {
-        print_diagnostics(&bind_diagnostics, &source, file_path);
+        print_diagnostics(&bind_diagnostics, &source, file_path, json_output);
         return Err(anyhow::anyhow!("Type checking failed"));
     }
 
@@ -44,7 +45,7 @@ pub fn run(file_path: &str) -> Result<()> {
     let typecheck_diagnostics = typechecker.check(&ast);
 
     if !typecheck_diagnostics.is_empty() {
-        print_diagnostics(&typecheck_diagnostics, &source, file_path);
+        print_diagnostics(&typecheck_diagnostics, &source, file_path, json_output);
         return Err(anyhow::anyhow!("Type checking failed"));
     }
 
@@ -53,10 +54,23 @@ pub fn run(file_path: &str) -> Result<()> {
     Ok(())
 }
 
-/// Print diagnostics to stderr
-fn print_diagnostics(diagnostics: &[atlas_runtime::Diagnostic], source: &str, file_path: &str) {
-    for diag in diagnostics {
-        eprintln!("{}", format_diagnostic(diag, source, file_path));
+/// Print diagnostics to stderr (or stdout for JSON)
+fn print_diagnostics(
+    diagnostics: &[atlas_runtime::Diagnostic],
+    _source: &str,
+    file_path: &str,
+    json_output: bool,
+) {
+    if json_output {
+        // JSON format to stdout
+        for diag in diagnostics {
+            println!("{}", diag.to_json_string().unwrap());
+        }
+    } else {
+        // Human-readable format to stderr
+        for diag in diagnostics {
+            eprintln!("{}", format_diagnostic(diag, _source, file_path));
+        }
     }
 }
 
@@ -92,7 +106,7 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
         writeln!(temp_file, "let x: number = 42;").unwrap();
 
-        let result = run(temp_file.path().to_str().unwrap());
+        let result = run(temp_file.path().to_str().unwrap(), false);
         assert!(result.is_ok());
     }
 
@@ -102,13 +116,23 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
         writeln!(temp_file, "let x: number = \"string\";").unwrap();
 
-        let result = run(temp_file.path().to_str().unwrap());
+        let result = run(temp_file.path().to_str().unwrap(), false);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_check_missing_file() {
-        let result = run("nonexistent.atl");
+        let result = run("nonexistent.atl", false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_check_json_output() {
+        // Create a temporary file with invalid Atlas code
+        let mut temp_file = NamedTempFile::new().unwrap();
+        writeln!(temp_file, "let x: number = \"wrong\";").unwrap();
+
+        let result = run(temp_file.path().to_str().unwrap(), true);
         assert!(result.is_err());
     }
 }

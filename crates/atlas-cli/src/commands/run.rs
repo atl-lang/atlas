@@ -7,7 +7,8 @@ use std::fs;
 /// Run an Atlas source file
 ///
 /// Compiles and executes the source file, printing the result to stdout.
-pub fn run(file_path: &str) -> Result<()> {
+/// If `json_output` is true, diagnostics are printed in JSON format.
+pub fn run(file_path: &str, json_output: bool) -> Result<()> {
     // Read source file
     let source = fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
@@ -24,9 +25,17 @@ pub fn run(file_path: &str) -> Result<()> {
         }
         Err(diagnostics) => {
             // Print all diagnostics
-            eprintln!("Errors occurred while running {}:", file_path);
-            for diag in &diagnostics {
-                eprintln!("{}", format_diagnostic(diag, &source));
+            if json_output {
+                // JSON format
+                for diag in &diagnostics {
+                    println!("{}", diag.to_json_string().unwrap());
+                }
+            } else {
+                // Human-readable format
+                eprintln!("Errors occurred while running {}:", file_path);
+                for diag in &diagnostics {
+                    eprintln!("{}", format_diagnostic(diag, &source));
+                }
             }
             Err(anyhow::anyhow!("Failed to execute program"))
         }
@@ -62,13 +71,23 @@ mod tests {
         let mut temp_file = NamedTempFile::new().unwrap();
         writeln!(temp_file, "1 + 2;").unwrap();
 
-        let result = run(temp_file.path().to_str().unwrap());
+        let result = run(temp_file.path().to_str().unwrap(), false);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_run_missing_file() {
-        let result = run("nonexistent.atl");
+        let result = run("nonexistent.atl", false);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_run_json_output() {
+        // Create a temporary file with invalid Atlas code
+        let mut temp_file = NamedTempFile::new().unwrap();
+        writeln!(temp_file, "let x: number = \"wrong\";").unwrap();
+
+        let result = run(temp_file.path().to_str().unwrap(), true);
         assert!(result.is_err());
     }
 

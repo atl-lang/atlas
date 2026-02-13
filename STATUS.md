@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/cli/phase-01-cli.md
-**Next Phase:** `phases/cli/phase-02-cli-diagnostics.md`
+**Last Completed:** phases/cli/phase-02-cli-diagnostics.md
+**Next Phase:** `phases/cli/phase-04-build-output.md`
 
-**What to implement:** Improve CLI diagnostic formatting and error display
+**What to implement:** Build output improvements (phase 03 already complete)
 
 ---
 
@@ -29,10 +29,10 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For CLI Phase 02:**
+**For CLI Phase 04:**
 - `docs/diagnostics.md` - Diagnostic specification
 - `Atlas-SPEC.md` - Language specification
-- `phases/cli/phase-02-cli-diagnostics.md` - Phase implementation guide
+- `phases/cli/phase-04-build-output.md` - Phase implementation guide
 
 ---
 
@@ -133,10 +133,11 @@
 - ✅ phase-07-prelude-binding.md
 - ✅ phase-08-prelude-tests.md
 
-### 10. CLI (1/10)
+### 10. CLI (3/10)
 - ✅ phase-01-cli.md
-- ⬜ phase-02-cli-diagnostics.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-03-repl-modes.md
+- ✅ phase-02-cli-diagnostics.md
+- ✅ phase-03-repl-modes.md
+- ⬜ phase-04-build-output.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-04-build-output.md
 - ⬜ phase-05-repl-history.md
 - ⬜ phase-06-config-behavior.md
@@ -162,7 +163,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 71/93 phases (76%)
+**Total Progress:** 73/93 phases (78%)
 
 ---
 
