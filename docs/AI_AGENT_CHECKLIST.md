@@ -81,6 +81,7 @@ cat Atlas-SPEC.md | grep -A 10 "function signatures\|let/var\|semicolons"
 - [ ] Phase file read and understood
 - [ ] Implementation guides read
 - [ ] Atlas syntax verified (if applicable)
+- [ ] **Modern testing approach reviewed** (`docs/testing.md` and `tests/common/mod.rs`)
 - [ ] Tests exist for similar features (reference them)
 
 ---
@@ -93,6 +94,13 @@ cat Atlas-SPEC.md | grep -A 10 "function signatures\|let/var\|semicolons"
 - Run tests frequently: `cargo test`
 - Check warnings: `cargo clippy`
 - Monitor file sizes (if adding significant code)
+
+**Writing tests (MODERN APPROACH):**
+- Use `#[rstest]` for parameterized tests (1 line per case)
+- Use `insta::assert_yaml_snapshot!()` for complex outputs
+- Use helpers from `tests/common/mod.rs` (`assert_eval_number`, etc.)
+- See `tests/lexer_tests_modern.rs` for examples
+- Refer to `docs/testing.md` for full guide
 
 ---
 
