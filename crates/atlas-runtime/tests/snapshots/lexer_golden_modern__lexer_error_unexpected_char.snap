@@ -1,0 +1,34 @@
+---
+source: crates/atlas-runtime/tests/lexer_golden_modern.rs
+expression: diagnostics
+---
+- diag_version: 1
+  level: error
+  code: AT1001
+  message: "Unexpected character '@'"
+  file: "<unknown>"
+  line: 2
+  column: 51
+  length: 1
+  snippet: let x = 5 @ 3;
+  label: lexer error
+- diag_version: 1
+  level: error
+  code: AT1001
+  message: "Unexpected character '$'"
+  file: "<unknown>"
+  line: 3
+  column: 64
+  length: 1
+  snippet: let y = $100;
+  label: lexer error
+- diag_version: 1
+  level: error
+  code: AT1001
+  message: "Unexpected character '#'"
+  file: "<unknown>"
+  line: 4
+  column: 78
+  length: 1
+  snippet: "let z = #tag;"
+  label: lexer error

@@ -1,0 +1,14 @@
+---
+source: crates/atlas-runtime/tests/lexer_golden_modern.rs
+expression: diagnostics
+---
+- diag_version: 1
+  level: error
+  code: AT1002
+  message: Unterminated string literal
+  file: "<unknown>"
+  line: 2
+  column: 61
+  length: 24
+  snippet: "let message = \"This string never ends"
+  label: lexer error

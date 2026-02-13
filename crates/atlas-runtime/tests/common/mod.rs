@@ -4,10 +4,10 @@
 //! and make tests more readable and maintainable.
 
 use atlas_runtime::{Atlas, Value};
-use atlas_runtime::diagnostics::Diagnostic;
+use atlas_runtime::diagnostic::Diagnostic;
 
 // Re-export testing utilities
-pub use pretty_assertions::{assert_eq, assert_ne};
+pub use pretty_assertions::assert_eq;
 
 /// Assert that source code evaluates to a number
 ///

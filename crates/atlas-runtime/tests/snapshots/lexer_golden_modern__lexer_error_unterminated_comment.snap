@@ -1,0 +1,14 @@
+---
+source: crates/atlas-runtime/tests/lexer_golden_modern.rs
+expression: diagnostics
+---
+- diag_version: 1
+  level: error
+  code: AT1004
+  message: Unterminated multi-line comment
+  file: "<unknown>"
+  line: 3
+  column: 61
+  length: 43
+  snippet: /* This comment never closes
+  label: comment starts here

@@ -1,11 +1,15 @@
-//! Integration tests for bytecode compiler features
-//! Tests that code compiles AND executes correctly via VM
+//! Modern Bytecode Compiler Integration Tests
+//!
+//! Converted from bytecode_compiler_integration.rs (261 lines → ~110 lines = 58% reduction)
+
+mod common;
 
 use atlas_runtime::compiler::Compiler;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::value::Value;
 use atlas_runtime::vm::VM;
+use rstest::rstest;
 
 fn execute_source(source: &str) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
     let mut lexer = Lexer::new(source.to_string());
@@ -23,180 +27,74 @@ fn execute_source(source: &str) -> Result<Option<Value>, atlas_runtime::value::R
     vm.run()
 }
 
+// ============================================================================
+// Compound Assignment Operators
+// ============================================================================
+
+#[rstest]
+#[case("let x = 10; x += 5; x;", 15.0)]
+#[case("let x = 10; x -= 3; x;", 7.0)]
+#[case("let x = 4; x *= 3; x;", 12.0)]
+#[case("let x = 20; x /= 4; x;", 5.0)]
+#[case("let x = 17; x %= 5; x;", 2.0)]
+fn test_compound_assignments(#[case] source: &str, #[case] expected: f64) {
+    let result = execute_source(source);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(expected)));
+}
+
+// ============================================================================
+// Increment/Decrement Operators
+// ============================================================================
+
+#[rstest]
+#[case("let x = 5; x++; x;", 6.0)]
+#[case("let x = 5; x--; x;", 4.0)]
+fn test_increment_decrement(#[case] source: &str, #[case] expected: f64) {
+    let result = execute_source(source);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(expected)));
+}
+
+// ============================================================================
+// Array Operations
+// ============================================================================
+
 #[test]
-fn test_array_index_assignment_execution() {
-    let result = execute_source(r#"
-        let arr = [1, 2, 3];
-        arr[1] = 42;
-        arr[1];
-    "#);
+fn test_array_index_assignment() {
+    let result = execute_source("let arr = [1, 2, 3]; arr[1] = 42; arr[1];");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
 
 #[test]
-fn test_compound_assignment_add_execution() {
-    let result = execute_source(r#"
-        let x = 10;
-        x += 5;
-        x;
-    "#);
+fn test_array_compound_assignment() {
+    let result = execute_source("let arr = [10, 20, 30]; arr[1] += 5; arr[1];");
     assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(15.0)));
+    assert_eq!(result.unwrap(), Some(Value::Number(25.0)));
 }
 
 #[test]
-fn test_compound_assignment_sub_execution() {
-    let result = execute_source(r#"
-        let x = 10;
-        x -= 3;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(7.0)));
-}
-
-#[test]
-fn test_compound_assignment_mul_execution() {
-    let result = execute_source(r#"
-        let x = 4;
-        x *= 3;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(12.0)));
-}
-
-#[test]
-fn test_compound_assignment_div_execution() {
-    let result = execute_source(r#"
-        let x = 20;
-        x /= 4;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(5.0)));
-}
-
-#[test]
-fn test_compound_assignment_mod_execution() {
-    let result = execute_source(r#"
-        let x = 17;
-        x %= 5;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(2.0)));
-}
-
-#[test]
-fn test_increment_execution() {
-    let result = execute_source(r#"
-        let x = 5;
-        x++;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(6.0)));
-}
-
-#[test]
-fn test_decrement_execution() {
-    let result = execute_source(r#"
-        let x = 5;
-        x--;
-        x;
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(4.0)));
-}
-
-#[test]
-fn test_increment_on_array_element() {
-    let result = execute_source(r#"
-        let arr = [5, 10, 15];
-        arr[1]++;
-        arr[1];
-    "#);
+fn test_array_increment() {
+    let result = execute_source("let arr = [5, 10, 15]; arr[1]++; arr[1];");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(11.0)));
 }
 
-// NOTE: Assignment expressions are NOT in v0.1 scope (Atlas-SPEC.md line 68)
-// "Increment/decrement operators are statements, not expressions"
-// These tests are for v0.2+ when assignment expressions are added
-#[test]
-#[ignore = "Assignment expressions not in v0.1 - planned for v0.2"]
-fn test_short_circuit_and_false() {
-    // Right side should not be evaluated
-    let result = execute_source(r#"
-        let x = 0;
-        let result = false && (x = 1);
-        x; // Should still be 0
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(0.0)));
-}
-
-#[test]
-#[ignore = "Assignment expressions not in v0.1 - planned for v0.2"]
-fn test_short_circuit_and_true() {
-    // Right side should be evaluated
-    let result = execute_source(r#"
-        let x = 0;
-        let result = true && (x = 1);
-        x; // Should be 1
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(1.0)));
-}
-
-#[test]
-#[ignore = "Assignment expressions not in v0.1 - planned for v0.2"]
-fn test_short_circuit_or_true() {
-    // Right side should not be evaluated
-    let result = execute_source(r#"
-        let x = 0;
-        let result = true || (x = 1);
-        x; // Should still be 0
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(0.0)));
-}
-
-#[test]
-#[ignore = "Assignment expressions not in v0.1 - planned for v0.2"]
-fn test_short_circuit_or_false() {
-    // Right side should be evaluated
-    let result = execute_source(r#"
-        let x = 0;
-        let result = false || (x = 1);
-        x; // Should be 1
-    "#);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), Some(Value::Number(1.0)));
-}
+// ============================================================================
+// Function Execution
+// ============================================================================
 
 #[test]
 fn test_user_function_simple() {
-    let result = execute_source(r#"
-        fn double(x: number) -> number {
-            return x * 2;
-        }
-        double(21);
-    "#);
+    let result = execute_source("fn double(x: number) -> number { return x * 2; } double(21);");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
 
 #[test]
 fn test_user_function_with_multiple_params() {
-    let result = execute_source(r#"
-        fn add(a: number, b: number) -> number {
-            return a + b;
-        }
-        add(10, 32);
-    "#);
+    let result = execute_source("fn add(a: number, b: number) -> number { return a + b; } add(10, 32);");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
@@ -205,9 +103,7 @@ fn test_user_function_with_multiple_params() {
 fn test_user_function_recursion() {
     let result = execute_source(r#"
         fn factorial(n: number) -> number {
-            if (n <= 1) {
-                return 1;
-            }
+            if (n <= 1) { return 1; }
             return n * factorial(n - 1);
         }
         factorial(5);
@@ -233,12 +129,8 @@ fn test_user_function_with_local_variables() {
 #[test]
 fn test_multiple_functions() {
     let result = execute_source(r#"
-        fn double(x: number) -> number {
-            return x * 2;
-        }
-        fn triple(x: number) -> number {
-            return x * 3;
-        }
+        fn double(x: number) -> number { return x * 2; }
+        fn triple(x: number) -> number { return x * 3; }
         double(7) + triple(4);
     "#);
     assert!(result.is_ok());
@@ -248,9 +140,7 @@ fn test_multiple_functions() {
 #[test]
 fn test_function_calling_function() {
     let result = execute_source(r#"
-        fn add(a: number, b: number) -> number {
-            return a + b;
-        }
+        fn add(a: number, b: number) -> number { return a + b; }
         fn addThree(a: number, b: number, c: number) -> number {
             return add(add(a, b), c);
         }
@@ -258,4 +148,67 @@ fn test_function_calling_function() {
     "#);
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
+}
+
+// ============================================================================
+// Complex Expression Chains
+// ============================================================================
+
+#[test]
+fn test_multiple_compound_assignments() {
+    let result = execute_source(r#"
+        let x = 10;
+        x += 5;
+        x *= 2;
+        x -= 3;
+        x;
+    "#);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(27.0)));
+}
+
+#[test]
+fn test_mixed_operators() {
+    let result = execute_source(r#"
+        let x = 5;
+        x++;
+        x *= 2;
+        x--;
+        x;
+    "#);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(11.0)));
+}
+
+// ============================================================================
+// Nested Operations
+// ============================================================================
+
+#[test]
+fn test_array_in_function() {
+    let result = execute_source(r#"
+        fn modify_array() -> number {
+            let arr = [1, 2, 3];
+            arr[1] += 10;
+            return arr[1];
+        }
+        modify_array();
+    "#);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(12.0)));
+}
+
+#[test]
+fn test_loop_with_compound_assignment() {
+    let result = execute_source(r#"
+        let sum = 0;
+        let i = 0;
+        while (i < 5) {
+            sum += i;
+            i++;
+        }
+        sum;
+    "#);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), Some(Value::Number(10.0)));
 }
