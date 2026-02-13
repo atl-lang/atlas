@@ -56,16 +56,25 @@ v0.2 transforms Atlas into a production-ready language:
 
 ## 📚 Documentation Reference Map
 
-**For AI Agents:** Phase files reference docs for guidance. Use this map to find the correct documentation:
+**For AI Agents:** Use the routing system to find docs efficiently. **DO NOT read all specs.**
 
-### Core Specifications
-- **Language Spec:** `Atlas-SPEC.md` - Grammar, syntax, keywords, types
-- **Grammar Rules:** `docs/specification/grammar-conformance.md` - Parser conformance requirements
-- **Language Semantics:** `docs/specification/language-semantics.md` - Type rules, operators, execution order, array aliasing, numeric edge cases
+### Navigation
+- **Start here:** `Atlas-SPEC.md` - Index with routing table for AI agents
+- **Use routing table** to find exactly which spec file you need
 
-### Runtime & Execution
-- **Runtime Spec:** `docs/specification/runtime-spec.md` - Value model, bytecode format, prelude, execution model
-- **Standard Library API:** `docs/api/stdlib.md` - Complete stdlib function reference (signatures, examples, errors)
+### Core Specifications (Lazy Load)
+- **Types:** `docs/specification/types.md` - Type system, generics, patterns, JSON type
+- **Syntax:** `docs/specification/syntax.md` - Grammar, keywords, operators, EBNF
+- **Semantics:** `docs/specification/language-semantics.md` - Evaluation rules, edge cases
+- **Runtime:** `docs/specification/runtime.md` - Execution model, memory, scoping
+- **Modules:** `docs/specification/modules.md` - Import/export, resolution
+- **REPL:** `docs/specification/repl.md` - Interactive mode behavior
+- **Bytecode:** `docs/specification/bytecode.md` - VM, compilation, instructions
+- **Diagnostics:** `docs/specification/diagnostics.md` - Error codes, formats
+- **Grammar Rules:** `docs/specification/grammar-conformance.md` - Parser conformance
+
+### API References
+- **Standard Library:** `docs/api/stdlib.md` - Function signatures, examples, errors
 - **Runtime API:** `docs/api/runtime-api.md` - Embedding API and runtime hooks
 
 ### Implementation Guides
