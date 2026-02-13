@@ -33,11 +33,6 @@ impl Compiler {
             }
         };
 
-        // Compile all arguments first (they'll be on the stack)
-        for arg in &call.args {
-            self.compile_expr(arg)?;
-        }
-
         // Check if it's a builtin function
         if crate::stdlib::is_builtin(func_name) {
             // Create a Function value for the builtin with bytecode_offset = 0
@@ -49,9 +44,14 @@ impl Compiler {
             let func_value = crate::value::Value::Function(func_ref);
             let const_idx = self.bytecode.add_constant(func_value);
 
-            // Load the function constant
+            // Load the function constant FIRST (before arguments)
             self.bytecode.emit(crate::bytecode::Opcode::Constant, call.span);
             self.bytecode.emit_u16(const_idx);
+
+            // Compile all arguments (they'll be pushed on top of the function)
+            for arg in &call.args {
+                self.compile_expr(arg)?;
+            }
 
             // Emit call instruction with argument count
             self.bytecode.emit(crate::bytecode::Opcode::Call, call.span);
