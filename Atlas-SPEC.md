@@ -27,9 +27,9 @@ These features require careful design and research before implementation:
 - Multi-line comments: `/* ... */`
 
 ## Keywords
-- `let`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`, `match`
-- `match` is reserved for future use (not in v0.1 grammar).
-- `import` is reserved for future use (not in v0.1 grammar).
+- `let`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`
+- `match` - Pattern matching (v0.2+)
+- `import`, `export` - Module system (reserved for v0.2+, grammar TBD)
 
 ## Types
 - Primitive: `number`, `string`, `bool`, `void`, `null`
@@ -156,6 +156,96 @@ let arr2: Array<number> = [1, 2, 3];  // Explicit generic form
 - No higher-kinded types
 
 **See:** `docs/design/generics.md` for complete design
+
+### Pattern Matching (v0.2+)
+
+Pattern matching enables destructuring and conditional logic based on value structure. Essential for ergonomic `Result<T,E>` and `Option<T>` handling.
+
+**Syntax:**
+```atlas
+match expression {
+    pattern1 => expression1,
+    pattern2 => expression2,
+    _ => default_expression
+}
+```
+
+**Examples:**
+```atlas
+// Result handling
+fn divide(a: number, b: number) -> Result<number, string> {
+    if (b == 0) { return Err("division by zero"); }
+    return Ok(a / b);
+}
+
+match divide(10, 2) {
+    Ok(value) => print("Result: " + str(value)),
+    Err(error) => print("Error: " + error)
+}
+
+// Option handling
+match find([1, 2, 3], 2) {
+    Some(index) => print("Found at " + str(index)),
+    None => print("Not found")
+}
+
+// Literal patterns
+match x {
+    0 => "zero",
+    1 => "one",
+    _ => "many"
+}
+
+// Nested patterns
+match result {
+    Ok(Some(value)) => process(value),
+    Ok(None) => use_default(),
+    Err(error) => handle_error(error)
+}
+```
+
+**Pattern Types:**
+- Literal: `42`, `"hello"`, `true`, `false`, `null`
+- Wildcard: `_` (matches anything, binds nothing)
+- Variable: `value` (matches anything, binds to name)
+- Constructor: `Ok(value)`, `Err(error)`, `Some(x)`, `None`
+- Array: `[]`, `[x]`, `[x, y]` (fixed-length only in v0.2)
+
+**Semantics:**
+- Match is an expression (has a type/value)
+- Exhaustiveness checking required (must handle all cases)
+- All arms must return compatible types
+- First-match-wins evaluation order
+- Variable bindings scoped to arm expression
+
+**Exhaustiveness:**
+```atlas
+// ✅ Exhaustive - all constructors covered
+match result {
+    Ok(value) => value,
+    Err(error) => 0
+}
+
+// ❌ Non-exhaustive - compiler error
+match result {
+    Ok(value) => value
+    // Missing: Err case
+}
+
+// ✅ Wildcard makes it exhaustive
+match x {
+    0 => "zero",
+    _ => "non-zero"
+}
+```
+
+**Limitations (v0.2):**
+- No guard clauses (`pattern if condition`)
+- No OR patterns (`0 | 1 | 2`)
+- No rest patterns in arrays (`[first, ...rest]`)
+- No struct patterns (no user-defined structs yet)
+
+**See:** `docs/design/pattern-matching.md` for complete design
 
 ### Typing Rules
 - `let` is immutable, `var` is mutable.
@@ -319,7 +409,21 @@ type_args      = "<" type_arg_list ">" ;                             (* v0.2+ *)
 type_arg_list  = type { "," type } ;                                 (* v0.2+ *)
 args           = expr { "," expr } ;
 array_literal  = "[" [ args ] "]" ;
-primary        = number | string | "true" | "false" | "null" | ident | array_literal | "(" expr ")" ;
+primary        = number | string | "true" | "false" | "null" | ident
+               | array_literal | "(" expr ")" | match_expr ;           (* v0.2+: match_expr *)
+
+(* Pattern matching - v0.2+ *)
+match_expr     = "match" expr "{" match_arms "}" ;
+match_arms     = match_arm { "," match_arm } [ "," ] ;
+match_arm      = pattern "=>" expr ;
+pattern        = literal_pattern | wildcard_pattern | variable_pattern
+               | constructor_pattern | array_pattern ;
+literal_pattern = number | string | "true" | "false" | "null" ;
+wildcard_pattern = "_" ;
+variable_pattern = ident ;
+constructor_pattern = ident "(" [ pattern_list ] ")" ;
+array_pattern  = "[" [ pattern_list ] "]" ;
+pattern_list   = pattern { "," pattern } ;
 
 type           = primary_type [ "[]" ] | generic_type | function_type ;  (* v0.2+ *)
 primary_type   = "number" | "string" | "bool" | "void" | "null" ;
