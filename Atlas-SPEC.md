@@ -29,7 +29,8 @@ These features require careful design and research before implementation:
 ## Keywords
 - `let`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`
 - `match` - Pattern matching (v0.2+)
-- `import`, `export` - Module system (reserved for v0.2+, grammar TBD)
+- `import`, `export` - Module system (v0.2+)
+- `from`, `as` - Import keywords (v0.2+)
 
 ## Types
 - Primitive: `number`, `string`, `bool`, `void`, `null`
@@ -247,6 +248,78 @@ match x {
 
 **See:** `docs/design/pattern-matching.md` for complete design
 
+### Module System (v0.2+)
+
+Module system enables multi-file programs with explicit imports and exports.
+
+**File extensions:** `.atl`
+
+**Export syntax:**
+```atlas
+// Export functions
+export fn add(a: number, b: number) -> number {
+    return a + b;
+}
+
+// Export variables
+export let PI = 3.14159;
+export var counter = 0;
+```
+
+**Import syntax:**
+```atlas
+// Named imports
+import { add, subtract } from "./math";
+
+// Namespace import
+import * as math from "./math";
+// Usage: math.add(2, 3)
+```
+
+**Module paths:**
+```atlas
+import { x } from "./sibling";        // Relative path
+import { y } from "../parent";        // Parent directory
+import { z } from "/src/utils";      // Absolute from project root
+```
+
+**Semantics:**
+- Single evaluation: Each module executed exactly once
+- Caching: Module exports cached by absolute path
+- Circular dependencies: Detected and rejected (compile error)
+- Exports only: Non-exported items are module-private
+- Initialization order: Topological sort by dependencies
+
+**Examples:**
+```atlas
+// math.atl
+export fn add(a: number, b: number) -> number {
+    return a + b;
+}
+export let PI = 3.14159;
+
+// main.atl
+import { add, PI } from "./math";
+let result = add(2, 3);
+print(str(PI));
+```
+
+**Namespace imports:**
+```atlas
+import * as math from "./math";
+let sum = math.add(10, 20);
+print(str(math.PI));
+```
+
+**Limitations (v0.2):**
+- No default exports (`export default`)
+- No re-exports (`export { x } from "./mod"`)
+- No dynamic imports (all imports top-level)
+- No package imports (file paths only)
+- No type-only imports
+
+**See:** `docs/design/modules.md` for complete design
+
 ### Typing Rules
 - `let` is immutable, `var` is mutable.
 - No implicit `any`.
@@ -359,8 +432,18 @@ match x {
 
 ## Grammar (EBNF)
 ```ebnf
-program        = { decl_or_stmt } ;
+program        = { module_item } ;
+module_item    = export_decl | import_decl | decl_or_stmt ;           (* v0.2+ *)
 decl_or_stmt   = fn_decl | stmt ;
+
+(* Module system - v0.2+ *)
+export_decl    = "export" ( fn_decl | var_decl ) ;
+import_decl    = "import" import_clause "from" string ";" ;
+import_clause  = named_imports | namespace_import ;
+named_imports  = "{" import_specifiers "}" ;
+import_specifiers = import_specifier { "," import_specifier } ;
+import_specifier  = ident ;
+namespace_import  = "*" "as" ident ;
 
 fn_decl        = "fn" ident [ type_params ] "(" [ params ] ")" "->" type block ;
 type_params    = "<" type_param_list ">" ;                           (* v0.2+ *)
