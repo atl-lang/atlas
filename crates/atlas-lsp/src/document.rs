@@ -1,6 +1,6 @@
 //! Document state management
 
-use atlas_runtime::{Binder, Diagnostic, Lexer, Parser, TypeChecker};
+use atlas_runtime::{ast::Program, symbol::SymbolTable, Binder, Diagnostic, Lexer, Parser, TypeChecker};
 use tower_lsp::lsp_types::Url;
 
 /// State of a single document in the LSP server
@@ -9,6 +9,8 @@ pub struct DocumentState {
     pub text: String,
     pub version: i32,
     pub diagnostics: Vec<Diagnostic>,
+    pub ast: Option<Program>,
+    pub symbols: Option<SymbolTable>,
 }
 
 impl DocumentState {
@@ -19,6 +21,8 @@ impl DocumentState {
             text,
             version,
             diagnostics: Vec::new(),
+            ast: None,
+            symbols: None,
         };
         doc.analyze();
         doc
@@ -34,6 +38,8 @@ impl DocumentState {
     /// Analyze the document and update diagnostics
     fn analyze(&mut self) {
         self.diagnostics.clear();
+        self.ast = None;
+        self.symbols = None;
 
         // Lex the source code
         let mut lexer = Lexer::new(&self.text);
@@ -53,6 +59,9 @@ impl DocumentState {
             return;
         }
 
+        // Store AST for navigation
+        self.ast = Some(ast.clone());
+
         // Bind symbols
         let mut binder = Binder::new();
         let (symbol_table, bind_diagnostics) = binder.bind(&ast);
@@ -61,6 +70,9 @@ impl DocumentState {
             self.diagnostics.extend(bind_diagnostics);
             return;
         }
+
+        // Store symbols for navigation
+        self.symbols = Some(symbol_table.clone());
 
         // Type check
         let mut typechecker = TypeChecker::new(&symbol_table);

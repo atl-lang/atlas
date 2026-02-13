@@ -5,4 +5,5 @@
 pub mod convert;
 pub mod document;
 pub mod handlers;
+pub mod navigation;
 pub mod server;

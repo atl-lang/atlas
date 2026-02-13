@@ -41,6 +41,10 @@ impl LanguageServer for AtlasLspServer {
                         work_done_progress_options: WorkDoneProgressOptions::default(),
                     },
                 )),
+                document_symbol_provider: Some(OneOf::Left(true)),
+                hover_provider: Some(HoverProviderCapability::Simple(true)),
+                definition_provider: Some(OneOf::Left(true)),
+                references_provider: Some(OneOf::Left(true)),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -119,5 +123,76 @@ impl LanguageServer for AtlasLspServer {
         self.client
             .publish_diagnostics(uri, Vec::new(), None)
             .await;
+    }
+
+    async fn document_symbol(
+        &self,
+        params: DocumentSymbolParams,
+    ) -> Result<Option<DocumentSymbolResponse>> {
+        let uri = params.text_document.uri;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            if let Some(ast) = &doc.ast {
+                let symbols = crate::navigation::extract_document_symbols(ast);
+                return Ok(Some(DocumentSymbolResponse::Nested(symbols)));
+            }
+        }
+
+        Ok(None)
+    }
+
+    async fn goto_definition(
+        &self,
+        params: GotoDefinitionParams,
+    ) -> Result<Option<GotoDefinitionResponse>> {
+        let uri = params.text_document_position_params.text_document.uri;
+        let position = params.text_document_position_params.position;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            if let (Some(_ast), Some(_symbols)) = (&doc.ast, &doc.symbols) {
+                if let Some(_identifier) =
+                    crate::navigation::find_identifier_at_position(&doc.text, position)
+                {
+                    // TODO: Implement actual go-to-definition once we have position info in symbol table
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    async fn references(&self, params: ReferenceParams) -> Result<Option<Vec<Location>>> {
+        let _uri = params.text_document_position.text_document.uri;
+        let _position = params.text_document_position.position;
+
+        // TODO: Implement find references
+        Ok(None)
+    }
+
+    async fn hover(&self, params: HoverParams) -> Result<Option<Hover>> {
+        let uri = params.text_document_position_params.text_document.uri;
+        let position = params.text_document_position_params.position;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            if let (Some(ast), Some(symbols)) = (&doc.ast, &doc.symbols) {
+                if let Some(identifier) =
+                    crate::navigation::find_identifier_at_position(&doc.text, position)
+                {
+                    if let Some(info) =
+                        crate::navigation::generate_hover_info(ast, symbols, &identifier)
+                    {
+                        return Ok(Some(Hover {
+                            contents: HoverContents::Scalar(MarkedString::String(info)),
+                            range: None,
+                        }));
+                    }
+                }
+            }
+        }
+
+        Ok(None)
     }
 }
