@@ -37,8 +37,8 @@ This document defines the roadmap for growing the Atlas standard library beyond 
 - ✅ Core functions (`print`, `len`, `str`)
 - ✅ Comprehensive tests
 - ✅ Documentation sync
-- ⬜ Expansion plan (this document)
-- ⬜ Security model for I/O
+- ✅ Expansion plan (this document)
+- ✅ Security model for I/O
 - ⬜ JSON stdlib plan
 
 ---
