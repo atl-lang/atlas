@@ -1,0 +1,47 @@
+---
+source: crates/atlas-cli/tests/typecheck_dump_tests.rs
+expression: json
+---
+{
+  "typecheck_version": 1,
+  "symbols": [
+    {
+      "name": "x",
+      "kind": "variable",
+      "start": 5,
+      "end": 6,
+      "type": "number",
+      "mutable": false
+    },
+    {
+      "name": "y",
+      "kind": "variable",
+      "start": 25,
+      "end": 26,
+      "type": "string",
+      "mutable": false
+    },
+    {
+      "name": "z",
+      "kind": "variable",
+      "start": 50,
+      "end": 51,
+      "type": "bool",
+      "mutable": false
+    }
+  ],
+  "types": [
+    {
+      "name": "bool",
+      "kind": "primitive"
+    },
+    {
+      "name": "number",
+      "kind": "primitive"
+    },
+    {
+      "name": "string",
+      "kind": "primitive"
+    }
+  ]
+}

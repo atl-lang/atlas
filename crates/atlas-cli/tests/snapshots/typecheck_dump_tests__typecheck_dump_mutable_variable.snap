@@ -1,0 +1,23 @@
+---
+source: crates/atlas-cli/tests/typecheck_dump_tests.rs
+expression: json
+---
+{
+  "typecheck_version": 1,
+  "symbols": [
+    {
+      "name": "counter",
+      "kind": "variable",
+      "start": 4,
+      "end": 11,
+      "type": "number",
+      "mutable": true
+    }
+  ],
+  "types": [
+    {
+      "name": "number",
+      "kind": "primitive"
+    }
+  ]
+}

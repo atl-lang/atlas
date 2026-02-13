@@ -1,0 +1,28 @@
+---
+source: crates/atlas-cli/tests/typecheck_dump_tests.rs
+expression: json
+---
+{
+  "typecheck_version": 1,
+  "symbols": [
+    {
+      "name": "add",
+      "kind": "function",
+      "start": 4,
+      "end": 7,
+      "type": "(number, number) -> number",
+      "mutable": false
+    }
+  ],
+  "types": [
+    {
+      "name": "(number, number) -> number",
+      "kind": "function",
+      "details": "signature: (number, number) -> number"
+    },
+    {
+      "name": "number",
+      "kind": "primitive"
+    }
+  ]
+}

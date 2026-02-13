@@ -1,0 +1,30 @@
+---
+source: crates/atlas-cli/tests/ast_dump_tests.rs
+expression: json
+---
+{
+  "ast_version": 1,
+  "items": [
+    {
+      "Statement": {
+        "Expr": {
+          "expr": {
+            "Literal": [
+              {
+                "Number": 42.0
+              },
+              {
+                "start": 0,
+                "end": 2
+              }
+            ]
+          },
+          "span": {
+            "start": 0,
+            "end": 3
+          }
+        }
+      }
+    }
+  ]
+}

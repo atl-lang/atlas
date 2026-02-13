@@ -1,0 +1,47 @@
+---
+source: crates/atlas-cli/tests/ast_dump_tests.rs
+expression: json
+---
+{
+  "ast_version": 1,
+  "items": [
+    {
+      "Statement": {
+        "VarDecl": {
+          "mutable": false,
+          "name": {
+            "name": "flag",
+            "span": {
+              "start": 4,
+              "end": 8
+            }
+          },
+          "type_ref": {
+            "Named": [
+              "bool",
+              {
+                "start": 10,
+                "end": 14
+              }
+            ]
+          },
+          "init": {
+            "Literal": [
+              {
+                "Bool": true
+              },
+              {
+                "start": 17,
+                "end": 21
+              }
+            ]
+          },
+          "span": {
+            "start": 0,
+            "end": 22
+          }
+        }
+      }
+    }
+  ]
+}

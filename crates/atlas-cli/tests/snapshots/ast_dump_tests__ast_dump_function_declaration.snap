@@ -1,0 +1,122 @@
+---
+source: crates/atlas-cli/tests/ast_dump_tests.rs
+expression: json
+---
+{
+  "ast_version": 1,
+  "items": [
+    {
+      "Function": {
+        "name": {
+          "name": "add",
+          "span": {
+            "start": 4,
+            "end": 7
+          }
+        },
+        "params": [
+          {
+            "name": {
+              "name": "a",
+              "span": {
+                "start": 8,
+                "end": 9
+              }
+            },
+            "type_ref": {
+              "Named": [
+                "number",
+                {
+                  "start": 11,
+                  "end": 17
+                }
+              ]
+            },
+            "span": {
+              "start": 8,
+              "end": 17
+            }
+          },
+          {
+            "name": {
+              "name": "b",
+              "span": {
+                "start": 19,
+                "end": 20
+              }
+            },
+            "type_ref": {
+              "Named": [
+                "number",
+                {
+                  "start": 22,
+                  "end": 28
+                }
+              ]
+            },
+            "span": {
+              "start": 19,
+              "end": 28
+            }
+          }
+        ],
+        "return_type": {
+          "Named": [
+            "number",
+            {
+              "start": 33,
+              "end": 39
+            }
+          ]
+        },
+        "body": {
+          "statements": [
+            {
+              "Return": {
+                "value": {
+                  "Binary": {
+                    "op": "Add",
+                    "left": {
+                      "Identifier": {
+                        "name": "a",
+                        "span": {
+                          "start": 53,
+                          "end": 54
+                        }
+                      }
+                    },
+                    "right": {
+                      "Identifier": {
+                        "name": "b",
+                        "span": {
+                          "start": 57,
+                          "end": 58
+                        }
+                      }
+                    },
+                    "span": {
+                      "start": 53,
+                      "end": 58
+                    }
+                  }
+                },
+                "span": {
+                  "start": 46,
+                  "end": 59
+                }
+              }
+            }
+          ],
+          "span": {
+            "start": 40,
+            "end": 61
+          }
+        },
+        "span": {
+          "start": 1,
+          "end": 61
+        }
+      }
+    }
+  ]
+}

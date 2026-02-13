@@ -1,0 +1,139 @@
+---
+source: crates/atlas-cli/tests/ast_dump_tests.rs
+expression: json
+---
+{
+  "ast_version": 1,
+  "items": [
+    {
+      "Function": {
+        "name": {
+          "name": "greet",
+          "span": {
+            "start": 4,
+            "end": 9
+          }
+        },
+        "params": [
+          {
+            "name": {
+              "name": "name",
+              "span": {
+                "start": 10,
+                "end": 14
+              }
+            },
+            "type_ref": {
+              "Named": [
+                "string",
+                {
+                  "start": 16,
+                  "end": 22
+                }
+              ]
+            },
+            "span": {
+              "start": 10,
+              "end": 22
+            }
+          }
+        ],
+        "return_type": {
+          "Named": [
+            "string",
+            {
+              "start": 27,
+              "end": 33
+            }
+          ]
+        },
+        "body": {
+          "statements": [
+            {
+              "Return": {
+                "value": {
+                  "Identifier": {
+                    "name": "name",
+                    "span": {
+                      "start": 47,
+                      "end": 51
+                    }
+                  }
+                },
+                "span": {
+                  "start": 40,
+                  "end": 52
+                }
+              }
+            }
+          ],
+          "span": {
+            "start": 34,
+            "end": 54
+          }
+        },
+        "span": {
+          "start": 1,
+          "end": 54
+        }
+      }
+    },
+    {
+      "Statement": {
+        "VarDecl": {
+          "mutable": false,
+          "name": {
+            "name": "msg",
+            "span": {
+              "start": 59,
+              "end": 62
+            }
+          },
+          "type_ref": {
+            "Named": [
+              "string",
+              {
+                "start": 64,
+                "end": 70
+              }
+            ]
+          },
+          "init": {
+            "Call": {
+              "callee": {
+                "Identifier": {
+                  "name": "greet",
+                  "span": {
+                    "start": 73,
+                    "end": 78
+                  }
+                }
+              },
+              "args": [
+                {
+                  "Literal": [
+                    {
+                      "String": "world"
+                    },
+                    {
+                      "start": 79,
+                      "end": 86
+                    }
+                  ]
+                }
+              ],
+              "span": {
+                "start": 73,
+                "end": 87
+              }
+            }
+          },
+          "span": {
+            "start": 55,
+            "end": 88
+          }
+        }
+      }
+    }
+  ]
+}

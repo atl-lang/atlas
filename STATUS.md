@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/cli/phase-07-ast-typecheck-dumps.md
-**Next Phase:** `phases/cli/phase-08-ast-typecheck-tests.md`
+**Last Completed:** phases/cli/phase-08-ast-typecheck-tests.md
+**Next Phase:** `phases/cli/phase-09-json-dump-stability-tests.md`
 
-**What to implement:** Tests for AST and typecheck dumps
+**What to implement:** JSON dump stability tests
 
 ---
 
@@ -29,11 +29,11 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For CLI Phase 07:**
+**For CLI Phase 08:**
+- `docs/ast-typecheck-tests.md` - Test specification
 - `docs/ast-dump.md` - AST dump specification
 - `docs/typecheck-dump.md` - Typecheck dump specification
-- `Atlas-SPEC.md` - Language specification
-- `phases/cli/phase-07-ast-typecheck-dumps.md` - Phase implementation guide
+- `phases/cli/phase-08-ast-typecheck-tests.md` - Phase implementation guide
 
 ---
 
@@ -134,7 +134,7 @@
 - ✅ phase-07-prelude-binding.md
 - ✅ phase-08-prelude-tests.md
 
-### 10. CLI (7/10)
+### 10. CLI (8/10)
 - ✅ phase-01-cli.md
 - ✅ phase-02-cli-diagnostics.md
 - ✅ phase-03-repl-modes.md
@@ -142,7 +142,8 @@
 - ✅ phase-05-repl-history.md
 - ✅ phase-06-config-behavior.md
 - ✅ phase-07-ast-typecheck-dumps.md
-- ⬜ phase-08-ast-typecheck-tests.md ⬅️ **YOU ARE HERE**
+- ✅ phase-08-ast-typecheck-tests.md
+- ⬜ phase-09-json-dump-stability-tests.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-04-build-output.md
 - ⬜ phase-05-repl-history.md
 - ⬜ phase-06-config-behavior.md
@@ -168,7 +169,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 77/93 phases (82%)
+**Total Progress:** 78/93 phases (83%)
 
 ---
 
