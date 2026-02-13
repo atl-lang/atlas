@@ -6,9 +6,7 @@
 //! - Typecheck dump format is stable and deterministic
 //! - Version mismatch handling for future-proofing
 
-use atlas_runtime::{
-    Binder, Lexer, Parser, TypecheckDump, TYPECHECK_VERSION,
-};
+use atlas_runtime::{Binder, Lexer, Parser, TypecheckDump, TYPECHECK_VERSION};
 
 /// Helper to create a typecheck dump from source code
 fn typecheck_dump_from_source(source: &str) -> TypecheckDump {
@@ -73,7 +71,10 @@ fn test_typecheck_dump_is_deterministic() {
     let json1 = dump1.to_json_string().unwrap();
     let json2 = dump2.to_json_string().unwrap();
 
-    assert_eq!(json1, json2, "Same source should produce identical JSON output");
+    assert_eq!(
+        json1, json2,
+        "Same source should produce identical JSON output"
+    );
 }
 
 #[test]
@@ -91,7 +92,10 @@ fn test_typecheck_dump_compact_is_deterministic() {
     let json1 = dump1.to_json_compact().unwrap();
     let json2 = dump2.to_json_compact().unwrap();
 
-    assert_eq!(json1, json2, "Same source should produce identical compact JSON");
+    assert_eq!(
+        json1, json2,
+        "Same source should produce identical compact JSON"
+    );
 }
 
 #[test]
@@ -159,10 +163,16 @@ fn test_version_mismatch_detection() {
     }"#;
 
     let result: Result<TypecheckDump, _> = serde_json::from_str(json_v2);
-    assert!(result.is_ok(), "Should be able to deserialize different versions");
+    assert!(
+        result.is_ok(),
+        "Should be able to deserialize different versions"
+    );
 
     let dump = result.unwrap();
-    assert_eq!(dump.typecheck_version, 2, "Should preserve version from JSON");
+    assert_eq!(
+        dump.typecheck_version, 2,
+        "Should preserve version from JSON"
+    );
     assert_ne!(
         dump.typecheck_version, TYPECHECK_VERSION,
         "Version mismatch should be detectable"
@@ -179,7 +189,10 @@ fn test_typecheck_dump_schema_stability() {
     let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
 
     // Verify required fields exist
-    assert!(parsed["typecheck_version"].is_number(), "Must have typecheck_version");
+    assert!(
+        parsed["typecheck_version"].is_number(),
+        "Must have typecheck_version"
+    );
     assert!(parsed["symbols"].is_array(), "Must have symbols array");
     assert!(parsed["types"].is_array(), "Must have types array");
 
@@ -226,7 +239,11 @@ fn test_empty_program_typecheck_dump() {
     let dump = typecheck_dump_from_source(source);
 
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
-    assert_eq!(dump.symbols.len(), 0, "Empty program should have no symbols");
+    assert_eq!(
+        dump.symbols.len(),
+        0,
+        "Empty program should have no symbols"
+    );
     assert_eq!(dump.types.len(), 0, "Empty program should have no types");
 }
 
@@ -248,7 +265,10 @@ fn test_complex_program_typecheck_dump() {
     let dump = typecheck_dump_from_source(source);
 
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
-    assert!(dump.symbols.len() > 0, "Complex program should have symbols");
+    assert!(
+        dump.symbols.len() > 0,
+        "Complex program should have symbols"
+    );
     assert!(dump.types.len() > 0, "Complex program should have types");
 
     // Verify JSON is valid
@@ -270,12 +290,22 @@ fn test_array_types_in_typecheck_dump() {
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
 
     // Find array type (if any)
-    let array_types: Vec<_> = dump.types.iter().filter(|t| t.name.contains("[]")).collect();
+    let array_types: Vec<_> = dump
+        .types
+        .iter()
+        .filter(|t| t.name.contains("[]"))
+        .collect();
 
     // Verify array type has correct kind if it exists
     for array_type in array_types {
-        assert_eq!(array_type.kind, "array", "Array type should have 'array' kind");
-        assert!(array_type.details.is_some(), "Array type should have details");
+        assert_eq!(
+            array_type.kind, "array",
+            "Array type should have 'array' kind"
+        );
+        assert!(
+            array_type.details.is_some(),
+            "Array type should have details"
+        );
     }
 }
 
@@ -290,13 +320,23 @@ fn test_function_types_in_typecheck_dump() {
     let dump = typecheck_dump_from_source(source);
 
     // Find function type
-    let func_types: Vec<_> = dump.types.iter().filter(|t| t.name.contains("->")).collect();
+    let func_types: Vec<_> = dump
+        .types
+        .iter()
+        .filter(|t| t.name.contains("->"))
+        .collect();
     assert!(func_types.len() > 0, "Should have function type");
 
     // Verify function type has correct kind
     for func_type in func_types {
-        assert_eq!(func_type.kind, "function", "Function type should have 'function' kind");
-        assert!(func_type.details.is_some(), "Function type should have details");
+        assert_eq!(
+            func_type.kind, "function",
+            "Function type should have 'function' kind"
+        );
+        assert!(
+            func_type.details.is_some(),
+            "Function type should have details"
+        );
     }
 }
 
@@ -310,13 +350,9 @@ fn test_typecheck_dump_stability_across_runs() {
     "#;
 
     // Run multiple times to ensure stability
-    let dumps: Vec<_> = (0..5)
-        .map(|_| typecheck_dump_from_source(source))
-        .collect();
+    let dumps: Vec<_> = (0..5).map(|_| typecheck_dump_from_source(source)).collect();
 
-    let jsons: Vec<_> = dumps.iter()
-        .map(|d| d.to_json_string().unwrap())
-        .collect();
+    let jsons: Vec<_> = dumps.iter().map(|d| d.to_json_string().unwrap()).collect();
 
     // All outputs should be identical
     for (i, json) in jsons.iter().enumerate().skip(1) {
@@ -336,7 +372,9 @@ fn test_version_field_is_first_in_json() {
 
     // The version field should appear early in the JSON
     // (This is ensured by serde field ordering)
-    let version_pos = json.find("\"typecheck_version\"").expect("Version field must exist");
+    let version_pos = json
+        .find("\"typecheck_version\"")
+        .expect("Version field must exist");
     let symbols_pos = json.find("\"symbols\"").expect("Symbols field must exist");
 
     assert!(

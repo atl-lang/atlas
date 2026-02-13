@@ -110,12 +110,13 @@ impl Interpreter {
         }
 
         // Check globals
-        self.globals.get(name).cloned().ok_or_else(|| {
-            RuntimeError::UndefinedVariable {
+        self.globals
+            .get(name)
+            .cloned()
+            .ok_or_else(|| RuntimeError::UndefinedVariable {
                 name: name.to_string(),
                 span,
-            }
-        })
+            })
     }
 
     /// Set a variable value
@@ -246,7 +247,10 @@ mod tests {
     #[test]
     fn test_eval_literal() {
         let interp = Interpreter::new();
-        assert_eq!(interp.eval_literal(&Literal::Number(42.0)), Value::Number(42.0));
+        assert_eq!(
+            interp.eval_literal(&Literal::Number(42.0)),
+            Value::Number(42.0)
+        );
         assert_eq!(interp.eval_literal(&Literal::Bool(true)), Value::Bool(true));
         assert_eq!(interp.eval_literal(&Literal::Null), Value::Null);
     }

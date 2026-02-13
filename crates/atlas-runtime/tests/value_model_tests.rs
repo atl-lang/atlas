@@ -273,7 +273,10 @@ fn test_number_string_type_mismatch() {
 
     // This should fail during type checking, not runtime
     // Atlas only allows == between same types
-    assert!(runtime.eval(code).is_err(), "Should reject comparing int and string");
+    assert!(
+        runtime.eval(code).is_err(),
+        "Should reject comparing int and string"
+    );
 }
 
 // ============================================================================
@@ -308,7 +311,10 @@ fn test_array_reference_equality_different_references() {
 
     match runtime.eval(code) {
         Ok(Value::Bool(result)) => {
-            assert!(!result, "Different array references should not be equal even with same contents");
+            assert!(
+                !result,
+                "Different array references should not be equal even with same contents"
+            );
         }
         _ => panic!("Expected Bool(false)"),
     }
@@ -326,7 +332,10 @@ fn test_array_reference_equality_empty_arrays() {
 
     match runtime.eval(code) {
         Ok(Value::Bool(result)) => {
-            assert!(!result, "Different empty array references should not be equal");
+            assert!(
+                !result,
+                "Different empty array references should not be equal"
+            );
         }
         _ => panic!("Expected Bool(false)"),
     }

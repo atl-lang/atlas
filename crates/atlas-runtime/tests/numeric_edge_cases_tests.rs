@@ -37,7 +37,9 @@ fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
 #[rstest]
 #[case::large_integer("let x: number = 9007199254740991;")]
 #[case::negative_large_integer("let x: number = -9007199254740991;")]
-#[case::large_integer_arithmetic("let a: number = 9007199254740991;\nlet b: number = 1;\nlet c: number = a + b;")]
+#[case::large_integer_arithmetic(
+    "let a: number = 9007199254740991;\nlet b: number = 1;\nlet c: number = a + b;"
+)]
 #[case::float_literal("let x: number = 3.14159265358979323846;")]
 #[case::very_small_float("let x: number = 0.0000000001;")]
 #[case::negative_float("let x: number = -3.14159;")]
@@ -77,7 +79,9 @@ fn test_division_and_modulo(#[case] source: &str) {
 
 #[rstest]
 #[case::addition_overflow("let a = 100000000000000000000000000000.0;\nlet b = 100000000000000000000000000000.0;\nlet c = a + b;")]
-#[case::multiplication_overflow("let a = 10000000000000000000.0;\nlet b = 10000000000000000000.0;\nlet c = a * b;")]
+#[case::multiplication_overflow(
+    "let a = 10000000000000000000.0;\nlet b = 10000000000000000000.0;\nlet c = a * b;"
+)]
 fn test_arithmetic_overflow(#[case] source: &str) {
     let _diags = get_all_diagnostics(source);
     // Typechecks fine, runtime would produce infinity
@@ -95,7 +99,9 @@ fn test_subtraction_to_negative() {
 // =============================================================================
 
 #[rstest]
-#[case::zero_comparisons("let a: number = 0;\nlet b: bool = a > 0;\nlet c: bool = a < 0;\nlet d: bool = a == 0;")]
+#[case::zero_comparisons(
+    "let a: number = 0;\nlet b: bool = a > 0;\nlet c: bool = a < 0;\nlet d: bool = a == 0;"
+)]
 #[case::negative_comparison("let a: number = -5;\nlet b: number = 10;\nlet c: bool = a < b;")]
 #[case::float_equality("let a: number = 0.1 + 0.2;\nlet b: number = 0.3;\nlet c: bool = a == b;")]
 fn test_comparisons(#[case] source: &str) {

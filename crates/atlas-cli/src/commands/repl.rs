@@ -80,7 +80,7 @@ pub fn run(use_tui: bool, no_history: bool, config: &crate::config::Config) -> R
                     if let Some(value) = result.value {
                         // Don't print null values
                         if !matches!(value, atlas_runtime::Value::Null) {
-                            println!("{}", value.to_string());
+                            println!("{}", value);
                         }
                     }
                 }

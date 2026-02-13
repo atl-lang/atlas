@@ -229,7 +229,10 @@ impl Compiler {
     }
 
     /// Compile a compound assignment (+=, -=, *=, /=, %=)
-    fn compile_compound_assign(&mut self, compound: &CompoundAssign) -> Result<(), Vec<Diagnostic>> {
+    fn compile_compound_assign(
+        &mut self,
+        compound: &CompoundAssign,
+    ) -> Result<(), Vec<Diagnostic>> {
         match &compound.target {
             AssignTarget::Name(ident) => {
                 // Get current value
@@ -268,7 +271,11 @@ impl Compiler {
                 // Pop the result (statement context)
                 self.bytecode.emit(Opcode::Pop, compound.span);
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 // Get array[index]
                 self.compile_expr(target)?;
                 self.compile_expr(index)?;
@@ -304,9 +311,9 @@ impl Compiler {
                 // Now set it back: need array, index, value
                 self.compile_expr(target)?; // Recompile array again
                 self.compile_expr(index)?; // Recompile index again
-                // Stack is now: [result, array, index]
-                // But we need: [array, index, result]
-                // We need to rotate... but we don't have that opcode
+                                           // Stack is now: [result, array, index]
+                                           // But we need: [array, index, result]
+                                           // We need to rotate... but we don't have that opcode
 
                 // Let's use a different approach with a temp on stack
                 // Actually, this is getting complex. Let me use locals.
@@ -433,7 +440,11 @@ impl Compiler {
                 // Pop the result (statement context)
                 self.bytecode.emit(Opcode::Pop, inc.span);
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 // Same pattern as compound assign for index
                 // Push array, index for SetIndex
                 self.compile_expr(target)?;
@@ -493,7 +504,11 @@ impl Compiler {
                 // Pop the result (statement context)
                 self.bytecode.emit(Opcode::Pop, dec.span);
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 // Same pattern as increment for index
                 // Push array, index for SetIndex
                 self.compile_expr(target)?;

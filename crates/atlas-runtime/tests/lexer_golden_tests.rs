@@ -35,7 +35,11 @@ fn test_lexer_error_files(#[case] filename: &str, #[case] expected_code: &str) {
     let diagnostics = lex_file(filename);
 
     // Verify we got the expected error
-    assert!(!diagnostics.is_empty(), "Expected diagnostics for {}", filename);
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected diagnostics for {}",
+        filename
+    );
     assert!(
         diagnostics.iter().any(|d| d.code == expected_code),
         "Expected error code {} in {}, got: {:?}",
@@ -61,10 +65,17 @@ fn test_diagnostic_stability() {
     let diag1 = lex_file("unterminated_string.atl");
     let diag2 = lex_file("unterminated_string.atl");
 
-    assert_eq!(diag1.len(), diag2.len(), "Diagnostic count should be stable");
+    assert_eq!(
+        diag1.len(),
+        diag2.len(),
+        "Diagnostic count should be stable"
+    );
     for (d1, d2) in diag1.iter().zip(diag2.iter()) {
         assert_eq!(d1.code, d2.code, "Diagnostic codes should be stable");
-        assert_eq!(d1.message, d2.message, "Diagnostic messages should be stable");
+        assert_eq!(
+            d1.message, d2.message,
+            "Diagnostic messages should be stable"
+        );
         assert_eq!(d1.line, d2.line, "Diagnostic lines should be stable");
         assert_eq!(d1.column, d2.column, "Diagnostic columns should be stable");
     }

@@ -125,9 +125,9 @@ impl Parser {
 
     /// Parse grouped expression
     fn parse_group(&mut self) -> Result<Expr, ()> {
-        let start_span = self.consume(TokenKind::LeftParen, "Expected '('")?. span;
+        let start_span = self.consume(TokenKind::LeftParen, "Expected '('")?.span;
         let expr = self.parse_expression()?;
-        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?. span;
+        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
 
         Ok(Expr::Group(GroupExpr {
             expr: Box::new(expr),
@@ -137,7 +137,7 @@ impl Parser {
 
     /// Parse array literal
     fn parse_array_literal(&mut self) -> Result<Expr, ()> {
-        let start_span = self.consume(TokenKind::LeftBracket, "Expected '['")?. span;
+        let start_span = self.consume(TokenKind::LeftBracket, "Expected '['")?.span;
         let mut elements = Vec::new();
 
         if !self.check(TokenKind::RightBracket) {
@@ -149,7 +149,7 @@ impl Parser {
             }
         }
 
-        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?. span;
+        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
 
         Ok(Expr::ArrayLiteral(ArrayLiteral {
             elements,
@@ -205,7 +205,10 @@ impl Parser {
             TokenKind::PipePipe => Precedence::Or,
             TokenKind::AmpAmp => Precedence::And,
             TokenKind::EqualEqual | TokenKind::BangEqual => Precedence::Equality,
-            TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => Precedence::Comparison,
+            TokenKind::Less
+            | TokenKind::LessEqual
+            | TokenKind::Greater
+            | TokenKind::GreaterEqual => Precedence::Comparison,
             TokenKind::Plus | TokenKind::Minus => Precedence::Term,
             TokenKind::Star | TokenKind::Slash | TokenKind::Percent => Precedence::Factor,
             _ => Precedence::Lowest,
@@ -237,7 +240,7 @@ impl Parser {
             }
         }
 
-        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?. span;
+        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
 
         Ok(Expr::Call(CallExpr {
             callee: Box::new(callee),
@@ -251,7 +254,7 @@ impl Parser {
         let target_span = target.span();
         self.consume(TokenKind::LeftBracket, "Expected '['")?;
         let index = self.parse_expression()?;
-        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?. span;
+        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
 
         Ok(Expr::Index(IndexExpr {
             target: Box::new(target),
@@ -277,7 +280,10 @@ impl Parser {
 
         // Handle array type syntax: type[]
         while self.match_token(TokenKind::LeftBracket) {
-            let rbracket_token = self.consume(TokenKind::RightBracket, "Expected ']' after '[' in array type")?;
+            let rbracket_token = self.consume(
+                TokenKind::RightBracket,
+                "Expected ']' after '[' in array type",
+            )?;
             let end_span = rbracket_token.span;
             let full_span = Span::new(span.start, end_span.end);
             type_ref = TypeRef::Array(Box::new(type_ref), full_span);

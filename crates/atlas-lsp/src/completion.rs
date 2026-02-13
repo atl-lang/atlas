@@ -27,9 +27,7 @@ pub fn keyword_completions() -> Vec<CompletionItem> {
             label: "fn".to_string(),
             kind: Some(CompletionItemKind::KEYWORD),
             detail: Some("Function declaration".to_string()),
-            insert_text: Some(
-                "fn ${1:name}(${2:params}) -> ${3:type} {\n\t${4}\n}".to_string(),
-            ),
+            insert_text: Some("fn ${1:name}(${2:params}) -> ${3:type} {\n\t${4}\n}".to_string()),
             insert_text_format: Some(InsertTextFormat::SNIPPET),
             ..Default::default()
         },

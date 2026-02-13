@@ -5,8 +5,8 @@
 //! - Diagnostic normalization produces consistent output
 //! - Same error in different contexts produces same normalized output
 
-use atlas_runtime::{Binder, Lexer, Parser, TypeChecker, DiagnosticLevel};
-use atlas_runtime::diagnostic::{sort_diagnostics, normalizer::normalize_diagnostics_for_testing};
+use atlas_runtime::diagnostic::{normalizer::normalize_diagnostics_for_testing, sort_diagnostics};
+use atlas_runtime::{Binder, DiagnosticLevel, Lexer, Parser, TypeChecker};
 
 /// Helper to get all diagnostics from source code
 fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
@@ -44,14 +44,24 @@ fn test_errors_before_warnings() {
     sort_diagnostics(&mut diags);
 
     // Count errors and warnings
-    let errors: Vec<_> = diags.iter().filter(|d| d.level == DiagnosticLevel::Error).collect();
-    let warnings: Vec<_> = diags.iter().filter(|d| d.level == DiagnosticLevel::Warning).collect();
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    let warnings: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning)
+        .collect();
 
     if !errors.is_empty() && !warnings.is_empty() {
         // Find first warning index
-        let first_warning_idx = diags.iter().position(|d| d.level == DiagnosticLevel::Warning);
+        let first_warning_idx = diags
+            .iter()
+            .position(|d| d.level == DiagnosticLevel::Warning);
         // Find last error index
-        let last_error_idx = diags.iter().rposition(|d| d.level == DiagnosticLevel::Error);
+        let last_error_idx = diags
+            .iter()
+            .rposition(|d| d.level == DiagnosticLevel::Error);
 
         if let (Some(first_warning), Some(last_error)) = (first_warning_idx, last_error_idx) {
             assert!(
@@ -114,7 +124,11 @@ fn test_sort_is_deterministic() {
     sort_diagnostics(&mut diags1);
     sort_diagnostics(&mut diags2);
 
-    assert_eq!(diags1.len(), diags2.len(), "Should have same number of diagnostics");
+    assert_eq!(
+        diags1.len(),
+        diags2.len(),
+        "Should have same number of diagnostics"
+    );
 
     for (d1, d2) in diags1.iter().zip(diags2.iter()) {
         assert_eq!(d1.code, d2.code, "Codes should match");
@@ -164,10 +178,7 @@ fn test_normalization_preserves_special_paths() {
 
     for (i, path) in special_paths.iter().enumerate() {
         if let Some(diag) = normalized.get(i) {
-            assert_eq!(
-                &diag.file, path,
-                "Special path should be preserved"
-            );
+            assert_eq!(&diag.file, path, "Special path should be preserved");
         }
     }
 }
@@ -192,7 +203,10 @@ fn test_normalization_normalizes_related_locations() {
     let normalized = normalize_diagnostics_for_testing(&diags);
 
     for diag in &normalized {
-        assert!(!diag.file.starts_with('/'), "File path should be normalized");
+        assert!(
+            !diag.file.starts_with('/'),
+            "File path should be normalized"
+        );
         for related in &diag.related {
             assert!(
                 !related.file.starts_with('/'),
@@ -222,13 +236,20 @@ fn test_same_error_normalizes_to_same_output() {
     let norm1 = normalize_diagnostics_for_testing(&diags1);
     let norm2 = normalize_diagnostics_for_testing(&diags2);
 
-    assert_eq!(norm1.len(), norm2.len(), "Should have same number of diagnostics");
+    assert_eq!(
+        norm1.len(),
+        norm2.len(),
+        "Should have same number of diagnostics"
+    );
 
     // Compare normalized JSON output
     for (d1, d2) in norm1.iter().zip(norm2.iter()) {
         let json1 = d1.to_json_string().unwrap();
         let json2 = d2.to_json_string().unwrap();
-        assert_eq!(json1, json2, "Normalized diagnostics should produce identical JSON");
+        assert_eq!(
+            json1, json2,
+            "Normalized diagnostics should produce identical JSON"
+        );
     }
 }
 
@@ -251,7 +272,10 @@ fn test_multi_span_diagnostics() {
                 assert!(!related.file.is_empty(), "Related span should have file");
                 assert!(related.line > 0, "Related span should have line");
                 assert!(related.column > 0, "Related span should have column");
-                assert!(!related.message.is_empty(), "Related span should have message");
+                assert!(
+                    !related.message.is_empty(),
+                    "Related span should have message"
+                );
             }
         }
     }

@@ -3,11 +3,11 @@
 //! This demonstrates the new testing approach with ~90% less boilerplate.
 //! Compare with lexer_tests.rs to see the improvement.
 
+use atlas_runtime::diagnostic::Diagnostic;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::token::TokenKind;
-use atlas_runtime::diagnostic::Diagnostic;
-use rstest::rstest;
 use pretty_assertions::assert_eq;
+use rstest::rstest;
 
 // Helper function to reduce boilerplate
 fn lex(source: &str) -> (Vec<atlas_runtime::token::Token>, Vec<Diagnostic>) {

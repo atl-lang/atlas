@@ -1,7 +1,7 @@
 //! Bytecode serialization and deserialization
 
-use crate::value::Value;
 use crate::span::Span;
+use crate::value::Value;
 
 /// Serialize a Value to bytes
 pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
@@ -25,7 +25,7 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         }
         Value::Function(func) => {
             bytes.push(0x04); // Type tag
-            // Serialize function name
+                              // Serialize function name
             let name_bytes = func.name.as_bytes();
             bytes.extend_from_slice(&(name_bytes.len() as u32).to_be_bytes());
             bytes.extend_from_slice(name_bytes);

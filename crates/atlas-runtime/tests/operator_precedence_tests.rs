@@ -54,8 +54,5 @@ fn test_operator_precedence(#[case] name: &str, #[case] source: &str) {
 
     // Snapshot the first statement's expression
     assert_eq!(program.items.len(), 1, "Should have one statement");
-    insta::assert_yaml_snapshot!(
-        format!("precedence_{}", name),
-        program.items[0]
-    );
+    insta::assert_yaml_snapshot!(format!("precedence_{}", name), program.items[0]);
 }

@@ -71,11 +71,12 @@ impl Atlas {
         // For REPL-style usage, if the source doesn't end with a semicolon,
         // treat it as an expression statement by appending one
         let source = source.trim();
-        let source_with_semi = if !source.is_empty() && !source.ends_with(';') && !source.ends_with('}') {
-            format!("{};", source)
-        } else {
-            source.to_string()
-        };
+        let source_with_semi =
+            if !source.is_empty() && !source.ends_with(';') && !source.ends_with('}') {
+                format!("{};", source)
+            } else {
+                source.to_string()
+            };
 
         // Lex the source code
         let mut lexer = Lexer::new(&source_with_semi);
@@ -160,9 +161,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
 
     let (code, message) = match &error {
         RuntimeError::DivideByZero { .. } => ("AT0005", "Divide by zero".to_string()),
-        RuntimeError::OutOfBounds { .. } => {
-            ("AT0006", "Array index out of bounds".to_string())
-        }
+        RuntimeError::OutOfBounds { .. } => ("AT0006", "Array index out of bounds".to_string()),
         RuntimeError::InvalidNumericResult { .. } => (
             "AT0007",
             "Invalid numeric result (NaN or Infinity)".to_string(),
@@ -183,9 +182,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
             ("AT0002", format!("Unknown function: {}", name))
         }
         // VM-specific errors
-        RuntimeError::UnknownOpcode { .. } => {
-            ("AT9998", "Unknown bytecode opcode".to_string())
-        }
+        RuntimeError::UnknownOpcode { .. } => ("AT9998", "Unknown bytecode opcode".to_string()),
         RuntimeError::StackUnderflow { .. } => ("AT9997", "Stack underflow".to_string()),
     };
 

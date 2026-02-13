@@ -395,15 +395,14 @@ mod tests {
 
     #[test]
     fn test_related_locations() {
-        let diag = Diagnostic::error("test", Span::new(0, 1)).with_related_location(
-            RelatedLocation {
+        let diag =
+            Diagnostic::error("test", Span::new(0, 1)).with_related_location(RelatedLocation {
                 file: "other.atlas".to_string(),
                 line: 5,
                 column: 10,
                 length: 3,
                 message: "defined here".to_string(),
-            },
-        );
+            });
 
         assert_eq!(diag.related.len(), 1);
         assert_eq!(diag.related[0].file, "other.atlas");

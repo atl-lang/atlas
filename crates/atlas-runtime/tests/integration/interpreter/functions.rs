@@ -86,8 +86,14 @@ fn test_function_nested_calls() {
 }
 
 #[rstest]
-#[case("fn add(a: number, b: number) -> number { return a + b; } add(5)", "AT3005")]
-#[case("fn add(a: number, b: number) -> number { return a + b; } add(1, 2, 3)", "AT3005")]
+#[case(
+    "fn add(a: number, b: number) -> number { return a + b; } add(5)",
+    "AT3005"
+)]
+#[case(
+    "fn add(a: number, b: number) -> number { return a + b; } add(1, 2, 3)",
+    "AT3005"
+)]
 fn test_function_wrong_arity(#[case] code: &str, #[case] error_code: &str) {
     assert_error_code(code, error_code);
 }

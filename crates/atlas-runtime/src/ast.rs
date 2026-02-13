@@ -137,11 +137,11 @@ pub enum AssignTarget {
 /// Compound assignment operators
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum CompoundOp {
-    AddAssign,    // +=
-    SubAssign,    // -=
-    MulAssign,    // *=
-    DivAssign,    // /=
-    ModAssign,    // %=
+    AddAssign, // +=
+    SubAssign, // -=
+    MulAssign, // *=
+    DivAssign, // /=
+    ModAssign, // %=
 }
 
 /// Compound assignment statement (+=, -=, *=, /=, %=)

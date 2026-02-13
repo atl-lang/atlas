@@ -75,11 +75,7 @@ fn print_diagnostics(
 }
 
 /// Format a diagnostic for display
-fn format_diagnostic(
-    diag: &atlas_runtime::Diagnostic,
-    _source: &str,
-    file_path: &str,
-) -> String {
+fn format_diagnostic(diag: &atlas_runtime::Diagnostic, _source: &str, file_path: &str) -> String {
     use atlas_runtime::DiagnosticLevel;
 
     let level_str = match diag.level {

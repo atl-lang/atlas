@@ -178,10 +178,8 @@ impl Parser {
     /// Record an error
     pub(super) fn error(&mut self, message: &str) {
         let span = self.peek().span;
-        self.diagnostics.push(
-            Diagnostic::error_with_code("AT1000", message, span)
-                .with_label("syntax error"),
-        );
+        self.diagnostics
+            .push(Diagnostic::error_with_code("AT1000", message, span).with_label("syntax error"));
     }
 
     /// Check if a token kind is a reserved keyword
@@ -230,7 +228,10 @@ impl Parser {
         } else if current.kind == TokenKind::Identifier {
             Ok(self.advance())
         } else {
-            self.error(&format!("Expected {} but found {:?}", context, current.kind));
+            self.error(&format!(
+                "Expected {} but found {:?}",
+                context, current.kind
+            ));
             Err(())
         }
     }
@@ -409,8 +410,10 @@ mod tests {
     fn test_recovery_missing_semicolon() {
         let (_program, diagnostics) = parse_source("let x = 42\nlet y = 10;");
         assert!(diagnostics.len() >= 1);
-        assert!(diagnostics[0].message.contains("Expected ';'")
-            || diagnostics[0].message.contains("Expected"));
+        assert!(
+            diagnostics[0].message.contains("Expected ';'")
+                || diagnostics[0].message.contains("Expected")
+        );
     }
 
     #[test]
@@ -418,7 +421,9 @@ mod tests {
         let source = "fn test() {\n    let x = 42;\n\nfn other() { }";
         let (_program, diagnostics) = parse_source(source);
         assert!(diagnostics.len() >= 1);
-        let has_brace_error = diagnostics.iter().any(|d| d.message.contains("Expected '}'"));
+        let has_brace_error = diagnostics
+            .iter()
+            .any(|d| d.message.contains("Expected '}'"));
         assert!(has_brace_error, "Expected missing brace error");
     }
 
@@ -435,15 +440,21 @@ mod tests {
         let source = "let x = ;\nlet y = 42;";
         let (_program, diagnostics) = parse_source(source);
         assert!(diagnostics.len() >= 1);
-        assert!(diagnostics[0].message.contains("Expected expression")
-            || diagnostics[0].message.contains("Expected '='"));
+        assert!(
+            diagnostics[0].message.contains("Expected expression")
+                || diagnostics[0].message.contains("Expected '='")
+        );
     }
 
     #[test]
     fn test_recovery_multiple_errors() {
         let source = "let x = ;\nlet y = ;\nlet z = 99;";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1, "Expected at least 1 error, got {}", diagnostics.len());
+        assert!(
+            diagnostics.len() >= 1,
+            "Expected at least 1 error, got {}",
+            diagnostics.len()
+        );
     }
 
     #[test]
@@ -459,8 +470,9 @@ mod tests {
         let source = "fn test() {\n    if (true) {\n        let x = ;\n    }\n    let y = 42;\n}";
         let (_program, diagnostics) = parse_source(source);
         assert!(diagnostics.len() >= 1);
-        assert!(diagnostics.iter().any(|d| d.message.contains("Expected expression")
-            || d.message.contains("Expected")));
+        assert!(diagnostics
+            .iter()
+            .any(|d| d.message.contains("Expected expression") || d.message.contains("Expected")));
     }
 
     #[test]
@@ -468,8 +480,10 @@ mod tests {
         let source = "fn test(x: number y: number) { }";
         let (_program, diagnostics) = parse_source(source);
         assert!(diagnostics.len() >= 1);
-        assert!(diagnostics[0].message.contains("Expected ')'")
-            || diagnostics[0].message.contains("Expected"));
+        assert!(
+            diagnostics[0].message.contains("Expected ')'")
+                || diagnostics[0].message.contains("Expected")
+        );
     }
 
     #[test]

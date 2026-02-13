@@ -176,10 +176,7 @@ pub fn run() -> Result<()> {
 }
 
 /// Run the application main loop
-fn run_app<B: ratatui::backend::Backend>(
-    terminal: &mut Terminal<B>,
-    app: &mut App,
-) -> Result<()> {
+fn run_app<B: ratatui::backend::Backend>(terminal: &mut Terminal<B>, app: &mut App) -> Result<()> {
     loop {
         terminal.draw(|f| ui(f, app))?;
 
@@ -203,9 +200,9 @@ fn ui(f: &mut Frame, app: &App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(1),      // History
-            Constraint::Length(3),   // Input
-            Constraint::Length(1),   // Status bar
+            Constraint::Min(1),    // History
+            Constraint::Length(3), // Input
+            Constraint::Length(1), // Status bar
         ])
         .split(f.area());
 
@@ -218,7 +215,12 @@ fn ui(f: &mut Frame, app: &App) {
 
             // Input line (in cyan)
             items.push(ListItem::new(Line::from(vec![
-                Span::styled(">> ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+                Span::styled(
+                    ">> ",
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
+                ),
                 Span::raw(&item.input),
             ])));
 
@@ -239,13 +241,12 @@ fn ui(f: &mut Frame, app: &App) {
         })
         .collect();
 
-    let history_widget = List::new(history_items)
-        .block(
-            Block::default()
-                .title("History")
-                .borders(Borders::ALL)
-                .border_style(Style::default().fg(Color::White)),
-        );
+    let history_widget = List::new(history_items).block(
+        Block::default()
+            .title("History")
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White)),
+    );
 
     f.render_widget(history_widget, chunks[0]);
 
@@ -280,8 +281,7 @@ fn ui(f: &mut Frame, app: &App) {
     f.render_widget(input_widget, chunks[1]);
 
     // Status bar
-    let status_widget = Paragraph::new(app.status.as_str())
-        .style(Style::default().fg(Color::Gray));
+    let status_widget = Paragraph::new(app.status.as_str()).style(Style::default().fg(Color::Gray));
 
     f.render_widget(status_widget, chunks[2]);
 }

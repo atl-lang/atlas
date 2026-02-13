@@ -257,7 +257,9 @@ fn test_array_indexing_errors(#[case] source: &str) {
 #[case::same_type("let x = [1, 2, 3]; x[0] = 10;")]
 #[case::string_array(r#"let x = ["a", "b", "c"]; x[1] = "world";"#)]
 #[case::nested_array("let x = [[1, 2], [3, 4]]; x[0][1] = 99;")]
-#[case::array_chain("let arr = [1, 2, 3]; let idx: number = 1; let val = arr[idx] + arr[0]; arr[2] = val;")]
+#[case::array_chain(
+    "let arr = [1, 2, 3]; let idx: number = 1; let val = arr[idx] + arr[0]; arr[2] = val;"
+)]
 fn test_array_element_assignment(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
@@ -277,7 +279,9 @@ fn test_array_assignment_errors(#[case] source: &str) {
 
 #[rstest]
 #[case::function_arithmetic(r#"fn add(a: number, b: number) -> number { return a + b; }"#)]
-#[case::conditional_operators(r#"let x: number = 5; let y: number = 10; if (x < y && y > 0) { let z = x + y; }"#)]
+#[case::conditional_operators(
+    r#"let x: number = 5; let y: number = 10; if (x < y && y > 0) { let z = x + y; }"#
+)]
 #[case::loop_operators(r#"let i: number = 0; while (i < 10) { let x = i + 1; }"#)]
 fn test_operators_in_context(#[case] source: &str) {
     let diagnostics = typecheck_source(source);

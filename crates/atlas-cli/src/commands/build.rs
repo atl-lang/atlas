@@ -2,8 +2,7 @@
 
 use anyhow::{Context, Result};
 use atlas_runtime::{
-    bytecode::disassemble,
-    Binder, Bytecode, Compiler, Lexer, Parser, TypeChecker,
+    bytecode::disassemble, Binder, Bytecode, Compiler, Lexer, Parser, TypeChecker,
 };
 use std::fs;
 use std::path::Path;

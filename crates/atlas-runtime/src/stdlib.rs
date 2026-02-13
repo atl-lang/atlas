@@ -225,8 +225,11 @@ mod tests {
     #[test]
     fn test_print_rejects_array() {
         // print() should reject arrays per spec
-        let result =
-            call_builtin("print", &[Value::array(vec![Value::Number(1.0)])], Span::dummy());
+        let result = call_builtin(
+            "print",
+            &[Value::array(vec![Value::Number(1.0)])],
+            Span::dummy(),
+        );
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -246,8 +249,7 @@ mod tests {
     #[test]
     fn test_str_rejects_string() {
         // str() should only accept number|bool|null, not strings
-        let result =
-            call_builtin("str", &[Value::string("already a string")], Span::dummy());
+        let result = call_builtin("str", &[Value::string("already a string")], Span::dummy());
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -258,7 +260,11 @@ mod tests {
     #[test]
     fn test_str_rejects_array() {
         // str() should only accept number|bool|null, not arrays
-        let result = call_builtin("str", &[Value::array(vec![Value::Number(1.0)])], Span::dummy());
+        let result = call_builtin(
+            "str",
+            &[Value::array(vec![Value::Number(1.0)])],
+            Span::dummy(),
+        );
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),

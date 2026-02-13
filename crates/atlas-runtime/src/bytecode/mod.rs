@@ -134,7 +134,11 @@ impl Bytecode {
         // Header
         bytes.extend_from_slice(b"ATB\0"); // Magic number
         bytes.extend_from_slice(&BYTECODE_VERSION.to_be_bytes()); // Version
-        let flags = if self.debug_info.is_empty() { 0u16 } else { 1u16 };
+        let flags = if self.debug_info.is_empty() {
+            0u16
+        } else {
+            1u16
+        };
         bytes.extend_from_slice(&flags.to_be_bytes()); // Flags
 
         // Constants section
@@ -392,7 +396,7 @@ mod tests {
         bytecode.emit_i16(100);
         assert_eq!(bytecode.instructions.len(), 3);
         assert_eq!(bytecode.instructions[0], 0x50); // Jump opcode
-        // 100 as i16 -> u16 -> bytes
+                                                    // 100 as i16 -> u16 -> bytes
         assert_eq!(bytecode.instructions[1], 0x00);
         assert_eq!(bytecode.instructions[2], 0x64);
     }
@@ -588,8 +592,10 @@ mod tests {
         assert_eq!(bytecode.instructions.len(), 7); // Constant + u16 + Constant + u16 + Halt
 
         // Verify the constant references in bytecode
-        let idx1_bytes = ((bytecode.instructions[1] as u16) << 8) | (bytecode.instructions[2] as u16);
-        let idx2_bytes = ((bytecode.instructions[4] as u16) << 8) | (bytecode.instructions[5] as u16);
+        let idx1_bytes =
+            ((bytecode.instructions[1] as u16) << 8) | (bytecode.instructions[2] as u16);
+        let idx2_bytes =
+            ((bytecode.instructions[4] as u16) << 8) | (bytecode.instructions[5] as u16);
 
         assert_eq!(idx1_bytes, num_idx);
         assert_eq!(idx2_bytes, str_idx);
@@ -930,7 +936,11 @@ mod tests {
 
         // Check header flags (bytes 6-7)
         let flags = u16::from_be_bytes([bytes[6], bytes[7]]);
-        assert_eq!(flags & 1, 1, "Bit 0 should be set when debug info is present");
+        assert_eq!(
+            flags & 1,
+            1,
+            "Bit 0 should be set when debug info is present"
+        );
     }
 
     #[test]
@@ -946,7 +956,11 @@ mod tests {
 
         // Check header flags (bytes 6-7)
         let flags = u16::from_be_bytes([bytes[6], bytes[7]]);
-        assert_eq!(flags & 1, 0, "Bit 0 should be clear when debug info is absent");
+        assert_eq!(
+            flags & 1,
+            0,
+            "Bit 0 should be clear when debug info is absent"
+        );
     }
 
     #[test]
@@ -1074,7 +1088,10 @@ mod tests {
 
         // Version: u16 (bytes 4-5)
         let version = u16::from_be_bytes([bytes[4], bytes[5]]);
-        assert_eq!(version, BYTECODE_VERSION, "Version should match BYTECODE_VERSION");
+        assert_eq!(
+            version, BYTECODE_VERSION,
+            "Version should match BYTECODE_VERSION"
+        );
 
         // Flags: u16 (bytes 6-7)
         let flags = u16::from_be_bytes([bytes[6], bytes[7]]);
@@ -1095,10 +1112,16 @@ mod tests {
         assert_eq!(u16::from_be_bytes([bytes[6], bytes[7]]), 0); // No debug info
 
         // Constants count (4 bytes) = 0
-        assert_eq!(u32::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]), 0);
+        assert_eq!(
+            u32::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]),
+            0
+        );
 
         // Instructions length (4 bytes) = 1
-        assert_eq!(u32::from_be_bytes([bytes[12], bytes[13], bytes[14], bytes[15]]), 1);
+        assert_eq!(
+            u32::from_be_bytes([bytes[12], bytes[13], bytes[14], bytes[15]]),
+            1
+        );
 
         // Halt opcode
         assert_eq!(bytes[16], Opcode::Halt as u8);
@@ -1122,7 +1145,12 @@ mod tests {
         let mut offset = 8;
 
         // Constants count should be 4
-        let const_count = u32::from_be_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]]);
+        let const_count = u32::from_be_bytes([
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
+        ]);
         assert_eq!(const_count, 4);
         offset += 4;
 
@@ -1131,8 +1159,14 @@ mod tests {
         assert_eq!(bytes[offset], 0x02); // Number tag
         offset += 1;
         let num = f64::from_be_bytes([
-            bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3],
-            bytes[offset + 4], bytes[offset + 5], bytes[offset + 6], bytes[offset + 7],
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
+            bytes[offset + 4],
+            bytes[offset + 5],
+            bytes[offset + 6],
+            bytes[offset + 7],
         ]);
         assert_eq!(num, 42.0);
         offset += 8;
@@ -1140,7 +1174,12 @@ mod tests {
         // Constant 1: String (tag 0x03 + u32 len + bytes)
         assert_eq!(bytes[offset], 0x03); // String tag
         offset += 1;
-        let str_len = u32::from_be_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]]) as usize;
+        let str_len = u32::from_be_bytes([
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
+        ]) as usize;
         assert_eq!(str_len, 5);
         offset += 4;
         assert_eq!(&bytes[offset..offset + 5], b"hello");
@@ -1286,7 +1325,7 @@ mod tests {
             b"XTB\0", // Wrong first byte
             b"AXB\0", // Wrong second byte
             b"ATX\0", // Wrong third byte
-            b"ATB1", // Wrong fourth byte (should be null)
+            b"ATB1",  // Wrong fourth byte (should be null)
             b"atb\0", // Wrong case
         ];
 
@@ -1323,7 +1362,7 @@ mod tests {
         bytes.extend_from_slice(&BYTECODE_VERSION.to_be_bytes());
         bytes.extend_from_slice(&0u16.to_be_bytes());
         bytes.extend_from_slice(&2u32.to_be_bytes()); // Claims 2 constants
-        // But no constant data follows
+                                                      // But no constant data follows
 
         let result = Bytecode::from_bytes(&bytes);
         assert!(result.is_err());

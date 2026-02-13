@@ -6,7 +6,6 @@ use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::token::{Token, TokenKind};
 
-
 mod literals;
 
 /// Lexer state for tokenizing source code
@@ -244,10 +243,14 @@ impl Lexer {
                             };
                             let snippet = self.get_line_snippet(comment_start_line);
                             self.diagnostics.push(
-                                Diagnostic::error_with_code("AT1004", "Unterminated multi-line comment", span)
-                                    .with_line(comment_start_line as usize)
-                                    .with_snippet(snippet)
-                                    .with_label("comment starts here"),
+                                Diagnostic::error_with_code(
+                                    "AT1004",
+                                    "Unterminated multi-line comment",
+                                    span,
+                                )
+                                .with_line(comment_start_line as usize)
+                                .with_snippet(snippet)
+                                .with_label("comment starts here"),
                             );
                         }
                     } else {
@@ -260,9 +263,7 @@ impl Lexer {
     }
 
     /// Scan a string literal
-
     // === Character navigation ===
-
     /// Advance to next character and return it
     pub(super) fn advance(&mut self) -> char {
         let c = self.chars[self.current];
@@ -820,7 +821,9 @@ mod tests {
         // Should have diagnostic for unterminated comment
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].code, "AT1004");
-        assert!(diagnostics[0].message.contains("Unterminated multi-line comment"));
+        assert!(diagnostics[0]
+            .message
+            .contains("Unterminated multi-line comment"));
     }
 
     #[test]
@@ -902,7 +905,11 @@ mod tests {
             let (_, diagnostics) = lexer.tokenize();
 
             assert!(diagnostics.len() >= 1, "Expected error for: {}", source);
-            assert_eq!(diagnostics[0].code, expected_code, "Wrong code for: {}", source);
+            assert_eq!(
+                diagnostics[0].code, expected_code,
+                "Wrong code for: {}",
+                source
+            );
         }
     }
 }

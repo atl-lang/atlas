@@ -2,7 +2,7 @@
 
 use atlas_lsp::server::AtlasLspServer;
 use tower_lsp::lsp_types::*;
-use tower_lsp::{LspService, LanguageServer};
+use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_keyword_completions() {

@@ -2,7 +2,7 @@
 
 use atlas_lsp::server::AtlasLspServer;
 use tower_lsp::lsp_types::*;
-use tower_lsp::{LspService, LanguageServer};
+use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_full_workflow_with_diagnostics_and_completion() {
@@ -249,7 +249,7 @@ async fn test_out_of_bounds_positions() {
         text_document_position_params: TextDocumentPositionParams {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
-                line: 100,    // Way past end of document
+                line: 100, // Way past end of document
                 character: 50,
             },
         },
@@ -327,7 +327,11 @@ async fn test_empty_file_all_operations() {
         partial_result_params: PartialResultParams::default(),
         context: None,
     };
-    assert!(server.completion(completion_params).await.unwrap().is_some());
+    assert!(server
+        .completion(completion_params)
+        .await
+        .unwrap()
+        .is_some());
 
     let symbol_params = DocumentSymbolParams {
         text_document: TextDocumentIdentifier { uri: uri.clone() },

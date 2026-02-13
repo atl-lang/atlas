@@ -19,7 +19,7 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
         Ok(value) => {
             // Print the result value if it's not null
             if !matches!(value, atlas_runtime::Value::Null) {
-                println!("{}", value.to_string());
+                println!("{}", value);
             }
             Ok(())
         }

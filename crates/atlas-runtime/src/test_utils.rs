@@ -25,8 +25,8 @@ pub fn diagnostics_to_json_string(diagnostics: &[Diagnostic]) -> Result<String, 
 /// Compare diagnostics JSON output for testing
 pub fn assert_diagnostics_match_json(actual: &[Diagnostic], expected_json: &str) {
     let normalized = normalize_for_golden_test(actual);
-    let actual_json = diagnostics_to_json_string(&normalized)
-        .expect("Failed to serialize diagnostics to JSON");
+    let actual_json =
+        diagnostics_to_json_string(&normalized).expect("Failed to serialize diagnostics to JSON");
 
     // Normalize whitespace for comparison
     let actual_parsed: serde_json::Value =

@@ -89,7 +89,7 @@ impl Compiler {
         self.bytecode.emit(Opcode::Halt, Span::dummy());
 
         // Take ownership of the bytecode
-        let mut bytecode = std::mem::replace(&mut self.bytecode, Bytecode::new());
+        let mut bytecode = std::mem::take(&mut self.bytecode);
 
         // Apply optimization if enabled
         if let Some(ref optimizer) = self.optimizer {
@@ -115,7 +115,7 @@ impl Compiler {
             name: func.name.name.clone(),
             arity: func.params.len(),
             bytecode_offset: 0, // Placeholder - will be updated after Jump
-            local_count: 0, // Will be updated after compiling body
+            local_count: 0,     // Will be updated after compiling body
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
 
@@ -125,7 +125,9 @@ impl Compiler {
         self.bytecode.emit_u16(const_idx);
 
         // Store function as a global variable (so it can be called)
-        let name_idx = self.bytecode.add_constant(crate::value::Value::string(&func.name.name));
+        let name_idx = self
+            .bytecode
+            .add_constant(crate::value::Value::string(&func.name.name));
         self.bytecode.emit(Opcode::SetGlobal, func.span);
         self.bytecode.emit_u16(name_idx);
         self.bytecode.emit(Opcode::Pop, func.span);
@@ -427,18 +429,26 @@ mod tests {
         // Should have instructions for function definition
         assert!(bytecode.instructions.len() > 0);
         // Should have function in constants
-        let has_function = bytecode.constants.iter().any(|c| matches!(c, Value::Function(_)));
+        let has_function = bytecode
+            .constants
+            .iter()
+            .any(|c| matches!(c, Value::Function(_)));
         assert!(has_function, "Should have function in constants");
     }
 
     #[test]
     fn test_compile_function_call_user_defined() {
-        let bytecode = compile_source(r#"
+        let bytecode = compile_source(
+            r#"
             fn double(x: number) -> number { return x * 2; }
             double(21);
-        "#);
+        "#,
+        );
         // Should have Call opcode
-        let has_call = bytecode.instructions.iter().any(|&b| b == Opcode::Call as u8);
+        let has_call = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Call as u8);
         assert!(has_call, "Should have Call opcode");
     }
 
@@ -446,7 +456,10 @@ mod tests {
     fn test_compile_array_index_assignment() {
         let bytecode = compile_source("let arr = [1, 2, 3]; arr[0] = 42;");
         // Should have SetIndex opcode
-        let has_setindex = bytecode.instructions.iter().any(|&b| b == Opcode::SetIndex as u8);
+        let has_setindex = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::SetIndex as u8);
         assert!(has_setindex, "Should have SetIndex opcode");
     }
 
@@ -454,7 +467,10 @@ mod tests {
     fn test_compile_compound_assignment_add() {
         let bytecode = compile_source("let x = 10; x += 5;");
         // Should have GetGlobal, Constant(5), Add, SetGlobal
-        let add_pos = bytecode.instructions.iter().position(|&b| b == Opcode::Add as u8);
+        let add_pos = bytecode
+            .instructions
+            .iter()
+            .position(|&b| b == Opcode::Add as u8);
         assert!(add_pos.is_some(), "Should have Add opcode for +=");
     }
 
@@ -462,7 +478,10 @@ mod tests {
     fn test_compile_increment() {
         let bytecode = compile_source("let x = 5; x++;");
         // Should have GetGlobal, Constant(1), Add, SetGlobal
-        let add_pos = bytecode.instructions.iter().position(|&b| b == Opcode::Add as u8);
+        let add_pos = bytecode
+            .instructions
+            .iter()
+            .position(|&b| b == Opcode::Add as u8);
         assert!(add_pos.is_some(), "Should have Add opcode for ++");
     }
 
@@ -470,7 +489,10 @@ mod tests {
     fn test_compile_decrement() {
         let bytecode = compile_source("let x = 5; x--;");
         // Should have GetGlobal, Constant(1), Sub, SetGlobal
-        let sub_pos = bytecode.instructions.iter().position(|&b| b == Opcode::Sub as u8);
+        let sub_pos = bytecode
+            .instructions
+            .iter()
+            .position(|&b| b == Opcode::Sub as u8);
         assert!(sub_pos.is_some(), "Should have Sub opcode for --");
     }
 
@@ -478,8 +500,14 @@ mod tests {
     fn test_compile_short_circuit_and() {
         let bytecode = compile_source("let result = false && true;");
         // Should have Dup and JumpIfFalse for short-circuit
-        let has_dup = bytecode.instructions.iter().any(|&b| b == Opcode::Dup as u8);
-        let has_jump = bytecode.instructions.iter().any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_dup = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Dup as u8);
+        let has_jump = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::JumpIfFalse as u8);
         assert!(has_dup, "Should have Dup for short-circuit");
         assert!(has_jump, "Should have JumpIfFalse for short-circuit");
     }
@@ -488,9 +516,18 @@ mod tests {
     fn test_compile_short_circuit_or() {
         let bytecode = compile_source("let result = true || false;");
         // Should have Dup, Not, and JumpIfFalse for short-circuit
-        let has_dup = bytecode.instructions.iter().any(|&b| b == Opcode::Dup as u8);
-        let has_not = bytecode.instructions.iter().any(|&b| b == Opcode::Not as u8);
-        let has_jump = bytecode.instructions.iter().any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_dup = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Dup as u8);
+        let has_not = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Not as u8);
+        let has_jump = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::JumpIfFalse as u8);
         assert!(has_dup, "Should have Dup for short-circuit");
         assert!(has_not, "Should have Not for || short-circuit");
         assert!(has_jump, "Should have JumpIfFalse for short-circuit");
@@ -500,7 +537,10 @@ mod tests {
     fn test_compile_return_statement() {
         let bytecode = compile_source("fn test() -> number { return 42; }");
         // Should have Return opcode
-        let has_return = bytecode.instructions.iter().any(|&b| b == Opcode::Return as u8);
+        let has_return = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Return as u8);
         assert!(has_return, "Should have Return opcode");
     }
 
@@ -562,10 +602,19 @@ mod tests {
         assert!(bytecode.constants.len() >= 4);
 
         // Verify we have number and string constants
-        let has_number = bytecode.constants.iter().any(|c| matches!(c, Value::Number(_)));
-        let has_string = bytecode.constants.iter().any(|c| matches!(c, Value::String(_)));
+        let has_number = bytecode
+            .constants
+            .iter()
+            .any(|c| matches!(c, Value::Number(_)));
+        let has_string = bytecode
+            .constants
+            .iter()
+            .any(|c| matches!(c, Value::String(_)));
         assert!(has_number, "Should have number constants");
-        assert!(has_string, "Should have string constants for variable names");
+        assert!(
+            has_string,
+            "Should have string constants for variable names"
+        );
     }
 
     #[test]
@@ -688,11 +737,17 @@ mod tests {
         let bytecode = compile_source("let x = 42;");
 
         // Debug info should not be empty
-        assert!(!bytecode.debug_info.is_empty(), "Debug info should be present by default");
+        assert!(
+            !bytecode.debug_info.is_empty(),
+            "Debug info should be present by default"
+        );
 
         // Should have debug info for each emitted opcode
         // At minimum: Constant, SetGlobal, Pop, Halt
-        assert!(bytecode.debug_info.len() >= 3, "Should have debug spans for multiple instructions");
+        assert!(
+            bytecode.debug_info.len() >= 3,
+            "Should have debug spans for multiple instructions"
+        );
     }
 
     #[test]
@@ -701,12 +756,17 @@ mod tests {
         let bytecode = compile_source("1 + 2 * 3;");
 
         // Should have debug info for: Constant(1), Constant(2), Constant(3), Mul, Add, Pop, Halt
-        assert!(bytecode.debug_info.len() >= 5, "Expression should generate debug info");
+        assert!(
+            bytecode.debug_info.len() >= 5,
+            "Expression should generate debug info"
+        );
 
         // Verify all debug spans have valid instruction offsets
         for debug_span in &bytecode.debug_info {
-            assert!(debug_span.instruction_offset < bytecode.instructions.len(),
-                    "Debug span offset should be within instruction bounds");
+            assert!(
+                debug_span.instruction_offset < bytecode.instructions.len(),
+                "Debug span offset should be within instruction bounds"
+            );
         }
     }
 
@@ -716,10 +776,16 @@ mod tests {
         let bytecode = compile_source("if (true) { 42; }");
 
         // Should have debug info for: True, JumpIfFalse, Constant, Pop, Halt
-        assert!(bytecode.debug_info.len() >= 3, "Control flow should generate debug info");
+        assert!(
+            bytecode.debug_info.len() >= 3,
+            "Control flow should generate debug info"
+        );
 
         // Check that we have a JumpIfFalse instruction with debug info
-        let has_jump = bytecode.instructions.iter().any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_jump = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::JumpIfFalse as u8);
         assert!(has_jump, "Should have JumpIfFalse instruction");
     }
 
@@ -729,10 +795,16 @@ mod tests {
         let bytecode = compile_source("while (true) { 1; }");
 
         // Should have debug info for loop instructions (True, JumpIfFalse, Constant, Pop, Loop, ...)
-        assert!(bytecode.debug_info.len() >= 4, "Loops should generate debug info");
+        assert!(
+            bytecode.debug_info.len() >= 4,
+            "Loops should generate debug info"
+        );
 
         // Verify we have Loop opcode with debug info
-        let has_loop = bytecode.instructions.iter().any(|&b| b == Opcode::Loop as u8);
+        let has_loop = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Loop as u8);
         assert!(has_loop, "Should have Loop instruction");
     }
 
@@ -742,10 +814,16 @@ mod tests {
         let bytecode = compile_source("[1, 2, 3];");
 
         // Should have debug info for: Constant(1), Constant(2), Constant(3), Array, Pop, Halt
-        assert!(bytecode.debug_info.len() >= 4, "Array operations should generate debug info");
+        assert!(
+            bytecode.debug_info.len() >= 4,
+            "Array operations should generate debug info"
+        );
 
         // Verify we have Array opcode
-        let has_array = bytecode.instructions.iter().any(|&b| b == Opcode::Array as u8);
+        let has_array = bytecode
+            .instructions
+            .iter()
+            .any(|&b| b == Opcode::Array as u8);
         assert!(has_array, "Should have Array instruction");
     }
 
@@ -755,13 +833,17 @@ mod tests {
         let bytecode = compile_source("let x = 1 + 2;");
 
         // Count non-dummy spans (dummy spans have start == end == 0)
-        let non_dummy_count = bytecode.debug_info.iter()
+        let non_dummy_count = bytecode
+            .debug_info
+            .iter()
             .filter(|ds| ds.span.start != 0 || ds.span.end != 0)
             .count();
 
         // Most spans should be real (only Halt uses Span::dummy())
-        assert!(non_dummy_count >= bytecode.debug_info.len() - 1,
-                "Most debug spans should have real source positions");
+        assert!(
+            non_dummy_count >= bytecode.debug_info.len() - 1,
+            "Most debug spans should have real source positions"
+        );
     }
 
     #[test]
@@ -776,7 +858,11 @@ mod tests {
         let flags = u16::from_be_bytes([bytes[6], bytes[7]]);
 
         // Bit 0 should be set (debug info present)
-        assert_eq!(flags & 1, 1, "Debug info flag should be set in serialized bytecode");
+        assert_eq!(
+            flags & 1,
+            1,
+            "Debug info flag should be set in serialized bytecode"
+        );
     }
 
     #[test]
@@ -785,22 +871,34 @@ mod tests {
         let bytecode = compile_source("let x = 10; x + 5;");
 
         let original_debug_count = bytecode.debug_info.len();
-        assert!(original_debug_count > 0, "Should have debug info before serialization");
+        assert!(
+            original_debug_count > 0,
+            "Should have debug info before serialization"
+        );
 
         // Serialize and deserialize
         let bytes = bytecode.to_bytes();
         let loaded = Bytecode::from_bytes(&bytes).expect("Deserialization should succeed");
 
         // Debug info should be preserved
-        assert_eq!(loaded.debug_info.len(), original_debug_count,
-                   "Debug info count should match after roundtrip");
+        assert_eq!(
+            loaded.debug_info.len(),
+            original_debug_count,
+            "Debug info count should match after roundtrip"
+        );
 
         // Verify each debug span matches
         for (i, debug_span) in loaded.debug_info.iter().enumerate() {
-            assert_eq!(debug_span.instruction_offset, bytecode.debug_info[i].instruction_offset,
-                       "Instruction offset should match for debug span {}", i);
-            assert_eq!(debug_span.span, bytecode.debug_info[i].span,
-                       "Span should match for debug span {}", i);
+            assert_eq!(
+                debug_span.instruction_offset, bytecode.debug_info[i].instruction_offset,
+                "Instruction offset should match for debug span {}",
+                i
+            );
+            assert_eq!(
+                debug_span.span, bytecode.debug_info[i].span,
+                "Span should match for debug span {}",
+                i
+            );
         }
     }
 
@@ -820,14 +918,19 @@ mod tests {
         let bytecode = compile_source(source);
 
         // Should have substantial debug info for all these operations
-        assert!(bytecode.debug_info.len() >= 10,
-                "Complex program should generate substantial debug info");
+        assert!(
+            bytecode.debug_info.len() >= 10,
+            "Complex program should generate substantial debug info"
+        );
 
         // Verify debug info is monotonically increasing in instruction offsets
         // (each new instruction should have an offset >= the previous)
         for i in 1..bytecode.debug_info.len() {
-            assert!(bytecode.debug_info[i].instruction_offset >= bytecode.debug_info[i-1].instruction_offset,
-                    "Debug spans should be in instruction order");
+            assert!(
+                bytecode.debug_info[i].instruction_offset
+                    >= bytecode.debug_info[i - 1].instruction_offset,
+                "Debug spans should be in instruction order"
+            );
         }
     }
 
@@ -839,8 +942,15 @@ mod tests {
         let bytecode = compiler.compile(&program).unwrap();
 
         // Should have just one debug span for Halt
-        assert_eq!(bytecode.debug_info.len(), 1, "Empty program should have debug info for Halt only");
-        assert_eq!(bytecode.debug_info[0].instruction_offset, 0, "Halt should be at offset 0");
+        assert_eq!(
+            bytecode.debug_info.len(),
+            1,
+            "Empty program should have debug info for Halt only"
+        );
+        assert_eq!(
+            bytecode.debug_info[0].instruction_offset, 0,
+            "Halt should be at offset 0"
+        );
     }
 
     #[test]
@@ -858,12 +968,18 @@ mod tests {
         let bytecode = compiler.compile(&program).expect("Compilation failed");
 
         // Even with optimization, debug info should be present
-        assert!(!bytecode.debug_info.is_empty(),
-                "Debug info should be present even with optimization");
+        assert!(
+            !bytecode.debug_info.is_empty(),
+            "Debug info should be present even with optimization"
+        );
 
         // Serialization should still include debug info
         let bytes = bytecode.to_bytes();
         let flags = u16::from_be_bytes([bytes[6], bytes[7]]);
-        assert_eq!(flags & 1, 1, "Debug info flag should be set with optimization");
+        assert_eq!(
+            flags & 1,
+            1,
+            "Debug info flag should be set with optimization"
+        );
     }
 }

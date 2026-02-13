@@ -2,7 +2,7 @@
 
 use atlas_lsp::server::AtlasLspServer;
 use tower_lsp::lsp_types::*;
-use tower_lsp::{LspService, LanguageServer};
+use tower_lsp::{LanguageServer, LspService};
 
 /// Helper to open a document and extract diagnostics from client messages
 async fn get_diagnostics_for_source(source: &str) -> Vec<Diagnostic> {
@@ -124,11 +124,11 @@ async fn test_diagnostics_clear_on_close() {
 #[tokio::test]
 async fn test_parse_error_diagnostics() {
     let test_cases = vec![
-        "let x",           // Missing type and value
-        "fn",              // Incomplete function
-        "if",              // Incomplete if statement
-        "while",           // Incomplete while loop
-        "return",          // Return outside function
+        "let x",  // Missing type and value
+        "fn",     // Incomplete function
+        "if",     // Incomplete if statement
+        "while",  // Incomplete while loop
+        "return", // Return outside function
     ];
 
     for source in test_cases {
@@ -140,7 +140,7 @@ async fn test_parse_error_diagnostics() {
 #[tokio::test]
 async fn test_binding_error_diagnostics() {
     let test_cases = vec![
-        "x;",                              // Undefined variable
+        "x;",                                    // Undefined variable
         "let x: number = 1; let x: number = 2;", // Duplicate definition
     ];
 

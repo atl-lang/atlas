@@ -79,9 +79,7 @@ impl Interpreter {
                     }
                     Ok(Value::Number(result))
                 }
-                (Value::String(a), Value::String(b)) => {
-                    Ok(Value::string(format!("{}{}", a, b)))
-                }
+                (Value::String(a), Value::String(b)) => Ok(Value::string(format!("{}{}", a, b))),
                 _ => Err(RuntimeError::TypeError {
                     msg: "Invalid operands for +".to_string(),
                     span: binary.span,
@@ -337,7 +335,10 @@ impl Interpreter {
     }
 
     /// Evaluate array literal
-    fn eval_array_literal(&mut self, arr: &crate::ast::ArrayLiteral) -> Result<Value, RuntimeError> {
+    fn eval_array_literal(
+        &mut self,
+        arr: &crate::ast::ArrayLiteral,
+    ) -> Result<Value, RuntimeError> {
         let elements: Result<Vec<Value>, _> =
             arr.elements.iter().map(|e| self.eval_expr(e)).collect();
         Ok(Value::array(elements?))

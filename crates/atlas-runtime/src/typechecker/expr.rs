@@ -2,8 +2,8 @@
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
-use crate::types::Type;
 use crate::typechecker::TypeChecker;
+use crate::types::Type;
 
 impl<'a> TypeChecker<'a> {
     /// Check an expression and return its type
@@ -55,7 +55,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "'+' requires both operands to be number or both to be string, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
@@ -74,7 +74,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Arithmetic operator requires number operands, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
@@ -92,7 +92,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Equality comparison requires same types, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
@@ -111,7 +111,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Comparison requires number operands, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
@@ -128,7 +128,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Logical operators require bool operands, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
@@ -153,7 +153,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Unary '-' requires number operand, found {}",
                                 expr_type.display_name()
                             ),
@@ -171,7 +171,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
-                            &format!(
+                            format!(
                                 "Unary '!' requires bool operand, found {}",
                                 expr_type.display_name()
                             ),
@@ -201,7 +201,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3005",
-                            &format!(
+                            format!(
                                 "Function expects {} arguments, found {}",
                                 params.len(),
                                 call.args.len()
@@ -220,7 +220,7 @@ impl<'a> TypeChecker<'a> {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3001",
-                                    &format!(
+                                    format!(
                                         "Argument {} has wrong type: expected {}, found {}",
                                         i + 1,
                                         expected_type.display_name(),
@@ -241,7 +241,7 @@ impl<'a> TypeChecker<'a> {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3006",
-                        &format!(
+                        format!(
                             "Cannot call non-function type {}",
                             callee_type.display_name()
                         ),
@@ -264,7 +264,7 @@ impl<'a> TypeChecker<'a> {
             self.diagnostics.push(
                 Diagnostic::error_with_code(
                     "AT3001",
-                    &format!(
+                    format!(
                         "Array index must be number, found {}",
                         index_type.display_name()
                     ),
@@ -282,7 +282,7 @@ impl<'a> TypeChecker<'a> {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3001",
-                        &format!(
+                        format!(
                             "Cannot index into non-array type {}",
                             target_type.display_name()
                         ),
@@ -312,7 +312,7 @@ impl<'a> TypeChecker<'a> {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3001",
-                        &format!(
+                        format!(
                             "Array element {} has wrong type: expected {}, found {}",
                             i,
                             first_type.display_name(),

@@ -111,7 +111,10 @@ impl ReplCore {
             },
             Err(e) => {
                 use crate::span::Span;
-                diagnostics.push(Diagnostic::error(format!("Runtime error: {:?}", e), Span::dummy()));
+                diagnostics.push(Diagnostic::error(
+                    format!("Runtime error: {:?}", e),
+                    Span::dummy(),
+                ));
                 ReplResult {
                     value: None,
                     diagnostics,
@@ -145,7 +148,11 @@ mod tests {
         let mut repl = ReplCore::new();
         let result = repl.eval_line("1 + 1;");
         // Should evaluate successfully
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert!(result.value.is_some());
         assert_eq!(result.value.unwrap(), Value::Number(2.0));
     }
@@ -156,11 +163,19 @@ mod tests {
 
         // Declare a variable
         let result = repl.eval_line("let x = 42;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Use the variable in a subsequent eval
         let result = repl.eval_line("x + 8;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(50.0));
     }
 
@@ -170,15 +185,27 @@ mod tests {
 
         // Declare a mutable variable
         let result = repl.eval_line("var y = 10;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Mutate it
         let result = repl.eval_line("y = y + 5;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Check new value
         let result = repl.eval_line("y;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(15.0));
     }
 
@@ -188,11 +215,19 @@ mod tests {
 
         // Declare a function
         let result = repl.eval_line("fn double(x: number) -> number { return x * 2; }");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Call the function
         let result = repl.eval_line("double(21);");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(42.0));
     }
 
@@ -202,7 +237,11 @@ mod tests {
 
         // Declare a variable
         let result = repl.eval_line("let x = 100;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Cause an error (type error)
         let result = repl.eval_line("x + \"hello\";");
@@ -210,7 +249,11 @@ mod tests {
 
         // Variable should still be accessible
         let result = repl.eval_line("x;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(100.0));
     }
 
@@ -220,7 +263,11 @@ mod tests {
 
         // Declare a variable
         let result = repl.eval_line("let arr = [1, 2, 3];");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Cause a runtime error (out of bounds)
         let result = repl.eval_line("arr[10];");
@@ -228,7 +275,11 @@ mod tests {
 
         // Variable should still be accessible
         let result = repl.eval_line("arr[0];");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(1.0));
     }
 
@@ -238,7 +289,11 @@ mod tests {
 
         // Multiple statements in one input
         let result = repl.eval_line("let a = 5; let b = 10; a + b;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(15.0));
     }
 
@@ -248,13 +303,21 @@ mod tests {
 
         // Expression - should return value
         let result = repl.eval_line("2 + 3;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert!(result.value.is_some());
         assert_eq!(result.value.unwrap(), Value::Number(5.0));
 
         // Statement - may not return value
         let result = repl.eval_line("let x = 10;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         // Variable declarations typically don't return values in the REPL
     }
 
@@ -264,14 +327,21 @@ mod tests {
 
         // Declare a variable
         let result = repl.eval_line("let x = 42;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Reset
         repl.reset();
 
         // Variable should no longer exist
         let result = repl.eval_line("x;");
-        assert!(!result.diagnostics.is_empty(), "Should have error - variable undefined");
+        assert!(
+            !result.diagnostics.is_empty(),
+            "Should have error - variable undefined"
+        );
     }
 
     #[test]
@@ -280,28 +350,56 @@ mod tests {
 
         // Build up a more complex program step by step
         let result = repl.eval_line("fn add(a: number, b: number) -> number { return a + b; }");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         let result = repl.eval_line("let x = 10;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         let result = repl.eval_line("var y = 20;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         let result = repl.eval_line("let result = add(x, y);");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         let result = repl.eval_line("result;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(30.0));
 
         // Modify y
         let result = repl.eval_line("y = 50;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Call function again with new value
         let result = repl.eval_line("add(x, y);");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(60.0));
     }
 
@@ -311,12 +409,26 @@ mod tests {
         let mut repl = ReplCore::new();
 
         let result = repl.eval_line("\"hello\";");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
-        assert_eq!(result.value.unwrap(), Value::String(Rc::new("hello".to_string())));
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
+        assert_eq!(
+            result.value.unwrap(),
+            Value::String(Rc::new("hello".to_string()))
+        );
 
         let result = repl.eval_line("\"hello\" + \" world\";");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
-        assert_eq!(result.value.unwrap(), Value::String(Rc::new("hello world".to_string())));
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
+        assert_eq!(
+            result.value.unwrap(),
+            Value::String(Rc::new("hello world".to_string()))
+        );
     }
 
     #[test]
@@ -324,11 +436,19 @@ mod tests {
         let mut repl = ReplCore::new();
 
         let result = repl.eval_line("true;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Bool(true));
 
         let result = repl.eval_line("1 < 2;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Bool(true));
     }
 
@@ -337,19 +457,35 @@ mod tests {
         let mut repl = ReplCore::new();
 
         let result = repl.eval_line("var arr = [1, 2, 3];");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         let result = repl.eval_line("arr[1];");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(2.0));
 
         // Mutate array
         let result = repl.eval_line("arr[1] = 42;");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
 
         // Check mutation persisted
         let result = repl.eval_line("arr[1];");
-        assert!(result.diagnostics.is_empty(), "Diagnostics: {:?}", result.diagnostics);
+        assert!(
+            result.diagnostics.is_empty(),
+            "Diagnostics: {:?}",
+            result.diagnostics
+        );
         assert_eq!(result.value.unwrap(), Value::Number(42.0));
     }
 }

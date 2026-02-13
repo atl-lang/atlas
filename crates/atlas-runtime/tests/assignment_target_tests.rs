@@ -9,7 +9,12 @@ use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use rstest::rstest;
 
-fn parse_source(source: &str) -> (atlas_runtime::ast::Program, Vec<atlas_runtime::diagnostic::Diagnostic>) {
+fn parse_source(
+    source: &str,
+) -> (
+    atlas_runtime::ast::Program,
+    Vec<atlas_runtime::diagnostic::Diagnostic>,
+) {
     let mut lexer = Lexer::new(source.to_string());
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -39,10 +44,7 @@ fn test_assignment_targets(#[case] name: &str, #[case] source: &str) {
     assert_eq!(program.items.len(), 1, "Should have one statement");
 
     // Snapshot the AST to verify structure
-    insta::assert_yaml_snapshot!(
-        format!("assignment_{}", name),
-        program.items[0]
-    );
+    insta::assert_yaml_snapshot!(format!("assignment_{}", name), program.items[0]);
 }
 
 // ============================================================================
@@ -60,10 +62,7 @@ fn test_compound_assignments(#[case] name: &str, #[case] source: &str) {
     let (program, diagnostics) = parse_source(source);
 
     assert_eq!(diagnostics.len(), 0);
-    insta::assert_yaml_snapshot!(
-        format!("compound_{}", name),
-        program.items[0]
-    );
+    insta::assert_yaml_snapshot!(format!("compound_{}", name), program.items[0]);
 }
 
 // ============================================================================
@@ -79,10 +78,7 @@ fn test_increment_decrement(#[case] name: &str, #[case] source: &str) {
     let (program, diagnostics) = parse_source(source);
 
     assert_eq!(diagnostics.len(), 0);
-    insta::assert_yaml_snapshot!(
-        format!("incdec_{}", name),
-        program.items[0]
-    );
+    insta::assert_yaml_snapshot!(format!("incdec_{}", name), program.items[0]);
 }
 
 // ============================================================================

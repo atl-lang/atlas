@@ -9,7 +9,10 @@ use atlas_runtime::{ReplCore, Value};
 fn eval_ok(repl: &mut ReplCore, input: &str) -> Value {
     let result = repl.eval_line(input);
     if !result.diagnostics.is_empty() {
-        panic!("Expected success for '{}'\nGot: {:?}", input, result.diagnostics);
+        panic!(
+            "Expected success for '{}'\nGot: {:?}",
+            input, result.diagnostics
+        );
     }
     result.value.unwrap_or(Value::Null)
 }
@@ -64,15 +67,24 @@ fn test_multiple_variables_persist() {
 #[test]
 fn test_function_persistence() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn double(x: number) -> number { return x * 2; }");
+    eval_ok(
+        &mut repl,
+        "fn double(x: number) -> number { return x * 2; }",
+    );
     assert_value(&mut repl, "double(21);", Value::Number(42.0));
 }
 
 #[test]
 fn test_multiple_functions_persist() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn add(a: number, b: number) -> number { return a + b; }");
-    eval_ok(&mut repl, "fn mul(a: number, b: number) -> number { return a * b; }");
+    eval_ok(
+        &mut repl,
+        "fn add(a: number, b: number) -> number { return a + b; }",
+    );
+    eval_ok(
+        &mut repl,
+        "fn mul(a: number, b: number) -> number { return a * b; }",
+    );
     assert_value(&mut repl, "add(5, 3);", Value::Number(8.0));
     assert_value(&mut repl, "mul(6, 7);", Value::Number(42.0));
 }
@@ -80,8 +92,14 @@ fn test_multiple_functions_persist() {
 #[test]
 fn test_functions_call_other_functions() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn square(x: number) -> number { return x * x; }");
-    eval_ok(&mut repl, "fn sum_of_squares(a: number, b: number) -> number { return square(a) + square(b); }");
+    eval_ok(
+        &mut repl,
+        "fn square(x: number) -> number { return x * x; }",
+    );
+    eval_ok(
+        &mut repl,
+        "fn sum_of_squares(a: number, b: number) -> number { return square(a) + square(b); }",
+    );
     assert_value(&mut repl, "sum_of_squares(3, 4);", Value::Number(25.0));
 }
 
@@ -93,7 +111,10 @@ fn test_functions_call_other_functions() {
 fn test_functions_use_global_variables() {
     let mut repl = ReplCore::new();
     eval_ok(&mut repl, "let multiplier = 10;");
-    eval_ok(&mut repl, "fn scale(x: number) -> number { return x * multiplier; }");
+    eval_ok(
+        &mut repl,
+        "fn scale(x: number) -> number { return x * multiplier; }",
+    );
     assert_value(&mut repl, "scale(5);", Value::Number(50.0));
 }
 
@@ -159,8 +180,14 @@ fn test_cannot_redeclare_function() {
 fn test_nested_function_calls_with_state() {
     let mut repl = ReplCore::new();
     eval_ok(&mut repl, "let base = 10;");
-    eval_ok(&mut repl, "fn add_base(x: number) -> number { return x + base; }");
-    eval_ok(&mut repl, "fn double_and_add(x: number) -> number { return add_base(x * 2); }");
+    eval_ok(
+        &mut repl,
+        "fn add_base(x: number) -> number { return x + base; }",
+    );
+    eval_ok(
+        &mut repl,
+        "fn double_and_add(x: number) -> number { return add_base(x * 2); }",
+    );
     assert_value(&mut repl, "double_and_add(5);", Value::Number(20.0));
 }
 

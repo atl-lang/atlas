@@ -55,7 +55,11 @@ fn test_underscore_prefix_suppresses_warning() {
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
-    assert_eq!(warnings.len(), 0, "Underscore prefix should suppress warnings");
+    assert_eq!(
+        warnings.len(),
+        0,
+        "Underscore prefix should suppress warnings"
+    );
 }
 
 #[test]
@@ -82,7 +86,11 @@ fn test_unused_parameter_warning() {
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
-    assert_eq!(warnings.len(), 1, "Expected 1 AT2001 warning for unused param");
+    assert_eq!(
+        warnings.len(),
+        1,
+        "Expected 1 AT2001 warning for unused param"
+    );
     assert!(warnings[0].message.contains("Unused parameter 'b'"));
 }
 
@@ -113,7 +121,11 @@ fn test_no_unreachable_warning_without_return() {
 
     let diags = get_all_diagnostics(source);
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2002").collect();
-    assert_eq!(warnings.len(), 0, "Should not have unreachable code warning");
+    assert_eq!(
+        warnings.len(),
+        0,
+        "Should not have unreachable code warning"
+    );
 }
 
 // ============================================================================
@@ -126,8 +138,14 @@ fn test_warnings_with_errors() {
     let diags = get_all_diagnostics(source);
 
     // Should have both error (type mismatch) and warning (unused variable)
-    let errors: Vec<_> = diags.iter().filter(|d| d.level == DiagnosticLevel::Error).collect();
-    let warnings: Vec<_> = diags.iter().filter(|d| d.level == DiagnosticLevel::Warning).collect();
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    let warnings: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning)
+        .collect();
 
     assert!(errors.len() > 0, "Expected type error");
     assert!(warnings.len() > 0, "Expected unused warning");

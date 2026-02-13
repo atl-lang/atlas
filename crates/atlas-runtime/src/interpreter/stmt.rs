@@ -45,7 +45,11 @@ impl Interpreter {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, value, assign.span)?;
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target)?;
                 let idx_val = self.eval_expr(index)?;
                 self.set_array_element(arr_val, idx_val, value, *span)?;
@@ -60,7 +64,11 @@ impl Interpreter {
         // Get current value
         let current = match &compound.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, compound.span)?,
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.get_array_element(arr_val, idx_val, *span)?
@@ -79,20 +87,26 @@ impl Interpreter {
                     CompoundOp::MulAssign => a * b,
                     CompoundOp::DivAssign => {
                         if b == &0.0 {
-                            return Err(RuntimeError::DivideByZero { span: compound.span });
+                            return Err(RuntimeError::DivideByZero {
+                                span: compound.span,
+                            });
                         }
                         a / b
                     }
                     CompoundOp::ModAssign => {
                         if b == &0.0 {
-                            return Err(RuntimeError::DivideByZero { span: compound.span });
+                            return Err(RuntimeError::DivideByZero {
+                                span: compound.span,
+                            });
                         }
                         a % b
                     }
                 };
 
                 if res.is_nan() || res.is_infinite() {
-                    return Err(RuntimeError::InvalidNumericResult { span: compound.span });
+                    return Err(RuntimeError::InvalidNumericResult {
+                        span: compound.span,
+                    });
                 }
 
                 Value::Number(res)
@@ -110,7 +124,11 @@ impl Interpreter {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, compound.span)?;
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.set_array_element(arr_val, idx_val, result, *span)?;
@@ -125,7 +143,11 @@ impl Interpreter {
         // Get current value
         let current = match &inc.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, inc.span)?,
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.get_array_element(arr_val, idx_val, *span)?
@@ -154,7 +176,11 @@ impl Interpreter {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, inc.span)?;
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.set_array_element(arr_val, idx_val, result, *span)?;
@@ -169,7 +195,11 @@ impl Interpreter {
         // Get current value
         let current = match &dec.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, dec.span)?,
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.get_array_element(arr_val, idx_val, *span)?
@@ -198,7 +228,11 @@ impl Interpreter {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, dec.span)?;
             }
-            AssignTarget::Index { target, index, span } => {
+            AssignTarget::Index {
+                target,
+                index,
+                span,
+            } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.set_array_element(arr_val, idx_val, result, *span)?;

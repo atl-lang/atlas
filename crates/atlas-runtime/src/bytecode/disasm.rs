@@ -65,19 +65,40 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
     // Format based on opcode type
     match opcode {
         // Simple opcodes (no operands)
-        Opcode::Null | Opcode::True | Opcode::False
-        | Opcode::Add | Opcode::Sub | Opcode::Mul | Opcode::Div | Opcode::Mod
-        | Opcode::Negate | Opcode::Equal | Opcode::NotEqual
-        | Opcode::Less | Opcode::LessEqual | Opcode::Greater | Opcode::GreaterEqual
-        | Opcode::Not | Opcode::And | Opcode::Or
-        | Opcode::Return | Opcode::GetIndex | Opcode::SetIndex
-        | Opcode::Pop | Opcode::Dup | Opcode::Halt => {
+        Opcode::Null
+        | Opcode::True
+        | Opcode::False
+        | Opcode::Add
+        | Opcode::Sub
+        | Opcode::Mul
+        | Opcode::Div
+        | Opcode::Mod
+        | Opcode::Negate
+        | Opcode::Equal
+        | Opcode::NotEqual
+        | Opcode::Less
+        | Opcode::LessEqual
+        | Opcode::Greater
+        | Opcode::GreaterEqual
+        | Opcode::Not
+        | Opcode::And
+        | Opcode::Or
+        | Opcode::Return
+        | Opcode::GetIndex
+        | Opcode::SetIndex
+        | Opcode::Pop
+        | Opcode::Dup
+        | Opcode::Halt => {
             format!("{:04}  {:?}", start_offset, opcode)
         }
 
         // u16 operands (constants, locals, globals)
-        Opcode::Constant | Opcode::GetLocal | Opcode::SetLocal
-        | Opcode::GetGlobal | Opcode::SetGlobal | Opcode::Array => {
+        Opcode::Constant
+        | Opcode::GetLocal
+        | Opcode::SetLocal
+        | Opcode::GetGlobal
+        | Opcode::SetGlobal
+        | Opcode::Array => {
             let operand = read_u16(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }

@@ -1,6 +1,8 @@
 //! Document state management
 
-use atlas_runtime::{ast::Program, symbol::SymbolTable, Binder, Diagnostic, Lexer, Parser, TypeChecker};
+use atlas_runtime::{
+    ast::Program, symbol::SymbolTable, Binder, Diagnostic, Lexer, Parser, TypeChecker,
+};
 use tower_lsp::lsp_types::Url;
 
 /// State of a single document in the LSP server

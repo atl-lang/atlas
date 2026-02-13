@@ -7,6 +7,7 @@
 //! - Functions: Reference to bytecode or builtin
 
 use std::cell::RefCell;
+use std::fmt;
 use std::rc::Rc;
 use thiserror::Error;
 
@@ -73,29 +74,6 @@ impl Value {
         }
     }
 
-    /// Convert value to string representation
-    pub fn to_string(&self) -> String {
-        match self {
-            Value::Number(n) => {
-                // Format number nicely (no trailing .0 for whole numbers)
-                if n.fract() == 0.0 && n.is_finite() {
-                    format!("{:.0}", n)
-                } else {
-                    n.to_string()
-                }
-            }
-            Value::String(s) => s.as_ref().clone(),
-            Value::Bool(b) => b.to_string(),
-            Value::Null => "null".to_string(),
-            Value::Array(arr) => {
-                let borrowed = arr.borrow();
-                let elements: Vec<String> = borrowed.iter().map(|v| v.to_string()).collect();
-                format!("[{}]", elements.join(", "))
-            }
-            Value::Function(f) => format!("<fn {}>", f.name),
-        }
-    }
-
     /// Get a display string representation (alias for to_string for backwards compatibility)
     pub fn to_display_string(&self) -> String {
         self.to_string()
@@ -120,6 +98,30 @@ impl PartialEq for Value {
 
 impl Eq for Value {}
 
+impl fmt::Display for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Number(n) => {
+                // Format number nicely (no trailing .0 for whole numbers)
+                if n.fract() == 0.0 && n.is_finite() {
+                    write!(f, "{:.0}", n)
+                } else {
+                    write!(f, "{}", n)
+                }
+            }
+            Value::String(s) => write!(f, "{}", s.as_ref()),
+            Value::Bool(b) => write!(f, "{}", b),
+            Value::Null => write!(f, "null"),
+            Value::Array(arr) => {
+                let borrowed = arr.borrow();
+                let elements: Vec<String> = borrowed.iter().map(|v| v.to_string()).collect();
+                write!(f, "[{}]", elements.join(", "))
+            }
+            Value::Function(func) => write!(f, "<fn {}>", func.name),
+        }
+    }
+}
+
 /// Runtime error type with source span information
 #[derive(Debug, Error, Clone, PartialEq)]
 pub enum RuntimeError {
@@ -137,29 +139,19 @@ pub enum RuntimeError {
     },
     /// Division by zero
     #[error("Division by zero")]
-    DivideByZero {
-        span: crate::span::Span,
-    },
+    DivideByZero { span: crate::span::Span },
     /// Array index out of bounds
     #[error("Array index out of bounds")]
-    OutOfBounds {
-        span: crate::span::Span,
-    },
+    OutOfBounds { span: crate::span::Span },
     /// Invalid numeric result (NaN, Infinity)
     #[error("Invalid numeric result")]
-    InvalidNumericResult {
-        span: crate::span::Span,
-    },
+    InvalidNumericResult { span: crate::span::Span },
     /// Unknown opcode (VM error)
     #[error("Unknown opcode")]
-    UnknownOpcode {
-        span: crate::span::Span,
-    },
+    UnknownOpcode { span: crate::span::Span },
     /// Stack underflow (VM error)
     #[error("Stack underflow")]
-    StackUnderflow {
-        span: crate::span::Span,
-    },
+    StackUnderflow { span: crate::span::Span },
     /// Unknown function
     #[error("Unknown function: {name}")]
     UnknownFunction {
@@ -168,14 +160,10 @@ pub enum RuntimeError {
     },
     /// Invalid stdlib argument
     #[error("Invalid stdlib argument")]
-    InvalidStdlibArgument {
-        span: crate::span::Span,
-    },
+    InvalidStdlibArgument { span: crate::span::Span },
     /// Invalid index (non-integer)
     #[error("Invalid index: expected number")]
-    InvalidIndex {
-        span: crate::span::Span,
-    },
+    InvalidIndex { span: crate::span::Span },
 }
 
 impl RuntimeError {
@@ -271,7 +259,11 @@ mod tests {
 
     #[test]
     fn test_to_string_array() {
-        let arr = Value::array(vec![Value::Number(1.0), Value::Number(2.0), Value::Number(3.0)]);
+        let arr = Value::array(vec![
+            Value::Number(1.0),
+            Value::Number(2.0),
+            Value::Number(3.0),
+        ]);
         assert_eq!(arr.to_string(), "[1, 2, 3]");
     }
 
@@ -377,8 +369,12 @@ mod tests {
     fn test_runtime_errors() {
         use crate::span::Span;
 
-        let err1 = RuntimeError::DivideByZero { span: Span::dummy() };
-        let err2 = RuntimeError::OutOfBounds { span: Span::dummy() };
+        let err1 = RuntimeError::DivideByZero {
+            span: Span::dummy(),
+        };
+        let err2 = RuntimeError::OutOfBounds {
+            span: Span::dummy(),
+        };
         let err3 = RuntimeError::UnknownFunction {
             name: "foo".to_string(),
             span: Span::dummy(),

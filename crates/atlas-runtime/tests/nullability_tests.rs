@@ -74,7 +74,9 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 #[case::nested_null_expression("let x = (null == null) && true;")]
 #[case::null_variable_comparison("let x = null;\nlet y = null;\nlet z = x == y;")]
 #[case::null_value_usage("let x = null;\nlet y = x == null;")]
-#[case::null_comparison_chain("let a = null;\nlet b = null;\nlet result = (a == b) && (b == null);")]
+#[case::null_comparison_chain(
+    "let a = null;\nlet b = null;\nlet result = (a == b) && (b == null);"
+)]
 fn test_valid_null_usage(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
@@ -96,9 +98,15 @@ fn test_null_assignment_errors(#[case] source: &str) {
 // ========== Null Function Parameter Errors ==========
 
 #[rstest]
-#[case::number_param("fn acceptsNumber(x: number) -> number { return x; }\nlet result = acceptsNumber(null);")]
-#[case::string_param("fn acceptsString(x: string) -> string { return x; }\nlet result = acceptsString(null);")]
-#[case::bool_param("fn acceptsBool(x: bool) -> bool { return x; }\nlet result = acceptsBool(null);")]
+#[case::number_param(
+    "fn acceptsNumber(x: number) -> number { return x; }\nlet result = acceptsNumber(null);"
+)]
+#[case::string_param(
+    "fn acceptsString(x: string) -> string { return x; }\nlet result = acceptsString(null);"
+)]
+#[case::bool_param(
+    "fn acceptsBool(x: bool) -> bool { return x; }\nlet result = acceptsBool(null);"
+)]
 fn test_null_function_parameter_errors(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");

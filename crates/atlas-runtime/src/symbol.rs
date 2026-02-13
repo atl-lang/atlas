@@ -50,18 +50,27 @@ impl SymbolTable {
         };
 
         // Add prelude builtins
-        table.define_builtin("print", Type::Function {
-            params: vec![Type::Unknown], // Accepts any type
-            return_type: Box::new(Type::Void),
-        });
-        table.define_builtin("len", Type::Function {
-            params: vec![Type::Unknown], // String or Array
-            return_type: Box::new(Type::Number),
-        });
-        table.define_builtin("str", Type::Function {
-            params: vec![Type::Unknown], // Converts any type to string
-            return_type: Box::new(Type::String),
-        });
+        table.define_builtin(
+            "print",
+            Type::Function {
+                params: vec![Type::Unknown], // Accepts any type
+                return_type: Box::new(Type::Void),
+            },
+        );
+        table.define_builtin(
+            "len",
+            Type::Function {
+                params: vec![Type::Unknown], // String or Array
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "str",
+            Type::Function {
+                params: vec![Type::Unknown], // Converts any type to string
+                return_type: Box::new(Type::String),
+            },
+        );
 
         table
     }
@@ -121,13 +130,16 @@ impl SymbolTable {
 
     /// Define a builtin function
     fn define_builtin(&mut self, name: &str, ty: Type) {
-        self.functions.insert(name.to_string(), Symbol {
-            name: name.to_string(),
-            ty,
-            mutable: false,
-            kind: SymbolKind::Builtin,
-            span: Span::dummy(),
-        });
+        self.functions.insert(
+            name.to_string(),
+            Symbol {
+                name: name.to_string(),
+                ty,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+            },
+        );
     }
 
     /// Check if a name is a prelude builtin
@@ -219,13 +231,15 @@ mod tests {
     #[test]
     fn test_redeclaration_error() {
         let mut table = SymbolTable::new();
-        table.define(Symbol {
-            name: "x".to_string(),
-            ty: Type::Number,
-            mutable: false,
-            kind: SymbolKind::Variable,
-            span: Span::dummy(),
-        }).unwrap();
+        table
+            .define(Symbol {
+                name: "x".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Variable,
+                span: Span::dummy(),
+            })
+            .unwrap();
 
         let result = table.define(Symbol {
             name: "x".to_string(),
@@ -258,16 +272,18 @@ mod tests {
         let mut table = SymbolTable::new();
 
         // Define a top-level function
-        table.define_function(Symbol {
-            name: "foo".to_string(),
-            ty: Type::Function {
-                params: vec![],
-                return_type: Box::new(Type::Void),
-            },
-            mutable: false,
-            kind: SymbolKind::Function,
-            span: Span::dummy(),
-        }).unwrap();
+        table
+            .define_function(Symbol {
+                name: "foo".to_string(),
+                ty: Type::Function {
+                    params: vec![],
+                    return_type: Box::new(Type::Void),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+            })
+            .unwrap();
 
         // Should be able to look it up
         assert!(table.lookup("foo").is_some());
@@ -292,25 +308,29 @@ mod tests {
         let mut table = SymbolTable::new();
 
         // Define in outer scope
-        table.define(Symbol {
-            name: "x".to_string(),
-            ty: Type::Number,
-            mutable: false,
-            kind: SymbolKind::Variable,
-            span: Span::dummy(),
-        }).unwrap();
+        table
+            .define(Symbol {
+                name: "x".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Variable,
+                span: Span::dummy(),
+            })
+            .unwrap();
 
         // Enter new scope
         table.enter_scope();
 
         // Shadow in inner scope
-        table.define(Symbol {
-            name: "x".to_string(),
-            ty: Type::String,
-            mutable: false,
-            kind: SymbolKind::Variable,
-            span: Span::dummy(),
-        }).unwrap();
+        table
+            .define(Symbol {
+                name: "x".to_string(),
+                ty: Type::String,
+                mutable: false,
+                kind: SymbolKind::Variable,
+                span: Span::dummy(),
+            })
+            .unwrap();
 
         // Should find inner scope's x
         let symbol = table.lookup("x").unwrap();

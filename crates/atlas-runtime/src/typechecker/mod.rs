@@ -85,17 +85,18 @@ impl<'a> TypeChecker<'a> {
         self.check_block(&func.body);
 
         // Check if all paths return (if return type != void/null)
-        if return_type != Type::Void && return_type != Type::Null {
-            if !self.block_always_returns(&func.body) {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3004",
-                        "Not all code paths return a value",
-                        func.span,
-                    )
-                    .with_label("function body"),
-                );
-            }
+        if return_type != Type::Void
+            && return_type != Type::Null
+            && !self.block_always_returns(&func.body)
+        {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3004",
+                    "Not all code paths return a value",
+                    func.span,
+                )
+                .with_label("function body"),
+            );
         }
 
         // Emit warnings for unused variables/parameters
@@ -127,7 +128,7 @@ impl<'a> TypeChecker<'a> {
 
             self.diagnostics.push(
                 Diagnostic::warning_with_code("AT2001", &message, *span)
-                    .with_label("declared here but never used")
+                    .with_label("declared here but never used"),
             );
         }
     }
@@ -139,12 +140,8 @@ impl<'a> TypeChecker<'a> {
             if found_return {
                 // Code after return is unreachable
                 self.diagnostics.push(
-                    Diagnostic::warning_with_code(
-                        "AT2002",
-                        "Unreachable code",
-                        stmt.span(),
-                    )
-                    .with_label("this code will never execute")
+                    Diagnostic::warning_with_code("AT2002", "Unreachable code", stmt.span())
+                        .with_label("this code will never execute"),
                 );
             }
 
@@ -188,10 +185,8 @@ impl<'a> TypeChecker<'a> {
         match stmt {
             Stmt::VarDecl(var) => {
                 // Track this variable declaration
-                self.declared_symbols.insert(
-                    var.name.name.clone(),
-                    (var.name.span, SymbolKind::Variable),
-                );
+                self.declared_symbols
+                    .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));
 
                 let init_type = self.check_expr(&var.init);
 
@@ -201,7 +196,7 @@ impl<'a> TypeChecker<'a> {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3001",
-                                &format!(
+                                format!(
                                     "Type mismatch: cannot assign {} to variable of type {}",
                                     init_type.display_name(),
                                     declared_type.display_name()
@@ -221,7 +216,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Type mismatch in assignment: cannot assign {} to {}",
                                 value_type.display_name(),
                                 target_type.display_name()
@@ -238,17 +233,22 @@ impl<'a> TypeChecker<'a> {
                         if !symbol.mutable {
                             let diag = Diagnostic::error_with_code(
                                 "AT3003",
-                                &format!("Cannot assign to immutable variable '{}'", id.name),
+                                format!("Cannot assign to immutable variable '{}'", id.name),
                                 id.span,
                             )
                             .with_label("immutable variable")
-                            .with_related_location(crate::diagnostic::RelatedLocation {
-                                file: "<input>".to_string(),
-                                line: 1,
-                                column: symbol.span.start + 1,
-                                length: symbol.span.end.saturating_sub(symbol.span.start),
-                                message: format!("'{}' declared here as immutable", symbol.name),
-                            });
+                            .with_related_location(
+                                crate::diagnostic::RelatedLocation {
+                                    file: "<input>".to_string(),
+                                    line: 1,
+                                    column: symbol.span.start + 1,
+                                    length: symbol.span.end.saturating_sub(symbol.span.start),
+                                    message: format!(
+                                        "'{}' declared here as immutable",
+                                        symbol.name
+                                    ),
+                                },
+                            );
 
                             self.diagnostics.push(diag);
                         }
@@ -264,7 +264,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Compound assignment requires number type, found {}",
                                 target_type.display_name()
                             ),
@@ -278,7 +278,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Compound assignment requires number value, found {}",
                                 value_type.display_name()
                             ),
@@ -294,7 +294,7 @@ impl<'a> TypeChecker<'a> {
                         if !symbol.mutable {
                             let diag = Diagnostic::error_with_code(
                                 "AT3003",
-                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                format!("Cannot modify immutable variable '{}'", id.name),
                                 id.span,
                             )
                             .with_label("immutable variable");
@@ -311,7 +311,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Increment requires number type, found {}",
                                 target_type.display_name()
                             ),
@@ -327,7 +327,7 @@ impl<'a> TypeChecker<'a> {
                         if !symbol.mutable {
                             let diag = Diagnostic::error_with_code(
                                 "AT3003",
-                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                format!("Cannot modify immutable variable '{}'", id.name),
                                 id.span,
                             )
                             .with_label("immutable variable");
@@ -344,7 +344,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Decrement requires number type, found {}",
                                 target_type.display_name()
                             ),
@@ -360,7 +360,7 @@ impl<'a> TypeChecker<'a> {
                         if !symbol.mutable {
                             let diag = Diagnostic::error_with_code(
                                 "AT3003",
-                                &format!("Cannot modify immutable variable '{}'", id.name),
+                                format!("Cannot modify immutable variable '{}'", id.name),
                                 id.span,
                             )
                             .with_label("immutable variable");
@@ -375,10 +375,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
-                                "Condition must be bool, found {}",
-                                cond_type.display_name()
-                            ),
+                            format!("Condition must be bool, found {}", cond_type.display_name()),
                             if_stmt.cond.span(),
                         )
                         .with_label("type mismatch"),
@@ -395,10 +392,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
-                                "Condition must be bool, found {}",
-                                cond_type.display_name()
-                            ),
+                            format!("Condition must be bool, found {}", cond_type.display_name()),
                             while_stmt.cond.span(),
                         )
                         .with_label("type mismatch"),
@@ -416,10 +410,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
-                                "Condition must be bool, found {}",
-                                cond_type.display_name()
-                            ),
+                            format!("Condition must be bool, found {}", cond_type.display_name()),
                             for_stmt.cond.span(),
                         )
                         .with_label("type mismatch"),
@@ -455,7 +446,7 @@ impl<'a> TypeChecker<'a> {
                 if !return_type.is_assignable_to(expected) {
                     let mut diag = Diagnostic::error_with_code(
                         "AT3001",
-                        &format!(
+                        format!(
                             "Return type mismatch: expected {}, found {}",
                             expected.display_name(),
                             return_type.display_name()
@@ -527,7 +518,7 @@ impl<'a> TypeChecker<'a> {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
-                            &format!(
+                            format!(
                                 "Array index must be number, found {}",
                                 index_type.display_name()
                             ),
@@ -545,7 +536,7 @@ impl<'a> TypeChecker<'a> {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3001",
-                                &format!(
+                                format!(
                                     "Cannot index into non-array type {}",
                                     target_type.display_name()
                                 ),
@@ -625,10 +616,12 @@ mod tests {
 
     #[test]
     fn test_immutable_assignment() {
-        let diagnostics = typecheck_source(r#"
+        let diagnostics = typecheck_source(
+            r#"
             let x = 5;
             x = 10;
-        "#);
+        "#,
+        );
         assert!(diagnostics.len() > 0);
         assert_eq!(diagnostics[0].code, "AT3003");
     }

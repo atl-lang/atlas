@@ -5,8 +5,8 @@
 
 #![allow(dead_code)]
 
-use atlas_runtime::{Atlas, Value};
 use atlas_runtime::diagnostic::Diagnostic;
+use atlas_runtime::{Atlas, Value};
 
 // Re-export testing utilities
 pub use pretty_assertions::assert_eq;
@@ -34,7 +34,13 @@ pub fn assert_eval_number(source: &str, expected: f64) {
 pub fn assert_eval_string(source: &str, expected: &str) {
     let runtime = Atlas::new();
     match runtime.eval(source) {
-        Ok(Value::String(s)) => assert_eq!(s.as_ref(), expected, "Expected {:?}, got {:?}", expected, s.as_ref()),
+        Ok(Value::String(s)) => assert_eq!(
+            s.as_ref(),
+            expected,
+            "Expected {:?}, got {:?}",
+            expected,
+            s.as_ref()
+        ),
         other => panic!("Expected String({:?}), got {:?}", expected, other),
     }
 }
@@ -62,7 +68,7 @@ pub fn assert_eval_bool(source: &str, expected: bool) {
 pub fn assert_eval_null(source: &str) {
     let runtime = Atlas::new();
     match runtime.eval(source) {
-        Ok(Value::Null) => {},
+        Ok(Value::Null) => {}
         other => panic!("Expected Null, got {:?}", other),
     }
 }
@@ -113,7 +119,7 @@ pub fn assert_has_error(source: &str) {
 pub fn assert_no_error(source: &str) {
     let runtime = Atlas::new();
     match runtime.eval(source) {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(diags) => panic!("Expected success, got errors: {:?}", diags),
     }
 }
@@ -164,7 +170,9 @@ pub fn compile_source(source: &str) -> Result<atlas_runtime::bytecode::Bytecode,
 }
 
 /// Run bytecode in VM and return result
-pub fn run_bytecode(bytecode: atlas_runtime::bytecode::Bytecode) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
+pub fn run_bytecode(
+    bytecode: atlas_runtime::bytecode::Bytecode,
+) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
     use atlas_runtime::vm::VM;
     let mut vm = VM::new(bytecode);
     vm.run()
@@ -182,7 +190,8 @@ macro_rules! snapshot_name {
             std::any::type_name::<T>()
         }
         let name = type_name_of(f);
-        name.strip_suffix("::f").unwrap_or(name)
+        name.strip_suffix("::f")
+            .unwrap_or(name)
             .split("::")
             .last()
             .unwrap_or("unknown")

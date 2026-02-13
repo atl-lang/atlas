@@ -57,7 +57,9 @@ impl Compiler {
                 self.bytecode.emit_u16(local_idx as u16);
             } else {
                 // Load from global
-                let name_idx = self.bytecode.add_constant(crate::value::Value::string(func_name));
+                let name_idx = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(func_name));
                 self.bytecode.emit(Opcode::GetGlobal, call.span);
                 self.bytecode.emit_u16(name_idx);
             }

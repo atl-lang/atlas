@@ -119,7 +119,10 @@ mod tests {
     fn test_get_history_path_custom() {
         env::set_var("ATLAS_HISTORY_FILE", "/tmp/custom");
         let config = Config::from_env();
-        assert_eq!(config.get_history_path(), Some(PathBuf::from("/tmp/custom")));
+        assert_eq!(
+            config.get_history_path(),
+            Some(PathBuf::from("/tmp/custom"))
+        );
         env::remove_var("ATLAS_HISTORY_FILE");
     }
 

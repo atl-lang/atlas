@@ -94,58 +94,67 @@ fn test_user_function_simple() {
 
 #[test]
 fn test_user_function_with_multiple_params() {
-    let result = execute_source("fn add(a: number, b: number) -> number { return a + b; } add(10, 32);");
+    let result =
+        execute_source("fn add(a: number, b: number) -> number { return a + b; } add(10, 32);");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
 
 #[test]
 fn test_user_function_recursion() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         fn factorial(n: number) -> number {
             if (n <= 1) { return 1; }
             return n * factorial(n - 1);
         }
         factorial(5);
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(120.0)));
 }
 
 #[test]
 fn test_user_function_with_local_variables() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         fn calculate(x: number) -> number {
             let y = x * 2;
             let z = y + 10;
             return z;
         }
         calculate(5);
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(20.0)));
 }
 
 #[test]
 fn test_multiple_functions() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         fn double(x: number) -> number { return x * 2; }
         fn triple(x: number) -> number { return x * 3; }
         double(7) + triple(4);
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(26.0)));
 }
 
 #[test]
 fn test_function_calling_function() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         fn add(a: number, b: number) -> number { return a + b; }
         fn addThree(a: number, b: number, c: number) -> number {
             return add(add(a, b), c);
         }
         addThree(10, 20, 12);
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
@@ -156,26 +165,30 @@ fn test_function_calling_function() {
 
 #[test]
 fn test_multiple_compound_assignments() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         let x = 10;
         x += 5;
         x *= 2;
         x -= 3;
         x;
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(27.0)));
 }
 
 #[test]
 fn test_mixed_operators() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         let x = 5;
         x++;
         x *= 2;
         x--;
         x;
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(11.0)));
 }
@@ -186,21 +199,24 @@ fn test_mixed_operators() {
 
 #[test]
 fn test_array_in_function() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         fn modify_array() -> number {
             let arr = [1, 2, 3];
             arr[1] += 10;
             return arr[1];
         }
         modify_array();
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(12.0)));
 }
 
 #[test]
 fn test_loop_with_compound_assignment() {
-    let result = execute_source(r#"
+    let result = execute_source(
+        r#"
         let sum = 0;
         let i = 0;
         while (i < 5) {
@@ -208,7 +224,8 @@ fn test_loop_with_compound_assignment() {
             i++;
         }
         sum;
-    "#);
+    "#,
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(10.0)));
 }

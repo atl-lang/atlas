@@ -60,7 +60,12 @@ impl Parser {
 
         self.consume(TokenKind::Equal, "Expected '=' in variable declaration")?;
         let init = self.parse_expression()?;
-        let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?.span;
+        let end_span = self
+            .consume(
+                TokenKind::Semicolon,
+                "Expected ';' after variable declaration",
+            )?
+            .span;
 
         Ok(Stmt::VarDecl(VarDecl {
             mutable,
@@ -85,7 +90,9 @@ impl Parser {
                 self.advance(); // consume =
                 let target = self.expr_to_assign_target(expr)?;
                 let value = self.parse_expression()?;
-                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after assignment")?.span;
+                let end_span = self
+                    .consume(TokenKind::Semicolon, "Expected ';' after assignment")?
+                    .span;
 
                 Ok(Stmt::Assign(Assign {
                     target,
@@ -95,8 +102,11 @@ impl Parser {
             }
 
             // Compound assignment: x += value, x -= value, etc.
-            TokenKind::PlusEqual | TokenKind::MinusEqual | TokenKind::StarEqual
-            | TokenKind::SlashEqual | TokenKind::PercentEqual => {
+            TokenKind::PlusEqual
+            | TokenKind::MinusEqual
+            | TokenKind::StarEqual
+            | TokenKind::SlashEqual
+            | TokenKind::PercentEqual => {
                 let op_token = self.advance();
                 let op = match op_token.kind {
                     TokenKind::PlusEqual => CompoundOp::AddAssign,
@@ -109,7 +119,12 @@ impl Parser {
 
                 let target = self.expr_to_assign_target(expr)?;
                 let value = self.parse_expression()?;
-                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after compound assignment")?.span;
+                let end_span = self
+                    .consume(
+                        TokenKind::Semicolon,
+                        "Expected ';' after compound assignment",
+                    )?
+                    .span;
 
                 Ok(Stmt::CompoundAssign(CompoundAssign {
                     target,
@@ -123,7 +138,9 @@ impl Parser {
             TokenKind::PlusPlus => {
                 self.advance(); // consume ++
                 let target = self.expr_to_assign_target(expr)?;
-                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after increment")?.span;
+                let end_span = self
+                    .consume(TokenKind::Semicolon, "Expected ';' after increment")?
+                    .span;
 
                 Ok(Stmt::Increment(IncrementStmt {
                     target,
@@ -135,7 +152,9 @@ impl Parser {
             TokenKind::MinusMinus => {
                 self.advance(); // consume --
                 let target = self.expr_to_assign_target(expr)?;
-                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after decrement")?.span;
+                let end_span = self
+                    .consume(TokenKind::Semicolon, "Expected ';' after decrement")?
+                    .span;
 
                 Ok(Stmt::Decrement(DecrementStmt {
                     target,
@@ -145,7 +164,9 @@ impl Parser {
 
             // Expression statement
             _ => {
-                let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after expression")?.span;
+                let end_span = self
+                    .consume(TokenKind::Semicolon, "Expected ';' after expression")?
+                    .span;
                 Ok(Stmt::Expr(ExprStmt {
                     expr,
                     span: expr_span.merge(end_span),
@@ -228,10 +249,13 @@ impl Parser {
             let expr = self.parse_expression()?;
             let expr_span = expr.span();
             self.consume(TokenKind::Semicolon, "Expected ';' after for initializer")?;
-            Box::new(Stmt::Expr(ExprStmt { expr, span: expr_span }))
+            Box::new(Stmt::Expr(ExprStmt {
+                expr,
+                span: expr_span,
+            }))
         } else {
             self.advance(); // consume semicolon
-            // Create dummy expression statement
+                            // Create dummy expression statement
             Box::new(Stmt::Expr(ExprStmt {
                 expr: Expr::Literal(Literal::Null, Span::dummy()),
                 span: Span::dummy(),
@@ -341,7 +365,9 @@ impl Parser {
             None
         };
 
-        let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after return")?.span;
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after return")?
+            .span;
 
         Ok(Stmt::Return(ReturnStmt {
             value,
@@ -352,20 +378,26 @@ impl Parser {
     /// Parse break statement
     pub(super) fn parse_break_stmt(&mut self) -> Result<Stmt, ()> {
         let break_span = self.consume(TokenKind::Break, "Expected 'break'")?.span;
-        let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after break")?.span;
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after break")?
+            .span;
         Ok(Stmt::Break(break_span.merge(end_span)))
     }
 
     /// Parse continue statement
     pub(super) fn parse_continue_stmt(&mut self) -> Result<Stmt, ()> {
-        let continue_span = self.consume(TokenKind::Continue, "Expected 'continue'")?.span;
-        let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after continue")?.span;
+        let continue_span = self
+            .consume(TokenKind::Continue, "Expected 'continue'")?
+            .span;
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after continue")?
+            .span;
         Ok(Stmt::Continue(continue_span.merge(end_span)))
     }
 
     /// Parse a block
     pub(super) fn parse_block(&mut self) -> Result<Block, ()> {
-        let start_span = self.consume(TokenKind::LeftBrace, "Expected '{'")?. span;
+        let start_span = self.consume(TokenKind::LeftBrace, "Expected '{'")?.span;
         let mut statements = Vec::new();
 
         while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
@@ -375,7 +407,7 @@ impl Parser {
             }
         }
 
-        let end_span = self.consume(TokenKind::RightBrace, "Expected '}'")?. span;
+        let end_span = self.consume(TokenKind::RightBrace, "Expected '}'")?.span;
 
         Ok(Block {
             statements,

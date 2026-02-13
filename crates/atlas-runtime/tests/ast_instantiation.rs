@@ -443,8 +443,7 @@ fn test_ast_serialization() {
     let json = serde_json::to_string(&program).expect("Failed to serialize AST");
 
     // Deserialize back
-    let deserialized: Program =
-        serde_json::from_str(&json).expect("Failed to deserialize AST");
+    let deserialized: Program = serde_json::from_str(&json).expect("Failed to deserialize AST");
 
     assert_eq!(program, deserialized);
 }

@@ -39,7 +39,10 @@ fn test_diagnostic_structure() {
 
     match result {
         Err(diagnostics) => {
-            assert!(!diagnostics.is_empty(), "Should return at least one diagnostic");
+            assert!(
+                !diagnostics.is_empty(),
+                "Should return at least one diagnostic"
+            );
 
             let diag = &diagnostics[0];
             assert_eq!(diag.level, DiagnosticLevel::Error);

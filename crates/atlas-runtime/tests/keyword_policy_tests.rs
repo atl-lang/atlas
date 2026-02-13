@@ -18,7 +18,12 @@ use rstest::rstest;
 // Test Helpers
 // ============================================================================
 
-fn parse_source(source: &str) -> (atlas_runtime::ast::Program, Vec<atlas_runtime::diagnostic::Diagnostic>) {
+fn parse_source(
+    source: &str,
+) -> (
+    atlas_runtime::ast::Program,
+    Vec<atlas_runtime::diagnostic::Diagnostic>,
+) {
     let mut lexer = Lexer::new(source.to_string());
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -28,8 +33,14 @@ fn parse_source(source: &str) -> (atlas_runtime::ast::Program, Vec<atlas_runtime
 fn assert_has_parser_error(diagnostics: &[atlas_runtime::diagnostic::Diagnostic]) {
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let found = diagnostics.iter().any(|d| d.code == "AT1000");
-    assert!(found, "Expected diagnostic with code 'AT1000', got: {:?}",
-        diagnostics.iter().map(|d| (&d.code, &d.message)).collect::<Vec<_>>());
+    assert!(
+        found,
+        "Expected diagnostic with code 'AT1000', got: {:?}",
+        diagnostics
+            .iter()
+            .map(|d| (&d.code, &d.message))
+            .collect::<Vec<_>>()
+    );
 }
 
 fn assert_error_mentions(diagnostics: &[atlas_runtime::diagnostic::Diagnostic], keywords: &[&str]) {
@@ -62,7 +73,10 @@ fn test_future_keywords_as_variables(#[case] source: &str, #[case] expected_ment
 #[rstest]
 #[case("fn import() { }", &["function", "identifier"])]
 #[case("fn match() { }", &["function", "identifier"])]
-fn test_future_keywords_as_function_names(#[case] source: &str, #[case] expected_mentions: &[&str]) {
+fn test_future_keywords_as_function_names(
+    #[case] source: &str,
+    #[case] expected_mentions: &[&str],
+) {
     let (_program, diagnostics) = parse_source(source);
     assert_has_parser_error(&diagnostics);
     assert_error_mentions(&diagnostics, expected_mentions);
@@ -92,7 +106,10 @@ fn test_future_keywords_as_parameters(#[case] source: &str, #[case] expected_men
 #[case("let null = 1;")]
 fn test_active_keywords_as_identifiers(#[case] source: &str) {
     let (_program, diagnostics) = parse_source(source);
-    assert!(!diagnostics.is_empty(), "Expected error for using active keyword as identifier");
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected error for using active keyword as identifier"
+    );
     assert_has_parser_error(&diagnostics);
 }
 
@@ -105,7 +122,11 @@ fn test_active_keywords_as_identifiers(#[case] source: &str) {
 #[case("import { x, y } from './module';", "import")]
 fn test_import_statements_not_supported(#[case] source: &str, #[case] keyword: &str) {
     let (_program, diagnostics) = parse_source(source);
-    assert!(!diagnostics.is_empty(), "Expected error for '{}' statement", keyword);
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected error for '{}' statement",
+        keyword
+    );
     // Should have some error since import is not supported
 }
 
@@ -113,7 +134,11 @@ fn test_import_statements_not_supported(#[case] source: &str, #[case] keyword: &
 #[case("match x { 1 => 2 }", "match")]
 fn test_match_expressions_not_supported(#[case] source: &str, #[case] keyword: &str) {
     let (_program, diagnostics) = parse_source(source);
-    assert!(!diagnostics.is_empty(), "Expected error for '{}' expression", keyword);
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected error for '{}' expression",
+        keyword
+    );
     // Should have some error since match is not supported
 }
 
@@ -132,7 +157,11 @@ fn test_valid_keyword_usage(#[case] source: &str) {
     // These should parse without errors (though return outside function might have semantic errors)
     // At parser level, these are valid
     let has_parser_error = diagnostics.iter().any(|d| d.code == "AT1000");
-    assert!(!has_parser_error, "Should not have parser errors for valid keyword usage: {:?}", diagnostics);
+    assert!(
+        !has_parser_error,
+        "Should not have parser errors for valid keyword usage: {:?}",
+        diagnostics
+    );
 }
 
 // ============================================================================
@@ -171,10 +200,13 @@ fn test_error_message_mentions_keyword_and_reserved() {
     assert_has_parser_error(&diagnostics);
 
     // Error message should mention 'import' keyword and that it's reserved
-    assert!(diagnostics.iter().any(|d|
-        d.message.contains("import") && d.message.contains("reserved")
-    ), "Expected error message to mention 'import' as reserved keyword, got: {:?}",
-        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>());
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d.message.contains("import") && d.message.contains("reserved")),
+        "Expected error message to mention 'import' as reserved keyword, got: {:?}",
+        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -185,10 +217,13 @@ fn test_error_message_for_future_keyword_mentions_future() {
     assert_has_parser_error(&diagnostics);
 
     // Error message should mention it's reserved for future use
-    assert!(diagnostics.iter().any(|d|
-        d.message.contains("match") && d.message.contains("future")
-    ), "Expected error message to mention 'match' is reserved for future use, got: {:?}",
-        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>());
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d.message.contains("match") && d.message.contains("future")),
+        "Expected error message to mention 'match' is reserved for future use, got: {:?}",
+        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -199,11 +234,14 @@ fn test_import_statement_error_message_mentions_not_supported() {
     assert_has_parser_error(&diagnostics);
 
     // Error message should mention import is not supported
-    assert!(diagnostics.iter().any(|d|
-        d.message.to_lowercase().contains("import") &&
-        (d.message.contains("not supported") || d.message.contains("v0.1"))
-    ), "Expected error message to mention import is not supported, got: {:?}",
-        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>());
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d.message.to_lowercase().contains("import")
+                && (d.message.contains("not supported") || d.message.contains("v0.1"))),
+        "Expected error message to mention import is not supported, got: {:?}",
+        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+    );
 }
 
 // ============================================================================
@@ -217,7 +255,10 @@ fn test_import_with_various_syntax(#[case] source: &str) {
     let (_program, diagnostics) = parse_source(source);
 
     // Import statements should produce errors as they're not supported
-    assert!(!diagnostics.is_empty(), "Expected error for unsupported import statement");
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected error for unsupported import statement"
+    );
     assert_has_parser_error(&diagnostics);
 }
 
@@ -230,23 +271,32 @@ fn test_keyword_as_identifier_in_expression() {
     // Trying to reference 'import' as if it were a variable
     let (_program, diagnostics) = parse_source("let x = import;");
 
-    assert!(!diagnostics.is_empty(), "Expected error for using keyword as expression");
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected error for using keyword as expression"
+    );
     assert_has_parser_error(&diagnostics);
 }
 
 #[test]
 fn test_multiple_keyword_errors() {
-    let (_program, diagnostics) = parse_source(r#"
+    let (_program, diagnostics) = parse_source(
+        r#"
         let import = 1;
         let match = 2;
-    "#);
+    "#,
+    );
 
     // Should have at least 2 errors (one for each invalid use)
     assert!(diagnostics.len() >= 2, "Expected at least 2 errors");
 
     // All should be AT1000 syntax errors
     let at1000_count = diagnostics.iter().filter(|d| d.code == "AT1000").count();
-    assert!(at1000_count >= 2, "Expected at least 2 AT1000 errors, got {}", at1000_count);
+    assert!(
+        at1000_count >= 2,
+        "Expected at least 2 AT1000 errors, got {}",
+        at1000_count
+    );
 }
 
 // ============================================================================
@@ -258,5 +308,9 @@ fn test_valid_use_of_boolean_and_null_literals() {
     let source = "let x = true; let y = false; let z = null;";
     let (_program, diagnostics) = parse_source(source);
 
-    assert_eq!(diagnostics.len(), 0, "Expected no errors for valid use of boolean/null literals");
+    assert_eq!(
+        diagnostics.len(),
+        0,
+        "Expected no errors for valid use of boolean/null literals"
+    );
 }

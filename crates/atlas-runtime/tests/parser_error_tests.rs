@@ -16,14 +16,21 @@ fn parse_source(source: &str) -> Vec<atlas_runtime::diagnostic::Diagnostic> {
     diagnostics
 }
 
-fn assert_has_parser_error(diagnostics: &[atlas_runtime::diagnostic::Diagnostic], expected_substring: &str) {
+fn assert_has_parser_error(
+    diagnostics: &[atlas_runtime::diagnostic::Diagnostic],
+    expected_substring: &str,
+) {
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let expected_lower = expected_substring.to_lowercase();
-    let found = diagnostics.iter().any(|d| {
-        d.message.to_lowercase().contains(&expected_lower) && d.code == "AT1000"
-    });
-    assert!(found, "Expected AT1000 error with '{}', got: {:?}",
-        expected_substring, diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>());
+    let found = diagnostics
+        .iter()
+        .any(|d| d.message.to_lowercase().contains(&expected_lower) && d.code == "AT1000");
+    assert!(
+        found,
+        "Expected AT1000 error with '{}', got: {:?}",
+        expected_substring,
+        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+    );
 }
 
 // ============================================================================
@@ -78,7 +85,10 @@ fn test_function_declaration_errors(#[case] source: &str, #[case] expected: &str
 #[case("fn outer() { fn inner() { return 1; } }", "function")]
 #[case("if (true) { fn foo() { return 1; } }", "function")]
 #[case("while (true) { fn foo() { return 1; } }", "function")]
-#[case("for (let i = 0; i < 10; i = i + 1) { fn foo() { return 1; } }", "function")]
+#[case(
+    "for (let i = 0; i < 10; i = i + 1) { fn foo() { return 1; } }",
+    "function"
+)]
 fn test_nested_functions_not_allowed(#[case] source: &str, #[case] expected: &str) {
     let diagnostics = parse_source(source);
     assert_has_parser_error(&diagnostics, expected);

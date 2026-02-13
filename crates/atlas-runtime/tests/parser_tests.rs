@@ -8,9 +8,9 @@
 //! Review with: cargo insta review
 
 mod common;
+use atlas_runtime::ast::*;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
-use atlas_runtime::ast::*;
 use rstest::rstest;
 
 fn parse_source(source: &str) -> (Program, Vec<atlas_runtime::diagnostic::Diagnostic>) {
@@ -226,7 +226,8 @@ fn test_parse_function_no_params() {
 
 #[test]
 fn test_parse_function_with_params() {
-    let (program, diagnostics) = parse_source("fn add(x: number, y: number) -> number { return x + y; }");
+    let (program, diagnostics) =
+        parse_source("fn add(x: number, y: number) -> number { return x + y; }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }
@@ -269,11 +270,17 @@ fn test_parse_error_recovery() {
     let (program, diagnostics) = parse_source("let x = ; let y = 2;");
     assert!(!diagnostics.is_empty(), "Expected syntax error");
     // Parser should recover and parse the second statement
-    assert!(program.items.len() >= 1, "Expected at least one item after recovery");
+    assert!(
+        program.items.len() >= 1,
+        "Expected at least one item after recovery"
+    );
 }
 
 #[test]
 fn test_parse_missing_semicolon_error() {
     let (_program, diagnostics) = parse_source("let x = 1 let y = 2;");
-    assert!(!diagnostics.is_empty(), "Expected syntax error for missing semicolon");
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected syntax error for missing semicolon"
+    );
 }

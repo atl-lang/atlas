@@ -139,8 +139,8 @@ impl OptimizationPass for ConstantFoldingPass {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::span::Span;
     use crate::bytecode::Opcode;
+    use crate::span::Span;
 
     #[test]
     fn test_optimizer_new() {

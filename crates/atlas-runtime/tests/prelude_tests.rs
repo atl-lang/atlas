@@ -105,7 +105,9 @@ fn test_global_shadowing_produces_at1012(#[case] filename: &str, #[case] builtin
 
     // Should mention "Cannot shadow prelude builtin"
     assert!(
-        diagnostics[0].message.contains("Cannot shadow prelude builtin"),
+        diagnostics[0]
+            .message
+            .contains("Cannot shadow prelude builtin"),
         "Error message should mention prelude shadowing, got: {}",
         diagnostics[0].message
     );

@@ -142,9 +142,16 @@ fn type_to_string(ty: &Type) -> String {
         Type::Void => "void".to_string(),
         Type::Null => "null".to_string(),
         Type::Array(elem) => format!("{}[]", type_to_string(elem)),
-        Type::Function { params, return_type } => {
+        Type::Function {
+            params,
+            return_type,
+        } => {
             let param_types: Vec<String> = params.iter().map(type_to_string).collect();
-            format!("({}) -> {}", param_types.join(", "), type_to_string(return_type))
+            format!(
+                "({}) -> {}",
+                param_types.join(", "),
+                type_to_string(return_type)
+            )
         }
         Type::Unknown => "unknown".to_string(),
     }
@@ -157,7 +164,10 @@ fn collect_types(ty: &Type, types: &mut std::collections::HashSet<String>) {
 
     match ty {
         Type::Array(elem) => collect_types(elem, types),
-        Type::Function { params, return_type } => {
+        Type::Function {
+            params,
+            return_type,
+        } => {
             for param in params {
                 collect_types(param, types);
             }
@@ -169,10 +179,16 @@ fn collect_types(ty: &Type, types: &mut std::collections::HashSet<String>) {
 
 /// Parse type information into kind and details
 fn parse_type_info(type_name: &str) -> (String, Option<String>) {
-    if type_name.ends_with("[]") {
-        ("array".to_string(), Some(format!("element type: {}", &type_name[..type_name.len() - 2])))
+    if let Some(stripped) = type_name.strip_suffix("[]") {
+        (
+            "array".to_string(),
+            Some(format!("element type: {}", stripped)),
+        )
     } else if type_name.contains("->") {
-        ("function".to_string(), Some(format!("signature: {}", type_name)))
+        (
+            "function".to_string(),
+            Some(format!("signature: {}", type_name)),
+        )
     } else {
         ("primitive".to_string(), None)
     }
@@ -312,20 +328,24 @@ mod tests {
     fn test_from_symbol_table_sorts_symbols() {
         // Create a symbol table with symbols in non-sorted order
         let mut table = SymbolTable::new();
-        table.define(Symbol {
-            name: "z".to_string(),
-            kind: SymbolKind::Variable,
-            ty: Type::Number,
-            mutable: false,
-            span: Span::new(10, 15),
-        }).ok();
-        table.define(Symbol {
-            name: "a".to_string(),
-            kind: SymbolKind::Variable,
-            ty: Type::String,
-            mutable: false,
-            span: Span::new(0, 5),
-        }).ok();
+        table
+            .define(Symbol {
+                name: "z".to_string(),
+                kind: SymbolKind::Variable,
+                ty: Type::Number,
+                mutable: false,
+                span: Span::new(10, 15),
+            })
+            .ok();
+        table
+            .define(Symbol {
+                name: "a".to_string(),
+                kind: SymbolKind::Variable,
+                ty: Type::String,
+                mutable: false,
+                span: Span::new(0, 5),
+            })
+            .ok();
 
         let dump = TypecheckDump::from_symbol_table(&table);
 
@@ -340,20 +360,24 @@ mod tests {
     #[test]
     fn test_from_symbol_table_sorts_types() {
         let mut table = SymbolTable::new();
-        table.define(Symbol {
-            name: "z".to_string(),
-            kind: SymbolKind::Variable,
-            ty: Type::String,
-            mutable: false,
-            span: Span::new(0, 1),
-        }).ok();
-        table.define(Symbol {
-            name: "a".to_string(),
-            kind: SymbolKind::Variable,
-            ty: Type::Number,
-            mutable: false,
-            span: Span::new(5, 6),
-        }).ok();
+        table
+            .define(Symbol {
+                name: "z".to_string(),
+                kind: SymbolKind::Variable,
+                ty: Type::String,
+                mutable: false,
+                span: Span::new(0, 1),
+            })
+            .ok();
+        table
+            .define(Symbol {
+                name: "a".to_string(),
+                kind: SymbolKind::Variable,
+                ty: Type::Number,
+                mutable: false,
+                span: Span::new(5, 6),
+            })
+            .ok();
 
         let dump = TypecheckDump::from_symbol_table(&table);
 

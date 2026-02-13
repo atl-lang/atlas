@@ -113,15 +113,14 @@ mod tests {
 
     #[test]
     fn test_normalize_related_locations() {
-        let diag = Diagnostic::error("test", Span::new(0, 1)).with_related_location(
-            RelatedLocation {
+        let diag =
+            Diagnostic::error("test", Span::new(0, 1)).with_related_location(RelatedLocation {
                 file: "/absolute/path/other.atlas".to_string(),
                 line: 5,
                 column: 10,
                 length: 3,
                 message: "defined here".to_string(),
-            },
-        );
+            });
 
         let normalized = normalize_diagnostic_for_testing(&diag);
 

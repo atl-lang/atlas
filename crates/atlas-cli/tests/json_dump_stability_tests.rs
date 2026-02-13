@@ -183,10 +183,7 @@ fn test_typecheck_dump_deterministic_simple() {
     let source = "let x: number = 42;";
     let output1 = run_typecheck_dump(source);
     let output2 = run_typecheck_dump(source);
-    assert_eq!(
-        output1, output2,
-        "Typecheck dump should be deterministic"
-    );
+    assert_eq!(output1, output2, "Typecheck dump should be deterministic");
 }
 
 #[test]
@@ -203,10 +200,7 @@ let x: number = factorial(5);
 "#;
     let output1 = run_typecheck_dump(source);
     let output2 = run_typecheck_dump(source);
-    assert_eq!(
-        output1, output2,
-        "Typecheck dump should be deterministic"
-    );
+    assert_eq!(output1, output2, "Typecheck dump should be deterministic");
 }
 
 #[test]
@@ -262,10 +256,7 @@ fn outer(a: number) -> number {
 "#;
     let output1 = run_typecheck_dump(source);
     let output2 = run_typecheck_dump(source);
-    assert_eq!(
-        output1, output2,
-        "Typecheck dump should be deterministic"
-    );
+    assert_eq!(output1, output2, "Typecheck dump should be deterministic");
 }
 
 #[test]
@@ -276,10 +267,7 @@ let first: number = arr[0];
 "#;
     let output1 = run_typecheck_dump(source);
     let output2 = run_typecheck_dump(source);
-    assert_eq!(
-        output1, output2,
-        "Typecheck dump should be deterministic"
-    );
+    assert_eq!(output1, output2, "Typecheck dump should be deterministic");
 }
 
 // ============================================================================
@@ -329,10 +317,7 @@ let c: bool = a && b || !a;
 "#;
     let ast1 = run_ast_dump(source);
     let ast2 = run_ast_dump(source);
-    assert_eq!(
-        ast1, ast2,
-        "AST dump should be deterministic with booleans"
-    );
+    assert_eq!(ast1, ast2, "AST dump should be deterministic with booleans");
 
     let tc1 = run_typecheck_dump(source);
     let tc2 = run_typecheck_dump(source);

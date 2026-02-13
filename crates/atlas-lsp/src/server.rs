@@ -129,9 +129,7 @@ impl LanguageServer for AtlasLspServer {
         documents.remove(&uri);
 
         // Clear diagnostics
-        self.client
-            .publish_diagnostics(uri, Vec::new(), None)
-            .await;
+        self.client.publish_diagnostics(uri, Vec::new(), None).await;
     }
 
     async fn document_symbol(
@@ -210,10 +208,8 @@ impl LanguageServer for AtlasLspServer {
 
         let documents = self.documents.lock().await;
         if let Some(doc) = documents.get(&uri) {
-            let completions = crate::completion::generate_completions(
-                doc.ast.as_ref(),
-                doc.symbols.as_ref(),
-            );
+            let completions =
+                crate::completion::generate_completions(doc.ast.as_ref(), doc.symbols.as_ref());
             return Ok(Some(CompletionResponse::Array(completions)));
         }
 

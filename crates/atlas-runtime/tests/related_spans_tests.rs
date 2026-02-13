@@ -137,13 +137,26 @@ fn test_return_type_mismatch_has_related_span() {
     "#;
 
     let (ast, parse_diags) = parse(source);
-    assert!(parse_diags.is_empty(), "Should parse without errors: {:?}", parse_diags);
+    assert!(
+        parse_diags.is_empty(),
+        "Should parse without errors: {:?}",
+        parse_diags
+    );
 
     let (symbol_table, bind_diags) = bind_program(&ast);
-    assert!(bind_diags.is_empty(), "Should bind without errors: {:?}", bind_diags);
+    assert!(
+        bind_diags.is_empty(),
+        "Should bind without errors: {:?}",
+        bind_diags
+    );
 
     let type_diags = typecheck_program(&ast, &symbol_table);
-    assert_eq!(type_diags.len(), 1, "Should have one type error, got: {:?}", type_diags);
+    assert_eq!(
+        type_diags.len(),
+        1,
+        "Should have one type error, got: {:?}",
+        type_diags
+    );
 
     let diag = &type_diags[0];
     assert_eq!(diag.code, "AT3001");
@@ -179,18 +192,32 @@ fn test_immutable_assignment_has_related_span() {
     "#;
 
     let (ast, parse_diags) = parse(source);
-    assert!(parse_diags.is_empty(), "Should parse without errors: {:?}", parse_diags);
+    assert!(
+        parse_diags.is_empty(),
+        "Should parse without errors: {:?}",
+        parse_diags
+    );
 
     let (symbol_table, bind_diags) = bind_program(&ast);
-    assert!(bind_diags.is_empty(), "Should bind without errors: {:?}", bind_diags);
+    assert!(
+        bind_diags.is_empty(),
+        "Should bind without errors: {:?}",
+        bind_diags
+    );
 
     let type_diags = typecheck_program(&ast, &symbol_table);
 
     // Find the AT3003 error (immutable assignment)
     let at3003_diags: Vec<_> = type_diags.iter().filter(|d| d.code == "AT3003").collect();
-    assert_eq!(at3003_diags.len(), 1, "Should have one AT3003 error, got {:?}. All diagnostics: {:?}",
+    assert_eq!(
+        at3003_diags.len(),
+        1,
+        "Should have one AT3003 error, got {:?}. All diagnostics: {:?}",
         type_diags.iter().map(|d| &d.code).collect::<Vec<_>>(),
-        type_diags.iter().map(|d| (&d.code, &d.message)).collect::<Vec<_>>()
+        type_diags
+            .iter()
+            .map(|d| (&d.code, &d.message))
+            .collect::<Vec<_>>()
     );
 
     let diag = at3003_diags[0];
@@ -283,7 +310,10 @@ fn test_related_span_serializes_to_json() {
 
     // Verify JSON serialization works
     let json = diag.to_json_string().expect("Should serialize to JSON");
-    assert!(json.contains("\"related\""), "JSON should contain related field");
+    assert!(
+        json.contains("\"related\""),
+        "JSON should contain related field"
+    );
     assert!(
         json.contains("first defined"),
         "JSON should contain related message"
@@ -322,7 +352,11 @@ fn test_no_related_span_for_undefined_variable() {
     "#;
 
     let (ast, parse_diags) = parse(source);
-    assert!(parse_diags.is_empty(), "Should parse without errors: {:?}", parse_diags);
+    assert!(
+        parse_diags.is_empty(),
+        "Should parse without errors: {:?}",
+        parse_diags
+    );
 
     let (_symbol_table, bind_diags) = bind_program(&ast);
 

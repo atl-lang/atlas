@@ -49,7 +49,7 @@ impl Binder {
         }
 
         (
-            std::mem::replace(&mut self.symbol_table, SymbolTable::new()),
+            std::mem::take(&mut self.symbol_table),
             std::mem::take(&mut self.diagnostics),
         )
     }
@@ -60,16 +60,14 @@ impl Binder {
         if self.symbol_table.is_prelude_builtin(&func.name.name) {
             let diag = Diagnostic::error_with_code(
                 "AT1012",
-                &format!(
+                format!(
                     "Cannot shadow prelude builtin '{}' in global scope",
                     func.name.name
                 ),
                 func.name.span,
             )
             .with_label("shadows prelude builtin")
-            .with_help(format!(
-                "Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope."
-            ));
+            .with_help("Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.".to_string());
 
             self.diagnostics.push(diag);
             return;
@@ -104,7 +102,10 @@ impl Binder {
                     file: "<input>".to_string(),
                     line: 1,
                     column: existing_symbol.span.start + 1,
-                    length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                    length: existing_symbol
+                        .span
+                        .end
+                        .saturating_sub(existing_symbol.span.start),
                     message: format!("'{}' first defined here", existing_symbol.name),
                 });
             }
@@ -135,7 +136,7 @@ impl Binder {
                 mutable: false,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
-                };
+            };
 
             if let Err((msg, existing)) = self.symbol_table.define(symbol) {
                 let mut diag = Diagnostic::error_with_code("AT2003", &msg, param.name.span)
@@ -147,7 +148,10 @@ impl Binder {
                         file: "<input>".to_string(),
                         line: 1,
                         column: existing_symbol.span.start + 1,
-                        length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                        length: existing_symbol
+                            .span
+                            .end
+                            .saturating_sub(existing_symbol.span.start),
                         message: format!("'{}' first defined here", existing_symbol.name),
                     });
                 }
@@ -185,16 +189,14 @@ impl Binder {
                 {
                     let diag = Diagnostic::error_with_code(
                         "AT1012",
-                        &format!(
+                        format!(
                             "Cannot shadow prelude builtin '{}' in global scope",
                             var.name.name
                         ),
                         var.name.span,
                     )
                     .with_label("shadows prelude builtin")
-                    .with_help(format!(
-                        "Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope."
-                    ));
+                    .with_help("Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.".to_string());
 
                     self.diagnostics.push(diag);
                     return;
@@ -216,7 +218,7 @@ impl Binder {
                     mutable: var.mutable,
                     kind: SymbolKind::Variable,
                     span: var.name.span,
-                        };
+                };
 
                 if let Err((msg, existing)) = self.symbol_table.define(symbol) {
                     let mut diag = Diagnostic::error_with_code("AT2003", &msg, var.name.span)
@@ -228,7 +230,10 @@ impl Binder {
                             file: "<input>".to_string(),
                             line: 1,
                             column: existing_symbol.span.start + 1,
-                            length: existing_symbol.span.end.saturating_sub(existing_symbol.span.start),
+                            length: existing_symbol
+                                .span
+                                .end
+                                .saturating_sub(existing_symbol.span.start),
                             message: format!("'{}' first defined here", existing_symbol.name),
                         });
                     }
@@ -299,7 +304,7 @@ impl Binder {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT2002",
-                            &format!("Unknown symbol '{}'", id.name),
+                            format!("Unknown symbol '{}'", id.name),
                             id.span,
                         )
                         .with_label("undefined variable"),
@@ -325,7 +330,7 @@ impl Binder {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT2002",
-                            &format!("Unknown symbol '{}'", id.name),
+                            format!("Unknown symbol '{}'", id.name),
                             id.span,
                         )
                         .with_label("undefined variable"),
@@ -418,18 +423,28 @@ mod tests {
             eprintln!("Diagnostic: {} - {}", diag.code, diag.message);
         }
 
-        assert_eq!(diagnostics.len(), 0, "Expected no diagnostics, got: {:?}", diagnostics);
-        assert!(table.lookup("foo").is_some(), "Function 'foo' not found in symbol table");
+        assert_eq!(
+            diagnostics.len(),
+            0,
+            "Expected no diagnostics, got: {:?}",
+            diagnostics
+        );
+        assert!(
+            table.lookup("foo").is_some(),
+            "Function 'foo' not found in symbol table"
+        );
         assert_eq!(table.lookup("foo").unwrap().kind, SymbolKind::Function);
     }
 
     #[test]
     fn test_function_hoisting() {
         // Function should be accessible even before its declaration
-        let (table, diagnostics) = bind_source(r#"
+        let (table, diagnostics) = bind_source(
+            r#"
             let x = foo();
             fn foo() -> number { return 42; }
-        "#);
+        "#,
+        );
 
         assert_eq!(diagnostics.len(), 0);
         assert!(table.lookup("foo").is_some());
@@ -446,10 +461,12 @@ mod tests {
 
     #[test]
     fn test_redeclaration_error() {
-        let (_table, diagnostics) = bind_source(r#"
+        let (_table, diagnostics) = bind_source(
+            r#"
             let x = 1;
             let x = 2;
-        "#);
+        "#,
+        );
 
         assert!(diagnostics.len() >= 1);
         assert!(diagnostics.iter().any(|d| d.code == "AT2003"));
@@ -458,12 +475,14 @@ mod tests {
     #[test]
     fn test_scope_shadowing() {
         // Shadowing in inner scope should be allowed
-        let (table, diagnostics) = bind_source(r#"
+        let (table, diagnostics) = bind_source(
+            r#"
             let x = 1;
             {
                 let x = 2;
             }
-        "#);
+        "#,
+        );
 
         // Should have no errors (shadowing is allowed)
         assert_eq!(diagnostics.len(), 0);
@@ -473,11 +492,13 @@ mod tests {
 
     #[test]
     fn test_builtin_functions() {
-        let (table, diagnostics) = bind_source(r#"
+        let (table, diagnostics) = bind_source(
+            r#"
             print("hello");
             let l = len("world");
             let s = str(42);
-        "#);
+        "#,
+        );
 
         assert_eq!(diagnostics.len(), 0);
         assert!(table.lookup("print").is_some());
@@ -488,36 +509,46 @@ mod tests {
     #[test]
     fn test_global_prelude_shadowing_function() {
         // Shadowing prelude function at global scope should produce AT1012
-        let (_table, diagnostics) = bind_source(r#"
+        let (_table, diagnostics) = bind_source(
+            r#"
             fn print() -> void {}
-        "#);
+        "#,
+        );
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].code, "AT1012");
-        assert!(diagnostics[0].message.contains("Cannot shadow prelude builtin 'print'"));
+        assert!(diagnostics[0]
+            .message
+            .contains("Cannot shadow prelude builtin 'print'"));
     }
 
     #[test]
     fn test_global_prelude_shadowing_variable() {
         // Shadowing prelude function with variable at global scope should produce AT1012
-        let (_table, diagnostics) = bind_source(r#"
+        let (_table, diagnostics) = bind_source(
+            r#"
             let len = 42;
-        "#);
+        "#,
+        );
 
         assert_eq!(diagnostics.len(), 1);
         assert_eq!(diagnostics[0].code, "AT1012");
-        assert!(diagnostics[0].message.contains("Cannot shadow prelude builtin 'len'"));
+        assert!(diagnostics[0]
+            .message
+            .contains("Cannot shadow prelude builtin 'len'"));
     }
 
     #[test]
     fn test_nested_prelude_shadowing_allowed() {
         // Shadowing prelude in nested scope should be allowed
-        let (table, diagnostics) = bind_source(r#"
+        let (table, diagnostics) = bind_source(
+            r#"
             fn foo() -> void {
                 let print = 42;
                 let len = "hello";
             }
-        "#);
+        "#,
+        );
 
         assert_eq!(diagnostics.len(), 0);
         // Original builtins should still be accessible
@@ -528,11 +559,13 @@ mod tests {
     #[test]
     fn test_all_prelude_builtins_shadowing() {
         // Test shadowing all three prelude builtins
-        let (_table, diagnostics) = bind_source(r#"
+        let (_table, diagnostics) = bind_source(
+            r#"
             fn print() -> void {}
             let len = 42;
             var str = "test";
-        "#);
+        "#,
+        );
 
         // Should have 3 errors (one for each prelude builtin)
         assert_eq!(diagnostics.len(), 3);
