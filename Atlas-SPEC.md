@@ -10,7 +10,6 @@
 
 ## Advanced Features Under Research
 These features require careful design and research before implementation:
-- Generics beyond arrays - How far should the type system extend?
 - Advanced type features (unions, intersections) - Complexity vs utility tradeoffs
 - Async/await - What's the most explicit async model for AI?
 - JIT/native codegen - Performance benefits vs maintenance complexity
@@ -34,8 +33,10 @@ These features require careful design and research before implementation:
 
 ## Types
 - Primitive: `number`, `string`, `bool`, `void`, `null`
-- Arrays: `T[]`
+- Arrays: `T[]` or `Array<T>`
 - Function: `(T1, T2) -> T3`
+- Generic: `Type<T1, T2, ...>` (v0.2+)
+- Built-in generics: `Option<T>`, `Result<T, E>` (v0.2+)
 
 ### Function Types
 Functions are first-class values that can be stored in variables, passed as arguments, and returned from functions.
@@ -83,6 +84,78 @@ g(5);  // 10
 - No anonymous function syntax: `fn(x) { ... }` (planned for v0.3+)
 - No closure capture: Functions can only reference globals (planned for v0.3+)
 - All function values must be named functions
+
+### Generic Types (v0.2+)
+
+Generic types enable parameterized types for reusable, type-safe code.
+
+**Syntax:**
+```atlas
+// Generic type application
+Type<T1, T2, ...>
+
+// Generic function declaration
+fn functionName<T, E>(param: T) -> Result<T, E> {
+    // body
+}
+```
+
+**Examples:**
+```atlas
+// Generic function with inference
+fn identity<T>(x: T) -> T {
+    return x;
+}
+
+let num = identity(42);        // T inferred as number
+let str = identity("hello");   // T inferred as string
+
+// Explicit type arguments
+let result = identity<number>(42);
+
+// Multiple type parameters
+fn pair<A, B>(first: A, second: B) -> Result<A, B> {
+    return Ok([first, second]);
+}
+```
+
+**Built-in Generic Types:**
+
+`Option<T>` - Represents optional values:
+```atlas
+let some: Option<number> = Some(42);
+let none: Option<number> = None;
+```
+
+`Result<T, E>` - Represents success or failure:
+```atlas
+fn divide(a: number, b: number) -> Result<number, string> {
+    if (b == 0) {
+        return Err("division by zero");
+    }
+    return Ok(a / b);
+}
+```
+
+**Array syntax sugar:**
+```atlas
+let arr1: number[] = [1, 2, 3];        // Sugar for Array<number>
+let arr2: Array<number> = [1, 2, 3];  // Explicit generic form
+```
+
+**Semantics:**
+- Monomorphization: Generates specialized code per type instantiation
+- Type inference: Arguments infer type parameters when possible
+- Type parameters: Lexically scoped to function declaration
+- No constraints in v0.2 (all type parameters unbounded)
+
+**Limitations (v0.2):**
+- No user-defined generic types (only built-in: Option, Result, Array)
+- No type parameter constraints/bounds
+- No variance (all type parameters invariant)
+- No higher-kinded types
+
+**See:** `docs/design/generics.md` for complete design
 
 ### Typing Rules
 - `let` is immutable, `var` is mutable.
@@ -194,12 +267,14 @@ g(5);  // 10
 - Return:
   - `return expr;`
 
-## Grammar (EBNF, v0.1)
+## Grammar (EBNF)
 ```ebnf
 program        = { decl_or_stmt } ;
 decl_or_stmt   = fn_decl | stmt ;
 
-fn_decl        = "fn" ident "(" [ params ] ")" "->" type block ;
+fn_decl        = "fn" ident [ type_params ] "(" [ params ] ")" "->" type block ;
+type_params    = "<" type_param_list ">" ;                           (* v0.2+ *)
+type_param_list = ident { "," ident } ;                              (* v0.2+ *)
 params         = param { "," param } ;
 param          = ident ":" type ;
 
@@ -239,13 +314,18 @@ comparison     = term { ("<" | "<=" | ">" | ">=") term } ;
 term           = factor { ("+" | "-") factor } ;
 factor         = unary { ("*" | "/" | "%") unary } ;
 unary          = ("!" | "-") unary | call ;
-call           = primary { "(" [ args ] ")" | "[" expr "]" } ;
+call           = primary { [ type_args ] "(" [ args ] ")" | "[" expr "]" } ;  (* v0.2+: type_args *)
+type_args      = "<" type_arg_list ">" ;                             (* v0.2+ *)
+type_arg_list  = type { "," type } ;                                 (* v0.2+ *)
 args           = expr { "," expr } ;
 array_literal  = "[" [ args ] "]" ;
 primary        = number | string | "true" | "false" | "null" | ident | array_literal | "(" expr ")" ;
 
-type           = primary_type [ "[]" ] ;
+type           = primary_type [ "[]" ] | generic_type | function_type ;  (* v0.2+ *)
 primary_type   = "number" | "string" | "bool" | "void" | "null" ;
+generic_type   = ident "<" type_arg_list ">" ;                       (* v0.2+ *)
+function_type  = "(" [ type_list ] ")" "->" type ;
+type_list      = type { "," type } ;
 ident          = letter { letter | digit | "_" } ;
 number         = digit { digit } [ "." digit { digit } ] [ ("e" | "E") ["+" | "-"] digit { digit } ] ;
 string         = "\"" { char } "\"" ;
