@@ -7,10 +7,22 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/bytecode-vm/phase-10-bytecode-serialization.md
-**Next Phase:** `phases/bytecode-vm/phase-11-bytecode-versioning.md`
+**🚫 BLOCKING: REFACTORING SPRINT (Phase 10.5)**
 
-**What to implement:** Bytecode version compatibility and migration strategies
+**Status:** 7 files exceed or approach 1000-line limit - must refactor before continuing
+**Task Document:** `REFACTORING_SPRINT.md`
+**After Completion:** Resume `phases/bytecode-vm/phase-11-bytecode-versioning.md`
+
+**Files requiring refactoring:**
+- vm.rs (1,386 lines) - BLOCKING
+- parser.rs (1,220 lines) - BLOCKING
+- lexer.rs (1,029 lines) - BLOCKING
+- bytecode.rs (981 lines) - WARNING
+- typechecker.rs (969 lines) - WARNING
+- compiler.rs (886 lines) - WARNING
+- interpreter.rs (840 lines) - WARNING
+
+**See `REFACTORING_SPRINT.md` for detailed task breakdown.**
 
 ---
 
@@ -29,9 +41,13 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Bytecode & VM Phase 11 (Bytecode Versioning):**
+**For REFACTORING SPRINT (Phase 10.5):**
+- `REFACTORING_SPRINT.md` - Complete refactoring task breakdown
+- `docs/CODE_ORGANIZATION.md` - File size limits and module patterns
+- Current source files in `crates/atlas-runtime/src/`
+
+**After refactoring, next phase will need:**
 - `docs/implementation/11-bytecode.md` - Bytecode format specification
-- Current bytecode.rs serialization implementation
 
 ---
 
@@ -234,12 +250,13 @@ Change date at top of file to current date
 
 ### For AI Agents:
 1. **Always read STATUS.md first** - This is your entry point
-2. **Follow BUILD-ORDER.md sequence** - Don't skip phases
-3. **⚠️ CRITICAL: Read Atlas-SPEC.md for any phase writing Atlas code** - Verify syntax (function signatures, let/var, semicolons) before implementation
-4. **Check exit criteria** - Each phase file lists what "done" means
-5. **Update this file** - Use handoff protocol when complete
-6. **Read implementation guides** - Use mapping table above
-7. **Each phase = implementation + tests** - Don't just write tests, build features!
+2. **🚫 BLOCKING: Check CODE_ORGANIZATION.md** - Verify file sizes before and after phase
+3. **Follow BUILD-ORDER.md sequence** - Don't skip phases
+4. **⚠️ CRITICAL: Read Atlas-SPEC.md for any phase writing Atlas code** - Verify syntax (function signatures, let/var, semicolons) before implementation
+5. **Check exit criteria** - Each phase file lists what "done" means
+6. **Update this file** - Use handoff protocol when complete
+7. **Read implementation guides** - Use mapping table above
+8. **Each phase = implementation + tests** - Don't just write tests, build features!
 
 ### For Humans:
 - Point AI agents to this file: "Read STATUS.md and continue from where we left off"
@@ -259,8 +276,10 @@ Change date at top of file to current date
 
 ### **For Implementation:**
 - **This file** (`STATUS.md`) - Current state and what's next
+- **AI Agent Checklist** (`docs/AI_AGENT_CHECKLIST.md`) - Pre/post phase verification steps
 - **Build order** (`phases/BUILD-ORDER.md`) - Complete phase sequence
 - **Implementation** (`docs/implementation/README.md`) - Architecture details
+- **🚫 Code Organization** (`docs/CODE_ORGANIZATION.md`) - File size limits and refactoring rules (ENFORCED)
 
 ---
 
@@ -271,6 +290,9 @@ Before marking a phase complete, verify:
 - [ ] Tests pass (if phase includes tests)
 - [ ] Code compiles without warnings
 - [ ] Phase file requirements fully implemented
+- [ ] **🚫 CODE ORGANIZATION: No .rs file exceeds 1000 lines** (see `docs/CODE_ORGANIZATION.md`)
+- [ ] **⚠️ CODE ORGANIZATION: Files 800-1000 lines documented in handoff**
+- [ ] **Run file size check:** `find crates/*/src -name "*.rs" -not -path "*/tests/*" -exec wc -l {} + | sort -rn | head -10`
 - [ ] STATUS.md updated with handoff
 
 ---
