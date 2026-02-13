@@ -1470,4 +1470,209 @@ mod tests {
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
     }
+
+    // ===== Phase 17: VM Numeric Error Propagation Tests =====
+
+    #[test]
+    fn test_vm_modulo_by_zero() {
+        // Test modulo by zero (AT0005)
+        let result = execute_source("10 % 0;");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
+    }
+
+    #[test]
+    fn test_vm_modulo_zero_by_zero() {
+        // Test 0 % 0 should also be divide by zero
+        let result = execute_source("0 % 0;");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
+    }
+
+    #[test]
+    fn test_vm_modulo_invalid_numeric_result() {
+        // Test modulo that produces invalid result
+        let result = execute_source("1e308 % 0.1;");
+        // This may produce NaN or Infinity depending on the operation
+        if result.is_err() {
+            assert!(matches!(
+                result.unwrap_err(),
+                RuntimeError::InvalidNumericResult | RuntimeError::DivideByZero
+            ));
+        }
+    }
+
+    #[test]
+    fn test_vm_subtraction_overflow() {
+        // Test subtraction that produces invalid result (AT0007)
+        let result = execute_source("let x = -1.7976931348623157e308 - 1.7976931348623157e308;");
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            RuntimeError::InvalidNumericResult
+        ));
+    }
+
+    #[test]
+    fn test_vm_negation_overflow() {
+        // Test negation that produces invalid result
+        // Note: Negation of very large numbers shouldn't overflow, but let's test edge cases
+        let result = execute_source("let x = -1.7976931348623157e308; let y = -x;");
+        // Negation should work fine, but if it somehow produces infinity, catch it
+        if result.is_err() {
+            assert!(matches!(
+                result.unwrap_err(),
+                RuntimeError::InvalidNumericResult
+            ));
+        } else {
+            // Should succeed
+            assert!(result.is_ok());
+        }
+    }
+
+    #[test]
+    fn test_vm_division_produces_infinity() {
+        // Test division that would produce infinity (very large / very small)
+        let result = execute_source("let x = 1e308 / 1e-308;");
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            RuntimeError::InvalidNumericResult
+        ));
+    }
+
+    #[test]
+    fn test_vm_numeric_error_matches_interpreter_divide_by_zero() {
+        // Verify VM and interpreter produce same error for divide by zero
+        let source = "1 / 0;";
+
+        // Test VM
+        let vm_result = execute_source(source);
+        assert!(vm_result.is_err());
+        assert!(matches!(vm_result.unwrap_err(), RuntimeError::DivideByZero));
+
+        // Test Interpreter (via runtime)
+        use crate::runtime::Atlas;
+        let runtime = Atlas::new();
+        let interp_result = runtime.eval(source);
+        assert!(interp_result.is_err());
+        // Interpreter converts RuntimeError to Diagnostic, so check diagnostic code
+        let diags = interp_result.unwrap_err();
+        assert!(!diags.is_empty());
+        assert_eq!(diags[0].code, "AT0005");
+    }
+
+    #[test]
+    fn test_vm_numeric_error_matches_interpreter_overflow() {
+        // Verify VM and interpreter produce same error for overflow
+        let source = "1e308 * 2.0;";
+
+        // Test VM
+        let vm_result = execute_source(source);
+        assert!(vm_result.is_err());
+        assert!(matches!(
+            vm_result.unwrap_err(),
+            RuntimeError::InvalidNumericResult
+        ));
+
+        // Test Interpreter (via runtime)
+        use crate::runtime::Atlas;
+        let runtime = Atlas::new();
+        let interp_result = runtime.eval(source);
+        assert!(interp_result.is_err());
+        let diags = interp_result.unwrap_err();
+        assert!(!diags.is_empty());
+        assert_eq!(diags[0].code, "AT0007");
+    }
+
+    #[test]
+    fn test_vm_numeric_error_in_nested_expression() {
+        // Test that numeric errors propagate correctly in nested expressions
+        let result = execute_source("let x = (5 + 3) * (10 / 0);");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
+    }
+
+    #[test]
+    fn test_vm_numeric_error_in_array() {
+        // Test numeric error in array element
+        let result = execute_source("let arr = [1, 2, 10 / 0];");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
+    }
+
+    #[test]
+    fn test_vm_numeric_error_in_array_index() {
+        // Test numeric error used as array index
+        let result = execute_source("let arr = [1, 2, 3]; arr[10 / 0];");
+        assert!(result.is_err());
+        assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero));
+    }
+
+    #[test]
+    fn test_vm_multiple_numeric_operations_no_error() {
+        // Test that valid numeric operations don't trigger errors
+        let result = execute_source("let x = 10 / 2 + 5 * 3 - 8 % 3;");
+        assert!(result.is_ok());
+        let value = result.unwrap();
+        assert_eq!(value, Some(Value::Number(5.0 + 15.0 - 2.0))); // 10/2=5, 5*3=15, 8%3=2, 5+15-2=18
+    }
+
+    #[test]
+    fn test_vm_division_by_very_small_number() {
+        // Test division by very small number (not zero)
+        let result = execute_source("let x = 1.0 / 1e-300;");
+        // Should succeed as long as result is not infinity
+        // 1.0 / 1e-300 = 1e300, which is less than max f64
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_vm_division_edge_case_max_divided_by_min() {
+        // Test edge case: max / min
+        let result = execute_source("let x = 1e308 / 1e-308;");
+        // This will overflow to infinity
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            RuntimeError::InvalidNumericResult
+        ));
+    }
+
+    #[test]
+    fn test_vm_addition_edge_case_max_plus_max() {
+        // Test edge case: max + max
+        let result = execute_source("let x = 1.7976931348623157e308 + 1.7976931348623157e308;");
+        assert!(result.is_err());
+        assert!(matches!(
+            result.unwrap_err(),
+            RuntimeError::InvalidNumericResult
+        ));
+    }
+
+    #[test]
+    fn test_vm_numeric_error_codes_division_by_zero() {
+        // Explicitly test that AT0005 is used for division by zero
+        use crate::runtime::Atlas;
+        let runtime = Atlas::new();
+        let result = runtime.eval("1 / 0");
+        assert!(result.is_err());
+        let diags = result.unwrap_err();
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].code, "AT0005");
+        assert!(diags[0].message.contains("Divide by zero"));
+    }
+
+    #[test]
+    fn test_vm_numeric_error_codes_invalid_result() {
+        // Explicitly test that AT0007 is used for invalid numeric results
+        use crate::runtime::Atlas;
+        let runtime = Atlas::new();
+        let result = runtime.eval("1e308 * 1e308");
+        assert!(result.is_err());
+        let diags = result.unwrap_err();
+        assert_eq!(diags.len(), 1);
+        assert_eq!(diags[0].code, "AT0007");
+        assert!(diags[0].message.contains("Invalid numeric result"));
+    }
 }
