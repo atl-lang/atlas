@@ -45,6 +45,13 @@ impl LanguageServer for AtlasLspServer {
                 hover_provider: Some(HoverProviderCapability::Simple(true)),
                 definition_provider: Some(OneOf::Left(true)),
                 references_provider: Some(OneOf::Left(true)),
+                completion_provider: Some(CompletionOptions {
+                    resolve_provider: Some(false),
+                    trigger_characters: Some(vec![".".to_string()]),
+                    all_commit_characters: None,
+                    work_done_progress_options: WorkDoneProgressOptions::default(),
+                    completion_item: None,
+                }),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -191,6 +198,21 @@ impl LanguageServer for AtlasLspServer {
                     }
                 }
             }
+        }
+
+        Ok(None)
+    }
+
+    async fn completion(&self, params: CompletionParams) -> Result<Option<CompletionResponse>> {
+        let uri = params.text_document_position.text_document.uri;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            let completions = crate::completion::generate_completions(
+                doc.ast.as_ref(),
+                doc.symbols.as_ref(),
+            );
+            return Ok(Some(CompletionResponse::Array(completions)));
         }
 
         Ok(None)

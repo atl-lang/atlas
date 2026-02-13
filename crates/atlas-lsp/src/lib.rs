@@ -2,6 +2,7 @@
 //!
 //! Provides LSP server implementation for Atlas language.
 
+pub mod completion;
 pub mod convert;
 pub mod document;
 pub mod handlers;
