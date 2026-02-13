@@ -181,10 +181,11 @@ Ensure features exist before tests and prevent premature or stubbed work.
 
 ### Enforcement
 
-**Build order compliance:**
-- `phases/BUILD-ORDER.md` must respect these gates
+**Phase execution compliance:**
+- Each phase has BLOCKERS section checking gate requirements
 - If gate not satisfied, STOP and update plan
 - Do not proceed without meeting gate requirements
+- See `STATUS.md` for phase progress tracking
 
 **Quality over velocity:**
 - Gates prevent rushing

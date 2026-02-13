@@ -249,7 +249,7 @@ Atlas is licensed under the [MIT License](LICENSE).
 ## 📂 Project Structure
 
 ### Phases
-- Build order: `phases/BUILD-ORDER.md`
+- Current progress: `STATUS.md` tracks all v0.2 phases (0/68)
 - Phase sections live in `phases/`
 - Each phase is comprehensive work, not quick tasks
 

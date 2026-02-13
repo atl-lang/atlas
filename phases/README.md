@@ -17,5 +17,5 @@ Phase naming convention:
 - `phase-01-*.md`, `phase-02-*.md`, etc.
 - Each section increments independently.
 
-Build order:
-- `phases/BUILD-ORDER.md`
+Current progress and phase order:
+- See `STATUS.md` in project root for v0.2 phase tracker

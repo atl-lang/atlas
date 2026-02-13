@@ -55,7 +55,7 @@ This directory contains concrete architectural decisions and implementation deta
 
 ## How to Use This Guide
 
-1. **Find your phase** in BUILD-ORDER.md
+1. **Find your phase** in STATUS.md (project root)
 2. **Look up the relevant files** in the table above
 3. **Read only what you need** - don't load everything
 4. **Follow the concrete patterns** - no guessing needed
