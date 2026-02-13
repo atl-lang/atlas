@@ -66,16 +66,13 @@ Create a language that feels natural for humans and AI agents, combining strict 
 - `docs/engineering.md` and `tests/README.md`.
 - `docs/diagnostics.md` and `docs/testing.md`.
 - `docs/runtime.md`, `docs/modules.md`, `docs/ir.md`.
-- `docs/value-model.md` and `docs/modules-test-plan.md`.
+- `docs/value-model.md`.
 - `docs/versioning.md` and `docs/style.md`.
 - `docs/ai-principles.md`.
 - `docs/debug-info.md`.
 - `docs/ast-dump.md`, `docs/typecheck-dump.md`, `docs/runtime-api.md`.
-- `docs/runtime-api-test-plan.md` and `docs/ast-typecheck-tests.md`.
 - `docs/runtime-api-evolution.md`.
 - `docs/prelude.md` and `docs/warnings.md`.
-- `docs/prelude-test-plan.md`.
-- `docs/warnings-test-plan.md`.
 - `docs/bytecode-format.md`.
 - `docs/top-level-execution.md`.
 - `docs/operator-rules.md`.
@@ -96,6 +93,14 @@ Create a language that feels natural for humans and AI agents, combining strict 
 - Rust project scaffolding.
 - Interpreter and VM.
 - CLI tools.
+
+### Archived Deliverables
+The following test plan documents were created during v0.1 development and later archived to `archive/test-plans/` after their tests were integrated into phase files:
+- `archive/test-plans/runtime-api-test-plan.md`
+- `archive/test-plans/ast-typecheck-tests.md`
+- `archive/test-plans/prelude-test-plan.md`
+- `archive/test-plans/warnings-test-plan.md`
+- `archive/test-plans/modules-test-plan.md` (modules are a post-v1.0 feature)
 
 ## Risks
 - Scope creep from feature requests.

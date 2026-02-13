@@ -4,7 +4,7 @@
 Add tests for the runtime API behavior.
 
 ## Inputs
-- `docs/runtime-api-test-plan.md`
+- `archive/test-plans/runtime-api-test-plan.md` (archived test plan)
 
 ## Deliverables
 - Unit tests for `eval` and `eval_file`.

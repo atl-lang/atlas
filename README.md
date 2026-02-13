@@ -137,41 +137,72 @@ Atlas is licensed under the [MIT License](LICENSE).
 - `docs/ai-principles.md` - Design principles
 - `docs/why-strict.md` - Why strictness helps AI
 
+### **Project Organization**
+- `STATUS.md` ⭐ **Current implementation status (start here for AI agents)**
+- `docs/AI_AGENT_CHECKLIST.md` - Pre/post phase verification steps
+- `docs/CODE_ORGANIZATION.md` - File size limits and refactoring rules
+
 ### **Language & Implementation**
 - `Atlas-SPEC.md` - Language specification
 - `PRD.md` - Product requirements
 - `docs/engineering.md` - Engineering standards
 - `docs/implementation/` ⭐ **Implementation guides (start here for coding)**
-- `docs/runtime.md`
-- `docs/value-model.md`
-- `docs/diagnostics.md`
-- `docs/testing.md`
-- `docs/repl.md`
-- `docs/debug-info.md`
-- `docs/versioning.md`
-- `docs/style.md`
-- `docs/runtime-api.md`
-- `docs/runtime-api-evolution.md`
-- `docs/prelude.md`
-- `docs/warnings.md`
-- `docs/prelude-test-plan.md`
-- `docs/warnings-test-plan.md`
-- `docs/bytecode-format.md`
-- `docs/top-level-execution.md`
-- `docs/operator-rules.md`
-- `docs/string-semantics.md`
-- `docs/array-aliasing.md`
-- `docs/diagnostic-normalization.md`
-- `docs/json-dump-stability.md`
-- `docs/decision-log.md`
-- `docs/coverage-matrix.md`
-- `docs/phase-gates.md`
-- `docs/numeric-edge-cases.md`
-- `docs/keyword-policy.md`
-- `docs/diagnostic-ordering.md`
-- `docs/e2e-parity.md`
-- `docs/repl-state.md`
-- `docs/cli-e2e.md`
+
+### **Core Components**
+- `docs/runtime.md` - Runtime architecture
+- `docs/value-model.md` - Value representation
+- `docs/diagnostics.md` - Diagnostic system
+- `docs/testing.md` - Testing strategy
+- `docs/versioning.md` - Versioning policy
+
+### **Frontend (Lexer, Parser, AST)**
+- `docs/ast.md` - AST structure
+- `docs/ast-dump.md` - AST JSON dump format
+- `docs/typecheck-dump.md` - Type checker JSON dump format
+- `docs/GRAMMAR_CONFORMANCE.md` - Grammar conformance testing
+- `docs/parser-recovery-policy.md` - Error recovery strategy
+- `docs/keyword-policy.md` - Keyword management
+
+### **Type System & Semantics**
+- `docs/warnings.md` - Warning diagnostics
+- `docs/operator-rules.md` - Operator type rules
+- `docs/string-semantics.md` - String behavior
+- `docs/array-aliasing.md` - Array mutation semantics
+- `docs/numeric-edge-cases.md` - Numeric edge cases
+- `docs/diagnostic-normalization.md` - Diagnostic consistency
+- `docs/diagnostic-ordering.md` - Diagnostic ordering
+- `docs/top-level-execution.md` - Top-level execution order
+
+### **Runtime & VM**
+- `docs/bytecode-format.md` - Bytecode specification
+- `docs/debug-info.md` - Debug information format
+- `docs/runtime-api.md` - Runtime API
+- `docs/runtime-api-evolution.md` - API evolution policy
+
+### **Standard Library & Prelude**
+- `docs/stdlib.md` - Standard library specification
+- `docs/prelude.md` - Prelude built-ins
+- `docs/io-security-model.md` - I/O security boundaries
+
+### **CLI & REPL**
+- `docs/repl.md` - REPL implementation
+- `docs/repl-modes.md` - REPL operation modes
+- `docs/repl-state.md` - REPL state management
+- `docs/cli-config.md` - CLI configuration
+- `docs/cli-e2e.md` - CLI end-to-end testing
+
+### **Quality & Process**
+- `docs/coverage-matrix.md` - Spec to phase mapping
+- `docs/phase-gates.md` - Phase exit criteria
+- `docs/json-dump-stability.md` - JSON dump stability
+- `docs/e2e-parity.md` - Interpreter/VM parity testing
+- `docs/decision-log.md` - Technical decisions
+- `docs/style.md` - Code style guide
+
+### **Future Features**
+- `docs/modules.md` - Module system (v1.0+)
+- `docs/ir.md` - Compiler IR design (future)
+- `docs/language-comparison.md` - Atlas vs other languages
 
 ## Phases
 - Build order: `phases/BUILD-ORDER.md`

@@ -6,10 +6,9 @@ This matrix maps specification areas to implementation phases to ensure full cov
 - Lexer & tokens: `frontend/phase-01-lexer.md`, `frontend/phase-07-lexer-edge-cases.md`
 - Parser & AST: `frontend/phase-02-parser.md`, `frontend/phase-03-ast-build.md`, `frontend/phase-05-grammar-conformance.md`
 - Diagnostics core: `typing/phase-03-diagnostics-pipeline.md`, `typing/phase-04-diagnostic-normalization.md`, `typing/phase-08-diagnostics-versioning.md`
-- Binder & scopes: `typing/phase-01-binder.md`, `typing/phase-06-scope-shadowing-tests.md`
-- Type rules: `typing/phase-02-typechecker.md`, `typing/phase-05-type-rules-tests.md`, `typing/phase-17-operator-rule-tests.md`
-- Control-flow legality: `typing/phase-12-control-flow-legality.md`
-- Warnings: `typing/phase-14-warnings.md`, `typing/phase-15-warning-tests.md`
+- Binder & scopes: `typing/phase-01-binder.md`, `typing/phase-06-scopes-shadowing.md`
+- Type rules: `typing/phase-02-typechecker.md`
+- Warnings: `typing/phase-14-warnings.md`
 - Runtime values: `interpreter/phase-03-runtime-values.md`, `interpreter/phase-07-value-model-tests.md`
 - Interpreter: `interpreter/phase-01-interpreter-core.md`, `interpreter/phase-04-arrays-mutation.md`, `interpreter/phase-06-control-flow.md`
 - Runtime errors: `interpreter/phase-08-runtime-errors.md`

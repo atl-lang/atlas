@@ -7,7 +7,7 @@ Add tests to validate AST and typecheck dump JSON outputs.
 - `Atlas-SPEC.md` (for correct Atlas syntax in .atl fixtures)
 - `docs/ast-dump.md`
 - `docs/typecheck-dump.md`
-- `docs/ast-typecheck-tests.md`
+- `archive/test-plans/ast-typecheck-tests.md` (archived test plan)
 
 ## Deliverables
 - Golden tests for `atlas ast --json`.
