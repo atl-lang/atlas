@@ -5,9 +5,11 @@
 //! - Variables are stored in locals (stack) or globals (HashMap)
 //! - Control flow uses jumps and loops
 
+mod debugger;
 mod frame;
 mod profiler;
 
+pub use debugger::{DebugAction, DebugHook, Debugger};
 pub use frame::CallFrame;
 pub use profiler::Profiler;
 
@@ -31,6 +33,8 @@ pub struct VM {
     ip: usize,
     /// Optional profiler for performance analysis
     profiler: Option<Profiler>,
+    /// Optional debugger for step-through execution
+    debugger: Option<Debugger>,
 }
 
 impl VM {
@@ -51,6 +55,7 @@ impl VM {
             bytecode,
             ip: 0,
             profiler: None, // Profiling disabled by default
+            debugger: None, // Debugging disabled by default
         }
     }
 
@@ -58,6 +63,13 @@ impl VM {
     pub fn with_profiling(bytecode: Bytecode) -> Self {
         let mut vm = Self::new(bytecode);
         vm.profiler = Some(Profiler::enabled());
+        vm
+    }
+
+    /// Create a new VM with debugging enabled
+    pub fn with_debugging(bytecode: Bytecode) -> Self {
+        let mut vm = Self::new(bytecode);
+        vm.debugger = Some(Debugger::enabled());
         vm
     }
 
@@ -87,6 +99,32 @@ impl VM {
         self.profiler.as_mut()
     }
 
+    /// Enable debugging
+    pub fn enable_debugging(&mut self) {
+        if let Some(ref mut debugger) = self.debugger {
+            debugger.enable();
+        } else {
+            self.debugger = Some(Debugger::enabled());
+        }
+    }
+
+    /// Disable debugging
+    pub fn disable_debugging(&mut self) {
+        if let Some(ref mut debugger) = self.debugger {
+            debugger.disable();
+        }
+    }
+
+    /// Get debugger reference
+    pub fn debugger(&self) -> Option<&Debugger> {
+        self.debugger.as_ref()
+    }
+
+    /// Get mutable debugger reference
+    pub fn debugger_mut(&mut self) -> Option<&mut Debugger> {
+        self.debugger.as_mut()
+    }
+
     /// Execute the bytecode
     pub fn run(&mut self) -> Result<Option<Value>, RuntimeError> {
         loop {
@@ -96,6 +134,26 @@ impl VM {
             }
 
             let opcode = self.read_opcode()?;
+
+            // Debugger hook: before instruction (zero overhead when disabled)
+            if let Some(ref mut debugger) = self.debugger {
+                if debugger.is_enabled() {
+                    let action = debugger.before_instruction(self.ip - 1, opcode);
+                    match action {
+                        DebugAction::Pause => {
+                            // Pause execution (would need external control to resume)
+                            // For now, we just continue
+                        }
+                        DebugAction::Step => {
+                            // Step mode: pause after this instruction
+                            // Future: integrate with debugger UI
+                        }
+                        DebugAction::Continue => {
+                            // Normal execution
+                        }
+                    }
+                }
+            }
 
             // Record instruction for profiling (zero overhead when disabled)
             if let Some(ref mut profiler) = self.profiler {

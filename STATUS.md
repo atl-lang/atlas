@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-12
-**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM In Progress (Phase 12 Complete)
+**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM In Progress (Phase 13 Complete)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/bytecode-vm/phase-12-profiling-hooks.md
-**Next Phase:** `phases/bytecode-vm/phase-13-debugger-hooks.md`
+**Last Completed:** phases/bytecode-vm/phase-13-debugger-hooks.md
+**Next Phase:** `phases/bytecode-vm/phase-14-debug-info.md`
 
-**What to implement:** Add hooks for future debugger integration and breakpoint support
+**What to implement:** Add debug information to bytecode for source mapping and better error messages
 
 ---
 
@@ -29,10 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Bytecode & VM Phase 13:**
+**For Bytecode & VM Phase 14:**
 - `docs/implementation/11-bytecode.md` - Bytecode format specification
-- `docs/implementation/12-vm.md` - VM implementation guide
-- `phases/bytecode-vm/phase-13-debugger-hooks.md` - Phase implementation guide
+- `phases/bytecode-vm/phase-14-debug-info.md` - Phase implementation guide
 
 ---
 
@@ -104,7 +103,7 @@
 ### 7. REPL (1/1) ✅ COMPLETE
 - ✅ phases/interpreter/phase-02-repl.md
 
-### 8. Bytecode & VM (12/15)
+### 8. Bytecode & VM (13/15)
 - ✅ phase-03-bytecode-format.md
 - ✅ phase-01-bytecode-compiler.md
 - ✅ phase-02-vm.md
@@ -117,7 +116,8 @@
 - ✅ phase-04-disassembler.md
 - ✅ phase-05-optimizer-hooks.md
 - ✅ phase-12-profiling-hooks.md
-- ⬜ phase-13-debugger-hooks.md ⬅️ **YOU ARE HERE**
+- ✅ phase-13-debugger-hooks.md
+- ⬜ phase-14-debug-info.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-12-profiling-hooks.md
 - ⬜ phase-13-debugger-hooks.md
 - ⬜ phase-14-debug-info.md
@@ -156,7 +156,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 57/86 phases (66%)
+**Total Progress:** 58/86 phases (67%)
 
 ---
 
