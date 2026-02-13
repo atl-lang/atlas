@@ -11,7 +11,6 @@
 //! - File I/O operations
 //! - Output formatting (JSON and human-readable)
 
-use assert_cmd::Command;
 use predicates::prelude::*;
 use std::fs;
 use tempfile::TempDir;
@@ -36,8 +35,7 @@ fn create_test_file(filename: &str, content: &str) -> (TempDir, String) {
 fn test_run_simple_expression() {
     let (_dir, path) = create_test_file("test.atl", "42;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -49,8 +47,7 @@ fn test_run_simple_expression() {
 fn test_run_arithmetic() {
     let (_dir, path) = create_test_file("test.atl", "1 + 2 * 3;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -62,8 +59,7 @@ fn test_run_arithmetic() {
 fn test_run_string_output() {
     let (_dir, path) = create_test_file("test.atl", r#""hello world";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -75,8 +71,7 @@ fn test_run_string_output() {
 fn test_run_boolean_output() {
     let (_dir, path) = create_test_file("test.atl", "true;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -88,8 +83,7 @@ fn test_run_boolean_output() {
 fn test_run_null_no_output() {
     let (_dir, path) = create_test_file("test.atl", "null;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -101,8 +95,7 @@ fn test_run_null_no_output() {
 fn test_run_variable_declaration_no_output() {
     let (_dir, path) = create_test_file("test.atl", "let x: number = 42;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -120,8 +113,7 @@ add(10, 20);
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -134,8 +126,7 @@ fn test_run_array_literal() {
     let source = "[1, 2, 3];";
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -151,8 +142,7 @@ arr[1];
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -169,8 +159,7 @@ if (true) {
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -191,8 +180,7 @@ sum;
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -206,8 +194,7 @@ sum;
 
 #[test]
 fn test_run_missing_file() {
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg("nonexistent.atl")
         .assert()
@@ -218,8 +205,7 @@ fn test_run_missing_file() {
 fn test_run_parse_error() {
     let (_dir, path) = create_test_file("test.atl", "let x =");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -230,8 +216,7 @@ fn test_run_parse_error() {
 fn test_run_type_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -248,8 +233,7 @@ greet(42);
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -260,8 +244,7 @@ greet(42);
 fn test_run_undefined_variable() {
     let (_dir, path) = create_test_file("test.atl", "x;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -272,8 +255,7 @@ fn test_run_undefined_variable() {
 fn test_run_json_flag_on_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .arg("--json")
@@ -294,8 +276,7 @@ fn test_build_creates_bytecode_file() {
 
     fs::write(&source_path, "let x: number = 42;").unwrap();
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(source_path.to_str().unwrap())
         .assert()
@@ -318,8 +299,7 @@ fn add(a: number, b: number) -> number {
 "#;
     fs::write(&source_path, source).unwrap();
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(source_path.to_str().unwrap())
         .assert()
@@ -332,8 +312,7 @@ fn add(a: number, b: number) -> number {
 fn test_build_with_disasm_flag() {
     let (_dir, path) = create_test_file("test.atl", "let x: number = 42;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(&path)
         .arg("--disasm")
@@ -360,8 +339,7 @@ let result: number = factorial(5);
 "#;
     fs::write(&source_path, source).unwrap();
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(source_path.to_str().unwrap())
         .assert()
@@ -380,8 +358,7 @@ let result: number = factorial(5);
 
 #[test]
 fn test_build_missing_file() {
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg("nonexistent.atl")
         .assert()
@@ -392,8 +369,7 @@ fn test_build_missing_file() {
 fn test_build_parse_error() {
     let (_dir, path) = create_test_file("test.atl", "let x =");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(&path)
         .assert()
@@ -404,8 +380,7 @@ fn test_build_parse_error() {
 fn test_build_type_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(&path)
         .assert()
@@ -416,8 +391,7 @@ fn test_build_type_error() {
 fn test_build_json_flag_on_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(&path)
         .arg("--json")
@@ -434,8 +408,7 @@ fn test_build_json_flag_on_error() {
 fn test_check_valid_program() {
     let (_dir, path) = create_test_file("test.atl", "let x: number = 42;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .assert()
@@ -455,8 +428,7 @@ let arr: number[] = [1, 2, 3];
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .assert()
@@ -472,8 +444,7 @@ let arr: number[] = [1, 2, 3];
 fn test_check_type_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .assert()
@@ -484,8 +455,7 @@ fn test_check_type_error() {
 fn test_check_parse_error() {
     let (_dir, path) = create_test_file("test.atl", "let x =");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .assert()
@@ -496,8 +466,7 @@ fn test_check_parse_error() {
 fn test_check_json_output() {
     let (_dir, path) = create_test_file("test.atl", "let x: number = 42;");
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .arg("--json")
@@ -510,8 +479,7 @@ fn test_check_json_output() {
 fn test_check_json_output_with_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .arg("--json")
@@ -536,8 +504,7 @@ fn test_build_then_run_workflow() {
     fs::write(&source_path, source).unwrap();
 
     // Build should succeed
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(source_path.to_str().unwrap())
         .assert()
@@ -546,8 +513,7 @@ fn test_build_then_run_workflow() {
     assert!(bytecode_path.exists());
 
     // Run should also succeed
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(source_path.to_str().unwrap())
         .assert()
@@ -559,22 +525,19 @@ fn test_all_commands_handle_same_error() {
     let (_dir, path) = create_test_file("test.atl", r#"let x: number = "wrong";"#);
 
     // All commands should fail on the same type error
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("check")
         .arg(&path)
         .assert()
         .failure();
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("build")
         .arg(&path)
         .assert()
         .failure();
 
-    Command::cargo_bin("atlas")
-        .unwrap()
+    assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path)
         .assert()
@@ -585,8 +548,7 @@ fn test_all_commands_handle_same_error() {
 fn test_exit_code_consistency() {
     // Parse error
     let (_dir1, path1) = create_test_file("parse_error.atl", "let x =");
-    let parse_err = Command::cargo_bin("atlas")
-        .unwrap()
+    let parse_err = assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path1)
         .output()
@@ -595,8 +557,7 @@ fn test_exit_code_consistency() {
 
     // Type error
     let (_dir2, path2) = create_test_file("type_error.atl", r#"let x: number = "wrong";"#);
-    let type_err = Command::cargo_bin("atlas")
-        .unwrap()
+    let type_err = assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("run")
         .arg(&path2)
         .output()

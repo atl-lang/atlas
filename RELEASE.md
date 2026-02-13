@@ -175,7 +175,7 @@ For each platform binary:
 
 - [ ] Can execute simple Atlas programs
   ```bash
-  echo 'let x: int = 42;' | ./atlas run -
+  echo 'let x: number = 42; x;' | ./atlas run -
   ```
 
 - [ ] Binary size is reasonable (< 10MB uncompressed)

@@ -1,19 +1,55 @@
-# Atlas Runtime API (Design Sketch)
+# Atlas Runtime API
 
 ## Purpose
-Define a stable minimal API for embedding Atlas in host applications later.
+Provide a stable minimal API for embedding Atlas in host applications.
 
 ## v0.1 Status
-- Not implemented, but API shape is defined to avoid refactors.
+✅ **Implemented** - Core embedding API is available in `atlas-runtime` crate.
 
-## Proposed API
-- `Atlas::new()` -> runtime instance
-- `Atlas::eval(source: &str) -> Result<Value, Diagnostic>`
-- `Atlas::eval_file(path: &str) -> Result<Value, Diagnostic>`
-- `Atlas::set_stdout(writer)` (optional)
+## Current API
+
+### Core Runtime
+```rust
+use atlas_runtime::{Atlas, Value};
+
+// Create runtime instance
+let runtime = Atlas::new();
+
+// Evaluate source code
+let result: Result<Value, Vec<Diagnostic>> = runtime.eval("1 + 2");
+```
+
+### Type: `RuntimeResult<T>`
+```rust
+pub type RuntimeResult<T> = Result<T, Vec<Diagnostic>>;
+```
+
+### Available Functions
+- `Atlas::new()` -> Create a new runtime instance
+- `Atlas::eval(source: &str) -> RuntimeResult<Value>` -> Evaluate source code
 
 ## Value Interop
-- Expose `Value` as a tagged enum for host usage.
+The `Value` enum is publicly exposed for host usage:
 
-## Future
-- C-ABI wrapper for embedding in non-Rust hosts.
+```rust
+pub enum Value {
+    Null,
+    Bool(bool),
+    Number(f64),
+    String(Rc<str>),
+    Array(Rc<RefCell<Vec<Value>>>),
+    Function(Rc<FunctionRef>),
+}
+```
+
+## Diagnostics
+Errors are returned as `Vec<Diagnostic>` with structured information:
+- Error codes (e.g., "AT0001")
+- Source location (file, line, column)
+- Formatted messages
+- JSON serialization support
+
+## Future Enhancements
+- `Atlas::eval_file(path: &str)` - Evaluate file contents
+- `Atlas::set_stdout(writer)` - Custom output redirection
+- C-ABI wrapper for embedding in non-Rust hosts

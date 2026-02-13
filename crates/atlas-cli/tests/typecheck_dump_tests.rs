@@ -1,6 +1,5 @@
 //! Integration tests for typecheck dump command
 
-use assert_cmd::Command;
 use insta::assert_snapshot;
 use std::fs;
 use tempfile::TempDir;
@@ -11,8 +10,7 @@ fn run_typecheck_dump(source: &str) -> String {
     let file_path = temp_dir.path().join("test.atl");
     fs::write(&file_path, source).unwrap();
 
-    let output = Command::cargo_bin("atlas")
-        .unwrap()
+    let output = assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("typecheck")
         .arg(file_path.to_str().unwrap())
         .output()

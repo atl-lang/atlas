@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/lsp/phase-06-lsp-testing.md
-**Next Phase:** `phases/polish/phase-01-polish.md`
+**Last Completed:** phases/polish/phase-01-polish.md
+**Next Phase:** `phases/polish/phase-02-regression-suite.md`
 
-**What to implement:** Final polish, cleanup, and release preparation
+**What to implement:** Comprehensive regression test suite to ensure stability across all language features
 
 ---
 
@@ -29,8 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Polish Phase 01:**
-- `phases/polish/phase-01-polish.md` - Phase implementation guide
+**For Polish Phase 02:**
+- `phases/polish/phase-02-regression-suite.md` - Phase implementation guide
+- `docs/testing.md` - Testing infrastructure and patterns
 
 ---
 
@@ -151,8 +152,8 @@
 - ✅ phase-05-lsp-formatting.md
 - ✅ phase-06-lsp-testing.md
 
-### 12. Polish (0/7)
-- ⬜ phase-01-polish.md
+### 12. Polish (1/7)
+- ✅ phase-01-polish.md
 - ⬜ phase-02-regression-suite.md
 - ⬜ phase-03-docs-pass.md
 - ⬜ phase-04-stability-audit.md
@@ -160,7 +161,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 86/93 phases (92%)
+**Total Progress:** 87/93 phases (94%)
 
 ---
 
@@ -306,6 +307,23 @@ Before marking a phase complete, verify:
 - [ ] **⚠️ CODE ORGANIZATION: Files 800-1000 lines documented in handoff**
 - [ ] **Run file size check:** `find crates/*/src -name "*.rs" -not -path "*/tests/*" -exec wc -l {} + | sort -rn | head -10`
 - [ ] STATUS.md updated with handoff
+
+---
+
+## 📝 Known Issues & Technical Debt
+
+### File Size Refactoring Needed (Post-v0.1.0)
+The following files exceed the 1000-line limit and should be refactored:
+- `crates/atlas-runtime/src/vm/mod.rs` - 1972 lines
+- `crates/atlas-runtime/src/bytecode/mod.rs` - 1421 lines
+
+**Recommendation:** Refactor these files into submodules following the patterns in `docs/CODE_ORGANIZATION.md` during post-release cleanup.
+
+### Files Approaching Limit (800-1000 lines)
+- `crates/atlas-runtime/src/lexer/mod.rs` - 908 lines
+- `crates/atlas-runtime/src/compiler/mod.rs` - 869 lines
+
+**Recommendation:** Monitor these files and consider refactoring if they grow significantly.
 
 ---
 

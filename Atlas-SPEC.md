@@ -287,11 +287,13 @@ help: convert the value to number or change the variable type
 - `AT1001` Invalid token
 - `AT1002` Unterminated string
 - `AT1003` Invalid escape sequence
+- `AT1004` Unterminated multi-line comment
 - `AT1010` Illegal break/continue
 - `AT1011` Illegal return
 - `AT1012` Illegal prelude shadowing
 - `AT2001` Unused variable (warning)
 - `AT2002` Unreachable code (warning)
+- `AT2003` Redeclaration
 
 ### Runtime Stack Trace Format
 ```

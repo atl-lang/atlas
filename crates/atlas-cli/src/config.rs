@@ -12,6 +12,7 @@ pub struct Config {
     /// Default to JSON diagnostic output (ATLAS_DIAGNOSTICS=json)
     pub default_json: bool,
     /// Disable colored output (ATLAS_NO_COLOR=1 or NO_COLOR=1)
+    #[allow(dead_code)]
     pub no_color: bool,
     /// Custom history file path (ATLAS_HISTORY_FILE=/path/to/file)
     pub history_file: Option<PathBuf>,

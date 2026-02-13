@@ -5,7 +5,6 @@
 //! - Properly formatted (no trailing spaces, stable indentation)
 //! - Version-tagged (includes ast_version/typecheck_version fields)
 
-use assert_cmd::Command;
 use serde_json::Value;
 use std::fs;
 use tempfile::TempDir;
@@ -16,8 +15,7 @@ fn run_ast_dump(source: &str) -> String {
     let file_path = temp_dir.path().join("test.atl");
     fs::write(&file_path, source).unwrap();
 
-    let output = Command::cargo_bin("atlas")
-        .unwrap()
+    let output = assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("ast")
         .arg(file_path.to_str().unwrap())
         .output()
@@ -33,8 +31,7 @@ fn run_typecheck_dump(source: &str) -> String {
     let file_path = temp_dir.path().join("test.atl");
     fs::write(&file_path, source).unwrap();
 
-    let output = Command::cargo_bin("atlas")
-        .unwrap()
+    let output = assert_cmd::cargo::cargo_bin_cmd!("atlas")
         .arg("typecheck")
         .arg(file_path.to_str().unwrap())
         .output()

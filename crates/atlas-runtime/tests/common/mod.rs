@@ -3,6 +3,8 @@
 //! This module provides common helpers for Atlas tests to reduce boilerplate
 //! and make tests more readable and maintainable.
 
+#![allow(dead_code)]
+
 use atlas_runtime::{Atlas, Value};
 use atlas_runtime::diagnostic::Diagnostic;
 
