@@ -8,12 +8,15 @@
 - Future-friendly for embedding (runtime as a library).
 - Cohesive “gold features” from other languages without becoming a clone.
 
-## Non-goals (for v0.1)
-- Generics beyond arrays.
-- Advanced type features (unions, intersections).
-- Async/await.
-- JIT/native codegen.
-- Concurrency primitives (planned for v1.1+).
+## Advanced Features Under Research
+These features require careful design and research before implementation:
+- Generics beyond arrays - How far should the type system extend?
+- Advanced type features (unions, intersections) - Complexity vs utility tradeoffs
+- Async/await - What's the most explicit async model for AI?
+- JIT/native codegen - Performance benefits vs maintenance complexity
+- Concurrency primitives - Which concurrency model aligns with AI-first principles?
+
+**These will be added when the design is right, not on a timeline.**
 
 ## File Format
 - Source files use `.atl` extension.

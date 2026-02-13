@@ -376,6 +376,110 @@ Run: `cargo bench`
 
 ---
 
+## Interpreter/VM Parity Testing
+
+### Purpose
+**Critical Requirement:** Interpreter and VM must produce identical outputs and diagnostics for all programs.
+
+### Parity Rules
+
+**Output Parity:**
+- Same input program yields same stdout
+- Same diagnostic messages and error codes
+- Same runtime error locations (file, line, column)
+- Same execution semantics
+
+**Why Parity Matters:**
+- Ensures VM faithfully implements language semantics
+- Prevents subtle behavioral differences
+- Validates bytecode compilation correctness
+- Builds confidence in both execution engines
+
+### Parity Test Strategy
+
+**Test Categories:**
+
+1. **Arithmetic and Operators:**
+   - All arithmetic operations (`+`, `-`, `*`, `/`, `%`)
+   - All comparison operations (`<`, `<=`, `>`, `>=`, `==`, `!=`)
+   - All logical operations (`&&`, `||`, `!`)
+   - Edge cases (divide by zero, NaN/Infinity)
+
+2. **Control Flow:**
+   - If/else statements
+   - While loops
+   - For loops
+   - Break and continue
+   - Nested control flow
+
+3. **Functions:**
+   - Function calls with arguments
+   - Recursion (factorial, fibonacci)
+   - Return values
+   - Function hoisting
+   - Multiple functions
+
+4. **Arrays:**
+   - Array creation and indexing
+   - Array mutation
+   - Array aliasing (shared references)
+   - Out-of-bounds access
+
+5. **Type System:**
+   - Type checking errors (same diagnostic codes)
+   - Type inference
+   - Null handling
+
+### Example Parity Test
+
+```rust
+use rstest::rstest;
+
+#[rstest]
+#[case("1 + 2 * 3", "7")]  // Arithmetic
+#[case("print(42)", "42\n")]  // Output
+#[case("1 / 0", "error[AT0005]")]  // Runtime error
+fn test_interpreter_vm_parity(#[case] input: &str, #[case] expected: &str) {
+    // Run in interpreter
+    let interp_output = run_interpreter(input);
+
+    // Run in VM
+    let vm_output = run_vm(input);
+
+    // Must be identical
+    assert_eq!(interp_output, vm_output);
+    assert!(expected.contains(&interp_output));
+}
+```
+
+### Parity Test Coverage
+
+**Required Tests:**
+- Arithmetic expressions with all operators
+- Control flow with all statement types
+- Function calls including recursion
+- Array mutation and aliasing verification
+- Runtime errors with diagnostic verification
+
+**Test Locations:**
+- `tests/parity_tests.rs` - Comprehensive parity suite
+- Individual component tests include parity checks
+- Integration tests verify end-to-end parity
+
+### Continuous Verification
+
+**CI Requirements:**
+- All parity tests must pass
+- No exceptions for "VM-only" or "interpreter-only" behavior
+- Parity breakage blocks merging
+
+**Development Practice:**
+- Run both interpreter and VM tests: `cargo test`
+- Fix parity issues immediately when found
+- Never compromise on parity for convenience
+
+---
+
 ## References
 
 - **Modernization Plan:** `docs/TEST_MODERNIZATION_PLAN.md`

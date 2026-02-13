@@ -9,10 +9,10 @@ Create a language that feels natural for humans and AI agents, combining strict 
 ## Non-Negotiable Principles
 - Strict typing: no implicit any, no implicit nullable.
 - Clear diagnostics: precise error locations, helpful messages, and JSON diagnostics.
-- Cohesion over feature sprawl: only a few “gold features” per release.
+- Cohesion over feature sprawl: only add features when they're truly needed and well-designed.
 - Single binary: no runtime dependencies.
 - Cross-platform: macOS, Windows, Linux.
-- Small surface area: keep syntax and stdlib focused.
+- Small surface area: keep syntax and stdlib focused and thoughtful.
 
 ## Primary Users
 - Developers who want a strict, readable scripting language.
@@ -24,12 +24,15 @@ Create a language that feels natural for humans and AI agents, combining strict 
 - Clear and deterministic CLI workflow.
 - Strong error handling (human + JSON diagnostics).
 
-## Non-Goals (v0.1)
-- Async/await
-- JIT/native codegen
-- Advanced types (unions, intersections)
-- Concurrency primitives (planned post v1.0)
-- Module system (planned v1.0)
+## Features Under Careful Research
+These features are important but require deep exploration before implementation:
+- **Async/await** - Needs research on AI-friendly async patterns
+- **JIT/native codegen** - Performance benefits vs complexity tradeoffs
+- **Advanced types** (unions, intersections) - How far to push the type system?
+- **Concurrency primitives** - Which model best serves AI-first principles?
+- **Module system** - Avoiding pitfalls of existing approaches
+
+**We add features when ready, not on a schedule.**
 
 ## Functional Requirements
 - Parse and type-check `.atl` files.
@@ -39,10 +42,14 @@ Create a language that feels natural for humans and AI agents, combining strict 
 - Errors include file, line, column, length, code, and hints.
 - JSON diagnostic output for tooling/AI.
 
-## Success Metrics
-- v0.1 can run simple programs with correct typing and clear diagnostics.
-- REPL handles errors without crashing.
-- Bytecode output runs identical to interpreter for covered cases.
+## Success Criteria
+- Atlas can run programs with correct typing and clear diagnostics
+- REPL handles errors gracefully without crashing
+- Bytecode VM produces identical results to interpreter (parity verified)
+- Type system catches bugs that would be runtime errors in dynamic languages
+- Error messages are precise and actionable for both humans and AI agents
+
+**Quality is measured by correctness and usability, not feature count or deadlines.**
 
 ## Design Constraints
 - Language implemented in Rust.
@@ -108,6 +115,8 @@ The following test plan documents were created during v0.1 development and later
 - Over-engineering early without a stable spec.
 
 ## Mitigations
-- Phased roadmap with strict scope per phase.
-- Spec-first workflow with tests defining behavior.
-- Enforced milestone gates before new features.
+- Phased development with clear scope for each phase
+- Spec-first workflow with tests defining behavior
+- Quality gates before moving to new features
+- No feature is added until previous work is solid
+- Honest assessment of progress, not wishful thinking

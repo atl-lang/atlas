@@ -1,6 +1,8 @@
-# Contributing to Atlas
+# Atlas Development Guidelines
 
-Thank you for your interest in contributing to Atlas! This document provides guidelines for development.
+This document provides development guidelines for working on Atlas.
+
+**Note:** Atlas is an internal research and development project focused on building something exceptional over the long term. These guidelines ensure code quality and architectural consistency.
 
 ## Development Setup
 
@@ -114,7 +116,7 @@ When making changes to the runtime API (anything in `atlas-runtime`):
 ## Security
 
 ### Dependency Auditing
-Before submitting PRs or releases, run security audits:
+Run security audits regularly during development:
 
 ```bash
 # Install cargo-audit (one time)
@@ -138,32 +140,34 @@ cargo deny check
   - Good test coverage
   - Permissive licenses (MIT/Apache-2.0)
 
-## Pull Request Process
+## Development Workflow
 
-1. **Create a branch** from `main`
-2. **Make your changes** following the code standards
-3. **Add tests** for new functionality
-4. **Run checks** before submitting:
+1. **Work on focused changes** - Keep changes scoped to a single feature or fix
+2. **Follow code standards** - Formatting, linting, architecture guidelines
+3. **Add comprehensive tests** - For all new functionality and bug fixes
+4. **Run quality checks** before committing:
    ```bash
    cargo fmt --check
    cargo clippy -- -D warnings
    cargo test
    cargo audit
    ```
-5. **Write clear commit messages** explaining the "why" not just the "what"
-6. **Submit PR** with description of changes and any relevant context
-7. **Wait for CI** - All checks must pass:
+5. **Write clear commit messages** - Explain the "why" not just the "what"
+6. **Verify CI passes** - All automated checks must pass:
    - Tests on Ubuntu, macOS, and Windows
    - Formatting check
    - Clippy lints
    - Security audit
+7. **Document changes** - Update relevant documentation in `docs/`
 
-## Questions?
+## Quality First
 
-- Check existing documentation in `docs/`
-- Open an issue for clarification
-- Read `docs/ai-workflow.md` for AI-assisted development patterns
+**Remember:** Atlas is being built for the long term.
+- Quality over speed - Always
+- Get it right the first time
+- No shortcuts or compromises
+- Build something that will last decades
 
 ---
 
-Thank you for contributing to Atlas! 🚀
+See `docs/DOCUMENTATION_PHILOSOPHY.md` for the project's long-term vision and quality standards.

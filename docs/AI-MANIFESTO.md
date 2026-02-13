@@ -286,66 +286,106 @@ Humans benefit from the same clarity that AI needs.
 
 ---
 
-## The Vision
+## The Journey Ahead
 
-### **Short Term (v0.1-1.0):**
-- Prove the concept: strict, typed, REPL-first
-- Best language for AI-assisted development
-- Clear, predictable, fast iteration
+**Atlas is being built for the long term - we're talking decades, not years.**
 
-### **Medium Term (v1.1-2.0):**
-- Module system (explicit imports, no global state)
-- Concurrency (Go-style channels, explicit)
-- Embedding API (use Atlas as a scripting engine)
+This is not a race to a 1.0 release. It's a methodical exploration of what programming could be when designed from first principles for the AI era.
 
-### **Long Term (v3.0+):**
-- Standard library for AI workflows
-- Built-in support for structured data (JSON, databases)
-- AI-native error recovery and suggestions
-- First-class support for LLM integration
+### **Foundation Phase (Current):**
+- Proving the concept: strict, typed, REPL-first works
+- Demonstrating AI-first design principles in practice
+- Building core infrastructure that will last decades
+- Getting the fundamentals absolutely right
+
+### **Areas Under Exploration:**
+These are research directions, not commitments or timelines:
+
+- **Module system** - What does "import" mean for AI? How do we avoid the pitfalls of Node.js, Python, Go?
+- **Concurrency** - Go-style channels? Rust-style ownership? Something new? Research needed.
+- **Advanced types** - Generics, constraints, inference - how far can we push type-based AI assistance?
+- **Error handling** - Result types? Try-catch? Algebraic effects? What's most explicit for AI?
+- **Embedding** - How should Atlas integrate with other systems? What does the FFI look like?
+- **AI workflows** - Built-in support for structured data, LLM integration, error recovery
+- **Performance** - JIT? Ahead-of-time compilation? Profile-guided optimization?
+
+**None of these have timelines. All of them need deep thought.**
+
+### **The Philosophy:**
+- Build each feature RIGHT, not FAST
+- Research thoroughly before committing
+- Learn from every language that came before
+- Make no compromises on the core principles
+- Accept that excellence takes time
 
 ---
 
-## Why This Matters
+## Why This Matters Now
 
-**2024-2026 is the inflection point.**
+**We're at a unique moment in programming history.**
 
-- 50%+ of code is AI-assisted or AI-generated
-- AI agents are getting smarter, but languages are holding them back
-- Developers spend hours debugging AI-generated code
+- AI is generating more code than ever before
+- Existing languages were designed for human-only workflows
+- The mismatch is causing real pain: bugs, confusion, wasted time
+- Nobody has built a language for this new reality yet
 
-**Atlas solves this.**
+**Atlas is exploring what that language could be.**
 
-It's not about replacing humans. It's about **making AI a better coding partner**.
+It's not about replacing humans. It's about **making AI and humans better partners in building software**.
 
 When AI and humans speak the same language (literally), everyone wins.
 
+But getting there requires patience, research, and unwavering commitment to quality.
+
 ---
 
-## The Bet
+## The Core Hypothesis
 
-**We're betting that:**
+**We believe that:**
 
-1. AI coding will become the norm, not the exception
-2. Languages designed for AI will outcompete retrofitted languages
-3. Explicit > Implicit is the future of programming
+1. AI-assisted programming will become the norm, not the exception
+2. Languages designed explicitly for AI will outperform retrofitted approaches
+3. Explicit > Implicit is fundamentally better for both humans and machines
 4. Developer productivity comes from AI partnership, not AI replacement
+5. Excellence in language design takes decades of iteration
 
-**If we're right, Atlas becomes the default language for the AI era.**
+**If these beliefs are correct, Atlas could fundamentally change how software is built.**
+
+But proving this requires patient, methodical work. No shortcuts. No compromises.
 
 ---
 
-## Join Us
+## The Commitment
 
-Atlas is open source, AI-first, and built for the future.
+Atlas is an internal research and development project built with unwavering standards:
 
-Every design decision is made with one question:
+**Every design decision is evaluated against one question:**
 > "Does this help or hurt AI agents?"
 
-If it helps AI, it stays. If it hurts AI, it's gone.
+- If it helps AI (and humans), it stays
+- If it hurts AI (or adds confusion), it's gone
+- If we're unsure, we research more before deciding
 
-**Simple. Strict. AI-native.**
+**Principles over deadlines:**
+- We don't ship features we're uncertain about
+- We don't compromise on explicitness
+- We don't accept "good enough" when "excellent" is possible
+- We don't rush to hit arbitrary milestones
 
-Welcome to the future of programming.
+**Quality over everything:**
+- Go took 5 years to reach 1.0
+- Rust took 9 years to reach 1.0
+- Both are still evolving decades later
+- Atlas will take however long it takes
 
-**Welcome to Atlas.**
+---
+
+## What We're Building
+
+**Simple. Strict. AI-native. Uncompromising.**
+
+Not a quick prototype. Not an MVP. Not a demo.
+
+A programming language built to last decades and stand alongside the best languages ever created.
+
+**This is Atlas.**
