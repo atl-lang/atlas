@@ -46,3 +46,20 @@ This log captures irreversible or high-impact design decisions. Update when a ne
 ## Bytecode
 - `.atb` format defined in `docs/bytecode-format.md`.
 - Debug info is emitted by default.
+
+## JSON Support (v0.5+)
+- JsonValue is the **only** exception to "no dynamic types" principle.
+- Rationale: JSON is critical for AI agent workflows (APIs, config files, data interchange).
+- Design follows **Rust's `serde_json`** pattern (ergonomic + type-safe):
+  - Natural indexing: `data["user"]["name"]` (like Python/JS)
+  - Explicit extraction: `.as_string()`, `.as_number()`, etc. (maintains type safety)
+  - Returns `JsonValue::Null` for missing keys/indices (safe, no crashes)
+- JsonValue is **isolated** from regular type system:
+  - Cannot be assigned to non-JsonValue variables without extraction
+  - Cannot be used in expressions (`json + 1` is type error)
+  - Forces type checking at extraction boundaries
+- Alternative approaches rejected:
+  - ❌ General-purpose `any` type (violates strict typing principle)
+  - ❌ Wait for union types (delays critical feature, union types complex)
+  - ❌ Schema-based only (too rigid for dynamic APIs)
+- Trade-off: Accept controlled dynamic typing for JSON to maintain AI-friendliness while preserving strict typing elsewhere.
