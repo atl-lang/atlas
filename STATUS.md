@@ -7,10 +7,10 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/polish/phase-01-polish.md
-**Next Phase:** `phases/polish/phase-02-regression-suite.md`
+**Last Completed:** phases/polish/phase-02-regression-suite.md
+**Next Phase:** `phases/polish/phase-03-docs-pass.md`
 
-**What to implement:** Comprehensive regression test suite to ensure stability across all language features
+**What to implement:** Documentation review and updates to ensure all docs are current and accurate
 
 ---
 
@@ -29,9 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For Polish Phase 02:**
-- `phases/polish/phase-02-regression-suite.md` - Phase implementation guide
-- `docs/testing.md` - Testing infrastructure and patterns
+**For Polish Phase 03:**
+- `phases/polish/phase-03-docs-pass.md` - Phase implementation guide
+- All documentation files in `docs/` directory
 
 ---
 
@@ -152,16 +152,16 @@
 - ✅ phase-05-lsp-formatting.md
 - ✅ phase-06-lsp-testing.md
 
-### 12. Polish (1/7)
+### 12. Polish (2/7)
 - ✅ phase-01-polish.md
-- ⬜ phase-02-regression-suite.md
+- ✅ phase-02-regression-suite.md
 - ⬜ phase-03-docs-pass.md
 - ⬜ phase-04-stability-audit.md
 - ⬜ phase-05-release-checklist.md
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 87/93 phases (94%)
+**Total Progress:** 88/93 phases (95%)
 
 ---
 
