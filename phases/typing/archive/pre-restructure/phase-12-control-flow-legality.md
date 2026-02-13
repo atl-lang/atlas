@@ -5,7 +5,7 @@ Enforce legality of `break`, `continue`, and `return` positions.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Compile-time errors for `break/continue` outside loops.

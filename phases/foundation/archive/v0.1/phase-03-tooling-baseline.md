@@ -4,8 +4,8 @@
 Set up baseline tooling for linting, formatting, and dependency checks.
 
 ## Inputs
-- `docs/engineering.md`
-- `docs/style.md`
+- `docs/guides/code-quality-standards.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - `rustfmt` config (if needed).

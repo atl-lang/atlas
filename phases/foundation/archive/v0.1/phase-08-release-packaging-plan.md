@@ -4,8 +4,8 @@
 Define how Atlas will be packaged and distributed as a single binary.
 
 ## Inputs
-- `docs/versioning.md`
-- `docs/engineering.md`
+- `docs/reference/versioning.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - Release artifact naming scheme (OS/arch).

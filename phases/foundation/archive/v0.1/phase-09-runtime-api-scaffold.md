@@ -4,7 +4,7 @@
 Create the minimal runtime API surface for future embedding, without implementing full behavior.
 
 ## Inputs
-- `docs/runtime-api.md`
+- `docs/api/runtime-api.md`
 
 ## Deliverables
 - `Atlas` runtime struct with `new`, `eval`, `eval_file` signatures.

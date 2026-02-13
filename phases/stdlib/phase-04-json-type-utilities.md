@@ -74,7 +74,7 @@ Use serde_json for JSON operations. Map JSON types bidirectionally with Atlas Va
 - Updates: Cargo.toml with serde_json = "1.0"
 - Updates: value.rs for Object variant
 - Updates: prelude.rs with 17 functions
-- Updates: docs/stdlib.md
+- Updates: docs/api/stdlib.md
 - Output: JSON and type utilities
 
 ## Acceptance

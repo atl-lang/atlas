@@ -4,7 +4,7 @@
 Ensure prelude built-ins are always in scope.
 
 ## Inputs
-- `docs/prelude.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Prelude symbols injected into the global scope.

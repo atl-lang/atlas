@@ -4,7 +4,7 @@
 Lock operator typing rules with comprehensive tests.
 
 ## Inputs
-- `docs/operator-rules.md`
+- `docs/specification/language-semantics.md`
 
 ## Deliverables
 - Tests for valid operator usage.

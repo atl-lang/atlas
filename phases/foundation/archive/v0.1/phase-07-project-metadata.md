@@ -4,8 +4,8 @@
 Establish baseline repository metadata and legal/behavioral policies.
 
 ## Inputs
-- `docs/engineering.md`
-- `docs/style.md`
+- `docs/guides/code-quality-standards.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - `LICENSE` (default: MIT unless decided otherwise).

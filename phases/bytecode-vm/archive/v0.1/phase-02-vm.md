@@ -4,7 +4,7 @@
 Execute bytecode instructions with a stack-based VM.
 
 ## Inputs
-- `docs/runtime.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Stack frame model.

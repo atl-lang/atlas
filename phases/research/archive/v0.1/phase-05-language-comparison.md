@@ -15,4 +15,4 @@ Capture concise notes on how Atlas borrows from TypeScript, Go, Rust, and Python
 - Link decisions to Atlas docs where relevant.
 
 ## Exit Criteria
-- Comparison doc complete and referenced from `docs/ai-principles.md`.
+- Comparison doc complete and referenced from `docs/philosophy/ai-principles.md`.

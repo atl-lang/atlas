@@ -4,10 +4,10 @@
 Define and implement consistent parser error reporting.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
-- Error messages aligned with `docs/diagnostics.md`.
+- Error messages aligned with `docs/specification/diagnostic-system.md`.
 - Span calculation for common syntax failures.
 - Map parser errors to `AT1000` (syntax error).
 

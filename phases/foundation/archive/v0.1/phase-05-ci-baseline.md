@@ -4,7 +4,7 @@
 Set up a minimal CI pipeline for tests and formatting.
 
 ## Inputs
-- `docs/engineering.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - CI config (GitHub Actions or equivalent).

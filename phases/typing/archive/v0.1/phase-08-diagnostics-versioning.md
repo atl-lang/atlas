@@ -4,7 +4,7 @@
 Introduce explicit diagnostics versioning to protect golden tests.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Diagnostic version identifier (e.g., `diag_version: 1`).

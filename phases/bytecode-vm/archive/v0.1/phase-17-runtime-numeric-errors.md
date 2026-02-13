@@ -4,8 +4,8 @@
 Ensure VM mirrors interpreter numeric error behavior.
 
 ## Inputs
-- `docs/numeric-edge-cases.md`
-- `docs/runtime.md`
+- `docs/specification/language-semantics.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - VM emits `AT0005` and `AT0007` correctly.

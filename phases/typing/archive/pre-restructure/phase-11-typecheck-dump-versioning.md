@@ -4,7 +4,7 @@
 Stabilize the JSON schema version for typecheck dumps.
 
 ## Inputs
-- `docs/typecheck-dump.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - `typecheck_version` field enforced in outputs.

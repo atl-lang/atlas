@@ -4,7 +4,7 @@
 Emit secondary/related spans for key diagnostics to aid AI tools.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Related spans for:

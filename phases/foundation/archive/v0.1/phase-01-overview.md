@@ -4,8 +4,8 @@
 Establish the project skeleton, build system, and testing harness in Rust. No language logic yet.
 
 ## Inputs
-- `docs/engineering.md`
-- `docs/style.md`
+- `docs/guides/code-quality-standards.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - Rust workspace with crates: `atlas-runtime` (library) and `atlas-cli` (binary).
@@ -32,7 +32,7 @@ Establish the project skeleton, build system, and testing harness in Rust. No la
   - `crates/atlas-runtime`
   - `crates/atlas-cli`
   - `tests/`
-- `docs/engineering.md` exists and is referenced in README.
+- `docs/guides/code-quality-standards.md` exists and is referenced in README.
 
 ## Tests
 - A simple unit test in `atlas-runtime` that always passes.

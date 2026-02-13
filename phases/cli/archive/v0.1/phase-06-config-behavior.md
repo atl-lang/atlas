@@ -4,7 +4,7 @@
 Define how the CLI reads optional configuration without adding complexity.
 
 ## Inputs
-- `docs/engineering.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - Decision: no config in v0.1, or minimal config (e.g., `ATLAS_DIAGNOSTICS=json`).

@@ -4,7 +4,7 @@
 Implement CLI diagnostics handling, including JSON output.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - `--json` flag behavior.

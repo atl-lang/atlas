@@ -4,8 +4,8 @@
 Stabilize typecheck dump format and guarantee diagnostic stability.
 
 ## Inputs
-- `docs/typecheck-dump.md`
-- `docs/diagnostics.md`
+- `docs/specification/json-formats.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 

@@ -72,7 +72,7 @@ Delegate all operations to Rust std::f64 methods which use platform libm. Follow
 - Uses: RuntimeError::ValueError for domain errors
 - Updates: Cargo.toml with rand = "0.8"
 - Updates: prelude.rs with 18 functions + 5 constants
-- Updates: docs/stdlib.md
+- Updates: docs/api/stdlib.md
 - Output: Complete math library
 
 ## Acceptance

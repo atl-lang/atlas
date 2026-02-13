@@ -26,7 +26,7 @@ Implement regular expression support with pattern matching, searching, and repla
 **Create:** `crates/atlas-runtime/src/stdlib/regex.rs` (~700 lines)
 **Update:** `crates/atlas-runtime/src/value.rs` (~100 lines Regex value)
 **Update:** `Cargo.toml` (add regex dependency)
-**Update:** `docs/stdlib.md` (~300 lines regex docs)
+**Update:** `docs/api/stdlib.md` (~300 lines regex docs)
 **Tests:** `crates/atlas-runtime/tests/regex_tests.rs` (~600 lines)
 
 ## Dependencies

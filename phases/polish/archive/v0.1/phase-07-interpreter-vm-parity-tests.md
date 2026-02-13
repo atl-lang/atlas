@@ -4,7 +4,7 @@
 Verify interpreter and VM produce identical results.
 
 ## Inputs
-- `docs/e2e-parity.md`
+- `docs/guides/testing-guide.md`
 
 ## Deliverables
 - Golden tests run in both interpreter and VM.

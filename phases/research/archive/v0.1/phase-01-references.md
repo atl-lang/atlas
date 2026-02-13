@@ -4,7 +4,7 @@
 Capture key references and rationale for Atlas design decisions.
 
 ## Inputs
-- `docs/ai-principles.md`
+- `docs/philosophy/ai-principles.md`
 
 ## Deliverables
 - Documented references for syntax, typing, diagnostics, and REPL architecture.

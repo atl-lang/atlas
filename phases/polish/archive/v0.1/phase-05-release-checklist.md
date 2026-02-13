@@ -4,7 +4,7 @@
 Define the v0.1 release checklist.
 
 ## Inputs
-- `docs/versioning.md`
+- `docs/reference/versioning.md`
 
 ## Deliverables
 - Checklist for docs, tests, binaries, diagnostics.

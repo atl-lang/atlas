@@ -9,7 +9,7 @@ cargo test --all
 ls crates/atlas-stdlib/src/
 ls crates/atlas-lsp/src/
 ls crates/atlas-cli/src/commands/
-grep "60+ functions" docs/stdlib.md
+grep "60+ functions" docs/api/stdlib.md
 ```
 
 **What's needed:**

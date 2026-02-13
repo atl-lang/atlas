@@ -4,10 +4,10 @@
 Support multiple REPL frontends via a shared core.
 
 ## Inputs
-- `docs/repl.md`
+- `docs/config/repl.md`
 
 ## Deliverables
-- REPL core API from `docs/repl.md`.
+- REPL core API from `docs/config/repl.md`.
 - Line-editor frontend as default.
 - Placeholder hook for TUI frontend.
 

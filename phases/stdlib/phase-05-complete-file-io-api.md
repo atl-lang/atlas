@@ -6,11 +6,11 @@
 **Verification:**
 ```bash
 ls docs/*io* docs/*security*
-cat docs/io-security-model.md
+cat docs/reference/io-security-model.md
 ```
 
 **What's needed:**
-- docs/io-security-model.md exists from v0.1
+- docs/reference/io-security-model.md exists from v0.1
 - Security policy defined
 
 **If missing:** Review security model before implementing
@@ -30,7 +30,7 @@ Implement complete file I/O API with 10 functions covering reading, writing, dir
 **VM Tests:** `crates/atlas-runtime/tests/vm_stdlib_io_tests.rs` (~600 lines)
 
 ## Dependencies
-- v0.1 security model from docs/io-security-model.md
+- v0.1 security model from docs/reference/io-security-model.md
 - Rust std::fs for file operations
 - tempfile crate for test isolation
 
@@ -71,7 +71,7 @@ Check all paths against security policy before operations. Validate UTF-8 on rea
 - Uses: Security model from docs
 - Updates: Cargo.toml with tempfile
 - Updates: prelude.rs with 10 functions
-- Updates: docs/stdlib.md
+- Updates: docs/api/stdlib.md
 - Output: Complete I/O API
 
 ## Acceptance

@@ -4,7 +4,7 @@
 Add tests to validate warning behavior and codes.
 
 ## Inputs
-- `docs/warnings.md`
+- `docs/specification/diagnostic-system.md`
 - `docs/warnings-test-plan.md`
 
 ## Deliverables

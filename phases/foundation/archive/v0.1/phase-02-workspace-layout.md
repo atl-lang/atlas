@@ -4,8 +4,8 @@
 Define the concrete Rust workspace layout and module boundaries.
 
 ## Inputs
-- `docs/engineering.md`
-- `docs/style.md`
+- `docs/guides/code-quality-standards.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - `crates/atlas-runtime` with submodules: `lexer`, `parser`, `ast`, `binder`, `types`, `typecheck`, `interpreter`, `bytecode`, `vm`, `diagnostics`.
@@ -19,4 +19,4 @@ Define the concrete Rust workspace layout and module boundaries.
 
 ## Exit Criteria
 - Workspace compiles with empty modules.
-- Module boundaries reflect `docs/engineering.md`.
+- Module boundaries reflect `docs/guides/code-quality-standards.md`.

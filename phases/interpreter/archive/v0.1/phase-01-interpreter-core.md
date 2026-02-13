@@ -5,7 +5,7 @@ Implement evaluation of the AST.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/runtime.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Expression evaluation.

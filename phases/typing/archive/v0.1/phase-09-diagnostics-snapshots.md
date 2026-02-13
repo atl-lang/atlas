@@ -4,7 +4,7 @@
 Establish stable snapshot tests for diagnostics output.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Snapshot test suite for common error cases.

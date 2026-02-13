@@ -4,7 +4,7 @@
 Define how the parser handles and reports errors consistently.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Policy on early-exit vs minimal recovery.

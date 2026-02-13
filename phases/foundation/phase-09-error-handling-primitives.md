@@ -30,7 +30,7 @@ Implement Result<T, E> type and error handling primitives enabling explicit erro
 **Update:** `crates/atlas-runtime/src/interpreter/mod.rs` (~200 lines Result handling)
 **Update:** `crates/atlas-runtime/src/compiler/mod.rs` (~200 lines Result codegen)
 **Create:** `docs/error-handling.md` (~800 lines)
-**Update:** `docs/stdlib.md` (~200 lines Result API)
+**Update:** `docs/api/stdlib.md` (~200 lines Result API)
 **Tests:** `crates/atlas-runtime/tests/result_type_tests.rs` (~600 lines)
 **Tests:** `crates/atlas-runtime/tests/error_handling_tests.rs` (~500 lines)
 

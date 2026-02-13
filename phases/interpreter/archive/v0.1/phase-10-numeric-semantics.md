@@ -5,8 +5,8 @@ Implement numeric edge-case checks and error propagation.
 
 ## Inputs
 - `Atlas-SPEC.md` (for correct Atlas test syntax)
-- `docs/numeric-edge-cases.md`
-- `docs/runtime.md`
+- `docs/specification/language-semantics.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Runtime checks for divide by zero.

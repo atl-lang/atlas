@@ -4,7 +4,7 @@
 Validate string length and concatenation semantics.
 
 ## Inputs
-- `docs/string-semantics.md`
+- `docs/specification/language-semantics.md`
 
 ## Deliverables
 - Tests for ASCII and Unicode length.

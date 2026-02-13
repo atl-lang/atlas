@@ -4,8 +4,8 @@
 Validate cross-platform behavior for macOS, Windows, Linux.
 
 ## Inputs
-- `docs/runtime.md`
-- `docs/versioning.md`
+- `docs/RUNTIME.md`
+- `docs/reference/versioning.md`
 
 ## Deliverables
 - Checklist for platform-specific issues (path separators, line endings).

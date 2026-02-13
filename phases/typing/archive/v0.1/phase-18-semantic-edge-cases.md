@@ -5,7 +5,7 @@ Handle and test edge cases for string semantics and numeric operations.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 

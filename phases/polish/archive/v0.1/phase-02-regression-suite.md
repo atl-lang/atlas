@@ -4,7 +4,7 @@
 Establish a stable regression suite and versioning checks.
 
 ## Inputs
-- `docs/testing.md`
+- `docs/guides/testing-guide.md`
 
 ## Deliverables
 - Golden test matrix for core language features.

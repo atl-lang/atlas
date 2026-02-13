@@ -26,7 +26,7 @@ grep "30-50% improvement" PERFORMANCE_REPORT_v02.md
 Execute comprehensive audit of all v0.2 documentation ensuring completeness accuracy and quality. Review stdlib documentation verifying all 60+ functions documented with examples. Audit bytecode VM documentation covering optimizer profiler debugger. Review frontend documentation for errors warnings formatter. Audit CLI documentation for all commands. Review LSP documentation for all features. Verify editor setup guides complete and tested. Fix broken links update stale references add missing examples. Generate documentation audit summary reporting status and completeness.
 
 ## Files
-**Update:** `docs/stdlib.md` (~1200 lines complete API reference for 60+ functions)
+**Update:** `docs/api/stdlib.md` (~1200 lines complete API reference for 60+ functions)
 **Create:** `docs/stdlib-usage-guide.md` (~500 lines)
 **Create:** `docs/vm-optimizer-guide.md` (~400 lines)
 **Create:** `docs/vm-profiler-guide.md` (~300 lines)

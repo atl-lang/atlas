@@ -5,7 +5,7 @@ Harden lexer behavior for edge cases and ambiguous inputs.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Tests for unterminated strings, invalid escapes, and unexpected characters.

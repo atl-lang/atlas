@@ -27,7 +27,7 @@ Comprehensive integration testing of complete standard library - verify all 60+ 
 **Create:** `crates/atlas-runtime/tests/stdlib_real_world_tests.rs` (~600 lines)
 **Create:** `crates/atlas-runtime/benches/stdlib_benchmarks.rs` (~400 lines)
 **Update:** `Cargo.toml` (add criterion for benchmarks)
-**Update:** `docs/stdlib.md` (complete API reference)
+**Update:** `docs/api/stdlib.md` (complete API reference)
 **Create:** `docs/stdlib-usage-guide.md` (~500 lines)
 
 ## Dependencies
@@ -71,7 +71,7 @@ Complete API reference with signatures, descriptions, examples, edge cases, erro
 - Uses: Both interpreter and VM for parity
 - Uses: Criterion for benchmarks
 - Uses: Tempfile for I/O tests
-- Updates: docs/stdlib.md with complete API
+- Updates: docs/api/stdlib.md with complete API
 - Creates: Usage guide with practical examples
 - Output: Verified stdlib ready for production
 

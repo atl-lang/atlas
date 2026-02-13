@@ -4,7 +4,7 @@
 Validate stability rules for AST and typecheck JSON dumps.
 
 ## Inputs
-- `docs/json-dump-stability.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - Tests for deterministic output ordering.

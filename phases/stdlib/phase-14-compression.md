@@ -29,7 +29,7 @@ Implement compression and archive utilities supporting gzip, tar, and zip format
 **Create:** `crates/atlas-runtime/src/stdlib/compression/tar.rs` (~500 lines)
 **Create:** `crates/atlas-runtime/src/stdlib/compression/zip.rs` (~500 lines)
 **Update:** `Cargo.toml` (add flate2, tar, zip dependencies)
-**Update:** `docs/stdlib.md` (~300 lines compression docs)
+**Update:** `docs/api/stdlib.md` (~300 lines compression docs)
 **Tests:** `crates/atlas-runtime/tests/compression_tests.rs` (~700 lines)
 
 ## Dependencies

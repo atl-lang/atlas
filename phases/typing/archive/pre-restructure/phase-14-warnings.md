@@ -4,8 +4,8 @@
 Implement warnings for unused variables and unreachable code.
 
 ## Inputs
-- `docs/warnings.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Warning diagnostics for unused variables (`AT2001`).

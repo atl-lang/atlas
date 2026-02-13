@@ -29,7 +29,7 @@ Implement complete string manipulation API with 18 functions covering core opera
 
 ## Dependencies
 - v0.1 complete (Value model, interpreter, VM, prelude system)
-- docs/stdlib.md exists for updates
+- docs/api/stdlib.md exists for updates
 - Atlas-SPEC.md defines string semantics
 
 ## Implementation
@@ -69,7 +69,7 @@ Register all 18 functions in prelude HashMap. Each gets wrapper function checkin
 - Uses: Value enum from value.rs
 - Uses: RuntimeError from error.rs
 - Updates: prelude.rs with 18 function registrations
-- Updates: docs/stdlib.md with API documentation
+- Updates: docs/api/stdlib.md with API documentation
 - Output: Complete string API available in Atlas programs
 
 ## Acceptance

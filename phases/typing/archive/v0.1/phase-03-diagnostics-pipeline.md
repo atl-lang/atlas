@@ -4,10 +4,10 @@
 Implement the unified `Diagnostic` type and formatting logic.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
-- `Diagnostic` struct with fields from `docs/diagnostics.md`.
+- `Diagnostic` struct with fields from `docs/specification/diagnostic-system.md`.
 - Human and JSON renderers.
 - Error code registry.
 - Support for secondary/related spans.

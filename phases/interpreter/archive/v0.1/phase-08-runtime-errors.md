@@ -5,8 +5,8 @@ Implement consistent runtime error propagation with stack traces.
 
 ## Inputs
 - `Atlas-SPEC.md` (for correct Atlas test syntax)
-- `docs/diagnostics.md`
-- `docs/runtime.md`
+- `docs/specification/diagnostic-system.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Runtime error mapping to diagnostic codes.

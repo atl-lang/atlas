@@ -4,7 +4,7 @@
 Introduce versioning for `.atb` bytecode files.
 
 ## Inputs
-- `docs/versioning.md`
+- `docs/reference/versioning.md`
 
 ## Deliverables
 - Bytecode header includes version field.

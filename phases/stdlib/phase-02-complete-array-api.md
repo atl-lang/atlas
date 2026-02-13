@@ -74,7 +74,7 @@ Prelude wrappers pass interpreter to array functions. Array functions call inter
 - Uses: Interpreter::call_function for callbacks
 - Uses: RuntimeError for error handling
 - Updates: prelude.rs with 21 functions
-- Updates: docs/stdlib.md
+- Updates: docs/api/stdlib.md
 - Output: Complete array API in Atlas
 
 ## Acceptance

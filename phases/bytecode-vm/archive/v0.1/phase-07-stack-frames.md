@@ -4,7 +4,7 @@
 Define and implement stack frame layout and call convention for VM.
 
 ## Inputs
-- `docs/runtime.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Frame layout documented in code and comments.

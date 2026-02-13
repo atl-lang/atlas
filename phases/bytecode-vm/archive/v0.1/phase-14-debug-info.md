@@ -4,7 +4,7 @@
 Implement debug info mapping from bytecode to source spans.
 
 ## Inputs
-- `docs/debug-info.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - Span table and instruction span mapping.

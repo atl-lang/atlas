@@ -8,7 +8,7 @@ This is the canonical build order for AI agents. Execute phases in order. Do not
 3. `phases/research/phase-05-language-comparison.md`
 4. `phases/research/phase-03-module-scaffolding.md`
 5. `phases/research/phase-04-module-compiler-hooks.md`
-6. Review `docs/decision-log.md`, `docs/coverage-matrix.md`, `docs/phase-gates.md` before starting implementation.
+6. Review `docs/decision-log.md`, `docs/guides/code-quality-standards.md`, `docs/guides/code-quality-standards.md` before starting implementation.
 
 ## 1. Foundation
 1. `phases/foundation/phase-01-overview.md`

@@ -5,7 +5,7 @@ Enforce strict typing rules on the bound AST.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Type inference for locals.

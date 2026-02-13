@@ -4,7 +4,7 @@
 Add hooks to support future debugging tools without changing semantics.
 
 ## Inputs
-- `docs/runtime.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Instruction-level hook callbacks (enabled via feature flag).

@@ -4,12 +4,12 @@
 Document contribution and workflow expectations.
 
 ## Inputs
-- `docs/engineering.md`
-- `docs/style.md`
+- `docs/guides/code-quality-standards.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - `CONTRIBUTING.md` with coding standards and test steps.
-- Reference to `docs/engineering.md` and `docs/style.md`.
+- Reference to `docs/guides/code-quality-standards.md` and `docs/guides/code-quality-standards.md`.
 
 ## Steps
 - Draft CONTRIBUTING with build/test steps.

@@ -4,7 +4,7 @@
 Plan JSON parsing/serialization module for v1.0.
 
 ## Inputs
-- `docs/stdlib.md`
+- `docs/api/stdlib.md`
 
 ## Deliverables
 - API sketch for `json.parse` and `json.stringify`.

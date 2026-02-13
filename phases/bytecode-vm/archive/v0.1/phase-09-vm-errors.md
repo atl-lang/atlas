@@ -4,8 +4,8 @@
 Align VM runtime errors with interpreter diagnostics and stack traces.
 
 ## Inputs
-- `docs/diagnostics.md`
-- `docs/runtime.md`
+- `docs/specification/diagnostic-system.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - VM errors mapped to diagnostic codes.

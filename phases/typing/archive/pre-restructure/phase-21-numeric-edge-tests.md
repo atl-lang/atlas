@@ -4,7 +4,7 @@
 Validate numeric edge case behavior and diagnostics.
 
 ## Inputs
-- `docs/numeric-edge-cases.md`
+- `docs/specification/language-semantics.md`
 
 ## Deliverables
 - Tests for divide by zero.

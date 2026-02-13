@@ -30,7 +30,7 @@ Implement essential collection types HashMap, HashSet, Queue, and Stack providin
 **Create:** `crates/atlas-runtime/src/stdlib/collections/queue.rs` (~400 lines)
 **Create:** `crates/atlas-runtime/src/stdlib/collections/stack.rs` (~300 lines)
 **Update:** `crates/atlas-runtime/src/value.rs` (~200 lines collection values)
-**Update:** `docs/stdlib.md` (~400 lines collection docs)
+**Update:** `docs/api/stdlib.md` (~400 lines collection docs)
 **Tests:** `crates/atlas-runtime/tests/collections_tests.rs` (~1000 lines)
 
 ## Dependencies

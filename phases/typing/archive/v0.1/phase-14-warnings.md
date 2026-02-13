@@ -4,8 +4,8 @@
 Implement and test warning diagnostics for unused variables and unreachable code.
 
 ## Inputs
-- `docs/warnings.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
+- `docs/specification/diagnostic-system.md`
 - `archive/test-plans/warnings-test-plan.md` (archived test plan)
 
 ## Deliverables

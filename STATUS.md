@@ -40,6 +40,47 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
+## 📚 Documentation Reference Map
+
+**For AI Agents:** Phase files reference docs for guidance. Use this map to find the correct documentation:
+
+### Core Specifications
+- **Language Spec:** `Atlas-SPEC.md` - Grammar, syntax, keywords, types
+- **Grammar Rules:** `docs/specification/grammar-conformance.md` - Parser conformance requirements
+- **Language Semantics:** `docs/specification/language-semantics.md` - Type rules, operators, execution order, array aliasing, numeric edge cases
+
+### Runtime & Execution
+- **Runtime Spec:** `docs/specification/runtime-spec.md` - Value model, bytecode format, prelude, execution model
+- **Standard Library API:** `docs/api/stdlib.md` - Complete stdlib function reference (signatures, examples, errors)
+- **Runtime API:** `docs/api/runtime-api.md` - Embedding API and runtime hooks
+
+### Implementation Guides
+- **All Implementation:** `docs/implementation/` directory
+  - `01-project-structure.md` - Codebase organization
+  - `02-core-types.md` through `16-lsp.md` - Component-specific implementation guides
+  - `13-stdlib.md` - HOW to implement stdlib (not API reference)
+
+### Error & Diagnostic System
+- **Diagnostic System:** `docs/specification/diagnostic-system.md` - Error codes, warning codes, diagnostic format, normalization, ordering
+- **Parser Recovery:** `docs/reference/parser-recovery-policy.md` - Error recovery strategy
+
+### Testing & Quality
+- **Testing Guide:** `docs/guides/testing-guide.md` - Test infrastructure, rstest, insta, proptest, interpreter/VM parity requirements
+- **Code Quality:** `docs/guides/code-quality-standards.md` - Code style, engineering standards, phase gates
+
+### JSON Formats
+- **JSON Dumps:** `docs/specification/json-formats.md` - AST dumps, typecheck dumps, debug info format, stability guarantees
+
+### Other References
+- **Config:** `docs/config/` - CLI config, REPL modes
+- **Reference:** `docs/reference/` - Code organization, versioning, decision log, security model
+- **Philosophy:** `docs/philosophy/` - AI manifesto, documentation philosophy, project principles
+
+### Feature Documentation
+**Phases create feature docs in `docs/features/` as they implement new capabilities.** Phase files specify which docs to create/update.
+
+---
+
 ## 📊 v0.2 Progress Tracker
 
 ### 0. Foundation (0/15) - Production Infrastructure

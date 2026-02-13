@@ -4,7 +4,7 @@
 Normalize diagnostics for stable golden tests.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Normalizer that strips non-deterministic data (absolute paths, timestamps).

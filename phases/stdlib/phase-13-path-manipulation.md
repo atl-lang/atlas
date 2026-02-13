@@ -27,7 +27,7 @@ Implement comprehensive path manipulation and file system utilities enabling cro
 ## Files
 **Create:** `crates/atlas-runtime/src/stdlib/path.rs` (~700 lines)
 **Create:** `crates/atlas-runtime/src/stdlib/fs.rs` (~600 lines)
-**Update:** `docs/stdlib.md` (~300 lines path and fs docs)
+**Update:** `docs/api/stdlib.md` (~300 lines path and fs docs)
 **Tests:** `crates/atlas-runtime/tests/path_tests.rs` (~600 lines)
 **Tests:** `crates/atlas-runtime/tests/fs_tests.rs` (~500 lines)
 

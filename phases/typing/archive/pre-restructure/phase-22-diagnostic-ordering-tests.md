@@ -4,7 +4,7 @@
 Validate deterministic ordering of diagnostics.
 
 ## Inputs
-- `docs/diagnostic-ordering.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Tests for error ordering.

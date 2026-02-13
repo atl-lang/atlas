@@ -6,7 +6,7 @@ Parse tokens into the AST defined in `docs/ast.md`.
 ## Inputs
 - `Atlas-SPEC.md`
 - `docs/ast.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Recursive descent parser covering all v0.1 constructs.

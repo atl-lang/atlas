@@ -4,8 +4,8 @@
 Implement AI-friendly JSON dumps for AST and typechecker output.
 
 ## Inputs
-- `docs/ast-dump.md`
-- `docs/typecheck-dump.md`
+- `docs/specification/json-formats.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - `atlas ast file.atl --json` outputs AST JSON.

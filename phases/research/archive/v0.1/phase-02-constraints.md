@@ -4,8 +4,8 @@
 Explicitly document constraints and potential risks to avoid future refactors.
 
 ## Inputs
-- `docs/runtime.md`
-- `docs/diagnostics.md`
+- `docs/RUNTIME.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Runtime model constraints.

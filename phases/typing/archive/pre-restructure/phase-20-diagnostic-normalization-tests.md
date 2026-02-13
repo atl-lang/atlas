@@ -4,7 +4,7 @@
 Validate normalization rules for diagnostics outputs.
 
 ## Inputs
-- `docs/diagnostic-normalization.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Tests that verify normalization of paths and line endings.

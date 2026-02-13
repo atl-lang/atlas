@@ -5,8 +5,8 @@ Provide an interactive REPL with persistent state.
 
 ## Inputs
 - `Atlas-SPEC.md` (for REPL behavior and syntax)
-- `docs/repl.md`
-- `docs/diagnostics.md`
+- `docs/config/repl.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Multi-line input handling.

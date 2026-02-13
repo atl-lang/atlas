@@ -5,14 +5,14 @@ Implement array literals, indexing, and mutation semantics.
 
 ## Inputs
 - `Atlas-SPEC.md` (for correct Atlas syntax)
-- `docs/runtime.md`
-- `docs/value-model.md`
+- `docs/RUNTIME.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Array literal evaluation.
 - Index read with bounds checking.
 - Index assignment with bounds checking.
-- Mutation semantics aligned with `docs/runtime.md` and `docs/value-model.md`.
+- Mutation semantics aligned with `docs/RUNTIME.md` and `docs/RUNTIME.md`.
 
 ## Steps
 - Implement array literal evaluation.

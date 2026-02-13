@@ -4,7 +4,7 @@
 Make debug info emission the default in v0.1.
 
 ## Inputs
-- `docs/debug-info.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - Bytecode serializer emits debug info by default.

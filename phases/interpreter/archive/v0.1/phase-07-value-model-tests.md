@@ -4,7 +4,7 @@
 Verify value representation semantics and equality rules.
 
 ## Inputs
-- `docs/value-model.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Tests for number, string, bool, null equality.

@@ -4,7 +4,7 @@
 Validate top-level execution order, function hoisting, and variable forward references.
 
 ## Inputs
-- `docs/top-level-execution.md`
+- `docs/specification/language-semantics.md`
 
 ## Deliverables
 - Tests for function hoisting at top level.

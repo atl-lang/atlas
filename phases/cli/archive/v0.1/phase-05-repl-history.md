@@ -4,7 +4,7 @@
 Implement optional REPL history persistence for convenience.
 
 ## Inputs
-- `docs/repl.md`
+- `docs/config/repl.md`
 
 ## Deliverables
 - History file (default location configurable).

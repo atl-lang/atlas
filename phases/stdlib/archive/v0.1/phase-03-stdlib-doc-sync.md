@@ -1,10 +1,10 @@
 # Phase 03 - Stdlib Doc Sync
 
 ## Objective
-Keep stdlib implementation aligned with `docs/stdlib.md`.
+Keep stdlib implementation aligned with `docs/api/stdlib.md`.
 
 ## Inputs
-- `docs/stdlib.md`
+- `docs/api/stdlib.md`
 
 ## Deliverables
 - Verification checklist for stdlib behaviors.

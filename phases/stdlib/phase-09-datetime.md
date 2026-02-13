@@ -25,7 +25,7 @@ Implement comprehensive date and time API with parsing, formatting, arithmetic, 
 **Create:** `crates/atlas-runtime/src/stdlib/datetime.rs` (~900 lines)
 **Update:** `crates/atlas-runtime/src/value.rs` (~100 lines DateTime value)
 **Update:** `Cargo.toml` (add chrono dependency)
-**Update:** `docs/stdlib.md` (~400 lines datetime docs)
+**Update:** `docs/api/stdlib.md` (~400 lines datetime docs)
 **Tests:** `crates/atlas-runtime/tests/datetime_tests.rs` (~700 lines)
 
 ## Dependencies

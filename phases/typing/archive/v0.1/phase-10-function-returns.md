@@ -5,7 +5,7 @@ Ensure functions with non-void returns always return a value on all paths.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Control-flow-aware return analysis.

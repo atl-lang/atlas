@@ -4,11 +4,11 @@
 Implement the shared runtime `Value` representation.
 
 ## Inputs
-- `docs/runtime.md`
-- `docs/value-model.md`
+- `docs/RUNTIME.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
-- `Value` enum as defined in `docs/runtime.md`.
+- `Value` enum as defined in `docs/RUNTIME.md`.
 - Basic conversions and display formatting.
 
 ## Steps

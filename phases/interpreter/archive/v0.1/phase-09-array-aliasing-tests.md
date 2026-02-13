@@ -5,7 +5,7 @@ Validate array aliasing and mutation visibility.
 
 ## Inputs
 - `Atlas-SPEC.md` (for correct Atlas test syntax)
-- `docs/array-aliasing.md`
+- `docs/specification/language-semantics.md`
 
 ## Deliverables
 - Tests for mutation visibility across aliases.

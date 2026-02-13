@@ -4,8 +4,8 @@
 Define strict compatibility rules for the runtime API to avoid breaking embeddings.
 
 ## Inputs
-- `docs/runtime-api.md`
-- `docs/versioning.md`
+- `docs/api/runtime-api.md`
+- `docs/reference/versioning.md`
 - `docs/runtime-api-evolution.md`
 
 ## Deliverables

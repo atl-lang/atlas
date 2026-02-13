@@ -1,10 +1,10 @@
 # Phase 16 - Bytecode Format Tests
 
 ## Objective
-Validate `.atb` serialization matches `docs/bytecode-format.md`.
+Validate `.atb` serialization matches `docs/RUNTIME.md`.
 
 ## Inputs
-- `docs/bytecode-format.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Tests that serialize and deserialize sample programs.

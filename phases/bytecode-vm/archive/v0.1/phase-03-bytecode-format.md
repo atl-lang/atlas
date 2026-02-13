@@ -5,12 +5,12 @@ Define the bytecode format and instruction encoding.
 
 ## Inputs
 - `docs/ir.md`
-- `docs/bytecode-format.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Instruction enum and operand encoding.
 - Bytecode container with constants pool.
-- Format matches `docs/bytecode-format.md`.
+- Format matches `docs/RUNTIME.md`.
 
 ## Steps
 - Define instruction enum and operands.

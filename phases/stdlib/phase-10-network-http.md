@@ -27,7 +27,7 @@ Implement HTTP client and basic networking for making web requests and API calls
 **Create:** `crates/atlas-runtime/src/stdlib/http.rs` (~800 lines)
 **Create:** `crates/atlas-runtime/src/stdlib/net.rs` (~400 lines)
 **Update:** `Cargo.toml` (add reqwest dependency)
-**Update:** `docs/stdlib.md` (~400 lines network docs)
+**Update:** `docs/api/stdlib.md` (~400 lines network docs)
 **Create:** `docs/http-guide.md` (~500 lines)
 **Tests:** `crates/atlas-runtime/tests/http_tests.rs` (~600 lines)
 

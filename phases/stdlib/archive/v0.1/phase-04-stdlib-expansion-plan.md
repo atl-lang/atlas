@@ -4,7 +4,7 @@
 Define a controlled roadmap for stdlib expansion beyond v0.1.
 
 ## Inputs
-- `docs/stdlib.md`
+- `docs/api/stdlib.md`
 
 ## Deliverables
 - List of v1.0 stdlib modules (e.g., `io`, `path`, `json`, `time`).

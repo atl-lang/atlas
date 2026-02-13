@@ -4,7 +4,7 @@
 Define security boundaries for any future IO-related stdlib features.
 
 ## Inputs
-- `docs/engineering.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - Policy for file and network access.

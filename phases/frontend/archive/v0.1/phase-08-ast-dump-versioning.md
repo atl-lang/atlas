@@ -4,7 +4,7 @@
 Stabilize the JSON schema version for AST dumps.
 
 ## Inputs
-- `docs/ast-dump.md`
+- `docs/specification/json-formats.md`
 
 ## Deliverables
 - `ast_version` field enforced in outputs.

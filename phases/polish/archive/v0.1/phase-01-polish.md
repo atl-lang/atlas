@@ -4,8 +4,8 @@
 Finalize v0.1 with consistent diagnostics, documentation, and packaging.
 
 ## Inputs
-- `docs/diagnostics.md`
-- `docs/testing.md`
+- `docs/specification/diagnostic-system.md`
+- `docs/guides/testing-guide.md`
 
 ## Deliverables
 - Diagnostics consistency checks.

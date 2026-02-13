@@ -5,7 +5,7 @@ Implement tokenization with spans and diagnostics.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Token types for all syntax in `Atlas-SPEC.md`.

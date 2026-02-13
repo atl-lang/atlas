@@ -4,7 +4,7 @@
 Lock core dependencies and versions for v0.1.
 
 ## Inputs
-- `docs/engineering.md`
+- `docs/guides/code-quality-standards.md`
 
 ## Deliverables
 - Document chosen crates and versions in README.

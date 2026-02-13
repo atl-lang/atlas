@@ -4,7 +4,7 @@
 Ensure key diagnostics include related spans consistently.
 
 ## Inputs
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 - Tests for related spans in:

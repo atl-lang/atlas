@@ -5,7 +5,7 @@ Create deterministic tests for stdlib behavior.
 
 ## Inputs
 - `Atlas-SPEC.md` (for correct Atlas syntax in test fixtures)
-- `docs/stdlib.md`
+- `docs/api/stdlib.md`
 
 ## Deliverables
 - Golden tests for `print`, `len`, `str`.

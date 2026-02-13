@@ -5,7 +5,7 @@ Implement related spans, diagnostic normalization, and ordering guarantees.
 
 ## Inputs
 - `Atlas-SPEC.md`
-- `docs/diagnostics.md`
+- `docs/specification/diagnostic-system.md`
 
 ## Deliverables
 

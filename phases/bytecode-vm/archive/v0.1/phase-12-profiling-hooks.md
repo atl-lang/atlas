@@ -4,7 +4,7 @@
 Add optional profiling hooks for future performance work.
 
 ## Inputs
-- `docs/runtime.md`
+- `docs/RUNTIME.md`
 
 ## Deliverables
 - Hooks for instruction counting.

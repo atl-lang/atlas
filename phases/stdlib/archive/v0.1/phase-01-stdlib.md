@@ -4,7 +4,7 @@
 Implement the v0.1 standard library.
 
 ## Inputs
-- `docs/stdlib.md`
+- `docs/api/stdlib.md`
 
 ## Deliverables
 - `print`, `len`, `str` with correct types.
