@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-13
-**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM Complete + Stdlib Complete + CLI Phase 01 Complete ✅
+**Status:** Frontend Complete + Typing & Binding Complete + Runtime Values Complete + Interpreter Complete + REPL Complete + Bytecode & VM Complete + Stdlib Complete + CLI Complete ✅
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/cli/phase-08-ast-typecheck-tests.md
-**Next Phase:** `phases/cli/phase-09-json-dump-stability-tests.md`
+**Last Completed:** phases/cli/phase-10-cli-e2e-tests.md
+**Next Phase:** `phases/lsp/phase-01-lsp-foundation.md`
 
-**What to implement:** JSON dump stability tests
+**What to implement:** LSP foundation and server setup
 
 ---
 
@@ -29,11 +29,9 @@
 
 ## 📚 Implementation Files Needed for Current Phase
 
-**For CLI Phase 08:**
-- `docs/ast-typecheck-tests.md` - Test specification
-- `docs/ast-dump.md` - AST dump specification
-- `docs/typecheck-dump.md` - Typecheck dump specification
-- `phases/cli/phase-08-ast-typecheck-tests.md` - Phase implementation guide
+**For LSP Phase 01:**
+- `docs/lsp-foundation.md` - LSP foundation specification
+- `phases/lsp/phase-01-lsp-foundation.md` - Phase implementation guide
 
 ---
 
@@ -134,7 +132,7 @@
 - ✅ phase-07-prelude-binding.md
 - ✅ phase-08-prelude-tests.md
 
-### 10. CLI (8/10)
+### 10. CLI (10/10) ✅ COMPLETE
 - ✅ phase-01-cli.md
 - ✅ phase-02-cli-diagnostics.md
 - ✅ phase-03-repl-modes.md
@@ -143,17 +141,11 @@
 - ✅ phase-06-config-behavior.md
 - ✅ phase-07-ast-typecheck-dumps.md
 - ✅ phase-08-ast-typecheck-tests.md
-- ⬜ phase-09-json-dump-stability-tests.md ⬅️ **YOU ARE HERE**
-- ⬜ phase-04-build-output.md
-- ⬜ phase-05-repl-history.md
-- ⬜ phase-06-config-behavior.md
-- ⬜ phase-07-ast-typecheck-dumps.md
-- ⬜ phase-08-ast-typecheck-tests.md
-- ⬜ phase-09-json-dump-stability-tests.md
-- ⬜ phase-10-cli-e2e-tests.md
+- ✅ phase-09-json-dump-stability-tests.md
+- ✅ phase-10-cli-e2e-tests.md
 
 ### 11. LSP (0/6)
-- ⬜ phase-01-lsp-foundation.md
+- ⬜ phase-01-lsp-foundation.md ⬅️ **YOU ARE HERE**
 - ⬜ phase-02-lsp-diagnostics.md
 - ⬜ phase-03-lsp-navigation.md
 - ⬜ phase-04-lsp-completion.md
@@ -169,7 +161,7 @@
 - ⬜ phase-06-cross-platform-check.md
 - ⬜ phase-07-interpreter-vm-parity-tests.md
 
-**Total Progress:** 78/93 phases (83%)
+**Total Progress:** 80/93 phases (86%)
 
 ---
 
