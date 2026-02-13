@@ -130,6 +130,20 @@ impl SymbolTable {
         });
     }
 
+    /// Check if a name is a prelude builtin
+    pub fn is_prelude_builtin(&self, name: &str) -> bool {
+        if let Some(symbol) = self.functions.get(name) {
+            symbol.kind == SymbolKind::Builtin
+        } else {
+            false
+        }
+    }
+
+    /// Check if we're currently in the global scope
+    pub fn is_global_scope(&self) -> bool {
+        self.scopes.len() == 1
+    }
+
     /// Get all symbols from all scopes and functions
     /// Returns a vector of all symbols in the table
     pub fn all_symbols(&self) -> Vec<Symbol> {

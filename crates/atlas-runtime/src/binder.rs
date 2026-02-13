@@ -56,6 +56,25 @@ impl Binder {
 
     /// Hoist a top-level function declaration
     fn hoist_function(&mut self, func: &FunctionDecl) {
+        // Check for global shadowing of prelude builtins
+        if self.symbol_table.is_prelude_builtin(&func.name.name) {
+            let diag = Diagnostic::error_with_code(
+                "AT1012",
+                &format!(
+                    "Cannot shadow prelude builtin '{}' in global scope",
+                    func.name.name
+                ),
+                func.name.span,
+            )
+            .with_label("shadows prelude builtin")
+            .with_help(format!(
+                "Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope."
+            ));
+
+            self.diagnostics.push(diag);
+            return;
+        }
+
         let param_types: Vec<Type> = func
             .params
             .iter()
@@ -160,6 +179,27 @@ impl Binder {
     fn bind_statement(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDecl(var) => {
+                // Check for global shadowing of prelude builtins
+                if self.symbol_table.is_global_scope()
+                    && self.symbol_table.is_prelude_builtin(&var.name.name)
+                {
+                    let diag = Diagnostic::error_with_code(
+                        "AT1012",
+                        &format!(
+                            "Cannot shadow prelude builtin '{}' in global scope",
+                            var.name.name
+                        ),
+                        var.name.span,
+                    )
+                    .with_label("shadows prelude builtin")
+                    .with_help(format!(
+                        "Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope."
+                    ));
+
+                    self.diagnostics.push(diag);
+                    return;
+                }
+
                 // First bind the initializer (can't reference the variable being declared)
                 self.bind_expr(&var.init);
 
@@ -443,5 +483,59 @@ mod tests {
         assert!(table.lookup("print").is_some());
         assert!(table.lookup("len").is_some());
         assert!(table.lookup("str").is_some());
+    }
+
+    #[test]
+    fn test_global_prelude_shadowing_function() {
+        // Shadowing prelude function at global scope should produce AT1012
+        let (_table, diagnostics) = bind_source(r#"
+            fn print() -> void {}
+        "#);
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1012");
+        assert!(diagnostics[0].message.contains("Cannot shadow prelude builtin 'print'"));
+    }
+
+    #[test]
+    fn test_global_prelude_shadowing_variable() {
+        // Shadowing prelude function with variable at global scope should produce AT1012
+        let (_table, diagnostics) = bind_source(r#"
+            let len = 42;
+        "#);
+
+        assert_eq!(diagnostics.len(), 1);
+        assert_eq!(diagnostics[0].code, "AT1012");
+        assert!(diagnostics[0].message.contains("Cannot shadow prelude builtin 'len'"));
+    }
+
+    #[test]
+    fn test_nested_prelude_shadowing_allowed() {
+        // Shadowing prelude in nested scope should be allowed
+        let (table, diagnostics) = bind_source(r#"
+            fn foo() -> void {
+                let print = 42;
+                let len = "hello";
+            }
+        "#);
+
+        assert_eq!(diagnostics.len(), 0);
+        // Original builtins should still be accessible
+        assert!(table.lookup("print").is_some());
+        assert_eq!(table.lookup("print").unwrap().kind, SymbolKind::Builtin);
+    }
+
+    #[test]
+    fn test_all_prelude_builtins_shadowing() {
+        // Test shadowing all three prelude builtins
+        let (_table, diagnostics) = bind_source(r#"
+            fn print() -> void {}
+            let len = 42;
+            var str = "test";
+        "#);
+
+        // Should have 3 errors (one for each prelude builtin)
+        assert_eq!(diagnostics.len(), 3);
+        assert!(diagnostics.iter().all(|d| d.code == "AT1012"));
     }
 }
