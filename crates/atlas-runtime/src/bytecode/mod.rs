@@ -3,9 +3,11 @@
 //! Stack-based bytecode with 30 opcodes organized by category.
 //! Operands are encoded separately in the instruction stream.
 
+mod disasm;
 mod opcode;
 mod serialize;
 
+pub use disasm::disassemble;
 pub use opcode::Opcode;
 use serialize::{deserialize_span, deserialize_value, serialize_span, serialize_value};
 

@@ -28,6 +28,9 @@ enum Commands {
     Build {
         /// Path to the Atlas source file
         file: String,
+        /// Disassemble bytecode and print to stdout
+        #[arg(long)]
+        disasm: bool,
     },
     /// Start an interactive REPL
     Repl,
@@ -45,9 +48,8 @@ fn main() -> Result<()> {
             println!("Checking: {}", file);
             println!("(Not yet implemented)");
         }
-        Commands::Build { file } => {
-            println!("Building: {}", file);
-            println!("(Not yet implemented)");
+        Commands::Build { file, disasm } => {
+            commands::build::run(&file, disasm)?;
         }
         Commands::Repl => {
             commands::repl::run()?;
