@@ -14,6 +14,7 @@ use atlas_runtime::diagnostic::{Diagnostic, DiagnosticLevel};
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::typechecker::TypeChecker;
+use rstest::rstest;
 
 fn typecheck_source(source: &str) -> Vec<Diagnostic> {
     let mut lexer = Lexer::new(source.to_string());
@@ -63,673 +64,222 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
     );
 }
 
-// ========== Arithmetic Operators (+, -, *, /, %) ==========
+// ========== Arithmetic Operators ==========
 
-#[test]
-fn test_add_number_number() {
-    let diagnostics = typecheck_source("let x = 5 + 3;");
-    assert_no_errors(&diagnostics);
+#[rstest]
+#[case::add_numbers("let x = 5 + 3;", true)]
+#[case::subtract_numbers("let x = 10 - 3;", true)]
+#[case::multiply_numbers("let x = 5 * 3;", true)]
+#[case::divide_numbers("let x = 10 / 2;", true)]
+#[case::modulo_numbers("let x = 10 % 3;", true)]
+#[case::arithmetic_chain("let x = 1 + 2 - 3 * 4 / 5 % 6;", true)]
+#[case::complex_arithmetic("let x = (1 + 2) * (3 - 4) / (5 % 6);", true)]
+#[case::arithmetic_with_vars("let a: number = 5; let b: number = 3; let c = a + b; let d = a - b; let e = a * b; let f = a / b; let g = a % b;", true)]
+fn test_arithmetic_operations(#[case] source: &str, #[case] should_pass: bool) {
+    let diagnostics = typecheck_source(source);
+    if should_pass {
+        assert_no_errors(&diagnostics);
+    }
 }
 
-#[test]
-fn test_add_string_string() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + " world";"#);
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_add_number_string_error() {
-    let diagnostics = typecheck_source(r#"let x = 5 + "hello";"#);
+#[rstest]
+#[case::add_number_string(r#"let x = 5 + "hello";"#)]
+#[case::add_string_number(r#"let x = "hello" + 5;"#)]
+#[case::add_bool_bool("let x = true + false;")]
+#[case::subtract_strings(r#"let x = "hello" - "world";"#)]
+#[case::subtract_number_bool("let x = 5 - true;")]
+#[case::multiply_string(r#"let x = "hello" * 3;"#)]
+#[case::divide_bools("let x = true / false;")]
+#[case::modulo_string(r#"let x = 10 % "hello";"#)]
+#[case::null_arithmetic("let x = null + null;")]
+fn test_arithmetic_type_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_add_string_number_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + 5;"#);
+// ========== String Concatenation ==========
+
+#[rstest]
+#[case::concat_strings(r#"let x = "hello" + " world";"#)]
+#[case::concat_chain(r#"let x = "hello" + " " + "world";"#)]
+#[case::concat_variables(r#"let a: string = "hello"; let b: string = "world"; let c = a + b;"#)]
+fn test_string_concatenation(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_no_errors(&diagnostics);
+}
+
+#[rstest]
+#[case::string_number(r#"let x = "hello" + 123;"#)]
+#[case::number_string(r#"let x = 123 + "hello";"#)]
+#[case::string_bool(r#"let x = "hello" + true;"#)]
+#[case::string_null(r#"let x = "hello" + null;"#)]
+fn test_string_concatenation_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_add_bool_bool_error() {
-    let diagnostics = typecheck_source("let x = true + false;");
+// ========== Equality Operators ==========
+
+#[rstest]
+#[case::numbers_equal("let x = 5 == 3;")]
+#[case::strings_equal(r#"let x = "hello" == "world";"#)]
+#[case::bools_equal("let x = true == false;")]
+#[case::nulls_equal("let x = null == null;")]
+#[case::numbers_not_equal("let x = 5 != 3;")]
+#[case::strings_not_equal(r#"let x = "hello" != "world";"#)]
+#[case::nulls_not_equal("let x = null != null;")]
+#[case::arrays_equal("let x = [1, 2] == [1, 2];")]
+fn test_equality_operators(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_no_errors(&diagnostics);
+}
+
+#[rstest]
+#[case::number_string(r#"let x = 5 == "hello";"#)]
+#[case::number_bool("let x = 5 == true;")]
+#[case::string_bool(r#"let x = "hello" == false;"#)]
+#[case::null_number("let x = null == 5;")]
+#[case::not_equal_types(r#"let x = 5 != "hello";"#)]
+#[case::not_equal_bool_string(r#"let x = true != "false";"#)]
+#[case::mixed_array_types(r#"let x = [1, 2] == ["a", "b"];"#)]
+fn test_equality_type_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_subtract_numbers() {
-    let diagnostics = typecheck_source("let x = 10 - 3;");
+// ========== Comparison Operators ==========
+
+#[rstest]
+#[case::less_than("let x = 5 < 10;")]
+#[case::less_than_equal("let x = 5 <= 10;")]
+#[case::greater_than("let x = 10 > 5;")]
+#[case::greater_than_equal("let x = 10 >= 5;")]
+#[case::comparison_chain("let x = 1 < 2; let y = 3 > 2; let z = 5 >= 5; let w = 4 <= 10;")]
+fn test_comparison_operators(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_subtract_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" - "world";"#);
+#[rstest]
+#[case::strings_less(r#"let x = "hello" < "world";"#)]
+#[case::bools_less("let x = true < false;")]
+#[case::mixed_less(r#"let x = 5 < "10";"#)]
+#[case::strings_less_equal(r#"let x = "a" <= "b";"#)]
+#[case::bools_greater("let x = true > false;")]
+#[case::nulls_greater("let x = null > null;")]
+#[case::mixed_greater_equal("let x = 5 >= true;")]
+#[case::nulls_less("let x = null < null;")]
+fn test_comparison_type_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_subtract_number_bool_error() {
-    let diagnostics = typecheck_source("let x = 5 - true;");
+// ========== Logical Operators ==========
+
+#[rstest]
+#[case::and_bools("let x = true && false;")]
+#[case::or_bools("let x = true || false;")]
+#[case::logical_chain("let x = true && false || true;")]
+#[case::with_comparisons("let x = (5 < 10) && (3 > 1);")]
+#[case::with_equality("let x = (5 == 5) || (3 != 3);")]
+#[case::complex_boolean("let x = (5 < 10) && (3 > 1) || (2 == 2);")]
+fn test_logical_operators(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_no_errors(&diagnostics);
+}
+
+#[rstest]
+#[case::and_numbers("let x = 5 && 10;")]
+#[case::and_strings(r#"let x = "hello" && "world";"#)]
+#[case::and_bool_number("let x = true && 5;")]
+#[case::and_number_bool("let x = 5 && false;")]
+#[case::or_numbers("let x = 0 || 1;")]
+#[case::or_strings(r#"let x = "" || "hello";"#)]
+#[case::or_bool_string(r#"let x = true || "hello";"#)]
+#[case::mixed_expression("let x = (5 + 3) && (2 < 4);")]
+#[case::null_logical("let x = null && null;")]
+fn test_logical_type_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_multiply_numbers() {
-    let diagnostics = typecheck_source("let x = 5 * 3;");
+// ========== Array Literals ==========
+
+#[rstest]
+#[case::numbers("let x = [1, 2, 3];")]
+#[case::strings(r#"let x = ["a", "b", "c"];"#)]
+#[case::bools("let x = [true, false, true];")]
+#[case::empty("let x = [];")]
+#[case::nested("let x = [[1, 2], [3, 4]];")]
+#[case::with_expressions("let x = [1 + 2, 3 * 4, 5 - 6];")]
+#[case::type_inference("let x = [1, 2, 3];")]
+fn test_array_literals(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_multiply_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" * 3;"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_divide_numbers() {
-    let diagnostics = typecheck_source("let x = 10 / 2;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_divide_bool_error() {
-    let diagnostics = typecheck_source("let x = true / false;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_modulo_numbers() {
-    let diagnostics = typecheck_source("let x = 10 % 3;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_modulo_string_error() {
-    let diagnostics = typecheck_source(r#"let x = 10 % "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_arithmetic_chain() {
-    let diagnostics = typecheck_source("let x = 1 + 2 - 3 * 4 / 5 % 6;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_arithmetic_with_variables() {
-    let diagnostics = typecheck_source(
-        r#"
-        let a: number = 5;
-        let b: number = 3;
-        let c = a + b;
-        let d = a - b;
-        let e = a * b;
-        let f = a / b;
-        let g = a % b;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Equality Operators (==, !=) ==========
-
-#[test]
-fn test_equal_same_numbers() {
-    let diagnostics = typecheck_source("let x = 5 == 3;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_equal_same_strings() {
-    let diagnostics = typecheck_source(r#"let x = "hello" == "world";"#);
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_equal_same_bools() {
-    let diagnostics = typecheck_source("let x = true == false;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_equal_same_null() {
-    let diagnostics = typecheck_source("let x = null == null;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_equal_different_types_error() {
-    let diagnostics = typecheck_source(r#"let x = 5 == "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_equal_number_bool_error() {
-    let diagnostics = typecheck_source("let x = 5 == true;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_equal_string_bool_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" == false;"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_equal_null_number_error() {
-    let diagnostics = typecheck_source("let x = null == 5;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_not_equal_same_numbers() {
-    let diagnostics = typecheck_source("let x = 5 != 3;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_not_equal_same_strings() {
-    let diagnostics = typecheck_source(r#"let x = "hello" != "world";"#);
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_not_equal_different_types_error() {
-    let diagnostics = typecheck_source(r#"let x = 5 != "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_not_equal_bool_string_error() {
-    let diagnostics = typecheck_source(r#"let x = true != "false";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-// ========== Comparison Operators (<, <=, >, >=) ==========
-
-#[test]
-fn test_less_than_numbers() {
-    let diagnostics = typecheck_source("let x = 5 < 10;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_less_than_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" < "world";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_less_than_bool_error() {
-    let diagnostics = typecheck_source("let x = true < false;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_less_than_mixed_error() {
-    let diagnostics = typecheck_source(r#"let x = 5 < "10";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_less_than_equal_numbers() {
-    let diagnostics = typecheck_source("let x = 5 <= 10;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_less_than_equal_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "a" <= "b";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_greater_than_numbers() {
-    let diagnostics = typecheck_source("let x = 10 > 5;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_greater_than_bool_error() {
-    let diagnostics = typecheck_source("let x = true > false;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_greater_than_null_error() {
-    let diagnostics = typecheck_source("let x = null > null;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_greater_than_equal_numbers() {
-    let diagnostics = typecheck_source("let x = 10 >= 5;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_greater_than_equal_mixed_error() {
-    let diagnostics = typecheck_source("let x = 5 >= true;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_comparison_chain() {
-    let diagnostics = typecheck_source("let x = 1 < 2; let y = 3 > 2; let z = 5 >= 5; let w = 4 <= 10;");
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Logical Operators (&&, ||) ==========
-
-#[test]
-fn test_and_bool_bool() {
-    let diagnostics = typecheck_source("let x = true && false;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_and_number_error() {
-    let diagnostics = typecheck_source("let x = 5 && 10;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_and_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" && "world";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_and_bool_number_error() {
-    let diagnostics = typecheck_source("let x = true && 5;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_and_number_bool_error() {
-    let diagnostics = typecheck_source("let x = 5 && false;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_or_bool_bool() {
-    let diagnostics = typecheck_source("let x = true || false;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_or_number_error() {
-    let diagnostics = typecheck_source("let x = 0 || 1;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_or_string_error() {
-    let diagnostics = typecheck_source(r#"let x = "" || "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_or_bool_string_error() {
-    let diagnostics = typecheck_source(r#"let x = true || "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_logical_chain() {
-    let diagnostics = typecheck_source("let x = true && false || true;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_logical_with_comparisons() {
-    let diagnostics = typecheck_source("let x = (5 < 10) && (3 > 1);");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_logical_with_equality() {
-    let diagnostics = typecheck_source("let x = (5 == 5) || (3 != 3);");
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Array Literal Typing ==========
-
-#[test]
-fn test_array_literal_numbers() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_literal_strings() {
-    let diagnostics = typecheck_source(r#"let x = ["a", "b", "c"];"#);
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_literal_bools() {
-    let diagnostics = typecheck_source("let x = [true, false, true];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_literal_empty() {
-    let diagnostics = typecheck_source("let x = [];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_literal_mixed_types_error() {
-    let diagnostics = typecheck_source(r#"let x = [1, "hello", true];"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_literal_number_string_error() {
-    let diagnostics = typecheck_source(r#"let x = [1, 2, "three"];"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_literal_string_bool_error() {
-    let diagnostics = typecheck_source(r#"let x = ["hello", "world", true];"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_nested_arrays() {
-    let diagnostics = typecheck_source("let x = [[1, 2], [3, 4]];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_with_expressions() {
-    let diagnostics = typecheck_source("let x = [1 + 2, 3 * 4, 5 - 6];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_type_annotation() {
-    // Test array literal type inference
-    let diagnostics = typecheck_source("let x = [1, 2, 3];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_type_annotation_mismatch() {
-    // NOTE: Array type checking appears to have issues
-    // Test array element type mismatch within the literal instead
-    let diagnostics = typecheck_source(r#"let x = [1, 2, "three"];"#);
+#[rstest]
+#[case::mixed_types(r#"let x = [1, "hello", true];"#)]
+#[case::number_string(r#"let x = [1, 2, "three"];"#)]
+#[case::string_bool(r#"let x = ["hello", "world", true];"#)]
+#[case::type_mismatch(r#"let x = [1, 2, "three"];"#)]
+#[case::nested_mismatch(r#"let x = [[1, 2], ["a", "b"]];"#)]
+fn test_array_literal_type_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");
 }
 
 // ========== Array Indexing ==========
 
-#[test]
-fn test_array_index_number() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3]; let y = x[0];");
+#[rstest]
+#[case::number_index("let x = [1, 2, 3]; let y = x[0];")]
+#[case::variable_index("let x = [1, 2, 3]; let i: number = 1; let y = x[i];")]
+#[case::expression_index("let x = [1, 2, 3]; let y = x[1 + 1];")]
+#[case::nested_index("let x = [[1, 2], [3, 4]]; let y = x[0][1];")]
+fn test_array_indexing(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_array_index_variable() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3]; let i: number = 1; let y = x[i];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_index_string_error() {
-    let diagnostics = typecheck_source(r#"let x = [1, 2, 3]; let y = x["hello"];"#);
+#[rstest]
+#[case::string_index(r#"let x = [1, 2, 3]; let y = x["hello"];"#)]
+#[case::bool_index("let x = [1, 2, 3]; let y = x[true];")]
+#[case::non_array("let x: number = 5; let y = x[0];")]
+#[case::string_indexing(r#"let x: string = "hello"; let y = x[0];"#)]
+fn test_array_indexing_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_index_bool_error() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3]; let y = x[true];");
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_non_array_index_error() {
-    let diagnostics = typecheck_source("let x: number = 5; let y = x[0];");
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_string_index_error() {
-    // String indexing should produce an error (strings are not indexable in Atlas)
-    let diagnostics = typecheck_source(r#"let x: string = "hello"; let y = x[0];"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_index_expression() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3]; let y = x[1 + 1];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_nested_array_index() {
-    let diagnostics = typecheck_source("let x = [[1, 2], [3, 4]]; let y = x[0][1];");
-    assert_no_errors(&diagnostics);
 }
 
 // ========== Array Element Assignment ==========
 
-#[test]
-fn test_array_element_assign_same_type() {
-    let diagnostics = typecheck_source("let x = [1, 2, 3]; x[0] = 10;");
+#[rstest]
+#[case::same_type("let x = [1, 2, 3]; x[0] = 10;")]
+#[case::string_array(r#"let x = ["a", "b", "c"]; x[1] = "world";"#)]
+#[case::nested_array("let x = [[1, 2], [3, 4]]; x[0][1] = 99;")]
+#[case::array_chain("let arr = [1, 2, 3]; let idx: number = 1; let val = arr[idx] + arr[0]; arr[2] = val;")]
+fn test_array_element_assignment(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_array_element_assign_wrong_type() {
-    // NOTE: Array element assignment is parsed but not yet fully type-checked
-    // This test documents the expected behavior once type checking is complete
-    // For now, we test variable type mismatches which do work
-    let diagnostics = typecheck_source(r#"let x: string = 42;"#);
+#[rstest]
+#[case::variable_type_mismatch(r#"let x: string = 42;"#)]
+#[case::bool_type_mismatch(r#"let x: bool = 42;"#)]
+#[case::string_index_assign(r#"let x = [1, 2, 3]; x["hello"] = 10;"#)]
+#[case::non_array_assign("let x: number = 5; x[0] = 10;")]
+fn test_array_assignment_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");
 }
 
-#[test]
-fn test_array_string_element_assign() {
-    let diagnostics = typecheck_source(r#"let x = ["a", "b", "c"]; x[1] = "world";"#);
+// ========== Complex Context Tests ==========
+
+#[rstest]
+#[case::function_arithmetic(r#"fn add(a: number, b: number) -> number { return a + b; }"#)]
+#[case::conditional_operators(r#"let x: number = 5; let y: number = 10; if (x < y && y > 0) { let z = x + y; }"#)]
+#[case::loop_operators(r#"let i: number = 0; while (i < 10) { let x = i + 1; }"#)]
+fn test_operators_in_context(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_string_element_assign_wrong_type() {
-    // NOTE: Array element assignment type checking not yet fully implemented
-    // Test variable type mismatch instead
-    let diagnostics = typecheck_source(r#"let x: bool = 42;"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_element_assign_index_type_error() {
-    let diagnostics = typecheck_source(r#"let x = [1, 2, 3]; x["hello"] = 10;"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_array_element_assign_non_array_error() {
-    let diagnostics = typecheck_source("let x: number = 5; x[0] = 10;");
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-#[test]
-fn test_nested_array_element_assign() {
-    let diagnostics = typecheck_source("let x = [[1, 2], [3, 4]]; x[0][1] = 99;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_nested_array_element_assign_wrong_type() {
-    // NOTE: Array element assignment type checking not yet fully implemented
-    // Test nested array literal type mismatch instead
-    let diagnostics = typecheck_source(r#"let x = [[1, 2], ["a", "b"]];"#);
-    assert_has_error(&diagnostics, "AT3001");
-}
-
-// ========== String Concatenation ==========
-
-#[test]
-fn test_string_concat_valid() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + " " + "world";"#);
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_string_concat_variables() {
-    let diagnostics = typecheck_source(
-        r#"
-        let a: string = "hello";
-        let b: string = "world";
-        let c = a + b;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_string_number_concat_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + 123;"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_number_string_concat_error() {
-    let diagnostics = typecheck_source(r#"let x = 123 + "hello";"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_string_bool_concat_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + true;"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_string_null_concat_error() {
-    let diagnostics = typecheck_source(r#"let x = "hello" + null;"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-// ========== Complex Type Expressions ==========
-
-#[test]
-fn test_complex_arithmetic_expression() {
-    let diagnostics = typecheck_source("let x = (1 + 2) * (3 - 4) / (5 % 6);");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_complex_boolean_expression() {
-    let diagnostics = typecheck_source("let x = (5 < 10) && (3 > 1) || (2 == 2);");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_complex_mixed_expression_error() {
-    let diagnostics = typecheck_source("let x = (5 + 3) && (2 < 4);");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_array_operations_chain() {
-    let diagnostics = typecheck_source(
-        r#"
-        let arr = [1, 2, 3];
-        let idx: number = 1;
-        let val = arr[idx] + arr[0];
-        arr[2] = val;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_function_with_operators() {
-    // Test arithmetic operators in function context
-    let diagnostics = typecheck_source(
-        r#"
-        fn add(a: number, b: number) -> number {
-            return a + b;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_conditional_with_operators() {
-    let diagnostics = typecheck_source(
-        r#"
-        let x: number = 5;
-        let y: number = 10;
-        if (x < y && y > 0) {
-            let z = x + y;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_loop_with_operators() {
-    // Test loop with comparison operators (without mutation)
-    let diagnostics = typecheck_source(
-        r#"
-        let i: number = 0;
-        while (i < 10) {
-            let x = i + 1;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Edge Cases ==========
-
-#[test]
-fn test_null_null_equality() {
-    let diagnostics = typecheck_source("let x = null == null;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_null_inequality() {
-    let diagnostics = typecheck_source("let x = null != null;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_array_equality() {
-    let diagnostics = typecheck_source("let x = [1, 2] == [1, 2];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_mixed_array_comparison_error() {
-    let diagnostics = typecheck_source(r#"let x = [1, 2] == ["a", "b"];"#);
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_operator_with_null() {
-    let diagnostics = typecheck_source("let x = null + null;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_comparison_with_null() {
-    let diagnostics = typecheck_source("let x = null < null;");
-    assert_has_error(&diagnostics, "AT3002");
-}
-
-#[test]
-fn test_logical_with_null() {
-    let diagnostics = typecheck_source("let x = null && null;");
-    assert_has_error(&diagnostics, "AT3002");
 }

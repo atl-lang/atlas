@@ -1,0 +1,52 @@
+---
+source: crates/atlas-runtime/tests/parser_tests.rs
+expression: program
+---
+items:
+  - Statement:
+      If:
+        cond:
+          Literal:
+            - Bool: true
+            - start: 4
+              end: 8
+        then_block:
+          statements:
+            - If:
+                cond:
+                  Literal:
+                    - Bool: false
+                    - start: 16
+                      end: 21
+                then_block:
+                  statements:
+                    - VarDecl:
+                        mutable: false
+                        name:
+                          name: x
+                          span:
+                            start: 29
+                            end: 30
+                        type_ref: ~
+                        init:
+                          Literal:
+                            - Number: 1
+                            - start: 33
+                              end: 34
+                        span:
+                          start: 25
+                          end: 35
+                  span:
+                    start: 23
+                    end: 37
+                else_block: ~
+                span:
+                  start: 12
+                  end: 37
+          span:
+            start: 10
+            end: 39
+        else_block: ~
+        span:
+          start: 0
+          end: 39

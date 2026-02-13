@@ -6,6 +6,7 @@
 //! Atlas uses f64 (64-bit IEEE 754 floating point) for all numbers.
 
 use atlas_runtime::{Binder, Lexer, Parser, TypeChecker};
+use rstest::rstest;
 
 /// Helper to get all diagnostics from source code
 fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
@@ -20,7 +21,6 @@ fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
     let mut checker = TypeChecker::new(&table);
     let type_diags = checker.check(&program);
 
-    // Combine all diagnostics
     let mut all_diags = Vec::new();
     all_diags.extend(lex_diags);
     all_diags.extend(parse_diags);
@@ -31,454 +31,139 @@ fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
 }
 
 // =============================================================================
-// Integer Boundary Tests
+// Integer and Float Boundary Tests
 // =============================================================================
 
-#[test]
-fn test_large_integer_literal() {
-    // Large integers should parse and typecheck correctly
-    let source = r#"
-        let x: number = 9007199254740991;
-    "#;
-
+#[rstest]
+#[case::large_integer("let x: number = 9007199254740991;")]
+#[case::negative_large_integer("let x: number = -9007199254740991;")]
+#[case::large_integer_arithmetic("let a: number = 9007199254740991;\nlet b: number = 1;\nlet c: number = a + b;")]
+#[case::float_literal("let x: number = 3.14159265358979323846;")]
+#[case::very_small_float("let x: number = 0.0000000001;")]
+#[case::negative_float("let x: number = -3.14159;")]
+#[case::zero_variants("let a: number = 0;\nlet b: number = 0.0;\nlet c: number = -0.0;")]
+fn test_numeric_boundaries(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Large integer should be valid: {:?}", diags);
-}
-
-#[test]
-fn test_negative_large_integer() {
-    let source = r#"
-        let x: number = -9007199254740991;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Negative large integer should be valid: {:?}", diags);
-}
-
-#[test]
-fn test_integer_arithmetic_boundaries() {
-    // Test arithmetic with large integers
-    let source = r#"
-        let a: number = 9007199254740991;
-        let b: number = 1;
-        let c: number = a + b;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Large integer arithmetic should typecheck: {:?}", diags);
-}
-
-// =============================================================================
-// Float Boundary Tests
-// =============================================================================
-
-#[test]
-fn test_float_literal() {
-    let source = r#"
-        let x: number = 3.14159265358979323846;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Float literal should be valid: {:?}", diags);
-}
-
-#[test]
-fn test_very_small_float() {
-    // Test small but non-zero float
-    let source = r#"
-        let x: number = 0.0000000001;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Small float should be valid: {:?}", diags);
+    assert!(diags.is_empty(), "Should be valid: {:?}", diags);
 }
 
 #[test]
 fn test_very_large_float() {
-    // Test large float (use large but parseable number)
-    // Note: Scientific notation may not be supported by lexer
-    let source = r#"
-        let x = 179769313486231570000000000000000000000.0;
-    "#;
-
+    let source = "let x = 179769313486231570000000000000000000000.0;";
     let _diags = get_all_diagnostics(source);
     // This might fail to parse depending on lexer implementation
-    // If it fails, that's okay - we're documenting the behavior
-}
-
-#[test]
-fn test_negative_float() {
-    let source = r#"
-        let x: number = -3.14159;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Negative float should be valid: {:?}", diags);
-}
-
-#[test]
-fn test_zero_variants() {
-    // Test different representations of zero
-    let source = r#"
-        let a: number = 0;
-        let b: number = 0.0;
-        let c: number = -0.0;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Zero variants should be valid: {:?}", diags);
 }
 
 // =============================================================================
-// Division Tests
+// Division and Modulo Tests
 // =============================================================================
 
-#[test]
-fn test_division_typechecks() {
-    // Division should typecheck correctly
-    let source = r#"
-        let a: number = 10;
-        let b: number = 2;
-        let c: number = a / b;
-    "#;
-
+#[rstest]
+#[case::division("let a: number = 10;\nlet b: number = 2;\nlet c: number = a / b;")]
+#[case::division_by_zero_literal("let x: number = 10 / 0;")]
+#[case::division_by_variable("let divisor: number = 0;\nlet result: number = 10 / divisor;")]
+#[case::division_underflow("let a = 1;\nlet b = 10000000;\nlet c = a / b;")]
+#[case::modulo_by_zero("let x: number = 10 % 0;")]
+#[case::modulo_with_floats("let x: number = 5.5 % 2.3;")]
+fn test_division_and_modulo(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Division should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_division_by_zero_literal_typechecks() {
-    // Division by literal zero typechecks (runtime behavior is separate)
-    let source = r#"
-        let x: number = 10 / 0;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    // Type checker cannot detect division by zero at compile time
-    // This is a runtime concern
-    assert!(diags.is_empty(), "Division by zero literal should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_division_by_variable() {
-    // Division by variable (could be zero at runtime)
-    let source = r#"
-        let divisor: number = 0;
-        let result: number = 10 / divisor;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Division by variable should typecheck: {:?}", diags);
-}
-
-// =============================================================================
-// Modulo Tests
-// =============================================================================
-
-#[test]
-fn test_modulo_by_zero_literal_typechecks() {
-    // Modulo by zero typechecks (runtime behavior is separate)
-    let source = r#"
-        let x: number = 10 % 0;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Modulo by zero should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_modulo_with_floats() {
-    let source = r#"
-        let x: number = 5.5 % 2.3;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Modulo with floats should typecheck: {:?}", diags);
+    // Type checker cannot detect division by zero - this is runtime behavior
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }
 
 // =============================================================================
 // Arithmetic Overflow/Underflow Tests
 // =============================================================================
 
-#[test]
-fn test_addition_with_large_numbers() {
-    // Addition that might overflow at runtime
-    let source = r#"
-        let a = 100000000000000000000000000000.0;
-        let b = 100000000000000000000000000000.0;
-        let c = a + b;
-    "#;
-
-    let _diags = get_all_diagnostics(source);
-    // Type checker cannot detect overflow - this is runtime behavior
-    // Result would be infinity at runtime
-}
-
-#[test]
-fn test_multiplication_overflow() {
-    let source = r#"
-        let a = 10000000000000000000.0;
-        let b = 10000000000000000000.0;
-        let c = a * b;
-    "#;
-
+#[rstest]
+#[case::addition_overflow("let a = 100000000000000000000000000000.0;\nlet b = 100000000000000000000000000000.0;\nlet c = a + b;")]
+#[case::multiplication_overflow("let a = 10000000000000000000.0;\nlet b = 10000000000000000000.0;\nlet c = a * b;")]
+fn test_arithmetic_overflow(#[case] source: &str) {
     let _diags = get_all_diagnostics(source);
     // Typechecks fine, runtime would produce infinity
 }
 
 #[test]
 fn test_subtraction_to_negative() {
-    let source = r#"
-        let a: number = 5;
-        let b: number = 10;
-        let c: number = a - b;
-    "#;
-
+    let source = "let a: number = 5;\nlet b: number = 10;\nlet c: number = a - b;";
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Subtraction to negative should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_division_underflow() {
-    // Division that produces very small number
-    // Note: Atlas lexer may not support scientific notation
-    let source = r#"
-        let a = 1;
-        let b = 10000000;
-        let c = a / b;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Division underflow should typecheck: {:?}", diags);
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }
 
 // =============================================================================
 // Comparison Tests with Edge Values
 // =============================================================================
 
-#[test]
-fn test_comparison_with_zero() {
-    let source = r#"
-        let a: number = 0;
-        let b: bool = a > 0;
-        let c: bool = a < 0;
-        let d: bool = a == 0;
-    "#;
-
+#[rstest]
+#[case::zero_comparisons("let a: number = 0;\nlet b: bool = a > 0;\nlet c: bool = a < 0;\nlet d: bool = a == 0;")]
+#[case::negative_comparison("let a: number = -5;\nlet b: number = 10;\nlet c: bool = a < b;")]
+#[case::float_equality("let a: number = 0.1 + 0.2;\nlet b: number = 0.3;\nlet c: bool = a == b;")]
+fn test_comparisons(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Zero comparisons should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_comparison_with_negative() {
-    let source = r#"
-        let a: number = -5;
-        let b: number = 10;
-        let c: bool = a < b;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Negative comparisons should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_equality_with_floats() {
-    // Floating point equality (behavior is well-defined but may surprise users)
-    let source = r#"
-        let a: number = 0.1 + 0.2;
-        let b: number = 0.3;
-        let c: bool = a == b;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Float equality should typecheck: {:?}", diags);
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }
 
 // =============================================================================
 // Mixed Arithmetic Tests
 // =============================================================================
 
-#[test]
-fn test_complex_arithmetic_expression() {
-    let source = r#"
-        let x: number = (10 + 5) * 2 - 8 / 4;
-    "#;
-
+#[rstest]
+#[case::complex_expression("let x: number = (10 + 5) * 2 - 8 / 4;")]
+#[case::nested_arithmetic("let a: number = 10;\nlet b: number = 5;\nlet c: number = 2;\nlet result: number = (a + b) * c - (a / b);")]
+#[case::negative_arithmetic("let a: number = -10;\nlet b: number = -5;\nlet c: number = a + b;\nlet d: number = a - b;\nlet e: number = a * b;\nlet f: number = a / b;")]
+fn test_mixed_arithmetic(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Complex arithmetic should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_nested_arithmetic() {
-    let source = r#"
-        let a: number = 10;
-        let b: number = 5;
-        let c: number = 2;
-        let result: number = (a + b) * c - (a / b);
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Nested arithmetic should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_arithmetic_with_negative_numbers() {
-    let source = r#"
-        let a: number = -10;
-        let b: number = -5;
-        let c: number = a + b;
-        let d: number = a - b;
-        let e: number = a * b;
-        let f: number = a / b;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Arithmetic with negatives should typecheck: {:?}", diags);
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }
 
 // =============================================================================
 // Unary Minus Tests
 // =============================================================================
 
-#[test]
-fn test_unary_minus_on_literal() {
-    let source = r#"
-        let x: number = -42;
-    "#;
-
+#[rstest]
+#[case::literal("let x: number = -42;")]
+#[case::variable("let a: number = 42;\nlet b: number = -a;")]
+#[case::double_negation("let a: number = 42;\nlet b: number = -(-a);")]
+#[case::negative_zero("let x: number = -0;\nlet y: number = -0.0;")]
+fn test_unary_minus(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Unary minus on literal should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_unary_minus_on_variable() {
-    let source = r#"
-        let a: number = 42;
-        let b: number = -a;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Unary minus on variable should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_double_negation() {
-    let source = r#"
-        let a: number = 42;
-        let b: number = -(-a);
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Double negation should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_unary_minus_on_zero() {
-    let source = r#"
-        let x: number = -0;
-        let y: number = -0.0;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Unary minus on zero should typecheck: {:?}", diags);
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }
 
 // =============================================================================
 // Error Cases
 // =============================================================================
 
-#[test]
-fn test_arithmetic_on_non_numbers() {
-    let source = r#"
-        let x: number = "hello" + 5;
-    "#;
-
+#[rstest]
+#[case::string_plus_number("let x: number = \"hello\" + 5;")]
+#[case::string_division("let x: number = \"10\" / \"2\";")]
+#[case::bool_modulo("let x: number = true % false;")]
+#[case::string_comparison("let x: bool = \"hello\" < 5;")]
+fn test_type_errors(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
-    assert!(!diags.is_empty(), "String + number should produce error");
+    assert!(!diags.is_empty(), "Should produce error");
+}
 
+#[test]
+fn test_arithmetic_on_non_numbers_has_error_code() {
+    let source = "let x: number = \"hello\" + 5;";
+    let diags = get_all_diagnostics(source);
     let error = diags.iter().find(|d| d.code.starts_with("AT"));
     assert!(error.is_some(), "Should have AT error code");
-}
-
-#[test]
-fn test_division_of_non_numbers() {
-    let source = r#"
-        let x: number = "10" / "2";
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(!diags.is_empty(), "String division should produce error");
-}
-
-#[test]
-fn test_modulo_of_non_numbers() {
-    let source = r#"
-        let x: number = true % false;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(!diags.is_empty(), "Bool modulo should produce error");
-}
-
-#[test]
-fn test_comparison_of_wrong_types() {
-    let source = r#"
-        let x: bool = "hello" < 5;
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(!diags.is_empty(), "String < number should produce error");
 }
 
 // =============================================================================
 // Array Index Edge Cases
 // =============================================================================
 
-#[test]
-fn test_array_index_zero() {
-    let source = r#"
-        let arr = [1, 2, 3];
-        let x = arr[0];
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Array index 0 should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_array_index_large_number() {
-    // Large index typechecks (runtime bounds checking is separate)
-    let source = r#"
-        let arr = [1, 2, 3];
-        let x = arr[999999];
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Large array index should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_array_index_negative() {
-    // Negative index typechecks (runtime error)
-    let source = r#"
-        let arr = [1, 2, 3];
-        let x = arr[-1];
-    "#;
-
-    let diags = get_all_diagnostics(source);
-    assert!(diags.is_empty(), "Negative array index should typecheck: {:?}", diags);
-}
-
-#[test]
-fn test_array_index_float_typechecks() {
-    // Float index typechecks but would be runtime error (non-integer)
-    let source = r#"
-        let arr = [1, 2, 3];
-        let x = arr[1.5];
-    "#;
-
+#[rstest]
+#[case::zero_index("let arr = [1, 2, 3];\nlet x = arr[0];")]
+#[case::large_index("let arr = [1, 2, 3];\nlet x = arr[999999];")]
+#[case::negative_index("let arr = [1, 2, 3];\nlet x = arr[-1];")]
+#[case::float_index("let arr = [1, 2, 3];\nlet x = arr[1.5];")]
+fn test_array_index_edge_cases(#[case] source: &str) {
     let diags = get_all_diagnostics(source);
     // Type system allows number (f64) for array index
-    // Runtime would check for integer
-    assert!(diags.is_empty(), "Float array index should typecheck: {:?}", diags);
+    // Runtime would handle bounds/integer checking
+    assert!(diags.is_empty(), "Should typecheck: {:?}", diags);
 }

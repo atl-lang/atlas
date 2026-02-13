@@ -13,6 +13,7 @@ use atlas_runtime::diagnostic::{Diagnostic, DiagnosticLevel};
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::typechecker::TypeChecker;
+use rstest::rstest;
 
 fn typecheck_source(source: &str) -> Vec<Diagnostic> {
     let mut lexer = Lexer::new(source.to_string());
@@ -26,7 +27,6 @@ fn typecheck_source(source: &str) -> Vec<Diagnostic> {
     let mut checker = TypeChecker::new(&table);
     let type_diags = checker.check(&program);
 
-    // Combine all diagnostics
     let mut all_diags = Vec::new();
     all_diags.extend(lex_diags);
     all_diags.extend(parse_diags);
@@ -62,433 +62,132 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
     );
 }
 
-// ========== Explicit Null Type Variables ==========
+// ========== Valid Null Usage ==========
 
-#[test]
-fn test_null_literal_inference() {
-    // NOTE: 'null' as an explicit type annotation (let x: null = null) is not
-    // currently supported by the parser (reserved keyword restriction).
-    // However, null literal inference works fine.
-    let diagnostics = typecheck_source("let x = null;");
+#[rstest]
+#[case::literal_inference("let x = null;")]
+#[case::variable_inference("let x = null;\nlet y = x;")]
+#[case::equality_with_null("let x = null == null;")]
+#[case::inequality_with_null("let x = null != null;")]
+#[case::null_array_literal("let x = [null, null, null];")]
+#[case::single_null_array("let x = [null];")]
+#[case::nested_null_expression("let x = (null == null) && true;")]
+#[case::null_variable_comparison("let x = null;\nlet y = null;\nlet z = x == y;")]
+#[case::null_value_usage("let x = null;\nlet y = x == null;")]
+#[case::null_comparison_chain("let a = null;\nlet b = null;\nlet result = (a == b) && (b == null);")]
+fn test_valid_null_usage(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_null_variable_inference() {
-    let diagnostics = typecheck_source(
-        r#"
-        let x = null;
-        let y = x;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
+// ========== Null Assignment Errors ==========
+
+#[rstest]
+#[case::to_number("let x: number = null;")]
+#[case::to_string(r#"let x: string = null;"#)]
+#[case::to_bool("let x: bool = null;")]
+#[case::in_number_array("let x = [1, 2, null];")]
+#[case::in_string_array(r#"let x = ["a", "b", null];"#)]
+fn test_null_assignment_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3001");
 }
 
-// ========== Null Cannot Be Assigned to Other Types ==========
+// ========== Null Function Parameter Errors ==========
 
-#[test]
-fn test_null_to_number_error() {
-    let diagnostics = typecheck_source("let x: number = null;");
-    assert_has_error(&diagnostics, "AT3001"); // Type mismatch
+#[rstest]
+#[case::number_param("fn acceptsNumber(x: number) -> number { return x; }\nlet result = acceptsNumber(null);")]
+#[case::string_param("fn acceptsString(x: string) -> string { return x; }\nlet result = acceptsString(null);")]
+#[case::bool_param("fn acceptsBool(x: bool) -> bool { return x; }\nlet result = acceptsBool(null);")]
+fn test_null_function_parameter_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3001");
 }
 
-#[test]
-fn test_null_to_string_error() {
-    let diagnostics = typecheck_source(r#"let x: string = null;"#);
-    assert_has_error(&diagnostics, "AT3001"); // Type mismatch
+// ========== Null Function Return Errors ==========
+
+#[rstest]
+#[case::number_return("fn returnsNumber() -> number { return null; }")]
+#[case::string_return("fn returnsString() -> string { return null; }")]
+#[case::bool_return("fn returnsBool() -> bool { return null; }")]
+fn test_null_function_return_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3001");
 }
 
-#[test]
-fn test_null_to_bool_error() {
-    let diagnostics = typecheck_source("let x: bool = null;");
-    assert_has_error(&diagnostics, "AT3001"); // Type mismatch
+// ========== Null Comparison Errors ==========
+
+#[rstest]
+#[case::with_number("let x = null == 42;")]
+#[case::with_string(r#"let x = null == "hello";"#)]
+#[case::with_bool("let x = null == true;")]
+#[case::number_with_null("let x = 42 == null;")]
+fn test_null_comparison_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_null_to_void_error() {
-    // NOTE: 'void' is not a valid type for variables, only for function returns
-    // This test documents expected behavior
-    let _diagnostics = typecheck_source("fn test() -> void { }");
+// ========== Null Arithmetic Errors ==========
+
+#[rstest]
+#[case::addition("let x = null + null;")]
+#[case::null_plus_number("let x = null + 42;")]
+#[case::number_plus_null("let x = 42 + null;")]
+#[case::subtraction("let x = null - null;")]
+#[case::multiplication("let x = null * null;")]
+#[case::division("let x = null / null;")]
+fn test_null_arithmetic_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_null_cannot_be_in_number_array() {
-    // Arrays with explicit type cannot contain null
-    let diagnostics = typecheck_source("let x = [1, 2, null];");
-    assert_has_error(&diagnostics, "AT3001"); // Array elements must have same type
-}
+// ========== Null Logical Operation Errors ==========
 
-#[test]
-fn test_null_cannot_be_in_string_array() {
-    // Arrays with explicit type cannot contain null
-    let diagnostics = typecheck_source(r#"let x = ["a", "b", null];"#);
-    assert_has_error(&diagnostics, "AT3001"); // Array elements must have same type
-}
-
-// ========== Non-Null Values Cannot Be Assigned to Null Type ==========
-
-// NOTE: These tests cannot be written without explicit 'null' type annotations,
-// which are not currently supported (reserved keyword restriction in parser).
-// The nullability rule "null is only assignable to null" is still enforced
-// through inference - see null-to-number/string/bool tests above.
-
-// ========== Null in Variable Assignment ==========
-
-#[test]
-fn test_assign_null_to_number_variable_error() {
-    let _diagnostics = typecheck_source(
-        r#"
-        let x: number = 42;
-        x = null;
-    "#,
-    );
-    // Will have AT3003 (immutability) as the first error, but the type
-    // mismatch would also be caught if the variable were mutable
-}
-
-// ========== Null in Function Parameters ==========
-
-#[test]
-fn test_call_number_param_with_null_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn acceptsNumber(x: number) -> number {
-            return x;
-        }
-        let result = acceptsNumber(null);
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Wrong argument type
-}
-
-#[test]
-fn test_call_string_param_with_null_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn acceptsString(x: string) -> string {
-            return x;
-        }
-        let result = acceptsString(null);
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Wrong argument type
-}
-
-#[test]
-fn test_call_bool_param_with_null_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn acceptsBool(x: bool) -> bool {
-            return x;
-        }
-        let result = acceptsBool(null);
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Wrong argument type
-}
-
-// ========== Null in Function Returns ==========
-
-#[test]
-fn test_return_null_from_number_function_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn returnsNumber() -> number {
-            return null;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Return type mismatch
-}
-
-#[test]
-fn test_return_null_from_string_function_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn returnsString() -> string {
-            return null;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Return type mismatch
-}
-
-#[test]
-fn test_return_null_from_bool_function_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        fn returnsBool() -> bool {
-            return null;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Return type mismatch
-}
-
-// ========== Null in Comparisons ==========
-
-#[test]
-fn test_null_equality_with_null() {
-    let diagnostics = typecheck_source("let x = null == null;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_inequality_with_null() {
-    let diagnostics = typecheck_source("let x = null != null;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_equality_with_number_error() {
-    let diagnostics = typecheck_source("let x = null == 42;");
-    assert_has_error(&diagnostics, "AT3002"); // Equality requires same types
-}
-
-#[test]
-fn test_null_equality_with_string_error() {
-    let diagnostics = typecheck_source(r#"let x = null == "hello";"#);
-    assert_has_error(&diagnostics, "AT3002"); // Equality requires same types
-}
-
-#[test]
-fn test_null_equality_with_bool_error() {
-    let diagnostics = typecheck_source("let x = null == true;");
-    assert_has_error(&diagnostics, "AT3002"); // Equality requires same types
-}
-
-#[test]
-fn test_number_equality_with_null_error() {
-    let diagnostics = typecheck_source("let x = 42 == null;");
-    assert_has_error(&diagnostics, "AT3002"); // Equality requires same types
-}
-
-// ========== Null in Arithmetic Operations ==========
-
-#[test]
-fn test_null_in_addition_error() {
-    let diagnostics = typecheck_source("let x = null + null;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-#[test]
-fn test_null_plus_number_error() {
-    let diagnostics = typecheck_source("let x = null + 42;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-#[test]
-fn test_number_plus_null_error() {
-    let diagnostics = typecheck_source("let x = 42 + null;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-#[test]
-fn test_null_in_subtraction_error() {
-    let diagnostics = typecheck_source("let x = null - null;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-#[test]
-fn test_null_in_multiplication_error() {
-    let diagnostics = typecheck_source("let x = null * null;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-#[test]
-fn test_null_in_division_error() {
-    let diagnostics = typecheck_source("let x = null / null;");
-    assert_has_error(&diagnostics, "AT3002"); // Invalid operation
-}
-
-// ========== Null in Logical Operations ==========
-
-#[test]
-fn test_null_in_and_error() {
-    let diagnostics = typecheck_source("let x = null && null;");
-    assert_has_error(&diagnostics, "AT3002"); // Logical operators require bool
-}
-
-#[test]
-fn test_null_in_or_error() {
-    let diagnostics = typecheck_source("let x = null || null;");
-    assert_has_error(&diagnostics, "AT3002"); // Logical operators require bool
-}
-
-#[test]
-fn test_null_and_bool_error() {
-    let diagnostics = typecheck_source("let x = null && true;");
-    assert_has_error(&diagnostics, "AT3002"); // Logical operators require bool
-}
-
-#[test]
-fn test_bool_and_null_error() {
-    let diagnostics = typecheck_source("let x = true && null;");
-    assert_has_error(&diagnostics, "AT3002"); // Logical operators require bool
+#[rstest]
+#[case::and_operator("let x = null && null;")]
+#[case::or_operator("let x = null || null;")]
+#[case::null_and_bool("let x = null && true;")]
+#[case::bool_and_null("let x = true && null;")]
+fn test_null_logical_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3002");
 }
 
 // ========== Null in Conditionals ==========
 
-#[test]
-fn test_null_in_if_condition_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        if (null) {
-            let x: number = 1;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Condition must be bool
-}
-
-#[test]
-fn test_null_in_while_condition_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        while (null) {
-            break;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Condition must be bool
-}
-
-#[test]
-fn test_null_in_for_condition_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        for (let i: number = 0; null; i = i + 1) {
-            break;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Condition must be bool
-}
-
-// ========== Null in Arrays ==========
-
-#[test]
-fn test_null_array_literal() {
-    let diagnostics = typecheck_source("let x = [null, null, null];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_mixed_null_number_array_error() {
-    let diagnostics = typecheck_source("let x = [null, 42];");
-    assert_has_error(&diagnostics, "AT3001"); // Array elements must have same type
-}
-
-#[test]
-fn test_mixed_number_null_array_error() {
-    let diagnostics = typecheck_source("let x = [42, null];");
-    assert_has_error(&diagnostics, "AT3001"); // Array elements must have same type
-}
-
-#[test]
-fn test_null_array_type_annotation() {
-    let diagnostics = typecheck_source("let x = [null];");
-    assert_no_errors(&diagnostics);
+#[rstest]
+#[case::if_condition("if (null) { let x: number = 1; }")]
+#[case::while_condition("while (null) { break; }")]
+#[case::for_condition("for (let i: number = 0; null; i = i + 1) { break; }")]
+fn test_null_in_conditionals(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3001");
 }
 
 // ========== Null with Unary Operators ==========
 
-#[test]
-fn test_negate_null_error() {
-    let diagnostics = typecheck_source("let x = -null;");
-    assert_has_error(&diagnostics, "AT3002"); // Unary - requires number
+#[rstest]
+#[case::negate("let x = -null;")]
+#[case::not("let x = !null;")]
+fn test_null_unary_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3002");
 }
 
-#[test]
-fn test_not_null_error() {
-    let diagnostics = typecheck_source("let x = !null;");
-    assert_has_error(&diagnostics, "AT3002"); // Unary ! requires bool
-}
+// ========== Null in Arrays ==========
 
-// ========== Complex Null Scenarios ==========
-
-#[test]
-fn test_null_in_nested_expression() {
-    let diagnostics = typecheck_source("let x = (null == null) && true;");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_variable_in_expression() {
-    let diagnostics = typecheck_source(
-        r#"
-        let x = null;
-        let y = null;
-        let z = x == y;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_in_array_indexing_error() {
-    let diagnostics = typecheck_source(
-        r#"
-        let arr = [1, 2, 3];
-        let x = arr[null];
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT3001"); // Index must be number
-}
-
-// ========== Null Type Inference ==========
-
-#[test]
-fn test_infer_null_from_literal() {
-    let diagnostics = typecheck_source(
-        r#"
-        let x = null;
-        let y = x;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_value_usage() {
-    // null can be used in comparisons with null
-    let diagnostics = typecheck_source(
-        r#"
-        let x = null;
-        let y = x == null;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
+#[rstest]
+#[case::null_then_number("let x = [null, 42];")]
+#[case::number_then_null("let x = [42, null];")]
+fn test_mixed_null_array_errors(#[case] source: &str) {
+    let diagnostics = typecheck_source(source);
+    assert_has_error(&diagnostics, "AT3001");
 }
 
 // ========== Edge Cases ==========
 
 #[test]
-fn test_empty_null_array() {
-    // An array of nulls
-    let diagnostics = typecheck_source("let x = [null];");
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_comparison_chain() {
-    let diagnostics = typecheck_source(
-        r#"
-        let a = null;
-        let b = null;
-        let result = (a == b) && (b == null);
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_null_literal_is_valid() {
-    // null is a valid literal value
-    let _diagnostics = typecheck_source(
-        r#"
-        let x = null;
-    "#,
-    );
-    // This test just verifies null literal doesn't crash the parser/type checker
+fn test_null_in_array_indexing_error() {
+    let diagnostics = typecheck_source("let arr = [1, 2, 3];\nlet x = arr[null];");
+    assert_has_error(&diagnostics, "AT3001");
 }

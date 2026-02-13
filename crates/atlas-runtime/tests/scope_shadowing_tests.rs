@@ -1,4 +1,8 @@
-//! Comprehensive tests for scope resolution and shadowing
+//! Modern scope resolution and shadowing tests using rstest
+//!
+//! Converted from individual test functions to parameterized tests
+//! Original: 782 lines, 47 tests
+//! Modern: ~250 lines with rstest parameterization
 //!
 //! Tests cover:
 //! - Block scoping (lexical scope)
@@ -8,11 +12,13 @@
 //! - For loop initializer scoping
 //! - Prelude function shadowing restrictions
 
+mod common;
 use atlas_runtime::binder::Binder;
 use atlas_runtime::diagnostic::{Diagnostic, DiagnosticLevel};
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::typechecker::TypeChecker;
+use rstest::rstest;
 
 fn bind_source(source: &str) -> Vec<Diagnostic> {
     let mut lexer = Lexer::new(source.to_string());
@@ -23,7 +29,6 @@ fn bind_source(source: &str) -> Vec<Diagnostic> {
     let mut binder = Binder::new();
     let (_table, bind_diags) = binder.bind(&program);
 
-    // Combine all diagnostics
     let mut all_diags = Vec::new();
     all_diags.extend(lex_diags);
     all_diags.extend(parse_diags);
@@ -43,7 +48,6 @@ fn typecheck_source(source: &str) -> Vec<Diagnostic> {
     let mut checker = TypeChecker::new(&table);
     let type_diags = checker.check(&program);
 
-    // Combine all diagnostics
     let mut all_diags = Vec::new();
     all_diags.extend(lex_diags);
     all_diags.extend(parse_diags);
@@ -65,11 +69,6 @@ fn assert_no_errors(diagnostics: &[Diagnostic]) {
 }
 
 fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
-    assert!(
-        !diagnostics.is_empty(),
-        "Expected at least one diagnostic with code {}",
-        code
-    );
     let found = diagnostics.iter().any(|d| d.code == code);
     assert!(
         found,
@@ -79,704 +78,145 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
     );
 }
 
-// ========== Block Scoping ==========
+// ============================================================================
+// Block Scoping - Valid Cases
+// ============================================================================
 
-#[test]
-fn test_nested_block_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-            let y: number = 2;
-            let z = x + y;
-        }
-    "#,
-    );
+#[rstest]
+#[case::nested_block(r#"let x: number = 1; { let y: number = 2; let z = x + y; }"#)]
+#[case::multiple_levels(r#"let a: number = 1; { let b: number = 2; { let c: number = 3; let sum = a + b + c; } }"#)]
+#[case::if_block(r#"let x: number = 1; if (x > 0) { let y: number = 2; }"#)]
+#[case::while_block(r#"let i: number = 0; while (i < 10) { let temp: number = i; }"#)]
+#[case::for_loop_init(r#"for (let i: number = 0; i < 10; i = i + 1) { let x = i; }"#)]
+#[case::for_loop_body(r#"for (let i: number = 0; i < 10; i = i + 1) { let sum: number = 0; }"#)]
+#[case::empty_block(r#"let x: number = 1; { } let y = x;"#)]
+#[case::nested_empty(r#"{ { { } } }"#)]
+fn test_valid_block_scoping(#[case] source: &str) {
+    let diagnostics = bind_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_variable_out_of_scope() {
-    let diagnostics = bind_source(
-        r#"
-        {
-            let x: number = 1;
-        }
-        let y = x;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol
+// ============================================================================
+// Block Scoping - Out of Scope Errors
+// ============================================================================
+
+#[rstest]
+#[case::block_var_out_of_scope(r#"{ let x: number = 1; } let y = x;"#, "AT2002")]
+#[case::if_block_out_of_scope(r#"let x: number = 1; if (x > 0) { let y: number = 2; } let z = y;"#, "AT2002")]
+#[case::while_block_out_of_scope(r#"let i: number = 0; while (i < 10) { let temp: number = i; } let x = temp;"#, "AT2002")]
+#[case::for_init_out_of_scope(r#"for (let i: number = 0; i < 10; i = i + 1) { let x = i; } let y = i;"#, "AT2002")]
+#[case::for_body_out_of_scope(r#"for (let i: number = 0; i < 10; i = i + 1) { let sum: number = 0; } let x = sum;"#, "AT2002")]
+fn test_out_of_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
+    let diagnostics = bind_source(source);
+    assert_has_error(&diagnostics, expected_code);
 }
 
-#[test]
-fn test_nested_blocks_multiple_levels() {
-    let diagnostics = bind_source(
-        r#"
-        let a: number = 1;
-        {
-            let b: number = 2;
-            {
-                let c: number = 3;
-                let sum = a + b + c;
-            }
-        }
-    "#,
-    );
+// ============================================================================
+// Variable Shadowing - Allowed in Nested Scopes
+// ============================================================================
+
+#[rstest]
+#[case::basic_shadowing(r#"let x: number = 1; { let x: string = "hello"; }"#)]
+#[case::multiple_levels(r#"let x: number = 1; { let x: string = "level 1"; { let x: bool = true; } }"#)]
+#[case::param_shadowing(r#"fn foo(x: number) -> number { { let x: string = "shadow"; } return x; }"#)]
+#[case::if_block_shadow(r#"let x: number = 1; if (true) { let x: string = "shadow"; }"#)]
+#[case::else_block_shadow(r#"let x: number = 1; if (false) { let y: number = 2; } else { let x: string = "shadow"; }"#)]
+#[case::while_shadow(r#"let i: number = 0; while (i < 10) { let i: string = "shadow"; }"#)]
+#[case::for_shadow(r#"let i: number = 999; for (let i: number = 0; i < 10; i = i + 1) { let x = i; }"#)]
+#[case::shadow_restored(r#"let x: number = 1; { let x: string = "shadow"; } let y = x;"#)]
+#[case::nested_fn_shadow(r#"fn outer(x: number) -> number { { let x: string = "shadow"; { let x: bool = true; } } return x; }"#)]
+#[case::if_else_separate(r#"let x: number = 1; if (true) { let y: number = 2; } else { let y: string = "different"; }"#)]
+#[case::multiple_blocks(r#"{ let x: number = 1; } { let x: string = "different block"; }"#)]
+#[case::loop_nested_blocks(r#"let i: number = 0; while (i < 10) { { let temp: number = i; } { let temp: string = "different"; } }"#)]
+#[case::deeply_nested(r#"let a: number = 1; { let b: number = 2; { let c: number = 3; { let d: number = 4; { let e: number = 5; let sum = a + b + c + d + e; } } } }"#)]
+#[case::different_types(r#"let x: number = 1; { let x: string = "string"; { let x: bool = true; { let x = [1, 2, 3]; } } }"#)]
+fn test_valid_shadowing(#[case] source: &str) {
+    let diagnostics = bind_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_if_block_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        if (x > 0) {
-            let y: number = 2;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
+// ============================================================================
+// Redeclaration Errors - Same Scope
+// ============================================================================
 
-#[test]
-fn test_if_block_variable_out_of_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        if (x > 0) {
-            let y: number = 2;
-        }
-        let z = y;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol
-}
-
-#[test]
-fn test_while_block_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let i: number = 0;
-        while (i < 10) {
-            let temp: number = i;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_while_block_variable_out_of_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let i: number = 0;
-        while (i < 10) {
-            let temp: number = i;
-        }
-        let x = temp;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol
-}
-
-// ========== For Loop Scoping ==========
-
-#[test]
-fn test_for_loop_initializer_scope() {
-    let diagnostics = bind_source(
-        r#"
-        for (let i: number = 0; i < 10; i = i + 1) {
-            let x = i;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_for_loop_initializer_out_of_scope() {
-    let diagnostics = bind_source(
-        r#"
-        for (let i: number = 0; i < 10; i = i + 1) {
-            let x = i;
-        }
-        let y = i;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol 'i'
-}
-
-#[test]
-fn test_for_loop_body_variable_scope() {
-    let diagnostics = bind_source(
-        r#"
-        for (let i: number = 0; i < 10; i = i + 1) {
-            let sum: number = 0;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_for_loop_body_variable_out_of_scope() {
-    let diagnostics = bind_source(
-        r#"
-        for (let i: number = 0; i < 10; i = i + 1) {
-            let sum: number = 0;
-        }
-        let x = sum;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol 'sum'
-}
-
-// ========== Variable Shadowing (Allowed) ==========
-
-#[test]
-fn test_variable_shadowing_in_nested_block() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-            let x: string = "hello";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_variable_shadowing_multiple_levels() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-            let x: string = "level 1";
-            {
-                let x: bool = true;
-            }
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_parameter_shadowing_in_nested_block() {
-    let diagnostics = bind_source(
-        r#"
-        fn foo(x: number) -> number {
-            {
-                let x: string = "shadow";
-            }
-            return x;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_in_if_block() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        if (true) {
-            let x: string = "shadow";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_in_else_block() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        if (false) {
-            let y: number = 2;
-        } else {
-            let x: string = "shadow";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_in_while_loop() {
-    let diagnostics = bind_source(
-        r#"
-        let i: number = 0;
-        while (i < 10) {
-            let i: string = "shadow";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_in_for_loop() {
-    let diagnostics = bind_source(
-        r#"
-        let i: number = 999;
-        for (let i: number = 0; i < 10; i = i + 1) {
-            let x = i;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_outer_variable_accessible_after_block() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-            let x: string = "shadow";
-        }
-        let y = x;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Redeclaration Errors (Same Scope) ==========
-
-#[test]
-fn test_variable_redeclaration_same_scope() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        let x: string = "redeclare";
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2003"); // Redeclaration error
-}
-
-#[test]
-fn test_variable_redeclaration_in_block() {
-    // Redeclaration in the same scope should error
-    let diagnostics = bind_source(
-        r#"
-        fn test() -> void {
-            let x: number = 1;
-            let x: string = "redeclare";
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2003"); // Redeclaration error
-}
-
-#[test]
-fn test_parameter_redeclaration() {
-    let diagnostics = bind_source(
-        r#"
-        fn foo(x: number, x: string) -> number {
-            return 0;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2003"); // Parameter redeclaration
-}
-
-#[test]
-fn test_parameter_can_be_shadowed_in_nested_block() {
-    // Parameters can be shadowed in nested blocks (this is shadowing, not redeclaration)
-    // Redeclaration would be in the same scope, but nested blocks create new scopes
-    let diagnostics = bind_source(
-        r#"
-        fn foo(x: number) -> number {
-            {
-                let x: string = "shadow";
-            }
-            return x;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_function_redeclaration() {
-    let diagnostics = bind_source(
-        r#"
-        fn foo() -> number {
-            return 1;
-        }
-        fn foo() -> string {
-            return "redeclare";
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2003"); // Function redeclaration
+#[rstest]
+#[case::same_scope(r#"let x: number = 1; let x: string = "redeclare";"#, "AT2003")]
+#[case::in_block(r#"fn test() -> void { let x: number = 1; let x: string = "redeclare"; }"#, "AT2003")]
+#[case::param_redecl(r#"fn foo(x: number, x: string) -> number { return 0; }"#, "AT2003")]
+#[case::function_redecl(r#"fn foo() -> number { return 1; } fn foo() -> string { return "redeclare"; }"#, "AT2003")]
+fn test_redeclaration_errors(#[case] source: &str, #[case] expected_code: &str) {
+    let diagnostics = bind_source(source);
+    assert_has_error(&diagnostics, expected_code);
 }
 
 #[test]
 fn test_multiple_variable_redeclarations() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        let x: string = "second";
-        let x: bool = true;
-    "#,
-    );
+    let diagnostics = bind_source(r#"let x: number = 1; let x: string = "second"; let x: bool = true;"#);
     // Should have multiple redeclaration errors
-    let redecl_errors: Vec<_> = diagnostics
-        .iter()
-        .filter(|d| d.code == "AT2003")
-        .collect();
+    let redecl_errors: Vec<_> = diagnostics.iter().filter(|d| d.code == "AT2003").collect();
     assert!(redecl_errors.len() >= 2);
 }
 
-// ========== Function Parameter Immutability ==========
+// ============================================================================
+// Function Parameter Cases
+// ============================================================================
 
-#[test]
-fn test_parameter_immutability_cannot_reassign() {
-    // NOTE: Parameter immutability checking requires full type checking implementation
-    // This test documents the expected behavior
-    // Parameters are immutable and cannot be reassigned
-    let diagnostics = typecheck_source(
-        r#"
-        fn foo(x: number) -> number {
-            x = 10;
-            return x;
-        }
-    "#,
-    );
-
-    // Check if we got the immutability error
-    // If not implemented yet, this test will fail and can be revisited
-    if !diagnostics.is_empty() {
-        println!("Got {} diagnostics:", diagnostics.len());
-        for diag in &diagnostics {
-            println!("  [{}] {}", diag.code, diag.message);
-        }
-    }
-
-    // For now, just verify the code compiles and runs without crashing
-    // Once AT3003 is implemented for parameters, uncomment this:
-    // assert_has_error(&diagnostics, "AT3003");
+#[rstest]
+#[case::param_shadow_allowed(r#"fn foo(x: number) -> number { { let x: string = "shadow"; } return x; }"#)]
+#[case::param_can_read(r#"fn double(x: number) -> number { let result = x * 2; return result; }"#)]
+#[case::param_in_expr(r#"fn calculate(x: number, y: number) -> number { return x + y * 2; }"#)]
+fn test_valid_parameter_usage(#[case] source: &str) {
+    let diagnostics = bind_source(source);
+    assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_parameter_immutability_multiple_params() {
-    // NOTE: Parameter immutability checking requires full type checking implementation
+#[rstest]
+#[case::immutable_assign(r#"fn foo(x: number) -> number { x = 10; return x; }"#)]
+#[case::multiple_params(r#"fn add(a: number, b: number) -> number { a = a + 1; return a + b; }"#)]
+fn test_parameter_immutability(#[case] source: &str) {
+    // NOTE: Parameter immutability checking requires full type checking
     // This test documents the expected behavior
-    let _diagnostics = typecheck_source(
-        r#"
-        fn add(a: number, b: number) -> number {
-            a = a + 1;
-            return a + b;
-        }
-    "#,
-    );
-
-    // For now, just verify the code compiles and runs without crashing
-    // Once AT3003 is implemented for parameters, uncomment this:
+    let _diagnostics = typecheck_source(source);
+    // Once AT3003 is implemented for parameters, add assertion:
     // assert_has_error(&_diagnostics, "AT3003");
 }
 
-#[test]
-fn test_parameter_can_be_read() {
-    let diagnostics = bind_source(
-        r#"
-        fn double(x: number) -> number {
-            let result = x * 2;
-            return result;
-        }
-    "#,
-    );
+// ============================================================================
+// Function Scope
+// ============================================================================
+
+#[rstest]
+#[case::access_params(r#"fn foo(x: number, y: string) -> number { let z = x; return z; }"#)]
+#[case::call_other_fn(r#"fn helper() -> number { return 42; } fn main() -> number { return helper(); }"#)]
+#[case::hoisting(r#"fn main() -> number { return helper(); } fn helper() -> number { return 42; }"#)]
+#[case::use_prelude(r#"fn test() -> number { print("hello"); return 42; }"#)]
+fn test_valid_function_scope(#[case] source: &str) {
+    let diagnostics = bind_source(source);
     assert_no_errors(&diagnostics);
 }
 
-#[test]
-fn test_parameter_used_in_expression() {
-    let diagnostics = bind_source(
-        r#"
-        fn calculate(x: number, y: number) -> number {
-            return x + y * 2;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
+#[rstest]
+#[case::undefined_var(r#"fn foo() -> number { return undefined_var; }"#, "AT2002")]
+#[case::forward_ref(r#"let x: number = a + b; let a: number = 1; let b: number = 2;"#, "AT2002")]
+#[case::self_ref(r#"let x: number = x + 1;"#, "AT2002")]
+#[case::decl_order(r#"let x = y; let y: number = 1;"#, "AT2002")]
+fn test_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
+    let diagnostics = bind_source(source);
+    assert_has_error(&diagnostics, expected_code);
 }
 
-// ========== Function Scope ==========
+// ============================================================================
+// Prelude Shadowing (Documented Behavior)
+// ============================================================================
 
-#[test]
-fn test_function_can_access_parameters() {
-    let diagnostics = bind_source(
-        r#"
-        fn foo(x: number, y: string) -> number {
-            let z = x;
-            return z;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_function_cannot_access_outer_local_variables() {
-    // NOTE: In Atlas v0.1, there are no closures - functions cannot access
-    // local variables from outer scopes. However, top-level variables are
-    // in global scope and may be accessible.
-    // For now, test that undefined variables produce errors
-    let diagnostics = bind_source(
-        r#"
-        fn foo() -> number {
-            return undefined_var;
-        }
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // Unknown symbol
-}
-
-#[test]
-fn test_function_can_call_other_functions() {
-    let diagnostics = bind_source(
-        r#"
-        fn helper() -> number {
-            return 42;
-        }
-        fn main() -> number {
-            return helper();
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_function_hoisting() {
-    let diagnostics = bind_source(
-        r#"
-        fn main() -> number {
-            return helper();
-        }
-        fn helper() -> number {
-            return 42;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Prelude Shadowing ==========
-
-#[test]
-fn test_cannot_shadow_print() {
-    let _diagnostics = bind_source(
-        r#"
-        fn test() -> void {
-            let print: number = 42;
-        }
-    "#,
-    );
+#[rstest]
+#[case::shadow_print(r#"fn test() -> void { let print: number = 42; }"#)]
+#[case::shadow_len(r#"fn test() -> void { let len: string = "shadowed"; }"#)]
+fn test_prelude_shadowing(#[case] source: &str) {
     // NOTE: Prelude shadowing detection (AT1012) may not be fully implemented yet
     // This test documents the expected behavior
     // For now, just verify it binds without crashing
-}
-
-#[test]
-fn test_cannot_shadow_len() {
-    let _diagnostics = bind_source(
-        r#"
-        fn test() -> void {
-            let len: string = "shadowed";
-        }
-    "#,
-    );
-    // NOTE: Prelude shadowing detection may not be implemented yet
-}
-
-#[test]
-fn test_can_use_prelude_functions() {
-    let diagnostics = bind_source(
-        r#"
-        fn test() -> number {
-            print("hello");
-            return 42;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-// ========== Complex Scoping Scenarios ==========
-
-#[test]
-fn test_nested_functions_with_shadowing() {
-    let diagnostics = bind_source(
-        r#"
-        fn outer(x: number) -> number {
-            {
-                let x: string = "shadow";
-                {
-                    let x: bool = true;
-                }
-            }
-            return x;
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_if_else_separate_scopes() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        if (true) {
-            let y: number = 2;
-        } else {
-            let y: string = "different";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_multiple_blocks_same_level() {
-    let diagnostics = bind_source(
-        r#"
-        {
-            let x: number = 1;
-        }
-        {
-            let x: string = "different block";
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_loop_with_nested_blocks() {
-    let diagnostics = bind_source(
-        r#"
-        let i: number = 0;
-        while (i < 10) {
-            {
-                let temp: number = i;
-            }
-            {
-                let temp: string = "different";
-            }
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_variable_declaration_order() {
-    let diagnostics = bind_source(
-        r#"
-        let x = y;
-        let y: number = 1;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // y not defined yet
-}
-
-#[test]
-fn test_forward_reference_in_expression() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = a + b;
-        let a: number = 1;
-        let b: number = 2;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // a and b not defined yet
-}
-
-#[test]
-fn test_self_reference_in_initializer() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = x + 1;
-    "#,
-    );
-    assert_has_error(&diagnostics, "AT2002"); // x not defined in its own initializer
-}
-
-// ========== Edge Cases ==========
-
-#[test]
-fn test_deeply_nested_scopes() {
-    let diagnostics = bind_source(
-        r#"
-        let a: number = 1;
-        {
-            let b: number = 2;
-            {
-                let c: number = 3;
-                {
-                    let d: number = 4;
-                    {
-                        let e: number = 5;
-                        let sum = a + b + c + d + e;
-                    }
-                }
-            }
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_shadowing_with_different_types() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-            let x: string = "string";
-            {
-                let x: bool = true;
-                {
-                    let x = [1, 2, 3];
-                }
-            }
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_empty_block() {
-    let diagnostics = bind_source(
-        r#"
-        let x: number = 1;
-        {
-        }
-        let y = x;
-    "#,
-    );
-    assert_no_errors(&diagnostics);
-}
-
-#[test]
-fn test_nested_empty_blocks() {
-    let diagnostics = bind_source(
-        r#"
-        {
-            {
-                {
-                }
-            }
-        }
-    "#,
-    );
-    assert_no_errors(&diagnostics);
+    let _diagnostics = bind_source(source);
+    // Once AT1012 is implemented, add assertion:
+    // assert_has_error(&_diagnostics, "AT1012");
 }
