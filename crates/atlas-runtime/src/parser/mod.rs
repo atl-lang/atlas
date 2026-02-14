@@ -208,7 +208,8 @@ impl Parser {
         // Lexer already strips quotes from string literals
         let source = source_token.lexeme.clone();
 
-        let end_span = self.peek().span;
+        // Consume the semicolon
+        let end_span = self.consume(TokenKind::Semicolon, "Expected ';' after import")?.span;
 
         Ok(ImportDecl {
             specifiers,

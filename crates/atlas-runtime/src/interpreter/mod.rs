@@ -159,8 +159,11 @@ impl Interpreter {
                             self.globals.insert(func.name.name.clone(), func_value);
                         }
                         crate::ast::ExportItem::Variable(var) => {
-                            last_value =
-                                self.eval_statement(&crate::ast::Stmt::VarDecl(var.clone()))?;
+                            // Evaluate the variable declaration
+                            let value = self.eval_expr(&var.init)?;
+                            // Store in globals (not locals) so exports can be extracted
+                            self.globals.insert(var.name.name.clone(), value);
+                            last_value = Value::Null;
                         }
                     }
                 }

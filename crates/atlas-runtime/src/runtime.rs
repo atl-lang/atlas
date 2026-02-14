@@ -4,6 +4,7 @@ use crate::binder::Binder;
 use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
+use crate::module_executor::ModuleExecutor;
 use crate::parser::Parser;
 use crate::span::Span;
 use crate::typechecker::TypeChecker;
@@ -122,6 +123,7 @@ impl Atlas {
     /// Evaluate an Atlas source file
     ///
     /// Reads and evaluates the Atlas source code from the specified file path.
+    /// If the file contains imports, uses the module system to load dependencies.
     ///
     /// # Arguments
     ///
@@ -136,14 +138,41 @@ impl Atlas {
     /// let result = runtime.eval_file("program.atlas");
     /// ```
     pub fn eval_file(&self, path: &str) -> RuntimeResult<Value> {
-        let source = std::fs::read_to_string(path).map_err(|e| {
+        use std::path::Path;
+
+        let file_path = Path::new(path);
+
+        // Get absolute path
+        let abs_path = file_path.canonicalize().map_err(|e| {
+            vec![Diagnostic::error(
+                format!("Failed to resolve path: {}", e),
+                Span::dummy(),
+            )]
+        })?;
+
+        // Quick check: does the file contain imports?
+        // If so, use module executor. If not, use simple eval.
+        let source = std::fs::read_to_string(&abs_path).map_err(|e| {
             vec![Diagnostic::error(
                 format!("Failed to read file: {}", e),
                 Span::dummy(),
             )]
         })?;
 
-        self.eval(&source)
+        // Check if source contains "import {" or "import *"
+        if source.contains("import {") || source.contains("import *") {
+            // Use module executor for multi-file programs
+            let root = abs_path
+                .parent()
+                .unwrap_or_else(|| Path::new("."))
+                .to_path_buf();
+
+            let mut executor = ModuleExecutor::new(root);
+            executor.execute_module(&abs_path)
+        } else {
+            // Simple single-file program - use regular eval
+            self.eval(&source)
+        }
     }
 }
 

@@ -408,7 +408,7 @@ mod tests {
         create_module(
             &root,
             "main",
-            "import { add } from \"./math\"\nexport fn calculate() -> number { return add(1, 2); }",
+            "import { add } from \"./math\";\nexport fn calculate() -> number { return add(1, 2); }",
         );
 
         let mut loader = ModuleLoader::new(root.clone());
