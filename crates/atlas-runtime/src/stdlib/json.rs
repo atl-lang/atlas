@@ -185,6 +185,18 @@ pub fn minify_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 }
 
 // ============================================================================
+// JSON Extraction Functions (Phase 17)
+// ============================================================================
+// NOTE: These functions will be implemented in Phase 17 after method call
+// syntax is complete. They will be called via method syntax:
+//   json.as_string()  → jsonAsString(json)
+//   json.as_number()  → jsonAsNumber(json)
+//   json.as_bool()    → jsonAsBool(json)
+//   json.is_null()    → jsonIsNull(json)
+//
+// See: phases/foundation/phase-17-method-call-syntax-backend.md
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 

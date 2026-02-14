@@ -147,6 +147,8 @@ pub enum TokenKind {
     Semicolon,
     /// `,` (comma)
     Comma,
+    /// `.` (dot for member access)
+    Dot,
     /// `:` (colon)
     Colon,
     /// `->` (arrow for function return type)
@@ -243,6 +245,7 @@ impl TokenKind {
             TokenKind::RightBracket => "]",
             TokenKind::Semicolon => ";",
             TokenKind::Comma => ",",
+            TokenKind::Dot => ".",
             TokenKind::Colon => ":",
             TokenKind::Arrow => "->",
             TokenKind::FatArrow => "=>",

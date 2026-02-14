@@ -82,6 +82,17 @@ This log captures irreversible or high-impact design decisions. Update when a ne
 - Type checker allows both string and number indices, always returns Type::JsonValue
 - 21 integration tests verify behavior and isolation
 
+## Method Call Syntax (v0.2)
+- **Syntax:** `value.method(args)` desugars to `Type::method(value, args)`
+- **Rationale:** Rust-style approach - AI-friendly (zero ambiguity), type-safe (compile-time resolution), zero-cost abstraction
+- **Design:** Methods are functions with special syntax. No runtime lookup, no prototype chains, no `this` binding complexity
+- **Dual syntax:** Both `value.method()` and `Type::method(value)` valid - AI can use either form
+- **Alternative approaches rejected:**
+  - ❌ Python-style (everything-is-object adds magic, runtime overhead)
+  - ❌ JavaScript prototype chains (implicit behavior, `this` binding issues)
+  - ❌ Go interfaces (implicit satisfaction not AI-friendly)
+- **Implementation:** Built-in methods for stdlib types (json, string, array). Trait system for user-defined methods in v0.3+
+
 ## Generic Types - Monomorphization (v0.2)
 - **Strategy:** Monomorphization (Rust-style) - generate specialized code for each type instantiation
 - **Rationale:** Performance and type safety. Follows Rust's proven approach.

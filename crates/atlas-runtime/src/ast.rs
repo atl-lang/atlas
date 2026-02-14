@@ -268,6 +268,7 @@ pub enum Expr {
     Binary(BinaryExpr),
     Call(CallExpr),
     Index(IndexExpr),
+    Member(MemberExpr),
     ArrayLiteral(ArrayLiteral),
     Group(GroupExpr),
     Match(MatchExpr),
@@ -303,6 +304,21 @@ pub struct CallExpr {
 pub struct IndexExpr {
     pub target: Box<Expr>,
     pub index: Box<Expr>,
+    pub span: Span,
+}
+
+/// Member access expression (method call or property access)
+///
+/// Syntax: `expr.member` or `expr.method(args)`
+/// This is sugar for function calls: `Type::method(expr, args)`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct MemberExpr {
+    /// The target expression (left side of dot)
+    pub target: Box<Expr>,
+    /// The member name (right side of dot)
+    pub member: Identifier,
+    /// Arguments if this is a method call, None if property access
+    pub args: Option<Vec<Expr>>,
     pub span: Span,
 }
 
@@ -429,6 +445,7 @@ impl Expr {
             Expr::Binary(b) => b.span,
             Expr::Call(c) => c.span,
             Expr::Index(i) => i.span,
+            Expr::Member(m) => m.span,
             Expr::ArrayLiteral(a) => a.span,
             Expr::Group(g) => g.span,
             Expr::Match(m) => m.span,

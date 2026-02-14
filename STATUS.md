@@ -9,7 +9,9 @@
 
 **Version:** v0.2 (adding depth to v0.1 foundation)
 **Last Completed:** phases/stdlib/phase-05-complete-file-io-api.md
-**Next Phase:** phases/stdlib/phase-06-stdlib-integration-tests.md
+**Next Phase:** phases/foundation/phase-16-method-call-syntax-frontend.md **[BLOCKER]**
+
+**⚠️ BLOCKER DISCOVERED:** Method call syntax required for JSON extraction (world-class requirement). Must complete Phases 16-17 before continuing stdlib integration tests.
 
 **v0.2 phase files complete - 68 comprehensive phases ready for implementation!**
 
@@ -102,7 +104,13 @@ v0.2 transforms Atlas into a production-ready language:
 
 ## 📊 v0.2 Progress Tracker
 
-### 0. Foundation (0/15) - Production Infrastructure
+### 0. Foundation (0/17) - Production Infrastructure
+
+**🚨 CRITICAL BLOCKERS - Complete before continuing v0.2:**
+- ⬜ phase-16-method-call-syntax-frontend.md **[BLOCKER - Parser, Type checking]**
+- ⬜ phase-17-method-call-syntax-backend.md **[BLOCKER - Interpreter, VM, Tests]**
+
+**Other Foundation (deferred):**
 - ⬜ phase-01-runtime-api-expansion.md
 - ⬜ phase-02-embedding-api-design.md
 - ⬜ phase-03-ci-automation.md
@@ -189,6 +197,7 @@ v0.2 transforms Atlas into a production-ready language:
 - ⬜ phase-05-v02-milestone-completion.md
 
 **Total v0.2 Progress:** 5/68 phases (7.4%)
+**Foundation Blockers:** 0/2 phases (Phases 16-17 must complete first)
 
 ---
 

@@ -186,6 +186,14 @@ impl Lexer {
             // Numbers
             c if c.is_ascii_digit() => self.number(),
 
+            // Dot (member access) or start of decimal number
+            '.' => {
+                // Check if this is the start of a decimal number (e.g., .5)
+                // NOTE: Atlas doesn't support .5 syntax, only 0.5
+                // So . is always a member access operator
+                self.make_token(TokenKind::Dot, ".")
+            }
+
             // Identifiers and keywords
             c if c.is_alphabetic() || c == '_' => self.identifier(),
 
