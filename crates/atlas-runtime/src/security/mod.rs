@@ -30,6 +30,8 @@
 //! assert!(ctx.check_filesystem_read(Path::new("/etc/passwd")).is_err());
 //! ```
 
+pub mod audit;
 pub mod permissions;
 
+pub use audit::{AuditEntry, AuditEvent, AuditLogger, MemoryAuditLogger, NullAuditLogger};
 pub use permissions::{Permission, PermissionSet, SecurityContext, SecurityError};

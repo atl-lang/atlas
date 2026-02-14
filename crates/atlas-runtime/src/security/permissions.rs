@@ -2,8 +2,10 @@
 //!
 //! Defines the permission system for controlling I/O operations.
 
+use crate::security::audit::{AuditEvent, AuditLogger, NullAuditLogger};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use thiserror::Error;
 
 /// Security errors
@@ -182,19 +184,45 @@ impl PermissionSet {
 }
 
 /// Security context managing permissions
-#[derive(Debug, Clone, Default)]
+#[derive(Clone)]
 pub struct SecurityContext {
     filesystem_read: PermissionSet,
     filesystem_write: PermissionSet,
     network: PermissionSet,
     process: PermissionSet,
     environment: PermissionSet,
+    audit_logger: Arc<dyn AuditLogger>,
+}
+
+impl Default for SecurityContext {
+    fn default() -> Self {
+        Self {
+            filesystem_read: PermissionSet::new(),
+            filesystem_write: PermissionSet::new(),
+            network: PermissionSet::new(),
+            process: PermissionSet::new(),
+            environment: PermissionSet::new(),
+            audit_logger: Arc::new(NullAuditLogger::new()),
+        }
+    }
 }
 
 impl SecurityContext {
     /// Create a new security context with default (deny all) permissions
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Create a new security context with audit logging enabled
+    pub fn with_audit_logger(logger: Arc<dyn AuditLogger>) -> Self {
+        Self {
+            filesystem_read: PermissionSet::new(),
+            filesystem_write: PermissionSet::new(),
+            network: PermissionSet::new(),
+            process: PermissionSet::new(),
+            environment: PermissionSet::new(),
+            audit_logger: logger,
+        }
     }
 
     /// Create from security configuration
@@ -285,8 +313,15 @@ impl SecurityContext {
         };
 
         if self.filesystem_read.is_granted(&requested) {
+            self.audit_logger.log(AuditEvent::PermissionCheck {
+                operation: "file read".to_string(),
+                target: path.display().to_string(),
+                granted: true,
+            });
             Ok(())
         } else {
+            self.audit_logger
+                .log(AuditEvent::FilesystemReadDenied { path: path.clone() });
             Err(SecurityError::FilesystemReadDenied { path })
         }
     }
@@ -300,8 +335,15 @@ impl SecurityContext {
         };
 
         if self.filesystem_write.is_granted(&requested) {
+            self.audit_logger.log(AuditEvent::PermissionCheck {
+                operation: "file write".to_string(),
+                target: path.display().to_string(),
+                granted: true,
+            });
             Ok(())
         } else {
+            self.audit_logger
+                .log(AuditEvent::FilesystemWriteDenied { path: path.clone() });
             Err(SecurityError::FilesystemWriteDenied { path })
         }
     }
@@ -313,8 +355,16 @@ impl SecurityContext {
         };
 
         if self.network.is_granted(&requested) {
+            self.audit_logger.log(AuditEvent::PermissionCheck {
+                operation: "network".to_string(),
+                target: host.to_string(),
+                granted: true,
+            });
             Ok(())
         } else {
+            self.audit_logger.log(AuditEvent::NetworkDenied {
+                host: host.to_string(),
+            });
             Err(SecurityError::NetworkDenied {
                 host: host.to_string(),
             })
@@ -328,8 +378,16 @@ impl SecurityContext {
         };
 
         if self.process.is_granted(&requested) {
+            self.audit_logger.log(AuditEvent::PermissionCheck {
+                operation: "process".to_string(),
+                target: command.to_string(),
+                granted: true,
+            });
             Ok(())
         } else {
+            self.audit_logger.log(AuditEvent::ProcessDenied {
+                command: command.to_string(),
+            });
             Err(SecurityError::ProcessDenied {
                 command: command.to_string(),
             })
@@ -343,12 +401,25 @@ impl SecurityContext {
         };
 
         if self.environment.is_granted(&requested) {
+            self.audit_logger.log(AuditEvent::PermissionCheck {
+                operation: "environment".to_string(),
+                target: var.to_string(),
+                granted: true,
+            });
             Ok(())
         } else {
+            self.audit_logger.log(AuditEvent::EnvironmentDenied {
+                var: var.to_string(),
+            });
             Err(SecurityError::EnvironmentDenied {
                 var: var.to_string(),
             })
         }
+    }
+
+    /// Get the audit logger (for testing)
+    pub fn audit_logger(&self) -> Arc<dyn AuditLogger> {
+        Arc::clone(&self.audit_logger)
     }
 }
 
