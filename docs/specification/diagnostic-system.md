@@ -179,6 +179,14 @@ help: remove the variable or prefix with underscore: _unused
 **AT4xxx - Runtime Errors:**
 - Stack overflow, invalid stdlib arguments, etc.
 
+**AT5xxx - Module Errors:**
+- `AT5003`: Circular dependency detected
+- `AT5004`: Cannot export (symbol not found)
+- `AT5005`: Module not found
+- `AT5006`: Module does not export symbol
+- `AT5007`: Namespace imports not yet supported
+- `AT5008`: Duplicate export
+
 ### Error Code Policy
 
 **Rules:**

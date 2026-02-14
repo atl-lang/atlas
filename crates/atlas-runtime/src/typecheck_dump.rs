@@ -353,6 +353,7 @@ mod tests {
                 ty: Type::Number,
                 mutable: false,
                 span: Span::new(10, 15),
+                exported: false,
             })
             .ok();
         table
@@ -362,6 +363,7 @@ mod tests {
                 ty: Type::String,
                 mutable: false,
                 span: Span::new(0, 5),
+                exported: false,
             })
             .ok();
 
@@ -385,6 +387,7 @@ mod tests {
                 ty: Type::String,
                 mutable: false,
                 span: Span::new(0, 1),
+                exported: false,
             })
             .ok();
         table
@@ -394,6 +397,7 @@ mod tests {
                 ty: Type::Number,
                 mutable: false,
                 span: Span::new(5, 6),
+                exported: false,
             })
             .ok();
 

@@ -10,6 +10,7 @@ use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::resolver::ModuleResolver;
 use crate::span::Span;
+use crate::symbol::SymbolTable;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -25,6 +26,51 @@ pub struct LoadedModule {
     pub exports: Vec<String>,
     /// List of import declarations (for dependency tracking)
     pub imports: Vec<ImportDecl>,
+}
+
+/// Registry of bound modules with their symbol tables
+///
+/// Used during binding and type checking to resolve cross-module references.
+/// This is BLOCKER 04-C - cross-module type checking.
+#[derive(Debug, Clone)]
+pub struct ModuleRegistry {
+    /// Map of module path -> symbol table
+    modules: HashMap<PathBuf, SymbolTable>,
+}
+
+impl ModuleRegistry {
+    /// Create a new empty module registry
+    pub fn new() -> Self {
+        Self {
+            modules: HashMap::new(),
+        }
+    }
+
+    /// Register a module's symbol table
+    pub fn register(&mut self, path: PathBuf, symbol_table: SymbolTable) {
+        self.modules.insert(path, symbol_table);
+    }
+
+    /// Get a module's symbol table
+    pub fn get(&self, path: &Path) -> Option<&SymbolTable> {
+        self.modules.get(path)
+    }
+
+    /// Get a mutable reference to a module's symbol table
+    pub fn get_mut(&mut self, path: &Path) -> Option<&mut SymbolTable> {
+        self.modules.get_mut(path)
+    }
+
+    /// Check if a module is registered
+    pub fn contains(&self, path: &Path) -> bool {
+        self.modules.contains_key(path)
+    }
+}
+
+impl Default for ModuleRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Module loader - loads files, builds dependency graphs, performs topological sort

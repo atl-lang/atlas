@@ -6,9 +6,11 @@
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
+use crate::module_loader::ModuleRegistry;
 use crate::symbol::{Symbol, SymbolKind, SymbolTable};
 use crate::types::Type;
 use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
 /// Binder for name resolution and scope management
 pub struct Binder {
@@ -45,12 +47,97 @@ impl Binder {
         for item in &program.items {
             if let Item::Function(func) = item {
                 self.hoist_function(func);
+            } else if let Item::Export(export_decl) = item {
+                // Also hoist exported functions
+                if let ExportItem::Function(func) = &export_decl.item {
+                    self.hoist_function(func);
+                }
             }
         }
 
         // Phase 2: Bind all items
         for item in &program.items {
             self.bind_item(item);
+        }
+
+        // Phase 3: Mark exported symbols
+        for item in &program.items {
+            if let Item::Export(export_decl) = item {
+                let name = match &export_decl.item {
+                    ExportItem::Function(func) => &func.name.name,
+                    ExportItem::Variable(var) => &var.name.name,
+                };
+
+                if !self.symbol_table.mark_exported(name) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT5004",
+                            format!("Cannot export '{}': symbol not found", name),
+                            export_decl.span,
+                        )
+                        .with_label("export declaration"),
+                    );
+                }
+            }
+        }
+
+        (
+            std::mem::take(&mut self.symbol_table),
+            std::mem::take(&mut self.diagnostics),
+        )
+    }
+
+    /// Bind a program with cross-module support (BLOCKER 04-C)
+    ///
+    /// Takes a module registry to resolve imports from other modules.
+    /// Returns symbol table and diagnostics.
+    ///
+    /// # Arguments
+    /// * `program` - The AST to bind
+    /// * `module_path` - Absolute path to this module
+    /// * `registry` - Registry of already-bound modules for import resolution
+    pub fn bind_with_modules(
+        &mut self,
+        program: &Program,
+        module_path: &Path,
+        registry: &ModuleRegistry,
+    ) -> (SymbolTable, Vec<Diagnostic>) {
+        // Phase 1: Collect all top-level function declarations (hoisting)
+        for item in &program.items {
+            if let Item::Function(func) = item {
+                self.hoist_function(func);
+            } else if let Item::Export(export_decl) = item {
+                // Also hoist exported functions
+                if let ExportItem::Function(func) = &export_decl.item {
+                    self.hoist_function(func);
+                }
+            }
+        }
+
+        // Phase 2: Bind all items (including imports and exports)
+        for item in &program.items {
+            self.bind_item_with_modules(item, module_path, registry);
+        }
+
+        // Phase 3: Mark exported symbols
+        for item in &program.items {
+            if let Item::Export(export_decl) = item {
+                let name = match &export_decl.item {
+                    ExportItem::Function(func) => &func.name.name,
+                    ExportItem::Variable(var) => &var.name.name,
+                };
+
+                if !self.symbol_table.mark_exported(name) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT5004",
+                            format!("Cannot export '{}': symbol not found", name),
+                            export_decl.span,
+                        )
+                        .with_label("export declaration"),
+                    );
+                }
+            }
         }
 
         (
@@ -105,6 +192,7 @@ impl Binder {
             mutable: false,
             kind: SymbolKind::Function,
             span: func.name.span,
+            exported: false,
         };
 
         if let Err(err) = self.symbol_table.define_function(symbol) {
@@ -152,6 +240,128 @@ impl Binder {
         }
     }
 
+    /// Bind a top-level item with module registry support (BLOCKER 04-C)
+    fn bind_item_with_modules(
+        &mut self,
+        item: &Item,
+        _module_path: &Path,
+        registry: &ModuleRegistry,
+    ) {
+        match item {
+            Item::Function(func) => self.bind_function(func),
+            Item::Statement(stmt) => self.bind_statement(stmt),
+            Item::Import(import_decl) => {
+                self.bind_import(import_decl, registry);
+            }
+            Item::Export(export_decl) => {
+                // Export wraps an item - bind the inner item
+                match &export_decl.item {
+                    crate::ast::ExportItem::Function(func) => self.bind_function(func),
+                    crate::ast::ExportItem::Variable(var) => {
+                        // Bind variable by treating it as a statement
+                        self.bind_statement(&crate::ast::Stmt::VarDecl(var.clone()));
+                    }
+                }
+            }
+        }
+    }
+
+    /// Bind an import declaration (BLOCKER 04-C)
+    ///
+    /// Creates local bindings for imported symbols by looking them up in the source module's
+    /// symbol table (from the registry).
+    fn bind_import(&mut self, import_decl: &ImportDecl, registry: &ModuleRegistry) {
+        // Resolve source module path (this will be done by ModuleResolver in practice)
+        // For now, we'll need to resolve the source path relative to the importing module
+        // This is a simplified version - full path resolution happens in ModuleResolver
+
+        // Convert import source to absolute path
+        // Note: In practice, this should use ModuleResolver.resolve(), but for binding
+        // we assume the source path is already resolved by the loader
+        let source_path = PathBuf::from(&import_decl.source);
+
+        // Look up source module's symbol table
+        let source_symbols = match registry.get(&source_path) {
+            Some(symbol_table) => symbol_table,
+            None => {
+                // Source module not in registry - error
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT5005",
+                        format!("Cannot find module '{}'", import_decl.source),
+                        import_decl.span,
+                    )
+                    .with_label("import statement"),
+                );
+                return;
+            }
+        };
+
+        // Get exported symbols from source module
+        let exports = source_symbols.get_exports();
+
+        // Process each import specifier
+        for specifier in &import_decl.specifiers {
+            match specifier {
+                ImportSpecifier::Named { name, span } => {
+                    // Named import: `import { foo } from "./module"`
+                    // Look up the symbol in source module's exports
+                    match exports.get(&name.name) {
+                        Some(exported_symbol) => {
+                            // Create a local binding for the imported symbol
+                            let imported_symbol = Symbol {
+                                name: name.name.clone(),
+                                ty: exported_symbol.ty.clone(),
+                                mutable: false, // Imported symbols are immutable
+                                kind: exported_symbol.kind.clone(),
+                                span: *span,
+                                exported: false, // Imports are not automatically re-exported
+                            };
+
+                            if let Err(err) = self.symbol_table.define(imported_symbol) {
+                                let (msg, _) = *err;
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code("AT2003", &msg, *span)
+                                        .with_label("imported symbol"),
+                                );
+                            }
+                        }
+                        None => {
+                            // Exported symbol not found
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT5006",
+                                    format!(
+                                        "Module '{}' does not export '{}'",
+                                        import_decl.source, name.name
+                                    ),
+                                    *span,
+                                )
+                                .with_label("imported name"),
+                            );
+                        }
+                    }
+                }
+                ImportSpecifier::Namespace { alias: _, span } => {
+                    // Namespace import: `import * as ns from "./module"`
+                    // For now, we'll create a placeholder
+                    // Full namespace support requires type system changes
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT5007",
+                            "Namespace imports not yet supported",
+                            *span,
+                        )
+                        .with_label("namespace import")
+                        .with_help(
+                            "Use named imports instead: import { name } from \"..\"".to_string(),
+                        ),
+                    );
+                }
+            }
+        }
+    }
+
     /// Bind a function declaration
     fn bind_function(&mut self, func: &FunctionDecl) {
         // Enter function scope
@@ -169,6 +379,7 @@ impl Binder {
                 mutable: false,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
+                exported: false,
             };
 
             if let Err(err) = self.symbol_table.define(symbol) {
@@ -252,6 +463,7 @@ impl Binder {
                     mutable: var.mutable,
                     kind: SymbolKind::Variable,
                     span: var.name.span,
+                    exported: false,
                 };
 
                 if let Err(err) = self.symbol_table.define(symbol) {
@@ -416,6 +628,7 @@ impl Binder {
                             mutable: false,
                             kind: SymbolKind::Variable,
                             span: *var_span,
+                            exported: false,
                         };
                         let _ = self.symbol_table.define(symbol);
                     }

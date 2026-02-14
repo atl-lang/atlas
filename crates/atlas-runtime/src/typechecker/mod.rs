@@ -11,10 +11,12 @@ pub mod generics;
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
+use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
 use crate::symbol::{SymbolKind, SymbolTable};
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
+use std::path::Path;
 
 /// Type checker state
 pub struct TypeChecker<'a> {
@@ -50,6 +52,53 @@ impl<'a> TypeChecker<'a> {
 
     /// Type check a program
     pub fn check(&mut self, program: &Program) -> Vec<Diagnostic> {
+        for item in &program.items {
+            self.check_item(item);
+        }
+
+        std::mem::take(&mut self.diagnostics)
+    }
+
+    /// Type check a program with cross-module support (BLOCKER 04-C)
+    ///
+    /// Validates cross-module references and export consistency.
+    ///
+    /// # Arguments
+    /// * `program` - The AST to type check
+    /// * `_module_path` - Absolute path to this module (for future use)
+    /// * `_registry` - Registry of bound modules (for future cross-module validation)
+    pub fn check_with_modules(
+        &mut self,
+        program: &Program,
+        _module_path: &Path,
+        _registry: &ModuleRegistry,
+    ) -> Vec<Diagnostic> {
+        // Check for duplicate exports
+        let mut exported_names: HashSet<String> = HashSet::new();
+
+        for item in &program.items {
+            if let Item::Export(export_decl) = item {
+                let name = match &export_decl.item {
+                    crate::ast::ExportItem::Function(func) => &func.name.name,
+                    crate::ast::ExportItem::Variable(var) => &var.name.name,
+                };
+
+                if exported_names.contains(name) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT5008",
+                            format!("Duplicate export: '{}' is exported more than once", name),
+                            export_decl.span,
+                        )
+                        .with_label("duplicate export"),
+                    );
+                } else {
+                    exported_names.insert(name.clone());
+                }
+            }
+        }
+
+        // Type check all items (imports already validated during binding)
         for item in &program.items {
             self.check_item(item);
         }
@@ -99,6 +148,7 @@ impl<'a> TypeChecker<'a> {
                 mutable: false,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
+                exported: false,
             };
             // Define parameter in symbol table for type checking
             let _ = self.symbol_table.define(symbol);

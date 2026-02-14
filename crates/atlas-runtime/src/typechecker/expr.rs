@@ -452,6 +452,7 @@ impl<'a> TypeChecker<'a> {
                     mutable: false, // Pattern bindings are immutable
                     kind: crate::symbol::SymbolKind::Variable,
                     span: *var_span,
+                    exported: false,
                 };
                 // Ignore if binding fails (duplicate names in pattern - will be caught separately)
                 let _ = self.symbol_table.define(symbol);

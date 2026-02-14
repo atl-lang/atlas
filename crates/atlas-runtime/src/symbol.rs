@@ -17,6 +17,8 @@ pub struct Symbol {
     pub kind: SymbolKind,
     /// Declaration location
     pub span: Span,
+    /// Whether this symbol is exported (for module system)
+    pub exported: bool,
 }
 
 /// Symbol classification
@@ -33,7 +35,7 @@ pub enum SymbolKind {
 }
 
 /// Symbol table for name resolution
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct SymbolTable {
     /// Stack of scopes (innermost last)
     scopes: Vec<HashMap<String, Symbol>>,
@@ -306,6 +308,7 @@ impl SymbolTable {
                 mutable: false,
                 kind: SymbolKind::Builtin,
                 span: Span::dummy(),
+                exported: false,
             },
         );
     }
@@ -369,6 +372,52 @@ impl SymbolTable {
             }
         }
     }
+
+    /// Get all exported symbols from this symbol table
+    ///
+    /// Returns symbols marked as exported (for module system)
+    pub fn get_exports(&self) -> HashMap<String, Symbol> {
+        let mut exports = HashMap::new();
+
+        // Check top-level scope for exported symbols
+        if let Some(top_scope) = self.scopes.first() {
+            for (name, symbol) in top_scope {
+                if symbol.exported {
+                    exports.insert(name.clone(), symbol.clone());
+                }
+            }
+        }
+
+        // Check top-level functions for exported symbols
+        for (name, symbol) in &self.functions {
+            if symbol.exported && symbol.kind != SymbolKind::Builtin {
+                exports.insert(name.clone(), symbol.clone());
+            }
+        }
+
+        exports
+    }
+
+    /// Mark a symbol as exported
+    ///
+    /// Used by binder when processing export declarations
+    pub fn mark_exported(&mut self, name: &str) -> bool {
+        // Check top-level scope first
+        if let Some(top_scope) = self.scopes.first_mut() {
+            if let Some(symbol) = top_scope.get_mut(name) {
+                symbol.exported = true;
+                return true;
+            }
+        }
+
+        // Check top-level functions
+        if let Some(symbol) = self.functions.get_mut(name) {
+            symbol.exported = true;
+            return true;
+        }
+
+        false
+    }
 }
 
 impl Default for SymbolTable {
@@ -390,6 +439,7 @@ mod tests {
             mutable: false,
             kind: SymbolKind::Variable,
             span: Span::dummy(),
+            exported: false,
         });
         assert!(result.is_ok());
         assert!(table.lookup("x").is_some());
@@ -406,6 +456,7 @@ mod tests {
                 mutable: false,
                 kind: SymbolKind::Variable,
                 span: Span::dummy(),
+                exported: false,
             })
             .unwrap();
 
@@ -415,6 +466,7 @@ mod tests {
             mutable: false,
             kind: SymbolKind::Variable,
             span: Span::dummy(),
+            exported: false,
         });
 
         assert!(result.is_err());
@@ -451,6 +503,7 @@ mod tests {
                 mutable: false,
                 kind: SymbolKind::Function,
                 span: Span::dummy(),
+                exported: false,
             })
             .unwrap();
 
@@ -468,6 +521,7 @@ mod tests {
             mutable: false,
             kind: SymbolKind::Function,
             span: Span::dummy(),
+            exported: false,
         });
 
         assert!(result.is_err());
@@ -485,6 +539,7 @@ mod tests {
                 mutable: false,
                 kind: SymbolKind::Variable,
                 span: Span::dummy(),
+                exported: false,
             })
             .unwrap();
 
@@ -499,6 +554,7 @@ mod tests {
                 mutable: false,
                 kind: SymbolKind::Variable,
                 span: Span::dummy(),
+                exported: false,
             })
             .unwrap();
 
