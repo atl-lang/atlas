@@ -61,7 +61,7 @@ fn test_monomorphizer_complex_types() {
     // Array types
     let array_number = Type::Array(Box::new(Type::Number));
     let subst = mono
-        .get_substitutions("process", &type_params, &[array_number.clone()])
+        .get_substitutions("process", &type_params, std::slice::from_ref(&array_number))
         .unwrap();
 
     assert_eq!(subst.get("T"), Some(&array_number));
@@ -148,7 +148,7 @@ fn test_monomorphizer_generic_types() {
     };
 
     let subst = mono
-        .get_substitutions("unwrap", &type_params, &[option_number.clone()])
+        .get_substitutions("unwrap", &type_params, std::slice::from_ref(&option_number))
         .unwrap();
 
     assert_eq!(subst.get("T"), Some(&option_number));
@@ -171,7 +171,11 @@ fn test_monomorphizer_nested_generics() {
     };
 
     let subst = mono
-        .get_substitutions("process", &type_params, &[option_result.clone()])
+        .get_substitutions(
+            "process",
+            &type_params,
+            std::slice::from_ref(&option_result),
+        )
         .unwrap();
 
     assert_eq!(subst.get("T"), Some(&option_result));

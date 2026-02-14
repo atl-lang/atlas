@@ -37,7 +37,11 @@ impl fmt::Display for AuditEvent {
                 granted,
             } => {
                 let status = if *granted { "GRANTED" } else { "DENIED" };
-                write!(f, "Permission {}: {} access to {}", status, operation, target)
+                write!(
+                    f,
+                    "Permission {}: {} access to {}",
+                    status, operation, target
+                )
             }
             AuditEvent::FilesystemReadDenied { path } => {
                 write!(

@@ -394,7 +394,7 @@ version = "1.0.0"
 [dependencies]
 http = "1.0"
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     assert!(config.dependencies.contains_key("http"));
@@ -411,7 +411,7 @@ version = "1.0.0"
 [dependencies]
 json = { version = "0.5" }
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     assert!(config.dependencies.contains_key("json"));
@@ -428,7 +428,7 @@ version = "1.0.0"
 [dependencies]
 local = { path = "../local-lib" }
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     assert!(config.dependencies.contains_key("local"));
@@ -445,7 +445,7 @@ version = "1.0.0"
 [dependencies]
 remote = { git = "https://github.com/example/lib" }
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     assert!(config.dependencies.contains_key("remote"));
@@ -462,7 +462,7 @@ version = "1.0.0"
 [dev-dependencies]
 test-utils = "1.0"
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     assert!(config.dev_dependencies.contains_key("test-utils"));
@@ -479,7 +479,7 @@ version = "1.0.0"
 [dependencies]
 "" = "1.0"
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let result = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml"));
     // TOML parser should reject empty keys
@@ -503,7 +503,7 @@ output = "dist"
 source = "src"
 entry = "src/main.atl"
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     let build = config.build.as_ref().unwrap();
@@ -533,7 +533,7 @@ optimize = true
 debug = false
 target = "bytecode"
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     let compiler = config.compiler.as_ref().unwrap();
@@ -560,7 +560,7 @@ indent = 2
 max_line_length = 80
 use_tabs = true
 "#;
-    create_config_file(temp_dir.path(), &content);
+    create_config_file(temp_dir.path(), content);
 
     let config = ProjectConfig::load_from_file(&temp_dir.path().join("atlas.toml")).unwrap();
     let formatting = config.formatting.as_ref().unwrap();

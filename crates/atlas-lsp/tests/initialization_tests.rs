@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_server_initialization() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let params = InitializeParams {
@@ -36,7 +36,7 @@ async fn test_server_initialization() {
 
 #[tokio::test]
 async fn test_server_initialized() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     // Should not panic
@@ -45,7 +45,7 @@ async fn test_server_initialized() {
 
 #[tokio::test]
 async fn test_server_shutdown() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let result = server.shutdown().await;
@@ -54,7 +54,7 @@ async fn test_server_shutdown() {
 
 #[tokio::test]
 async fn test_full_lifecycle() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     // Initialize

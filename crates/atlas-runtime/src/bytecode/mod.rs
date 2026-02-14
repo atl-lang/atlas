@@ -764,7 +764,7 @@ mod tests {
         let mut bytecode = Bytecode::new();
 
         // Add constants
-        bytecode.add_constant(Value::Number(3.14));
+        bytecode.add_constant(Value::Number(2.5));
         bytecode.add_constant(Value::String(Rc::new("test".to_string())));
 
         // Add instructions
@@ -783,7 +783,7 @@ mod tests {
 
         // Verify constants
         assert_eq!(loaded.constants.len(), 2);
-        assert_eq!(loaded.constants[0], Value::Number(3.14));
+        assert_eq!(loaded.constants[0], Value::Number(2.5));
         assert_eq!(loaded.constants[1], Value::string("test"));
 
         // Verify instructions
@@ -1250,7 +1250,7 @@ mod tests {
         bytecode.add_constant(Value::Null);
         bytecode.add_constant(Value::Bool(true));
         bytecode.add_constant(Value::Bool(false));
-        bytecode.add_constant(Value::Number(3.14159));
+        bytecode.add_constant(Value::Number(4.2));
         bytecode.add_constant(Value::Number(-273.15));
         bytecode.add_constant(Value::Number(0.0));
         bytecode.add_constant(Value::String(Rc::new("".to_string())));
@@ -1269,7 +1269,7 @@ mod tests {
         assert_eq!(loaded.constants[0], Value::Null);
         assert_eq!(loaded.constants[1], Value::Bool(true));
         assert_eq!(loaded.constants[2], Value::Bool(false));
-        assert_eq!(loaded.constants[3], Value::Number(3.14159));
+        assert_eq!(loaded.constants[3], Value::Number(4.2));
         assert_eq!(loaded.constants[4], Value::Number(-273.15));
         assert_eq!(loaded.constants[5], Value::Number(0.0));
         assert_eq!(loaded.constants[6], Value::string(""));

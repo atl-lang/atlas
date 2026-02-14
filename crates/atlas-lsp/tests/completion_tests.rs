@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_keyword_completions() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -51,7 +51,7 @@ async fn test_keyword_completions() {
 
 #[tokio::test]
 async fn test_builtin_function_completions() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -93,7 +93,7 @@ async fn test_builtin_function_completions() {
 
 #[tokio::test]
 async fn test_type_completions() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -134,7 +134,7 @@ async fn test_type_completions() {
 
 #[tokio::test]
 async fn test_function_completions_from_document() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -189,7 +189,7 @@ fn greet(name: string) -> string {
 
 #[tokio::test]
 async fn test_variable_completions_from_document() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -234,7 +234,7 @@ var name: string = "test";
 
 #[tokio::test]
 async fn test_snippet_completions() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -283,7 +283,7 @@ async fn test_snippet_completions() {
 
 #[tokio::test]
 async fn test_completions_with_errors() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();

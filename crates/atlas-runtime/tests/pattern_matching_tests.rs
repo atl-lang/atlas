@@ -50,9 +50,9 @@ fn test_parse_simple_match() {
             _ => "other"
         }
     "#;
-    let (success, _) = typecheck(source);
+    let (_success, _) = typecheck(source);
     // May fail type checking (x undefined), but should parse
-    assert!(!success || success); // Just ensure it parses without panic
+    // If we reach here, it parsed without panic
 }
 
 #[test]

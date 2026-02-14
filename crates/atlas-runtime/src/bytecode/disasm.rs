@@ -272,7 +272,7 @@ mod tests {
     fn test_format_value_number() {
         use crate::value::Value;
         assert_eq!(format_value(&Value::Number(42.0)), "42");
-        assert_eq!(format_value(&Value::Number(3.14)), "3.14");
+        assert_eq!(format_value(&Value::Number(2.5)), "2.5");
     }
 
     #[test]

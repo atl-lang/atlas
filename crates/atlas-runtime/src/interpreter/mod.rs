@@ -201,6 +201,26 @@ impl Interpreter {
             }));
         }
 
+        // Check array intrinsics - return a function value
+        if crate::stdlib::is_array_intrinsic(name) {
+            return Ok(Value::Function(crate::value::FunctionRef {
+                name: name.to_string(),
+                arity: 0, // Arity checked at call site
+                bytecode_offset: 0,
+                local_count: 0,
+            }));
+        }
+
+        // Check math constants
+        match name {
+            "PI" => return Ok(Value::Number(crate::stdlib::math::PI)),
+            "E" => return Ok(Value::Number(crate::stdlib::math::E)),
+            "SQRT2" => return Ok(Value::Number(crate::stdlib::math::SQRT2)),
+            "LN2" => return Ok(Value::Number(crate::stdlib::math::LN2)),
+            "LN10" => return Ok(Value::Number(crate::stdlib::math::LN10)),
+            _ => {}
+        }
+
         Err(RuntimeError::UndefinedVariable {
             name: name.to_string(),
             span,

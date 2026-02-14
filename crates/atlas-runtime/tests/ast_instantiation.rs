@@ -300,7 +300,7 @@ fn test_all_expression_types() {
     // Verify all expressions have valid spans
     for expr in &expressions {
         let span = expr.span();
-        assert!(span.len() > 0 || span == Span::new(0, 4)); // Allow null literal span
+        assert!(!span.is_empty() || span == Span::new(0, 4)); // Allow null literal span
     }
 }
 

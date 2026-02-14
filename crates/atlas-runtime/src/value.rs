@@ -292,7 +292,7 @@ mod tests {
     #[test]
     fn test_to_string_number() {
         assert_eq!(Value::Number(42.0).to_string(), "42");
-        assert_eq!(Value::Number(3.14).to_string(), "3.14");
+        assert_eq!(Value::Number(2.5).to_string(), "2.5");
         assert_eq!(Value::Number(-5.0).to_string(), "-5");
     }
 

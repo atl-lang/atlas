@@ -147,6 +147,6 @@ fn test_warnings_with_errors() {
         .filter(|d| d.level == DiagnosticLevel::Warning)
         .collect();
 
-    assert!(errors.len() > 0, "Expected type error");
-    assert!(warnings.len() > 0, "Expected unused warning");
+    assert!(!errors.is_empty(), "Expected type error");
+    assert!(!warnings.is_empty(), "Expected unused warning");
 }

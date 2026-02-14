@@ -757,21 +757,21 @@ mod tests {
     #[test]
     fn test_type_mismatch() {
         let diagnostics = typecheck_source("let x: number = \"hello\";");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3001");
     }
 
     #[test]
     fn test_arithmetic_type_error() {
         let diagnostics = typecheck_source(r#"let x = 5 + "hello";"#);
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3002");
     }
 
     #[test]
     fn test_condition_must_be_bool() {
         let diagnostics = typecheck_source("if (5) { }");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3001");
     }
 
@@ -783,21 +783,21 @@ mod tests {
             x = 10;
         "#,
         );
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3003");
     }
 
     #[test]
     fn test_break_outside_loop() {
         let diagnostics = typecheck_source("break;");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3010");
     }
 
     #[test]
     fn test_return_outside_function() {
         let diagnostics = typecheck_source("return 5;");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert_eq!(diagnostics[0].code, "AT3011");
     }
 
@@ -818,7 +818,7 @@ mod tests {
     fn test_generic_type_wrong_arity_too_few() {
         // Result expects 2 type arguments, got 1
         let diagnostics = typecheck_source("fn test(_x: Result<number>) -> void {}");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics[0]
             .message
             .contains("expects 2 type argument(s), found 1"));
@@ -828,7 +828,7 @@ mod tests {
     fn test_generic_type_wrong_arity_too_many() {
         // Option expects 1 type argument, got 2
         let diagnostics = typecheck_source("fn test(_x: Option<number, string>) -> void {}");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics[0]
             .message
             .contains("expects 1 type argument(s), found 2"));
@@ -838,7 +838,7 @@ mod tests {
     fn test_generic_type_unknown() {
         // Unknown generic type
         let diagnostics = typecheck_source("fn test(_x: UnknownGeneric<number>) -> void {}");
-        assert!(diagnostics.len() > 0);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics[0].message.contains("Unknown generic type"));
     }
 
@@ -923,7 +923,7 @@ mod tests {
         "#,
         );
         // Should have error: cannot unify number with string for T
-        assert!(diagnostics.len() > 0, "Expected errors but got none");
+        assert!(!diagnostics.is_empty(), "Expected errors but got none");
         assert!(
             diagnostics[0].message.contains("Type inference failed")
                 || diagnostics[0].message.contains("cannot match"),

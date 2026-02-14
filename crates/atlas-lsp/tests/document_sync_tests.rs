@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_did_open() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let params = DidOpenTextDocumentParams {
@@ -24,7 +24,7 @@ async fn test_did_open() {
 
 #[tokio::test]
 async fn test_did_change() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -59,7 +59,7 @@ async fn test_did_change() {
 
 #[tokio::test]
 async fn test_did_close() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -86,7 +86,7 @@ async fn test_did_close() {
 
 #[tokio::test]
 async fn test_full_document_lifecycle() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -127,7 +127,7 @@ async fn test_full_document_lifecycle() {
 
 #[tokio::test]
 async fn test_multiple_documents() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     // Open multiple documents

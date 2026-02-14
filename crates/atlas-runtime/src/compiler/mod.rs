@@ -260,7 +260,7 @@ mod tests {
     fn test_compile_number_literal() {
         let bytecode = compile_source("42;");
         // Should have: Constant, Pop, Halt
-        assert!(bytecode.instructions.len() > 0);
+        assert!(!bytecode.instructions.is_empty());
         assert_eq!(bytecode.instructions[0], Opcode::Constant as u8);
         assert_eq!(bytecode.constants.len(), 1);
         assert_eq!(bytecode.constants[0], Value::Number(42.0));
@@ -445,7 +445,7 @@ mod tests {
     fn test_compile_user_function_basic() {
         let bytecode = compile_source("fn add(a: number, b: number) -> number { return a + b; }");
         // Should have instructions for function definition
-        assert!(bytecode.instructions.len() > 0);
+        assert!(!bytecode.instructions.is_empty());
         // Should have function in constants
         let has_function = bytecode
             .constants
@@ -463,10 +463,7 @@ mod tests {
         "#,
         );
         // Should have Call opcode
-        let has_call = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Call as u8);
+        let has_call = bytecode.instructions.contains(&(Opcode::Call as u8));
         assert!(has_call, "Should have Call opcode");
     }
 
@@ -474,10 +471,7 @@ mod tests {
     fn test_compile_array_index_assignment() {
         let bytecode = compile_source("let arr = [1, 2, 3]; arr[0] = 42;");
         // Should have SetIndex opcode
-        let has_setindex = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::SetIndex as u8);
+        let has_setindex = bytecode.instructions.contains(&(Opcode::SetIndex as u8));
         assert!(has_setindex, "Should have SetIndex opcode");
     }
 
@@ -518,14 +512,8 @@ mod tests {
     fn test_compile_short_circuit_and() {
         let bytecode = compile_source("let result = false && true;");
         // Should have Dup and JumpIfFalse for short-circuit
-        let has_dup = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Dup as u8);
-        let has_jump = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_dup = bytecode.instructions.contains(&(Opcode::Dup as u8));
+        let has_jump = bytecode.instructions.contains(&(Opcode::JumpIfFalse as u8));
         assert!(has_dup, "Should have Dup for short-circuit");
         assert!(has_jump, "Should have JumpIfFalse for short-circuit");
     }
@@ -534,18 +522,9 @@ mod tests {
     fn test_compile_short_circuit_or() {
         let bytecode = compile_source("let result = true || false;");
         // Should have Dup, Not, and JumpIfFalse for short-circuit
-        let has_dup = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Dup as u8);
-        let has_not = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Not as u8);
-        let has_jump = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_dup = bytecode.instructions.contains(&(Opcode::Dup as u8));
+        let has_not = bytecode.instructions.contains(&(Opcode::Not as u8));
+        let has_jump = bytecode.instructions.contains(&(Opcode::JumpIfFalse as u8));
         assert!(has_dup, "Should have Dup for short-circuit");
         assert!(has_not, "Should have Not for || short-circuit");
         assert!(has_jump, "Should have JumpIfFalse for short-circuit");
@@ -555,10 +534,7 @@ mod tests {
     fn test_compile_return_statement() {
         let bytecode = compile_source("fn test() -> number { return 42; }");
         // Should have Return opcode
-        let has_return = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Return as u8);
+        let has_return = bytecode.instructions.contains(&(Opcode::Return as u8));
         assert!(has_return, "Should have Return opcode");
     }
 
@@ -584,12 +560,12 @@ mod tests {
     #[test]
     fn test_compile_number_to_constant_pool() {
         // Verify numbers are added to constant pool, not inlined
-        let bytecode = compile_source("42; 3.14; -1.5;");
+        let bytecode = compile_source("42; 2.5; -1.5;");
 
         // Should have 3 number constants (including the one for -1.5)
-        assert!(bytecode.constants.len() >= 2); // At least 42 and 3.14
+        assert!(bytecode.constants.len() >= 2); // At least 42 and 2.5
         assert_eq!(bytecode.constants[0], Value::Number(42.0));
-        assert_eq!(bytecode.constants[1], Value::Number(3.14));
+        assert_eq!(bytecode.constants[1], Value::Number(2.5));
     }
 
     #[test]
@@ -701,8 +677,8 @@ mod tests {
         // Test that large numbers are handled correctly
         let bytecode = compile_source("999999999.123456789;");
 
-        assert!(bytecode.constants.len() >= 1);
-        assert_eq!(bytecode.constants[0], Value::Number(999999999.123456789));
+        assert!(!bytecode.constants.is_empty());
+        assert_eq!(bytecode.constants[0], Value::Number(999_999_999.123_456_8));
     }
 
     #[test]
@@ -710,7 +686,7 @@ mod tests {
         // Test that empty strings work
         let bytecode = compile_source("\"\";");
 
-        assert!(bytecode.constants.len() >= 1);
+        assert!(!bytecode.constants.is_empty());
         if let Value::String(s) = &bytecode.constants[0] {
             assert_eq!(s.as_ref(), "");
         } else {
@@ -725,7 +701,7 @@ mod tests {
         let source = format!(r#""{}";"#, long_str);
         let bytecode = compile_source(&source);
 
-        assert!(bytecode.constants.len() >= 1);
+        assert!(!bytecode.constants.is_empty());
         if let Value::String(s) = &bytecode.constants[0] {
             assert_eq!(s.len(), 1000);
         } else {
@@ -800,10 +776,7 @@ mod tests {
         );
 
         // Check that we have a JumpIfFalse instruction with debug info
-        let has_jump = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::JumpIfFalse as u8);
+        let has_jump = bytecode.instructions.contains(&(Opcode::JumpIfFalse as u8));
         assert!(has_jump, "Should have JumpIfFalse instruction");
     }
 
@@ -819,10 +792,7 @@ mod tests {
         );
 
         // Verify we have Loop opcode with debug info
-        let has_loop = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Loop as u8);
+        let has_loop = bytecode.instructions.contains(&(Opcode::Loop as u8));
         assert!(has_loop, "Should have Loop instruction");
     }
 
@@ -838,10 +808,7 @@ mod tests {
         );
 
         // Verify we have Array opcode
-        let has_array = bytecode
-            .instructions
-            .iter()
-            .any(|&b| b == Opcode::Array as u8);
+        let has_array = bytecode.instructions.contains(&(Opcode::Array as u8));
         assert!(has_array, "Should have Array instruction");
     }
 

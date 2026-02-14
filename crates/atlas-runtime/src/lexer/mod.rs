@@ -384,7 +384,7 @@ mod tests {
     fn test_lexer_creation() {
         let mut lexer = Lexer::new("test");
         let (tokens, _) = lexer.tokenize();
-        assert!(tokens.len() >= 1); // At minimum, should have EOF
+        assert!(!tokens.is_empty()); // At minimum, should have EOF
     }
 
     #[test]
@@ -845,7 +845,7 @@ mod tests {
         let (_tokens, diagnostics) = lexer.tokenize();
 
         // Should report multiple errors
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         // First error should be unterminated string
         assert_eq!(diagnostics[0].code, "AT1002");
     }
@@ -906,7 +906,7 @@ mod tests {
             let mut lexer = Lexer::new(source);
             let (_, diagnostics) = lexer.tokenize();
 
-            assert!(diagnostics.len() >= 1, "Expected error for: {}", source);
+            assert!(!diagnostics.is_empty(), "Expected error for: {}", source);
             assert_eq!(
                 diagnostics[0].code, expected_code,
                 "Wrong code for: {}",

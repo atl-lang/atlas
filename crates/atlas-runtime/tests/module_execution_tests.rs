@@ -157,15 +157,15 @@ fn test_import_variable() {
     create_module(
         temp_dir.path(),
         "constants",
-        "export let PI: number = 3.14159;",
+        "export let SCALE: number = 4.2;",
     );
 
     let main = create_module(
         temp_dir.path(),
         "main",
         r#"
-import { PI } from "./constants";
-PI * 2;
+import { SCALE } from "./constants";
+SCALE * 2;
 "#,
     );
 
@@ -173,8 +173,8 @@ PI * 2;
     let result = executor.execute_module(&main);
 
     match result {
-        Ok(Value::Number(n)) => assert!((n - 6.28318).abs() < 0.00001),
-        Ok(v) => panic!("Expected Number(6.28318), got {:?}", v),
+        Ok(Value::Number(n)) => assert!((n - 8.4).abs() < 0.00001),
+        Ok(v) => panic!("Expected Number(8.4), got {:?}", v),
         Err(e) => panic!("Execution failed: {:?}", e),
     }
 }
@@ -680,7 +680,7 @@ fn test_imported_function_preserves_types() {
         temp_dir.path(),
         "string_ops",
         r#"
-export fn concat(a: string, b: string) -> string {
+export fn concatStrings(a: string, b: string) -> string {
     return a + b;
 }
 "#,
@@ -690,8 +690,8 @@ export fn concat(a: string, b: string) -> string {
         temp_dir.path(),
         "main",
         r#"
-import { concat } from "./string_ops";
-concat("Hello", " World");
+import { concatStrings } from "./string_ops";
+concatStrings("Hello", " World");
 "#,
     );
 

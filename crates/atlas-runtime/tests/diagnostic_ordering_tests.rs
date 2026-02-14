@@ -90,19 +90,17 @@ fn test_diagnostics_sorted_by_location() {
         let curr = &diags[i];
 
         // Same level: should be sorted by file, line, column
-        if prev.level == curr.level {
-            if prev.file == curr.file {
-                if prev.line == curr.line {
-                    assert!(
-                        prev.column <= curr.column,
-                        "Diagnostics should be sorted by column within same line"
-                    );
-                } else {
-                    assert!(
-                        prev.line < curr.line,
-                        "Diagnostics should be sorted by line"
-                    );
-                }
+        if prev.level == curr.level && prev.file == curr.file {
+            if prev.line == curr.line {
+                assert!(
+                    prev.column <= curr.column,
+                    "Diagnostics should be sorted by column within same line"
+                );
+            } else {
+                assert!(
+                    prev.line < curr.line,
+                    "Diagnostics should be sorted by line"
+                );
             }
         }
     }
@@ -167,7 +165,7 @@ fn test_normalization_preserves_special_paths() {
     let mut diags = get_all_diagnostics(source);
 
     // Set special paths
-    let special_paths = vec!["<input>", "<stdin>", "<unknown>"];
+    let special_paths = ["<input>", "<stdin>", "<unknown>"];
     for (i, path) in special_paths.iter().enumerate() {
         if let Some(diag) = diags.get_mut(i) {
             diag.file = path.to_string();

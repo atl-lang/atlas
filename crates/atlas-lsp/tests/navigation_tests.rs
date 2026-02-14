@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_document_symbols() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -55,7 +55,7 @@ fn increment() -> number {
 
 #[tokio::test]
 async fn test_hover_on_function() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -95,7 +95,7 @@ fn add(a: number, b: number) -> number {
 
 #[tokio::test]
 async fn test_goto_definition_placeholder() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -137,7 +137,7 @@ var result: number = add(1, 2);
 
 #[tokio::test]
 async fn test_references_placeholder() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -183,7 +183,7 @@ var y: number = add(3, 4);
 
 #[tokio::test]
 async fn test_document_symbols_empty_file() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///empty.atl").unwrap();

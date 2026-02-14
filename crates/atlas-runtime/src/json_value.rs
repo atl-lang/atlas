@@ -229,8 +229,8 @@ mod tests {
         assert_eq!(val.as_number(), Some(42.0));
         assert_eq!(val.to_string(), "42");
 
-        let val = JsonValue::Number(3.14);
-        assert_eq!(val.to_string(), "3.14");
+        let val = JsonValue::Number(2.5);
+        assert_eq!(val.to_string(), "2.5");
     }
 
     #[test]

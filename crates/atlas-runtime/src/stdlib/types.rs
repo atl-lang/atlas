@@ -147,11 +147,11 @@ mod tests {
         let some_val = some(Value::Number(42.0));
         let none_val = none();
 
-        assert_eq!(is_some(&some_val, Span::dummy()).unwrap(), true);
-        assert_eq!(is_none(&some_val, Span::dummy()).unwrap(), false);
+        assert!(is_some(&some_val, Span::dummy()).unwrap());
+        assert!(!is_none(&some_val, Span::dummy()).unwrap());
 
-        assert_eq!(is_some(&none_val, Span::dummy()).unwrap(), false);
-        assert_eq!(is_none(&none_val, Span::dummy()).unwrap(), true);
+        assert!(!is_some(&none_val, Span::dummy()).unwrap());
+        assert!(is_none(&none_val, Span::dummy()).unwrap());
     }
 
     #[test]
@@ -189,11 +189,11 @@ mod tests {
         let ok_val = ok(Value::Number(42.0));
         let err_val = err(Value::string("error"));
 
-        assert_eq!(is_ok(&ok_val, Span::dummy()).unwrap(), true);
-        assert_eq!(is_err(&ok_val, Span::dummy()).unwrap(), false);
+        assert!(is_ok(&ok_val, Span::dummy()).unwrap());
+        assert!(!is_err(&ok_val, Span::dummy()).unwrap());
 
-        assert_eq!(is_ok(&err_val, Span::dummy()).unwrap(), false);
-        assert_eq!(is_err(&err_val, Span::dummy()).unwrap(), true);
+        assert!(!is_ok(&err_val, Span::dummy()).unwrap());
+        assert!(is_err(&err_val, Span::dummy()).unwrap());
     }
 
     #[test]

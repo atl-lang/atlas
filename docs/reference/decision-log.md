@@ -93,3 +93,21 @@ This log captures irreversible or high-impact design decisions. Update when a ne
   - **Con:** Code bloat for many instantiations (mitigated by caching)
   - **Con:** Longer compile times for generic-heavy code
 - **Status:** Infrastructure complete (BLOCKER 02-C). Full pipeline in BLOCKER 02-D (Option<T>, Result<T,E>).
+
+## Array API - Intrinsics vs Stdlib (v0.2)
+- **Strategy:** Split array functions by callback requirements
+- **Rationale:** Callback-based functions need runtime execution context to invoke user code
+- **Implementation:**
+  - **Pure functions** (10): Implemented in `stdlib/array.rs` - pop, shift, unshift, reverse, concat, flatten, indexOf, lastIndexOf, includes, slice
+  - **Callback intrinsics** (11): Implemented in interpreter/VM directly - map, filter, reduce, forEach, find, findIndex, flatMap, some, every, sort, sortBy
+- **Real-world precedent:**
+  - V8 (JavaScript): `Array.prototype.map/filter/reduce` implemented as C++ runtime intrinsics
+  - CPython: `map()`, `filter()` implemented as builtin types in C
+  - Rust: Iterator methods like `map/filter` are compiler intrinsics for optimization
+- **Trade-offs:**
+  - **Pro:** Maintains clean stdlib interface, each engine uses native calling mechanism
+  - **Pro:** No complex abstraction layer needed for 2-engine architecture
+  - **Pro:** Matches production compiler patterns
+  - **Con:** Code in two places (but already Atlas's dual-engine architecture)
+- **Alternative rejected:** Create function-caller trait → adds complexity without benefit for 2 engines in same codebase
+- **Status:** Phase stdlib/phase-02-complete-array-api.md (v0.2)

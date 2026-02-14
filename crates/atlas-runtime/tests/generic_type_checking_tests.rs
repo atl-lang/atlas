@@ -123,7 +123,7 @@ fn test_duplicate_type_parameter() {
         }
     "#,
     );
-    assert!(diagnostics.len() > 0);
+    assert!(!diagnostics.is_empty());
     assert!(diagnostics[0].message.contains("Duplicate type parameter"));
 }
 
@@ -290,7 +290,7 @@ fn test_option_wrong_arity_too_many() {
         fn test(_x: Option<number, string>) -> void {}
     "#,
     );
-    assert!(diagnostics.len() > 0);
+    assert!(!diagnostics.is_empty());
     assert!(diagnostics[0].message.contains("expects 1 type argument"));
 }
 
@@ -301,7 +301,7 @@ fn test_result_wrong_arity_too_few() {
         fn test(_x: Result<number>) -> void {}
     "#,
     );
-    assert!(diagnostics.len() > 0);
+    assert!(!diagnostics.is_empty());
     assert!(diagnostics[0].message.contains("expects 2 type argument"));
 }
 
@@ -312,7 +312,7 @@ fn test_unknown_generic_type() {
         fn test(_x: UnknownGeneric<number>) -> void {}
     "#,
     );
-    assert!(diagnostics.len() > 0);
+    assert!(!diagnostics.is_empty());
     assert!(diagnostics[0].message.contains("Unknown generic type"));
 }
 
@@ -374,7 +374,7 @@ fn test_inference_type_mismatch() {
         let _result = both(42, "hello");
     "#,
     );
-    assert!(diagnostics.len() > 0);
+    assert!(!diagnostics.is_empty());
     assert!(
         diagnostics[0].message.contains("Type inference failed")
             || diagnostics[0].message.contains("cannot match")

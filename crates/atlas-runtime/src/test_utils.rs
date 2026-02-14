@@ -2,8 +2,6 @@
 //!
 //! Shared utilities for testing across the codebase.
 
-#![cfg(test)]
-
 use crate::diagnostic::{normalizer::normalize_diagnostic_for_testing, Diagnostic};
 
 /// Normalize diagnostics for golden testing

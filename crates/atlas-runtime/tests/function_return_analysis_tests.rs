@@ -106,7 +106,7 @@ fn test_return_after_statements() {
 fn test_early_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn abs(x: number) -> number {
+        fn myAbs(x: number) -> number {
             if (x < 0) {
                 return -x;
             }
@@ -173,7 +173,7 @@ fn test_missing_return_bool_function() {
 fn test_if_else_both_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn abs(x: number) -> number {
+        fn myAbs(x: number) -> number {
             if (x < 0) {
                 return -x;
             } else {
@@ -627,7 +627,7 @@ fn test_simple_return_without_nesting() {
 fn test_return_after_if_without_else() {
     let diagnostics = typecheck_source(
         r#"
-        fn max(a: number, b: number) -> number {
+        fn myMax(a: number, b: number) -> number {
             if (a > b) {
                 return a;
             }

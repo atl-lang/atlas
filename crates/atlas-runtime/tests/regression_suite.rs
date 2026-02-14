@@ -25,7 +25,7 @@ use common::*;
 
 #[rstest]
 #[case("42;", 42.0)]
-#[case("3.14;", 3.14)]
+#[case("2.5;", 2.5)]
 #[case("0;", 0.0)]
 #[case("-42;", -42.0)]
 fn regression_number_literals(#[case] code: &str, #[case] expected: f64) {

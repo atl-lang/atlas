@@ -208,7 +208,7 @@ fn test_json_display_bool() {
 #[test]
 fn test_json_display_number() {
     assert_eq!(JsonValue::Number(42.0).to_string(), "42");
-    assert_eq!(JsonValue::Number(3.14).to_string(), "3.14");
+    assert_eq!(JsonValue::Number(2.5).to_string(), "2.5");
     assert_eq!(JsonValue::Number(-5.0).to_string(), "-5");
 }
 

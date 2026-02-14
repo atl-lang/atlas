@@ -229,6 +229,472 @@ impl SymbolTable {
             },
         );
 
+        // Array functions - Use Any for now (proper generics support needs more work)
+        // TODO: Improve type signatures when proper generic inference is ready
+        table.define_builtin(
+            "pop",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number))], // Simplified
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "shift",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number))],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "unshift",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "reverse",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number))],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "concat",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Number)),
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "flatten",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Array(Box::new(Type::Number))))],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "arrayIndexOf",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "arrayLastIndexOf",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "arrayIncludes",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "slice",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Number,
+                    Type::Number,
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+
+        // Array intrinsics (callback-based) - simplified signatures
+        table.define_builtin(
+            "map",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Number),
+                    },
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "filter",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Bool),
+                    },
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "reduce",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number, Type::Number],
+                        return_type: Box::new(Type::Number),
+                    },
+                    Type::Number,
+                ],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "forEach",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Void),
+                    },
+                ],
+                return_type: Box::new(Type::Null),
+            },
+        );
+        table.define_builtin(
+            "find",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Bool),
+                    },
+                ],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "findIndex",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Bool),
+                    },
+                ],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "flatMap",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                    },
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "some",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Bool),
+                    },
+                ],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "every",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Bool),
+                    },
+                ],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "sort",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number, Type::Number],
+                        return_type: Box::new(Type::Number),
+                    },
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+        table.define_builtin(
+            "sortBy",
+            Type::Function {
+                type_params: vec![],
+                params: vec![
+                    Type::Array(Box::new(Type::Number)),
+                    Type::Function {
+                        type_params: vec![],
+                        params: vec![Type::Number],
+                        return_type: Box::new(Type::Number),
+                    },
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+            },
+        );
+
+        // Math functions - Basic Operations
+        table.define_builtin(
+            "abs",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "floor",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "ceil",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "round",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "min",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number, Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "max",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number, Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+
+        // Math functions - Exponential/Power
+        table.define_builtin(
+            "sqrt",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "pow",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number, Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "log",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+
+        // Math functions - Trigonometry
+        table.define_builtin(
+            "sin",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "cos",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "tan",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "asin",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "acos",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "atan",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+
+        // Math functions - Utilities
+        table.define_builtin(
+            "clamp",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number, Type::Number, Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "sign",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+        );
+        table.define_builtin(
+            "random",
+            Type::Function {
+                type_params: vec![],
+                params: vec![],
+                return_type: Box::new(Type::Number),
+            },
+        );
+
+        // Math constants (registered as variables, not functions)
+        table
+            .define(Symbol {
+                name: "PI".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .ok(); // Ignore if already defined
+
+        table
+            .define(Symbol {
+                name: "E".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .ok();
+
+        table
+            .define(Symbol {
+                name: "SQRT2".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .ok();
+
+        table
+            .define(Symbol {
+                name: "LN2".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .ok();
+
+        table
+            .define(Symbol {
+                name: "LN10".to_string(),
+                ty: Type::Number,
+                mutable: false,
+                kind: SymbolKind::Builtin,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .ok();
+
         table
     }
 

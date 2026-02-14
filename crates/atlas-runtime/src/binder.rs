@@ -894,7 +894,7 @@ mod tests {
         "#,
         );
 
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics.iter().any(|d| d.code == "AT2003"));
     }
 

@@ -112,8 +112,7 @@ impl Permission {
                 }
 
                 // Wildcard: *.example.com matches api.example.com
-                if allowed.starts_with("*.") {
-                    let domain = &allowed[2..];
+                if let Some(domain) = allowed.strip_prefix("*.") {
                     if requested.ends_with(domain) {
                         // Check it's a proper subdomain match
                         if requested == domain {
@@ -142,9 +141,7 @@ impl Permission {
             // Environment: exact variable name match
             (
                 Permission::Environment { var: allowed_var },
-                Permission::Environment {
-                    var: requested_var,
-                },
+                Permission::Environment { var: requested_var },
             ) => allowed_var == requested_var || allowed_var == "*",
 
             // Different permission types never match
@@ -229,7 +226,7 @@ impl SecurityContext {
     ///
     /// Note: This requires atlas-config to be available. For now, this is a placeholder
     /// that will be implemented when integrating with the runtime.
-    #[cfg(feature = "config-integration")]
+    #[allow(dead_code)] // TODO: Implement full config integration (future phase)
     pub fn from_config(_config: &atlas_config::SecurityConfig) -> Self {
         // TODO: Implement full config integration
         Self::new()
@@ -268,26 +265,21 @@ impl SecurityContext {
     /// Grant filesystem read permission
     pub fn grant_filesystem_read(&mut self, path: &Path, recursive: bool) {
         let path = canonicalize_path_safe(path);
-        self.filesystem_read.grant(Permission::FilesystemRead {
-            path,
-            recursive,
-        });
+        self.filesystem_read
+            .grant(Permission::FilesystemRead { path, recursive });
     }
 
     /// Grant filesystem write permission
     pub fn grant_filesystem_write(&mut self, path: &Path, recursive: bool) {
         let path = canonicalize_path_safe(path);
-        self.filesystem_write.grant(Permission::FilesystemWrite {
-            path,
-            recursive,
-        });
+        self.filesystem_write
+            .grant(Permission::FilesystemWrite { path, recursive });
     }
 
     /// Grant network permission
     pub fn grant_network(&mut self, host: impl Into<String>) {
-        self.network.grant(Permission::Network {
-            host: host.into(),
-        });
+        self.network
+            .grant(Permission::Network { host: host.into() });
     }
 
     /// Grant process execution permission
@@ -299,7 +291,8 @@ impl SecurityContext {
 
     /// Grant environment variable access permission
     pub fn grant_environment(&mut self, var: impl Into<String>) {
-        self.environment.grant(Permission::Environment { var: var.into() });
+        self.environment
+            .grant(Permission::Environment { var: var.into() });
     }
 
     // Permission checking methods
@@ -570,7 +563,9 @@ mod tests {
         let mut ctx = SecurityContext::new();
         ctx.grant_filesystem_read(Path::new("/data"), true);
 
-        assert!(ctx.check_filesystem_read(Path::new("/data/file.txt")).is_ok());
+        assert!(ctx
+            .check_filesystem_read(Path::new("/data/file.txt"))
+            .is_ok());
         assert!(ctx
             .check_filesystem_read(Path::new("/other/file.txt"))
             .is_err());

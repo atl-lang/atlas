@@ -239,12 +239,26 @@ fn test_empty_program_typecheck_dump() {
     let dump = typecheck_dump_from_source(source);
 
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
+
+    // Empty program has only prelude builtin constants (E, LN10, LN2, PI, SQRT2)
     assert_eq!(
         dump.symbols.len(),
-        0,
-        "Empty program should have no symbols"
+        5,
+        "Empty program should have 5 prelude constants"
     );
-    assert_eq!(dump.types.len(), 0, "Empty program should have no types");
+
+    // All symbols should be builtins
+    for symbol in &dump.symbols {
+        assert_eq!(symbol.kind, "builtin", "All symbols should be builtins");
+        assert_eq!(
+            symbol.ty, "number",
+            "All builtin constants should be numbers"
+        );
+    }
+
+    // Should have number type from the constants
+    assert_eq!(dump.types.len(), 1, "Empty program should have number type");
+    assert_eq!(dump.types[0].name, "number");
 }
 
 #[test]
@@ -266,10 +280,10 @@ fn test_complex_program_typecheck_dump() {
 
     assert_eq!(dump.typecheck_version, TYPECHECK_VERSION);
     assert!(
-        dump.symbols.len() > 0,
+        !dump.symbols.is_empty(),
         "Complex program should have symbols"
     );
-    assert!(dump.types.len() > 0, "Complex program should have types");
+    assert!(!dump.types.is_empty(), "Complex program should have types");
 
     // Verify JSON is valid
     let json = dump.to_json_string().unwrap();
@@ -325,7 +339,7 @@ fn test_function_types_in_typecheck_dump() {
         .iter()
         .filter(|t| t.name.contains("->"))
         .collect();
-    assert!(func_types.len() > 0, "Should have function type");
+    assert!(!func_types.is_empty(), "Should have function type");
 
     // Verify function type has correct kind
     for func_type in func_types {

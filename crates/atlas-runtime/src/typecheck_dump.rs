@@ -79,8 +79,9 @@ impl TypecheckDump {
             })
             .collect();
 
-        // Sort symbols by position for deterministic output
-        dump.symbols.sort_by_key(|s| s.start);
+        // Sort symbols by position, then by name for deterministic output
+        dump.symbols
+            .sort_by(|a, b| a.start.cmp(&b.start).then(a.name.cmp(&b.name)));
 
         // Collect unique types
         let mut type_names = std::collections::HashSet::new();
@@ -369,12 +370,19 @@ mod tests {
 
         let dump = TypecheckDump::from_symbol_table(&table);
 
+        // Filter out builtin symbols to focus on user-defined ones
+        let user_symbols: Vec<_> = dump
+            .symbols
+            .iter()
+            .filter(|s| s.kind != "builtin")
+            .collect();
+
         // Symbols should be sorted by position (start)
-        assert_eq!(dump.symbols.len(), 2);
-        assert_eq!(dump.symbols[0].name, "a");
-        assert_eq!(dump.symbols[0].start, 0);
-        assert_eq!(dump.symbols[1].name, "z");
-        assert_eq!(dump.symbols[1].start, 10);
+        assert_eq!(user_symbols.len(), 2);
+        assert_eq!(user_symbols[0].name, "a");
+        assert_eq!(user_symbols[0].start, 0);
+        assert_eq!(user_symbols[1].name, "z");
+        assert_eq!(user_symbols[1].start, 10);
     }
 
     #[test]

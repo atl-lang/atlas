@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 /// Helper to open a document and extract diagnostics from client messages
 async fn get_diagnostics_for_source(source: &str) -> Vec<Diagnostic> {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -50,7 +50,7 @@ async fn test_no_errors_clean_diagnostics() {
 
 #[tokio::test]
 async fn test_diagnostics_update_on_change() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -96,7 +96,7 @@ let z
 
 #[tokio::test]
 async fn test_diagnostics_clear_on_close() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -187,7 +187,7 @@ let arr: number[] = [1, 2, 3];
 
 #[tokio::test]
 async fn test_incremental_error_fixing() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -236,7 +236,7 @@ async fn test_incremental_error_fixing() {
 
 #[tokio::test]
 async fn test_rapid_document_changes() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();

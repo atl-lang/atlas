@@ -6,7 +6,7 @@ use tower_lsp::{LanguageServer, LspService};
 
 #[tokio::test]
 async fn test_full_workflow_with_diagnostics_and_completion() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///workflow.atl").unwrap();
@@ -122,7 +122,7 @@ fn add(a: number, b: number) -> number {
 
 #[tokio::test]
 async fn test_multiple_documents_simultaneously() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     // Open 5 documents simultaneously
@@ -162,7 +162,7 @@ async fn test_multiple_documents_simultaneously() {
 
 #[tokio::test]
 async fn test_large_document_performance() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///large.atl").unwrap();
@@ -204,7 +204,7 @@ async fn test_large_document_performance() {
 
 #[tokio::test]
 async fn test_invalid_document_uri() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     // Try to get completions from non-existent document
@@ -229,7 +229,7 @@ async fn test_invalid_document_uri() {
 
 #[tokio::test]
 async fn test_out_of_bounds_positions() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///test.atl").unwrap();
@@ -264,7 +264,7 @@ async fn test_out_of_bounds_positions() {
 
 #[tokio::test]
 async fn test_unicode_content() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///unicode.atl").unwrap();
@@ -299,7 +299,7 @@ async fn test_unicode_content() {
 
 #[tokio::test]
 async fn test_empty_file_all_operations() {
-    let (service, _socket) = LspService::new(|client| AtlasLspServer::new(client));
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
     let uri = Url::parse("file:///empty.atl").unwrap();

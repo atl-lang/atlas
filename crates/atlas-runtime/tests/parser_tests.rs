@@ -271,7 +271,7 @@ fn test_parse_error_recovery() {
     assert!(!diagnostics.is_empty(), "Expected syntax error");
     // Parser should recover and parse the second statement
     assert!(
-        program.items.len() >= 1,
+        !program.items.is_empty(),
         "Expected at least one item after recovery"
     );
 }

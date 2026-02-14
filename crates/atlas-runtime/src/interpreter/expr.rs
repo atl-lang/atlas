@@ -227,6 +227,22 @@ impl Interpreter {
                     return crate::stdlib::call_builtin(&func_ref.name, &args, call.span);
                 }
 
+                // Check for array intrinsics (callback-based functions)
+                match func_ref.name.as_str() {
+                    "map" => return self.intrinsic_map(&args, call.span),
+                    "filter" => return self.intrinsic_filter(&args, call.span),
+                    "reduce" => return self.intrinsic_reduce(&args, call.span),
+                    "forEach" => return self.intrinsic_for_each(&args, call.span),
+                    "find" => return self.intrinsic_find(&args, call.span),
+                    "findIndex" => return self.intrinsic_find_index(&args, call.span),
+                    "flatMap" => return self.intrinsic_flat_map(&args, call.span),
+                    "some" => return self.intrinsic_some(&args, call.span),
+                    "every" => return self.intrinsic_every(&args, call.span),
+                    "sort" => return self.intrinsic_sort(&args, call.span),
+                    "sortBy" => return self.intrinsic_sort_by(&args, call.span),
+                    _ => {}
+                }
+
                 // User-defined function - look up body
                 if let Some(func) = self.function_bodies.get(&func_ref.name).cloned() {
                     return self.call_user_function(&func, args, call.span);
@@ -524,6 +540,587 @@ impl Interpreter {
             (Value::Bool(x), Value::Bool(y)) => x == y,
             (Value::Null, Value::Null) => true,
             _ => false,
+        }
+    }
+
+    // ========================================================================
+    // Array Intrinsics (Callback-based operations)
+    // ========================================================================
+
+    /// map(array, callback) - Transform each element
+    fn intrinsic_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "map() expects 2 arguments (array, callback)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "map() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "map() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let mut result = Vec::with_capacity(arr.len());
+        for elem in arr {
+            // Call callback with element
+            let callback_result = self.call_value(callback, vec![elem], span)?;
+            result.push(callback_result);
+        }
+
+        Ok(Value::array(result))
+    }
+
+    /// filter(array, predicate) - Keep elements matching predicate
+    fn intrinsic_filter(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "filter() expects 2 arguments (array, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "filter() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "filter() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let mut result = Vec::new();
+        for elem in arr {
+            let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
+            match pred_result {
+                Value::Bool(true) => result.push(elem),
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "filter() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::array(result))
+    }
+
+    /// reduce(array, reducer, initial) - Accumulate to single value
+    fn intrinsic_reduce(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 3 {
+            return Err(RuntimeError::TypeError {
+                msg: "reduce() expects 3 arguments (array, reducer, initial)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "reduce() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let reducer = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "reduce() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let mut accumulator = args[2].clone();
+        for elem in arr {
+            accumulator = self.call_value(reducer, vec![accumulator, elem], span)?;
+        }
+
+        Ok(accumulator)
+    }
+
+    /// forEach(array, callback) - Execute callback for each element
+    fn intrinsic_for_each(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "forEach() expects 2 arguments (array, callback)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "forEach() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "forEach() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        for elem in arr {
+            self.call_value(callback, vec![elem], span)?;
+        }
+
+        Ok(Value::Null)
+    }
+
+    /// find(array, predicate) - Find first matching element
+    fn intrinsic_find(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "find() expects 2 arguments (array, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "find() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "find() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        for elem in arr {
+            let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
+            match pred_result {
+                Value::Bool(true) => return Ok(elem),
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "find() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::Null)
+    }
+
+    /// findIndex(array, predicate) - Find index of first matching element
+    fn intrinsic_find_index(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "findIndex() expects 2 arguments (array, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "findIndex() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "findIndex() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        for (i, elem) in arr.iter().enumerate() {
+            let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
+            match pred_result {
+                Value::Bool(true) => return Ok(Value::Number(i as f64)),
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "findIndex() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::Number(-1.0))
+    }
+
+    /// flatMap(array, callback) - Map and flatten one level
+    fn intrinsic_flat_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "flatMap() expects 2 arguments (array, callback)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "flatMap() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "flatMap() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let mut result = Vec::new();
+        for elem in arr {
+            let callback_result = self.call_value(callback, vec![elem], span)?;
+            match callback_result {
+                Value::Array(nested) => {
+                    result.extend(nested.borrow().clone());
+                }
+                other => result.push(other),
+            }
+        }
+
+        Ok(Value::array(result))
+    }
+
+    /// some(array, predicate) - Check if any element matches
+    fn intrinsic_some(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "some() expects 2 arguments (array, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "some() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "some() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        for elem in arr {
+            let pred_result = self.call_value(predicate, vec![elem], span)?;
+            match pred_result {
+                Value::Bool(true) => return Ok(Value::Bool(true)),
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "some() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::Bool(false))
+    }
+
+    /// every(array, predicate) - Check if all elements match
+    fn intrinsic_every(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "every() expects 2 arguments (array, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "every() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "every() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        for elem in arr {
+            let pred_result = self.call_value(predicate, vec![elem], span)?;
+            match pred_result {
+                Value::Bool(false) => return Ok(Value::Bool(false)),
+                Value::Bool(true) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "every() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::Bool(true))
+    }
+
+    /// sort(array, comparator) - Sort with custom comparator
+    ///
+    /// Uses insertion sort for stability and simplicity with callbacks
+    fn intrinsic_sort(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "sort() expects 2 arguments (array, comparator)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "sort() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let comparator = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "sort() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        // Simple insertion sort (stable) with callback comparisons
+        let mut sorted = arr;
+        for i in 1..sorted.len() {
+            let mut j = i;
+            while j > 0 {
+                let cmp_result = self.call_value(
+                    comparator,
+                    vec![sorted[j].clone(), sorted[j - 1].clone()],
+                    span,
+                )?;
+                match cmp_result {
+                    Value::Number(n) if n < 0.0 => {
+                        sorted.swap(j, j - 1);
+                        j -= 1;
+                    }
+                    Value::Number(_) => break,
+                    _ => {
+                        return Err(RuntimeError::TypeError {
+                            msg: "sort() comparator must return number".to_string(),
+                            span,
+                        })
+                    }
+                }
+            }
+        }
+
+        Ok(Value::array(sorted))
+    }
+
+    /// sortBy(array, keyExtractor) - Sort by extracted key
+    fn intrinsic_sort_by(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "sortBy() expects 2 arguments (array, keyExtractor)".to_string(),
+                span,
+            });
+        }
+
+        let arr = match &args[0] {
+            Value::Array(a) => a.borrow().clone(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "sortBy() first argument must be array".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let key_extractor = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "sortBy() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        // Extract keys first
+        let mut keyed: Vec<(Value, Value)> = Vec::new();
+        for elem in arr {
+            let key = self.call_value(key_extractor, vec![elem.clone()], span)?;
+            keyed.push((key, elem));
+        }
+
+        // Sort by keys (stable)
+        keyed.sort_by(|(key_a, _), (key_b, _)| match (key_a, key_b) {
+            (Value::Number(a), Value::Number(b)) => {
+                if a < b {
+                    std::cmp::Ordering::Less
+                } else if a > b {
+                    std::cmp::Ordering::Greater
+                } else {
+                    std::cmp::Ordering::Equal
+                }
+            }
+            (Value::String(a), Value::String(b)) => a.cmp(b),
+            _ => std::cmp::Ordering::Equal,
+        });
+
+        // Extract sorted elements
+        let sorted: Vec<Value> = keyed.into_iter().map(|(_, elem)| elem).collect();
+        Ok(Value::array(sorted))
+    }
+
+    /// Helper: Call a function value with arguments
+    fn call_value(
+        &mut self,
+        func: &Value,
+        args: Vec<Value>,
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        match func {
+            Value::Function(func_ref) => {
+                // Check for builtins
+                if crate::stdlib::is_builtin(&func_ref.name) {
+                    return crate::stdlib::call_builtin(&func_ref.name, &args, span);
+                }
+
+                // User-defined function
+                if let Some(user_func) = self.function_bodies.get(&func_ref.name).cloned() {
+                    return self.call_user_function(&user_func, args, span);
+                }
+
+                Err(RuntimeError::UnknownFunction {
+                    name: func_ref.name.clone(),
+                    span,
+                })
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "Expected function value".to_string(),
+                span,
+            }),
         }
     }
 }

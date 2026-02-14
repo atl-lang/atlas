@@ -81,7 +81,10 @@ fn test_audit_logger_logs_network_denied() {
 
     let entries = logger.entries();
     assert_eq!(entries.len(), 1);
-    assert!(matches!(&entries[0].event, AuditEvent::NetworkDenied { .. }));
+    assert!(matches!(
+        &entries[0].event,
+        AuditEvent::NetworkDenied { .. }
+    ));
 }
 
 #[test]
@@ -109,7 +112,10 @@ fn test_audit_logger_logs_process_denied() {
 
     let entries = logger.entries();
     assert_eq!(entries.len(), 1);
-    assert!(matches!(&entries[0].event, AuditEvent::ProcessDenied { .. }));
+    assert!(matches!(
+        &entries[0].event,
+        AuditEvent::ProcessDenied { .. }
+    ));
 }
 
 #[test]
@@ -357,7 +363,9 @@ fn test_audit_logger_thread_safe() {
     use std::thread;
 
     let logger = Arc::new(MemoryAuditLogger::new());
-    let ctx = Arc::new(SecurityContext::with_audit_logger(logger.clone() as Arc<dyn AuditLogger>));
+    let ctx = Arc::new(SecurityContext::with_audit_logger(
+        logger.clone() as Arc<dyn AuditLogger>
+    ));
 
     let handles: Vec<_> = (0..10)
         .map(|i| {

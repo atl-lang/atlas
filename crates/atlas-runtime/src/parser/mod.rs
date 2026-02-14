@@ -530,7 +530,7 @@ mod tests {
     #[test]
     fn test_recovery_missing_semicolon() {
         let (_program, diagnostics) = parse_source("let x = 42\nlet y = 10;");
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(
             diagnostics[0].message.contains("Expected ';'")
                 || diagnostics[0].message.contains("Expected")
@@ -541,7 +541,7 @@ mod tests {
     fn test_recovery_missing_closing_brace_in_block() {
         let source = "fn test() {\n    let x = 42;\n\nfn other() { }";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         let has_brace_error = diagnostics
             .iter()
             .any(|d| d.message.contains("Expected '}'"));
@@ -552,7 +552,7 @@ mod tests {
     fn test_recovery_missing_closing_paren() {
         let source = "if (x > 10 { let y = 5; }";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics[0].message.contains("Expected ')'"));
     }
 
@@ -560,7 +560,7 @@ mod tests {
     fn test_recovery_invalid_expression() {
         let source = "let x = ;\nlet y = 42;";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(
             diagnostics[0].message.contains("Expected expression")
                 || diagnostics[0].message.contains("Expected '='")
@@ -572,7 +572,7 @@ mod tests {
         let source = "let x = ;\nlet y = ;\nlet z = 99;";
         let (_program, diagnostics) = parse_source(source);
         assert!(
-            diagnostics.len() >= 1,
+            !diagnostics.is_empty(),
             "Expected at least 1 error, got {}",
             diagnostics.len()
         );
@@ -582,7 +582,7 @@ mod tests {
     fn test_recovery_missing_function_body_brace() {
         let source = "fn test()\n    return 42;\n}";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics[0].message.contains("Expected '{'"));
     }
 
@@ -590,7 +590,7 @@ mod tests {
     fn test_recovery_nested_block_error() {
         let source = "fn test() {\n    if (true) {\n        let x = ;\n    }\n    let y = 42;\n}";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(diagnostics
             .iter()
             .any(|d| d.message.contains("Expected expression") || d.message.contains("Expected")));
@@ -600,7 +600,7 @@ mod tests {
     fn test_recovery_missing_comma_in_params() {
         let source = "fn test(x: number y: number) { }";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
         assert!(
             diagnostics[0].message.contains("Expected ')'")
                 || diagnostics[0].message.contains("Expected")
@@ -611,28 +611,28 @@ mod tests {
     fn test_recovery_missing_comma_in_array() {
         let source = "[1 2 3];";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
     }
 
     #[test]
     fn test_recovery_synchronize_at_statement_keyword() {
         let source = "let x = ;\nif (true) { }\nlet y = 5;";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
     }
 
     #[test]
     fn test_recovery_no_infinite_loop_on_eof() {
         let source = "let x = ";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
     }
 
     #[test]
     fn test_recovery_preserves_valid_code_after_error() {
         let source = "let bad = ;\nlet good = 42;";
         let (_program, diagnostics) = parse_source(source);
-        assert!(diagnostics.len() >= 1);
+        assert!(!diagnostics.is_empty());
     }
 
     #[test]

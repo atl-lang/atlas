@@ -189,15 +189,27 @@ fn test_cli_check() {
 
 ## Test Organization
 
-```rust
-// Test categories
-mod lexer_tests;
-mod parser_tests;
-mod typechecker_tests;
-mod interpreter_tests;
-mod vm_tests;
-mod e2e_tests;
 ```
+tests/
+├── stdlib/               # Modular interpreter stdlib tests
+│   ├── mod.rs           # Common utilities (eval_ok, eval_err)
+│   ├── array_*.rs       # Array API tests
+│   ├── math_*.rs        # Math API tests
+│   └── string_*.rs      # String API tests (future)
+├── vm/                  # Modular VM stdlib tests (mirrors stdlib/)
+│   ├── mod.rs           # Common utilities (execute_vm_ok, execute_vm_err)
+│   └── ...              # Same structure as stdlib/
+├── lexer_tests.rs       # Lexer unit/integration tests
+├── parser_tests.rs      # Parser unit/integration tests
+├── typechecker_tests.rs # Type checker tests
+└── ...                  # Other component tests
+```
+
+**Modular Structure Benefits:**
+- Each module focuses on specific functionality (< 800 lines)
+- stdlib/ and vm/ directories ensure interpreter/VM parity
+- Shared utilities in mod.rs reduce boilerplate
+- Easy to locate and add tests for new features
 
 ## Key Principles
 

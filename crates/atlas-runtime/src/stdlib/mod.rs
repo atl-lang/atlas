@@ -1,11 +1,13 @@
 //! Standard library functions
 
+pub mod array;
+pub mod math;
 pub mod string;
 pub mod types;
 
 use crate::value::{RuntimeError, Value};
 
-/// Check if a function name is a builtin
+/// Check if a function name is a builtin (stdlib function, not intrinsic)
 pub fn is_builtin(name: &str) -> bool {
     matches!(
         name,
@@ -15,12 +17,38 @@ pub fn is_builtin(name: &str) -> bool {
             | "indexOf" | "lastIndexOf" | "includes"
             | "toUpperCase" | "toLowerCase" | "substring" | "charAt" | "repeat" | "replace"
             | "padStart" | "padEnd" | "startsWith" | "endsWith"
+            // Array functions (pure)
+            | "pop" | "shift" | "unshift" | "reverse" | "concat" | "flatten"
+            | "arrayIndexOf" | "arrayLastIndexOf" | "arrayIncludes" | "slice"
+            // Math functions
+            | "abs" | "floor" | "ceil" | "round" | "min" | "max"
+            | "sqrt" | "pow" | "log"
+            | "sin" | "cos" | "tan" | "asin" | "acos" | "atan"
+            | "clamp" | "sign" | "random"
             // Option functions
             | "Some" | "None" | "is_some" | "is_none"
             // Result functions
             | "Ok" | "Err" | "is_ok" | "is_err"
             // Generic unwrap functions (work with both Option and Result)
             | "unwrap" | "unwrap_or"
+    )
+}
+
+/// Check if a function name is an array intrinsic (handled in interpreter/VM)
+pub fn is_array_intrinsic(name: &str) -> bool {
+    matches!(
+        name,
+        "map"
+            | "filter"
+            | "reduce"
+            | "forEach"
+            | "find"
+            | "findIndex"
+            | "flatMap"
+            | "some"
+            | "every"
+            | "sort"
+            | "sortBy"
     )
 }
 
@@ -237,6 +265,111 @@ pub fn call_builtin(
             Ok(Value::Bool(string::ends_with(s, suffix)))
         }
 
+        // Array functions - Core Operations
+        "pop" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            array::pop(&arr, call_span)
+        }
+        "shift" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            array::shift(&arr, call_span)
+        }
+        "unshift" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            Ok(array::unshift(&arr, args[1].clone()))
+        }
+        "reverse" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            Ok(array::reverse(&arr))
+        }
+        "concat" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr1 = extract_array(&args[0], call_span)?;
+            let arr2 = extract_array(&args[1], call_span)?;
+            Ok(array::concat(&arr1, &arr2))
+        }
+        "flatten" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            array::flatten(&arr, call_span)
+        }
+
+        // Array functions - Search Operations
+        "arrayIndexOf" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            Ok(Value::Number(array::index_of(&arr, &args[1])))
+        }
+        "arrayLastIndexOf" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            Ok(Value::Number(array::last_index_of(&arr, &args[1])))
+        }
+        "arrayIncludes" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            Ok(Value::Bool(array::includes(&arr, &args[1])))
+        }
+
+        // Array functions - Slicing
+        "slice" => {
+            if args.len() != 3 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let arr = extract_array(&args[0], call_span)?;
+            let start = extract_number(&args[1], call_span)?;
+            let end = extract_number(&args[2], call_span)?;
+            array::slice(&arr, start, end, call_span)
+        }
+
+        // Math functions - Basic Operations
+        "abs" => math::abs(args, call_span),
+        "floor" => math::floor(args, call_span),
+        "ceil" => math::ceil(args, call_span),
+        "round" => math::round(args, call_span),
+        "min" => math::min(args, call_span),
+        "max" => math::max(args, call_span),
+
+        // Math functions - Exponential/Power
+        "sqrt" => math::sqrt(args, call_span),
+        "pow" => math::pow(args, call_span),
+        "log" => math::log(args, call_span),
+
+        // Math functions - Trigonometry
+        "sin" => math::sin(args, call_span),
+        "cos" => math::cos(args, call_span),
+        "tan" => math::tan(args, call_span),
+        "asin" => math::asin(args, call_span),
+        "acos" => math::acos(args, call_span),
+        "atan" => math::atan(args, call_span),
+
+        // Math functions - Utilities
+        "clamp" => math::clamp(args, call_span),
+        "sign" => math::sign(args, call_span),
+        "random" => math::random(args, call_span),
+
         // Option<T> constructors
         "Some" => {
             if args.len() != 1 {
@@ -431,7 +564,7 @@ mod tests {
     #[test]
     fn test_str_number() {
         assert_eq!(str(&Value::Number(42.0), Span::dummy()).unwrap(), "42");
-        assert_eq!(str(&Value::Number(3.14), Span::dummy()).unwrap(), "3.14");
+        assert_eq!(str(&Value::Number(2.5), Span::dummy()).unwrap(), "2.5");
         assert_eq!(str(&Value::Number(-10.0), Span::dummy()).unwrap(), "-10");
     }
 

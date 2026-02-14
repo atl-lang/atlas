@@ -173,7 +173,146 @@
 **Implementation:** `crates/atlas-runtime/src/stdlib/array.rs`
 **Phase:** phases/stdlib/phase-02-complete-array-api.md
 
-_Phases will populate this section with array manipulation functions_
+**Note:** All array functions return NEW arrays - originals are never mutated (immutability).
+**Callbacks:** v0.2 supports named functions only (no anonymous functions or closures).
+
+### Core Operations
+
+#### pop
+**Signature:** `pop(arr: T[]) -> [T, T[]]`
+**Behavior:** Removes and returns last element plus new array without that element
+**Example:** `pop([1, 2, 3])` returns `[3, [1, 2]]`
+**Errors:** AT0103 if array is empty
+
+#### shift
+**Signature:** `shift(arr: T[]) -> [T, T[]]`
+**Behavior:** Removes and returns first element plus new array without that element
+**Example:** `shift([1, 2, 3])` returns `[1, [2, 3]]`
+**Errors:** AT0103 if array is empty
+
+#### unshift
+**Signature:** `unshift(arr: T[], element: T) -> T[]`
+**Behavior:** Returns new array with element prepended
+**Example:** `unshift([2, 3], 1)` returns `[1, 2, 3]`
+**Errors:** AT0102 if wrong types
+
+#### reverse
+**Signature:** `reverse(arr: T[]) -> T[]`
+**Behavior:** Returns new array with elements in reverse order
+**Example:** `reverse([1, 2, 3])` returns `[3, 2, 1]`
+**Errors:** AT0102 if wrong type
+
+#### concat
+**Signature:** `concat(arr1: T[], arr2: T[]) -> T[]`
+**Behavior:** Returns new array combining both arrays
+**Example:** `concat([1, 2], [3, 4])` returns `[1, 2, 3, 4]`
+**Errors:** AT0102 if wrong types
+
+#### flatten
+**Signature:** `flatten(arr: T[][]) -> T[]`
+**Behavior:** Flattens nested arrays by one level
+**Example:** `flatten([[1], [2, 3]])` returns `[1, 2, 3]`
+**Errors:** AT0102 if wrong type
+
+### Search Operations
+
+#### arrayIndexOf
+**Signature:** `arrayIndexOf(arr: T[], element: T) -> number`
+**Behavior:** Returns index of first occurrence, -1 if not found
+**Example:** `arrayIndexOf([1, 2, 3, 2], 2)` returns `1`
+**Errors:** AT0102 if wrong types
+
+#### arrayLastIndexOf
+**Signature:** `arrayLastIndexOf(arr: T[], element: T) -> number`
+**Behavior:** Returns index of last occurrence, -1 if not found
+**Example:** `arrayLastIndexOf([1, 2, 3, 2], 2)` returns `3`
+**Errors:** AT0102 if wrong types
+
+#### arrayIncludes
+**Signature:** `arrayIncludes(arr: T[], element: T) -> bool`
+**Behavior:** Returns true if element is in array
+**Example:** `arrayIncludes([1, 2, 3], 2)` returns `true`
+**Errors:** AT0102 if wrong types
+
+#### find
+**Signature:** `find(arr: T[], predicate: (T) -> bool) -> T | null`
+**Behavior:** Returns first element matching predicate, null if none match
+**Example:** `find([1, 5, 10], fn(x) { return x > 3; })` returns `5`
+**Errors:** AT0102 if wrong types, AT0104 if predicate doesn't return bool
+
+#### findIndex
+**Signature:** `findIndex(arr: T[], predicate: (T) -> bool) -> number`
+**Behavior:** Returns index of first element matching predicate, -1 if none match
+**Example:** `findIndex([1, 5, 10], fn(x) { return x > 3; })` returns `1`
+**Errors:** AT0102 if wrong types, AT0104 if predicate doesn't return bool
+
+### Slicing
+
+#### slice
+**Signature:** `slice(arr: T[], start: number, end: number) -> T[]`
+**Behavior:** Returns new array containing elements from start (inclusive) to end (exclusive)
+**Example:** `slice([0, 1, 2, 3, 4], 1, 4)` returns `[1, 2, 3]`
+**Errors:** AT0102 if wrong types, AT0105 if indices invalid
+
+### Iteration & Transformation
+
+#### map
+**Signature:** `map(arr: T[], fn: (T) -> U) -> U[]`
+**Behavior:** Returns new array with function applied to each element
+**Example:** `map([1, 2, 3], double)` returns `[2, 4, 6]`
+**Errors:** AT0102 if wrong types
+
+#### filter
+**Signature:** `filter(arr: T[], predicate: (T) -> bool) -> T[]`
+**Behavior:** Returns new array with elements matching predicate
+**Example:** `filter([1, 2, 3, 4], isEven)` returns `[2, 4]`
+**Errors:** AT0102 if wrong types, AT0104 if predicate doesn't return bool
+
+#### reduce
+**Signature:** `reduce(arr: T[], fn: (Acc, T) -> Acc, initial: Acc) -> Acc`
+**Behavior:** Reduces array to single value by applying function cumulatively
+**Example:** `reduce([1, 2, 3], add, 0)` returns `6`
+**Errors:** AT0102 if wrong types
+
+#### forEach
+**Signature:** `forEach(arr: T[], fn: (T) -> void) -> null`
+**Behavior:** Executes function for each element (side effects only)
+**Example:** `forEach([1, 2, 3], print)`
+**Errors:** AT0102 if wrong types
+
+#### flatMap
+**Signature:** `flatMap(arr: T[], fn: (T) -> U[]) -> U[]`
+**Behavior:** Maps each element to array, then flattens results by one level
+**Example:** `flatMap([1, 2], duplicate)` returns `[1, 1, 2, 2]`
+**Errors:** AT0102 if wrong types
+
+### Testing Predicates
+
+#### some
+**Signature:** `some(arr: T[], predicate: (T) -> bool) -> bool`
+**Behavior:** Returns true if any element matches predicate
+**Example:** `some([1, 2, 3], fn(x) { return x > 2; })` returns `true`
+**Errors:** AT0102 if wrong types, AT0104 if predicate doesn't return bool
+
+#### every
+**Signature:** `every(arr: T[], predicate: (T) -> bool) -> bool`
+**Behavior:** Returns true if all elements match predicate
+**Example:** `every([2, 4, 6], isEven)` returns `true`
+**Errors:** AT0102 if wrong types, AT0104 if predicate doesn't return bool
+
+### Sorting
+
+#### sort
+**Signature:** `sort(arr: T[], comparator: (T, T) -> number) -> T[]`
+**Behavior:** Returns new sorted array using comparator (negative = first < second, 0 = equal, positive = first > second). Stable sort.
+**Example:** `sort([3, 1, 2], fn(a, b) { return a - b; })` returns `[1, 2, 3]`
+**Errors:** AT0102 if wrong types, AT0104 if comparator doesn't return number
+
+#### sortBy
+**Signature:** `sortBy(arr: T[], keyFn: (T) -> number|string) -> T[]`
+**Behavior:** Returns new sorted array by comparing keys extracted by keyFn. Stable sort.
+**Example:** `sortBy([3, -5, 2], abs)` returns `[2, 3, -5]`
+**Errors:** AT0102 if wrong types
 
 ---
 

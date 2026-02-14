@@ -30,13 +30,13 @@ fn test_function_with_local_return() {
 #[test]
 fn test_function_with_early_return() {
     let code = r#"
-        fn abs(x: number) -> number {
+        fn myAbs(x: number) -> number {
             if (x < 0) {
                 return -x;
             }
             return x;
         }
-        abs(-5)
+        myAbs(-5)
     "#;
     assert_eval_number(code, 5.0);
 }

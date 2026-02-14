@@ -3,10 +3,7 @@
 //! Tests cross-module binding, import/export validation, and type checking.
 
 use atlas_runtime::{
-    binder::Binder,
-    lexer::Lexer,
-    module_loader::{LoadedModule, ModuleRegistry},
-    parser::Parser,
+    binder::Binder, lexer::Lexer, module_loader::ModuleRegistry, parser::Parser,
     typechecker::TypeChecker,
 };
 use std::path::PathBuf;
@@ -46,6 +43,7 @@ fn bind_module_with_registry(
 }
 
 /// Helper to type check with modules
+#[allow(dead_code)] // Preserved for future test expansion
 fn typecheck_module_with_registry(
     source: &str,
     module_path: &str,
@@ -95,7 +93,7 @@ export fn add(a: number, b: number) -> number {
 #[test]
 fn test_basic_export_variable() {
     let source = r#"
-export let PI = 3.14159;
+export let MY_PI = 3.14159;
 "#;
 
     let (symbol_table, diags) = bind_module(source);
@@ -107,7 +105,10 @@ export let PI = 3.14159;
 
     // Check that variable is exported
     let exports = symbol_table.get_exports();
-    assert!(exports.contains_key("PI"), "Expected 'PI' to be exported");
+    assert!(
+        exports.contains_key("MY_PI"),
+        "Expected 'MY_PI' to be exported"
+    );
 }
 
 #[test]
@@ -250,14 +251,14 @@ export fn subtract(a: number, b: number) -> number {
     return a - b;
 }
 
-export let PI = 3.14159;
+export let MY_PI = 3.14159;
 "#;
     let (symbol_table_a, _) = bind_module(module_a);
     registry.register(PathBuf::from("/math.atl"), symbol_table_a);
 
     // Module B imports multiple symbols
     let module_b = r#"
-import { add, subtract, PI } from "/math.atl";
+import { add, subtract, MY_PI } from "/math.atl";
 "#;
 
     let (symbol_table_b, diags) = bind_module_with_registry(module_b, "/test.atl", &registry);
@@ -270,7 +271,7 @@ import { add, subtract, PI } from "/math.atl";
     // Check all imported symbols
     assert!(symbol_table_b.lookup("add").is_some());
     assert!(symbol_table_b.lookup("subtract").is_some());
-    assert!(symbol_table_b.lookup("PI").is_some());
+    assert!(symbol_table_b.lookup("MY_PI").is_some());
 }
 
 #[test]

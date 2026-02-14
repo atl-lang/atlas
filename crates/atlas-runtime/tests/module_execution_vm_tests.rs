@@ -80,23 +80,23 @@ fn test_vm_import_variable() {
     create_module(
         temp_dir.path(),
         "constants",
-        "export let PI: number = 3.14159;",
+        "export let SCALE: number = 4.2;",
     );
 
     let main = create_module(
         temp_dir.path(),
         "main",
         r#"
-import { PI } from "./constants";
-PI * 2;
+import { SCALE } from "./constants";
+SCALE * 2;
 "#,
     );
 
     let result = execute_with_vm(&main, temp_dir.path());
 
     match result {
-        Ok(Value::Number(n)) => assert!((n - 6.28318).abs() < 0.00001),
-        Ok(v) => panic!("Expected Number(6.28318), got {:?}", v),
+        Ok(Value::Number(n)) => assert!((n - 8.4).abs() < 0.00001),
+        Ok(v) => panic!("Expected Number(8.4), got {:?}", v),
         Err(e) => panic!("Execution failed: {}", e),
     }
 }

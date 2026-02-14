@@ -328,11 +328,15 @@ fn test_security_context_grant_filesystem_read() {
     let mut ctx = SecurityContext::new();
     ctx.grant_filesystem_read(Path::new("/data"), true);
 
-    assert!(ctx.check_filesystem_read(Path::new("/data/file.txt")).is_ok());
+    assert!(ctx
+        .check_filesystem_read(Path::new("/data/file.txt"))
+        .is_ok());
     assert!(ctx
         .check_filesystem_read(Path::new("/data/subdir/file.txt"))
         .is_ok());
-    assert!(ctx.check_filesystem_read(Path::new("/other/file.txt")).is_err());
+    assert!(ctx
+        .check_filesystem_read(Path::new("/other/file.txt"))
+        .is_err());
 }
 
 #[test]
@@ -340,9 +344,15 @@ fn test_security_context_grant_filesystem_write() {
     let mut ctx = SecurityContext::new();
     ctx.grant_filesystem_write(Path::new("/output"), true);
 
-    assert!(ctx.check_filesystem_write(Path::new("/output/file.txt")).is_ok());
-    assert!(ctx.check_filesystem_write(Path::new("/output/logs/app.log")).is_ok());
-    assert!(ctx.check_filesystem_write(Path::new("/other/file.txt")).is_err());
+    assert!(ctx
+        .check_filesystem_write(Path::new("/output/file.txt"))
+        .is_ok());
+    assert!(ctx
+        .check_filesystem_write(Path::new("/output/logs/app.log"))
+        .is_ok());
+    assert!(ctx
+        .check_filesystem_write(Path::new("/other/file.txt"))
+        .is_err());
 }
 
 #[test]
@@ -465,9 +475,15 @@ fn test_multiple_grants_same_type() {
     ctx.grant_filesystem_read(Path::new("/data"), true);
     ctx.grant_filesystem_read(Path::new("/config"), true);
 
-    assert!(ctx.check_filesystem_read(Path::new("/data/file.txt")).is_ok());
-    assert!(ctx.check_filesystem_read(Path::new("/config/app.toml")).is_ok());
-    assert!(ctx.check_filesystem_read(Path::new("/other/file.txt")).is_err());
+    assert!(ctx
+        .check_filesystem_read(Path::new("/data/file.txt"))
+        .is_ok());
+    assert!(ctx
+        .check_filesystem_read(Path::new("/config/app.toml"))
+        .is_ok());
+    assert!(ctx
+        .check_filesystem_read(Path::new("/other/file.txt"))
+        .is_err());
 }
 
 #[test]
@@ -490,6 +506,10 @@ fn test_security_context_isolation() {
     ctx1.grant_filesystem_read(Path::new("/data"), true);
 
     // ctx2 should not have ctx1's permissions
-    assert!(ctx1.check_filesystem_read(Path::new("/data/file.txt")).is_ok());
-    assert!(ctx2.check_filesystem_read(Path::new("/data/file.txt")).is_err());
+    assert!(ctx1
+        .check_filesystem_read(Path::new("/data/file.txt"))
+        .is_ok());
+    assert!(ctx2
+        .check_filesystem_read(Path::new("/data/file.txt"))
+        .is_err());
 }
