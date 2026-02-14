@@ -205,8 +205,8 @@ impl Parser {
         self.consume(TokenKind::From, "Expected 'from' after imports")?;
 
         let source_token = self.consume(TokenKind::String, "Expected module path string")?;
-        // Remove quotes from string literal
-        let source = source_token.lexeme[1..source_token.lexeme.len() - 1].to_string();
+        // Lexer already strips quotes from string literals
+        let source = source_token.lexeme.clone();
 
         let end_span = self.peek().span;
 

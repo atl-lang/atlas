@@ -13,3 +13,4 @@ insta.workspace = true
 rstest.workspace = true
 proptest.workspace = true
 pretty_assertions.workspace = true
+tempfile = "3.8"
