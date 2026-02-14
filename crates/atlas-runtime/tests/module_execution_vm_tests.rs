@@ -3,7 +3,7 @@
 //! Mirrors interpreter tests but uses VM for execution.
 //! Verifies 100% parity between interpreter and VM for module execution.
 
-use atlas_runtime::{Compiler, Lexer, ModuleExecutor, Parser, Value, VM};
+use atlas_runtime::{ModuleExecutor, Value};
 use std::fs;
 use tempfile::TempDir;
 
