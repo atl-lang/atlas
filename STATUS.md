@@ -1,7 +1,7 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-14
-**Status:** 🚀 Configuration System Complete (BLOCKER 05)
+**Status:** 🚀 Permission System Infrastructure Complete (BLOCKER 06-A)
 
 ---
 
@@ -23,8 +23,9 @@
 - **BLOCKER 04-C:** Module Type System Integration
 - **BLOCKER 04-D:** Module Runtime Implementation
 - **BLOCKER 05:** Configuration System
+- **BLOCKER 06-A:** Permission System Infrastructure
 
-**Next Phase:** phases/blockers/blocker-06-a-permission-system.md (Security Model - Permission System)
+**Next Phase:** phases/blockers/blocker-06-b-runtime-enforcement.md (Security Model - Runtime Enforcement)
 **⚠️ Note:** Foundation blockers MUST be completed before v0.2 phases (see tracker below)
 
 **v0.2 phase files complete - 68 comprehensive phases ready for implementation!**
@@ -123,7 +124,7 @@ v0.2 transforms Atlas into a production-ready language:
 
 **Documentation:** `phases/blockers/README.md` - Full dependency analysis and implementation order
 
-**Progress:** 13/19 blocker sub-phases complete
+**Progress:** 14/19 blocker sub-phases complete
 
 ### BLOCKER 01: JSON Value Type ✅ COMPLETE
 - ✅ blocker-01-json-value-type.md (Completed: 2026-02-13)
@@ -159,7 +160,7 @@ v0.2 transforms Atlas into a production-ready language:
 **Blocks:** Package manifest, CLI config, security config, 5+ phases
 
 ### BLOCKER 06: Security Model (2-3 weeks) - 3 Sub-Phases
-- ⬜ blocker-06-a-permission-system.md (Week 1: Permission types & policies)
+- ✅ blocker-06-a-permission-system.md (Completed: 2026-02-14 - Permission types & policies)
 - ⬜ blocker-06-b-runtime-enforcement.md (Week 2: Runtime integration)
 - ⬜ blocker-06-c-audit-configuration.md (Week 3: Audit logging & prompts)
 

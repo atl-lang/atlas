@@ -28,6 +28,7 @@ pub mod global;
 pub mod loader;
 pub mod manifest;
 pub mod project;
+pub mod security;
 
 use std::path::PathBuf;
 use thiserror::Error;
@@ -77,3 +78,4 @@ pub use global::GlobalConfig;
 pub use loader::ConfigLoader;
 pub use manifest::Manifest;
 pub use project::ProjectConfig;
+pub use security::SecurityConfig;

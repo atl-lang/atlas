@@ -2,6 +2,7 @@
 //!
 //! Handles project-level configuration stored in `atlas.toml` at the project root.
 
+use crate::security::SecurityConfig;
 use crate::{ConfigError, ConfigResult};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -26,6 +27,10 @@ pub struct ProjectConfig {
     /// Formatting configuration
     #[serde(skip_serializing_if = "Option::is_none")]
     pub formatting: Option<FormattingConfig>,
+
+    /// Security configuration
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub security: Option<SecurityConfig>,
 
     /// Dependencies
     #[serde(default)]
@@ -239,6 +244,9 @@ impl ProjectConfig {
         }
         if other.formatting.is_some() {
             self.formatting = other.formatting.clone();
+        }
+        if other.security.is_some() {
+            self.security = other.security.clone();
         }
         if !other.dependencies.is_empty() {
             self.dependencies.extend(other.dependencies.clone());
