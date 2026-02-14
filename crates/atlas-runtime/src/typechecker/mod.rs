@@ -582,6 +582,20 @@ impl<'a> TypeChecker<'a> {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Generic {
+                name, type_args, ..
+            } => {
+                // BLOCKER 02-A: Just parse syntax, don't validate yet
+                // Full type checking will be in BLOCKER 02-B
+                let resolved_args = type_args
+                    .iter()
+                    .map(|arg| self.resolve_type_ref(arg))
+                    .collect();
+                Type::Generic {
+                    name: name.clone(),
+                    type_args: resolved_args,
+                }
+            }
         }
     }
 }

@@ -272,16 +272,14 @@ impl Parser {
 
         let token = self.consume_identifier("a type name")?;
         let span = token.span;
+        let name = token.lexeme.clone();
 
-        let name = match token.lexeme.as_str() {
-            "number" | "string" | "bool" | "null" | "void" => token.lexeme.clone(),
-            _ => {
-                self.error("Unknown type");
-                return Err(());
-            }
+        // Check for generic type: Type<T1, T2>
+        let mut type_ref = if self.check(TokenKind::Less) {
+            self.parse_generic_type(name, span)?
+        } else {
+            TypeRef::Named(name, span)
         };
-
-        let mut type_ref = TypeRef::Named(name, span);
 
         // Handle array type syntax: type[]
         while self.match_token(TokenKind::LeftBracket) {
@@ -295,6 +293,38 @@ impl Parser {
         }
 
         Ok(type_ref)
+    }
+
+    /// Parse generic type: Type<T1, T2, ...>
+    fn parse_generic_type(&mut self, name: String, start: Span) -> Result<TypeRef, ()> {
+        // Consume '<'
+        self.consume(TokenKind::Less, "Expected '<'")?;
+
+        // Parse type arguments
+        let mut type_args = vec![];
+        loop {
+            type_args.push(self.parse_type_ref()?);
+
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+        }
+
+        // Ensure at least one type argument
+        if type_args.is_empty() {
+            self.error("Generic type requires at least one type argument");
+            return Err(());
+        }
+
+        // Consume '>'
+        let end_token = self.consume(TokenKind::Greater, "Expected '>' after type arguments")?;
+        let span = Span::new(start.start, end_token.span.end);
+
+        Ok(TypeRef::Generic {
+            name,
+            type_args,
+            span,
+        })
     }
 
     /// Parse function type: (T1, T2) -> ReturnType

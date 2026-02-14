@@ -24,6 +24,10 @@ pub enum Type {
     },
     /// JSON value type (isolated dynamic type for JSON interop)
     JsonValue,
+    /// Generic type with instantiated arguments (e.g., Result<number, string>)
+    Generic { name: String, type_args: Vec<Type> },
+    /// Type parameter (unresolved variable, e.g., T in Result<T, E>)
+    TypeParameter { name: String },
     /// Unknown type (for error recovery)
     Unknown,
 }
@@ -79,6 +83,15 @@ impl Type {
             Type::Array(inner) => format!("{}[]", inner.display_name()),
             Type::Function { .. } => "function".to_string(),
             Type::JsonValue => "json".to_string(),
+            Type::Generic { name, type_args } => {
+                let args = type_args
+                    .iter()
+                    .map(|t| t.display_name())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{}<{}>", name, args)
+            }
+            Type::TypeParameter { name } => name.clone(),
             Type::Unknown => "?".to_string(),
         }
     }

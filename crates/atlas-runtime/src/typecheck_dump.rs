@@ -154,6 +154,15 @@ fn type_to_string(ty: &Type) -> String {
             )
         }
         Type::JsonValue => "json".to_string(),
+        Type::Generic { name, type_args } => {
+            let args = type_args
+                .iter()
+                .map(type_to_string)
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("{}<{}>", name, args)
+        }
+        Type::TypeParameter { name } => name.clone(),
         Type::Unknown => "unknown".to_string(),
     }
 }
@@ -173,6 +182,11 @@ fn collect_types(ty: &Type, types: &mut std::collections::HashSet<String>) {
                 collect_types(param, types);
             }
             collect_types(return_type, types);
+        }
+        Type::Generic { type_args, .. } => {
+            for arg in type_args {
+                collect_types(arg, types);
+            }
         }
         _ => {}
     }

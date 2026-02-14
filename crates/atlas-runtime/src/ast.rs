@@ -294,6 +294,12 @@ pub enum TypeRef {
         return_type: Box<TypeRef>,
         span: Span,
     },
+    /// Generic type application: Type<T1, T2, ...>
+    Generic {
+        name: String,
+        type_args: Vec<TypeRef>,
+        span: Span,
+    },
 }
 
 /// Unary operator
@@ -368,6 +374,7 @@ impl TypeRef {
             TypeRef::Named(_, span) => *span,
             TypeRef::Array(_, span) => *span,
             TypeRef::Function { span, .. } => *span,
+            TypeRef::Generic { span, .. } => *span,
         }
     }
 }
