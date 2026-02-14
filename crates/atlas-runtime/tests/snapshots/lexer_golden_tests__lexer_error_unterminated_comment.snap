@@ -12,3 +12,4 @@ expression: diagnostics
   length: 43
   snippet: /* This comment never closes
   label: comment starts here
+  help: "add '*/' to close the multi-line comment"
