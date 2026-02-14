@@ -44,6 +44,8 @@ pub struct Interpreter {
     /// Monomorphizer for generic functions (tracks type substitutions)
     #[allow(dead_code)] // Will be used when generic runtime support is fully integrated
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
+    /// Security context for current evaluation (set during eval())
+    pub(super) current_security: Option<*const crate::security::SecurityContext>,
 }
 
 impl Interpreter {
@@ -55,6 +57,7 @@ impl Interpreter {
             function_bodies: HashMap::new(),
             control_flow: ControlFlow::None,
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
+            current_security: None,
         };
 
         // Register builtin functions in globals
@@ -98,7 +101,14 @@ impl Interpreter {
     }
 
     /// Evaluate a program
-    pub fn eval(&mut self, program: &Program) -> Result<Value, RuntimeError> {
+    pub fn eval(
+        &mut self,
+        program: &Program,
+        security: &crate::security::SecurityContext,
+    ) -> Result<Value, RuntimeError> {
+        // Store security context for builtin calls
+        self.current_security = Some(security as *const _);
+
         let mut last_value = Value::Null;
 
         for item in &program.items {

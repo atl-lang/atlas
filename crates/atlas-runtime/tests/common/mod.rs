@@ -174,8 +174,9 @@ pub fn run_bytecode(
     bytecode: atlas_runtime::bytecode::Bytecode,
 ) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
     use atlas_runtime::vm::VM;
+    use atlas_runtime::SecurityContext;
     let mut vm = VM::new(bytecode);
-    vm.run()
+    vm.run(&SecurityContext::allow_all())
 }
 
 /// Helper to create a snapshot name from test function name

@@ -14,6 +14,7 @@ use atlas_runtime::vm::VM;
 
 /// Helper to execute Atlas source code using VM
 pub fn execute_vm(source: &str) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
+    use atlas_runtime::SecurityContext;
     let mut lexer = Lexer::new(source);
     let (tokens, _lex_diagnostics) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -23,7 +24,7 @@ pub fn execute_vm(source: &str) -> Result<Option<Value>, atlas_runtime::value::R
     let bytecode = compiler.compile(&ast).unwrap();
 
     let mut vm = VM::new(bytecode);
-    vm.run()
+    vm.run(&SecurityContext::allow_all())
 }
 
 /// Helper to execute and unwrap result

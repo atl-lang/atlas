@@ -5,6 +5,7 @@ use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
+use crate::security::SecurityContext;
 use crate::symbol::SymbolTable;
 use crate::typechecker::TypeChecker;
 use crate::value::Value;
@@ -29,14 +30,22 @@ pub struct ReplCore {
     interpreter: Interpreter,
     /// Symbol table (type information)
     symbol_table: SymbolTable,
+    /// Security context for permission checks
+    security: SecurityContext,
 }
 
 impl ReplCore {
     /// Create a new REPL core
     pub fn new() -> Self {
+        Self::new_with_security(SecurityContext::allow_all())
+    }
+
+    /// Create a new REPL core with specific security context
+    pub fn new_with_security(security: SecurityContext) -> Self {
         Self {
             interpreter: Interpreter::new(),
             symbol_table: SymbolTable::new(),
+            security,
         }
     }
 
@@ -103,7 +112,7 @@ impl ReplCore {
         }
 
         // Phase 5: Evaluate
-        match self.interpreter.eval(&ast) {
+        match self.interpreter.eval(&ast, &self.security) {
             Ok(value) => ReplResult {
                 value: Some(value),
                 diagnostics,

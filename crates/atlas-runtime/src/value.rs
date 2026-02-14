@@ -215,6 +215,12 @@ pub enum RuntimeError {
         var: String,
         span: crate::span::Span,
     },
+    /// I/O error (file operations)
+    #[error("I/O error: {message}")]
+    IoError {
+        message: String,
+        span: crate::span::Span,
+    },
 }
 
 impl RuntimeError {
@@ -235,6 +241,7 @@ impl RuntimeError {
             RuntimeError::NetworkPermissionDenied { span, .. } => *span,
             RuntimeError::ProcessPermissionDenied { span, .. } => *span,
             RuntimeError::EnvironmentPermissionDenied { span, .. } => *span,
+            RuntimeError::IoError { span, .. } => *span,
         }
     }
 }

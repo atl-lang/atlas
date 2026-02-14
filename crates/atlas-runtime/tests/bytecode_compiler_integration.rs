@@ -9,6 +9,7 @@ use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::value::Value;
 use atlas_runtime::vm::VM;
+use atlas_runtime::SecurityContext;
 use rstest::rstest;
 
 fn execute_source(source: &str) -> Result<Option<Value>, atlas_runtime::value::RuntimeError> {
@@ -24,7 +25,7 @@ fn execute_source(source: &str) -> Result<Option<Value>, atlas_runtime::value::R
     let bytecode = compiler.compile(&program).expect("Compilation failed");
 
     let mut vm = VM::new(bytecode);
-    vm.run()
+    vm.run(&SecurityContext::allow_all())
 }
 
 // ============================================================================

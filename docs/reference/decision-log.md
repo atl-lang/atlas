@@ -26,6 +26,14 @@ This log captures irreversible or high-impact design decisions. Update when a ne
 - Strings immutable; arrays mutable and shared by reference.
 - Function arguments are passed by value with shared references for heap types.
 
+## Security Architecture
+- `SecurityContext` threads through runtime via raw pointer in Interpreter/VM.
+- Rationale: Avoids lifetime complexity while maintaining security checks for I/O operations.
+- `call_builtin()` accepts `&SecurityContext` parameter for permission enforcement.
+- Interpreter/VM store `current_security: Option<*const SecurityContext>` set during `eval()`/`run()`.
+- Pattern: Pass SecurityContext to `eval()`/`run()`, access via unsafe deref in stdlib functions.
+- Safe because: SecurityContext lifetime guaranteed valid for duration of eval/run execution.
+
 ## Diagnostics
 - Unified `Diagnostic` type with human + JSON formats.
 - Errors emitted before warnings.

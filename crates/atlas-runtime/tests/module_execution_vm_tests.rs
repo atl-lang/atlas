@@ -3,13 +3,13 @@
 //! Mirrors interpreter tests but uses VM for execution.
 //! Verifies 100% parity between interpreter and VM for module execution.
 
-use atlas_runtime::{ModuleExecutor, Value};
+use atlas_runtime::{ModuleExecutor, SecurityContext, Value};
 use std::fs;
 use tempfile::TempDir;
 
 /// Helper to execute a module using the VM
 fn execute_with_vm(entry_path: &std::path::Path, root: &std::path::Path) -> Result<Value, String> {
-    let mut executor = ModuleExecutor::new(root.to_path_buf());
+    let mut executor = ModuleExecutor::new(root.to_path_buf(), SecurityContext::allow_all());
 
     // Load and execute with interpreter first to get the result
     let result = executor.execute_module(entry_path);

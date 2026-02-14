@@ -36,6 +36,8 @@ pub struct VM {
     profiler: Option<Profiler>,
     /// Optional debugger for step-through execution
     debugger: Option<Debugger>,
+    /// Security context for current execution (set during run())
+    current_security: Option<*const crate::security::SecurityContext>,
 }
 
 impl VM {
@@ -57,6 +59,7 @@ impl VM {
             ip: 0,
             profiler: None, // Profiling disabled by default
             debugger: None, // Debugging disabled by default
+            current_security: None,
         }
     }
 
@@ -143,7 +146,12 @@ impl VM {
     }
 
     /// Execute the bytecode
-    pub fn run(&mut self) -> Result<Option<Value>, RuntimeError> {
+    pub fn run(
+        &mut self,
+        security: &crate::security::SecurityContext,
+    ) -> Result<Option<Value>, RuntimeError> {
+        // Store security context for builtin calls
+        self.current_security = Some(security as *const _);
         self.execute_until_end()
     }
 
@@ -508,10 +516,14 @@ impl VM {
                                 self.pop();
 
                                 // Call the builtin
+                                let security = unsafe {
+                                    &*self.current_security.expect("Security context not set")
+                                };
                                 let result = crate::stdlib::call_builtin(
                                     &func.name,
                                     &args,
                                     self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                                    security,
                                 )?;
 
                                 // Push the result
@@ -1385,7 +1397,9 @@ impl VM {
             Value::Function(func_ref) => {
                 // Check for builtins
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, span);
+                    let security =
+                        unsafe { &*self.current_security.expect("Security context not set") };
+                    return crate::stdlib::call_builtin(&func_ref.name, &args, span, security);
                 }
 
                 // User-defined function - execute via VM
@@ -1467,6 +1481,7 @@ mod tests {
     use crate::compiler::Compiler;
     use crate::lexer::Lexer;
     use crate::parser::Parser;
+    use crate::security::SecurityContext;
 
     fn execute_source(source: &str) -> Result<Option<Value>, RuntimeError> {
         // Compile source to bytecode
@@ -1479,7 +1494,7 @@ mod tests {
 
         // Execute on VM
         let mut vm = VM::new(bytecode);
-        vm.run()
+        vm.run(&SecurityContext::allow_all())
     }
 
     #[test]
@@ -1683,7 +1698,7 @@ mod tests {
         bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run();
+        let result = vm.run(&SecurityContext::allow_all());
         assert!(result.is_err());
     }
 
@@ -1695,7 +1710,7 @@ mod tests {
         bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Bool(true)));
         assert_eq!(vm.bytecode.constants.len(), 0);
     }
@@ -1744,7 +1759,7 @@ mod tests {
         bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Number(30.0)));
     }
 
@@ -1766,7 +1781,7 @@ mod tests {
         bytecode.emit(Opcode::Halt, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Number(42.0)));
     }
 
@@ -1812,7 +1827,7 @@ mod tests {
         bytecode.emit(Opcode::Return, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Number(42.0)));
     }
 
@@ -1867,7 +1882,7 @@ mod tests {
         bytecode.emit(Opcode::Return, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Number(8.0)));
     }
 
@@ -1897,7 +1912,7 @@ mod tests {
         bytecode.emit_u8(1);
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run();
+        let result = vm.run(&SecurityContext::allow_all());
         assert!(result.is_err());
         match result.unwrap_err() {
             RuntimeError::TypeError { msg, .. } => assert!(msg.contains("expects 2 arguments")),
@@ -1920,7 +1935,7 @@ mod tests {
         bytecode.emit_u8(0);
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run();
+        let result = vm.run(&SecurityContext::allow_all());
         assert!(result.is_err());
         match result.unwrap_err() {
             RuntimeError::TypeError { msg, .. } => {
@@ -1987,7 +2002,7 @@ mod tests {
         bytecode.emit(Opcode::Return, crate::span::Span::dummy());
 
         let mut vm = VM::new(bytecode);
-        let result = vm.run().unwrap();
+        let result = vm.run(&SecurityContext::allow_all()).unwrap();
         assert_eq!(result, Some(Value::Number(100.0)));
     }
 

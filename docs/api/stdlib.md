@@ -479,7 +479,88 @@ _Phases will populate this section with JSON parsing and serialization functions
 **Implementation:** `crates/atlas-runtime/src/stdlib/io.rs`
 **Phase:** phases/stdlib/phase-05-complete-file-io-api.md
 
-_Phases will populate this section with file I/O functions_
+**Note:** All file operations require appropriate security permissions (Deno-style permission model).
+**Security:** Operations check `SecurityContext` for read/write access before executing.
+
+### File Reading & Writing
+
+#### readFile
+**Signature:** `readFile(path: string) -> string`
+**Behavior:** Reads entire file as UTF-8 string. Checks read permission, validates UTF-8.
+**Example:** `readFile("config.txt")` returns file contents
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem read access to file path
+
+#### writeFile
+**Signature:** `writeFile(path: string, contents: string) -> null`
+**Behavior:** Writes string to file (creates or overwrites). Checks write permission.
+**Example:** `writeFile("output.txt", "data")` writes "data" to file
+**Errors:** AT0102 if wrong types, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem write access to file or parent directory
+
+#### appendFile
+**Signature:** `appendFile(path: string, contents: string) -> null`
+**Behavior:** Appends string to end of file (creates if doesn't exist). Checks write permission.
+**Example:** `appendFile("log.txt", "entry\n")` adds line to file
+**Errors:** AT0102 if wrong types, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem write access to file or parent directory
+
+### File System Queries
+
+#### fileExists
+**Signature:** `fileExists(path: string) -> bool`
+**Behavior:** Returns true if file or directory exists at path. No permission check.
+**Example:** `fileExists("test.txt")` returns `true` or `false`
+**Errors:** AT0102 if wrong type
+**Permissions:** None required (existence check only)
+
+#### fileInfo
+**Signature:** `fileInfo(path: string) -> json`
+**Behavior:** Returns metadata object with size (bytes), modified (Unix timestamp), isFile, isDir. Checks read permission.
+**Example:** `fileInfo("data.txt")` returns `{"size": 1024, "modified": 1234567890, "isFile": true, "isDir": false}`
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem read access to file path
+
+### Directory Operations
+
+#### readDir
+**Signature:** `readDir(path: string) -> string[]`
+**Behavior:** Returns array of filenames (not full paths) in directory. Checks read permission.
+**Example:** `readDir("./data")` returns `["file1.txt", "file2.txt"]`
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem read access to directory path
+
+#### createDir
+**Signature:** `createDir(path: string) -> null`
+**Behavior:** Creates directory (mkdir -p behavior - creates parents if needed). Checks write permission.
+**Example:** `createDir("a/b/c")` creates nested directories
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error
+**Permissions:** Requires filesystem write access to first existing ancestor
+
+### File System Modifications
+
+#### removeFile
+**Signature:** `removeFile(path: string) -> null`
+**Behavior:** Removes file (not directory). Checks write permission.
+**Example:** `removeFile("temp.txt")` deletes file
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error or path is directory
+**Permissions:** Requires filesystem write access to file path
+
+#### removeDir
+**Signature:** `removeDir(path: string) -> null`
+**Behavior:** Removes empty directory (not file). Checks write permission.
+**Example:** `removeDir("empty_dir")` deletes directory
+**Errors:** AT0102 if wrong type, AT0300 if permission denied, AT0400 if I/O error, directory not empty, or path is file
+**Permissions:** Requires filesystem write access to directory path
+
+### Path Utilities
+
+#### pathJoin
+**Signature:** `pathJoin(parts: ...string) -> string`
+**Behavior:** Joins path components with OS-specific separator (\ on Windows, / on Unix). No permission check.
+**Example:** `pathJoin("a", "b", "c")` returns `"a/b/c"` on Unix or `"a\b\c"` on Windows
+**Errors:** AT0102 if wrong types (must provide at least one string)
+**Permissions:** None required (string manipulation only)
 
 ---
 

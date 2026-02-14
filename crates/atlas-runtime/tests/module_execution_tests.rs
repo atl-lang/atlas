@@ -3,7 +3,7 @@
 //! Tests for runtime module execution in both interpreter and VM.
 //! Verifies single evaluation, proper initialization order, and export/import functionality.
 
-use atlas_runtime::{ModuleExecutor, Value};
+use atlas_runtime::{ModuleExecutor, SecurityContext, Value};
 use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
@@ -24,7 +24,8 @@ fn test_single_module_no_imports() {
     let temp_dir = TempDir::new().unwrap();
     let main = create_module(temp_dir.path(), "main", "let x: number = 42;\nx;");
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -43,7 +44,8 @@ fn test_single_module_with_function() {
         "fn add(a: number, b: number) -> number { return a + b; }\nadd(10, 20);",
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -62,7 +64,8 @@ fn test_module_with_export_function() {
         "export fn multiply(a: number, b: number) -> number { return a * b; }",
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&math);
 
     assert!(result.is_ok());
@@ -77,7 +80,8 @@ fn test_module_with_export_variable() {
         "export let PI: number = 3.14159;",
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&constants);
 
     assert!(result.is_ok());
@@ -106,7 +110,8 @@ add(5, 7);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -140,7 +145,8 @@ sum + diff;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -169,7 +175,8 @@ SCALE * 2;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -201,7 +208,8 @@ scale(5);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -239,7 +247,8 @@ DOUBLED;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -282,7 +291,8 @@ Z;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -330,7 +340,8 @@ LEFT + RIGHT;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -370,7 +381,8 @@ first + second;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     // Both imports should get count=1 (module executed once)
@@ -426,7 +438,8 @@ A_COUNT + B_COUNT;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     // shared module executes once, so both get counter=1
@@ -460,7 +473,8 @@ subtract(5, 3);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     assert!(result.is_err());
@@ -483,7 +497,8 @@ foo;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     assert!(result.is_err());
@@ -533,7 +548,8 @@ add(50, 50);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -570,7 +586,8 @@ double(21);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -604,7 +621,8 @@ multiply(10);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -631,7 +649,8 @@ VALUE;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -658,7 +677,8 @@ PORT;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -695,7 +715,8 @@ concatStrings("Hello", " World");
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -726,7 +747,8 @@ len(numbers);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     match result {
@@ -767,7 +789,8 @@ private_helper(5);
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     // Should fail - private_helper is not exported
@@ -796,7 +819,8 @@ SECRET;
 "#,
     );
 
-    let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+    let mut executor =
+        ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
     let result = executor.execute_module(&main);
 
     // Should fail - SECRET is not exported

@@ -135,7 +135,7 @@ impl Atlas {
         // Interpret the AST
         let mut interpreter = self.interpreter.borrow_mut();
 
-        match interpreter.eval(&ast) {
+        match interpreter.eval(&ast, &self.security) {
             Ok(value) => Ok(value),
             Err(runtime_error) => Err(vec![runtime_error_to_diagnostic(runtime_error)]),
         }
@@ -201,7 +201,7 @@ impl Atlas {
                 .unwrap_or_else(|| Path::new("."))
                 .to_path_buf();
 
-            let mut executor = ModuleExecutor::new(root);
+            let mut executor = ModuleExecutor::new(root, self.security.clone());
             executor.execute_module(&abs_path)
         } else {
             // Simple single-file program - use regular eval
@@ -266,6 +266,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
             "AT0303",
             format!("Permission denied: environment variable {}", var),
         ),
+        RuntimeError::IoError { message, .. } => ("AT0400", message.clone()),
     };
 
     let help = match error {

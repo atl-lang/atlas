@@ -1,11 +1,13 @@
 //! Standard library functions
 
 pub mod array;
+pub mod io;
 pub mod json;
 pub mod math;
 pub mod string;
 pub mod types;
 
+use crate::security::SecurityContext;
 use crate::value::{RuntimeError, Value};
 
 /// Check if a function name is a builtin (stdlib function, not intrinsic)
@@ -38,6 +40,10 @@ pub fn is_builtin(name: &str) -> bool {
             | "Ok" | "Err" | "is_ok" | "is_err"
             // Generic unwrap functions (work with both Option and Result)
             | "unwrap" | "unwrap_or"
+            // File I/O functions
+            | "readFile" | "writeFile" | "appendFile" | "fileExists"
+            | "readDir" | "createDir" | "removeFile" | "removeDir"
+            | "fileInfo" | "pathJoin"
     )
 }
 
@@ -87,10 +93,12 @@ fn extract_array(value: &Value, span: crate::span::Span) -> Result<Vec<Value>, R
 ///
 /// The `call_span` parameter should be the span of the function call expression
 /// in the source code, used for error reporting.
+/// The `security` parameter is used for permission checks in I/O operations.
 pub fn call_builtin(
     name: &str,
     args: &[Value],
     call_span: crate::span::Span,
+    security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     match name {
         "print" => {
@@ -460,6 +468,18 @@ pub fn call_builtin(
             Ok(Value::Bool(is_err))
         }
 
+        // File I/O functions
+        "readFile" => io::read_file(args, call_span, security),
+        "writeFile" => io::write_file(args, call_span, security),
+        "appendFile" => io::append_file(args, call_span, security),
+        "fileExists" => io::file_exists(args, call_span, security),
+        "readDir" => io::read_dir(args, call_span, security),
+        "createDir" => io::create_dir(args, call_span, security),
+        "removeFile" => io::remove_file(args, call_span, security),
+        "removeDir" => io::remove_dir(args, call_span, security),
+        "fileInfo" => io::file_info(args, call_span, security),
+        "pathJoin" => io::path_join(args, call_span, security),
+
         // Generic unwrap (works with both Option and Result)
         "unwrap" => {
             if args.len() != 1 {
@@ -611,28 +631,32 @@ mod tests {
 
     #[test]
     fn test_call_builtin_print() {
-        let result = call_builtin("print", &[Value::string("test")], Span::dummy());
+        let security = SecurityContext::allow_all();
+        let result = call_builtin("print", &[Value::string("test")], Span::dummy(), &security);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Null);
     }
 
     #[test]
     fn test_call_builtin_len() {
-        let result = call_builtin("len", &[Value::string("hello")], Span::dummy());
+        let security = SecurityContext::allow_all();
+        let result = call_builtin("len", &[Value::string("hello")], Span::dummy(), &security);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Number(5.0));
     }
 
     #[test]
     fn test_call_builtin_str() {
-        let result = call_builtin("str", &[Value::Number(42.0)], Span::dummy());
+        let security = SecurityContext::allow_all();
+        let result = call_builtin("str", &[Value::Number(42.0)], Span::dummy(), &security);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::string("42"));
     }
 
     #[test]
     fn test_call_builtin_wrong_arg_count() {
-        let result = call_builtin("print", &[], Span::dummy());
+        let security = SecurityContext::allow_all();
+        let result = call_builtin("print", &[], Span::dummy(), &security);
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -642,7 +666,8 @@ mod tests {
 
     #[test]
     fn test_call_builtin_unknown_function() {
-        let result = call_builtin("unknown", &[Value::Null], Span::dummy());
+        let security = SecurityContext::allow_all();
+        let result = call_builtin("unknown", &[Value::Null], Span::dummy(), &security);
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -665,20 +690,23 @@ mod tests {
 
     #[test]
     fn test_print_accepts_all_valid_types() {
+        let security = SecurityContext::allow_all();
         // print() should accept string, number, bool, null per spec
-        assert!(call_builtin("print", &[Value::string("test")], Span::dummy()).is_ok());
-        assert!(call_builtin("print", &[Value::Number(42.0)], Span::dummy()).is_ok());
-        assert!(call_builtin("print", &[Value::Bool(true)], Span::dummy()).is_ok());
-        assert!(call_builtin("print", &[Value::Null], Span::dummy()).is_ok());
+        assert!(call_builtin("print", &[Value::string("test")], Span::dummy(), &security).is_ok());
+        assert!(call_builtin("print", &[Value::Number(42.0)], Span::dummy(), &security).is_ok());
+        assert!(call_builtin("print", &[Value::Bool(true)], Span::dummy(), &security).is_ok());
+        assert!(call_builtin("print", &[Value::Null], Span::dummy(), &security).is_ok());
     }
 
     #[test]
     fn test_print_rejects_array() {
+        let security = SecurityContext::allow_all();
         // print() should reject arrays per spec
         let result = call_builtin(
             "print",
             &[Value::array(vec![Value::Number(1.0)])],
             Span::dummy(),
+            &security,
         );
         assert!(result.is_err());
         assert!(matches!(
@@ -689,17 +717,24 @@ mod tests {
 
     #[test]
     fn test_print_null_displays_correctly() {
+        let security = SecurityContext::allow_all();
         // Verify that null prints as "null" per spec
         // This is a behavioral test - actual stdout not captured in unit test
-        let result = call_builtin("print", &[Value::Null], Span::dummy());
+        let result = call_builtin("print", &[Value::Null], Span::dummy(), &security);
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Null);
     }
 
     #[test]
     fn test_str_rejects_string() {
+        let security = SecurityContext::allow_all();
         // str() should only accept number|bool|null, not strings
-        let result = call_builtin("str", &[Value::string("already a string")], Span::dummy());
+        let result = call_builtin(
+            "str",
+            &[Value::string("already a string")],
+            Span::dummy(),
+            &security,
+        );
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -709,11 +744,13 @@ mod tests {
 
     #[test]
     fn test_str_rejects_array() {
+        let security = SecurityContext::allow_all();
         // str() should only accept number|bool|null, not arrays
         let result = call_builtin(
             "str",
             &[Value::array(vec![Value::Number(1.0)])],
             Span::dummy(),
+            &security,
         );
         assert!(result.is_err());
         assert!(matches!(
@@ -724,9 +761,10 @@ mod tests {
 
     #[test]
     fn test_str_accepts_all_valid_types() {
+        let security = SecurityContext::allow_all();
         // str() should accept number, bool, null per spec
-        assert!(call_builtin("str", &[Value::Number(42.0)], Span::dummy()).is_ok());
-        assert!(call_builtin("str", &[Value::Bool(true)], Span::dummy()).is_ok());
-        assert!(call_builtin("str", &[Value::Null], Span::dummy()).is_ok());
+        assert!(call_builtin("str", &[Value::Number(42.0)], Span::dummy(), &security).is_ok());
+        assert!(call_builtin("str", &[Value::Bool(true)], Span::dummy(), &security).is_ok());
+        assert!(call_builtin("str", &[Value::Null], Span::dummy(), &security).is_ok());
     }
 }

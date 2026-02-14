@@ -8,6 +8,7 @@ use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::module_loader::{LoadedModule, ModuleLoader};
 use crate::resolver::ModuleResolver;
+use crate::security::SecurityContext;
 use crate::value::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -52,6 +53,8 @@ pub struct ModuleExecutor {
     cache: ModuleCache,
     /// Shared interpreter instance
     interpreter: Interpreter,
+    /// Security context for permission checks
+    security: SecurityContext,
 }
 
 impl ModuleExecutor {
@@ -59,12 +62,14 @@ impl ModuleExecutor {
     ///
     /// # Arguments
     /// * `root` - Project root directory for module resolution
-    pub fn new(root: PathBuf) -> Self {
+    /// * `security` - Security context for permission checks
+    pub fn new(root: PathBuf, security: SecurityContext) -> Self {
         Self {
             loader: ModuleLoader::new(root.clone()),
             resolver: ModuleResolver::new(root),
             cache: ModuleCache::new(),
             interpreter: Interpreter::new(),
+            security,
         }
     }
 
@@ -111,12 +116,15 @@ impl ModuleExecutor {
         }
 
         // Execute the module
-        let result = self.interpreter.eval(&module.ast).map_err(|e| {
-            vec![Diagnostic::error(
-                format!("Runtime error in module {}: {}", module.path.display(), e),
-                e.span(),
-            )]
-        })?;
+        let result = self
+            .interpreter
+            .eval(&module.ast, &self.security)
+            .map_err(|e| {
+                vec![Diagnostic::error(
+                    format!("Runtime error in module {}: {}", module.path.display(), e),
+                    e.span(),
+                )]
+            })?;
 
         // Extract and cache exports
         let exports = self.extract_exports(module);
@@ -222,7 +230,8 @@ mod tests {
     #[test]
     fn test_module_executor_creation() {
         let temp_dir = TempDir::new().unwrap();
-        let _executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+        let _executor =
+            ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
         // Executor can be created successfully
     }
 
@@ -231,7 +240,8 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let module_path = create_test_module(temp_dir.path(), "main", "let x: number = 42;\nx;");
 
-        let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+        let mut executor =
+            ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
         let result = executor.execute_module(&module_path);
 
         match result {
@@ -250,7 +260,8 @@ mod tests {
             "export fn add(a: number, b: number) -> number { return a + b; }",
         );
 
-        let mut executor = ModuleExecutor::new(temp_dir.path().to_path_buf());
+        let mut executor =
+            ModuleExecutor::new(temp_dir.path().to_path_buf(), SecurityContext::allow_all());
         let result = executor.execute_module(&module_path);
 
         assert!(result.is_ok());

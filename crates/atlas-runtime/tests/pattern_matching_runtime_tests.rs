@@ -4,7 +4,7 @@
 //! Tests verify that patterns match correctly, variables bind properly, and both
 //! engines produce identical results (100% parity).
 
-use atlas_runtime::{Binder, Compiler, Interpreter, Lexer, Parser, TypeChecker, VM};
+use atlas_runtime::{Binder, Compiler, Interpreter, Lexer, Parser, SecurityContext, TypeChecker, VM};
 
 /// Helper to run code in interpreter
 fn run_interpreter(source: &str) -> Result<String, String> {
@@ -33,7 +33,7 @@ fn run_interpreter(source: &str) -> Result<String, String> {
     }
 
     let mut interpreter = Interpreter::new();
-    match interpreter.eval(&program) {
+    match interpreter.eval(&program, &SecurityContext::allow_all()) {
         Ok(value) => Ok(format!("{:?}", value)),
         Err(e) => Err(format!("Runtime error: {:?}", e)),
     }
@@ -69,7 +69,7 @@ fn run_vm(source: &str) -> Result<String, String> {
     match compiler.compile(&program) {
         Ok(bytecode) => {
             let mut vm = VM::new(bytecode);
-            match vm.run() {
+            match vm.run(&SecurityContext::allow_all()) {
                 Ok(opt_value) => match opt_value {
                     Some(value) => Ok(format!("{:?}", value)),
                     None => Ok("None".to_string()),

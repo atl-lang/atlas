@@ -224,7 +224,9 @@ impl Interpreter {
             Value::Function(func_ref) => {
                 // Check for stdlib functions first
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, call.span);
+                    let security =
+                        unsafe { &*self.current_security.expect("Security context not set") };
+                    return crate::stdlib::call_builtin(&func_ref.name, &args, call.span, security);
                 }
 
                 // Check for array intrinsics (callback-based functions)
@@ -1104,7 +1106,9 @@ impl Interpreter {
             Value::Function(func_ref) => {
                 // Check for builtins
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, span);
+                    let security =
+                        unsafe { &*self.current_security.expect("Security context not set") };
+                    return crate::stdlib::call_builtin(&func_ref.name, &args, span, security);
                 }
 
                 // User-defined function
