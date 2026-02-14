@@ -36,7 +36,7 @@ pub fn run(file_path: &str) -> Result<()> {
 
     // Bind symbols
     let mut binder = Binder::new();
-    let (symbol_table, bind_diagnostics) = binder.bind(&ast);
+    let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
 
     if !bind_diagnostics.is_empty() {
         for diag in &bind_diagnostics {
@@ -46,7 +46,7 @@ pub fn run(file_path: &str) -> Result<()> {
     }
 
     // Type check
-    let mut typechecker = TypeChecker::new(&symbol_table);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
     let typecheck_diagnostics = typechecker.check(&ast);
 
     if !typecheck_diagnostics.is_empty() {

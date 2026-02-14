@@ -96,14 +96,14 @@ impl Atlas {
 
         // Bind symbols
         let mut binder = Binder::new();
-        let (symbol_table, bind_diagnostics) = binder.bind(&ast);
+        let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
 
         if !bind_diagnostics.is_empty() {
             return Err(bind_diagnostics);
         }
 
         // Type check
-        let mut type_checker = TypeChecker::new(&symbol_table);
+        let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&ast);
 
         if !type_diagnostics.is_empty() {

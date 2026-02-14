@@ -27,7 +27,7 @@ fn bind_program(
 /// Helper to typecheck a program
 fn typecheck_program(
     program: &atlas_runtime::ast::Program,
-    symbol_table: &atlas_runtime::SymbolTable,
+    symbol_table: &mut atlas_runtime::SymbolTable,
 ) -> Vec<atlas_runtime::Diagnostic> {
     let mut checker = TypeChecker::new(symbol_table);
     checker.check(program)
@@ -143,14 +143,14 @@ fn test_return_type_mismatch_has_related_span() {
         parse_diags
     );
 
-    let (symbol_table, bind_diags) = bind_program(&ast);
+    let (mut symbol_table, bind_diags) = bind_program(&ast);
     assert!(
         bind_diags.is_empty(),
         "Should bind without errors: {:?}",
         bind_diags
     );
 
-    let type_diags = typecheck_program(&ast, &symbol_table);
+    let type_diags = typecheck_program(&ast, &mut symbol_table);
     assert_eq!(
         type_diags.len(),
         1,
@@ -198,14 +198,14 @@ fn test_immutable_assignment_has_related_span() {
         parse_diags
     );
 
-    let (symbol_table, bind_diags) = bind_program(&ast);
+    let (mut symbol_table, bind_diags) = bind_program(&ast);
     assert!(
         bind_diags.is_empty(),
         "Should bind without errors: {:?}",
         bind_diags
     );
 
-    let type_diags = typecheck_program(&ast, &symbol_table);
+    let type_diags = typecheck_program(&ast, &mut symbol_table);
 
     // Find the AT3003 error (immutable assignment)
     let at3003_diags: Vec<_> = type_diags.iter().filter(|d| d.code == "AT3003").collect();

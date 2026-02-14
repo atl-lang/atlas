@@ -43,9 +43,9 @@ fn typecheck_source(source: &str) -> Vec<Diagnostic> {
     let (program, parse_diags) = parser.parse();
 
     let mut binder = Binder::new();
-    let (table, bind_diags) = binder.bind(&program);
+    let (mut table, bind_diags) = binder.bind(&program);
 
-    let mut checker = TypeChecker::new(&table);
+    let mut checker = TypeChecker::new(&mut table);
     let type_diags = checker.check(&program);
 
     let mut all_diags = Vec::new();

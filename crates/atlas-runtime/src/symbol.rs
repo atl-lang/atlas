@@ -262,6 +262,19 @@ impl SymbolTable {
         self.functions.get(name)
     }
 
+    /// Look up a symbol mutably in all scopes (innermost first, then functions)
+    pub fn lookup_mut(&mut self, name: &str) -> Option<&mut Symbol> {
+        // Check local scopes first (innermost to outermost)
+        for scope in self.scopes.iter_mut().rev() {
+            if scope.contains_key(name) {
+                return scope.get_mut(name);
+            }
+        }
+
+        // Check top-level functions (hoisted)
+        self.functions.get_mut(name)
+    }
+
     /// Define a builtin function
     fn define_builtin(&mut self, name: &str, ty: Type) {
         self.functions.insert(

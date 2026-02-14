@@ -90,7 +90,7 @@ impl ReplCore {
         }
 
         // Phase 4: Typecheck
-        let mut typechecker = TypeChecker::new(&self.symbol_table);
+        let mut typechecker = TypeChecker::new(&mut self.symbol_table);
         let typecheck_diags = typechecker.check(&ast);
         diagnostics.extend(typecheck_diags);
 

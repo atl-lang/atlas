@@ -18,7 +18,7 @@ use std::collections::{HashMap, HashSet};
 /// Type checker state
 pub struct TypeChecker<'a> {
     /// Symbol table from binder
-    symbol_table: &'a SymbolTable,
+    symbol_table: &'a mut SymbolTable,
     /// Collected diagnostics
     pub(super) diagnostics: Vec<Diagnostic>,
     /// Current function's return type (for return statement checking)
@@ -35,7 +35,7 @@ pub struct TypeChecker<'a> {
 
 impl<'a> TypeChecker<'a> {
     /// Create a new type checker
-    pub fn new(symbol_table: &'a SymbolTable) -> Self {
+    pub fn new(symbol_table: &'a mut SymbolTable) -> Self {
         Self {
             symbol_table,
             diagnostics: Vec::new(),
@@ -205,6 +205,13 @@ impl<'a> TypeChecker<'a> {
                             )
                             .with_label("type mismatch"),
                         );
+                    }
+                } else {
+                    // No explicit type annotation - update symbol table with inferred type
+                    if init_type != Type::Unknown {
+                        if let Some(symbol) = self.symbol_table.lookup_mut(&var.name.name) {
+                            symbol.ty = init_type;
+                        }
                     }
                 }
             }
@@ -593,9 +600,9 @@ mod tests {
         let (program, _) = parser.parse();
 
         let mut binder = Binder::new();
-        let (table, _) = binder.bind(&program);
+        let (mut table, _) = binder.bind(&program);
 
-        let mut checker = TypeChecker::new(&table);
+        let mut checker = TypeChecker::new(&mut table);
         checker.check(&program)
     }
 
