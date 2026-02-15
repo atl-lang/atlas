@@ -229,38 +229,38 @@ impl SymbolTable {
             },
         );
 
-        // Array functions - Use Any for now (proper generics support needs more work)
-        // TODO: Improve type signatures when proper generic inference is ready
+        // Array functions - Use Unknown for array element types to support any array type
+        // This allows string[], number[], etc. to work with these functions
         table.define_builtin(
             "pop",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number))], // Simplified
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                params: vec![Type::Array(Box::new(Type::Unknown))],
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
             "shift",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number))],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                params: vec![Type::Array(Box::new(Type::Unknown))],
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
             "unshift",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
             "reverse",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number))],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                params: vec![Type::Array(Box::new(Type::Unknown))],
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
@@ -268,25 +268,25 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::Unknown)),
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
             "flatten",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Array(Box::new(Type::Number))))],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                params: vec![Type::Array(Box::new(Type::Array(Box::new(Type::Unknown))))],
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
             "arrayIndexOf",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
                 return_type: Box::new(Type::Number),
             },
         );
@@ -294,7 +294,7 @@ impl SymbolTable {
             "arrayLastIndexOf",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
                 return_type: Box::new(Type::Number),
             },
         );
@@ -302,7 +302,7 @@ impl SymbolTable {
             "arrayIncludes",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Number)), Type::Number],
+                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
                 return_type: Box::new(Type::Bool),
             },
         );
@@ -311,28 +311,28 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Number,
                     Type::Number,
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
 
-        // Array intrinsics (callback-based) - simplified signatures
+        // Array intrinsics (callback-based) - use Unknown for generic array support
         table.define_builtin(
             "map",
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
-                        return_type: Box::new(Type::Number),
+                        params: vec![Type::Unknown],
+                        return_type: Box::new(Type::Unknown),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
@@ -340,14 +340,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
@@ -355,15 +355,15 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number, Type::Number],
-                        return_type: Box::new(Type::Number),
+                        params: vec![Type::Unknown, Type::Unknown],
+                        return_type: Box::new(Type::Unknown),
                     },
-                    Type::Number,
+                    Type::Unknown,
                 ],
-                return_type: Box::new(Type::Number),
+                return_type: Box::new(Type::Unknown),
             },
         );
         table.define_builtin(
@@ -371,10 +371,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Void),
                     },
                 ],
@@ -386,14 +386,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
-                return_type: Box::new(Type::Number),
+                return_type: Box::new(Type::Unknown),
             },
         );
         table.define_builtin(
@@ -401,10 +401,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -416,14 +416,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
-                        return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                        params: vec![Type::Unknown],
+                        return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
@@ -431,10 +431,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -446,10 +446,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -461,14 +461,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number, Type::Number],
+                        params: vec![Type::Unknown, Type::Unknown],
                         return_type: Box::new(Type::Number),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
         table.define_builtin(
@@ -476,14 +476,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Number)),
+                    Type::Array(Box::new(Type::Unknown)),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Number],
+                        params: vec![Type::Unknown],
                         return_type: Box::new(Type::Number),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Number))),
+                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
             },
         );
 

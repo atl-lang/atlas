@@ -220,11 +220,15 @@ fn test_sqrt_map_floor() {
             return floor(sqrt(x));
         }
 
+        fn add(a: number, b: number) -> number {
+            return a + b;
+        }
+
         let nums: number[] = [4, 9, 10, 16, 20];
         let roots: number[] = map(nums, sqrtFloor);
-        reduce(roots, (a: number, b: number): number => a + b, 0)
+        reduce(roots, add, 0)
     "#;
-    assert_eval_number(code, 14.0); // 2 + 3 + 3 + 4 + 4
+    assert_eval_number(code, 16.0); // 2 + 3 + 3 + 4 + 4 = 16
 }
 
 #[test]
@@ -234,9 +238,13 @@ fn test_clamp_map_range() {
             return clamp(x, 0, 10);
         }
 
+        fn numToStr(x: number) -> string {
+            return toString(x);
+        }
+
         let nums: number[] = [-5, 3, 15, 7, 20];
         let clamped: number[] = map(nums, clampTo10);
-        join(map(clamped, (x: number): string => toString(x)), ",")
+        join(map(clamped, numToStr), ",")
     "#;
     assert_eval_string(code, "0,3,10,7,10");
 }
@@ -282,7 +290,7 @@ fn test_round_map_average() {
         let sum: number = reduce(rounded, add, 0);
         sum / len(rounded)
     "#;
-    assert_eval_number(code, 3.4); // (1+3+4+4+6)/5 = 18/5 = 3.6 wait let me recalculate: round(1.2)=1, round(2.7)=3, round(3.5)=4, round(4.1)=4, round(5.9)=6. Sum = 18. 18/5 = 3.6
+    assert_eval_number(code, 3.6); // (1+3+4+4+6)/5 = 18/5 = 3.6 wait let me recalculate: round(1.2)=1, round(2.7)=3, round(3.5)=4, round(4.1)=4, round(5.9)=6. Sum = 18. 18/5 = 3.6
 }
 
 #[test]
@@ -292,10 +300,13 @@ fn test_sign_filter_sort() {
             return a - b;
         }
 
-        let nums: number[] = [-5, 3, -2, 0, 8];
+        fn numToStr(x: number) -> string {
+            return toString(x);
+        }
+
         let signs: number[] = [sign(-5), sign(3), sign(-2), sign(0), sign(8)];
         let sorted: number[] = sort(signs, compare);
-        join(map(sorted, (x: number): string => toString(x)), ",")
+        join(map(sorted, numToStr), ",")
     "#;
     assert_eval_string(code, "-1,-1,0,1,1");
 }
@@ -319,22 +330,22 @@ fn test_random_clamp_floor() {
 
 #[test]
 fn test_parse_json_extract_map() {
-    let code = r#"
-        let jsonStr: string = '{"users": [{"name": "Alice"}, {"name": "Bob"}]}';
+    let code = r##"
+        let jsonStr: string = "{\"users\": [{\"name\": \"Alice\"}, {\"name\": \"Bob\"}]}";
         let data: json = parseJSON(jsonStr);
         let users: json = data["users"];
         let alice: json = users[0];
         let name: string = alice["name"].as_string();
         name
-    "#;
+    "##;
     assert_eval_string(code, "Alice");
 }
 
 #[test]
 fn test_typeof_filter_numbers() {
-    let code = r#"
+    let code = r##"
         // Simulated mixed array using json
-        let jsonStr: string = '[1, "two", 3, "four", 5]';
+        let jsonStr: string = "[1, \"two\", 3, \"four\", 5]";
         let arr: json = parseJSON(jsonStr);
 
         // Extract and check types
@@ -343,25 +354,25 @@ fn test_typeof_filter_numbers() {
         let item2: json = arr[2];
 
         isNumber(item0.as_number()) && !isNumber(item1.as_number()) && isNumber(item2.as_number())
-    "#;
+    "##;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_json_to_string_concatenation() {
-    let code = r#"
-        let obj: json = parseJSON('{"name": "Atlas", "version": 1}');
+    let code = r##"
+        let obj: json = parseJSON("{\"name\": \"Atlas\", \"version\": 1}");
         let name: string = obj["name"].as_string();
         let version: number = obj["version"].as_number();
         name + " v" + toString(version)
-    "#;
+    "##;
     assert_eval_string(code, "Atlas v1");
 }
 
 #[test]
 fn test_json_array_length_type_check() {
     let code = r#"
-        let arr: json = parseJSON('[10, 20, 30]');
+        let arr: json = parseJSON("[10, 20, 30]");
         // JSON arrays don't have len() directly, need to extract values
         let item0: number = arr[0].as_number();
         let item1: number = arr[1].as_number();
@@ -374,24 +385,24 @@ fn test_json_array_length_type_check() {
 
 #[test]
 fn test_prettify_minify_roundtrip() {
-    let code = r#"
-        let compact: string = '{"a":1,"b":2}';
-        let pretty: string = prettifyJSON(compact);
+    let code = r##"
+        let compact: string = "{\"a\":1,\"b\":2}";
+        let pretty: string = prettifyJSON(compact, 2);
         let mini: string = minifyJSON(pretty);
         isValidJSON(mini)
-    "#;
+    "##;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_json_nested_extraction() {
-    let code = r#"
-        let json: json = parseJSON('{"user":{"profile":{"age":25}}}');
+    let code = r##"
+        let json: json = parseJSON("{\"user\":{\"profile\":{\"age\":25}}}");
         let user: json = json["user"];
         let profile: json = user["profile"];
         let age: number = profile["age"].as_number();
         age
-    "#;
+    "##;
     assert_eval_number(code, 25.0);
 }
 
@@ -409,7 +420,7 @@ fn test_parse_float_parse_int_json_mix() {
 #[test]
 fn test_to_bool_json_boolean() {
     let code = r#"
-        let json: json = parseJSON('{"active": true, "deleted": false}');
+        let json: json = parseJSON("{"active": true, "deleted": false}");
         let active: bool = json["active"].as_bool();
         let deleted: bool = json["deleted"].as_bool();
         active && !deleted
@@ -420,7 +431,7 @@ fn test_to_bool_json_boolean() {
 #[test]
 fn test_to_json_parse_roundtrip() {
     let code = r#"
-        let original: json = parseJSON('{"x": 10}');
+        let original: json = parseJSON("{"x": 10}");
         let serialized: string = toJSON(original);
         let parsed: json = parseJSON(serialized);
         let x: number = parsed["x"].as_number();
@@ -431,20 +442,20 @@ fn test_to_json_parse_roundtrip() {
 
 #[test]
 fn test_is_valid_json_filter_strings() {
-    let code = r#"
+    let code = r##"
         fn isValid(s: string) -> bool {
             return isValidJSON(s);
         }
 
         let candidates: string[] = [
-            '{"valid": true}',
-            'not json',
-            '[1, 2, 3]',
-            '{invalid'
+            "{\"valid\": true}",
+            "not json",
+            "[1, 2, 3]",
+            "{invalid"
         ];
         let valid: string[] = filter(candidates, isValid);
         len(valid)
-    "#;
+    "##;
     assert_eval_number(code, 2.0); // First and third are valid
 }
 
