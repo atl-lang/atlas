@@ -9,16 +9,16 @@
 
 **Version:** v0.2 (building production infrastructure)
 **Last Completed:** phases/foundation/phase-12-reflection-api.md
-**Next Phase:** phases/foundation/phase-08-package-manager-core.md
+**Next Phase:** phases/foundation/phase-08a-package-manager-resolver-core.md
 
 **🚨 CRITICAL: Foundation must be completed before continuing stdlib/frontend/CLI**
 
-**Real Progress:** 15/70 phases complete (21%)
-- Foundation: 15/19 (method call + runtime API + embedding + config + modules + error handling + complete FFI system + package manifest + security permissions + CI/CD automation + foundation integration docs + reflection API)
+**Real Progress:** 15/72 phases complete (21%)
+- Foundation: 15/21 (method call + runtime API + embedding + config + modules + error handling + complete FFI system + package manifest + security permissions + CI/CD automation + foundation integration docs + reflection API)
 - Stdlib: 5/15 (will hit foundation blockers at phase 10b)
 - Everything else: Blocked by foundation
 
-**Note:** Phase-10 FFI split into 3 sub-phases (10a/10b/10c) for manageable implementation
+**Note:** Phase-10 FFI split into 3 sub-phases (10a/10b/10c), Phase-08 Package Manager split into 3 sub-phases (08a/08b/08c) for manageable implementation
 
 **v0.1 Prerequisites (Already Complete):**
 - ✅ First-Class Functions
@@ -110,7 +110,7 @@ v0.2 transforms Atlas into a production-ready language:
 **🚨 CATEGORY ORDER = EXECUTION ORDER 🚨**
 **Foundation MUST be complete before other categories**
 
-### 0. Foundation (14/19) - Production Infrastructure [PRIORITY 1 - DO FIRST]
+### 0. Foundation (15/21) - Production Infrastructure [PRIORITY 1 - DO FIRST]
 
 **Completed:**
 - ✅ phase-16-method-call-syntax-frontend.md **[Emergency blocker fix - not planned foundation]**
@@ -133,8 +133,10 @@ v0.2 transforms Atlas into a production-ready language:
 - ✅ **CRITICAL PATH COMPLETE** - All blocking foundation phases done!
 
 **Secondary (can defer until needed):**
-- ⬜ phase-08-package-manager-core.md **[Needs: phase-07]**
-- ⬜ phase-11-build-system.md **[Needs: phase-06, phase-07, phase-08]**
+- ⬜ phase-08a-package-manager-resolver-core.md **[Needs: phase-07]**
+- ⬜ phase-08b-package-manager-registry.md **[Needs: phase-08a]**
+- ⬜ phase-08c-package-manager-integration.md **[Needs: phase-08a, phase-08b]**
+- ⬜ phase-11-build-system.md **[Needs: phase-06, phase-07, phase-08c]**
 - ⬜ phase-13-performance-benchmarking.md **[Needs: Bytecode-VM/phase-03]**
 - ⬜ phase-14-documentation-generator.md **[Needs: Frontend/phase-02, phase-06]**
 
@@ -207,9 +209,9 @@ v0.2 transforms Atlas into a production-ready language:
 - ⬜ phase-04-stability-verification.md
 - ⬜ phase-05-v02-milestone-completion.md
 
-**Total v0.2 Progress:** 20/70 phases (29%) - **MISLEADING: 5 stdlib phases will hit blockers**
-**Real Progress:** 15/70 phases (21%) - Foundation phases 01, 02, 03, 04, 05, 06, 07, 09, 10a/b/c, 12, 15, 16-17 complete
-**Foundation Status:** 15/19 phases (79%) - **CRITICAL PATH COMPLETE! Secondary phases remain**
+**Total v0.2 Progress:** 20/72 phases (28%) - **MISLEADING: 5 stdlib phases will hit blockers**
+**Real Progress:** 15/72 phases (21%) - Foundation phases 01, 02, 03, 04, 05, 06, 07, 09, 10a/b/c, 12, 15, 16-17 complete
+**Foundation Status:** 15/21 phases (71%) - **CRITICAL PATH COMPLETE! Secondary phases remain**
 **Next Focus:** Secondary foundation phases (package manager, build system, benchmarking, docs generator)
 
 ---
