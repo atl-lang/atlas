@@ -11,8 +11,8 @@
 //! - Complex multi-step transformations
 
 mod common;
-use common::*;
 use atlas_runtime::{Atlas, SecurityContext, Value};
+use common::*;
 use std::path::Path;
 
 // Assert with file I/O permissions (grants /tmp access)

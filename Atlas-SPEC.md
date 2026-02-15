@@ -1,7 +1,7 @@
 # Atlas Language Specification (Index)
 
 **Version:** v0.2 (Draft)
-**Last Updated:** 2026-02-13
+**Last Updated:** 2026-02-15
 
 ---
 
@@ -22,6 +22,10 @@
 | **Bytecode, VM, compilation** | `docs/specification/bytecode.md` |
 | **Error codes, diagnostics** | `docs/specification/diagnostic-system.md` |
 | **Stdlib functions, API** | `docs/api/stdlib.md` |
+| **Build system** | `docs/build-system.md` |
+| **Package manager & dependency resolution** | `docs/dependency-resolution.md` |
+| **Security model & permissions** | `docs/security-model.md` |
+| **Reflection API** | `docs/reflection.md` |
 
 **Example:** "I'm implementing pattern matching" → Read `docs/specification/types.md` (Pattern Matching section)
 

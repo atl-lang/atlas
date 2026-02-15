@@ -12,7 +12,7 @@ This documentation is organized for both AI agents and human developers working 
 Core language definition and semantics
 - `grammar-conformance.md` - Parser conformance requirements
 - `language-semantics.md` - Type rules, operators, execution semantics
-- `runtime-spec.md` - Value model, bytecode format, execution model
+- `runtime.md` - Value model, bytecode format, execution model
 - `diagnostic-system.md` - Error codes, warnings, diagnostic format
 - `json-formats.md` - AST/typecheck dump formats
 

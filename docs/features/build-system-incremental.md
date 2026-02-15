@@ -1,12 +1,12 @@
 # Atlas Build System - Incremental Compilation & Cache
 
-**Status:** Implemented (Phase-11b)
+**Status:** Implemented (Phases 11b–11c)
 **Version:** 0.2.0
 **Last Updated:** 2026-02-15
 
 ## Overview
 
-Phase-11b extends the Atlas build system with incremental compilation and intelligent build caching. This enables fast rebuilds by recompiling only changed modules and their dependents, while reusing cached bytecode for unchanged modules.
+Phases 11b–11c extend the Atlas build system with incremental compilation, intelligent build caching, profile-aware builds, build scripts, and CLI integration. Fast rebuilds recompile only changed modules and their dependents while reusing cached bytecode for unchanged modules.
 
 ## Architecture
 
@@ -16,11 +16,13 @@ Phase-11b extends the Atlas build system with incremental compilation and intell
 2. **Change Detection** (`cache/metadata.rs`) - File change tracking with timestamps and content hashing
 3. **Cache Invalidation** (`cache/invalidation.rs`) - Dependency-aware invalidation propagation
 4. **Incremental Builder** (`builder.rs`) - Build orchestration with cache integration
+5. **Profiles** (`profile.rs`) - Profile-aware cache keys and options
+6. **Build Scripts** (`script.rs`) - Hooks that participate in incremental flow (rerun when script or inputs change)
 
 ### Incremental Build Pipeline
 
 ```
-Load Cache → Detect Changes → Compute Invalidation → Recompile Affected → Reuse Cached → Link → Save Cache
+Load Cache → Detect Changes → Compute Invalidation → Recompile Affected → Reuse Cached → Link → Save Cache (profile-aware)
 ```
 
 **Detailed Flow:**

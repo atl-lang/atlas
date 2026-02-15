@@ -8,11 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- CI/CD automation with GitHub Actions
-- Benchmark workflow with performance regression detection
-- Automated release workflow with multi-platform binaries
+- CI/CD automation with GitHub Actions (multi-platform, coverage, MSRV)
+- Benchmark workflow with regression detection
+- Release workflow with multi-platform binaries
 - Security audit workflows (daily audits + supply chain checks)
 - Dependabot configuration for automated dependency updates
+- Foundation infrastructure (v0.2):
+  - Runtime API expansion (phase 01)
+  - Embedding API with native functions and sandboxing (phase 02)
+  - Configuration system (`atlas.toml`, global config) (phase 04)
+  - Module system core (imports/exports/resolution) (phase 06)
+  - Error handling primitives with Result type and `?` propagation (phase 09)
+  - FFI core + dynamic loading + callbacks (phases 10a–10c)
+  - Package manager resolver/registry/integration (phases 08a–08c)
+  - Build system core + incremental + profiles/scripts (phases 11a–11c)
+  - Security permissions model and sandbox (phase 15)
+  - Reflection API (phase 12)
+  - Method call syntax fixes (phases 16–17)
+- Standard library through integration phases:
+  - String, array, math, JSON, file I/O APIs
+  - Option/Result helpers and type guards/conversions
+  - Integration tests, real-world usage tests, parity verification (phases 06a–06c)
+  - Performance benchmarks for stdlib (phase 06c)
 
 ### Changed
 

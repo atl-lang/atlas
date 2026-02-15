@@ -3,7 +3,6 @@
 use atlas_build::{
     BuildScript, Profile, ScriptContext, ScriptExecutor, ScriptPhase,
 };
-use std::collections::HashMap;
 use std::path::PathBuf;
 use std::time::Duration;
 

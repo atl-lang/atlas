@@ -1,12 +1,12 @@
 # Atlas Build System - Core Infrastructure
 
-**Status:** Implemented (Phase-11a)
+**Status:** Implemented (Phases 11a–11c)
 **Version:** 0.2.0
 **Last Updated:** 2026-02-15
 
 ## Overview
 
-The Atlas build system provides professional-grade build infrastructure for compiling Atlas projects. Phase-11a implements the core build orchestration, multiple build targets, dependency ordering with topological sort, and the foundation for incremental compilation.
+The Atlas build system provides professional-grade build infrastructure for compiling Atlas projects. Phases 11a–11c deliver core orchestration, multiple build targets, dependency ordering with topological sort, incremental compilation + cache, profiles, build scripts, and CLI integration.
 
 ## Architecture
 
@@ -16,11 +16,14 @@ The Atlas build system provides professional-grade build infrastructure for comp
 2. **Build Targets** (`targets.rs`) - Target type definitions (library, binary, bytecode, test, benchmark)
 3. **Build Order** (`build_order.rs`) - Topological sort and dependency ordering
 4. **Error Handling** (`error.rs`) - Comprehensive build error types
+5. **Profiles** (`profile.rs`) - Build profiles (dev/release/custom) and option resolution
+6. **Build Scripts** (`script.rs`) - Pre/post build hooks with sandboxed execution
+7. **Output** (`output.rs`) - Structured build output (timings, cache hits, artifacts)
 
 ### Build Pipeline
 
 ```
-Project Discovery → Dependency Graph → Build Order → Compilation → Linking → Artifacts
+Project Discovery → Dependency Graph → Build Order → Incremental Cache → Compilation → Linking → Artifacts
 ```
 
 **Detailed Flow:**
@@ -53,6 +56,19 @@ Project Discovery → Dependency Graph → Build Order → Compilation → Linki
 6. **Artifact Generation**
    - Create output files in conventional directory structure
    - Include build metadata (compile time, module count, version)
+   - Report cache hits/misses and profile used
+
+## Build Profiles
+
+- Profiles configured in `atlas.toml` under `[profile.<name>]`.
+- Defaults: `dev` (debug on, opt_level 0), `release` (debug off, opt_level 3).
+- Custom profiles inherit defaults; per-target overrides supported.
+
+## Build Scripts
+
+- Optional hooks in `atlas.toml` `[package.scripts]`: `prebuild`, `postbuild`.
+- Executed before/after build pipeline; failures abort the build with diagnostics.
+- Run within the security policy (no ambient network/filesystem beyond allowed permissions).
 
 ## Build Targets
 

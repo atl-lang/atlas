@@ -2,7 +2,7 @@
 
 **Purpose:** Complete API reference for Atlas standard library functions
 **Audience:** AI agents and developers
-**Status:** Growing - phases add functions as implemented
+**Status:** Complete for phases 01–06c (strings, arrays, math, JSON, file I/O, Option/Result, integration, real-world tests, benchmarks)
 
 ---
 
@@ -13,12 +13,13 @@
 4. [Math Functions](#math-functions)
 5. [JSON Functions](#json-functions)
 6. [File I/O Functions](#file-io-functions)
-7. [Result Methods](#result-methods)
-8. [Option Methods](#option-methods)
-9. [Collection Functions](#collection-functions)
-10. [Regex Functions](#regex-functions)
-11. [DateTime Functions](#datetime-functions)
-12. [Network Functions](#network-functions)
+7. [Result Functions](#result-functions)
+8. [Option Functions](#option-functions)
+9. [Type Guards & Conversions](#type-guards--conversions)
+10. [Collections](#collections)
+11. [Regex](#regex)
+12. [DateTime](#datetime)
+13. [Network](#network)
 
 ---
 
@@ -34,10 +35,15 @@
 **Errors:** AT0102 if wrong type
 
 ### len
-**Signature:** `len(value: string|T[]) -> number`
+**Signature:** `len(value: string|array) -> number`
 **Behavior:** Returns length (Unicode scalars for strings, element count for arrays)
 **Example:** `len("🌟")` returns `1`
 **Errors:** AT0102 if wrong type
+
+### typeOf
+**Signature:** `typeOf(value: any) -> string`
+**Behavior:** Returns type name (`"null"|"bool"|"number"|"string"|"array"|"function"|"json"|"option"|"result"`)
+**Errors:** None
 
 ### str
 **Signature:** `str(value: number|bool|null) -> string`

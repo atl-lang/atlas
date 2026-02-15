@@ -14,6 +14,7 @@ pub struct BuildArgs {
     /// Build in release mode (shorthand for --profile=release)
     pub release: bool,
     /// Specific target to build
+    #[allow(dead_code)]
     pub target: Option<String>,
     /// Clean build (ignore cache)
     pub clean: bool,
@@ -24,6 +25,7 @@ pub struct BuildArgs {
     /// JSON output
     pub json: bool,
     /// Number of parallel jobs
+    #[allow(dead_code)]
     pub jobs: Option<usize>,
     /// Target directory
     pub target_dir: Option<PathBuf>,
@@ -155,7 +157,7 @@ fn determine_output_mode(args: &BuildArgs) -> OutputMode {
 }
 
 /// Load build scripts from package manifest
-fn load_build_scripts(builder: &Builder, project_dir: &PathBuf) -> Result<Vec<BuildScript>> {
+fn load_build_scripts(_builder: &Builder, project_dir: &PathBuf) -> Result<Vec<BuildScript>> {
     // Read manifest
     let manifest_path = project_dir.join("atlas.toml");
     if !manifest_path.exists() {
