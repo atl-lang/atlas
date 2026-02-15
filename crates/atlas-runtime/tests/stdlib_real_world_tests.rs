@@ -2787,7 +2787,6 @@ fn test_config_prettify_for_humans() {
     assert_eval_bool_with_io(code, true);
 }
 
-
 #[test]
 fn test_config_array_length() {
     let code = r#"
