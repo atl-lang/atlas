@@ -267,8 +267,8 @@ Lock rules for top-level execution order and function hoisting. Predictable exec
   ```
 
 **Hoisting Scope:**
-- Only top-level functions are hoisted
-- Nested functions (when supported) are NOT hoisted
+- Top-level functions are hoisted globally
+- Nested functions are hoisted within their enclosing scope (v0.2+)
 - Variable declarations are NOT hoisted
 
 **Declaration Order:**
@@ -280,11 +280,33 @@ Lock rules for top-level execution order and function hoisting. Predictable exec
   let x = 5;
   ```
 
+**Nested Function Hoisting (v0.2+):**
+Nested functions are hoisted within their scope using two-pass binding:
+```atlas
+fn outer() -> number {
+    return helper(21);  // ✅ OK: helper is hoisted in outer's scope
+
+    fn helper(x: number) -> number {
+        return x * 2;
+    }
+}
+```
+
+Sibling nested functions can call each other:
+```atlas
+fn outer() -> number {
+    fn a() -> number { return b() + 10; }  // ✅ OK
+    fn b() -> number { return 32; }
+    return a();  // Returns 42
+}
+```
+
 ### Test Coverage
 - Call function before declaration → works (hoisted)
 - Use variable before declaration → `AT0002` undefined symbol
 - Top-level statements with side effects execute in order
-- Function hoisting only applies to top-level, not nested
+- Nested function forward references → works (hoisted within scope)
+- Sibling nested function calls → works
 
 ---
 

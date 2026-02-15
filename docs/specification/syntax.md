@@ -314,12 +314,27 @@ fn identity<T>(x: T) -> T {
 fn greet(name: string) -> void {
     print("Hello " + name);
 }
+
+// Nested function (v0.2+)
+fn outer() -> number {
+    fn helper(x: number) -> number {
+        return x * 2;
+    }
+    return helper(21);  // Returns 42
+}
 ```
 
 **Rules:**
 - Parameter types must be explicit
 - Return type must be explicit
-- Top-level only (no nested functions in v0.2)
+- Can be declared at top-level or nested within functions/blocks (v0.2+)
+- Nested functions are hoisted within their scope (forward references allowed)
+- Nested functions can shadow outer functions and globals
+- Nested functions can call sibling functions at the same scope level
+
+**Limitations (deferred to v0.3):**
+- Nested functions cannot capture outer scope variables (no closure)
+- Anonymous/lambda functions not supported
 
 ### If Statement
 
@@ -424,7 +439,7 @@ type_param_list = ident { "," ident } ;                              (* v0.2+ *)
 params         = param { "," param } ;
 param          = ident ":" type ;
 
-stmt           = var_decl | assign_stmt | compound_assign_stmt | increment_stmt
+stmt           = fn_decl | var_decl | assign_stmt | compound_assign_stmt | increment_stmt
                | decrement_stmt | if_stmt | while_stmt | for_stmt
                | return_stmt | break_stmt | continue_stmt | expr_stmt ;
 

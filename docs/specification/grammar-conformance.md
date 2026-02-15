@@ -253,7 +253,6 @@ All parser errors use diagnostic code **AT1000** (Syntax Error).
 | Missing tokens | `let = 42;` | ✅ |
 | Invalid assignment targets | `42 = x;` | ✅ |
 | Unclosed delimiters | `[1, 2, 3` | ✅ |
-| Nested functions | `fn f() { fn g() {} }` | ✅ |
 | Reserved keywords | `import foo;` | ✅ |
 
 ### Error Recovery
@@ -302,19 +301,24 @@ Assignments can target:
 
 ### Test Coverage
 
-- ✅ 44 parser golden tests (valid programs)
-- ✅ 45 parser error tests (syntax errors)
+- ✅ 54 parser golden tests (valid programs, including nested functions)
+- ✅ 37 parser error tests (syntax errors)
 - ✅ Operator precedence tests
 - ✅ Assignment target tests
 - ✅ Error recovery tests
-- ✅ Nested function rejection tests
 - ✅ Reserved keyword tests
+
+### Features Added in v0.2
+
+1. **Nested function declarations:** Functions can be declared inside function bodies and blocks. ✅ Implemented (Phases 1-7)
+2. **Generic type parameters:** Functions support `<T>` syntax. ✅ Implemented
+3. **Pattern matching:** `match` expressions with type narrowing. ✅ Implemented
 
 ### Known Limitations (By Design)
 
-1. **No nested function declarations:** Functions can only be declared at top level (v0.1 constraint). ✅ Enforced
-2. **No `import` statements:** Reserved for future versions. ✅ Error on use
-3. **No `match` expressions:** Reserved for future versions. ⚠️ No explicit test yet
+1. **No closure capture:** Nested functions cannot capture outer scope variables (deferred to v0.3)
+2. **No anonymous functions:** All functions must be named (deferred to v0.3)
+3. **No `import` statements in non-module files:** Reserved for module system. ✅ Error on use
 
 ---
 
