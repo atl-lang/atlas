@@ -9,16 +9,16 @@
 
 **Version:** v0.2 (building production infrastructure)
 **Last Completed:** phases/stdlib/phase-06c-stdlib-performance-docs.md (verified 2026-02-15)
-**Next Phase:** phases/stdlib/phase-07-collections.md
+**Next Phase:** phases/stdlib/phase-07a-hash-infrastructure-hashmap.md
 
 **🚨 CRITICAL: Foundation must be completed before continuing stdlib/frontend/CLI**
 
-**Real Progress:** 29/75 phases complete (39%)
+**Real Progress:** 29/78 phases complete (37%)
 - Foundation: 21/21 (100% COMPLETE)
-- Stdlib: 8/18 (will hit foundation blockers at phase 10b)
+- Stdlib: 8/21 (will hit foundation blockers at phase 10b)
 - Everything else: Blocked by foundation
 
-**Note:** Phase-10 FFI split into 3 sub-phases (10a/10b/10c), Phase-08 Package Manager split into 3 sub-phases (08a/08b/08c), Phase-11 Build System split into 3 sub-phases (11a/11b/11c), Phase-06 Stdlib Integration split into 3 sub-phases (06a/06b/06c) for manageable implementation
+**Note:** Phase-10 FFI split into 3 sub-phases (10a/10b/10c), Phase-08 Package Manager split into 3 sub-phases (08a/08b/08c), Phase-11 Build System split into 3 sub-phases (11a/11b/11c), Phase-06 Stdlib Integration split into 3 sub-phases (06a/06b/06c), Phase-07 Collections split into 4 sub-phases (07a/07b/07c/07d) for manageable AI-friendly implementation
 
 **v0.1 Prerequisites (Already Complete):**
 - ✅ First-Class Functions
@@ -142,7 +142,7 @@ v0.2 transforms Atlas into a production-ready language:
 - ⬜ phase-13-performance-benchmarking.md **[Needs: Bytecode-VM/phase-03]**
 - ⬜ phase-14-documentation-generator.md **[Needs: Frontend/phase-02, phase-06]**
 
-### 1. Standard Library (8/18) - Complete API [⚠️ FOUNDATION BLOCKERS AHEAD]
+### 1. Standard Library (8/21) - Complete API [⚠️ FOUNDATION BLOCKERS AHEAD]
 - ✅ phase-01-complete-string-api.md (18 functions)
 - ✅ phase-02-complete-array-api.md (21 functions)
 - ✅ phase-03-complete-math-api.md (18 functions + 5 constants)
@@ -151,7 +151,10 @@ v0.2 transforms Atlas into a production-ready language:
 - ✅ phase-06a-stdlib-integration-core.md **[120 integration tests, 100% passing, 2026-02-15]**
 - ✅ phase-06b-stdlib-real-world.md **[COMPLETE - 150 real-world tests]**
 - ✅ phase-06c-stdlib-performance-docs.md **[Benchmarks + docs + parity verification, 2026-02-15]**
-- ⬜ phase-07-collections.md **[Can continue - HashMap, HashSet, Queue, Stack]**
+- ⬜ phase-07a-hash-infrastructure-hashmap.md **[Hash function + HashMap, ~1,270 lines, 35+ tests]**
+- ⬜ phase-07b-hashset.md **[HashSet + set operations, ~610 lines, 25+ tests]**
+- ⬜ phase-07c-queue-stack.md **[Queue (FIFO) + Stack (LIFO), ~690 lines, 36+ tests]**
+- ⬜ phase-07d-collection-integration.md **[Iteration + integration + benchmarks, ~450 lines, 35+ tests]**
 - ⬜ phase-08-regex.md **[Can continue - Regular expressions]**
 - ⬜ phase-09-datetime.md **[Can continue - Date and time API]**
 - 🚨 phase-10-network-http.md **[BLOCKED: needs foundation/09 + foundation/15]**
@@ -213,8 +216,8 @@ v0.2 transforms Atlas into a production-ready language:
 - ⬜ phase-04-stability-verification.md
 - ⬜ phase-05-v02-milestone-completion.md
 
-**Total v0.2 Progress:** 27/75 phases (36%)
-**Real Progress:** 22/75 phases (29%) - Foundation 100% complete, Stdlib phase-06a complete (120 integration tests)
+**Total v0.2 Progress:** 29/78 phases (37%)
+**Real Progress:** 29/78 phases (37%) - Foundation 100% complete, Stdlib phase-06c complete (benchmarks + parity verification)
 **Foundation Status:** 21/21 phases (100%) ✅ **COMPLETE! All foundation infrastructure delivered**
 **Next Focus:** Continue with stdlib phases 06-15, bytecode-VM, frontend, typing, interpreter, CLI, LSP, polish
 
