@@ -62,7 +62,7 @@ fn test_typecheck_nested_function_basic() {
             return helper(21);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -77,7 +77,7 @@ fn test_typecheck_nested_function_multiple_params() {
             return add(10, 20);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -92,7 +92,7 @@ fn test_typecheck_nested_function_different_types() {
             return greet("World");
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -111,7 +111,7 @@ fn test_typecheck_nested_function_missing_return() {
             return 0;
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected missing return error");
     assert!(
@@ -135,7 +135,7 @@ fn test_typecheck_nested_function_conditional_return() {
             return abs(-5);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -152,7 +152,7 @@ fn test_typecheck_nested_function_incomplete_return_paths() {
             return 0;
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected incomplete return paths error");
     assert!(
@@ -176,11 +176,13 @@ fn test_typecheck_nested_function_wrong_param_type() {
             return double("not a number");
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected type mismatch error");
     assert!(
-        errors.iter().any(|e| e.contains("AT3001") || e.contains("type")),
+        errors
+            .iter()
+            .any(|e| e.contains("AT3001") || e.contains("type")),
         "Expected type error, got: {:?}",
         errors
     );
@@ -196,11 +198,13 @@ fn test_typecheck_nested_function_wrong_return_type() {
             return bad();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected type mismatch error");
     assert!(
-        errors.iter().any(|e| e.contains("AT3001") || e.contains("type")),
+        errors
+            .iter()
+            .any(|e| e.contains("AT3001") || e.contains("type")),
         "Expected type error, got: {:?}",
         errors
     );
@@ -216,7 +220,7 @@ fn test_typecheck_nested_function_param_type_mismatch() {
             process(42, 100);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected type mismatch error");
 }
@@ -238,7 +242,7 @@ fn test_typecheck_deeply_nested_functions() {
             return level2() + 1;
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -256,7 +260,7 @@ fn test_typecheck_nested_function_type_error_in_deep_nesting() {
             return level2();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert!(!errors.is_empty(), "Expected type error");
 }
@@ -278,7 +282,7 @@ fn test_typecheck_nested_function_calling_nested() {
             return helper2();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -297,7 +301,7 @@ fn test_typecheck_nested_function_calling_outer() {
             return nested();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -316,7 +320,7 @@ fn test_typecheck_nested_function_with_type_params() {
             return inner(100);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -335,7 +339,7 @@ fn test_typecheck_nested_function_void_return() {
             helper();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -350,7 +354,7 @@ fn test_typecheck_nested_function_void_no_return_required() {
             helper();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     // Void functions don't require explicit return
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
@@ -371,7 +375,7 @@ fn test_typecheck_nested_function_array_param() {
             return sum(nums);
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -386,7 +390,7 @@ fn test_typecheck_nested_function_array_return() {
             return makeArray();
         }
     "#;
-    
+
     let errors = typecheck_source(source);
     assert_eq!(errors.len(), 0, "Type errors: {:?}", errors);
 }
@@ -405,7 +409,7 @@ fn test_typecheck_nested_function_unused_param_warning() {
             return helper(10, 20);
         }
     "#;
-    
+
     let diagnostics = typecheck_source_with_warnings(source);
     // Should have warning for unused parameter 'y'
     assert!(
@@ -425,9 +429,13 @@ fn test_typecheck_nested_function_underscore_suppresses_warning() {
             return helper(10);
         }
     "#;
-    
+
     let diagnostics = typecheck_source_with_warnings(source);
     // Should NOT have warning for _x (underscore prefix suppresses)
     let unused_warnings = diagnostics.iter().filter(|d| d.contains("AT2001")).count();
-    assert_eq!(unused_warnings, 0, "Should not warn about _x: {:?}", diagnostics);
+    assert_eq!(
+        unused_warnings, 0,
+        "Should not warn about _x: {:?}",
+        diagnostics
+    );
 }

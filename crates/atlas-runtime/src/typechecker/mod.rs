@@ -169,7 +169,11 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Resolve a type reference, treating names in type_params as TypeParameter
-    fn resolve_type_ref_with_params(&mut self, type_ref: &TypeRef, type_params: &[crate::ast::TypeParam]) -> Type {
+    fn resolve_type_ref_with_params(
+        &mut self,
+        type_ref: &TypeRef,
+        type_params: &[crate::ast::TypeParam],
+    ) -> Type {
         match type_ref {
             TypeRef::Named(name, _) => {
                 // Check if this is a type parameter
@@ -186,14 +190,20 @@ impl<'a> TypeChecker<'a> {
                     _ => Type::Unknown,
                 }
             }
-            TypeRef::Array(elem, _) => Type::Array(Box::new(self.resolve_type_ref_with_params(elem, type_params))),
+            TypeRef::Array(elem, _) => Type::Array(Box::new(
+                self.resolve_type_ref_with_params(elem, type_params),
+            )),
             TypeRef::Function {
                 params,
                 return_type,
                 ..
             } => {
-                let param_types = params.iter().map(|p| self.resolve_type_ref_with_params(p, type_params)).collect();
-                let ret_type = Box::new(self.resolve_type_ref_with_params(return_type, type_params));
+                let param_types = params
+                    .iter()
+                    .map(|p| self.resolve_type_ref_with_params(p, type_params))
+                    .collect();
+                let ret_type =
+                    Box::new(self.resolve_type_ref_with_params(return_type, type_params));
                 Type::Function {
                     type_params: vec![],
                     params: param_types,
