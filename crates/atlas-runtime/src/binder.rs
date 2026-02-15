@@ -684,9 +684,10 @@ impl Binder {
                 // Literals don't need binding
             }
             Expr::Identifier(id) => {
-                // Check if identifier is defined (in symbol table or as builtin)
+                // Check if identifier is defined (in symbol table, as builtin, or as intrinsic)
                 if self.symbol_table.lookup(&id.name).is_none()
                     && !crate::stdlib::is_builtin(&id.name)
+                    && !crate::stdlib::is_array_intrinsic(&id.name)
                 {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
@@ -765,6 +766,10 @@ impl Binder {
                         self.bind_expr(arg);
                     }
                 }
+            }
+            Expr::Try(try_expr) => {
+                // Bind the expression being tried
+                self.bind_expr(&try_expr.expr);
             }
         }
     }

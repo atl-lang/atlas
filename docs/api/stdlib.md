@@ -13,10 +13,12 @@
 4. [Math Functions](#math-functions)
 5. [JSON Functions](#json-functions)
 6. [File I/O Functions](#file-io-functions)
-7. [Collection Functions](#collection-functions)
-8. [Regex Functions](#regex-functions)
-9. [DateTime Functions](#datetime-functions)
-10. [Network Functions](#network-functions)
+7. [Result Methods](#result-methods)
+8. [Option Methods](#option-methods)
+9. [Collection Functions](#collection-functions)
+10. [Regex Functions](#regex-functions)
+11. [DateTime Functions](#datetime-functions)
+12. [Network Functions](#network-functions)
 
 ---
 
@@ -620,3 +622,144 @@ _Phases will populate this section with HTTP client functions_
 **Example:** `functionName("input")` returns `"output"`
 **Errors:** AT0102 if wrong type, AT0103 if invalid input
 ```
+
+---
+
+## Result Methods
+
+**Implementation:** `crates/atlas-runtime/src/stdlib/types.rs`
+**Purpose:** Type-safe error handling with Result<T, E>
+**See also:** `docs/features/error-handling.md` for comprehensive guide
+
+### Constructors
+
+#### Ok
+**Signature:** `Ok<T, E>(value: T) -> Result<T, E>`
+**Behavior:** Creates a successful Result containing the value
+**Example:** `Ok(42)` returns `Result<number, E>` with value 42
+**Errors:** None
+
+#### Err
+**Signature:** `Err<T, E>(error: E) -> Result<T, E>`
+**Behavior:** Creates a failed Result containing the error
+**Example:** `Err("failed")` returns `Result<T, string>` with error
+**Errors:** None
+
+### Checking Variants
+
+#### is_ok
+**Signature:** `is_ok<T, E>(result: Result<T, E>) -> bool`
+**Behavior:** Returns true if Result is Ok variant
+**Example:** `is_ok(Ok(42))` returns `true`
+**Errors:** None
+
+#### is_err
+**Signature:** `is_err<T, E>(result: Result<T, E>) -> bool`
+**Behavior:** Returns true if Result is Err variant
+**Example:** `is_err(Err("fail"))` returns `true`
+**Errors:** None
+
+### Extracting Values
+
+#### unwrap
+**Signature:** `unwrap<T, E>(result: Result<T, E>) -> T`
+**Behavior:** Extracts Ok value, panics on Err
+**Example:** `unwrap(Ok(42))` returns `42`
+**Errors:** Runtime panic if Err
+**Warning:** Use only when certain Result is Ok
+
+#### expect
+**Signature:** `expect<T, E>(result: Result<T, E>, message: string) -> T`
+**Behavior:** Extracts Ok value, panics on Err with custom message
+**Example:** `expect(Ok(42), "must succeed")` returns `42`
+**Errors:** Runtime panic with message if Err
+
+#### unwrap_or
+**Signature:** `unwrap_or<T, E>(result: Result<T, E>, default: T) -> T`
+**Behavior:** Returns Ok value or default if Err
+**Example:** `unwrap_or(Err("fail"), 0)` returns `0`
+**Errors:** None
+
+#### unwrap_or_else
+**Signature:** `unwrap_or_else<T, E>(result: Result<T, E>, fn: (E) -> T) -> T`
+**Behavior:** Returns Ok value or calls function on Err
+**Example:** `unwrap_or_else(Err("x"), fn(e) { return 0; })` returns `0`
+**Errors:** None
+
+### Transforming Results
+
+#### result_map
+**Signature:** `result_map<T, U, E>(result: Result<T, E>, fn: (T) -> U) -> Result<U, E>`
+**Behavior:** Transforms Ok value with function, preserves Err
+**Example:** `result_map(Ok(21), fn(x) { return x * 2; })` returns `Ok(42)`
+**Errors:** None
+**Note:** Callback function is NOT called if Err
+
+#### result_map_err
+**Signature:** `result_map_err<T, E, F>(result: Result<T, E>, fn: (E) -> F) -> Result<T, F>`
+**Behavior:** Transforms Err value with function, preserves Ok
+**Example:** `result_map_err(Err("x"), fn(e) { return "Error: " + e; })` returns `Err("Error: x")`
+**Errors:** None
+**Note:** Callback function is NOT called if Ok
+
+### Chaining Operations
+
+#### result_and_then
+**Signature:** `result_and_then<T, U, E>(result: Result<T, E>, fn: (T) -> Result<U, E>) -> Result<U, E>`
+**Behavior:** Chains Result-returning operations, short-circuits on Err
+**Example:** `result_and_then(Ok(10), fn(x) { return Ok(x * 2); })` returns `Ok(20)`
+**Errors:** None
+**Note:** Monadic bind operation
+
+#### result_or_else
+**Signature:** `result_or_else<T, E>(result: Result<T, E>, fn: (E) -> Result<T, E>) -> Result<T, E>`
+**Behavior:** Recovers from Err by calling function, preserves Ok
+**Example:** `result_or_else(Err("x"), fn(_) { return Ok(0); })` returns `Ok(0)`
+**Errors:** None
+**Note:** Error recovery operation
+
+### Converting to Option
+
+#### result_ok
+**Signature:** `result_ok<T, E>(result: Result<T, E>) -> Option<T>`
+**Behavior:** Converts Ok to Some, Err to None (discards error)
+**Example:** `result_ok(Ok(42))` returns `Some(42)`
+**Errors:** None
+
+#### result_err
+**Signature:** `result_err<T, E>(result: Result<T, E>) -> Option<E>`
+**Behavior:** Converts Err to Some, Ok to None (discards value)
+**Example:** `result_err(Err("fail"))` returns `Some("fail")`
+**Errors:** None
+
+### Error Propagation Operator (?)
+
+**Syntax:** `expression?`
+**Behavior:** Unwraps Ok value or returns Err early from function
+**Requirements:**
+- Expression must be Result<T, E>
+- Must be inside function returning Result<T', E'>
+- Error types E and E' must match
+
+**Example:**
+```atlas
+fn calculate() -> Result<number, string> {
+    let x = divide(100, 10)?;  // Unwraps 10 or returns Err
+    return Ok(x * 2);
+}
+```
+
+**Type Errors:**
+- AT3027: Expression is not Result type
+- AT3028: Not inside a function
+- AT3029: Error type mismatch
+- AT3030: Function doesn't return Result
+
+**See:** `docs/features/error-handling.md#error-propagation-operator-`
+
+---
+
+## Option Methods
+
+**Status:** Implemented in v0.1
+**See:** Previous documentation for Option<T> methods (Some, None, unwrap, is_some, is_none, etc.)

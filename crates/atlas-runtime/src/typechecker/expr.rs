@@ -35,6 +35,7 @@ impl<'a> TypeChecker<'a> {
             Expr::Group(group) => self.check_expr(&group.expr),
             Expr::Match(match_expr) => self.check_match(match_expr),
             Expr::Member(member) => self.check_member(member),
+            Expr::Try(try_expr) => self.check_try(try_expr),
         }
     }
 
@@ -1052,5 +1053,102 @@ impl<'a> TypeChecker<'a> {
         }
 
         bindings
+    }
+
+    /// Check try expression (error propagation operator ?)
+    fn check_try(&mut self, try_expr: &TryExpr) -> Type {
+        // Type check the expression being tried
+        let expr_type = self.check_expr(&try_expr.expr);
+
+        // Skip if expression type is unknown (error already reported)
+        if expr_type == Type::Unknown {
+            return Type::Unknown;
+        }
+
+        // Expression must be a Result<T, E>
+        let (ok_type, err_type) = match &expr_type {
+            Type::Generic { name, type_args } if name == "Result" && type_args.len() == 2 => {
+                (type_args[0].clone(), type_args[1].clone())
+            }
+            _ => {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3027",
+                        format!(
+                            "? operator requires Result<T, E> type, found {}",
+                            expr_type.display_name()
+                        ),
+                        try_expr.span,
+                    )
+                    .with_label("not a Result type")
+                    .with_help("the ? operator can only be applied to Result<T, E> values"),
+                );
+                return Type::Unknown;
+            }
+        };
+
+        // Must be inside a function that returns Result<T', E'>
+        let function_return_type = match &self.current_function_return_type {
+            Some(ty) => ty.clone(),
+            None => {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3028",
+                        "? operator can only be used inside functions",
+                        try_expr.span,
+                    )
+                    .with_label("not in a function")
+                    .with_help("? operator propagates errors by early return"),
+                );
+                return Type::Unknown;
+            }
+        };
+
+        // Function must return Result<T', E'>
+        match &function_return_type {
+            Type::Generic { name, type_args } if name == "Result" && type_args.len() == 2 => {
+                let function_err_type = &type_args[1];
+
+                // Error types must be compatible (for now, they must be the same)
+                if &err_type != function_err_type {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3029",
+                            format!(
+                                "? operator error type mismatch: expression has error type {}, but function returns {}",
+                                err_type.display_name(),
+                                function_err_type.display_name()
+                            ),
+                            try_expr.span,
+                        )
+                        .with_label("error type mismatch")
+                        .with_help(format!(
+                            "convert the error type to {} or change the function's error type",
+                            function_err_type.display_name()
+                        )),
+                    );
+                }
+
+                // Return the Ok type (T)
+                ok_type
+            }
+            _ => {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3030",
+                        format!(
+                            "? operator requires function to return Result<T, E>, found {}",
+                            function_return_type.display_name()
+                        ),
+                        try_expr.span,
+                    )
+                    .with_label("function does not return Result")
+                    .with_help(
+                        "change the function's return type to Result<T, E> to use ? operator",
+                    ),
+                );
+                Type::Unknown
+            }
+        }
     }
 }

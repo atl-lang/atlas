@@ -90,6 +90,7 @@ impl Lexer {
             ';' => self.make_token(TokenKind::Semicolon, ";"),
             ',' => self.make_token(TokenKind::Comma, ","),
             ':' => self.make_token(TokenKind::Colon, ":"),
+            '?' => self.make_token(TokenKind::Question, "?"),
 
             // Operators with potential compound forms
             '+' => {

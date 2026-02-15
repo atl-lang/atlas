@@ -130,6 +130,63 @@ pub fn unwrap_or_result(res: &Value, default: Value, span: Span) -> Result<Value
     }
 }
 
+/// Unwrap Result value with custom error message, panic if Err
+pub fn expect_result(res: &Value, message: &str, span: Span) -> Result<Value, RuntimeError> {
+    match res {
+        Value::Result(Ok(val)) => Ok((**val).clone()),
+        Value::Result(Err(err)) => Err(RuntimeError::TypeError {
+            msg: format!("{}: {}", message, err),
+            span,
+        }),
+        _ => Err(RuntimeError::TypeError {
+            msg: "expect() requires Result value".to_string(),
+            span,
+        }),
+    }
+}
+
+/// Unwrap Option value with custom error message, panic if None
+pub fn expect_option(opt: &Value, message: &str, span: Span) -> Result<Value, RuntimeError> {
+    match opt {
+        Value::Option(Some(val)) => Ok((**val).clone()),
+        Value::Option(None) => Err(RuntimeError::TypeError {
+            msg: message.to_string(),
+            span,
+        }),
+        _ => Err(RuntimeError::TypeError {
+            msg: "expect() requires Option value".to_string(),
+            span,
+        }),
+    }
+}
+
+// Note: map, map_err, and_then, or_else are implemented as intrinsics
+// in interpreter/expr.rs and vm/mod.rs because they require callback support
+
+/// Convert Result to Option, dropping Err
+pub fn result_ok(res: &Value, span: Span) -> Result<Value, RuntimeError> {
+    match res {
+        Value::Result(Ok(val)) => Ok(Value::Option(Some(val.clone()))),
+        Value::Result(Err(_)) => Ok(Value::Option(None)),
+        _ => Err(RuntimeError::TypeError {
+            msg: "ok() requires Result value".to_string(),
+            span,
+        }),
+    }
+}
+
+/// Convert Result to Option, extracting Err and dropping Ok
+pub fn result_err(res: &Value, span: Span) -> Result<Value, RuntimeError> {
+    match res {
+        Value::Result(Ok(_)) => Ok(Value::Option(None)),
+        Value::Result(Err(err)) => Ok(Value::Option(Some(err.clone()))),
+        _ => Err(RuntimeError::TypeError {
+            msg: "err() requires Result value".to_string(),
+            span,
+        }),
+    }
+}
+
 // ============================================================================
 // Type Checking Functions
 // ============================================================================

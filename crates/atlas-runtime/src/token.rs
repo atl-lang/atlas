@@ -157,6 +157,8 @@ pub enum TokenKind {
     FatArrow,
     /// `_` (underscore for wildcard patterns)
     Underscore,
+    /// `?` (error propagation operator)
+    Question,
 
     // Special
     /// End of file
@@ -250,6 +252,7 @@ impl TokenKind {
             TokenKind::Arrow => "->",
             TokenKind::FatArrow => "=>",
             TokenKind::Underscore => "_",
+            TokenKind::Question => "?",
             TokenKind::Eof => "EOF",
             TokenKind::Error => "error",
         }

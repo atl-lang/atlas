@@ -273,6 +273,7 @@ pub enum Expr {
     ArrayLiteral(ArrayLiteral),
     Group(GroupExpr),
     Match(MatchExpr),
+    Try(TryExpr),
 }
 
 /// Unary expression
@@ -333,6 +334,15 @@ pub struct ArrayLiteral {
 /// Grouped expression (parenthesized)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GroupExpr {
+    pub expr: Box<Expr>,
+    pub span: Span,
+}
+
+/// Try expression (error propagation operator ?)
+///
+/// Unwraps Ok value or returns Err early from current function
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TryExpr {
     pub expr: Box<Expr>,
     pub span: Span,
 }
@@ -450,6 +460,7 @@ impl Expr {
             Expr::ArrayLiteral(a) => a.span,
             Expr::Group(g) => g.span,
             Expr::Match(m) => m.span,
+            Expr::Try(t) => t.span,
         }
     }
 }

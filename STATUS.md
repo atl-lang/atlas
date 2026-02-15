@@ -8,13 +8,13 @@
 ## 🎯 Current Phase
 
 **Version:** v0.2 (building production infrastructure)
-**Last Completed:** phases/foundation/phase-06-module-system-core.md
-**Next Phase:** phases/foundation/phase-09-error-handling-primitives.md
+**Last Completed:** phases/foundation/phase-09-error-handling-primitives.md
+**Next Phase:** phases/foundation/phase-02-embedding-api-design.md
 
 **🚨 CRITICAL: Foundation must be completed before continuing stdlib/frontend/CLI**
 
-**Real Progress:** 5/68 phases complete (7%)
-- Foundation: 5/17 (method call + runtime API + config + modules)
+**Real Progress:** 6/68 phases complete (9%)
+- Foundation: 6/17 (method call + runtime API + config + modules + error handling)
 - Stdlib: 5/15 (will hit foundation blockers at phase 10)
 - Everything else: Blocked by foundation
 
@@ -108,7 +108,7 @@ v0.2 transforms Atlas into a production-ready language:
 **🚨 CATEGORY ORDER = EXECUTION ORDER 🚨**
 **Foundation MUST be complete before other categories**
 
-### 0. Foundation (5/17) - Production Infrastructure [PRIORITY 1 - DO FIRST]
+### 0. Foundation (6/17) - Production Infrastructure [PRIORITY 1 - DO FIRST]
 
 **Completed:**
 - ✅ phase-16-method-call-syntax-frontend.md **[Emergency blocker fix - not planned foundation]**
@@ -116,9 +116,9 @@ v0.2 transforms Atlas into a production-ready language:
 - ✅ phase-01-runtime-api-expansion.md **[Runtime API with conversion traits, 151 tests]**
 - ✅ phase-04-configuration-system.md **[Config system: atlas.toml + global config, 76 tests]**
 - ✅ phase-06-module-system-core.md **[Module system: imports/exports/deps, 82 tests, BLOCKER 04 complete]**
+- ✅ phase-09-error-handling-primitives.md **[Error propagation operator (?), 16 tests, 100% parity]**
 
 **Critical Path (do in this order to unblock v0.2):**
-- ⬜ phase-09-error-handling-primitives.md **[No blockers - Result types]**
 - ⬜ phase-02-embedding-api-design.md **[Needs: phase-01]**
 - ⬜ phase-10-ffi-infrastructure.md **[No blockers]**
 - ⬜ phase-07-package-manifest.md **[Needs: phase-04, phase-06]**

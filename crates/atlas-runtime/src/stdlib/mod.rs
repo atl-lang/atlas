@@ -41,7 +41,9 @@ pub fn is_builtin(name: &str) -> bool {
             // Result functions
             | "Ok" | "Err" | "is_ok" | "is_err"
             // Generic unwrap functions (work with both Option and Result)
-            | "unwrap" | "unwrap_or"
+            | "unwrap" | "unwrap_or" | "expect"
+            // Result conversion functions
+            | "result_ok" | "result_err"
             // File I/O functions
             | "readFile" | "writeFile" | "appendFile" | "fileExists"
             | "readDir" | "createDir" | "removeFile" | "removeDir"
@@ -64,6 +66,11 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             | "every"
             | "sort"
             | "sortBy"
+            // Result intrinsics (callback-based)
+            | "result_map"
+            | "result_map_err"
+            | "result_and_then"
+            | "result_or_else"
     )
 }
 
@@ -514,6 +521,32 @@ pub fn call_builtin(
                     span: call_span,
                 }),
             }
+        }
+        "expect" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let message = extract_string(&args[1], call_span)?;
+            match &args[0] {
+                Value::Option(_) => types::expect_option(&args[0], message, call_span),
+                Value::Result(_) => types::expect_result(&args[0], message, call_span),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "expect() requires Option or Result value".to_string(),
+                    span: call_span,
+                }),
+            }
+        }
+        "result_ok" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            types::result_ok(&args[0], call_span)
+        }
+        "result_err" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            types::result_err(&args[0], call_span)
         }
 
         _ => Err(RuntimeError::UnknownFunction {

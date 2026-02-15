@@ -19,6 +19,7 @@ impl Interpreter {
             Expr::Group(group) => self.eval_expr(&group.expr),
             Expr::Match(match_expr) => self.eval_match(match_expr),
             Expr::Member(member) => self.eval_member(member),
+            Expr::Try(try_expr) => self.eval_try(try_expr),
         }
     }
 
@@ -216,9 +217,30 @@ impl Interpreter {
         // Evaluate callee as ANY expression (enables first-class functions)
         let callee_value = self.eval_expr(&call.callee)?;
 
-        // Evaluate arguments
-        let args: Result<Vec<Value>, _> = call.args.iter().map(|arg| self.eval_expr(arg)).collect();
-        let args = args?;
+        // Check for early return from callee evaluation
+        if self.control_flow != ControlFlow::None {
+            // Propagate control flow (e.g., from ? operator)
+            return Ok(match &self.control_flow {
+                ControlFlow::Return(v) => v.clone(),
+                _ => Value::Null,
+            });
+        }
+
+        // Evaluate arguments, checking for control flow after each
+        let mut args = Vec::new();
+        for arg in &call.args {
+            let val = self.eval_expr(arg)?;
+
+            // Check for early return from argument evaluation (e.g., ? operator)
+            if self.control_flow != ControlFlow::None {
+                return Ok(match &self.control_flow {
+                    ControlFlow::Return(v) => v.clone(),
+                    _ => Value::Null,
+                });
+            }
+
+            args.push(val);
+        }
 
         // Callee must be a function value
         match callee_value {
@@ -243,6 +265,11 @@ impl Interpreter {
                     "every" => return self.intrinsic_every(&args, call.span),
                     "sort" => return self.intrinsic_sort(&args, call.span),
                     "sortBy" => return self.intrinsic_sort_by(&args, call.span),
+                    // Result intrinsics (callback-based)
+                    "result_map" => return self.intrinsic_result_map(&args, call.span),
+                    "result_map_err" => return self.intrinsic_result_map_err(&args, call.span),
+                    "result_and_then" => return self.intrinsic_result_and_then(&args, call.span),
+                    "result_or_else" => return self.intrinsic_result_or_else(&args, call.span),
                     _ => {}
                 }
 
@@ -285,6 +312,33 @@ impl Interpreter {
         // 4. Call stdlib function
         let security = unsafe { &*self.current_security.expect("Security context not set") };
         crate::stdlib::call_builtin(&func_name, &args, member.span, security)
+    }
+
+    /// Evaluate try expression (error propagation operator ?)
+    ///
+    /// Unwraps Ok value or returns Err early from current function
+    pub(super) fn eval_try(&mut self, try_expr: &TryExpr) -> Result<Value, RuntimeError> {
+        let value = self.eval_expr(&try_expr.expr)?;
+
+        match value {
+            Value::Result(Ok(inner)) => {
+                // Unwrap Ok value
+                Ok(*inner)
+            }
+            Value::Result(Err(err)) => {
+                // Propagate error by early return
+                let err_result = Value::Result(Err(err));
+                self.control_flow = ControlFlow::Return(err_result.clone());
+                Ok(err_result)
+            }
+            _ => {
+                // Type checker should prevent this, but handle gracefully
+                Err(RuntimeError::TypeError {
+                    msg: "? operator requires Result<T, E> type".to_string(),
+                    span: try_expr.span,
+                })
+            }
+        }
     }
 
     /// Call a user-defined function
@@ -1118,6 +1172,158 @@ impl Interpreter {
         // Extract sorted elements
         let sorted: Vec<Value> = keyed.into_iter().map(|(_, elem)| elem).collect();
         Ok(Value::array(sorted))
+    }
+
+    // ========================================================================
+    // Result Intrinsics (Callback-based operations)
+    // ========================================================================
+
+    /// result_map(result, transform_fn) - Transform Ok value
+    fn intrinsic_result_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_map() expects 2 arguments (result, transform_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let transform_fn = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "result_map() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        match result_val {
+            Value::Result(Ok(val)) => {
+                let transformed = self.call_value(transform_fn, vec![(**val).clone()], span)?;
+                Ok(Value::Result(Ok(Box::new(transformed))))
+            }
+            Value::Result(Err(err)) => Ok(Value::Result(Err(err.clone()))),
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_map() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    /// result_map_err(result, transform_fn) - Transform Err value
+    fn intrinsic_result_map_err(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_map_err() expects 2 arguments (result, transform_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let transform_fn = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "result_map_err() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        match result_val {
+            Value::Result(Ok(val)) => Ok(Value::Result(Ok(val.clone()))),
+            Value::Result(Err(err)) => {
+                let transformed = self.call_value(transform_fn, vec![(**err).clone()], span)?;
+                Ok(Value::Result(Err(Box::new(transformed))))
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_map_err() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    /// result_and_then(result, next_fn) - Chain Results (monadic bind)
+    fn intrinsic_result_and_then(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_and_then() expects 2 arguments (result, next_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let next_fn = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "result_and_then() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        match result_val {
+            Value::Result(Ok(val)) => {
+                // Call next_fn which should return a Result
+                self.call_value(next_fn, vec![(**val).clone()], span)
+            }
+            Value::Result(Err(err)) => Ok(Value::Result(Err(err.clone()))),
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_and_then() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    /// result_or_else(result, recovery_fn) - Recover from Err
+    fn intrinsic_result_or_else(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_or_else() expects 2 arguments (result, recovery_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let recovery_fn = match &args[1] {
+            Value::Function(_) => &args[1],
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "result_or_else() second argument must be function".to_string(),
+                    span,
+                })
+            }
+        };
+
+        match result_val {
+            Value::Result(Ok(val)) => Ok(Value::Result(Ok(val.clone()))),
+            Value::Result(Err(err)) => {
+                // Call recovery_fn which should return a Result
+                self.call_value(recovery_fn, vec![(**err).clone()], span)
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_or_else() first argument must be Result".to_string(),
+                span,
+            }),
+        }
     }
 
     /// Helper: Call a function value with arguments

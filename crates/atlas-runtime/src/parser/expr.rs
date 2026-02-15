@@ -60,6 +60,7 @@ impl Parser {
             TokenKind::LeftParen => self.parse_call(left),
             TokenKind::LeftBracket => self.parse_index(left),
             TokenKind::Dot => self.parse_member(left),
+            TokenKind::Question => self.parse_try(left),
             _ => Ok(left),
         }
     }
@@ -81,7 +82,10 @@ impl Parser {
             | TokenKind::GreaterEqual => Precedence::Comparison,
             TokenKind::Plus | TokenKind::Minus => Precedence::Term,
             TokenKind::Star | TokenKind::Slash | TokenKind::Percent => Precedence::Factor,
-            TokenKind::LeftParen | TokenKind::LeftBracket | TokenKind::Dot => Precedence::Call,
+            TokenKind::LeftParen
+            | TokenKind::LeftBracket
+            | TokenKind::Dot
+            | TokenKind::Question => Precedence::Call,
             _ => Precedence::Lowest,
         }
     }
@@ -304,6 +308,17 @@ impl Parser {
             member,
             args,
             span: target_span.merge(end_span),
+        }))
+    }
+
+    /// Parse try expression (error propagation operator ?)
+    fn parse_try(&mut self, expr: Expr) -> Result<Expr, ()> {
+        let expr_span = expr.span();
+        let question_span = self.consume(TokenKind::Question, "Expected '?'")?.span;
+
+        Ok(Expr::Try(TryExpr {
+            expr: Box::new(expr),
+            span: expr_span.merge(question_span),
         }))
     }
 

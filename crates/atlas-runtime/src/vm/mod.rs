@@ -921,6 +921,11 @@ impl VM {
             "every" => self.vm_intrinsic_every(args, span),
             "sort" => self.vm_intrinsic_sort(args, span),
             "sortBy" => self.vm_intrinsic_sort_by(args, span),
+            // Result intrinsics (callback-based)
+            "result_map" => self.vm_intrinsic_result_map(args, span),
+            "result_map_err" => self.vm_intrinsic_result_map_err(args, span),
+            "result_and_then" => self.vm_intrinsic_result_and_then(args, span),
+            "result_or_else" => self.vm_intrinsic_result_or_else(args, span),
             _ => Err(RuntimeError::UnknownFunction {
                 name: name.to_string(),
                 span,
@@ -1384,6 +1389,124 @@ impl VM {
 
         let sorted: Vec<Value> = keyed.into_iter().map(|(_, elem)| elem).collect();
         Ok(Value::array(sorted))
+    }
+
+    // ========================================================================
+    // Result Intrinsics (Callback-based operations) - VM versions
+    // ========================================================================
+
+    fn vm_intrinsic_result_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_map() expects 2 arguments (result, transform_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let transform_fn = &args[1];
+
+        match result_val {
+            Value::Result(Ok(val)) => {
+                let transformed =
+                    self.vm_call_function_value(transform_fn, vec![(**val).clone()], span)?;
+                Ok(Value::Result(Ok(Box::new(transformed))))
+            }
+            Value::Result(Err(err)) => Ok(Value::Result(Err(err.clone()))),
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_map() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_result_map_err(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_map_err() expects 2 arguments (result, transform_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let transform_fn = &args[1];
+
+        match result_val {
+            Value::Result(Ok(val)) => Ok(Value::Result(Ok(val.clone()))),
+            Value::Result(Err(err)) => {
+                let transformed =
+                    self.vm_call_function_value(transform_fn, vec![(**err).clone()], span)?;
+                Ok(Value::Result(Err(Box::new(transformed))))
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_map_err() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_result_and_then(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_and_then() expects 2 arguments (result, next_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let next_fn = &args[1];
+
+        match result_val {
+            Value::Result(Ok(val)) => {
+                // Call next_fn which should return a Result
+                self.vm_call_function_value(next_fn, vec![(**val).clone()], span)
+            }
+            Value::Result(Err(err)) => Ok(Value::Result(Err(err.clone()))),
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_and_then() first argument must be Result".to_string(),
+                span,
+            }),
+        }
+    }
+
+    fn vm_intrinsic_result_or_else(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "result_or_else() expects 2 arguments (result, recovery_fn)".to_string(),
+                span,
+            });
+        }
+
+        let result_val = &args[0];
+        let recovery_fn = &args[1];
+
+        match result_val {
+            Value::Result(Ok(val)) => Ok(Value::Result(Ok(val.clone()))),
+            Value::Result(Err(err)) => {
+                // Call recovery_fn which should return a Result
+                self.vm_call_function_value(recovery_fn, vec![(**err).clone()], span)
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "result_or_else() first argument must be Result".to_string(),
+                span,
+            }),
+        }
     }
 
     /// Helper: Call a function value with arguments (VM version)

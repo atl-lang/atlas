@@ -21,6 +21,7 @@ impl Compiler {
             Expr::Call(call) => self.compile_call(call),
             Expr::Match(match_expr) => self.compile_match(match_expr),
             Expr::Member(member) => self.compile_member(member),
+            Expr::Try(try_expr) => self.compile_try(try_expr),
         }
     }
 
@@ -722,6 +723,51 @@ impl Compiler {
         self.bytecode.emit_u16(0xFFFF);
 
         Ok(Some(final_jump))
+    }
+
+    /// Compile try expression (error propagation operator ?)
+    ///
+    /// Desugars to match-based early return:
+    /// ```atlas
+    /// value?
+    /// // becomes:
+    /// match value {
+    ///     Ok(v) => v,
+    ///     Err(e) => return Err(e)
+    /// }
+    /// ```
+    fn compile_try(&mut self, try_expr: &TryExpr) -> Result<(), Vec<Diagnostic>> {
+        // 1. Compile the expression being tried
+        self.compile_expr(&try_expr.expr)?;
+
+        // 2. Duplicate the result value for pattern matching
+        self.bytecode.emit(Opcode::Dup, try_expr.span);
+
+        // 3. Check if it's an Ok variant
+        self.bytecode.emit(Opcode::IsResultOk, try_expr.span);
+
+        // 4. Jump to error handling if false (it's an Err)
+        self.bytecode.emit(Opcode::JumpIfFalse, try_expr.span);
+        let err_jump = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // 5. Ok path: extract the Ok value
+        self.bytecode
+            .emit(Opcode::ExtractResultValue, try_expr.span);
+
+        // Skip error handling
+        self.bytecode.emit(Opcode::Jump, try_expr.span);
+        let ok_skip = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // 6. Err path: Result value is still on stack from Dup, return it
+        self.bytecode.patch_jump(err_jump);
+        self.bytecode.emit(Opcode::Return, try_expr.span);
+
+        // 7. Patch ok skip jump
+        self.bytecode.patch_jump(ok_skip);
+
+        Ok(())
     }
 }
 
