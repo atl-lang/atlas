@@ -273,6 +273,100 @@ impl Bytecode {
             debug_info,
         })
     }
+
+    /// Append another bytecode chunk to this one
+    ///
+    /// This adjusts:
+    /// - Instruction offsets in debug info
+    /// - Bytecode offsets in Function values in constants
+    /// - Constant indices in the new instructions (opcodes that reference constants)
+    ///
+    /// Used by Runtime to accumulate bytecode across multiple eval() calls.
+    pub fn append(&mut self, other: Bytecode) {
+        let instruction_offset = self.instructions.len();
+        let constant_offset = self.constants.len() as u16;
+
+        // Append constants FIRST, adjusting function bytecode offsets
+        for constant in other.constants {
+            match constant {
+                Value::Function(mut func_ref) => {
+                    // Adjust bytecode offset to account for accumulated instructions
+                    if func_ref.bytecode_offset > 0 {
+                        func_ref.bytecode_offset += instruction_offset;
+                    }
+                    self.constants.push(Value::Function(func_ref));
+                }
+                other_value => {
+                    self.constants.push(other_value);
+                }
+            }
+        }
+
+        // Append instructions, adjusting constant indices in opcodes that use them
+        let mut i = 0;
+        while i < other.instructions.len() {
+            let opcode_byte = other.instructions[i];
+            self.instructions.push(opcode_byte);
+            i += 1;
+
+            // Check if this opcode uses a constant index (u16 operand)
+            let uses_constant = matches!(
+                opcode_byte,
+                x if x == Opcode::Constant as u8
+                    || x == Opcode::GetGlobal as u8
+                    || x == Opcode::SetGlobal as u8
+            );
+
+            if uses_constant && i + 1 < other.instructions.len() {
+                // Read the u16 constant index
+                let high = other.instructions[i] as u16;
+                let low = other.instructions[i + 1] as u16;
+                let old_index = (high << 8) | low;
+
+                // Adjust by constant_offset
+                let new_index = old_index + constant_offset;
+
+                // Write adjusted index
+                self.instructions.push((new_index >> 8) as u8);
+                self.instructions.push((new_index & 0xFF) as u8);
+                i += 2;
+            } else if uses_constant {
+                // Malformed bytecode, but continue
+                while i < other.instructions.len() && i < 2 {
+                    self.instructions.push(other.instructions[i]);
+                    i += 1;
+                }
+            } else {
+                // Check opcode operand size and copy remaining bytes
+                // Most opcodes have known operand sizes
+                let operand_size = match opcode_byte {
+                    x if x == Opcode::Jump as u8
+                        || x == Opcode::JumpIfFalse as u8
+                        || x == Opcode::GetLocal as u8
+                        || x == Opcode::SetLocal as u8
+                        || x == Opcode::Array as u8 =>
+                    {
+                        2 // u16 operand
+                    }
+                    x if x == Opcode::Call as u8 => 1, // u8 operand
+                    _ => 0,                             // No operand
+                };
+
+                for _ in 0..operand_size {
+                    if i < other.instructions.len() {
+                        self.instructions.push(other.instructions[i]);
+                        i += 1;
+                    }
+                }
+            }
+        }
+
+        // Append debug info, adjusting instruction offsets
+        for mut debug_span in other.debug_info {
+            debug_span.instruction_offset += instruction_offset;
+            self.debug_info.push(debug_span);
+        }
+    }
 }
 
 impl Default for Bytecode {

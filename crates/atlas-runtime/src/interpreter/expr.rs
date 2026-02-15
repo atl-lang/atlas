@@ -283,6 +283,10 @@ impl Interpreter {
                     span: call.span,
                 })
             }
+            Value::NativeFunction(native_fn) => {
+                // Call the native Rust closure
+                native_fn(&args)
+            }
             _ => Err(RuntimeError::TypeError {
                 msg: format!("Cannot call non-function type {}", callee_value.type_name()),
                 span: call.span,

@@ -36,24 +36,9 @@ impl Compiler {
             }
         };
 
-        // Load the function (either builtin or user-defined)
-        // For builtins, we create a FunctionRef; for user-defined, we load from globals
-        if crate::stdlib::is_builtin(func_name) {
-            // Create a Function value for the builtin with bytecode_offset = 0
-            let func_ref = crate::value::FunctionRef {
-                name: func_name.to_string(),
-                arity: call.args.len(),
-                bytecode_offset: 0, // Builtins have offset 0
-                local_count: 0,     // Builtins don't use local variables
-            };
-            let func_value = crate::value::Value::Function(func_ref);
-            let const_idx = self.bytecode.add_constant(func_value);
-
-            // Load the function constant
-            self.bytecode.emit(Opcode::Constant, call.span);
-            self.bytecode.emit_u16(const_idx);
-        } else {
-            // User-defined function - load from local or global
+        // Load the function from local or global scope
+        // Don't hardcode builtins - let GetGlobal handle them so natives can override
+        {
             // Try local first (for nested functions)
             if let Some(local_idx) = self.resolve_local(func_name) {
                 let local = &self.locals[local_idx];

@@ -77,6 +77,30 @@ impl VM {
         vm
     }
 
+    /// Set a global variable
+    ///
+    /// Used by the Runtime to inject native functions and other complex values
+    /// that can't be represented in bytecode constants.
+    pub fn set_global(&mut self, name: String, value: Value) {
+        self.globals.insert(name, value);
+    }
+
+    /// Get all global variables
+    ///
+    /// Used by the Runtime to persist VM globals back to interpreter state
+    /// after execution completes.
+    pub fn get_globals(&self) -> &std::collections::HashMap<String, Value> {
+        &self.globals
+    }
+
+    /// Set the instruction pointer
+    ///
+    /// Used by Runtime to start execution from a specific offset when
+    /// accumulating bytecode across multiple eval() calls.
+    pub fn set_ip(&mut self, offset: usize) {
+        self.ip = offset;
+    }
+
     /// Enable profiling
     pub fn enable_profiling(&mut self) {
         if let Some(ref mut profiler) = self.profiler {
@@ -557,6 +581,20 @@ impl VM {
                                 // Jump to function bytecode
                                 self.ip = func.bytecode_offset;
                             }
+                        }
+                        Value::NativeFunction(native_fn) => {
+                            // Call the native Rust closure
+                            let mut args = Vec::with_capacity(arg_count);
+                            for _ in 0..arg_count {
+                                args.push(self.pop());
+                            }
+                            args.reverse(); // Arguments were pushed in reverse order
+
+                            // Pop the function value from stack
+                            self.pop();
+
+                            let result = native_fn(&args)?;
+                            self.push(result);
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {
@@ -1583,6 +1621,10 @@ impl VM {
                 self.ip = saved_ip;
 
                 Ok(return_value)
+            }
+            Value::NativeFunction(native_fn) => {
+                // Call the native Rust closure directly
+                native_fn(&args)
             }
             _ => Err(RuntimeError::TypeError {
                 msg: "Expected function value".to_string(),

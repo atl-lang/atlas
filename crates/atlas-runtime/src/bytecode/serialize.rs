@@ -34,6 +34,11 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
             // Serialize bytecode offset
             bytes.extend_from_slice(&(func.bytecode_offset as u32).to_be_bytes());
         }
+        Value::NativeFunction(_) => {
+            // Native functions cannot be serialized in constant pool
+            // They are runtime-only closures
+            panic!("Cannot serialize native functions in bytecode constants");
+        }
         Value::Array(_) => {
             // Arrays cannot be serialized in constant pool
             // They are runtime-only values

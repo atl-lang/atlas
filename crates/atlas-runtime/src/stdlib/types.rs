@@ -207,6 +207,7 @@ pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::String(_) => "string",
         Value::Array(_) => "array",
         Value::Function(_) => "function",
+        Value::NativeFunction(_) => "function",
         Value::JsonValue(_) => "json",
         Value::Option(_) => "option",
         Value::Result(_) => "result",
@@ -312,6 +313,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::String(s) => s.as_ref().clone(),
         Value::Array(_) => "[Array]".to_string(),
         Value::Function(_) => "[Function]".to_string(),
+        Value::NativeFunction(_) => "[Native Function]".to_string(),
         Value::JsonValue(_) => "[JSON]".to_string(),
         Value::Option(Some(v)) => format!("Some({})", value_to_display_string(v)),
         Value::Option(None) => "None".to_string(),
@@ -381,6 +383,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::Null => false,
         Value::Array(_)
         | Value::Function(_)
+        | Value::NativeFunction(_)
         | Value::JsonValue(_)
         | Value::Option(_)
         | Value::Result(_) => true,
@@ -510,6 +513,7 @@ fn type_name(value: &Value) -> &str {
         Value::String(_) => "string",
         Value::Array(_) => "array",
         Value::Function(_) => "function",
+        Value::NativeFunction(_) => "function",
         Value::JsonValue(_) => "json",
         Value::Option(_) => "option",
         Value::Result(_) => "result",
@@ -531,6 +535,7 @@ fn value_to_display_string(value: &Value) -> String {
         Value::String(s) => format!("\"{}\"", s),
         Value::Array(_) => "[Array]".to_string(),
         Value::Function(_) => "[Function]".to_string(),
+        Value::NativeFunction(_) => "[Native Function]".to_string(),
         Value::JsonValue(_) => "[JSON]".to_string(),
         Value::Option(_) => "[Option]".to_string(),
         Value::Result(_) => "[Result]".to_string(),

@@ -4,6 +4,7 @@
 //! It includes:
 //! - Runtime execution with mode selection (Interpreter or VM)
 //! - Value conversion between Rust and Atlas types
+//! - Native function registration
 //! - Function calling and global variable management
 //! - Comprehensive error handling
 //!
@@ -24,8 +25,10 @@
 //! ```
 
 pub mod conversion;
+pub mod native;
 pub mod runtime;
 
 // Re-export main types for convenience
 pub use conversion::{ConversionError, FromAtlas, ToAtlas};
+pub use native::{BuildError, NativeFunctionBuilder};
 pub use runtime::{EvalError, ExecutionMode, Runtime};

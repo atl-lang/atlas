@@ -383,6 +383,10 @@ fn value_to_json(
             msg: "Cannot serialize function to JSON".to_string(),
             span,
         }),
+        Value::NativeFunction(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize native function to JSON".to_string(),
+            span,
+        }),
         Value::Option(_) => Err(RuntimeError::TypeError {
             msg: "Cannot serialize Option to JSON".to_string(),
             span,

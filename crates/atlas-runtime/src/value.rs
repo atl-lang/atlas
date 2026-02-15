@@ -5,16 +5,24 @@
 //! - Strings: Heap-allocated, reference-counted (Rc<String>), immutable
 //! - Arrays: Heap-allocated, reference-counted (Rc<RefCell<Vec<Value>>>), mutable
 //! - Functions: Reference to bytecode or builtin
+//! - NativeFunction: Rust closures callable from Atlas
 //! - JsonValue: Isolated dynamic type for JSON interop (Rc<JsonValue>)
 
 use crate::json_value::JsonValue;
 use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
+use std::sync::Arc;
 use thiserror::Error;
 
+/// Native function type - Rust closure callable from Atlas
+///
+/// Native functions receive an array of Atlas values and return either a value or a runtime error.
+/// Arc provides thread safety and cheap cloning for sharing natives across execution contexts.
+pub type NativeFn = Arc<dyn Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync>;
+
 /// Runtime value type
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub enum Value {
     /// Numeric value (IEEE 754 double-precision)
     Number(f64),
@@ -28,6 +36,8 @@ pub enum Value {
     Array(Rc<RefCell<Vec<Value>>>),
     /// Function reference (bytecode or builtin)
     Function(FunctionRef),
+    /// Native function (Rust closure callable from Atlas)
+    NativeFunction(NativeFn),
     /// JSON value (isolated dynamic type for JSON interop)
     JsonValue(Rc<JsonValue>),
     /// Option value (Some(value) or None)
@@ -70,6 +80,7 @@ impl Value {
             Value::Null => "null",
             Value::Array(_) => "array",
             Value::Function(_) => "function",
+            Value::NativeFunction(_) => "function",
             Value::JsonValue(_) => "json",
             Value::Option(_) => "Option",
             Value::Result(_) => "Result",
@@ -102,6 +113,8 @@ impl PartialEq for Value {
             (Value::Array(a), Value::Array(b)) => Rc::ptr_eq(a, b),
             // Functions are equal if they have the same name
             (Value::Function(a), Value::Function(b)) => a.name == b.name,
+            // Native functions use pointer equality
+            (Value::NativeFunction(a), Value::NativeFunction(b)) => Arc::ptr_eq(a, b),
             // JsonValue uses structural equality
             (Value::JsonValue(a), Value::JsonValue(b)) => a == b,
             // Option uses deep equality
@@ -135,6 +148,7 @@ impl fmt::Display for Value {
                 write!(f, "[{}]", elements.join(", "))
             }
             Value::Function(func) => write!(f, "<fn {}>", func.name),
+            Value::NativeFunction(_) => write!(f, "<native fn>"),
             Value::JsonValue(json) => write!(f, "{}", json),
             Value::Option(opt) => match opt {
                 Some(val) => write!(f, "Some({})", val),
@@ -144,6 +158,26 @@ impl fmt::Display for Value {
                 Ok(val) => write!(f, "Ok({})", val),
                 Err(err) => write!(f, "Err({})", err),
             },
+        }
+    }
+}
+
+impl fmt::Debug for Value {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Value::Number(n) => write!(f, "Number({})", n),
+            Value::String(s) => write!(f, "String({:?})", s),
+            Value::Bool(b) => write!(f, "Bool({})", b),
+            Value::Null => write!(f, "Null"),
+            Value::Array(arr) => {
+                let borrowed = arr.borrow();
+                write!(f, "Array({:?})", &*borrowed)
+            }
+            Value::Function(func) => write!(f, "Function({:?})", func),
+            Value::NativeFunction(_) => write!(f, "NativeFunction(<closure>)"),
+            Value::JsonValue(json) => write!(f, "JsonValue({:?})", json),
+            Value::Option(opt) => write!(f, "Option({:?})", opt),
+            Value::Result(res) => write!(f, "Result({:?})", res),
         }
     }
 }

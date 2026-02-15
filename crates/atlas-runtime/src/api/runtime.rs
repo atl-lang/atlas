@@ -94,10 +94,12 @@ impl std::error::Error for EvalError {}
 pub struct Runtime {
     /// Execution mode (Interpreter or VM)
     mode: ExecutionMode,
-    /// Interpreter state (used in Interpreter mode)
+    /// Interpreter state (used in Interpreter mode, also stores globals for VM mode)
     interpreter: RefCell<Interpreter>,
     /// Security context for permission checks
     security: SecurityContext,
+    /// Accumulated bytecode for VM mode (persists across eval() calls)
+    accumulated_bytecode: RefCell<crate::bytecode::Bytecode>,
 }
 
 impl Runtime {
@@ -117,6 +119,7 @@ impl Runtime {
             mode,
             interpreter: RefCell::new(Interpreter::new()),
             security: SecurityContext::new(),
+            accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
         }
     }
 
@@ -136,6 +139,7 @@ impl Runtime {
             mode,
             interpreter: RefCell::new(Interpreter::new()),
             security,
+            accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
         }
     }
 
@@ -193,8 +197,40 @@ impl Runtime {
             return Err(EvalError::ParseError(parse_diagnostics));
         }
 
-        // Bind symbols
-        let mut binder = Binder::new();
+        // Create initial symbol table with registered globals
+        let mut initial_symbol_table = crate::symbol::SymbolTable::new();
+        {
+            let interpreter = self.interpreter.borrow();
+            for (name, value) in &interpreter.globals {
+                // Determine symbol kind based on value type
+                let kind = match value {
+                    Value::NativeFunction(_) | Value::Function(_) => {
+                        crate::symbol::SymbolKind::Function
+                    }
+                    _ => crate::symbol::SymbolKind::Variable,
+                };
+
+                // Create symbol with placeholder type (runtime values don't have compile-time types)
+                let symbol = crate::symbol::Symbol {
+                    name: name.clone(),
+                    ty: crate::types::Type::Unknown, // Dynamic values have unknown type at compile time
+                    mutable: false,
+                    kind: kind.clone(),
+                    span: crate::span::Span::dummy(),
+                    exported: false,
+                };
+
+                // Add to initial symbol table
+                if kind == crate::symbol::SymbolKind::Function {
+                    let _ = initial_symbol_table.define_function(symbol);
+                } else {
+                    let _ = initial_symbol_table.define(symbol);
+                }
+            }
+        }
+
+        // Bind symbols with pre-populated symbol table
+        let mut binder = Binder::with_symbol_table(initial_symbol_table);
         let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
 
         if !bind_diagnostics.is_empty() {
@@ -218,20 +254,49 @@ impl Runtime {
                     .map_err(EvalError::RuntimeError)
             }
             ExecutionMode::VM => {
-                // Compile to bytecode
+                // Compile new AST to bytecode
                 let mut compiler = Compiler::new();
-                let bytecode = match compiler.compile(&ast) {
+                let new_bytecode = match compiler.compile(&ast) {
                     Ok(bc) => bc,
                     Err(diagnostics) => return Err(EvalError::ParseError(diagnostics)),
                 };
 
-                // Create VM and execute
-                let mut vm = VM::new(bytecode);
-                match vm.run(&self.security) {
+                // Get the start offset of new code (before appending)
+                let new_code_start = self.accumulated_bytecode.borrow().instructions.len();
+
+                // Append to accumulated bytecode
+                self.accumulated_bytecode.borrow_mut().append(new_bytecode);
+
+                // Create VM with the accumulated bytecode
+                let accumulated = self.accumulated_bytecode.borrow().clone();
+                let mut vm = VM::new(accumulated);
+
+                // Set IP to start of new code (so we don't re-execute old code)
+                vm.set_ip(new_code_start);
+
+                // Copy interpreter globals to VM (for natives and other complex types)
+                {
+                    let interpreter = self.interpreter.borrow();
+                    for (name, value) in &interpreter.globals {
+                        vm.set_global(name.clone(), value.clone());
+                    }
+                }
+
+                let result = match vm.run(&self.security) {
                     Ok(Some(value)) => Ok(value),
                     Ok(None) => Ok(Value::Null),
                     Err(e) => Err(EvalError::RuntimeError(e)),
+                };
+
+                // Copy VM globals back to interpreter for persistence across eval() calls
+                {
+                    let mut interpreter = self.interpreter.borrow_mut();
+                    for (name, value) in vm.get_globals() {
+                        interpreter.globals.insert(name.clone(), value.clone());
+                    }
                 }
+
+                result
             }
         }
     }
@@ -309,7 +374,15 @@ impl Runtime {
                 interpreter.globals.insert(name.to_string(), value);
             }
             ExecutionMode::VM => {
-                // VM mode doesn't support direct global manipulation yet
+                // For native functions and other complex types, store in interpreter globals
+                // The VM will look them up from there during execution
+                if matches!(value, Value::NativeFunction(_) | Value::Array(_) | Value::Function(_)) {
+                    let mut interpreter = self.interpreter.borrow_mut();
+                    interpreter.globals.insert(name.to_string(), value);
+                    return;
+                }
+
+                // VM mode doesn't support direct global manipulation for simple types
                 // Would need to store globals separately and merge on each eval
                 // For v0.2 phase-01, we'll use eval to set globals
                 let set_code = match &value {
@@ -319,7 +392,7 @@ impl Runtime {
                     }
                     Value::Bool(b) => format!("var {}: bool = {};", name, b),
                     Value::Null => format!("var {}: null = null;", name),
-                    _ => return, // Can't set complex types via code generation
+                    _ => return, // Can't set other complex types via code generation
                 };
                 let _ = self.eval(&set_code);
             }
@@ -363,6 +436,114 @@ impl Runtime {
                 None
             }
         }
+    }
+
+    /// Register a native function with fixed arity
+    ///
+    /// Registers a Rust closure as a callable function in Atlas code. The function
+    /// will be available globally and can be called like any Atlas function.
+    ///
+    /// The function's arity (argument count) is validated automatically - calls with
+    /// the wrong number of arguments will result in a runtime error.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Function name (how it will be called from Atlas)
+    /// * `arity` - Required number of arguments
+    /// * `implementation` - Rust closure implementing the function
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::value::{Value, RuntimeError};
+    /// use atlas_runtime::span::Span;
+    ///
+    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    ///
+    /// // Register a native "add" function
+    /// runtime.register_function("add", 2, |args| {
+    ///     let a = match &args[0] {
+    ///         Value::Number(n) => *n,
+    ///         _ => return Err(RuntimeError::TypeError {
+    ///             msg: "Expected number".to_string(),
+    ///             span: Span::dummy()
+    ///         }),
+    ///     };
+    ///     let b = match &args[1] {
+    ///         Value::Number(n) => *n,
+    ///         _ => return Err(RuntimeError::TypeError {
+    ///             msg: "Expected number".to_string(),
+    ///             span: Span::dummy()
+    ///         }),
+    ///     };
+    ///     Ok(Value::Number(a + b))
+    /// });
+    ///
+    /// // Call from Atlas code
+    /// let result = runtime.eval("add(10, 20)").unwrap();
+    /// ```
+    pub fn register_function<F>(&mut self, name: &str, arity: usize, implementation: F)
+    where
+        F: Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync + 'static,
+    {
+        let native_fn = crate::api::native::NativeFunctionBuilder::new(name)
+            .with_arity(arity)
+            .with_implementation(implementation)
+            .build()
+            .expect("Failed to build native function");
+
+        self.set_global(name, native_fn);
+    }
+
+    /// Register a variadic native function
+    ///
+    /// Registers a Rust closure as a callable function that accepts any number of arguments.
+    /// The implementation is responsible for validating the argument count and types.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - Function name (how it will be called from Atlas)
+    /// * `implementation` - Rust closure implementing the function
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::value::{Value, RuntimeError};
+    /// use atlas_runtime::span::Span;
+    ///
+    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    ///
+    /// // Register a variadic "sum" function
+    /// runtime.register_variadic("sum", |args| {
+    ///     let mut total = 0.0;
+    ///     for arg in args {
+    ///         match arg {
+    ///             Value::Number(n) => total += n,
+    ///             _ => return Err(RuntimeError::TypeError {
+    ///                 msg: "All arguments must be numbers".to_string(),
+    ///                 span: Span::dummy()
+    ///             }),
+    ///         }
+    ///     }
+    ///     Ok(Value::Number(total))
+    /// });
+    ///
+    /// // Call with any number of arguments
+    /// let result = runtime.eval("sum(1, 2, 3, 4, 5)").unwrap();
+    /// ```
+    pub fn register_variadic<F>(&mut self, name: &str, implementation: F)
+    where
+        F: Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync + 'static,
+    {
+        let native_fn = crate::api::native::NativeFunctionBuilder::new(name)
+            .variadic()
+            .with_implementation(implementation)
+            .build()
+            .expect("Failed to build native function");
+
+        self.set_global(name, native_fn);
     }
 }
 
