@@ -53,6 +53,22 @@ pub enum BuildError {
 
     #[error("Build failed: {0}")]
     BuildFailed(String),
+
+    #[error("Profile not found: {0}")]
+    ProfileNotFound(String),
+
+    #[error("Script '{name}' failed with exit code {exit_code}: {output}")]
+    ScriptFailed {
+        name: String,
+        exit_code: i32,
+        output: String,
+    },
+
+    #[error("Script '{name}' execution error: {error}")]
+    ScriptExecutionError { name: String, error: String },
+
+    #[error("Script '{name}' not found at path: {}", path.display())]
+    ScriptNotFound { name: String, path: PathBuf },
 }
 
 impl BuildError {

@@ -31,14 +31,24 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
-    /// Compile an Atlas source file to bytecode
+    /// Build an Atlas project
     Build {
-        /// Path to the Atlas source file
-        file: String,
-        /// Disassemble bytecode and print to stdout
+        /// Build profile (dev, release, test, or custom)
+        #[arg(long, short = 'p')]
+        profile: Option<String>,
+        /// Build in release mode (shorthand for --profile=release)
         #[arg(long)]
-        disasm: bool,
-        /// Output diagnostics in JSON format
+        release: bool,
+        /// Clean build (ignore cache)
+        #[arg(long)]
+        clean: bool,
+        /// Verbose output
+        #[arg(long, short = 'v')]
+        verbose: bool,
+        /// Quiet output (errors only)
+        #[arg(long, short = 'q')]
+        quiet: bool,
+        /// JSON output
         #[arg(long)]
         json: bool,
     },
@@ -84,10 +94,19 @@ fn main() -> Result<()> {
             let use_json = json || cli_config.default_json;
             commands::check::run(&file, use_json)?;
         }
-        Commands::Build { file, disasm, json } => {
+        Commands::Build { profile, release, clean, verbose, quiet, json } => {
             // Command-line flag overrides environment variable
             let use_json = json || cli_config.default_json;
-            commands::build::run(&file, disasm, use_json)?;
+            let args = commands::build::BuildArgs {
+                profile,
+                release,
+                clean,
+                verbose,
+                quiet,
+                json: use_json,
+                ..Default::default()
+            };
+            commands::build::run(args)?;
         }
         Commands::Repl { tui, no_history } => {
             // Command-line flag overrides environment variable

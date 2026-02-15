@@ -2,7 +2,7 @@
 //!
 //! Tests the complete build pipeline with real Atlas projects
 
-use atlas_build::{Builder, BuildConfig, OptLevel};
+use atlas_build::{BuildConfig, Builder, OptLevel};
 use std::fs;
 use tempfile::TempDir;
 
@@ -68,7 +68,7 @@ fn main() -> void {
         (
             "src/math.atlas",
             r#"export fn add(x: number, y: number) -> number {
-    x + y
+    return x + y;
 }"#,
         ),
     ]);
@@ -87,7 +87,7 @@ fn test_build_library_target() {
     let (_temp, project_path) = create_test_project(&[(
         "src/lib.atlas",
         r#"export fn greet(name: string) -> string {
-    "Hello, " + name
+    return "Hello, " + name;
 }"#,
     )]);
 
@@ -97,7 +97,10 @@ fn test_build_library_target() {
     assert!(result.is_ok(), "Build should succeed");
     let context = result.unwrap();
     assert_eq!(context.artifacts.len(), 1);
-    assert_eq!(context.artifacts[0].target.kind, atlas_build::TargetKind::Library);
+    assert_eq!(
+        context.artifacts[0].target.kind,
+        atlas_build::TargetKind::Library
+    );
 }
 
 #[test]
@@ -118,7 +121,10 @@ fn main() -> void {
     assert!(result.is_ok(), "Build should succeed");
     let context = result.unwrap();
     assert_eq!(context.artifacts.len(), 1);
-    assert_eq!(context.artifacts[0].target.kind, atlas_build::TargetKind::Binary);
+    assert_eq!(
+        context.artifacts[0].target.kind,
+        atlas_build::TargetKind::Binary
+    );
 }
 
 #[test]
@@ -184,8 +190,14 @@ version = "0.1.0"
 #[test]
 fn test_build_stats_tracking() {
     let (_temp, project_path) = create_test_project(&[
-        ("src/main.atlas", "fn main() -> void { let x: number = 42; }"),
-        ("src/utils.atlas", "export fn helper() -> number { 1 }"),
+        (
+            "src/main.atlas",
+            "fn main() -> void { let x: number = 42; print(x); }",
+        ),
+        (
+            "src/utils.atlas",
+            "export fn helper() -> number { return 1; }",
+        ),
     ]);
 
     let mut builder = Builder::new(&project_path).unwrap();
@@ -199,10 +211,8 @@ fn test_build_stats_tracking() {
 
 #[test]
 fn test_build_output_directory_structure() {
-    let (_temp, project_path) = create_test_project(&[(
-        "src/main.atlas",
-        "fn main() -> number { 42 }",
-    )]);
+    let (_temp, project_path) =
+        create_test_project(&[("src/main.atlas", "fn main() -> number { return 42; }")]);
 
     let mut builder = Builder::new(&project_path).unwrap();
     let result = builder.build().unwrap();
@@ -222,7 +232,7 @@ fn test_multiple_targets_library_and_binary() {
         (
             "src/lib.atlas",
             r#"export fn double(x: number) -> number {
-    x * 2
+    return x * 2;
 }"#,
         ),
         (
@@ -241,11 +251,7 @@ fn main() -> void {
     // Should have both library and binary targets
     assert_eq!(result.artifacts.len(), 2);
 
-    let kinds: Vec<_> = result
-        .artifacts
-        .iter()
-        .map(|a| a.target.kind)
-        .collect();
+    let kinds: Vec<_> = result.artifacts.iter().map(|a| a.target.kind).collect();
     assert!(kinds.contains(&atlas_build::TargetKind::Library));
     assert!(kinds.contains(&atlas_build::TargetKind::Binary));
 }
@@ -274,12 +280,10 @@ fn test_build_order_respects_dependencies() {
 
 fn main() -> void {
     let x: number = VALUE;
+    print(x);
 }"#,
         ),
-        (
-            "src/constants.atlas",
-            r#"export let VALUE: number = 42;"#,
-        ),
+        ("src/constants.atlas", r#"export let VALUE: number = 42;"#),
     ]);
 
     let mut builder = Builder::new(&project_path).unwrap();

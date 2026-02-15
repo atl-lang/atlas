@@ -145,7 +145,22 @@ pub struct BuildConfig {
     #[serde(default)]
     pub target: Option<String>,
     #[serde(default)]
-    pub scripts: HashMap<String, String>,
+    pub scripts: Vec<BuildScriptConfig>,
+}
+
+/// Build script configuration
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct BuildScriptConfig {
+    pub name: String,
+    #[serde(default)]
+    pub path: Option<PathBuf>,
+    #[serde(default)]
+    pub shell: Option<String>,
+    pub phase: String,
+    #[serde(default)]
+    pub timeout: Option<u64>,
+    #[serde(default)]
+    pub permissions: Vec<String>,
 }
 
 /// Library configuration

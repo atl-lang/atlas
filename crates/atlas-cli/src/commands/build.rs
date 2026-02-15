@@ -1,105 +1,316 @@
-//! Build command - compile Atlas source to bytecode
+//! Build command - compile Atlas projects with profiles, scripts, and caching
 
 use anyhow::{Context, Result};
-use atlas_runtime::{
-    bytecode::disassemble, Binder, Bytecode, Compiler, Lexer, Parser, TypeChecker,
+use atlas_build::{
+    BuildScript, Builder, OutputMode, Profile, ScriptPhase,
 };
-use std::fs;
-use std::path::Path;
+use std::path::PathBuf;
+use std::time::Duration;
+
+/// Build command arguments
+pub struct BuildArgs {
+    /// Build profile (dev, release, test, or custom)
+    pub profile: Option<String>,
+    /// Build in release mode (shorthand for --profile=release)
+    pub release: bool,
+    /// Specific target to build
+    pub target: Option<String>,
+    /// Clean build (ignore cache)
+    pub clean: bool,
+    /// Verbose output
+    pub verbose: bool,
+    /// Quiet output (errors only)
+    pub quiet: bool,
+    /// JSON output
+    pub json: bool,
+    /// Number of parallel jobs
+    pub jobs: Option<usize>,
+    /// Target directory
+    pub target_dir: Option<PathBuf>,
+    /// Project directory (defaults to current directory)
+    pub project_dir: Option<PathBuf>,
+}
+
+impl Default for BuildArgs {
+    fn default() -> Self {
+        Self {
+            profile: None,
+            release: false,
+            target: None,
+            clean: false,
+            verbose: false,
+            quiet: false,
+            json: false,
+            jobs: None,
+            target_dir: None,
+            project_dir: None,
+        }
+    }
+}
 
 /// Run the build command
-///
-/// Compiles an Atlas source file to bytecode (.atb).
-/// If `disasm` is true, prints disassembled bytecode to stdout.
-/// If `json_output` is true, diagnostics are printed in JSON format.
-pub fn run(file_path: &str, disasm: bool, json_output: bool) -> Result<()> {
-    // Read source file
-    let source = fs::read_to_string(file_path)
-        .with_context(|| format!("Failed to read source file: {}", file_path))?;
+pub fn run(args: BuildArgs) -> Result<()> {
+    // Determine project directory
+    let project_dir = args.project_dir.clone().unwrap_or_else(|| PathBuf::from("."));
 
-    // Compile to bytecode
-    let bytecode = compile_source(&source, file_path, json_output)?;
+    // Create builder
+    let mut builder = Builder::new(&project_dir)
+        .context("Failed to create builder")?;
 
-    // Generate output path (.atl -> .atb)
-    let output_path = Path::new(file_path).with_extension("atb");
+    // Determine build profile
+    let profile = determine_profile(&args)?;
 
-    // Serialize and write bytecode
-    let bytes = bytecode.to_bytes();
-    fs::write(&output_path, bytes)
-        .with_context(|| format!("Failed to write bytecode file: {:?}", output_path))?;
+    // Determine output mode
+    let output_mode = determine_output_mode(&args);
 
-    println!("Compiled {} -> {:?}", file_path, output_path);
+    // Clean if requested
+    if args.clean {
+        if !args.quiet {
+            println!("Cleaning build artifacts...");
+        }
+        builder.clean()
+            .context("Failed to clean build artifacts")?;
+    }
 
-    // Optionally disassemble
-    if disasm {
-        println!("\n{}", disassemble(&bytecode));
+    // Set target directory if specified
+    if let Some(ref target_dir) = args.target_dir {
+        builder = builder.with_target_dir(target_dir.clone());
+    }
+
+    // Set verbose mode
+    if args.verbose {
+        builder = builder.with_verbose(true);
+    }
+
+    // Load build scripts from manifest
+    let scripts = load_build_scripts(&builder, &project_dir)?;
+
+    // Execute build with profile
+    let context = builder
+        .build_with_profile(profile.clone(), &scripts, output_mode)
+        .context("Build failed")?;
+
+    // Display results
+    if args.json {
+        // JSON output
+        let summary = context.stats;
+        println!(
+            "{}",
+            serde_json::json!({
+                "success": true,
+                "profile": profile.name(),
+                "total_time": summary.total_time.as_secs_f64(),
+                "compilation_time": summary.compilation_time.as_secs_f64(),
+                "linking_time": summary.linking_time.as_secs_f64(),
+                "modules": summary.total_modules,
+                "compiled_modules": summary.compiled_modules,
+                "parallel_groups": summary.parallel_groups,
+                "artifacts": context.artifacts.len(),
+            })
+        );
+    } else if !args.quiet {
+        // Human-readable output
+        println!("\n{}", "=".repeat(60));
+        println!("Build succeeded in {:.2}s", context.stats.total_time.as_secs_f64());
+        println!("{}", "=".repeat(60));
+        println!("  Profile: {}", profile.name());
+        println!("  Modules: {} compiled", context.stats.compiled_modules);
+        println!("  Parallel groups: {}", context.stats.parallel_groups);
+        println!("  Artifacts: {}", context.artifacts.len());
+        println!("{}", "=".repeat(60));
     }
 
     Ok(())
 }
 
-/// Compile source code to bytecode
-///
-/// Performs full compilation pipeline: lex -> parse -> bind -> typecheck -> compile
-/// If `json_output` is true, diagnostics are printed in JSON format.
-fn compile_source(source: &str, _file_path: &str, json_output: bool) -> Result<Bytecode> {
-    // Lex the source code
-    let mut lexer = Lexer::new(source);
-    let (tokens, lex_diagnostics) = lexer.tokenize();
-
-    if !lex_diagnostics.is_empty() {
-        print_errors(&lex_diagnostics, json_output);
-        return Err(anyhow::anyhow!("Lexer errors"));
+/// Determine build profile from arguments
+fn determine_profile(args: &BuildArgs) -> Result<Profile> {
+    if args.release {
+        Ok(Profile::Release)
+    } else if let Some(ref profile_name) = args.profile {
+        Profile::from_str(profile_name)
+            .map_err(|e| anyhow::anyhow!("Invalid profile: {}", e))
+    } else {
+        // Check environment variable
+        if let Ok(profile_env) = std::env::var("ATLAS_PROFILE") {
+            Profile::from_str(&profile_env)
+                .map_err(|e| anyhow::anyhow!("Invalid ATLAS_PROFILE: {}", e))
+        } else {
+            Ok(Profile::Dev)
+        }
     }
-
-    // Parse tokens into AST
-    let mut parser = Parser::new(tokens);
-    let (ast, parse_diagnostics) = parser.parse();
-
-    if !parse_diagnostics.is_empty() {
-        print_errors(&parse_diagnostics, json_output);
-        return Err(anyhow::anyhow!("Parse errors"));
-    }
-
-    // Bind symbols
-    let mut binder = Binder::new();
-    let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
-
-    if !bind_diagnostics.is_empty() {
-        print_errors(&bind_diagnostics, json_output);
-        return Err(anyhow::anyhow!("Binding errors"));
-    }
-
-    // Type check
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let typecheck_diagnostics = typechecker.check(&ast);
-
-    if !typecheck_diagnostics.is_empty() {
-        print_errors(&typecheck_diagnostics, json_output);
-        return Err(anyhow::anyhow!("Type errors"));
-    }
-
-    // Compile to bytecode
-    let mut compiler = Compiler::new();
-    let bytecode = compiler.compile(&ast).map_err(|diagnostics| {
-        print_errors(&diagnostics, json_output);
-        anyhow::anyhow!("Compilation errors")
-    })?;
-
-    Ok(bytecode)
 }
 
-/// Print diagnostics in JSON or human-readable format
-fn print_errors(diagnostics: &[atlas_runtime::Diagnostic], json_output: bool) {
-    if json_output {
-        // JSON format to stdout
-        for diag in diagnostics {
-            println!("{}", diag.to_json_string().unwrap());
-        }
+/// Determine output mode from arguments
+fn determine_output_mode(args: &BuildArgs) -> OutputMode {
+    if args.json {
+        OutputMode::Json
+    } else if args.quiet {
+        OutputMode::Quiet
+    } else if args.verbose {
+        OutputMode::Verbose
     } else {
-        // Human-readable format to stderr
-        for diag in diagnostics {
-            eprintln!("{:?}", diag);
+        OutputMode::Normal
+    }
+}
+
+/// Load build scripts from package manifest
+fn load_build_scripts(builder: &Builder, project_dir: &PathBuf) -> Result<Vec<BuildScript>> {
+    // Read manifest
+    let manifest_path = project_dir.join("atlas.toml");
+    if !manifest_path.exists() {
+        return Ok(Vec::new());
+    }
+
+    let manifest_content = std::fs::read_to_string(&manifest_path)
+        .context("Failed to read atlas.toml")?;
+
+    let manifest: atlas_build::PackageManifest = toml::from_str(&manifest_content)
+        .context("Failed to parse atlas.toml")?;
+
+    // Extract build scripts if present
+    let mut scripts = Vec::new();
+
+    if let Some(build_config) = manifest.build {
+        for script_config in build_config.scripts {
+            let phase = parse_script_phase(&script_config.phase)?;
+
+            let script = if let Some(path) = script_config.path {
+                BuildScript::atlas(&script_config.name, path, phase)
+            } else if let Some(shell) = script_config.shell {
+                BuildScript::shell(&script_config.name, shell, phase)
+            } else {
+                anyhow::bail!("Build script '{}' must specify either 'path' or 'shell'", script_config.name);
+            };
+
+            let script = if let Some(timeout_secs) = script_config.timeout {
+                script.with_timeout(Duration::from_secs(timeout_secs))
+            } else {
+                script
+            };
+
+            let script = if !script_config.permissions.is_empty() {
+                script.with_permissions(script_config.permissions)
+            } else {
+                script
+            };
+
+            scripts.push(script);
         }
+    }
+
+    Ok(scripts)
+}
+
+/// Parse script phase from string
+fn parse_script_phase(phase_str: &str) -> Result<ScriptPhase> {
+    match phase_str {
+        "pre-build" | "prebuild" => Ok(ScriptPhase::PreBuild),
+        "post-build" | "postbuild" => Ok(ScriptPhase::PostBuild),
+        "post-link" | "postlink" => Ok(ScriptPhase::PostLink),
+        _ => anyhow::bail!("Invalid script phase: {}. Valid phases are: pre-build, post-build, post-link", phase_str),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_determine_profile_default() {
+        let args = BuildArgs::default();
+        let profile = determine_profile(&args).unwrap();
+        assert_eq!(profile, Profile::Dev);
+    }
+
+    #[test]
+    fn test_determine_profile_release() {
+        let args = BuildArgs {
+            release: true,
+            ..Default::default()
+        };
+        let profile = determine_profile(&args).unwrap();
+        assert_eq!(profile, Profile::Release);
+    }
+
+    #[test]
+    fn test_determine_profile_custom() {
+        let args = BuildArgs {
+            profile: Some("test".to_string()),
+            ..Default::default()
+        };
+        let profile = determine_profile(&args).unwrap();
+        assert_eq!(profile, Profile::Test);
+    }
+
+    #[test]
+    fn test_determine_profile_release_priority() {
+        let args = BuildArgs {
+            release: true,
+            profile: Some("dev".to_string()),
+            ..Default::default()
+        };
+        let profile = determine_profile(&args).unwrap();
+        assert_eq!(profile, Profile::Release); // --release takes priority
+    }
+
+    #[test]
+    fn test_determine_output_mode_default() {
+        let args = BuildArgs::default();
+        let mode = determine_output_mode(&args);
+        assert_eq!(mode, OutputMode::Normal);
+    }
+
+    #[test]
+    fn test_determine_output_mode_verbose() {
+        let args = BuildArgs {
+            verbose: true,
+            ..Default::default()
+        };
+        let mode = determine_output_mode(&args);
+        assert_eq!(mode, OutputMode::Verbose);
+    }
+
+    #[test]
+    fn test_determine_output_mode_quiet() {
+        let args = BuildArgs {
+            quiet: true,
+            ..Default::default()
+        };
+        let mode = determine_output_mode(&args);
+        assert_eq!(mode, OutputMode::Quiet);
+    }
+
+    #[test]
+    fn test_determine_output_mode_json() {
+        let args = BuildArgs {
+            json: true,
+            ..Default::default()
+        };
+        let mode = determine_output_mode(&args);
+        assert_eq!(mode, OutputMode::Json);
+    }
+
+    #[test]
+    fn test_parse_script_phase_prebuild() {
+        assert_eq!(parse_script_phase("pre-build").unwrap(), ScriptPhase::PreBuild);
+        assert_eq!(parse_script_phase("prebuild").unwrap(), ScriptPhase::PreBuild);
+    }
+
+    #[test]
+    fn test_parse_script_phase_postbuild() {
+        assert_eq!(parse_script_phase("post-build").unwrap(), ScriptPhase::PostBuild);
+        assert_eq!(parse_script_phase("postbuild").unwrap(), ScriptPhase::PostBuild);
+    }
+
+    #[test]
+    fn test_parse_script_phase_postlink() {
+        assert_eq!(parse_script_phase("post-link").unwrap(), ScriptPhase::PostLink);
+        assert_eq!(parse_script_phase("postlink").unwrap(), ScriptPhase::PostLink);
+    }
+
+    #[test]
+    fn test_parse_script_phase_invalid() {
+        assert!(parse_script_phase("invalid").is_err());
     }
 }

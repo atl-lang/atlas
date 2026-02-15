@@ -1,7 +1,7 @@
+use serde::{Deserialize, Serialize};
 /// Build target types and artifact management
 use std::path::PathBuf;
 use std::time::Duration;
-use serde::{Deserialize, Serialize};
 
 /// Kind of build target
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -183,11 +183,7 @@ pub struct ArtifactMetadata {
 
 impl ArtifactMetadata {
     /// Create new artifact metadata
-    pub fn new(
-        compile_time: Duration,
-        module_count: usize,
-        bytecode_size: usize,
-    ) -> Self {
+    pub fn new(compile_time: Duration, module_count: usize, bytecode_size: usize) -> Self {
         Self {
             compile_time,
             module_count,
@@ -344,12 +340,11 @@ mod tests {
 
     #[test]
     fn test_multiple_source_files() {
-        let target = BuildTarget::new("app", TargetKind::Library)
-            .with_sources(vec![
-                PathBuf::from("src/lib.atlas"),
-                PathBuf::from("src/utils.atlas"),
-                PathBuf::from("src/helpers.atlas"),
-            ]);
+        let target = BuildTarget::new("app", TargetKind::Library).with_sources(vec![
+            PathBuf::from("src/lib.atlas"),
+            PathBuf::from("src/utils.atlas"),
+            PathBuf::from("src/helpers.atlas"),
+        ]);
 
         assert_eq!(target.sources.len(), 3);
     }

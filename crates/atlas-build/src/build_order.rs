@@ -204,12 +204,9 @@ impl BuildGraph {
         let mut path = Vec::new();
 
         for module_name in self.modules.keys() {
-            if let Some(cycle) = self.dfs_find_cycle(
-                module_name,
-                &mut visited,
-                &mut rec_stack,
-                &mut path,
-            ) {
+            if let Some(cycle) =
+                self.dfs_find_cycle(module_name, &mut visited, &mut rec_stack, &mut path)
+            {
                 return cycle;
             }
         }
@@ -288,12 +285,10 @@ mod tests {
     fn test_linear_dependency_chain() {
         let mut graph = BuildGraph::new();
         graph.add_module(
-            ModuleNode::new("a", PathBuf::from("a.atlas"))
-                .with_dependencies(vec!["b".to_string()]),
+            ModuleNode::new("a", PathBuf::from("a.atlas")).with_dependencies(vec!["b".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("b", PathBuf::from("b.atlas"))
-                .with_dependencies(vec!["c".to_string()]),
+            ModuleNode::new("b", PathBuf::from("b.atlas")).with_dependencies(vec!["c".to_string()]),
         );
         graph.add_module(ModuleNode::new("c", PathBuf::from("c.atlas")));
 
@@ -310,12 +305,10 @@ mod tests {
                 .with_dependencies(vec!["b".to_string(), "c".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("b", PathBuf::from("b.atlas"))
-                .with_dependencies(vec!["d".to_string()]),
+            ModuleNode::new("b", PathBuf::from("b.atlas")).with_dependencies(vec!["d".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("c", PathBuf::from("c.atlas"))
-                .with_dependencies(vec!["d".to_string()]),
+            ModuleNode::new("c", PathBuf::from("c.atlas")).with_dependencies(vec!["d".to_string()]),
         );
         graph.add_module(ModuleNode::new("d", PathBuf::from("d.atlas")));
 
@@ -331,12 +324,10 @@ mod tests {
     fn test_circular_dependency_detection() {
         let mut graph = BuildGraph::new();
         graph.add_module(
-            ModuleNode::new("a", PathBuf::from("a.atlas"))
-                .with_dependencies(vec!["b".to_string()]),
+            ModuleNode::new("a", PathBuf::from("a.atlas")).with_dependencies(vec!["b".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("b", PathBuf::from("b.atlas"))
-                .with_dependencies(vec!["a".to_string()]),
+            ModuleNode::new("b", PathBuf::from("b.atlas")).with_dependencies(vec!["a".to_string()]),
         );
 
         let result = graph.compute_build_order();
@@ -397,12 +388,10 @@ mod tests {
                 .with_dependencies(vec!["b".to_string(), "c".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("b", PathBuf::from("b.atlas"))
-                .with_dependencies(vec!["d".to_string()]),
+            ModuleNode::new("b", PathBuf::from("b.atlas")).with_dependencies(vec!["d".to_string()]),
         );
         graph.add_module(
-            ModuleNode::new("c", PathBuf::from("c.atlas"))
-                .with_dependencies(vec!["d".to_string()]),
+            ModuleNode::new("c", PathBuf::from("c.atlas")).with_dependencies(vec!["d".to_string()]),
         );
         graph.add_module(ModuleNode::new("d", PathBuf::from("d.atlas")));
 

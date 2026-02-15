@@ -1,12 +1,14 @@
 //! Build orchestration and pipeline management
 use crate::build_order::{BuildGraph, ModuleNode};
+use crate::cache::{compute_selective_invalidation, BuildCache, ChangeDetector};
 use crate::error::{BuildError, BuildResult};
+use crate::output::OutputMode;
+use crate::profile::{Profile, ProfileManager};
+use crate::script::{BuildScript, ScriptContext, ScriptExecutor, ScriptPhase};
 use crate::targets::{ArtifactMetadata, BuildArtifact, BuildTarget, TargetKind};
 
 use atlas_package::manifest::PackageManifest;
-use atlas_runtime::{
-    Binder, Bytecode, Compiler, Diagnostic, Lexer, Parser, TypeChecker,
-};
+use atlas_runtime::{Binder, Bytecode, Compiler, Diagnostic, Lexer, Parser, TypeChecker};
 
 // Note: Parallel compilation disabled for now due to Bytecode containing non-Send types (Rc<>)
 // use rayon::prelude::*;
@@ -16,7 +18,7 @@ use std::time::{Duration, Instant};
 use walkdir::WalkDir;
 
 /// Optimization level for compilation
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum OptLevel {
     /// No optimization (fast compilation)
     O0,
@@ -26,6 +28,13 @@ pub enum OptLevel {
     O2,
     /// Aggressive optimization
     O3,
+}
+
+#[allow(clippy::derivable_impls)]
+impl Default for OptLevel {
+    fn default() -> Self {
+        Self::O0
+    }
 }
 
 impl OptLevel {
@@ -179,7 +188,10 @@ impl Builder {
         let build_start = Instant::now();
 
         if self.config.verbose {
-            println!("Building {} v{}", self.manifest.package.name, self.manifest.package.version);
+            println!(
+                "Building {} v{}",
+                self.manifest.package.name, self.manifest.package.version
+            );
         }
 
         // Discover source files
@@ -255,6 +267,239 @@ impl Builder {
         })
     }
 
+    /// Build with incremental compilation (recompile only changed modules)
+    pub fn build_incremental(&mut self) -> BuildResult<BuildContext> {
+        let build_start = Instant::now();
+
+        if self.config.verbose {
+            println!(
+                "Building {} v{} (incremental)",
+                self.manifest.package.name, self.manifest.package.version
+            );
+        }
+
+        // Load or create build cache
+        let cache_dir = self.config.target_dir.join("cache");
+        let mut cache = BuildCache::load(&cache_dir)?;
+
+        // Discover source files
+        let source_files = self.discover_source_files()?;
+
+        if source_files.is_empty() {
+            return Err(BuildError::BuildFailed(
+                "No source files found in src/ directory".to_string(),
+            ));
+        }
+
+        // Build dependency graph
+        let graph = self.build_dependency_graph(&source_files)?;
+        graph.validate()?;
+
+        // Detect changed files
+        let mut change_detector = ChangeDetector::new();
+        let changes = change_detector.detect_changes(&source_files);
+
+        // Compute invalidation set (modules to recompile)
+        let changed_modules: std::collections::HashSet<String> = changes
+            .iter()
+            .filter_map(|change| self.path_to_module_name(&change.path).ok())
+            .collect();
+
+        // Build dependency map for invalidation propagation
+        let mut dep_map = std::collections::HashMap::new();
+        for (name, node) in graph.modules() {
+            dep_map.insert(name.clone(), node.dependencies.clone());
+        }
+
+        let invalidation = compute_selective_invalidation(&changed_modules, &dep_map);
+
+        if self.config.verbose {
+            println!("Changed modules: {}", changed_modules.len());
+            println!("Invalidated modules: {}", invalidation.len());
+            println!("Cached modules: {}", graph.len() - invalidation.len());
+        }
+
+        // Compile invalidated modules
+        let compile_start = Instant::now();
+        let mut compiled_modules = Vec::new();
+
+        for (module_name, node) in graph.modules() {
+            if invalidation.is_invalidated(module_name) {
+                // Recompile this module
+                let compiled = self.compile_single_module(module_name, &node.path)?;
+
+                // Store in cache
+                let source =
+                    fs::read_to_string(&node.path).map_err(|e| BuildError::io(&node.path, e))?;
+
+                cache.store(
+                    &node.name,
+                    node.path.clone(),
+                    &source,
+                    serialize_bytecode(&compiled.bytecode)?,
+                    node.dependencies.clone(),
+                    compiled.compile_time,
+                )?;
+
+                compiled_modules.push(compiled);
+            } else {
+                // Try to load from cache
+                if let Some(_bytecode_bytes) = cache.get(module_name, &node.path)? {
+                    // Deserialize bytecode (placeholder - actual deserialization needed)
+                    // For now, we'll recompile if cache hit fails
+                    if self.config.verbose {
+                        println!("Cache hit: {}", module_name);
+                    }
+
+                    // TODO: Deserialize bytecode from cache
+                    // For now, recompile as fallback
+                    let compiled = self.compile_single_module(module_name, &node.path)?;
+                    compiled_modules.push(compiled);
+                } else {
+                    // Cache miss - recompile
+                    let compiled = self.compile_single_module(&node.name, &node.path)?;
+
+                    let source = fs::read_to_string(&node.path)
+                        .map_err(|e| BuildError::io(&node.path, e))?;
+
+                    cache.store(
+                        &node.name,
+                        node.path.clone(),
+                        &source,
+                        serialize_bytecode(&compiled.bytecode)?,
+                        node.dependencies.clone(),
+                        compiled.compile_time,
+                    )?;
+
+                    compiled_modules.push(compiled);
+                }
+            }
+        }
+
+        let compilation_time = compile_start.elapsed();
+
+        // Save cache
+        cache.save()?;
+
+        if self.config.verbose {
+            println!(
+                "Compiled {} modules ({} from cache) in {:.2}s",
+                compiled_modules.len(),
+                graph.len() - invalidation.len(),
+                compilation_time.as_secs_f64()
+            );
+        }
+
+        // Create build targets
+        let targets = self.create_build_targets(&source_files)?;
+
+        // Link artifacts
+        let link_start = Instant::now();
+        let artifacts = self.link_artifacts(&targets, &compiled_modules)?;
+        let linking_time = link_start.elapsed();
+
+        let total_time = build_start.elapsed();
+
+        // Build statistics
+        let stats = BuildStats {
+            total_modules: graph.len(),
+            compiled_modules: compiled_modules.len(),
+            parallel_groups: 1,
+            total_time,
+            compilation_time,
+            linking_time,
+        };
+
+        if self.config.verbose {
+            println!(
+                "Incremental build completed in {:.2}s",
+                total_time.as_secs_f64()
+            );
+        }
+
+        Ok(BuildContext {
+            manifest: self.manifest.clone(),
+            stats,
+            artifacts,
+        })
+    }
+
+    /// Compile a single module
+    fn compile_single_module(
+        &self,
+        module_name: &str,
+        source_path: &Path,
+    ) -> BuildResult<CompiledModule> {
+        let compile_start = Instant::now();
+
+        // Read source
+        let source = fs::read_to_string(source_path).map_err(|e| BuildError::io(source_path, e))?;
+
+        // Lex
+        let mut lexer = Lexer::new(&source);
+        let (tokens, lex_diagnostics) = lexer.tokenize();
+
+        if !lex_diagnostics.is_empty() {
+            return Err(BuildError::compilation(
+                module_name,
+                format_diagnostics(&lex_diagnostics),
+            ));
+        }
+
+        // Parse
+        let mut parser = Parser::new(tokens);
+        let (program, parse_diagnostics) = parser.parse();
+
+        if !parse_diagnostics.is_empty() {
+            return Err(BuildError::compilation(
+                module_name,
+                format_diagnostics(&parse_diagnostics),
+            ));
+        }
+
+        // Bind
+        let mut binder = Binder::new();
+        let (mut symbol_table, bind_diagnostics) = binder.bind(&program);
+
+        if !bind_diagnostics.is_empty() {
+            return Err(BuildError::compilation(
+                module_name,
+                format_diagnostics(&bind_diagnostics),
+            ));
+        }
+
+        // Type check
+        let mut type_checker = TypeChecker::new(&mut symbol_table);
+        let type_diagnostics = type_checker.check(&program);
+
+        if !type_diagnostics.is_empty() {
+            return Err(BuildError::compilation(
+                module_name,
+                format_diagnostics(&type_diagnostics),
+            ));
+        }
+
+        // Compile to bytecode
+        let mut compiler = if self.config.optimization_level.should_optimize() {
+            Compiler::with_optimization()
+        } else {
+            Compiler::new()
+        };
+
+        let bytecode = compiler.compile(&program).map_err(|diagnostics| {
+            BuildError::compilation(module_name, format_diagnostics(&diagnostics))
+        })?;
+
+        let compile_time = compile_start.elapsed();
+
+        Ok(CompiledModule {
+            name: module_name.to_string(),
+            path: source_path.to_path_buf(),
+            bytecode,
+            compile_time,
+        })
+    }
+
     /// Discover all source files in the project
     fn discover_source_files(&self) -> BuildResult<Vec<PathBuf>> {
         let src_dir = self.root_dir.join("src");
@@ -290,8 +535,8 @@ impl Builder {
 
         for source_path in source_files {
             // Parse file to extract imports
-            let source = fs::read_to_string(source_path)
-                .map_err(|e| BuildError::io(source_path, e))?;
+            let source =
+                fs::read_to_string(source_path).map_err(|e| BuildError::io(source_path, e))?;
 
             let module_name = self.path_to_module_name(source_path)?;
 
@@ -329,8 +574,8 @@ impl Builder {
                 })
                 .collect();
 
-            let module = ModuleNode::new(module_name, source_path.clone())
-                .with_dependencies(dependencies);
+            let module =
+                ModuleNode::new(module_name, source_path.clone()).with_dependencies(dependencies);
 
             graph.add_module(module);
         }
@@ -348,7 +593,11 @@ impl Builder {
 
         for (group_idx, group) in build_order.iter().enumerate() {
             if self.config.verbose {
-                println!("Compiling group {} ({} modules)", group_idx + 1, group.len());
+                println!(
+                    "Compiling group {} ({} modules)",
+                    group_idx + 1,
+                    group.len()
+                );
             }
 
             // TODO: Parallel compilation requires Bytecode to be Send
@@ -378,8 +627,8 @@ impl Builder {
         }
 
         // Read source
-        let source = fs::read_to_string(&module.path)
-            .map_err(|e| BuildError::io(&module.path, e))?;
+        let source =
+            fs::read_to_string(&module.path).map_err(|e| BuildError::io(&module.path, e))?;
 
         // Lex
         let mut lexer = Lexer::new(&source);
@@ -477,9 +726,7 @@ impl Builder {
 
         // Validate targets
         for target in &targets {
-            target
-                .validate()
-                .map_err(BuildError::InvalidTarget)?;
+            target.validate().map_err(BuildError::InvalidTarget)?;
         }
 
         Ok(targets)
@@ -511,12 +758,8 @@ impl Builder {
             }
 
             // Create output directory
-            let output_dir = self
-                .config
-                .target_dir
-                .join(target.kind.output_dir_name());
-            fs::create_dir_all(&output_dir)
-                .map_err(|e| BuildError::io(&output_dir, e))?;
+            let output_dir = self.config.target_dir.join(target.kind.output_dir_name());
+            fs::create_dir_all(&output_dir).map_err(|e| BuildError::io(&output_dir, e))?;
 
             // Write artifact
             let output_path = output_dir.join(target.output_filename());
@@ -543,14 +786,9 @@ impl Builder {
     /// Convert file path to module name
     fn path_to_module_name(&self, path: &Path) -> BuildResult<String> {
         let src_dir = self.root_dir.join("src");
-        let relative = path
-            .strip_prefix(&src_dir)
-            .map_err(|_| {
-                BuildError::BuildFailed(format!(
-                    "Path {} is not under src/",
-                    path.display()
-                ))
-            })?;
+        let relative = path.strip_prefix(&src_dir).map_err(|_| {
+            BuildError::BuildFailed(format!("Path {} is not under src/", path.display()))
+        })?;
 
         let module_name = relative
             .with_extension("")
@@ -558,6 +796,78 @@ impl Builder {
             .replace(std::path::MAIN_SEPARATOR, "::");
 
         Ok(module_name)
+    }
+
+    /// Build with specific profile
+    pub fn build_with_profile(
+        &mut self,
+        profile: Profile,
+        scripts: &[BuildScript],
+        output_mode: OutputMode,
+    ) -> BuildResult<BuildContext> {
+        // Load profile manager and get profile config
+        let profile_manager = ProfileManager::new();
+
+        // Load custom profiles from manifest if any
+        // TODO: Add profile section to PackageManifest
+
+        let profile_config = profile_manager.get(&profile)?;
+
+        // Apply profile configuration to build config
+        self.config.optimization_level = profile_config.optimization_level;
+        self.config.verbose = matches!(output_mode, OutputMode::Verbose);
+
+        // Create script context
+        let script_context = ScriptContext::new(
+            profile.clone(),
+            self.config.target_dir.clone(),
+            self.root_dir.join("src"),
+            self.manifest.package.name.clone(),
+            self.manifest.package.version.to_string(),
+        );
+
+        let script_executor = ScriptExecutor::new(script_context)
+            .with_verbose(self.config.verbose);
+
+        // Execute pre-build scripts
+        script_executor.execute_phase(scripts, ScriptPhase::PreBuild)?;
+
+        // Perform build (incremental if profile allows)
+        let context = if profile_config.incremental {
+            self.build_incremental()?
+        } else {
+            self.build()?
+        };
+
+        // Execute post-build scripts
+        script_executor.execute_phase(scripts, ScriptPhase::PostBuild)?;
+
+        // Execute post-link scripts
+        script_executor.execute_phase(scripts, ScriptPhase::PostLink)?;
+
+        Ok(context)
+    }
+
+    /// Set profile
+    pub fn with_profile(self, _profile: Profile) -> Self {
+        // Profile will be applied in build_with_profile
+        self
+    }
+
+    /// Set output mode
+    pub fn with_output_mode(self, _mode: OutputMode) -> Self {
+        // Output mode will be applied in build_with_profile
+        self
+    }
+
+    /// Clean build artifacts
+    pub fn clean(&mut self) -> BuildResult<()> {
+        let target_dir = &self.config.target_dir;
+        if target_dir.exists() {
+            std::fs::remove_dir_all(target_dir)
+                .map_err(|e| BuildError::io(target_dir, e))?;
+        }
+        Ok(())
     }
 }
 
