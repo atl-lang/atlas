@@ -8,10 +8,129 @@ use crate::span::Span;
 use crate::value::Value;
 
 impl Compiler {
+    /// Compile a nested function declaration (Phase 6)
+    ///
+    /// Nested functions are compiled similarly to top-level functions, but:
+    /// - They're stored as local variables instead of globals
+    /// - They use scoped names to avoid collisions
+    fn compile_nested_function(&mut self, func: &FunctionDecl) -> Result<(), Vec<Diagnostic>> {
+        // Create scoped name to avoid collisions between nested functions
+        let scoped_name = format!("{}_{}", func.name.name, self.next_func_id);
+        self.next_func_id += 1;
+
+        // Create placeholder FunctionRef
+        let placeholder_ref = crate::value::FunctionRef {
+            name: scoped_name.clone(),
+            arity: func.params.len(),
+            bytecode_offset: 0, // Will be updated after Jump
+            local_count: 0,     // Will be updated after compiling body
+        };
+        let placeholder_value = crate::value::Value::Function(placeholder_ref);
+
+        // Add placeholder to constant pool
+        let const_idx = self.bytecode.add_constant(placeholder_value);
+        self.bytecode.emit(Opcode::Constant, func.span);
+        self.bytecode.emit_u16(const_idx);
+
+        // Store function both globally (for sibling access) and locally (for outer scope)
+        if self.scope_depth == 0 {
+            // Top-level: store globally with original name
+            let name_idx = self
+                .bytecode
+                .add_constant(crate::value::Value::string(&func.name.name));
+            self.bytecode.emit(Opcode::SetGlobal, func.span);
+            self.bytecode.emit_u16(name_idx);
+            self.bytecode.emit(Opcode::Pop, func.span);
+        } else {
+            // Nested function: store globally with scoped name for sibling access
+            let scoped_name_idx = self
+                .bytecode
+                .add_constant(crate::value::Value::string(&scoped_name));
+            self.bytecode.emit(Opcode::SetGlobal, func.span);
+            self.bytecode.emit_u16(scoped_name_idx);
+
+            // Also add as local variable in outer function's scope
+            self.locals.push(Local {
+                name: func.name.name.clone(),
+                depth: self.scope_depth,
+                mutable: false,
+                scoped_name: Some(scoped_name.clone()), // Store scoped name for sibling access
+            });
+            // The function value is still on stack - it will be the first local
+        }
+
+        // Jump over the function body (so it's not executed during declaration)
+        self.bytecode.emit(Opcode::Jump, func.span);
+        let skip_jump = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // Record the function body offset
+        let function_offset = self.bytecode.current_offset();
+
+        // STRATEGY FOR NESTED FUNCTIONS:
+        // - Keep parent scope locals visible (for sibling function calls)
+        // - Add this function's parameters starting from index 0
+        // - Use local_base to track where this function's locals start
+        // - When emitting GetLocal/SetLocal, adjust index based on whether
+        //   it's a parent-scope variable (keep absolute) or function-local (relative)
+
+        let old_scope = self.scope_depth;
+        let local_base = self.locals.len(); // Where this function's locals start
+        self.scope_depth += 1;
+
+        // Add parameters as locals
+        for param in &func.params {
+            self.locals.push(Local {
+                name: param.name.name.clone(),
+                depth: self.scope_depth,
+                mutable: true,
+                scoped_name: None,
+            });
+        }
+
+        // Save the local_base before compiling body (for nested function resolution)
+        let prev_local_base = std::mem::replace(&mut self.current_function_base, local_base);
+
+        // Compile function body
+        self.compile_block(&func.body)?;
+
+        // Restore previous function base
+        self.current_function_base = prev_local_base;
+
+        // Calculate total local count (only this function's locals)
+        let total_local_count = self.locals.len() - local_base;
+
+        // Implicit return null if no explicit return
+        self.bytecode.emit(Opcode::Null, func.span);
+        self.bytecode.emit(Opcode::Return, func.span);
+
+        // Restore scope and remove this function's locals
+        self.scope_depth = old_scope;
+        self.locals.truncate(local_base);
+
+        // Update the FunctionRef in constants with accurate offsets
+        let updated_ref = crate::value::FunctionRef {
+            name: scoped_name,
+            arity: func.params.len(),
+            bytecode_offset: function_offset,
+            local_count: total_local_count,
+        };
+        self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
+
+        // Patch the skip jump to go past the function body
+        self.bytecode.patch_jump(skip_jump);
+
+        Ok(())
+    }
+
     /// Compile a statement
     pub(super) fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), Vec<Diagnostic>> {
         match stmt {
             Stmt::VarDecl(decl) => self.compile_var_decl(decl),
+            Stmt::FunctionDecl(func) => {
+                // Nested function declaration - compile it
+                self.compile_nested_function(func)
+            }
             Stmt::Assign(assign) => {
                 // Compile assignment and pop the result (statement context)
                 self.compile_assign(assign)?;
@@ -65,6 +184,7 @@ impl Compiler {
                 name: decl.name.name.clone(),
                 depth: self.scope_depth,
                 mutable: decl.mutable,
+                scoped_name: None,
             });
         }
 

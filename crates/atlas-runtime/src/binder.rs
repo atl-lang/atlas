@@ -224,6 +224,74 @@ impl Binder {
         }
     }
 
+    /// Hoist a scoped (nested) function declaration
+    ///
+    /// Unlike top-level functions, scoped functions:
+    /// - Are defined in the current scope (not global)
+    /// - Can shadow outer functions and builtins
+    /// - Follow lexical scoping rules
+    fn hoist_scoped_function(&mut self, func: &FunctionDecl) {
+        // Note: Nested functions CAN shadow builtins (unlike top-level functions)
+        // This is allowed because they follow lexical scoping rules
+
+        // Enter type parameter scope to resolve generic types
+        self.enter_type_param_scope();
+        for type_param in &func.type_params {
+            self.register_type_parameter(type_param);
+        }
+
+        let param_types: Vec<Type> = func
+            .params
+            .iter()
+            .map(|p| self.resolve_type_ref(&p.type_ref))
+            .collect();
+
+        let return_type = self.resolve_type_ref(&func.return_type);
+
+        // Exit type parameter scope
+        self.exit_type_param_scope();
+
+        let symbol = Symbol {
+            name: func.name.name.clone(),
+            ty: Type::Function {
+                type_params: func.type_params.iter().map(|tp| tp.name.clone()).collect(),
+                params: param_types,
+                return_type: Box::new(return_type),
+            },
+            mutable: false,
+            kind: SymbolKind::Function,
+            span: func.name.span,
+            exported: false,
+        };
+
+        // Use define_scoped_function to add to current scope (not global functions)
+        if let Err(err) = self.symbol_table.define_scoped_function(symbol) {
+            let (msg, existing) = *err;
+            let mut diag = Diagnostic::error_with_code("AT2003", &msg, func.name.span)
+                .with_label("redeclaration")
+                .with_help(format!(
+                    "rename or remove one of the '{}' declarations",
+                    func.name.name
+                ));
+
+            // Add related location if we have the existing symbol
+            if let Some(existing_symbol) = existing {
+                diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                    file: "<input>".to_string(),
+                    line: 1,
+                    column: existing_symbol.span.start + 1,
+                    length: existing_symbol
+                        .span
+                        .end
+                        .saturating_sub(existing_symbol.span.start),
+                    message: format!("'{}' first defined here", existing_symbol.name),
+                });
+            }
+
+            self.diagnostics.push(diag);
+        }
+    }
+
     /// Bind a top-level item
     fn bind_item(&mut self, item: &Item) {
         match item {
@@ -430,10 +498,23 @@ impl Binder {
     }
 
     /// Bind a block
+    ///
+    /// Uses two-pass binding to support forward references to nested functions:
+    /// 1. First pass: Hoist all nested function declarations
+    /// 2. Second pass: Bind all statements (including function bodies)
     fn bind_block(&mut self, block: &Block) {
         // Blocks create their own scope
         self.symbol_table.enter_scope();
 
+        // Phase 1: Hoist all nested function declarations
+        // This allows functions to reference other functions declared later in the same block
+        for stmt in &block.statements {
+            if let Stmt::FunctionDecl(func) = stmt {
+                self.hoist_scoped_function(func);
+            }
+        }
+
+        // Phase 2: Bind all statements (including function bodies)
         for stmt in &block.statements {
             self.bind_statement(stmt);
         }
@@ -559,6 +640,12 @@ impl Binder {
             }
             Stmt::Expr(expr_stmt) => {
                 self.bind_expr(&expr_stmt.expr);
+            }
+            Stmt::FunctionDecl(func) => {
+                // Function declaration in statement position
+                // Note: Hoisting is already done by bind_block's first pass for nested functions
+                // We only need to bind the function body here
+                self.bind_function(func);
             }
         }
     }

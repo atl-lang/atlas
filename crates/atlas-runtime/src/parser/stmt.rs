@@ -24,10 +24,7 @@ impl Parser {
                     span: block.span,
                 }))
             }
-            TokenKind::Fn => {
-                self.error("Function declarations are only allowed at top level");
-                Err(())
-            }
+            TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),
             TokenKind::Import => {
                 self.error("Import statements are not supported in Atlas v0.1");
                 Err(())

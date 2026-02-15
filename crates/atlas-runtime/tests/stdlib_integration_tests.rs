@@ -20,7 +20,7 @@ use common::*;
 #[test]
 fn test_split_map_join_pipeline() {
     let code = r#"
-        fn toUpper(s: string): string {
+        fn toUpper(s: string) -> string {
             return toUpperCase(s);
         }
 
@@ -35,7 +35,7 @@ fn test_split_map_join_pipeline() {
 #[test]
 fn test_split_filter_length() {
     let code = r#"
-        fn isLong(s: string): bool {
+        fn isLong(s: string) -> bool {
             return len(s) > 3;
         }
 
@@ -49,7 +49,7 @@ fn test_split_filter_length() {
 #[test]
 fn test_string_trim_split_trim_each() {
     let code = r#"
-        fn trimWord(s: string): string {
+        fn trimWord(s: string) -> string {
             return trim(s);
         }
 
@@ -75,7 +75,7 @@ fn test_split_reverse_join() {
 #[test]
 fn test_substring_map_concat() {
     let code = r#"
-        fn first3(s: string): string {
+        fn first3(s: string) -> string {
             return substring(s, 0, 3);
         }
 
@@ -89,7 +89,7 @@ fn test_substring_map_concat() {
 #[test]
 fn test_index_of_filter_slice() {
     let code = r#"
-        fn hasA(s: string): bool {
+        fn hasA(s: string) -> bool {
             return indexOf(s, "a") != -1;
         }
 
@@ -104,7 +104,7 @@ fn test_index_of_filter_slice() {
 #[test]
 fn test_replace_all_in_array() {
     let code = r#"
-        fn removeDashes(s: string): string {
+        fn removeDashes(s: string) -> string {
             return replace(s, "-", "");
         }
 
@@ -118,7 +118,7 @@ fn test_replace_all_in_array() {
 #[test]
 fn test_pad_start_alignment() {
     let code = r#"
-        fn pad5(s: string): string {
+        fn pad5(s: string) -> string {
             return padStart(s, 5, " ");
         }
 
@@ -132,7 +132,7 @@ fn test_pad_start_alignment() {
 #[test]
 fn test_split_flatten_join() {
     let code = r#"
-        fn splitLine(line: string): string[] {
+        fn splitLine(line: string) -> string[] {
             return split(line, ",");
         }
 
@@ -147,7 +147,7 @@ fn test_split_flatten_join() {
 #[test]
 fn test_starts_with_filter_count() {
     let code = r#"
-        fn startsWithHttp(url: string): bool {
+        fn startsWithHttp(url: string) -> bool {
             return startsWith(url, "http");
         }
 
@@ -170,11 +170,11 @@ fn test_starts_with_filter_count() {
 #[test]
 fn test_map_numbers_sum_with_reduce() {
     let code = r#"
-        fn double(x: number): number {
+        fn double(x: number) -> number {
             return x * 2;
         }
 
-        fn add(a: number, b: number): number {
+        fn add(a: number, b: number) -> number {
             return a + b;
         }
 
@@ -188,11 +188,11 @@ fn test_map_numbers_sum_with_reduce() {
 #[test]
 fn test_filter_positive_then_sum() {
     let code = r#"
-        fn isPositive(x: number): bool {
+        fn isPositive(x: number) -> bool {
             return x > 0;
         }
 
-        fn add(a: number, b: number): number {
+        fn add(a: number, b: number) -> number {
             return a + b;
         }
 
@@ -216,7 +216,7 @@ fn test_abs_map_max() {
 #[test]
 fn test_sqrt_map_floor() {
     let code = r#"
-        fn sqrtFloor(x: number): number {
+        fn sqrtFloor(x: number) -> number {
             return floor(sqrt(x));
         }
 
@@ -230,7 +230,7 @@ fn test_sqrt_map_floor() {
 #[test]
 fn test_clamp_map_range() {
     let code = r#"
-        fn clampTo10(x: number): number {
+        fn clampTo10(x: number) -> number {
             return clamp(x, 0, 10);
         }
 
@@ -244,11 +244,11 @@ fn test_clamp_map_range() {
 #[test]
 fn test_pow_reduce_product() {
     let code = r#"
-        fn square(x: number): number {
+        fn square(x: number) -> number {
             return pow(x, 2);
         }
 
-        fn multiply(a: number, b: number): number {
+        fn multiply(a: number, b: number) -> number {
             return a * b;
         }
 
@@ -273,7 +273,7 @@ fn test_min_max_range() {
 #[test]
 fn test_round_map_average() {
     let code = r#"
-        fn add(a: number, b: number): number {
+        fn add(a: number, b: number) -> number {
             return a + b;
         }
 
@@ -288,7 +288,7 @@ fn test_round_map_average() {
 #[test]
 fn test_sign_filter_sort() {
     let code = r#"
-        fn compare(a: number, b: number): number {
+        fn compare(a: number, b: number) -> number {
             return a - b;
         }
 
@@ -432,7 +432,7 @@ fn test_to_json_parse_roundtrip() {
 #[test]
 fn test_is_valid_json_filter_strings() {
     let code = r#"
-        fn isValid(s: string): bool {
+        fn isValid(s: string) -> bool {
             return isValidJSON(s);
         }
 
@@ -486,11 +486,11 @@ fn test_csv_to_json_transformation() {
 #[test]
 fn test_log_analysis_pipeline() {
     let code = r#"
-        fn hasError(line: string): bool {
+        fn hasError(line: string) -> bool {
             return includes(line, "ERROR");
         }
 
-        fn extractTimestamp(line: string): string {
+        fn extractTimestamp(line: string) -> string {
             return substring(line, 0, 10);
         }
 
@@ -510,7 +510,7 @@ fn test_log_analysis_pipeline() {
 #[test]
 fn test_data_normalization_pipeline() {
     let code = r#"
-        fn normalize(s: string): string {
+        fn normalize(s: string) -> string {
             let trimmed: string = trim(s);
             let lower: string = toLowerCase(trimmed);
             return lower;
@@ -526,11 +526,11 @@ fn test_data_normalization_pipeline() {
 #[test]
 fn test_validation_and_transformation() {
     let code = r#"
-        fn isValidEmail(email: string): bool {
+        fn isValidEmail(email: string) -> bool {
             return includes(email, "@") && includes(email, ".");
         }
 
-        fn extractDomain(email: string): string {
+        fn extractDomain(email: string) -> string {
             let atIndex: number = indexOf(email, "@");
             if (atIndex == -1) {
                 return "";
@@ -554,7 +554,7 @@ fn test_validation_and_transformation() {
 #[test]
 fn test_statistical_pipeline() {
     let code = r#"
-        fn add(a: number, b: number): number {
+        fn add(a: number, b: number) -> number {
             return a + b;
         }
 
@@ -565,7 +565,7 @@ fn test_statistical_pipeline() {
         let mean: number = sum / len(data);
 
         // Count values above mean
-        fn aboveMean(x: number): bool {
+        fn aboveMean(x: number) -> bool {
             return x > mean;
         }
         let aboveCount: number[] = filter(data, aboveMean);
@@ -578,7 +578,7 @@ fn test_statistical_pipeline() {
 #[test]
 fn test_text_formatting_pipeline() {
     let code = r#"
-        fn titleCase(word: string): string {
+        fn titleCase(word: string) -> string {
             if (len(word) == 0) {
                 return word;
             }
@@ -599,7 +599,7 @@ fn test_text_formatting_pipeline() {
 fn test_deduplication_pipeline() {
     let code = r#"
         // Manual deduplication since we don't have Set yet
-        fn notInList(items: string[], item: string): bool {
+        fn notInList(items: string[], item: string) -> bool {
             return !arrayIncludes(items, item);
         }
 
@@ -676,7 +676,7 @@ fn test_markdown_to_text_pipeline() {
 #[test]
 fn test_score_calculation_pipeline() {
     let code = r#"
-        fn calculateGrade(score: number): string {
+        fn calculateGrade(score: number) -> string {
             if (score >= 90) {
                 return "A";
             }

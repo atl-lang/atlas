@@ -1,0 +1,72 @@
+---
+source: crates/atlas-runtime/tests/parser_tests.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 23
+            end: 29
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: get_value
+                span:
+                  start: 47
+                  end: 56
+              type_params: []
+              params: []
+              return_type:
+                Named:
+                  - number
+                  - start: 62
+                    end: 68
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Literal:
+                          - Number: 42
+                          - start: 94
+                            end: 96
+                      span:
+                        start: 87
+                        end: 97
+                span:
+                  start: 69
+                  end: 111
+              span:
+                start: 44
+                end: 111
+          - Return:
+              value:
+                Call:
+                  callee:
+                    Identifier:
+                      name: get_value
+                      span:
+                        start: 131
+                        end: 140
+                  args: []
+                  span:
+                    start: 131
+                    end: 142
+              span:
+                start: 124
+                end: 143
+        span:
+          start: 30
+          end: 153
+      span:
+        start: 9
+        end: 153

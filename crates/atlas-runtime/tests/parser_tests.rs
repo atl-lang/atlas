@@ -342,3 +342,170 @@ fn test_parse_missing_semicolon_error() {
         "Expected syntax error for missing semicolon"
     );
 }
+
+// ============================================================================
+// Nested Functions (Phase 1: Parser Support)
+// ============================================================================
+
+#[test]
+fn test_parse_nested_function_in_function() {
+    let source = r#"
+        fn outer() -> number {
+            fn helper(x: number) -> number {
+                return x * 2;
+            }
+            return helper(21);
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_in_if_block() {
+    let source = r#"
+        fn outer() -> void {
+            if (true) {
+                fn helper() -> void {
+                    print("hello");
+                }
+                helper();
+            }
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_in_while_block() {
+    let source = r#"
+        fn outer() -> void {
+            var i: number = 0;
+            while (i < 5) {
+                fn increment() -> void {
+                    i++;
+                }
+                increment();
+                i++;
+            }
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_in_for_block() {
+    let source = r#"
+        fn outer() -> void {
+            for (var i: number = 0; i < 5; i++) {
+                fn log(x: number) -> void {
+                    print(str(x));
+                }
+                log(i);
+            }
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_multiple_nested_functions_same_scope() {
+    let source = r#"
+        fn outer() -> number {
+            fn add(a: number, b: number) -> number {
+                return a + b;
+            }
+            fn multiply(a: number, b: number) -> number {
+                return a * b;
+            }
+            return add(2, multiply(3, 4));
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_deeply_nested_functions() {
+    let source = r#"
+        fn level1() -> number {
+            fn level2() -> number {
+                fn level3() -> number {
+                    return 42;
+                }
+                return level3();
+            }
+            return level2();
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_with_type_params() {
+    let source = r#"
+        fn outer<T>() -> void {
+            fn inner<E>(x: E) -> E {
+                return x;
+            }
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_no_params() {
+    let source = r#"
+        fn outer() -> number {
+            fn get_value() -> number {
+                return 42;
+            }
+            return get_value();
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_defaults_to_null_return_type() {
+    let source = r#"
+        fn outer() -> void {
+            fn helper(x: number) {
+                return x;
+            }
+        }
+    "#;
+    let (program, diagnostics) = parse_source(source);
+    // Parser allows omitting return type arrow - defaults to null type
+    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
+    insta::assert_yaml_snapshot!(program);
+}
+
+#[test]
+fn test_parse_nested_function_syntax_error_missing_body() {
+    let source = r#"
+        fn outer() -> void {
+            fn helper() -> void;
+        }
+    "#;
+    let (_program, diagnostics) = parse_source(source);
+    // Parser should report syntax error for missing function body
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected parser error for missing function body"
+    );
+}

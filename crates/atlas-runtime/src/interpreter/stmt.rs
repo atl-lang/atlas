@@ -1,14 +1,52 @@
 //! Statement execution
 
 use crate::ast::*;
-use crate::interpreter::{ControlFlow, Interpreter};
-use crate::value::{RuntimeError, Value};
+use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
+use crate::value::{FunctionRef, RuntimeError, Value};
 
 impl Interpreter {
     /// Execute a statement
     pub(super) fn eval_statement(&mut self, stmt: &Stmt) -> Result<Value, RuntimeError> {
         match stmt {
             Stmt::VarDecl(var) => self.eval_var_decl(var),
+            Stmt::FunctionDecl(func) => {
+                // Nested function declaration
+                // Create scoped name to avoid collisions between nested functions
+                let scoped_name = format!("{}_{}", func.name.name, self.next_func_id);
+                self.next_func_id += 1;
+
+                // Store function body with scoped internal name
+                self.function_bodies.insert(
+                    scoped_name.clone(),
+                    UserFunction {
+                        name: func.name.name.clone(),
+                        params: func.params.clone(),
+                        body: func.body.clone(),
+                    },
+                );
+
+                // Create FunctionRef value
+                let func_value = Value::Function(FunctionRef {
+                    name: scoped_name, // Internal scoped name for lookup
+                    arity: func.params.len(),
+                    bytecode_offset: 0, // Not used in interpreter
+                    local_count: 0,     // Not used in interpreter
+                });
+
+                // Store in current scope
+                if self.locals.is_empty() {
+                    // Global scope (shouldn't happen for nested functions, but handle it)
+                    self.globals.insert(func.name.name.clone(), func_value);
+                } else {
+                    // Local scope - this is the normal case for nested functions
+                    self.locals
+                        .last_mut()
+                        .unwrap()
+                        .insert(func.name.name.clone(), func_value);
+                }
+
+                Ok(Value::Null)
+            }
             Stmt::Assign(assign) => self.eval_assign(assign),
             Stmt::CompoundAssign(compound) => self.eval_compound_assign(compound),
             Stmt::Increment(inc) => self.eval_increment(inc),

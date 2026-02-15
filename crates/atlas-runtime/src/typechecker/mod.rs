@@ -136,7 +136,84 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Check a function declaration
+    /// Hoist a nested function's signature into the current scope
+    /// This mirrors what the binder does, ensuring nested function symbols
+    /// are available when type-checking calls to them
+    fn hoist_nested_function_signature(&mut self, func: &FunctionDecl) {
+        // Resolve parameter types, handling type parameters
+        let param_types: Vec<Type> = func
+            .params
+            .iter()
+            .map(|p| self.resolve_type_ref_with_params(&p.type_ref, &func.type_params))
+            .collect();
+
+        // Resolve return type
+        let return_type = self.resolve_type_ref_with_params(&func.return_type, &func.type_params);
+
+        // Create function symbol
+        let symbol = crate::symbol::Symbol {
+            name: func.name.name.clone(),
+            ty: Type::Function {
+                type_params: func.type_params.iter().map(|tp| tp.name.clone()).collect(),
+                params: param_types,
+                return_type: Box::new(return_type),
+            },
+            mutable: false,
+            kind: SymbolKind::Function,
+            span: func.name.span,
+            exported: false,
+        };
+
+        // Define in current scope (ignore redeclaration errors - binder already checked)
+        let _ = self.symbol_table.define(symbol);
+    }
+
+    /// Resolve a type reference, treating names in type_params as TypeParameter
+    fn resolve_type_ref_with_params(&mut self, type_ref: &TypeRef, type_params: &[crate::ast::TypeParam]) -> Type {
+        match type_ref {
+            TypeRef::Named(name, _) => {
+                // Check if this is a type parameter
+                if type_params.iter().any(|tp| tp.name == *name) {
+                    return Type::TypeParameter { name: name.clone() };
+                }
+                // Otherwise resolve as normal
+                match name.as_str() {
+                    "number" => Type::Number,
+                    "string" => Type::String,
+                    "bool" => Type::Bool,
+                    "void" => Type::Void,
+                    "null" => Type::Null,
+                    _ => Type::Unknown,
+                }
+            }
+            TypeRef::Array(elem, _) => Type::Array(Box::new(self.resolve_type_ref_with_params(elem, type_params))),
+            TypeRef::Function {
+                params,
+                return_type,
+                ..
+            } => {
+                let param_types = params.iter().map(|p| self.resolve_type_ref_with_params(p, type_params)).collect();
+                let ret_type = Box::new(self.resolve_type_ref_with_params(return_type, type_params));
+                Type::Function {
+                    type_params: vec![],
+                    params: param_types,
+                    return_type: ret_type,
+                }
+            }
+            TypeRef::Generic { .. } => {
+                // Just use the regular resolver for generics
+                self.resolve_type_ref(type_ref)
+            }
+        }
+    }
+
     fn check_function(&mut self, func: &FunctionDecl) {
+        // Save previous function context (for nested functions)
+        let prev_return_type = self.current_function_return_type.clone();
+        let prev_function_info = self.current_function_info.clone();
+        let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
+        let prev_used_symbols = std::mem::take(&mut self.used_symbols);
+
         let return_type = self.resolve_type_ref(&func.return_type);
         self.current_function_return_type = Some(return_type.clone());
         self.current_function_info = Some((func.name.name.clone(), func.name.span));
@@ -168,6 +245,14 @@ impl<'a> TypeChecker<'a> {
             );
         }
 
+        // Hoist nested function signatures (like the binder does)
+        // This ensures nested functions are available when type-checking their calls
+        for stmt in &func.body.statements {
+            if let Stmt::FunctionDecl(nested_func) = stmt {
+                self.hoist_nested_function_signature(nested_func);
+            }
+        }
+
         self.check_block(&func.body);
 
         // Check if all paths return (if return type != void/null)
@@ -195,8 +280,11 @@ impl<'a> TypeChecker<'a> {
         // Exit function scope
         self.symbol_table.exit_scope();
 
-        self.current_function_return_type = None;
-        self.current_function_info = None;
+        // Restore previous function context (for nested functions)
+        self.current_function_return_type = prev_return_type;
+        self.current_function_info = prev_function_info;
+        self.declared_symbols = prev_declared_symbols;
+        self.used_symbols = prev_used_symbols;
     }
 
     /// Emit warnings for unused symbols
@@ -617,6 +705,11 @@ impl<'a> TypeChecker<'a> {
             }
             Stmt::Expr(expr_stmt) => {
                 self.check_expr(&expr_stmt.expr);
+            }
+            Stmt::FunctionDecl(func) => {
+                // Nested function declaration - type check it
+                // Uses same check_function logic as top-level functions
+                self.check_function(func);
             }
         }
     }

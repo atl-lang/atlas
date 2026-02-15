@@ -738,6 +738,23 @@ impl SymbolTable {
         Ok(())
     }
 
+    /// Define a scoped function (nested function, not hoisted)
+    ///
+    /// This defines a function in the current scope on the stack, rather than
+    /// in the global functions table. Nested functions are not hoisted and
+    /// follow normal lexical scoping rules.
+    ///
+    /// Returns Err with existing symbol if name already exists in current scope
+    pub fn define_scoped_function(
+        &mut self,
+        symbol: Symbol,
+    ) -> Result<(), Box<(String, Option<Symbol>)>> {
+        // Define in current scope (not global functions HashMap)
+        // This allows nested functions to shadow outer functions and follow
+        // lexical scoping rules
+        self.define(symbol)
+    }
+
     /// Look up a symbol in all scopes (innermost first, then functions)
     pub fn lookup(&self, name: &str) -> Option<&Symbol> {
         // Check local scopes first (innermost to outermost)
@@ -1034,5 +1051,200 @@ mod tests {
         // Should find outer scope's x again
         let symbol = table.lookup("x").unwrap();
         assert_eq!(symbol.ty, Type::Number);
+    }
+
+    #[test]
+    fn test_scoped_function_definition() {
+        let mut table = SymbolTable::new();
+
+        // Enter a nested scope
+        table.enter_scope();
+
+        // Define a scoped function (nested function)
+        let result = table.define_scoped_function(Symbol {
+            name: "helper".to_string(),
+            ty: Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(Type::Number),
+            },
+            mutable: false,
+            kind: SymbolKind::Function,
+            span: Span::dummy(),
+            exported: false,
+        });
+
+        assert!(result.is_ok());
+
+        // Should be able to look it up
+        assert!(table.lookup("helper").is_some());
+
+        // Exit scope - function should no longer be visible
+        table.exit_scope();
+        assert!(table.lookup("helper").is_none());
+    }
+
+    #[test]
+    fn test_scoped_function_shadows_global() {
+        let mut table = SymbolTable::new();
+
+        // Define a global function
+        table
+            .define_function(Symbol {
+                name: "foo".to_string(),
+                ty: Type::Function {
+                    type_params: vec![],
+                    params: vec![],
+                    return_type: Box::new(Type::Number),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .unwrap();
+
+        // Verify we can look up the global function
+        let symbol = table.lookup("foo").unwrap();
+        assert_eq!(
+            symbol.ty,
+            Type::Function {
+                type_params: vec![],
+                params: vec![],
+                return_type: Box::new(Type::Number),
+            }
+        );
+
+        // Enter nested scope
+        table.enter_scope();
+
+        // Define a scoped function with same name (shadows global)
+        table
+            .define_scoped_function(Symbol {
+                name: "foo".to_string(),
+                ty: Type::Function {
+                    type_params: vec![],
+                    params: vec![],
+                    return_type: Box::new(Type::String),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .unwrap();
+
+        // Should find the nested function (shadows global)
+        let symbol = table.lookup("foo").unwrap();
+        assert_eq!(
+            symbol.ty,
+            Type::Function {
+                type_params: vec![],
+                params: vec![],
+                return_type: Box::new(Type::String),
+            }
+        );
+
+        // Exit scope
+        table.exit_scope();
+
+        // Should find global function again
+        let symbol = table.lookup("foo").unwrap();
+        assert_eq!(
+            symbol.ty,
+            Type::Function {
+                type_params: vec![],
+                params: vec![],
+                return_type: Box::new(Type::Number),
+            }
+        );
+    }
+
+    #[test]
+    fn test_scoped_function_shadows_builtin() {
+        let mut table = SymbolTable::new();
+
+        // Verify builtin exists
+        assert!(table.lookup("print").is_some());
+        assert_eq!(table.lookup("print").unwrap().kind, SymbolKind::Builtin);
+
+        // Enter nested scope
+        table.enter_scope();
+
+        // Define a scoped function that shadows builtin
+        table
+            .define_scoped_function(Symbol {
+                name: "print".to_string(),
+                ty: Type::Function {
+                    type_params: vec![],
+                    params: vec![Type::String],
+                    return_type: Box::new(Type::Void),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .unwrap();
+
+        // Should find the nested function (shadows builtin)
+        let symbol = table.lookup("print").unwrap();
+        assert_eq!(symbol.kind, SymbolKind::Function);
+
+        // Exit scope
+        table.exit_scope();
+
+        // Should find builtin again
+        let symbol = table.lookup("print").unwrap();
+        assert_eq!(symbol.kind, SymbolKind::Builtin);
+    }
+
+    #[test]
+    fn test_multiple_scoped_functions_same_scope() {
+        let mut table = SymbolTable::new();
+
+        // Enter nested scope
+        table.enter_scope();
+
+        // Define first scoped function
+        table
+            .define_scoped_function(Symbol {
+                name: "helper1".to_string(),
+                ty: Type::Function {
+                    type_params: vec![],
+                    params: vec![],
+                    return_type: Box::new(Type::Number),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .unwrap();
+
+        // Define second scoped function in same scope
+        table
+            .define_scoped_function(Symbol {
+                name: "helper2".to_string(),
+                ty: Type::Function {
+                    type_params: vec![],
+                    params: vec![],
+                    return_type: Box::new(Type::String),
+                },
+                mutable: false,
+                kind: SymbolKind::Function,
+                span: Span::dummy(),
+                exported: false,
+            })
+            .unwrap();
+
+        // Both should be visible
+        assert!(table.lookup("helper1").is_some());
+        assert!(table.lookup("helper2").is_some());
+
+        // Exit scope - neither should be visible
+        table.exit_scope();
+        assert!(table.lookup("helper1").is_none());
+        assert!(table.lookup("helper2").is_none());
     }
 }

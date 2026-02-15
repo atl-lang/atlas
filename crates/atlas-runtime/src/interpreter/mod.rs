@@ -46,6 +46,8 @@ pub struct Interpreter {
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
     /// Security context for current evaluation (set during eval())
     pub(super) current_security: Option<*const crate::security::SecurityContext>,
+    /// Counter for generating unique nested function names
+    next_func_id: usize,
 }
 
 impl Interpreter {
@@ -58,6 +60,7 @@ impl Interpreter {
             control_flow: ControlFlow::None,
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
             current_security: None,
+            next_func_id: 0,
         };
 
         // Register builtin functions in globals

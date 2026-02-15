@@ -24,6 +24,9 @@ pub(super) struct Local {
     /// Whether this local is mutable (let vs var)
     #[allow(dead_code)] // TODO: Use for const checking (future phase)
     pub(super) mutable: bool,
+    /// Scoped name for nested functions (None for regular variables)
+    /// Used to access nested functions globally from siblings
+    pub(super) scoped_name: Option<String>,
 }
 
 /// Loop context for break/continue
@@ -48,6 +51,11 @@ pub struct Compiler {
     /// Monomorphizer for generic functions
     #[allow(dead_code)] // Will be used when generic runtime support is fully integrated
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
+    /// Counter for generating unique nested function names
+    next_func_id: usize,
+    /// Base index for current function's locals (for nested functions)
+    /// Used to distinguish parent-scope locals from function-local variables
+    pub(super) current_function_base: usize,
 }
 
 impl Compiler {
@@ -60,6 +68,8 @@ impl Compiler {
             loops: Vec::new(),
             optimizer: None, // Optimization disabled by default
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
+            next_func_id: 0,
+            current_function_base: 0,
         }
     }
 
@@ -75,6 +85,8 @@ impl Compiler {
             loops: Vec::new(),
             optimizer: Some(Optimizer::with_default_passes()),
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
+            next_func_id: 0,
+            current_function_base: 0,
         }
     }
 
@@ -176,11 +188,18 @@ impl Compiler {
                 name: param.name.name.clone(),
                 depth: self.scope_depth,
                 mutable: true, // Parameters are always mutable
+                scoped_name: None,
             });
         }
 
+        // Track function base for nested function support
+        let prev_function_base = std::mem::replace(&mut self.current_function_base, old_locals_len);
+
         // Compile function body
         self.compile_block(&func.body)?;
+
+        // Restore function base
+        self.current_function_base = prev_function_base;
 
         // Calculate total local count (all locals added during function compilation)
         let total_local_count = self.locals.len() - old_locals_len;

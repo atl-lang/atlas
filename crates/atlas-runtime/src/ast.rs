@@ -143,6 +143,7 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Stmt {
     VarDecl(VarDecl),
+    FunctionDecl(FunctionDecl),
     Assign(Assign),
     CompoundAssign(CompoundAssign),
     Increment(IncrementStmt),
@@ -458,6 +459,7 @@ impl Stmt {
     pub fn span(&self) -> Span {
         match self {
             Stmt::VarDecl(v) => v.span,
+            Stmt::FunctionDecl(f) => f.span,
             Stmt::Assign(a) => a.span,
             Stmt::CompoundAssign(c) => c.span,
             Stmt::Increment(i) => i.span,

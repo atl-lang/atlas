@@ -78,21 +78,13 @@ fn test_function_declaration_errors(#[case] source: &str, #[case] expected: &str
 }
 
 // ============================================================================
-// Nested Functions (Not Allowed)
+// Nested Functions - Parser Support Added (Phase 1)
 // ============================================================================
-
-#[rstest]
-#[case("fn outer() { fn inner() { return 1; } }", "function")]
-#[case("if (true) { fn foo() { return 1; } }", "function")]
-#[case("while (true) { fn foo() { return 1; } }", "function")]
-#[case(
-    "for (let i = 0; i < 10; i = i + 1) { fn foo() { return 1; } }",
-    "function"
-)]
-fn test_nested_functions_not_allowed(#[case] source: &str, #[case] expected: &str) {
-    let diagnostics = parse_source(source);
-    assert_has_parser_error(&diagnostics, expected);
-}
+//
+// NOTE: Nested function syntax is now allowed by the parser (Phase 1 complete).
+// Semantic validation (binder/typechecker) will be added in Phases 3-4.
+// The parser no longer rejects nested functions - it parses them as Stmt::FunctionDecl.
+// Tests for semantic errors (AT1013) will be added in later phases.
 
 // ============================================================================
 // If Statement Errors

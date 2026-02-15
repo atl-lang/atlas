@@ -52,11 +52,27 @@ impl Compiler {
             self.bytecode.emit(Opcode::Constant, call.span);
             self.bytecode.emit_u16(const_idx);
         } else {
-            // User-defined function - load from global
-            // Try local first (for nested functions in the future)
+            // User-defined function - load from local or global
+            // Try local first (for nested functions)
             if let Some(local_idx) = self.resolve_local(func_name) {
-                self.bytecode.emit(Opcode::GetLocal, call.span);
-                self.bytecode.emit_u16(local_idx as u16);
+                let local = &self.locals[local_idx];
+
+                // Check if this local is from current function's scope or parent scope
+                if local.depth < self.scope_depth {
+                    // Parent scope variable - use GetGlobal with scoped name
+                    // This handles sibling nested functions calling each other
+                    let name_to_use = local.scoped_name.as_ref().unwrap_or(&local.name);
+                    let name_idx = self
+                        .bytecode
+                        .add_constant(crate::value::Value::string(name_to_use));
+                    self.bytecode.emit(Opcode::GetGlobal, call.span);
+                    self.bytecode.emit_u16(name_idx);
+                } else {
+                    // Current function's scope - use GetLocal with function-relative index
+                    let function_relative_idx = local_idx - self.current_function_base;
+                    self.bytecode.emit(Opcode::GetLocal, call.span);
+                    self.bytecode.emit_u16(function_relative_idx as u16);
+                }
             } else {
                 // Load from global
                 let name_idx = self
@@ -150,8 +166,21 @@ impl Compiler {
     fn compile_identifier(&mut self, ident: &Identifier) -> Result<(), Vec<Diagnostic>> {
         // Try to resolve as local first
         if let Some(local_idx) = self.resolve_local(&ident.name) {
-            self.bytecode.emit(Opcode::GetLocal, ident.span);
-            self.bytecode.emit_u16(local_idx as u16);
+            let local = &self.locals[local_idx];
+
+            // Check if this local is from current function's scope or parent scope
+            if local.depth < self.scope_depth {
+                // Parent scope variable - use GetGlobal with scoped name (for nested functions)
+                let name_to_use = local.scoped_name.as_ref().unwrap_or(&local.name);
+                let name_idx = self.bytecode.add_constant(Value::string(name_to_use));
+                self.bytecode.emit(Opcode::GetGlobal, ident.span);
+                self.bytecode.emit_u16(name_idx);
+            } else {
+                // Current function's scope - use GetLocal with function-relative index
+                let function_relative_idx = local_idx - self.current_function_base;
+                self.bytecode.emit(Opcode::GetLocal, ident.span);
+                self.bytecode.emit_u16(function_relative_idx as u16);
+            }
         } else {
             // Global variable
             let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
@@ -368,6 +397,7 @@ impl Compiler {
                     name: id.name.clone(),
                     depth: self.scope_depth,
                     mutable: false, // Pattern variables are immutable
+                    scoped_name: None,
                 });
                 let local_idx = self.locals.len() - 1;
 
