@@ -90,8 +90,11 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 - Phase says "50+ tests" → deliver 50+ (not 45 "close enough")
 - Phase says "100% parity" → verify 100% (not "seems to work")
 - Phase says "zero warnings" → zero warnings (not "just 2 small ones")
+- **ALL tests MUST pass** → 0 failures (not "23 failing, close enough")
 
-**Partial completion = phase incomplete.**
+**BLOCKING:** Any failing test = phase incomplete. Fix ALL failures before handoff.
+
+**Partial completion = phase incomplete = DO NOT HAND OFF.**
 
 ---
 
@@ -155,18 +158,23 @@ Both execution engines MUST produce identical output.
 
 ### 7. Testing Protocol (SURGICAL ONLY)
 
-**ONE test at a time:**
+**DURING implementation:**
 ```bash
-cargo test -p atlas-runtime test_exact_name -- --exact
+cargo test -p atlas-runtime test_exact_name -- --exact  # ONE test at a time
 ```
 
-**BANNED:**
+**BEFORE handoff (GATE 4 - BLOCKING):**
+```bash
+cargo test -p atlas-runtime  # Full suite - ALL must pass
+```
+
+**CRITICAL: If ANY test fails in full suite, phase INCOMPLETE. Fix ALL failures before handoff.**
+
+**BANNED during implementation:**
 - `cargo test` (full suite)
-- `cargo test -p atlas-runtime` (package suite)
+- `cargo test -p atlas-runtime` (package suite - save for GATE 4)
 - Any test without `-- --exact` flag
 - Re-running passing tests "for verification"
-
-**GATE 4 only:** User tells you to run full suite
 
 **Details:** `guides/testing-protocol.md`
 
@@ -283,17 +291,18 @@ cargo test -p atlas-runtime   # Full suite (user tells you when)
 
 ## Phase Completion Handoff
 
-**Use standardized format for seamless agent transitions.**
+**CRITICAL: Only hand off when ALL tests pass. Failing tests = phase incomplete.**
 
-**Template:** `examples/phase-completion-template.md`
+**Template:** `examples/phase-completion-template.md` (simple format, ~30 lines)
 
 **Required:**
-- Visual table (test counts, coverage)
-- Key Features section
-- Technical Implementation (decisions, patterns)
-- ALL files created/modified
-- Progress tracking (current, next, overall)
-- Clear next step
+- Status: "✅ ALL ACCEPTANCE CRITERIA MET" (if not, phase incomplete)
+- Final Stats (bullets, NOT tables)
+- Highlights (2-3 sentences + key bullets)
+- Progress (simple numbers)
+- Next step
+
+**BLOCKING: If ANY test fails, DO NOT hand off. Fix ALL failures first.**
 
 ---
 
