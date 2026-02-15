@@ -45,9 +45,15 @@ mod manifest_parsing {
         let manifest = PackageManifest::from_str(toml).unwrap();
         assert_eq!(manifest.package.name, "full-package");
         assert_eq!(manifest.package.version.to_string(), "1.2.3");
-        assert_eq!(manifest.package.description, Some("A complete package".to_string()));
+        assert_eq!(
+            manifest.package.description,
+            Some("A complete package".to_string())
+        );
         assert_eq!(manifest.package.authors.len(), 2);
-        assert_eq!(manifest.package.license, Some("MIT OR Apache-2.0".to_string()));
+        assert_eq!(
+            manifest.package.license,
+            Some("MIT OR Apache-2.0".to_string())
+        );
         assert_eq!(manifest.dependencies.len(), 2);
         assert_eq!(manifest.dev_dependencies.len(), 1);
         assert!(manifest.build.is_some());
@@ -124,7 +130,10 @@ mod manifest_parsing {
 
         let manifest = PackageManifest::from_str(toml).unwrap();
         if let Some(Dependency::Detailed(dep)) = manifest.dependencies.get("foo") {
-            assert_eq!(dep.features, Some(vec!["feature1".to_string(), "feature2".to_string()]));
+            assert_eq!(
+                dep.features,
+                Some(vec!["feature1".to_string(), "feature2".to_string()])
+            );
             assert_eq!(dep.default_features, Some(false));
         } else {
             panic!("Expected detailed dependency");
@@ -410,8 +419,14 @@ mod lockfile_tests {
         });
 
         assert_eq!(lockfile.packages.len(), 1);
-        assert_eq!(lockfile.get_package("pkg").unwrap().version.to_string(), "2.0.0");
-        assert_eq!(lockfile.get_package("pkg").unwrap().checksum, Some("new-checksum".to_string()));
+        assert_eq!(
+            lockfile.get_package("pkg").unwrap().version.to_string(),
+            "2.0.0"
+        );
+        assert_eq!(
+            lockfile.get_package("pkg").unwrap().checksum,
+            Some("new-checksum".to_string())
+        );
     }
 
     #[test]

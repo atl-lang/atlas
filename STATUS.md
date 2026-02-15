@@ -8,13 +8,13 @@
 ## 🎯 Current Phase
 
 **Version:** v0.2 (building production infrastructure)
-**Last Completed:** phases/foundation/phase-12-reflection-api.md
-**Next Phase:** phases/foundation/phase-08a-package-manager-resolver-core.md
+**Last Completed:** phases/foundation/phase-08a-package-manager-resolver-core.md
+**Next Phase:** phases/foundation/phase-08b-package-manager-registry.md
 
 **🚨 CRITICAL: Foundation must be completed before continuing stdlib/frontend/CLI**
 
-**Real Progress:** 15/72 phases complete (21%)
-- Foundation: 15/21 (method call + runtime API + embedding + config + modules + error handling + complete FFI system + package manifest + security permissions + CI/CD automation + foundation integration docs + reflection API)
+**Real Progress:** 16/72 phases complete (22%)
+- Foundation: 16/21 (method call + runtime API + embedding + config + modules + error handling + complete FFI system + package manifest + security permissions + CI/CD automation + foundation integration docs + reflection API + package manager resolver core)
 - Stdlib: 5/15 (will hit foundation blockers at phase 10b)
 - Everything else: Blocked by foundation
 
@@ -110,7 +110,7 @@ v0.2 transforms Atlas into a production-ready language:
 **🚨 CATEGORY ORDER = EXECUTION ORDER 🚨**
 **Foundation MUST be complete before other categories**
 
-### 0. Foundation (15/21) - Production Infrastructure [PRIORITY 1 - DO FIRST]
+### 0. Foundation (16/21) - Production Infrastructure [PRIORITY 1 - DO FIRST]
 
 **Completed:**
 - ✅ phase-16-method-call-syntax-frontend.md **[Emergency blocker fix - not planned foundation]**
@@ -128,12 +128,12 @@ v0.2 transforms Atlas into a production-ready language:
 - ✅ phase-03-ci-automation.md **[CI/CD: multi-platform testing, benchmarks, releases, security audits, dependabot, 2026-02-15]**
 - ✅ phase-05-foundation-integration.md **[Foundation status documentation + test verification, 767+ tests passing, 2026-02-15]**
 - ✅ phase-12-reflection-api.md **[Reflection & introspection: TypeInfo, ValueInfo, stdlib functions, 86 tests (86% above target), 100% parity, 2026-02-15]**
+- ✅ phase-08a-package-manager-resolver-core.md **[Package resolver: PubGrub algorithm, version solver, dependency graph, 52 tests (49% above target), 2026-02-15]**
 
 **Critical Path (do in this order to unblock v0.2):**
 - ✅ **CRITICAL PATH COMPLETE** - All blocking foundation phases done!
 
 **Secondary (can defer until needed):**
-- ⬜ phase-08a-package-manager-resolver-core.md **[Needs: phase-07]**
 - ⬜ phase-08b-package-manager-registry.md **[Needs: phase-08a]**
 - ⬜ phase-08c-package-manager-integration.md **[Needs: phase-08a, phase-08b]**
 - ⬜ phase-11-build-system.md **[Needs: phase-06, phase-07, phase-08c]**
@@ -209,9 +209,9 @@ v0.2 transforms Atlas into a production-ready language:
 - ⬜ phase-04-stability-verification.md
 - ⬜ phase-05-v02-milestone-completion.md
 
-**Total v0.2 Progress:** 20/72 phases (28%) - **MISLEADING: 5 stdlib phases will hit blockers**
-**Real Progress:** 15/72 phases (21%) - Foundation phases 01, 02, 03, 04, 05, 06, 07, 09, 10a/b/c, 12, 15, 16-17 complete
-**Foundation Status:** 15/21 phases (71%) - **CRITICAL PATH COMPLETE! Secondary phases remain**
+**Total v0.2 Progress:** 21/72 phases (29%) - **MISLEADING: 5 stdlib phases will hit blockers**
+**Real Progress:** 16/72 phases (22%) - Foundation phases 01, 02, 03, 04, 05, 06, 07, 08a, 09, 10a/b/c, 12, 15, 16-17 complete
+**Foundation Status:** 16/21 phases (76%) - **CRITICAL PATH COMPLETE! Secondary phases remain**
 **Next Focus:** Secondary foundation phases (package manager, build system, benchmarking, docs generator)
 
 ---
