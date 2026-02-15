@@ -1,4 +1,4 @@
-# Status Manager - Design Document
+# Atlas Dev - Design Document
 
 ## Purpose
 
@@ -28,12 +28,12 @@ Automate Atlas phase completion tracking to eliminate human/AI errors in STATUS.
 
 **Structure:**
 ```
-tools/status-manager/
+tools/atlas-dev/
 ├── Makefile                  # build, install, test
 ├── go.mod
 ├── go.sum
 ├── cmd/
-│   └── status-manager/
+│   └── atlas-dev/
 │       └── main.go           # CLI entry, cobra commands
 ├── internal/
 │   ├── tracker/
@@ -61,7 +61,7 @@ tools/status-manager/
 
 ## Commands
 
-### `status-manager complete <phase-path>`
+### `atlas-dev complete <phase-path>`
 
 **Primary command.** Marks phase complete, updates all files, validates, commits.
 
@@ -129,7 +129,7 @@ tools/status-manager/
 
 ---
 
-### `status-manager validate`
+### `atlas-dev validate`
 
 **Validation command.** Verifies STATUS.md sync with trackers.
 
@@ -150,7 +150,7 @@ tools/status-manager/
 
 ---
 
-### `status-manager next`
+### `atlas-dev next`
 
 **Next phase command.** Shows what to work on next.
 
@@ -163,7 +163,7 @@ tools/status-manager/
 
 ---
 
-### `status-manager summary`
+### `atlas-dev summary`
 
 **Progress summary.** Shows dashboard overview.
 
@@ -271,7 +271,7 @@ STATUS.md shows: 30/78
 Mismatches:
   - status/trackers/1-stdlib.md: 10 complete (STATUS.md shows 9)
 
-Run: status-manager complete --fix
+Run: atlas-dev complete --fix
 ```
 
 ---
@@ -301,7 +301,7 @@ Run: status-manager complete --fix
 
 **Build:**
 ```bash
-cd tools/status-manager
+cd tools/atlas-dev
 make build
 ```
 
@@ -312,7 +312,7 @@ make install  # Installs to $GOPATH/bin or /usr/local/bin
 
 **Usage from Atlas root:**
 ```bash
-status-manager complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev complete "phases/stdlib/phase-07b-hashset.md" \
   --description "HashSet with 25 tests" \
   --commit
 ```
@@ -329,8 +329,8 @@ status-manager complete "phases/stdlib/phase-07b-hashset.md" \
 **After EVERY phase completion:**
 
 ```bash
-# Run status-manager (handles ALL updates automatically)
-status-manager complete "phases/{category}/{phase}.md" \
+# Run atlas-dev (handles ALL updates automatically)
+atlas-dev complete "phases/{category}/{phase}.md" \
   --description "{brief summary: X functions, Y tests}" \
   --commit
 
@@ -338,7 +338,7 @@ status-manager complete "phases/{category}/{phase}.md" \
 ```
 
 **CRITICAL:** Do NOT manually edit STATUS.md or tracker files.
-Use status-manager exclusively for updates.
+Use atlas-dev exclusively for updates.
 ```
 
 **Benefits:**
@@ -355,14 +355,14 @@ Use status-manager exclusively for updates.
 ## Future Enhancements
 
 **v1.1:**
-- `status-manager undo` - Revert last completion
-- `status-manager stats` - Detailed progress analytics
-- `status-manager export` - Export to JSON/CSV
+- `atlas-dev undo` - Revert last completion
+- `atlas-dev stats` - Detailed progress analytics
+- `atlas-dev export` - Export to JSON/CSV
 
 **v1.2:**
-- `status-manager check-phase <path>` - Verify phase file exists and is valid
-- `status-manager timeline` - Show completion timeline
-- `status-manager estimate` - Estimate v0.2 completion date
+- `atlas-dev check-phase <path>` - Verify phase file exists and is valid
+- `atlas-dev timeline` - Show completion timeline
+- `atlas-dev estimate` - Estimate v0.2 completion date
 
 **v2.0:**
 - Interactive mode for manual override
@@ -373,13 +373,13 @@ Use status-manager exclusively for updates.
 
 ## Success Metrics
 
-**Before status-manager:**
+**Before atlas-dev:**
 - Manual 2-file update
 - 60% success rate (40% have issues)
 - ~5 minutes per update
 - Frequent sync errors
 
-**After status-manager:**
+**After atlas-dev:**
 - Automated 1-command update
 - 99%+ success rate
 - ~10 seconds per update

@@ -15,19 +15,19 @@
 4. ✅ Error handling framework
 5. ✅ Logging system
 6. ✅ Test infrastructure
-7. ✅ `status-manager version` command works
+7. ✅ `atlas-dev version` command works
 
 ---
 
 ## File Structure
 
 ```
-tools/status-manager/
+tools/atlas-dev/
 ├── go.mod                              # Go module
 ├── go.sum                              # Dependencies
 ├── Makefile                            # Build system
 ├── cmd/
-│   └── status-manager/
+│   └── atlas-dev/
 │       └── main.go                     # CLI entry point
 ├── internal/
 │   ├── config/
@@ -59,7 +59,7 @@ tools/status-manager/
 
 Verify:
 ```bash
-cd tools/status-manager
+cd tools/atlas-dev
 go mod tidy
 ```
 
@@ -76,7 +76,7 @@ go get github.com/BurntSushi/toml@latest
 
 Update `go.mod`:
 ```go
-module github.com/atlas-lang/status-manager
+module github.com/atlas-lang/atlas-dev
 
 go 1.22
 
@@ -103,7 +103,7 @@ import (
     "github.com/BurntSushi/toml"
 )
 
-// Config represents the status-manager configuration
+// Config represents the atlas-dev configuration
 type Config struct {
     Output  OutputConfig  `toml:"output"`
     Cache   CacheConfig   `toml:"cache"`
@@ -164,7 +164,7 @@ func Load(path string) (*Config, error) {
 // DefaultConfigPath returns the default config file path
 func DefaultConfigPath() string {
     home, _ := os.UserHomeDir()
-    return filepath.Join(home, ".config", "atlas-status-manager", "config.toml")
+    return filepath.Join(home, ".config", "atlas-atlas-dev", "config.toml")
 }
 ```
 
@@ -304,7 +304,7 @@ import (
     "io"
     "os"
 
-    "github.com/atlas-lang/status-manager/internal/config"
+    "github.com/atlas-lang/atlas-dev/internal/config"
 )
 
 // Writer handles output formatting
@@ -422,7 +422,7 @@ func Info() map[string]string {
 
 // String returns version as string
 func String() string {
-    return fmt.Sprintf("status-manager v%s (%s)", Version, GitCommit)
+    return fmt.Sprintf("atlas-dev v%s (%s)", Version, GitCommit)
 }
 ```
 
@@ -430,7 +430,7 @@ func String() string {
 
 ### Step 7: Update Main CLI
 
-**File:** `cmd/status-manager/main.go` (replace existing)
+**File:** `cmd/atlas-dev/main.go` (replace existing)
 
 ```go
 package main
@@ -441,10 +441,10 @@ import (
 
     "github.com/spf13/cobra"
 
-    "github.com/atlas-lang/status-manager/internal/config"
-    "github.com/atlas-lang/status-manager/internal/errors"
-    "github.com/atlas-lang/status-manager/internal/output"
-    "github.com/atlas-lang/status-manager/internal/version"
+    "github.com/atlas-lang/atlas-dev/internal/config"
+    "github.com/atlas-lang/atlas-dev/internal/errors"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/atlas-lang/atlas-dev/internal/version"
 )
 
 var (
@@ -455,7 +455,7 @@ var (
 
 func main() {
     rootCmd := &cobra.Command{
-        Use:           "status-manager",
+        Use:           "atlas-dev",
         Short:         "Atlas phase completion tracking automation",
         Long:          `AI-optimized CLI tool for Atlas development workflow automation.`,
         Version:       version.String(),
@@ -476,7 +476,7 @@ func main() {
     }
 
     // Global flags
-    rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default: ~/.config/atlas-status-manager/config.toml)")
+    rootCmd.PersistentFlags().StringVar(&configFile, "config", "", "config file (default: ~/.config/atlas-atlas-dev/config.toml)")
     rootCmd.PersistentFlags().Bool("human", false, "human-readable output (overrides config)")
     rootCmd.PersistentFlags().Bool("no-cache", false, "disable cache")
 
@@ -519,17 +519,17 @@ func main() {
 
 # Build binary
 build:
-	go build -o bin/status-manager \
-		-ldflags "-X github.com/atlas-lang/status-manager/internal/version.GitCommit=$(shell git rev-parse --short HEAD) \
-		          -X github.com/atlas-lang/status-manager/internal/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" \
-		./cmd/status-manager
+	go build -o bin/atlas-dev \
+		-ldflags "-X github.com/atlas-lang/atlas-dev/internal/version.GitCommit=$(shell git rev-parse --short HEAD) \
+		          -X github.com/atlas-lang/atlas-dev/internal/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" \
+		./cmd/atlas-dev
 
 # Install to PATH
 install:
 	go install \
-		-ldflags "-X github.com/atlas-lang/status-manager/internal/version.GitCommit=$(shell git rev-parse --short HEAD) \
-		          -X github.com/atlas-lang/status-manager/internal/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" \
-		./cmd/status-manager
+		-ldflags "-X github.com/atlas-lang/atlas-dev/internal/version.GitCommit=$(shell git rev-parse --short HEAD) \
+		          -X github.com/atlas-lang/atlas-dev/internal/version.BuildDate=$(shell date -u +%Y-%m-%dT%H:%M:%SZ)" \
+		./cmd/atlas-dev
 
 # Run tests
 test:
@@ -549,11 +549,11 @@ lint:
 
 # Development: build and run version
 dev: build
-	./bin/status-manager version
+	./bin/atlas-dev version
 
 # Show version
 version:
-	@echo "status-manager v$(shell git describe --tags --always)"
+	@echo "atlas-dev v$(shell git describe --tags --always)"
 ```
 
 ---
@@ -606,19 +606,19 @@ func TestLoad(t *testing.T) {
 
 ```bash
 # Build
-cd tools/status-manager
+cd tools/atlas-dev
 make build
 
 # Test version command (JSON output)
-./bin/status-manager version
+./bin/atlas-dev version
 # Expected: {"version":"1.0.0","git_commit":"...","build_date":"..."}
 
 # Test version command (human output)
-./bin/status-manager version --human
-# Expected: status-manager v1.0.0 (...)
+./bin/atlas-dev version --human
+# Expected: atlas-dev v1.0.0 (...)
 
 # Test with non-existent config (should use defaults)
-./bin/status-manager version --config /tmp/nonexistent.toml
+./bin/atlas-dev version --config /tmp/nonexistent.toml
 # Expected: Works fine, uses default config
 
 # Run tests
@@ -630,9 +630,9 @@ make test
 ## Acceptance Criteria
 
 - [x] `go build` succeeds without errors
-- [x] `make build` creates `bin/status-manager`
-- [x] `status-manager version` outputs JSON
-- [x] `status-manager version --human` outputs human-readable text
+- [x] `make build` creates `bin/atlas-dev`
+- [x] `atlas-dev version` outputs JSON
+- [x] `atlas-dev version --human` outputs human-readable text
 - [x] Config system loads defaults when config file doesn't exist
 - [x] All tests pass (`make test`)
 - [x] Code is formatted (`make fmt`)

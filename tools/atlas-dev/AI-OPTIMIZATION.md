@@ -1,5 +1,5 @@
 # AI Optimization Guide
-## Making status-manager Perfect for LLM Agents
+## Making atlas-dev Perfect for LLM Agents
 
 **Core Principle:** This tool is 100% for AI agents. Every byte counts.
 
@@ -312,7 +312,7 @@ polish = pol
 ### Cache Structure
 
 ```
-~/.cache/atlas-status-manager/
+~/.cache/atlas-atlas-dev/
 ├── phase-index.json        # All phase metadata
 ├── decision-index.json     # All decision log metadata
 ├── doc-index.json          # Doc hierarchy
@@ -371,7 +371,7 @@ polish = pol
 ```bash
 # Check if cache is fresh
 latest_mtime=$(find status/ phases/ docs/decision-logs/ -type f -name "*.md" -exec stat -f %m {} \; | sort -n | tail -1)
-cache_time=$(cat ~/.cache/atlas-status-manager/.last-update)
+cache_time=$(cat ~/.cache/atlas-atlas-dev/.last-update)
 
 if [ $latest_mtime -gt $cache_time ]; then
   # Rebuild cache
@@ -407,13 +407,13 @@ fi
 **All commands output JSON to stdout:**
 ```bash
 # Get current phase, then get its dependencies
-status-manager context current | jq -r '.phase.dep[]'
+atlas-dev context current | jq -r '.phase.dep[]'
 
 # List all active categories
-status-manager summary | jq -r '.cats[] | select(.status==1) | .name'
+atlas-dev summary | jq -r '.cats[] | select(.status==1) | .name'
 
 # Find all decisions from 2026
-status-manager decision list | jq -r '.decisions[] | select(.date | startswith("2026")) | .id'
+atlas-dev decision list | jq -r '.decisions[] | select(.date | startswith("2026")) | .id'
 ```
 
 ### Exit Codes
@@ -430,7 +430,7 @@ status-manager decision list | jq -r '.decisions[] | select(.date | startswith("
 
 **AI can check exit code:**
 ```bash
-if status-manager phase complete "..."; then
+if atlas-dev phase complete "..."; then
   echo "Success"
 else
   echo "Failed with code $?"
@@ -492,13 +492,13 @@ use_enums = true        # Use numeric enums
 
 ```bash
 # Human-readable output
-status-manager summary --human
+atlas-dev summary --human
 
 # Pretty-printed JSON
-status-manager summary --pretty
+atlas-dev summary --pretty
 
 # Verbose errors
-status-manager phase complete "..." --verbose
+atlas-dev phase complete "..." --verbose
 ```
 
 ---
@@ -509,17 +509,17 @@ status-manager phase complete "..." --verbose
 
 ```bash
 # Good (JSON output, parseable)
-result=$(status-manager context current)
+result=$(atlas-dev context current)
 phase=$(echo $result | jq -r '.phase.path')
 
 # Bad (human mode, hard to parse)
-status-manager context current --human
+atlas-dev context current --human
 ```
 
 ### 2. Check Exit Code
 
 ```bash
-if ! status-manager phase complete "..."; then
+if ! atlas-dev phase complete "..."; then
   echo "Failed to complete phase"
   exit 1
 fi
@@ -529,20 +529,20 @@ fi
 
 ```bash
 # Get next phase
-next=$(status-manager context current | jq -r '.next')
+next=$(atlas-dev context current | jq -r '.next')
 
 # Get all dependencies
-deps=$(status-manager context current | jq -r '.phase.dep[]')
+deps=$(atlas-dev context current | jq -r '.phase.dep[]')
 
 # Get test target
-target=$(status-manager context current | jq -r '.phase.tests[0]')
+target=$(atlas-dev context current | jq -r '.phase.tests[0]')
 ```
 
 ### 4. Use --dry-run for Preview
 
 ```bash
 # Preview changes without modifying files
-status-manager phase complete "..." --dry-run
+atlas-dev phase complete "..." --dry-run
 
 # Returns same JSON, but mod=[] and no commit
 ```
@@ -551,10 +551,10 @@ status-manager phase complete "..." --dry-run
 
 ```bash
 # Clear cache before critical operations
-status-manager cache clear
+atlas-dev cache clear
 
 # Get fresh data
-status-manager context current --no-cache
+atlas-dev context current --no-cache
 ```
 
 ---

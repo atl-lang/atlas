@@ -1,4 +1,4 @@
-# Status Manager - World-Class Automation
+# Atlas Dev - World-Class Automation
 
 ## The Problem We're Solving
 
@@ -22,7 +22,7 @@ When AI agents manually update STATUS.md:
 
 ```bash
 # AI completes phase implementation, then runs:
-status-manager complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev complete "phases/stdlib/phase-07b-hashset.md" \
   --description "HashSet with 25 tests, 100% parity" \
   --commit
 
@@ -64,7 +64,7 @@ status-manager complete "phases/stdlib/phase-07b-hashset.md" \
 **After:**
 ```bash
 # AI runs ONE command, tool does the rest
-status-manager complete "phases/stdlib/phase-07b-hashset.md" -d "..." -c
+atlas-dev complete "phases/stdlib/phase-07b-hashset.md" -d "..." -c
 # → 99.9% success (tool can't make arithmetic errors)
 ```
 
@@ -230,7 +230,7 @@ func ParseTracker(path string) (*Tracker, error) {
 - [ ] Sync validator (count verification)
 - [ ] Git commit automation (atomic commits)
 
-**Deliverable:** `status-manager complete` works end-to-end
+**Deliverable:** `atlas-dev complete` works end-to-end
 
 **Test:** Complete phase-07c using tool, verify correctness
 
@@ -316,7 +316,7 @@ func ParseTracker(path string) (*Tracker, error) {
 **After completing a phase, run ONE command:**
 
 ```bash
-status-manager complete "phases/{category}/{phase}.md" \
+atlas-dev complete "phases/{category}/{phase}.md" \
   --description "{brief summary: X functions, Y tests, Z% parity}" \
   --commit
 ```
@@ -331,7 +331,7 @@ status-manager complete "phases/{category}/{phase}.md" \
 
 **CRITICAL:**
 - Do NOT manually edit STATUS.md or tracker files
-- Use status-manager exclusively for all updates
+- Use atlas-dev exclusively for all updates
 - Tool prevents errors that manual updates introduce
 
 **Success rate: ~100%** (vs 60% with manual updates)
@@ -352,7 +352,7 @@ status-manager complete "phases/{category}/{phase}.md" \
 **New (automated, bulletproof):**
 1. Read STATUS.md ✓
 2. Complete phase implementation ✓
-3. Run `status-manager complete ...` ✓ (tool does steps 3-8)
+3. Run `atlas-dev complete ...` ✓ (tool does steps 3-8)
 
 **Reduction: 8 manual steps → 1 automated command**
 
@@ -361,7 +361,7 @@ status-manager complete "phases/{category}/{phase}.md" \
 ## Why This Achieves World-Class
 
 **World-class systems have:**
-1. **Automation** - Eliminate human error → status-manager automates everything
+1. **Automation** - Eliminate human error → atlas-dev automates everything
 2. **Validation** - Catch errors early → built-in sync validation
 3. **Consistency** - Same process every time → standardized workflow
 4. **Speed** - Fast feedback loops → 10-second updates
@@ -456,6 +456,6 @@ status-manager complete "phases/{category}/{phase}.md" \
 - ROI is massive (saves hours, prevents errors)
 - Aligns with project goals (world-class compiler)
 
-**Build status-manager. Make phase tracking invisible.**
+**Build atlas-dev. Make phase tracking invisible.**
 
 **Let AI agents focus on writing world-class code, not managing spreadsheets.**

@@ -173,23 +173,23 @@ This command gives AI agent EVERYTHING needed to start work:
 
 ```bash
 # Test doc search
-status-manager doc search "generics" | jq '.cnt'
+atlas-dev doc search "generics" | jq '.cnt'
 # Expected: 5+ results
 
 # Test doc read
-status-manager doc read docs/api/stdlib.md | jq '.sections | length'
+atlas-dev doc read docs/api/stdlib.md | jq '.sections | length'
 # Expected: 10+ sections
 
 # Test doc index
-status-manager doc index | jq '.cnt'
+atlas-dev doc index | jq '.cnt'
 # Expected: 47+ docs
 
 # Test context current (CRITICAL)
-status-manager context current | jq '.phase.files | length'
+atlas-dev context current | jq '.phase.files | length'
 # Expected: 4+ files
 
 # Test context has all needed info
-status-manager context current | jq 'has("phase") and has("decisions") and has("docs")'
+atlas-dev context current | jq 'has("phase") and has("decisions") and has("docs")'
 # Expected: true
 ```
 

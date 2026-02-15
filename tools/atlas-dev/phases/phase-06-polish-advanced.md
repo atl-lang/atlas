@@ -46,7 +46,7 @@ Track operations and enable undo.
 
 **Storage:**
 ```
-~/.cache/atlas-status-manager/undo/
+~/.cache/atlas-atlas-dev/undo/
 ├── operations.json       # Operation history
 └── snapshots/
     ├── 001-phase-07b.tar.gz    # Snapshot before phase-07b
@@ -67,9 +67,9 @@ Export data in various formats.
 
 **Usage:**
 ```bash
-status-manager export json > status.json
-status-manager export csv > phases.csv
-status-manager export html > dashboard.html
+atlas-dev export json > status.json
+atlas-dev export csv > phases.csv
+atlas-dev export html > dashboard.html
 ```
 
 ### 3. Cache System
@@ -88,7 +88,7 @@ Cache expensive operations.
 
 **Cache structure:**
 ```
-~/.cache/atlas-status-manager/
+~/.cache/atlas-atlas-dev/
 ├── phase-index.json
 ├── decision-index.json
 ├── doc-index.json
@@ -109,11 +109,11 @@ Validate before git commits.
 
 **Install:**
 ```bash
-status-manager pre-commit --install
+atlas-dev pre-commit --install
 # Adds .git/hooks/pre-commit
 
 # Manual run:
-status-manager pre-commit
+atlas-dev pre-commit
 # Returns exit code 0 if valid, 1 if invalid
 ```
 
@@ -130,7 +130,7 @@ Find broken doc/spec references.
 
 **Usage:**
 ```bash
-status-manager check-links
+atlas-dev check-links
 ```
 
 **JSON Output:**
@@ -164,7 +164,7 @@ Pretty, colored output for humans.
 
 **Usage:**
 ```bash
-status-manager summary --human
+atlas-dev summary --human
 ```
 
 **Output:**
@@ -184,27 +184,27 @@ Categories:
 
 ### 7. Shell Completions
 
-**File:** `cmd/status-manager/completion.go`
+**File:** `cmd/atlas-dev/completion.go`
 
 Generate shell completion scripts.
 
 **Usage:**
 ```bash
 # Bash
-status-manager completion bash > /etc/bash_completion.d/status-manager
+atlas-dev completion bash > /etc/bash_completion.d/atlas-dev
 
 # Zsh
-status-manager completion zsh > ~/.zsh/completions/_status-manager
+atlas-dev completion zsh > ~/.zsh/completions/_atlas-dev
 
 # Fish
-status-manager completion fish > ~/.config/fish/completions/status-manager.fish
+atlas-dev completion fish > ~/.config/fish/completions/atlas-dev.fish
 ```
 
 ### 8. Implement Commands
 
 **`undo`:**
 ```bash
-status-manager undo
+atlas-dev undo
 # Reverts last phase completion or decision creation
 
 # Output:
@@ -213,13 +213,13 @@ status-manager undo
 
 **`export json`:**
 ```bash
-status-manager export json
+atlas-dev export json
 # Exports full state as JSON
 ```
 
 **`cache clear`:**
 ```bash
-status-manager cache clear
+atlas-dev cache clear
 # Clears all cached indexes
 
 # Output:
@@ -228,7 +228,7 @@ status-manager cache clear
 
 **`check-links`:**
 ```bash
-status-manager check-links
+atlas-dev check-links
 # Finds all broken doc/spec links
 
 # Output:
@@ -237,7 +237,7 @@ status-manager check-links
 
 **`pre-commit`:**
 ```bash
-status-manager pre-commit
+atlas-dev pre-commit
 # Runs validation checks
 
 # Output:
@@ -250,28 +250,28 @@ status-manager pre-commit
 
 ```bash
 # Test undo (after completing a phase)
-status-manager phase complete "phases/test/dummy.md" --desc "Test"
-status-manager undo
+atlas-dev phase complete "phases/test/dummy.md" --desc "Test"
+atlas-dev undo
 # Verify: phase reverted
 
 # Test export
-status-manager export json | jq .
-status-manager export csv | head -5
+atlas-dev export json | jq .
+atlas-dev export csv | head -5
 
 # Test cache
-status-manager cache clear
-status-manager context current  # Rebuilds cache
-status-manager cache clear
+atlas-dev cache clear
+atlas-dev context current  # Rebuilds cache
+atlas-dev cache clear
 
 # Test check-links
-status-manager check-links | jq '.cnt'
+atlas-dev check-links | jq '.cnt'
 
 # Test pre-commit
-status-manager pre-commit
+atlas-dev pre-commit
 # Verify: exit code 0
 
 # Test human mode
-status-manager summary --human
+atlas-dev summary --human
 # Verify: colored, pretty output
 ```
 
@@ -293,11 +293,11 @@ status-manager summary --human
 ## Completion
 
 **After Phase 6:**
-- ✅ status-manager is 100% feature-complete
+- ✅ atlas-dev is 100% feature-complete
 - ✅ All 35+ commands implemented
 - ✅ AI-optimized (JSON, compact, token-efficient)
 - ✅ Cached for speed (50x on repeated calls)
 - ✅ Validated and safe (pre-commit hooks)
 - ✅ Polished (human mode, completions)
 
-**status-manager is READY FOR PRODUCTION.**
+**atlas-dev is READY FOR PRODUCTION.**

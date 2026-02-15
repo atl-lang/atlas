@@ -1,4 +1,4 @@
-# Status Manager - Master Plan
+# Atlas Dev - Master Plan
 ## The Ultimate AI Development Companion for Atlas
 
 **Purpose:** 100% AI-optimized CLI tool for Atlas development workflow automation.
@@ -19,70 +19,70 @@
 
 ### Category 1: Phase Management (Core)
 
-**`status-manager phase complete`** - Mark phase complete
-**`status-manager phase current`** - Get current phase context
-**`status-manager phase next`** - Get next phase(s) to work on
-**`status-manager phase info <path>`** - Get phase metadata
-**`status-manager phase validate <path>`** - Check phase prerequisites
-**`status-manager phase dependencies <path>`** - Show dependency tree
-**`status-manager phase search <query>`** - Find phases by keyword
+**`atlas-dev phase complete`** - Mark phase complete
+**`atlas-dev phase current`** - Get current phase context
+**`atlas-dev phase next`** - Get next phase(s) to work on
+**`atlas-dev phase info <path>`** - Get phase metadata
+**`atlas-dev phase validate <path>`** - Check phase prerequisites
+**`atlas-dev phase dependencies <path>`** - Show dependency tree
+**`atlas-dev phase search <query>`** - Find phases by keyword
 
 ---
 
 ### Category 2: Decision Log Management
 
-**`status-manager decision list`** - List all decision logs
-**`status-manager decision read <id>`** - Read decision log (structured)
-**`status-manager decision create`** - Create new decision log (interactive)
-**`status-manager decision search <query>`** - Search decision logs
-**`status-manager decision next-id <component>`** - Get next DR-XXX number
-**`status-manager decision related <id>`** - Find related decisions
-**`status-manager decision by-component <name>`** - List decisions by component
-**`status-manager decision by-date <range>`** - List decisions by date
+**`atlas-dev decision list`** - List all decision logs
+**`atlas-dev decision read <id>`** - Read decision log (structured)
+**`atlas-dev decision create`** - Create new decision log (interactive)
+**`atlas-dev decision search <query>`** - Search decision logs
+**`atlas-dev decision next-id <component>`** - Get next DR-XXX number
+**`atlas-dev decision related <id>`** - Find related decisions
+**`atlas-dev decision by-component <name>`** - List decisions by component
+**`atlas-dev decision by-date <range>`** - List decisions by date
 
 ---
 
 ### Category 3: Progress & Analytics
 
-**`status-manager summary`** - Overall progress dashboard
-**`status-manager category <name>`** - Category-specific progress
-**`status-manager validate`** - Validate STATUS.md sync
-**`status-manager stats`** - Completion velocity, estimates
-**`status-manager blockers`** - Show all blocked phases
-**`status-manager timeline`** - Completion timeline
-**`status-manager test-coverage`** - Test count tracking
+**`atlas-dev summary`** - Overall progress dashboard
+**`atlas-dev category <name>`** - Category-specific progress
+**`atlas-dev validate`** - Validate STATUS.md sync
+**`atlas-dev stats`** - Completion velocity, estimates
+**`atlas-dev blockers`** - Show all blocked phases
+**`atlas-dev timeline`** - Completion timeline
+**`atlas-dev test-coverage`** - Test count tracking
 
 ---
 
 ### Category 4: Documentation & Context
 
-**`status-manager doc search <query>`** - Search documentation
-**`status-manager doc read <path>`** - Read doc file (structured)
-**`status-manager doc index`** - Show doc hierarchy
-**`status-manager context phase <path>`** - Get everything needed for phase
-**`status-manager context current`** - Context for current phase
+**`atlas-dev doc search <query>`** - Search documentation
+**`atlas-dev doc read <path>`** - Read doc file (structured)
+**`atlas-dev doc index`** - Show doc hierarchy
+**`atlas-dev context phase <path>`** - Get everything needed for phase
+**`atlas-dev context current`** - Context for current phase
 
 ---
 
 ### Category 5: Validation & Safety
 
-**`status-manager validate all`** - Full system validation
-**`status-manager validate phase <path>`** - Phase prerequisites
-**`status-manager validate parity`** - Interpreter/VM parity check
-**`status-manager validate tests`** - Test count verification
-**`status-manager check-links`** - Find broken doc/spec links
-**`status-manager pre-commit`** - Pre-commit validation hook
+**`atlas-dev validate all`** - Full system validation
+**`atlas-dev validate phase <path>`** - Phase prerequisites
+**`atlas-dev validate parity`** - Interpreter/VM parity check
+**`atlas-dev validate tests`** - Test count verification
+**`atlas-dev check-links`** - Find broken doc/spec links
+**`atlas-dev pre-commit`** - Pre-commit validation hook
 
 ---
 
 ### Category 6: Utilities
 
-**`status-manager config get <key>`** - Get config value
-**`status-manager config set <key> <value>`** - Set config value
-**`status-manager cache clear`** - Clear command cache
-**`status-manager export <format>`** - Export data (JSON, CSV, HTML)
-**`status-manager undo`** - Revert last operation
-**`status-manager version`** - Show version info
+**`atlas-dev config get <key>`** - Get config value
+**`atlas-dev config set <key> <value>`** - Set config value
+**`atlas-dev cache clear`** - Clear command cache
+**`atlas-dev export <format>`** - Export data (JSON, CSV, HTML)
+**`atlas-dev undo`** - Revert last operation
+**`atlas-dev version`** - Show version info
 
 ---
 
@@ -92,12 +92,12 @@
 
 **Human mode:**
 ```bash
-status-manager summary --human
+atlas-dev summary --human
 ```
 
 **AI mode (default):**
 ```bash
-status-manager summary
+atlas-dev summary
 # Returns JSON, no --json flag needed
 ```
 
@@ -175,8 +175,8 @@ status-manager summary
 - Test infrastructure
 
 **Commands:**
-- `status-manager version`
-- `status-manager config`
+- `atlas-dev version`
+- `atlas-dev config`
 
 **Estimate:** 2-3 hours
 
@@ -194,11 +194,11 @@ status-manager summary
 - Git commit automation
 
 **Commands:**
-- `status-manager phase complete`
-- `status-manager phase current`
-- `status-manager phase next`
-- `status-manager phase info`
-- `status-manager validate`
+- `atlas-dev phase complete`
+- `atlas-dev phase current`
+- `atlas-dev phase next`
+- `atlas-dev phase info`
+- `atlas-dev validate`
 
 **Estimate:** 4-6 hours
 
@@ -215,12 +215,12 @@ status-manager summary
 - Related decision finder
 
 **Commands:**
-- `status-manager decision list`
-- `status-manager decision read`
-- `status-manager decision create`
-- `status-manager decision search`
-- `status-manager decision next-id`
-- `status-manager decision related`
+- `atlas-dev decision list`
+- `atlas-dev decision read`
+- `atlas-dev decision create`
+- `atlas-dev decision search`
+- `atlas-dev decision next-id`
+- `atlas-dev decision related`
 
 **Estimate:** 3-4 hours
 
@@ -238,13 +238,13 @@ status-manager summary
 - Timeline generator
 
 **Commands:**
-- `status-manager summary`
-- `status-manager category`
-- `status-manager stats`
-- `status-manager blockers`
-- `status-manager timeline`
-- `status-manager test-coverage`
-- `status-manager validate parity`
+- `atlas-dev summary`
+- `atlas-dev category`
+- `atlas-dev stats`
+- `atlas-dev blockers`
+- `atlas-dev timeline`
+- `atlas-dev test-coverage`
+- `atlas-dev validate parity`
 
 **Estimate:** 3-4 hours
 
@@ -261,11 +261,11 @@ status-manager summary
 - Related doc finder
 
 **Commands:**
-- `status-manager doc search`
-- `status-manager doc read`
-- `status-manager doc index`
-- `status-manager context phase`
-- `status-manager context current`
+- `atlas-dev doc search`
+- `atlas-dev doc read`
+- `atlas-dev doc index`
+- `atlas-dev context phase`
+- `atlas-dev context current`
 
 **Estimate:** 3-4 hours
 
@@ -283,11 +283,11 @@ status-manager summary
 - Rich output (human mode)
 
 **Commands:**
-- `status-manager export`
-- `status-manager undo`
-- `status-manager cache clear`
-- `status-manager check-links`
-- `status-manager pre-commit`
+- `atlas-dev export`
+- `atlas-dev undo`
+- `atlas-dev cache clear`
+- `atlas-dev check-links`
+- `atlas-dev pre-commit`
 
 **Estimate:** 3-4 hours
 
@@ -299,11 +299,11 @@ status-manager summary
 
 ## Priority Command Deep-Dive
 
-### `status-manager phase complete` (HIGHEST PRIORITY)
+### `atlas-dev phase complete` (HIGHEST PRIORITY)
 
 **Usage:**
 ```bash
-status-manager phase complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev phase complete "phases/stdlib/phase-07b-hashset.md" \
   --desc "HashSet with 25 tests, 100% parity" \
   [--commit] [--dry-run]
 ```
@@ -349,11 +349,11 @@ status-manager phase complete "phases/stdlib/phase-07b-hashset.md" \
 
 ---
 
-### `status-manager decision create` (HIGH PRIORITY)
+### `atlas-dev decision create` (HIGH PRIORITY)
 
 **Usage:**
 ```bash
-status-manager decision create \
+atlas-dev decision create \
   --component "stdlib" \
   --title "Collection iterator design" \
   --context "Need consistent iteration API for HashMap/HashSet" \
@@ -409,11 +409,11 @@ Create? [y/N]: y
 
 ---
 
-### `status-manager context current` (HIGH PRIORITY)
+### `atlas-dev context current` (HIGH PRIORITY)
 
 **Usage:**
 ```bash
-status-manager context current
+atlas-dev context current
 ```
 
 **JSON Output:**
@@ -472,7 +472,7 @@ status-manager context current
 **AI Usage:**
 ```bash
 # AI starts work on next phase:
-context=$(status-manager context current)
+context=$(atlas-dev context current)
 
 # Parse JSON to get:
 # - Phase path, name, description
@@ -587,7 +587,7 @@ context=$(status-manager context current)
 
 ### Cache File Location
 ```
-~/.cache/atlas-status-manager/
+~/.cache/atlas-atlas-dev/
 ├── phase-info.json          # Phase metadata cache
 ├── decision-index.json      # Decision log index
 ├── doc-index.json           # Doc hierarchy
@@ -599,7 +599,7 @@ context=$(status-manager context current)
 **Invalidate on:**
 - File modification (check mtime)
 - Git commit (check HEAD sha)
-- Manual clear (`status-manager cache clear`)
+- Manual clear (`atlas-dev cache clear`)
 
 **Cache TTL:**
 - Phase info: 1 hour (rarely changes)
@@ -611,13 +611,13 @@ context=$(status-manager context current)
 
 **Without cache:**
 ```bash
-$ time status-manager context current
+$ time atlas-dev context current
 real    0m2.500s  # Parses 78 phase files, 50+ decision logs
 ```
 
 **With cache:**
 ```bash
-$ time status-manager context current
+$ time atlas-dev context current
 real    0m0.050s  # Reads cache, validates freshness
 ```
 
@@ -627,7 +627,7 @@ real    0m0.050s  # Reads cache, validates freshness
 
 ## Configuration File
 
-**Location:** `~/.config/atlas-status-manager/config.toml`
+**Location:** `~/.config/atlas-atlas-dev/config.toml`
 
 **Example:**
 ```toml
@@ -656,8 +656,8 @@ atlas_root = "/Users/proxikal/dev/projects/atlas"
 
 **Override with flags:**
 ```bash
-status-manager summary --human  # Override format
-status-manager complete ... --no-cache  # Disable cache
+atlas-dev summary --human  # Override format
+atlas-dev complete ... --no-cache  # Disable cache
 ```
 
 ---
@@ -672,7 +672,7 @@ status-manager complete ... --no-cache  # Disable cache
 **After completing a phase, run ONE command:**
 
 ```bash
-status-manager phase complete "phases/{category}/{phase}.md" \
+atlas-dev phase complete "phases/{category}/{phase}.md" \
   --desc "{brief summary: X functions, Y tests}" \
   --commit
 ```
@@ -689,7 +689,7 @@ status-manager phase complete "phases/{category}/{phase}.md" \
 **Get context for next phase:**
 
 ```bash
-status-manager context current
+atlas-dev context current
 ```
 
 **Returns everything needed:**
@@ -703,14 +703,14 @@ status-manager context current
 **Creating decision logs:**
 
 ```bash
-status-manager decision create \
+atlas-dev decision create \
   --component "stdlib" \
   --title "Iterator design"
 ```
 
 **CRITICAL:**
 - Do NOT manually edit STATUS.md, trackers, or decision logs
-- Use status-manager exclusively
+- Use atlas-dev exclusively
 - Tool prevents errors, validates automatically
 ```
 
@@ -718,14 +718,14 @@ status-manager decision create \
 
 ## Success Metrics
 
-### Before status-manager
+### Before atlas-dev
 - ⏱️ **Phase completion time:** ~5 min (manual editing)
 - ✅ **Success rate:** 60% (40% have errors)
 - 🔍 **Finding decision logs:** ~2 min (grep manually)
 - 📊 **Getting phase context:** ~3 min (read multiple files)
 - 🐛 **Debug time:** ~15 min per error
 
-### After status-manager
+### After atlas-dev
 - ⏱️ **Phase completion time:** ~10 sec (one command)
 - ✅ **Success rate:** 99.8% (automated, validated)
 - 🔍 **Finding decision logs:** ~1 sec (indexed search)

@@ -100,7 +100,7 @@ Create atomic commits.
 
 ### Step 7: Implement `phase complete` Command
 
-**File:** `cmd/status-manager/phase_complete.go`
+**File:** `cmd/atlas-dev/phase_complete.go`
 
 **Algorithm:**
 1. Parse phase path → category, name
@@ -135,7 +135,7 @@ Create atomic commits.
 
 ### Step 8: Implement `phase current`
 
-**File:** `cmd/status-manager/phase_current.go`
+**File:** `cmd/atlas-dev/phase_current.go`
 
 Read STATUS.md current phase section, return JSON.
 
@@ -151,7 +151,7 @@ Read STATUS.md current phase section, return JSON.
 
 ### Step 9: Implement `phase next`
 
-**File:** `cmd/status-manager/phase_next.go`
+**File:** `cmd/atlas-dev/phase_next.go`
 
 Read STATUS.md next phase, return JSON.
 
@@ -168,7 +168,7 @@ Read STATUS.md next phase, return JSON.
 
 ### Step 10: Implement `validate`
 
-**File:** `cmd/status-manager/validate.go`
+**File:** `cmd/atlas-dev/validate.go`
 
 Run full sync validation, report results.
 
@@ -220,15 +220,15 @@ cp -r status/ testdata/status-snapshot/
 cp STATUS.md testdata/STATUS-snapshot.md
 
 # Run phase complete on dummy phase
-status-manager phase complete "phases/test/phase-00-dummy.md" \
+atlas-dev phase complete "phases/test/phase-00-dummy.md" \
   --desc "Test phase" \
   --dry-run
 
 # Verify output is valid JSON
-status-manager phase complete "..." --dry-run | jq .
+atlas-dev phase complete "..." --dry-run | jq .
 
 # Verify validation works
-status-manager validate
+atlas-dev validate
 ```
 
 ### Real-World Test
@@ -236,7 +236,7 @@ status-manager validate
 **Use on REAL phase (phase-07c):**
 ```bash
 # After completing phase-07c implementation
-status-manager phase complete "phases/stdlib/phase-07c-queue-stack.md" \
+atlas-dev phase complete "phases/stdlib/phase-07c-queue-stack.md" \
   --desc "Queue + Stack implementation, 36 tests, 100% parity" \
   --commit
 
@@ -300,7 +300,7 @@ internal/
     ├── commit.go
     └── commit_test.go
 
-cmd/status-manager/
+cmd/atlas-dev/
 ├── phase_complete.go
 ├── phase_current.go
 ├── phase_next.go

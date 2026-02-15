@@ -369,7 +369,7 @@ atlas-dev validate parity
 ## Directory Structure (Updated)
 
 ```
-tools/atlas-dev/  (renamed from status-manager)
+tools/atlas-dev/  (renamed from atlas-dev)
 ├── COMPLETE-VISION.md          # This file
 ├── MASTER-PLAN.md              # Updated master plan
 ├── AI-OPTIMIZATION.md
@@ -610,7 +610,7 @@ atlas-dev validate parity
 
 **Ready to implement?**
 
-1. ✅ Rename project: `status-manager` → `atlas-dev`
+1. ✅ Rename project: `atlas-dev` → `atlas-dev`
 2. ✅ Create Phases 7-10 (NEW)
 3. ✅ Build Phase 1 (core infrastructure)
 4. ✅ Build Phase 2 (phase management)

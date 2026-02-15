@@ -1,4 +1,4 @@
-# Status Manager
+# Atlas Dev
 
 **Automates Atlas phase completion tracking to eliminate human/AI errors.**
 
@@ -16,7 +16,7 @@ Manual STATUS.md updates are error-prone:
 
 **One command does everything automatically:**
 ```bash
-status-manager complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev complete "phases/stdlib/phase-07b-hashset.md" \
   --description "HashSet with 25 tests" \
   --commit
 ```
@@ -38,7 +38,7 @@ status-manager complete "phases/stdlib/phase-07b-hashset.md" \
 
 ### Build from source:
 ```bash
-cd tools/status-manager
+cd tools/atlas-dev
 make build
 ```
 
@@ -49,7 +49,7 @@ make install  # Installs to $GOPATH/bin
 
 ### Verify:
 ```bash
-status-manager --version
+atlas-dev --version
 ```
 
 ---
@@ -59,7 +59,7 @@ status-manager --version
 ### `complete` - Mark phase complete (PRIMARY)
 
 ```bash
-status-manager complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev complete "phases/stdlib/phase-07b-hashset.md" \
   --description "HashSet implementation, 25 tests, 100% parity" \
   --commit
 ```
@@ -94,7 +94,7 @@ status-manager complete "phases/stdlib/phase-07b-hashset.md" \
 ### `validate` - Check sync
 
 ```bash
-status-manager validate
+atlas-dev validate
 ```
 
 **Flags:**
@@ -116,7 +116,7 @@ All category percentages match ✓
 ### `next` - Show next phase
 
 ```bash
-status-manager next
+atlas-dev next
 ```
 
 **Output:**
@@ -132,7 +132,7 @@ Description: Queue (FIFO) + Stack (LIFO), ~690 lines, 36+ tests
 ### `summary` - Progress dashboard
 
 ```bash
-status-manager summary
+atlas-dev summary
 ```
 
 **Output:**
@@ -162,14 +162,14 @@ Categories:
 **After completing a phase, run ONE command:**
 
 ```bash
-status-manager complete "phases/{category}/{phase}.md" \
+atlas-dev complete "phases/{category}/{phase}.md" \
   --description "{brief summary}" \
   --commit
 ```
 
 **CRITICAL:**
 - Do NOT manually edit STATUS.md or tracker files
-- Use status-manager exclusively
+- Use atlas-dev exclusively
 - Tool handles all updates automatically
 ```
 

@@ -45,7 +45,7 @@
 
 ### 1. Read Phase File
 ```bash
-cat tools/status-manager/phases/phase-01-core-infrastructure.md
+cat tools/atlas-dev/phases/phase-01-core-infrastructure.md
 ```
 
 ### 2. Implement Phase
@@ -67,7 +67,7 @@ Update this README with completion status.
 - [ ] Config system implemented
 - [ ] Error handling framework
 - [ ] Test infrastructure setup
-- [ ] `status-manager version` works
+- [ ] `atlas-dev version` works
 
 ### Phase 2: Phase Management
 - [ ] Phase path parser implemented
@@ -76,28 +76,28 @@ Update this README with completion status.
 - [ ] Percentage calculator
 - [ ] Sync validator
 - [ ] Git commit automation
-- [ ] `status-manager phase complete` works end-to-end
+- [ ] `atlas-dev phase complete` works end-to-end
 
 ### Phase 3: Decision Log Integration
 - [ ] Decision log parser
 - [ ] Next ID calculator
 - [ ] Template generator
 - [ ] Search indexer
-- [ ] `status-manager decision create` works
-- [ ] `status-manager decision list` works
+- [ ] `atlas-dev decision create` works
+- [ ] `atlas-dev decision list` works
 
 ### Phase 4: Progress Analytics
 - [ ] Progress calculator
 - [ ] Blocker analyzer
 - [ ] Test coverage tracker
-- [ ] `status-manager summary` works
-- [ ] `status-manager validate` comprehensive
+- [ ] `atlas-dev summary` works
+- [ ] `atlas-dev validate` comprehensive
 
 ### Phase 5: Documentation & Context
 - [ ] Doc indexer
 - [ ] Doc search
 - [ ] Context aggregator
-- [ ] `status-manager context current` works
+- [ ] `atlas-dev context current` works
 
 ### Phase 6: Polish & Advanced
 - [ ] Undo/redo system

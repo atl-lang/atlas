@@ -203,23 +203,23 @@ Generate completion timeline from git history.
 
 ```bash
 # Test summary
-status-manager summary | jq '.progress'
+atlas-dev summary | jq '.progress'
 # Expected: [31, 78, 40]
 
 # Test stats
-status-manager stats | jq '.velocity.eta'
+atlas-dev stats | jq '.velocity.eta'
 # Expected: Future date
 
 # Test blockers
-status-manager blockers | jq '.cnt'
+atlas-dev blockers | jq '.cnt'
 # Expected: 5+
 
 # Test test-coverage
-status-manager test-coverage | jq '.total'
+atlas-dev test-coverage | jq '.total'
 # Expected: 1547
 
 # Test timeline
-status-manager timeline | jq '.events | length'
+atlas-dev timeline | jq '.events | length'
 # Expected: 31 (one per completed phase)
 ```
 

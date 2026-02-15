@@ -133,7 +133,7 @@ Search decision logs by keyword.
 
 **`decision create`:**
 ```go
-// cmd/status-manager/decision_create.go
+// cmd/atlas-dev/decision_create.go
 func runDecisionCreate(cmd *cobra.Command, args []string) {
     // Get flags
     component := cmd.Flag("component").Value.String()
@@ -229,23 +229,23 @@ func runDecisionCreate(cmd *cobra.Command, args []string) {
 
 ```bash
 # Test next-id
-status-manager decision next-id stdlib
+atlas-dev decision next-id stdlib
 # Expected: {"ok":true,"component":"stdlib","next_id":"DR-007"}
 
 # Test list
-status-manager decision list | jq '.decisions | length'
+atlas-dev decision list | jq '.decisions | length'
 # Expected: 16 (current count)
 
 # Test read
-status-manager decision read DR-001 | jq '.decision.title'
+atlas-dev decision read DR-001 | jq '.decision.title'
 # Expected: "Value representation"
 
 # Test search
-status-manager decision search "hash" | jq '.cnt'
+atlas-dev decision search "hash" | jq '.cnt'
 # Expected: 3+ results
 
 # Test create (dry-run)
-status-manager decision create \
+atlas-dev decision create \
   --component "stdlib" \
   --title "Iterator protocol" \
   --dry-run

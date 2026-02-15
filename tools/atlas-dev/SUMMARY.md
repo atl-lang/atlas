@@ -1,4 +1,4 @@
-# Status Manager - Complete Summary
+# Atlas Dev - Complete Summary
 
 **Created:** 2026-02-15
 **Status:** Design Complete, Ready to Build
@@ -30,7 +30,7 @@ AI agent completes a phase:
 
 AI agent runs ONE command:
 ```bash
-status-manager phase complete "phases/stdlib/phase-07b-hashset.md" \
+atlas-dev phase complete "phases/stdlib/phase-07b-hashset.md" \
   --desc "HashSet with 25 tests" \
   --commit
 ```
@@ -191,7 +191,7 @@ Tool does EVERYTHING:
 ## Files Created
 
 ```
-tools/status-manager/
+tools/atlas-dev/
 ├── MASTER-PLAN.md              # Complete vision, all commands
 ├── AI-OPTIMIZATION.md          # Token efficiency, JSON formats
 ├── VISION.md                   # Why this achieves ~100% success
@@ -201,7 +201,7 @@ tools/status-manager/
 ├── go.mod                      # Go module
 ├── Makefile                    # Build system
 ├── cmd/
-│   └── status-manager/
+│   └── atlas-dev/
 │       └── main.go             # CLI skeleton (ready for Phase 1)
 ├── phases/
 │   ├── README.md               # Phase tracking
