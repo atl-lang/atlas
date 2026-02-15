@@ -272,14 +272,18 @@ atlas-dev phase complete "phases/stdlib/phase-07c-queue-stack.md" \
 
 ### STATUS.md Format Compliance (CRITICAL)
 - [ ] Follows `STATUS-FORMAT-SPEC.md` EXACTLY
-- [ ] Updates line 3 (Last Updated)
-- [ ] Updates line 10 (Last Completed with verified date)
-- [ ] Updates line 11 (Next Phase)
-- [ ] Updates line 12 (Real Progress X/78)
-- [ ] Updates correct category row in table (lines 20-28)
+- [ ] Uses REGEX PATTERNS (NOT line numbers) for all updates
+- [ ] Updates `**Last Updated:**` field (pattern-based)
+- [ ] Updates `**Last Completed:**` field (pattern-based, with verified date)
+- [ ] Updates `**Next Phase:**` field (pattern-based)
+- [ ] Updates `**Real Progress:**` field (pattern-based)
+- [ ] Updates correct category table row (pattern-based, preserves status text)
+- [ ] PRESERVES existing category status notes (e.g., "⚠️ blockers...")
 - [ ] Uses exact tracker path format: `status/trackers/{N}-{category}.md`
 - [ ] Category mapping matches spec (foundation=0, stdlib=1, etc.)
 - [ ] Rounding uses math.Round (not floor/ceil)
+- [ ] SCALES: Adding blank lines doesn't break updates
+- [ ] SCALES: Adding new sections doesn't break updates
 
 ### Token Efficiency Requirements
 - [ ] `phase complete --help` output < 60 tokens

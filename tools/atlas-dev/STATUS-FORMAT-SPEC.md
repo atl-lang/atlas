@@ -8,48 +8,57 @@
 
 **Location:** `/Users/proxikal/dev/projects/atlas/STATUS.md`
 
-### Line Numbers (CRITICAL)
+### Structure (Pattern-Based Parsing - NO LINE NUMBERS)
+
+**CRITICAL:** Do NOT use line numbers. Use regex patterns to find and update fields.
 
 ```markdown
-1   # Atlas Implementation Status
-2
-3   **Last Updated:** 2026-02-15
-4   **Version:** v0.2 (building production infrastructure)
-5
-6   ---
-7
-8   ## 🎯 Current Phase
-9
-10  **Last Completed:** phases/stdlib/phase-07a-hash-infrastructure-hashmap.md (verified 2026-02-15)
-11  **Next Phase:** phases/stdlib/phase-07b-hashset.md
-12  **Real Progress:** 30/78 phases complete (38%)
-13
-14  ---
-15
-16  ## 📊 Category Progress
-17
-18  | Category | Progress | Status |
-19  |----------|----------|--------|
-20  | **[0. Foundation](status/trackers/0-foundation.md)** | 21/21 (100%) | ✅ COMPLETE |
-21  | **[1. Stdlib](status/trackers/1-stdlib.md)** | 9/21 (43%) | 🔨 ACTIVE (⚠️ blockers at phase-10+) |
-22  | **[2. Bytecode-VM](status/trackers/2-bytecode-vm.md)** | 0/8 (0%) | ⬜ Pending |
-23  | **[3. Frontend](status/trackers/3-frontend.md)** | 0/5 (0%) | 🚨 BLOCKED (needs foundation/04) |
-24  | **[4. Typing](status/trackers/4-typing.md)** | 0/7 (0%) | ⬜ Pending |
-25  | **[5. Interpreter](status/trackers/5-interpreter.md)** | 0/2 (0%) | ⬜ Pending |
-26  | **[6. CLI](status/trackers/6-cli.md)** | 0/6 (0%) | 🚨 BLOCKED (needs foundation phases) |
-27  | **[7. LSP](status/trackers/7-lsp.md)** | 0/5 (0%) | ⬜ Pending |
-28  | **[8. Polish](status/trackers/8-polish.md)** | 0/5 (0%) | ⬜ Pending |
+# Atlas Implementation Status
+
+**Last Updated:** 2026-02-15
+**Version:** v0.2 (building production infrastructure)
+
+---
+
+## 🎯 Current Phase
+
+**Last Completed:** phases/stdlib/phase-07a-hash-infrastructure-hashmap.md (verified 2026-02-15)
+**Next Phase:** phases/stdlib/phase-07b-hashset.md
+**Real Progress:** 30/78 phases complete (38%)
+
+---
+
+## 📊 Category Progress
+
+| Category | Progress | Status |
+|----------|----------|--------|
+| **[0. Foundation](status/trackers/0-foundation.md)** | 21/21 (100%) | ✅ COMPLETE |
+| **[1. Stdlib](status/trackers/1-stdlib.md)** | 9/21 (43%) | 🔨 ACTIVE (⚠️ blockers at phase-10+) |
+| **[2. Bytecode-VM](status/trackers/2-bytecode-vm.md)** | 0/8 (0%) | ⬜ Pending |
+| **[3. Frontend](status/trackers/3-frontend.md)** | 0/5 (0%) | 🚨 BLOCKED (needs foundation/04) |
+| **[4. Typing](status/trackers/4-typing.md)** | 0/7 (0%) | ⬜ Pending |
+| **[5. Interpreter](status/trackers/5-interpreter.md)** | 0/2 (0%) | ⬜ Pending |
+| **[6. CLI](status/trackers/6-cli.md)** | 0/6 (0%) | 🚨 BLOCKED (needs foundation phases) |
+| **[7. LSP](status/trackers/7-lsp.md)** | 0/5 (0%) | ⬜ Pending |
+| **[8. Polish](status/trackers/8-polish.md)** | 0/5 (0%) | ⬜ Pending |
 ```
 
 ---
 
-## Update Locations
+## Update Patterns (REGEX-BASED - Scales Automatically)
 
-### 1. Last Updated (Line 3)
+### 1. Last Updated
 
-**Pattern:** `**Last Updated:** YYYY-MM-DD`
+**Regex Pattern:**
+```regex
+^\*\*Last Updated:\*\* .+$
+```
 
-**Update:** Replace date with current date when phase completed.
+**Replacement:**
+```go
+newLine := fmt.Sprintf("**Last Updated:** %s", currentDate)
+content = regexp.MustCompile(`^\*\*Last Updated:\*\* .+$`).ReplaceAllString(content, newLine)
+```
 
 **Example:**
 ```markdown
@@ -58,11 +67,18 @@
 
 ---
 
-### 2. Last Completed (Line 10)
+### 2. Last Completed
 
-**Pattern:** `**Last Completed:** phases/{category}/{phase-name}.md (verified YYYY-MM-DD)`
+**Regex Pattern:**
+```regex
+^\*\*Last Completed:\*\* .+$
+```
 
-**Update:** Replace phase path and date when marking complete.
+**Replacement:**
+```go
+newLine := fmt.Sprintf("**Last Completed:** %s (verified %s)", phasePath, date)
+content = regexp.MustCompile(`^\*\*Last Completed:\*\* .+$`).ReplaceAllString(content, newLine)
+```
 
 **Example:**
 ```markdown
@@ -71,11 +87,18 @@
 
 ---
 
-### 3. Next Phase (Line 11)
+### 3. Next Phase
 
-**Pattern:** `**Next Phase:** phases/{category}/{phase-name}.md`
+**Regex Pattern:**
+```regex
+^\*\*Next Phase:\*\* .+$
+```
 
-**Update:** Replace with next pending phase from tracker.
+**Replacement:**
+```go
+newLine := fmt.Sprintf("**Next Phase:** %s", nextPhasePath)
+content = regexp.MustCompile(`^\*\*Next Phase:\*\* .+$`).ReplaceAllString(content, newLine)
+```
 
 **Example:**
 ```markdown
@@ -84,11 +107,18 @@
 
 ---
 
-### 4. Real Progress (Line 12)
+### 4. Real Progress
 
-**Pattern:** `**Real Progress:** X/78 phases complete (Z%)`
+**Regex Pattern:**
+```regex
+^\*\*Real Progress:\*\* \d+/\d+ phases complete \(\d+%\)$
+```
 
-**Update:** Recalculate from all trackers, update count and percentage.
+**Replacement:**
+```go
+newLine := fmt.Sprintf("**Real Progress:** %d/%d phases complete (%d%%)", completed, total, percent)
+content = regexp.MustCompile(`^\*\*Real Progress:\*\* \d+/\d+ phases complete \(\d+%\)$`).ReplaceAllString(content, newLine)
+```
 
 **Example:**
 ```markdown
@@ -97,21 +127,49 @@
 
 ---
 
-### 5. Category Table Row (Lines 20-28)
+### 5. Category Table Row
 
-**Pattern:** `| **[N. Name](path)** | X/Y (Z%) | Status |`
+**Regex Pattern (for specific category):**
+```regex
+^\| \*\*\[1\. Stdlib\]\(status/trackers/1-stdlib\.md\)\*\* \| \d+/\d+ \(\d+%\) \| .+ \|$
+```
 
-**Update:** Find row matching category, update progress and percentage.
+**Generic Pattern:**
+```go
+pattern := fmt.Sprintf(
+    `^\| \*\*\[%d\. %s\]\(status/trackers/%d-%s\.md\)\*\* \| \d+/\d+ \(\d+%%\) \| .+ \|$`,
+    categoryNum, categoryName, categoryNum, category,
+)
+```
 
-**Example (stdlib row, line 21):**
+**Replacement:**
+```go
+// Extract existing status text (preserve it)
+oldRow := findRow(content, category)
+statusText := extractStatusColumn(oldRow)  // Preserve "🔨 ACTIVE (⚠️ blockers...)"
+
+newRow := fmt.Sprintf(
+    "| **[%d. %s](status/trackers/%d-%s.md)** | %d/%d (%d%%) | %s |",
+    categoryNum, categoryName, categoryNum, category,
+    completed, total, percent,
+    statusText,  // PRESERVE existing status notes
+)
+
+content = replaceRow(content, category, newRow)
+```
+
+**Example:**
 ```markdown
 | **[1. Stdlib](status/trackers/1-stdlib.md)** | 10/21 (48%) | 🔨 ACTIVE (⚠️ blockers at phase-10+) |
 ```
 
-**Status column rules:**
-- 0% → `⬜ Pending`
-- 1-99% → `🔨 ACTIVE` (keep existing notes if present)
-- 100% → `✅ COMPLETE`
+**Status column preservation:**
+- ALWAYS preserve existing status text (e.g., "⚠️ blockers at phase-10+")
+- ONLY update percentage and counts
+- If status is empty, use default based on percentage:
+  - 0% → `⬜ Pending`
+  - 1-99% → `🔨 ACTIVE`
+  - 100% → `✅ COMPLETE`
 
 ---
 
@@ -227,15 +285,17 @@ nextPath := fmt.Sprintf("phases/%s/%s", category, nextPhase)
 
 ### 5. Update STATUS.md
 
-**Line 3:** `**Last Updated:** 2026-02-15`
+**Use regex patterns (NOT line numbers):**
 
-**Line 10:** `**Last Completed:** phases/stdlib/phase-07b-hashset.md (verified 2026-02-15)`
+**Pattern 1:** `^\*\*Last Updated:\*\* .+$` → `**Last Updated:** 2026-02-15`
 
-**Line 11:** `**Next Phase:** phases/stdlib/phase-07c-queue-stack.md`
+**Pattern 2:** `^\*\*Last Completed:\*\* .+$` → `**Last Completed:** phases/stdlib/phase-07b-hashset.md (verified 2026-02-15)`
 
-**Line 12:** `**Real Progress:** 31/78 phases complete (40%)`
+**Pattern 3:** `^\*\*Next Phase:\*\* .+$` → `**Next Phase:** phases/stdlib/phase-07c-queue-stack.md`
 
-**Line 21:** `| **[1. Stdlib](status/trackers/1-stdlib.md)** | 10/21 (48%) | 🔨 ACTIVE (⚠️ blockers at phase-10+) |`
+**Pattern 4:** `^\*\*Real Progress:\*\* \d+/\d+ phases complete \(\d+%\)$` → `**Real Progress:** 31/78 phases complete (40%)`
+
+**Pattern 5 (stdlib row):** Find row matching `[1. Stdlib](status/trackers/1-stdlib.md)` → `| **[1. Stdlib](...)** | 10/21 (48%) | 🔨 ACTIVE (⚠️ blockers at phase-10+) |`
 
 ### 6. Write Files
 - Write `status/trackers/1-stdlib.md`
@@ -462,10 +522,17 @@ atlas-dev phase complete "phases/stdlib/phase-07b-hashset.md" \
 
 **DO NOT deviate from this format when implementing Phase 2.**
 
-- Line numbers are FIXED (don't change STATUS.md structure)
-- Patterns are EXACT (regex must match precisely)
-- Rounding is SPECIFIC (use math.Round, not floor/ceil)
-- Category mapping is CANONICAL (0-8, no changes)
-- Tracker path format is FIXED (`status/trackers/{N}-{category}.md`)
+- ✅ **USE REGEX PATTERNS** (NOT line numbers - format can change)
+- ✅ **PRESERVE existing status text** (don't overwrite category status notes)
+- ✅ **Patterns are EXACT** (regex must match precisely)
+- ✅ **Rounding is SPECIFIC** (use math.Round, not floor/ceil)
+- ✅ **Category mapping is CANONICAL** (0-8, no changes)
+- ✅ **Tracker path format is FIXED** (`status/trackers/{N}-{category}.md`)
 
-**If implementation doesn't match this spec, STATUS.md will break.**
+**SCALABILITY:**
+- Adding blank lines → ✅ Still works (regex-based)
+- Adding new sections → ✅ Still works (regex-based)
+- Changing category status text → ✅ Preserved automatically
+- Adding more categories → ⚠️ Update categoryMap (rare)
+
+**If implementation doesn't use regex patterns, STATUS.md WILL BREAK when format changes.**
