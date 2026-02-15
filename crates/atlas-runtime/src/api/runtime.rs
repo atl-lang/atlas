@@ -143,6 +143,54 @@ impl Runtime {
         }
     }
 
+    /// Create a new runtime with configuration
+    ///
+    /// Converts RuntimeConfig into appropriate SecurityContext settings.
+    /// Note: Timeout and memory limits in config are documented but not yet enforced.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use atlas_runtime::api::{Runtime, ExecutionMode, RuntimeConfig};
+    ///
+    /// let config = RuntimeConfig::sandboxed();
+    /// let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    /// ```
+    pub fn with_config(mode: ExecutionMode, config: super::config::RuntimeConfig) -> Self {
+        // Create security context based on config flags
+        let security = if config.allow_io {
+            SecurityContext::allow_all() // For now, simplified - allows all if IO is allowed
+        } else {
+            SecurityContext::new() // Deny-all by default
+        };
+        // Note: max_execution_time and max_memory_bytes are stored in config but not yet enforced
+        // TODO: Implement timeout and memory limit enforcement
+
+        Self {
+            mode,
+            interpreter: RefCell::new(Interpreter::new()),
+            security,
+            accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
+        }
+    }
+
+    /// Create a sandboxed runtime with restrictive defaults
+    ///
+    /// Equivalent to `Runtime::with_config(mode, RuntimeConfig::sandboxed())`.
+    /// Disables IO and network operations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    ///
+    /// let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    /// // Attempts to use IO operations will fail
+    /// ```
+    pub fn sandboxed(mode: ExecutionMode) -> Self {
+        Self::with_config(mode, super::config::RuntimeConfig::sandboxed())
+    }
+
     /// Get the current execution mode
     pub fn mode(&self) -> ExecutionMode {
         self.mode

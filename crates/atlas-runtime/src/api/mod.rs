@@ -24,11 +24,13 @@
 //! let result = runtime.call("add", vec![1.0.into(), 2.0.into()]).unwrap();
 //! ```
 
+pub mod config;
 pub mod conversion;
 pub mod native;
 pub mod runtime;
 
 // Re-export main types for convenience
+pub use config::RuntimeConfig;
 pub use conversion::{ConversionError, FromAtlas, ToAtlas};
 pub use native::{BuildError, NativeFunctionBuilder};
 pub use runtime::{EvalError, ExecutionMode, Runtime};
