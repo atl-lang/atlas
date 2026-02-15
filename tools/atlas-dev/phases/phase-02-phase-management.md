@@ -1,200 +1,752 @@
-# Phase 02: Phase Management System
+# Phase 02: Phase Management System (SQLite)
 
-**Objective:** Implement core phase tracking - complete, current, next, validate.
+**Objective:** Implement core phase tracking with pure SQLite - complete, current, next, validate.
 
 **Priority:** CRITICAL
 **Depends On:** Phase 1
-**CRITICAL:** Must follow `STATUS-FORMAT-SPEC.md` EXACTLY (line numbers, patterns, rounding)
+**Architecture:** Pure SQLite (DB queries only, NO markdown parsing)
 
 ---
 
 ## Deliverables
 
-1. ✅ Phase path parser
-2. ✅ Tracker file reader/writer (markdown)
-3. ✅ STATUS.md reader/writer
-4. ✅ Percentage calculator
-5. ✅ Next phase finder
-6. ✅ Sync validator
-7. ✅ Git commit automation
-8. ✅ `phase complete` works end-to-end
-9. ✅ `phase current` works
-10. ✅ `phase next` works
-11. ✅ `validate` works
+1. ✅ `phase complete` command (updates DB, triggers auto-update categories)
+2. ✅ `phase current` command (query DB for current phase)
+3. ✅ `phase next` command (query DB for next pending phase)
+4. ✅ `phase info <path>` command (get phase details from DB)
+5. ✅ `phase list` command (list phases by category/status)
+6. ✅ `validate` command (validate DB consistency)
+7. ✅ Git integration (commit after DB updates)
+8. ✅ Audit logging (all changes tracked)
+9. ✅ Transaction safety (ACID guarantees)
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Implement Phase Path Parser
-
-**File:** `internal/phase/parser.go`
-
-Parse phase paths like `phases/stdlib/phase-07b-hashset.md` into components.
-
-**Functions:**
-- `Parse(path string) (*PhaseInfo, error)` - Parse phase path
-- `ExtractCategory(path string) string` - Get category from path
-- `ExtractName(path string) string` - Get phase name
-- `MapCategoryToTracker(category string) int` - Map stdlib→1, etc.
-
-### Step 2: Implement Tracker File Handler
-
-**File:** `internal/tracker/tracker.go`
-
-Read/write tracker markdown files.
-
-**Functions:**
-- `Read(path string) (*Tracker, error)` - Parse tracker file
-- `Write(path string, tracker *Tracker) error` - Write tracker
-- `MarkComplete(tracker *Tracker, phaseName string, desc string, date string)` - Mark ✅
-- `CountCompleted(tracker *Tracker) int` - Count ✅ lines
-- `CountTotal(tracker *Tracker) int` - Count all phases
-- `FindNext(tracker *Tracker, currentPhase string) string` - Find next ⬜
-
-### Step 3: Implement STATUS.md Handler
-
-**File:** `internal/status/status.go`
-
-Read/write STATUS.md fields.
-
-**Functions:**
-- `Read(path string) (*Status, error)` - Parse STATUS.md
-- `Write(path string, status *Status) error` - Write STATUS.md
-- `UpdateCurrentPhase(status *Status, completed string, next string, date string)` - Update lines 10-12
-- `UpdateProgress(status *Status, completed int, total int)` - Update line 13
-- `UpdateCategoryRow(status *Status, category string, progress [3]int)` - Update table row
-- `UpdateLastUpdated(status *Status, date string)` - Update line 3
-
-### Step 4: Implement Percentage Calculator
-
-**File:** `internal/calc/percentage.go`
-
-Calculate percentages correctly (rounding).
-
-**Functions:**
-- `Calculate(completed int, total int) int` - Returns rounded percentage
-- `Format(completed int, total int) string` - Returns "X/Y (Z%)"
-
-### Step 5: Implement Sync Validator
-
-**File:** `internal/validator/sync.go`
-
-Validate STATUS.md matches trackers.
-
-**Functions:**
-- `ValidateSync(statusPath string, trackerPaths []string) error` - Verify counts match
-- `ValidatePercentages(status *Status) error` - Check percentage math
-- `Report() *ValidationReport` - Detailed validation report
-
-### Step 6: Implement Git Automation
-
-**File:** `internal/git/commit.go`
-
-Create atomic commits.
-
-**Functions:**
-- `AddFiles(paths []string) error` - Stage files
-- `Commit(message string) (sha string, error)` - Create commit
-- `AtomicCommit(files []string, message string) (sha string, error)` - Stage + commit atomically
-
-### Step 7: Implement `phase complete` Command
+### Step 1: Phase Complete Command
 
 **File:** `cmd/atlas-dev/phase_complete.go`
 
 **Algorithm:**
-1. Parse phase path → category, name
-2. Find tracker file (`status/trackers/{N}-{category}.md`)
-3. Read tracker, mark phase complete
-4. Count completed, calculate percentages
-5. Find next phase in tracker
-6. Read STATUS.md
-7. Update STATUS.md (5 fields)
-8. Write tracker file
-9. Write STATUS.md
-10. Validate sync
-11. Git commit (if --commit)
-12. Return JSON
+1. Parse phase path → extract category, name
+2. Begin transaction
+3. Find phase in DB (validate exists)
+4. Update phase status → 'completed'
+5. Trigger auto-updates category progress (via SQL trigger)
+6. Insert audit log entry
+7. Commit transaction
+8. Git commit (if --commit flag)
+9. Return compact JSON
 
-**JSON Output:**
-```json
-{
-  "ok": true,
-  "phase": "phase-07b",
-  "cat": "stdlib",
-  "progress": {
-    "cat": [10, 21, 48],
-    "total": [31, 78, 40]
-  },
-  "next": "phase-07c",
-  "mod": ["status/trackers/1-stdlib.md", "STATUS.md"],
-  "commit": "a1b2c3d",
-  "ts": 1708012800
+**Code:**
+
+```go
+package main
+
+import (
+    "database/sql"
+    "encoding/json"
+    "fmt"
+    "path/filepath"
+    "strings"
+    "time"
+
+    "github.com/atlas-lang/atlas-dev/internal/audit"
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/git"
+    "github.com/atlas-lang/atlas-dev/internal/lock"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func phaseCompleteCmd() *cobra.Command {
+    var (
+        description string
+        date        string
+        commit      bool
+        dryRun      bool
+        testCount   int
+    )
+
+    cmd := &cobra.Command{
+        Use:   "complete <phase-path>",
+        Short: "Mark phase complete, update DB",
+        Args:  cobra.ExactArgs(1),
+        RunE: func(cmd *cobra.Command, args []string) error {
+            phasePath := args[0]
+
+            // Parse date (default: today)
+            if date == "" {
+                date = time.Now().Format("2006-01-02")
+            }
+
+            // Dry run mode
+            if dryRun {
+                return dryRunPhaseComplete(phasePath, description, date, testCount)
+            }
+
+            // Execute phase completion
+            result, err := executePhaseComplete(phasePath, description, date, testCount, commit)
+            if err != nil {
+                return output.Error(err, nil)
+            }
+
+            return output.Success(result)
+        },
+    }
+
+    cmd.Flags().StringVarP(&description, "desc", "d", "", "Phase completion description (required)")
+    cmd.Flags().StringVar(&date, "date", "", "Completion date (default: today, YYYY-MM-DD)")
+    cmd.Flags().BoolVarP(&commit, "commit", "c", false, "Auto-commit changes")
+    cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Preview changes without modifying DB")
+    cmd.Flags().IntVarP(&testCount, "tests", "t", 0, "Test count")
+    cmd.MarkFlagRequired("desc")
+
+    return cmd
+}
+
+func executePhaseComplete(phasePath, description, date string, testCount int, shouldCommit bool) (map[string]interface{}, error) {
+    // Extract category from path: "phases/stdlib/phase-07b.md" → "stdlib"
+    category := extractCategory(phasePath)
+    phaseName := filepath.Base(phasePath)
+    phaseName = strings.TrimSuffix(phaseName, filepath.Ext(phaseName))
+
+    // Acquire lock (prevent concurrent updates)
+    return lock.WithLock("atlas-dev.db", func() (map[string]interface{}, error) {
+        // Begin transaction
+        return db.WithTransaction(func(tx *db.Transaction) (map[string]interface{}, error) {
+            // 1. Find phase in DB
+            var phaseID int64
+            var currentStatus string
+            err := tx.QueryRow(`
+                SELECT id, status FROM phases WHERE path = ?
+            `, phasePath).Scan(&phaseID, &currentStatus)
+
+            if err == sql.ErrNoRows {
+                return nil, fmt.Errorf("phase not found: %s", phasePath)
+            }
+            if err != nil {
+                return nil, fmt.Errorf("failed to find phase: %w", err)
+            }
+
+            // 2. Validate not already completed
+            if currentStatus == "completed" {
+                return nil, fmt.Errorf("phase already completed: %s", phasePath)
+            }
+
+            // 3. Update phase to completed
+            completedDate := date + "T12:00:00Z"  // ISO 8601
+            _, err = tx.Exec(`
+                UPDATE phases
+                SET status = 'completed',
+                    completed_date = ?,
+                    description = ?,
+                    test_count = ?
+                WHERE id = ?
+            `, completedDate, description, testCount, phaseID)
+            if err != nil {
+                return nil, fmt.Errorf("failed to update phase: %w", err)
+            }
+
+            // 4. Get updated progress (triggers already updated categories)
+            var catCompleted, catTotal, catPercent int
+            err = tx.QueryRow(`
+                SELECT completed, total, percentage
+                FROM categories
+                WHERE name = ?
+            `, category).Scan(&catCompleted, &catTotal, &catPercent)
+            if err != nil {
+                return nil, fmt.Errorf("failed to get category progress: %w", err)
+            }
+
+            // 5. Get total progress
+            var totalCompleted, totalPhases int
+            err = tx.QueryRow(`
+                SELECT
+                    (SELECT COUNT(*) FROM phases WHERE status = 'completed'),
+                    (SELECT COUNT(*) FROM phases)
+            `).Scan(&totalCompleted, &totalPhases)
+            if err != nil {
+                return nil, fmt.Errorf("failed to get total progress: %w", err)
+            }
+            totalPercent := int(float64(totalCompleted) / float64(totalPhases) * 100)
+
+            // 6. Find next phase
+            var nextPath, nextName sql.NullString
+            tx.QueryRow(`
+                SELECT path, name
+                FROM phases
+                WHERE category = ? AND status = 'pending'
+                ORDER BY id
+                LIMIT 1
+            `, category).Scan(&nextPath, &nextName)
+
+            // 7. Insert audit log
+            changes := map[string]interface{}{
+                "phase":       phasePath,
+                "status":      "completed",
+                "description": description,
+                "test_count":  testCount,
+                "date":        date,
+            }
+            changesJSON, _ := json.Marshal(changes)
+
+            _, err = tx.Exec(`
+                INSERT INTO audit_log (action, entity_type, entity_id, changes)
+                VALUES ('phase_complete', 'phase', ?, ?)
+            `, fmt.Sprintf("%d", phaseID), string(changesJSON))
+            if err != nil {
+                return nil, fmt.Errorf("failed to insert audit log: %w", err)
+            }
+
+            // 8. Build response (compact JSON)
+            result := map[string]interface{}{
+                "phase": phaseName,
+                "cat":   category,
+                "progress": map[string]interface{}{
+                    "cat": []int{catCompleted, catTotal, catPercent},
+                    "tot": []int{totalCompleted, totalPhases, totalPercent},
+                },
+            }
+
+            if nextPath.Valid {
+                result["next"] = nextName.String
+            }
+
+            return result, nil
+        })
+    })
+}
+
+func dryRunPhaseComplete(phasePath, description, date string, testCount int) error {
+    category := extractCategory(phasePath)
+    phaseName := filepath.Base(phasePath)
+
+    // Query what would change
+    var phaseID int64
+    var currentStatus string
+    err := db.DB.QueryRow(`
+        SELECT id, status FROM phases WHERE path = ?
+    `, phasePath).Scan(&phaseID, &currentStatus)
+
+    if err == sql.ErrNoRows {
+        return fmt.Errorf("phase not found: %s", phasePath)
+    }
+    if err != nil {
+        return fmt.Errorf("failed to find phase: %w", err)
+    }
+
+    if currentStatus == "completed" {
+        return fmt.Errorf("phase already completed")
+    }
+
+    // Show what would happen
+    result := map[string]interface{}{
+        "dry_run":     true,
+        "phase":       phaseName,
+        "cat":         category,
+        "changes":     "Set status='completed', description='" + description + "'",
+        "note":        "No changes made (dry-run mode)",
+    }
+
+    return output.Success(result)
+}
+
+func extractCategory(phasePath string) string {
+    // "phases/stdlib/phase-07b.md" → "stdlib"
+    parts := strings.Split(filepath.ToSlash(phasePath), "/")
+    if len(parts) >= 2 {
+        return parts[1]
+    }
+    return ""
 }
 ```
 
-### Step 8: Implement `phase current`
+---
+
+### Step 2: Phase Current Command
 
 **File:** `cmd/atlas-dev/phase_current.go`
 
-Read STATUS.md current phase section, return JSON.
+```go
+package main
 
-**JSON Output:**
-```json
-{
-  "ok": true,
-  "current": "phase-07c",
-  "cat": "stdlib",
-  "path": "phases/stdlib/phase-07c-queue-stack.md"
+import (
+    "database/sql"
+
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func phaseCurrentCmd() *cobra.Command {
+    return &cobra.Command{
+        Use:   "current",
+        Short: "Show current phase",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            // Query most recently completed phase
+            var path, name, category, description string
+            var completedDate sql.NullString
+
+            err := db.DB.QueryRow(`
+                SELECT path, name, category, description, completed_date
+                FROM phases
+                WHERE status = 'completed'
+                ORDER BY completed_date DESC
+                LIMIT 1
+            `).Scan(&path, &name, &category, &description, &completedDate)
+
+            if err == sql.ErrNoRows {
+                return output.Success(map[string]interface{}{
+                    "msg": "No phases completed yet",
+                })
+            }
+            if err != nil {
+                return output.Error(err, nil)
+            }
+
+            result := map[string]interface{}{
+                "last_completed": name,
+                "cat":            category,
+                "path":           path,
+            }
+
+            if completedDate.Valid {
+                result["date"] = completedDate.String[:10]  // YYYY-MM-DD
+            }
+
+            return output.Success(result)
+        },
+    }
 }
 ```
 
-### Step 9: Implement `phase next`
+---
+
+### Step 3: Phase Next Command
 
 **File:** `cmd/atlas-dev/phase_next.go`
 
-Read STATUS.md next phase, return JSON.
+```go
+package main
 
-**JSON Output:**
-```json
-{
-  "ok": true,
-  "next": "phase-07c",
-  "cat": "stdlib",
-  "path": "phases/stdlib/phase-07c-queue-stack.md",
-  "desc": "Queue (FIFO) + Stack (LIFO), ~690 lines, 36+ tests"
+import (
+    "database/sql"
+
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func phaseNextCmd() *cobra.Command {
+    var category string
+
+    cmd := &cobra.Command{
+        Use:   "next",
+        Short: "Show next phase",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            query := `
+                SELECT path, name, category, description
+                FROM phases
+                WHERE status = 'pending'
+            `
+
+            var queryArgs []interface{}
+            if category != "" {
+                query += " AND category = ?"
+                queryArgs = append(queryArgs, category)
+            }
+
+            query += " ORDER BY id LIMIT 1"
+
+            var path, name, cat, description sql.NullString
+            err := db.DB.QueryRow(query, queryArgs...).Scan(&path, &name, &cat, &description)
+
+            if err == sql.ErrNoRows {
+                return output.Success(map[string]interface{}{
+                    "msg": "No pending phases",
+                })
+            }
+            if err != nil {
+                return output.Error(err, nil)
+            }
+
+            result := map[string]interface{}{
+                "next": name.String,
+                "cat":  cat.String,
+                "path": path.String,
+            }
+
+            if description.Valid && description.String != "" {
+                result["desc"] = description.String
+            }
+
+            return output.Success(result)
+        },
+    }
+
+    cmd.Flags().StringVarP(&category, "category", "c", "", "Filter by category")
+
+    return cmd
 }
 ```
 
-### Step 10: Implement `validate`
+---
+
+### Step 4: Phase Info Command
+
+**File:** `cmd/atlas-dev/phase_info.go`
+
+```go
+package main
+
+import (
+    "database/sql"
+    "encoding/json"
+
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func phaseInfoCmd() *cobra.Command {
+    return &cobra.Command{
+        Use:   "info <phase-path>",
+        Short: "Get phase details",
+        Args:  cobra.ExactArgs(1),
+        RunE: func(cmd *cobra.Command, args []string) error {
+            phasePath := args[0]
+
+            var (
+                id                                    int64
+                name, category, status, description   string
+                completedDate                         sql.NullString
+                testCount, testTarget                 sql.NullInt64
+                acceptanceCriteria, blockers, deps    sql.NullString
+            )
+
+            err := db.DB.QueryRow(`
+                SELECT
+                    id, name, category, status, description,
+                    completed_date, test_count, test_target,
+                    acceptance_criteria, blockers, dependencies
+                FROM phases
+                WHERE path = ?
+            `, phasePath).Scan(
+                &id, &name, &category, &status, &description,
+                &completedDate, &testCount, &testTarget,
+                &acceptanceCriteria, &blockers, &deps,
+            )
+
+            if err == sql.ErrNoRows {
+                return output.Error(fmt.Errorf("phase not found: %s", phasePath), nil)
+            }
+            if err != nil {
+                return output.Error(err, nil)
+            }
+
+            result := map[string]interface{}{
+                "id":     id,
+                "name":   name,
+                "cat":    category,
+                "status": status,
+            }
+
+            if description != "" {
+                result["desc"] = description
+            }
+
+            if completedDate.Valid {
+                result["completed"] = completedDate.String[:10]
+            }
+
+            if testCount.Valid {
+                result["tests"] = []int{int(testCount.Int64), int(testTarget.Int64)}
+            }
+
+            if acceptanceCriteria.Valid {
+                var criteria []string
+                json.Unmarshal([]byte(acceptanceCriteria.String), &criteria)
+                result["acceptance"] = criteria
+            }
+
+            if blockers.Valid {
+                var blockersList []string
+                json.Unmarshal([]byte(blockers.String), &blockersList)
+                result["blk"] = blockersList
+            }
+
+            if deps.Valid {
+                var depsList []string
+                json.Unmarshal([]byte(deps.String), &depsList)
+                result["dep"] = depsList
+            }
+
+            return output.Success(result)
+        },
+    }
+}
+```
+
+---
+
+### Step 5: Phase List Command
+
+**File:** `cmd/atlas-dev/phase_list.go`
+
+```go
+package main
+
+import (
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func phaseListCmd() *cobra.Command {
+    var (
+        category string
+        status   string
+        limit    int
+    )
+
+    cmd := &cobra.Command{
+        Use:   "list",
+        Short: "List phases",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            query := "SELECT name, category, status FROM phases WHERE 1=1"
+            var queryArgs []interface{}
+
+            if category != "" {
+                query += " AND category = ?"
+                queryArgs = append(queryArgs, category)
+            }
+
+            if status != "" {
+                query += " AND status = ?"
+                queryArgs = append(queryArgs, status)
+            }
+
+            query += " ORDER BY id"
+
+            if limit > 0 {
+                query += " LIMIT ?"
+                queryArgs = append(queryArgs, limit)
+            }
+
+            rows, err := db.DB.Query(query, queryArgs...)
+            if err != nil {
+                return output.Error(err, nil)
+            }
+            defer rows.Close()
+
+            var phases [][]string
+            for rows.Next() {
+                var name, cat, stat string
+                if err := rows.Scan(&name, &cat, &stat); err != nil {
+                    return output.Error(err, nil)
+                }
+                phases = append(phases, []string{name, cat, stat})
+            }
+
+            return output.Success(map[string]interface{}{
+                "phases": phases,
+                "cnt":    len(phases),
+            })
+        },
+    }
+
+    cmd.Flags().StringVarP(&category, "category", "c", "", "Filter by category")
+    cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status (pending|completed|blocked)")
+    cmd.Flags().IntVarP(&limit, "limit", "n", 0, "Limit results")
+
+    return cmd
+}
+```
+
+---
+
+### Step 6: Validate Command
 
 **File:** `cmd/atlas-dev/validate.go`
 
-Run full sync validation, report results.
+```go
+package main
 
-**JSON Output (success):**
-```json
-{
-  "ok": true,
-  "trackers": 31,
-  "status": 31,
-  "cats": {
-    "foundation": [21, 21, 100],
-    "stdlib": [10, 21, 48]
-  }
+import (
+    "github.com/atlas-lang/atlas-dev/internal/db"
+    "github.com/atlas-lang/atlas-dev/internal/output"
+    "github.com/spf13/cobra"
+)
+
+func validateCmd() *cobra.Command {
+    return &cobra.Command{
+        Use:   "validate",
+        Short: "Validate DB consistency",
+        RunE: func(cmd *cobra.Command, args []string) error {
+            // 1. Verify total completed matches sum of categories
+            var totalFromPhases, totalFromMetadata int
+
+            db.DB.QueryRow("SELECT COUNT(*) FROM phases WHERE status = 'completed'").Scan(&totalFromPhases)
+            db.DB.QueryRow("SELECT CAST(value AS INTEGER) FROM metadata WHERE key = 'completed_phases'").Scan(&totalFromMetadata)
+
+            if totalFromPhases != totalFromMetadata {
+                return output.Error(
+                    fmt.Errorf("completed count mismatch"),
+                    map[string]interface{}{
+                        "phases":   totalFromPhases,
+                        "metadata": totalFromMetadata,
+                    },
+                )
+            }
+
+            // 2. Verify each category completed count matches phases table
+            type CategoryCheck struct {
+                Name      string
+                Completed int
+                Total     int
+            }
+
+            rows, err := db.DB.Query(`
+                SELECT name, completed, total FROM categories ORDER BY id
+            `)
+            if err != nil {
+                return output.Error(err, nil)
+            }
+            defer rows.Close()
+
+            var categories []CategoryCheck
+            var totalCompleted, totalPhases int
+
+            for rows.Next() {
+                var cat CategoryCheck
+                rows.Scan(&cat.Name, &cat.Completed, &cat.Total)
+
+                // Verify against phases table
+                var actualCompleted int
+                db.DB.QueryRow(`
+                    SELECT COUNT(*) FROM phases
+                    WHERE category = ? AND status = 'completed'
+                `, cat.Name).Scan(&actualCompleted)
+
+                if actualCompleted != cat.Completed {
+                    return output.Error(
+                        fmt.Errorf("category %s mismatch", cat.Name),
+                        map[string]interface{}{
+                            "cat":      cat.Name,
+                            "expected": actualCompleted,
+                            "actual":   cat.Completed,
+                        },
+                    )
+                }
+
+                categories = append(categories, cat)
+                totalCompleted += cat.Completed
+                totalPhases += cat.Total
+            }
+
+            // 3. All checks passed
+            return output.Success(map[string]interface{}{
+                "completed": totalCompleted,
+                "total":     totalPhases,
+                "pct":       int(float64(totalCompleted) / float64(totalPhases) * 100),
+                "cats":      len(categories),
+            })
+        },
+    }
 }
 ```
 
-**JSON Output (failure):**
-```json
-{
-  "ok": false,
-  "err": "Sync validation failed",
-  "details": {
-    "trackers": 31,
-    "status": 30,
-    "mismatch": "Trackers show 31, STATUS.md shows 30"
-  }
+---
+
+### Step 7: Git Integration
+
+**File:** `internal/git/commit.go`
+
+```go
+package git
+
+import (
+    "fmt"
+    "os"
+    "os/exec"
+    "strings"
+)
+
+// Commit creates a git commit
+func Commit(message string) (string, error) {
+    // Stage atlas-dev.db
+    cmd := exec.Command("git", "add", "atlas-dev.db")
+    if output, err := cmd.CombinedOutput(); err != nil {
+        return "", fmt.Errorf("git add failed: %s", output)
+    }
+
+    // Commit
+    cmd = exec.Command("git", "commit", "-m", message)
+    if output, err := cmd.CombinedOutput(); err != nil {
+        // Check if it's "nothing to commit"
+        if strings.Contains(string(output), "nothing to commit") {
+            return "", fmt.Errorf("nothing to commit")
+        }
+        return "", fmt.Errorf("git commit failed: %s", output)
+    }
+
+    // Get commit SHA
+    cmd = exec.Command("git", "rev-parse", "HEAD")
+    output, err := cmd.Output()
+    if err != nil {
+        return "", fmt.Errorf("failed to get commit SHA: %w", err)
+    }
+
+    sha := strings.TrimSpace(string(output))
+    return sha[:7], nil  // Short SHA
+}
+
+// CommitWithCoAuthor creates a commit with co-author
+func CommitWithCoAuthor(message string) (string, error) {
+    fullMessage := fmt.Sprintf("%s\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>", message)
+    return Commit(fullMessage)
+}
+```
+
+---
+
+### Step 8: Update Main CLI
+
+**File:** `cmd/atlas-dev/main.go` (add phase commands)
+
+```go
+// Add to main.go
+
+func main() {
+    rootCmd := &cobra.Command{
+        Use:   "atlas-dev",
+        Short: "Atlas development automation",
+        // ... (existing setup)
+    }
+
+    // Phase commands
+    phaseCmd := &cobra.Command{
+        Use:   "phase",
+        Short: "Phase management",
+    }
+    phaseCmd.AddCommand(phaseCompleteCmd())
+    phaseCmd.AddCommand(phaseCurrentCmd())
+    phaseCmd.AddCommand(phaseNextCmd())
+    phaseCmd.AddCommand(phaseInfoCmd())
+    phaseCmd.AddCommand(phaseListCmd())
+
+    rootCmd.AddCommand(phaseCmd)
+    rootCmd.AddCommand(validateCmd())
+    rootCmd.AddCommand(versionCmd())
+    rootCmd.AddCommand(migrateCmd())
+
+    // Execute
+    if err := rootCmd.Execute(); err != nil {
+        output.Error(err, nil)
+        os.Exit(1)
+    }
 }
 ```
 
@@ -202,49 +754,40 @@ Run full sync validation, report results.
 
 ## Testing
 
-### Unit Tests
+### Manual Tests
 
-Create tests for each module:
-- `internal/phase/parser_test.go`
-- `internal/tracker/tracker_test.go`
-- `internal/status/status_test.go`
-- `internal/calc/percentage_test.go`
-- `internal/validator/sync_test.go`
-
-### Integration Test
-
-**Test with dummy data:**
 ```bash
-# Create test fixture
-cp -r status/ testdata/status-snapshot/
-cp STATUS.md testdata/STATUS-snapshot.md
+# Build
+make build
 
-# Run phase complete on dummy phase
-atlas-dev phase complete "phases/test/phase-00-dummy.md" \
-  --desc "Test phase" \
-  --dry-run
-
-# Verify output is valid JSON
-atlas-dev phase complete "..." --dry-run | jq .
-
-# Verify validation works
-atlas-dev validate
-```
-
-### Real-World Test
-
-**Use on REAL phase (phase-07c):**
-```bash
-# After completing phase-07c implementation
-atlas-dev phase complete "phases/stdlib/phase-07c-queue-stack.md" \
-  --desc "Queue + Stack implementation, 36 tests, 100% parity" \
+# Complete a phase
+./bin/atlas-dev phase complete "phases/stdlib/phase-07b-hashset.md" \
+  -d "HashSet with 25 tests, 100% parity" \
+  --tests 25 \
   --commit
 
-# Verify:
-# 1. Tracker updated (status/trackers/1-stdlib.md shows ✅ phase-07c)
-# 2. STATUS.md updated (current=07c, next=07d, progress=11/21)
-# 3. Git commit created
-# 4. Validation passes
+# Expected output (compact JSON):
+# {"ok":true,"phase":"phase-07b-hashset","cat":"stdlib","progress":{"cat":[10,21,48],"tot":[31,78,40]},"next":"phase-07c-queue-stack"}
+
+# Get current phase
+./bin/atlas-dev phase current
+# {"ok":true,"last_completed":"phase-07b-hashset","cat":"stdlib","path":"phases/stdlib/phase-07b-hashset.md","date":"2026-02-15"}
+
+# Get next phase
+./bin/atlas-dev phase next
+# {"ok":true,"next":"phase-07c-queue-stack","cat":"stdlib","path":"phases/stdlib/phase-07c-queue-stack.md"}
+
+# Get phase info
+./bin/atlas-dev phase info "phases/stdlib/phase-07b-hashset.md"
+# {"ok":true,"id":32,"name":"phase-07b-hashset","cat":"stdlib","status":"completed","desc":"HashSet with 25 tests","completed":"2026-02-15","tests":[25,25]}
+
+# List phases
+./bin/atlas-dev phase list -c stdlib -s pending
+# {"ok":true,"phases":[["phase-07c-queue-stack","stdlib","pending"],...],"cnt":11}
+
+# Validate
+./bin/atlas-dev validate
+# {"ok":true,"completed":31,"total":78,"pct":40,"cats":9}
 ```
 
 ---
@@ -252,89 +795,61 @@ atlas-dev phase complete "phases/stdlib/phase-07c-queue-stack.md" \
 ## Acceptance Criteria
 
 ### Functional Requirements
-- [ ] Phase path parser correctly extracts category and name
-- [ ] Tracker reader parses markdown, counts ✅/⬜ correctly
-- [ ] Tracker writer updates phase status (⬜ → ✅)
-- [ ] STATUS.md reader parses all necessary fields (lines 3, 10, 11, 12, 21-28)
-- [ ] STATUS.md writer updates all 5 fields correctly
-- [ ] Percentage calculator rounds correctly (10/21 = 48%, not 47%)
-- [ ] Next phase finder locates next ⬜ in tracker
-- [ ] Sync validator detects mismatches
-- [ ] Git commit creates atomic commit with both files
-- [ ] `phase complete` works end-to-end with --dry-run
-- [ ] `phase complete --commit` creates real commit
-- [ ] `phase current` returns correct current phase
-- [ ] `phase next` returns correct next phase
-- [ ] `validate` detects sync errors
-- [ ] Unit tests pass
-- [ ] Integration test passes
-- [ ] Real-world test (phase-07c) passes
-
-### STATUS.md Format Compliance (CRITICAL)
-- [ ] Follows `STATUS-FORMAT-SPEC.md` EXACTLY
-- [ ] Uses REGEX PATTERNS (NOT line numbers) for all updates
-- [ ] Updates `**Last Updated:**` field (pattern-based)
-- [ ] Updates `**Last Completed:**` field (pattern-based, with verified date)
-- [ ] Updates `**Next Phase:**` field (pattern-based)
-- [ ] Updates `**Real Progress:**` field (pattern-based)
-- [ ] Updates correct category table row (pattern-based, preserves status text)
-- [ ] PRESERVES existing category status notes (e.g., "⚠️ blockers...")
-- [ ] Uses exact tracker path format: `status/trackers/{N}-{category}.md`
-- [ ] Category mapping matches spec (foundation=0, stdlib=1, etc.)
-- [ ] Rounding uses math.Round (not floor/ceil)
-- [ ] SCALES: Adding blank lines doesn't break updates
-- [ ] SCALES: Adding new sections doesn't break updates
+- [ ] `phase complete` updates DB atomically
+- [ ] Triggers auto-update category progress
+- [ ] `phase complete --commit` creates git commit
+- [ ] `phase complete --dry-run` shows preview without changes
+- [ ] `phase current` returns last completed phase
+- [ ] `phase next` returns next pending phase
+- [ ] `phase info` returns full phase details
+- [ ] `phase list` filters by category/status
+- [ ] `validate` detects inconsistencies
+- [ ] All commands use transactions (ACID)
+- [ ] File locking prevents concurrent corruption
+- [ ] Audit log tracks all changes
+- [ ] Git commits reference phase completion
 
 ### Token Efficiency Requirements
-- [ ] `phase complete --help` output < 60 tokens
-- [ ] JSON output uses compact notation (abbreviated fields)
-- [ ] No emoji in default JSON output
-- [ ] Arrays used for progress tuples: `[10, 21, 48]`
-- [ ] Null/empty fields omitted from JSON
+- [ ] `phase complete` output < 120 tokens
+- [ ] `phase current` output < 60 tokens
+- [ ] `phase next` output < 60 tokens
+- [ ] `phase info` output < 150 tokens
+- [ ] JSON uses compact notation (abbreviated fields)
+- [ ] Arrays used for tuples: `[10,21,48]`
+- [ ] Null/empty fields omitted
+
+### Database Requirements
+- [ ] All updates use transactions
+- [ ] Triggers fire correctly (auto-update categories)
+- [ ] No race conditions (file locking)
+- [ ] Audit log contains all phase completions
+- [ ] Database remains consistent (validated)
 
 ---
 
-## Files Created
+## Token Efficiency Examples
 
-```
-internal/
-├── phase/
-│   ├── parser.go
-│   ├── parser_test.go
-│   └── types.go
-├── tracker/
-│   ├── tracker.go
-│   ├── tracker_test.go
-│   ├── reader.go
-│   └── writer.go
-├── status/
-│   ├── status.go
-│   ├── status_test.go
-│   ├── reader.go
-│   └── writer.go
-├── calc/
-│   ├── percentage.go
-│   └── percentage_test.go
-├── validator/
-│   ├── sync.go
-│   └── sync_test.go
-└── git/
-    ├── commit.go
-    └── commit_test.go
+### phase complete
+```bash
+# Old (markdown): ~150 tokens
+✅ Phase marked complete: phase-07b-hashset.md
+📊 Progress:
+   Category: stdlib (10/21 = 48%)
+   Total: 31/78 (40%)
+📝 Updates: status/trackers/1-stdlib.md, STATUS.md
+⏭️  Next: phase-07c-queue-stack.md
 
-cmd/atlas-dev/
-├── phase_complete.go
-├── phase_current.go
-├── phase_next.go
-└── validate.go
+# New (SQLite): ~40 tokens
+{"ok":true,"phase":"phase-07b-hashset","cat":"stdlib","progress":{"cat":[10,21,48],"tot":[31,78,40]},"next":"phase-07c-queue-stack"}
 ```
+
+**73% token reduction** ✅
 
 ---
 
 ## Next Phase
 
 **Phase 3:** Decision Log Integration
-- Decision log parser
-- Create new decision logs
-- Search/list decision logs
-- Get next DR-XXX number
+- Decision CRUD operations (DB-based)
+- `decision create` / `list` / `search` commands
+- Auto-generate DR-XXX IDs from DB sequence
