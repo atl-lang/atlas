@@ -12,6 +12,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 // Public API modules
 pub mod api;
 pub mod ast;
+pub mod async_runtime;
 pub mod binder;
 pub mod bytecode;
 pub mod compiler;

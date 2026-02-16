@@ -1,8 +1,10 @@
 //! Standard library functions
 
 pub mod array;
+pub mod async_io;
 pub mod collections;
 pub mod datetime;
+pub mod future;
 pub mod http;
 pub mod io;
 pub mod json;
@@ -109,6 +111,15 @@ pub fn is_builtin(name: &str) -> bool {
             | "httpSend" | "httpGet" | "httpPost" | "httpPut" | "httpDelete" | "httpPatch"
             | "httpPostJson" | "httpParseJson" | "httpGetJson"
             | "httpCheckPermission"
+            // Future/async functions
+            | "futureResolve" | "futureReject" | "futureNew"
+            | "futureThen" | "futureCatch"
+            | "futureAll" | "futureRace"
+            | "futureIsPending" | "futureIsResolved" | "futureIsRejected"
+            // Async I/O functions
+            | "readFileAsync" | "writeFileAsync" | "appendFileAsync"
+            | "httpSendAsync" | "httpGetAsync" | "httpPostAsync" | "httpPutAsync" | "httpDeleteAsync"
+            | "await"
     )
 }
 
@@ -785,6 +796,28 @@ pub fn call_builtin(
         "httpIsServerError" => http::http_is_server_error(args, call_span),
         "httpGetJson" => http::http_get_json(args, call_span),
         "httpCheckPermission" => http::http_check_permission(args, call_span),
+        // Future/async functions
+        "futureResolve" => future::future_resolve(args, call_span),
+        "futureReject" => future::future_reject(args, call_span),
+        "futureNew" => future::future_new(args, call_span),
+        "futureIsPending" => future::future_is_pending(args, call_span),
+        "futureIsResolved" => future::future_is_resolved(args, call_span),
+        "futureIsRejected" => future::future_is_rejected(args, call_span),
+        "futureThen" => future::future_then(args, call_span),
+        "futureCatch" => future::future_catch(args, call_span),
+        "futureAll" => future::future_all_fn(args, call_span),
+        "futureRace" => future::future_race_fn(args, call_span),
+
+        // Async I/O functions
+        "readFileAsync" => async_io::read_file_async(args, call_span, security),
+        "writeFileAsync" => async_io::write_file_async(args, call_span, security),
+        "appendFileAsync" => async_io::append_file_async(args, call_span, security),
+        "httpSendAsync" => async_io::http_send_async(args, call_span),
+        "httpGetAsync" => async_io::http_get_async(args, call_span),
+        "httpPostAsync" => async_io::http_post_async(args, call_span),
+        "httpPutAsync" => async_io::http_put_async(args, call_span),
+        "httpDeleteAsync" => async_io::http_delete_async(args, call_span),
+        "await" => async_io::await_future(args, call_span),
 
         _ => Err(RuntimeError::UnknownFunction {
             name: name.to_string(),

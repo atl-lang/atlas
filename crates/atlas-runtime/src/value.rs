@@ -60,6 +60,8 @@ pub enum Value {
     HttpRequest(Rc<crate::stdlib::http::HttpRequest>),
     /// HTTP Response data
     HttpResponse(Rc<crate::stdlib::http::HttpResponse>),
+    /// Future value (async computation)
+    Future(Rc<crate::async_runtime::AtlasFuture>),
 }
 
 /// Function reference
@@ -108,6 +110,7 @@ impl Value {
             Value::DateTime(_) => "datetime",
             Value::HttpRequest(_) => "HttpRequest",
             Value::HttpResponse(_) => "HttpResponse",
+            Value::Future(_) => "future",
         }
     }
 
@@ -206,6 +209,7 @@ impl fmt::Display for Value {
             Value::DateTime(dt) => write!(f, "{}", dt.to_rfc3339()),
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
             Value::HttpResponse(res) => write!(f, "<HttpResponse {}>", res.status()),
+            Value::Future(future) => write!(f, "{}", future.as_ref()),
         }
     }
 }
@@ -234,6 +238,7 @@ impl fmt::Debug for Value {
             Value::DateTime(dt) => write!(f, "DateTime({})", dt.to_rfc3339()),
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),
             Value::HttpResponse(res) => write!(f, "HttpResponse({})", res.status()),
+            Value::Future(future) => write!(f, "{:?}", future.as_ref()),
         }
     }
 }

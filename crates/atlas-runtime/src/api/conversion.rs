@@ -110,6 +110,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
+        Value::Future(_) => "future",
     }
 }
 

@@ -7,9 +7,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-10b-http-advanced.md
-**Next Phase:** phases/stdlib/phase-11-async-io-foundation.md
-**Real Progress:** 39/82 phases complete (48%)
+**Last Completed:** phases/stdlib/phase-11b-async-io-operations.md
+**Next Phase:** phases/stdlib/phase-11c-async-primitives.md
+**Real Progress:** 41/84 phases complete (49%)
 
 ---
 
@@ -18,7 +18,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 21/21 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 18/25 (72%) | 🔨 ACTIVE |
+| **1. Stdlib** | 20/27 (74%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -29,7 +29,7 @@
 
 ---
 
-## 📋 Complete Phase List (36/81)
+## 📋 Complete Phase List (40/84)
 
 ### 0. Foundation (21/21) ✅ COMPLETE
 
@@ -55,7 +55,7 @@
 ✅ phase-11b-build-system-incremental.md
 ✅ phase-11c-build-system-integration.md
 
-### 1. Stdlib (15/24) 🔨 ACTIVE
+### 1. Stdlib (19/27) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -75,7 +75,9 @@
 ✅ phase-09b-datetime-advanced.md
 ✅ phase-10a-http-core.md
 ✅ phase-10b-http-advanced.md
-⬜ phase-11-async-io-foundation.md
+✅ phase-11a-async-foundation.md
+✅ phase-11b-async-io-operations.md
+⬜ phase-11c-async-primitives.md
 ⬜ phase-12-process-management.md
 ⬜ phase-13-path-manipulation.md
 ⬜ phase-14-compression.md

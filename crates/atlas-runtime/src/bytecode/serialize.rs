@@ -95,6 +95,11 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         Value::HttpResponse(_) => {
             panic!("Cannot serialize HttpResponse values in bytecode constants");
         }
+        Value::Future(_) => {
+            // Future values cannot be serialized in bytecode constants
+            // They are runtime-only values
+            panic!("Cannot serialize Future values in bytecode constants");
+        }
     }
 }
 

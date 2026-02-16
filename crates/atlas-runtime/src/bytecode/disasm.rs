@@ -184,6 +184,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::DateTime(dt) => format!("<datetime {}>", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
         Value::HttpResponse(res) => format!("<HttpResponse {}>", res.status()),
+        Value::Future(f) => format!("<{}>", f.as_ref()),
     }
 }
 

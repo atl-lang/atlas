@@ -1,7 +1,7 @@
 //! Run command - execute Atlas source files
 
 use anyhow::{Context, Result};
-use atlas_runtime::Atlas;
+use atlas_runtime::{Atlas, SecurityContext};
 use std::fs;
 
 /// Run an Atlas source file
@@ -13,8 +13,8 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
     let source = fs::read_to_string(file_path)
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
 
-    // Create runtime and evaluate
-    let runtime = Atlas::new();
+    // Create runtime with full permissions (like go run, cargo run, python, node, etc.)
+    let runtime = Atlas::new_with_security(SecurityContext::allow_all());
     match runtime.eval(&source) {
         Ok(value) => {
             // Print the result value if it's not null

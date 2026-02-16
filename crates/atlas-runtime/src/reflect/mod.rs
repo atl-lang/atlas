@@ -215,6 +215,15 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             element_type: None,
             type_args: vec![],
         },
+        Value::Future(_) => TypeInfo {
+            name: "Future".to_string(),
+            kind: TypeKind::Generic,
+            fields: vec![],
+            parameters: vec![],
+            return_type: None,
+            element_type: None,
+            type_args: vec![],
+        },
     }
 }
 

@@ -423,6 +423,10 @@ fn value_to_json(
             msg: "Cannot serialize HttpRequest/HttpResponse to JSON".to_string(),
             span,
         }),
+        Value::Future(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize Future to JSON".to_string(),
+            span,
+        }),
     }
 }
 
