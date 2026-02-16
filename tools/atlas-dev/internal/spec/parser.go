@@ -190,10 +190,10 @@ func Parse(path string) (*Spec, error) {
 		refs := extractReferences(line)
 		spec.References = append(spec.References, refs...)
 
-		// Collect section content
-		if currentSection != nil && trimmed != "" && !strings.HasPrefix(trimmed, "**") {
+		// Collect section content (everything except headings, code blocks, metadata)
+		if currentSection != nil && trimmed != "" && trimmed != "---" {
 			if currentSection.Content != "" {
-				currentSection.Content += " "
+				currentSection.Content += "\n"
 			}
 			currentSection.Content += trimmed
 		}

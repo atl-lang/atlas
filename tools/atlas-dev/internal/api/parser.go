@@ -98,24 +98,33 @@ func Parse(path string) (*APIDoc, error) {
 			continue
 		}
 
-		// Extract signature (usually in first code block or after "Signature:")
-		if currentFunc != nil && (strings.HasPrefix(trimmed, "**Signature:**") || strings.HasPrefix(trimmed, "```")) {
-			if strings.HasPrefix(trimmed, "```") {
-				if inCode {
-					// End of code block
-					code := strings.Join(codeLines, "\n")
-					if currentFunc.Signature == "" {
-						currentFunc.Signature = extractSignature(code)
-					} else {
-						currentFunc.Examples = append(currentFunc.Examples, code)
-					}
-					inCode = false
-					codeLines = []string{}
-				} else {
-					inCode = true
-				}
-				continue
+		// Extract signature from **Signature:** line
+		if currentFunc != nil && strings.HasPrefix(trimmed, "**Signature:**") {
+			sig := strings.TrimPrefix(trimmed, "**Signature:**")
+			sig = strings.TrimSpace(sig)
+			sig = strings.Trim(sig, "`")
+			if sig != "" {
+				currentFunc.Signature = sig
 			}
+			continue
+		}
+
+		// Handle code blocks
+		if strings.HasPrefix(trimmed, "```") {
+			if inCode {
+				// End of code block
+				code := strings.Join(codeLines, "\n")
+				if currentFunc != nil && currentFunc.Signature == "" {
+					currentFunc.Signature = extractSignature(code)
+				} else if currentFunc != nil {
+					currentFunc.Examples = append(currentFunc.Examples, code)
+				}
+				inCode = false
+				codeLines = []string{}
+			} else {
+				inCode = true
+			}
+			continue
 		}
 
 		if inCode {

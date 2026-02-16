@@ -13,7 +13,6 @@ func specReadCmd() *cobra.Command {
 	var (
 		section  string
 		withCode bool
-		raw      bool
 	)
 
 	cmd := &cobra.Command{
@@ -67,14 +66,13 @@ func specReadCmd() *cobra.Command {
 				status   string
 				outline  string
 				sections string
-				content  string
 			)
 
 			err := database.QueryRow(`
-				SELECT title, version, status, outline, sections, content
+				SELECT title, version, status, outline, sections
 				FROM specs
 				WHERE name = ?
-			`, specName).Scan(&title, &version, &status, &outline, &sections, &content)
+			`, specName).Scan(&title, &version, &status, &outline, &sections)
 
 			if err != nil {
 				return fmt.Errorf("spec not found: %s", specName)
@@ -90,12 +88,6 @@ func specReadCmd() *cobra.Command {
 			}
 			if status != "" {
 				result["stat"] = status
-			}
-
-			// Return raw content if requested
-			if raw {
-				result["content"] = content
-				return output.Success(result)
 			}
 
 			// Filter to specific section if requested
@@ -141,7 +133,6 @@ func specReadCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&section, "section", "", "Read specific section")
 	cmd.Flags().BoolVar(&withCode, "with-code", false, "Include code blocks")
-	cmd.Flags().BoolVar(&raw, "raw", false, "Return raw markdown content")
 
 	return cmd
 }
