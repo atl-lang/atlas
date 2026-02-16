@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-16
+**Last Updated:** 2026-02-16 (Phase-08 split into 08a/08b)
 **Version:** v0.2 (building production infrastructure)
 
 ---
@@ -8,8 +8,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/stdlib/phase-07d-collection-integration.md
-**Next Phase:** phases/stdlib/phase-08-regex.md
-**Real Progress:** 33/78 phases complete (42%)
+**Next Phase:** phases/stdlib/phase-08a-regex-core.md
+**Real Progress:** 33/80 phases complete (41%)
 
 ---
 
@@ -18,7 +18,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 21/21 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 12/21 (57%) | 🔨 ACTIVE |
+| **1. Stdlib** | 12/23 (52%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -55,7 +55,7 @@
 ✅ phase-11b-build-system-incremental.md
 ✅ phase-11c-build-system-integration.md
 
-### 1. Stdlib (11/21) 🔨 ACTIVE
+### 1. Stdlib (12/23) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -69,7 +69,8 @@
 ✅ phase-07b-hashset.md
 ✅ phase-07c-queue-stack.md
 ✅ phase-07d-collection-integration.md
-⬜ phase-08-regex.md
+⬜ phase-08a-regex-core.md
+⬜ phase-08b-regex-operations.md
 ⬜ phase-09-datetime.md
 ⬜ phase-10-network-http.md
 ⬜ phase-11-async-io-foundation.md
@@ -77,7 +78,7 @@
 ⬜ phase-13-path-manipulation.md
 ⬜ phase-14-compression.md
 ⬜ phase-15-testing-framework.md
-⬜ phase-16-through-21 (TBD)
+⬜ phase-16-through-23 (TBD)
 
 ### 2. Bytecode-VM (0/8) ⬜
 
