@@ -52,6 +52,8 @@ pub enum Value {
     Queue(Rc<RefCell<crate::stdlib::collections::queue::AtlasQueue>>),
     /// Stack collection (LIFO)
     Stack(Rc<RefCell<crate::stdlib::collections::stack::AtlasStack>>),
+    /// Regular expression pattern
+    Regex(Rc<regex::Regex>),
 }
 
 /// Function reference
@@ -96,6 +98,7 @@ impl Value {
             Value::HashSet(_) => "hashset",
             Value::Queue(_) => "queue",
             Value::Stack(_) => "stack",
+            Value::Regex(_) => "regex",
         }
     }
 
@@ -141,6 +144,8 @@ impl PartialEq for Value {
             (Value::Queue(a), Value::Queue(b)) => Rc::ptr_eq(a, b),
             // Stack uses reference identity (like arrays)
             (Value::Stack(a), Value::Stack(b)) => Rc::ptr_eq(a, b),
+            // Regex uses reference identity (like arrays)
+            (Value::Regex(a), Value::Regex(b)) => Rc::ptr_eq(a, b),
             _ => false,
         }
     }
@@ -182,6 +187,7 @@ impl fmt::Display for Value {
             Value::HashSet(set) => write!(f, "<HashSet size={}>", set.borrow().len()),
             Value::Queue(queue) => write!(f, "<Queue size={}>", queue.borrow().len()),
             Value::Stack(stack) => write!(f, "<Stack size={}>", stack.borrow().len()),
+            Value::Regex(r) => write!(f, "<Regex /{}/>", r.as_str()),
         }
     }
 }
@@ -206,6 +212,7 @@ impl fmt::Debug for Value {
             Value::HashSet(set) => write!(f, "HashSet(size={})", set.borrow().len()),
             Value::Queue(queue) => write!(f, "Queue(size={})", queue.borrow().len()),
             Value::Stack(stack) => write!(f, "Stack(size={})", stack.borrow().len()),
+            Value::Regex(r) => write!(f, "Regex(/{}/)", r.as_str()),
         }
     }
 }

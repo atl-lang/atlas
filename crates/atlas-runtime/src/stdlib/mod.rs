@@ -6,6 +6,7 @@ pub mod io;
 pub mod json;
 pub mod math;
 pub mod reflect;
+pub mod regex;
 pub mod string;
 pub mod types;
 
@@ -72,6 +73,10 @@ pub fn is_builtin(name: &str) -> bool {
             // Stack functions
             | "stackNew" | "stackPush" | "stackPop" | "stackPeek"
             | "stackSize" | "stackIsEmpty" | "stackClear" | "stackToArray"
+            // Regex functions
+            | "regexNew" | "regexNewWithFlags" | "regexEscape"
+            | "regexIsMatch" | "regexFind" | "regexFindAll"
+            | "regexCaptures" | "regexCapturesNamed"
     )
 }
 
@@ -645,6 +650,16 @@ pub fn call_builtin(
         "stackIsEmpty" => collections::stack::is_empty(args, call_span),
         "stackClear" => collections::stack::clear(args, call_span),
         "stackToArray" => collections::stack::to_array(args, call_span),
+
+        // Regex functions
+        "regexNew" => regex::regex_new(args, call_span),
+        "regexNewWithFlags" => regex::regex_new_with_flags(args, call_span),
+        "regexEscape" => regex::regex_escape(args, call_span),
+        "regexIsMatch" => regex::regex_is_match(args, call_span),
+        "regexFind" => regex::regex_find(args, call_span),
+        "regexFindAll" => regex::regex_find_all(args, call_span),
+        "regexCaptures" => regex::regex_captures(args, call_span),
+        "regexCapturesNamed" => regex::regex_captures_named(args, call_span),
 
         _ => Err(RuntimeError::UnknownFunction {
             name: name.to_string(),

@@ -411,6 +411,10 @@ fn value_to_json(
             msg: "Cannot serialize Stack to JSON".to_string(),
             span,
         }),
+        Value::Regex(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize Regex to JSON".to_string(),
+            span,
+        }),
     }
 }
 

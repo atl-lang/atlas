@@ -215,6 +215,7 @@ pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::HashSet(_) => "hashset",
         Value::Queue(_) => "queue",
         Value::Stack(_) => "stack",
+        Value::Regex(_) => "regex",
     };
 
     Ok(Value::string(type_name))
@@ -327,6 +328,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::HashSet(_) => "[HashSet]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
+        Value::Regex(r) => format!("[Regex /{}/ ]", r.as_str()),
     };
 
     Ok(Value::string(string_value))
@@ -398,7 +400,8 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::HashMap(_)
         | Value::HashSet(_)
         | Value::Queue(_)
-        | Value::Stack(_) => true,
+        | Value::Stack(_)
+        | Value::Regex(_) => true,
     };
 
     Ok(Value::Bool(bool_value))
@@ -533,6 +536,7 @@ fn type_name(value: &Value) -> &str {
         Value::HashSet(_) => "hashset",
         Value::Queue(_) => "queue",
         Value::Stack(_) => "stack",
+        Value::Regex(_) => "regex",
     }
 }
 
@@ -559,6 +563,7 @@ fn value_to_display_string(value: &Value) -> String {
         Value::HashSet(_) => "[HashSet]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
+        Value::Regex(r) => format!("[Regex /{}/ ]", r.as_str()),
     }
 }
 

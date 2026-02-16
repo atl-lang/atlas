@@ -180,6 +180,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::HashSet(_) => "<hashset>".to_string(),
         Value::Queue(_) => "<queue>".to_string(),
         Value::Stack(_) => "<stack>".to_string(),
+        Value::Regex(r) => format!("<regex /{}/>", r.as_str()),
     }
 }
 

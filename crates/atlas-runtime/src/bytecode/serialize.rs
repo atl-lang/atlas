@@ -79,6 +79,11 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
             // They are runtime-only values
             panic!("Cannot serialize Stack values in bytecode constants");
         }
+        Value::Regex(_) => {
+            // Regex values cannot be serialized in constant pool
+            // They are runtime-only values
+            panic!("Cannot serialize Regex values in bytecode constants");
+        }
     }
 }
 

@@ -106,6 +106,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::HashSet(_) => "hashset",
         Value::Queue(_) => "queue",
         Value::Stack(_) => "stack",
+        Value::Regex(_) => "regex",
     }
 }
 

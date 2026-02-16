@@ -1,15 +1,15 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-16 (Phase-08 split into 08a/08b)
+**Last Updated:** 2026-02-16
 **Version:** v0.2 (building production infrastructure)
 
 ---
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-07d-collection-integration.md
-**Next Phase:** phases/stdlib/phase-08a-regex-core.md
-**Real Progress:** 33/80 phases complete (41%)
+**Last Completed:** phases/stdlib/phase-08a-regex-core.md
+**Next Phase:** phases/stdlib/phase-08b-regex-operations.md
+**Real Progress:** 34/80 phases complete (43%)
 
 ---
 
@@ -18,7 +18,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 21/21 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 12/23 (52%) | 🔨 ACTIVE |
+| **1. Stdlib** | 13/23 (57%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -69,7 +69,7 @@
 ✅ phase-07b-hashset.md
 ✅ phase-07c-queue-stack.md
 ✅ phase-07d-collection-integration.md
-⬜ phase-08a-regex-core.md
+✅ phase-08a-regex-core.md
 ⬜ phase-08b-regex-operations.md
 ⬜ phase-09-datetime.md
 ⬜ phase-10-network-http.md
