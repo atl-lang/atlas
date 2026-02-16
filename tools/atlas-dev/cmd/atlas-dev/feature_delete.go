@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -12,6 +13,7 @@ import (
 func featureDeleteCmd() *cobra.Command {
 	var (
 		deleteFile bool
+		useStdin   bool
 	)
 
 	cmd := &cobra.Command{
@@ -22,10 +24,31 @@ func featureDeleteCmd() *cobra.Command {
   atlas-dev feature delete pattern-matching
 
   # Delete from DB and file
-  atlas-dev feature delete pattern-matching --file`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev feature delete pattern-matching --file
+
+  # Delete from stdin
+  echo '{"name":"pattern-matching"}' | atlas-dev feature delete --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var name string
+
+			// Get name from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				name, err = compose.ExtractFirstString(input, "name")
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("feature name required")
+				}
+				name = args[0]
+			}
 
 			// Delete from database
 			err := database.DeleteFeature(name)
@@ -54,6 +77,7 @@ func featureDeleteCmd() *cobra.Command {
 	}
 
 	cmd.Flags().BoolVar(&deleteFile, "file", false, "Also delete markdown file")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read feature name from stdin JSON")
 
 	return cmd
 }

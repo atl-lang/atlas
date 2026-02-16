@@ -1,25 +1,51 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/atlas-lang/atlas-dev/internal/api"
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
 )
 
 func apiValidateCmd() *cobra.Command {
-	var codePath string
+	var (
+		codePath string
+		useStdin bool
+	)
 
 	cmd := &cobra.Command{
 		Use:   "validate <api-file>",
 		Short: "Validate API documentation against code",
 		Long:  `Compare API documentation to actual Rust code implementation.`,
 		Example: `  # Validate API docs
-  atlas-dev api validate ../../docs/api/stdlib.md --code ../../crates/atlas-runtime/src/stdlib`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev api validate ../../docs/api/stdlib.md --code ../../crates/atlas-runtime/src/stdlib
+
+  # Validate from stdin
+  echo '{"path":"docs/api/stdlib.md"}' | atlas-dev api validate --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			apiPath := args[0]
+			var apiPath string
+
+			// Get path from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				apiPath, err = compose.ExtractFirstPath(input)
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("API file path required")
+				}
+				apiPath = args[0]
+			}
 
 			// Parse API doc
 			doc, err := api.Parse(apiPath)
@@ -59,6 +85,7 @@ func apiValidateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&codePath, "code", "", "Path to Rust source code")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read path from stdin JSON")
 
 	return cmd
 }

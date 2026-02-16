@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/db"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
@@ -15,6 +16,7 @@ func featureUpdateCmd() *cobra.Command {
 		description string
 		specPath    string
 		apiPath     string
+		useStdin    bool
 	)
 
 	cmd := &cobra.Command{
@@ -25,10 +27,31 @@ func featureUpdateCmd() *cobra.Command {
   atlas-dev feature update pattern-matching --status Implemented
 
   # Update version
-  atlas-dev feature update pattern-matching --version v0.2`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev feature update pattern-matching --version v0.2
+
+  # Update from stdin
+  echo '{"name":"pattern-matching"}' | atlas-dev feature update --stdin --status Implemented`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var name string
+
+			// Get name from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				name, err = compose.ExtractFirstString(input, "name")
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("feature name required")
+				}
+				name = args[0]
+			}
 
 			// Build update request
 			req := db.UpdateFeatureRequest{
@@ -61,6 +84,7 @@ func featureUpdateCmd() *cobra.Command {
 	cmd.Flags().StringVar(&description, "description", "", "Update description")
 	cmd.Flags().StringVar(&specPath, "spec", "", "Update spec path")
 	cmd.Flags().StringVar(&apiPath, "api", "", "Update API path")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read feature name from stdin JSON")
 
 	return cmd
 }

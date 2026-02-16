@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/feature"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ import (
 func featureValidateCmd() *cobra.Command {
 	var (
 		projectRoot string
+		useStdin    bool
 	)
 
 	cmd := &cobra.Command{
@@ -22,10 +24,29 @@ func featureValidateCmd() *cobra.Command {
   atlas-dev feature validate pattern-matching
 
   # Validate with custom project root
-  atlas-dev feature validate pattern-matching --root ../..`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev feature validate pattern-matching --root ../..
+
+  # Validate from stdin
+  echo '{"name":"pattern-matching"}' | atlas-dev feature validate --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var name string
+
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+				name, err = compose.ExtractFirstString(input, "name")
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("feature name required")
+				}
+				name = args[0]
+			}
 
 			// Parse markdown file
 			markdownPath := filepath.Join("../../docs/features", name+".md")
@@ -100,6 +121,7 @@ func featureValidateCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&projectRoot, "root", "../..", "Project root directory")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read feature name from stdin JSON")
 
 	return cmd
 }

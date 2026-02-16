@@ -1,23 +1,48 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/feature"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
 )
 
 func featureReadCmd() *cobra.Command {
+	var useStdin bool
+
 	cmd := &cobra.Command{
 		Use:   "read <name>",
 		Short: "Read a feature",
 		Long:  `Read complete feature details combining database and markdown file data.`,
 		Example: `  # Read feature
-  atlas-dev feature read pattern-matching`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev feature read pattern-matching
+
+  # Read from stdin
+  echo '{"name":"pattern-matching"}' | atlas-dev feature read --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var name string
+
+			// Get name from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				name, err = compose.ExtractFirstString(input, "name")
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("feature name required")
+				}
+				name = args[0]
+			}
 
 			// Get from database
 			dbFeature, err := database.GetFeature(name)
@@ -62,6 +87,8 @@ func featureReadCmd() *cobra.Command {
 			return output.Success(result)
 		},
 	}
+
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read feature name from stdin JSON")
 
 	return cmd
 }

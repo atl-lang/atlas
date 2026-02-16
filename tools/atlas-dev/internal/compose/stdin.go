@@ -180,6 +180,15 @@ func ExtractFirstPath(input *StdinInput) (string, error) {
 	return paths[0], nil
 }
 
+// ExtractFirstString extracts the first value of a named field from stdin
+func ExtractFirstString(input *StdinInput, fieldName string) (string, error) {
+	values := ExtractField(input, fieldName)
+	if len(values) == 0 {
+		return "", fmt.Errorf("no %s found in stdin", fieldName)
+	}
+	return values[0], nil
+}
+
 // ReadAndParseStdin reads and parses stdin in one call
 func ReadAndParseStdin() (*StdinInput, error) {
 	data, err := ReadStdin()

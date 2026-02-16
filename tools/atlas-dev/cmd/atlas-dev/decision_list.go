@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/db"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
@@ -12,6 +13,7 @@ func decisionListCmd() *cobra.Command {
 		status    string
 		limit     int
 		offset    int
+		useStdin  bool
 	)
 
 	cmd := &cobra.Command{
@@ -28,8 +30,22 @@ func decisionListCmd() *cobra.Command {
   atlas-dev decision list --status accepted
 
   # Pagination
-  atlas-dev decision list --limit 10 --offset 20`,
+  atlas-dev decision list --limit 10 --offset 20
+
+  # Filter from stdin (show only decisions from input)
+  echo '[{"id":"DR-001"},{"id":"DR-002"}]' | atlas-dev decision list --stdin`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var filterIDs []string
+
+			// Get filter IDs from stdin if provided
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+				filterIDs = compose.ExtractIDs(input)
+			}
+
 			opts := db.ListDecisionsOptions{
 				Component: component,
 				Status:    status,
@@ -43,9 +59,23 @@ func decisionListCmd() *cobra.Command {
 			}
 
 			// Convert to compact JSON
-			items := make([]map[string]interface{}, len(decisions))
-			for i, d := range decisions {
-				items[i] = d.ToCompactJSON()
+			items := make([]map[string]interface{}, 0, len(decisions))
+			for _, d := range decisions {
+				// Filter by stdin IDs if provided
+				if len(filterIDs) > 0 {
+					found := false
+					for _, fid := range filterIDs {
+						if fid == d.ID {
+							found = true
+							break
+						}
+					}
+					if !found {
+						continue
+					}
+				}
+
+				items = append(items, d.ToCompactJSON())
 			}
 
 			return output.Success(map[string]interface{}{
@@ -59,6 +89,7 @@ func decisionListCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status")
 	cmd.Flags().IntVarP(&limit, "limit", "l", 20, "Limit results")
 	cmd.Flags().IntVar(&offset, "offset", 0, "Offset for pagination")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Filter results by IDs from stdin JSON")
 
 	return cmd
 }

@@ -62,6 +62,8 @@ func (u *UndoManager) Undo() (*UndoResult, error) {
 		result, err = u.undoDecisionCreate(entry)
 	case "update_decision", "decision_update":
 		result, err = u.undoDecisionUpdate(entry)
+	case "update_feature", "feature_update":
+		result, err = u.undoFeatureUpdate(entry)
 	default:
 		return nil, fmt.Errorf("unsupported action type: %s", entry.Action)
 	}

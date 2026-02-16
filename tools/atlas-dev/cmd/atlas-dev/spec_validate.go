@@ -6,21 +6,45 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/atlas-lang/atlas-dev/internal/spec"
 	"github.com/spf13/cobra"
 )
 
 func specValidateCmd() *cobra.Command {
+	var useStdin bool
+
 	cmd := &cobra.Command{
 		Use:   "validate <spec-file>",
 		Short: "Validate a specification document",
 		Long:  `Validate spec consistency: check cross-references, internal links, and code block syntax.`,
 		Example: `  # Validate spec
-  atlas-dev spec validate ../../docs/specification/syntax.md`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev spec validate ../../docs/specification/syntax.md
+
+  # Validate from stdin
+  echo '{"path":"docs/specification/syntax.md"}' | atlas-dev spec validate --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			specPath := args[0]
+			var specPath string
+
+			// Get path from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				specPath, err = compose.ExtractFirstPath(input)
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("spec file path required")
+				}
+				specPath = args[0]
+			}
 
 			// Parse spec
 			parsed, err := spec.Parse(specPath)
@@ -87,6 +111,8 @@ func specValidateCmd() *cobra.Command {
 			return output.Success(result)
 		},
 	}
+
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read path from stdin JSON")
 
 	return cmd
 }

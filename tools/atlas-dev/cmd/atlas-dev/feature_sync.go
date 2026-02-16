@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/db"
 	"github.com/atlas-lang/atlas-dev/internal/feature"
 	"github.com/atlas-lang/atlas-dev/internal/output"
@@ -14,6 +15,7 @@ func featureSyncCmd() *cobra.Command {
 	var (
 		projectRoot string
 		dryRun      bool
+		useStdin    bool
 	)
 
 	cmd := &cobra.Command{
@@ -24,10 +26,31 @@ func featureSyncCmd() *cobra.Command {
   atlas-dev feature sync pattern-matching
 
   # Dry-run (preview changes)
-  atlas-dev feature sync pattern-matching --dry-run`,
-		Args: cobra.ExactArgs(1),
+  atlas-dev feature sync pattern-matching --dry-run
+
+  # Sync from stdin
+  echo '{"name":"pattern-matching"}' | atlas-dev feature sync --stdin`,
+		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			name := args[0]
+			var name string
+
+			// Get name from stdin or args
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+
+				name, err = compose.ExtractFirstString(input, "name")
+				if err != nil {
+					return err
+				}
+			} else {
+				if len(args) < 1 {
+					return fmt.Errorf("feature name required")
+				}
+				name = args[0]
+			}
 
 			// Parse markdown file
 			markdownPath := filepath.Join("../../docs/features", name+".md")
@@ -99,6 +122,7 @@ func featureSyncCmd() *cobra.Command {
 
 	cmd.Flags().StringVar(&projectRoot, "root", "../..", "Project root directory")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Preview changes without applying")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Read feature name from stdin JSON")
 
 	return cmd
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -9,6 +10,7 @@ func featureListCmd() *cobra.Command {
 	var (
 		category string
 		status   string
+		useStdin bool
 	)
 
 	cmd := &cobra.Command{
@@ -22,8 +24,22 @@ func featureListCmd() *cobra.Command {
   atlas-dev feature list --status Implemented
 
   # List by category
-  atlas-dev feature list --category core`,
+  atlas-dev feature list --category core
+
+  # Filter from stdin (show only features from input)
+  echo '[{"name":"pattern-matching"},{"name":"modules"}]' | atlas-dev feature list --stdin`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var filterNames []string
+
+			// Get filter names from stdin if provided
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+				filterNames = compose.ExtractField(input, "name")
+			}
+
 			features, err := database.ListFeatures(category, status)
 			if err != nil {
 				return err
@@ -32,6 +48,20 @@ func featureListCmd() *cobra.Command {
 			// Convert to compact JSON
 			items := make([]map[string]interface{}, 0, len(features))
 			for _, f := range features {
+				// Filter by stdin names if provided
+				if len(filterNames) > 0 {
+					found := false
+					for _, fn := range filterNames {
+						if fn == f.Name {
+							found = true
+							break
+						}
+					}
+					if !found {
+						continue
+					}
+				}
+
 				items = append(items, map[string]interface{}{
 					"name":    f.Name,
 					"display": f.DisplayName,
@@ -51,6 +81,7 @@ func featureListCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&category, "category", "c", "", "Filter by category")
 	cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Filter results by names from stdin JSON")
 
 	return cmd
 }

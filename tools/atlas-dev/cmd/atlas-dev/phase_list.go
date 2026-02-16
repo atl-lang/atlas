@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/db"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
@@ -12,13 +13,33 @@ func phaseListCmd() *cobra.Command {
 		status   string
 		limit    int
 		offset   int
+		useStdin bool
 	)
 
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List phases",
 		Long:  `List phases with optional filters.`,
+		Example: `  # List all phases
+  atlas-dev phase list
+
+  # Filter by category
+  atlas-dev phase list --category stdlib
+
+  # Filter from stdin (show only phases from input)
+  echo '[{"path":"phases/stdlib/phase-01.md"},{"path":"phases/stdlib/phase-02.md"}]' | atlas-dev phase list --stdin`,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			var filterPaths []string
+
+			// Get filter paths from stdin if provided
+			if useStdin {
+				input, err := compose.ReadAndParseStdin()
+				if err != nil {
+					return err
+				}
+				filterPaths = compose.ExtractPaths(input)
+			}
+
 			phases, err := database.ListPhases(db.ListPhasesOptions{
 				Category: category,
 				Status:   status,
@@ -32,6 +53,20 @@ func phaseListCmd() *cobra.Command {
 			// Convert to compact JSON
 			result := make([]map[string]interface{}, 0, len(phases))
 			for _, p := range phases {
+				// Filter by stdin paths if provided
+				if len(filterPaths) > 0 {
+					found := false
+					for _, fp := range filterPaths {
+						if fp == p.Path {
+							found = true
+							break
+						}
+					}
+					if !found {
+						continue
+					}
+				}
+
 				item := map[string]interface{}{
 					"path": p.Path,
 					"name": p.Name,
@@ -55,6 +90,7 @@ func phaseListCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status")
 	cmd.Flags().IntVar(&limit, "limit", 0, "Limit number of results")
 	cmd.Flags().IntVar(&offset, "offset", 0, "Offset for pagination")
+	cmd.Flags().BoolVar(&useStdin, "stdin", false, "Filter results by paths from stdin JSON")
 
 	return cmd
 }

@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/atlas-lang/atlas-dev/internal/parity"
 	"github.com/spf13/cobra"
@@ -18,6 +19,7 @@ var (
 	parityAPIDir        string
 	parityPhaseDir      string
 	parityTestDir       string
+	parityUseStdin      bool
 )
 
 func validateParityCmd() *cobra.Command {
@@ -32,6 +34,14 @@ func validateParityCmd() *cobra.Command {
 - Cross-references: verify all documentation links are valid
 
 Returns health score (0-100) and detailed mismatch report.`,
+		Example: `  # Run parity validation
+  atlas-dev validate parity
+
+  # With custom directories
+  atlas-dev validate parity --code-dir ../crates --spec-dir ../docs/spec
+
+  # Override directories from stdin
+  echo '{"code_dir":"../crates","spec_dir":"../docs/spec"}' | atlas-dev validate parity --stdin`,
 		RunE: runValidateParity,
 	}
 
@@ -42,11 +52,40 @@ Returns health score (0-100) and detailed mismatch report.`,
 	cmd.Flags().StringVar(&parityAPIDir, "api-dir", "", "API directory (default: docs/api/)")
 	cmd.Flags().StringVar(&parityPhaseDir, "phase-dir", "", "Phase directory (default: phases/)")
 	cmd.Flags().StringVar(&parityTestDir, "test-dir", "", "Test directory (default: crates/)")
+	cmd.Flags().BoolVar(&parityUseStdin, "stdin", false, "Read directory paths from stdin JSON")
 
 	return cmd
 }
 
 func runValidateParity(cmd *cobra.Command, args []string) error {
+	// Override directories from stdin if provided
+	if parityUseStdin {
+		input, err := compose.ReadAndParseStdin()
+		if err != nil {
+			return err
+		}
+
+		// Extract directory fields from stdin
+		if len(input.Items) > 0 {
+			item := input.Items[0]
+			if codeDir, ok := item["code_dir"].(string); ok && codeDir != "" {
+				parityCodeDir = codeDir
+			}
+			if specDir, ok := item["spec_dir"].(string); ok && specDir != "" {
+				paritySpecDir = specDir
+			}
+			if apiDir, ok := item["api_dir"].(string); ok && apiDir != "" {
+				parityAPIDir = apiDir
+			}
+			if phaseDir, ok := item["phase_dir"].(string); ok && phaseDir != "" {
+				parityPhaseDir = phaseDir
+			}
+			if testDir, ok := item["test_dir"].(string); ok && testDir != "" {
+				parityTestDir = testDir
+			}
+		}
+	}
+
 	// Determine project root
 	projectRoot, err := findProjectRoot()
 	if err != nil {
