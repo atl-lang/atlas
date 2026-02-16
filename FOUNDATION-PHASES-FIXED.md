@@ -41,7 +41,7 @@ d) If spec doesn't define → Check if out-of-scope
 ### Critical Path (8 phases - must do first):
 
 1. ✅ **Phase 01 - Runtime API Expansion**
-   - Verifies v0.1 completion via STATUS.md and tests
+   - Verifies v0.1 completion via `atlas-dev phase info` and tests
    - Decision tree for v0.1 status scenarios
    - No user questions
 
@@ -168,7 +168,7 @@ AI never asks user technical questions - checks spec/docs instead.
 
 ### 5. Clear Dependencies
 **Phase dependencies are explicit:**
-- "Phase-01 must be ✅ in STATUS.md"
+- "Phase-01 must be ✅ in `atlas-dev phase info`"
 - "Verify file X exists"
 - "Run tests, verify N+ pass"
 - "Stop if prerequisite incomplete"

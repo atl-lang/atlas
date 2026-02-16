@@ -1100,4 +1100,4 @@ Not a quick hack. Not an MVP. A serious, decades-long exploration of what progra
 **Document Version:** 1.0
 **Last Updated:** 2026-02-15
 **Maintained By:** Atlas Language Team
-**Questions/Feedback:** See STATUS.md for contribution guidelines
+**Questions/Feedback:** Run `atlas-dev summary` for current project status
