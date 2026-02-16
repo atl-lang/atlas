@@ -7,8 +7,8 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-07c-queue-stack.md (verified 2026-02-16)
-**Next Phase:** phases/stdlib/phase-07d-collection-integration.md
+**Last Completed:** phases/stdlib/phase-07d-collection-integration.md (partial 2026-02-16)
+**Next Phase:** phases/stdlib/phase-07d-collection-integration.md (needs test fixes)
 **Real Progress:** 32/78 phases complete (41%)
 
 ---
@@ -68,7 +68,7 @@
 ✅ phase-07a-hash-infrastructure-hashmap.md
 ✅ phase-07b-hashset.md
 ✅ phase-07c-queue-stack.md
-⬜ phase-07d-collection-integration.md **← NEXT**
+🔨 phase-07d-collection-integration.md **← IN PROGRESS** (intrinsics complete, tests partial)
 ⬜ phase-08-regex.md
 ⬜ phase-09-datetime.md
 ⬜ phase-10-network-http.md

@@ -110,7 +110,9 @@ fn test_hashset_remove_nonexistent() {
 
 #[test]
 fn test_hashset_add_unhashable() {
-    assert!(eval_expect_error("let set = hashSetNew(); hashSetAdd(set, [1, 2])"));
+    assert!(eval_expect_error(
+        "let set = hashSetNew(); hashSetAdd(set, [1, 2])"
+    ));
 }
 
 // Has Tests

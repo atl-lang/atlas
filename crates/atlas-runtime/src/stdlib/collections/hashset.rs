@@ -330,10 +330,7 @@ pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 // ============================================================================
 
 /// Extract HashSet from value
-fn extract_hashset(
-    value: &Value,
-    span: Span,
-) -> Result<Rc<RefCell<AtlasHashSet>>, RuntimeError> {
+fn extract_hashset(value: &Value, span: Span) -> Result<Rc<RefCell<AtlasHashSet>>, RuntimeError> {
     match value {
         Value::HashSet(set) => Ok(Rc::clone(set)),
         _ => Err(RuntimeError::InvalidStdlibArgument { span }),

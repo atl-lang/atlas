@@ -44,8 +44,13 @@ fn test_new_queue_has_size_zero() {
 fn test_enqueue_increases_size() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let size = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
     assert_eq!(size, Value::Number(1.0));
@@ -55,30 +60,36 @@ fn test_enqueue_increases_size() {
 fn test_dequeue_fifo_order() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(3.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(3.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let first = call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
-    assert_eq!(
-        first,
-        Value::Option(Some(Box::new(Value::Number(1.0))))
-    );
+    assert_eq!(first, Value::Option(Some(Box::new(Value::Number(1.0)))));
 
     let second = call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
-    assert_eq!(
-        second,
-        Value::Option(Some(Box::new(Value::Number(2.0))))
-    );
+    assert_eq!(second, Value::Option(Some(Box::new(Value::Number(2.0)))));
 
     let third = call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
-    assert_eq!(
-        third,
-        Value::Option(Some(Box::new(Value::Number(3.0))))
-    );
+    assert_eq!(third, Value::Option(Some(Box::new(Value::Number(3.0)))));
 }
 
 #[test]
@@ -93,28 +104,40 @@ fn test_dequeue_from_empty_returns_none() {
 fn test_enqueue_after_dequeue() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
     call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let size = call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
     assert_eq!(size, Value::Number(1.0));
 
     let result = call_builtin("queueDequeue", &[queue], dummy_span(), &security()).unwrap();
-    assert_eq!(
-        result,
-        Value::Option(Some(Box::new(Value::Number(2.0))))
-    );
+    assert_eq!(result, Value::Option(Some(Box::new(Value::Number(2.0)))));
 }
 
 #[test]
 fn test_queue_accepts_any_value_type() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(42.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(42.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
     call_builtin(
         "queueEnqueue",
         &[queue.clone(), Value::string("hello")],
@@ -122,9 +145,20 @@ fn test_queue_accepts_any_value_type() {
         &security(),
     )
     .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Bool(true)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Null], dummy_span(), &security()).unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Bool(true)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Null],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let size = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
     assert_eq!(size, Value::Number(4.0));
@@ -138,14 +172,16 @@ fn test_queue_accepts_any_value_type() {
 fn test_peek_returns_front_without_removing() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(42.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(42.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let peeked = call_builtin("queuePeek", &[queue.clone()], dummy_span(), &security()).unwrap();
-    assert_eq!(
-        peeked,
-        Value::Option(Some(Box::new(Value::Number(42.0))))
-    );
+    assert_eq!(peeked, Value::Option(Some(Box::new(Value::Number(42.0)))));
 
     let size = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
     assert_eq!(size, Value::Number(1.0));
@@ -163,12 +199,23 @@ fn test_peek_on_empty_returns_none() {
 fn test_peek_doesnt_change_size() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
-    let size_before = call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
+    let size_before =
+        call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
     call_builtin("queuePeek", &[queue.clone()], dummy_span(), &security()).unwrap();
     let size_after = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
 
@@ -186,13 +233,23 @@ fn test_size_reflects_element_count() {
     let size0 = call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
     assert_eq!(size0, Value::Number(0.0));
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
     let size1 = call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
     assert_eq!(size1, Value::Number(1.0));
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
     let size2 = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
     assert_eq!(size2, Value::Number(2.0));
 }
@@ -209,8 +266,13 @@ fn test_is_empty_true_for_new_queue() {
 fn test_is_empty_false_after_enqueue() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let empty = call_builtin("queueIsEmpty", &[queue], dummy_span(), &security()).unwrap();
     assert_eq!(empty, Value::Bool(false));
@@ -220,10 +282,20 @@ fn test_is_empty_false_after_enqueue() {
 fn test_is_empty_true_after_dequeuing_all() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
     call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
@@ -240,12 +312,27 @@ fn test_is_empty_true_after_dequeuing_all() {
 fn test_clear_removes_all_elements() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(3.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(3.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     call_builtin("queueClear", &[queue.clone()], dummy_span(), &security()).unwrap();
 
@@ -275,12 +362,27 @@ fn test_clear_on_empty_queue_is_safe() {
 fn test_to_array_returns_fifo_order() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(3.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(3.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let array = call_builtin("queueToArray", &[queue], dummy_span(), &security()).unwrap();
 
@@ -299,10 +401,16 @@ fn test_to_array_returns_fifo_order() {
 fn test_to_array_doesnt_modify_queue() {
     let queue = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
-    let size_before = call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
+    let size_before =
+        call_builtin("queueSize", &[queue.clone()], dummy_span(), &security()).unwrap();
     call_builtin("queueToArray", &[queue.clone()], dummy_span(), &security()).unwrap();
     let size_after = call_builtin("queueSize", &[queue], dummy_span(), &security()).unwrap();
 
@@ -331,10 +439,20 @@ fn test_multiple_queues_are_independent() {
     let queue1 = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
     let queue2 = call_builtin("queueNew", &[], dummy_span(), &security()).unwrap();
 
-    call_builtin("queueEnqueue", &[queue1.clone(), Value::Number(1.0)], dummy_span(), &security())
-        .unwrap();
-    call_builtin("queueEnqueue", &[queue2.clone(), Value::Number(2.0)], dummy_span(), &security())
-        .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue1.clone(), Value::Number(1.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
+    call_builtin(
+        "queueEnqueue",
+        &[queue2.clone(), Value::Number(2.0)],
+        dummy_span(),
+        &security(),
+    )
+    .unwrap();
 
     let size1 = call_builtin("queueSize", &[queue1], dummy_span(), &security()).unwrap();
     let size2 = call_builtin("queueSize", &[queue2], dummy_span(), &security()).unwrap();
@@ -363,7 +481,8 @@ fn test_large_queue_performance() {
 
     // Dequeue all elements
     for i in 0..1000 {
-        let result = call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
+        let result =
+            call_builtin("queueDequeue", &[queue.clone()], dummy_span(), &security()).unwrap();
         assert_eq!(
             result,
             Value::Option(Some(Box::new(Value::Number(i as f64))))

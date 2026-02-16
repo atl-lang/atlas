@@ -95,6 +95,14 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             | "result_map_err"
             | "result_and_then"
             | "result_or_else"
+            // HashMap intrinsics (callback-based)
+            | "hashMapForEach"
+            | "hashMapMap"
+            | "hashMapFilter"
+            // HashSet intrinsics (callback-based)
+            | "hashSetForEach"
+            | "hashSetMap"
+            | "hashSetFilter"
     )
 }
 

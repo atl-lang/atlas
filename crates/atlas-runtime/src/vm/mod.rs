@@ -1079,6 +1079,14 @@ impl VM {
             "result_map_err" => self.vm_intrinsic_result_map_err(args, span),
             "result_and_then" => self.vm_intrinsic_result_and_then(args, span),
             "result_or_else" => self.vm_intrinsic_result_or_else(args, span),
+            // HashMap intrinsics (callback-based)
+            "hashMapForEach" => self.vm_intrinsic_hashmap_for_each(args, span),
+            "hashMapMap" => self.vm_intrinsic_hashmap_map(args, span),
+            "hashMapFilter" => self.vm_intrinsic_hashmap_filter(args, span),
+            // HashSet intrinsics (callback-based)
+            "hashSetForEach" => self.vm_intrinsic_hashset_for_each(args, span),
+            "hashSetMap" => self.vm_intrinsic_hashset_map(args, span),
+            "hashSetFilter" => self.vm_intrinsic_hashset_filter(args, span),
             _ => Err(RuntimeError::UnknownFunction {
                 name: name.to_string(),
                 span,
@@ -1660,6 +1668,235 @@ impl VM {
                 span,
             }),
         }
+    }
+
+    fn vm_intrinsic_hashmap_for_each(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashMapForEach() expects 2 arguments (map, callback)".to_string(),
+                span,
+            });
+        }
+
+        let map = match &args[0] {
+            Value::HashMap(m) => m.borrow().entries(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashMapForEach() first argument must be HashMap".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = &args[1];
+
+        for (key, value) in map {
+            self.vm_call_function_value(callback, vec![value, key.to_value()], span)?;
+        }
+
+        Ok(Value::Null)
+    }
+
+    fn vm_intrinsic_hashmap_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashMapMap() expects 2 arguments (map, callback)".to_string(),
+                span,
+            });
+        }
+
+        let map = match &args[0] {
+            Value::HashMap(m) => m.borrow().entries(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashMapMap() first argument must be HashMap".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = &args[1];
+
+        let mut result_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
+        for (key, value) in map {
+            let new_value =
+                self.vm_call_function_value(callback, vec![value, key.clone().to_value()], span)?;
+            result_map.insert(key, new_value);
+        }
+
+        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
+            result_map,
+        ))))
+    }
+
+    fn vm_intrinsic_hashmap_filter(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashMapFilter() expects 2 arguments (map, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let map = match &args[0] {
+            Value::HashMap(m) => m.borrow().entries(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashMapFilter() first argument must be HashMap".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = &args[1];
+
+        let mut result_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
+        for (key, value) in map {
+            let pred_result = self.vm_call_function_value(
+                predicate,
+                vec![value.clone(), key.clone().to_value()],
+                span,
+            )?;
+            match pred_result {
+                Value::Bool(true) => {
+                    result_map.insert(key, value);
+                }
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "hashMapFilter() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
+            result_map,
+        ))))
+    }
+
+    fn vm_intrinsic_hashset_for_each(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashSetForEach() expects 2 arguments (set, callback)".to_string(),
+                span,
+            });
+        }
+
+        let set = match &args[0] {
+            Value::HashSet(s) => s.borrow().to_vec(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashSetForEach() first argument must be HashSet".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = &args[1];
+
+        for element in set {
+            self.vm_call_function_value(callback, vec![element.to_value()], span)?;
+        }
+
+        Ok(Value::Null)
+    }
+
+    fn vm_intrinsic_hashset_map(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashSetMap() expects 2 arguments (set, callback)".to_string(),
+                span,
+            });
+        }
+
+        let set = match &args[0] {
+            Value::HashSet(s) => s.borrow().to_vec(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashSetMap() first argument must be HashSet".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let callback = &args[1];
+
+        let mut result = Vec::new();
+        for element in set {
+            let mapped_value =
+                self.vm_call_function_value(callback, vec![element.to_value()], span)?;
+            result.push(mapped_value);
+        }
+
+        Ok(Value::array(result))
+    }
+
+    fn vm_intrinsic_hashset_filter(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        if args.len() != 2 {
+            return Err(RuntimeError::TypeError {
+                msg: "hashSetFilter() expects 2 arguments (set, predicate)".to_string(),
+                span,
+            });
+        }
+
+        let set = match &args[0] {
+            Value::HashSet(s) => s.borrow().to_vec(),
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "hashSetFilter() first argument must be HashSet".to_string(),
+                    span,
+                })
+            }
+        };
+
+        let predicate = &args[1];
+
+        let mut result_set = crate::stdlib::collections::hashset::AtlasHashSet::new();
+        for element in set {
+            let pred_result =
+                self.vm_call_function_value(predicate, vec![element.clone().to_value()], span)?;
+            match pred_result {
+                Value::Bool(true) => {
+                    result_set.insert(element);
+                }
+                Value::Bool(false) => {}
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "hashSetFilter() predicate must return bool".to_string(),
+                        span,
+                    })
+                }
+            }
+        }
+
+        Ok(Value::HashSet(std::rc::Rc::new(std::cell::RefCell::new(
+            result_set,
+        ))))
     }
 
     /// Helper: Call a function value with arguments (VM version)
