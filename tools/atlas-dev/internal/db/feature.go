@@ -192,8 +192,16 @@ func (db *DB) GetFeature(name string) (*Feature, error) {
 	return &f, nil
 }
 
+// ListFeaturesOptions represents filtering options for listing features
+type ListFeaturesOptions struct {
+	Category string
+	Status   string
+	Limit    int
+	Offset   int
+}
+
 // ListFeatures retrieves features with optional filters
-func (db *DB) ListFeatures(category, status string) ([]*FeatureListItem, error) {
+func (db *DB) ListFeatures(opts ListFeaturesOptions) ([]*FeatureListItem, error) {
 	start := time.Now()
 
 	query := `
@@ -206,12 +214,23 @@ func (db *DB) ListFeatures(category, status string) ([]*FeatureListItem, error) 
 	// Note: category filter would require joining with a category mapping
 	// For now, we'll skip category filtering at DB level
 
-	if status != "" {
+	if opts.Status != "" {
 		query += " AND status = ?"
-		args = append(args, status)
+		args = append(args, opts.Status)
 	}
 
 	query += " ORDER BY name"
+
+	// Add pagination (same pattern as phases/decisions)
+	if opts.Limit > 0 {
+		query += " LIMIT ?"
+		args = append(args, opts.Limit)
+	}
+
+	if opts.Offset > 0 {
+		query += " OFFSET ?"
+		args = append(args, opts.Offset)
+	}
 
 	rows, err := db.conn.Query(query, args...)
 	if err != nil {
@@ -236,11 +255,49 @@ func (db *DB) ListFeatures(category, status string) ([]*FeatureListItem, error) 
 	duration := time.Since(start)
 	slog.Debug("features listed",
 		"count", len(features),
-		"status_filter", status,
+		"status_filter", opts.Status,
+		"limit", opts.Limit,
+		"offset", opts.Offset,
 		"duration_ms", duration.Milliseconds(),
 	)
 
 	return features, nil
+}
+
+// CountFeatures returns the count of features matching the filter criteria (no data fetch)
+func (db *DB) CountFeatures(opts ListFeaturesOptions) (int, error) {
+	start := time.Now()
+
+	query := `
+		SELECT COUNT(*)
+		FROM features
+		WHERE 1=1
+	`
+	args := []interface{}{}
+
+	// Note: category filter would require joining with a category mapping
+	// For now, we'll skip category filtering at DB level
+
+	if opts.Status != "" {
+		query += " AND status = ?"
+		args = append(args, opts.Status)
+	}
+
+	var count int
+	err := db.conn.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count features: %w", err)
+	}
+
+	duration := time.Since(start)
+	slog.Debug("query completed",
+		"query", "countFeatures",
+		"status", opts.Status,
+		"count", count,
+		"duration_ms", duration.Milliseconds(),
+	)
+
+	return count, nil
 }
 
 // UpdateFeature updates a feature record

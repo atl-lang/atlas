@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/atlas-lang/atlas-dev/internal/compose"
+	"github.com/atlas-lang/atlas-dev/internal/db"
 	"github.com/atlas-lang/atlas-dev/internal/output"
 	"github.com/spf13/cobra"
 )
@@ -10,6 +11,8 @@ func featureListCmd() *cobra.Command {
 	var (
 		category string
 		status   string
+		limit    int
+		offset   int
 	)
 
 	cmd := &cobra.Command{
@@ -39,12 +42,27 @@ func featureListCmd() *cobra.Command {
 				filterNames = compose.ExtractField(input, "name")
 			}
 
-			features, err := database.ListFeatures(category, status)
+			// Apply default limit for token efficiency (AI-only)
+			const DEFAULT_LIST_LIMIT = 10
+			const MAX_LIST_LIMIT = 100
+			if limit == 0 {
+				limit = DEFAULT_LIST_LIMIT
+			}
+			if limit > MAX_LIST_LIMIT {
+				limit = MAX_LIST_LIMIT
+			}
+
+			features, err := database.ListFeatures(db.ListFeaturesOptions{
+				Category: category,
+				Status:   status,
+				Limit:    limit,
+				Offset:   offset,
+			})
 			if err != nil {
 				return err
 			}
 
-			// Convert to compact JSON
+			// Convert to minimal JSON (surgical by default)
 			items := make([]map[string]interface{}, 0, len(features))
 			for _, f := range features {
 				// Filter by stdin names if provided
@@ -62,16 +80,16 @@ func featureListCmd() *cobra.Command {
 				}
 
 				items = append(items, map[string]interface{}{
-					"name":    f.Name,
-					"display": f.DisplayName,
-					"ver":     f.Version,
-					"stat":    f.Status,
+					"name": f.Name,
+					"ver":  f.Version,
+					"stat": f.Status,
 				})
 			}
 
 			result := map[string]interface{}{
 				"features": items,
-				"cnt":      len(features),
+				"cnt":      len(items),
+				"lim":      limit,
 			}
 
 			return output.Success(result)
@@ -80,6 +98,8 @@ func featureListCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&category, "category", "c", "", "Filter by category")
 	cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status")
+	cmd.Flags().IntVar(&limit, "limit", 0, "Limit results (default: 10, max: 100)")
+	cmd.Flags().IntVar(&offset, "offset", 0, "Offset for pagination")
 
 	return cmd
 }

@@ -14,6 +14,7 @@ func decisionCmd() *cobra.Command {
 
 	cmd.AddCommand(decisionCreateCmd())
 	cmd.AddCommand(decisionListCmd())
+	cmd.AddCommand(decisionCountCmd())
 	cmd.AddCommand(decisionSearchCmd())
 	cmd.AddCommand(decisionReadCmd())
 	cmd.AddCommand(decisionUpdateCmd())

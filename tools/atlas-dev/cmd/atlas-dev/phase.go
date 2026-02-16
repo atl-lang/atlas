@@ -17,6 +17,7 @@ func phaseCmd() *cobra.Command {
 	cmd.AddCommand(phaseNextCmd())
 	cmd.AddCommand(phaseInfoCmd())
 	cmd.AddCommand(phaseListCmd())
+	cmd.AddCommand(phaseCountCmd())
 
 	return cmd
 }

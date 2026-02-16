@@ -17,6 +17,7 @@ The database is the source of truth for metadata, while markdown files contain f
 
 	cmd.AddCommand(featureCreateCmd())
 	cmd.AddCommand(featureListCmd())
+	cmd.AddCommand(featureCountCmd())
 	cmd.AddCommand(featureReadCmd())
 	cmd.AddCommand(featureUpdateCmd())
 	cmd.AddCommand(featureValidateCmd())

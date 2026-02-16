@@ -303,6 +303,46 @@ func (db *DB) ListDecisions(opts ListDecisionsOptions) ([]*DecisionListItem, err
 	return decisions, rows.Err()
 }
 
+// CountDecisions returns the count of decisions matching the filter criteria (no data fetch)
+func (db *DB) CountDecisions(opts ListDecisionsOptions) (int, error) {
+	start := time.Now()
+
+	query := `
+		SELECT COUNT(*)
+		FROM decisions
+		WHERE 1=1
+	`
+	args := []interface{}{}
+
+	// Add filters (same as ListDecisions)
+	if opts.Component != "" {
+		query += " AND component = ?"
+		args = append(args, opts.Component)
+	}
+
+	if opts.Status != "" {
+		query += " AND status = ?"
+		args = append(args, opts.Status)
+	}
+
+	var count int
+	err := db.conn.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	duration := time.Since(start)
+	slog.Debug("query completed",
+		"query", "countDecisions",
+		"component", opts.Component,
+		"status", opts.Status,
+		"count", count,
+		"duration_ms", duration.Milliseconds(),
+	)
+
+	return count, nil
+}
+
 // SearchDecisions searches decisions by query string
 func (db *DB) SearchDecisions(query string, limit int) ([]*DecisionListItem, error) {
 	start := time.Now()

@@ -146,7 +146,10 @@ func TestListFeatures(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			list, err := db.ListFeatures(tt.category, tt.status)
+			list, err := db.ListFeatures(ListFeaturesOptions{
+				Category: tt.category,
+				Status:   tt.status,
+			})
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}

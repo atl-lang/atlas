@@ -39,6 +39,16 @@ func phaseListCmd() *cobra.Command {
 				filterPaths = compose.ExtractPaths(input)
 			}
 
+			// Apply default limit for token efficiency (AI-only)
+			const DEFAULT_LIST_LIMIT = 10
+			const MAX_LIST_LIMIT = 100
+			if limit == 0 {
+				limit = DEFAULT_LIST_LIMIT
+			}
+			if limit > MAX_LIST_LIMIT {
+				limit = MAX_LIST_LIMIT
+			}
+
 			phases, err := database.ListPhases(db.ListPhasesOptions{
 				Category: category,
 				Status:   status,
@@ -49,7 +59,7 @@ func phaseListCmd() *cobra.Command {
 				return err
 			}
 
-			// Convert to compact JSON
+			// Convert to minimal JSON (surgical by default for token efficiency)
 			result := make([]map[string]interface{}, 0, len(phases))
 			for _, p := range phases {
 				// Filter by stdin paths if provided
@@ -66,13 +76,14 @@ func phaseListCmd() *cobra.Command {
 					}
 				}
 
+				// Minimal fields: path (unique ID), cat (for filtering), sts (for status)
 				item := map[string]interface{}{
 					"path": p.Path,
-					"name": p.Name,
 					"cat":  p.Category,
 					"sts":  p.Status,
 				}
-				if p.CompletedDate.Valid {
+				// Only include date if completed (conditional to save tokens)
+				if p.Status == "completed" && p.CompletedDate.Valid {
 					item["date"] = p.CompletedDate.String
 				}
 				result = append(result, item)
@@ -80,7 +91,8 @@ func phaseListCmd() *cobra.Command {
 
 			return output.Success(map[string]interface{}{
 				"phases": result,
-				"count":  len(result),
+				"cnt":    len(result),
+				"lim":    limit,
 			})
 		},
 	}

@@ -45,6 +45,16 @@ func decisionListCmd() *cobra.Command {
 				filterIDs = compose.ExtractIDs(input)
 			}
 
+			// Apply default limit for token efficiency (AI-only)
+			const DEFAULT_LIST_LIMIT = 10
+			const MAX_LIST_LIMIT = 100
+			if limit == 0 {
+				limit = DEFAULT_LIST_LIMIT
+			}
+			if limit > MAX_LIST_LIMIT {
+				limit = MAX_LIST_LIMIT
+			}
+
 			opts := db.ListDecisionsOptions{
 				Component: component,
 				Status:    status,
@@ -57,7 +67,7 @@ func decisionListCmd() *cobra.Command {
 				return err
 			}
 
-			// Convert to compact JSON
+			// Convert to minimal JSON (surgical by default)
 			items := make([]map[string]interface{}, 0, len(decisions))
 			for _, d := range decisions {
 				// Filter by stdin IDs if provided
@@ -74,19 +84,27 @@ func decisionListCmd() *cobra.Command {
 					}
 				}
 
-				items = append(items, d.ToCompactJSON())
+				// Minimal fields for list view
+				items = append(items, map[string]interface{}{
+					"id":   d.ID,
+					"comp": d.Component,
+					"ttl":  d.Title,
+					"stat": d.Status,
+					"date": d.Date,
+				})
 			}
 
 			return output.Success(map[string]interface{}{
 				"decisions": items,
-				"cnt":       len(decisions),
+				"cnt":       len(items),
+				"lim":       limit,
 			})
 		},
 	}
 
 	cmd.Flags().StringVarP(&component, "component", "c", "", "Filter by component")
 	cmd.Flags().StringVarP(&status, "status", "s", "", "Filter by status")
-	cmd.Flags().IntVarP(&limit, "limit", "l", 20, "Limit results")
+	cmd.Flags().IntVarP(&limit, "limit", "l", 0, "Limit results (default: 10, max: 100)")
 	cmd.Flags().IntVar(&offset, "offset", 0, "Offset for pagination")
 
 	return cmd

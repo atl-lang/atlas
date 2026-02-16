@@ -383,6 +383,46 @@ func (db *DB) ListPhases(opts ListPhasesOptions) ([]*PhaseListItem, error) {
 	return phases, rows.Err()
 }
 
+// CountPhases returns the count of phases matching the filter criteria (no data fetch)
+func (db *DB) CountPhases(opts ListPhasesOptions) (int, error) {
+	start := time.Now()
+
+	query := `
+		SELECT COUNT(*)
+		FROM phases
+		WHERE 1=1
+	`
+	args := []interface{}{}
+
+	// Add filters (same as ListPhases)
+	if opts.Category != "" {
+		query += " AND category = ?"
+		args = append(args, opts.Category)
+	}
+
+	if opts.Status != "" {
+		query += " AND status = ?"
+		args = append(args, opts.Status)
+	}
+
+	var count int
+	err := db.conn.QueryRow(query, args...).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	duration := time.Since(start)
+	slog.Debug("query completed",
+		"query", "countPhases",
+		"category", opts.Category,
+		"status", opts.Status,
+		"count", count,
+		"duration_ms", duration.Milliseconds(),
+	)
+
+	return count, nil
+}
+
 // InsertPhase inserts a new phase into the database
 func (db *DB) InsertPhase(path, name, category string) (int64, error) {
 	result, err := db.Exec(`
