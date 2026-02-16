@@ -70,6 +70,8 @@ func main() {
 	rootCmd.AddCommand(phaseCmd())
 	rootCmd.AddCommand(decisionCmd())
 	rootCmd.AddCommand(featureCmd())
+	rootCmd.AddCommand(specCmd())
+	rootCmd.AddCommand(apiCmd())
 	rootCmd.AddCommand(contextCmd())
 	rootCmd.AddCommand(exportCmd())
 	rootCmd.AddCommand(undoCmd())
