@@ -12,8 +12,10 @@ import (
 
 var (
 	// Global flags
-	dbPath string
-	debug  bool
+	dbPath     string
+	debug      bool
+	serverMode bool
+	serverPort int
 
 	// Global database handle
 	database *db.DB
@@ -28,6 +30,14 @@ func main() {
 		Short:   "Atlas development automation tool",
 		Long:    `Atlas Dev automates development workflows using pure SQLite as single source of truth.`,
 		Version: version,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// If --server flag is set, run server mode
+			if serverMode {
+				return runServer(serverPort)
+			}
+			// Otherwise show help
+			return cmd.Help()
+		},
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// Configure logging
 			level := slog.LevelInfo
@@ -64,6 +74,10 @@ func main() {
 	// Persistent flags
 	rootCmd.PersistentFlags().StringVar(&dbPath, "db", "atlas-dev.db", "Database path")
 	rootCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug logging")
+
+	// Server mode flags
+	rootCmd.Flags().BoolVar(&serverMode, "server", false, "Start monitoring dashboard server")
+	rootCmd.Flags().IntVar(&serverPort, "port", 8080, "Server port (used with --server)")
 
 	// Add commands
 	rootCmd.AddCommand(versionCmd())

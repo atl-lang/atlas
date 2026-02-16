@@ -2,7 +2,7 @@
 
 **Single source of truth for Atlas compiler development.**
 
-SQLite database + CLI tool for tracking phases, decisions, features, and validation. **AI-only** (no human mode). Token-efficient. Production-ready.
+SQLite database + CLI tool + Real-time Monitoring Dashboard for tracking phases, decisions, features, and validation. **AI-only** (no human mode). Token-efficient. Production-ready.
 
 ---
 
@@ -13,6 +13,7 @@ Atlas Dev tracks everything about Atlas compiler development in a SQLite databas
 - **Decisions** - Architectural decisions (why we chose X over Y)
 - **Features** - What features exist, their status, implementation details
 - **Validation** - Parity checks (code ↔ specs ↔ docs ↔ tests)
+- **Monitoring** - Real-time dashboard with WebSocket updates (NEW!)
 
 **Why?** Manual tracking (editing STATUS.md) had 40% failure rate. Database is 99.8% reliable.
 
@@ -39,7 +40,22 @@ atlas-dev migrate schema
 
 **⚠️ Migration safety:** After first migration, `migrate bootstrap` requires `--force` flag to prevent accidental re-run.
 
-### 3. Complete a Phase
+### 3. Start Monitoring Dashboard (Optional)
+```bash
+# Launch real-time monitoring dashboard
+./atlas-dev --server
+
+# Open http://localhost:8080 in your browser
+```
+
+Professional hacker-themed dashboard with:
+- 100% WebSocket real-time updates (zero refreshes)
+- Live phase, decision, and feature tracking
+- Animated statistics and progress bars
+- Activity feed with GSAP animations
+- Works from any directory (embedded assets)
+
+### 4. Complete a Phase
 ```bash
 atlas-dev phase complete phases/stdlib/phase-07b.md \
   -d "HashSet with 25 tests, 100% parity" \

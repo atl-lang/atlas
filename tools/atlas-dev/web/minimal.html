@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Minimal Test</title>
+</head>
+<body style="background:#0a0e27;color:#fff;font-family:monospace;padding:20px;">
+    <h1>Minimal WebSocket Test</h1>
+    <div id="output" style="white-space:pre;"></div>
+
+    <script>
+        const output = document.getElementById('output');
+        let msgCount = 0;
+
+        output.textContent = 'Connecting...\n';
+
+        const ws = new WebSocket('ws://' + window.location.host + '/ws');
+
+        ws.onopen = () => {
+            output.textContent += 'CONNECTED\n';
+        };
+
+        ws.onmessage = (event) => {
+            msgCount++;
+            output.textContent += `\nMessage #${msgCount}:\n${event.data}\n`;
+
+            // Prevent infinite growth
+            if (msgCount > 20) {
+                output.textContent = 'Too many messages, stopping...\n';
+                ws.close();
+            }
+        };
+
+        ws.onclose = () => {
+            output.textContent += '\nDISCONNECTED\n';
+        };
+    </script>
+</body>
+</html>
