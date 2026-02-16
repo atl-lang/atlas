@@ -7,13 +7,18 @@
 **Verification:**
 ```bash
 # Check all collection implementations exist
-ls crates/atlas-runtime/src/stdlib/collections/{hashmap,hashset,queue,stack,hash}.rs
+ls crates/atlas-runtime/src/stdlib/collections/hashmap.rs
+ls crates/atlas-runtime/src/stdlib/collections/hashset.rs
+ls crates/atlas-runtime/src/stdlib/collections/queue.rs
+ls crates/atlas-runtime/src/stdlib/collections/stack.rs
+ls crates/atlas-runtime/src/stdlib/collections/hash.rs
 
 # Verify Value variants
 grep "HashMap\|HashSet\|Queue\|Stack" crates/atlas-runtime/src/value.rs | grep "Rc<RefCell"
 
-# Verify all collection tests pass
-cargo test -p atlas-runtime hashmap_tests hashset_tests queue_tests stack_tests -- --nocapture
+# Verify all collection tests pass (if they exist from previous phases)
+cargo test -p atlas-runtime -- hashmap --nocapture
+cargo test -p atlas-runtime -- hashset --nocapture
 
 # Clean build check
 cargo clean && cargo check -p atlas-runtime
@@ -31,17 +36,15 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 
 ## Files
 
-**Update:** `crates/atlas-runtime/src/interpreter.rs` (~200 lines - intrinsics)
-**Update:** `crates/atlas-runtime/src/vm.rs` (~200 lines - intrinsics)
-**Update:** `crates/atlas-runtime/src/stdlib/prelude.rs` (~50 lines - register functions)
-**Update:** `docs/api/stdlib.md` (~200 lines - iteration docs + examples)
-**Tests:** `crates/atlas-runtime/tests/collection_integration_tests.rs` (~600 lines)
-**Tests:** `crates/atlas-runtime/tests/collection_iteration_tests.rs` (~400 lines)
-**Create:** `crates/atlas-runtime/benches/collection_benchmarks.rs` (~300 lines)
+**Update:** `crates/atlas-runtime/src/interpreter/expr.rs` (~200 lines - intrinsics)
+**Update:** `crates/atlas-runtime/src/vm/mod.rs` (~200 lines - intrinsics)
+**Update:** `crates/atlas-runtime/src/stdlib/mod.rs` (~20 lines - register intrinsic names)
+**Extend:** `crates/atlas-runtime/tests/collection_iteration_tests.rs` (already exists - add more tests)
 
-**Total new code:** ~450 lines
+**Total new code:** ~450 lines (intrinsics)
 **Total tests:** ~1,000 lines (30+ test cases)
-**Total benchmarks:** ~300 lines
+
+**Note:** Benchmarks deferred to separate phase per DR-006 (scope management)
 
 ---
 
@@ -70,9 +73,9 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 - `hashSetMap(set, fn)` - transform elements to array (Set→Array)
 
 **Implementation locations:**
-- Interpreter intrinsics: interpreter.rs (builtin_call match)
-- VM intrinsics: vm.rs (execute_call_builtin)
-- Function registration: stdlib/prelude.rs (register_native macro)
+- Interpreter intrinsics: interpreter/expr.rs (in eval_expr for Expr::Call)
+- VM intrinsics: vm/mod.rs (in execute_call_intrinsic)
+- Function registration: stdlib/mod.rs (is_array_intrinsic function)
 
 **Integration tests cover:**
 - Cross-collection operations (Map→Set, Set→Array, etc.)
@@ -80,12 +83,12 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 - Edge cases (empty collections, large collections)
 - Error scenarios (wrong types, callback errors)
 
-**Benchmarks cover:**
-- HashMap: insert, get, remove, iteration (1K, 10K, 100K elements)
-- HashSet: add, has, set operations, iteration
-- Queue: enqueue/dequeue throughput
-- Stack: push/pop throughput
-- Compare against Rust std HashMap/HashSet/VecDeque/Vec
+**Note on Benchmarks:**
+Per DR-006, benchmarks deferred to separate dedicated performance phase. Focus for this phase:
+- Complete functional implementation
+- Comprehensive testing (33+ tests)
+- 100% parity verification
+- Correctness over performance optimization
 
 ---
 
@@ -130,13 +133,9 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 14. Memory behavior (no leaks with Rc<RefCell<>>)
 15. Parity verification (interpreter vs VM results)
 
-### Benchmark Tests (4 categories)
-1. HashMap performance (insert, get, remove, iterate)
-2. HashSet performance (add, has, operations, iterate)
-3. Queue/Stack performance (push/pop throughput)
-4. Comparison benchmarks (Atlas vs Rust std collections)
+**Minimum test count:** 33 tests (18 iteration + 15 integration)
 
-**Minimum test count:** 33 tests
+**Note:** Benchmark tests deferred per DR-006.
 
 **Parity requirement:** All tests run in both interpreter and VM with identical results.
 
@@ -150,16 +149,12 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 - ✅ All intrinsics implemented in both interpreter and VM
 - ✅ Callback pattern matches array intrinsics (consistent API)
 - ✅ 33+ tests pass (10 HashMap + 8 HashSet + 15 integration)
-- ✅ Collection benchmarks complete (4 categories)
-- ✅ Benchmarks show competitive performance vs Rust std
 - ✅ Integration tests verify cross-collection operations
 - ✅ Error handling complete (callback errors, type errors)
 - ✅ 100% interpreter/VM parity verified
-- ✅ Documentation complete with real-world examples
 - ✅ No clippy warnings
 - ✅ cargo test -p atlas-runtime passes
-- ✅ cargo bench (benchmarks run successfully)
-- ✅ Decision log DR-005 (Collection API) referenced
+- ✅ Decision logs DR-005 (Collection API), DR-006 (Benchmarks deferred) referenced
 
 ---
 
@@ -168,7 +163,7 @@ Add iteration support (forEach, map, filter) for HashMap and HashSet as interpre
 **Decision Logs:** DR-005 (Collection API Design and Iteration)
 **Specifications:**
 - docs/specification/runtime.md (Value representation, intrinsics)
-- memory/patterns.md (Callback intrinsic pattern from arrays)
+- memory/patterns.md (Callback intrinsic pattern - see "Intrinsic Pattern" section)
 **Previous phases:**
 - phase-07a-hash-infrastructure-hashmap.md (HashMap)
 - phase-07b-hashset.md (HashSet)
