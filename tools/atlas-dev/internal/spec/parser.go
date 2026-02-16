@@ -13,9 +13,12 @@ type Spec struct {
 	Title         string          `json:"title"`
 	Version       string          `json:"version,omitempty"`
 	Status        string          `json:"status,omitempty"`
+	RawContent    string          `json:"raw_content,omitempty"`
+	Outline       []string        `json:"outline,omitempty"`
 	Sections      []*Section      `json:"sections"`
 	CodeBlocks    []*CodeBlock    `json:"code_blocks,omitempty"`
 	GrammarRules  []*GrammarRule  `json:"grammar_rules,omitempty"`
+	Grammar       []*GrammarRule  `json:"grammar,omitempty"`
 	References    []string        `json:"references,omitempty"`
 }
 
@@ -44,6 +47,13 @@ type GrammarRule struct {
 
 // Parse parses a specification markdown file
 func Parse(path string) (*Spec, error) {
+	// Read raw content first
+	rawBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read spec file: %w", err)
+	}
+	rawContent := string(rawBytes)
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open spec file: %w", err)
@@ -51,6 +61,8 @@ func Parse(path string) (*Spec, error) {
 	defer file.Close()
 
 	spec := &Spec{
+		RawContent:   rawContent,
+		Outline:      []string{},
 		Sections:     []*Section{},
 		CodeBlocks:   []*CodeBlock{},
 		GrammarRules: []*GrammarRule{},
@@ -144,6 +156,10 @@ func Parse(path string) (*Spec, error) {
 
 			if level > 1 { // Skip level 1 (title)
 				title := strings.TrimSpace(strings.TrimPrefix(trimmed, strings.Repeat("#", level)))
+
+				// Add to outline
+				spec.Outline = append(spec.Outline, title)
+
 				section := &Section{
 					Level:       level,
 					Title:       title,
@@ -191,6 +207,9 @@ func Parse(path string) (*Spec, error) {
 	if spec.Title == "" {
 		return nil, fmt.Errorf("missing spec title")
 	}
+
+	// Set Grammar field (for backward compatibility)
+	spec.Grammar = spec.GrammarRules
 
 	return spec, nil
 }

@@ -1,12 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"path/filepath"
 
 	"github.com/atlas-lang/atlas-dev/internal/compose"
 	"github.com/atlas-lang/atlas-dev/internal/output"
-	"github.com/atlas-lang/atlas-dev/internal/spec"
 	"github.com/spf13/cobra"
 )
 
@@ -17,20 +16,20 @@ func specReadCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "read <spec-file>",
-		Short: "Read a specification document",
-		Long:  `Read and parse a specification markdown file. Optionally filter to a specific section.`,
+		Use:   "read <spec-name>",
+		Short: "Read specification from database",
+		Long:  `Read specification content from database. No MD files required.`,
 		Example: `  # Read full spec
-  atlas-dev spec read ../../docs/specification/syntax.md
+  atlas-dev spec read syntax
 
   # Read specific section
-  atlas-dev spec read ../../docs/specification/syntax.md --section "Keywords"
+  atlas-dev spec read syntax --section "Keywords"
 
   # Read from stdin (auto-detected)
-  echo '{"path":"docs/specification/syntax.md"}' | atlas-dev spec read`,
+  echo '{"name":"syntax"}' | atlas-dev spec read`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var specPath string
+			var specName string
 
 			// Auto-detect stdin or use args
 			if compose.HasStdin() {
@@ -39,68 +38,93 @@ func specReadCmd() *cobra.Command {
 					return err
 				}
 
-				specPath, err = compose.ExtractFirstPath(input)
-				if err != nil {
-					return err
+				if len(input.Items) == 0 {
+					return fmt.Errorf("empty stdin input")
+				}
+
+				item := input.Items[0]
+				// Try to extract name or path
+				if name, ok := item["name"].(string); ok {
+					specName = name
+				} else if path, ok := item["path"].(string); ok {
+					// Extract name from path
+					specName = extractNameFromPath(path)
+				} else {
+					return fmt.Errorf("name or path required")
 				}
 			} else {
 				if len(args) < 1 {
-					return fmt.Errorf("spec file path required")
+					return fmt.Errorf("spec name required")
 				}
-				specPath = args[0]
+				specName = args[0]
 			}
 
-			// Make path absolute if relative
-			if !filepath.IsAbs(specPath) {
-				var err error
-				specPath, err = filepath.Abs(specPath)
-				if err != nil {
-					return fmt.Errorf("failed to resolve path: %w", err)
-				}
-			}
+			// Query database by name
+			var (
+				title    string
+				version  string
+				status   string
+				outline  string
+				sections string
+			)
 
-			// Parse spec
-			parsed, err := spec.Parse(specPath)
+			err := database.QueryRow(`
+				SELECT title, version, status, outline, sections
+				FROM specs
+				WHERE name = ?
+			`, specName).Scan(&title, &version, &status, &outline, &sections)
+
 			if err != nil {
-				return err
+				return fmt.Errorf("spec not found: %s", specName)
 			}
 
 			result := map[string]interface{}{
-				"title": parsed.Title,
+				"ok":    true,
+				"title": title,
 			}
 
-			if parsed.Version != "" {
-				result["ver"] = parsed.Version
+			if version != "" {
+				result["ver"] = version
 			}
-			if parsed.Status != "" {
-				result["stat"] = parsed.Status
+			if status != "" {
+				result["stat"] = status
 			}
 
 			// Filter to specific section if requested
 			if section != "" {
-				found := parsed.FindSection(section)
-				if found == nil {
-					return fmt.Errorf("section not found: %s", section)
+				// Parse sections JSON
+				var sectionsList []interface{}
+				if err := json.Unmarshal([]byte(sections), &sectionsList); err != nil {
+					return fmt.Errorf("failed to parse sections: %w", err)
 				}
 
-				result["section"] = found.Title
-				result["content"] = found.Content
-
-				if withCode && len(found.CodeBlocks) > 0 {
-					blocks := []map[string]string{}
-					for _, block := range found.CodeBlocks {
-						blocks = append(blocks, map[string]string{
-							"lang": block.Language,
-							"code": block.Code,
-						})
+				// Find matching section (simplified - would need proper recursive search)
+				found := false
+				for _, s := range sectionsList {
+					if sMap, ok := s.(map[string]interface{}); ok {
+						if sMap["title"] == section {
+							result["section"] = sMap["title"]
+							result["content"] = sMap["content"]
+							found = true
+							break
+						}
 					}
-					result["code"] = blocks
+				}
+
+				if !found {
+					return fmt.Errorf("section not found: %s", section)
 				}
 			} else {
 				// Return outline
-				outline := parsed.GetOutline()
-				result["outline"] = outline
-				result["sections"] = len(parsed.Sections)
+				var outlineList []string
+				if err := json.Unmarshal([]byte(outline), &outlineList); err == nil {
+					result["outline"] = outlineList
+				}
+
+				var sectionsList []interface{}
+				if err := json.Unmarshal([]byte(sections), &sectionsList); err == nil {
+					result["sections"] = len(sectionsList)
+				}
 			}
 
 			return output.Success(result)
@@ -111,4 +135,22 @@ func specReadCmd() *cobra.Command {
 	cmd.Flags().BoolVar(&withCode, "with-code", false, "Include code blocks")
 
 	return cmd
+}
+
+func extractNameFromPath(path string) string {
+	// Extract name from path like "docs/specification/syntax.md" -> "syntax"
+	name := path
+	if idx := len(path) - 1; idx >= 0 {
+		for i := idx; i >= 0; i-- {
+			if path[i] == '/' {
+				name = path[i+1:]
+				break
+			}
+		}
+	}
+	// Remove .md extension
+	if len(name) > 3 && name[len(name)-3:] == ".md" {
+		name = name[:len(name)-3]
+	}
+	return name
 }

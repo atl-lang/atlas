@@ -83,6 +83,14 @@ CREATE TABLE IF NOT EXISTS features (
     related_phases TEXT,
     spec_path TEXT,
     api_path TEXT,
+    content TEXT,
+    overview TEXT,
+    functions TEXT,
+    impl_file TEXT,
+    test_file TEXT,
+    function_count INTEGER DEFAULT 0,
+    test_count INTEGER DEFAULT 0,
+    parity REAL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -91,7 +99,7 @@ CREATE INDEX IF NOT EXISTS idx_features_version ON features(version);
 CREATE INDEX IF NOT EXISTS idx_features_status ON features(status);
 
 -- ============================================================================
--- SPECS (tracks specification docs)
+-- SPECS (FULL specification content - replaces docs/specification/*.md)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS specs (
@@ -100,7 +108,13 @@ CREATE TABLE IF NOT EXISTS specs (
     name TEXT NOT NULL,
     section TEXT NOT NULL,
     title TEXT NOT NULL,
+    version TEXT,
+    status TEXT,
     summary TEXT,
+    content TEXT,
+    outline TEXT,
+    sections TEXT,
+    grammar TEXT,
     last_validated TEXT,
     validation_status TEXT,
     related_features TEXT,
@@ -109,9 +123,10 @@ CREATE TABLE IF NOT EXISTS specs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_specs_section ON specs(section);
+CREATE INDEX IF NOT EXISTS idx_specs_name ON specs(name);
 
 -- ============================================================================
--- API_DOCS (tracks API documentation)
+-- API_DOCS (FULL API documentation - replaces docs/api/*.md)
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS api_docs (
@@ -120,12 +135,18 @@ CREATE TABLE IF NOT EXISTS api_docs (
     module TEXT NOT NULL,
     name TEXT NOT NULL,
     title TEXT NOT NULL,
+    content TEXT,
+    functions TEXT,
+    types TEXT,
+    examples TEXT,
     functions_count INTEGER DEFAULT 0,
     last_validated TEXT,
     validation_status TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_api_docs_module ON api_docs(module);
 
 -- ============================================================================
 -- METADATA (replaces STATUS.md header + global config)

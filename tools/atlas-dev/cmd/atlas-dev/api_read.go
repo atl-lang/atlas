@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/atlas-lang/atlas-dev/internal/api"
@@ -16,20 +17,20 @@ func apiReadCmd() *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "read <api-file>",
-		Short: "Read API documentation",
-		Long:  `Read and parse API documentation markdown file.`,
-		Example: `  # Read API doc
-  atlas-dev api read ../../docs/api/stdlib.md
+		Use:   "read <module-name>",
+		Short: "Read API documentation from database",
+		Long:  `Read API documentation content from database. No MD files required.`,
+		Example: `  # Read full API doc
+  atlas-dev api read stdlib
 
   # Read specific function
-  atlas-dev api read ../../docs/api/stdlib.md --function print
+  atlas-dev api read stdlib --function print
 
   # Read from stdin (auto-detected)
-  echo '{"path":"docs/api/stdlib.md"}' | atlas-dev api read`,
+  echo '{"name":"stdlib"}' | atlas-dev api read`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			var apiPath string
+			var moduleName string
 
 			// Auto-detect stdin or use args
 			if compose.HasStdin() {
@@ -37,44 +38,80 @@ func apiReadCmd() *cobra.Command {
 				if err != nil {
 					return err
 				}
-				apiPath, err = compose.ExtractFirstPath(input)
-				if err != nil {
-					return err
+
+				if len(input.Items) == 0 {
+					return fmt.Errorf("empty stdin input")
+				}
+
+				item := input.Items[0]
+				// Try to extract name or module
+				if name, ok := item["name"].(string); ok {
+					moduleName = name
+				} else if module, ok := item["module"].(string); ok {
+					moduleName = module
+				} else {
+					return fmt.Errorf("name or module required")
 				}
 			} else {
 				if len(args) < 1 {
-					return fmt.Errorf("API file path required")
+					return fmt.Errorf("module name required")
 				}
-				apiPath = args[0]
+				moduleName = args[0]
 			}
 
-			// Parse API doc
-			doc, err := api.Parse(apiPath)
+			// Query database by module name
+			var (
+				title          string
+				functionsJSON  string
+				functionsCount int
+			)
+
+			err := database.QueryRow(`
+				SELECT title, functions, functions_count
+				FROM api_docs
+				WHERE module = ? OR name = ?
+			`, moduleName, moduleName).Scan(&title, &functionsJSON, &functionsCount)
+
 			if err != nil {
-				return err
+				return fmt.Errorf("API doc not found: %s", moduleName)
 			}
 
 			result := map[string]interface{}{
-				"title": doc.Title,
+				"ok":    true,
+				"title": title,
+			}
+
+			// Parse functions JSON
+			var functions []*api.Function
+			if err := json.Unmarshal([]byte(functionsJSON), &functions); err != nil {
+				return fmt.Errorf("failed to parse functions: %w", err)
 			}
 
 			if function != "" {
-				fn := doc.FindFunction(function)
-				if fn == nil {
+				// Find specific function
+				var found *api.Function
+				for _, fn := range functions {
+					if fn.Name == function {
+						found = fn
+						break
+					}
+				}
+
+				if found == nil {
 					return fmt.Errorf("function not found: %s", function)
 				}
 
-				result["func"] = fn.Name
-				result["sig"] = fn.Signature
-				if fn.Description != "" {
-					result["desc"] = fn.Description
+				result["func"] = found.Name
+				result["sig"] = found.Signature
+				if found.Description != "" {
+					result["desc"] = found.Description
 				}
 			} else {
-				result["functions"] = len(doc.Functions)
+				result["functions"] = functionsCount
 
 				if detailed {
 					fns := []map[string]string{}
-					for _, fn := range doc.Functions {
+					for _, fn := range functions {
 						fns = append(fns, map[string]string{
 							"name": fn.Name,
 							"sig":  fn.Signature,

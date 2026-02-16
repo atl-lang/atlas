@@ -9,9 +9,11 @@ import (
 
 // APIDoc represents parsed API documentation
 type APIDoc struct {
-	Title     string      `json:"title"`
-	Functions []*Function `json:"functions"`
-	Types     []*TypeDef  `json:"types,omitempty"`
+	Title      string      `json:"title"`
+	RawContent string      `json:"raw_content,omitempty"`
+	Functions  []*Function `json:"functions"`
+	Types      []*TypeDef  `json:"types,omitempty"`
+	Examples   []string    `json:"examples,omitempty"`
 }
 
 // Function represents a documented function
@@ -41,6 +43,13 @@ type TypeDef struct {
 
 // Parse parses API documentation from markdown
 func Parse(path string) (*APIDoc, error) {
+	// Read raw content first
+	rawBytes, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read API file: %w", err)
+	}
+	rawContent := string(rawBytes)
+
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open API file: %w", err)
@@ -48,8 +57,10 @@ func Parse(path string) (*APIDoc, error) {
 	defer file.Close()
 
 	doc := &APIDoc{
-		Functions: []*Function{},
-		Types:     []*TypeDef{},
+		RawContent: rawContent,
+		Functions:  []*Function{},
+		Types:      []*TypeDef{},
+		Examples:   []string{},
 	}
 
 	scanner := bufio.NewScanner(file)
