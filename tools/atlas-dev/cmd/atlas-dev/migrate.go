@@ -307,15 +307,19 @@ func parseTrackerFile(path string) (trackerData, error) {
 
 	text := string(content)
 
-	// Parse completed phases: - ✅ phase-name.md **[Description, 2024-01-15]**
-	completedRe := regexp.MustCompile(`(?m)^- ✅ (.+?)\.md \*\*\[(.+?), (\d{4}-\d{2}-\d{2})\]\*\*`)
+	// Parse completed phases: - ✅ phase-name.md **[Description, 2024-01-15]** or **[Description]**
+	completedRe := regexp.MustCompile(`(?m)^- ✅ (.+?)\.md \*\*\[(.+?)(?:, (\d{4}-\d{2}-\d{2}))?\]\*\*`)
 	matches := completedRe.FindAllStringSubmatch(text, -1)
 	for _, match := range matches {
-		if len(match) >= 4 {
+		if len(match) >= 3 {
+			completedDate := ""
+			if len(match) >= 4 {
+				completedDate = match[3]
+			}
 			data.CompletedPhases = append(data.CompletedPhases, phaseData{
 				Name:          match[1] + ".md",
 				Description:   match[2],
-				CompletedDate: match[3],
+				CompletedDate: completedDate,
 				Status:        "completed",
 			})
 		}
