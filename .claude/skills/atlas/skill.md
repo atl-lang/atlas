@@ -241,13 +241,13 @@ cargo test -p atlas-runtime  # Full suite - ALL must pass
 **Structure:**
 - `docs/README.md` - Navigation
 - `Atlas-SPEC.md` - Spec index (routing)
+- `docs/atlas-dev.md` - **CLI reference (AI-optimized, surgical patterns, 170 lines)**
 - `docs/specification/` - Types, syntax, semantics, runtime, modules, REPL, bytecode, diagnostics
 - `docs/implementation/` - Component details
 - `docs/guides/` - Testing, code quality
 - `docs/api/` - Stdlib, runtime
-- `tools/atlas-dev/README.md` - CLI tool documentation (all commands)
 
-**Database is truth. Never edit markdown tracking files. Always use `atlas-dev` CLI.**
+**Database is truth. Never edit markdown tracking files. Always use `atlas-dev` CLI with surgical patterns.**
 
 ---
 
@@ -326,6 +326,9 @@ cargo test -p atlas-runtime   # Full suite (user tells you when)
 - `guides/ai-first-principles.md` - AI optimization
 - `guides/build-quality.md` - Build commands
 - `guides/line-limits.md` - Line limit philosophy
+
+**CLI Tool (Read First):**
+- `docs/atlas-dev.md` - **AI-optimized CLI reference (surgical patterns, piping, workflows)**
 
 **Gates:**
 - `gates/README.md` - Gate index

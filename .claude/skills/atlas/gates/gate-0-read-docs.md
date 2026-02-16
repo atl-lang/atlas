@@ -18,7 +18,19 @@ cargo clean
 
 ---
 
-## Step 2: Get Context (CLI First, Then Docs)
+## Step 2: Learn CLI Tool (First Time Only)
+
+**IF first time using atlas-dev CLI:**
+- Read `docs/atlas-dev.md` (170 lines, AI-optimized)
+- Learn surgical patterns: count → list → read
+- Learn piping workflows
+- Learn token-efficient queries
+
+**SKIP if already familiar with atlas-dev.**
+
+---
+
+## Step 3: Get Context (CLI First, Then Docs)
 
 1. **ALWAYS:** Run `atlas-dev context current` - Single command returns:
    - Next phase to work on (path + name)
@@ -27,7 +39,7 @@ cargo clean
    - Related architectural decisions
    - Category progress and navigation
 
-2. **IF needed:** Additional queries:
+2. **IF needed:** Additional queries (use surgical patterns from docs/atlas-dev.md):
    - `atlas-dev summary` - Project dashboard (category progress, completion %)
    - `atlas-dev blockers` - See what phases are blocked
    - `atlas-dev decision search "keyword"` - Find relevant decisions
