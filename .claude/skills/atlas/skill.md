@@ -16,7 +16,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 **User:** Overseer (catch mistakes only, has "no technical experience")
 **Phase directive = START NOW** (no permission needed)
 
-**Never ask:** "Ready?" "What's next?" "Should I proceed?" "Is this correct?"
+**Never ask during execution:** "Ready?" "What's next?" "Should I proceed?" "Is this correct?"
 **Answer source:** STATUS.md, phases/, memory/, docs/specification/
 
 **Triggers:** "Next: Phase-XX" | "Start Phase-XX" | User pastes handoff
@@ -29,8 +29,8 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 1. Check STATUS.md (verify phase not complete)
 2. Run GATE -1 (sanity check)
 3. Declare workflow type
-4. Execute gates 0-6
-5. Deliver handoff
+4. Execute gates 0-6 (A to Z, uninterrupted)
+5. Deliver handoff (completion checkpoint - user may engage here)
 
 ### 2. Spec Compliance (100%)
 Spec defines it → implement EXACTLY. No shortcuts, no "good enough", no partial implementations.
@@ -118,7 +118,9 @@ cargo test -p atlas-runtime  # Full suite - ALL must pass
 
 **CRITICAL:** Only hand off when ALL tests pass.
 
-**Required:**
+**Protocol:** See STATUS.md "Handoff Protocol" section for detailed update steps.
+
+**Required in summary:**
 - Status: "✅ ALL ACCEPTANCE CRITERIA MET"
 - Final Stats (bullets)
 - Highlights (2-3 sentences + key bullets)
