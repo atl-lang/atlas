@@ -5,6 +5,24 @@
 
 ---
 
+## IMPORTANT: Pure SQLite Architecture
+
+**One-time migration, then SQL forever:**
+1. ✅ **Bootstrap once** - `atlas-dev migrate bootstrap` (parses STATUS.md → SQLite)
+2. ✅ **Delete markdown** - Remove STATUS.md, trackers/*.md (no longer needed)
+3. ✅ **SQL only** - All future updates via CLI → database
+4. ❌ **No markdown indexing** - Database is indexed, no file parsing needed
+
+**After migration:**
+- All tracking data in `atlas-dev.db`
+- Phase files (`phases/*.md`) are instructions only (never change)
+- No STATUS.md, no trackers, no decision-logs markdown
+- All operations via SQL (indexed, < 1ms)
+
+**This guide assumes pure SQLite architecture (post-migration).**
+
+---
+
 ## Token Efficiency
 
 ### Problem: Verbose Output Wastes Tokens
@@ -295,108 +313,38 @@ polish = pol
 
 ---
 
-## Caching for Speed
+## Performance: SQLite = Built-In Speed
 
-### Cache Strategy
+**NO FILE CACHING NEEDED** - SQLite with indexes IS the cache.
 
-**Cache these expensive operations:**
-1. Phase file parsing (78 files)
-2. Decision log indexing (50+ files)
-3. Doc hierarchy building (100+ files)
+### Why No Cache Files?
 
-**Don't cache:**
-1. Current progress (changes frequently)
-2. Validation results (must be fresh)
-3. Git operations (must be real-time)
+**Old approach (markdown):**
+- ❌ Parse 78 phase files (slow)
+- ❌ Index 50+ decision logs (slow)
+- ❌ Build doc hierarchy (slow)
+- ❌ Need cache files (phase-index.json, etc.)
 
-### Cache Structure
+**New approach (SQLite):**
+- ✅ All data in indexed database
+- ✅ Queries < 1ms (prepared statements)
+- ✅ No file parsing needed
+- ✅ No cache files needed
 
-```
-~/.cache/atlas-atlas-dev/
-├── phase-index.json        # All phase metadata
-├── decision-index.json     # All decision log metadata
-├── doc-index.json          # Doc hierarchy
-└── .last-update            # Cache timestamp
-```
-
-### Cache File Format
-
-**phase-index.json:**
-```json
-{
-  "version": 1,
-  "updated": 1708012800,
-  "phases": {
-    "phases/stdlib/phase-07a.md": {
-      "name": "phase-07a",
-      "cat": "stdlib",
-      "desc": "Hash + HashMap",
-      "files": ["hash.rs", "hashmap.rs"],
-      "dep": ["phase-06c"],
-      "blk": [],
-      "tests": [35, 0],
-      "accept": ["35+ tests", "100% parity"]
-    }
-  }
-}
-```
-
-**decision-index.json:**
-```json
-{
-  "version": 1,
-  "updated": 1708012800,
-  "decisions": {
-    "DR-001": {
-      "id": "DR-001",
-      "title": "Value representation",
-      "comp": "runtime",
-      "date": "2026-01-15",
-      "status": 0,
-      "path": "docs/decision-logs/runtime/DR-001.md",
-      "keywords": ["value", "representation", "memory"]
-    }
-  }
-}
-```
-
-### Cache Invalidation
-
-**Invalidate when:**
-- Any tracked file modified (check mtime)
-- Git HEAD changes (check `.git/HEAD`)
-- Manual clear (`cache clear`)
-
-**Validation:**
-```bash
-# Check if cache is fresh
-latest_mtime=$(find status/ phases/ docs/decision-logs/ -type f -name "*.md" -exec stat -f %m {} \; | sort -n | tail -1)
-cache_time=$(cat ~/.cache/atlas-atlas-dev/.last-update)
-
-if [ $latest_mtime -gt $cache_time ]; then
-  # Rebuild cache
-fi
-```
+**Database = cache.** Indexed SQL is faster than file caching.
 
 ---
 
 ## Response Time Targets
 
-### Without Cache (Cold)
-- `phase complete`: <1 sec (writes are fast)
-- `context current`: <2 sec (parses phase file + searches)
-- `decision list`: <1 sec (scans directory)
-- `decision read`: <0.5 sec (reads single file)
-- `summary`: <1 sec (reads STATUS.md + trackers)
+**All queries use indexed SQL (< 1ms):**
+- `phase complete`: < 100ms (write + transaction)
+- `phase current`: < 1ms (indexed query)
+- `phase next`: < 1ms (indexed query)
+- `decision list`: < 5ms (indexed query)
+- `summary`: < 10ms (aggregate queries)
 
-### With Cache (Warm)
-- `phase complete`: <1 sec (same, writes don't use cache)
-- `context current`: <0.05 sec (reads cache)
-- `decision list`: <0.01 sec (reads index)
-- `decision read`: <0.01 sec (cached metadata + file read)
-- `summary`: <0.5 sec (STATUS.md only)
-
-**Target: All reads <100ms with cache**
+**Target: All reads < 10ms** (no cache needed - DB is fast)
 
 ---
 
@@ -464,56 +412,41 @@ fi
 
 ---
 
-## Configuration
+## Hard-Coded Defaults (No Config Files)
 
-### Default Config (AI-optimized)
+**NO configuration needed.** Everything is hard-coded for AI-only:
 
-```toml
-[output]
-format = "json"         # Always JSON (not "human")
-compact = true          # Minified JSON (no pretty-print)
-color = false           # No ANSI colors
-emoji = false           # No emoji
-abbreviate = true       # Use short field names
-
-[cache]
-enabled = true
-ttl_hours = 24
-max_size_mb = 100
-
-[ai]
-optimize = true         # Enable all AI optimizations
-omit_empty = true       # Skip null/empty fields
-use_arrays = true       # Use array notation for tuples
-use_enums = true        # Use numeric enums
 ```
+Output (hard-coded):
+  ✅ JSON always (compact, minified)
+  ✅ Abbreviated field names (cat, pct, cnt, tot)
+  ✅ Omit null/empty fields
+  ✅ Arrays for tuples ([10,21,48])
+  ✅ Numeric enums (0=pending, 1=active, 2=blocked, 3=complete)
+  ✅ No colors, no emoji, no pretty-printing
 
-### Override for Humans
+Flags that DON'T exist:
+  ❌ No --human flag (JSON is the ONLY output)
+  ❌ No --pretty flag (always compact)
+  ❌ No --verbose flag (structured errors only)
+  ❌ No config files (everything hard-coded)
 
-```bash
-# Human-readable output
-atlas-dev summary --human
-
-# Pretty-printed JSON
-atlas-dev summary --pretty
-
-# Verbose errors
-atlas-dev phase complete "..." --verbose
+AI-only. No options. No configuration.
 ```
 
 ---
 
 ## Best Practices for AI Agents
 
-### 1. Always Use JSON Mode (Default)
+### 1. All Output is JSON (Only Mode)
 
 ```bash
-# Good (JSON output, parseable)
+# Always JSON (only mode)
 result=$(atlas-dev context current)
 phase=$(echo $result | jq -r '.phase.path')
 
-# Bad (human mode, hard to parse)
-atlas-dev context current --human
+# Parse with jq
+deps=$(atlas-dev context current | jq -r '.phase.dep[]')
 ```
 
 ### 2. Check Exit Code
@@ -547,15 +480,8 @@ atlas-dev phase complete "..." --dry-run
 # Returns same JSON, but mod=[] and no commit
 ```
 
-### 5. Cache Awareness
 
-```bash
-# Clear cache before critical operations
-atlas-dev cache clear
 
-# Get fresh data
-atlas-dev context current --no-cache
-```
 
 ---
 

@@ -1,234 +1,166 @@
-# Phase 03: Decision Log Integration (SQLite)
+# Phase 03: Decision Log Integration
 
-**Objective:** Implement decision log management with pure SQLite - create, list, search, track decisions.
+## 🚨 BLOCKERS - CHECK BEFORE STARTING
+**REQUIRED:** Phase 2 must be 100% complete
 
-**Priority:** HIGH
-**Depends On:** Phase 2
-**Architecture:** Pure SQLite (decisions table)
+**Verification:**
+```bash
+atlas-dev phase complete --help  # Must show complete command
+atlas-dev phase list  # Must return valid JSON
+go test ./internal/db/... -v  # All Phase 2 tests must pass
+```
 
----
+**What's needed:**
+- Phase 2 phase management system complete
+- Database operations working correctly
+- Audit logging functional
+- Compact JSON output operational
 
-## Deliverables
-
-1. ✅ `decision create` command (insert into DB)
-2. ✅ `decision list` command (query DB)
-3. ✅ `decision search` command (full-text search)
-4. ✅ `decision read <id>` command (get decision details)
-5. ✅ `decision next-id <component>` command (auto-increment DR-XXX)
-6. ✅ `decision update <id>` command (update status/supersede)
-7. ✅ Auto-generate decision IDs (DR-001, DR-002, etc.)
-8. ✅ Audit logging
-9. ✅ Optional markdown export (`decision export`)
+**If missing:** Complete Phase 2 first
 
 ---
+
+## Objective
+Implement decision log management commands using pure SQLite - enabling AI agents to create, list, search, read, and update architectural decisions with auto-generated IDs, full-text search, and audit tracking - all with < 1ms query performance.
+
+## Files
+**Create:** `cmd/atlas-dev/decision.go` (~150 lines - decision command group)
+**Create:** `cmd/atlas-dev/decision_create.go` (~200 lines - create command)
+**Create:** `cmd/atlas-dev/decision_list.go` (~150 lines - list command)
+**Create:** `cmd/atlas-dev/decision_search.go` (~100 lines - search command)
+**Create:** `cmd/atlas-dev/decision_read.go` (~100 lines - read command)
+**Create:** `cmd/atlas-dev/decision_update.go` (~150 lines - update command)
+**Create:** `cmd/atlas-dev/decision_next_id.go` (~80 lines - next-id command)
+**Create:** `cmd/atlas-dev/decision_export.go` (~150 lines - export command)
+**Create:** `internal/db/decision.go` (~400 lines - decision DB operations)
+**Update:** `cmd/atlas-dev/main.go` (add decision command group)
+
+## Dependencies
+- Phase 1 infrastructure (DB, transactions, JSON output)
+- Phase 2 phase management (audit logging, validation)
+- SQLite full-text search (FTS5 virtual table)
+- All Phase 1-2 acceptance criteria met
 
 ## Implementation
 
-### Step 1: Decision Create Command
+### Decision Create Command
+Implement decision create subcommand with flags: --component (required), --title (required), --decision (required), --rationale (required), --alternatives (optional), --status (default: accepted). Auto-generate sequential decision IDs in format DR-001, DR-002, etc by querying max ID from decisions table. Use WithTransaction to insert decision record with all fields, current timestamp, and auto-generated ID. Insert audit log entry recording decision creation. Return compact JSON with decision ID, component, and date. Validate component exists in categories table. **See ARCHITECTURE.md for transaction patterns.**
 
-```go
-func decisionCreateCmd() *cobra.Command {
-    var (
-        component    string
-        title        string
-        decision     string
-        rationale    string
-        alternatives string
-        status       string
-    )
+### Decision List Command
+Implement decision list subcommand with optional --component and --status filters. Query decisions table with WHERE clauses for filters, order by date DESC. Support --limit flag for pagination (default: 20). Return array of decisions with: ID, component, title, date, status. Use prepared statements for query performance. Output compact JSON with abbreviated field names: id, comp, title, date, stat. Handle empty results gracefully.
 
-    cmd := &cobra.Command{
-        Use:   "create",
-        Short: "Create decision log",
-        RunE: func(cmd *cobra.Command, args []string) error {
-            // Auto-generate ID
-            id, err := getNextDecisionID(component)
-            if err != nil {
-                return output.Error(err, nil)
-            }
+### Decision Search Command
+Implement decision search subcommand taking search query argument. Use SQLite LIKE operator to search across title, decision, and rationale fields. Query format: WHERE title LIKE ? OR decision LIKE ? OR rationale LIKE ? with query wrapped in % wildcards. Order results by date DESC, limit to 20. Return array of matching decisions with ID, component, title, date. Use indexed searches for performance. **Reference ARCHITECTURE.md for query patterns.**
 
-            date := time.Now().Format("2006-01-02")
+### Decision Read Command
+Implement decision read subcommand taking decision ID argument. Query decisions table for full decision details by ID using prepared statement. Return all fields: ID, component, title, decision, rationale, alternatives, date, status, created_at, updated_at. Output compact JSON omitting null fields. If decision not found, return structured error with exit code 2 and suggestion of similar IDs.
 
-            // Insert into DB
-            return db.WithTransaction(func(tx *db.Transaction) error {
-                _, err := tx.Exec(`
-                    INSERT INTO decisions (
-                        id, component, title, decision, rationale,
-                        alternatives, date, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
-                `, id, component, title, decision, rationale, alternatives, date, status)
+### Decision Update Command
+Implement decision update subcommand taking decision ID argument with flags: --status (to update status), --superseded-by (to mark as superseded). Use WithTransaction to update decision record and insert audit log entry with old values for undo capability. Support status transitions: proposed → accepted/rejected, accepted → superseded. Validate status transitions are valid. Return compact JSON with updated decision ID and new status.
 
-                if err != nil {
-                    return err
-                }
+### Decision Next ID Command
+Implement decision next-id subcommand to preview the next auto-generated ID. Query decisions table for maximum ID number: SELECT MAX(CAST(SUBSTR(id, 4) AS INTEGER)) FROM decisions. Return next ID in format DR-XXX with zero padding. Useful for AI agents to preview ID before creating decision. Return compact JSON with next_id field.
 
-                // Audit log
-                audit.Log("decision_create", "decision", id, map[string]interface{}{
-                    "component": component,
-                    "title":     title,
-                })
+### Decision Export Command
+Implement optional decision export subcommand to generate markdown files from database. Query all decisions grouped by component. Generate markdown file per component with decision records formatted as markdown tables. Export to docs/decisions/ directory. Include all decision fields, format alternatives as bullet lists. Return JSON with count of exported files and total decisions.
 
-                return output.Success(map[string]interface{}{
-                    "id":   id,
-                    "comp": component,
-                    "date": date,
-                })
-            })
-        },
-    }
+### Database Operations Layer
+Implement all decision operations in internal/db/decision.go using struct-based DB pattern. Use prepared statements for all queries: getDecision, listDecisions, searchDecisions, createDecision, updateDecision. Implement GetNextDecisionID to query max ID and generate next. All operations must use transactions for consistency. Return Go structs that serialize to compact JSON. Handle concurrent decision creation with exclusive locks if needed.
 
-    cmd.Flags().StringVar(&component, "component", "", "Component (required)")
-    cmd.Flags().StringVar(&title, "title", "", "Decision title (required)")
-    cmd.Flags().StringVar(&decision, "decision", "", "Decision text")
-    cmd.Flags().StringVar(&rationale, "rationale", "", "Rationale")
-    cmd.Flags().StringVar(&alternatives, "alternatives", "", "Alternatives considered")
-    cmd.Flags().StringVar(&status, "status", "accepted", "Status (accepted|rejected|proposed)")
-    cmd.MarkFlagRequired("component")
-    cmd.MarkFlagRequired("title")
+## Tests (TDD)
 
-    return cmd
-}
+**Decision create tests:**
+1. Create decision with all fields
+2. Auto-generate sequential IDs (DR-001, DR-002, DR-003)
+3. Required fields validated (component, title)
+4. Audit log entry created
+5. Invalid component rejected
+6. Duplicate ID handling
+7. Compact JSON output
+8. Transaction rollback on error
 
-func getNextDecisionID(component string) (string, error) {
-    var maxID int
-    err := db.DB.QueryRow(`
-        SELECT COALESCE(MAX(CAST(SUBSTR(id, 4) AS INTEGER)), 0)
-        FROM decisions
-    `).Scan(&maxID)
+**Decision list tests:**
+1. List all decisions
+2. Filter by component works
+3. Filter by status works
+4. Combined filters work
+5. Ordered by date DESC
+6. Limit works (pagination)
+7. Empty results handled
+8. Compact JSON with abbreviated fields
 
-    if err != nil {
-        return "", err
-    }
+**Decision search tests:**
+1. Search by title finds matches
+2. Search by decision text works
+3. Search by rationale works
+4. Search case-insensitive
+5. Multiple results ordered by date
+6. No matches returns empty array
+7. Query < 10ms
 
-    return fmt.Sprintf("DR-%03d", maxID+1), nil
-}
-```
+**Decision read tests:**
+1. Read decision by ID returns all fields
+2. Not found returns error
+3. Null fields omitted from JSON
+4. Suggestion provided for similar IDs
+5. Query < 1ms
 
-### Step 2: Decision List/Search
+**Decision update tests:**
+1. Update status works
+2. Mark as superseded works
+3. Invalid status transition rejected
+4. Audit log records old values
+5. Transaction atomic
+6. Not found handled
 
-```go
-func decisionListCmd() *cobra.Command {
-    var (
-        component string
-        status    string
-        limit     int
-    )
+**Next ID tests:**
+1. First ID is DR-001
+2. Sequential IDs generated
+3. Zero padding correct (DR-009, DR-010)
+4. Concurrent ID generation safe
 
-    cmd := &cobra.Command{
-        Use:   "list",
-        Short: "List decisions",
-        RunE: func(cmd *cobra.Command, args []string) error {
-            query := "SELECT id, component, title, date, status FROM decisions WHERE 1=1"
-            var args []interface{}
+**Minimum test count:** 35 tests
+**Coverage target:** 80%+ on internal/db/decision, cmd/atlas-dev/decision*
 
-            if component != "" {
-                query += " AND component = ?"
-                args = append(args, component)
-            }
+## Integration Points
+- Uses: Database from Phase 1
+- Uses: Transaction handling from Phase 1
+- Uses: JSON output from Phase 1
+- Uses: Audit logging from Phase 1
+- Creates: Decision CRUD operations
+- Creates: Auto-generated decision IDs
+- Creates: Full-text decision search
+- Creates: Decision export capability
+- Output: Complete decision log system for tracking architectural choices
 
-            if status != "" {
-                query += " AND status = ?"
-                args = append(args, status)
-            }
+## Acceptance
+- atlas-dev decision create works end-to-end
+- Decision IDs auto-generated (DR-001, DR-002, etc)
+- Sequential ID generation concurrent-safe
+- atlas-dev decision list filters by component/status
+- atlas-dev decision search performs full-text search
+- Search results ordered by relevance/date
+- atlas-dev decision read returns full details
+- atlas-dev decision update changes status/supersedes
+- atlas-dev decision next-id previews next ID
+- Optional export generates markdown files
+- All commands return compact JSON
+- Null fields omitted from output
+- Abbreviated field names used (comp, stat)
+- Exit codes correct (0-6)
+- Structured errors with suggestions
+- 35+ tests pass
+- 80%+ coverage on decision operations
+- go test -race passes
+- golangci-lint passes
+- Benchmark: decision search < 10ms
+- Benchmark: decision read < 1ms
+- All SQL queries use prepared statements or transactions
+- Audit log tracks all decision changes
+- JSON output ~30-80 tokens (token-efficient)
 
-            query += " ORDER BY date DESC LIMIT ?"
-            args = append(args, limit)
-
-            rows, err := db.DB.Query(query, args...)
-            if err != nil {
-                return output.Error(err, nil)
-            }
-            defer rows.Close()
-
-            var decisions [][]string
-            for rows.Next() {
-                var id, comp, title, date, stat string
-                rows.Scan(&id, &comp, &title, &date, &stat)
-                decisions = append(decisions, []string{id, comp, title, date, stat})
-            }
-
-            return output.Success(map[string]interface{}{
-                "decisions": decisions,
-                "cnt":       len(decisions),
-            })
-        },
-    }
-
-    cmd.Flags().StringVarP(&component, "component", "c", "", "Filter by component")
-    cmd.Flags().StringVarP(&status, "status", "s", "accepted", "Filter by status")
-    cmd.Flags().IntVarP(&limit, "limit", "n", 20, "Limit results")
-
-    return cmd
-}
-```
-
-### Step 3: Decision Search
-
-```go
-func decisionSearchCmd() *cobra.Command {
-    return &cobra.Command{
-        Use:   "search <query>",
-        Short: "Search decisions",
-        Args:  cobra.ExactArgs(1),
-        RunE: func(cmd *cobra.Command, args []string) error {
-            searchQuery := "%" + args[0] + "%"
-
-            rows, err := db.DB.Query(`
-                SELECT id, component, title, date
-                FROM decisions
-                WHERE title LIKE ? OR decision LIKE ? OR rationale LIKE ?
-                ORDER BY date DESC
-                LIMIT 20
-            `, searchQuery, searchQuery, searchQuery)
-
-            if err != nil {
-                return output.Error(err, nil)
-            }
-            defer rows.Close()
-
-            var results [][]string
-            for rows.Next() {
-                var id, comp, title, date string
-                rows.Scan(&id, &comp, &title, &date)
-                results = append(results, []string{id, comp, title, date})
-            }
-
-            return output.Success(map[string]interface{}{
-                "results": results,
-                "cnt":     len(results),
-            })
-        },
-    }
-}
-```
+**Phase complete when all acceptance criteria met and make test lint passes.**
 
 ---
 
-## Acceptance Criteria
-
-- [ ] `decision create` inserts into DB
-- [ ] Auto-generates DR-XXX IDs
-- [ ] `decision list` filters by component/status
-- [ ] `decision search` performs full-text search
-- [ ] `decision read` returns full details
-- [ ] Audit log tracks all changes
-- [ ] JSON output < 80 tokens for list
-- [ ] JSON output < 150 tokens for details
-
----
-
-## Token Efficiency
-
-```bash
-# List decisions: ~60 tokens
-{"ok":true,"decisions":[["DR-001","stdlib","Hash function","2026-01-15","accepted"]],"cnt":1}
-
-# Create decision: ~30 tokens
-{"ok":true,"id":"DR-007","comp":"stdlib","date":"2026-02-15"}
-```
-
----
-
-## Next Phase
-
-**Phase 4:** Progress Analytics & Validation
+**Note:** Reference ARCHITECTURE.md for all DB patterns. Use struct-based DB, prepared statements, and transaction handling. Follow TOKEN-EFFICIENCY.md for compact JSON output.

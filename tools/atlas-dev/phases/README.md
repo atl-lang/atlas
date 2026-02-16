@@ -18,10 +18,10 @@
 |-------|-------|----------|
 | [01](phase-01-core-infrastructure.md) | Core Infrastructure | CRITICAL |
 | [02](phase-02-phase-management.md) | Phase Management | CRITICAL |
-| [03](phase-03-decision-log-integration.md) | Decision Logs | HIGH |
-| [04](phase-04-progress-analytics.md) | Analytics & Validation | HIGH |
-| [05](phase-05-documentation-context.md) | Docs & Context | MEDIUM |
-| [06](phase-06-polish-advanced.md) | Polish & Advanced | LOW |
+| [03](phase-03-decision-logs.md) | Decision Logs | HIGH |
+| [04](phase-04-analytics.md) | Analytics & Validation | HIGH |
+| [05](phase-05-context.md) | Context System | MEDIUM |
+| [06](phase-06-polish.md) | Polish & Export | LOW |
 | [07](phase-07-feature-management.md) | Feature Management | HIGH |
 | [08](phase-08-spec-api-management.md) | Spec & API Management | HIGH |
 | [09](phase-09-parity-validation.md) | Parity Validation | CRITICAL |
@@ -71,18 +71,17 @@ Update this README with completion status.
 
 ### Phase 2: Phase Management
 - [ ] Phase path parser implemented
-- [ ] Tracker file reader/writer
-- [ ] STATUS.md reader/writer
-- [ ] Percentage calculator
-- [ ] Sync validator
+- [ ] Database operations (phase CRUD)
+- [ ] Percentage calculator (via SQL triggers)
+- [ ] Validation logic
 - [ ] Git commit automation
 - [ ] `atlas-dev phase complete` works end-to-end
 
 ### Phase 3: Decision Log Integration
-- [ ] Decision log parser
+- [ ] Decision database operations
 - [ ] Next ID calculator
-- [ ] Template generator
-- [ ] Search indexer
+- [ ] Decision CRUD
+- [ ] Full-text search (SQL)
 - [ ] `atlas-dev decision create` works
 - [ ] `atlas-dev decision list` works
 
@@ -94,9 +93,8 @@ Update this README with completion status.
 - [ ] `atlas-dev validate` comprehensive
 
 ### Phase 5: Documentation & Context
-- [ ] Doc indexer
-- [ ] Doc search
-- [ ] Context aggregator
+- [ ] Phase file parser (read phase .md files for context)
+- [ ] Context aggregator (combine DB + phase file data)
 - [ ] `atlas-dev context current` works
 
 ### Phase 6: Polish & Advanced
@@ -147,9 +145,12 @@ Update this README with completion status.
 ## Current Status
 
 **Last Updated:** 2026-02-15
-**Completed:** 0/10 phases
+**Completed:** 0/10 phases (implementation)
+**Documentation:** ✅ All 10 phases rewritten in professional high-level format
 **In Progress:** None
-**Next:** Phase 1 (Core Infrastructure)
+**Next:** Phase 1 (Core Infrastructure) - Ready to implement
+
+**Note:** All phase files have been updated to match professional Atlas compiler phase format (high-level prose, no code dumps). See ARCHITECTURE.md for canonical implementation patterns.
 
 ---
 
@@ -158,7 +159,7 @@ Update this README with completion status.
 ### MVP (Phases 1-2): Core Phase Tracking
 **Delivers:**
 - Phase tracking (`phase complete`, `phase current`, `phase next`)
-- STATUS.md/tracker automation
+- Database automation (SQL triggers)
 - Validation (`validate`)
 - 99.8% success rate on phase completions
 

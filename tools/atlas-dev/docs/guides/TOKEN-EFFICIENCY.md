@@ -6,18 +6,14 @@
 
 ## Global Standards
 
-### Default Output: JSON
+### Default Output: JSON (Always)
 ```bash
-# DEFAULT (no flags needed)
+# Always JSON (only mode)
 atlas-dev summary
 # Returns compact JSON
-
-# Human mode (opt-in)
-atlas-dev summary --human
-# Returns formatted text
 ```
 
-**Rationale:** AI agents parse JSON, humans read formatted text.
+**Rationale:** AI-only tool. JSON is the only output. No human mode.
 
 ---
 
@@ -113,7 +109,7 @@ Examples:
   atlas-dev phase complete "phases/stdlib/phase-07b.md" \
     -d "..." --dry-run
 
-Output: Compact JSON (default) or human-readable (--human)
+Output: Compact JSON (always)
 ```
 
 **Token count: ~180 tokens** ✅
@@ -205,9 +201,7 @@ Output: Compact JSON (default) or human-readable (--human)
 {
   "ok": true,   // success
   "d": false,   // dry-run
-  "v": false,   // verbose
-  "c": true,    // commit
-  "h": false    // human mode
+  "c": true     // commit
 }
 ```
 
