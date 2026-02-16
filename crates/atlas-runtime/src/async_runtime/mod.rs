@@ -4,19 +4,35 @@
 //! - Future type for representing pending computations
 //! - Tokio runtime integration for executing async operations
 //! - Task management and spawning
+//! - Channels for message passing
+//! - Async primitives (sleep, timers, mutex, timeout)
 //!
 //! The async runtime enables non-blocking I/O operations without requiring
 //! language-level async/await syntax (reserved for future versions).
 
+pub mod channel;
 pub mod future;
+pub mod primitives;
+pub mod task;
 
+pub use channel::{
+    channel_bounded, channel_select, channel_unbounded, ChannelReceiver, ChannelSender,
+};
 pub use future::{future_all, future_race, AtlasFuture, FutureState};
+pub use primitives::{interval, retry_with_timeout, sleep, timeout, timer, AsyncMutex};
+pub use task::{join_all, spawn_and_await, spawn_task, TaskHandle, TaskStatus};
 
 use std::sync::OnceLock;
 use tokio::runtime::Runtime;
+use tokio::task::LocalSet;
 
 /// Global tokio runtime for async operations
 static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();
+
+/// Thread-local LocalSet for spawning !Send futures
+thread_local! {
+    static LOCAL_SET: std::cell::RefCell<Option<LocalSet>> = const { std::cell::RefCell::new(None) };
+}
 
 /// Initialize the global tokio runtime
 ///
@@ -46,26 +62,39 @@ pub fn runtime() -> &'static Runtime {
     })
 }
 
-/// Spawn a task on the tokio runtime
+/// Spawn a !Send task on the local set
 ///
-/// This is a convenience function for spawning async tasks.
-pub fn spawn<F>(future: F) -> tokio::task::JoinHandle<F::Output>
+/// This allows spawning futures that contain Rc/RefCell (our Value type).
+/// Tasks run on the same thread but provide true async concurrency.
+pub fn spawn_local<F>(future: F) -> tokio::task::JoinHandle<F::Output>
 where
-    F: std::future::Future + Send + 'static,
-    F::Output: Send + 'static,
+    F: std::future::Future + 'static,
+    F::Output: 'static,
 {
-    runtime().spawn(future)
+    // Initialize LocalSet if needed
+    LOCAL_SET.with(|cell| {
+        let mut local_set = cell.borrow_mut();
+        if local_set.is_none() {
+            *local_set = Some(LocalSet::new());
+        }
+    });
+
+    // Spawn on the LocalSet
+    tokio::task::spawn_local(future)
 }
 
 /// Block on a future until it completes
 ///
 /// This bridges the sync/async boundary by blocking the current thread
-/// until the future completes.
+/// until the future completes. Uses LocalSet for !Send futures.
 pub fn block_on<F>(future: F) -> F::Output
 where
     F: std::future::Future,
 {
-    runtime().block_on(future)
+    // Create a new LocalSet for this block_on call
+    // This ensures each block_on has its own execution context
+    let local_set = LocalSet::new();
+    runtime().block_on(local_set.run_until(future))
 }
 
 #[cfg(test)]
@@ -85,8 +114,8 @@ mod tests {
     }
 
     #[test]
-    fn test_spawn() {
-        let handle = spawn(async { "hello" });
+    fn test_spawn_local() {
+        let handle = spawn_local(async { "hello" });
         let result = block_on(handle).unwrap();
         assert_eq!(result, "hello");
     }

@@ -43,8 +43,8 @@ fn main() -> void {
     print("");
 
     // Configuration
-    let startUrl: string = "https://example.com"; // Change this
-    let maxPages: number = 10; // Limit crawl depth
+    let startUrl: string = "https://recharts.github.io/en-US/examples/"; // Change this
+    let maxPages: number = 15; // Limit crawl depth
 
     print("Starting crawl...");
     print("URL: " + startUrl);
