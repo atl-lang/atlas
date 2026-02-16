@@ -34,9 +34,9 @@
    Dependency: [feature name]
 
    Step 1: Check specification
-   - Search specs: `atlas-dev spec search "feature"`
-   - Read spec: `atlas-dev spec read <file>`
-   - Check grammar: `atlas-dev spec grammar`
+   - Look in `docs/specification/` for feature definition
+   - Search `Atlas-SPEC.md` routing table
+   - Read relevant spec section
 
    Step 2: Determine status
    - ✅ Spec defines it AND it's implemented → Proceed
@@ -44,8 +44,8 @@
    - 🚫 Spec DOESN'T define it → Check if out-of-scope for current version
 
    Step 3: Log decision (if implementing)
-   - Create decision: `atlas-dev decision create -c COMP -t "..." --decision "..." --rationale "..."`
-   - Decision stored in database
+   - Add entry to `docs/reference/decision-log.md`
+   - Format: "Implemented X per spec section Y for phase Z"
    ```
 
 3. **NEVER ask user these questions:**
@@ -57,7 +57,7 @@
    **Instead: CHECK SPEC, DECIDE, LOG**
 
 4. **Gather version/progress context:**
-   - Read ``atlas-dev summary`` (current version, phase, what's complete)
+   - Read `STATUS.md` (current version, phase, what's complete)
    - Read current phase file dependencies
    - Verify prerequisites are met
 
@@ -67,7 +67,7 @@
 
 **Evaluate request against check categories:**
 
-1. **Version scope:** Is this in current version's scope per `atlas-dev summary`?
+1. **Version scope:** Is this in current version's scope per STATUS.md?
 2. **Dependencies met:** Did spec verification confirm all deps ready?
 3. **Design consistency:** Does this align with Atlas compiler identity?
 4. **Workload:** Is this too ambitious for one session?

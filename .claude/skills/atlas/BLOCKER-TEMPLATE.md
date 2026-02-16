@@ -87,7 +87,7 @@
 
 **If spec doesn't define it:**
 - Feature is out-of-scope for current version
-- Consult `atlas-dev summary` for version scope
+- Consult STATUS.md for version scope
 - Flag as architectural question if blocking
 ```
 
@@ -107,7 +107,7 @@
 **REQUIRED:** Configuration system (foundation/phase-04) must be complete.
 
 **Verification Steps:**
-1. Check `atlas-dev summary`: Foundation section, phase-04 checkbox
+1. Check STATUS.md: Foundation section, phase-04 checkbox
 2. Verify crate exists: `ls crates/atlas-config/src/lib.rs`
 3. Verify API: `grep -n "pub struct AtlasConfig" crates/atlas-config/src/config.rs`
 4. Run tests: `cargo test --package atlas-config`
@@ -121,7 +121,7 @@
 **If phase-04 incomplete:**
 - Stop immediately
 - Report: "Foundation phase-04 required before this phase"
-- Update `atlas-dev summary` to show correct next phase
+- Update STATUS.md to show correct next phase
 - Do NOT attempt to implement config system here
 
 **If phase-04 complete but API different than expected:**
@@ -173,7 +173,7 @@ b) If Result types exist but incomplete:
 c) If Result types don't exist:
    → Must be foundation/phase-09 (Result implementation phase)
    → Stop and report: "Foundation phase-09 required before stdlib/phase-10"
-   → Update `atlas-dev summary` next phase to foundation/phase-09
+   → Update STATUS.md next phase to foundation/phase-09
 
 d) If spec doesn't define Result types:
    → ERROR: Spec should define this (check Atlas-SPEC.md routing)
@@ -222,10 +222,10 @@ b) If [feature] exists but incomplete:
 c) If [feature] doesn't exist:
    → Check if this is [prerequisite phase] responsibility
    → Stop and report: "[Prerequisite phase] required before this phase"
-   → Update `atlas-dev summary` to show correct phase order
+   → Update STATUS.md to show correct phase order
 
 d) If spec doesn't define [feature]:
-   → Check if out-of-scope for current version (see `atlas-dev summary`)
+   → Check if out-of-scope for current version (see STATUS.md)
    → If truly needed: Flag as spec gap
    → Ask ARCHITECTURAL question: "Should [feature] be in v[X] scope?"
 

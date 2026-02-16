@@ -8,16 +8,14 @@
 
 ### 1. Understand Current Context (CRITICAL)
 
-**Query and verify:**
-- `atlas-dev context current` - Phase context, dependencies, blockers, related decisions (single command)
-- `atlas-dev summary` - Project overview (version, category progress, total completion)
-- `atlas-dev blockers` - See what phases are blocked by dependencies
-- `atlas-dev decision search "relevant-keyword"` - Find decisions related to your work
+**Read and verify:**
+- `STATUS.md` - Current version (v0.1? v0.2?), what's complete, what's in progress
+- `docs/reference/decision-log.md` - Architectural decisions already made
+- Current phase file - ALL dependencies and blockers
 
 **Extract:**
 - Version context (what's available in this version)
 - Completion status (what phases are done)
-- Dependencies and blockers (from context command)
 - Existing patterns (how similar features were implemented)
 
 ### 2. Verify Each Dependency EXISTS in Codebase
@@ -30,15 +28,15 @@ Dependency: [feature name]
 Check 1: Does it exist in codebase?
 - Grep for implementation: `grep -r "feature" crates/`
 - Check if tests exist: `ls tests/*feature*`
-- Verify with `atlas-dev phase info <path>` as complete
+- Verify in STATUS.md as complete
 
 Check 2: Does it match spec?
-- Compare implementation to spec: `atlas-dev spec search "feature"`
+- Compare implementation to `docs/specification/`
 - Verify behavior matches documented semantics
 
 Check 3: Is it complete or partial?
 - Run its tests: `cargo test feature_tests`
-- Check with `atlas-dev phase info <path>` if marked complete
+- Check if marked complete in STATUS.md
 - Verify quality (not a stub)
 
 Status:
@@ -62,11 +60,6 @@ Status:
 
 ### 4. Version-Aware Context
 
-**Check version and progress:**
-- `atlas-dev summary` - Shows current version, category completion %
-- `atlas-dev phase list -s completed -c <category>` - See what's done in category
-- `atlas-dev phase count -s completed` - Total completed phases
-
 **v0.1 complete?**
 - All v0.1 features available as building blocks
 - Can reference v0.1 implementation as examples
@@ -74,6 +67,7 @@ Status:
 
 **v0.2 in progress?**
 - Some v0.2 features may be partial
+- Check STATUS.md for exact progress
 - Don't assume v0.2 features exist yet
 
 ### 5. Check Affected Components
@@ -95,12 +89,10 @@ Status:
 
 Before proceeding to GATE 1:
 
-- [ ] Run `atlas-dev context current` - get phase context, dependencies, blockers
-- [ ] Run `atlas-dev summary` - know current version and overall progress
-- [ ] Run `atlas-dev decision search "<relevant-topic>"` - find related decisions
-- [ ] Run `atlas-dev blockers` - see if current phase or dependencies are blocked
-- [ ] Read phase dependencies from context - ALL of them
-- [ ] Verified EACH dependency exists in codebase (grep, phase info)
+- [ ] Read STATUS.md - know current version and progress
+- [ ] Read decision-log.md - know architectural decisions
+- [ ] Read phase dependencies - ALL of them
+- [ ] Verified EACH dependency exists in codebase
 - [ ] Found existing patterns to follow
 - [ ] Understand version context (v0.1 vs v0.2)
 - [ ] Know which components will be affected

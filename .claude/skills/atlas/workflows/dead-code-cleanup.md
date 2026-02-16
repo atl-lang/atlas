@@ -59,7 +59,7 @@ Bad time:
    - Future expansion points
    - FFI stubs, runtime hooks
 
-2. **``atlas-dev summary``:**
+2. **`STATUS.md`:**
    - What's implemented vs planned
    - Current version scope
 

@@ -17,7 +17,7 @@ All gates MANDATORY and BLOCKING. Cannot skip.
 | **GATE 3** | `gate-3-parity.md` | Verify interpreter/VM parity |
 | **GATE 4** | `gate-4-quality.md` | Quality gates (test, clippy, fmt) |
 | **GATE 5** | `gate-5-docs.md` | Doc updates (3-tier strategy) |
-| **GATE 6** | `gate-6-status.md` | Update atlas-dev CLI (structured dev only) |
+| **GATE 6** | `gate-6-status.md` | Update STATUS.md (structured dev only) |
 
 ---
 
@@ -120,16 +120,16 @@ cargo test integration  # Integration tests
 
 ## Doc Sync
 
-**Source of Truth:** `atlas-dev` CLI database (NOT MD files)
+**Source of Truth:** Project `docs/` (NOT skill workflows)
 
-**Key Sources:**
-- `atlas-dev CLI` - ONLY source (specs, APIs, decisions, features, progress)
-  - Specs: `atlas-dev spec read/search`
-  - APIs: `atlas-dev api read`
-  - Decisions: `atlas-dev decision list/search`
-  - Features: `atlas-dev feature list/read`
-- `docs/implementation/` - Component guides (ONLY MD files that stay)
-- `docs/guides/` - Testing, code quality guides
+**Key Docs:**
+- `STATUS.md` - Current state, progress tracking
+- `Atlas-SPEC.md` - Spec index with routing (use to find specific spec files)
+- `docs/README.md` - Documentation navigation
+- `docs/specification/` - Grammar, semantics, runtime
+- `docs/implementation/` - Component details
+- `docs/api/` - Stdlib, runtime API
+- `docs/guides/` - Testing, code quality
 
 **Update Frequency:**
 - Skill: Rarely (rules only)

@@ -47,10 +47,7 @@
 
 ### 3. Architectural Decision Check
 
-**Query decisions from database:**
-```bash
-atlas-dev decision search "foundation"
-```
+**Read `docs/reference/decision-log.md`:**
 - Any documented decisions apply?
 - Does planned approach align?
 - If making new decision: document it
