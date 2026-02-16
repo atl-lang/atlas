@@ -18,18 +18,36 @@
 - `context current` - **START HERE** - Next phase + deps + decisions + progress (single command)
 - `context phase <path>` - Full context for specific phase
 
-**Decisions:**
+**Decisions (Database ONLY):**
 - `decision count [-c COMP] [-s STATUS]` - Count decisions (20 bytes)
 - `decision list [-c COMP] [-s STATUS] [--limit N]` - List decisions (minimal, limit 10)
-- `decision read <id>` - Full decision details
-- `decision search "keyword"` - Full-text search
-- `decision create -c COMP -t "title" --decision "..." --rationale "..."` - Log decision
+- `decision read <id>` - Full decision details (from database)
+- `decision search "keyword"` - Full-text search (database)
+- `decision create -c COMP -t "title" --decision "..." --rationale "..."` - Create decision (database)
 
-**Features:**
+**Features (Database ONLY):**
 - `feature count [-s STATUS]` - Count features
 - `feature list [-s STATUS] [--limit N]` - List features (minimal, limit 10)
-- `feature read <name>` - Full feature details
-- `feature sync <name>` - Sync from codebase
+- `feature read <name>` - Full feature details (from database)
+- `feature create --name X --display "..." --category X` - Create feature (database)
+- `feature sync <name>` - Sync from codebase (updates database)
+
+**Specs (Database ONLY):**
+- `spec read <file>` - Read spec from database
+- `spec search "keyword"` - Search specs (database)
+- `spec validate <file>` - Validate spec
+- `spec grammar` - Grammar rules (database)
+
+**API Docs (Database ONLY):**
+- `api read <file>` - Read API doc from database
+- `api validate <file>` - Validate API vs code
+- `api coverage` - API coverage stats (database)
+- `api generate <input>` - Generate API docs (to database)
+
+**References (Database ONLY):**
+- `reference list` - List reference docs (database)
+- `reference read <name>` - Read reference (database)
+- `reference search "keyword"` - Search references (database)
 
 **Analytics:**
 - `summary` - Project dashboard (categories, progress, recent)
@@ -178,7 +196,8 @@ atlas-dev phase list -c stdlib | jq -r '.phases[].path'
 3. **Use list with limits** - Default 10, never fetch all
 4. **Use read only when needed** - Full details on demand
 5. **Pipe for composition** - Chain commands efficiently
-6. **Never read STATUS.md** - Database is truth
+6. **Database is ONLY source of truth** - NEVER read MD files (STATUS.md, decision-logs/, features/, specs/, api/, references/)
+7. **All content from CLI** - Specs, APIs, decisions, features, references all in database
 
 ---
 
@@ -223,4 +242,20 @@ atlas-dev summary
 | `blockers` | ~400 | Blocked phases only |
 | `decision search` | ~300-600 | Depends on matches |
 
-**Full docs:** `tools/atlas-dev/README.md` (human-focused, verbose, 1093 lines - use only when needed)
+## Files Being Deleted (Database Replaces All)
+
+**DO NOT read these files - they will be deleted:**
+- `STATUS.md` - Use `atlas-dev summary`
+- `status/trackers/` - Use `atlas-dev phase list`
+- `status/references/` - Use `atlas-dev reference list`
+- `status/history/` - Use `atlas-dev timeline`
+- `docs/decision-logs/` - Use `atlas-dev decision list`
+- `docs/features/` - Use `atlas-dev feature list`
+- `docs/specification/` - Use `atlas-dev spec read`
+- `docs/api/` - Use `atlas-dev api read`
+
+**Database is ONLY source. MD files are deprecated.**
+
+---
+
+**Full docs:** `tools/atlas-dev/README.md` (human-focused, 1093 lines - use only when CLI command unclear)
