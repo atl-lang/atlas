@@ -8,8 +8,10 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/stdlib/phase-11b-async-io-operations.md
-**Next Phase:** phases/stdlib/phase-11c-async-primitives.md
-**Real Progress:** 41/84 phases complete (49%)
+**Next Phase:** phases/foundation/phase-18a-arc-core-value.md
+**Real Progress:** 41/95 phases complete (43%)
+
+**🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
 ---
 
@@ -17,8 +19,8 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **0. Foundation** | 21/21 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 20/27 (74%) | 🔨 ACTIVE |
+| **0. Foundation** | 21/32 (66%) | 🔨 ACTIVE (CRITICAL) |
+| **1. Stdlib** | 20/27 (74%) | ⏸️ BLOCKED (waiting on foundation) |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -29,9 +31,9 @@
 
 ---
 
-## 📋 Complete Phase List (40/84)
+## 📋 Complete Phase List (41/95)
 
-### 0. Foundation (21/21) ✅ COMPLETE
+### 0. Foundation (21/32) 🔨 ACTIVE - CRITICAL BLOCKERS
 
 ✅ phase-16-method-call-syntax-frontend.md
 ✅ phase-17-method-call-syntax-backend.md
@@ -55,7 +57,21 @@
 ✅ phase-11b-build-system-incremental.md
 ✅ phase-11c-build-system-integration.md
 
-### 1. Stdlib (19/27) 🔨 ACTIVE
+**🚨 CRITICAL - Architecture Foundation Fixes (BLOCKING v0.2):**
+
+⬜ phase-18a-arc-core-value.md ← **START HERE**
+⬜ phase-18b-arc-engines.md
+⬜ phase-18c-arc-core-stdlib.md
+⬜ phase-18d-arc-collections.md
+⬜ phase-18e-arc-advanced-stdlib.md
+⬜ phase-18f-arc-tests-verification.md
+⬜ phase-19-enable-parser-features.md
+⬜ phase-20a-for-in-frontend.md
+⬜ phase-20b-for-in-semantic.md
+⬜ phase-20c-for-in-backend.md
+⬜ phase-20d-for-in-testing-demos.md
+
+### 1. Stdlib (20/27) ⏸️ BLOCKED
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -77,7 +93,7 @@
 ✅ phase-10b-http-advanced.md
 ✅ phase-11a-async-foundation.md
 ✅ phase-11b-async-io-operations.md
-⬜ phase-11c-async-primitives.md
+🚫 phase-11c-async-primitives.md ← **BLOCKED by phase-18 (Arc refactor)**
 ⬜ phase-12-process-management.md
 ⬜ phase-13-path-manipulation.md
 ⬜ phase-14-compression.md
@@ -147,19 +163,36 @@
 
 ## 🚨 Critical Notes
 
-**Foundation Status:**
-- ✅ 100% complete (21/21 phases) - all foundation infrastructure delivered
-- All blockers cleared for stdlib/bytecode-vm/typing/interpreter/LSP/polish categories
+**Foundation Status - ARCHITECTURE CRISIS:**
+- ⚠️ 21/32 complete (66%) - **CRITICAL BLOCKERS DISCOVERED**
+- 🚨 **Phase-18 (Arc Refactor):** Value uses Rc<T> (not thread-safe) - BLOCKS all async work
+- 🚨 **Phase-19 (Parser Features):** Match/import exist but are DISABLED - BLOCKS all demos
+- 🚨 **Phase-20 (For-In Loops):** Syntax doesn't exist - BLOCKS ergonomic iteration
+
+**What's Blocked:**
+- ❌ Phase-11c (async primitives) - needs Arc for tokio::spawn
+- ❌ All demos - need match, import, for-in to function
+- ❌ Realistic Atlas code - missing core language features
+- ❌ v0.2 progress - can't build on broken foundation
+
+**Why This Happened:**
+- Features marked "complete" in STATUS.md but were disabled/missing
+- v0.2 started building stdlib before core language was ready
+- No phases existed to fix architectural issues
+- Discovered when trying to run demos
 
 **Current Work:**
-- Stdlib can continue through phase-09 (datetime)
-- Some stdlib phases (10+) may have foundation dependencies (already complete)
+- **PRIORITY:** Execute phases 18-20 (fix foundation)
+- **THEN:** Resume stdlib work (phase-11c unblocked)
+- **THEN:** Demos can be tested
 
-**v0.1 Prerequisites (Already Complete):**
+**v0.1 Prerequisites (Status Update):**
 - ✅ First-Class Functions
 - ✅ JsonValue Type
 - ✅ Generic Type System (Option<T>, Result<T,E>)
-- ✅ Pattern Matching
+- ⚠️ Pattern Matching - **CODE EXISTS BUT DISABLED** (phase-19 fixes)
+- ⚠️ Import Statements - **CODE EXISTS BUT DISABLED** (phase-19 fixes)
+- ❌ For-In Loops - **DOESN'T EXIST** (phase-20 implements)
 - ✅ Basic Module System (v0.1 only - v0.2 expands this)
 
 ---
@@ -259,4 +292,6 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Ready to continue v0.2? Next phase: `phases/stdlib/phase-09a-datetime-core.md` 🚀**
+**Ready to continue v0.2? Next phase: `phases/foundation/phase-18a-arc-core-value.md` 🚀**
+
+**⚠️ CRITICAL PATH:** Must complete phases 18-20 before resuming stdlib work.

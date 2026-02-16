@@ -1,21 +1,47 @@
 # Phase 11c: Async Primitives & Task Management
 
 ## 🚨 BLOCKERS - CHECK BEFORE STARTING
-**REQUIRED:** Phase-11a and 11b complete.
+
+**⛔ BLOCKED BY FOUNDATION PHASES - DO NOT START**
+
+**REQUIRED FOUNDATION (CRITICAL):**
+- Foundation/Phase-18: Value Arc Refactor (Rc→Arc for thread safety)
+- Foundation/Phase-19: Enable Parser Features (match/import)
+- Foundation/Phase-20: For-In Loops (ergonomic iteration)
+
+**REQUIRED STDLIB:**
+- Phase-11a and 11b complete
+
+**Why Blocked:**
+Current Value enum uses `Rc<T>` which is NOT Send/Sync. Async tasks with
+tokio::spawn REQUIRE Send trait. Phase-18 fixes this by refactoring to `Arc<T>`.
 
 **Verification:**
 ```bash
+# Foundation phases complete
+ls phases/foundation/phase-18-value-arc-refactor.md
+ls phases/foundation/phase-19-enable-parser-features.md
+ls phases/foundation/phase-20-for-in-loops.md
+
+# Async foundation ready
 cargo test async_future_tests
 cargo test async_io_tests
+
+# Value is Send (after Phase-18)
+! grep "Rc<String>" crates/atlas-runtime/src/value.rs
+grep "Arc<String>" crates/atlas-runtime/src/value.rs
 ```
 
 **What's needed:**
+- Thread-safe Value enum (Arc instead of Rc)
 - Future type from phase-11a
 - Async I/O from phase-11b
 - Tokio runtime infrastructure
 - Channel primitives
+- Match expressions enabled (for Result/Option handling)
+- For-in loops enabled (for ergonomic iteration)
 
-**If missing:** Complete phases 11a and 11b first
+**If missing:** Complete Foundation phases 18, 19, 20 AND Stdlib phases 11a, 11b FIRST
 
 ---
 
