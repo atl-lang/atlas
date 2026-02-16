@@ -1,0 +1,37 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - gosec
+    - ineffassign
+    - unused
+    - misspell
+    - unconvert
+
+linters-settings:
+  govet:
+    enable:
+      - shadow
+
+  staticcheck:
+    checks: ["all"]
+
+  gosec:
+    excludes:
+      - G204
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec

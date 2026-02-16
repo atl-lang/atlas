@@ -1,32 +1,42 @@
-.PHONY: build install test clean
+.PHONY: build install test bench lint fmt clean all
 
-# Build binary
+# Build binary (CGO required for SQLite)
 build:
-	CGO_ENABLED=0 go build -ldflags="-w -s" -o bin/atlas-dev ./cmd/atlas-dev
+	go build -ldflags="-w -s" -o bin/atlas-dev ./cmd/atlas-dev
 
 # Install to PATH
 install:
-	CGO_ENABLED=0 go install -ldflags="-w -s" ./cmd/atlas-dev
+	go install -ldflags="-w -s" ./cmd/atlas-dev
 
-# Run tests
+# Run tests with coverage and race detector
 test:
-	go test -v ./...
+	go test -v -race -cover -coverprofile=coverage.out ./...
+	@echo "\nCoverage report:"
+	@go tool cover -func=coverage.out | grep total
 
-# Clean build artifacts
-clean:
-	rm -rf bin/
+# Run benchmarks
+bench:
+	go test -bench=. -benchmem -run=^$$ ./...
 
-# Development: build and run
-dev: build
-	./bin/atlas-dev
+# Lint code
+lint:
+	golangci-lint run
 
 # Format code
 fmt:
 	go fmt ./...
+	goimports -w .
 
-# Lint
-lint:
-	golangci-lint run
+# Clean build artifacts
+clean:
+	rm -rf bin/ coverage.out
+
+# All quality checks
+all: fmt lint test
+
+# Development: build and run
+dev: build
+	./bin/atlas-dev
 
 # Show version
 version:
