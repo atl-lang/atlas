@@ -6,8 +6,9 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 # Atlas
 
 **Type:** Rust-based programming language compiler
-**Docs:** `docs/README.md` (navigation), `STATUS.md` (current state)
+**Docs:** `docs/README.md` (navigation), `atlas-dev context current` (next work + context)
 **Spec:** `Atlas-SPEC.md` (index with routing - DO NOT read all specs, use routing table)
+**Tracking:** `atlas-dev` CLI tool (database-driven, all phase/decision/feature tracking)
 
 ---
 
@@ -17,7 +18,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 **You:** Autonomous Lead Developer (full authority, make ALL decisions, execute phases)
 **User:** Overseer (catch mistakes only, not decision-maker, has "no technical experience")
-**Answers:** phases/ directory, docs/specification/, STATUS.md (NEVER ask user)
+**Answers:** phases/ directory, docs/specification/, `atlas-dev` CLI (NEVER ask user)
 **Phase directive = START NOW** (no permission needed)
 
 **Never ask:**
@@ -60,7 +61,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 - "Do Phase-XX"
 
 **Protocol:**
-1. Check STATUS.md (if phase complete, confirm with user; if phase file missing, list available phases)
+1. Run `atlas-dev context current` (gets next phase + full context - phase file, dependencies, decisions, progress)
 2. GATE -1 (verify - see below)
 3. Declare workflow
 4. Execute gates 0-6
@@ -224,7 +225,13 @@ cargo test -p atlas-runtime  # Full suite - ALL must pass
 
 ## Documentation Routing (LAZY LOAD)
 
-**Always check `STATUS.md` first** (current state, progress, routing)
+**Start with `atlas-dev context current`** - Single command gives everything: next phase, dependencies, decisions, progress
+
+**Additional commands:**
+- `atlas-dev summary` - Project dashboard (category progress, total progress)
+- `atlas-dev phase info <path>` - Details about specific phase
+- `atlas-dev decision search "keyword"` - Find architectural decisions
+- `atlas-dev blockers` - See blocked phases
 
 **Lazy-load specs:** `Atlas-SPEC.md` is INDEX with routing table
 - DO NOT read all spec files
@@ -238,8 +245,9 @@ cargo test -p atlas-runtime  # Full suite - ALL must pass
 - `docs/implementation/` - Component details
 - `docs/guides/` - Testing, code quality
 - `docs/api/` - Stdlib, runtime
+- `tools/atlas-dev/README.md` - CLI tool documentation (all commands)
 
-**Docs evolve. Skill stays stable. Always reference docs.**
+**Database is truth. Never edit markdown tracking files. Always use `atlas-dev` CLI.**
 
 ---
 

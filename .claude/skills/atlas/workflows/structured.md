@@ -1,6 +1,6 @@
 # Structured Development Workflow
 
-**When to use:** Following documented development plan (e.g., from STATUS.md)
+**When to use:** Following documented development plan (e.g., from `atlas-dev` CLI)
 
 **Approach:** Gate-based, systematic development (implementation-driven, NOT strict TDD)
 
@@ -37,7 +37,7 @@ Structured development uses **GATE 0, 0.5, 1, 1.5, 2-6** from central gate workf
 - Tests (what to test?)
 - Acceptance criteria (how to verify?)
 
-**Source:** STATUS.md points to current phase/plan location.
+**Source:** `atlas-dev` CLI points to current phase/plan location.
 
 ---
 
@@ -71,7 +71,7 @@ Structured development uses **GATE 0, 0.5, 1, 1.5, 2-6** from central gate workf
 
 ### GATE 6 Status Update
 **Record completion:**
-- Update STATUS.md or phase tracking
+- Update `atlas-dev` CLI or phase tracking
 - Mark work complete
 - Note completion date
 - Document next steps if applicable

@@ -17,7 +17,7 @@ All gates MANDATORY and BLOCKING. Cannot skip.
 | **GATE 3** | `gate-3-parity.md` | Verify interpreter/VM parity |
 | **GATE 4** | `gate-4-quality.md` | Quality gates (test, clippy, fmt) |
 | **GATE 5** | `gate-5-docs.md` | Doc updates (3-tier strategy) |
-| **GATE 6** | `gate-6-status.md` | Update STATUS.md (structured dev only) |
+| **GATE 6** | `gate-6-status.md` | Update atlas-dev CLI (structured dev only) |
 
 ---
 
@@ -123,7 +123,7 @@ cargo test integration  # Integration tests
 **Source of Truth:** Project `docs/` (NOT skill workflows)
 
 **Key Docs:**
-- `STATUS.md` - Current state, progress tracking
+- `atlas-dev CLI` - Current state, progress tracking
 - `Atlas-SPEC.md` - Spec index with routing (use to find specific spec files)
 - `docs/README.md` - Documentation navigation
 - `docs/specification/` - Grammar, semantics, runtime

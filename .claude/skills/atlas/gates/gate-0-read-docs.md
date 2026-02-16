@@ -18,10 +18,20 @@ cargo clean
 
 ---
 
-## Step 2: Read Docs (Selective Reading)
+## Step 2: Get Context (CLI First, Then Docs)
 
-1. **ALWAYS:** Read `STATUS.md` (current state, progress, doc map with routing)
-2. **IF structured development:** Read complete development plan
+1. **ALWAYS:** Run `atlas-dev context current` - Single command returns:
+   - Next phase to work on (path + name)
+   - Phase instructions (objectives, deliverables, acceptance criteria)
+   - Dependencies and blockers
+   - Related architectural decisions
+   - Category progress and navigation
+
+2. **IF needed:** Additional queries:
+   - `atlas-dev summary` - Project dashboard (category progress, completion %)
+   - `atlas-dev blockers` - See what phases are blocked
+   - `atlas-dev decision search "keyword"` - Find relevant decisions
+
 3. **ROUTING:** Read `Atlas-SPEC.md` (INDEX only - use routing table)
 4. **SELECTIVE:** Read ONLY the spec files your task needs:
 

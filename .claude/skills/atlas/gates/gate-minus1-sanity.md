@@ -57,7 +57,7 @@
    **Instead: CHECK SPEC, DECIDE, LOG**
 
 4. **Gather version/progress context:**
-   - Read `STATUS.md` (current version, phase, what's complete)
+   - Read ``atlas-dev summary`` (current version, phase, what's complete)
    - Read current phase file dependencies
    - Verify prerequisites are met
 
@@ -67,7 +67,7 @@
 
 **Evaluate request against check categories:**
 
-1. **Version scope:** Is this in current version's scope per STATUS.md?
+1. **Version scope:** Is this in current version's scope per `atlas-dev summary`?
 2. **Dependencies met:** Did spec verification confirm all deps ready?
 3. **Design consistency:** Does this align with Atlas compiler identity?
 4. **Workload:** Is this too ambitious for one session?
