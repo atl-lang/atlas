@@ -1,88 +1,72 @@
-# GATE 5: Doc Update (Selective - 3-Tier Strategy)
+# GATE 5: Update Database (Selective - CLI Only)
 
 **Condition:** Quality gates passed
 
-**CRITICAL:** Use 3-tier strategy. Don't update 15 files every phase (wallet dies). Don't wait until polish (drift catastrophic).
-
-**Reference:** `docs/gates/doc-update-rules.md` (detailed rules)
+**CRITICAL:** Database is ONLY source. Use CLI commands to update specs/APIs/decisions.
 
 ---
 
-## Tier 1: IMMEDIATE Updates (Do NOW)
+## Tier 1: IMMEDIATE Updates (Do NOW via CLI)
 
-**Update immediately if ANY of these:**
+**Update database immediately if ANY of these:**
 
 1. **Spec changed:**
-   - Updated any file in `docs/specification/` → Commit now
+   - Run: `atlas-dev spec sync <file>` → Updates database
    - Grammar, types, semantics, runtime behavior changed
-   - Note: Atlas-SPEC.md is just the index (rarely changes)
+   - Example: `atlas-dev spec sync syntax.md`
 
 2. **Architectural decision made:**
-   - Add to `docs/reference/decision-log.md` → Commit now
+   - Run: `atlas-dev decision create -c COMP -t "title" --decision "..." --rationale "..."`
    - Only if: Chose between approaches AND affects future work
+   - Stored in database immediately
 
 3. **Breaking API change:**
-   - Update `docs/api/` → Commit now
+   - Run: `atlas-dev api sync <file>` → Updates database
    - Changed function signature, removed function, changed behavior
+   - Example: `atlas-dev api sync stdlib.md`
 
-**Cost:** ~$0.10-0.25 per phase (if critical changes exist)
+**Cost:** ~30 seconds per command
 
 ---
 
 ## Tier 2: BATCHED Updates (Queue for Later)
 
-**Queue in `docs/reference/pending-updates.md` if:**
+**Use CLI for batch operations:**
 
 1. **New features added:**
-   - Added stdlib functions
-   - Added language features
-   - Minor spec clarifications
+   - Run: `atlas-dev feature create --name X --status InProgress`
+   - Or: `atlas-dev feature sync <name>` to update from codebase
 
 2. **When to process:**
-   - Category complete (all stdlib/strings phases done)
+   - Category complete (all stdlib phases done)
    - OR every 10-20 phases
    - OR at mini-polish checkpoints
-
-**Cost:** ~$0.20-0.50 every 10-20 phases
 
 ---
 
 ## Tier 3: NEVER Update (Skip)
 
-**DON'T update docs for:**
+**DON'T update database for:**
 
-1. **Implementation details:**
-   - Refactored code
-   - Optimizations
-   - Internal changes
-
-2. **Bug fixes:**
-   - Fixed errors
-   - Corrected behavior
-   - Unless spec ambiguity revealed
-
-3. **Refactors:**
-   - Code cleanup
-   - Module splits
-   - Unless public API changed
-
-**Cost:** $0 (don't do it)
+1. **Implementation details** (refactors, optimizations, internal changes)
+2. **Bug fixes** (unless spec ambiguity revealed)
+3. **Code cleanup** (unless public API changed)
 
 ---
 
-## Decision Tree
+## Decision Tree (CLI Commands)
 
 ```
-Spec changed? → YES → Update relevant docs/specification/*.md NOW
+Spec changed? → YES → atlas-dev spec sync <file>
               → NO ↓
 
-Architectural decision? → YES → Add to decision-log.md NOW
+Architectural decision? → YES → atlas-dev decision create ...
                        → NO ↓
 
-Breaking API change? → YES → Update docs/api/ NOW
+Breaking API change? → YES → atlas-dev api sync <file>
                     → NO ↓
 
-New features? → YES → Queue in .pending-updates.md
+New features? → YES → atlas-dev feature sync <name>
               → NO ↓
 
 Implementation detail only? → YES → SKIP
@@ -91,15 +75,34 @@ Implementation detail only? → YES → SKIP
 
 ---
 
-## Token Savings
+## Commands Reference
 
-**At 100 phases:**
-- Old way: Update 15 files × 100 phases = $150
-- New way: ~20 immediate + 5 batches = $5
-- **Savings: $145**
+**Sync specs:**
+```bash
+atlas-dev spec sync syntax.md          # Update spec in database
+atlas-dev spec sync --all               # Sync all specs
+```
+
+**Create decision:**
+```bash
+atlas-dev decision create \
+  -c COMPONENT \
+  -t "Decision title" \
+  --decision "What we decided" \
+  --rationale "Why we decided it"
+```
+
+**Sync APIs:**
+```bash
+atlas-dev api sync stdlib.md            # Update API doc in database
+atlas-dev api sync --all                # Sync all APIs
+```
+
+**Sync features:**
+```bash
+atlas-dev feature sync <name>           # Update from codebase
+```
 
 ---
 
 **Next:** Done (or GATE 6 if structured development)
-
-**Reference:** `docs/gates/doc-update-rules.md`
