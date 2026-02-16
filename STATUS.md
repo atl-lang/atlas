@@ -8,8 +8,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/stdlib/phase-08b-regex-operations.md
-**Next Phase:** phases/stdlib/phase-09-datetime.md
-**Real Progress:** 35/80 phases complete (44%)
+**Next Phase:** phases/stdlib/phase-09a-datetime-core.md
+**Real Progress:** 35/81 phases complete (43%)
 
 ---
 
@@ -18,7 +18,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 21/21 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 14/23 (61%) | 🔨 ACTIVE |
+| **1. Stdlib** | 14/24 (58%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -29,7 +29,7 @@
 
 ---
 
-## 📋 Complete Phase List (35/80)
+## 📋 Complete Phase List (35/81)
 
 ### 0. Foundation (21/21) ✅ COMPLETE
 
@@ -55,7 +55,7 @@
 ✅ phase-11b-build-system-incremental.md
 ✅ phase-11c-build-system-integration.md
 
-### 1. Stdlib (14/23) 🔨 ACTIVE
+### 1. Stdlib (14/24) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -71,7 +71,8 @@
 ✅ phase-07d-collection-integration.md
 ✅ phase-08a-regex-core.md
 ✅ phase-08b-regex-operations.md
-⬜ phase-09-datetime.md
+⬜ phase-09a-datetime-core.md
+⬜ phase-09b-datetime-advanced.md
 ⬜ phase-10-network-http.md
 ⬜ phase-11-async-io-foundation.md
 ⬜ phase-12-process-management.md
@@ -214,7 +215,7 @@ STATUS.md changes:
 ## 📋 v0.2 Implementation Notes
 
 **v0.1.0: COMPLETE** (93 phases archived in `phases/*/archive/v0.1/`)
-**v0.2: IN PROGRESS** (78 detailed, comprehensive phases)
+**v0.2: IN PROGRESS** (81 detailed, comprehensive phases)
 
 ### v0.2 Focus: Building Production Foundation
 
@@ -255,4 +256,4 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Ready to continue v0.2? Next phase: `phases/stdlib/phase-07d-collection-integration.md` 🚀**
+**Ready to continue v0.2? Next phase: `phases/stdlib/phase-09a-datetime-core.md` 🚀**
