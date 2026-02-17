@@ -6,6 +6,7 @@ members = [
     "crates/atlas-config",
     "crates/atlas-package",
     "crates/atlas-build",
+    "crates/atlas-jit",
 ]
 resolver = "2"
 
