@@ -7,9 +7,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-14a-gzip.md
-**Next Phase:** phases/stdlib/phase-14b-tar.md
-**Real Progress:** 57/98 phases complete (58%)
+**Last Completed:** phases/stdlib/phase-14b-tar.md
+**Next Phase:** phases/stdlib/phase-14c-zip.md
+**Real Progress:** 58/98 phases complete (59%)
 
 **🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
@@ -20,7 +20,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 32/32 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 25/30 (83%) | 🔨 ACTIVE |
+| **1. Stdlib** | 26/30 (87%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -71,7 +71,7 @@
 ✅ phase-20c-for-in-backend.md
 ✅ phase-20d-for-in-testing-demos.md
 
-### 1. Stdlib (22/28) 🔨 ACTIVE
+### 1. Stdlib (23/28) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -98,7 +98,7 @@
 ✅ phase-13a-path-manipulation.md
 ✅ phase-13b-file-system-operations.md
 ✅ phase-14a-gzip.md
-⬜ phase-14b-tar.md
+✅ phase-14b-tar.md
 ⬜ phase-14c-zip.md
 ⬜ phase-15-testing-framework.md
 ⬜ phase-16-through-25 (TBD)

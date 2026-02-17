@@ -160,6 +160,9 @@ pub fn is_builtin(name: &str) -> bool {
             // Compression - gzip
             | "gzipCompress" | "gzipDecompress" | "gzipDecompressString"
             | "gzipIsGzip" | "gzipCompressionRatio"
+            // Compression - tar
+            | "tarCreate" | "tarCreateGz" | "tarExtract" | "tarExtractGz"
+            | "tarList" | "tarContains"
     )
 }
 
@@ -1300,6 +1303,45 @@ pub fn call_builtin(
                 return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
             }
             compression::gzip::gzip_compression_ratio(&args[0], &args[1], call_span)
+        }
+
+        // Compression - tar
+        "tarCreate" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            compression::tar::tar_create(&args[0], &args[1], call_span)
+        }
+        "tarCreateGz" => {
+            if args.len() < 2 || args.len() > 3 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            let level_opt = args.get(2);
+            compression::tar::tar_create_gz(&args[0], &args[1], level_opt, call_span)
+        }
+        "tarExtract" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            compression::tar::tar_extract(&args[0], &args[1], call_span)
+        }
+        "tarExtractGz" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            compression::tar::tar_extract_gz(&args[0], &args[1], call_span)
+        }
+        "tarList" => {
+            if args.len() != 1 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            compression::tar::tar_list(&args[0], call_span)
+        }
+        "tarContains" => {
+            if args.len() != 2 {
+                return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
+            }
+            compression::tar::tar_contains_file(&args[0], &args[1], call_span)
         }
 
         _ => Err(RuntimeError::UnknownFunction {

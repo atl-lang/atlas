@@ -28,8 +28,9 @@ libffi = "5.1"
 pathdiff = "0.2"
 dirs = "5.0"
 
-# Compression (phase-14a)
+# Compression (phase-14a, 14b)
 flate2 = "1.0"
+tar = "0.4"
 
 [dev-dependencies]
 insta.workspace = true
