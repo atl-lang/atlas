@@ -387,6 +387,58 @@ for (;;) {  // Infinite loop
 
 **Syntax:** `for (init; condition; step) { body }`
 
+### For-In Loop
+
+```atlas
+// Iterate over array elements
+for item in array {
+    print(item);
+}
+
+// With explicit type annotation
+for x in [1, 2, 3] {
+    print(x);
+}
+
+// Nested iteration
+for row in matrix {
+    for item in row {
+        process(item);
+    }
+}
+
+// With break and continue
+for item in items {
+    if (item == target) {
+        break;
+    }
+    if (item < 0) {
+        continue;
+    }
+    process(item);
+}
+```
+
+**Syntax:** `for IDENTIFIER in expression block`
+
+**Type Requirements:**
+- Iterable expression must be of type `array`
+- Loop variable has type of array elements
+- Type is inferred from array element type
+
+**Scope:**
+- Loop variable is scoped to the loop body
+- Not accessible outside the loop
+- Can shadow outer variables
+
+**Control Flow:**
+- `break` exits the for-in loop
+- `continue` skips to next iteration
+- Early `return` from enclosing function works as expected
+
+**Implementation:**
+For-in loops iterate directly over array elements without explicit indexing.
+
 ### Return Statement
 
 ```atlas

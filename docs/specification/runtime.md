@@ -132,6 +132,46 @@ for (let i = 0; i < 3; i = i + 1) {
 // i not accessible here
 ```
 
+### For-In Loop Semantics
+
+**Execution:**
+1. Evaluate iterable expression (must be array)
+2. Extract array elements
+3. For each element:
+   - Create new scope (if first iteration) or reuse existing scope
+   - Bind loop variable to current element
+   - Execute body
+   - Check control flow (break/continue/return)
+4. Exit loop when all elements processed or break encountered
+
+**Variable Scoping:**
+- Loop variable exists only within loop body
+- Shadows outer variables with same name
+- Outer variable unaffected after loop completes
+- Each iteration rebinds same variable (not a new variable per iteration)
+
+Example:
+```atlas
+let item: number = 100;  // outer variable
+
+for item in [1, 2, 3] {
+    // item here is loop variable (shadows outer)
+    print(item);  // Prints 1, 2, 3
+}
+
+print(item);  // Prints 100 (outer variable unchanged)
+```
+
+**Break and Continue:**
+- `break` exits the for-in loop immediately
+- `continue` skips to next element
+- Both work as expected in nested loops
+
+**Performance:**
+- For-in has same performance as manual index-based iteration
+- Direct element access without index arithmetic
+- No runtime overhead for iteration abstraction
+
 ---
 
 ## Variable Semantics

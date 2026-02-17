@@ -7,9 +7,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/foundation/phase-20c-for-in-backend.md
-**Next Phase:** phases/foundation/phase-20d-for-in-testing-demos.md
-**Real Progress:** 51/95 phases complete (54%)
+**Last Completed:** phases/foundation/phase-20d-for-in-testing-demos.md
+**Next Phase:** TBD (Foundation nearly complete - 32/32!)
+**Real Progress:** 52/95 phases complete (55%)
 
 **🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
@@ -19,7 +19,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **0. Foundation** | 31/32 (97%) | 🔨 ACTIVE (CRITICAL) |
+| **0. Foundation** | 32/32 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 20/27 (74%) | ⏸️ BLOCKED (waiting on foundation) |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
@@ -69,7 +69,7 @@
 ✅ phase-20a-for-in-frontend.md
 ✅ phase-20b-for-in-semantic.md
 ✅ phase-20c-for-in-backend.md
-⬜ phase-20d-for-in-testing-demos.md
+✅ phase-20d-for-in-testing-demos.md
 
 ### 1. Stdlib (20/27) ⏸️ BLOCKED
 
@@ -163,14 +163,14 @@
 
 ## 🚨 Critical Notes
 
-**Foundation Status - PROGRESS:**
-- ✅ 31/32 complete (97%) - **MAJOR BLOCKERS RESOLVED**
+**Foundation Status - ✅ COMPLETE (32/32 = 100%):**
 - ✅ **Phase-18 (Arc Refactor):** COMPLETE - Value now thread-safe (Arc<Mutex<>>)
 - ✅ **Phase-19 (Parser Features):** COMPLETE - Match expressions enabled
-- ✅ **Phase-20a (For-In Frontend):** COMPLETE - Syntax parses correctly
-- ✅ **Phase-20b (For-In Semantic):** COMPLETE - Binder/typechecker implemented
-- ✅ **Phase-20c (For-In Backend):** COMPLETE - Interpreter execution works
-- 🚨 **Phase-20d (For-In Testing):** Comprehensive tests/demos remaining
+- ✅ **Phase-20 (For-In Loops):** COMPLETE - All 4 sub-phases done
+  - ✅ Phase-20a: Frontend (lexer, parser, AST)
+  - ✅ Phase-20b: Semantic analysis (binder, typechecker)
+  - ✅ Phase-20c: Backend (interpreter execution)
+  - ✅ Phase-20d: Testing & documentation
 
 **What's Unblocked:**
 - ✅ Phase-11c (async primitives) - Arc refactor complete, tokio::spawn works
@@ -178,9 +178,10 @@
 - ✅ Import statements - Already functional (verified)
 - ✅ For-in syntax - Parses correctly (execution in 20b-d)
 
-**Remaining Work:**
-- **NEXT:** Phase-20d (for-in comprehensive testing/demos)
-- **THEN:** Resume stdlib work (phase-11c async primitives)
+**Foundation Complete - Unblocked Work:**
+- ✅ All foundation phases complete (32/32)
+- **NEXT:** Resume stdlib work (phase-11c async primitives)
+- **THEN:** Continue with bytecode-VM, frontend, typing, etc.
 
 **v0.1 Prerequisites (Status Update):**
 - ✅ First-Class Functions
@@ -188,7 +189,7 @@
 - ✅ Generic Type System (Option<T>, Result<T,E>)
 - ✅ Pattern Matching (match expressions) - **ENABLED in Phase-19**
 - ✅ Import Statements - **Already functional** (verified in Phase-19)
-- ⏳ For-In Loops - **INTERPRETER EXECUTION COMPLETE** (phase-20a-c done, testing in 20d)
+- ✅ For-In Loops - **COMPLETE** (all 4 sub-phases done)
 - ✅ Basic Module System (v0.1 only - v0.2 expands this)
 
 ---
