@@ -17,6 +17,7 @@ pub mod process;
 pub mod reflect;
 pub mod regex;
 pub mod string;
+pub mod test;
 pub mod types;
 
 use crate::security::SecurityContext;
@@ -167,6 +168,13 @@ pub fn is_builtin(name: &str) -> bool {
             | "zipCreate" | "zipCreateWithComment" | "zipExtract" | "zipExtractFiles"
             | "zipList" | "zipContains" | "zipCompressionRatio"
             | "zipAddFile" | "zipValidate" | "zipComment"
+            // Testing primitives (assertions)
+            | "assert" | "assertFalse"
+            | "assertEqual" | "assertNotEqual"
+            | "assertOk" | "assertErr"
+            | "assertSome" | "assertNone"
+            | "assertContains" | "assertEmpty" | "assertLength"
+            | "assertThrows" | "assertNoThrow"
     )
 }
 
@@ -1421,6 +1429,21 @@ pub fn call_builtin(
             }
             compression::zip::zip_comment_fn(&args[0], call_span)
         }
+
+        // Testing primitives (assertions)
+        "assert" => test::assert(args, call_span),
+        "assertFalse" => test::assert_false(args, call_span),
+        "assertEqual" => test::assert_equal(args, call_span),
+        "assertNotEqual" => test::assert_not_equal(args, call_span),
+        "assertOk" => test::assert_ok(args, call_span),
+        "assertErr" => test::assert_err(args, call_span),
+        "assertSome" => test::assert_some(args, call_span),
+        "assertNone" => test::assert_none(args, call_span),
+        "assertContains" => test::assert_contains(args, call_span),
+        "assertEmpty" => test::assert_empty(args, call_span),
+        "assertLength" => test::assert_length(args, call_span),
+        "assertThrows" => test::assert_throws(args, call_span),
+        "assertNoThrow" => test::assert_no_throw(args, call_span),
 
         _ => Err(RuntimeError::UnknownFunction {
             name: name.to_string(),

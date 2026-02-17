@@ -7,9 +7,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-14c-zip.md
-**Next Phase:** phases/stdlib/phase-15-testing-framework.md
-**Real Progress:** 59/98 phases complete (60%)
+**Last Completed:** phases/stdlib/phase-15-testing-primitives.md
+**Next Phase:** phases/stdlib/phase-16-through-25 (TBD)
+**Real Progress:** 60/98 phases complete (61%)
 
 ---
 
@@ -18,7 +18,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 32/32 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 27/30 (90%) | 🔨 ACTIVE |
+| **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -96,7 +96,7 @@
 ✅ phase-14a-gzip.md
 ✅ phase-14b-tar.md
 ✅ phase-14c-zip.md
-⬜ phase-15-testing-framework.md
+✅ phase-15-testing-primitives.md
 ⬜ phase-16-through-25 (TBD)
 
 ### 2. Bytecode-VM (0/8) ⬜
