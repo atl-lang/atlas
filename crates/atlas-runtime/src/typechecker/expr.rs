@@ -5,7 +5,7 @@ use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::typechecker::suggestions;
 use crate::typechecker::TypeChecker;
-use crate::types::Type;
+use crate::types::{Type, TypeParamDef};
 
 impl<'a> TypeChecker<'a> {
     /// Check an expression and return its type
@@ -44,7 +44,7 @@ impl<'a> TypeChecker<'a> {
         &mut self,
         call: &CallExpr,
         callee_type: &Type,
-        type_params: &[String],
+        type_params: &[TypeParamDef],
         params: &[Type],
         return_type: &Type,
     ) -> Type {
@@ -401,7 +401,7 @@ impl<'a> TypeChecker<'a> {
     /// Check a generic function call with type inference
     fn check_call_with_inference(
         &mut self,
-        type_params: &[String],
+        type_params: &[TypeParamDef],
         params: &[Type],
         return_type: &Type,
         call: &CallExpr,
@@ -442,8 +442,8 @@ impl<'a> TypeChecker<'a> {
             // Some type parameters couldn't be inferred
             let uninferred: Vec<String> = type_params
                 .iter()
-                .filter(|param| inferer.get_substitution(param).is_none())
-                .cloned()
+                .filter(|param| inferer.get_substitution(&param.name).is_none())
+                .map(|param| param.name.clone())
                 .collect();
 
             self.diagnostics.push(
@@ -458,7 +458,14 @@ impl<'a> TypeChecker<'a> {
         }
 
         // Apply substitutions to return type
-        inferer.apply_substitutions(return_type)
+        let inferred_return = inferer.apply_substitutions(return_type);
+
+        // Validate constraints
+        if !self.check_constraints(type_params, &inferer, call.span) {
+            return Type::Unknown;
+        }
+
+        inferred_return
     }
 
     fn all_union_pairs_valid<F>(&self, left: &Type, right: &Type, mut predicate: F) -> bool

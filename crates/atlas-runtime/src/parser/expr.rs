@@ -371,6 +371,8 @@ impl Parser {
     fn parse_type_primary(&mut self) -> Result<TypeRef, ()> {
         let mut type_ref = if self.check(TokenKind::LeftParen) {
             self.parse_paren_type()?
+        } else if self.check(TokenKind::LeftBrace) {
+            self.parse_structural_type()?
         } else {
             let token = if self.check(TokenKind::Null) {
                 self.advance()
@@ -403,6 +405,57 @@ impl Parser {
         }
 
         Ok(type_ref)
+    }
+
+    /// Parse structural type: { field: type, method: (params) -> return }
+    fn parse_structural_type(&mut self) -> Result<TypeRef, ()> {
+        use crate::ast::StructuralMember;
+
+        let start_span = self
+            .consume(
+                TokenKind::LeftBrace,
+                "Expected '{' at start of structural type",
+            )?
+            .span;
+
+        let mut members = Vec::new();
+        if !self.check(TokenKind::RightBrace) {
+            loop {
+                let member_start = self.peek().span;
+                let name_tok = self.consume_identifier("a structural member name")?;
+                let member_name = name_tok.lexeme.clone();
+                let member_name_span = name_tok.span;
+                self.consume(TokenKind::Colon, "Expected ':' after member name")?;
+                let type_ref = self.parse_type_ref()?;
+                let member_span = member_start.merge(type_ref.span());
+                members.push(StructuralMember {
+                    name: member_name,
+                    type_ref,
+                    span: member_span.merge(member_name_span),
+                });
+
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+                if self.check(TokenKind::RightBrace) {
+                    break;
+                }
+            }
+        }
+
+        let end_span = self
+            .consume(TokenKind::RightBrace, "Expected '}' after structural type")?
+            .span;
+
+        if members.is_empty() {
+            self.error("Structural type must include at least one member");
+            return Err(());
+        }
+
+        Ok(TypeRef::Structural {
+            members,
+            span: start_span.merge(end_span),
+        })
     }
 
     /// Parse parenthesized type or function type.

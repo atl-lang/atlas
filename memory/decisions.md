@@ -425,3 +425,27 @@ pub enum Value {
 - `Type::Alias` added to type system.
 - Type checker resolves and caches aliases; warnings emitted on deprecated aliases.
 - Parser captures doc comments for alias declarations.
+
+---
+
+## DR-011: Built-in Constraint Patterns
+
+**Date:** 2026-02 (v0.2, Phase typing-05)
+**Status:** ✅ Active
+
+**Decision:**
+- Treat `Comparable`, `Numeric`, `Equatable`, `Serializable`, and `Iterable` as built-in constraint
+  names that resolve to concrete type bounds during type resolution.
+- `Comparable` and `Numeric` resolve to `number`.
+- `Equatable` resolves to `number | string | bool | null`.
+- `Serializable` resolves to `number | string | bool | null | json`.
+- `Iterable` resolves to `Array<unknown>`.
+
+**Rationale:**
+- Provides practical constraint patterns without introducing a full trait system.
+- Keeps constraint checking consistent with existing type-checker capabilities.
+- Aligns with current operator and for-in requirements.
+
+**Impact:**
+- Type resolution maps these names to concrete bounds in binder and type checker.
+- Constraint checking uses existing assignability rules for these patterns.

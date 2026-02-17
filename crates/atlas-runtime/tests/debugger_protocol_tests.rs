@@ -81,7 +81,7 @@ fn proto_serialize_continue() {
 
 #[test]
 fn proto_serialize_step_over() {
-    use atlas_runtime::debugger::protocol::{deserialize_request, serialize_request};
+    use atlas_runtime::debugger::protocol::serialize_request;
     let req = DebugRequest::StepOver;
     let json = serialize_request(&req).unwrap();
     assert!(json.contains("StepOver"));
@@ -89,7 +89,7 @@ fn proto_serialize_step_over() {
 
 #[test]
 fn proto_serialize_step_into() {
-    use atlas_runtime::debugger::protocol::{deserialize_request, serialize_request};
+    use atlas_runtime::debugger::protocol::serialize_request;
     let req = DebugRequest::StepInto;
     let json = serialize_request(&req).unwrap();
     assert!(json.contains("StepInto"));
@@ -97,7 +97,7 @@ fn proto_serialize_step_into() {
 
 #[test]
 fn proto_serialize_step_out() {
-    use atlas_runtime::debugger::protocol::{deserialize_request, serialize_request};
+    use atlas_runtime::debugger::protocol::serialize_request;
     let req = DebugRequest::StepOut;
     let json = serialize_request(&req).unwrap();
     assert!(json.contains("StepOut"));

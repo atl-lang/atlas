@@ -6,6 +6,7 @@
 //! - No truthy/falsey - conditionals require bool
 //! - Strict equality - == requires same-type operands
 
+mod constraints;
 mod expr;
 pub mod generics;
 pub mod inference;
@@ -18,7 +19,7 @@ use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
 use crate::symbol::{SymbolKind, SymbolTable};
-use crate::types::Type;
+use crate::types::{Type, TypeParamDef};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
@@ -198,11 +199,26 @@ impl<'a> TypeChecker<'a> {
         // Resolve return type
         let return_type = self.resolve_type_ref_with_params(&func.return_type, &func.type_params);
 
+        let type_params = func
+            .type_params
+            .iter()
+            .map(|param| TypeParamDef {
+                name: param.name.clone(),
+                bound: param.bound.as_ref().map(|bound| {
+                    Box::new(self.resolve_type_ref_with_params_and_context(
+                        bound,
+                        &func.type_params,
+                        None,
+                    ))
+                }),
+            })
+            .collect();
+
         // Create function symbol
         let symbol = crate::symbol::Symbol {
             name: func.name.name.clone(),
             ty: Type::Function {
-                type_params: func.type_params.iter().map(|tp| tp.name.clone()).collect(),
+                type_params,
                 params: param_types,
                 return_type: Box::new(return_type),
             },
@@ -286,6 +302,19 @@ impl<'a> TypeChecker<'a> {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Structural { members, .. } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| crate::types::StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: self.resolve_type_ref_with_params_and_context(
+                            &member.type_ref,
+                            type_params,
+                            None,
+                        ),
+                    })
+                    .collect(),
+            },
             TypeRef::Union { members, .. } => {
                 let resolved = members
                     .iter()
@@ -377,6 +406,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_function(&mut self, func: &FunctionDecl) {
+        self.validate_type_param_bounds(&func.type_params);
         // Save previous function context (for nested functions)
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
@@ -1071,6 +1101,18 @@ impl<'a> TypeChecker<'a> {
                 "void" => Type::Void,
                 "null" => Type::Null,
                 "json" => Type::JsonValue,
+                "Comparable" | "Numeric" => Type::Number,
+                "Iterable" => Type::Array(Box::new(Type::Unknown)),
+                "Equatable" => {
+                    Type::union(vec![Type::Number, Type::String, Type::Bool, Type::Null])
+                }
+                "Serializable" => Type::union(vec![
+                    Type::Number,
+                    Type::String,
+                    Type::Bool,
+                    Type::Null,
+                    Type::JsonValue,
+                ]),
                 _ => {
                     if let Some(alias) = self.type_aliases.get(name).cloned() {
                         if alias.type_params.is_empty() {
@@ -1128,6 +1170,15 @@ impl<'a> TypeChecker<'a> {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Structural { members, .. } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| crate::types::StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: self.resolve_type_ref_with_context(&member.type_ref, None),
+                    })
+                    .collect(),
+            },
             TypeRef::Union { members, .. } => {
                 let resolved = members
                     .iter()
@@ -1308,6 +1359,16 @@ impl<'a> TypeChecker<'a> {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Structural { members, .. } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| crate::types::StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: self
+                            .resolve_type_ref_with_substitutions(&member.type_ref, substitutions),
+                    })
+                    .collect(),
+            },
             TypeRef::Union { members, .. } => {
                 let resolved = members
                     .iter()
@@ -1508,6 +1569,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn validate_type_alias(&mut self, alias: &TypeAliasDecl) {
+        self.validate_type_param_bounds(&alias.type_params);
         let type_args = alias
             .type_params
             .iter()
@@ -1516,6 +1578,112 @@ impl<'a> TypeChecker<'a> {
             })
             .collect::<Vec<_>>();
         let _ = self.resolve_type_alias(alias, type_args, alias.span);
+    }
+
+    fn check_constraints(
+        &mut self,
+        type_params: &[TypeParamDef],
+        inferer: &generics::TypeInferer,
+        span: Span,
+    ) -> bool {
+        constraints::check_constraints(
+            type_params,
+            inferer,
+            &self.method_table,
+            &mut self.diagnostics,
+            span,
+        )
+    }
+
+    fn validate_type_param_bounds(&mut self, type_params: &[crate::ast::TypeParam]) {
+        for param in type_params {
+            let Some(bound) = &param.bound else {
+                continue;
+            };
+
+            let resolved = self.resolve_type_ref_with_params_and_context(bound, type_params, None);
+            if self.contains_type_param(&resolved, &param.name) {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3001",
+                        format!(
+                            "Type parameter '{}' cannot be constrained by itself",
+                            param.name
+                        ),
+                        param.span,
+                    )
+                    .with_label("circular constraint")
+                    .with_help("remove the self-referential constraint"),
+                );
+            }
+
+            if resolved.normalized() == Type::Unknown {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3001",
+                        format!(
+                            "Unknown constraint type for type parameter '{}'",
+                            param.name
+                        ),
+                        param.span,
+                    )
+                    .with_label("unknown constraint")
+                    .with_help("define the constraint type or use a supported constraint"),
+                );
+            }
+
+            if resolved.normalized() == Type::Never {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3001",
+                        format!(
+                            "Constraint for type parameter '{}' is unsatisfiable",
+                            param.name
+                        ),
+                        param.span,
+                    )
+                    .with_label("conflicting constraint")
+                    .with_help("simplify or remove the conflicting constraint"),
+                );
+            }
+        }
+    }
+
+    fn contains_type_param(&self, ty: &Type, name: &str) -> bool {
+        match ty {
+            Type::TypeParameter { name: param_name } => param_name == name,
+            Type::Array(elem) => self.contains_type_param(elem, name),
+            Type::Function {
+                params,
+                return_type,
+                type_params,
+            } => {
+                params.iter().any(|p| self.contains_type_param(p, name))
+                    || self.contains_type_param(return_type, name)
+                    || type_params
+                        .iter()
+                        .filter_map(|param| param.bound.as_ref())
+                        .any(|bound| self.contains_type_param(bound, name))
+            }
+            Type::Generic { type_args, .. } => type_args
+                .iter()
+                .any(|arg| self.contains_type_param(arg, name)),
+            Type::Alias {
+                type_args, target, ..
+            } => {
+                type_args
+                    .iter()
+                    .any(|arg| self.contains_type_param(arg, name))
+                    || self.contains_type_param(target, name)
+            }
+            Type::Union(members) | Type::Intersection(members) => members
+                .iter()
+                .any(|member| self.contains_type_param(member, name)),
+            Type::Structural { members } => members
+                .iter()
+                .any(|member| self.contains_type_param(&member.ty, name)),
+            _ => false,
+        }
     }
 }
 

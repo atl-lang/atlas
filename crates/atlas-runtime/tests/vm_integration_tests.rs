@@ -12,7 +12,7 @@ use atlas_runtime::optimizer::Optimizer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
-use atlas_runtime::vm::VM;
+use atlas_runtime::vm::{Profiler, VM};
 use rstest::rstest;
 
 // ============================================================================

@@ -4,6 +4,20 @@ use crate::ffi::ExternType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+/// Generic type parameter with optional constraint bound
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct TypeParamDef {
+    pub name: String,
+    pub bound: Option<Box<Type>>,
+}
+
+/// Structural type member (field or method signature)
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct StructuralMemberType {
+    pub name: String,
+    pub ty: Type,
+}
+
 /// Type representation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Type {
@@ -24,7 +38,7 @@ pub enum Type {
     /// Function type
     Function {
         /// Type parameters (empty for non-generic functions)
-        type_params: Vec<String>,
+        type_params: Vec<TypeParamDef>,
         params: Vec<Type>,
         return_type: Box<Type>,
     },
@@ -48,6 +62,8 @@ pub enum Type {
     Union(Vec<Type>),
     /// Intersection type (A & B)
     Intersection(Vec<Type>),
+    /// Structural type { field: type, method: (params) -> return }
+    Structural { members: Vec<StructuralMemberType> },
 }
 
 impl Type {
@@ -202,6 +218,17 @@ impl Type {
                     return match_type_params(r1, r2, &mut substitutions);
                 }
 
+                if tp1.len() != tp2.len() {
+                    return false;
+                }
+                for (a, b) in tp1.iter().zip(tp2.iter()) {
+                    let a_bound = a.bound.as_ref().map(|bound| bound.normalized());
+                    let b_bound = b.bound.as_ref().map(|bound| bound.normalized());
+                    if a_bound != b_bound {
+                        return false;
+                    }
+                }
+
                 p1.iter().zip(p2.iter()).all(|(a, b)| a.is_assignable_to(b))
                     && r1.is_assignable_to(r2)
             }
@@ -212,6 +239,21 @@ impl Type {
 
             // Extern types are assignable if they match
             (Type::Extern(a), Type::Extern(b)) => a == b,
+
+            (Type::Structural { members: a }, Type::Structural { members: b }) => {
+                if a.len() != b.len() {
+                    return false;
+                }
+                for member in b {
+                    let Some(actual) = a.iter().find(|m| m.name == member.name) else {
+                        return false;
+                    };
+                    if !actual.ty.is_assignable_to(&member.ty) {
+                        return false;
+                    }
+                }
+                true
+            }
 
             // No other types are assignable
             _ => false,
@@ -236,7 +278,18 @@ impl Type {
                 let mut result = String::new();
                 if !type_params.is_empty() {
                     result.push('<');
-                    result.push_str(&type_params.join(", "));
+                    let params = type_params
+                        .iter()
+                        .map(|param| {
+                            if let Some(bound) = &param.bound {
+                                format!("{} extends {}", param.name, bound.display_name())
+                            } else {
+                                param.name.clone()
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    result.push_str(&params);
                     result.push('>');
                 }
                 result.push('(');
@@ -282,6 +335,14 @@ impl Type {
                 .map(|t| t.display_name())
                 .collect::<Vec<_>>()
                 .join(" & "),
+            Type::Structural { members } => {
+                let parts = members
+                    .iter()
+                    .map(|member| format!("{}: {}", member.name, member.ty.display_name()))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{ {} }}", parts)
+            }
         }
     }
 
@@ -295,7 +356,13 @@ impl Type {
                 params,
                 return_type,
             } => Type::Function {
-                type_params: type_params.clone(),
+                type_params: type_params
+                    .iter()
+                    .map(|param| TypeParamDef {
+                        name: param.name.clone(),
+                        bound: param.bound.as_ref().map(|b| Box::new(b.normalized())),
+                    })
+                    .collect(),
                 params: params.iter().map(|p| p.normalized()).collect(),
                 return_type: Box::new(return_type.normalized()),
             },
@@ -305,6 +372,15 @@ impl Type {
             },
             Type::Union(members) => Type::union(members.clone()),
             Type::Intersection(members) => Type::intersection(members.clone()),
+            Type::Structural { members } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: member.ty.normalized(),
+                    })
+                    .collect(),
+            },
             other => other.clone(),
         }
     }

@@ -192,6 +192,14 @@ fn type_to_string(ty: &Type) -> String {
             .map(type_to_string)
             .collect::<Vec<_>>()
             .join(" & "),
+        Type::Structural { members } => {
+            let parts = members
+                .iter()
+                .map(|member| format!("{}: {}", member.name, type_to_string(&member.ty)))
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("{{ {} }}", parts)
+        }
     }
 }
 
@@ -227,6 +235,11 @@ fn collect_types(ty: &Type, types: &mut std::collections::HashSet<String>) {
         }
         Type::Extern(_) => {
             // Extern types are primitives, no nested types to collect
+        }
+        Type::Structural { members } => {
+            for member in members {
+                collect_types(&member.ty, types);
+            }
         }
         _ => {}
     }

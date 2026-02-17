@@ -781,6 +781,20 @@ impl FormatVisitor {
                 .map(|m| self.type_ref_to_string(m))
                 .collect::<Vec<_>>()
                 .join(" & "),
+            TypeRef::Structural { members, .. } => {
+                let parts = members
+                    .iter()
+                    .map(|member| {
+                        format!(
+                            "{}: {}",
+                            member.name,
+                            self.type_ref_to_string(&member.type_ref)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("{{ {} }}", parts)
+            }
         }
     }
 

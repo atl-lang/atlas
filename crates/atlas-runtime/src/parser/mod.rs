@@ -99,10 +99,17 @@ impl Parser {
             loop {
                 let type_param_start = self.peek().span;
                 let type_param_tok = self.consume_identifier("a type parameter name")?;
+                let type_param_name = type_param_tok.lexeme.clone();
+                let type_param_span = type_param_tok.span;
+                let mut bound = None;
+                if self.match_token(TokenKind::Extends) {
+                    bound = Some(self.parse_type_ref()?);
+                }
 
                 type_params.push(TypeParam {
-                    name: type_param_tok.lexeme.clone(),
-                    span: type_param_start.merge(type_param_tok.span),
+                    name: type_param_name,
+                    bound,
+                    span: type_param_start.merge(type_param_span),
                 });
 
                 if !self.match_token(TokenKind::Comma) {
@@ -281,10 +288,17 @@ impl Parser {
             loop {
                 let type_param_start = self.peek().span;
                 let type_param_tok = self.consume_identifier("a type parameter name")?;
+                let type_param_name = type_param_tok.lexeme.clone();
+                let type_param_span = type_param_tok.span;
+                let mut bound = None;
+                if self.match_token(TokenKind::Extends) {
+                    bound = Some(self.parse_type_ref()?);
+                }
 
                 type_params.push(TypeParam {
-                    name: type_param_tok.lexeme.clone(),
-                    span: type_param_start.merge(type_param_tok.span),
+                    name: type_param_name,
+                    bound,
+                    span: type_param_start.merge(type_param_span),
                 });
 
                 if !self.match_token(TokenKind::Comma) {

@@ -85,6 +85,8 @@ pub enum TokenKind {
     Match,
     /// `as` keyword (used in imports and patterns)
     As,
+    /// `extends` keyword (generic constraints)
+    Extends,
 
     // Operators
     /// `+` (addition)
@@ -210,6 +212,7 @@ impl TokenKind {
             "extern" => Some(TokenKind::Extern),
             "match" => Some(TokenKind::Match),
             "as" => Some(TokenKind::As),
+            "extends" => Some(TokenKind::Extends),
             _ => None,
         }
     }
@@ -241,6 +244,7 @@ impl TokenKind {
             TokenKind::Extern => "extern",
             TokenKind::Match => "match",
             TokenKind::As => "as",
+            TokenKind::Extends => "extends",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",
@@ -316,6 +320,7 @@ mod tests {
         assert_eq!(TokenKind::is_keyword("true"), Some(TokenKind::True));
         assert_eq!(TokenKind::is_keyword("false"), Some(TokenKind::False));
         assert_eq!(TokenKind::is_keyword("null"), Some(TokenKind::Null));
+        assert_eq!(TokenKind::is_keyword("extends"), Some(TokenKind::Extends));
     }
 
     #[test]

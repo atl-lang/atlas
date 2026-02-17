@@ -38,6 +38,8 @@ pub enum TypeKind {
     Unknown,
     /// Extern type (FFI)
     Extern,
+    /// Structural type (member requirements)
+    Structural,
     /// Union type
     Union,
     /// Intersection type
@@ -259,6 +261,22 @@ impl TypeInfo {
                 type_args: vec![],
                 alias_target: None,
             },
+            Type::Structural { members } => TypeInfo {
+                name: ty.display_name(),
+                kind: TypeKind::Structural,
+                fields: members
+                    .iter()
+                    .map(|member| FieldInfo {
+                        name: member.name.clone(),
+                        field_type: TypeInfo::from_type(&member.ty),
+                    })
+                    .collect(),
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: vec![],
+                alias_target: None,
+            },
             Type::Union(members) => TypeInfo {
                 name: "union".to_string(),
                 kind: TypeKind::Union,
@@ -365,6 +383,7 @@ impl TypeInfo {
             }
 
             TypeKind::JsonValue => "dynamic JSON value type".to_string(),
+            TypeKind::Structural => "structural type".to_string(),
             TypeKind::Union => "union type".to_string(),
             TypeKind::Intersection => "intersection type".to_string(),
 

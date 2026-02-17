@@ -9,7 +9,7 @@ use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
 use crate::symbol::{Symbol, SymbolKind, SymbolTable};
-use crate::types::Type;
+use crate::types::{StructuralMemberType, Type, TypeParamDef};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
@@ -214,10 +214,22 @@ impl Binder {
         // Exit type parameter scope
         self.exit_type_param_scope();
 
+        let type_params = func
+            .type_params
+            .iter()
+            .map(|param| TypeParamDef {
+                name: param.name.clone(),
+                bound: param
+                    .bound
+                    .as_ref()
+                    .map(|bound| Box::new(self.resolve_type_ref(bound))),
+            })
+            .collect();
+
         let symbol = Symbol {
             name: func.name.name.clone(),
             ty: Type::Function {
-                type_params: func.type_params.iter().map(|tp| tp.name.clone()).collect(),
+                type_params,
                 params: param_types,
                 return_type: Box::new(return_type),
             },
@@ -281,10 +293,22 @@ impl Binder {
         // Exit type parameter scope
         self.exit_type_param_scope();
 
+        let type_params = func
+            .type_params
+            .iter()
+            .map(|param| TypeParamDef {
+                name: param.name.clone(),
+                bound: param
+                    .bound
+                    .as_ref()
+                    .map(|bound| Box::new(self.resolve_type_ref(bound))),
+            })
+            .collect();
+
         let symbol = Symbol {
             name: func.name.name.clone(),
             ty: Type::Function {
-                type_params: func.type_params.iter().map(|tp| tp.name.clone()).collect(),
+                type_params,
                 params: param_types,
                 return_type: Box::new(return_type),
             },
@@ -1026,6 +1050,18 @@ impl Binder {
                 "void" => Type::Void,
                 "null" => Type::Null,
                 "json" => Type::JsonValue,
+                "Comparable" | "Numeric" => Type::Number,
+                "Iterable" => Type::Array(Box::new(Type::Unknown)),
+                "Equatable" => {
+                    Type::union(vec![Type::Number, Type::String, Type::Bool, Type::Null])
+                }
+                "Serializable" => Type::union(vec![
+                    Type::Number,
+                    Type::String,
+                    Type::Bool,
+                    Type::Null,
+                    Type::JsonValue,
+                ]),
                 _ => {
                     // Check if it's a type parameter
                     if let Some(_type_param) = self.lookup_type_parameter(name) {
@@ -1059,6 +1095,15 @@ impl Binder {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Structural { members, .. } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: self.resolve_type_ref(&member.type_ref),
+                    })
+                    .collect(),
+            },
             TypeRef::Generic {
                 name,
                 type_args,
@@ -1219,6 +1264,16 @@ impl Binder {
                     return_type: ret_type,
                 }
             }
+            TypeRef::Structural { members, .. } => Type::Structural {
+                members: members
+                    .iter()
+                    .map(|member| StructuralMemberType {
+                        name: member.name.clone(),
+                        ty: self
+                            .resolve_type_ref_with_alias_params(&member.type_ref, substitutions),
+                    })
+                    .collect(),
+            },
             TypeRef::Union { members, .. } => {
                 let resolved = members
                     .iter()
@@ -1529,7 +1584,7 @@ mod tests {
         // Check function type has type parameters
         if let Type::Function { type_params, .. } = &identity_symbol.unwrap().ty {
             assert_eq!(type_params.len(), 1);
-            assert_eq!(type_params[0], "T");
+            assert_eq!(type_params[0].name, "T");
         } else {
             panic!("Expected Function type");
         }
@@ -1553,8 +1608,8 @@ mod tests {
 
         if let Type::Function { type_params, .. } = &pair_symbol.unwrap().ty {
             assert_eq!(type_params.len(), 2);
-            assert_eq!(type_params[0], "A");
-            assert_eq!(type_params[1], "B");
+            assert_eq!(type_params[0].name, "A");
+            assert_eq!(type_params[1].name, "B");
         } else {
             panic!("Expected Function type");
         }

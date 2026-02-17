@@ -165,6 +165,8 @@ pub struct FunctionDecl {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeParam {
     pub name: String,
+    /// Optional constraint bound (e.g., `T extends number`)
+    pub bound: Option<TypeRef>,
     pub span: Span,
 }
 
@@ -467,6 +469,11 @@ pub enum TypeRef {
         return_type: Box<TypeRef>,
         span: Span,
     },
+    /// Structural type: { field: type, method: (params) -> return }
+    Structural {
+        members: Vec<StructuralMember>,
+        span: Span,
+    },
     /// Generic type application: Type<T1, T2, ...>
     Generic {
         name: String,
@@ -483,6 +490,14 @@ pub enum TypeRef {
         members: Vec<TypeRef>,
         span: Span,
     },
+}
+
+/// Structural type member
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructuralMember {
+    pub name: String,
+    pub type_ref: TypeRef,
+    pub span: Span,
 }
 
 /// Unary operator
@@ -562,6 +577,7 @@ impl TypeRef {
             TypeRef::Named(_, span) => *span,
             TypeRef::Array(_, span) => *span,
             TypeRef::Function { span, .. } => *span,
+            TypeRef::Structural { span, .. } => *span,
             TypeRef::Generic { span, .. } => *span,
             TypeRef::Union { span, .. } => *span,
             TypeRef::Intersection { span, .. } => *span,
