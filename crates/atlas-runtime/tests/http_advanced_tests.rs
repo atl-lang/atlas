@@ -43,6 +43,7 @@ fn test_http_request_patch_creation() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_put_simple() {
     let code = r#"
         let result = httpPut("https://httpbin.org/put", "test data");
@@ -52,6 +53,7 @@ fn test_http_put_simple() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_delete_simple() {
     let code = r#"
         let result = httpDelete("https://httpbin.org/delete");
@@ -61,6 +63,7 @@ fn test_http_delete_simple() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_patch_simple() {
     let code = r#"
         let result = httpPatch("https://httpbin.org/patch", "patch data");
@@ -95,6 +98,7 @@ fn test_http_set_query_multiple() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_query_url_encoding() {
     let code = r#"
         fn test() -> string {
@@ -180,6 +184,7 @@ fn test_http_multiple_configuration() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_status_text_200() {
     let code = r#"
         fn test() -> string {
@@ -194,6 +199,7 @@ fn test_http_status_text_200() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_status_text_404() {
     let code = r#"
         fn test() -> string {
@@ -208,6 +214,7 @@ fn test_http_status_text_404() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_content_type() {
     let code = r#"
         fn test() -> string {
@@ -223,6 +230,7 @@ fn test_http_content_type() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_is_redirect_false() {
     let code = r#"
         fn test() -> bool {
@@ -237,6 +245,7 @@ fn test_http_is_redirect_false() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_is_client_error_true() {
     let code = r#"
         fn test() -> bool {
@@ -251,6 +260,7 @@ fn test_http_is_client_error_true() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_is_server_error_false() {
     let code = r#"
         fn test() -> bool {
@@ -269,6 +279,7 @@ fn test_http_is_server_error_false() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_get_json() {
     let code = r#"
         fn test() -> string {
@@ -281,6 +292,7 @@ fn test_http_get_json() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_get_json_success() {
     let code = r#"
         fn test() -> bool {
@@ -307,6 +319,7 @@ fn test_http_check_permission_placeholder() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_put_workflow() {
     let code = r#"
         fn test() -> bool {
@@ -325,6 +338,7 @@ fn test_http_put_workflow() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_delete_workflow() {
     let code = r#"
         fn test() -> bool {
@@ -342,6 +356,7 @@ fn test_http_delete_workflow() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_patch_workflow() {
     let code = r#"
         fn test() -> bool {
@@ -359,6 +374,7 @@ fn test_http_patch_workflow() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_query_params_workflow() {
     let code = r#"
         fn test() -> bool {
@@ -378,6 +394,7 @@ fn test_http_query_params_workflow() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_advanced_config_workflow() {
     let code = r#"
         fn test() -> bool {
@@ -398,6 +415,7 @@ fn test_http_advanced_config_workflow() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_utilities_workflow() {
     let code = r#"
         fn test() -> bool {

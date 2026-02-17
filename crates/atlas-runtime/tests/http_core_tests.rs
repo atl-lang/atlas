@@ -95,6 +95,7 @@ fn test_http_request_with_valid_method() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_status() {
     let code = r#"
         fn test() -> number {
@@ -111,6 +112,7 @@ fn test_http_response_status() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_body() {
     let code = r#"
         fn test() -> string {
@@ -125,6 +127,7 @@ fn test_http_response_body() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_is_success_200() {
     let code = r#"
         fn test() -> bool {
@@ -140,6 +143,7 @@ fn test_http_response_is_success_200() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_is_success_404() {
     let code = r#"
         fn test() -> bool {
@@ -154,6 +158,7 @@ fn test_http_response_is_success_404() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_headers() {
     let code = r#"
         fn test() -> string {
@@ -169,6 +174,7 @@ fn test_http_response_headers() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_header_by_name() {
     let code = r#"
         fn test() -> string {
@@ -184,6 +190,7 @@ fn test_http_response_header_by_name() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_response_url() {
     let code = r#"
         fn test() -> string {
@@ -202,6 +209,7 @@ fn test_http_response_url() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_get_simple() {
     let code = r#"
         let result = httpGet("https://httpbin.org/get");
@@ -211,12 +219,14 @@ fn test_http_get_simple() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_get_returns_result_type() {
     let code = r#"typeof(httpGet("https://httpbin.org/get"))"#;
     assert_eq!(eval_ok(code), "result");
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_post_simple() {
     let code = r#"
         let result = httpPost("https://httpbin.org/post", "test data");
@@ -226,6 +236,7 @@ fn test_http_post_simple() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_post_with_body() {
     let code = r#"
         fn test() -> bool {
@@ -242,6 +253,7 @@ fn test_http_post_with_body() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_send_with_request() {
     let code = r#"
         let req = httpRequestGet("https://httpbin.org/get");
@@ -252,6 +264,7 @@ fn test_http_send_with_request() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_send_with_custom_headers() {
     let code = r#"
         let req = httpRequestGet("https://httpbin.org/get");
@@ -263,6 +276,7 @@ fn test_http_send_with_custom_headers() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_post_json() {
     let code = r#"
         fn test() -> string {
@@ -277,6 +291,7 @@ fn test_http_post_json() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_parse_json_response() {
     let code = r#"
         fn test() -> string {
@@ -297,6 +312,7 @@ fn test_http_invalid_url_error() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_invalid_host_returns_error() {
     let code = r#"
         let result = httpGet("https://this-domain-definitely-does-not-exist-12345.com");
@@ -306,6 +322,7 @@ fn test_http_invalid_host_returns_error() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_timeout_configuration() {
     let code = r#"
         let req = httpRequestGet("https://httpbin.org/delay/1");
@@ -316,6 +333,7 @@ fn test_http_timeout_configuration() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_request_post_method() {
     let code = r#"
         let req = httpRequest("POST", "https://httpbin.org/post");
@@ -331,6 +349,7 @@ fn test_http_request_post_method() {
 // ============================================================================
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_complete_workflow_get() {
     let code = r#"
         fn test() -> bool {
@@ -351,6 +370,7 @@ fn test_http_complete_workflow_get() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_complete_workflow_post() {
     let code = r#"
         fn test() -> bool {
@@ -370,6 +390,7 @@ fn test_http_complete_workflow_post() {
 }
 
 #[test]
+#[ignore = "requires network"]
 fn test_http_json_workflow() {
     let code = r#"
         fn test() -> bool {

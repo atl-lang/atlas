@@ -640,6 +640,7 @@ fn test_multiple_concurrent_requests() {
 }
 
 #[rstest]
+#[ignore = "requires network"]
 fn test_request_timeout() {
     // Timeout test - use a slow endpoint
     use atlas_runtime::stdlib::http::HttpRequest;
@@ -671,6 +672,7 @@ fn test_request_timeout() {
 }
 
 #[rstest]
+#[ignore = "requires network"]
 fn test_network_error_handling() {
     let args = [Value::string(
         "https://this-domain-does-not-exist-12345.com",
@@ -1049,6 +1051,7 @@ fn test_await_resolved_future() {
 }
 
 #[rstest]
+#[ignore = "requires network"]
 fn test_await_rejected_future() {
     let args = [Value::string("https://this-will-fail.invalid")];
     let future_result = async_io::http_get_async(&args, Span::dummy()).unwrap();
