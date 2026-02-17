@@ -6,8 +6,8 @@
 **Verification:**
 ```bash
 ls crates/atlas-lsp/src/actions.rs
-cargo test lsp_actions
-grep -n "WorkspaceEdit" crates/atlas-lsp/src/
+cargo test -p atlas-lsp lsp_actions
+grep -rn "WorkspaceEdit" crates/atlas-lsp/src/
 ```
 
 **What's needed:**

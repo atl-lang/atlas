@@ -151,6 +151,17 @@ fn addition_works() -> void {
 
 ---
 
+### ⚠️ API NOTE for GATE 1
+
+Atlas Lexer and Parser do NOT return `Result`. Their actual API is:
+```rust
+let mut lexer = Lexer::new(&source);
+let (tokens, lex_diags) = lexer.tokenize();  // returns (Vec<Token>, Vec<Diagnostic>)
+let mut parser = Parser::new(tokens);
+let (ast, parse_diags) = parser.parse();     // returns (Program, Vec<Diagnostic>)
+```
+Adapt the code examples below accordingly — they use `.map_err(...)` for illustration only.
+
 ### GATE 1: Implement Test Discovery
 
 **File:** `crates/atlas-cli/src/testing/discovery.rs`

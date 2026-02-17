@@ -6,19 +6,19 @@
 **Verification:**
 ```bash
 ls crates/atlas-runtime/src/interpreter/mod.rs
-ls crates/atlas-repl/src/lib.rs
+ls crates/atlas-runtime/src/repl.rs
+ls crates/atlas-cli/src/commands/repl.rs
 ls crates/atlas-runtime/src/debugger/mod.rs
-cargo test interpreter
-cargo test repl
+cargo test -p atlas-runtime -- interpreter
 ```
 
 **What's needed:**
-- Interpreter from v0.1 with AST evaluation
-- REPL from v0.1 with basic interaction
+- Interpreter from v0.1 with AST evaluation (`crates/atlas-runtime/src/interpreter/mod.rs`)
+- REPL in `crates/atlas-runtime/src/repl.rs` and `crates/atlas-cli/src/commands/repl.rs` (NO separate atlas-repl crate)
 - VM debugger infrastructure from bytecode-vm/phase-04
 - Debugger protocol defined
 
-**If missing:** Verify v0.1 interpreter and REPL exist, complete bytecode-vm debugger phases
+**If missing:** Verify v0.1 interpreter and REPL files above exist, complete bytecode-vm debugger phases
 
 ---
 
@@ -28,11 +28,11 @@ Add debugger support to interpreter achieving parity with VM debugger and enhanc
 ## Files
 **Update:** `crates/atlas-runtime/src/interpreter/mod.rs` (~300 lines add debug hooks)
 **Create:** `crates/atlas-runtime/src/interpreter/debugger.rs` (~400 lines)
-**Update:** `crates/atlas-repl/src/lib.rs` (~400 lines commands multi-line)
-**Create:** `crates/atlas-repl/src/commands.rs` (~300 lines)
-**Create:** `crates/atlas-repl/src/multiline.rs` (~200 lines)
+**Update:** `crates/atlas-runtime/src/repl.rs` (~400 lines commands multi-line)
+**Update:** `crates/atlas-cli/src/commands/repl.rs` (~300 lines add REPL commands)
+**Create:** `crates/atlas-runtime/src/repl/multiline.rs` (~200 lines)
 **Tests:** `crates/atlas-runtime/tests/interpreter_debug_tests.rs` (~400 lines)
-**Tests:** `crates/atlas-repl/tests/repl_tests.rs` (~300 lines)
+**Tests:** `crates/atlas-runtime/tests/repl_state_tests.rs` (add to existing file)
 
 ## Dependencies
 - Interpreter from v0.1

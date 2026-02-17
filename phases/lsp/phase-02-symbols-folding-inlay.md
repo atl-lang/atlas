@@ -25,11 +25,11 @@ cargo test lsp_actions_tests
 Implement LSP document and workspace symbol providers for navigation, folding range provider for code collapse, and inlay hint provider for type and parameter hints improving code readability and editor navigation.
 
 ## Files
-**Update:** `crates/atlas-lsp/src/handlers.rs` (~400 lines)
+**Update:** `crates/atlas-lsp/src/handlers/mod.rs` (~400 lines)
 **Create:** `crates/atlas-lsp/src/symbols.rs` (~500 lines)
 **Create:** `crates/atlas-lsp/src/folding.rs` (~200 lines)
 **Create:** `crates/atlas-lsp/src/inlay_hints.rs` (~300 lines)
-**Update:** `crates/atlas-lsp/src/server.rs` (~80 lines register handlers)
+**Update:** `crates/atlas-lsp/src/handlers/mod.rs` (~80 lines register new handlers)
 **Tests:** `crates/atlas-lsp/tests/lsp_symbols_tests.rs` (~200 lines)
 **Tests:** `crates/atlas-lsp/tests/lsp_folding_tests.rs` (~150 lines)
 **Tests:** `crates/atlas-lsp/tests/lsp_inlay_tests.rs` (~150 lines)

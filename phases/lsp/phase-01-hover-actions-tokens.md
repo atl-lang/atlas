@@ -25,7 +25,7 @@ grep -n "textDocument" crates/atlas-lsp/src/server.rs
 Implement LSP hover information showing types and documentation, code actions providing quick fixes and refactorings, and semantic token provider for enhanced syntax highlighting enabling rich editor integration.
 
 ## Files
-**Update:** `crates/atlas-lsp/src/handlers.rs` (~600 lines)
+**Update:** `crates/atlas-lsp/src/handlers/mod.rs` (~600 lines)
 **Create:** `crates/atlas-lsp/src/hover.rs` (~300 lines)
 **Create:** `crates/atlas-lsp/src/actions.rs` (~400 lines)
 **Create:** `crates/atlas-lsp/src/semantic_tokens.rs` (~400 lines)

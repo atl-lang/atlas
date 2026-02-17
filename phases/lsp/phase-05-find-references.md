@@ -6,7 +6,7 @@
 **Verification:**
 ```bash
 ls crates/atlas-lsp/src/server.rs
-ls crates/atlas-runtime/src/modules/mod.rs
+ls crates/atlas-runtime/src/module_loader.rs
 cargo test lsp
 ```
 

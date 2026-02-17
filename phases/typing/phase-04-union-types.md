@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-grep -n "Type::" crates/atlas-runtime/src/typechecker/types.rs
+grep -n "Type::" crates/atlas-runtime/src/types.rs
 cargo test typechecker
 ls crates/atlas-runtime/src/typechecker/mod.rs
 ```
@@ -23,7 +23,7 @@ ls crates/atlas-runtime/src/typechecker/mod.rs
 Implement union and intersection types enabling flexible type composition - union types for values of multiple possible types (string | number) and intersection types for combining type constraints (Serializable & Comparable) - providing TypeScript-like type flexibility.
 
 ## Files
-**Update:** `crates/atlas-runtime/src/typechecker/types.rs` (~400 lines union/intersection)
+**Update:** `crates/atlas-runtime/src/types.rs` (~400 lines union/intersection)
 **Update:** `crates/atlas-runtime/src/typechecker/mod.rs` (~350 lines type checking)
 **Update:** `crates/atlas-runtime/src/parser/mod.rs` (~150 lines parse union syntax)
 **Create:** `crates/atlas-runtime/src/typechecker/narrowing.rs` (~500 lines)

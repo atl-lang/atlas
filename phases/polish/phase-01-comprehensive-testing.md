@@ -13,14 +13,14 @@ grep "60+ functions" docs/api/stdlib.md
 ```
 
 **What's needed:**
-- All stdlib phases complete (6/6) with 60+ functions
-- All bytecode-vm phases complete (7/7)
-- All frontend phases complete (3/3)
-- All typing phases complete (2/2)
+- All stdlib phases complete (30/30) with 60+ functions
+- All bytecode-vm phases complete (8/8)
+- All frontend phases complete (5/5)
+- All typing phases complete (7/7)
 - All interpreter phases complete (2/2)
-- All CLI phases complete (4/4)
-- All LSP phases complete (3/3)
-- All foundation phases complete (5/5)
+- All CLI phases complete (6/6)
+- All LSP phases complete (5/5)
+- All foundation phases complete (33/33)
 
 **If missing:** Complete all implementation phases before comprehensive testing
 

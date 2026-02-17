@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-grep -n "Type::" crates/atlas-runtime/src/typechecker/types.rs
+grep -n "Type::" crates/atlas-runtime/src/types.rs
 cargo test typechecker
 ls crates/atlas-runtime/src/typechecker/mod.rs
 ```
@@ -24,7 +24,7 @@ Implement type aliases enabling named type definitions for documentation, abstra
 
 ## Files
 **Update:** `crates/atlas-runtime/src/ast.rs` (~100 lines add TypeAlias node)
-**Update:** `crates/atlas-runtime/src/typechecker/types.rs` (~200 lines alias support)
+**Update:** `crates/atlas-runtime/src/types.rs` (~200 lines alias support)
 **Update:** `crates/atlas-runtime/src/typechecker/mod.rs` (~250 lines alias checking)
 **Update:** `crates/atlas-runtime/src/parser/mod.rs` (~150 lines parse type keyword)
 **Create:** `docs/type-aliases.md` (~400 lines)

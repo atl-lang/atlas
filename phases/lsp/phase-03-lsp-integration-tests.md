@@ -12,7 +12,7 @@ atlas lsp --help
 ```
 
 **What's needed:**
-- LSP phases 01-02 complete with all features
+- LSP phases 01-02 complete with all features (3 more phases remain after this: 04-05)
 - All LSP unit tests passing
 - LSP server launches successfully
 - CLI integration from cli/phase-03
@@ -78,7 +78,7 @@ Create troubleshooting guide for LSP issues. Document common server startup issu
 Write comprehensive LSP status report. Document implementation status of all three LSP phases. List all implemented features with protocol method names. Describe editor compatibility. Show performance benchmarks. List verification checklist with test coverage. Document known limitations. Propose future enhancements completion refactoring improvements. Conclude LSP is complete and production-ready.
 
 ### STATUS.md Update
-Update STATUS.md marking LSP category as 3/3 complete with all phases checked off. Update overall progress percentage.
+Update STATUS.md marking LSP category as 3/5 complete with phases 01-03 checked off. Update overall progress percentage.
 
 ## Tests (TDD - Use rstest)
 

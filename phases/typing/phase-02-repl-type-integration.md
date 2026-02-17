@@ -5,18 +5,19 @@
 
 **Verification:**
 ```bash
-ls crates/atlas-repl/src/lib.rs
+ls crates/atlas-runtime/src/repl.rs
+ls crates/atlas-cli/src/commands/repl.rs
 grep -n "TypeChecker" crates/atlas-runtime/src/typechecker/mod.rs
-cargo test typechecker
-cargo test type_improvements_tests
+cargo test -p atlas-runtime --test type_improvements_tests
+cargo test -p atlas-runtime --test type_inference_tests
 ```
 
 **What's needed:**
-- REPL from v0.1 with basic command processing
+- REPL in `crates/atlas-runtime/src/repl.rs` and `crates/atlas-cli/src/commands/repl.rs` (NO separate atlas-repl crate)
 - Type checker with improved errors and inference from phase 01
 - Enhanced type display from phase 01
 
-**If missing:** Complete phase typing/phase-01 first, verify REPL exists from v0.1
+**If missing:** Complete phase typing/phase-01 first, verify REPL files above exist
 
 ---
 
@@ -24,8 +25,8 @@ cargo test type_improvements_tests
 Integrate type information display into REPL with type command and automatic type showing for let bindings plus comprehensive integration testing of entire typing system ensuring all improvements work together correctly.
 
 ## Files
-**Update:** `crates/atlas-repl/src/lib.rs` (~200 lines add type commands)
-**Update:** `crates/atlas-repl/src/commands.rs` (~150 lines)
+**Update:** `crates/atlas-runtime/src/repl.rs` (~200 lines add type commands)
+**Update:** `crates/atlas-cli/src/commands/repl.rs` (~150 lines add type display)
 **Create:** `crates/atlas-runtime/tests/repl_types_tests.rs` (~300 lines)
 **Create:** `crates/atlas-runtime/tests/typing_integration_tests.rs` (~400 lines)
 **Create:** `docs/typing-status.md` (~200 lines)
@@ -58,7 +59,7 @@ Test REPL type commands and display. Test colon-type command with various expres
 Write comprehensive typing status report. Document implementation status of both typing phases. List verification checklist with test coverage. Describe type error improvements with examples. Describe type inference enhancements with examples. Describe REPL integration features. Document known limitations. Propose future enhancements. Conclude Typing is complete and production-ready.
 
 ### STATUS.md Update
-Update STATUS.md marking Typing category as 2/2 complete with both phases checked off. Update overall progress percentage.
+Update STATUS.md marking Typing category as 2/7 complete with phases 01-02 checked off. Update overall progress percentage.
 
 ## Tests (TDD - Use rstest)
 
@@ -96,7 +97,7 @@ Update STATUS.md marking Typing category as 2/2 complete with both phases checke
 
 ## Integration Points
 - Uses: Type checker with improvements from phase 01
-- Uses: REPL from v0.1
+- Uses: REPL from `crates/atlas-runtime/src/repl.rs` and `crates/atlas-cli/src/commands/repl.rs`
 - Updates: REPL with type commands
 - Tests: Complete typing system
 - Verifies: All typing features work together

@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-grep -n "Generic\|TypeParam" crates/atlas-runtime/src/typechecker/types.rs
+grep -n "Generic\|TypeParam" crates/atlas-runtime/src/types.rs
 cargo test typechecker
 ls crates/atlas-runtime/src/typechecker/mod.rs
 ```
@@ -23,7 +23,7 @@ ls crates/atlas-runtime/src/typechecker/mod.rs
 Implement generic type constraints and bounds restricting type parameters to specific capabilities - enabling bounded polymorphism with constraints like T extends Comparable, T implements Serializable - providing Rust-like trait bounds for type safety.
 
 ## Files
-**Update:** `crates/atlas-runtime/src/typechecker/types.rs` (~300 lines constraints)
+**Update:** `crates/atlas-runtime/src/types.rs` (~300 lines constraints)
 **Update:** `crates/atlas-runtime/src/typechecker/mod.rs` (~400 lines constraint checking)
 **Update:** `crates/atlas-runtime/src/parser/mod.rs` (~150 lines extends syntax)
 **Create:** `crates/atlas-runtime/src/typechecker/constraints.rs` (~500 lines)
