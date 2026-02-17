@@ -19,7 +19,7 @@ use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Virtual machine state
 pub struct VM {
@@ -471,7 +471,7 @@ impl VM {
                             self.push(Value::Number(result));
                         }
                         (Value::String(x), Value::String(y)) => {
-                            self.push(Value::String(Rc::new(format!("{}{}", x, y))));
+                            self.push(Value::String(Arc::new(format!("{}{}", x, y))));
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {
@@ -763,7 +763,7 @@ impl VM {
                         elements.push(self.pop());
                     }
                     elements.reverse(); // Stack is LIFO, so reverse to get correct order
-                    self.push(Value::Array(Rc::new(RefCell::new(elements))));
+                    self.push(Value::Array(Arc::new(RefCell::new(elements))));
                 }
                 Opcode::GetIndex => {
                     let index_val = self.pop();
@@ -811,7 +811,7 @@ impl VM {
                                     })
                                 }
                             };
-                            self.push(Value::JsonValue(Rc::new(result)));
+                            self.push(Value::JsonValue(Arc::new(result)));
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {
@@ -1735,9 +1735,9 @@ impl VM {
             result_map.insert(key, new_value);
         }
 
-        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
-            result_map,
-        ))))
+        Ok(Value::HashMap(std::sync::Arc::new(
+            std::cell::RefCell::new(result_map),
+        )))
     }
 
     fn vm_intrinsic_hashmap_filter(
@@ -1785,9 +1785,9 @@ impl VM {
             }
         }
 
-        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
-            result_map,
-        ))))
+        Ok(Value::HashMap(std::sync::Arc::new(
+            std::cell::RefCell::new(result_map),
+        )))
     }
 
     fn vm_intrinsic_hashset_for_each(
@@ -1897,9 +1897,9 @@ impl VM {
             }
         }
 
-        Ok(Value::HashSet(std::rc::Rc::new(std::cell::RefCell::new(
-            result_set,
-        ))))
+        Ok(Value::HashSet(std::sync::Arc::new(
+            std::cell::RefCell::new(result_set),
+        )))
     }
 
     /// Regex intrinsic: Replace first match using callback (VM version)
@@ -1946,19 +1946,19 @@ impl VM {
             // Build match data HashMap
             let mut match_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "text".to_string(),
                 )),
                 Value::string(match_text),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "start".to_string(),
                 )),
                 Value::Number(match_start as f64),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "end".to_string(),
                 )),
                 Value::Number(match_end as f64),
@@ -1975,21 +1975,22 @@ impl VM {
                     }
                 }
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(groups),
                 );
             } else {
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(vec![]),
                 );
             }
 
-            let match_value = Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(match_map)));
+            let match_value =
+                Value::HashMap(std::sync::Arc::new(std::cell::RefCell::new(match_map)));
 
             // Call callback with match data
             let replacement_value =
@@ -2074,19 +2075,19 @@ impl VM {
             // Build match data HashMap
             let mut match_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "text".to_string(),
                 )),
                 Value::string(match_text),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "start".to_string(),
                 )),
                 Value::Number(match_start as f64),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "end".to_string(),
                 )),
                 Value::Number(match_end as f64),
@@ -2103,21 +2104,22 @@ impl VM {
                     }
                 }
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(groups),
                 );
             } else {
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(vec![]),
                 );
             }
 
-            let match_value = Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(match_map)));
+            let match_value =
+                Value::HashMap(std::sync::Arc::new(std::cell::RefCell::new(match_map)));
 
             // Call callback with match data
             let replacement_value =

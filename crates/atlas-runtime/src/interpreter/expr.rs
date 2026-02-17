@@ -3,7 +3,7 @@
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
 use crate::value::{RuntimeError, Value};
-use std::rc::Rc;
+use std::sync::Arc;
 
 impl Interpreter {
     /// Evaluate an expression
@@ -467,7 +467,7 @@ impl Interpreter {
                         })
                     }
                 };
-                Ok(Value::JsonValue(Rc::new(result)))
+                Ok(Value::JsonValue(Arc::new(result)))
             }
             _ => Err(RuntimeError::TypeError {
                 msg: "Cannot index non-array/string/json".to_string(),
@@ -1435,9 +1435,9 @@ impl Interpreter {
             result_map.insert(key, new_value);
         }
 
-        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
-            result_map,
-        ))))
+        Ok(Value::HashMap(std::sync::Arc::new(
+            std::cell::RefCell::new(result_map),
+        )))
     }
 
     /// hashMapFilter(map, predicate) - Filter entries, return new map
@@ -1492,9 +1492,9 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(
-            result_map,
-        ))))
+        Ok(Value::HashMap(std::sync::Arc::new(
+            std::cell::RefCell::new(result_map),
+        )))
     }
 
     /// hashSetForEach(set, callback) - Iterate over set elements with side effects
@@ -1632,9 +1632,9 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::HashSet(std::rc::Rc::new(std::cell::RefCell::new(
-            result_set,
-        ))))
+        Ok(Value::HashSet(std::sync::Arc::new(
+            std::cell::RefCell::new(result_set),
+        )))
     }
 
     /// Regex intrinsic: Replace first match using callback
@@ -1689,19 +1689,19 @@ impl Interpreter {
             // Build match data HashMap
             let mut match_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "text".to_string(),
                 )),
                 Value::string(match_text),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "start".to_string(),
                 )),
                 Value::Number(match_start as f64),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "end".to_string(),
                 )),
                 Value::Number(match_end as f64),
@@ -1718,21 +1718,22 @@ impl Interpreter {
                     }
                 }
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(groups),
                 );
             } else {
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(vec![]),
                 );
             }
 
-            let match_value = Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(match_map)));
+            let match_value =
+                Value::HashMap(std::sync::Arc::new(std::cell::RefCell::new(match_map)));
 
             // Call callback with match data
             let replacement_value = self.call_value(callback, vec![match_value], span)?;
@@ -1824,19 +1825,19 @@ impl Interpreter {
             // Build match data HashMap
             let mut match_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "text".to_string(),
                 )),
                 Value::string(match_text),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "start".to_string(),
                 )),
                 Value::Number(match_start as f64),
             );
             match_map.insert(
-                crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                     "end".to_string(),
                 )),
                 Value::Number(match_end as f64),
@@ -1853,21 +1854,22 @@ impl Interpreter {
                     }
                 }
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(groups),
                 );
             } else {
                 match_map.insert(
-                    crate::stdlib::collections::hash::HashKey::String(std::rc::Rc::new(
+                    crate::stdlib::collections::hash::HashKey::String(std::sync::Arc::new(
                         "groups".to_string(),
                     )),
                     Value::array(vec![]),
                 );
             }
 
-            let match_value = Value::HashMap(std::rc::Rc::new(std::cell::RefCell::new(match_map)));
+            let match_value =
+                Value::HashMap(std::sync::Arc::new(std::cell::RefCell::new(match_map)));
 
             // Call callback with match data
             let replacement_value = self.call_value(callback, vec![match_value], span)?;
