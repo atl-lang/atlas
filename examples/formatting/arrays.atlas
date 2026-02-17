@@ -1,0 +1,7 @@
+// Array formatting
+let empty = [];
+let single = [1];
+let numbers = [1, 2, 3, 4, 5];
+let strings = ["hello", "world"];
+let mixed = [1, "two", true, null];
+let nested = [[1, 2], [3, 4]];

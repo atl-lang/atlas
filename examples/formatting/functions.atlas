@@ -1,0 +1,12 @@
+// Function declarations with various signatures
+fn greet(name: string) {
+    print("Hello, " + name);
+}
+
+fn add(a: number, b: number) -> number {
+    return a + b;
+}
+
+fn identity<T>(x: T) -> T {
+    return x;
+}

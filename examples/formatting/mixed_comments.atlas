@@ -1,0 +1,15 @@
+// Line comment
+/* Block comment */
+/// Doc comment
+
+// All three comment styles in one file
+let x = 42;
+
+/* Another block */
+let y = 100;
+
+/// Documentation for add
+fn add(a: number, b: number) -> number {
+    // Implementation
+    return a + b;
+}

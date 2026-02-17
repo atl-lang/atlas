@@ -1,0 +1,10 @@
+// Deeply nested code formatting
+fn process(data: number) {
+    if (data > 0) {
+        while (data > 10) {
+            data -= 1;
+        }
+    } else {
+        print("invalid");
+    }
+}

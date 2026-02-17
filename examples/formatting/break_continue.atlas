@@ -1,0 +1,7 @@
+// Break and continue in loops
+while (true) {
+    if (done) {
+        break;
+    }
+    counter += 1;
+}

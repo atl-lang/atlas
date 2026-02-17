@@ -1,0 +1,8 @@
+/* Block comment at top */
+let x = 42;
+
+/*
+ * Multi-line block comment
+ * describing the next section
+ */
+let y = 100;

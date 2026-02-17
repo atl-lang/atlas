@@ -1,0 +1,4 @@
+// Typed variable declarations
+let x: number = 42;
+let name: string = "Atlas";
+let flag: bool = true;

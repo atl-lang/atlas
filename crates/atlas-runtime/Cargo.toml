@@ -41,6 +41,7 @@ proptest.workspace = true
 pretty_assertions.workspace = true
 tempfile = "3.8"
 criterion = "0.5"
+atlas-formatter = { path = "../atlas-formatter" }
 
 [[bench]]
 name = "stdlib_benchmarks"

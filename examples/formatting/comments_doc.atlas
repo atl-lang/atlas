@@ -1,0 +1,10 @@
+/// Documentation comment for a function
+/// Adds two numbers and returns the result
+fn add(a: number, b: number) -> number {
+    return a + b;
+}
+
+/// Greets the user by name
+fn greet(name: string) {
+    print("Hello, " + name);
+}

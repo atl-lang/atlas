@@ -1,0 +1,12 @@
+// Multiple function definitions
+fn first() {
+    print("first");
+}
+
+fn second() {
+    print("second");
+}
+
+fn third() -> number {
+    return 3;
+}

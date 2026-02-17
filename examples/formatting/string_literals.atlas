@@ -1,0 +1,5 @@
+// String literal formatting
+let simple = "hello world";
+let escaped = "line1\nline2";
+let with_quotes = "she said \"hi\"";
+let empty_str = "";

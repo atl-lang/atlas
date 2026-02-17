@@ -1,0 +1,8 @@
+// Expression formatting
+let sum = 1 + 2 + 3;
+let product = a * b * c;
+let complex = (a + b) * (c - d);
+let neg = -x;
+let not_flag = !flag;
+let comparison = x > 0;
+let logical = a && b || c;

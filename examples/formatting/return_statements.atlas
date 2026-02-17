@@ -1,0 +1,7 @@
+// Return statement formatting
+fn early_return(x: number) -> number {
+    if (x < 0) {
+        return 0;
+    }
+    return x * 2;
+}

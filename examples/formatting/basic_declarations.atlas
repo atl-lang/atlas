@@ -1,0 +1,7 @@
+// Basic variable declarations showing formatter behavior
+let x = 42;
+let name = "Atlas";
+let flag = true;
+let nothing = null;
+var counter = 0;
+let arr = [1, 2, 3];

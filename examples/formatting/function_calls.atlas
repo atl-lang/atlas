@@ -1,0 +1,5 @@
+// Function call formatting
+print("hello");
+add(1, 2);
+process(a, b, c);
+let result = compute(x + y, z);

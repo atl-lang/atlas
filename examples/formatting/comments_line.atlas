@@ -1,0 +1,10 @@
+// Line comment at the top of a file
+let x = 42;
+
+// Comment between statements
+let y = 100;
+
+// Multiple consecutive comments
+// form a comment block
+// that stays together
+let z = x + y;

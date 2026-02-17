@@ -1,0 +1,5 @@
+// Complex expression formatting
+let a = 1 + 2 * 3 - 4 / 2;
+let b = (x + y) * (z - w);
+let c = arr[0] + arr[1];
+let d = -x + !flag;
