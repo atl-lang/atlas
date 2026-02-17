@@ -518,7 +518,7 @@ mod tests {
 
     #[test]
     fn test_keywords() {
-        let mut lexer = Lexer::new("let var fn if else while for return break continue");
+        let mut lexer = Lexer::new("let var fn if else while for return break continue is");
         let (tokens, _) = lexer.tokenize();
 
         let expected = vec![
@@ -532,6 +532,7 @@ mod tests {
             TokenKind::Return,
             TokenKind::Break,
             TokenKind::Continue,
+            TokenKind::Is,
         ];
 
         for (i, expected_kind) in expected.iter().enumerate() {

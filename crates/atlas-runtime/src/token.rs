@@ -87,6 +87,8 @@ pub enum TokenKind {
     As,
     /// `extends` keyword (generic constraints)
     Extends,
+    /// `is` keyword (type predicates)
+    Is,
 
     // Operators
     /// `+` (addition)
@@ -213,6 +215,7 @@ impl TokenKind {
             "match" => Some(TokenKind::Match),
             "as" => Some(TokenKind::As),
             "extends" => Some(TokenKind::Extends),
+            "is" => Some(TokenKind::Is),
             _ => None,
         }
     }
@@ -245,6 +248,7 @@ impl TokenKind {
             TokenKind::Match => "match",
             TokenKind::As => "as",
             TokenKind::Extends => "extends",
+            TokenKind::Is => "is",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",
@@ -321,6 +325,7 @@ mod tests {
         assert_eq!(TokenKind::is_keyword("false"), Some(TokenKind::False));
         assert_eq!(TokenKind::is_keyword("null"), Some(TokenKind::Null));
         assert_eq!(TokenKind::is_keyword("extends"), Some(TokenKind::Extends));
+        assert_eq!(TokenKind::is_keyword("is"), Some(TokenKind::Is));
     }
 
     #[test]

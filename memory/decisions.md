@@ -449,3 +449,23 @@ pub enum Value {
 **Impact:**
 - Type resolution maps these names to concrete bounds in binder and type checker.
 - Constraint checking uses existing assignability rules for these patterns.
+
+---
+
+## DR-012: Structural Width Subtyping
+
+**Date:** 2026-02-17 (v0.2, Phase typing-06)
+**Status:** ✅ Active
+
+**Decision:**
+- Structural types are width-subtyped for assignability: a value type with extra fields/methods
+  can be assigned to a structural type that requires a subset of those members.
+- Missing required members still fails assignability.
+
+**Rationale:**
+- Enables common structural typing patterns and aligns with typical expectations for shape-based types.
+- Improves ergonomics for type guards and structural bounds without introducing explicit nominal traits.
+
+**Impact:**
+- `Type::Struct` assignability now checks required members as a subset of the source type.
+- Type guard narrowing for structural types can rely on width-subtyping behavior.

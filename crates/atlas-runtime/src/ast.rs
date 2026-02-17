@@ -157,7 +157,17 @@ pub struct FunctionDecl {
     pub type_params: Vec<TypeParam>,
     pub params: Vec<Param>,
     pub return_type: TypeRef,
+    /// Optional type predicate for type guards (e.g., `-> bool is x: string`)
+    pub predicate: Option<TypePredicate>,
     pub body: Block,
+    pub span: Span,
+}
+
+/// Type predicate for type guard functions
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TypePredicate {
+    pub param: Identifier,
+    pub target: TypeRef,
     pub span: Span,
 }
 
@@ -674,6 +684,7 @@ mod tests {
             type_params: vec![],
             params: vec![],
             return_type: TypeRef::Named("void".to_string(), Span::new(14, 18)),
+            predicate: None,
             body: Block {
                 statements: vec![],
                 span: Span::new(19, 21),

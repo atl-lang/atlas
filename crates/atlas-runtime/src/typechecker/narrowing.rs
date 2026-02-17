@@ -1,6 +1,6 @@
 //! Type narrowing utilities for control flow analysis.
 
-use crate::ast::{BinaryOp, Expr, Literal};
+use crate::ast::{BinaryOp, Expr, Literal, UnaryOp};
 use crate::typechecker::TypeChecker;
 use crate::types::Type;
 use std::collections::HashMap;
@@ -27,25 +27,36 @@ impl<'a> TypeChecker<'a> {
                     (HashMap::new(), HashMap::new())
                 }
                 BinaryOp::And => {
-                    let (left_true, _left_false) = self.narrow_condition(&binary.left);
-                    let (right_true, _right_false) = self.narrow_condition(&binary.right);
+                    let (left_true, left_false) = self.narrow_condition(&binary.left);
+                    let (right_true, right_false) = self.narrow_condition(&binary.right);
                     let merged_true = merge_narrowings(left_true, right_true);
-                    (merged_true, HashMap::new())
+                    let merged_false = merge_or_narrowings(left_false, right_false);
+                    (merged_true, merged_false)
                 }
                 BinaryOp::Or => {
-                    let (_left_true, left_false) = self.narrow_condition(&binary.left);
-                    let (_right_true, right_false) = self.narrow_condition(&binary.right);
+                    let (left_true, left_false) = self.narrow_condition(&binary.left);
+                    let (right_true, right_false) = self.narrow_condition(&binary.right);
+                    let merged_true = merge_or_narrowings(left_true, right_true);
                     let merged_false = merge_narrowings(left_false, right_false);
-                    (HashMap::new(), merged_false)
+                    (merged_true, merged_false)
                 }
                 _ => (HashMap::new(), HashMap::new()),
             },
+            Expr::Unary(unary) => {
+                if unary.op == UnaryOp::Not {
+                    let (true_map, false_map) = self.narrow_condition(&unary.expr);
+                    return (false_map, true_map);
+                }
+                (HashMap::new(), HashMap::new())
+            }
             Expr::Call(call) => {
                 if let Some((name, target)) = self.extract_type_guard(call) {
                     return self.narrow_name_by_type(&name, &target, true);
                 }
                 (HashMap::new(), HashMap::new())
             }
+            Expr::Group(group) => self.narrow_condition(&group.expr),
+            Expr::Try(try_expr) => self.narrow_condition(&try_expr.expr),
             _ => (HashMap::new(), HashMap::new()),
         }
     }
@@ -80,29 +91,78 @@ impl<'a> TypeChecker<'a> {
             _ => return None,
         };
 
-        if call.args.len() != 1 {
-            return None;
+        if callee_name == "isType" {
+            if call.args.len() != 2 {
+                return None;
+            }
+            let arg_name = match &call.args[0] {
+                Expr::Identifier(id) => id.name.clone(),
+                _ => return None,
+            };
+            let type_name = match &call.args[1] {
+                Expr::Literal(Literal::String(name), _) => name.as_str(),
+                _ => return None,
+            };
+            let target = type_from_typeof_value(type_name)?;
+            return Some((arg_name, target));
         }
-        let arg_name = match &call.args[0] {
+
+        if callee_name == "hasField" {
+            if call.args.len() != 2 {
+                return None;
+            }
+            let arg_name = match &call.args[0] {
+                Expr::Identifier(id) => id.name.clone(),
+                _ => return None,
+            };
+            let field = match &call.args[1] {
+                Expr::Literal(Literal::String(name), _) => name.as_str(),
+                _ => return None,
+            };
+            let target = self.guard_target_for_field(field);
+            return Some((arg_name, target));
+        }
+
+        if callee_name == "hasMethod" {
+            if call.args.len() != 2 {
+                return None;
+            }
+            let arg_name = match &call.args[0] {
+                Expr::Identifier(id) => id.name.clone(),
+                _ => return None,
+            };
+            let field = match &call.args[1] {
+                Expr::Literal(Literal::String(name), _) => name.as_str(),
+                _ => return None,
+            };
+            let target = self.guard_target_for_method(field);
+            return Some((arg_name, target));
+        }
+
+        if callee_name == "hasTag" {
+            if call.args.len() != 2 {
+                return None;
+            }
+            let arg_name = match &call.args[0] {
+                Expr::Identifier(id) => id.name.clone(),
+                _ => return None,
+            };
+            let _tag_value = match &call.args[1] {
+                Expr::Literal(Literal::String(name), _) => name.as_str(),
+                _ => return None,
+            };
+            let target = self.guard_target_for_tag();
+            return Some((arg_name, target));
+        }
+
+        let guard = self.type_guards.lookup(callee_name)?;
+        let arg = call.args.get(guard.param_index)?;
+        let arg_name = match arg {
             Expr::Identifier(id) => id.name.clone(),
             _ => return None,
         };
 
-        let target = match callee_name {
-            "isString" => Type::String,
-            "isNumber" => Type::Number,
-            "isBool" => Type::Bool,
-            "isNull" => Type::Null,
-            "isArray" => Type::Array(Box::new(Type::Unknown)),
-            "isFunction" => Type::Function {
-                type_params: Vec::new(),
-                params: Vec::new(),
-                return_type: Box::new(Type::Unknown),
-            },
-            _ => return None,
-        };
-
-        Some((arg_name, target))
+        Some((arg_name, guard.target.clone()))
     }
 
     fn narrow_name_by_type(
@@ -173,6 +233,7 @@ fn type_from_typeof_value(value: &str) -> Option<Type> {
             return_type: Box::new(Type::Unknown),
         }),
         "json" => Some(Type::JsonValue),
+        "object" => Some(Type::JsonValue),
         _ => None,
     }
 }
@@ -228,4 +289,17 @@ fn merge_narrowings(
         }
     }
     left
+}
+
+fn merge_or_narrowings(
+    left: HashMap<String, Type>,
+    right: HashMap<String, Type>,
+) -> HashMap<String, Type> {
+    let mut merged = HashMap::new();
+    for (name, left_ty) in left {
+        if let Some(right_ty) = right.get(&name) {
+            merged.insert(name, Type::union(vec![left_ty, right_ty.clone()]));
+        }
+    }
+    merged
 }

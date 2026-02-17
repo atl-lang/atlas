@@ -203,6 +203,11 @@ impl Type {
                     ..
                 },
             ) => {
+                // Treat () -> unknown as a wildcard function type for guard checks
+                if tp2.is_empty() && p2.is_empty() && matches!(r2.normalized(), Type::Unknown) {
+                    return true;
+                }
+
                 if p1.len() != p2.len() {
                     return false;
                 }
@@ -241,9 +246,6 @@ impl Type {
             (Type::Extern(a), Type::Extern(b)) => a == b,
 
             (Type::Structural { members: a }, Type::Structural { members: b }) => {
-                if a.len() != b.len() {
-                    return false;
-                }
                 for member in b {
                     let Some(actual) = a.iter().find(|m| m.name == member.name) else {
                         return false;

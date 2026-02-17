@@ -159,6 +159,28 @@ impl Parser {
             TypeRef::Named("null".to_string(), Span::dummy())
         };
 
+        // Optional type predicate: `-> bool is param: Type`
+        let predicate = if self.match_token(TokenKind::Is) {
+            let param_token = self.consume_identifier("type predicate parameter")?;
+            let param = Identifier {
+                name: param_token.lexeme.clone(),
+                span: param_token.span,
+            };
+            self.consume(
+                TokenKind::Colon,
+                "Expected ':' after type predicate parameter",
+            )?;
+            let target = self.parse_type_ref()?;
+            let span = param.span.merge(target.span());
+            Some(TypePredicate {
+                param,
+                target,
+                span,
+            })
+        } else {
+            None
+        };
+
         // Parse body
         let body = self.parse_block()?;
         let end_span = body.span;
@@ -168,6 +190,7 @@ impl Parser {
             type_params,
             params,
             return_type,
+            predicate,
             body,
             span: fn_span.merge(end_span),
         })
@@ -493,6 +516,7 @@ impl Parser {
                 | TokenKind::Null
                 | TokenKind::Import
                 | TokenKind::Match
+                | TokenKind::Is
         )
     }
 

@@ -13,6 +13,7 @@ pub mod inference;
 mod methods;
 mod narrowing;
 pub mod suggestions;
+mod type_guards;
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
@@ -55,6 +56,8 @@ pub struct TypeChecker<'a> {
     pub(super) used_symbols: HashSet<String>,
     /// Method table for method resolution
     pub(super) method_table: methods::MethodTable,
+    /// Type guard registry for predicate-based narrowing
+    pub(super) type_guards: type_guards::TypeGuardRegistry,
     /// Type alias declarations available in this module scope
     type_aliases: HashMap<String, TypeAliasDecl>,
     /// Cached alias resolutions (alias name + args -> resolved type)
@@ -77,6 +80,7 @@ impl<'a> TypeChecker<'a> {
             declared_symbols: HashMap::new(),
             used_symbols: HashSet::new(),
             method_table: methods::MethodTable::new(),
+            type_guards: type_guards::TypeGuardRegistry::new(),
             type_aliases,
             alias_cache: HashMap::new(),
             alias_resolution_stack: Vec::new(),
@@ -92,6 +96,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Type check a program
     pub fn check(&mut self, program: &Program) -> Vec<Diagnostic> {
+        self.collect_type_guards(program);
         self.validate_type_aliases(program);
         for item in &program.items {
             self.check_item(item);
@@ -145,6 +150,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         // Type check all items (imports already validated during binding)
+        self.collect_type_guards(program);
         self.validate_type_aliases(program);
         for item in &program.items {
             self.check_item(item);
@@ -422,7 +428,7 @@ impl<'a> TypeChecker<'a> {
         self.used_symbols.clear();
 
         // Enter function scope and define parameters
-        self.symbol_table.enter_scope();
+        self.enter_scope();
 
         for param in &func.params {
             let ty = self.resolve_type_ref(&param.type_ref);
@@ -452,6 +458,9 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
+        // Register nested type guards before checking the function body
+        self.register_type_guards_in_block(&func.body);
+
         self.check_block(&func.body);
 
         // Check if all paths return (if return type != void/null)
@@ -478,7 +487,7 @@ impl<'a> TypeChecker<'a> {
         self.emit_unused_warnings();
 
         // Exit function scope
-        self.symbol_table.exit_scope();
+        self.exit_scope();
 
         // Restore previous function context (for nested functions)
         self.current_function_return_type = prev_return_type;
@@ -813,15 +822,15 @@ impl<'a> TypeChecker<'a> {
                     );
                 }
                 let (then_narrow, else_narrow) = self.narrow_condition(&if_stmt.cond);
-                self.symbol_table.enter_scope();
+                self.enter_scope();
                 self.apply_narrowings(&then_narrow);
                 self.check_block(&if_stmt.then_block);
-                self.symbol_table.exit_scope();
+                self.exit_scope();
                 if let Some(else_block) = &if_stmt.else_block {
-                    self.symbol_table.enter_scope();
+                    self.enter_scope();
                     self.apply_narrowings(&else_narrow);
                     self.check_block(else_block);
-                    self.symbol_table.exit_scope();
+                    self.exit_scope();
                 }
             }
             Stmt::While(while_stmt) => {
@@ -841,10 +850,10 @@ impl<'a> TypeChecker<'a> {
                 let old_in_loop = self.in_loop;
                 self.in_loop = true;
                 let (then_narrow, _) = self.narrow_condition(&while_stmt.cond);
-                self.symbol_table.enter_scope();
+                self.enter_scope();
                 self.apply_narrowings(&then_narrow);
                 self.check_block(&while_stmt.body);
-                self.symbol_table.exit_scope();
+                self.exit_scope();
                 self.in_loop = old_in_loop;
             }
             Stmt::For(for_stmt) => {
@@ -1015,6 +1024,16 @@ impl<'a> TypeChecker<'a> {
             };
             let _ = self.symbol_table.define(shadow);
         }
+    }
+
+    fn enter_scope(&mut self) {
+        self.symbol_table.enter_scope();
+        self.type_guards.enter_scope();
+    }
+
+    fn exit_scope(&mut self) {
+        self.symbol_table.exit_scope();
+        self.type_guards.exit_scope();
     }
 
     /// Check an assignment target and return its type
