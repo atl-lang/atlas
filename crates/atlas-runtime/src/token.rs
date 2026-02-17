@@ -59,6 +59,8 @@ pub enum TokenKind {
     While,
     /// `for` keyword
     For,
+    /// `in` keyword (used in for-in loops)
+    In,
     /// `return` keyword
     Return,
     /// `break` keyword
@@ -180,6 +182,7 @@ impl TokenKind {
             "else" => Some(TokenKind::Else),
             "while" => Some(TokenKind::While),
             "for" => Some(TokenKind::For),
+            "in" => Some(TokenKind::In),
             "return" => Some(TokenKind::Return),
             "break" => Some(TokenKind::Break),
             "continue" => Some(TokenKind::Continue),
@@ -212,6 +215,7 @@ impl TokenKind {
             TokenKind::Else => "else",
             TokenKind::While => "while",
             TokenKind::For => "for",
+            TokenKind::In => "in",
             TokenKind::Return => "return",
             TokenKind::Break => "break",
             TokenKind::Continue => "continue",

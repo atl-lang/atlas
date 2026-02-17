@@ -176,6 +176,7 @@ pub enum Stmt {
     If(IfStmt),
     While(WhileStmt),
     For(ForStmt),
+    ForIn(ForInStmt),
     Return(ReturnStmt),
     Break(Span),
     Continue(Span),
@@ -267,6 +268,20 @@ pub struct ForStmt {
     pub init: Box<Stmt>,
     pub cond: Expr,
     pub step: Box<Stmt>,
+    pub body: Block,
+    pub span: Span,
+}
+
+/// For-in loop statement
+///
+/// Syntax: `for item in array { body }`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ForInStmt {
+    /// Loop variable name
+    pub variable: Identifier,
+    /// Expression to iterate over
+    pub iterable: Box<Expr>,
+    /// Loop body
     pub body: Block,
     pub span: Span,
 }
@@ -503,6 +518,7 @@ impl Stmt {
             Stmt::If(i) => i.span,
             Stmt::While(w) => w.span,
             Stmt::For(f) => f.span,
+            Stmt::ForIn(f) => f.span,
             Stmt::Return(r) => r.span,
             Stmt::Break(s) | Stmt::Continue(s) => *s,
             Stmt::Expr(e) => e.span,

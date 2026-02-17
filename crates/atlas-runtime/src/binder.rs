@@ -638,6 +638,12 @@ impl Binder {
 
                 self.symbol_table.exit_scope();
             }
+            Stmt::ForIn(for_in_stmt) => {
+                // TODO(Phase-20b): Implement proper for-in binding
+                // For now, just bind the iterable and body
+                self.bind_expr(&for_in_stmt.iterable);
+                self.bind_block(&for_in_stmt.body);
+            }
             Stmt::Return(ret) => {
                 if let Some(expr) = &ret.value {
                     self.bind_expr(expr);

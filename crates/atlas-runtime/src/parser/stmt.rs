@@ -12,7 +12,20 @@ impl Parser {
             TokenKind::Let | TokenKind::Var => self.parse_var_decl(),
             TokenKind::If => self.parse_if_stmt(),
             TokenKind::While => self.parse_while_stmt(),
-            TokenKind::For => self.parse_for_stmt(),
+            TokenKind::For => {
+                // Check if it's a for-in loop or traditional for loop
+                // Peek ahead to see what comes after 'for'
+                let next_idx = self.current + 1;
+                if next_idx < self.tokens.len()
+                    && self.tokens[next_idx].kind == TokenKind::LeftParen
+                {
+                    // Traditional for loop: for (init; cond; step) { body }
+                    self.parse_for_stmt()
+                } else {
+                    // For-in loop: for item in array { body }
+                    self.parse_for_in_stmt()
+                }
+            }
             TokenKind::Return => self.parse_return_stmt(),
             TokenKind::Break => self.parse_break_stmt(),
             TokenKind::Continue => self.parse_continue_stmt(),
@@ -343,6 +356,37 @@ impl Parser {
             init,
             cond,
             step,
+            body,
+            span: for_span.merge(body_span),
+        }))
+    }
+
+    /// Parse for-in statement
+    ///
+    /// Syntax: `for item in array { body }`
+    pub(super) fn parse_for_in_stmt(&mut self) -> Result<Stmt, ()> {
+        let for_span = self.consume(TokenKind::For, "Expected 'for'")?.span;
+
+        // Parse variable name
+        let name_token = self.consume_identifier("variable name after 'for'")?;
+        let variable = Identifier {
+            name: name_token.lexeme.clone(),
+            span: name_token.span,
+        };
+
+        // Expect 'in' keyword
+        self.consume(TokenKind::In, "Expected 'in' after variable name")?;
+
+        // Parse iterable expression
+        let iterable = Box::new(self.parse_expression()?);
+
+        // Parse body block
+        let body = self.parse_block()?;
+        let body_span = body.span;
+
+        Ok(Stmt::ForIn(ForInStmt {
+            variable,
+            iterable,
             body,
             span: for_span.merge(body_span),
         }))

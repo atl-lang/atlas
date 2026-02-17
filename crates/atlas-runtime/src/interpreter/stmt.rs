@@ -54,6 +54,13 @@ impl Interpreter {
             Stmt::If(if_stmt) => self.eval_if(if_stmt),
             Stmt::While(while_stmt) => self.eval_while(while_stmt),
             Stmt::For(for_stmt) => self.eval_for(for_stmt),
+            Stmt::ForIn(for_in_stmt) => {
+                // TODO(Phase-20c): Implement for-in execution
+                Err(RuntimeError::TypeError {
+                    msg: "For-in loops are not yet implemented in the interpreter".to_string(),
+                    span: for_in_stmt.span,
+                })
+            }
             Stmt::Return(return_stmt) => self.eval_return(return_stmt),
             Stmt::Break(_) => {
                 self.control_flow = ControlFlow::Break;

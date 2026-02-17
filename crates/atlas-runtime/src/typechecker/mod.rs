@@ -725,6 +725,18 @@ impl<'a> TypeChecker<'a> {
                 // Uses same check_function logic as top-level functions
                 self.check_function(func);
             }
+            Stmt::ForIn(for_in_stmt) => {
+                // TODO(Phase-20b): Implement for-in desugaring
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT9999",
+                        "For-in loops are not yet implemented",
+                        for_in_stmt.span,
+                    )
+                    .with_label("not implemented")
+                    .with_help("For-in loops will be available in Phase-20b".to_string()),
+                );
+            }
         }
     }
 
