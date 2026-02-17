@@ -3,6 +3,7 @@
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
+use crate::typechecker::suggestions;
 use crate::typechecker::TypeChecker;
 use crate::types::Type;
 
@@ -56,18 +57,24 @@ impl<'a> TypeChecker<'a> {
                 {
                     left_type
                 } else {
+                    let help = suggestions::suggest_binary_operator_fix("+", &left_type, &right_type)
+                        .unwrap_or_else(|| "ensure both operands are numbers (for addition) or both are strings (for concatenation)".to_string());
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
                             format!(
-                                "'+' requires both operands to be number or both to be string, found {} and {}",
+                                "'+' requires matching types, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
                             ),
                             binary.span,
                         )
-                        .with_label("type mismatch")
-                        .with_help("ensure both operands are numbers (for addition) or both are strings (for concatenation)"),
+                        .with_label(format!(
+                            "found {} and {}",
+                            left_type.display_name(),
+                            right_type.display_name()
+                        ))
+                        .with_help(help),
                     );
                     Type::Unknown
                 }
@@ -202,7 +209,7 @@ impl<'a> TypeChecker<'a> {
     fn check_call(&mut self, call: &CallExpr) -> Type {
         let callee_type = self.check_expr(&call.callee);
 
-        match callee_type {
+        match &callee_type {
             Type::Function {
                 type_params,
                 params,
@@ -214,29 +221,25 @@ impl<'a> TypeChecker<'a> {
                         Diagnostic::error_with_code(
                             "AT3005",
                             format!(
-                                "Function expects {} arguments, found {}",
+                                "Function expects {} argument{}, found {}",
                                 params.len(),
+                                if params.len() == 1 { "" } else { "s" },
                                 call.args.len()
                             ),
                             call.span,
                         )
                         .with_label("argument count mismatch")
-                        .with_help(format!(
-                            "provide exactly {} argument{}",
+                        .with_help(suggestions::suggest_arity_fix(
                             params.len(),
-                            if params.len() == 1 { "" } else { "s" }
+                            call.args.len(),
+                            &callee_type,
                         )),
                     );
                 }
 
                 // If function has type parameters, use type inference
                 if !type_params.is_empty() {
-                    return self.check_call_with_inference(
-                        &type_params,
-                        &params,
-                        &return_type,
-                        call,
-                    );
+                    return self.check_call_with_inference(type_params, params, return_type, call);
                 }
 
                 // Non-generic function - check argument types normally
@@ -244,29 +247,37 @@ impl<'a> TypeChecker<'a> {
                     let arg_type = self.check_expr(arg);
                     if let Some(expected_type) = params.get(i) {
                         if !arg_type.is_assignable_to(expected_type) && arg_type != Type::Unknown {
+                            let help = suggestions::suggest_type_mismatch(expected_type, &arg_type)
+                                .unwrap_or_else(|| {
+                                    format!(
+                                        "argument {} must be of type {}",
+                                        i + 1,
+                                        expected_type.display_name()
+                                    )
+                                });
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3001",
                                     format!(
-                                        "Argument {} has wrong type: expected {}, found {}",
+                                        "Argument {} type mismatch: expected {}, found {}",
                                         i + 1,
                                         expected_type.display_name(),
                                         arg_type.display_name()
                                     ),
                                     arg.span(),
                                 )
-                                .with_label("type mismatch")
-                                .with_help(format!(
-                                    "argument {} must be of type {}",
-                                    i + 1,
-                                    expected_type.display_name()
-                                )),
+                                .with_label(format!(
+                                    "expected {}, found {}",
+                                    expected_type.display_name(),
+                                    arg_type.display_name()
+                                ))
+                                .with_help(help),
                             );
                         }
                     }
                 }
 
-                *return_type
+                (**return_type).clone()
             }
             Type::Unknown => {
                 // Error recovery: still check arguments for side effects (usage tracking)
@@ -287,9 +298,7 @@ impl<'a> TypeChecker<'a> {
                         call.span,
                     )
                     .with_label("not callable")
-                    .with_help(
-                        "Expected a function type like (number, string) -> bool".to_string(),
-                    ),
+                    .with_help(suggestions::suggest_not_callable(&callee_type)),
                 );
                 Type::Unknown
             }

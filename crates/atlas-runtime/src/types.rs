@@ -91,7 +91,24 @@ impl Type {
             Type::Null => "null".to_string(),
             Type::Void => "void".to_string(),
             Type::Array(inner) => format!("{}[]", inner.display_name()),
-            Type::Function { .. } => "function".to_string(),
+            Type::Function {
+                params,
+                return_type,
+                type_params,
+            } => {
+                let mut result = String::new();
+                if !type_params.is_empty() {
+                    result.push('<');
+                    result.push_str(&type_params.join(", "));
+                    result.push('>');
+                }
+                result.push('(');
+                let param_strs: Vec<String> = params.iter().map(|p| p.display_name()).collect();
+                result.push_str(&param_strs.join(", "));
+                result.push_str(") -> ");
+                result.push_str(&return_type.display_name());
+                result
+            }
             Type::JsonValue => "json".to_string(),
             Type::Generic { name, type_args } => {
                 let args = type_args
@@ -134,6 +151,6 @@ mod tests {
             params: vec![Type::Number, Type::String],
             return_type: Box::new(Type::Bool),
         };
-        assert_eq!(func_type.display_name(), "function");
+        assert_eq!(func_type.display_name(), "(number, string) -> bool");
     }
 }

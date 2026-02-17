@@ -8,7 +8,9 @@
 
 mod expr;
 pub mod generics;
+pub mod inference;
 mod methods;
+pub mod suggestions;
 
 use crate::ast::*;
 use crate::diagnostic::Diagnostic;
@@ -398,22 +400,30 @@ impl<'a> TypeChecker<'a> {
                 if let Some(type_ref) = &var.type_ref {
                     let declared_type = self.resolve_type_ref(type_ref);
                     if !init_type.is_assignable_to(&declared_type) {
+                        let help = suggestions::suggest_type_mismatch(&declared_type, &init_type)
+                            .unwrap_or_else(|| {
+                                format!(
+                                    "expected {}, found {}",
+                                    declared_type.display_name(),
+                                    init_type.display_name()
+                                )
+                            });
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3001",
                                 format!(
-                                    "Type mismatch: cannot assign {} to variable of type {}",
-                                    init_type.display_name(),
-                                    declared_type.display_name()
+                                    "Type mismatch: expected {}, found {}",
+                                    declared_type.display_name(),
+                                    init_type.display_name()
                                 ),
                                 var.span,
                             )
-                            .with_label("type mismatch")
-                            .with_help(format!(
-                                "change the variable type to {} or use a {} value",
-                                init_type.display_name(),
-                                declared_type.display_name()
-                            )),
+                            .with_label(format!(
+                                "expected {}, found {}",
+                                declared_type.display_name(),
+                                init_type.display_name()
+                            ))
+                            .with_help(help),
                         );
                     }
                 } else {
@@ -430,21 +440,30 @@ impl<'a> TypeChecker<'a> {
                 let target_type = self.check_assign_target(&assign.target);
 
                 if !value_type.is_assignable_to(&target_type) {
+                    let help = suggestions::suggest_type_mismatch(&target_type, &value_type)
+                        .unwrap_or_else(|| {
+                            format!(
+                                "expected {}, found {}",
+                                target_type.display_name(),
+                                value_type.display_name()
+                            )
+                        });
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
                             format!(
-                                "Type mismatch in assignment: cannot assign {} to {}",
-                                value_type.display_name(),
-                                target_type.display_name()
+                                "Type mismatch in assignment: expected {}, found {}",
+                                target_type.display_name(),
+                                value_type.display_name()
                             ),
                             assign.span,
                         )
-                        .with_label("type mismatch")
-                        .with_help(format!(
-                            "the value must be of type {}",
-                            target_type.display_name()
-                        )),
+                        .with_label(format!(
+                            "expected {}, found {}",
+                            target_type.display_name(),
+                            value_type.display_name()
+                        ))
+                        .with_help(help),
                     );
                 }
 
@@ -465,10 +484,7 @@ impl<'a> TypeChecker<'a> {
                                 length: symbol.span.end.saturating_sub(symbol.span.start),
                                 message: format!("'{}' declared here as immutable", symbol.name),
                             })
-                            .with_help(format!(
-                                "declare '{}' as mutable: var {} = ...",
-                                id.name, id.name
-                            ));
+                            .with_help(suggestions::suggest_mutability_fix(&id.name));
 
                             self.diagnostics.push(diag);
                         }
@@ -602,7 +618,8 @@ impl<'a> TypeChecker<'a> {
                             format!("Condition must be bool, found {}", cond_type.display_name()),
                             if_stmt.cond.span(),
                         )
-                        .with_label("type mismatch"),
+                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
+                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
                 self.check_block(&if_stmt.then_block);
@@ -619,7 +636,8 @@ impl<'a> TypeChecker<'a> {
                             format!("Condition must be bool, found {}", cond_type.display_name()),
                             while_stmt.cond.span(),
                         )
-                        .with_label("type mismatch"),
+                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
+                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
                 let old_in_loop = self.in_loop;
@@ -637,7 +655,8 @@ impl<'a> TypeChecker<'a> {
                             format!("Condition must be bool, found {}", cond_type.display_name()),
                             for_stmt.cond.span(),
                         )
-                        .with_label("type mismatch"),
+                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
+                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
                 self.check_statement(&for_stmt.step);
@@ -677,7 +696,12 @@ impl<'a> TypeChecker<'a> {
                         ),
                         ret.span,
                     )
-                    .with_label("type mismatch");
+                    .with_label(format!(
+                        "expected {}, found {}",
+                        expected.display_name(),
+                        return_type.display_name()
+                    ))
+                    .with_help(suggestions::suggest_return_fix(expected, &return_type));
 
                     // Add related location for function declaration
                     if let Some((func_name, func_span)) = &self.current_function_info {
@@ -736,7 +760,6 @@ impl<'a> TypeChecker<'a> {
                         // Valid - continue
                     }
                     _ => {
-                        // Invalid type
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3001",
@@ -746,8 +769,11 @@ impl<'a> TypeChecker<'a> {
                                 ),
                                 for_in_stmt.iterable.span(),
                             )
-                            .with_label("type mismatch")
-                            .with_help("for-in loops can only iterate over arrays".to_string()),
+                            .with_label(format!(
+                                "expected array, found {}",
+                                iterable_type.display_name()
+                            ))
+                            .with_help(suggestions::suggest_for_in_fix(&iterable_type)),
                         );
                     }
                 }

@@ -8,9 +8,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/foundation/phase-21a-cross-module-symbol-resolution.md
-**Next Phase:** phases/typing/phase-01-improved-type-errors-and-inference.md
-**Real Progress:** 74/99 phases complete (75%)
+**Last Completed:** phases/typing/phase-01-improved-type-errors-and-inference.md
+**Next Phase:** phases/typing/phase-02-repl-type-integration.md
+**Real Progress:** 75/99 phases complete (76%)
 
 ---
 
@@ -22,7 +22,7 @@
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
 | **3. Frontend** | 5/5 (100%) | ✅ COMPLETE |
-| **4. Typing** | 0/7 (0%) | ⬜ Pending |
+| **4. Typing** | 1/7 (14%) | 🔨 ACTIVE |
 | **5. Interpreter** | 0/2 (0%) | ⬜ Pending |
 | **6. CLI** | 0/6 (0%) | ⬜ Pending |
 | **7. LSP** | 0/5 (0%) | ⬜ Pending |
@@ -122,7 +122,7 @@
 
 ### 4. Typing (0/7) ⬜
 
-⬜ phase-01-improved-type-errors-and-inference.md
+✅ phase-01-improved-type-errors-and-inference.md
 ⬜ phase-02-repl-type-integration.md
 ⬜ phase-03-type-aliases.md
 ⬜ phase-04-union-types.md
@@ -290,5 +290,4 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Next phase: `phases/foundation/phase-21a-cross-module-symbol-resolution.md`**
-**Then:** `phases/typing/phase-01-improved-type-errors-and-inference.md`
+**Next phase: `phases/typing/phase-02-repl-type-integration.md`**
