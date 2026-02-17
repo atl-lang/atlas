@@ -55,8 +55,9 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 
 ### 7. Testing Protocol (SURGICAL)
 **During:** `cargo test -p atlas-runtime test_exact_name -- --exact` (ONE test)
-**Before handoff:** `cargo test -p atlas-runtime` (ALL must pass)
-**Banned:** Full suite during implementation, tests without `-- --exact`
+**Per-file:** `cargo test -p atlas-runtime --test test_file_name` (validate a test file)
+**Full suite:** EMERGENCY ONLY (when something unexplainable is happening)
+**Banned:** Full suite as routine step, tests without `-- --exact` during dev
 
 ---
 
@@ -109,7 +110,13 @@ cargo test -p atlas-runtime test_exact_name -- --exact  # ONE test
 
 **Before handoff:**
 ```bash
-cargo test -p atlas-runtime  # Full suite - ALL must pass
+cargo test -p atlas-runtime --test <relevant_test_file>  # Validate phase test files
+cargo clippy -p atlas-runtime -- -D warnings             # Zero warnings
+```
+
+**Emergency only:**
+```bash
+cargo test -p atlas-runtime  # Full suite — ONLY when debugging unexplainable failures
 ```
 
 ---
@@ -133,7 +140,7 @@ cargo test -p atlas-runtime  # Full suite - ALL must pass
 
 **Location:** `/memory/`
 - `MEMORY.md` - Index (always loaded, 200 line cap)
-- `patterns.md` - Codebase patterns (Rc<RefCell<>>, stdlib signatures, etc.)
+- `patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
 - `decisions.md` - Architectural decisions (search DR-XXX)
 - `gates.md` - Quality gate rules
 

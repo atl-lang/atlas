@@ -172,7 +172,7 @@ fn vm_intrinsic_hashmap_for_each(
 
     // 2. Extract and validate map argument
     let map = match &args[0] {
-        Value::HashMap(m) => m.borrow().entries(),
+        Value::HashMap(m) => m.lock().unwrap().entries(),
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: "hashMapForEach() first argument must be HashMap".to_string(),

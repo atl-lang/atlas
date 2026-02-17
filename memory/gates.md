@@ -177,10 +177,10 @@ cargo test -p atlas-runtime
 
 ```bash
 # Count tests (must meet phase minimum)
-grep -c "^#\[test\]" crates/atlas-runtime/tests/collection_integration_tests.rs
+grep -c "^#\[test\]" crates/atlas-runtime/tests/<phase_test_file>.rs
 
-# All tests pass (ONLY at gate checkpoints, not during dev)
-cargo test -p atlas-runtime
+# Run phase test files (NOT full suite)
+cargo test -p atlas-runtime --test <phase_test_file>
 ```
 
 ### Outcome
@@ -350,12 +350,18 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>"
 ### Final Checks
 
 ```bash
-# One last full test run
-cargo test -p atlas-runtime
+# Run phase-specific test files (NOT full suite)
+cargo test -p atlas-runtime --test <relevant_test_file>
+
+# Clippy clean
+cargo clippy -p atlas-runtime -- -D warnings
 
 # Verify clean status
 git status
 ```
+
+**NOTE:** Full suite (`cargo test -p atlas-runtime`) is EMERGENCY ONLY.
+Individual/per-file tests + cargo check + clippy catch regressions without wasting 15+ minutes.
 
 ### Outcome
 
@@ -397,17 +403,19 @@ cargo test -p atlas-runtime hashmap  # Pattern match (runs many)
 
 ### Before Handoff (GATE 6 Only)
 
-**Run full test suite ONCE:**
+**Run phase-specific test files:**
 
 ```bash
-cargo test -p atlas-runtime
+cargo test -p atlas-runtime --test <test_file>  # Per-file validation
+cargo clippy -p atlas-runtime -- -D warnings    # Quality check
 ```
 
-**Expected:** All tests pass (no failures, no errors)
+**Full suite is EMERGENCY ONLY** — use when something unexplainable is happening.
 
 **Rationale:**
-- During dev: fast feedback (seconds)
-- Before handoff: full validation (minutes)
+- During dev: single tests (seconds)
+- Before handoff: per-file + clippy (seconds)
+- Full suite: 15+ minutes, almost never catches anything cargo check + targeted tests don't
 
 ---
 
