@@ -30,8 +30,8 @@ fn run_program(source: &str) -> Result<Value, String> {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_sqrt_basic() {
     let source = r#"
@@ -54,8 +54,8 @@ fn test_extern_sqrt_basic() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_pow_basic() {
     let source = r#"
@@ -78,8 +78,8 @@ fn test_extern_pow_basic() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_multiple_calls() {
     let source = r#"
@@ -105,8 +105,8 @@ fn test_extern_multiple_calls() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_with_user_functions() {
     let source = r#"
@@ -150,8 +150,8 @@ fn test_extern_library_not_found() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_symbol_not_found() {
     let source = r#"
@@ -170,8 +170,8 @@ fn test_extern_symbol_not_found() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_ceil_floor() {
     let source = r#"
@@ -199,8 +199,8 @@ fn test_extern_ceil_floor() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_sin_cos() {
     let source = r#"

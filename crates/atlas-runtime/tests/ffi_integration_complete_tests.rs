@@ -64,8 +64,8 @@ fn run_vm(source: &str) -> Result<Value, String> {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_full_ffi_flow_interpreter() {
     let source = r#"
@@ -88,8 +88,8 @@ fn test_full_ffi_flow_interpreter() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_full_ffi_flow_vm() {
     let source = r#"
@@ -112,8 +112,8 @@ fn test_full_ffi_flow_vm() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_parity_extern_call_basic() {
     let source = r#"
@@ -206,8 +206,8 @@ fn test_error_propagation_extern_library_not_found() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_error_propagation_symbol_not_found() {
     let source = r#"
@@ -223,8 +223,8 @@ fn test_error_propagation_symbol_not_found() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_extern_with_user_functions() {
     let source = r#"
@@ -254,8 +254,8 @@ fn test_extern_with_user_functions() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_multiple_extern_functions() {
     let source = r#"
@@ -280,8 +280,8 @@ fn test_multiple_extern_functions() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_ffi_multiple_calls() {
     let source = r#"
@@ -446,8 +446,8 @@ fn test_ffi_platform_compatibility() {
 
 #[test]
 #[cfg_attr(
-    target_os = "windows",
-    ignore = "libm not available as .dll on Windows"
+    any(target_os = "windows", target_os = "macos"),
+    ignore = "libm not available as standalone shared library on this platform"
 )]
 fn test_library_loading_platform_specific() {
     // Tests that library names resolve correctly on current platform
