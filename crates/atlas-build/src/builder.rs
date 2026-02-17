@@ -1,7 +1,9 @@
 //! Build orchestration and pipeline management
 use crate::build_order::{BuildGraph, ModuleNode};
-use crate::cache::{compute_selective_invalidation, BuildCache, ChangeDetector};
+use crate::cache::BuildCache;
 use crate::error::{BuildError, BuildResult};
+use crate::fingerprint::FingerprintConfig;
+use crate::incremental::{IncrementalEngine, IncrementalStats};
 use crate::output::OutputMode;
 use crate::profile::{Profile, ProfileManager};
 use crate::script::{BuildScript, ScriptContext, ScriptExecutor, ScriptPhase};
@@ -278,10 +280,6 @@ impl Builder {
             );
         }
 
-        // Load or create build cache
-        let cache_dir = self.config.target_dir.join("cache");
-        let mut cache = BuildCache::load(&cache_dir)?;
-
         // Discover source files
         let source_files = self.discover_source_files()?;
 
@@ -295,43 +293,55 @@ impl Builder {
         let graph = self.build_dependency_graph(&source_files)?;
         graph.validate()?;
 
-        // Detect changed files
-        let mut change_detector = ChangeDetector::new();
-        let changes = change_detector.detect_changes(&source_files);
+        // Initialize incremental engine
+        let state_dir = self.config.target_dir.join("incremental");
+        let fp_config = FingerprintConfig {
+            optimization: format!("{:?}", self.config.optimization_level),
+            ..Default::default()
+        };
+        let mut engine = IncrementalEngine::new(state_dir, fp_config);
 
-        // Compute invalidation set (modules to recompile)
-        let changed_modules: std::collections::HashSet<String> = changes
-            .iter()
-            .filter_map(|change| self.path_to_module_name(&change.path).ok())
-            .collect();
-
-        // Build dependency map for invalidation propagation
-        let mut dep_map = std::collections::HashMap::new();
-        for (name, node) in graph.modules() {
-            dep_map.insert(name.clone(), node.dependencies.clone());
-        }
-
-        let invalidation = compute_selective_invalidation(&changed_modules, &dep_map);
+        // Analyze what needs recompilation
+        let analysis_start = Instant::now();
+        let plan = engine.plan(&graph)?;
+        let analysis_time = analysis_start.elapsed();
 
         if self.config.verbose {
-            println!("Changed modules: {}", changed_modules.len());
-            println!("Invalidated modules: {}", invalidation.len());
-            println!("Cached modules: {}", graph.len() - invalidation.len());
+            println!(
+                "Incremental analysis: {} to recompile, {} cached ({:.2}ms)",
+                plan.recompile.len(),
+                plan.cached.len(),
+                analysis_time.as_secs_f64() * 1000.0
+            );
+            for (name, reason) in &plan.reasons {
+                println!("  {} -> {:?}", name, reason);
+            }
         }
 
-        // Compile invalidated modules
+        // Load build cache for artifact caching
+        let cache_dir = self.config.target_dir.join("cache");
+        let mut cache = BuildCache::load(&cache_dir)?;
+
+        // Compile modules
         let compile_start = Instant::now();
         let mut compiled_modules = Vec::new();
+        let recompile_set: std::collections::HashSet<String> =
+            plan.recompile.iter().cloned().collect();
 
         for (module_name, node) in graph.modules() {
-            if invalidation.is_invalidated(module_name) {
+            if recompile_set.contains(module_name) {
                 // Recompile this module
                 let compiled = self.compile_single_module(module_name, &node.path)?;
 
-                // Store in cache
+                // Read source for fingerprint + cache
                 let source =
                     fs::read_to_string(&node.path).map_err(|e| BuildError::io(&node.path, e))?;
 
+                // Record in incremental engine
+                let dep_hashes = self.gather_dependency_hashes(&node.dependencies, &engine);
+                engine.record_compilation(module_name, &node.path, &source, dep_hashes);
+
+                // Store in build cache
                 cache.store(
                     &node.name,
                     node.path.clone(),
@@ -343,52 +353,22 @@ impl Builder {
 
                 compiled_modules.push(compiled);
             } else {
-                // Try to load from cache
-                if let Some(_bytecode_bytes) = cache.get(module_name, &node.path)? {
-                    // Deserialize bytecode (placeholder - actual deserialization needed)
-                    // For now, we'll recompile if cache hit fails
-                    if self.config.verbose {
-                        println!("Cache hit: {}", module_name);
-                    }
-
-                    // TODO: Deserialize bytecode from cache
-                    // For now, recompile as fallback
-                    let compiled = self.compile_single_module(module_name, &node.path)?;
-                    compiled_modules.push(compiled);
-                } else {
-                    // Cache miss - recompile
-                    let compiled = self.compile_single_module(&node.name, &node.path)?;
-
-                    let source = fs::read_to_string(&node.path)
-                        .map_err(|e| BuildError::io(&node.path, e))?;
-
-                    cache.store(
-                        &node.name,
-                        node.path.clone(),
-                        &source,
-                        serialize_bytecode(&compiled.bytecode)?,
-                        node.dependencies.clone(),
-                        compiled.compile_time,
-                    )?;
-
-                    compiled_modules.push(compiled);
+                // Cached module - still need to compile for linking
+                // (bytecode deserialization not yet implemented)
+                if self.config.verbose {
+                    println!("  Cache hit: {}", module_name);
                 }
+                let compiled = self.compile_single_module(module_name, &node.path)?;
+                compiled_modules.push(compiled);
             }
         }
 
         let compilation_time = compile_start.elapsed();
 
-        // Save cache
+        // Update and persist state
+        engine.update_state(&graph);
+        engine.save()?;
         cache.save()?;
-
-        if self.config.verbose {
-            println!(
-                "Compiled {} modules ({} from cache) in {:.2}s",
-                compiled_modules.len(),
-                graph.len() - invalidation.len(),
-                compilation_time.as_secs_f64()
-            );
-        }
 
         // Create build targets
         let targets = self.create_build_targets(&source_files)?;
@@ -411,10 +391,16 @@ impl Builder {
         };
 
         if self.config.verbose {
-            println!(
-                "Incremental build completed in {:.2}s",
-                total_time.as_secs_f64()
-            );
+            let inc_stats = IncrementalStats {
+                total_modules: graph.len(),
+                recompiled: recompile_set.len(),
+                from_cache: graph.len() - recompile_set.len(),
+                analysis_time,
+                compilation_time,
+                time_saved: Duration::ZERO, // Would need baseline to compute
+                was_full_rebuild: recompile_set.len() == graph.len(),
+            };
+            println!("{}", inc_stats.summary());
         }
 
         Ok(BuildContext {
@@ -422,6 +408,23 @@ impl Builder {
             stats,
             artifacts,
         })
+    }
+
+    /// Gather dependency hashes for fingerprinting
+    fn gather_dependency_hashes(
+        &self,
+        dependencies: &[String],
+        engine: &IncrementalEngine,
+    ) -> std::collections::BTreeMap<String, String> {
+        dependencies
+            .iter()
+            .filter_map(|dep| {
+                engine
+                    .fingerprint_db()
+                    .get(dep)
+                    .map(|fp| (dep.clone(), fp.hash.clone()))
+            })
+            .collect()
     }
 
     /// Compile a single module

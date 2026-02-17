@@ -14,6 +14,8 @@ pub mod build_order;
 pub mod builder;
 pub mod cache;
 pub mod error;
+pub mod fingerprint;
+pub mod incremental;
 pub mod output;
 pub mod profile;
 pub mod script;
@@ -24,6 +26,12 @@ pub use build_order::{BuildGraph, ModuleNode};
 pub use builder::{BuildConfig, BuildContext, BuildStats, Builder, OptLevel};
 pub use cache::{BuildCache, CacheEntry, CacheMetadata, CacheStats};
 pub use error::{BuildError, BuildResult};
+pub use fingerprint::{
+    compute_fingerprint, compute_hash, Fingerprint, FingerprintConfig, FingerprintDb, PlatformInfo,
+};
+pub use incremental::{
+    BuildState, IncrementalEngine, IncrementalPlan, IncrementalStats, RecompileReason,
+};
 pub use output::{BuildProgress, BuildSummary, ErrorFormatter, OutputMode};
 pub use profile::{
     DependencyProfile, ManifestProfileConfig, Profile, ProfileConfig, ProfileManager,
