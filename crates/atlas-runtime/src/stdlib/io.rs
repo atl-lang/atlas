@@ -435,7 +435,9 @@ pub fn file_info(
     info.insert("isFile".to_string(), JsonValue::Bool(metadata.is_file()));
     info.insert("isDir".to_string(), JsonValue::Bool(metadata.is_dir()));
 
-    Ok(Value::JsonValue(std::rc::Rc::new(JsonValue::Object(info))))
+    Ok(Value::JsonValue(std::sync::Arc::new(JsonValue::Object(
+        info,
+    ))))
 }
 
 /// Join path components with OS-specific separator

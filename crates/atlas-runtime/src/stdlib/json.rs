@@ -4,7 +4,7 @@ use crate::json_value::JsonValue;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::collections::HashSet;
-use std::rc::Rc;
+use std::sync::Arc;
 
 // ============================================================================
 // JSON Functions
@@ -45,7 +45,7 @@ pub fn parse_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     // Convert serde_json::Value to JsonValue
     let json_value = serde_to_atlas_json(parsed);
-    Ok(Value::JsonValue(Rc::new(json_value)))
+    Ok(Value::JsonValue(Arc::new(json_value)))
 }
 
 /// Convert JsonValue to JSON string
@@ -356,7 +356,7 @@ fn value_to_json(
         }
         Value::Array(arr_ref) => {
             // Check for circular reference using pointer address
-            let ptr = Rc::as_ptr(arr_ref) as usize;
+            let ptr = Arc::as_ptr(arr_ref) as usize;
             if !visited.insert(ptr) {
                 return Err(RuntimeError::TypeError {
                     msg: "Circular reference detected in array".to_string(),
