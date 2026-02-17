@@ -6,21 +6,33 @@
 
 ## Collection Types (Shared Mutable State)
 
-**Pattern:** `Rc<RefCell<X>>` for all collection types
+**Pattern:** `Arc<Mutex<X>>` for all collection types (migrated from `Rc<RefCell<>>` in phase-18)
 
 ```rust
-// In value.rs
+// In value.rs (actual current code)
 pub enum Value {
-    HashMap(Rc<RefCell<HashMap>>),  // Shared mutable HashMap
-    HashSet(Rc<RefCell<HashSet>>),  // Shared mutable HashSet
-    Queue(Rc<RefCell<Queue>>),      // Shared mutable Queue
-    Stack(Rc<RefCell<Stack>>),      // Shared mutable Stack
-    Array(Rc<RefCell<Vec<Value>>>), // Shared mutable Array
+    Array(Arc<Mutex<Vec<Value>>>),
+    HashMap(Arc<Mutex<AtlasHashMap>>),
+    HashSet(Arc<Mutex<AtlasHashSet>>),
+    Queue(Arc<Mutex<AtlasQueue>>),
+    Stack(Arc<Mutex<AtlasStack>>),
+    String(Arc<String>),
     // ...
 }
 ```
 
-**Why:** Collections need reference semantics (multiple bindings to same collection).
+**Access pattern:** `.lock().unwrap()` — NOT `.borrow()` / `.borrow_mut()`
+
+```rust
+// Correct — read
+let guard = arr.lock().unwrap();
+
+// Correct — mutate
+let mut guard = map.lock().unwrap();
+guard.insert(key, value);
+```
+
+**Why Arc<Mutex<>>:** Thread safety required for async/tokio support (phase-18 migration). DR-009.
 
 ---
 
@@ -89,7 +101,7 @@ fn intrinsic_hashmap_for_each(
 
     // 2. Extract and validate map argument
     let map = match &args[0] {
-        Value::HashMap(m) => m.borrow().entries(),  // Get entries snapshot
+        Value::HashMap(m) => m.lock().unwrap().entries(),  // Get entries snapshot
         _ => {
             return Err(RuntimeError::TypeError {
                 msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -256,7 +268,7 @@ pub fn hashmap_put(
 ) -> Result<Value, RuntimeError> {
     let hashmap = expect_hashmap(map, span)?;
     let hash_key = HashKey::try_from_value(key.clone(), span)?;
-    hashmap.borrow_mut().insert(hash_key, value.clone());
+    hashmap.lock().unwrap().insert(hash_key, value.clone());
     Ok(value)
 }
 ```
@@ -324,9 +336,9 @@ return Err(RuntimeError::IndexOutOfBounds {
 fn expect_hashmap(
     value: &Value,
     span: crate::span::Span,
-) -> Result<Rc<RefCell<HashMap>>, RuntimeError> {
+) -> Result<Arc<Mutex<AtlasHashMap>>, RuntimeError> {
     match value {
-        Value::HashMap(m) => Ok(Rc::clone(m)),
+        Value::HashMap(m) => Ok(Arc::clone(m)),
         _ => Err(RuntimeError::TypeError {
             msg: format!("Expected HashMap, got {}", value.type_name()),
             span,

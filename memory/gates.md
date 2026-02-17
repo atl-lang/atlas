@@ -31,7 +31,7 @@
 # Example from phase file:
 ls crates/atlas-runtime/src/stdlib/collections/{hashmap,hashset,queue,stack,hash}.rs
 
-grep "HashMap\|HashSet\|Queue\|Stack" crates/atlas-runtime/src/value.rs | grep "Rc<RefCell"
+grep "HashMap\|HashSet\|Queue\|Stack" crates/atlas-runtime/src/value.rs | grep "Arc<Mutex"
 ```
 
 **If missing:** STOP. Complete prerequisite phases first.
@@ -54,8 +54,8 @@ cargo clean && cargo check -p atlas-runtime
 **Check all files referenced in phase:**
 ```bash
 # Example validations:
-ls crates/atlas-runtime/src/interpreter.rs  # Must exist
-ls crates/atlas-runtime/src/vm.rs          # Must exist
+ls crates/atlas-runtime/src/interpreter/   # Must exist (directory)
+ls crates/atlas-runtime/src/vm/            # Must exist (directory)
 ls crates/atlas-runtime/src/stdlib/mod.rs  # Must exist
 ```
 

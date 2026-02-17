@@ -11,8 +11,6 @@
 **Next Phase:** phases/stdlib/phase-15-testing-framework.md
 **Real Progress:** 59/98 phases complete (60%)
 
-**🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
-
 ---
 
 ## 📊 Category Progress
@@ -31,9 +29,9 @@
 
 ---
 
-## 📋 Complete Phase List (50/95)
+## 📋 Complete Phase List (59/98)
 
-### 0. Foundation (24/32) 🔨 ACTIVE - CRITICAL BLOCKERS
+### 0. Foundation (32/32) ✅ COMPLETE
 
 ✅ phase-16-method-call-syntax-frontend.md
 ✅ phase-17-method-call-syntax-backend.md
@@ -57,8 +55,6 @@
 ✅ phase-11b-build-system-incremental.md
 ✅ phase-11c-build-system-integration.md
 
-**🚨 CRITICAL - Architecture Foundation Fixes (BLOCKING v0.2):**
-
 ✅ phase-18a-arc-core-value.md
 ✅ phase-18b-arc-engines.md
 ✅ phase-18c-arc-core-stdlib.md
@@ -71,7 +67,7 @@
 ✅ phase-20c-for-in-backend.md
 ✅ phase-20d-for-in-testing-demos.md
 
-### 1. Stdlib (24/28) 🔨 ACTIVE
+### 1. Stdlib (27/30) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -183,7 +179,7 @@
 
 **Foundation Complete - Unblocked Work:**
 - ✅ All foundation phases complete (32/32)
-- **NEXT:** Resume stdlib work (phase-11c async primitives)
+- **NEXT:** Continue stdlib work (phase-15 testing framework)
 - **THEN:** Continue with bytecode-VM, frontend, typing, etc.
 
 **v0.1 Prerequisites (Status Update):**
@@ -229,7 +225,7 @@ STATUS.md changes:
 
 **Memory System (Auto-Loaded):**
 - `/memory/MEMORY.md` - Always loaded index (patterns, decisions, gates)
-- `/memory/patterns.md` - Codebase patterns (Rc<RefCell<>>, stdlib signatures, etc.)
+- `/memory/patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
 - `/memory/decisions.md` - Architectural decisions (search DR-XXX)
 - `/memory/gates.md` - Quality gate rules
 
@@ -292,6 +288,4 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Ready to continue v0.2? Next phase: `phases/foundation/phase-18a-arc-core-value.md` 🚀**
-
-**⚠️ CRITICAL PATH:** Must complete phases 18-20 before resuming stdlib work.
+**Next phase: `phases/stdlib/phase-15-testing-framework.md`**

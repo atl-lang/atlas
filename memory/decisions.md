@@ -34,9 +34,10 @@
 ## DR-002: Reference Semantics for Collections
 
 **Date:** 2025-02 (v0.2, Phase 07a)
-**Status:** ✅ Active
+**Status:** 🔄 Superseded by DR-009 (phase-18 Arc migration)
 
 **Decision:** Collections use `Rc<RefCell<T>>` for reference semantics.
+**NOTE:** This was replaced with `Arc<Mutex<T>>` in phase-18. See DR-009.
 
 **Pattern:**
 ```rust
@@ -366,9 +367,37 @@ let filtered = hashSetFilter(set, fn(elem) { elem > 10; });
 
 ---
 
+## DR-009: Arc<Mutex<T>> Migration (Replaces DR-002)
+
+**Date:** 2026-01 (v0.2, Phase 18a-18f)
+**Status:** ✅ Active
+
+**Decision:** All collection types migrated from `Rc<RefCell<T>>` to `Arc<Mutex<T>>`.
+
+**New pattern:**
+```rust
+pub enum Value {
+    Array(Arc<Mutex<Vec<Value>>>),
+    HashMap(Arc<Mutex<AtlasHashMap>>),
+    HashSet(Arc<Mutex<AtlasHashSet>>),
+    Queue(Arc<Mutex<AtlasQueue>>),
+    Stack(Arc<Mutex<AtlasStack>>),
+    String(Arc<String>),
+}
+```
+
+**Access:** `.lock().unwrap()` for reads and writes. NOT `.borrow()` / `.borrow_mut()`.
+
+**Rationale:** Required for tokio async support. `Rc<RefCell<>>` is `!Send`, preventing use across thread boundaries. `Arc<Mutex<>>` is `Send + Sync`.
+
+**Impact:** All collection code, intrinsics, stdlib functions updated in phases 18a-18f.
+
+---
+
 ## References
 
 - DR-001, DR-002: See `docs/specification/runtime.md`
 - DR-003, DR-004: See `crates/atlas-runtime/src/stdlib/collections/hash.rs`
 - DR-005: See `memory/patterns.md` (Intrinsic Pattern)
 - DR-007, DR-008: See `memory/gates.md` (Gate -1: Validation)
+- DR-009: See `crates/atlas-runtime/src/value.rs` (current collection types)
