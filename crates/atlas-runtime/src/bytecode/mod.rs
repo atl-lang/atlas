@@ -7,11 +7,13 @@ mod disasm;
 mod opcode;
 mod optimizer;
 mod serialize;
+pub mod validator;
 
 pub use disasm::disassemble;
 pub use opcode::Opcode;
 pub use optimizer::{ConstantFoldingPass, OptimizationPass, Optimizer};
 use serialize::{deserialize_span, deserialize_value, serialize_span, serialize_value};
+pub use validator::{validate, ValidationError, ValidationErrorKind};
 
 use crate::span::Span;
 use crate::value::Value;

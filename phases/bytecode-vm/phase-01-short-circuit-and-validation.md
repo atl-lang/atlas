@@ -1,91 +1,129 @@
-# Phase 01: Short-Circuit Evaluation & Bytecode Validation
+# Phase 01: Bytecode Validator
 
-## 🚨 BLOCKERS - CHECK BEFORE STARTING
-**REQUIRED:** VM must have LogicalAnd/LogicalOr opcodes with TODO markers.
+## Status: Short-circuit ALREADY DONE
 
-**Verification:**
-```bash
-grep -n "LogicalAnd\|LogicalOr" crates/atlas-runtime/src/bytecode/mod.rs
-grep -n "TODO.*short.*circuit" crates/atlas-runtime/src/vm/mod.rs
-cargo test vm_logical
-```
+Short-circuit evaluation for `&&`/`||` was fully implemented in `compiler/expr.rs`
+using `Dup + JumpIfFalse` (AND) and `Dup + Not + JumpIfFalse` (OR). `Opcode::And`
+and `Opcode::Or` are dead stubs — compiler never emits them. VM tests pass.
 
-**What's needed:**
-- Opcodes LogicalAnd/LogicalOr exist from v0.1
-- VM executes them (currently evaluates both sides - wrong)
-- TODO comments indicate need for implementation
-
-**If missing:** Check v0.1 phase bytecode-vm/phase-08 completed
+**This phase = bytecode validator only.**
 
 ---
 
 ## Objective
-Implement proper short-circuit evaluation for && and || operators in VM, and add comprehensive bytecode validation to detect malformed bytecode before execution.
+
+Create `bytecode/validator.rs` — static analysis of bytecode before VM execution.
+Catches malformed bytecode (bad jumps, constant overruns, stack underflow) before
+it causes cryptic runtime panics.
+
+---
 
 ## Files
-**Update:** `crates/atlas-runtime/src/vm/mod.rs` (~50 lines changed)
-**Update:** `crates/atlas-runtime/src/compiler/mod.rs` (~100 lines changed)
-**Create:** `crates/atlas-runtime/src/bytecode/validator.rs` (~600 lines)
-**Update:** `crates/atlas-runtime/src/bytecode/mod.rs` (add validator module)
-**Tests:** `crates/atlas-runtime/tests/vm_short_circuit_tests.rs` (~300 lines)
-**Tests:** `crates/atlas-runtime/tests/bytecode_validator_tests.rs` (~400 lines)
 
-## Dependencies
-- v0.1 complete with VM, compiler, bytecode format
-- Existing LogicalAnd/LogicalOr opcodes
-- Atlas-SPEC.md defines short-circuit semantics
+**Create:** `crates/atlas-runtime/src/bytecode/validator.rs` (~400 lines)
+**Update:** `crates/atlas-runtime/src/bytecode/mod.rs` (~5 lines — add module)
+**Tests:** `crates/atlas-runtime/tests/bytecode_validator_tests.rs` (~300 lines)
+
+---
+
+## Validator API
+
+```rust
+pub struct ValidationError {
+    pub kind: ValidationErrorKind,
+    pub offset: usize,
+}
+
+pub enum ValidationErrorKind {
+    UnknownOpcode(u8),
+    JumpOutOfBounds { target: usize, len: usize },
+    ConstantIndexOutOfBounds { index: usize, pool_size: usize },
+    StackUnderflow { depth: i32, needed: i32, op: &'static str },
+    TruncatedInstruction { opcode: &'static str },
+    MissingHalt,
+}
+
+pub fn validate(bytecode: &Bytecode) -> Result<(), Vec<ValidationError>>;
+```
+
+---
 
 ## Implementation
 
-### Short-Circuit Evaluation
-Current v0.1 evaluates both operands which is wrong. Implement jump-based short-circuiting. Compiler emits conditional jumps instead of logical opcodes. For AND: jump if left false skipping right evaluation. For OR: jump if left true skipping right. Add JumpIfTrue/JumpIfFalse/Dup opcodes if needed. Remove old LogicalAnd/LogicalOr opcodes.
+### Opcode operand table (from opcode.rs)
 
-### Bytecode Validator
-Create comprehensive validation before execution. Check jump targets within bounds. Verify constant indices not excessive. Simulate stack depth detecting underflow. Detect unreachable code after returns/jumps. Build reachability graph marking dead code. Update jump targets after dead code removal.
+| Opcode | Operand bytes | Stack delta |
+|--------|--------------|-------------|
+| Constant | u16 | +1 |
+| Null, True, False | 0 | +1 |
+| GetLocal, GetGlobal | u16 | +1 |
+| SetLocal, SetGlobal | u16 | 0 (peek, no pop in atlas semantics) |
+| Add, Sub, Mul, Div, Mod | 0 | -1 (pop 2, push 1) |
+| Negate, Not | 0 | 0 (pop 1, push 1) |
+| Equal..GreaterEqual | 0 | -1 |
+| And, Or | 0 | -1 (dead but defined) |
+| Jump | i16 | 0 |
+| JumpIfFalse | i16 | -1 |
+| Loop | i16 | 0 |
+| Call | u8 | -(arg_count) + 1 (net: -(arg_count-1), but arg_count unknown statically — skip stack check for Call) |
+| Return | 0 | drain (exit frame) |
+| Array | u16 | -(size) + 1 |
+| GetIndex | 0 | -1 |
+| SetIndex | 0 | -2 (pops array, index, value; no push) |
+| Pop | 0 | -1 |
+| Dup | 0 | +1 |
+| IsOptionSome..GetArrayLen | 0 | 0 (pop 1, push 1) |
+| Halt | 0 | 0 |
 
-### VM Integration
-Integrate validator in VM constructor. Reject invalid bytecode before execution. Add stack_effect method to Opcode calculating push/pop delta. Use in validator for depth simulation.
+### Algorithm
 
-## Tests (TDD - Use rstest)
+1. **Pass 1 — decode:** Walk instructions byte-by-byte, building `Vec<(offset, Opcode, operand)>`. Emit `UnknownOpcode` or `TruncatedInstruction` on bad bytes. Record all jump operands.
+2. **Pass 2 — jump targets:** For each jump, compute absolute target. Emit `JumpOutOfBounds` if outside `[0, instructions.len())`.
+3. **Pass 3 — constant refs:** For each `Constant`/`GetGlobal`/`SetGlobal`, verify index < `constants.len()`. Emit `ConstantIndexOutOfBounds`.
+4. **Pass 4 — stack depth:** Linear walk, tracking depth as i32. On underflow (depth < 0), emit `StackUnderflow`. Skip stack tracking after `Call` (arity not statically available without type info).
+5. **Termination:** Warn if last reachable instruction isn't `Halt` or `Return`.
 
-**Short-circuit tests:**
-1. AND with false left - right not evaluated
-2. OR with true left - right not evaluated
-3. Non-short-circuit cases - right evaluated when needed
-4. Nested logical operators
-5. Side effects only when evaluated
-6. Function calls in logical expressions
+Collect all errors (don't stop at first), return `Ok(())` or `Err(errors)`.
 
-**Validator tests:**
-1. Invalid jump targets - out of bounds
-2. Stack underflow detection
-3. Stack overflow warnings
-4. Invalid constant indices
-5. Unreachable code detection
-6. Valid bytecode passes all checks
-7. Validator performance acceptable
+---
 
-**Minimum test count:** 80 tests (40 short-circuit, 40 validator)
+## Gates
 
-## Integration Points
-- Uses: Opcode enum from bytecode/mod.rs
-- Uses: VM from vm/mod.rs
-- Uses: Compiler from compiler/mod.rs
-- Updates: Compiler jump-based logical ops
-- Updates: VM with new jump opcodes
-- Creates: Validator for bytecode verification
-- Output: Correct short-circuit semantics, validated bytecode
+### GATE -1: Sanity
+```bash
+cargo clean && cargo check -p atlas-runtime
+```
+
+### GATE 1: Implement + unit tests
+```bash
+cargo test -p atlas-runtime --test bytecode_validator_tests
+```
+Minimum: 40 tests.
+
+### GATE 2: Clippy
+```bash
+cargo clippy -p atlas-runtime -- -D warnings
+```
+
+### GATE 3: Format
+```bash
+cargo fmt -p atlas-runtime
+```
+
+### GATE 4: Full suite (pre-existing 6 async failures OK)
+```bash
+cargo test -p atlas-runtime 2>&1 | grep "test result"
+```
+
+---
 
 ## Acceptance
-- Short-circuit evaluation works - right side skipped when unnecessary
-- Side effects only when operand evaluated
-- Bytecode validator catches all malformed categories
-- Valid bytecode passes validation
-- VM rejects invalid bytecode pre-execution
-- 80+ tests pass
-- Interpreter/VM parity both short-circuit correctly
-- No performance regression
-- Files under 100 lines changed each
-- validator.rs under 700 lines
-- No clippy warnings
-- cargo test passes
+
+- `validate()` catches unknown opcodes
+- `validate()` catches jump targets outside bytecode bounds
+- `validate()` catches constant pool index overruns
+- `validate()` catches stack underflow
+- Valid bytecode (from compiler) passes with `Ok(())`
+- 40+ tests pass
+- Zero clippy warnings
+- No changes to VM execution path (validator is opt-in, not wired into VM yet)
