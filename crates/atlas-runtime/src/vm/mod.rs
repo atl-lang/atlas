@@ -20,6 +20,22 @@ use crate::value::{RuntimeError, Value};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+/// Result returned by [`VM::run_debuggable`].
+#[derive(Debug)]
+pub enum VmRunResult {
+    /// Execution completed normally.
+    Complete(Option<Value>),
+    /// Execution was paused (breakpoint hit or step condition met).
+    ///
+    /// The VM state is fully preserved.  Resume by calling `run_debuggable` again
+    /// (or `run` to run without further debug checks).
+    Paused {
+        /// Instruction pointer at the pause point (the instruction that would
+        /// have been executed next has NOT been executed yet).
+        ip: usize,
+    },
+}
+
 /// Virtual machine state
 pub struct VM {
     /// Value stack
@@ -36,6 +52,9 @@ pub struct VM {
     profiler: Option<Profiler>,
     /// Optional debugger for step-through execution
     debugger: Option<Debugger>,
+    /// Set to `true` by the execute_loop when the debugger requests a pause.
+    /// Cleared by `run_debuggable` after it reads the flag.
+    debug_pause_pending: bool,
     /// Security context for current execution (set during run())
     current_security: Option<*const crate::security::SecurityContext>,
     /// FFI library loader (phase-10b)
@@ -63,6 +82,7 @@ impl VM {
             ip: 0,
             profiler: None, // Profiling disabled by default
             debugger: None, // Debugging disabled by default
+            debug_pause_pending: false,
             current_security: None,
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
@@ -261,6 +281,137 @@ impl VM {
         self.bytecode.get_span_for_offset(offset)
     }
 
+    // ── Debugger inspection API ───────────────────────────────────────────────
+
+    /// Get the current instruction pointer.
+    pub fn current_ip(&self) -> usize {
+        self.ip
+    }
+
+    /// Get the current call-frame depth (number of active frames).
+    pub fn frame_depth(&self) -> usize {
+        self.frames.len()
+    }
+
+    /// Get the current value-stack depth.
+    pub fn stack_size(&self) -> usize {
+        self.stack.len()
+    }
+
+    /// Get a call frame by index (0 = innermost / most recent).
+    ///
+    /// Returns `None` if `index` is out of range.
+    pub fn get_frame_at(&self, index: usize) -> Option<&CallFrame> {
+        let len = self.frames.len();
+        if index < len {
+            self.frames.get(len - 1 - index)
+        } else {
+            None
+        }
+    }
+
+    /// Get the local variable values for a call frame.
+    ///
+    /// `frame_index` 0 is the innermost (current) frame.
+    /// Returns `(slot_index, &Value)` pairs for all initialised local slots.
+    pub fn get_locals_for_frame(&self, frame_index: usize) -> Vec<(usize, &Value)> {
+        let frame = match self.get_frame_at(frame_index) {
+            Some(f) => f,
+            None => return Vec::new(),
+        };
+        let base = frame.stack_base;
+        let count = frame.local_count;
+        (0..count)
+            .filter_map(|i| self.stack.get(base + i).map(|v| (i, v)))
+            .collect()
+    }
+
+    /// Get all global variables.
+    pub fn get_global_variables(&self) -> &HashMap<String, Value> {
+        &self.globals
+    }
+
+    /// Get debug information from the bytecode.
+    pub fn debug_spans(&self) -> &[crate::bytecode::DebugSpan] {
+        &self.bytecode.debug_info
+    }
+
+    // ── Debuggable execution ──────────────────────────────────────────────────
+
+    /// Execute bytecode with live debugger-state integration.
+    ///
+    /// Syncs verified breakpoints and step conditions from `debug_state` into
+    /// the VM's embedded debugger, then runs until the program completes or a
+    /// pause condition fires.
+    ///
+    /// When `VmRunResult::Paused` is returned the VM state is fully preserved
+    /// and execution can be resumed by calling `run_debuggable` again.
+    pub fn run_debuggable(
+        &mut self,
+        debug_state: &mut crate::debugger::DebuggerState,
+        security: &crate::security::SecurityContext,
+    ) -> Result<VmRunResult, RuntimeError> {
+        use crate::debugger::state::StepMode;
+        use debugger::StepCondition;
+
+        // Sync verified breakpoints from debug_state into the embedded Debugger.
+        self.enable_debugging();
+        let dbg = self.debugger.as_mut().unwrap();
+        dbg.clear_breakpoints();
+        for bp in debug_state.breakpoints() {
+            if let Some(offset) = bp.instruction_offset {
+                dbg.set_breakpoint(offset);
+            }
+        }
+
+        // Configure the step condition.
+        let step_condition = match debug_state.step_mode {
+            StepMode::None => StepCondition::None,
+            StepMode::Into => StepCondition::Always,
+            StepMode::Over => StepCondition::OverDepth(debug_state.step_start_frame_depth),
+            StepMode::Out => StepCondition::OutDepth(debug_state.step_start_frame_depth),
+        };
+        self.debugger
+            .as_mut()
+            .unwrap()
+            .set_step_condition(step_condition);
+
+        // Clear any leftover pause flag from a previous run.
+        self.debug_pause_pending = false;
+
+        // Run the execute loop (profiling hooks still active).
+        self.current_security = Some(security as *const _);
+        if let Some(ref mut profiler) = self.profiler {
+            if profiler.is_enabled() {
+                profiler.start_timing();
+            }
+        }
+        let loop_result = self.execute_until_end();
+        if let Some(ref mut profiler) = self.profiler {
+            if profiler.is_enabled() {
+                profiler.stop_timing();
+            }
+        }
+
+        if self.debug_pause_pending {
+            // The execute_loop broke early due to a debug pause.
+            let ip = self.ip;
+            let location = None; // Caller resolves via SourceMap
+            let reason = if let Some(bp) = debug_state.breakpoint_at_offset(ip) {
+                crate::debugger::protocol::PauseReason::Breakpoint { id: bp.id }
+            } else {
+                crate::debugger::protocol::PauseReason::Step
+            };
+            debug_state.pause(reason, location, ip);
+            debug_state.clear_step_mode();
+            self.debug_pause_pending = false;
+            Ok(VmRunResult::Paused { ip })
+        } else {
+            debug_state.stop();
+            Ok(VmRunResult::Complete(loop_result?))
+        }
+    }
+
     /// Execute the bytecode
     pub fn run(
         &mut self,
@@ -315,18 +466,19 @@ impl VM {
             // Debugger hook: before instruction (zero overhead when disabled)
             if let Some(ref mut debugger) = self.debugger {
                 if debugger.is_enabled() {
-                    let action = debugger.before_instruction(self.ip - 1, opcode);
+                    let current_ip = self.ip - 1;
+                    let frame_depth = self.frames.len();
+                    let action =
+                        debugger.before_instruction_with_depth(current_ip, opcode, frame_depth);
                     match action {
-                        DebugAction::Pause => {
-                            // Pause execution (would need external control to resume)
-                            // For now, we just continue
-                        }
-                        DebugAction::Step => {
-                            // Step mode: pause after this instruction
-                            // Future: integrate with debugger UI
+                        DebugAction::Pause | DebugAction::Step => {
+                            // Back up IP so the paused instruction is re-executed on resume
+                            self.ip = current_ip;
+                            self.debug_pause_pending = true;
+                            break; // break the execute_loop loop
                         }
                         DebugAction::Continue => {
-                            // Normal execution
+                            // Normal execution – continue with opcode dispatch
                         }
                     }
                 }

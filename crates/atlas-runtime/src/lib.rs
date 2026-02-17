@@ -16,6 +16,7 @@ pub mod async_runtime;
 pub mod binder;
 pub mod bytecode;
 pub mod compiler;
+pub mod debugger;
 pub mod diagnostic;
 pub mod ffi;
 pub mod interpreter;

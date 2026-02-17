@@ -17,6 +17,32 @@ pub enum DebugAction {
     Pause,
 }
 
+/// Frame-depth-aware step condition for the VM debugger.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum StepCondition {
+    /// No stepping active.
+    None,
+    /// Pause at every instruction (step-into semantics).
+    Always,
+    /// Pause when call-frame depth ≤ the recorded start depth (step-over).
+    OverDepth(usize),
+    /// Pause when call-frame depth < the recorded start depth (step-out).
+    OutDepth(usize),
+}
+
+impl StepCondition {
+    /// Returns `true` if this condition fires at `current_depth`.
+    pub fn fires(&self, current_depth: usize) -> bool {
+        match self {
+            Self::None => false,
+            Self::Always => true,
+            Self::OverDepth(start) => current_depth <= *start,
+            Self::OutDepth(start) => current_depth < *start,
+        }
+    }
+}
+
 /// Debugger hook trait for custom debugging callbacks
 ///
 /// Implement this trait to create custom debugging tools.
@@ -50,8 +76,10 @@ pub struct Debugger {
     breakpoints: HashSet<usize>,
     /// Whether VM is currently paused at a breakpoint
     paused: bool,
-    /// Step mode: pause after each instruction
+    /// Simple step mode: pause after each instruction (legacy)
     step_mode: bool,
+    /// Frame-depth-aware step condition (overrides step_mode when not None)
+    step_condition: StepCondition,
 }
 
 impl Debugger {
@@ -62,6 +90,7 @@ impl Debugger {
             breakpoints: HashSet::new(),
             paused: false,
             step_mode: false,
+            step_condition: StepCondition::None,
         }
     }
 
@@ -72,6 +101,7 @@ impl Debugger {
             breakpoints: HashSet::new(),
             paused: false,
             step_mode: false,
+            step_condition: StepCondition::None,
         }
     }
 
@@ -140,6 +170,26 @@ impl Debugger {
         self.paused = false;
     }
 
+    /// Get the active step condition.
+    pub fn step_condition(&self) -> StepCondition {
+        self.step_condition
+    }
+
+    /// Set a frame-depth-aware step condition.
+    ///
+    /// When set, this overrides the simple `step_mode` flag.
+    pub fn set_step_condition(&mut self, condition: StepCondition) {
+        self.step_condition = condition;
+        // Keep legacy step_mode in sync for introspection.
+        self.step_mode = !matches!(condition, StepCondition::None);
+    }
+
+    /// Clear the active step condition (revert to free-running).
+    pub fn clear_step_condition(&mut self) {
+        self.step_condition = StepCondition::None;
+        self.step_mode = false;
+    }
+
     /// Hook called before instruction execution
     ///
     /// Returns the action to take (Continue, Step, or Pause).
@@ -155,6 +205,42 @@ impl Debugger {
         }
 
         // Check step mode
+        if self.step_mode {
+            return DebugAction::Step;
+        }
+
+        DebugAction::Continue
+    }
+
+    /// Frame-depth-aware variant of `before_instruction`.
+    ///
+    /// This is the preferred hook when running with the full debugger infrastructure,
+    /// as it supports step-over and step-out semantics.
+    pub fn before_instruction_with_depth(
+        &mut self,
+        ip: usize,
+        _opcode: Opcode,
+        frame_depth: usize,
+    ) -> DebugAction {
+        if !self.enabled {
+            return DebugAction::Continue;
+        }
+
+        // Breakpoints always take priority
+        if self.has_breakpoint(ip) {
+            self.paused = true;
+            return DebugAction::Pause;
+        }
+
+        // Frame-depth-aware step condition overrides simple step_mode
+        if !matches!(self.step_condition, StepCondition::None) {
+            if self.step_condition.fires(frame_depth) {
+                return DebugAction::Pause;
+            }
+            return DebugAction::Continue;
+        }
+
+        // Legacy simple step mode
         if self.step_mode {
             return DebugAction::Step;
         }
