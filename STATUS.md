@@ -8,8 +8,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/stdlib/phase-13b-file-system-operations.md
-**Next Phase:** phases/stdlib/phase-14-compression.md
-**Real Progress:** 56/96 phases complete (58%)
+**Next Phase:** phases/stdlib/phase-14a-gzip.md
+**Real Progress:** 56/98 phases complete (57%)
 
 **🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
@@ -20,7 +20,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 32/32 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 24/28 (86%) | 🔨 ACTIVE |
+| **1. Stdlib** | 24/30 (80%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -97,9 +97,11 @@
 ✅ phase-12-process-management.md
 ✅ phase-13a-path-manipulation.md
 ✅ phase-13b-file-system-operations.md
-⬜ phase-14-compression.md
+⬜ phase-14a-gzip.md
+⬜ phase-14b-tar.md
+⬜ phase-14c-zip.md
 ⬜ phase-15-testing-framework.md
-⬜ phase-16-through-23 (TBD)
+⬜ phase-16-through-25 (TBD)
 
 ### 2. Bytecode-VM (0/8) ⬜
 
