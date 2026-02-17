@@ -1,0 +1,12 @@
+// Reverse an array in-place
+let arr = [1, 2, 3, 4, 5];
+let left = 0;
+let right = 4;
+while (left < right) {
+    let temp = arr[left];
+    arr[left] = arr[right];
+    arr[right] = temp;
+    left = left + 1;
+    right = right - 1;
+}
+arr[0];

@@ -1,0 +1,10 @@
+// Approximate Euler's number e using Taylor series
+let e = 0;
+let factorial = 1;
+let i = 0;
+while (i < 10) {
+    e = e + 1 / factorial;
+    i = i + 1;
+    factorial = factorial * i;
+}
+e;

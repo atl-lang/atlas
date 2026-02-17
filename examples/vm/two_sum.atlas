@@ -1,0 +1,16 @@
+// Two Sum - find if any two elements sum to target
+let arr = [2, 7, 11, 15];
+let target = 9;
+let found = false;
+let i = 0;
+while (i < 4) {
+    let j = i + 1;
+    while (j < 4) {
+        if (arr[i] + arr[j] == target) {
+            found = true;
+        }
+        j = j + 1;
+    }
+    i = i + 1;
+}
+found;

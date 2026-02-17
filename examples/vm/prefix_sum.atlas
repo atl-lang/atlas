@@ -1,0 +1,10 @@
+// Prefix sum computation
+let arr = [1, 2, 3, 4, 5];
+let prefix = [0, 0, 0, 0, 0];
+prefix[0] = arr[0];
+let i = 1;
+while (i < 5) {
+    prefix[i] = prefix[i - 1] + arr[i];
+    i = i + 1;
+}
+prefix[4];

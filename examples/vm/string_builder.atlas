@@ -1,0 +1,12 @@
+// String builder - repeat a pattern
+fn repeat(s: string, n: number) -> string {
+    let result = "";
+    let i = 0;
+    while (i < n) {
+        result = result + s;
+        i = i + 1;
+    }
+    return result;
+}
+
+repeat("ab", 5);

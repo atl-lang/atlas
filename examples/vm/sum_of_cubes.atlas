@@ -1,0 +1,13 @@
+// Sum of cubes: 1^3 + 2^3 + ... + n^3
+fn power(b: number, e: number) -> number {
+    if (e == 0) { return 1; }
+    return b * power(b, e - 1);
+}
+
+let sum = 0;
+let i = 1;
+while (i <= 10) {
+    sum = sum + power(i, 3);
+    i = i + 1;
+}
+sum;

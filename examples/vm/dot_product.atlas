@@ -1,0 +1,10 @@
+// Dot product of two vectors
+let a = [1, 2, 3, 4, 5];
+let b = [5, 4, 3, 2, 1];
+let dot = 0;
+let i = 0;
+while (i < 5) {
+    dot = dot + a[i] * b[i];
+    i = i + 1;
+}
+dot;

@@ -1,0 +1,17 @@
+// Bubble sort
+let arr = [5, 3, 8, 1, 9, 2, 7, 4, 6, 0];
+let n = 10;
+let i = 0;
+while (i < n) {
+    let j = 0;
+    while (j < n - 1 - i) {
+        if (arr[j] > arr[j + 1]) {
+            let temp = arr[j];
+            arr[j] = arr[j + 1];
+            arr[j + 1] = temp;
+        }
+        j = j + 1;
+    }
+    i = i + 1;
+}
+arr[0];

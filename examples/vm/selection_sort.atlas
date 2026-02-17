@@ -1,0 +1,19 @@
+// Selection sort
+let arr = [64, 25, 12, 22, 11];
+let n = 5;
+let i = 0;
+while (i < n - 1) {
+    let min_idx = i;
+    let j = i + 1;
+    while (j < n) {
+        if (arr[j] < arr[min_idx]) {
+            min_idx = j;
+        }
+        j = j + 1;
+    }
+    let temp = arr[min_idx];
+    arr[min_idx] = arr[i];
+    arr[i] = temp;
+    i = i + 1;
+}
+arr[0];
