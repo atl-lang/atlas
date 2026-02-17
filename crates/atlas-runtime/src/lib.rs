@@ -51,8 +51,8 @@ pub use binder::Binder;
 pub use bytecode::{Bytecode, Opcode};
 pub use compiler::Compiler;
 pub use diagnostic::{
-    error_codes, normalizer, sort_diagnostics, Diagnostic, DiagnosticLevel, RelatedLocation,
-    DIAG_VERSION,
+    error_codes, formatter, normalizer, sort_diagnostics, warnings, Diagnostic, DiagnosticLevel,
+    RelatedLocation, DIAG_VERSION,
 };
 pub use interpreter::Interpreter;
 pub use json_value::JsonValue;
