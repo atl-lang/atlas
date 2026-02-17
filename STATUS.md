@@ -7,9 +7,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/stdlib/phase-11b-async-io-operations.md
-**Next Phase:** phases/foundation/phase-18a-arc-core-value.md
-**Real Progress:** 41/95 phases complete (43%)
+**Last Completed:** phases/foundation/phase-18a-arc-core-value.md
+**Next Phase:** phases/foundation/phase-18b-arc-engines.md
+**Real Progress:** 42/95 phases complete (44%)
 
 **🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
@@ -19,7 +19,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **0. Foundation** | 21/32 (66%) | 🔨 ACTIVE (CRITICAL) |
+| **0. Foundation** | 22/32 (69%) | 🔨 ACTIVE (CRITICAL) |
 | **1. Stdlib** | 20/27 (74%) | ⏸️ BLOCKED (waiting on foundation) |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
@@ -59,8 +59,8 @@
 
 **🚨 CRITICAL - Architecture Foundation Fixes (BLOCKING v0.2):**
 
-⬜ phase-18a-arc-core-value.md ← **START HERE**
-⬜ phase-18b-arc-engines.md
+✅ phase-18a-arc-core-value.md
+⬜ phase-18b-arc-engines.md ← **NEXT**
 ⬜ phase-18c-arc-core-stdlib.md
 ⬜ phase-18d-arc-collections.md
 ⬜ phase-18e-arc-advanced-stdlib.md
