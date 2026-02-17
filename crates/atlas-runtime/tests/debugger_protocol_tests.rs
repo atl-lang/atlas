@@ -14,14 +14,13 @@ use atlas_runtime::bytecode::Bytecode;
 use atlas_runtime::bytecode::DebugSpan;
 use atlas_runtime::compiler::Compiler;
 use atlas_runtime::debugger::protocol::{
-    BreakpointId, DebugEvent, DebugRequest, DebugResponse, DebugStackFrame, PauseReason,
-    SourceLocation, Variable,
+    DebugEvent, DebugRequest, DebugResponse, DebugStackFrame, PauseReason, SourceLocation, Variable,
 };
 use atlas_runtime::debugger::source_map::{
     byte_offset_to_line_column, compute_line_offsets, SourceMap,
 };
-use atlas_runtime::debugger::state::{DebuggerState, ExecutionMode, StepMode};
-use atlas_runtime::debugger::{DebugEvent as DE, DebuggerSession};
+use atlas_runtime::debugger::state::{DebuggerState, StepMode};
+use atlas_runtime::debugger::DebuggerSession;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::security::SecurityContext;
