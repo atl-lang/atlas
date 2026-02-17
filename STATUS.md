@@ -8,8 +8,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/stdlib/phase-12-process-management.md
-**Next Phase:** phases/stdlib/phase-13-path-manipulation.md
-**Real Progress:** 54/95 phases complete (57%)
+**Next Phase:** phases/stdlib/phase-13a-path-manipulation.md
+**Real Progress:** 54/96 phases complete (56%)
 
 **🚨 BLOCKING:** Phase-11c (async primitives) is blocked by foundation phases 18-20
 
@@ -20,7 +20,7 @@
 | Category | Progress | Status |
 |----------|----------|--------|
 | **0. Foundation** | 32/32 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 22/27 (81%) | 🔨 ACTIVE |
+| **1. Stdlib** | 22/28 (79%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 0/8 (0%) | ⬜ Pending |
 | **3. Frontend** | 0/5 (0%) | ⬜ Pending |
 | **4. Typing** | 0/7 (0%) | ⬜ Pending |
@@ -71,7 +71,7 @@
 ✅ phase-20c-for-in-backend.md
 ✅ phase-20d-for-in-testing-demos.md
 
-### 1. Stdlib (20/27) ⏸️ BLOCKED
+### 1. Stdlib (22/28) 🔨 ACTIVE
 
 ✅ phase-01-complete-string-api.md
 ✅ phase-02-complete-array-api.md
@@ -95,7 +95,8 @@
 ✅ phase-11b-async-io-operations.md
 ✅ phase-11c-async-primitives.md
 ✅ phase-12-process-management.md
-⬜ phase-13-path-manipulation.md
+⬜ phase-13a-path-manipulation.md
+⬜ phase-13b-file-system-operations.md
 ⬜ phase-14-compression.md
 ⬜ phase-15-testing-framework.md
 ⬜ phase-16-through-23 (TBD)
