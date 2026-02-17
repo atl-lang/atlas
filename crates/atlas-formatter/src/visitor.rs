@@ -771,6 +771,16 @@ impl FormatVisitor {
                     .collect();
                 format!("{}<{}>", name, args_str.join(", "))
             }
+            TypeRef::Union { members, .. } => members
+                .iter()
+                .map(|m| self.type_ref_to_string(m))
+                .collect::<Vec<_>>()
+                .join(" | "),
+            TypeRef::Intersection { members, .. } => members
+                .iter()
+                .map(|m| self.type_ref_to_string(m))
+                .collect::<Vec<_>>()
+                .join(" & "),
         }
     }
 

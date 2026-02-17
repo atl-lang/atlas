@@ -20,6 +20,8 @@ pub enum TypeKind {
     Null,
     /// Void type (functions returning nothing)
     Void,
+    /// Never type (no values)
+    Never,
     /// Array type (has element_type)
     Array,
     /// Function type (has parameters and return_type)
@@ -36,6 +38,10 @@ pub enum TypeKind {
     Unknown,
     /// Extern type (FFI)
     Extern,
+    /// Union type
+    Union,
+    /// Intersection type
+    Intersection,
     /// Option type
     Option,
     /// Result type
@@ -143,6 +149,16 @@ impl TypeInfo {
                 type_args: vec![],
                 alias_target: None,
             },
+            Type::Never => TypeInfo {
+                name: "never".to_string(),
+                kind: TypeKind::Never,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: vec![],
+                alias_target: None,
+            },
 
             Type::Array(inner) => {
                 let element = TypeInfo::from_type(inner);
@@ -243,6 +259,26 @@ impl TypeInfo {
                 type_args: vec![],
                 alias_target: None,
             },
+            Type::Union(members) => TypeInfo {
+                name: "union".to_string(),
+                kind: TypeKind::Union,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: members.iter().map(TypeInfo::from_type).collect(),
+                alias_target: None,
+            },
+            Type::Intersection(members) => TypeInfo {
+                name: "intersection".to_string(),
+                kind: TypeKind::Intersection,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: members.iter().map(TypeInfo::from_type).collect(),
+                alias_target: None,
+            },
 
             Type::Alias { name, target, .. } => TypeInfo {
                 name: name.clone(),
@@ -310,6 +346,7 @@ impl TypeInfo {
             TypeKind::Bool => "primitive boolean type".to_string(),
             TypeKind::Null => "null type".to_string(),
             TypeKind::Void => "void type (no value)".to_string(),
+            TypeKind::Never => "never type (no values)".to_string(),
 
             TypeKind::Array => {
                 if let Some(elem) = &self.element_type {
@@ -328,6 +365,8 @@ impl TypeInfo {
             }
 
             TypeKind::JsonValue => "dynamic JSON value type".to_string(),
+            TypeKind::Union => "union type".to_string(),
+            TypeKind::Intersection => "intersection type".to_string(),
 
             TypeKind::Generic => {
                 format!(

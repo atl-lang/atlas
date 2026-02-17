@@ -1137,6 +1137,14 @@ impl Binder {
                     type_args: resolved_args,
                 }
             }
+            TypeRef::Union { members, .. } => {
+                let resolved = members.iter().map(|m| self.resolve_type_ref(m)).collect();
+                Type::union(resolved)
+            }
+            TypeRef::Intersection { members, .. } => {
+                let resolved = members.iter().map(|m| self.resolve_type_ref(m)).collect();
+                Type::intersection(resolved)
+            }
         }
     }
 
@@ -1210,6 +1218,20 @@ impl Binder {
                     params: param_types,
                     return_type: ret_type,
                 }
+            }
+            TypeRef::Union { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_alias_params(m, substitutions))
+                    .collect();
+                Type::union(resolved)
+            }
+            TypeRef::Intersection { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_alias_params(m, substitutions))
+                    .collect();
+                Type::intersection(resolved)
             }
             TypeRef::Generic {
                 name,

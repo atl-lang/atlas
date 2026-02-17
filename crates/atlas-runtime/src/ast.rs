@@ -473,6 +473,16 @@ pub enum TypeRef {
         type_args: Vec<TypeRef>,
         span: Span,
     },
+    /// Union type: A | B
+    Union {
+        members: Vec<TypeRef>,
+        span: Span,
+    },
+    /// Intersection type: A & B
+    Intersection {
+        members: Vec<TypeRef>,
+        span: Span,
+    },
 }
 
 /// Unary operator
@@ -553,6 +563,8 @@ impl TypeRef {
             TypeRef::Array(_, span) => *span,
             TypeRef::Function { span, .. } => *span,
             TypeRef::Generic { span, .. } => *span,
+            TypeRef::Union { span, .. } => *span,
+            TypeRef::Intersection { span, .. } => *span,
         }
     }
 }

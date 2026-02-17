@@ -10,6 +10,7 @@ mod expr;
 pub mod generics;
 pub mod inference;
 mod methods;
+mod narrowing;
 pub mod suggestions;
 
 use crate::ast::*;
@@ -284,6 +285,20 @@ impl<'a> TypeChecker<'a> {
                     params: param_types,
                     return_type: ret_type,
                 }
+            }
+            TypeRef::Union { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_params_and_context(m, type_params, None))
+                    .collect();
+                Type::union(resolved)
+            }
+            TypeRef::Intersection { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_params_and_context(m, type_params, None))
+                    .collect();
+                Type::intersection(resolved)
             }
             TypeRef::Generic {
                 name,
@@ -767,9 +782,16 @@ impl<'a> TypeChecker<'a> {
                         .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
+                let (then_narrow, else_narrow) = self.narrow_condition(&if_stmt.cond);
+                self.symbol_table.enter_scope();
+                self.apply_narrowings(&then_narrow);
                 self.check_block(&if_stmt.then_block);
+                self.symbol_table.exit_scope();
                 if let Some(else_block) = &if_stmt.else_block {
+                    self.symbol_table.enter_scope();
+                    self.apply_narrowings(&else_narrow);
                     self.check_block(else_block);
+                    self.symbol_table.exit_scope();
                 }
             }
             Stmt::While(while_stmt) => {
@@ -788,7 +810,11 @@ impl<'a> TypeChecker<'a> {
                 }
                 let old_in_loop = self.in_loop;
                 self.in_loop = true;
+                let (then_narrow, _) = self.narrow_condition(&while_stmt.cond);
+                self.symbol_table.enter_scope();
+                self.apply_narrowings(&then_narrow);
                 self.check_block(&while_stmt.body);
+                self.symbol_table.exit_scope();
                 self.in_loop = old_in_loop;
             }
             Stmt::For(for_stmt) => {
@@ -944,6 +970,23 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn apply_narrowings(&mut self, narrowings: &HashMap<String, Type>) {
+        for (name, ty) in narrowings {
+            let Some(symbol) = self.symbol_table.lookup(name) else {
+                continue;
+            };
+            let shadow = crate::symbol::Symbol {
+                name: symbol.name.clone(),
+                ty: ty.clone(),
+                mutable: symbol.mutable,
+                kind: symbol.kind.clone(),
+                span: symbol.span,
+                exported: symbol.exported,
+            };
+            let _ = self.symbol_table.define(shadow);
+        }
+    }
+
     /// Check an assignment target and return its type
     fn check_assign_target(&mut self, target: &AssignTarget) -> Type {
         match target {
@@ -1084,6 +1127,20 @@ impl<'a> TypeChecker<'a> {
                     params: param_types,
                     return_type: ret_type,
                 }
+            }
+            TypeRef::Union { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_context(m, None))
+                    .collect();
+                Type::union(resolved)
+            }
+            TypeRef::Intersection { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_context(m, None))
+                    .collect();
+                Type::intersection(resolved)
             }
             TypeRef::Generic {
                 name,
@@ -1250,6 +1307,20 @@ impl<'a> TypeChecker<'a> {
                     params: param_types,
                     return_type: ret_type,
                 }
+            }
+            TypeRef::Union { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_substitutions(m, substitutions))
+                    .collect();
+                Type::union(resolved)
+            }
+            TypeRef::Intersection { members, .. } => {
+                let resolved = members
+                    .iter()
+                    .map(|m| self.resolve_type_ref_with_substitutions(m, substitutions))
+                    .collect();
+                Type::intersection(resolved)
             }
             TypeRef::Generic {
                 name,

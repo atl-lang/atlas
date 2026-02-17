@@ -198,14 +198,14 @@ impl Lexer {
                 if self.match_char('&') {
                     self.make_token(TokenKind::AmpAmp, "&&")
                 } else {
-                    self.error_token("Unexpected character '&', did you mean '&&'?")
+                    self.make_token(TokenKind::Ampersand, "&")
                 }
             }
             '|' => {
                 if self.match_char('|') {
                     self.make_token(TokenKind::PipePipe, "||")
                 } else {
-                    self.error_token("Unexpected character '|', did you mean '||'?")
+                    self.make_token(TokenKind::Pipe, "|")
                 }
             }
 

@@ -1,7 +1,8 @@
 //! REPL command implementation
 
 use anyhow::Result;
-use atlas_runtime::{ReplBinding, ReplCore, Type, Value};
+use atlas_runtime::{ReplCore, Type};
+use atlas_runtime::repl::ReplBinding;
 use rustyline::error::ReadlineError;
 use rustyline::DefaultEditor;
 

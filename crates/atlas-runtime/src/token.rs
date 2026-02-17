@@ -115,6 +115,10 @@ pub enum TokenKind {
     AmpAmp,
     /// `||` (logical or)
     PipePipe,
+    /// `&` (type intersection)
+    Ampersand,
+    /// `|` (type union)
+    Pipe,
 
     // Compound assignment operators
     /// `+=` (add and assign)
@@ -251,6 +255,8 @@ impl TokenKind {
             TokenKind::GreaterEqual => ">=",
             TokenKind::AmpAmp => "&&",
             TokenKind::PipePipe => "||",
+            TokenKind::Ampersand => "&",
+            TokenKind::Pipe => "|",
             TokenKind::PlusEqual => "+=",
             TokenKind::MinusEqual => "-=",
             TokenKind::StarEqual => "*=",

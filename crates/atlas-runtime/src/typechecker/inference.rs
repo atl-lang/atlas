@@ -202,12 +202,28 @@ pub fn least_upper_bound(a: &Type, b: &Type) -> Option<Type> {
     }
 
     // Arrays: LUB of element types
-    if let (Type::Array(ea), Type::Array(eb)) = (a_norm, b_norm) {
-        return least_upper_bound(&ea, &eb).map(|lub| Type::Array(Box::new(lub)));
+    if let (Type::Array(ea), Type::Array(eb)) = (&a_norm, &b_norm) {
+        return least_upper_bound(ea, eb).map(|lub| Type::Array(Box::new(lub)));
     }
 
-    // No common type
-    None
+    if let Type::Union(mut members) = a_norm.clone() {
+        members.push(b_norm.clone());
+        return Some(Type::union(members));
+    }
+    if let Type::Union(mut members) = b_norm.clone() {
+        members.push(a_norm.clone());
+        return Some(Type::union(members));
+    }
+
+    if a.is_assignable_to(b) {
+        return Some(b.clone());
+    }
+    if b.is_assignable_to(a) {
+        return Some(a.clone());
+    }
+
+    // No common type - fall back to union
+    Some(Type::union(vec![a.clone(), b.clone()]))
 }
 
 #[cfg(test)]
@@ -271,7 +287,10 @@ mod tests {
 
     #[test]
     fn test_least_upper_bound_incompatible() {
-        assert_eq!(least_upper_bound(&Type::Number, &Type::String), None);
+        assert_eq!(
+            least_upper_bound(&Type::Number, &Type::String),
+            Some(Type::union(vec![Type::Number, Type::String]))
+        );
     }
 
     #[test]

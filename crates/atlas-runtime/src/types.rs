@@ -7,6 +7,8 @@ use std::collections::HashMap;
 /// Type representation
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Type {
+    /// Never type (empty set of values)
+    Never,
     /// Number type (unified int/float)
     Number,
     /// String type
@@ -42,9 +44,103 @@ pub enum Type {
     Unknown,
     /// Extern type for FFI (Foreign Function Interface)
     Extern(ExternType),
+    /// Union type (A | B)
+    Union(Vec<Type>),
+    /// Intersection type (A & B)
+    Intersection(Vec<Type>),
 }
 
 impl Type {
+    /// Construct a normalized union type from members.
+    pub fn union(mut members: Vec<Type>) -> Type {
+        let mut flat = Vec::new();
+        for member in members.drain(..) {
+            match member {
+                Type::Union(inner) => {
+                    flat.extend(inner);
+                }
+                Type::Never => {}
+                other => flat.push(other),
+            }
+        }
+
+        let mut normalized = Vec::new();
+        for member in flat {
+            let norm = member.normalized();
+            if !normalized
+                .iter()
+                .any(|existing: &Type| existing.normalized() == norm)
+            {
+                normalized.push(norm);
+            }
+        }
+
+        if normalized.is_empty() {
+            return Type::Never;
+        }
+        if normalized.len() == 1 {
+            return normalized.remove(0);
+        }
+
+        Type::Union(normalized)
+    }
+
+    /// Construct a normalized intersection type from members.
+    pub fn intersection(mut members: Vec<Type>) -> Type {
+        let mut flat = Vec::new();
+        for member in members.drain(..) {
+            match member {
+                Type::Intersection(inner) => flat.extend(inner),
+                Type::Never => return Type::Never,
+                other => flat.push(other),
+            }
+        }
+
+        let mut normalized = Vec::new();
+        for member in flat {
+            let norm = member.normalized();
+            if !normalized
+                .iter()
+                .any(|existing: &Type| existing.normalized() == norm)
+            {
+                normalized.push(norm);
+            }
+        }
+
+        if normalized.is_empty() {
+            return Type::Never;
+        }
+        if normalized.len() == 1 {
+            return normalized.remove(0);
+        }
+
+        if let Some((index, union_members)) =
+            normalized
+                .iter()
+                .enumerate()
+                .find_map(|(idx, member)| match member {
+                    Type::Union(members) => Some((idx, members.clone())),
+                    _ => None,
+                })
+        {
+            let mut others = normalized;
+            others.remove(index);
+            let mut distributed = Vec::new();
+            for member in union_members {
+                let mut group = others.clone();
+                group.push(member);
+                distributed.push(Type::intersection(group));
+            }
+            return Type::union(distributed);
+        }
+
+        if Self::has_incompatible_primitives(&normalized) {
+            return Type::Never;
+        }
+
+        Type::Intersection(normalized)
+    }
+
     /// Check if this type is compatible with another type
     pub fn is_assignable_to(&self, other: &Type) -> bool {
         let self_norm = self.normalized();
@@ -56,8 +152,22 @@ impl Type {
         }
 
         match (&self_norm, &other_norm) {
+            (Type::Never, _) => true,
+            (_, Type::Never) => matches!(self_norm, Type::Never),
             // Same type is always assignable
             (a, b) if a == b => true,
+            (Type::Union(members), target) => {
+                members.iter().all(|member| member.is_assignable_to(target))
+            }
+            (source, Type::Union(members)) => {
+                members.iter().any(|member| source.is_assignable_to(member))
+            }
+            (Type::Intersection(members), target) => {
+                members.iter().any(|member| member.is_assignable_to(target))
+            }
+            (source, Type::Intersection(members)) => {
+                members.iter().all(|member| source.is_assignable_to(member))
+            }
 
             // Array types must have compatible element types
             (Type::Array(a), Type::Array(b)) => a.is_assignable_to(b),
@@ -111,6 +221,7 @@ impl Type {
     /// Get a human-readable name for this type
     pub fn display_name(&self) -> String {
         match self {
+            Type::Never => "never".to_string(),
             Type::Number => "number".to_string(),
             Type::String => "string".to_string(),
             Type::Bool => "bool".to_string(),
@@ -161,6 +272,16 @@ impl Type {
             Type::TypeParameter { name } => name.clone(),
             Type::Unknown => "?".to_string(),
             Type::Extern(extern_type) => extern_type.display_name().to_string(),
+            Type::Union(members) => members
+                .iter()
+                .map(|t| t.display_name())
+                .collect::<Vec<_>>()
+                .join(" | "),
+            Type::Intersection(members) => members
+                .iter()
+                .map(|t| t.display_name())
+                .collect::<Vec<_>>()
+                .join(" & "),
         }
     }
 
@@ -182,8 +303,31 @@ impl Type {
                 name: name.clone(),
                 type_args: type_args.iter().map(|t| t.normalized()).collect(),
             },
+            Type::Union(members) => Type::union(members.clone()),
+            Type::Intersection(members) => Type::intersection(members.clone()),
             other => other.clone(),
         }
+    }
+
+    fn has_incompatible_primitives(members: &[Type]) -> bool {
+        let mut primitive = None;
+        for member in members {
+            let is_primitive = matches!(
+                member,
+                Type::Number | Type::String | Type::Bool | Type::Null | Type::Void
+            );
+            if !is_primitive {
+                continue;
+            }
+            if let Some(ref existing) = primitive {
+                if existing != member {
+                    return true;
+                }
+            } else {
+                primitive = Some(member.clone());
+            }
+        }
+        false
     }
 }
 
@@ -249,6 +393,24 @@ fn match_type_params(
             }
             true
         }
+        (Type::Union(a_members), Type::Union(b_members)) => {
+            if a_members.len() != b_members.len() {
+                return false;
+            }
+            a_members
+                .iter()
+                .zip(b_members.iter())
+                .all(|(a, b)| match_type_params(a, b, substitutions))
+        }
+        (Type::Intersection(a_members), Type::Intersection(b_members)) => {
+            if a_members.len() != b_members.len() {
+                return false;
+            }
+            a_members
+                .iter()
+                .zip(b_members.iter())
+                .all(|(a, b)| match_type_params(a, b, substitutions))
+        }
         (a, b) => a == b,
     }
 }
@@ -264,6 +426,7 @@ mod tests {
         assert_eq!(Type::Bool.display_name(), "bool");
         assert_eq!(Type::Null.display_name(), "null");
         assert_eq!(Type::Void.display_name(), "void");
+        assert_eq!(Type::Never.display_name(), "never");
     }
 
     #[test]
@@ -280,5 +443,35 @@ mod tests {
             return_type: Box::new(Type::Bool),
         };
         assert_eq!(func_type.display_name(), "(number, string) -> bool");
+    }
+
+    #[test]
+    fn test_union_display() {
+        let ty = Type::union(vec![Type::Number, Type::String]);
+        assert_eq!(ty.display_name(), "number | string");
+    }
+
+    #[test]
+    fn test_intersection_display() {
+        let ty = Type::intersection(vec![Type::Number, Type::Number]);
+        assert_eq!(ty.display_name(), "number");
+    }
+
+    #[test]
+    fn test_union_assignability() {
+        let union = Type::union(vec![Type::Number, Type::String]);
+        assert!(Type::Number.is_assignable_to(&union));
+        assert!(Type::String.is_assignable_to(&union));
+        assert!(!Type::Bool.is_assignable_to(&union));
+        assert!(!union.is_assignable_to(&Type::Number));
+    }
+
+    #[test]
+    fn test_intersection_assignability() {
+        let intersection = Type::intersection(vec![Type::Number, Type::Number]);
+        assert!(intersection.is_assignable_to(&Type::Number));
+        assert!(Type::Number.is_assignable_to(&intersection));
+        let bad = Type::intersection(vec![Type::Number, Type::String]);
+        assert_eq!(bad, Type::Never);
     }
 }

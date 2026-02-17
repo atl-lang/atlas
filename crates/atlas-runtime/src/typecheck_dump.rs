@@ -137,6 +137,7 @@ fn symbol_kind_to_string(kind: &SymbolKind) -> String {
 /// Convert type to string representation
 fn type_to_string(ty: &Type) -> String {
     match ty {
+        Type::Never => "never".to_string(),
         Type::Number => "number".to_string(),
         Type::String => "string".to_string(),
         Type::Bool => "bool".to_string(),
@@ -181,6 +182,16 @@ fn type_to_string(ty: &Type) -> String {
         Type::TypeParameter { name } => name.clone(),
         Type::Unknown => "unknown".to_string(),
         Type::Extern(extern_type) => extern_type.display_name().to_string(),
+        Type::Union(members) => members
+            .iter()
+            .map(type_to_string)
+            .collect::<Vec<_>>()
+            .join(" | "),
+        Type::Intersection(members) => members
+            .iter()
+            .map(type_to_string)
+            .collect::<Vec<_>>()
+            .join(" & "),
     }
 }
 
