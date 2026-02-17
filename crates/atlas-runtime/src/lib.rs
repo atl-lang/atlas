@@ -32,6 +32,7 @@ pub mod repl;
 pub mod resolver;
 pub mod runtime;
 pub mod security;
+pub mod sourcemap;
 pub mod span;
 pub mod stdlib;
 pub mod symbol;
