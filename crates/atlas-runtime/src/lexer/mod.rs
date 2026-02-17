@@ -692,23 +692,23 @@ mod tests {
     }
 
     #[test]
-    fn test_invalid_single_ampersand() {
+    fn test_single_ampersand_is_valid() {
+        // & is valid: used for intersection types (A & B)
         let mut lexer = Lexer::new("&");
         let (tokens, diagnostics) = lexer.tokenize();
 
-        assert_eq!(tokens[0].kind, TokenKind::Error);
-        assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.contains("&"));
+        assert_eq!(tokens[0].kind, TokenKind::Ampersand);
+        assert!(diagnostics.is_empty());
     }
 
     #[test]
-    fn test_invalid_single_pipe() {
+    fn test_single_pipe_is_valid() {
+        // | is valid: used for union types (A | B)
         let mut lexer = Lexer::new("|");
         let (tokens, diagnostics) = lexer.tokenize();
 
-        assert_eq!(tokens[0].kind, TokenKind::Error);
-        assert_eq!(diagnostics.len(), 1);
-        assert!(diagnostics[0].message.contains("|"));
+        assert_eq!(tokens[0].kind, TokenKind::Pipe);
+        assert!(diagnostics.is_empty());
     }
 
     // === Edge Case Tests (Phase 07) ===
@@ -862,25 +862,23 @@ mod tests {
     }
 
     #[test]
-    fn test_single_ampersand_error_code() {
+    fn test_ampersand_token_kind() {
+        // & produces Ampersand token for intersection types (A & B)
         let mut lexer = Lexer::new("&");
         let (tokens, diagnostics) = lexer.tokenize();
 
-        assert_eq!(tokens[0].kind, TokenKind::Error);
-        assert_eq!(diagnostics.len(), 1);
-        assert_eq!(diagnostics[0].code, "AT1001");
-        assert!(diagnostics[0].message.contains("&"));
+        assert_eq!(tokens[0].kind, TokenKind::Ampersand);
+        assert!(diagnostics.is_empty());
     }
 
     #[test]
-    fn test_single_pipe_error_code() {
+    fn test_pipe_token_kind() {
+        // | produces Pipe token for union types (A | B)
         let mut lexer = Lexer::new("|");
         let (tokens, diagnostics) = lexer.tokenize();
 
-        assert_eq!(tokens[0].kind, TokenKind::Error);
-        assert_eq!(diagnostics.len(), 1);
-        assert_eq!(diagnostics[0].code, "AT1001");
-        assert!(diagnostics[0].message.contains("|"));
+        assert_eq!(tokens[0].kind, TokenKind::Pipe);
+        assert!(diagnostics.is_empty());
     }
 
     #[test]
