@@ -63,7 +63,7 @@ This phase contains no new tests. The acceptance criterion is that all existing 
 cargo nextest run -p atlas-runtime --test frontend_syntax
 cargo nextest run -p atlas-runtime --test diagnostics
 cargo nextest run -p atlas-runtime --test frontend_integration
-cargo test -p atlas-runtime value  # verifies moved unit tests
+cargo nextest run -p atlas-runtime -E 'test(value)'  # verifies moved unit tests in #[cfg(test)] block
 ```
 
 ## Integration Points
