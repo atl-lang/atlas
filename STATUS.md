@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-18
-**Version:** v0.2 | **Progress:** 97/130 phases (75%)
+**Version:** v0.2 | **Progress:** 98/130 phases (75%)
 
 ---
 
 ## Current Phase
 
-**Last Completed:** phases/infra/phase-06-fuzz-testing.md
-**Next Phase:** phases/infra/phase-07-benchmark-suite.md
+**Last Completed:** phases/infra/phase-07-benchmark-suite.md
+**Next Phase:** phases/correctness/phase-01-security-context-threading.md
 
-> **Execution order:** Infra (2 left) → Correctness (11) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
+> **Execution order:** Correctness (11) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
 > Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
 
 ---
@@ -19,7 +19,7 @@
 
 | Category | Done | Status |
 |----------|------|--------|
-| **Infra** | 19/20 | 🚨 DO FIRST — 1 remaining |
+| **Infra** | 20/20 | ✅ Complete |
 | **Correctness** | 0/11 | 🚨 Do after Infra |
 | **Foundation** | 33/33 | ✅ Archived |
 | **Stdlib** | 28/30 | ✅ Near complete (phase-16+ TBD) |
@@ -35,10 +35,10 @@
 
 ## Remaining Phases
 
-### Infra (2 remaining)
+### Infra (0 remaining — Complete)
 
 ✅ phase-06-fuzz-testing.md — cargo-fuzz on lexer/parser/typechecker/eval
-⬜ phase-07-benchmark-suite.md — Criterion benchmarks, baseline committed
+✅ phase-07-benchmark-suite.md — Criterion benchmarks, baseline committed
 
 ### Correctness (0/11) — Do after Infra
 

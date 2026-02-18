@@ -44,9 +44,29 @@ criterion = "0.5"
 atlas-formatter = { path = "../atlas-formatter" }
 
 [[bench]]
-name = "stdlib_benchmarks"
+name = "lexer"
+harness = false
+
+[[bench]]
+name = "parser"
+harness = false
+
+[[bench]]
+name = "typechecker"
+harness = false
+
+[[bench]]
+name = "interpreter"
 harness = false
 
 [[bench]]
 name = "vm_performance_benches"
+harness = false
+
+[[bench]]
+name = "stdlib_benchmarks"
+harness = false
+
+[[bench]]
+name = "parity"
 harness = false

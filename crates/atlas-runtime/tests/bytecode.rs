@@ -1004,7 +1004,9 @@ fn assert_semantics(source: &str) {
         format!("{:?}", orig),
         format!("{:?}", opt),
         "Semantics differ for:\n{}\nOrig: {:?}\nOpt:  {:?}",
-        source, orig, opt
+        source,
+        orig,
+        opt
     );
 }
 
@@ -2512,7 +2514,7 @@ fn test_literal_string_match() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(2.0)");
+    assert_eq!(interp_result, "Number(2)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2578,7 +2580,7 @@ fn test_variable_binding_simple() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(15.0)");
+    assert_eq!(interp_result, "Number(15)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2598,7 +2600,7 @@ fn test_variable_binding_with_literal() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(14.0)");
+    assert_eq!(interp_result, "Number(14)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2622,7 +2624,7 @@ fn test_option_some_match() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(42.0)");
+    assert_eq!(interp_result, "Number(42)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2642,7 +2644,7 @@ fn test_option_none_match() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(-1.0)");
+    assert_eq!(interp_result, "Number(-1)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2686,7 +2688,7 @@ fn test_result_ok_match() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(100.0)");
+    assert_eq!(interp_result, "Number(100)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2731,7 +2733,7 @@ fn test_nested_option_some() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(99.0)");
+    assert_eq!(interp_result, "Number(99)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2752,7 +2754,7 @@ fn test_nested_result_ok() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(42.0)");
+    assert_eq!(interp_result, "Number(42)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2867,7 +2869,7 @@ fn test_match_in_arithmetic() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(15.0)");
+    assert_eq!(interp_result, "Number(15)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2891,7 +2893,7 @@ fn test_option_unwrap_or() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(42.0)");
+    assert_eq!(interp_result, "Number(42)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);

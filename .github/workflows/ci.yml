@@ -262,6 +262,41 @@ jobs:
         run: cargo +nightly fuzz run fuzz_eval -- -max_total_time=120 -error_exitcode=1
         working-directory: crates/atlas-runtime
 
+  bench:
+    name: Benchmarks
+    runs-on: ubuntu-latest
+    # Only on main pushes — too slow for PR gates
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Run benchmarks
+        run: cargo bench -p atlas-runtime 2>&1 | tee bench-output.txt
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            bench-output.txt
+            target/criterion/
+
   msrv:
     name: Minimum Supported Rust Version
     runs-on: ubuntu-latest

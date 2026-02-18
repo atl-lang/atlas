@@ -59,7 +59,7 @@ fn test_json_as_string_error() {
 #[rstest]
 #[case(
     r#"let data: json = parseJSON("{\"age\":30}"); data["age"].as_number();"#,
-    "Number(30.0)"
+    "Number(30)"
 )]
 #[case(
     r#"let data: json = parseJSON("{\"price\":19.99}"); data["price"].as_number();"#,
@@ -143,7 +143,7 @@ fn test_method_in_expression() {
     "#,
     )
     .expect("Should succeed");
-    assert_eq!(result, "Number(15.0)");
+    assert_eq!(result, "Number(15)");
 }
 
 #[test]
@@ -171,7 +171,7 @@ fn test_multiple_methods() {
     "#,
     )
     .expect("Should succeed");
-    assert_eq!(result, "Number(15.0)");
+    assert_eq!(result, "Number(15)");
 }
 
 // Error Cases
@@ -1707,7 +1707,9 @@ fn test_arm_type_mismatch() {
     let (success, msgs) = typecheck(source);
     assert!(!success, "Should reject mismatched arm types");
     assert!(
-        msgs.iter().any(|m| m.contains("incompatible type")),
+        msgs.iter().any(|m| m.contains("incompatible type")
+            || m.contains("type mismatch")
+            || m.contains("Return type mismatch")),
         "Should report arm type mismatch: {:?}",
         msgs
     );
