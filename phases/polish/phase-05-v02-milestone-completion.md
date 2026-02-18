@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-cargo test --all --release
+cargo nextest run --release
 ls STATUS.md
 grep "Testing.*complete" TESTING_REPORT_v02.md
 grep "Performance.*verified" PERFORMANCE_REPORT_v02.md

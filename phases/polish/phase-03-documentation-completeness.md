@@ -6,7 +6,7 @@
 **Verification:**
 ```bash
 ls docs/
-cargo test --all
+cargo nextest run
 grep "2500+ tests pass" TESTING_REPORT_v02.md
 grep "30-50% improvement" PERFORMANCE_REPORT_v02.md
 ```

@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-cargo test --all --release
+cargo nextest run --release
 cargo build --release
 ls docs/
 grep "2500+ tests pass" TESTING_REPORT_v02.md
@@ -30,9 +30,7 @@ Verify system stability determinism and robustness across all v0.2 components en
 **Create:** `fuzz/fuzz_targets/parser_fuzz.rs` (~200 lines)
 **Create:** `fuzz/fuzz_targets/typechecker_fuzz.rs` (~200 lines)
 **Create:** `fuzz/fuzz_targets/vm_fuzz.rs` (~200 lines)
-**Create:** `crates/atlas-runtime/tests/stress_tests.rs` (~400 lines)
-**Create:** `crates/atlas-runtime/tests/edge_case_tests.rs` (~300 lines)
-**Create:** `crates/atlas-runtime/tests/determinism_tests.rs` (~200 lines)
+**Update:** `crates/atlas-runtime/tests/regression.rs` (add stress, edge case, and determinism tests to existing file)
 **Create:** `STABILITY_AUDIT_REPORT_v02.md` (~500 lines)
 
 ## Dependencies

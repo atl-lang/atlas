@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-cargo test --all
+cargo nextest run
 ls benches/
 cargo bench --help
 grep "performance" TESTING_REPORT_v02.md

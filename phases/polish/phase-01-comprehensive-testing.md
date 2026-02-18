@@ -5,7 +5,7 @@
 
 **Verification:**
 ```bash
-cargo test --all
+cargo nextest run
 ls crates/atlas-stdlib/src/
 ls crates/atlas-lsp/src/
 ls crates/atlas-cli/src/commands/
@@ -30,9 +30,7 @@ grep "60+ functions" docs/api/stdlib.md
 Execute comprehensive integration testing of all v0.2 features across all categories ensuring everything works together correctly. Test cross-feature interactions verifying stdlib with VM optimization, debugger with profiler, LSP with CLI, type system with REPL. Execute regression testing against v0.1 programs. Verify interpreter-VM parity across all features. Generate comprehensive testing report documenting coverage results and identifying any issues.
 
 ## Files
-**Create:** `crates/atlas-runtime/tests/v02_integration_tests.rs` (~1000 lines)
-**Create:** `crates/atlas-runtime/tests/v02_regression_tests.rs` (~400 lines)
-**Create:** `crates/atlas-runtime/tests/v02_cross_feature_tests.rs` (~600 lines)
+**Update:** `crates/atlas-runtime/tests/regression.rs` (add v0.2 integration, regression, and cross-feature tests to existing file)
 **Create:** `TESTING_REPORT_v02.md` (~500 lines)
 
 ## Dependencies
