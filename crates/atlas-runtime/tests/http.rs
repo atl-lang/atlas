@@ -4,7 +4,7 @@
 use atlas_runtime::{Atlas, SecurityContext};
 
 
-// ===== http_core_tests.rs =====
+// --- Core HTTP functionality ---
 
 // Tests for HTTP core functionality (Phase-10a)
 //
@@ -415,7 +415,7 @@ fn test_http_json_workflow() {
     assert!(output == "true" || output == "false");
 }
 
-// ===== http_advanced_tests.rs =====
+// --- Advanced HTTP (builder pattern, PUT/DELETE/PATCH, query params) ---
 
 // Tests for HTTP advanced functionality (Phase-10b)
 //
