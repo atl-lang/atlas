@@ -5,6 +5,10 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # Run nightly at 04:00 UTC for fuzz testing
+    - cron: '0 4 * * *'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -220,6 +224,43 @@ jobs:
           else
             echo "No examples found - skipping example execution"
           fi
+
+  fuzz:
+    name: Fuzz Testing
+    runs-on: ubuntu-latest
+    # Run on schedule (nightly) — fuzzing is too slow for PR gates
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust nightly
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz
+
+      - name: Cache fuzz build
+        uses: actions/cache@v4
+        with:
+          path: crates/atlas-runtime/fuzz/target
+          key: ${{ runner.os }}-fuzz-target-${{ hashFiles('crates/atlas-runtime/fuzz/Cargo.toml') }}
+
+      - name: Fuzz lexer (120s)
+        run: cargo +nightly fuzz run fuzz_lexer -- -max_total_time=120 -error_exitcode=1
+        working-directory: crates/atlas-runtime
+
+      - name: Fuzz parser (120s)
+        run: cargo +nightly fuzz run fuzz_parser -- -max_total_time=120 -error_exitcode=1
+        working-directory: crates/atlas-runtime
+
+      - name: Fuzz typechecker (120s)
+        run: cargo +nightly fuzz run fuzz_typechecker -- -max_total_time=120 -error_exitcode=1
+        working-directory: crates/atlas-runtime
+
+      - name: Fuzz eval (120s)
+        run: cargo +nightly fuzz run fuzz_eval -- -max_total_time=120 -error_exitcode=1
+        working-directory: crates/atlas-runtime
 
   msrv:
     name: Minimum Supported Rust Version

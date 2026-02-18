@@ -16,6 +16,11 @@ Cargo.lock
 *.profraw
 *.profdata
 
+# Fuzz (only seed corpus and config are committed)
+crates/atlas-runtime/fuzz/target/
+crates/atlas-runtime/fuzz/artifacts/
+crates/atlas-runtime/fuzz/coverage/
+
 # Build artifacts
 /release/
 /dist/
