@@ -34,8 +34,6 @@
 - DR-008: Scope sizing for phases
 - DR-009: Arc<Mutex<T>> migration (replaces DR-002, required for tokio)
 
-**gates.md** - Quality gate definitions (GATE -1 through 6)
-
 ---
 
 ## Quick Reference
@@ -47,7 +45,7 @@
 3. **Run GATE -1** - Sanity check before starting
 4. **Reference patterns.md** - Implementation patterns
 5. **Check decisions.md** - Architectural context
-6. **Follow gates.md** - Quality checkpoints
+6. **Follow gates** - Quality checkpoints (defined in atlas skill)
 7. **Update STATUS.md** - On completion
 
 ### Project Structure
@@ -147,5 +145,5 @@ atlas/
 - Update patterns.md when new patterns emerge
 - Add decisions to decisions.md (use DR-XXX format)
 - Update testing-patterns.md for new testing approaches
-- Keep gates.md in sync with actual workflow
+- Gates are defined in `.claude/skills/atlas/gates/` — not duplicated in memory
 - **This file must stay under 200 lines** (injected into system prompt)

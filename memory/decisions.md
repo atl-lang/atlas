@@ -1,471 +1,90 @@
 # Atlas Architectural Decisions
 
-**Purpose:** Record of key architectural decisions for AI agents.
+**Purpose:** Record of key architectural decisions for AI agents. Use DR-XXX to reference.
 
 ---
 
-## DR-001: Interpreter + VM Dual Execution
+## Active Decisions
 
-**Date:** 2024 (v0.1)
-**Status:** ✅ Active
+| DR | Title | Date | Summary |
+|----|-------|------|---------|
+| 001 | Dual execution engines | 2024 | Interpreter (dev/debug) + VM (production). 100% parity required. |
+| 003 | Hash function design | 2025-02 | `DefaultHasher` with value-based hashing. Hashable: String, Number, Bool. |
+| 004 | HashMap key equality | 2025-02 | Value equality (structural), not reference. Hash-then-compare. |
+| 005 | Collection iteration API | 2025-02 | Functional: `forEach`/`map`/`filter` as intrinsics. HashMap cb: `fn(value, key)`. |
+| 007 | Phase file accuracy | 2025-02-16 | All phase files must reference actual files. Gate -1 verifies. |
+| 008 | Phase scope sizing | 2025-02-16 | ~200-300 lines impl, 10-20 tests per phase. Split if larger. |
+| 009 | Arc<Mutex<T>> migration | 2026-01 | Replaced `Rc<RefCell<T>>` (DR-002). Required for tokio/async. Access: `.lock().unwrap()`. |
+| 010 | Type alias resolution | 2026-02 | Structural resolution, alias names preserved for display. Circular = rejected. |
+| 011 | Built-in constraints | 2026-02 | `Comparable`/`Numeric` → number. `Equatable` → number\|string\|bool\|null. No trait system. |
+| 012 | Structural width subtyping | 2026-02-17 | Extra fields OK for assignability. Missing required fields = fail. |
 
-**Decision:** Atlas maintains TWO execution engines with 100% feature parity.
+## Superseded
 
-**Engines:**
-1. **Interpreter:** AST-walking interpreter (developer-friendly, debugging)
-2. **VM:** Bytecode virtual machine (production, performance)
-
-**Requirements:**
-- Every feature MUST work in both engines
-- Outputs MUST be identical
-- Tests run against both engines
-
-**Rationale:**
-- Interpreter: Fast development, easy debugging, REPL
-- VM: Performance, optimization, production deployments
-
-**Impact:**
-- Every intrinsic implemented twice (interpreter + VM)
-- Parity testing required for all features
-- Increased maintenance but better DX and performance
+| DR | Title | Replaced by |
+|----|-------|-------------|
+| 002 | `Rc<RefCell<T>>` collections | DR-009 (`Arc<Mutex<T>>`) |
+| 006 | Collection benchmarking (deferred) | Infra phase-07 (benchmark suite) |
 
 ---
 
-## DR-002: Reference Semantics for Collections
+## Detail: DR-003 — Hash Function
 
-**Date:** 2025-02 (v0.2, Phase 07a)
-**Status:** 🔄 Superseded by DR-009 (phase-18 Arc migration)
-
-**Decision:** Collections use `Rc<RefCell<T>>` for reference semantics.
-**NOTE:** This was replaced with `Arc<Mutex<T>>` in phase-18. See DR-009.
-
-**Pattern:**
 ```rust
-pub enum Value {
-    Array(Rc<RefCell<Vec<Value>>>),
-    HashMap(Rc<RefCell<HashMap>>),
-    HashSet(Rc<RefCell<HashSet>>),
-    Queue(Rc<RefCell<Queue>>),
-    Stack(Rc<RefCell<Stack>>),
-}
+pub struct HashKey { hash: u64, value: Value }
+// compute_hash: String → s.hash(), Number → n.to_bits().hash(), Bool → b.hash()
+// Unhashable: Null, Array, HashMap, HashSet, Function, Object → RuntimeError
 ```
 
-**Rationale:**
-- Multiple bindings to same collection (JavaScript-like behavior)
-- Mutations visible across all references
-- Enables shared state patterns
+## Detail: DR-004 — Key Equality
 
-**Example:**
-```atlas
-let map1 = hashMapNew();
-let map2 = map1;  // Same reference
-hashMapPut(map1, "key", 100);
-print(hashMapGet(map2, "key"));  // Prints 100
-```
-
-**Alternatives Considered:**
-- ❌ Copy-on-write: Confusing semantics, unexpected copies
-- ❌ Value semantics: Breaking change for arrays, inconsistent
-
-**Impact:**
-- All collection operations use `.borrow()` and `.borrow_mut()`
-- Careful management to avoid RefCell panics (borrow conflicts)
-- Memory managed via Rc (reference counting)
-
----
-
-## DR-003: Hash Function Design
-
-**Date:** 2025-02 (v0.2, Phase 07a)
-**Status:** ✅ Active
-
-**Decision:** Use Rust's `DefaultHasher` with value-based hashing.
-
-**Implementation:**
-```rust
-pub struct HashKey {
-    hash: u64,
-    value: Value,
-}
-
-impl HashKey {
-    pub fn new(value: Value) -> Result<Self, RuntimeError> {
-        let hash = Self::compute_hash(&value)?;
-        Ok(HashKey { hash, value })
-    }
-
-    fn compute_hash(value: &Value) -> Result<u64, RuntimeError> {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
-        let mut hasher = DefaultHasher::new();
-        match value {
-            Value::String(s) => s.hash(&mut hasher),
-            Value::Number(n) => n.to_bits().hash(&mut hasher),
-            Value::Bool(b) => b.hash(&mut hasher),
-            _ => return Err(/* unhashable type */),
-        }
-        Ok(hasher.finish())
-    }
-}
-```
-
-**Hashable Types:** String, Number, Bool
-**Unhashable Types:** Null, Array, HashMap, HashSet, Function, Object
-
-**Rationale:**
-- Simple, predictable hashing
-- Standard Rust hasher (well-tested)
-- Structural equality (not reference equality)
-
-**Alternatives Considered:**
-- ❌ Custom hash: Complexity, security concerns (hash flooding)
-- ❌ Reference-based hash: Breaks semantic equality
-
-**Impact:**
-- HashMap/HashSet only accept hashable types as keys/elements
-- Runtime error for unhashable types
-- Consistent hashing across interpreter and VM
-
----
-
-## DR-004: HashMap Key Equality
-
-**Date:** 2025-02 (v0.2, Phase 07a)
-**Status:** ✅ Active
-
-**Decision:** HashMap keys use **value equality** (structural), not reference equality.
-
-**Implementation:**
 ```rust
 impl PartialEq for HashKey {
     fn eq(&self, other: &Self) -> bool {
-        // Fast path: compare hashes first
-        if self.hash != other.hash {
-            return false;
-        }
-
-        // Slow path: compare values (handle hash collisions)
-        values_equal(&self.value, &other.value)
-    }
-}
-
-fn values_equal(a: &Value, b: &Value) -> bool {
-    match (a, b) {
-        (Value::String(x), Value::String(y)) => x == y,
-        (Value::Number(x), Value::Number(y)) => x == y,
-        (Value::Bool(x), Value::Bool(y)) => x == y,
-        _ => false,
+        self.hash == other.hash && values_equal(&self.value, &other.value) // hash-first fast path
     }
 }
 ```
 
-**Behavior:**
-```atlas
-let map = hashMapNew();
-hashMapPut(map, "key", 100);
-hashMapGet(map, "key");  // ✅ Returns 100 (string equality)
-
-let key1 = "test";
-let key2 = "test";
-hashMapPut(map, key1, 200);
-hashMapGet(map, key2);  // ✅ Returns 200 (value equality)
-```
-
-**Rationale:**
-- Intuitive for users (JavaScript/Python-like)
-- Matches developer expectations
-- Enables literal key lookups
-
-**Impact:**
-- Hash collisions handled correctly
-- Two-step equality check (hash then value)
-- Performance: O(1) average, O(n) worst case (collisions)
-
----
-
-## DR-005: Collection API Design
-
-**Date:** 2025-02 (v0.2, Phase 07d)
-**Status:** ✅ Active
-
-**Decision:** Collections provide **functional iteration** via intrinsics.
-
-**API Design:**
-
-### HashMap Iteration (3 functions)
+## Detail: DR-005 — Collection Iteration
 
 ```atlas
-// forEach: side effects only
-hashMapForEach(map, fn(value, key) { print(key, value); });
-
-// map: transform values, new map
-let doubled = hashMapMap(map, fn(value, key) { value * 2; });
-
-// filter: selective copy
-let filtered = hashMapFilter(map, fn(value, key) { value > 10; });
+hashMapForEach(map, fn(value, key) { ... });     // → null
+hashMapMap(map, fn(value, key) { value * 2; });  // → new HashMap
+hashMapFilter(map, fn(value, key) { v > 10; });  // → new HashMap
+hashSetForEach(set, fn(elem) { ... });            // → null
+hashSetMap(set, fn(elem) { elem * 2; });          // → Array (NOT Set — allows dupes)
+hashSetFilter(set, fn(elem) { elem > 10; });      // → new HashSet
 ```
 
-### HashSet Iteration (3 functions)
+## Detail: DR-009 — Arc Migration
 
-```atlas
-// forEach: side effects only
-hashSetForEach(set, fn(elem) { print(elem); });
-
-// map: transform to ARRAY (not set)
-let arr = hashSetMap(set, fn(elem) { elem * 2; });
-
-// filter: selective copy (returns SET)
-let filtered = hashSetFilter(set, fn(elem) { elem > 10; });
+```rust
+// Old (DR-002): Array(Rc<RefCell<Vec<Value>>>)  — !Send, breaks tokio
+// New (DR-009): Array(Arc<Mutex<Vec<Value>>>)   — Send + Sync
+// Access: .lock().unwrap()   NOT .borrow()/.borrow_mut()
 ```
 
-**Key Decisions:**
-1. **Callback signatures:**
-   - HashMap: `fn(value, key)` - value first (consistent with JS)
-   - HashSet: `fn(elem)` - single argument
-   - Array: `fn(elem)` - single argument
+## Detail: DR-011 — Built-in Constraints
 
-2. **Return types:**
-   - `forEach` → `null` (side effects)
-   - `map` → new collection (transform)
-   - `filter` → new collection (subset)
-   - HashSet `map` → **Array** (not Set) - allows duplicates
-
-3. **Implementation:**
-   - Intrinsics (not stdlib functions) - need execution context
-   - Callback errors propagate immediately
-   - Empty collections → empty result
-
-**Rationale:**
-- Familiar to JS/Python developers
-- Functional programming style
-- Composable (chain operations)
-
-**Alternatives Considered:**
-- ❌ Iterator protocol: Complex, not idiomatic for Atlas
-- ❌ For-in loops: Requires language syntax changes
-- ❌ External iteration: Exposes implementation details
-
-**Impact:**
-- 6 intrinsics implemented (3 HashMap + 3 HashSet)
-- Intrinsics in both interpreter and VM
-- Tests cover callback patterns, edge cases, parity
+| Constraint | Resolves to |
+|-----------|-------------|
+| `Comparable`, `Numeric` | `number` |
+| `Equatable` | `number \| string \| bool \| null` |
+| `Serializable` | `number \| string \| bool \| null \| json` |
+| `Iterable` | `Array<unknown>` |
 
 ---
 
-## DR-006: Collection Benchmarking
-
-**Date:** 2025-02 (v0.2, Phase 07d - Deferred)
-**Status:** ⏳ Deferred (future phase)
-
-**Decision:** Defer comprehensive benchmarking to dedicated performance phase.
-
-**Rationale:**
-- Phase 07d scope too large (implementation + tests + benchmarks + docs)
-- Benchmarking requires stable API (current API is stable)
-- Performance optimization is separate concern from correctness
-
-**Plan:**
-- Complete functional implementation (Phase 07d)
-- Verify correctness and parity
-- Benchmarking in separate phase (Bytecode-VM category)
-
-**Benchmark Goals (Future):**
-- HashMap: insert, get, remove, iteration (1K, 10K, 100K elements)
-- HashSet: add, has, set operations, iteration
-- Queue/Stack: push/pop throughput
-- Comparison: Atlas vs Rust std collections
-
----
-
-## DR-007: Phase File Accuracy
-
-**Date:** 2025-02-16
-**Status:** ✅ Active
-
-**Problem:** Phase files referenced files that didn't exist:
-- `docs/api/stdlib.md` (doesn't exist)
-- `crates/atlas-runtime/src/stdlib/prelude.rs` (actual: `mod.rs`)
-- `memory/patterns.md` (didn't exist - now created)
-
-**Decision:** All phase files MUST reference actual files in codebase.
-
-**Validation:**
-1. Run all file path checks before committing phase
-2. Verify all referenced patterns exist in documentation
-3. Test all validation commands actually work
-
-**Process:**
-- Phase author runs validation commands
-- Automated check script (`tools/validate-phase.sh`)
-- Gate -1 includes file existence verification
-
-**Impact:**
-- Phase files are accurate
-- Reduced wasted time during execution
-- Clear error messages when dependencies missing
-
----
-
-## DR-008: Scope Sizing for Phases
-
-**Date:** 2025-02-16
-**Status:** ✅ Active
-
-**Problem:** Phase 07d was 3-4 phases compressed into one:
-- 6 intrinsics (interpreter + VM)
-- 33+ tests
-- Benchmarks
-- Documentation updates
-- Integration tests
-
-**Decision:** Phases should be **reasonably scoped** (~200 lines implementation, ~15 tests).
-
-**Guidelines:**
-- **Implementation:** Max 200-300 lines new code
-- **Tests:** 10-20 tests per phase
-- **Benchmarks:** Separate phase
-- **Documentation:** Separate phase if substantial
-
-**Example Split (Phase 07d):**
-- 07d-1: Core iteration intrinsics (implementation only)
-- 07d-2: Comprehensive testing (all test cases)
-- 07d-3: Benchmarks and performance docs
-
-**Rationale:**
-- Manageable chunks (1-2 hour work sessions)
-- Clear completion criteria
-- Easier to validate and review
-
-**Impact:**
-- More phases (higher count) but each is smaller
-- Faster feedback loops
-- Reduced risk of scope creep
-
----
-
-## Decision Log Format
-
-**New decisions use this template:**
+## New Decision Template
 
 ```markdown
-## DR-XXX: Decision Title
+## DR-XXX: Title
 
-**Date:** YYYY-MM-DD
-**Status:** ✅ Active | ⏳ Deferred | ❌ Rejected | 🔄 Superseded
+**Date:** YYYY-MM-DD | **Status:** ✅ Active | ⏳ Deferred | 🔄 Superseded
 
-**Decision:** [What was decided]
-
-**Rationale:** [Why this decision was made]
-
-**Alternatives Considered:**
-- ❌ Alternative 1: [Why rejected]
-- ❌ Alternative 2: [Why rejected]
-
-**Impact:** [What this affects, implementation notes]
+**Decision:** [What]
+**Rationale:** [Why]
+**Alternatives:** ❌ Alt1: [why rejected]
+**Impact:** [What it affects]
 ```
-
----
-
-## DR-009: Arc<Mutex<T>> Migration (Replaces DR-002)
-
-**Date:** 2026-01 (v0.2, Phase 18a-18f)
-**Status:** ✅ Active
-
-**Decision:** All collection types migrated from `Rc<RefCell<T>>` to `Arc<Mutex<T>>`.
-
-**New pattern:**
-```rust
-pub enum Value {
-    Array(Arc<Mutex<Vec<Value>>>),
-    HashMap(Arc<Mutex<AtlasHashMap>>),
-    HashSet(Arc<Mutex<AtlasHashSet>>),
-    Queue(Arc<Mutex<AtlasQueue>>),
-    Stack(Arc<Mutex<AtlasStack>>),
-    String(Arc<String>),
-}
-```
-
-**Access:** `.lock().unwrap()` for reads and writes. NOT `.borrow()` / `.borrow_mut()`.
-
-**Rationale:** Required for tokio async support. `Rc<RefCell<>>` is `!Send`, preventing use across thread boundaries. `Arc<Mutex<>>` is `Send + Sync`.
-
-**Impact:** All collection code, intrinsics, stdlib functions updated in phases 18a-18f.
-
----
-
-## References
-
-- DR-001, DR-002: See `docs/specification/runtime.md`
-- DR-003, DR-004: See `crates/atlas-runtime/src/stdlib/collections/hash.rs`
-- DR-005: See `memory/patterns.md` (Intrinsic Pattern)
-- DR-007, DR-008: See `memory/gates.md` (Gate -1: Validation)
-- DR-009: See `crates/atlas-runtime/src/value.rs` (current collection types)
-
----
-
-## DR-010: Type Alias Resolution and Metadata
-
-**Date:** 2026-02 (v0.2, Phase typing-03)
-**Status:** ✅ Active
-
-**Decision:**
-- Type aliases resolve structurally to their target type for assignability.
-- Alias names are preserved for display and diagnostics via `Type::Alias`.
-- Generic alias type arguments can be inferred from initializer context when omitted.
-- Circular alias definitions are rejected with explicit cycle diagnostics.
-- Doc comment tags `@deprecated` and `@since` are parsed for warnings/metadata.
-
-**Rationale:**
-- Preserves readability in errors while keeping structural type equivalence.
-- Enables ergonomic alias usage without sacrificing correctness.
-- Avoids infinite expansions by detecting cycles early.
-
-**Impact:**
-- `Type::Alias` added to type system.
-- Type checker resolves and caches aliases; warnings emitted on deprecated aliases.
-- Parser captures doc comments for alias declarations.
-
----
-
-## DR-011: Built-in Constraint Patterns
-
-**Date:** 2026-02 (v0.2, Phase typing-05)
-**Status:** ✅ Active
-
-**Decision:**
-- Treat `Comparable`, `Numeric`, `Equatable`, `Serializable`, and `Iterable` as built-in constraint
-  names that resolve to concrete type bounds during type resolution.
-- `Comparable` and `Numeric` resolve to `number`.
-- `Equatable` resolves to `number | string | bool | null`.
-- `Serializable` resolves to `number | string | bool | null | json`.
-- `Iterable` resolves to `Array<unknown>`.
-
-**Rationale:**
-- Provides practical constraint patterns without introducing a full trait system.
-- Keeps constraint checking consistent with existing type-checker capabilities.
-- Aligns with current operator and for-in requirements.
-
-**Impact:**
-- Type resolution maps these names to concrete bounds in binder and type checker.
-- Constraint checking uses existing assignability rules for these patterns.
-
----
-
-## DR-012: Structural Width Subtyping
-
-**Date:** 2026-02-17 (v0.2, Phase typing-06)
-**Status:** ✅ Active
-
-**Decision:**
-- Structural types are width-subtyped for assignability: a value type with extra fields/methods
-  can be assigned to a structural type that requires a subset of those members.
-- Missing required members still fails assignability.
-
-**Rationale:**
-- Enables common structural typing patterns and aligns with typical expectations for shape-based types.
-- Improves ergonomics for type guards and structural bounds without introducing explicit nominal traits.
-
-**Impact:**
-- `Type::Struct` assignability now checks required members as a subset of the source type.
-- Type guard narrowing for structural types can rely on width-subtyping behavior.
