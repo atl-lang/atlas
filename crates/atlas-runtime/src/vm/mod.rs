@@ -842,6 +842,24 @@ impl VM {
                                 self.push(result);
                             } else {
                                 // User-defined function
+                                // Safety check: compiled functions always have bytecode_offset > 0
+                                // because the compiler emits setup code (Constant, SetGlobal, Pop, Jump)
+                                // before the function body. bytecode_offset == 0 indicates an
+                                // interpreter-created function that has no bytecode.
+                                if func.bytecode_offset == 0 {
+                                    return Err(RuntimeError::TypeError {
+                                        msg: format!(
+                                            "Cannot call function '{}' from VM: function was created \
+                                             by interpreter and has no compiled bytecode. This typically \
+                                             happens when importing functions across execution modes.",
+                                            func.name
+                                        ),
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                                }
+
                                 // Create a new call frame
                                 let frame = CallFrame {
                                     function_name: func.name.clone(),

@@ -2955,8 +2955,8 @@ fn test_eval_file_with_real_file() {
 
 #[test]
 fn test_eval_file_simple_module() {
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     let temp_dir = TempDir::new().unwrap();
     let main_path = temp_dir.path().join("main.atl");
@@ -2974,8 +2974,8 @@ fn test_eval_file_simple_module() {
 
 #[test]
 fn test_eval_file_with_imports() {
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     let temp_dir = TempDir::new().unwrap();
 
@@ -2983,7 +2983,8 @@ fn test_eval_file_with_imports() {
     fs::write(
         temp_dir.path().join("math.atl"),
         "export fn add(a: number, b: number) -> number { return a + b; }",
-    ).unwrap();
+    )
+    .unwrap();
 
     // Create main module that imports from math
     fs::write(
@@ -2992,7 +2993,8 @@ fn test_eval_file_with_imports() {
 import { add } from "./math";
 add(10, 20);
 "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let main_path = temp_dir.path().join("main.atl");
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
@@ -3007,15 +3009,16 @@ add(10, 20);
 
 #[test]
 fn test_eval_file_import_variable() {
-    use tempfile::TempDir;
     use std::fs;
+    use tempfile::TempDir;
 
     let temp_dir = TempDir::new().unwrap();
 
     fs::write(
         temp_dir.path().join("constants.atl"),
         "export let PI: number = 3.14159;",
-    ).unwrap();
+    )
+    .unwrap();
 
     fs::write(
         temp_dir.path().join("main.atl"),
@@ -3023,7 +3026,8 @@ fn test_eval_file_import_variable() {
 import { PI } from "./constants";
 PI * 2;
 "#,
-    ).unwrap();
+    )
+    .unwrap();
 
     let main_path = temp_dir.path().join("main.atl");
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);

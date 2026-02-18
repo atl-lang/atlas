@@ -78,6 +78,16 @@ impl ModuleResolver {
             .with_help("Check that the file exists and the path is correct".to_string()));
         }
 
+        // Canonicalize to get consistent paths (fixes cycle detection with ./.. components)
+        let resolved = resolved.canonicalize().map_err(|e| {
+            Diagnostic::error_with_code(
+                "AT5002",
+                format!("Failed to resolve module path: {}", e),
+                span,
+            )
+            .with_label(format!("path: {}", resolved.display()))
+        })?;
+
         // Cache the resolved path
         self.path_cache.insert(cache_key, resolved.clone());
 
@@ -111,11 +121,8 @@ impl ModuleResolver {
             format!("{}.atl", source)
         };
 
-        // Resolve relative to importing directory
-        let resolved = importing_dir.join(with_ext);
-
-        // Canonicalize to get absolute path
-        Ok(resolved)
+        // Resolve relative to importing directory (canonicalized later in resolve_path)
+        Ok(importing_dir.join(with_ext))
     }
 
     /// Add a module dependency to the graph

@@ -23,9 +23,10 @@ use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::module_executor::ModuleExecutor;
-use crate::span::Span;
+use crate::module_loader::ModuleLoader;
 use crate::parser::Parser;
 use crate::security::SecurityContext;
+use crate::span::Span;
 use crate::typechecker::TypeChecker;
 use crate::value::{RuntimeError, Value};
 use crate::vm::VM;
@@ -401,26 +402,82 @@ impl Runtime {
             .map(|p| p.to_path_buf())
             .unwrap_or_else(|| std::path::PathBuf::from("."));
 
-        // Use ModuleExecutor for file-based execution with import support
-        let mut interpreter = self.interpreter.borrow_mut();
-        let mut executor = ModuleExecutor::new(&mut interpreter, &self.security, project_root);
+        match self.mode {
+            ExecutionMode::Interpreter => {
+                // Use ModuleExecutor for file-based execution with import support
+                let mut interpreter = self.interpreter.borrow_mut();
+                let mut executor =
+                    ModuleExecutor::new(&mut interpreter, &self.security, project_root);
 
-        executor.execute_module(path).map_err(|diags| {
-            if diags.iter().any(|d| d.message.contains("Runtime error")) {
-                // Runtime errors from execution
-                EvalError::RuntimeError(RuntimeError::TypeError {
-                    msg: diags
-                        .iter()
-                        .map(|d| d.message.clone())
-                        .collect::<Vec<_>>()
-                        .join("; "),
-                    span: Span::dummy(),
+                executor.execute_module(path).map_err(|diags| {
+                    if diags.iter().any(|d| d.message.contains("Runtime error")) {
+                        EvalError::RuntimeError(RuntimeError::TypeError {
+                            msg: diags
+                                .iter()
+                                .map(|d| d.message.clone())
+                                .collect::<Vec<_>>()
+                                .join("; "),
+                            span: Span::dummy(),
+                        })
+                    } else {
+                        EvalError::ParseError(diags)
+                    }
                 })
-            } else {
-                // Parse/load errors
-                EvalError::ParseError(diags)
             }
-        })
+            ExecutionMode::VM => {
+                // Step 1: Load all modules in dependency order
+                let mut loader = ModuleLoader::new(project_root.clone());
+                let modules = loader.load_module(path).map_err(EvalError::ParseError)?;
+
+                // Step 2: Compile ALL modules to bytecode in dependency order
+                // Modules are already in topological order (dependencies first),
+                // so when module B imports from A, A's code will have already run
+                // and defined its globals before B tries to access them.
+                let mut combined_bytecode = crate::bytecode::Bytecode::new();
+
+                for (i, module) in modules.iter().enumerate() {
+                    let is_last = i == modules.len() - 1;
+
+                    // Compile this module
+                    let mut compiler = Compiler::new();
+                    let mut module_bytecode = compiler
+                        .compile(&module.ast)
+                        .map_err(EvalError::ParseError)?;
+
+                    // Strip trailing Halt from non-final modules
+                    // (compiler adds Halt at end of each module, but we need
+                    // continuous execution until the entry module completes)
+                    if !is_last && !module_bytecode.instructions.is_empty() {
+                        // Check if last instruction is Halt (0xFF)
+                        if module_bytecode.instructions.last() == Some(&0xFF) {
+                            module_bytecode.instructions.pop();
+                            // Also remove corresponding debug info if present
+                            if let Some(last_debug) = module_bytecode.debug_info.last() {
+                                if last_debug.instruction_offset
+                                    == module_bytecode.instructions.len()
+                                {
+                                    module_bytecode.debug_info.pop();
+                                }
+                            }
+                        }
+                    }
+
+                    // Append to combined bytecode (this adjusts function offsets)
+                    combined_bytecode.append(module_bytecode);
+                }
+
+                // Step 3: Create VM and run combined bytecode
+                let mut vm = VM::new(combined_bytecode);
+                vm.set_output_writer(self.output.clone());
+
+                // Step 4: Execute via VM
+                match vm.run(&self.security) {
+                    Ok(Some(value)) => Ok(value),
+                    Ok(None) => Ok(Value::Null),
+                    Err(e) => Err(EvalError::RuntimeError(e)),
+                }
+            }
+        }
     }
 
     /// Call an Atlas function by name with arguments

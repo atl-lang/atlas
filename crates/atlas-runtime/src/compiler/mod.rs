@@ -129,7 +129,9 @@ impl Compiler {
             Item::Function(func) => self.compile_function(func),
             Item::Statement(stmt) => self.compile_stmt(stmt),
             Item::Import(_) => {
-                // Imports don't generate code - they're resolved at compile time
+                // Imports are resolved in Runtime::import_prepass() BEFORE compilation.
+                // By the time we reach here, imported symbols are already in globals.
+                // The compiler emits GetGlobal for imported names — no special handling needed.
                 Ok(())
             }
             Item::Export(export_decl) => {

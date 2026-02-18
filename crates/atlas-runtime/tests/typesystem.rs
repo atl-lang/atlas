@@ -2772,7 +2772,12 @@ fn typecheck_modules(entry: &str, modules: &[(&str, &str)]) -> Vec<Diagnostic> {
         fs::write(&path, content).unwrap();
     }
 
-    let entry_path = temp_dir.path().join(format!("{}.atl", entry));
+    // Use canonical path since the resolver now canonicalizes all paths
+    let entry_path = temp_dir
+        .path()
+        .join(format!("{}.atl", entry))
+        .canonicalize()
+        .unwrap();
     let mut loader = ModuleLoader::new(temp_dir.path().to_path_buf());
     let loaded_modules = loader.load_module(&entry_path).unwrap();
 

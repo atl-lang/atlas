@@ -715,15 +715,18 @@ impl Interpreter {
         for specifier in &import.specifiers {
             match specifier {
                 ImportSpecifier::Named { name, span } => {
-                    let value = exports.get(&name.name).ok_or_else(|| RuntimeError::TypeError {
-                        msg: format!(
-                            "'{}' is not exported from module '{}'",
-                            name.name, import.source
-                        ),
-                        span: *span,
-                    })?;
+                    let value = exports
+                        .get(&name.name)
+                        .ok_or_else(|| RuntimeError::TypeError {
+                            msg: format!(
+                                "'{}' is not exported from module '{}'",
+                                name.name, import.source
+                            ),
+                            span: *span,
+                        })?;
                     // Imported values are immutable bindings
-                    self.globals.insert(name.name.clone(), (value.clone(), false));
+                    self.globals
+                        .insert(name.name.clone(), (value.clone(), false));
                 }
                 ImportSpecifier::Namespace { alias: _, span } => {
                     return Err(RuntimeError::TypeError {

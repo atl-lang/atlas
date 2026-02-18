@@ -1006,7 +1006,8 @@ mod tests {
         assert_eq!(modules_b.len(), 2); // shared + b
 
         // Verify shared module is only loaded once (same instance)
-        let shared_path = root.join("shared.atl");
+        // Use canonical path since resolver now canonicalizes paths
+        let shared_path = root.join("shared.atl").canonicalize().unwrap();
         assert_eq!(loader.get_module(&shared_path).unwrap().exports.len(), 1);
     }
 

@@ -250,11 +250,8 @@ mod tests {
         let temp_dir = TempDir::new().unwrap();
         let mut interpreter = Interpreter::new();
         let security = SecurityContext::allow_all();
-        let _executor = ModuleExecutor::new(
-            &mut interpreter,
-            &security,
-            temp_dir.path().to_path_buf(),
-        );
+        let _executor =
+            ModuleExecutor::new(&mut interpreter, &security, temp_dir.path().to_path_buf());
         // Executor can be created successfully
     }
 
@@ -265,11 +262,8 @@ mod tests {
 
         let mut interpreter = Interpreter::new();
         let security = SecurityContext::allow_all();
-        let mut executor = ModuleExecutor::new(
-            &mut interpreter,
-            &security,
-            temp_dir.path().to_path_buf(),
-        );
+        let mut executor =
+            ModuleExecutor::new(&mut interpreter, &security, temp_dir.path().to_path_buf());
         let result = executor.execute_module(&module_path);
 
         match result {
@@ -290,11 +284,8 @@ mod tests {
 
         let mut interpreter = Interpreter::new();
         let security = SecurityContext::allow_all();
-        let mut executor = ModuleExecutor::new(
-            &mut interpreter,
-            &security,
-            temp_dir.path().to_path_buf(),
-        );
+        let mut executor =
+            ModuleExecutor::new(&mut interpreter, &security, temp_dir.path().to_path_buf());
         let result = executor.execute_module(&module_path);
 
         assert!(result.is_ok());

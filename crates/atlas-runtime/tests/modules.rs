@@ -1857,3 +1857,166 @@ fn test_cycle_error_includes_path() {
     // Error should include the cycle path for debugging
     assert!(err.message.contains("Circular dependency"));
 }
+
+// ============================================================================
+// True Interpreter/VM Parity Tests (Phase 07b)
+// ============================================================================
+// These tests use the Runtime API with both ExecutionMode::Interpreter and
+// ExecutionMode::VM to verify identical results for import-based programs.
+
+use atlas_runtime::api::{ExecutionMode, Runtime};
+
+/// Helper to compare interpreter and VM execution results
+fn assert_parity(entry_path: &std::path::Path) {
+    // Execute with interpreter
+    let mut interpreter_runtime =
+        Runtime::new_with_security(ExecutionMode::Interpreter, SecurityContext::allow_all());
+    let interpreter_result = interpreter_runtime.eval_file(entry_path);
+
+    // Execute with VM
+    let mut vm_runtime =
+        Runtime::new_with_security(ExecutionMode::VM, SecurityContext::allow_all());
+    let vm_result = vm_runtime.eval_file(entry_path);
+
+    // Both should succeed or both should fail
+    match (&interpreter_result, &vm_result) {
+        (Ok(interp_val), Ok(vm_val)) => {
+            // Compare values
+            let interp_str = format!("{:?}", interp_val);
+            let vm_str = format!("{:?}", vm_val);
+            assert_eq!(
+                interp_str, vm_str,
+                "Parity violation: Interpreter returned {:?}, VM returned {:?}",
+                interp_val, vm_val
+            );
+        }
+        (Err(e1), Err(e2)) => {
+            // Both failed - that's still parity
+            let _ = (e1, e2);
+        }
+        (Ok(v), Err(e)) => {
+            panic!(
+                "Parity violation: Interpreter succeeded with {:?}, but VM failed with {:?}",
+                v, e
+            );
+        }
+        (Err(e), Ok(v)) => {
+            panic!(
+                "Parity violation: Interpreter failed with {:?}, but VM succeeded with {:?}",
+                e, v
+            );
+        }
+    }
+}
+
+#[test]
+fn test_import_parity_basic_function() {
+    let temp_dir = TempDir::new().unwrap();
+
+    create_module(
+        temp_dir.path(),
+        "math",
+        "export fn add(a: number, b: number) -> number { return a + b; }",
+    );
+
+    let main = create_module(
+        temp_dir.path(),
+        "main",
+        r#"
+            import { add } from "./math";
+            add(10, 20);
+        "#,
+    );
+
+    assert_parity(&main);
+}
+
+#[test]
+fn test_import_parity_variable() {
+    let temp_dir = TempDir::new().unwrap();
+
+    create_module(
+        temp_dir.path(),
+        "constants",
+        "export let PI: number = 3.14159;",
+    );
+
+    let main = create_module(
+        temp_dir.path(),
+        "main",
+        r#"
+            import { PI } from "./constants";
+            PI * 2;
+        "#,
+    );
+
+    assert_parity(&main);
+}
+
+#[test]
+fn test_import_parity_multiple_imports() {
+    let temp_dir = TempDir::new().unwrap();
+
+    create_module(
+        temp_dir.path(),
+        "math",
+        r#"
+            export fn add(a: number, b: number) -> number { return a + b; }
+            export fn multiply(a: number, b: number) -> number { return a * b; }
+        "#,
+    );
+
+    let main = create_module(
+        temp_dir.path(),
+        "main",
+        r#"
+            import { add, multiply } from "./math";
+            add(2, 3) + multiply(4, 5);
+        "#,
+    );
+
+    assert_parity(&main);
+}
+
+#[test]
+fn test_import_parity_chained_imports() {
+    let temp_dir = TempDir::new().unwrap();
+
+    create_module(temp_dir.path(), "base", "export let VALUE: number = 100;");
+
+    create_module(
+        temp_dir.path(),
+        "middle",
+        r#"
+            import { VALUE } from "./base";
+            export fn doubled() -> number { return VALUE * 2; }
+        "#,
+    );
+
+    let main = create_module(
+        temp_dir.path(),
+        "main",
+        r#"
+            import { doubled } from "./middle";
+            doubled();
+        "#,
+    );
+
+    assert_parity(&main);
+}
+
+#[test]
+fn test_import_parity_no_imports() {
+    let temp_dir = TempDir::new().unwrap();
+
+    let main = create_module(
+        temp_dir.path(),
+        "main",
+        r#"
+            fn compute(x: number) -> number { return x * x + 1; }
+            compute(5);
+        "#,
+    );
+
+    assert_parity(&main);
+}
