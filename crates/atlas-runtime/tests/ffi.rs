@@ -15,13 +15,11 @@ use atlas_runtime::value::{RuntimeError, Value};
 use atlas_runtime::vm::VM;
 use rstest::rstest;
 
-
 // ===== ffi_callback_tests.rs =====
 
 // FFI Callback Tests (phase-10c)
 //
 // Tests for C→Atlas function callbacks.
-
 
 fn parse_and_eval(source: &str) -> Result<(Interpreter, Value), String> {
     let mut lexer = Lexer::new(source);
@@ -431,7 +429,6 @@ fn test_callback_signature() {
 // Complete FFI Integration Tests (phase-10c)
 //
 // Tests for full FFI system: extern calls, callbacks, type marshaling, and parity.
-
 
 fn run_interpreter(source: &str) -> Result<Value, String> {
     let mut lexer = Lexer::new(source);
@@ -888,7 +885,6 @@ fn test_library_loading_platform_specific() {
 
 // Tests for FFI extern declaration parsing (phase-10b)
 
-
 fn parse_program(source: &str) -> (Vec<Item>, Vec<atlas_runtime::diagnostic::Diagnostic>) {
     let mut lexer = Lexer::new(source);
     let (tokens, lex_diags) = lexer.tokenize();
@@ -1094,7 +1090,6 @@ fn test_extern_mixed_with_functions() {
 // - Atlas ↔ C type marshaling
 // - MarshalContext memory management
 // - Type compatibility and validation
-
 
 // ====================
 // Extern Type Tests (8 tests)
@@ -1503,7 +1498,6 @@ mod interpreter_tests {
 
     // Integration tests for FFI interpreter execution (phase-10b)
 
-
     fn run_program(source: &str) -> Result<Value, String> {
         // Parse
         let mut lexer = Lexer::new(source);
@@ -1734,7 +1728,6 @@ mod vm_tests {
     use super::*;
 
     // Integration tests for FFI VM execution (phase-10b)
-
 
     fn run_program(source: &str) -> Result<Value, String> {
         // Parse

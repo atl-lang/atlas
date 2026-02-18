@@ -848,9 +848,24 @@ fn test_monomorphizer_nested_generics() {
 
 mod queue {
     use super::{dummy_span, security};
-    use atlas_runtime::stdlib::call_builtin;
     use atlas_runtime::value::Value;
     use pretty_assertions::assert_eq;
+
+    // Shadow call_builtin with a 4-arg wrapper (5th arg = stdout_writer) so tests don't need changing.
+    fn call_builtin(
+        name: &str,
+        args: &[Value],
+        span: atlas_runtime::span::Span,
+        sec: &atlas_runtime::security::SecurityContext,
+    ) -> Result<Value, atlas_runtime::value::RuntimeError> {
+        atlas_runtime::stdlib::call_builtin(
+            name,
+            args,
+            span,
+            sec,
+            &atlas_runtime::stdlib::stdout_writer(),
+        )
+    }
 
     // ============================================================================
     // From queue_tests.rs
@@ -1345,9 +1360,24 @@ mod queue {
 
 mod stack {
     use super::{dummy_span, security};
-    use atlas_runtime::stdlib::call_builtin;
     use atlas_runtime::value::Value;
     use pretty_assertions::assert_eq;
+
+    // Shadow call_builtin with a 4-arg wrapper (5th arg = stdout_writer) so tests don't need changing.
+    fn call_builtin(
+        name: &str,
+        args: &[Value],
+        span: atlas_runtime::span::Span,
+        sec: &atlas_runtime::security::SecurityContext,
+    ) -> Result<Value, atlas_runtime::value::RuntimeError> {
+        atlas_runtime::stdlib::call_builtin(
+            name,
+            args,
+            span,
+            sec,
+            &atlas_runtime::stdlib::stdout_writer(),
+        )
+    }
 
     // ============================================================================
     // From stack_tests.rs

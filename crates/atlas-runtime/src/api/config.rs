@@ -3,6 +3,7 @@
 //! Provides configuration options for controlling Atlas runtime behavior,
 //! including execution limits, memory constraints, and capability restrictions.
 
+use crate::stdlib::{stdout_writer, OutputWriter};
 use std::time::Duration;
 
 /// Runtime configuration for execution limits and sandboxing
@@ -29,7 +30,7 @@ use std::time::Duration;
 ///     .with_io_allowed(false)
 ///     .with_network_allowed(false);
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct RuntimeConfig {
     /// Maximum execution time before timeout (None = unlimited)
     pub max_execution_time: Option<Duration>,
@@ -42,6 +43,21 @@ pub struct RuntimeConfig {
 
     /// Whether network operations are allowed
     pub allow_network: bool,
+
+    /// Output destination for print(). Defaults to stdout.
+    pub output: OutputWriter,
+}
+
+impl std::fmt::Debug for RuntimeConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RuntimeConfig")
+            .field("max_execution_time", &self.max_execution_time)
+            .field("max_memory_bytes", &self.max_memory_bytes)
+            .field("allow_io", &self.allow_io)
+            .field("allow_network", &self.allow_network)
+            .field("output", &"<output writer>")
+            .finish()
+    }
 }
 
 impl RuntimeConfig {
@@ -68,6 +84,7 @@ impl RuntimeConfig {
             max_memory_bytes: None,
             allow_io: true,
             allow_network: true,
+            output: stdout_writer(),
         }
     }
 
@@ -97,7 +114,26 @@ impl RuntimeConfig {
             max_memory_bytes: Some(10_000_000), // 10MB
             allow_io: false,
             allow_network: false,
+            output: stdout_writer(),
         }
+    }
+
+    /// Redirect all `print()` output to a custom writer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use atlas_runtime::api::RuntimeConfig;
+    /// use atlas_runtime::stdlib::{OutputWriter, stdout_writer};
+    /// use std::sync::{Arc, Mutex};
+    ///
+    /// // Capture output in a buffer
+    /// let buf: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
+    /// // (wrap buf in a Write newtype, then pass as OutputWriter)
+    /// ```
+    pub fn with_output(mut self, output: OutputWriter) -> Self {
+        self.output = output;
+        self
     }
 
     /// Set maximum execution time

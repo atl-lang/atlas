@@ -9,12 +9,13 @@ use atlas_runtime::debugger::inspection::{
     format_value_with_depth, EvalResult, Inspector, ScopedVariable, VariableScope,
 };
 use atlas_runtime::debugger::protocol::{
-    Breakpoint, DebugEvent, DebugRequest, DebugResponse, DebugStackFrame, PauseReason,
-    SourceLocation, Variable,
-    deserialize_event, deserialize_request, deserialize_response,
-    serialize_event, serialize_request, serialize_response,
+    deserialize_event, deserialize_request, deserialize_response, serialize_event,
+    serialize_request, serialize_response, Breakpoint, DebugEvent, DebugRequest, DebugResponse,
+    DebugStackFrame, PauseReason, SourceLocation, Variable,
 };
-use atlas_runtime::debugger::source_map::{byte_offset_to_line_column, compute_line_offsets, SourceMap};
+use atlas_runtime::debugger::source_map::{
+    byte_offset_to_line_column, compute_line_offsets, SourceMap,
+};
 use atlas_runtime::debugger::state::{DebuggerState, StepMode};
 use atlas_runtime::debugger::stepping::{StepRequest, StepTracker};
 use atlas_runtime::debugger::DebuggerSession;
@@ -25,14 +26,12 @@ use atlas_runtime::span::Span;
 use atlas_runtime::value::Value;
 use atlas_runtime::vm::VM;
 
-
 // --- Execution control (breakpoints, stepping) ---
 
 // Debugger execution control tests — Phase 05.
 //
 // Tests breakpoint management (set, hit, remove, conditional, hit counts, log points),
 // step operations (into, over, out, run-to-line), and execution flow.
-
 
 fn compile(source: &str) -> Bytecode {
     let tokens = Lexer::new(source).tokenize().0;
@@ -719,7 +718,6 @@ fn test_session_list_breakpoints_empty() {
 // Tests variable inspection, expression evaluation, watch expressions,
 // hover, and the Inspector API.
 
-
 // ══════════════════════════════════════════════════════════════════════════════
 // Inspector Unit Tests
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1139,7 +1137,6 @@ fn test_session_stack_trace_has_main() {
 // 6. Stack trace generation
 // 7. Expression evaluation in context
 // 8. Performance impact when debugging is disabled
-
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

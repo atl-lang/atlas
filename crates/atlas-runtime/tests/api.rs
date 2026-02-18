@@ -1,7 +1,9 @@
 // Merged: api_tests + api_conversion_tests + api_native_functions_tests + api_sandboxing_tests
 //       + reflection_tests + json_value_tests + runtime_api
 
-use atlas_runtime::api::{ConversionError, EvalError, ExecutionMode, FromAtlas, Runtime, RuntimeConfig, ToAtlas};
+use atlas_runtime::api::{
+    ConversionError, EvalError, ExecutionMode, FromAtlas, Runtime, RuntimeConfig, ToAtlas,
+};
 use atlas_runtime::reflect::{get_value_type_info, TypeInfo, TypeKind, ValueInfo};
 use atlas_runtime::span::Span;
 use atlas_runtime::types::Type;
@@ -19,7 +21,6 @@ use std::time::Duration;
 //
 // Tests the public embedding API for creating runtimes, evaluating code,
 // calling functions, and managing global variables.
-
 
 // Runtime Creation Tests
 
@@ -475,7 +476,6 @@ fn test_multiple_function_definitions_single_eval() {
 //
 // Tests ToAtlas and FromAtlas traits for bidirectional conversion
 // between Rust and Atlas types.
-
 
 // f64 Conversion Tests
 
@@ -968,7 +968,6 @@ fn test_conversion_error_display_object_value() {
 //
 // Tests native Rust function registration and calling from Atlas code.
 // Verifies both fixed-arity and variadic functions in interpreter and VM modes.
-
 
 // ============================================================================
 // Test Fixtures
@@ -1594,6 +1593,30 @@ fn test_native_with_complex_logic(#[case] mode: ExecutionMode) {
 
 // Tests for Runtime sandboxing and configuration
 
+/// A thin Write wrapper around Arc<Mutex<Vec<u8>>> for capturing output in integration tests.
+struct VecWriter(Arc<Mutex<Vec<u8>>>);
+
+impl std::io::Write for VecWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+#[test]
+fn test_runtime_captures_print_output() {
+    use atlas_runtime::stdlib::OutputWriter;
+    let buf: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
+    let output: OutputWriter = Arc::new(Mutex::new(Box::new(VecWriter(buf.clone()))));
+    let config = RuntimeConfig::new().with_output(output);
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    runtime.eval(r#"print("captured")"#).unwrap();
+    let s = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+    assert_eq!(s, "captured\n");
+}
 
 #[test]
 fn test_default_config_is_permissive() {
@@ -1830,7 +1853,6 @@ fn test_sandboxed_runtime_persistent_state() {
 //
 // Tests reflection and introspection functionality with both
 // interpreter and VM execution engines (100% parity required).
-
 
 // ============================================================================
 // Type Information Tests
@@ -2459,7 +2481,6 @@ fn test_parity_deep_equals() {
 //
 // Tests both interpreter and VM parity for JSON value operations.
 
-
 /// Helper to create a test JSON object
 fn make_test_json() -> Value {
     let mut user = HashMap::new();
@@ -2771,7 +2792,6 @@ fn test_json_type_display_name() {
 // These tests validate the runtime API without using the CLI,
 // ensuring it can be embedded in other applications.
 
-
 /// Test that runtime can be created and used
 #[test]
 fn test_runtime_api_availability() {
@@ -2928,4 +2948,3 @@ fn test_eval_file_with_real_file() {
         _ => panic!("Expected Null"),
     }
 }
-

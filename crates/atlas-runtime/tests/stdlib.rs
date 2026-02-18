@@ -7,7 +7,7 @@ use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::span::Span;
 use atlas_runtime::stdlib::test as atlas_test;
-use atlas_runtime::stdlib::{call_builtin, is_builtin};
+use atlas_runtime::stdlib::{call_builtin, is_builtin, stdout_writer};
 use atlas_runtime::typechecker::TypeChecker;
 use atlas_runtime::value::{RuntimeError, Value};
 use atlas_runtime::{Atlas, Binder, SecurityContext};
@@ -9276,6 +9276,7 @@ fn test_call_builtin_assert_via_dispatch() {
         &[bool_val(true), str_val("ok")],
         span(),
         &security,
+        &stdout_writer(),
     );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Value::Null);
@@ -9289,6 +9290,7 @@ fn test_call_builtin_assert_equal_via_dispatch() {
         &[num_val(42.0), num_val(42.0)],
         span(),
         &security,
+        &stdout_writer(),
     );
     assert!(result.is_ok());
 }
@@ -9296,7 +9298,13 @@ fn test_call_builtin_assert_equal_via_dispatch() {
 #[test]
 fn test_call_builtin_assert_ok_via_dispatch() {
     let security = SecurityContext::allow_all();
-    let result = call_builtin("assertOk", &[ok_val(str_val("inner"))], span(), &security);
+    let result = call_builtin(
+        "assertOk",
+        &[ok_val(str_val("inner"))],
+        span(),
+        &security,
+        &stdout_writer(),
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), str_val("inner"));
 }
@@ -9304,7 +9312,13 @@ fn test_call_builtin_assert_ok_via_dispatch() {
 #[test]
 fn test_call_builtin_assert_some_via_dispatch() {
     let security = SecurityContext::allow_all();
-    let result = call_builtin("assertSome", &[some_val(num_val(7.0))], span(), &security);
+    let result = call_builtin(
+        "assertSome",
+        &[some_val(num_val(7.0))],
+        span(),
+        &security,
+        &stdout_writer(),
+    );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), num_val(7.0));
 }
@@ -9312,7 +9326,13 @@ fn test_call_builtin_assert_some_via_dispatch() {
 #[test]
 fn test_call_builtin_assert_empty_via_dispatch() {
     let security = SecurityContext::allow_all();
-    let result = call_builtin("assertEmpty", &[arr_val(vec![])], span(), &security);
+    let result = call_builtin(
+        "assertEmpty",
+        &[arr_val(vec![])],
+        span(),
+        &security,
+        &stdout_writer(),
+    );
     assert!(result.is_ok());
 }
 

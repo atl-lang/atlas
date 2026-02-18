@@ -2,13 +2,11 @@
 
 use atlas_runtime::{Atlas, Value};
 
-
 // --- DateTime core ---
 
 // Tests for datetime core functionality (Phase-09a)
 //
 // Tests construction, component access, arithmetic, and conversion operations.
-
 
 // ============================================================================
 // Test Helpers
@@ -391,7 +389,6 @@ fn test_large_time_span_arithmetic() {
 // - Timezone operations (conversion, offset, named zones)
 // - Duration operations (creation, formatting)
 
-
 // ============================================================================
 // Advanced Formatting Tests (8 tests)
 // ============================================================================
@@ -743,7 +740,6 @@ fn test_duration_format_zero_seconds() {
 //
 // Tests regex compilation, matching, and capture group extraction.
 // All tests use Atlas::eval() API.
-
 
 // ============================================================================
 // Test Helpers
@@ -1125,7 +1121,6 @@ fn test_complex_email_pattern() {
 //
 // Tests regex replacement operations, splitting, and advanced features.
 // All tests use Atlas::eval() API.
-
 
 // ============================================================================
 // Test Helpers

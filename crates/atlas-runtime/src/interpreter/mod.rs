@@ -47,6 +47,8 @@ pub struct Interpreter {
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
     /// Security context for current evaluation (set during eval())
     pub(super) current_security: Option<*const crate::security::SecurityContext>,
+    /// Output writer for print() (defaults to stdout)
+    pub(super) output_writer: crate::stdlib::OutputWriter,
     /// Counter for generating unique nested function names
     next_func_id: usize,
     /// FFI library loader (phase-10b)
@@ -67,6 +69,7 @@ impl Interpreter {
             control_flow: ControlFlow::None,
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
             current_security: None,
+            output_writer: crate::stdlib::stdout_writer(),
             next_func_id: 0,
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
@@ -100,6 +103,11 @@ impl Interpreter {
         interpreter.register_builtin("padEnd", 3);
 
         interpreter
+    }
+
+    /// Set the output writer (used by Runtime to redirect print() output)
+    pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
+        self.output_writer = writer;
     }
 
     /// Register a builtin function in globals
@@ -506,6 +514,7 @@ impl Interpreter {
                 control_flow: ControlFlow::None,
                 monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
                 current_security: None,
+                output_writer: crate::stdlib::stdout_writer(),
                 next_func_id: 0,
                 library_loader: LibraryLoader::new(),
                 extern_functions: HashMap::new(),

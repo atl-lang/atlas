@@ -19,14 +19,13 @@ use tempfile::TempDir;
 //
 // Tests all path functions through the stdlib interface
 
-
 fn test_span() -> Span {
     Span::dummy()
 }
 
 fn call_fn(name: &str, args: &[Value]) -> Result<Value, atlas_runtime::value::RuntimeError> {
     let security = SecurityContext::allow_all();
-    stdlib::call_builtin(name, args, test_span(), &security)
+    stdlib::call_builtin(name, args, test_span(), &security, &stdlib::stdout_writer())
 }
 
 // ============================================================================
@@ -595,7 +594,6 @@ fn test_path_normalization_workflow() {
 // File system operations tests
 //
 // Comprehensive tests for fs module: directories, metadata, symlinks, temporary files
-
 
 // ============================================================================
 // Helper Functions
@@ -1283,7 +1281,6 @@ fn test_permissions_on_directory() {
 //
 // Tests for command execution, environment variables, and process control.
 
-
 /// Helper to evaluate code expecting success
 fn eval_ok(code: &str) -> Value {
     let security = SecurityContext::allow_all();
@@ -1424,11 +1421,9 @@ fn test_env_requires_permission() {
 //
 // Comprehensive tests for gzip compression and decompression
 
-
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
 
 fn bytes_to_atlas_array(bytes: &[u8]) -> Value {
     let values: Vec<Value> = bytes.iter().map(|&b| Value::Number(b as f64)).collect();
@@ -1450,8 +1445,6 @@ fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
         _ => panic!("Expected array"),
     }
 }
-
-
 
 // ============================================================================
 // Compression Tests
@@ -1969,11 +1962,9 @@ fn test_default_compression_level() {
 
 // Integration tests for tar archive functionality
 
-
 // ============================================================================
 // Test Helpers
 // ============================================================================
-
 
 fn create_test_file(dir: &std::path::Path, name: &str, content: &str) {
     let path = dir.join(name);
@@ -2259,7 +2250,10 @@ fn test_tar_extract_basic() {
 
     let extracted_file = extract_dir.join("test.txt");
     assert!(extracted_file.exists());
-    assert_eq!(std_fs::read_to_string(extracted_file).unwrap(), "test content");
+    assert_eq!(
+        std_fs::read_to_string(extracted_file).unwrap(),
+        "test content"
+    );
 }
 
 #[test]
@@ -2343,7 +2337,10 @@ fn test_tar_extract_nested_directories() {
         .join("subdir")
         .join("nested.txt");
     assert!(nested_file.exists());
-    assert_eq!(std_fs::read_to_string(nested_file).unwrap(), "nested content");
+    assert_eq!(
+        std_fs::read_to_string(nested_file).unwrap(),
+        "nested content"
+    );
 }
 
 #[test]
@@ -2807,15 +2804,9 @@ fn test_tar_list_nonexistent_tar() {
 
 // Integration tests for zip archive functionality
 
-
 // ============================================================================
 // Test Helpers
 // ============================================================================
-
-
-
-
-
 
 fn num_value(n: f64) -> Value {
     Value::Number(n)
@@ -3758,4 +3749,3 @@ fn test_zip_create_type_error_sources() {
 
     assert!(result.is_err());
 }
-

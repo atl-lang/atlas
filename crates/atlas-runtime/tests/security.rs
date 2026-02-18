@@ -2,21 +2,21 @@
 
 use atlas_runtime::security::policy::{PolicyAction, PolicyRule, ResourceType};
 use atlas_runtime::security::{
-    Permission, PermissionSet, PolicyManager, ResourceQuotas, Sandbox,
-    SecurityError, SecurityPolicy,
+    Permission, PermissionSet, PolicyManager, ResourceQuotas, Sandbox, SecurityError,
+    SecurityPolicy,
 };
-use atlas_runtime::{Atlas, AuditEvent, AuditLogger, DiagnosticLevel, MemoryAuditLogger, SecurityContext};
+use atlas_runtime::{
+    Atlas, AuditEvent, AuditLogger, DiagnosticLevel, MemoryAuditLogger, SecurityContext,
+};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread;
 use tempfile::TempDir;
 
-
 // --- Permission model ---
 
 // Comprehensive security and permission tests
-
 
 // ============================================================================
 // Permission Matching Tests
@@ -719,7 +719,6 @@ fn test_sandbox_disabled_bypasses_checks() {
 //
 // Tests that security checks are enforced at runtime for I/O operations.
 
-
 // ============================================================================
 // Runtime Integration Tests
 // ============================================================================
@@ -1075,7 +1074,6 @@ fn test_permission_denied_has_code_and_message() {
 //
 // Tests that all security events are properly logged for monitoring and compliance.
 
-
 // ============================================================================
 // Audit Logging Integration Tests
 // ============================================================================
@@ -1430,7 +1428,6 @@ fn test_default_context_audit_logger_is_null() {
 
 #[test]
 fn test_audit_logger_thread_safe() {
-
     let logger = Arc::new(MemoryAuditLogger::new());
     let ctx = Arc::new(SecurityContext::with_audit_logger(
         logger.clone() as Arc<dyn AuditLogger>

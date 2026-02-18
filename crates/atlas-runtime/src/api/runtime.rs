@@ -100,6 +100,8 @@ pub struct Runtime {
     security: SecurityContext,
     /// Accumulated bytecode for VM mode (persists across eval() calls)
     accumulated_bytecode: RefCell<crate::bytecode::Bytecode>,
+    /// Output writer for print() (threaded to interpreter and VM)
+    output: crate::stdlib::OutputWriter,
 }
 
 impl Runtime {
@@ -115,11 +117,15 @@ impl Runtime {
     /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     /// ```
     pub fn new(mode: ExecutionMode) -> Self {
+        let output = crate::stdlib::stdout_writer();
+        let mut interp = Interpreter::new();
+        interp.set_output_writer(output.clone());
         Self {
             mode,
-            interpreter: RefCell::new(Interpreter::new()),
+            interpreter: RefCell::new(interp),
             security: SecurityContext::new(),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
+            output,
         }
     }
 
@@ -135,11 +141,15 @@ impl Runtime {
     /// let mut runtime = Runtime::new_with_security(ExecutionMode::VM, security);
     /// ```
     pub fn new_with_security(mode: ExecutionMode, security: SecurityContext) -> Self {
+        let output = crate::stdlib::stdout_writer();
+        let mut interp = Interpreter::new();
+        interp.set_output_writer(output.clone());
         Self {
             mode,
-            interpreter: RefCell::new(Interpreter::new()),
+            interpreter: RefCell::new(interp),
             security,
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
+            output,
         }
     }
 
@@ -166,11 +176,15 @@ impl Runtime {
         // Note: max_execution_time and max_memory_bytes are stored in config but not yet enforced
         // TODO: Implement timeout and memory limit enforcement
 
+        let output = config.output.clone();
+        let mut interp = Interpreter::new();
+        interp.set_output_writer(output.clone());
         Self {
             mode,
-            interpreter: RefCell::new(Interpreter::new()),
+            interpreter: RefCell::new(interp),
             security,
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
+            output,
         }
     }
 
@@ -318,6 +332,7 @@ impl Runtime {
                 // Create VM with the accumulated bytecode
                 let accumulated = self.accumulated_bytecode.borrow().clone();
                 let mut vm = VM::new(accumulated);
+                vm.set_output_writer(self.output.clone());
 
                 // Set IP to start of new code (so we don't re-execute old code)
                 vm.set_ip(new_code_start);

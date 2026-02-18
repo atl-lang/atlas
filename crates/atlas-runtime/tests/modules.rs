@@ -1,22 +1,20 @@
 // modules.rs — Module system: binding, execution (interpreter + VM), and resolution tests
 
 use atlas_runtime::{
-        binder::Binder, lexer::Lexer, module_loader::ModuleRegistry, parser::Parser,
-        typechecker::TypeChecker,
-    };
-use std::path::PathBuf;
+    binder::Binder, lexer::Lexer, module_loader::ModuleRegistry, parser::Parser,
+    typechecker::TypeChecker,
+};
 use atlas_runtime::{ModuleExecutor, SecurityContext, Value};
-use std::fs;
-use tempfile::TempDir;
 use atlas_runtime::{ModuleResolver, Span};
-
+use std::fs;
+use std::path::PathBuf;
+use tempfile::TempDir;
 
 // --- Module binding and type checking ---
 
 // Module Binding and Type Checking Tests (BLOCKER 04-C)
 //
 // Tests cross-module binding, import/export validation, and type checking.
-
 
 /// Helper to parse and bind a module
 fn bind_module(
@@ -376,7 +374,6 @@ export fn bar() -> number {
 //
 // Tests for runtime module execution in both interpreter and VM.
 // Verifies single evaluation, proper initialization order, and export/import functionality.
-
 
 /// Helper to create a test module file
 fn create_module(dir: &std::path::Path, name: &str, content: &str) -> PathBuf {
@@ -1204,7 +1201,6 @@ SECRET;
 // Mirrors interpreter tests but uses VM for execution.
 // Verifies 100% parity between interpreter and VM for module execution.
 
-
 /// Helper to execute a module using the VM
 fn execute_with_vm(entry_path: &std::path::Path, root: &std::path::Path) -> Result<Value, String> {
     let mut executor = ModuleExecutor::new(root.to_path_buf(), SecurityContext::allow_all());
@@ -1531,7 +1527,6 @@ DEBUG;
 //
 // Tests for path resolution and circular dependency detection.
 // Does NOT test module loading (that's BLOCKER 04-B).
-
 
 // ============================================================================
 // Path Resolution Tests

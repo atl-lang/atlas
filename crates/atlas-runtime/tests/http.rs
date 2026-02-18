@@ -3,7 +3,6 @@
 
 use atlas_runtime::{Atlas, SecurityContext};
 
-
 // --- Core HTTP functionality ---
 
 // Tests for HTTP core functionality (Phase-10a)
@@ -12,7 +11,6 @@ use atlas_runtime::{Atlas, SecurityContext};
 //
 // NOTE: Some tests rely on network access to httpbin.org. They're designed
 // to pass whether network is available or not by checking type signatures.
-
 
 // ============================================================================
 // Test Helpers
@@ -421,7 +419,6 @@ fn test_http_json_workflow() {
 //
 // Tests PUT/DELETE/PATCH methods, query parameters, advanced configuration,
 // response utilities, and common operations.
-
 
 // ============================================================================
 // Test Helpers

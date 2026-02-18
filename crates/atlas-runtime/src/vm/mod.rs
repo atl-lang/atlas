@@ -58,6 +58,8 @@ pub struct VM {
     debug_pause_pending: bool,
     /// Security context for current execution (set during run())
     current_security: Option<*const crate::security::SecurityContext>,
+    /// Output writer for print() (defaults to stdout)
+    output_writer: crate::stdlib::OutputWriter,
     /// FFI library loader (phase-10b)
     library_loader: LibraryLoader,
     /// Loaded extern functions (phase-10b)
@@ -87,6 +89,7 @@ impl VM {
             debugger: None,
             debug_pause_pending: false,
             current_security: None,
+            output_writer: crate::stdlib::stdout_writer(),
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
             string_buffer: String::with_capacity(256),
@@ -105,6 +108,11 @@ impl VM {
         let mut vm = Self::new(bytecode);
         vm.debugger = Some(Debugger::enabled());
         vm
+    }
+
+    /// Set the output writer (used by Runtime to redirect print() output)
+    pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
+        self.output_writer = writer;
     }
 
     /// Set a global variable
@@ -838,6 +846,7 @@ impl VM {
                                     &args,
                                     self.current_span().unwrap_or_else(crate::span::Span::dummy),
                                     security,
+                                    &self.output_writer,
                                 )?;
 
                                 // Push the result
@@ -2349,7 +2358,13 @@ impl VM {
                 if crate::stdlib::is_builtin(&func_ref.name) {
                     let security =
                         unsafe { &*self.current_security.expect("Security context not set") };
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, span, security);
+                    return crate::stdlib::call_builtin(
+                        &func_ref.name,
+                        &args,
+                        span,
+                        security,
+                        &self.output_writer,
+                    );
                 }
 
                 // User-defined function - execute via VM

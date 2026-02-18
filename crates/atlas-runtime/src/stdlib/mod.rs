@@ -22,6 +22,17 @@ pub mod types;
 
 use crate::security::SecurityContext;
 use crate::value::{RuntimeError, Value};
+use std::io::Write;
+use std::sync::{Arc, Mutex};
+
+/// Shared, thread-safe output writer.
+/// Default implementation writes to stdout.
+pub type OutputWriter = Arc<Mutex<Box<dyn Write + Send>>>;
+
+/// Construct a writer that goes to real stdout (the default).
+pub fn stdout_writer() -> OutputWriter {
+    Arc::new(Mutex::new(Box::new(std::io::stdout())))
+}
 
 /// Check if a function name is a builtin (stdlib function, not intrinsic)
 pub fn is_builtin(name: &str) -> bool {
@@ -247,13 +258,14 @@ pub fn call_builtin(
     args: &[Value],
     call_span: crate::span::Span,
     security: &SecurityContext,
+    output: &OutputWriter,
 ) -> Result<Value, RuntimeError> {
     match name {
         "print" => {
             if args.len() != 1 {
                 return Err(RuntimeError::InvalidStdlibArgument { span: call_span });
             }
-            print(&args[0], call_span)?;
+            print(&args[0], call_span, output)?;
             Ok(Value::Null)
         }
         "len" => {
@@ -1458,13 +1470,21 @@ pub fn call_builtin(
     }
 }
 
-/// Print a value to stdout
+/// Print a value to the configured output writer.
 ///
 /// Only accepts string, number, bool, or null per stdlib specification.
-pub fn print(value: &Value, span: crate::span::Span) -> Result<(), RuntimeError> {
+pub fn print(
+    value: &Value,
+    span: crate::span::Span,
+    output: &OutputWriter,
+) -> Result<(), RuntimeError> {
     match value {
         Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null => {
-            println!("{}", value.to_display_string());
+            let mut w = output.lock().unwrap();
+            writeln!(w, "{}", value.to_display_string()).map_err(|_| RuntimeError::TypeError {
+                msg: "write failed".into(),
+                span,
+            })?;
             Ok(())
         }
         _ => Err(RuntimeError::InvalidStdlibArgument { span }),
@@ -1575,7 +1595,13 @@ mod tests {
     #[test]
     fn test_call_builtin_print() {
         let security = SecurityContext::allow_all();
-        let result = call_builtin("print", &[Value::string("test")], Span::dummy(), &security);
+        let result = call_builtin(
+            "print",
+            &[Value::string("test")],
+            Span::dummy(),
+            &security,
+            &stdout_writer(),
+        );
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Null);
     }
@@ -1583,7 +1609,13 @@ mod tests {
     #[test]
     fn test_call_builtin_len() {
         let security = SecurityContext::allow_all();
-        let result = call_builtin("len", &[Value::string("hello")], Span::dummy(), &security);
+        let result = call_builtin(
+            "len",
+            &[Value::string("hello")],
+            Span::dummy(),
+            &security,
+            &stdout_writer(),
+        );
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Number(5.0));
     }
@@ -1591,7 +1623,13 @@ mod tests {
     #[test]
     fn test_call_builtin_str() {
         let security = SecurityContext::allow_all();
-        let result = call_builtin("str", &[Value::Number(42.0)], Span::dummy(), &security);
+        let result = call_builtin(
+            "str",
+            &[Value::Number(42.0)],
+            Span::dummy(),
+            &security,
+            &stdout_writer(),
+        );
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::string("42"));
     }
@@ -1599,7 +1637,7 @@ mod tests {
     #[test]
     fn test_call_builtin_wrong_arg_count() {
         let security = SecurityContext::allow_all();
-        let result = call_builtin("print", &[], Span::dummy(), &security);
+        let result = call_builtin("print", &[], Span::dummy(), &security, &stdout_writer());
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -1610,7 +1648,13 @@ mod tests {
     #[test]
     fn test_call_builtin_unknown_function() {
         let security = SecurityContext::allow_all();
-        let result = call_builtin("unknown", &[Value::Null], Span::dummy(), &security);
+        let result = call_builtin(
+            "unknown",
+            &[Value::Null],
+            Span::dummy(),
+            &security,
+            &stdout_writer(),
+        );
         assert!(result.is_err());
         assert!(matches!(
             result.unwrap_err(),
@@ -1635,10 +1679,25 @@ mod tests {
     fn test_print_accepts_all_valid_types() {
         let security = SecurityContext::allow_all();
         // print() should accept string, number, bool, null per spec
-        assert!(call_builtin("print", &[Value::string("test")], Span::dummy(), &security).is_ok());
-        assert!(call_builtin("print", &[Value::Number(42.0)], Span::dummy(), &security).is_ok());
-        assert!(call_builtin("print", &[Value::Bool(true)], Span::dummy(), &security).is_ok());
-        assert!(call_builtin("print", &[Value::Null], Span::dummy(), &security).is_ok());
+        let w = stdout_writer();
+        assert!(call_builtin(
+            "print",
+            &[Value::string("test")],
+            Span::dummy(),
+            &security,
+            &w
+        )
+        .is_ok());
+        assert!(call_builtin(
+            "print",
+            &[Value::Number(42.0)],
+            Span::dummy(),
+            &security,
+            &w
+        )
+        .is_ok());
+        assert!(call_builtin("print", &[Value::Bool(true)], Span::dummy(), &security, &w).is_ok());
+        assert!(call_builtin("print", &[Value::Null], Span::dummy(), &security, &w).is_ok());
     }
 
     #[test]
@@ -1650,6 +1709,7 @@ mod tests {
             &[Value::array(vec![Value::Number(1.0)])],
             Span::dummy(),
             &security,
+            &stdout_writer(),
         );
         assert!(result.is_err());
         assert!(matches!(
@@ -1662,8 +1722,13 @@ mod tests {
     fn test_print_null_displays_correctly() {
         let security = SecurityContext::allow_all();
         // Verify that null prints as "null" per spec
-        // This is a behavioral test - actual stdout not captured in unit test
-        let result = call_builtin("print", &[Value::Null], Span::dummy(), &security);
+        let result = call_builtin(
+            "print",
+            &[Value::Null],
+            Span::dummy(),
+            &security,
+            &stdout_writer(),
+        );
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::Null);
     }
@@ -1677,6 +1742,7 @@ mod tests {
             &[Value::string("already a string")],
             Span::dummy(),
             &security,
+            &stdout_writer(),
         );
         assert!(result.is_err());
         assert!(matches!(
@@ -1694,6 +1760,7 @@ mod tests {
             &[Value::array(vec![Value::Number(1.0)])],
             Span::dummy(),
             &security,
+            &stdout_writer(),
         );
         assert!(result.is_err());
         assert!(matches!(
@@ -1706,8 +1773,43 @@ mod tests {
     fn test_str_accepts_all_valid_types() {
         let security = SecurityContext::allow_all();
         // str() should accept number, bool, null per spec
-        assert!(call_builtin("str", &[Value::Number(42.0)], Span::dummy(), &security).is_ok());
-        assert!(call_builtin("str", &[Value::Bool(true)], Span::dummy(), &security).is_ok());
-        assert!(call_builtin("str", &[Value::Null], Span::dummy(), &security).is_ok());
+        let w = stdout_writer();
+        assert!(call_builtin("str", &[Value::Number(42.0)], Span::dummy(), &security, &w).is_ok());
+        assert!(call_builtin("str", &[Value::Bool(true)], Span::dummy(), &security, &w).is_ok());
+        assert!(call_builtin("str", &[Value::Null], Span::dummy(), &security, &w).is_ok());
+    }
+
+    // ========================================================================
+    // OutputWriter Tests
+    // ========================================================================
+
+    /// A thin Write wrapper around Arc<Mutex<Vec<u8>>> for capturing output in tests.
+    struct VecWriter(Arc<Mutex<Vec<u8>>>);
+
+    impl std::io::Write for VecWriter {
+        fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+            self.0.lock().unwrap().extend_from_slice(buf);
+            Ok(buf.len())
+        }
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_print_writes_to_custom_writer() {
+        let buf: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
+        let writer: OutputWriter = Arc::new(Mutex::new(Box::new(VecWriter(buf.clone()))));
+        let security = SecurityContext::allow_all();
+        call_builtin(
+            "print",
+            &[Value::string("hello")],
+            Span::dummy(),
+            &security,
+            &writer,
+        )
+        .unwrap();
+        let output = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
+        assert_eq!(output, "hello\n");
     }
 }

@@ -249,7 +249,13 @@ impl Interpreter {
                 if crate::stdlib::is_builtin(&func_ref.name) {
                     let security =
                         unsafe { &*self.current_security.expect("Security context not set") };
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, call.span, security);
+                    return crate::stdlib::call_builtin(
+                        &func_ref.name,
+                        &args,
+                        call.span,
+                        security,
+                        &self.output_writer,
+                    );
                 }
 
                 // Check for array intrinsics (callback-based functions)
@@ -339,7 +345,13 @@ impl Interpreter {
 
         // 4. Call stdlib function
         let security = unsafe { &*self.current_security.expect("Security context not set") };
-        crate::stdlib::call_builtin(&func_name, &args, member.span, security)
+        crate::stdlib::call_builtin(
+            &func_name,
+            &args,
+            member.span,
+            security,
+            &self.output_writer,
+        )
     }
 
     /// Evaluate try expression (error propagation operator ?)
@@ -1910,7 +1922,13 @@ impl Interpreter {
                 if crate::stdlib::is_builtin(&func_ref.name) {
                     let security =
                         unsafe { &*self.current_security.expect("Security context not set") };
-                    return crate::stdlib::call_builtin(&func_ref.name, &args, span, security);
+                    return crate::stdlib::call_builtin(
+                        &func_ref.name,
+                        &args,
+                        span,
+                        security,
+                        &self.output_writer,
+                    );
                 }
 
                 // User-defined function

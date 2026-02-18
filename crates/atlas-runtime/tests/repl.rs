@@ -2,17 +2,15 @@
 // Covers: state persistence, type tracking
 
 use atlas_runtime::repl::ReplCore;
-use atlas_runtime::Value;
 use atlas_runtime::types::Type;
+use atlas_runtime::Value;
 use rstest::rstest;
-
 
 // --- REPL state persistence ---
 
 // Modern REPL State Tests
 //
 // Converted from repl_state_tests.rs (373 lines → ~240 lines = 36% reduction)
-
 
 fn eval_ok(repl: &mut ReplCore, input: &str) -> Value {
     let result = repl.eval_line(input);
