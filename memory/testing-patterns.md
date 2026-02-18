@@ -1,6 +1,6 @@
 # Atlas Testing Patterns
 
-**Purpose:** How to write and organize tests in Atlas. Follow this exactly — deviations recreate the 125-binary bloat problem that cost significant engineering time.
+**Purpose:** How to write and organize tests in Atlas. Follow this exactly — deviations recreate the binary bloat problem that cost significant engineering time.
 
 ---
 
@@ -8,13 +8,13 @@
 
 **DO NOT create new `*.rs` files in `crates/atlas-runtime/tests/`.**
 
-The test suite was consolidated from 125 → ~17 domain files (infra phases 01-03). Every new test file is a new binary: more link time, more process overhead, slower CI. New tests go into the **existing domain files** listed below.
+The test suite was consolidated from many small files into domain files (infra phases 01-03). Every new test file is a new binary: more link time, more process overhead, slower CI. New tests go into the **existing domain files** listed below.
 
 **The only exception:** If a new domain is added that genuinely has no existing home, get explicit approval and document the reasoning in `memory/decisions.md`.
 
 ---
 
-## The 17 Canonical Test Files
+## Canonical Test Files
 
 Add new tests to the appropriate existing file:
 
@@ -193,20 +193,17 @@ Every new feature must add tests to the appropriate domain file covering:
 3. **Error cases** — wrong types, invalid arguments, out of bounds
 4. **Parity** — interpreter and VM produce identical output (use `assert_parity`)
 
-**Minimum counts (from phase acceptance criteria):**
-- New stdlib function: 10+ tests
-- New collection type: 15+ tests
-- New language feature: 20+ tests
+**Minimum counts:** Defined per-phase in the phase file's acceptance criteria. Always meet or exceed.
 
-**Corpus requirement (new from infra-05):**
-- Every new language syntax feature: add at least 2 corpus files (one pass, one fail)
-- Every new stdlib function: add at least 1 corpus file (pass case)
+**Corpus requirement:**
+- New language syntax feature: add corpus files (pass and fail cases)
+- New stdlib function: add at least one corpus file (pass case)
 
 ---
 
 ## What Changed (Context for Agents)
 
-Pre-infra: 125 test files, one per feature, ~2.3GB of binaries, 60-90s test runs.
-Post-infra: ~17-20 domain files, <400MB of binaries, <20s test runs.
+Pre-infra: one test file per feature, massive binary bloat, slow test runs.
+Post-infra: consolidated domain files, fast builds, fast test runs.
 
 The old pattern (`{feature}_tests.rs`) is what caused the problem. Don't recreate it.

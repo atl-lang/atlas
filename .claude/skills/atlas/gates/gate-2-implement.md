@@ -48,7 +48,7 @@ cargo nextest run -p atlas-runtime -E 'test(exact_name)'
 # Domain file (validate your work area)
 cargo nextest run -p atlas-runtime --test <domain_file>
 
-# Full suite — GATE 6 ONLY (~15-20s)
+# Full suite — GATE 6 ONLY
 cargo nextest run -p atlas-runtime
 ```
 

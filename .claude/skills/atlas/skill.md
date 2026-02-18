@@ -56,11 +56,11 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 ### 7. Testing Protocol (SURGICAL)
 **During:** `cargo nextest run -p atlas-runtime -E 'test(exact_name)'` (ONE test)
 **Per-file:** `cargo nextest run -p atlas-runtime --test <domain_file>` (validate domain file)
-**Full suite:** GATE 6 only — `cargo nextest run -p atlas-runtime` (~15-20s, acceptable before handoff)
+**Full suite:** GATE 6 only — `cargo nextest run -p atlas-runtime`
 **Banned:** Creating new `tests/*.rs` files (adds binary bloat), bare `#[ignore]` without reason string
 
 **Test placement rules (non-negotiable):**
-- New tests → existing domain file (see `memory/testing-patterns.md` for the 17 canonical files)
+- New tests → existing domain file (see `memory/testing-patterns.md` for the canonical file list)
 - New language behavior → also add `.atlas` corpus file in `tests/corpus/pass/` or `tests/corpus/fail/`
 - Unit tests (no external deps) → `#[cfg(test)]` in source file, NOT in `tests/`
 - Parity tests → use `assert_parity()` helper, NEVER write duplicate interpreter+VM functions
@@ -118,7 +118,7 @@ cargo nextest run -p atlas-runtime --test <domain_file>             # Domain fil
 **Before handoff (GATE 6):**
 ```bash
 cargo nextest run -p atlas-runtime --test <domain_file>  # Phase domain file
-cargo nextest run -p atlas-runtime                        # Full suite (~15-20s)
+cargo nextest run -p atlas-runtime                        # Full suite
 cargo clippy -p atlas-runtime -- -D warnings             # Zero warnings
 ```
 

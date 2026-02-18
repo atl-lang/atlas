@@ -16,7 +16,7 @@
 - Error handling, helper functions, test harness
 
 **testing-patterns.md** - Testing strategies and guidelines ⚠️ READ BEFORE WRITING TESTS
-- **NEVER create new test files** — add to existing ~17 domain files
+- **NEVER create new test files** — add to existing domain files (see `testing-patterns.md`)
 - Corpus tests (`.atlas` source files in `tests/corpus/`) — preferred for new language features
 - Parity helper `assert_parity()` — always use instead of duplicate interpreter/VM functions
 - `#[ignore]` must always have a reason string — bare `#[ignore]` is banned
@@ -120,7 +120,7 @@ atlas/
 **Testing protocol:**
 - During dev: `cargo nextest run -p atlas-runtime -E 'test(name)'` (single test)
 - Domain file: `cargo nextest run -p atlas-runtime --test <domain_file>`
-- Before handoff: `cargo nextest run -p atlas-runtime` (full suite, ~15-20s)
+- Before handoff: `cargo nextest run -p atlas-runtime` (full suite)
 
 ---
 
