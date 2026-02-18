@@ -6,6 +6,24 @@
 
 ---
 
+## 🎯 END GOAL (Read This First)
+
+**Atlas will become a world-class systems language rivaling Rust, Go, C.**
+
+| Current | Future |
+|---------|--------|
+| Application-tier (Go-level) | Systems-tier (Rust-level) |
+| Interpreter + Bytecode VM | + LLVM native backend |
+| `Arc<Mutex<>>` memory | Ownership OR GC (AI decides) |
+
+**Memory model decision:** When v1.0+ planning begins, AI agents research and decide the best approach (Rust ownership vs Go GC vs Swift hybrid). Do NOT ask user — research, analyze, propose.
+
+**All current work enables this goal.** Frontend, types, tooling = 100% reusable for native codegen.
+
+See `language-classification.md` for full details.
+
+---
+
 ## File Index
 
 **language-classification.md** - Language tier and evolution path
