@@ -158,29 +158,56 @@ grep -r "unimplemented!" crates/atlas-runtime/src/
 
 #### Test Execution During Development
 
-**CRITICAL:** Use `-- --exact` flag to run ONE test at a time.
+**CRITICAL:** Run ONE test at a time during development.
 
 ```bash
-# CORRECT: Run specific test
-cargo test -p atlas-runtime test_hashmap_foreach -- --exact
+# CORRECT: Run specific test by name
+cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'
 
-# WRONG: Run all tests (wastes time)
-cargo test -p atlas-runtime
+# CORRECT: Run domain file for current phase work
+cargo nextest run -p atlas-runtime --test stdlib
+
+# WRONG: Full suite during development
+cargo nextest run -p atlas-runtime
 ```
 
 **Rationale:**
-- Faster feedback (seconds vs minutes)
-- Clear which test failed
-- Don't re-run passing tests
+- Single test: instant feedback
+- Domain file: validates the file you're working in (~seconds)
+- Full suite: run at GATE 6 only (still fast at ~15-20s, but unnecessary noise during dev)
+
+#### Where New Tests Go
+
+**DO NOT create new test files.** Add tests to the existing domain file for the feature:
+- Stdlib function → `tests/stdlib.rs`
+- Interpreter behavior → `tests/interpreter.rs`
+- VM behavior → `tests/vm.rs`
+- Type system → `tests/typesystem.rs`
+- See `memory/testing-patterns.md` for the full domain file list.
+
+New language behavior → also add a corpus test in `tests/corpus/pass/` or `tests/corpus/fail/`.
+
+#### #[ignore] Rules
+
+Every `#[ignore]` must have a reason string. Bare `#[ignore]` is banned:
+```rust
+// ✅ CORRECT
+#[ignore = "requires network"]
+// ❌ BANNED
+#[ignore]
+```
 
 ### Validation
 
 ```bash
-# Count tests (must meet phase minimum)
-grep -c "^#\[test\]" crates/atlas-runtime/tests/<phase_test_file>.rs
+# Count tests in domain file (must meet phase minimum)
+grep -c "^#\[test\]\|^#\[rstest\]" crates/atlas-runtime/tests/<domain_file>.rs
 
-# Run phase test files (NOT full suite)
-cargo nextest run -p atlas-runtime --test <phase_test_file>
+# Run domain file for current phase
+cargo nextest run -p atlas-runtime --test <domain_file>
+
+# Verify no bare #[ignore] introduced
+grep -n "^#\[ignore\]$" crates/atlas-runtime/tests/<domain_file>.rs  # must be empty
 ```
 
 ### Outcome
@@ -391,32 +418,35 @@ Individual/per-file tests + cargo check + clippy catch regressions without wasti
 
 ### During Development
 
-**ALWAYS use `-- --exact` for single test execution:**
+**Run ONE test at a time. Use the domain file, not the full suite.**
 
 ```bash
-# ✅ CORRECT
-cargo test -p atlas-runtime test_hashmap_foreach -- --exact
+# ✅ CORRECT — single test
+cargo nextest run -p atlas-runtime -E 'test(test_hashmap_foreach)'
 
-# ❌ WRONG
-cargo test -p atlas-runtime  # Full suite (slow)
-cargo test -p atlas-runtime hashmap  # Pattern match (runs many)
+# ✅ CORRECT — domain file
+cargo nextest run -p atlas-runtime --test stdlib
+
+# ❌ WRONG — full suite during dev (unnecessary noise)
+cargo nextest run -p atlas-runtime
 ```
 
 ### Before Handoff (GATE 6 Only)
 
-**Run phase-specific test files:**
-
 ```bash
-cargo test -p atlas-runtime --test <test_file>  # Per-file validation
-cargo clippy -p atlas-runtime -- -D warnings    # Quality check
+cargo nextest run -p atlas-runtime --test <domain_file>  # Domain file validation
+cargo clippy -p atlas-runtime -- -D warnings             # Quality check
 ```
 
-**Full suite is EMERGENCY ONLY** — use when something unexplainable is happening.
+**Full suite at GATE 6:**
+```bash
+cargo nextest run -p atlas-runtime  # ~15-20 seconds — run once before commit
+```
 
 **Rationale:**
-- During dev: single tests (seconds)
-- Before handoff: per-file + clippy (seconds)
-- Full suite: 15+ minutes, almost never catches anything cargo check + targeted tests don't
+- During dev: single test (instant)
+- Domain file: validates your work area in seconds
+- Full suite: ~15-20s after infra consolidation — acceptable at GATE 6, not during dev loops
 
 ---
 

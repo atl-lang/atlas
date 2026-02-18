@@ -1,462 +1,212 @@
 # Atlas Testing Patterns
 
-**Purpose:** How to test Atlas runtime features effectively.
+**Purpose:** How to write and organize tests in Atlas. Follow this exactly — deviations recreate the 125-binary bloat problem that cost significant engineering time.
 
 ---
 
-## Test Infrastructure
+## THE CARDINAL RULE: No New Test Files Without Authorization
 
-**Location:** `crates/atlas-runtime/tests/*.rs`
+**DO NOT create new `*.rs` files in `crates/atlas-runtime/tests/`.**
 
-**Libraries:**
-- **rstest:** Parameterized tests
-- **insta:** Snapshot testing
-- **proptest:** Property-based testing
-- **pretty_assertions:** Better test output
+The test suite was consolidated from 125 → ~17 domain files (infra phases 01-03). Every new test file is a new binary: more link time, more process overhead, slower CI. New tests go into the **existing domain files** listed below.
+
+**The only exception:** If a new domain is added that genuinely has no existing home, get explicit approval and document the reasoning in `memory/decisions.md`.
 
 ---
 
-## Integration Test Pattern (Standard)
+## The 17 Canonical Test Files
 
-**Use for:** Testing runtime behavior end-to-end
+Add new tests to the appropriate existing file:
 
-```rust
-use atlas_runtime::interpreter::Interpreter;
-use atlas_runtime::lexer::Lexer;
-use atlas_runtime::parser::Parser;
-use atlas_runtime::security::SecurityContext;
+| File | What goes here |
+|------|---------------|
+| `tests/frontend_syntax.rs` | Lexer, parser, syntax, operators, keywords, warnings, for-in parsing |
+| `tests/diagnostics.rs` | Diagnostic ordering, error spans, source maps, enhanced errors |
+| `tests/frontend_integration.rs` | Full frontend pipeline, AST, bytecode validation |
+| `tests/typesystem.rs` | Type inference, aliases, guards, union/intersection, generics, constraints |
+| `tests/interpreter.rs` | Interpreter execution, member access, nested functions, scope, patterns |
+| `tests/vm.rs` | VM execution, regression, performance, first-class functions, generics |
+| `tests/stdlib.rs` | All stdlib functions (strings, arrays, json, IO, math, options, results, parity) |
+| `tests/collections.rs` | HashMap, HashSet, Queue, Stack, generics runtime |
+| `tests/bytecode.rs` | Bytecode compiler, optimizer, profiler, parity |
+| `tests/async_runtime.rs` | Futures, channels, timers, async I/O |
+| `tests/ffi.rs` | FFI types, parsing, interpreter, VM, callbacks |
+| `tests/debugger.rs` | Debugger execution, inspection, protocol |
+| `tests/security.rs` | Permissions, sandboxing, audit logging |
+| `tests/modules.rs` | Module binding, execution, resolution |
+| `tests/http.rs` | HTTP core and advanced (most tests `#[ignore = "requires network"]`) |
+| `tests/datetime_regex.rs` | DateTime, regex core and operations |
+| `tests/system.rs` | Path, filesystem, process, compression (gzip, tar, zip) |
+| `tests/api.rs` | Public embedding API, conversion, native functions, reflection |
+| `tests/repl.rs` | REPL state, types |
+| `tests/regression.rs` | Regression suite (specific bug reproductions) |
 
-fn run(code: &str) -> Result<String, String> {
-    let mut lexer = Lexer::new(code);
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (ast, _) = parser.parse();
-    let mut interpreter = Interpreter::new();
-    let security = SecurityContext::allow_all();
-    match interpreter.eval(&ast, &security) {
-        Ok(val) => Ok(format!("{:?}", val)),
-        Err(e) => Err(format!("{:?}", e)),
-    }
-}
-
-#[test]
-fn test_basic_operation() {
-    let code = r#"
-        let x = 42;
-        x + 1
-    "#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "Number(43.0)");
-}
-
-#[test]
-fn test_error_case() {
-    let code = r#"
-        hashMapPut("not a map", "key", "value")
-    "#;
-    let result = run(code);
-    assert!(result.is_err());
-    assert!(result.unwrap_err().contains("TypeError"));
-}
-```
+**Unit tests** (testing internal module logic with no external deps) go in `#[cfg(test)]` blocks inside the source file they test — NOT in `tests/`.
 
 ---
 
-## Testing Intrinsics (Callbacks)
+## The File-Based Corpus (Preferred for New Feature Tests)
 
-**Challenge:** Atlas closures capture environment, callbacks execute in caller's scope.
+The preferred way to add tests for language behavior is via the corpus, not Rust test functions.
 
-### Pattern 1: Simple Callback
+**Location:** `crates/atlas-runtime/tests/corpus/`
 
-```rust
-#[test]
-fn test_map_intrinsic() {
-    let code = r#"
-        let arr = [1, 2, 3];
-        let result = map(arr, fn(x) { x * 2; });
-        result
-    "#;
-    let result = run(code).unwrap();
-    assert!(result.contains("2.0"));
-    assert!(result.contains("4.0"));
-    assert!(result.contains("6.0"));
-}
+```
+tests/corpus/
+├── pass/         # .atlas files that should run and produce expected output
+│   └── foo.atlas + foo.stdout
+├── fail/         # .atlas files that should produce specific errors
+│   └── bar.atlas + bar.stderr
+└── warn/         # .atlas files that should produce specific warnings
+    └── baz.atlas + baz.stderr
 ```
 
-### Pattern 2: Multi-Argument Callback (HashMap)
+**How to add a corpus test:**
+1. Write a `.atlas` file demonstrating the feature
+2. Run with `UPDATE_CORPUS=1 cargo nextest run -p atlas-runtime --test corpus` to generate the expected output file
+3. Commit both files
 
-```rust
-#[test]
-fn test_hashmap_foreach_callback_args() {
-    let code = r#"
-        let map = hashMapNew();
-        hashMapPut(map, "a", 1);
-        hashMapPut(map, "b", 2);
-        let result = hashMapMap(map, fn(value, key) {
-            value * 2;
-        });
-        hashMapGet(result, "a")
-    "#;
-    let result = run(code).unwrap();
-    assert!(result.contains("2.0"));
-}
-```
-
-**Key:** Callbacks receive `(value, key)` for maps, `(element)` for sets/arrays.
-
-### Pattern 3: Testing Callback Errors
-
-```rust
-#[test]
-fn test_callback_type_error() {
-    let code = r#"
-        let arr = [1, 2, 3];
-        map(arr, "not a function")
-    "#;
-    let result = run(code);
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_callback_runtime_error() {
-    let code = r#"
-        let arr = [1, 2, 3];
-        map(arr, fn(x) { x / 0; })
-    "#;
-    let result = run(code);
-    // Depending on error handling, may succeed or error
-    // Document expected behavior
-}
-```
+**Why corpus over Rust tests:** Corpus tests are written in Atlas (readable by anyone), automatically test parity (harness runs both interpreter and VM), and serve as living documentation of language behavior. This is how rustc, clang, and Go test their compilers.
 
 ---
 
-## Testing Collections
+## Writing Rust Tests (When Corpus Isn't Enough)
 
-### Pattern 1: Basic Operations
+### Standard helper pattern (use the existing helper in each domain file)
+
+Each domain file already has a canonical `eval_ok` / `run` helper at the top. Use it — don't define a new one.
 
 ```rust
+// Use the existing helper in the file, e.g.:
 #[test]
-fn test_hashmap_put_get() {
-    let code = r#"
-        let map = hashMapNew();
-        hashMapPut(map, "key", 42);
-        hashMapGet(map, "key")
-    "#;
-    let result = run(code).unwrap();
-    assert!(result.contains("42.0"));
+fn test_new_behavior() {
+    assert_eq!(eval_ok("1 + 2"), Value::Number(3.0));
 }
 ```
 
-### Pattern 2: Reference Semantics
+### Parity pattern (interpreter + VM identical output)
+
+For anything in `stdlib.rs` or `bytecode.rs`, use the existing `assert_parity` helper:
 
 ```rust
 #[test]
-fn test_hashmap_reference_semantics() {
-    let code = r#"
-        let map1 = hashMapNew();
-        let map2 = map1;  // Same reference
-        hashMapPut(map1, "key", 100);
-        hashMapGet(map2, "key")  // Should see the change
-    "#;
-    let result = run(code).unwrap();
-    assert!(result.contains("100.0"));
+fn test_feature_parity() {
+    assert_parity(r#"len("hello")"#, "5");
 }
 ```
 
-### Pattern 3: Empty Collections
+This runs the code in both engines and asserts identical output. Never write two separate functions (`test_feature_interpreter` and `test_feature_vm`) — that's the old pattern.
 
-```rust
-#[test]
-fn test_empty_collection_edge_case() {
-    let code = r#"
-        let map = hashMapNew();
-        let result = hashMapMap(map, fn(v, k) { v; });
-        hashMapSize(result)
-    "#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "Number(0.0)");
-}
-```
-
-### Pattern 4: Large Collections
-
-```rust
-#[test]
-fn test_large_collection() {
-    let code = r#"
-        let map = hashMapNew();
-        let i = 0;
-        while (i < 100) {
-            hashMapPut(map, toString(i), i);
-            i = i + 1;
-        }
-        hashMapSize(map)
-    "#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "Number(100.0)");
-}
-```
-
----
-
-## Testing Parity (Interpreter vs VM)
-
-**Requirement:** Both engines must produce identical results.
-
-### Pattern 1: Integration Test (Tests Interpreter)
-
-```rust
-#[test]
-fn test_operation() {
-    let code = r#"/* test code */"#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "expected");
-}
-```
-
-**Note:** The `run()` helper uses Interpreter by default. VM parity is tested by running the full test suite with VM execution mode.
-
-### Pattern 2: Explicit VM Test (If Needed)
-
-```rust
-use atlas_runtime::vm::VM;
-use atlas_runtime::bytecode::BytecodeCompiler;
-
-fn run_vm(code: &str) -> Result<String, String> {
-    let mut lexer = Lexer::new(code);
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (ast, _) = parser.parse();
-
-    let mut compiler = BytecodeCompiler::new();
-    let chunk = compiler.compile(&ast).map_err(|e| format!("{:?}", e))?;
-
-    let mut vm = VM::new();
-    let security = SecurityContext::allow_all();
-    match vm.run(&chunk, &security) {
-        Ok(val) => Ok(format!("{:?}", val)),
-        Err(e) => Err(format!("{:?}", e)),
-    }
-}
-
-#[test]
-fn test_parity() {
-    let code = r#"/* test code */"#;
-    let interp_result = run(code).unwrap();
-    let vm_result = run_vm(code).unwrap();
-    assert_eq!(interp_result, vm_result);
-}
-```
-
----
-
-## Parameterized Tests (rstest)
-
-**Use for:** Testing multiple inputs with same logic
+### Parameterized tests (rstest)
 
 ```rust
 use rstest::rstest;
 
 #[rstest]
-#[case(1, 2, 3)]
-#[case(10, 20, 30)]
-#[case(-5, 5, 0)]
-fn test_addition(#[case] a: i64, #[case] b: i64, #[case] expected: i64) {
-    let code = format!("let x = {}; let y = {}; x + y", a, b);
-    let result = run(&code).unwrap();
-    assert!(result.contains(&format!("{}.0", expected)));
+#[case("hello", 5)]
+#[case("", 0)]
+#[case("hello世界", 7)]
+fn test_len(#[case] input: &str, #[case] expected: f64) {
+    assert_parity(&format!(r#"len("{}")"#, input), &expected.to_string());
 }
 ```
 
----
-
-## Snapshot Tests (insta)
-
-**Use for:** Testing complex output (AST, bytecode, error messages)
+### Snapshot tests (insta) — for error messages and complex output
 
 ```rust
 use insta::assert_snapshot;
 
 #[test]
-fn test_error_message() {
-    let code = r#"let x = undefined_var;"#;
-    let result = run(code).unwrap_err();
-    assert_snapshot!(result);
-}
-```
-
-**Workflow:**
-1. Run test first time → creates snapshot
-2. Run again → compares to snapshot
-3. On mismatch → `cargo insta review` to accept/reject
-
----
-
-## Property-Based Tests (proptest)
-
-**Use for:** Testing invariants with random inputs
-
-```rust
-use proptest::prelude::*;
-
-proptest! {
-    #[test]
-    fn test_hashmap_size_invariant(keys in prop::collection::vec(".*", 0..100)) {
-        let mut code = String::from("let map = hashMapNew();\n");
-        for (i, key) in keys.iter().enumerate() {
-            code.push_str(&format!("hashMapPut(map, \"{}\", {});\n", key, i));
-        }
-        code.push_str("hashMapSize(map)");
-
-        let result = run(&code).unwrap();
-        let expected = keys.len();
-        assert!(result.contains(&format!("{}.0", expected)));
-    }
+fn test_error_message_quality() {
+    let err = eval_err(r#"let x: string = 42;"#);
+    assert_snapshot!(err);
 }
 ```
 
 ---
 
-## Atlas Language Semantics (Important!)
+## The #[ignore] Rules (Non-Negotiable)
 
-### Closure Semantics
-
-**Atlas closures capture environment by reference, not value.**
+**Bare `#[ignore]` is banned.** Every ignored test must have an explicit reason:
 
 ```rust
-#[test]
-fn test_closure_captures_reference() {
-    let code = r#"
-        let x = 1;
-        let f = fn() { x; };
-        x = 2;  // Mutate x
-        f()     // Returns 2, not 1!
-    "#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "Number(2.0)");
-}
+// ✅ CORRECT
+#[ignore = "requires network"]
+#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires platform: linux"]
+#[ignore = "not yet implemented: feature-name"]
+
+// ❌ BANNED
+#[ignore]
 ```
 
-**Implication:** Callbacks in intrinsics see current environment state.
-
-### Function Return Values
-
-**Last expression in function is the return value (no explicit return needed).**
-
-```rust
-#[test]
-fn test_implicit_return() {
-    let code = r#"
-        let f = fn(x) { x * 2; };  // Semicolon required!
-        f(5)
-    "#;
-    let result = run(code).unwrap();
-    assert_eq!(result, "Number(10.0)");
-}
-```
-
-### Truthiness
-
-**Truthy:** All values except `false` and `null`
-**Falsy:** `false`, `null`
-
-```rust
-#[test]
-fn test_filter_truthiness() {
-    let code = r#"
-        let arr = [0, 1, 2, false, null];
-        filter(arr, fn(x) { x; })  // 0, 1, 2 are truthy!
-    "#;
-    let result = run(code).unwrap();
-    // 0, 1, 2 pass (numbers are truthy)
-}
-```
+If you find a bare `#[ignore]`, fix it before writing new tests. Don't add to the debt.
 
 ---
 
-## Test Organization
+## Test Execution Commands
 
-### File Naming
+### During development (use these)
+```bash
+# Single test — always use --exact
+cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'
 
-- `{feature}_tests.rs` - Feature integration tests
-- `{feature}_integration_tests.rs` - Cross-feature tests
-- `diagnostic_*.rs` - Compiler diagnostic tests
+# One domain file
+cargo nextest run -p atlas-runtime --test stdlib
 
-### Test Naming
-
-- `test_{feature}_{scenario}` - Descriptive names
-- `test_{feature}_error_{case}` - Error cases
-- `test_parity_{feature}` - Parity verification
-
-### Test Groups
-
-```rust
-// Group related tests with comments
-// ========================================
-// HashMap Basic Operations
-// ========================================
-
-#[test]
-fn test_hashmap_new() { /* ... */ }
-
-#[test]
-fn test_hashmap_put() { /* ... */ }
-
-// ========================================
-// HashMap Iteration
-// ========================================
-
-#[test]
-fn test_hashmap_foreach() { /* ... */ }
+# Corpus only
+cargo nextest run -p atlas-runtime --test corpus
 ```
 
----
-
-## Test Execution
-
-### Run All Tests
-
+### Before handoff (GATE 6)
 ```bash
-cargo test -p atlas-runtime
+cargo nextest run -p atlas-runtime --test <domain_file>  # Domain file for phase
+cargo clippy -p atlas-runtime -- -D warnings
 ```
 
-### Run Specific Test
-
+### Full suite
 ```bash
-cargo test -p atlas-runtime test_hashmap_foreach -- --exact
+cargo nextest run -p atlas-runtime          # ~15-20 seconds, excludes network/slow tests
+cargo nextest run -p atlas-runtime --run-ignored all  # Includes network tests (slow)
 ```
 
-### Run With Output
-
+### Benchmarks (performance-sensitive changes only)
 ```bash
-cargo test -p atlas-runtime test_name -- --nocapture
+cargo bench -p atlas-runtime --bench vm     # VM benchmark
+cargo bench -p atlas-runtime               # Full benchmark suite
 ```
 
-### Run Pattern Match
-
+### Fuzz (when modifying lexer/parser/typechecker)
 ```bash
-cargo test -p atlas-runtime hashmap  # Runs all tests with "hashmap" in name
+cargo +nightly fuzz run fuzz_lexer -- -max_total_time=60
+cargo +nightly fuzz run fuzz_parser -- -max_total_time=60
 ```
 
 ---
 
 ## Quality Standards
 
-**Every feature must have:**
-1. ✅ Happy path tests (basic operations work)
-2. ✅ Edge case tests (empty, large, boundary values)
-3. ✅ Error tests (wrong types, invalid arguments)
-4. ✅ Integration tests (feature + feature)
-5. ✅ Parity verification (interpreter == VM)
+Every new feature must add tests to the appropriate domain file covering:
 
-**Test coverage guidelines:**
-- 10+ tests for new intrinsic
-- 15+ tests for new collection type
-- 20+ tests for complex feature (pattern matching, etc.)
+1. **Happy path** — basic correct usage
+2. **Edge cases** — empty input, boundary values, large input
+3. **Error cases** — wrong types, invalid arguments, out of bounds
+4. **Parity** — interpreter and VM produce identical output (use `assert_parity`)
 
-**Test quality over quantity:**
-- Clear test names
-- Focused assertions
-- Good error messages
-- Documented edge cases
+**Minimum counts (from phase acceptance criteria):**
+- New stdlib function: 10+ tests
+- New collection type: 15+ tests
+- New language feature: 20+ tests
+
+**Corpus requirement (new from infra-05):**
+- Every new language syntax feature: add at least 2 corpus files (one pass, one fail)
+- Every new stdlib function: add at least 1 corpus file (pass case)
+
+---
+
+## What Changed (Context for Agents)
+
+Pre-infra: 125 test files, one per feature, ~2.3GB of binaries, 60-90s test runs.
+Post-infra: ~17-20 domain files, <400MB of binaries, <20s test runs.
+
+The old pattern (`{feature}_tests.rs`) is what caused the problem. Don't recreate it.

@@ -15,10 +15,13 @@
 - Stdlib function pattern (non-intrinsic)
 - Error handling, helper functions, test harness
 
-**testing-patterns.md** - Testing strategies and guidelines
-- Integration test pattern, testing intrinsics with callbacks
-- Parity verification (interpreter vs VM)
-- Parameterized tests (rstest), snapshot tests (insta), proptest
+**testing-patterns.md** - Testing strategies and guidelines ⚠️ READ BEFORE WRITING TESTS
+- **NEVER create new test files** — add to existing ~17 domain files
+- Corpus tests (`.atlas` source files in `tests/corpus/`) — preferred for new language features
+- Parity helper `assert_parity()` — always use instead of duplicate interpreter/VM functions
+- `#[ignore]` must always have a reason string — bare `#[ignore]` is banned
+- Fuzz targets in `crates/atlas-runtime/fuzz/` — run when modifying lexer/parser/typechecker
+- Criterion benchmarks in `crates/atlas-runtime/benches/` — run when optimizing execution
 
 **decisions.md** - Architectural decision log
 - DR-001: Interpreter + VM dual execution
@@ -117,8 +120,9 @@ atlas/
 **Before handoff?** → GATE 4-6 (quality, docs, status)
 
 **Testing protocol:**
-- During dev: `cargo test -p atlas-runtime test_name -- --exact`
-- Before handoff: `cargo test -p atlas-runtime` (full suite once)
+- During dev: `cargo nextest run -p atlas-runtime -E 'test(name)'` (single test)
+- Domain file: `cargo nextest run -p atlas-runtime --test <domain_file>`
+- Before handoff: `cargo nextest run -p atlas-runtime` (full suite, ~15-20s)
 
 ---
 
