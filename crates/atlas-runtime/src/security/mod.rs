@@ -39,3 +39,11 @@ pub use audit::{AuditEntry, AuditEvent, AuditLogger, MemoryAuditLogger, NullAudi
 pub use permissions::{Permission, PermissionSet, SecurityContext, SecurityError};
 pub use policy::{PolicyError, PolicyManager, SecurityPolicy};
 pub use sandbox::{ResourceQuotas, ResourceUsage, Sandbox, SandboxError};
+
+// Compile-time assertion: SecurityContext must be Send + Sync for Arc<SecurityContext> usage.
+const _: () = {
+    fn _assert_send_sync<T: Send + Sync>() {}
+    fn _check() {
+        _assert_send_sync::<SecurityContext>();
+    }
+};

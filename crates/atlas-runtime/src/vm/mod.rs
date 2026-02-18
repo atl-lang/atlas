@@ -57,7 +57,7 @@ pub struct VM {
     /// Cleared by `run_debuggable` after it reads the flag.
     debug_pause_pending: bool,
     /// Security context for current execution (set during run())
-    current_security: Option<*const crate::security::SecurityContext>,
+    current_security: Option<std::sync::Arc<crate::security::SecurityContext>>,
     /// Output writer for print() (defaults to stdout)
     output_writer: crate::stdlib::OutputWriter,
     /// FFI library loader (phase-10b)
@@ -392,7 +392,7 @@ impl VM {
         self.debug_pause_pending = false;
 
         // Run the execute loop (profiling hooks still active).
-        self.current_security = Some(security as *const _);
+        self.current_security = Some(std::sync::Arc::new(security.clone()));
         if let Some(ref mut profiler) = self.profiler {
             if profiler.is_enabled() {
                 profiler.start_timing();
@@ -430,7 +430,7 @@ impl VM {
         security: &crate::security::SecurityContext,
     ) -> Result<Option<Value>, RuntimeError> {
         // Store security context for builtin calls
-        self.current_security = Some(security as *const _);
+        self.current_security = Some(std::sync::Arc::new(security.clone()));
         // Start profiling timer if profiler is enabled
         if let Some(ref mut profiler) = self.profiler {
             if profiler.is_enabled() {
@@ -838,9 +838,10 @@ impl VM {
                                 self.pop();
 
                                 // Call the builtin
-                                let security = unsafe {
-                                    &*self.current_security.expect("Security context not set")
-                                };
+                                let security = self
+                                    .current_security
+                                    .as_ref()
+                                    .expect("Security context not set");
                                 let result = crate::stdlib::call_builtin(
                                     &func.name,
                                     &args,
@@ -2356,8 +2357,10 @@ impl VM {
             Value::Function(func_ref) => {
                 // Check for builtins
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    let security =
-                        unsafe { &*self.current_security.expect("Security context not set") };
+                    let security = self
+                        .current_security
+                        .as_ref()
+                        .expect("Security context not set");
                     return crate::stdlib::call_builtin(
                         &func_ref.name,
                         &args,

@@ -1,14 +1,14 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-18
-**Version:** v0.2 | **Progress:** 98/130 phases (75%)
+**Last Updated:** 2026-02-19
+**Version:** v0.2 | **Progress:** 99/130 phases (76%)
 
 ---
 
 ## Current Phase
 
-**Last Completed:** phases/infra/phase-07-benchmark-suite.md
-**Next Phase:** phases/correctness/phase-01-security-context-threading.md
+**Last Completed:** phases/correctness/phase-01-security-context-threading.md
+**Next Phase:** phases/correctness/phase-02-builtin-dispatch-registry.md
 
 > **Execution order:** Correctness (11) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
 > Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
@@ -20,7 +20,7 @@
 | Category | Done | Status |
 |----------|------|--------|
 | **Infra** | 20/20 | ✅ Complete |
-| **Correctness** | 0/11 | 🚨 Do after Infra |
+| **Correctness** | 1/11 | 🚧 In progress |
 | **Foundation** | 33/33 | ✅ Archived |
 | **Stdlib** | 28/30 | ✅ Near complete (phase-16+ TBD) |
 | **Bytecode-VM** | 8/8 | ✅ Archived |
@@ -43,7 +43,7 @@
 ### Correctness (0/11) — Do after Infra
 
 **Structural safety:**
-⬜ phase-01-security-context-threading.md — Replace *const SecurityContext with Arc<SecurityContext>
+✅ phase-01-security-context-threading.md — Replace *const SecurityContext with Arc<SecurityContext>
 ⬜ phase-02-builtin-dispatch-registry.md — Unified OnceLock registry (eliminate dual match)
 ⬜ phase-03-value-builtin-variant.md — Value::Builtin(Arc<str>); separate builtins from user fns
 

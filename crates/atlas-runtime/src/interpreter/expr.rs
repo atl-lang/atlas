@@ -247,8 +247,10 @@ impl Interpreter {
             Value::Function(func_ref) => {
                 // Check for stdlib functions first
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    let security =
-                        unsafe { &*self.current_security.expect("Security context not set") };
+                    let security = self
+                        .current_security
+                        .as_ref()
+                        .expect("Security context not set");
                     return crate::stdlib::call_builtin(
                         &func_ref.name,
                         &args,
@@ -344,7 +346,10 @@ impl Interpreter {
         }
 
         // 4. Call stdlib function
-        let security = unsafe { &*self.current_security.expect("Security context not set") };
+        let security = self
+            .current_security
+            .as_ref()
+            .expect("Security context not set");
         crate::stdlib::call_builtin(
             &func_name,
             &args,
@@ -1920,8 +1925,10 @@ impl Interpreter {
             Value::Function(func_ref) => {
                 // Check for builtins
                 if crate::stdlib::is_builtin(&func_ref.name) {
-                    let security =
-                        unsafe { &*self.current_security.expect("Security context not set") };
+                    let security = self
+                        .current_security
+                        .as_ref()
+                        .expect("Security context not set");
                     return crate::stdlib::call_builtin(
                         &func_ref.name,
                         &args,

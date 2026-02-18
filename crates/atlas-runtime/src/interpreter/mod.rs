@@ -46,7 +46,7 @@ pub struct Interpreter {
     #[allow(dead_code)] // Will be used when generic runtime support is fully integrated
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
     /// Security context for current evaluation (set during eval())
-    pub(super) current_security: Option<*const crate::security::SecurityContext>,
+    pub(super) current_security: Option<std::sync::Arc<crate::security::SecurityContext>>,
     /// Output writer for print() (defaults to stdout)
     pub(super) output_writer: crate::stdlib::OutputWriter,
     /// Counter for generating unique nested function names
@@ -156,7 +156,7 @@ impl Interpreter {
         security: &crate::security::SecurityContext,
     ) -> Result<Value, RuntimeError> {
         // Store security context for builtin calls
-        self.current_security = Some(security as *const _);
+        self.current_security = Some(std::sync::Arc::new(security.clone()));
 
         let mut last_value = Value::Null;
 
