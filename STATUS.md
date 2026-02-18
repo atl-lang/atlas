@@ -8,9 +8,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/infra/phase-03a-consolidate-async-http-ffi.md
-**Next Phase:** phases/infra/phase-03b-consolidate-debugger-security-modules.md
-**Real Progress:** 84/108 phases complete (78%)
+**Last Completed:** phases/infra/phase-03b-consolidate-debugger-security-modules.md
+**Next Phase:** phases/infra/phase-03c-consolidate-system-api-final.md
+**Real Progress:** 85/108 phases complete (79%)
 
 > ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
 > Must complete all 7 Infra phases before resuming feature work.
@@ -22,7 +22,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **Infra** | 3/9 (33%) | 🚨 BLOCKING — do first |
+| **Infra** | 4/9 (44%) | 🚨 BLOCKING — do first |
 | **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
@@ -43,7 +43,7 @@
 ✅ phase-01-test-consolidation-frontend.md               — 20 files → 3, nextest.toml
 ✅ phase-02-test-consolidation-core.md                   — 70 files → 6, fix fib timeout
 ✅ phase-03a-consolidate-async-http-ffi.md               — 11 files → 3 (async, http, ffi)
-⬜ phase-03b-consolidate-debugger-security-modules.md    — 10 files → 3 (debugger, security, modules)
+✅ phase-03b-consolidate-debugger-security-modules.md    — 10 files → 3 (debugger, security, modules)
 ⬜ phase-03c-consolidate-system-api-final.md             — 19 files → 5 + regression rename, final audit
 
 **Quality standards (do after 03a-03c):**
