@@ -9,8 +9,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/infra/phase-03c-consolidate-system-api-final.md
-**Next Phase:** phases/infra/phase-04-ignore-audit.md
-**Real Progress:** 86/108 phases complete (80%)
+**Next Phase:** phases/infra/phase-03d-common-helpers-setup.md
+**Real Progress:** 86/118 phases complete (73%)
 
 > ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
 > Must complete all 7 Infra phases before resuming feature work.
@@ -22,7 +22,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **Infra** | 5/9 (56%) | 🚨 BLOCKING — do first |
+| **Infra** | 5/19 (26%) | 🚨 BLOCKING — do first |
 | **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
@@ -35,24 +35,36 @@
 
 ---
 
-## 📋 Complete Phase List (83/108)
+## 📋 Complete Phase List (86/118)
 
-### Infra — Test Infrastructure (2/9) 🚨 BLOCKING
+### Infra — Test Infrastructure (5/19) 🚨 BLOCKING
 
-**Structural consolidation (do first):**
+**Stage 1 — Binary reduction (COMPLETE):**
 ✅ phase-01-test-consolidation-frontend.md               — 20 files → 3, nextest.toml
 ✅ phase-02-test-consolidation-core.md                   — 70 files → 6, fix fib timeout
 ✅ phase-03a-consolidate-async-http-ffi.md               — 11 files → 3 (async, http, ffi)
 ✅ phase-03b-consolidate-debugger-security-modules.md    — 10 files → 3 (debugger, security, modules)
-✅ phase-03c-consolidate-system-api-final.md             — 19 files → 5 + regression rename, final audit
+✅ phase-03c-consolidate-system-api-final.md             — 19 files → 5 + regression rename
 
-**Quality standards (do after 03a-03c):**
+**Stage 2 — World-class organization (ONE FILE PER PHASE):**
+⬜ phase-03d-common-helpers-setup.md            — Expand common/mod.rs with 8 shared helpers
+⬜ phase-03e-flatten-repl.md                    — repl.rs: remove mod state/types wrappers (366 lines)
+⬜ phase-03f-flatten-http.md                    — http.rs: replace file banners with section comments (862 lines)
+⬜ phase-03g-flatten-security.md                — security.rs: remove mod permissions/runtime/audit (1,527 lines)
+⬜ phase-03h-flatten-datetime-regex.md          — datetime_regex.rs: remove 4 mod wrappers (1,593 lines)
+⬜ phase-03i-flatten-modules.md                 — modules.rs: remove 4 mod wrappers, rename dup test (1,806 lines)
+⬜ phase-03j-flatten-debugger.md                — debugger.rs: remove mod execution/inspection/protocol (1,921 lines)
+⬜ phase-03k-clean-async-runtime.md             — async_runtime.rs: replace file banners with section comments (2,336 lines)
+⬜ phase-03l-flatten-api.md                     — api.rs: remove 7 mod wrappers (2,955 lines)
+⬜ phase-03m-flatten-system.md                  — system.rs: remove 6 mod wrappers (3,821 lines)
+
+**Stage 3 — Quality standards (do after 03d-03m):**
 ⬜ phase-04-ignore-audit.md                     — Zero bare #[ignore], all reasons documented
 ⬜ phase-05-file-based-test-corpus.md           — .atlas corpus files (pass/fail/warn)
 ⬜ phase-06-fuzz-testing.md                     — cargo-fuzz on lexer/parser/typechecker/eval
 ⬜ phase-07-benchmark-suite.md                  — Criterion benchmarks, baseline committed
 
-> After all 9 complete: restore Next Phase to `phases/interpreter/phase-01-debugger-repl-improvements.md`
+> After all 19 complete: restore Next Phase to `phases/interpreter/phase-01-debugger-repl-improvements.md`
 
 ---
 
@@ -314,5 +326,5 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Next phase: `phases/infra/phase-03a-consolidate-async-http-ffi.md`**
-**After all 9 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**
+**Next phase: `phases/infra/phase-03d-common-helpers-setup.md`**
+**After all 19 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**
