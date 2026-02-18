@@ -1,10 +1,14 @@
 # Phase 02: Interpreter Performance & Integration Tests
 
 ## 🚨 BLOCKERS - CHECK BEFORE STARTING
-**REQUIRED:** All previous interpreter work and VM complete.
+**REQUIRED:** All Correctness phases (01–07) complete. Interpreter-01 complete. VM complete.
 
 **Verification:**
 ```bash
+# Correctness phases must be done first — parity must be proven correct before measuring it
+grep -rn "current_security.*\*const" crates/atlas-runtime/src/  # must return 0 results
+grep "Item::Import" crates/atlas-runtime/src/interpreter/mod.rs | grep -c "skip"  # must be 0
+cargo nextest run -p atlas-runtime -E 'test(parity)' 2>&1 | tail -3  # must be all green
 ls crates/atlas-runtime/src/interpreter/debugger.rs
 cargo nextest run -p atlas-runtime -E 'test(interpreter_debug_tests)'
 cargo nextest run -p atlas-runtime -E 'test(repl_tests)'
@@ -12,12 +16,20 @@ cargo bench | grep vm
 ```
 
 **What's needed:**
+- ALL Correctness phases complete (01–07): raw pointer eliminated, builtin registry unified,
+  Value::Builtin variant added, callback parity fixed, method dispatch unified,
+  immutability enforced, imports wired
 - Phase interpreter/phase-01 complete with debugger and REPL improvements
 - VM from v0.1 complete for parity comparison
 - Profiler from bytecode-vm/phase-03 for performance measurement
-- All unit tests passing
+- All unit tests passing, all parity tests green
 
-**If missing:** Complete phase interpreter/phase-01 first
+**Why correctness phases must precede this phase:**
+Parity verification in this phase is only meaningful if the known parity breaks have been
+fixed. Running parity benchmarks against a broken baseline produces misleading results and
+may mask real divergence behind the noise of known failures.
+
+**If missing:** Complete Correctness phases 01–07, then Interpreter-01
 
 ---
 

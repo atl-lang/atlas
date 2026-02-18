@@ -10,11 +10,12 @@
 
 **Last Completed:** phases/infra/phase-05a-runtime-output-writer.md
 **Next Phase:** phases/infra/phase-05b-file-based-test-corpus.md
-**Real Progress:** 95/119 phases complete (80%)
+**Real Progress:** 95/126 phases complete (75%)
 
-> ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
-> Must complete all 7 Infra phases before resuming feature work.
-> After infra: ~17 binaries, sub-20s runs, fuzz tested, benchmarked, corpus-driven.
+> ⚠️ **INFRASTRUCTURE BLOCKER:** Infra phases in progress. After Infra completes, do
+> Correctness phases (01–07) before resuming Interpreter/CLI/LSP/Polish work.
+> Correctness phases fix structural compiler bugs (raw pointers, parity breaks,
+> missing enforcement) that must be resolved before building features on top.
 
 ---
 
@@ -28,14 +29,15 @@
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
 | **3. Frontend** | 5/5 (100%) | ✅ COMPLETE |
 | **4. Typing** | 7/7 (100%) | ✅ COMPLETE |
-| **5. Interpreter** | 0/2 (0%) | ⬜ Blocked by Infra |
+| **Correctness** | 0/7 (0%) | 🚨 Do after Infra, before Interpreter |
+| **5. Interpreter** | 0/2 (0%) | ⬜ Blocked by Correctness |
 | **6. CLI** | 0/6 (0%) | ⬜ Pending |
 | **7. LSP** | 0/5 (0%) | ⬜ Pending |
 | **8. Polish** | 0/5 (0%) | ⬜ Pending |
 
 ---
 
-## 📋 Complete Phase List (86/118)
+## 📋 Complete Phase List (95/126)
 
 ### Infra — Test Infrastructure (5/19) 🚨 BLOCKING
 
@@ -65,11 +67,29 @@
 ⬜ phase-06-fuzz-testing.md                     — cargo-fuzz on lexer/parser/typechecker/eval
 ⬜ phase-07-benchmark-suite.md                  — Criterion benchmarks, baseline committed
 
-> After all 20 complete: restore Next Phase to `phases/interpreter/phase-01-debugger-repl-improvements.md`
+> After all 20 infra phases complete: Next Phase → `phases/correctness/phase-01-security-context-threading.md`
 
 ---
 
-### 0. Foundation (32/33) 🔨 ACTIVE
+### Correctness — Compiler Standards (0/7) 🚨 Do after Infra
+
+> These phases fix structural compiler correctness issues identified in a full audit.
+> They MUST be completed before Interpreter-01. Interpreter-02 explicitly requires
+> all 7 complete before its parity test suite runs.
+
+⬜ phase-01-security-context-threading.md  — Replace *const SecurityContext raw pointer with Arc<SecurityContext>
+⬜ phase-02-builtin-dispatch-registry.md   — Eliminate is_builtin/call_builtin dual match; unified OnceLock registry
+⬜ phase-03-value-builtin-variant.md       — Add Value::Builtin(Arc<str>); separate builtins from user functions
+⬜ phase-04-parity-callback-fixes.md       — NativeFunction in call_value + align all 17 callback intrinsic validations
+⬜ phase-05-parity-method-dispatch.md      — Shared TypeTag dispatch table; eliminate interpreter/compiler method name divergence
+⬜ phase-06-immutability-enforcement.md    — Activate let/var enforcement in compiler + interpreter (data already tracked, never used)
+⬜ phase-07-import-execution.md            — Wire interpreter import handling to module executor (currently silent stub)
+
+> After all 7 complete: Next Phase → `phases/interpreter/phase-01-debugger-repl-improvements.md`
+
+---
+
+### 0. Foundation (33/33) ✅ COMPLETE
 
 ✅ phase-16-method-call-syntax-frontend.md
 ✅ phase-17-method-call-syntax-backend.md
@@ -167,10 +187,13 @@
 ✅ phase-06-type-guards.md
 ✅ phase-07-advanced-inference.md
 
-### 5. Interpreter (0/2) ⬜ Blocked by Infra
+### 5. Interpreter (0/2) ⬜ Blocked by Correctness
+
+> Requires all 7 Correctness phases. Interpreter-02 explicitly validates parity —
+> that parity must be correct before the test suite runs.
 
 ⬜ phase-01-debugger-repl-improvements.md
-⬜ phase-02-interpreter-performance-and-integration.md
+⬜ phase-02-interpreter-performance-and-integration.md   — REQUIRES all Correctness phases (see phase file BLOCKERS)
 
 ### 6. CLI (0/6) ⬜
 
