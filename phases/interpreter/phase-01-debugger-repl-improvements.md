@@ -9,7 +9,7 @@ ls crates/atlas-runtime/src/interpreter/mod.rs
 ls crates/atlas-runtime/src/repl.rs
 ls crates/atlas-cli/src/commands/repl.rs
 ls crates/atlas-runtime/src/debugger/mod.rs
-cargo test -p atlas-runtime -- interpreter
+cargo nextest run -p atlas-runtime --test interpreter
 ```
 
 **What's needed:**
@@ -31,8 +31,8 @@ Add debugger support to interpreter achieving parity with VM debugger and enhanc
 **Update:** `crates/atlas-runtime/src/repl.rs` (~400 lines commands multi-line)
 **Update:** `crates/atlas-cli/src/commands/repl.rs` (~300 lines add REPL commands)
 **Create:** `crates/atlas-runtime/src/repl/multiline.rs` (~200 lines)
-**Tests:** `crates/atlas-runtime/tests/interpreter_debug_tests.rs` (~400 lines)
-**Tests:** `crates/atlas-runtime/tests/repl_state_tests.rs` (add to existing file)
+**Tests:** `crates/atlas-runtime/tests/debugger.rs` (add interpreter debugger tests to existing file)
+**Tests:** `crates/atlas-runtime/tests/repl.rs` (add REPL state tests to existing file)
 
 ## Dependencies
 - Interpreter from v0.1
@@ -124,5 +124,5 @@ Ensure interpreter debugger has feature parity with VM debugger. Support identic
 - 100+ tests pass 50 debugger 50 REPL
 - Interpreter-VM debugger parity verified
 - No clippy warnings
-- cargo test passes
+- cargo nextest run -p atlas-runtime passes
 - Enhanced REPL usability

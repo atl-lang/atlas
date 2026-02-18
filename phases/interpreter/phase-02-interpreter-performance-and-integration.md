@@ -6,8 +6,8 @@
 **Verification:**
 ```bash
 ls crates/atlas-runtime/src/interpreter/debugger.rs
-cargo test interpreter_debug_tests
-cargo test repl_tests
+cargo nextest run -p atlas-runtime -E 'test(interpreter_debug_tests)'
+cargo nextest run -p atlas-runtime -E 'test(repl_tests)'
 cargo bench | grep vm
 ```
 
@@ -28,8 +28,7 @@ Optimize interpreter performance targeting 30%+ improvement through caching, red
 **Update:** `crates/atlas-runtime/src/interpreter/mod.rs` (~200 lines optimized)
 **Create:** `crates/atlas-runtime/src/interpreter/cache.rs` (~300 lines)
 **Create:** `benches/interpreter_benches.rs` (~400 lines)
-**Create:** `crates/atlas-runtime/tests/interpreter_integration_tests.rs` (~600 lines)
-**Create:** `crates/atlas-runtime/tests/interpreter_parity_tests.rs` (~500 lines)
+**Update:** `crates/atlas-runtime/tests/interpreter.rs` (add integration + parity tests to existing file)
 **Create:** `docs/interpreter-status.md` (~300 lines)
 **Update:** `STATUS.md` (~50 lines mark interpreter complete)
 
@@ -124,6 +123,6 @@ Update STATUS.md marking Interpreter category as 2/2 complete with both phases c
 - Documentation complete interpreter-status.md
 - STATUS.md updated Interpreter marked 2/2 complete
 - No clippy warnings
-- cargo test passes
+- cargo nextest run -p atlas-runtime passes
 - cargo bench shows improvements
 - Interpreter production-ready for v0.2
