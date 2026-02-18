@@ -55,4 +55,19 @@ Buffered (×1.2): ~M lines
 
 **CRITICAL:** Quality over line counts. NEVER simplify compiler logic for arbitrary limits.
 
-**Next:** GATE 1.5
+---
+
+## Foundation Check (formerly GATE 1.5)
+
+**Before writing any code, verify:**
+
+1. **Existing code audit:** Read existing code FIRST. Check against spec. Fix violations BEFORE adding new code.
+2. **Dependencies not stubbed:** Grep for `unimplemented!()`, `todo!()` in dependencies.
+3. **Architectural decisions:** Check `memory/decisions.md` for applicable decisions.
+4. **Anti-patterns:** Planning stubs? Single-engine only? Skipping tests? → STOP.
+
+**If issues found:** Fix BEFORE implementation. Don't waste tokens on bad foundations.
+
+---
+
+**Next:** GATE 2

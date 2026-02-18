@@ -63,4 +63,22 @@ cargo clean
 
 **BLOCKING:** Cannot proceed without understanding current state and requirements.
 
-**Next:** GATE 0.5
+---
+
+## Step 3: Check Dependencies (formerly GATE 0.5)
+
+**For EACH dependency in phase file:**
+1. Does it exist in codebase? (grep for implementation)
+2. Does it match spec? (compare to `docs/specification/`)
+3. Is it complete? (check STATUS.md, run tests)
+
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check `memory/decisions.md` for constraints.
+
+**Status per dependency:**
+- ✅ Exists, complete, spec-compliant → Proceed
+- ⚠️ Exists but incomplete → Flag, may need to finish first
+- 🚫 Doesn't exist → BLOCKING, report to user
+
+---
+
+**Next:** GATE 1

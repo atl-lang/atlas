@@ -29,7 +29,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 1. Check STATUS.md (verify phase not complete)
 2. Run GATE -1 (sanity check)
 3. Declare workflow type
-4. Execute gates 0-7 (A to Z, uninterrupted)
+4. Execute gates 0→1→2→3→4→5→6→7 (uninterrupted)
 5. Deliver handoff (completion checkpoint - user may engage here)
 
 ### 2. Spec Compliance (100%)
@@ -155,7 +155,7 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 - `MEMORY.md` - Index (always loaded, 200 line cap)
 - `patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
 - `decisions.md` - Architectural decisions (search DR-XXX)
-- `gates.md` - Quality gate rules
+- `testing-patterns.md` - Test domain files, corpus workflow, parity helpers
 
 **Usage:** Read patterns.md for codebase patterns, decisions.md for architectural context.
 
@@ -173,7 +173,7 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 
 **Key patterns:** See memory/patterns.md
 **Decisions:** See memory/decisions.md (DR-003 to DR-006 for collections)
-**Gates:** See memory/gates.md
+**Gates:** See gates/ directory in this skill
 
 ---
 
