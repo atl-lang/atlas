@@ -19,11 +19,11 @@ export fn exportFeed(articles: array, filename: string) -> Result<void, string> 
     let writeResult: Result<void, string> = writeFile(filepath, json);
 
     match writeResult {
-        Ok(_) -> {
+        Ok(_) => {
             print("📄 Feed exported to: " + filepath);
             return Ok(void);
         },
-        Err(e) -> return Err("Failed to export feed: " + e)
+        Err(e) => return Err("Failed to export feed: " + e)
     }
 }
 
@@ -36,10 +36,10 @@ export fn exportSummary(summary: JsonValue, filename: string) -> Result<void, st
     let writeResult: Result<void, string> = writeFile(filepath, json);
 
     match writeResult {
-        Ok(_) -> {
+        Ok(_) => {
             print("📄 Summary exported to: " + filepath);
             return Ok(void);
         },
-        Err(e) -> return Err("Failed to export summary: " + e)
+        Err(e) => return Err("Failed to export summary: " + e)
     }
 }

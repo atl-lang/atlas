@@ -27,7 +27,7 @@ export fn displayCityWeather(
     windDir: string,
     useMetric: bool
 ) -> void {
-    let tempUnit: string = if useMetric { "°C" } else { "°F" };
+    let tempUnit: string = if (useMetric) { "°C" } else { "°F" };
 
     // Header
     print("┌────────────────────────────────────────────────┐");
@@ -72,11 +72,11 @@ export fn displaySummary(totalCities: number, successful: number, failed: number
     print("───────────────────────────────────────────────────────");
     print("Summary: " + toString(successful) + "/" + toString(totalCities) + " cities loaded successfully");
 
-    if failed > 0 {
+    if (failed > 0) {
         print("Failed: " + toString(failed) + " cities");
     }
 
-    let unit: string = if useMetric { "Celsius" } else { "Fahrenheit" };
+    let unit: string = if (useMetric) { "Celsius" } else { "Fahrenheit" };
     print("Temperature unit: " + unit);
 
     print("Cache: Data cached for 30 minutes");

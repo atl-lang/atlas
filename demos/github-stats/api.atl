@@ -9,30 +9,30 @@ fn githubRequest(endpoint: string, cacheKey: string) -> Result<JsonValue, string
     // Check cache first
     let cached: Option<JsonValue> = getCache(cacheKey);
     match cached {
-        Some(data) -> return Ok(data),
-        None -> {
+        Some(data) => return Ok(data),
+        None => {
             // Make API request
             let url: string = GITHUB_API + endpoint;
             let response: Result<HttpResponse, string> = http_get(url);
 
             match response {
-                Ok(resp) -> {
-                    if !http_is_success(resp) {
+                Ok(resp) => {
+                    if (!http_is_success(resp)) {
                         let status: number = http_status(resp);
                         return Err("GitHub API error: " + toString(status));
                     }
 
                     let jsonResult: Result<JsonValue, string> = http_parse_json(resp);
                     match jsonResult {
-                        Ok(data) -> {
+                        Ok(data) => {
                             // Cache the response
-                            let _ = setCache(cacheKey, data);
+                            setCache(cacheKey, data);
                             return Ok(data);
                         },
-                        Err(e) -> return Err("Failed to parse JSON: " + e)
+                        Err(e) => return Err("Failed to parse JSON: " + e)
                     }
                 },
-                Err(e) -> return Err("HTTP request failed: " + e)
+                Err(e) => return Err("HTTP request failed: " + e)
             }
         }
     }

@@ -30,8 +30,8 @@ fn showStats(username: string) -> Result<void, string> {
     let userResult: Result<JsonValue, string> = fetchUser(username);
 
     let user: JsonValue = match userResult {
-        Ok(data) -> data,
-        Err(e) -> return Err(e)
+        Ok(data) => data,
+        Err(e) => return Err(e)
     };
 
     // Fetch repositories
@@ -39,8 +39,8 @@ fn showStats(username: string) -> Result<void, string> {
     let reposResult: Result<JsonValue, string> = fetchRepos(username);
 
     let repos: JsonValue = match reposResult {
-        Ok(data) -> data,
-        Err(e) -> return Err(e)
+        Ok(data) => data,
+        Err(e) => return Err(e)
     };
 
     // Fetch events for activity analysis
@@ -48,8 +48,8 @@ fn showStats(username: string) -> Result<void, string> {
     let eventsResult: Result<JsonValue, string> = fetchEvents(username);
 
     let events: JsonValue = match eventsResult {
-        Ok(data) -> data,
-        Err(e) -> return Err(e)
+        Ok(data) => data,
+        Err(e) => return Err(e)
     };
 
     displaySuccess("Data fetched successfully (cached for 5 minutes)");
@@ -67,11 +67,11 @@ fn showStats(username: string) -> Result<void, string> {
     let topRepoStars: number = 0;
 
     match topRepoOpt {
-        Some(repo) -> {
+        Some(repo) => {
             topRepoName = jsonAsString(repo["name"]);
             topRepoStars = jsonAsNumber(repo["stargazers_count"]);
         },
-        None -> {}
+        None => {}
     }
 
     // Language statistics
@@ -81,11 +81,11 @@ fn showStats(username: string) -> Result<void, string> {
     let langPercent: number = 0;
 
     match topLangOpt {
-        Some(lang) -> {
+        Some(lang) => {
             topLang = lang;
             langPercent = calculateLanguagePercentage(languages, lang);
         },
-        None -> {}
+        None => {}
     }
 
     // Activity statistics
@@ -123,11 +123,11 @@ fn main() -> void {
     let result: Result<void, string> = showStats(username);
 
     match result {
-        Ok(_) -> {
+        Ok(_) => {
             print("");
             print("💡 Tip: Data is cached for 5 minutes to avoid rate limits");
         },
-        Err(e) -> {
+        Err(e) => {
             print("");
             displayError(e);
             print("");

@@ -24,20 +24,20 @@ fn loadFeeds() -> Result<array, string> {
     let content: Result<string, string> = readFile(configPath);
 
     let fileContent: string = match content {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to read feeds config: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to read feeds config: " + e)
     };
 
     let json: Result<JsonValue, string> = parseJSON(fileContent);
 
     let config: JsonValue = match json {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to parse feeds config: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to parse feeds config: " + e)
     };
 
     let feeds: JsonValue = config["feeds"];
 
-    if jsonIsArray(feeds) {
+    if (jsonIsArray(feeds)) {
         return Ok(jsonAsArray(feeds));
     } else {
         return Err("Invalid feeds config");
@@ -52,8 +52,8 @@ fn main() -> void {
     let feedsResult: Result<array, string> = loadFeeds();
 
     let feedUrls: array = match feedsResult {
-        Ok(urls) -> urls,
-        Err(e) -> {
+        Ok(urls) => urls,
+        Err(e) => {
             print("❌ Error: " + e);
             return;
         }
@@ -78,23 +78,23 @@ fn main() -> void {
         let xmlResult: Result<string, string> = fetchFeed(feedUrl);
 
         match xmlResult {
-            Ok(xml) -> {
+            Ok(xml) => {
                 // Parse feed
                 let feedResult: Result<JsonValue, string> = parseFeed(xml, feedUrl);
 
                 match feedResult {
-                    Ok(feed) -> {
+                    Ok(feed) => {
                         let itemCount: number = jsonAsNumber(feed["itemCount"]);
                         displayFeedResult(feedName, itemCount);
                         push(parsedFeeds, feed);
                         successCount = successCount + 1;
                     },
-                    Err(e) -> {
+                    Err(e) => {
                         displayFeedError(feedName, e);
                     }
                 }
             },
-            Err(e) -> {
+            Err(e) => {
                 displayFeedError(feedName, e);
             }
         }
@@ -106,7 +106,7 @@ fn main() -> void {
     print("✅ Fetched " + toString(successCount) + " of " + toString(totalFeeds) + " feeds");
     print("");
 
-    if len(parsedFeeds) == 0 {
+    if (len(parsedFeeds) == 0) {
         print("❌ No feeds were successfully fetched");
         return;
     }
@@ -131,16 +131,16 @@ fn main() -> void {
 
     // Display recent articles (first 10)
     let displayCount: number = 10;
-    if len(recentArticles) < displayCount {
+    if (len(recentArticles) < displayCount) {
         displayCount = len(recentArticles);
     }
 
-    if displayCount > 0 {
+    if (displayCount > 0) {
         print("Recent Articles (last 7 days):");
         print("");
 
         let i: number = 1;
-        while i <= displayCount {
+        while (i <= displayCount) {
             let article: JsonValue = recentArticles[i - 1];
             displayArticle(article, i);
             i = i + 1;
@@ -151,7 +151,7 @@ fn main() -> void {
 
     // Export results
     print("Exporting results...");
-    let _ = exportFeed(recentArticles, "aggregated-feed.json");
+    exportFeed(recentArticles, "aggregated-feed.json");
 
     let summary: JsonValue = jsonObject([
         ["totalFeeds", jsonNumber(totalFeeds)],
@@ -161,7 +161,7 @@ fn main() -> void {
         ["recentArticles", jsonNumber(len(recentArticles))]
     ]);
 
-    let _ = exportSummary(summary, "feed-summary.json");
+    exportSummary(summary, "feed-summary.json");
 
     print("");
     displayTips();

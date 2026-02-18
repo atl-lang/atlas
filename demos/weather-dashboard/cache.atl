@@ -17,32 +17,32 @@ fn getCachePath(city: string) -> string {
 export fn isCacheValid(city: string) -> bool {
     let path: string = getCachePath(city);
 
-    if !fileExists(path) {
+    if (!fileExists(path)) {
         return false;
     }
 
     let content: Result<string, string> = readFile(path);
     match content {
-        Ok(data) -> {
+        Ok(data) => {
             let json: Result<JsonValue, string> = parseJSON(data);
             match json {
-                Ok(obj) -> {
+                Ok(obj) => {
                     let timestamp: JsonValue = obj["timestamp"];
                     let now: number = timestampNow();
                     let cached: number = jsonAsNumber(timestamp);
 
                     return (now - cached) < CACHE_TTL;
                 },
-                Err(_) -> return false
+                Err(_) => return false
             }
         },
-        Err(_) -> return false
+        Err(_) => return false
     }
 }
 
 // Get cached weather data
 export fn getCache(city: string) -> Option<JsonValue> {
-    if !isCacheValid(city) {
+    if (!isCacheValid(city)) {
         return None;
     }
 
@@ -50,14 +50,14 @@ export fn getCache(city: string) -> Option<JsonValue> {
     let content: Result<string, string> = readFile(path);
 
     match content {
-        Ok(data) -> {
+        Ok(data) => {
             let json: Result<JsonValue, string> = parseJSON(data);
             match json {
-                Ok(obj) -> return Some(obj["data"]),
-                Err(_) -> return None
+                Ok(obj) => return Some(obj["data"]),
+                Err(_) => return None
             }
         },
-        Err(_) -> return None
+        Err(_) => return None
     }
 }
 

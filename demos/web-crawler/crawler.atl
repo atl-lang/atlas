@@ -7,7 +7,7 @@ import { extractLinks, extractTitle, extractDescription } from "./extractor";
 import { normalizeUrl, makeAbsolute, shouldCrawl, extractDomain, isValidUrl } from "./urls";
 
 // Page data structure
-fn createPageData(url: string, title: string, description: string, linkCount: number) => JsonValue {
+fn createPageData(url: string, title: string, description: string, linkCount: number) -> JsonValue {
     return jsonObject([
         ["url", jsonString(url)],
         ["title", jsonString(title)],
@@ -17,7 +17,7 @@ fn createPageData(url: string, title: string, description: string, linkCount: nu
 }
 
 // Crawl result structure
-export fn createCrawlResult(pages: array, linkGraph: HashMap, stats: JsonValue) => JsonValue {
+export fn createCrawlResult(pages: array, linkGraph: HashMap, stats: JsonValue) -> JsonValue {
     return jsonObject([
         ["pages", jsonArray(pages)],
         ["stats", stats]
@@ -25,12 +25,12 @@ export fn createCrawlResult(pages: array, linkGraph: HashMap, stats: JsonValue) 
 }
 
 // Fetch and parse a single page
-fn fetchPage(url: string) => Result<string, string> {
+fn fetchPage(url: string) -> Result<string, string> {
     let response: Result<HttpResponse, string> = http_get(url);
 
     match response {
         Ok(resp) => {
-            if http_is_success(resp) {
+            if (http_is_success(resp)) {
                 return Ok(http_body(resp));
             } else {
                 return Err("HTTP error");
@@ -41,7 +41,7 @@ fn fetchPage(url: string) => Result<string, string> {
 }
 
 // Main crawl function (BFS traversal)
-export fn crawl(startUrl: string, maxPages: number) => Result<JsonValue, string> {
+export fn crawl(startUrl: string, maxPages: number) -> Result<JsonValue, string> {
     let baseDomain: string = extractDomain(startUrl);
     let normalizedStart: string = normalizeUrl(startUrl);
 
@@ -56,7 +56,7 @@ export fn crawl(startUrl: string, maxPages: number) => Result<JsonValue, string>
 
     let pagesVisited: number = 0;
 
-    while !queueIsEmpty(queue) && pagesVisited < maxPages {
+    while (!queueIsEmpty(queue) && pagesVisited < maxPages) {
         let currentOpt: Option<JsonValue> = queuePop(queue);
 
         let current: string = match currentOpt {
@@ -65,7 +65,7 @@ export fn crawl(startUrl: string, maxPages: number) => Result<JsonValue, string>
         };
 
         // Skip if already visited
-        if setHas(visited, current) {
+        if (setHas(visited, current)) {
             continue;
         }
 
@@ -94,8 +94,8 @@ export fn crawl(startUrl: string, maxPages: number) => Result<JsonValue, string>
                     let normalized: string = normalizeUrl(absolute);
 
                     // Only crawl same domain and valid URLs
-                    if shouldCrawl(normalized, baseDomain) && isValidUrl(normalized) {
-                        if !setHas(visited, normalized) {
+                    if (shouldCrawl(normalized, baseDomain) && isValidUrl(normalized)) {
+                        if (!setHas(visited, normalized)) {
                             queuePush(queue, normalized);
                         }
                         push(validLinks, normalized);

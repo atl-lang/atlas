@@ -10,7 +10,7 @@ export fn deduplicateArticles(articles: array) -> array {
     for article in articles {
         let link: string = jsonAsString(article["link"]);
 
-        if !setHas(seen, link) {
+        if (!setHas(seen, link)) {
             setAdd(seen, link);
             push(unique, article);
         }
@@ -42,19 +42,19 @@ export fn filterByDays(articles: array, days: number) -> array {
     for article in articles {
         let pubDate: string = jsonAsString(article["pubDate"]);
 
-        if len(pubDate) > 0 {
+        if (len(pubDate) > 0) {
             let dateResult: Result<DateTime, string> = parseIso(pubDate);
 
             match dateResult {
-                Ok(dt) -> {
+                Ok(dt) => {
                     let now: DateTime = timestampNow();
                     let diff: number = abs(diffSeconds(now, dt));
 
-                    if diff <= cutoffSeconds {
+                    if (diff <= cutoffSeconds) {
                         push(filtered, article);
                     }
                 },
-                Err(_) -> {
+                Err(_) => {
                     // Include articles with unparseable dates
                     push(filtered, article);
                 }
@@ -75,7 +75,7 @@ export fn countBySource(articles: array) -> HashMap {
     for article in articles {
         let source: string = jsonAsString(article["feedTitle"]);
 
-        if mapHas(counts, source) {
+        if (mapHas(counts, source)) {
             let count: number = jsonAsNumber(mapGet(counts, source));
             mapSet(counts, source, jsonNumber(count + 1));
         } else {

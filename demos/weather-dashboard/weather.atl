@@ -6,7 +6,7 @@ export fn getCurrentWeather(data: JsonValue) -> JsonValue {
     let current: JsonValue = data["current_condition"];
     let currentArray: array = jsonAsArray(current);
 
-    if len(currentArray) > 0 {
+    if (len(currentArray) > 0) {
         return currentArray[0];
     } else {
         return jsonObject([]);
@@ -36,7 +36,7 @@ export fn getDescription(weather: JsonValue) -> string {
     let desc: JsonValue = weather["weatherDesc"];
     let descArray: array = jsonAsArray(desc);
 
-    if len(descArray) > 0 {
+    if (len(descArray) > 0) {
         let first: JsonValue = descArray[0];
         let value: JsonValue = first["value"];
         return jsonAsString(value);
@@ -95,19 +95,19 @@ export fn fahrenheitToCelsius(fahrenheit: number) -> number {
 export fn getWeatherEmoji(description: string) -> string {
     let lower: string = toLower(description);
 
-    if contains(lower, "sunny") || contains(lower, "clear") {
+    if (contains(lower, "sunny") || contains(lower, "clear")) {
         return "☀️";
-    } else if contains(lower, "cloud") {
+    } else if (contains(lower, "cloud")) {
         return "☁️";
-    } else if contains(lower, "rain") {
+    } else if (contains(lower, "rain")) {
         return "🌧️";
-    } else if contains(lower, "snow") {
+    } else if (contains(lower, "snow")) {
         return "❄️";
-    } else if contains(lower, "thunder") || contains(lower, "storm") {
+    } else if (contains(lower, "thunder") || contains(lower, "storm")) {
         return "⛈️";
-    } else if contains(lower, "fog") || contains(lower, "mist") {
+    } else if (contains(lower, "fog") || contains(lower, "mist")) {
         return "🌫️";
-    } else if contains(lower, "wind") {
+    } else if (contains(lower, "wind")) {
         return "💨";
     } else {
         return "🌤️";
@@ -119,7 +119,7 @@ export fn getLocationName(data: JsonValue) -> string {
     let request: JsonValue = data["request"];
     let requestArray: array = jsonAsArray(request);
 
-    if len(requestArray) > 0 {
+    if (len(requestArray) > 0) {
         let first: JsonValue = requestArray[0];
         let query: JsonValue = first["query"];
         return jsonAsString(query);

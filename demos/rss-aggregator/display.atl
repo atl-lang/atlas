@@ -26,7 +26,7 @@ export fn displayFeedError(feedName: string, error: string) -> void {
 
 // Truncate text to max length
 fn truncate(text: string, maxLength: number) -> string {
-    if len(text) <= maxLength {
+    if (len(text) <= maxLength) {
         return text;
     } else {
         return substring(text, 0, maxLength) + "...";
@@ -45,12 +45,12 @@ export fn displayArticle(article: JsonValue, index: number) -> void {
     print("─────────────────────────────────────────────────");
     print(toString(index) + ". " + title);
     print("   Source: " + source);
-    if len(pubDate) > 0 {
+    if (len(pubDate) > 0) {
         print("   Date: " + pubDate);
     }
     print("   Link: " + truncate(link, 60));
 
-    if len(description) > 0 {
+    if (len(description) > 0) {
         let cleanDesc: string = replace(description, "<[^>]+>", "");
         print("   " + truncate(cleanDesc, 100));
     }

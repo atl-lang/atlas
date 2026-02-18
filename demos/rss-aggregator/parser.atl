@@ -8,17 +8,17 @@ fn extractTagContent(xml: string, tag: string) -> string {
     let regex: Result<Regex, string> = regexNew(pattern);
 
     match regex {
-        Ok(re) -> {
+        Ok(re) => {
             let matches: array = regexFindAll(re, xml);
-            if len(matches) > 0 {
+            if (len(matches) > 0) {
                 let firstMatch: JsonValue = matches[0];
                 let groups: array = firstMatch["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     return trim(groups[1]);
                 }
             }
         },
-        Err(_) -> {}
+        Err(_) => {}
     }
 
     return "";
@@ -30,17 +30,17 @@ fn extractCData(xml: string) -> string {
     let regex: Result<Regex, string> = regexNew(pattern);
 
     match regex {
-        Ok(re) -> {
+        Ok(re) => {
             let matches: array = regexFindAll(re, xml);
-            if len(matches) > 0 {
+            if (len(matches) > 0) {
                 let firstMatch: JsonValue = matches[0];
                 let groups: array = firstMatch["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     return trim(groups[1]);
                 }
             }
         },
-        Err(_) -> {}
+        Err(_) => {}
     }
 
     return xml;
@@ -54,7 +54,7 @@ fn parseItem(itemXml: string) -> JsonValue {
     let pubDate: string = extractTagContent(itemXml, "pubDate");
 
     // Also try dc:date for Atom feeds
-    if len(pubDate) == 0 {
+    if (len(pubDate) == 0) {
         pubDate = extractTagContent(itemXml, "published");
     }
 
@@ -82,12 +82,12 @@ export fn parseFeed(xml: string, feedUrl: string) -> Result<JsonValue, string> {
     let items: array = [];
 
     match itemRegex {
-        Ok(re) -> {
+        Ok(re) => {
             let matches: array = regexFindAll(re, xml);
 
             for match in matches {
                 let groups: array = match["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     let itemXml: string = groups[1];
                     let item: JsonValue = parseItem(itemXml);
 
@@ -105,21 +105,21 @@ export fn parseFeed(xml: string, feedUrl: string) -> Result<JsonValue, string> {
                 }
             }
         },
-        Err(e) -> return Err("Failed to parse items: " + e)
+        Err(e) => return Err("Failed to parse items: " + e)
     }
 
     // Also try entry for Atom feeds
-    if len(items) == 0 {
+    if (len(items) == 0) {
         let entryPattern: string = "<entry[^>]*>(.*?)</entry>";
         let entryRegex: Result<Regex, string> = regexNew(entryPattern);
 
         match entryRegex {
-            Ok(re) -> {
+            Ok(re) => {
                 let matches: array = regexFindAll(re, xml);
 
                 for match in matches {
                     let groups: array = match["groups"];
-                    if len(groups) > 1 {
+                    if (len(groups) > 1) {
                         let itemXml: string = groups[1];
                         let item: JsonValue = parseItem(itemXml);
 
@@ -136,7 +136,7 @@ export fn parseFeed(xml: string, feedUrl: string) -> Result<JsonValue, string> {
                     }
                 }
             },
-            Err(_) -> {}
+            Err(_) => {}
         }
     }
 

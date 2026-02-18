@@ -55,7 +55,7 @@ export fn displayHeader(user: JsonValue, width: number) -> void {
 
     print(boxTop(width));
 
-    if !jsonIsNull(name) {
+    if (!jsonIsNull(name)) {
         let nameStr: string = jsonAsString(name);
         print("│ " + center(nameStr + " (@" + username + ")", width - 4) + " │");
     } else {

@@ -2,7 +2,7 @@
 import { regexNew, regexTest } from "std:regex";
 
 // Check if URL is valid HTTP/HTTPS
-export fn isValidUrl(url: string) => bool {
+export fn isValidUrl(url: string) -> bool {
     let pattern: string = "^https?://[^\\s/$.?#].[^\\s]*$";
     let regex: Result<Regex, string> = regexNew(pattern);
 
@@ -13,17 +13,17 @@ export fn isValidUrl(url: string) => bool {
 }
 
 // Normalize URL (remove trailing slash, fragments)
-export fn normalizeUrl(url: string) => string {
+export fn normalizeUrl(url: string) -> string {
     let normalized: string = url;
 
     // Remove fragment (#section)
-    if contains(normalized, "#") {
+    if (contains(normalized, "#")) {
         let parts: array = split(normalized, "#");
         normalized = parts[0];
     }
 
     // Remove trailing slash
-    if endsWith(normalized, "/") && len(normalized) > 8 {
+    if (endsWith(normalized, "/") && len(normalized) > 8) {
         normalized = substring(normalized, 0, len(normalized) - 1);
     }
 
@@ -31,14 +31,14 @@ export fn normalizeUrl(url: string) => string {
 }
 
 // Extract domain from URL
-export fn extractDomain(url: string) => string {
+export fn extractDomain(url: string) -> string {
     // Remove protocol
     let withoutProtocol: string = replace(url, "https://", "");
     withoutProtocol = replace(withoutProtocol, "http://", "");
 
     // Get first part (domain)
     let parts: array = split(withoutProtocol, "/");
-    if len(parts) > 0 {
+    if (len(parts) > 0) {
         return parts[0];
     } else {
         return withoutProtocol;
@@ -46,33 +46,33 @@ export fn extractDomain(url: string) => string {
 }
 
 // Convert relative URL to absolute
-export fn makeAbsolute(baseUrl: string, relativeUrl: string) => string {
+export fn makeAbsolute(baseUrl: string, relativeUrl: string) -> string {
     // Already absolute
-    if startsWith(relativeUrl, "http://") || startsWith(relativeUrl, "https://") {
+    if (startsWith(relativeUrl, "http://") || startsWith(relativeUrl, "https://")) {
         return relativeUrl;
     }
 
     // Protocol-relative
-    if startsWith(relativeUrl, "//") {
+    if (startsWith(relativeUrl, "//")) {
         return "https:" + relativeUrl;
     }
 
     // Root-relative
-    if startsWith(relativeUrl, "/") {
+    if (startsWith(relativeUrl, "/")) {
         let domain: string = extractDomain(baseUrl);
-        let protocol: string = if contains(baseUrl, "https://") { "https://" } else { "http://" };
+        let protocol: string = if (contains(baseUrl, "https://")) { "https://" } else { "http://" };
         return protocol + domain + relativeUrl;
     }
 
     // Relative path - simplified implementation
     // In production, would handle ../  and ./ properly
     let baseDomain: string = extractDomain(baseUrl);
-    let protocol: string = if contains(baseUrl, "https://") { "https://" } else { "http://" };
+    let protocol: string = if (contains(baseUrl, "https://")) { "https://" } else { "http://" };
     return protocol + baseDomain + "/" + relativeUrl;
 }
 
 // Check if URL should be crawled (same domain)
-export fn shouldCrawl(url: string, baseDomain: string) => bool {
+export fn shouldCrawl(url: string, baseDomain: string) -> bool {
     let domain: string = extractDomain(url);
     return domain == baseDomain;
 }

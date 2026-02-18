@@ -15,32 +15,32 @@ fn getCachePath(key: string) -> string {
 export fn isCacheValid(key: string) -> bool {
     let path: string = getCachePath(key);
 
-    if !fileExists(path) {
+    if (!fileExists(path)) {
         return false;
     }
 
     let content: Result<string, string> = readFile(path);
     match content {
-        Ok(data) -> {
+        Ok(data) => {
             let json: Result<JsonValue, string> = parseJSON(data);
             match json {
-                Ok(obj) -> {
+                Ok(obj) => {
                     let timestamp: JsonValue = obj["timestamp"];
                     let now: number = timestampNow();
                     let cached: number = jsonAsNumber(timestamp);
 
                     return (now - cached) < CACHE_TTL;
                 },
-                Err(_) -> return false
+                Err(_) => return false
             }
         },
-        Err(_) -> return false
+        Err(_) => return false
     }
 }
 
 // Get cached data
 export fn getCache(key: string) -> Option<JsonValue> {
-    if !isCacheValid(key) {
+    if (!isCacheValid(key)) {
         return None;
     }
 
@@ -48,16 +48,16 @@ export fn getCache(key: string) -> Option<JsonValue> {
     let content: Result<string, string> = readFile(path);
 
     match content {
-        Ok(data) -> {
+        Ok(data) => {
             let json: Result<JsonValue, string> = parseJSON(data);
             match json {
-                Ok(obj) -> {
+                Ok(obj) => {
                     return Some(obj["data"]);
                 },
-                Err(_) -> return None
+                Err(_) => return None
             }
         },
-        Err(_) -> return None
+        Err(_) => return None
     }
 }
 
@@ -78,7 +78,7 @@ export fn setCache(key: string, data: JsonValue) -> Result<void, string> {
 // Clear specific cache entry
 export fn clearCache(key: string) -> void {
     let path: string = getCachePath(key);
-    if fileExists(path) {
+    if (fileExists(path)) {
         // In a real implementation, we'd delete the file
         // For now, we just let it expire naturally
     }

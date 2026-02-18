@@ -7,7 +7,7 @@ import { regexNew, regexTest } from "std:regex";
 export fn validateStatus(response: HttpResponse, expected: number) -> Result<void, string> {
     let actual: number = http_status(response);
 
-    if actual == expected {
+    if (actual == expected) {
         return Ok(void);
     } else {
         return Err("Status mismatch: expected " + toString(expected) + ", got " + toString(actual));
@@ -18,7 +18,7 @@ export fn validateStatus(response: HttpResponse, expected: number) -> Result<voi
 export fn validateHeader(response: HttpResponse, headerName: string, expectedValue: string) -> Result<void, string> {
     let actual: string = http_header(response, headerName);
 
-    if actual == expectedValue {
+    if (actual == expectedValue) {
         return Ok(void);
     } else {
         return Err("Header '" + headerName + "' mismatch: expected '" + expectedValue + "', got '" + actual + "'");
@@ -29,7 +29,7 @@ export fn validateHeader(response: HttpResponse, headerName: string, expectedVal
 export fn validateHeaderContains(response: HttpResponse, headerName: string, substring: string) -> Result<void, string> {
     let actual: string = http_header(response, headerName);
 
-    if contains(actual, substring) {
+    if (contains(actual, substring)) {
         return Ok(void);
     } else {
         return Err("Header '" + headerName + "' does not contain '" + substring + "'");
@@ -40,7 +40,7 @@ export fn validateHeaderContains(response: HttpResponse, headerName: string, sub
 export fn validateBodyEquals(response: HttpResponse, expected: string) -> Result<void, string> {
     let actual: string = http_body(response);
 
-    if actual == expected {
+    if (actual == expected) {
         return Ok(void);
     } else {
         return Err("Body mismatch: expected '" + expected + "', got '" + actual + "'");
@@ -51,7 +51,7 @@ export fn validateBodyEquals(response: HttpResponse, expected: string) -> Result
 export fn validateBodyContains(response: HttpResponse, substring: string) -> Result<void, string> {
     let actual: string = http_body(response);
 
-    if contains(actual, substring) {
+    if (contains(actual, substring)) {
         return Ok(void);
     } else {
         return Err("Body does not contain '" + substring + "'");
@@ -64,14 +64,14 @@ export fn validateBodyMatchesRegex(response: HttpResponse, pattern: string) -> R
     let regex: Result<Regex, string> = regexNew(pattern);
 
     match regex {
-        Ok(re) -> {
-            if regexTest(re, actual) {
+        Ok(re) => {
+            if (regexTest(re, actual)) {
                 return Ok(void);
             } else {
                 return Err("Body does not match pattern '" + pattern + "'");
             }
         },
-        Err(e) -> return Err("Invalid regex pattern: " + e)
+        Err(e) => return Err("Invalid regex pattern: " + e)
     }
 }
 
@@ -81,8 +81,8 @@ export fn validateJsonResponse(response: HttpResponse) -> Result<JsonValue, stri
     let json: Result<JsonValue, string> = parseJSON(body);
 
     match json {
-        Ok(data) -> return Ok(data),
-        Err(e) -> return Err("Invalid JSON response: " + e)
+        Ok(data) => return Ok(data),
+        Err(e) => return Err("Invalid JSON response: " + e)
     }
 }
 
@@ -90,7 +90,7 @@ export fn validateJsonResponse(response: HttpResponse) -> Result<JsonValue, stri
 export fn validateJsonField(json: JsonValue, field: string, expectedValue: JsonValue) -> Result<void, string> {
     let actual: JsonValue = json[field];
 
-    if jsonEquals(actual, expectedValue) {
+    if (jsonEquals(actual, expectedValue)) {
         return Ok(void);
     } else {
         let actualStr: string = toJSON(actual);
@@ -103,7 +103,7 @@ export fn validateJsonField(json: JsonValue, field: string, expectedValue: JsonV
 export fn validateJsonFieldExists(json: JsonValue, field: string) -> Result<void, string> {
     let value: JsonValue = json[field];
 
-    if jsonIsNull(value) {
+    if (jsonIsNull(value)) {
         return Err("JSON field '" + field + "' does not exist or is null");
     } else {
         return Ok(void);
@@ -112,14 +112,14 @@ export fn validateJsonFieldExists(json: JsonValue, field: string) -> Result<void
 
 // Validate JSON array length
 export fn validateJsonArrayLength(json: JsonValue, expectedLength: number) -> Result<void, string> {
-    if !jsonIsArray(json) {
+    if (!jsonIsArray(json)) {
         return Err("Expected JSON array, got " + reflect_typeof(json));
     }
 
     let arr: array = jsonAsArray(json);
     let actualLength: number = len(arr);
 
-    if actualLength == expectedLength {
+    if (actualLength == expectedLength) {
         return Ok(void);
     } else {
         return Err("Array length mismatch: expected " + toString(expectedLength) + ", got " + toString(actualLength));

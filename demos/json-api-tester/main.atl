@@ -11,16 +11,16 @@ fn runTestSuite(filepath: string) -> Result<void, string> {
     let fileContent: Result<string, string> = readFile(filepath);
 
     let content: string = match fileContent {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to read test suite: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to read test suite: " + e)
     };
 
     // Parse JSON
     let jsonResult: Result<JsonValue, string> = parseJSON(content);
 
     let suite: JsonValue = match jsonResult {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to parse test suite JSON: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to parse test suite JSON: " + e)
     };
 
     // Extract suite metadata
@@ -64,8 +64,8 @@ fn runTestSuite(filepath: string) -> Result<void, string> {
     // Save results
     let saveResult: Result<void, string> = saveResults(results, suiteName);
     match saveResult {
-        Ok(_) -> {},
-        Err(e) -> print("⚠️  " + e)
+        Ok(_) => {},
+        Err(e) => print("⚠️  " + e)
     }
 
     return Ok(void);
@@ -82,10 +82,10 @@ fn main() -> void {
     let result: Result<void, string> = runTestSuite(testSuite);
 
     match result {
-        Ok(_) -> {
+        Ok(_) => {
             print("✅ Test suite completed successfully");
         },
-        Err(e) -> {
+        Err(e) => {
             print("");
             print("❌ Error: " + e);
             print("");

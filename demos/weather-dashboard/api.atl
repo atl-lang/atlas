@@ -7,8 +7,8 @@ export fn fetchWeather(city: string) -> Result<JsonValue, string> {
     // Check cache first
     let cached: Option<JsonValue> = getCache(city);
     match cached {
-        Some(data) -> return Ok(data),
-        None -> {
+        Some(data) => return Ok(data),
+        None => {
             // Build wttr.in URL (format=j1 returns JSON)
             let encodedCity: string = replace(city, " ", "+");
             let url: string = "https://wttr.in/" + encodedCity + "?format=j1";
@@ -16,23 +16,23 @@ export fn fetchWeather(city: string) -> Result<JsonValue, string> {
             let response: Result<HttpResponse, string> = http_get(url);
 
             match response {
-                Ok(resp) -> {
-                    if !http_is_success(resp) {
+                Ok(resp) => {
+                    if (!http_is_success(resp)) {
                         let status: number = http_status(resp);
                         return Err("Weather API error: " + toString(status));
                     }
 
                     let jsonResult: Result<JsonValue, string> = http_parse_json(resp);
                     match jsonResult {
-                        Ok(data) -> {
+                        Ok(data) => {
                             // Cache the response
-                            let _ = setCache(city, data);
+                            setCache(city, data);
                             return Ok(data);
                         },
-                        Err(e) -> return Err("Failed to parse weather JSON: " + e)
+                        Err(e) => return Err("Failed to parse weather JSON: " + e)
                     }
                 },
-                Err(e) -> return Err("HTTP request failed: " + e)
+                Err(e) => return Err("HTTP request failed: " + e)
             }
         }
     }

@@ -14,7 +14,7 @@ export fn displaySummary(results: array, totalTests: number) -> void {
         let isPassed: bool = jsonAsBool(result["passed"]);
         let duration: number = jsonAsNumber(result["duration"]);
 
-        if isPassed {
+        if (isPassed) {
             passed = passed + 1;
         } else {
             failed = failed + 1;
@@ -41,22 +41,22 @@ export fn displayTestResult(result: JsonValue, index: number) -> void {
     let passed: bool = jsonAsBool(result["passed"]);
     let duration: number = jsonAsNumber(result["duration"]);
 
-    let status: string = if passed { "✅ PASS" } else { "❌ FAIL" };
+    let status: string = if (passed) { "✅ PASS" } else { "❌ FAIL" };
     print(toString(index) + ". " + status + " - " + name + " (" + toString(duration) + "ms)");
 
     // Show error if failed
     let error: JsonValue = result["error"];
-    if !jsonIsNull(error) {
+    if (!jsonIsNull(error)) {
         print("   Error: " + jsonAsString(error));
     }
 
     // Show failed assertions
     let assertions: JsonValue = result["assertions"];
-    if !jsonIsNull(assertions) && jsonIsArray(assertions) {
+    if (!jsonIsNull(assertions) && jsonIsArray(assertions)) {
         let assertArr: array = jsonAsArray(assertions);
         for assertion in assertArr {
             let assertPassed: bool = jsonAsBool(assertion["passed"]);
-            if !assertPassed {
+            if (!assertPassed) {
                 let assertType: string = jsonAsString(assertion["type"]);
                 let message: string = jsonAsString(assertion["message"]);
                 print("   Assertion failed (" + assertType + "): " + message);
@@ -81,11 +81,11 @@ export fn saveResults(results: array, suiteName: string) -> Result<void, string>
     let writeResult: Result<void, string> = writeFile(filepath, json);
 
     match writeResult {
-        Ok(_) -> {
+        Ok(_) => {
             print("📄 Results saved to: " + filepath);
             return Ok(void);
         },
-        Err(e) -> return Err("Failed to save results: " + e)
+        Err(e) => return Err("Failed to save results: " + e)
     }
 }
 

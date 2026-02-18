@@ -33,7 +33,7 @@ export fn calculateTotalForks(repos: JsonValue) -> number {
 export fn findTopRepo(repos: JsonValue) -> Option<JsonValue> {
     let repoArray: array = jsonAsArray(repos);
 
-    if len(repoArray) == 0 {
+    if (len(repoArray) == 0) {
         return None;
     }
 
@@ -42,7 +42,7 @@ export fn findTopRepo(repos: JsonValue) -> Option<JsonValue> {
 
     for repo in repoArray {
         let stars: number = jsonAsNumber(repo["stargazers_count"]);
-        if stars > maxStars {
+        if (stars > maxStars) {
             maxStars = stars;
             topRepo = repo;
         }
@@ -59,10 +59,10 @@ export fn aggregateLanguages(repos: JsonValue) -> HashMap {
     for repo in repoArray {
         let lang: JsonValue = repo["language"];
 
-        if !jsonIsNull(lang) {
+        if (!jsonIsNull(lang)) {
             let langStr: string = jsonAsString(lang);
 
-            if mapHas(languages, langStr) {
+            if (mapHas(languages, langStr)) {
                 let count: number = jsonAsNumber(mapGet(languages, langStr));
                 mapSet(languages, langStr, jsonNumber(count + 1));
             } else {
@@ -78,7 +78,7 @@ export fn aggregateLanguages(repos: JsonValue) -> HashMap {
 export fn findTopLanguage(languageMap: HashMap) -> Option<string> {
     let keys: array = mapKeys(languageMap);
 
-    if len(keys) == 0 {
+    if (len(keys) == 0) {
         return None;
     }
 
@@ -87,7 +87,7 @@ export fn findTopLanguage(languageMap: HashMap) -> Option<string> {
 
     for lang in keys {
         let count: number = jsonAsNumber(mapGet(languageMap, lang));
-        if count > maxCount {
+        if (count > maxCount) {
             maxCount = count;
             topLang = lang;
         }
@@ -106,7 +106,7 @@ export fn calculateLanguagePercentage(languageMap: HashMap, language: string) ->
         total = total + count;
     }
 
-    if total == 0 {
+    if (total == 0) {
         return 0;
     }
 
@@ -118,7 +118,7 @@ export fn calculateLanguagePercentage(languageMap: HashMap, language: string) ->
 export fn daysSinceLastActivity(repos: JsonValue) -> number {
     let repoArray: array = jsonAsArray(repos);
 
-    if len(repoArray) == 0 {
+    if (len(repoArray) == 0) {
         return 0;
     }
 
@@ -128,11 +128,11 @@ export fn daysSinceLastActivity(repos: JsonValue) -> number {
 
     let lastUpdate: Result<DateTime, string> = parseIso(updatedAt);
     match lastUpdate {
-        Ok(dt) -> {
+        Ok(dt) => {
             let now: DateTime = timestampNow();
             return abs(diffDays(now, dt));
         },
-        Err(_) -> return 0
+        Err(_) => return 0
     }
 }
 
@@ -140,7 +140,7 @@ export fn daysSinceLastActivity(repos: JsonValue) -> number {
 export fn calculateStreak(events: JsonValue) -> number {
     let eventArray: array = jsonAsArray(events);
 
-    if len(eventArray) == 0 {
+    if (len(eventArray) == 0) {
         return 0;
     }
 
@@ -153,22 +153,22 @@ export fn calculateStreak(events: JsonValue) -> number {
         let eventTime: Result<DateTime, string> = parseIso(createdAt);
 
         match eventTime {
-            Ok(dt) -> {
+            Ok(dt) => {
                 match lastDate {
-                    None -> {
+                    None => {
                         lastDate = Some(dt);
                         streak = 1;
                     },
-                    Some(last) -> {
+                    Some(last) => {
                         let diff: number = abs(diffDays(dt, last));
-                        if diff <= 1 {
+                        if (diff <= 1) {
                             streak = streak + 1;
                             lastDate = Some(dt);
                         }
                     }
                 }
             },
-            Err(_) -> {}
+            Err(_) => {}
         }
     }
 
@@ -182,7 +182,7 @@ export fn countPublicRepos(repos: JsonValue) -> number {
 
     for repo in repoArray {
         let isFork: bool = jsonAsBool(repo["fork"]);
-        if !isFork {
+        if (!isFork) {
             count = count + 1;
         }
     }

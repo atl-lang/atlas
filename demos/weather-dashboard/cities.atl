@@ -9,20 +9,20 @@ export fn loadCities() -> Result<array, string> {
     let content: Result<string, string> = readFile(configPath);
 
     let fileContent: string = match content {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to read cities config: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to read cities config: " + e)
     };
 
     let json: Result<JsonValue, string> = parseJSON(fileContent);
 
     let config: JsonValue = match json {
-        Ok(data) -> data,
-        Err(e) -> return Err("Failed to parse cities config: " + e)
+        Ok(data) => data,
+        Err(e) => return Err("Failed to parse cities config: " + e)
     };
 
     let cities: JsonValue = config["cities"];
 
-    if jsonIsArray(cities) {
+    if (jsonIsArray(cities)) {
         return Ok(jsonAsArray(cities));
     } else {
         return Err("Invalid cities config: 'cities' must be an array");

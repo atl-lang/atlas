@@ -3,7 +3,7 @@ import { regexNew, regexFindAll } from "std:regex";
 import { setNew, setAdd, setHas } from "std:collections";
 
 // Extract all links from HTML
-export fn extractLinks(html: string) => array {
+export fn extractLinks(html: string) -> array {
     let links: array = [];
 
     // Pattern for href attributes
@@ -16,7 +16,7 @@ export fn extractLinks(html: string) => array {
 
             for match in matches {
                 let groups: array = match["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     let url: string = groups[1];
                     push(links, url);
                 }
@@ -29,7 +29,7 @@ export fn extractLinks(html: string) => array {
 }
 
 // Extract email addresses
-export fn extractEmails(html: string) => array {
+export fn extractEmails(html: string) -> array {
     let emails: HashSet = setNew();
 
     // Email pattern
@@ -56,7 +56,7 @@ export fn extractEmails(html: string) => array {
 }
 
 // Extract phone numbers (US format)
-export fn extractPhones(html: string) => array {
+export fn extractPhones(html: string) -> array {
     let phones: HashSet = setNew();
 
     // Phone pattern (simplified)
@@ -80,7 +80,7 @@ export fn extractPhones(html: string) => array {
 }
 
 // Extract page title
-export fn extractTitle(html: string) => string {
+export fn extractTitle(html: string) -> string {
     let pattern: string = "<title>([^<]+)</title>";
     let regex: Result<Regex, string> = regexNew(pattern);
 
@@ -88,10 +88,10 @@ export fn extractTitle(html: string) => string {
         Ok(re) => {
             let matches: array = regexFindAll(re, html);
 
-            if len(matches) > 0 {
+            if (len(matches) > 0) {
                 let firstMatch: JsonValue = matches[0];
                 let groups: array = firstMatch["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     return trim(groups[1]);
                 }
             }
@@ -103,7 +103,7 @@ export fn extractTitle(html: string) => string {
 }
 
 // Extract meta description
-export fn extractDescription(html: string) => string {
+export fn extractDescription(html: string) -> string {
     let pattern: string = "<meta\\s+name=\"description\"\\s+content=\"([^\"]+)\"";
     let regex: Result<Regex, string> = regexNew(pattern);
 
@@ -111,10 +111,10 @@ export fn extractDescription(html: string) => string {
         Ok(re) => {
             let matches: array = regexFindAll(re, html);
 
-            if len(matches) > 0 {
+            if (len(matches) > 0) {
                 let firstMatch: JsonValue = matches[0];
                 let groups: array = firstMatch["groups"];
-                if len(groups) > 1 {
+                if (len(groups) > 1) {
                     return trim(groups[1]);
                 }
             }
@@ -126,7 +126,7 @@ export fn extractDescription(html: string) => string {
 }
 
 // Count word occurrences
-export fn countWords(text: string) => number {
+export fn countWords(text: string) -> number {
     // Remove HTML tags (simplified)
     let cleaned: string = replace(text, "<[^>]+>", " ");
 
@@ -135,7 +135,7 @@ export fn countWords(text: string) => number {
 
     for word in words {
         let trimmed: string = trim(word);
-        if len(trimmed) > 0 {
+        if (len(trimmed) > 0) {
             count = count + 1;
         }
     }
