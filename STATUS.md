@@ -1,214 +1,74 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-19
-**Version:** v0.2 (building production infrastructure)
-
+**Last Updated:** 2026-02-18
+**Version:** v0.2 | **Progress:** 96/130 phases (74%)
 
 ---
 
-## 🎯 Current Phase
+## Current Phase
 
 **Last Completed:** phases/infra/phase-05b-file-based-test-corpus.md
 **Next Phase:** phases/infra/phase-06-fuzz-testing.md
-**Real Progress:** 96/130 phases complete (74%)
 
-> ⚠️ **INFRASTRUCTURE BLOCKER:** Infra phases in progress. After Infra completes, do
-> Correctness phases (01–07) before resuming Interpreter/CLI/LSP/Polish work.
-> Correctness phases fix structural compiler bugs (raw pointers, parity breaks,
-> missing enforcement) that must be resolved before building features on top.
+> **Execution order:** Infra (2 left) → Correctness (11) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
+> Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
 
 ---
 
-## 📊 Category Progress
+## Category Progress
 
-| Category | Progress | Status |
-|----------|----------|--------|
-| **Infra** | 18/20 (90%) | 🚨 BLOCKING — do first |
-| **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
-| **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
-| **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
-| **3. Frontend** | 5/5 (100%) | ✅ COMPLETE |
-| **4. Typing** | 7/7 (100%) | ✅ COMPLETE |
-| **Correctness** | 0/11 (0%) | 🚨 Do after Infra, before Interpreter |
-| **5. Interpreter** | 0/2 (0%) | ⬜ Blocked by Correctness |
-| **6. CLI** | 0/6 (0%) | ⬜ Pending |
-| **7. LSP** | 0/5 (0%) | ⬜ Pending |
-| **8. Polish** | 0/5 (0%) | ⬜ Pending |
-
----
-
-## 📋 Complete Phase List (95/126)
-
-### Infra — Test Infrastructure (5/19) 🚨 BLOCKING
-
-**Stage 1 — Binary reduction (COMPLETE):**
-✅ phase-01-test-consolidation-frontend.md               — 20 files → 3, nextest.toml
-✅ phase-02-test-consolidation-core.md                   — 70 files → 6, fix fib timeout
-✅ phase-03a-consolidate-async-http-ffi.md               — 11 files → 3 (async, http, ffi)
-✅ phase-03b-consolidate-debugger-security-modules.md    — 10 files → 3 (debugger, security, modules)
-✅ phase-03c-consolidate-system-api-final.md             — 19 files → 5 + regression rename
-
-**Stage 2 — World-class organization (ONE FILE PER PHASE):**
-✅ phase-03d-common-helpers-setup.md            — Expand common/mod.rs with 8 shared helpers
-✅ phase-03e-flatten-repl.md                    — repl.rs: remove mod state/types wrappers (366 lines)
-✅ phase-03f-flatten-http.md                    — http.rs: replace file banners with section comments (862 lines)
-✅ phase-03g-flatten-security.md                — security.rs: remove mod permissions/runtime/audit (1,527 lines)
-✅ phase-03h-flatten-datetime-regex.md          — datetime_regex.rs: remove 4 mod wrappers (1,593 lines)
-✅ phase-03i-flatten-modules.md                 — modules.rs: remove 4 mod wrappers, rename dup test (1,806 lines)
-✅ phase-03j-flatten-debugger.md                — debugger.rs: remove mod execution/inspection/protocol (1,921 lines)
-✅ phase-03k-clean-async-runtime.md             — async_runtime.rs: replace file banners with section comments (2,336 lines)
-✅ phase-03l-flatten-api.md                     — api.rs: remove 7 mod wrappers (2,955 lines)
-✅ phase-03m-flatten-system.md                  — system.rs: remove 6 mod wrappers (3,821 lines)
-
-**Stage 3 — Quality standards (do after 03d-03m):**
-✅ phase-04-ignore-audit.md                     — Zero bare #[ignore], all reasons documented
-✅ phase-05a-runtime-output-writer.md           — Add configurable OutputWriter to RuntimeConfig (prereq for corpus)
-✅ phase-05b-file-based-test-corpus.md          — .atlas corpus files (pass/fail/warn) built on OutputWriter
-⬜ phase-06-fuzz-testing.md                     — cargo-fuzz on lexer/parser/typechecker/eval
-⬜ phase-07-benchmark-suite.md                  — Criterion benchmarks, baseline committed
-
-> After all 20 infra phases complete: Next Phase → `phases/correctness/phase-01-security-context-threading.md`
+| Category | Done | Status |
+|----------|------|--------|
+| **Infra** | 18/20 | 🚨 DO FIRST — 2 remaining |
+| **Correctness** | 0/11 | 🚨 Do after Infra |
+| **Foundation** | 33/33 | ✅ Archived |
+| **Stdlib** | 28/30 | ✅ Near complete (phase-16+ TBD) |
+| **Bytecode-VM** | 8/8 | ✅ Archived |
+| **Frontend** | 5/5 | ✅ Archived |
+| **Typing** | 7/7 | ✅ Archived |
+| **Interpreter** | 0/2 | ⬜ Blocked by Correctness |
+| **CLI** | 0/6 | ⬜ Pending |
+| **LSP** | 0/5 | ⬜ Pending |
+| **Polish** | 0/5 | ⬜ Pending |
 
 ---
 
-### Correctness — Compiler Standards (0/11) 🚨 Do after Infra
+## Remaining Phases
 
-> These phases fix structural compiler correctness issues identified in a full audit.
-> They MUST be completed before Interpreter-01. Interpreter-02 explicitly requires
-> all 11 complete before its parity test suite runs.
+### Infra (2 remaining)
 
-**Structural safety (01–03):**
-⬜ phase-01-security-context-threading.md  — Replace *const SecurityContext raw pointer with Arc<SecurityContext>
-⬜ phase-02-builtin-dispatch-registry.md   — Eliminate is_builtin/call_builtin dual match; unified OnceLock registry
-⬜ phase-03-value-builtin-variant.md       — Add Value::Builtin(Arc<str>); separate builtins from user functions
+⬜ phase-06-fuzz-testing.md — cargo-fuzz on lexer/parser/typechecker/eval
+⬜ phase-07-benchmark-suite.md — Criterion benchmarks, baseline committed
 
-**Engine parity (04–05):**
-⬜ phase-04-parity-callback-fixes.md       — NativeFunction in call_value + align all 17 callback intrinsic validations
-⬜ phase-05-parity-method-dispatch.md      — Shared TypeTag dispatch table; eliminate interpreter/compiler method name divergence
+### Correctness (0/11) — Do after Infra
 
-**Language semantics (06–07):**
-⬜ phase-06-immutability-enforcement.md    — Activate let/var enforcement in compiler + interpreter (data already tracked, never used)
-⬜ phase-07-import-execution.md            — Wire interpreter + compiler import handling to module executor (both currently stub)
+**Structural safety:**
+⬜ phase-01-security-context-threading.md — Replace *const SecurityContext with Arc<SecurityContext>
+⬜ phase-02-builtin-dispatch-registry.md — Unified OnceLock registry (eliminate dual match)
+⬜ phase-03-value-builtin-variant.md — Value::Builtin(Arc<str>); separate builtins from user fns
 
-**Soundness & UB elimination (08–09):**
-⬜ phase-08-ffi-callback-soundness.md      — Replace unsound closure-as-fn-ptr with extern "C" trampolines
-⬜ phase-09-vm-bytecode-bounds-safety.md   — Add bounds checking to VM read_u8/read_u16; eliminate UB on malformed bytecode
+**Engine parity:**
+⬜ phase-04-parity-callback-fixes.md — NativeFunction in call_value + callback validation alignment
+⬜ phase-05-parity-method-dispatch.md — Shared TypeTag dispatch table
 
-**Error quality (10–11):**
-⬜ phase-10-stdlib-error-context.md        — Add function name + type context to all ~294 InvalidStdlibArgument errors
-⬜ phase-11-parser-number-diagnostic.md    — Emit diagnostic for invalid number literals; add distinct parser error codes
+**Language semantics:**
+⬜ phase-06-immutability-enforcement.md — Activate let/var enforcement (data tracked, never used)
+⬜ phase-07-import-execution.md — Wire import handling to module executor (both engines stub)
 
-> After all 11 complete: Next Phase → `phases/interpreter/phase-01-debugger-repl-improvements.md`
+**Soundness:**
+⬜ phase-08-ffi-callback-soundness.md — extern "C" trampolines (current closure cast = UB)
+⬜ phase-09-vm-bytecode-bounds-safety.md — Bounds checking on VM read_u8/read_u16
 
----
+**Error quality:**
+⬜ phase-10-stdlib-error-context.md — Function name + type context in all stdlib errors
+⬜ phase-11-parser-number-diagnostic.md — Diagnostic for invalid numbers; distinct error codes
 
-### 0. Foundation (33/33) ✅ COMPLETE
-
-✅ phase-16-method-call-syntax-frontend.md
-✅ phase-17-method-call-syntax-backend.md
-✅ phase-01-runtime-api-expansion.md
-✅ phase-04-configuration-system.md
-✅ phase-06-module-system-core.md
-✅ phase-09-error-handling-primitives.md
-✅ phase-02-embedding-api-design.md
-✅ phase-10a-ffi-core-types.md
-✅ phase-10b-ffi-library-loading.md
-✅ phase-10c-ffi-callbacks.md
-✅ phase-07-package-manifest.md
-✅ phase-15-security-permissions.md
-✅ phase-03-ci-automation.md
-✅ phase-05-foundation-integration.md
-✅ phase-12-reflection-api.md
-✅ phase-08a-package-manager-resolver-core.md
-✅ phase-08b-package-manager-registry.md
-✅ phase-08c-package-manager-integration.md
-✅ phase-11a-build-system-core.md
-✅ phase-11b-build-system-incremental.md
-✅ phase-11c-build-system-integration.md
-
-✅ phase-18a-arc-core-value.md
-✅ phase-18b-arc-engines.md
-✅ phase-18c-arc-core-stdlib.md
-✅ phase-18d-arc-collections.md
-✅ phase-18e-arc-advanced-stdlib.md
-✅ phase-18f-arc-tests-verification.md
-✅ phase-19-enable-parser-features.md
-✅ phase-20a-for-in-frontend.md
-✅ phase-20b-for-in-semantic.md
-✅ phase-20c-for-in-backend.md
-✅ phase-20d-for-in-testing-demos.md
-✅ phase-21a-cross-module-symbol-resolution.md
-
-### 1. Stdlib (28/30) ✅ Near Complete
-
-✅ phase-01-complete-string-api.md
-✅ phase-02-complete-array-api.md
-✅ phase-03-complete-math-api.md
-✅ phase-04-json-type-utilities.md
-✅ phase-05-complete-file-io-api.md
-✅ phase-06a-stdlib-integration-core.md
-✅ phase-06b-stdlib-real-world.md
-✅ phase-06c-stdlib-performance-docs.md
-✅ phase-07a-hash-infrastructure-hashmap.md
-✅ phase-07b-hashset.md
-✅ phase-07c-queue-stack.md
-✅ phase-07d-collection-integration.md
-✅ phase-08a-regex-core.md
-✅ phase-08b-regex-operations.md
-✅ phase-09a-datetime-core.md
-✅ phase-09b-datetime-advanced.md
-✅ phase-10a-http-core.md
-✅ phase-10b-http-advanced.md
-✅ phase-11a-async-foundation.md
-✅ phase-11b-async-io-operations.md
-✅ phase-11c-async-primitives.md
-✅ phase-12-process-management.md
-✅ phase-13a-path-manipulation.md
-✅ phase-13b-file-system-operations.md
-✅ phase-14a-gzip.md
-✅ phase-14b-tar.md
-✅ phase-14c-zip.md
-✅ phase-15-testing-primitives.md
-⬜ phase-16-through-25 (TBD)
-
-### 2. Bytecode-VM (8/8) ✅ COMPLETE
-
-✅ phase-01-short-circuit-and-validation.md
-✅ phase-02-complete-optimizer.md
-✅ phase-03-complete-profiler.md
-✅ phase-04-debugger-infrastructure.md
-✅ phase-05-debugger-execution-control.md
-✅ phase-06-vm-performance-improvements.md
-✅ phase-07-vm-integration-tests.md
-✅ phase-08-jit-compilation-foundation.md
-
-### 3. Frontend (5/5) ✅ COMPLETE
-
-✅ phase-01-enhanced-errors-and-warnings.md
-✅ phase-02-code-formatter.md
-✅ phase-03-frontend-integration-tests.md
-✅ phase-04-source-maps.md
-✅ phase-05-incremental-compilation.md
-
-### 4. Typing (7/7) ✅ COMPLETE
-
-✅ phase-01-improved-type-errors-and-inference.md
-✅ phase-02-repl-type-integration.md
-✅ phase-03-type-aliases.md
-✅ phase-04-union-types.md
-✅ phase-05-generic-constraints.md
-✅ phase-06-type-guards.md
-✅ phase-07-advanced-inference.md
-
-### 5. Interpreter (0/2) ⬜ Blocked by Correctness
-
-> Requires all 7 Correctness phases. Interpreter-02 explicitly validates parity —
-> that parity must be correct before the test suite runs.
+### Interpreter (0/2) — Blocked by Correctness
 
 ⬜ phase-01-debugger-repl-improvements.md
-⬜ phase-02-interpreter-performance-and-integration.md   — REQUIRES all Correctness phases (see phase file BLOCKERS)
+⬜ phase-02-interpreter-performance-and-integration.md — Requires all Correctness phases
 
-### 6. CLI (0/6) ⬜
+### CLI (0/6)
 
 ⬜ phase-01-formatter-and-watch-mode.md
 ⬜ phase-02-test-bench-doc-runners.md
@@ -217,7 +77,7 @@
 ⬜ phase-05-package-manager-cli.md
 ⬜ phase-06-project-scaffolding.md
 
-### 7. LSP (0/5) ⬜
+### LSP (0/5)
 
 ⬜ phase-01-hover-actions-tokens.md
 ⬜ phase-02-symbols-folding-inlay.md
@@ -225,7 +85,7 @@
 ⬜ phase-04-refactoring-actions.md
 ⬜ phase-05-find-references.md
 
-### 8. Polish (0/5) ⬜
+### Polish (0/5)
 
 ⬜ phase-01-comprehensive-testing.md
 ⬜ phase-02-performance-verification.md
@@ -235,133 +95,25 @@
 
 ---
 
-## 🚨 Critical Notes
-
-**Foundation Status - ✅ COMPLETE (32/32 = 100%):**
-- ✅ **Phase-18 (Arc Refactor):** COMPLETE - Value now thread-safe (Arc<Mutex<>>)
-- ✅ **Phase-19 (Parser Features):** COMPLETE - Match expressions enabled
-- ✅ **Phase-20 (For-In Loops):** COMPLETE - All 4 sub-phases done
-  - ✅ Phase-20a: Frontend (lexer, parser, AST)
-  - ✅ Phase-20b: Semantic analysis (binder, typechecker)
-  - ✅ Phase-20c: Backend (interpreter execution)
-  - ✅ Phase-20d: Testing & documentation
-
-**What's Unblocked:**
-- ✅ Phase-11c (async primitives) - Arc refactor complete, tokio::spawn works
-- ✅ Match expressions - Result/Option pattern matching works
-- ✅ Import statements - Already functional (verified)
-- ✅ For-in syntax - Parses correctly (execution in 20b-d)
-
-**Foundation Complete - Unblocked Work:**
-- ✅ All foundation phases complete (32/32)
-- **NEXT:** Continue stdlib work (phase-15 testing framework)
-- **THEN:** Continue with bytecode-VM, frontend, typing, etc.
-
-**v0.1 Prerequisites (Status Update):**
-- ✅ First-Class Functions
-- ✅ JsonValue Type
-- ✅ Generic Type System (Option<T>, Result<T,E>)
-- ✅ Pattern Matching (match expressions) - **ENABLED in Phase-19**
-- ✅ Import Statements - **Already functional** (verified in Phase-19)
-- ✅ For-In Loops - **COMPLETE** (all 4 sub-phases done)
-- ✅ Basic Module System (v0.1 only - v0.2 expands this)
-
----
-
-## 🔄 Handoff Protocol
+## Handoff Protocol
 
 **When you complete a phase:**
-
-1. **Update STATUS.md phase list:** Change ⬜ to ✅ for completed phase
-2. **Update STATUS.md header:**
-   - "Last Completed" → phase you just finished
-   - "Next Phase" → next phase in list
-   - Category progress percentage in table
-   - "Last Updated" date
-3. **Commit:** Single commit with STATUS.md changes
-
-**Example:**
-```markdown
-After completing phase-07d-collection-integration.md:
-
-STATUS.md changes:
-- Mark "✅ phase-07d-collection-integration.md" in Stdlib list
-- Last Completed: phases/stdlib/phase-07d-collection-integration.md
-- Next Phase: phases/stdlib/phase-08-regex.md
-- Stdlib: 11/21 (52%) → 12/21 (57%)
-- Last Updated: 2026-02-16
-```
+1. Mark ⬜ → ✅ in this file
+2. Update "Last Completed" and "Next Phase"
+3. Update category count in progress table
+4. Update "Last Updated" date
+5. Commit STATUS.md
 
 ---
 
-## 📚 Quick Links
+## Quick Links
 
-### For AI Agents
+| Resource | Location |
+|----------|----------|
+| Memory | `/memory/` (patterns.md, decisions.md, testing-patterns.md) |
+| Specs | `docs/specification/` |
+| Phase files | `phases/{category}/` (pending only; completed in `archive/v0.2/`) |
+| v0.1 archive | `phases/*/archive/v0.1/` (93 phases) |
+| v0.2 archive | `phases/*/archive/v0.2/` (96 phases) |
 
-**Memory System (Auto-Loaded):**
-- `/memory/MEMORY.md` - Always loaded index (patterns, decisions, gates)
-- `/memory/patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
-- `/memory/decisions.md` - Architectural decisions (search DR-XXX)
-- `/memory/gates.md` - Quality gate rules
-
-**Specifications:**
-- `docs/specification/` - Language spec (grammar, syntax, types, runtime, bytecode, etc.)
-- `Atlas-SPEC.md` - Spec index with routing table
-
-**History:**
-- v0.1: 93 phases complete, 1391 tests, 100% parity (archived in `phases/*/archive/v0.1/`)
-
-### For Humans
-
-- **Point AI to this file:** "Read STATUS.md and continue"
-- **Each phase is substantial work** (not 5-minute tasks)
-- **All docs optimized for AI** (humans can ask AI to summarize)
-
----
-
-## 📋 v0.2 Implementation Notes
-
-**v0.1.0: COMPLETE** (93 phases archived in `phases/*/archive/v0.1/`)
-**v0.2: IN PROGRESS** (81 detailed, comprehensive phases)
-
-### v0.2 Focus: Building Production Foundation
-
-v0.2 transforms Atlas into a production-ready language:
-- **Foundation:** Module system, package manager, FFI, build system, error handling, reflection, security
-- **Stdlib:** 100+ functions (strings, arrays, math, JSON, files, collections, regex, datetime, networking)
-- **Type System:** Type aliases, union/intersection types, generic constraints, type guards, advanced inference
-- **Bytecode-VM:** Optimizer, profiler, debugger, JIT compilation foundation
-- **Frontend:** Enhanced errors/warnings, formatter, source maps, incremental compilation
-- **Interpreter:** Debugger, REPL improvements, performance, sandboxing
-- **CLI:** Complete tooling (fmt, test, bench, doc, debug, lsp, watch) + package manager CLI
-- **LSP:** Hover, actions, tokens, symbols, folding, refactoring, find-references
-- **Polish:** Comprehensive testing, performance verification, documentation, stability
-
-### Implementation Principles
-
-- **No stubs, full implementation** - Each phase adds complete functionality
-- **Maintain interpreter/VM parity** - All features work in both engines
-- **Testing integrated** - Each phase includes comprehensive tests
-- **Quality over speed** - Proper implementation, not rushing
-- **Token-efficient documentation** - Optimized for AI agents
-
-### Test Infrastructure
-
-- **rstest:** Parameterized tests
-- **insta:** Snapshot testing
-- **proptest:** Property-based testing
-- **pretty_assertions:** Better test output
-
-### For AI Agents
-
-1. Read phase file (~120 lines, requirements only)
-2. Reference memory/ for patterns and decisions
-3. Implement with TDD approach
-4. Verify all acceptance criteria
-5. Update STATUS.md (see Handoff Protocol above)
-6. Maintain 100% interpreter/VM parity
-
----
-
-**Next phase: `phases/infra/phase-03d-common-helpers-setup.md`**
-**After all 19 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**
+**For humans:** Point AI to this file — "Read STATUS.md and continue"
