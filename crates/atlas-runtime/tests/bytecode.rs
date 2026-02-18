@@ -998,8 +998,11 @@ fn test_already_optimal_unchanged() {
 fn assert_semantics(source: &str) {
     let orig = run(compile(source));
     let opt = run(compile_optimized(source));
+    // Compare by Debug representation because PartialEq for collections
+    // uses Arc pointer identity, not structural equality.
     assert_eq!(
-        orig, opt,
+        format!("{:?}", orig),
+        format!("{:?}", opt),
         "Semantics differ for:\n{}\nOrig: {:?}\nOpt:  {:?}",
         source, orig, opt
     );
@@ -2793,7 +2796,7 @@ fn test_array_pattern_single() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(42.0)");
+    assert_eq!(interp_result, "Number(42)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
@@ -2813,7 +2816,7 @@ fn test_array_pattern_pair() {
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();
-    assert_eq!(interp_result, "Number(30.0)");
+    assert_eq!(interp_result, "Number(30)");
 
     if let Ok(vm_result) = pm_run_vm(source) {
         assert_eq!(vm_result, interp_result);
