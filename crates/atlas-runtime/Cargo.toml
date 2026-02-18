@@ -40,7 +40,7 @@ rstest.workspace = true
 proptest.workspace = true
 pretty_assertions.workspace = true
 tempfile = "3.8"
-criterion = "0.5"
+criterion = "0.8"
 atlas-formatter = { path = "../atlas-formatter" }
 
 [[bench]]
