@@ -1,0 +1,101 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax.rs
+assertion_line: 379
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - void
+          - start: 23
+            end: 27
+      predicate: ~
+      body:
+        statements:
+          - If:
+              cond:
+                Literal:
+                  - Bool: true
+                  - start: 46
+                    end: 50
+              then_block:
+                statements:
+                  - FunctionDecl:
+                      name:
+                        name: helper
+                        span:
+                          start: 73
+                          end: 79
+                      type_params: []
+                      params: []
+                      return_type:
+                        Named:
+                          - void
+                          - start: 85
+                            end: 89
+                      predicate: ~
+                      body:
+                        statements:
+                          - Expr:
+                              expr:
+                                Call:
+                                  callee:
+                                    Identifier:
+                                      name: print
+                                      span:
+                                        start: 112
+                                        end: 117
+                                  args:
+                                    - Literal:
+                                        - String: hello
+                                        - start: 118
+                                          end: 125
+                                  span:
+                                    start: 112
+                                    end: 126
+                              span:
+                                start: 112
+                                end: 127
+                        span:
+                          start: 90
+                          end: 145
+                      span:
+                        start: 70
+                        end: 145
+                  - Expr:
+                      expr:
+                        Call:
+                          callee:
+                            Identifier:
+                              name: helper
+                              span:
+                                start: 162
+                                end: 168
+                          args: []
+                          span:
+                            start: 162
+                            end: 170
+                      span:
+                        start: 162
+                        end: 171
+                span:
+                  start: 52
+                  end: 185
+              else_block: ~
+              span:
+                start: 42
+                end: 185
+        span:
+          start: 28
+          end: 195
+      span:
+        start: 9
+        end: 195

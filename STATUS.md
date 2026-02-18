@@ -8,11 +8,11 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/typing/phase-07-advanced-inference.md
-**Next Phase:** phases/infra/phase-01-test-consolidation-frontend.md
-**Real Progress:** 81/106 phases complete (76%)
+**Last Completed:** phases/infra/phase-01-test-consolidation-frontend.md
+**Next Phase:** phases/infra/phase-02-test-consolidation-core.md
+**Real Progress:** 82/106 phases complete (77%)
 
-> ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite has 125 separate binaries (~2.3GB, 60-90s run time).
+> ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
 > Must complete all 7 Infra phases before resuming feature work.
 > After infra: ~17 binaries, sub-20s runs, fuzz tested, benchmarked, corpus-driven.
 
@@ -22,7 +22,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **Infra** | 0/7 (0%) | 🚨 BLOCKING — do first |
+| **Infra** | 1/7 (14%) | 🚨 BLOCKING — do first |
 | **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
@@ -40,7 +40,7 @@
 ### Infra — Test Infrastructure (0/7) 🚨 BLOCKING
 
 **Structural consolidation (do first):**
-⬜ phase-01-test-consolidation-frontend.md       — 20 files → 3, nextest.toml
+✅ phase-01-test-consolidation-frontend.md       — 20 files → 3, nextest.toml
 ⬜ phase-02-test-consolidation-core.md           — 70 files → 6, fix fib timeout
 ⬜ phase-03-test-consolidation-specialized.md   — 38 files → 10, final structure
 
@@ -312,5 +312,5 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Next phase: `phases/infra/phase-01-test-consolidation-frontend.md`**
+**Next phase: `phases/infra/phase-02-test-consolidation-core.md`**
 **After all 7 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**

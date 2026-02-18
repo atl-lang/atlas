@@ -1,0 +1,15 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax.rs
+expression: program
+---
+items:
+  - Statement:
+      Expr:
+        expr:
+          Literal:
+            - String: hello
+            - start: 0
+              end: 7
+        span:
+          start: 0
+          end: 8

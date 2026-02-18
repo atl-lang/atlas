@@ -1,0 +1,113 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax.rs
+assertion_line: 451
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: level1
+        span:
+          start: 12
+          end: 18
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 24
+            end: 30
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: level2
+                span:
+                  start: 48
+                  end: 54
+              type_params: []
+              params: []
+              return_type:
+                Named:
+                  - number
+                  - start: 60
+                    end: 66
+              predicate: ~
+              body:
+                statements:
+                  - FunctionDecl:
+                      name:
+                        name: level3
+                        span:
+                          start: 88
+                          end: 94
+                      type_params: []
+                      params: []
+                      return_type:
+                        Named:
+                          - number
+                          - start: 100
+                            end: 106
+                      predicate: ~
+                      body:
+                        statements:
+                          - Return:
+                              value:
+                                Literal:
+                                  - Number: 42
+                                  - start: 136
+                                    end: 138
+                              span:
+                                start: 129
+                                end: 139
+                        span:
+                          start: 107
+                          end: 157
+                      span:
+                        start: 85
+                        end: 157
+                  - Return:
+                      value:
+                        Call:
+                          callee:
+                            Identifier:
+                              name: level3
+                              span:
+                                start: 181
+                                end: 187
+                          args: []
+                          span:
+                            start: 181
+                            end: 189
+                      span:
+                        start: 174
+                        end: 190
+                span:
+                  start: 67
+                  end: 204
+              span:
+                start: 45
+                end: 204
+          - Return:
+              value:
+                Call:
+                  callee:
+                    Identifier:
+                      name: level2
+                      span:
+                        start: 224
+                        end: 230
+                  args: []
+                  span:
+                    start: 224
+                    end: 232
+              span:
+                start: 217
+                end: 233
+        span:
+          start: 31
+          end: 243
+      span:
+        start: 9
+        end: 243

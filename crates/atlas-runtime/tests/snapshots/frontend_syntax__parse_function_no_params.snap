@@ -1,0 +1,37 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax.rs
+assertion_line: 224
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: foo
+        span:
+          start: 3
+          end: 6
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - "null"
+          - start: 0
+            end: 0
+      predicate: ~
+      body:
+        statements:
+          - Return:
+              value:
+                Literal:
+                  - Number: 42
+                  - start: 18
+                    end: 20
+              span:
+                start: 11
+                end: 21
+        span:
+          start: 9
+          end: 23
+      span:
+        start: 0
+        end: 23

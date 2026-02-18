@@ -1,0 +1,9 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax.rs
+expression: program
+---
+items:
+  - Statement:
+      Continue:
+        start: 0
+        end: 9
