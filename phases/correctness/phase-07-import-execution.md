@@ -102,9 +102,13 @@ Item::Import(import_decl) => {
 
 The `execute_module` helper evaluates the imported module's AST in a fresh interpreter scope and returns its exported bindings as a `HashMap<String, Value>`.
 
-### Step 4: Verify compiler import handling
+### Step 4: Fix compiler import handling
 
-Check what the compiler does with `Item::Import`. If it also silently skips imports, determine whether the VM path needs imports executed at the `Runtime` level before bytecode compilation, or whether imports must be resolved during compilation. For the v0.2 scope, the simplest correct approach is: the `Runtime` runs a pre-pass over all imports before compiling, populating globals for the compiler. Document the chosen approach and implement it if missing.
+The compiler also stubs imports (confirmed: `compiler/mod.rs:129` returns `Ok(())` with comment "Imports don't generate code - they're resolved at compile time"). This is incorrect — imports are NOT resolved at compile time today.
+
+Fix the compiler path: the `Runtime` must run a pre-pass over all `Item::Import` entries before compilation. This pre-pass uses `ModuleLoader` to load the imported module, evaluates it (via interpreter or a dedicated module evaluator), and populates the compiler's globals with the exported symbols. The compiler then sees these globals during compilation and can emit correct `GetGlobal` opcodes.
+
+Implementation: add an `import_prepass()` method to `api/runtime.rs` that processes imports before calling the compiler. The compiler's `Item::Import` arm should then be a no-op (imports already resolved) but must NOT silently skip — add a comment explaining that imports are resolved in the pre-pass.
 
 ### Step 5: Circular import detection
 
