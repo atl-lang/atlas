@@ -1,3 +1,0 @@
-let x: number = "not a number";
-fn add(a: number, b: number) -> number { return a + b; }
-let y = add("hello", true);

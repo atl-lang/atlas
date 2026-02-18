@@ -1,3 +1,0 @@
-let s = "hello" + " " + "world";
-let n = len(s);
-let upper = to_upper("abc");
