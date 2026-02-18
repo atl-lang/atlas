@@ -8,9 +8,9 @@
 
 ## 🎯 Current Phase
 
-**Last Completed:** phases/infra/phase-03d-common-helpers-setup.md
-**Next Phase:** phases/infra/phase-03e-flatten-repl.md
-**Real Progress:** 87/118 phases complete (74%)
+**Last Completed:** phases/infra/phase-03e-flatten-repl.md
+**Next Phase:** phases/infra/phase-03f-flatten-http.md
+**Real Progress:** 88/118 phases complete (75%)
 
 > ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
 > Must complete all 7 Infra phases before resuming feature work.
@@ -22,7 +22,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **Infra** | 6/19 (32%) | 🚨 BLOCKING — do first |
+| **Infra** | 7/19 (37%) | 🚨 BLOCKING — do first |
 | **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
@@ -48,7 +48,7 @@
 
 **Stage 2 — World-class organization (ONE FILE PER PHASE):**
 ✅ phase-03d-common-helpers-setup.md            — Expand common/mod.rs with 8 shared helpers
-⬜ phase-03e-flatten-repl.md                    — repl.rs: remove mod state/types wrappers (366 lines)
+✅ phase-03e-flatten-repl.md                    — repl.rs: remove mod state/types wrappers (366 lines)
 ⬜ phase-03f-flatten-http.md                    — http.rs: replace file banners with section comments (862 lines)
 ⬜ phase-03g-flatten-security.md                — security.rs: remove mod permissions/runtime/audit (1,527 lines)
 ⬜ phase-03h-flatten-datetime-regex.md          — datetime_regex.rs: remove 4 mod wrappers (1,593 lines)
