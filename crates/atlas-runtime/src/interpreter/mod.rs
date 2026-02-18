@@ -503,10 +503,13 @@ impl Interpreter {
         let fn_name = function_name.to_string();
         let function_bodies = self.function_bodies.clone();
         let globals = self.globals.clone();
+        let output_writer = self.output_writer.clone();
 
         // Create callback that calls interpreter
         let callback_fn = move |args: &[Value]| -> Result<Value, RuntimeError> {
-            // Create a temporary interpreter for callback execution
+            // Create a temporary interpreter for callback execution.
+            // Inherit the parent's output_writer so print() inside callbacks
+            // writes to the same destination as the parent interpreter.
             let mut temp_interp = Interpreter {
                 globals: globals.clone(),
                 locals: vec![HashMap::new()],
@@ -514,7 +517,7 @@ impl Interpreter {
                 control_flow: ControlFlow::None,
                 monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
                 current_security: None,
-                output_writer: crate::stdlib::stdout_writer(),
+                output_writer: output_writer.clone(),
                 next_func_id: 0,
                 library_loader: LibraryLoader::new(),
                 extern_functions: HashMap::new(),

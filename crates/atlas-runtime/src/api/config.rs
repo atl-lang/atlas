@@ -120,16 +120,18 @@ impl RuntimeConfig {
 
     /// Redirect all `print()` output to a custom writer.
     ///
+    /// The default writer goes to real stdout. Pass any `Arc<Mutex<Box<dyn Write + Send>>>`
+    /// to capture or redirect output — useful for testing or embedding.
+    ///
     /// # Examples
     ///
     /// ```
     /// use atlas_runtime::api::RuntimeConfig;
-    /// use atlas_runtime::stdlib::{OutputWriter, stdout_writer};
-    /// use std::sync::{Arc, Mutex};
+    /// use atlas_runtime::stdlib::stdout_writer;
     ///
-    /// // Capture output in a buffer
-    /// let buf: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
-    /// // (wrap buf in a Write newtype, then pass as OutputWriter)
+    /// // Explicitly set stdout (same as the default):
+    /// let config = RuntimeConfig::new().with_output(stdout_writer());
+    /// assert!(config.allow_io);
     /// ```
     pub fn with_output(mut self, output: OutputWriter) -> Self {
         self.output = output;
