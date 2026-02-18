@@ -9,8 +9,8 @@
 ## 🎯 Current Phase
 
 **Last Completed:** phases/infra/phase-02-test-consolidation-core.md
-**Next Phase:** phases/infra/phase-03-test-consolidation-specialized.md
-**Real Progress:** 83/106 phases complete (78%)
+**Next Phase:** phases/infra/phase-03a-consolidate-async-http-ffi.md
+**Real Progress:** 83/108 phases complete (77%)
 
 > ⚠️ **INFRASTRUCTURE BLOCKER:** Test suite consolidation in progress (7 infra phases).
 > Must complete all 7 Infra phases before resuming feature work.
@@ -22,7 +22,7 @@
 
 | Category | Progress | Status |
 |----------|----------|--------|
-| **Infra** | 2/7 (29%) | 🚨 BLOCKING — do first |
+| **Infra** | 2/9 (22%) | 🚨 BLOCKING — do first |
 | **0. Foundation** | 33/33 (100%) | ✅ COMPLETE |
 | **1. Stdlib** | 28/30 (93%) | 🔨 ACTIVE |
 | **2. Bytecode-VM** | 8/8 (100%) | ✅ COMPLETE |
@@ -35,22 +35,24 @@
 
 ---
 
-## 📋 Complete Phase List (81/106)
+## 📋 Complete Phase List (83/108)
 
-### Infra — Test Infrastructure (0/7) 🚨 BLOCKING
+### Infra — Test Infrastructure (2/9) 🚨 BLOCKING
 
 **Structural consolidation (do first):**
-✅ phase-01-test-consolidation-frontend.md       — 20 files → 3, nextest.toml
-✅ phase-02-test-consolidation-core.md           — 70 files → 6, fix fib timeout
-⬜ phase-03-test-consolidation-specialized.md   — 38 files → 10, final structure
+✅ phase-01-test-consolidation-frontend.md               — 20 files → 3, nextest.toml
+✅ phase-02-test-consolidation-core.md                   — 70 files → 6, fix fib timeout
+⬜ phase-03a-consolidate-async-http-ffi.md               — 11 files → 3 (async, http, ffi)
+⬜ phase-03b-consolidate-debugger-security-modules.md    — 10 files → 3 (debugger, security, modules)
+⬜ phase-03c-consolidate-system-api-final.md             — 19 files → 5 + regression rename, final audit
 
-**Quality standards (do after 01-03):**
+**Quality standards (do after 03a-03c):**
 ⬜ phase-04-ignore-audit.md                     — Zero bare #[ignore], all reasons documented
 ⬜ phase-05-file-based-test-corpus.md           — .atlas corpus files (pass/fail/warn)
 ⬜ phase-06-fuzz-testing.md                     — cargo-fuzz on lexer/parser/typechecker/eval
 ⬜ phase-07-benchmark-suite.md                  — Criterion benchmarks, baseline committed
 
-> After all 7 complete: restore Next Phase to `phases/interpreter/phase-01-debugger-repl-improvements.md`
+> After all 9 complete: restore Next Phase to `phases/interpreter/phase-01-debugger-repl-improvements.md`
 
 ---
 
@@ -312,5 +314,5 @@ v0.2 transforms Atlas into a production-ready language:
 
 ---
 
-**Next phase: `phases/infra/phase-02-test-consolidation-core.md`**
-**After all 7 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**
+**Next phase: `phases/infra/phase-03a-consolidate-async-http-ffi.md`**
+**After all 9 infra phases: `phases/interpreter/phase-01-debugger-repl-improvements.md`**
