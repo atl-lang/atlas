@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 atlas-runtime = { path = "../atlas-runtime" }
 serde = { version = "1.0", features = ["derive"] }
-toml = "0.8"
+toml = "1.0"
 
 [dev-dependencies]
 rstest.workspace = true
