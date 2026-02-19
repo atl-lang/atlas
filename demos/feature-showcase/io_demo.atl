@@ -1,7 +1,7 @@
 // File I/O (requires SecurityContext permissions when running)
 
 export fn demo_io() -> string {
-    let base = "./demo/data";
+    let base = "./data";
     let sample_path = pathJoin(base, "sample.txt");
     let json_path = pathJoin(base, "sample.json");
     let output_path = pathJoin(base, "output.txt");

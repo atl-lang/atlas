@@ -506,10 +506,7 @@ mod tests {
                 path_normalize("foo/./bar", test_span()).unwrap(),
                 "foo\\bar"
             );
-            assert_eq!(
-                path_normalize("foo//bar", test_span()).unwrap(),
-                "foo\\bar"
-            );
+            assert_eq!(path_normalize("foo//bar", test_span()).unwrap(), "foo\\bar");
         }
 
         #[cfg(not(target_os = "windows"))]
