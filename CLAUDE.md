@@ -14,3 +14,9 @@
 ## Git Process
 - **All code changes use PRs.** Phases, CI fixes, features—everything. PR = fast feedback (~3-4 min).
 - **Direct push to main:** Only for docs/config that CI ignores (*.md, docs/**, LICENSE*, .gitignore).
+
+## Cross-Platform Testing
+- Use `std::path::Path` APIs, not string manipulation for paths.
+- Use `Path::is_absolute()`, not `starts_with('/')`.
+- Normalize separators in test assertions: `path.replace('\\', "/")`.
+- Platform-specific test paths: use `#[cfg(unix)]` / `#[cfg(windows)]` helpers.
