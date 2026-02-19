@@ -627,7 +627,7 @@ fn test_datetime_in_timezone() {
         .unwrap();
     // Should have different hour due to timezone interpretation
     match result {
-        Value::Number(h) => assert!(h >= 0.0 && h < 24.0),
+        Value::Number(h) => assert!((0.0..24.0).contains(&h)),
         _ => panic!("Expected number"),
     }
 }

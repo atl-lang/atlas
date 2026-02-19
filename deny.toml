@@ -3,15 +3,10 @@
 
 [advisories]
 # Check for security vulnerabilities
-vulnerability = "deny"
-unmaintained = "workspace"
-unsound = "workspace"
 yanked = "warn"
-notice = "warn"
 
 [licenses]
 # Ensure all dependencies use approved licenses
-unlicensed = "deny"
 allow = [
     "MIT",
     "Apache-2.0",
@@ -21,9 +16,6 @@ allow = [
     "ISC",
     "Unicode-DFS-2016",
 ]
-copyleft = "warn"
-allow-osi-fsf-free = "both"
-default = "deny"
 
 [bans]
 # Ban specific crates or versions
