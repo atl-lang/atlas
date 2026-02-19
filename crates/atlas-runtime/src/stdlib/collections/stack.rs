@@ -18,10 +18,14 @@ impl AtlasStack {
     /// Create new empty stack
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let stack = AtlasStack::new();
     /// assert!(stack.is_empty());
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn new() -> Self {
         Self { inner: Vec::new() }
     }
@@ -31,9 +35,13 @@ impl AtlasStack {
     /// Useful for performance when stack size is known.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let stack = AtlasStack::with_capacity(100);
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
             inner: Vec::with_capacity(capacity),
@@ -43,11 +51,15 @@ impl AtlasStack {
     /// Push element onto top of stack (LIFO order)
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// stack.push(Value::Number(1.0));
     /// stack.push(Value::String("hello".into()));
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn push(&mut self, value: Value) {
         self.inner.push(value);
     }
@@ -57,12 +69,16 @@ impl AtlasStack {
     /// Returns `None` if stack is empty.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// stack.push(Value::Number(1.0));
     /// assert_eq!(stack.pop(), Some(Value::Number(1.0)));
     /// assert_eq!(stack.pop(), None);
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn pop(&mut self) -> Option<Value> {
         self.inner.pop()
     }
@@ -72,12 +88,16 @@ impl AtlasStack {
     /// Returns `None` if stack is empty.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// stack.push(Value::Number(42.0));
     /// assert_eq!(stack.peek(), Some(&Value::Number(42.0)));
     /// assert_eq!(stack.len(), 1); // Still has 1 element
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn peek(&self) -> Option<&Value> {
         self.inner.last()
     }
@@ -85,12 +105,16 @@ impl AtlasStack {
     /// Get number of elements in stack
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// assert_eq!(stack.len(), 0);
     /// stack.push(Value::Number(1.0));
     /// assert_eq!(stack.len(), 1);
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn len(&self) -> usize {
         self.inner.len()
     }
@@ -98,10 +122,14 @@ impl AtlasStack {
     /// Check if stack is empty
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let stack = AtlasStack::new();
     /// assert!(stack.is_empty());
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn is_empty(&self) -> bool {
         self.inner.is_empty()
     }
@@ -109,12 +137,16 @@ impl AtlasStack {
     /// Remove all elements from stack
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// stack.push(Value::Number(1.0));
     /// stack.clear();
     /// assert!(stack.is_empty());
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn clear(&mut self) {
         self.inner.clear();
     }
@@ -124,13 +156,17 @@ impl AtlasStack {
     /// Bottom of stack becomes first array element.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     /// let mut stack = AtlasStack::new();
     /// stack.push(Value::Number(1.0));
     /// stack.push(Value::Number(2.0));
     /// let arr = stack.to_vec();
     /// assert_eq!(arr, vec![Value::Number(1.0), Value::Number(2.0)]);
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::stdlib::collections::stack::AtlasStack;
+/// # use atlas_runtime::value::Value;
     pub fn to_vec(&self) -> Vec<Value> {
         self.inner.clone()
     }

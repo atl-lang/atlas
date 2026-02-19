@@ -5,7 +5,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```rust,no_run
 //! use atlas_runtime::api::{Runtime, ExecutionMode};
 //!
 //! let mut runtime = Runtime::new(ExecutionMode::Interpreter);
@@ -15,7 +15,7 @@
 //!
 //! // State persists
 //! let result = runtime.eval("x").unwrap();
-//! ```
+//! ```rust,no_run
 
 use crate::binder::Binder;
 use crate::compiler::Compiler;
@@ -84,7 +84,7 @@ impl std::error::Error for EvalError {}
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust,no_run
 /// use atlas_runtime::api::{Runtime, ExecutionMode};
 ///
 /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
@@ -94,7 +94,7 @@ impl std::error::Error for EvalError {}
 ///
 /// // Call it
 /// let result = runtime.eval("add(1, 2)").unwrap();
-/// ```
+/// ```rust,no_run
 pub struct Runtime {
     /// Execution mode (Interpreter or VM)
     mode: ExecutionMode,

@@ -78,11 +78,15 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     /// use atlas_runtime::api::native::NativeFunctionBuilder;
     ///
     /// let builder = NativeFunctionBuilder::new("my_function");
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -106,12 +110,16 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     /// use atlas_runtime::api::native::NativeFunctionBuilder;
     ///
     /// let builder = NativeFunctionBuilder::new("add")
     ///     .with_arity(2);  // Requires exactly 2 arguments
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     pub fn with_arity(mut self, arity: usize) -> Self {
         self.arity = Some(arity);
         self.is_variadic = false;
@@ -127,12 +135,16 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     /// use atlas_runtime::api::native::NativeFunctionBuilder;
     ///
     /// let builder = NativeFunctionBuilder::new("sum")
     ///     .variadic();  // Accepts any number of arguments
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     pub fn variadic(mut self) -> Self {
         self.is_variadic = true;
         self.arity = None;
@@ -151,7 +163,9 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     /// use atlas_runtime::api::native::NativeFunctionBuilder;
     /// use atlas_runtime::value::Value;
     ///
@@ -166,7 +180,9 @@ impl NativeFunctionBuilder {
     ///             }),
     ///         }
     ///     });
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     pub fn with_implementation<F>(mut self, implementation: F) -> Self
     where
         F: Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync + 'static,
@@ -187,7 +203,9 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     /// use atlas_runtime::api::native::NativeFunctionBuilder;
     /// use atlas_runtime::value::Value;
     ///
@@ -196,7 +214,9 @@ impl NativeFunctionBuilder {
     ///     .with_implementation(|args| Ok(args[0].clone()))
     ///     .build()
     ///     .unwrap();
-    /// ```
+    /// ```rust
+/// # use atlas_runtime::value::{Value, RuntimeError};
+/// # use atlas_runtime::span::Span;
     pub fn build(self) -> Result<Value, BuildError> {
         let implementation = self
             .implementation
