@@ -1,14 +1,14 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-18
-**Version:** v0.2 | **Progress:** 106/131 phases (81%)
+**Version:** v0.2 | **Progress:** 107/131 phases (82%)
 
 ---
 
 ## Current Phase
 
-**Last Completed:** phases/correctness/phase-07b-compiler-import-prepass.md
-**Next Phase:** phases/correctness/phase-08-ffi-callback-soundness.md
+**Last Completed:** phases/correctness/phase-08-ffi-callback-soundness.md
+**Next Phase:** phases/correctness/phase-09-vm-bytecode-bounds-safety.md
 
 > **Execution order:** Correctness (12) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
 > Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
@@ -20,7 +20,7 @@
 | Category | Done | Status |
 |----------|------|--------|
 | **Infra** | 20/20 | ✅ Complete |
-| **Correctness** | 8/12 | 🚧 In progress |
+| **Correctness** | 9/12 | 🚧 In progress |
 | **Foundation** | 33/33 | ✅ Archived |
 | **Stdlib** | 28/30 | ✅ Near complete (phase-16+ TBD) |
 | **Bytecode-VM** | 8/8 | ✅ Archived |
@@ -57,7 +57,7 @@
 ✅ phase-07b-compiler-import-prepass.md — Document VM module compilation (DR-014), verify parity tests
 
 **Soundness:**
-⬜ phase-08-ffi-callback-soundness.md — extern "C" trampolines (current closure cast = UB)
+✅ phase-08-ffi-callback-soundness.md — extern "C" trampolines (current closure cast = UB)
 ⬜ phase-09-vm-bytecode-bounds-safety.md — Bounds checking on VM read_u8/read_u16
 
 **Error quality:**

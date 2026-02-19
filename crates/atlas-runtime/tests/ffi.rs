@@ -14,6 +14,7 @@ use atlas_runtime::types::Type;
 use atlas_runtime::value::{RuntimeError, Value};
 use atlas_runtime::vm::VM;
 use rstest::rstest;
+use std::ffi::c_void;
 
 // ===== ffi_callback_tests.rs =====
 
@@ -197,7 +198,6 @@ fn test_callback_int_params() {
 // ===== Callback Execution Tests =====
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_basic_call() {
     use std::os::raw::c_double;
 
@@ -214,16 +214,15 @@ fn test_callback_basic_call() {
     )
     .unwrap();
 
-    // Cast to function pointer and call
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    // Cast to trampoline and call with context
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f(10.0);
+    let result = unsafe { trampoline(handle.context(), 10.0) };
     assert!((result - 30.0).abs() < 0.0001);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_with_two_params() {
     use std::os::raw::c_double;
 
@@ -240,15 +239,14 @@ fn test_callback_with_two_params() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double, c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f(15.0, 25.0);
+    let result = unsafe { trampoline(handle.context(), 15.0, 25.0) };
     assert!((result - 40.0).abs() < 0.0001);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_int_return() {
     use std::os::raw::c_int;
 
@@ -265,15 +263,14 @@ fn test_callback_int_return() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_int) -> c_int = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_int) -> c_int =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f(21);
+    let result = unsafe { trampoline(handle.context(), 21) };
     assert_eq!(result, 42);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_no_params_call() {
     use std::os::raw::c_int;
 
@@ -284,15 +281,14 @@ fn test_callback_no_params_call() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn() -> c_int = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void) -> c_int =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f();
+    let result = unsafe { trampoline(handle.context()) };
     assert_eq!(result, 99);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_void_return_call() {
     use std::os::raw::c_int;
 
@@ -303,15 +299,14 @@ fn test_callback_void_return_call() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_int) = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_int) =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
     // Should not crash
-    f(42);
+    unsafe { trampoline(handle.context(), 42) };
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_error_handling() {
     use std::os::raw::c_double;
 
@@ -335,18 +330,17 @@ fn test_callback_error_handling() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
     // Should not crash on error, returns 0.0
-    let result = f(-1.0);
+    let result = unsafe { trampoline(handle.context(), -1.0) };
     assert_eq!(result, 0.0);
 }
 
 // ===== Memory Safety Tests =====
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_lifetime_management() {
     use std::os::raw::c_double;
 
@@ -363,15 +357,16 @@ fn test_callback_lifetime_management() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    let context = handle.context();
 
     // Call while handle is alive
-    let result1 = f(5.0);
+    let result1 = unsafe { trampoline(context, 5.0) };
     assert!((result1 - 10.0).abs() < 0.0001);
 
     // Handle still valid
-    let result2 = f(7.0);
+    let result2 = unsafe { trampoline(context, 7.0) };
     assert!((result2 - 14.0).abs() < 0.0001);
 
     // Explicit drop
@@ -382,7 +377,6 @@ fn test_callback_lifetime_management() {
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_multiple_invocations() {
     use std::os::raw::c_int;
 
@@ -399,17 +393,17 @@ fn test_callback_multiple_invocations() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_int, c_int) -> c_int = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_int, c_int) -> c_int =
+        unsafe { std::mem::transmute(handle.trampoline()) };
+    let context = handle.context();
 
     // Multiple calls
-    assert_eq!(f(1, 2), 3);
-    assert_eq!(f(10, 20), 30);
-    assert_eq!(f(100, 200), 300);
+    assert_eq!(unsafe { trampoline(context, 1, 2) }, 3);
+    assert_eq!(unsafe { trampoline(context, 10, 20) }, 30);
+    assert_eq!(unsafe { trampoline(context, 100, 200) }, 300);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_signature() {
     let handle = create_callback(
         |_args: &[Value]| Ok(Value::Number(0.0)),
@@ -560,7 +554,6 @@ fn test_parity_extern_call_basic() {
 // ===== Callback Tests =====
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_basic_functionality() {
     use std::os::raw::c_double;
 
@@ -577,15 +570,14 @@ fn test_callback_basic_functionality() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f(49.0);
+    let result = unsafe { trampoline(handle.context(), 49.0) };
     assert!((result - 7.0).abs() < 0.0001);
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_with_computation() {
     use std::os::raw::c_double;
 
@@ -603,10 +595,10 @@ fn test_callback_with_computation() {
     )
     .unwrap();
 
-    let fn_ptr = handle.fn_ptr() as *const ();
-    let f: extern "C" fn(c_double, c_double) -> c_double = unsafe { std::mem::transmute(fn_ptr) };
+    let trampoline: unsafe extern "C" fn(*mut c_void, c_double, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle.trampoline()) };
 
-    let result = f(3.0, 4.0);
+    let result = unsafe { trampoline(handle.context(), 3.0, 4.0) };
     assert!((result - 5.0).abs() < 0.0001);
 }
 
@@ -733,7 +725,6 @@ fn test_ffi_multiple_calls() {
 }
 
 #[test]
-#[ignore = "Direct function pointer calling requires platform-specific trampolines"]
 fn test_callback_stress_multiple_types() {
     use std::os::raw::{c_double, c_int, c_long};
 
@@ -779,17 +770,17 @@ fn test_callback_stress_multiple_types() {
     )
     .unwrap();
 
-    // Call them all
-    let f1: extern "C" fn(c_double) -> c_double =
-        unsafe { std::mem::transmute(handle1.fn_ptr() as *const ()) };
-    let f2: extern "C" fn(c_int) -> c_int =
-        unsafe { std::mem::transmute(handle2.fn_ptr() as *const ()) };
-    let f3: extern "C" fn(c_long) -> c_long =
-        unsafe { std::mem::transmute(handle3.fn_ptr() as *const ()) };
+    // Call them all with proper trampolines
+    let f1: unsafe extern "C" fn(*mut c_void, c_double) -> c_double =
+        unsafe { std::mem::transmute(handle1.trampoline()) };
+    let f2: unsafe extern "C" fn(*mut c_void, c_int) -> c_int =
+        unsafe { std::mem::transmute(handle2.trampoline()) };
+    let f3: unsafe extern "C" fn(*mut c_void, c_long) -> c_long =
+        unsafe { std::mem::transmute(handle3.trampoline()) };
 
-    assert!((f1(21.0) - 42.0).abs() < 0.0001);
-    assert_eq!(f2(32), 42);
-    assert_eq!(f3(47), 42);
+    assert!(unsafe { (f1(handle1.context(), 21.0) - 42.0).abs() } < 0.0001);
+    assert_eq!(unsafe { f2(handle2.context(), 32) }, 42);
+    assert_eq!(unsafe { f3(handle3.context(), 47) }, 42);
 }
 
 // ===== Safety Wrapper Tests =====
@@ -860,7 +851,9 @@ fn test_ffi_platform_compatibility() {
     )
     .unwrap();
 
-    assert!(!handle.fn_ptr().is_null());
+    // Verify both trampoline and context are valid pointers
+    assert!(!handle.trampoline().is_null());
+    assert!(!handle.context().is_null());
 }
 
 #[test]

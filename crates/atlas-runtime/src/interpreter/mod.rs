@@ -590,10 +590,10 @@ impl Interpreter {
             }
         })?;
 
-        let fn_ptr = handle.fn_ptr();
+        let trampoline = handle.trampoline();
         self.callbacks.push(handle);
 
-        Ok(fn_ptr)
+        Ok(trampoline)
     }
 
     /// Get the number of registered callbacks
