@@ -1,14 +1,14 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-18
-**Version:** v0.2 | **Progress:** 108/131 phases (82%)
+**Version:** v0.2 | **Progress:** 109/131 phases (83%)
 
 ---
 
 ## Current Phase
 
-**Last Completed:** phases/correctness/phase-09-vm-bytecode-bounds-safety.md
-**Next Phase:** phases/correctness/phase-10-stdlib-error-context.md
+**Last Completed:** phases/correctness/phase-10-stdlib-error-context.md
+**Next Phase:** phases/correctness/phase-11-parser-number-diagnostic.md
 
 > **Execution order:** Correctness (12) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
 > Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
@@ -20,7 +20,7 @@
 | Category | Done | Status |
 |----------|------|--------|
 | **Infra** | 20/20 | ✅ Complete |
-| **Correctness** | 10/12 | 🚧 In progress |
+| **Correctness** | 11/12 | 🚧 In progress |
 | **Foundation** | 33/33 | ✅ Archived |
 | **Stdlib** | 28/30 | ✅ Near complete (phase-16+ TBD) |
 | **Bytecode-VM** | 8/8 | ✅ Archived |
@@ -61,7 +61,7 @@
 ✅ phase-09-vm-bytecode-bounds-safety.md — Bounds checking on VM read_u8/read_u16
 
 **Error quality:**
-⬜ phase-10-stdlib-error-context.md — Function name + type context in all stdlib errors
+✅ phase-10-stdlib-error-context.md — Function name + type context in all stdlib errors
 ⬜ phase-11-parser-number-diagnostic.md — Diagnostic for invalid numbers; distinct error codes
 
 ### Interpreter (0/2) — Blocked by Correctness
