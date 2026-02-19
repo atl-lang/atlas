@@ -107,7 +107,9 @@
 6. Commit all changes to feature branch
 7. Push and create PR
 8. Wait for CI: `fmt → clippy → test → ci-success`
-9. Report PR URL to user (user merges when ready)
+9. Merge PR (squash), delete branch
+10. Sync local main: `git checkout main && git pull`
+11. Report completion (user is NOT involved in Git operations)
 
 ---
 

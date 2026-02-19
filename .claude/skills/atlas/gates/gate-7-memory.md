@@ -62,15 +62,22 @@ Ask yourself:
    - Key change 1
    - Key change 2
 
-   ## Test Plan
-   - [ ] All tests pass
-   - [ ] CI green
-
    🤖 Generated with Claude Code"
    ```
 
-3. **Verify CI passes:** `fmt → clippy → test → ci-success`
+3. **Wait for CI:** Poll until green
+   ```bash
+   gh pr checks --watch
+   ```
 
-4. **Report to user:** Include PR URL in handoff summary
+4. **Merge and cleanup:**
+   ```bash
+   gh pr merge --squash --delete-branch
+   git checkout main && git pull
+   ```
 
-**Next:** Handoff complete. User merges PR when ready.
+5. **Report completion:** Phase merged to main, ready for next phase
+
+**User involvement:** NONE. AI handles entire Git lifecycle.
+
+**Next:** Handoff complete. Main is updated.

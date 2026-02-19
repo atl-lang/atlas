@@ -31,8 +31,8 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 3. Run GATE -1 (sanity check)
 4. Declare workflow type
 5. Execute gates 0→1→2→3→4→5→6→7 (uninterrupted)
-6. **Git Finalize:** Commit, push, create PR, verify CI
-7. Deliver handoff with PR URL (user merges when ready)
+6. **Git Finalize:** Commit, push, create PR, wait for CI, merge, cleanup
+7. Deliver completion summary (main is updated, ready for next phase)
 
 ### 2. Spec Compliance (100%)
 Spec defines it → implement EXACTLY. No shortcuts, no "good enough", no partial implementations.
@@ -92,11 +92,21 @@ git push -u origin HEAD                                   # Push branch
 gh pr create --title "Phase X: Title" --body "..."       # Create PR
 ```
 
-**PR waits for CI:** `fmt → clippy → test → ci-success`
+**Wait for CI:** `fmt → clippy → test → ci-success` (poll with `gh pr checks`)
 
-**After CI passes:** Report PR URL to user. User merges (or agent if authorized).
+**Merge when green:**
+```bash
+gh pr merge --squash --delete-branch                      # Merge + cleanup
+git checkout main && git pull                             # Sync local
+```
 
-**Cleanup:** GitHub auto-deletes branch on merge. If stale branches exist, delete them.
+**Cleanup:** If stale branches exist from failed runs, delete them:
+```bash
+git branch -d <branch>                                    # Local
+gh api -X DELETE repos/{owner}/{repo}/git/refs/heads/<branch>  # Remote
+```
+
+**User involvement:** NONE. Agent handles entire Git lifecycle autonomously.
 
 ---
 
@@ -170,7 +180,7 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 
 ## Phase Handoff
 
-**CRITICAL:** Only hand off when ALL tests pass AND CI is green.
+**CRITICAL:** Only hand off when ALL tests pass, CI is green, AND PR is merged.
 
 **Protocol:**
 1. All gates passed (tests, clippy, fmt)
@@ -179,16 +189,16 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 4. Changes committed and pushed
 5. PR created with standard template
 6. CI passes (fmt → clippy → test → ci-success)
-7. Report PR URL to user
+7. PR merged (squash) and branch deleted
+8. Local main synced with remote
 
 **Required in summary:**
-- Status: "✅ ALL ACCEPTANCE CRITERIA MET"
-- PR: Link to pull request
-- CI: Status (passing/pending)
+- Status: "✅ PHASE COMPLETE - MERGED TO MAIN"
+- Commit: Short SHA of merge commit
 - Final Stats (bullets)
 - Highlights (2-3 sentences + key bullets)
 - Progress (simple numbers)
-- Next step
+- Next phase ready
 
 ---
 

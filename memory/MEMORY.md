@@ -157,15 +157,17 @@ atlas/
 5. Execute gates 0-7 without asking for permission
 6. Commit, push, create PR
 7. Wait for CI: `fmt → clippy → test → ci-success`
-8. Deliver handoff with PR URL (user merges when ready)
+8. Merge PR, delete branch, sync local main
+9. Report completion summary
 
 **Branch naming:** `phase/`, `fix/`, `feat/`, `ci/`
 
 **Key Principles:**
-- Autonomous execution (no "should I proceed?" questions)
-- 100% spec compliance, all acceptance criteria met
-- Zero shortcuts (no TODOs, no stubs), world-class quality
+- **100% autonomous** — user gives direction, AI handles everything
+- User is architect only — no Git knowledge required
+- AI owns entire Git lifecycle (branch, PR, CI, merge, cleanup)
 - Main branch stays clean (PRs only, CI must pass)
+- Zero shortcuts (no TODOs, no stubs), world-class quality
 
 ---
 
