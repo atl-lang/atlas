@@ -43,7 +43,10 @@ fn create_test_manifest(name: &str, version: &str, deps: Vec<(&str, &str)>) -> P
 }
 
 // Test helper: Create a lockfile with packages
-fn create_test_lockfile(packages: Vec<(&str, &str, Vec<(&str, &str)>)>) -> Lockfile {
+type PackageDeps<'a> = Vec<(&'a str, &'a str)>;
+type PackageSpec<'a> = (&'a str, &'a str, PackageDeps<'a>);
+
+fn create_test_lockfile(packages: Vec<PackageSpec<'_>>) -> Lockfile {
     let mut lockfile = Lockfile::new();
 
     for (name, version, deps) in packages {
