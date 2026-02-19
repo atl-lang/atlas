@@ -1,328 +1,182 @@
+# Atlas CI Pipeline
+#
+# Optimized for speed on PRs while maintaining comprehensive checks on main.
+#
+# PR checks (~3-4 min):     fmt → clippy → test (ubuntu/stable only)
+# Main branch:              Full matrix + coverage + benchmarks
+# Nightly (scheduled):      Fuzz testing + MSRV verification
+#
+# Reference: https://github.com/actions-rust-lang/setup-rust-toolchain
+
 name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
+      - "*.md"
       - "docs/**"
-      - "**/*.png"
-      - "**/*.jpg"
-      - "**/*.svg"
+      - "LICENSE*"
+      - ".gitignore"
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths-ignore:
-      - "**/*.md"
-      - "**/*.txt"
+      - "*.md"
       - "docs/**"
-      - "**/*.png"
-      - "**/*.jpg"
-      - "**/*.svg"
+      - "LICENSE*"
+      - ".gitignore"
   schedule:
-    # Run nightly at 04:00 UTC for fuzz testing
-    - cron: '0 4 * * *'
+    # Nightly at 04:00 UTC for fuzz testing and MSRV
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
   RUST_BACKTRACE: 1
 
 jobs:
-  test:
-    name: Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: [stable, beta]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: ${{ matrix.rust }}
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Run tests
-        run: cargo test --all-targets --all-features
-
-      - name: Run doc tests
-        run: cargo test --doc
+  # ==========================================================================
+  # Fast checks - Run first, fail fast
+  # ==========================================================================
 
   fmt:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
+      - run: cargo fmt --all --check
 
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
+    needs: fmt
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+  # ==========================================================================
+  # Tests - Core validation
+  # ==========================================================================
+
+  test:
+    name: Test
+    needs: clippy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+
+      - name: Run tests
+        run: cargo nextest run --all-features --workspace
+
+      - name: Run doc tests
+        run: cargo test --doc --all-features
+
+  test-matrix:
+    name: Test (${{ matrix.os }}/${{ matrix.rust }})
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+          - os: ubuntu-latest
+            rust: beta
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
+          key: ${{ matrix.os }}-${{ matrix.rust }}
 
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
 
-      - name: Run clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Run tests
+        run: cargo nextest run --all-features --workspace
+
+      - name: Run doc tests
+        run: cargo test --doc --all-features
+
+  # ==========================================================================
+  # Security - Dependency audit
+  # ==========================================================================
 
   security:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo-audit
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check@v2
         with:
-          path: ~/.cargo/bin/cargo-audit
-          key: ${{ runner.os }}-cargo-audit
-          restore-keys: ${{ runner.os }}-cargo-audit
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --force
-
-      - name: Run security audit
-        run: cargo audit
+  # ==========================================================================
+  # Main-only jobs - Run after merge to main
+  # ==========================================================================
 
   coverage:
-    name: Code Coverage
+    name: Coverage
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo-tarpaulin
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/bin/cargo-tarpaulin
-          key: ${{ runner.os }}-cargo-tarpaulin
-          restore-keys: ${{ runner.os }}-cargo-tarpaulin
-
-      - name: Install cargo-tarpaulin
-        run: cargo install cargo-tarpaulin --force
+      - name: Install tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
 
       - name: Generate coverage
-        run: cargo tarpaulin --verbose --all-features --workspace --timeout 300 --out xml
+        run: cargo tarpaulin --all-features --workspace --timeout 300 --out xml
 
-      - name: Upload coverage to Codecov
+      - name: Upload to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./cobertura.xml
+          files: cobertura.xml
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
-
-  integration:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-build-integration-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Run integration tests
-        run: cargo test --test '*' --all-features
-
-  examples:
-    name: Examples
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Build all examples
-        run: cargo build --examples --all-features
-        continue-on-error: true
-
-      - name: Check for examples
-        run: |
-          if ls crates/*/examples/*.rs 1> /dev/null 2>&1; then
-            echo "Examples found, attempting to run..."
-            for crate in crates/*; do
-              if [ -d "$crate/examples" ]; then
-                echo "Running examples in $crate"
-                cd "$crate" && cargo build --examples && cd ../..
-              fi
-            done
-          else
-            echo "No examples found - skipping example execution"
-          fi
-
-  fuzz:
-    name: Fuzz Testing
-    runs-on: ubuntu-latest
-    # Run on schedule (nightly) — fuzzing is too slow for PR gates
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
-
-      - name: Install cargo-fuzz
-        run: cargo install cargo-fuzz
-
-      - name: Cache fuzz build
-        uses: actions/cache@v4
-        with:
-          path: crates/atlas-runtime/fuzz/target
-          key: ${{ runner.os }}-fuzz-target-${{ hashFiles('crates/atlas-runtime/fuzz/Cargo.toml') }}
-
-      - name: Fuzz lexer (120s)
-        run: cargo +nightly fuzz run fuzz_lexer -- -max_total_time=120 -error_exitcode=1
-        working-directory: crates/atlas-runtime
-
-      - name: Fuzz parser (120s)
-        run: cargo +nightly fuzz run fuzz_parser -- -max_total_time=120 -error_exitcode=1
-        working-directory: crates/atlas-runtime
-
-      - name: Fuzz typechecker (120s)
-        run: cargo +nightly fuzz run fuzz_typechecker -- -max_total_time=120 -error_exitcode=1
-        working-directory: crates/atlas-runtime
-
-      - name: Fuzz eval (120s)
-        run: cargo +nightly fuzz run fuzz_eval -- -max_total_time=120 -error_exitcode=1
-        working-directory: crates/atlas-runtime
 
   bench:
     name: Benchmarks
     runs-on: ubuntu-latest
-    # Only on main pushes — too slow for PR gates
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Cache cargo build
-        uses: actions/cache@v4
-        with:
-          path: target
-          key: ${{ runner.os }}-cargo-bench-target-${{ hashFiles('**/Cargo.lock') }}
+          key: bench
 
       - name: Run benchmarks
         run: cargo bench -p atlas-runtime 2>&1 | tee bench-output.txt
 
-      - name: Upload benchmark results
+      - name: Upload results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
@@ -330,35 +184,73 @@ jobs:
             bench-output.txt
             target/criterion/
 
+  # ==========================================================================
+  # Scheduled jobs - Nightly only
+  # ==========================================================================
+
   msrv:
-    name: Minimum Supported Rust Version
+    name: MSRV (1.70.0)
     runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Rust toolchain (MSRV 1.70.0)
-        uses: dtolnay/rust-toolchain@1.70.0
+      - uses: dtolnay/rust-toolchain@stable
+        id: stable
 
-      - name: Install Rust toolchain (stable for lockfile)
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.70.0
+        id: msrv
 
-      - name: Cache cargo registry
-        uses: actions/cache@v4
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: ~/.cargo/registry
-          key: ${{ runner.os }}-cargo-registry-msrv-${{ hashFiles('**/Cargo.lock') }}
+          key: msrv
 
-      - name: Cache cargo index
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo/git
-          key: ${{ runner.os }}-cargo-git-msrv-${{ hashFiles('**/Cargo.lock') }}
-
-      - name: Pin MSRV-compatible time
+      - name: Pin MSRV-compatible dependencies
         run: cargo +stable update -p time --precise 0.3.45
 
-      - name: Check MSRV compatibility
+      - name: Check MSRV
+        run: cargo +1.70.0 check --all-features --locked
+
+  fuzz:
+    name: Fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [fuzz_lexer, fuzz_parser, fuzz_typechecker, fuzz_eval]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: fuzz-${{ matrix.target }}
+          workspaces: crates/atlas-runtime/fuzz
+
+      - name: Install cargo-fuzz
+        uses: taiki-e/install-action@cargo-fuzz
+
+      - name: Run ${{ matrix.target }} (120s)
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=120
+        working-directory: crates/atlas-runtime
+
+  # ==========================================================================
+  # Status check - Required for branch protection
+  # ==========================================================================
+
+  ci-success:
+    name: CI Success
+    if: always()
+    needs: [fmt, clippy, test, security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all jobs passed
         run: |
-          RUSTC="$(rustup which rustc --toolchain 1.70.0)"
-          cargo +stable check --all-features --locked
+          if [[ "${{ needs.fmt.result }}" != "success" ]] || \
+             [[ "${{ needs.clippy.result }}" != "success" ]] || \
+             [[ "${{ needs.test.result }}" != "success" ]] || \
+             [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "One or more required jobs failed"
+            exit 1
+          fi
+          echo "All required jobs passed"
