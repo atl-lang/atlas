@@ -1,0 +1,29 @@
+# Force LF line endings for all source files to ensure consistent span positions
+# across platforms (Windows uses CRLF by default, which shifts byte offsets)
+
+# Atlas source files
+*.atlas text eol=lf
+
+# Test corpus files (must match exactly for span assertions)
+*.stderr text eol=lf
+*.stdout text eol=lf
+
+# Rust source
+*.rs text eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Config files
+*.toml text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Markdown
+*.md text eol=lf
+
+# Keep binaries as-is
+*.png binary
+*.ico binary
+*.wasm binary
