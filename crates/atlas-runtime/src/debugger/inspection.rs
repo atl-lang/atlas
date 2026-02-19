@@ -477,6 +477,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::approx_constant)]
     fn test_format_number_float() {
         let val = Value::Number(3.14);
         assert_eq!(format_value_with_depth(&val, 3), "3.14");
