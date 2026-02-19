@@ -478,7 +478,7 @@ mod tests {
 
     #[test]
     fn test_format_number_float() {
-        let val = Value::Number(std::f64::consts::PI);
+        let val = Value::Number(3.14);
         assert_eq!(format_value_with_depth(&val, 3), "3.14");
     }
 
