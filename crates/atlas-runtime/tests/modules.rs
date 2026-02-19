@@ -10,6 +10,12 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::TempDir;
 
+/// Normalize path string for cross-platform comparison
+/// Converts all separators to forward slashes for consistent testing
+fn normalize_path_for_test(path: &str) -> String {
+    path.replace('\\', "/")
+}
+
 // --- Module binding and type checking ---
 
 // Module Binding and Type Checking Tests (BLOCKER 04-C)
@@ -1612,7 +1618,7 @@ DEBUG;
 fn test_resolve_relative_sibling() {
     // Test internal logic without file existence check
     let resolved = PathBuf::from("/project/src").join("utils.atl");
-    assert!(resolved.to_string_lossy().contains("src/utils.atl"));
+    assert!(normalize_path_for_test(&resolved.to_string_lossy()).contains("src/utils.atl"));
 }
 
 #[test]
@@ -1627,7 +1633,7 @@ fn test_resolve_relative_parent() {
     let resolved = importing_dir.join(with_ext); // /project/src/lib/../utils.atl
 
     // The path should contain ../utils.atl
-    assert!(resolved.to_string_lossy().contains("../utils.atl"));
+    assert!(normalize_path_for_test(&resolved.to_string_lossy()).contains("../utils.atl"));
 }
 
 #[test]
@@ -1834,9 +1840,9 @@ fn test_complex_nested_relative_path() {
     let resolved = importing_dir.join(with_ext);
 
     // Path should contain the relative navigation
-    assert!(resolved
-        .to_string_lossy()
-        .contains("../../utils/helpers.atl"));
+    assert!(
+        normalize_path_for_test(&resolved.to_string_lossy()).contains("../../utils/helpers.atl")
+    );
 }
 
 #[test]
