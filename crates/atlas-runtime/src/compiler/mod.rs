@@ -129,9 +129,10 @@ impl Compiler {
             Item::Function(func) => self.compile_function(func),
             Item::Statement(stmt) => self.compile_stmt(stmt),
             Item::Import(_) => {
-                // Imports are resolved in Runtime::import_prepass() BEFORE compilation.
-                // By the time we reach here, imported symbols are already in globals.
-                // The compiler emits GetGlobal for imported names — no special handling needed.
+                // Imports don't generate bytecode directly. In VM mode, Runtime::eval_file()
+                // uses ModuleLoader to load ALL modules in dependency order, then compiles
+                // each module to bytecode. Imported symbols become globals when the dependency
+                // module's bytecode executes first. See DR-014 in memory/decisions.md.
                 Ok(())
             }
             Item::Export(export_decl) => {

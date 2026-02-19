@@ -19,6 +19,7 @@
 | 011 | Built-in constraints | 2026-02 | `Comparable`/`Numeric` → number. `Equatable` → number\|string\|bool\|null. No trait system. |
 | 012 | Structural width subtyping | 2026-02-17 | Extra fields OK for assignability. Missing required fields = fail. |
 | 013 | ModuleExecutor borrows interpreter | 2026-02-18 | ModuleExecutor takes `&mut Interpreter` to ensure imports populate caller's interpreter. |
+| 014 | VM module compilation | 2026-02-18 | All modules compiled to bytecode. No interpreter pre-pass for VM mode. |
 
 ## Superseded
 
@@ -112,3 +113,37 @@ hashSetFilter(set, fn(elem) { elem > 10; });      // → new HashSet
 - `ModuleExecutor::new()` signature changes to accept `&mut Interpreter`
 - `Runtime` must pass its interpreter to ModuleExecutor for file execution
 - Enables proper import execution for both Runtime and standalone use
+
+---
+
+## Detail: DR-014 — VM Module Compilation
+
+**Date:** 2026-02-18 | **Status:** ✅ Active
+
+**Decision:** In VM mode, compile ALL modules to bytecode and execute combined. No interpreter pre-pass.
+
+**Rationale:**
+- Original design proposed `import_prepass()` using interpreter to execute imports before VM compilation
+- This caused a 52GB memory leak: interpreter-created functions had `bytecode_offset: 0`
+- When VM called interpreter functions, it jumped to offset 0 → infinite loop
+- Additionally, path canonicalization was missing, causing cycle detection failures
+
+**Alternatives:**
+❌ `import_prepass()` using interpreter: Creates interpreter functions unusable by VM
+❌ Hybrid execution (interpreter deps + VM entry): Architectural mismatch
+
+**Implementation:**
+```rust
+// Runtime::eval_file() for VM mode:
+// 1. ModuleLoader loads all modules in dependency order (topological sort)
+// 2. Compile EVERY module to bytecode (not just entry module)
+// 3. Strip intermediate Halt opcodes from non-final modules
+// 4. Append all bytecode into combined Bytecode struct
+// 5. Execute combined bytecode - dependencies run first, define their globals
+```
+
+**Impact:**
+- `ModuleLoader` provides modules in dependency order
+- Each module is compiled independently, bytecode appended
+- Intermediate Halt opcodes stripped for continuous execution
+- Final module's result is the program result
