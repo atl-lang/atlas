@@ -27,10 +27,12 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 ### 1. Autonomous Execution
 1. Check STATUS.md (verify phase not complete)
-2. Run GATE -1 (sanity check)
-3. Declare workflow type
-4. Execute gates 0→1→2→3→4→5→6→7 (uninterrupted)
-5. Deliver handoff (completion checkpoint - user may engage here)
+2. **Git Setup:** Create feature branch from main (see Git Workflow below)
+3. Run GATE -1 (sanity check)
+4. Declare workflow type
+5. Execute gates 0→1→2→3→4→5→6→7 (uninterrupted)
+6. **Git Finalize:** Commit, push, create PR, verify CI
+7. Deliver handoff with PR URL (user merges when ready)
 
 ### 2. Spec Compliance (100%)
 Spec defines it → implement EXACTLY. No shortcuts, no "good enough", no partial implementations.
@@ -67,11 +69,43 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 
 ---
 
+## Git Workflow (REQUIRED)
+
+**Branch naming:**
+```
+phase/{category}-{number}     # Phase work (e.g., phase/correctness-11)
+fix/{short-description}       # Bug fixes (e.g., fix/parser-float-format)
+feat/{short-description}      # Features (e.g., feat/array-slice)
+ci/{short-description}        # CI/infra (e.g., ci/optimize-workflows)
+```
+
+**Before starting work:**
+```bash
+git checkout main && git pull                    # Sync with remote
+git checkout -b phase/{category}-{number}        # Create feature branch
+```
+
+**After GATE 7 (memory check):**
+```bash
+git add -A && git commit -m "feat(phase): Description"   # Commit all
+git push -u origin HEAD                                   # Push branch
+gh pr create --title "Phase X: Title" --body "..."       # Create PR
+```
+
+**PR waits for CI:** `fmt → clippy → test → ci-success`
+
+**After CI passes:** Report PR URL to user. User merges (or agent if authorized).
+
+**Cleanup:** GitHub auto-deletes branch on merge. If stale branches exist, delete them.
+
+---
+
 ## GATE -1: Sanity Check (ALWAYS FIRST)
 
 1. **Verify:** Check phase dependencies in phase file
-2. **Sanity:** `cargo clean && cargo check -p atlas-runtime`
-3. **On failure:** Stop, inform user with error details
+2. **Git check:** Ensure on feature branch (not main), working directory clean
+3. **Sanity:** `cargo clean && cargo check -p atlas-runtime`
+4. **On failure:** Stop, inform user with error details
 
 ---
 
@@ -136,12 +170,21 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 
 ## Phase Handoff
 
-**CRITICAL:** Only hand off when ALL tests pass.
+**CRITICAL:** Only hand off when ALL tests pass AND CI is green.
 
-**Protocol:** See STATUS.md "Handoff Protocol" section for detailed update steps.
+**Protocol:**
+1. All gates passed (tests, clippy, fmt)
+2. STATUS.md updated
+3. Memory checked (GATE 7)
+4. Changes committed and pushed
+5. PR created with standard template
+6. CI passes (fmt → clippy → test → ci-success)
+7. Report PR URL to user
 
 **Required in summary:**
 - Status: "✅ ALL ACCEPTANCE CRITERIA MET"
+- PR: Link to pull request
+- CI: Status (passing/pending)
 - Final Stats (bullets)
 - Highlights (2-3 sentences + key bullets)
 - Progress (simple numbers)

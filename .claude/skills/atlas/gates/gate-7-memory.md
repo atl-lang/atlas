@@ -45,4 +45,32 @@ Ask yourself:
 
 **Cost:** 0-30 seconds per phase. Prevents hours of confusion in future sessions.
 
-**Next:** Final commit and handoff
+---
+
+## Git Finalization (After Memory Check)
+
+1. **Commit all changes:**
+   ```bash
+   git add -A
+   git commit -m "feat(category): Phase X - description"
+   ```
+
+2. **Push and create PR:**
+   ```bash
+   git push -u origin HEAD
+   gh pr create --title "Phase X: Title" --body "## Summary
+   - Key change 1
+   - Key change 2
+
+   ## Test Plan
+   - [ ] All tests pass
+   - [ ] CI green
+
+   🤖 Generated with Claude Code"
+   ```
+
+3. **Verify CI passes:** `fmt → clippy → test → ci-success`
+
+4. **Report to user:** Include PR URL in handoff summary
+
+**Next:** Handoff complete. User merges PR when ready.

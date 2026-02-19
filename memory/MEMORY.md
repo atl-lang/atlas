@@ -151,15 +151,21 @@ atlas/
 
 **Execution Mode (Default):**
 1. User says "Next: Phase-XX" or STATUS.md shows next phase
-2. Run GATE -1 immediately
-3. Declare workflow type (GATE 0)
-4. Execute gates 0-6 without asking for permission
-5. Deliver handoff summary (user may engage here)
+2. Create feature branch: `git checkout -b phase/{category}-{number}`
+3. Run GATE -1 (sanity check)
+4. Declare workflow type (GATE 0)
+5. Execute gates 0-7 without asking for permission
+6. Commit, push, create PR
+7. Wait for CI: `fmt → clippy → test → ci-success`
+8. Deliver handoff with PR URL (user merges when ready)
+
+**Branch naming:** `phase/`, `fix/`, `feat/`, `ci/`
 
 **Key Principles:**
 - Autonomous execution (no "should I proceed?" questions)
 - 100% spec compliance, all acceptance criteria met
 - Zero shortcuts (no TODOs, no stubs), world-class quality
+- Main branch stays clean (PRs only, CI must pass)
 
 ---
 
