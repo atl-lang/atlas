@@ -191,7 +191,7 @@ mod tests {
     #[test]
     fn test_profile_with_loop() {
         let src =
-            "let sum: number = 0; let i: number = 0; while i < 10 { sum = sum + i; i = i + 1; }";
+            "var sum: number = 0; var i: number = 0; while (i < 10) { sum = sum + i; i = i + 1; }";
         let f = write_temp(src);
         let args = ProfileArgs::new(f.path().to_str().unwrap());
         assert!(run(args).is_ok());
