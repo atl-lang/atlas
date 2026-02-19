@@ -32,7 +32,7 @@ fn run_vm(source: &str) {
 const PROGRAMS: &[(&str, &str)] = &[
     (
         "arithmetic_loop",
-        "let sum = 0; let i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;",
+        "var sum = 0; var i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;",
     ),
     (
         "fibonacci_20",
@@ -40,15 +40,15 @@ const PROGRAMS: &[(&str, &str)] = &[
     ),
     (
         "function_calls_5k",
-        "fn inc(x: number) -> number { return x + 1; } let r = 0; let i = 0; while (i < 5000) { r = inc(r); i = i + 1; } r;",
+        "fn inc(x: number) -> number { return x + 1; } var r = 0; var i = 0; while (i < 5000) { r = inc(r); i = i + 1; } r;",
     ),
     (
         "nested_loops",
-        "let c = 0; let i = 0; while (i < 100) { let j = 0; while (j < 100) { c = c + 1; j = j + 1; } i = i + 1; } c;",
+        "var c = 0; var i = 0; while (i < 100) { var j = 0; while (j < 100) { c = c + 1; j = j + 1; } i = i + 1; } c;",
     ),
     (
         "string_concat_200",
-        r#"let s = ""; let i = 0; while (i < 200) { s = s + "x"; i = i + 1; } len(s);"#,
+        r#"var s = ""; var i = 0; while (i < 200) { s = s + "x"; i = i + 1; } len(s);"#,
     ),
 ];
 

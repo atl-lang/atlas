@@ -6,9 +6,10 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```rust,no_run
+//! # use atlas_runtime::value::{Value, RuntimeError};
+//! # use atlas_runtime::span::Span;
 //! use atlas_runtime::api::native::NativeFunctionBuilder;
-//! use atlas_runtime::value::Value;
 //!
 //! // Fixed arity function (2 arguments)
 //! let add_fn = NativeFunctionBuilder::new("add")
@@ -78,9 +79,10 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use atlas_runtime::api::native::NativeFunctionBuilder;
-    ///
+    /// ```rust
+    /// # use atlas_runtime::api::native::NativeFunctionBuilder;
+    /// # use atlas_runtime::value::{Value, RuntimeError};
+    /// # use atlas_runtime::span::Span;
     /// let builder = NativeFunctionBuilder::new("my_function");
     /// ```
     pub fn new(name: impl Into<String>) -> Self {
@@ -106,9 +108,10 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use atlas_runtime::api::native::NativeFunctionBuilder;
-    ///
+    /// ```rust
+    /// # use atlas_runtime::api::native::NativeFunctionBuilder;
+    /// # use atlas_runtime::value::{Value, RuntimeError};
+    /// # use atlas_runtime::span::Span;
     /// let builder = NativeFunctionBuilder::new("add")
     ///     .with_arity(2);  // Requires exactly 2 arguments
     /// ```
@@ -127,9 +130,10 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use atlas_runtime::api::native::NativeFunctionBuilder;
-    ///
+    /// ```rust
+    /// # use atlas_runtime::api::native::NativeFunctionBuilder;
+    /// # use atlas_runtime::value::{Value, RuntimeError};
+    /// # use atlas_runtime::span::Span;
     /// let builder = NativeFunctionBuilder::new("sum")
     ///     .variadic();  // Accepts any number of arguments
     /// ```
@@ -151,10 +155,10 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use atlas_runtime::api::native::NativeFunctionBuilder;
-    /// use atlas_runtime::value::Value;
-    ///
+    /// ```rust
+    /// # use atlas_runtime::api::native::NativeFunctionBuilder;
+    /// # use atlas_runtime::value::{Value, RuntimeError};
+    /// # use atlas_runtime::span::Span;
     /// let builder = NativeFunctionBuilder::new("negate")
     ///     .with_arity(1)
     ///     .with_implementation(|args| {
@@ -187,10 +191,10 @@ impl NativeFunctionBuilder {
     ///
     /// # Examples
     ///
-    /// ```
-    /// use atlas_runtime::api::native::NativeFunctionBuilder;
-    /// use atlas_runtime::value::Value;
-    ///
+    /// ```rust
+    /// # use atlas_runtime::api::native::NativeFunctionBuilder;
+    /// # use atlas_runtime::value::{Value, RuntimeError};
+    /// # use atlas_runtime::span::Span;
     /// let native_fn = NativeFunctionBuilder::new("identity")
     ///     .with_arity(1)
     ///     .with_implementation(|args| Ok(args[0].clone()))

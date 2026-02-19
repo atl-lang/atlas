@@ -19,7 +19,9 @@ impl AtlasQueue {
     /// Create new empty queue
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let queue = AtlasQueue::new();
     /// assert!(queue.is_empty());
     /// ```
@@ -34,7 +36,9 @@ impl AtlasQueue {
     /// Useful for performance when queue size is known.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let queue = AtlasQueue::with_capacity(100);
     /// ```
     pub fn with_capacity(capacity: usize) -> Self {
@@ -46,10 +50,13 @@ impl AtlasQueue {
     /// Add element to back of queue (FIFO order)
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
+    /// # use std::sync::Arc;
     /// let mut queue = AtlasQueue::new();
     /// queue.enqueue(Value::Number(1.0));
-    /// queue.enqueue(Value::String("hello".into()));
+    /// queue.enqueue(Value::String(Arc::new("hello".to_string())));
     /// ```
     pub fn enqueue(&mut self, value: Value) {
         self.inner.push_back(value);
@@ -60,7 +67,9 @@ impl AtlasQueue {
     /// Returns `None` if queue is empty.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let mut queue = AtlasQueue::new();
     /// queue.enqueue(Value::Number(1.0));
     /// assert_eq!(queue.dequeue(), Some(Value::Number(1.0)));
@@ -75,7 +84,9 @@ impl AtlasQueue {
     /// Returns `None` if queue is empty.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let mut queue = AtlasQueue::new();
     /// queue.enqueue(Value::Number(42.0));
     /// assert_eq!(queue.peek(), Some(&Value::Number(42.0)));
@@ -88,7 +99,9 @@ impl AtlasQueue {
     /// Get number of elements in queue
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let mut queue = AtlasQueue::new();
     /// assert_eq!(queue.len(), 0);
     /// queue.enqueue(Value::Number(1.0));
@@ -101,7 +114,9 @@ impl AtlasQueue {
     /// Check if queue is empty
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let queue = AtlasQueue::new();
     /// assert!(queue.is_empty());
     /// ```
@@ -112,7 +127,9 @@ impl AtlasQueue {
     /// Remove all elements from queue
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let mut queue = AtlasQueue::new();
     /// queue.enqueue(Value::Number(1.0));
     /// queue.clear();
@@ -127,7 +144,9 @@ impl AtlasQueue {
     /// Front of queue becomes first array element.
     ///
     /// # Example
-    /// ```
+    /// ```rust
+    /// # use atlas_runtime::stdlib::collections::queue::AtlasQueue;
+    /// # use atlas_runtime::value::Value;
     /// let mut queue = AtlasQueue::new();
     /// queue.enqueue(Value::Number(1.0));
     /// queue.enqueue(Value::Number(2.0));

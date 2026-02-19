@@ -21,9 +21,9 @@ use std::sync::Mutex;
 /// Returns: DateTime representing current moment in UTC
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let now = dateTimeNow();
-/// ```
+/// ```atlas
 pub fn date_time_now(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
         return Err(RuntimeError::TypeError {
@@ -44,9 +44,9 @@ pub fn date_time_now(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Returns: DateTime
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeFromTimestamp(1609459200); // 2021-01-01 00:00:00 UTC
-/// ```
+/// ```atlas
 pub fn date_time_from_timestamp(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -80,9 +80,9 @@ pub fn date_time_from_timestamp(args: &[Value], span: Span) -> Result<Value, Run
 /// Returns: DateTime in UTC
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeFromComponents(2024, 1, 15, 10, 30, 0);
-/// ```
+/// ```atlas
 pub fn date_time_from_components(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 6 {
         return Err(RuntimeError::TypeError { msg: "dateTimeFromComponents: expected 6 arguments (year, month, day, hour, minute, second)".to_string(), span });
@@ -157,9 +157,9 @@ pub fn date_time_from_components(args: &[Value], span: Span) -> Result<Value, Ru
 /// Returns: DateTime
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeParseIso("2024-01-15T10:30:00Z");
-/// ```
+/// ```atlas
 pub fn date_time_parse_iso(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -184,9 +184,9 @@ pub fn date_time_parse_iso(args: &[Value], span: Span) -> Result<Value, RuntimeE
 /// Returns: DateTime representing current moment in UTC
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let utc = dateTimeUtc();
-/// ```
+/// ```atlas
 pub fn date_time_utc(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     date_time_now(args, span)
 }
@@ -584,9 +584,9 @@ pub fn date_time_to_iso(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// - %Z: Timezone name (UTC)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let formatted = dateTimeFormat(dt, "%Y-%m-%d %H:%M:%S");
-/// ```
+/// ```atlas
 pub fn date_time_format(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -610,9 +610,9 @@ pub fn date_time_format(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// Returns: string (RFC 3339 format)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let rfc = dateTimeToRfc3339(dt); // "2024-01-15T10:30:00+00:00"
-/// ```
+/// ```atlas
 pub fn date_time_to_rfc3339(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -633,9 +633,9 @@ pub fn date_time_to_rfc3339(args: &[Value], span: Span) -> Result<Value, Runtime
 /// Returns: string (RFC 2822 format)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let rfc = dateTimeToRfc2822(dt); // "Mon, 15 Jan 2024 10:30:00 +0000"
-/// ```
+/// ```atlas
 pub fn date_time_to_rfc2822(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -672,9 +672,9 @@ pub fn date_time_to_custom(args: &[Value], span: Span) -> Result<Value, RuntimeE
 /// Returns: DateTime
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeParse("2024-01-15 10:30:00", "%Y-%m-%d %H:%M:%S");
-/// ```
+/// ```atlas
 pub fn date_time_parse(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -709,9 +709,9 @@ pub fn date_time_parse(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Returns: DateTime
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeParseRfc3339("2024-01-15T10:30:00+00:00");
-/// ```
+/// ```atlas
 pub fn date_time_parse_rfc3339(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -739,9 +739,9 @@ pub fn date_time_parse_rfc3339(args: &[Value], span: Span) -> Result<Value, Runt
 /// Returns: DateTime
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeParseRfc2822("Mon, 15 Jan 2024 10:30:00 +0000");
-/// ```
+/// ```atlas
 pub fn date_time_parse_rfc2822(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -770,9 +770,9 @@ pub fn date_time_parse_rfc2822(args: &[Value], span: Span) -> Result<Value, Runt
 /// Returns: DateTime (first successful parse)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dt = dateTimeTryParse("2024-01-15", ["%Y-%m-%d", "%d/%m/%Y"]);
-/// ```
+/// ```atlas
 pub fn date_time_try_parse(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -815,9 +815,9 @@ pub fn date_time_try_parse(args: &[Value], span: Span) -> Result<Value, RuntimeE
 /// Returns: DateTime in UTC
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let utc = dateTimeToUtc(dt);
-/// ```
+/// ```atlas
 pub fn date_time_to_utc(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -838,9 +838,9 @@ pub fn date_time_to_utc(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// Returns: DateTime in local timezone (converted back to UTC representation)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let local = dateTimeToLocal(dt);
-/// ```
+/// ```atlas
 pub fn date_time_to_local(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -863,9 +863,9 @@ pub fn date_time_to_local(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// Returns: DateTime in specified timezone (converted back to UTC representation)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let ny = dateTimeToTimezone(dt, "America/New_York");
-/// ```
+/// ```atlas
 pub fn date_time_to_timezone(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -899,9 +899,9 @@ pub fn date_time_to_timezone(args: &[Value], span: Span) -> Result<Value, Runtim
 /// Returns: string (timezone name, always "UTC" for current implementation)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let tz = dateTimeGetTimezone(dt); // "UTC"
-/// ```
+/// ```atlas
 pub fn date_time_get_timezone(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -922,9 +922,9 @@ pub fn date_time_get_timezone(args: &[Value], span: Span) -> Result<Value, Runti
 /// Returns: number (offset in seconds, 0 for UTC)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let offset = dateTimeGetOffset(dt); // 0
-/// ```
+/// ```atlas
 pub fn date_time_get_offset(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -947,9 +947,9 @@ pub fn date_time_get_offset(args: &[Value], span: Span) -> Result<Value, Runtime
 /// Returns: DateTime interpreted in specified timezone
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let ny = dateTimeInTimezone(dt, "America/New_York");
-/// ```
+/// ```atlas
 pub fn date_time_in_timezone(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -997,9 +997,9 @@ pub fn date_time_in_timezone(args: &[Value], span: Span) -> Result<Value, Runtim
 /// Returns: HashMap with duration components
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dur = durationFromSeconds(3665); // {days: 0, hours: 1, minutes: 1, seconds: 5}
-/// ```
+/// ```atlas
 pub fn duration_from_seconds(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -1021,9 +1021,9 @@ pub fn duration_from_seconds(args: &[Value], span: Span) -> Result<Value, Runtim
 /// Returns: HashMap with duration components
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dur = durationFromMinutes(90); // {days: 0, hours: 1, minutes: 30, seconds: 0}
-/// ```
+/// ```atlas
 pub fn duration_from_minutes(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -1046,9 +1046,9 @@ pub fn duration_from_minutes(args: &[Value], span: Span) -> Result<Value, Runtim
 /// Returns: HashMap with duration components
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dur = durationFromHours(25); // {days: 1, hours: 1, minutes: 0, seconds: 0}
-/// ```
+/// ```atlas
 pub fn duration_from_hours(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -1071,9 +1071,9 @@ pub fn duration_from_hours(args: &[Value], span: Span) -> Result<Value, RuntimeE
 /// Returns: HashMap with duration components
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let dur = durationFromDays(2); // {days: 2, hours: 0, minutes: 0, seconds: 0}
-/// ```
+/// ```atlas
 pub fn duration_from_days(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -1096,9 +1096,9 @@ pub fn duration_from_days(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// Returns: string (e.g., "2d 3h 30m 15s")
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let formatted = durationFormat(dur); // "1h 30m"
-/// ```
+/// ```atlas
 pub fn duration_format(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {

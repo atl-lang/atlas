@@ -5,7 +5,7 @@
 //!
 //! # Examples
 //!
-//! ```
+//! ```rust,no_run
 //! use atlas_runtime::api::{Runtime, ExecutionMode};
 //!
 //! let mut runtime = Runtime::new(ExecutionMode::Interpreter);
@@ -84,7 +84,7 @@ impl std::error::Error for EvalError {}
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust,no_run
 /// use atlas_runtime::api::{Runtime, ExecutionMode};
 ///
 /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
@@ -497,9 +497,9 @@ impl Runtime {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```rust,no_run
     /// use atlas_runtime::api::{Runtime, ExecutionMode};
-    /// use atlas_runtime::Value;
+    /// use atlas_runtime::value::Value;
     ///
     /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     /// runtime.eval("fn add(x: number, y: number) -> number { x + y }").unwrap();

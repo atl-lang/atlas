@@ -3,27 +3,23 @@
 
 [advisories]
 # Check for security vulnerabilities
-vulnerability = "deny"
-unmaintained = "warn"
-unsound = "warn"
 yanked = "warn"
-notice = "warn"
 
 [licenses]
 # Ensure all dependencies use approved licenses
-unlicensed = "deny"
 allow = [
     "MIT",
     "Apache-2.0",
     "Apache-2.0 WITH LLVM-exception",
     "BSD-2-Clause",
     "BSD-3-Clause",
+    "BSL-1.0",
+    "CC0-1.0",
     "ISC",
-    "Unicode-DFS-2016",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Zlib",
 ]
-copyleft = "warn"
-allow-osi-fsf-free = "both"
-default = "deny"
 
 [bans]
 # Ban specific crates or versions

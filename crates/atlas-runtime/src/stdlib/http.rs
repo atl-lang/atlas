@@ -192,9 +192,9 @@ impl HttpResponse {
 /// Returns: HttpRequest
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpRequest("GET", "https://httpbin.org/get");
-/// ```
+/// ```atlas
 pub fn http_request(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -246,9 +246,9 @@ pub fn http_request(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: HttpRequest
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpRequestGet("https://httpbin.org/get");
-/// ```
+/// ```atlas
 pub fn http_request_get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -269,9 +269,9 @@ pub fn http_request_get(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// Returns: HttpRequest
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpRequestPost("https://httpbin.org/post", "data");
-/// ```
+/// ```atlas
 pub fn http_request_post(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -294,9 +294,9 @@ pub fn http_request_post(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// Returns: HttpRequest (new request with header set)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpSetHeader(req, "Content-Type", "application/json");
-/// ```
+/// ```atlas
 pub fn http_set_header(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
         return Err(RuntimeError::TypeError {
@@ -322,9 +322,9 @@ pub fn http_set_header(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Returns: HttpRequest (new request with body set)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpSetBody(req, "request data");
-/// ```
+/// ```atlas
 pub fn http_set_body(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -349,9 +349,9 @@ pub fn http_set_body(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Returns: HttpRequest (new request with timeout set)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let req = httpSetTimeout(req, 60);
-/// ```
+/// ```atlas
 pub fn http_set_timeout(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -386,9 +386,9 @@ pub fn http_set_timeout(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// Returns: number (status code)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let status = httpStatus(response);
-/// ```
+/// ```atlas
 pub fn http_status(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -409,9 +409,9 @@ pub fn http_status(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: string (response body)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let body = httpBody(response);
-/// ```
+/// ```atlas
 pub fn http_body(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -433,9 +433,9 @@ pub fn http_body(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: Option<string> (header value or None)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let content_type = httpHeader(response, "Content-Type");
-/// ```
+/// ```atlas
 pub fn http_header(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -468,9 +468,9 @@ pub fn http_header(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: HashMap (all headers)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let headers = httpHeaders(response);
-/// ```
+/// ```atlas
 pub fn http_headers(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -500,9 +500,9 @@ pub fn http_headers(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: string (final URL)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let url = httpUrl(response);
-/// ```
+/// ```atlas
 pub fn http_url(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -523,9 +523,9 @@ pub fn http_url(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: bool
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// if httpIsSuccess(response) { ... }
-/// ```
+/// ```atlas
 pub fn http_is_success(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -550,9 +550,9 @@ pub fn http_is_success(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Returns: Result<HttpResponse> (Ok with response or Err with error message)
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let result = httpSend(request);
-/// ```
+/// ```atlas
 pub fn http_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -663,9 +663,9 @@ pub fn http_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: Result<HttpResponse>
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let result = httpGet("https://httpbin.org/get");
-/// ```
+/// ```atlas
 pub fn http_get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -687,9 +687,9 @@ pub fn http_get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: Result<HttpResponse>
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let result = httpPost("https://httpbin.org/post", "data");
-/// ```
+/// ```atlas
 pub fn http_post(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -711,9 +711,9 @@ pub fn http_post(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns: Result<HttpResponse>
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let result = httpPostJson("https://httpbin.org/post", jsonParse("{\"key\":\"value\"}"));
-/// ```
+/// ```atlas
 pub fn http_post_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(RuntimeError::TypeError {
@@ -759,9 +759,9 @@ pub fn http_post_json(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// Returns: Result<JsonValue>
 ///
 /// Example:
-/// ```
+/// ```atlas
 /// let json_result = httpParseJson(response);
-/// ```
+/// ```atlas
 pub fn http_parse_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {

@@ -76,6 +76,23 @@ impl LibraryLoader {
                 paths.push(PathBuf::from("/usr/lib64"));
                 paths.push(PathBuf::from("/lib64"));
             }
+
+            // Debian/Ubuntu multiarch library locations.
+            #[cfg(target_arch = "x86_64")]
+            {
+                paths.push(PathBuf::from("/lib/x86_64-linux-gnu"));
+                paths.push(PathBuf::from("/usr/lib/x86_64-linux-gnu"));
+            }
+            #[cfg(target_arch = "aarch64")]
+            {
+                paths.push(PathBuf::from("/lib/aarch64-linux-gnu"));
+                paths.push(PathBuf::from("/usr/lib/aarch64-linux-gnu"));
+            }
+            #[cfg(target_arch = "arm")]
+            {
+                paths.push(PathBuf::from("/lib/arm-linux-gnueabihf"));
+                paths.push(PathBuf::from("/usr/lib/arm-linux-gnueabihf"));
+            }
         }
 
         #[cfg(target_os = "macos")]
@@ -122,7 +139,8 @@ impl LibraryLoader {
         } else if cfg!(target_os = "macos") {
             vec!["dylib", "so"]
         } else {
-            vec!["so"]
+            // Prefer versioned shared objects to avoid linker scripts (e.g., libm.so).
+            vec!["so.6", "so"]
         };
 
         // Platform-specific prefixes (try both with and without "lib" prefix)

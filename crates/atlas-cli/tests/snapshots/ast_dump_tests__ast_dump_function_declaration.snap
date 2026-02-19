@@ -1,9 +1,10 @@
 ---
 source: crates/atlas-cli/tests/ast_dump_tests.rs
+assertion_line: 45
 expression: json
 ---
 {
-  "ast_version": 1,
+  "ast_version": 2,
   "items": [
     {
       "Function": {
@@ -70,6 +71,7 @@ expression: json
             }
           ]
         },
+        "predicate": null,
         "body": {
           "statements": [
             {
