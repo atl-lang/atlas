@@ -24,8 +24,10 @@ allow = [
 [bans]
 # Ban specific crates or versions
 multiple-versions = "warn"
-wildcards = "warn"
+wildcards = "allow"  # Workspace path deps don't need versions
 highlight = "all"
+workspace-default-features = "allow"
+external-default-features = "allow"
 
 [sources]
 # Ensure all dependencies come from trusted sources
