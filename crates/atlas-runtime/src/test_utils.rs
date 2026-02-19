@@ -44,11 +44,23 @@ mod tests {
     use super::*;
     use crate::span::Span;
 
+    /// Get an absolute path that works on both Unix and Windows
+    #[cfg(unix)]
+    fn absolute_test_path(filename: &str) -> String {
+        format!("/absolute/path/{}", filename)
+    }
+
+    #[cfg(windows)]
+    fn absolute_test_path(filename: &str) -> String {
+        format!("C:\\absolute\\path\\{}", filename)
+    }
+
     #[test]
     fn test_normalize_for_golden_test() {
+        let abs_path = absolute_test_path("test.atlas");
         let diags = vec![
             Diagnostic::error("test 1", Span::new(0, 5))
-                .with_file("/absolute/path/test.atlas")
+                .with_file(&abs_path)
                 .with_line(1),
             Diagnostic::error("test 2", Span::new(0, 3)).with_file("<input>"),
         ];
