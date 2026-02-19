@@ -14,8 +14,8 @@ atlas-build = { path = "../atlas-build" }
 atlas-formatter = { path = "../atlas-formatter" }
 clap = { version = "4.5", features = ["derive"] }
 rustyline = "14.0"  # Line editor for REPL
-ratatui = "0.28"  # TUI framework for rich REPL mode
-crossterm = "0.28"  # Terminal backend for ratatui
+ratatui = "0.30"  # TUI framework for rich REPL mode
+crossterm = "0.29"  # Terminal backend for ratatui
 dirs = "5.0"  # Platform-specific directories (for history file)
 anyhow = "1.0"
 serde_json = "1.0"
