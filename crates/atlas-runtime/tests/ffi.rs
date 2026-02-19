@@ -228,7 +228,7 @@ fn test_callback_with_two_params() {
 
     let handle = create_callback(
         |args: &[Value]| {
-            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.get(0), args.get(1)) {
+            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.first(), args.get(1)) {
                 Ok(Value::Number(a + b))
             } else {
                 Ok(Value::Number(0.0))
@@ -382,7 +382,7 @@ fn test_callback_multiple_invocations() {
 
     let handle = create_callback(
         |args: &[Value]| {
-            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.get(0), args.get(1)) {
+            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.first(), args.get(1)) {
                 Ok(Value::Number(((*a as i32) + (*b as i32)) as f64))
             } else {
                 Ok(Value::Number(0.0))
@@ -583,7 +583,7 @@ fn test_callback_with_computation() {
 
     let handle = create_callback(
         |args: &[Value]| {
-            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.get(0), args.get(1)) {
+            if let (Some(Value::Number(a)), Some(Value::Number(b))) = (args.first(), args.get(1)) {
                 // Pythagorean theorem: sqrt(a^2 + b^2)
                 Ok(Value::Number((a * a + b * b).sqrt()))
             } else {
@@ -822,7 +822,7 @@ fn test_check_null_invalid() {
 fn test_bounded_buffer() {
     use atlas_runtime::ffi::BoundedBuffer;
 
-    let data = vec![1u8, 2, 3, 4, 5];
+    let data = [1u8, 2, 3, 4, 5];
     let buffer = BoundedBuffer::new(data.as_ptr(), data.len()).unwrap();
 
     assert_eq!(buffer.len(), 5);
@@ -1134,7 +1134,7 @@ fn test_extern_type_equality() {
 #[test]
 fn test_all_extern_types_exist() {
     // Verify all 6 extern types are defined and accessible
-    let types = vec![
+    let types = [
         ExternType::CInt,
         ExternType::CLong,
         ExternType::CDouble,
@@ -1180,7 +1180,10 @@ fn test_extern_type_to_atlas_type_mapping(
 fn test_ctype_equality() {
     assert_eq!(CType::Int(42), CType::Int(42));
     assert_ne!(CType::Int(42), CType::Int(43));
-    assert_eq!(CType::Double(3.14), CType::Double(3.14));
+    assert_eq!(
+        CType::Double(std::f64::consts::PI),
+        CType::Double(std::f64::consts::PI)
+    );
     assert_eq!(CType::Bool(1), CType::Bool(1));
     assert_ne!(CType::Bool(0), CType::Bool(1));
     assert_eq!(CType::Void, CType::Void);
@@ -1216,7 +1219,7 @@ fn test_marshal_number_to_cint_out_of_range() {
 fn test_marshal_number_to_cint_non_integer() {
     let mut ctx = MarshalContext::new();
     // Non-integer values should fail for CInt
-    let result = ctx.atlas_to_c(&Value::Number(3.14), &ExternType::CInt);
+    let result = ctx.atlas_to_c(&Value::Number(std::f64::consts::PI), &ExternType::CInt);
     assert!(matches!(result, Err(MarshalError::NumberOutOfRange { .. })));
 }
 
@@ -1231,7 +1234,10 @@ fn test_marshal_number_to_clong(#[case] value: Value, #[case] expected: CType) {
 }
 
 #[rstest]
-#[case(Value::Number(3.14), CType::Double(3.14))]
+#[case(
+    Value::Number(std::f64::consts::PI),
+    CType::Double(std::f64::consts::PI)
+)]
 #[case(Value::Number(0.0), CType::Double(0.0))]
 #[case(Value::Number(-2.5), CType::Double(-2.5))]
 fn test_marshal_number_to_cdouble(#[case] value: Value, #[case] expected: CType) {
@@ -1314,7 +1320,10 @@ fn test_unmarshal_clong_to_number(#[case] c_value: CType, #[case] expected: Valu
 }
 
 #[rstest]
-#[case(CType::Double(3.14), Value::Number(3.14))]
+#[case(
+    CType::Double(std::f64::consts::PI),
+    Value::Number(std::f64::consts::PI)
+)]
 #[case(CType::Double(0.0), Value::Number(0.0))]
 #[case(CType::Double(-2.5), Value::Number(-2.5))]
 fn test_unmarshal_cdouble_to_number(#[case] c_value: CType, #[case] expected: Value) {
@@ -1405,7 +1414,7 @@ fn test_marshal_context_multiple_conversions() {
     let int_result = ctx.atlas_to_c(&Value::Number(42.0), &ExternType::CInt);
     let str_result = ctx.atlas_to_c(&Value::string("hello"), &ExternType::CCharPtr);
     let bool_result = ctx.atlas_to_c(&Value::Bool(true), &ExternType::CBool);
-    let double_result = ctx.atlas_to_c(&Value::Number(3.14), &ExternType::CDouble);
+    let double_result = ctx.atlas_to_c(&Value::Number(std::f64::consts::PI), &ExternType::CDouble);
 
     assert!(int_result.is_ok());
     assert!(str_result.is_ok());
@@ -1465,7 +1474,7 @@ fn test_roundtrip_marshaling() {
     assert_eq!(num, num_back);
 
     // Number (via CDouble)
-    let num_f = Value::Number(3.14);
+    let num_f = Value::Number(std::f64::consts::PI);
     let c_num_f = ctx.atlas_to_c(&num_f, &ExternType::CDouble).unwrap();
     let num_f_back = ctx.c_to_atlas(&c_num_f).unwrap();
     assert_eq!(num_f, num_f_back);

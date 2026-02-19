@@ -1212,25 +1212,10 @@ fn test_practical_constraint_patterns(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     if (source.contains("\"a\"") && source.contains("Numeric"))
         || (source.contains("Iterable") && source.contains("= f(1)"))
+        || (source.contains("Comparable") && source.contains("\"a\""))
+        || (source.contains("Equatable") && source.contains("json"))
+        || (source.contains("Serializable") && source.contains("[1]"))
     {
-        assert!(
-            has_error(&diagnostics),
-            "Expected errors, got: {:?}",
-            diagnostics
-        );
-    } else if source.contains("Comparable") && source.contains("\"a\"") {
-        assert!(
-            has_error(&diagnostics),
-            "Expected errors, got: {:?}",
-            diagnostics
-        );
-    } else if source.contains("Equatable") && source.contains("json") {
-        assert!(
-            has_error(&diagnostics),
-            "Expected errors, got: {:?}",
-            diagnostics
-        );
-    } else if source.contains("Serializable") && source.contains("[1]") {
         assert!(
             has_error(&diagnostics),
             "Expected errors, got: {:?}",
@@ -3741,7 +3726,7 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case("isType([1, 2], \"array\")", Value::Bool(true))]
 #[case("isType(null, \"null\")", Value::Bool(true))]
 fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
-    let code = format!("{}", expr);
+    let code = expr.to_string();
     let result = eval(&code);
     assert_eq!(result, expected);
 }
