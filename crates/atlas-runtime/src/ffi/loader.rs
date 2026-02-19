@@ -139,7 +139,8 @@ impl LibraryLoader {
         } else if cfg!(target_os = "macos") {
             vec!["dylib", "so"]
         } else {
-            vec!["so"]
+            // Prefer versioned shared objects to avoid linker scripts (e.g., libm.so).
+            vec!["so.6", "so"]
         };
 
         // Platform-specific prefixes (try both with and without "lib" prefix)
