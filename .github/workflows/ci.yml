@@ -223,7 +223,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         id: stable
 
-      - uses: dtolnay/rust-toolchain@1.70.0
+      - uses: dtolnay/rust-toolchain@1.100.0
         id: msrv
 
       - uses: Swatinem/rust-cache@v2
