@@ -27,6 +27,7 @@
 //! - processKill: Kill running process
 //! - processPid: Get current process ID
 
+use super::stdlib_arity_error;
 use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -51,7 +52,7 @@ use std::sync::Arc;
 /// Returns: { exitCode: number, stdout: string, stderr: string }
 pub fn exec(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
     if args.is_empty() || args.len() > 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("exec", 1, args.len(), span));
     }
 
     // Parse command
@@ -151,7 +152,7 @@ pub fn shell(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.is_empty() || args.len() > 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("shell", 1, args.len(), span));
     }
 
     let command_str = match &args[0] {
@@ -268,7 +269,7 @@ pub fn get_env(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getEnv", 1, args.len(), span));
     }
 
     let var_name = match &args[0] {
@@ -308,7 +309,7 @@ pub fn set_env(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("setEnv", 2, args.len(), span));
     }
 
     let var_name = match &args[0] {
@@ -360,7 +361,7 @@ pub fn unset_env(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("unsetEnv", 1, args.len(), span));
     }
 
     let var_name = match &args[0] {
@@ -399,7 +400,7 @@ pub fn list_env(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("listEnv", 0, args.len(), span));
     }
 
     // Get all environment variables
@@ -425,7 +426,7 @@ pub fn get_cwd(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getCwd", 0, args.len(), span));
     }
 
     let cwd = env::current_dir().map_err(|e| RuntimeError::IoError {
@@ -445,7 +446,7 @@ pub fn get_pid(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getPid", 0, args.len(), span));
     }
 
     Ok(Value::Number(std::process::id() as f64))

@@ -3,6 +3,7 @@
 //! Provides async file and network I/O operations that return Futures.
 //! All operations are non-blocking and can be composed using Future combinators.
 
+use super::{stdlib_arg_error, stdlib_arity_error};
 use crate::async_runtime::{block_on, AtlasFuture};
 use crate::security::SecurityContext;
 use crate::span::Span;
@@ -40,12 +41,12 @@ pub fn read_file_async(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("readFileAsync", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.to_string(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("readFileAsync", "string", &args[0], span)),
     };
 
     // Permission check must happen synchronously before spawning task
@@ -100,17 +101,17 @@ pub fn write_file_async(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("writeFileAsync", 2, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.to_string(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("writeFileAsync", "string", &args[0], span)),
     };
 
     let contents = match &args[1] {
         Value::String(s) => s.to_string(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("writeFileAsync", "string", &args[1], span)),
     };
 
     // Permission check
@@ -193,17 +194,31 @@ pub fn append_file_async(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("appendFileAsync", 2, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.to_string(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => {
+            return Err(stdlib_arg_error(
+                "appendFileAsync",
+                "string",
+                &args[0],
+                span,
+            ))
+        }
     };
 
     let contents = match &args[1] {
         Value::String(s) => s.to_string(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => {
+            return Err(stdlib_arg_error(
+                "appendFileAsync",
+                "string",
+                &args[1],
+                span,
+            ))
+        }
     };
 
     // Permission check

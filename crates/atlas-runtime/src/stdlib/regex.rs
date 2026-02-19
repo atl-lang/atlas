@@ -13,6 +13,7 @@
 //! - `regexCaptures(regex: Regex, text: string) -> Option<Array>` - Extract capture groups by index
 //! - `regexCapturesNamed(regex: Regex, text: string) -> Option<HashMap>` - Extract named capture groups
 
+use super::stdlib_arity_error;
 use crate::span::Span;
 use crate::stdlib::collections::hash::HashKey;
 use crate::stdlib::collections::hashmap::AtlasHashMap;
@@ -39,7 +40,7 @@ use std::sync::{Arc, Mutex};
 /// ```
 pub fn regex_new(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexNew", 1, args.len(), span));
     }
 
     let pattern_str = expect_string(&args[0], span, "pattern")?;
@@ -78,7 +79,7 @@ pub fn regex_new(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn regex_new_with_flags(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexNewWithFlags", 2, args.len(), span));
     }
 
     let pattern_str = expect_string(&args[0], span, "pattern")?;
@@ -136,7 +137,7 @@ pub fn regex_new_with_flags(args: &[Value], span: Span) -> Result<Value, Runtime
 /// ```
 pub fn regex_escape(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexEscape", 1, args.len(), span));
     }
 
     let text = expect_string(&args[0], span, "text")?;
@@ -166,7 +167,7 @@ pub fn regex_escape(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn regex_is_match(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexIsMatch", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -195,7 +196,7 @@ pub fn regex_is_match(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// ```
 pub fn regex_find(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexFind", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -241,7 +242,7 @@ pub fn regex_find(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn regex_find_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexFindAll", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -292,7 +293,7 @@ pub fn regex_find_all(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// ```
 pub fn regex_captures(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexCaptures", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -335,7 +336,12 @@ pub fn regex_captures(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// ```
 pub fn regex_captures_named(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "regexCapturesNamed",
+            2,
+            args.len(),
+            span,
+        ));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -390,7 +396,7 @@ pub fn regex_captures_named(args: &[Value], span: Span) -> Result<Value, Runtime
 /// ```
 pub fn regex_replace(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexReplace", 3, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -426,7 +432,7 @@ pub fn regex_replace(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// ```
 pub fn regex_replace_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexReplaceAll", 3, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -461,7 +467,7 @@ pub fn regex_replace_all(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// ```
 pub fn regex_split(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexSplit", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -490,7 +496,7 @@ pub fn regex_split(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn regex_split_n(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexSplitN", 3, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -534,7 +540,7 @@ pub fn regex_split_n(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// ```
 pub fn regex_match_indices(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexMatchIndices", 2, args.len(), span));
     }
 
     let regex = expect_regex(&args[0], span)?;
@@ -569,7 +575,7 @@ pub fn regex_match_indices(args: &[Value], span: Span) -> Result<Value, RuntimeE
 /// ```
 pub fn regex_test(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("regexTest", 2, args.len(), span));
     }
 
     let pattern_str = expect_string(&args[0], span, "pattern")?;

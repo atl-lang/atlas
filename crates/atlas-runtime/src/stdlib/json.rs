@@ -1,5 +1,6 @@
 //! JSON parsing and serialization functions
 
+use super::stdlib_arity_error;
 use crate::json_value::JsonValue;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -23,7 +24,7 @@ use std::sync::Arc;
 /// Returns error if JSON is malformed.
 pub fn parse_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("parseJSON", 1, args.len(), span));
     }
 
     let json_str = match &args[0] {
@@ -56,7 +57,7 @@ pub fn parse_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns compact JSON string (no whitespace).
 pub fn to_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("toJSON", 1, args.len(), span));
     }
 
     // Track visited pointers to detect circular references
@@ -71,7 +72,7 @@ pub fn to_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// More efficient than parseJSON when you only need validation.
 pub fn is_valid_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isValidJSON", 1, args.len(), span));
     }
 
     let json_str = match &args[0] {
@@ -94,7 +95,7 @@ pub fn is_valid_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Returns prettified JSON with proper formatting.
 pub fn prettify_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("prettifyJSON", 2, args.len(), span));
     }
 
     let json_str = match &args[0] {
@@ -156,7 +157,7 @@ pub fn prettify_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Takes JSON string and returns compact version with no extra whitespace.
 pub fn minify_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("minifyJSON", 1, args.len(), span));
     }
 
     let json_str = match &args[0] {
@@ -199,7 +200,7 @@ pub fn minify_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns error if JsonValue is not a string.
 pub fn json_as_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("jsonAsString", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -225,7 +226,7 @@ pub fn json_as_string(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// Returns error if JsonValue is not a number.
 pub fn json_as_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("jsonAsNumber", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -251,7 +252,7 @@ pub fn json_as_number(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// Returns error if JsonValue is not a boolean.
 pub fn json_as_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("jsonAsBool", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -277,7 +278,7 @@ pub fn json_as_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns true if JsonValue is null, false otherwise.
 pub fn json_is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("jsonIsNull", 1, args.len(), span));
     }
 
     match &args[0] {

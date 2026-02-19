@@ -150,6 +150,7 @@ impl Default for AtlasQueue {
 // ============================================================================
 
 use crate::span::Span;
+use crate::stdlib::stdlib_arity_error;
 use crate::value::RuntimeError;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -168,7 +169,7 @@ fn extract_queue(value: &Value, span: Span) -> Result<Arc<Mutex<AtlasQueue>>, Ru
 /// Create new empty queue
 pub fn new_queue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.new", 0, args.len(), span));
     }
     Ok(Value::Queue(Arc::new(Mutex::new(AtlasQueue::new()))))
 }
@@ -176,7 +177,7 @@ pub fn new_queue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Add element to back of queue
 pub fn enqueue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.enqueue", 2, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -189,7 +190,7 @@ pub fn enqueue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Remove and return element from front of queue
 pub fn dequeue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.dequeue", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -204,7 +205,7 @@ pub fn dequeue(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// View front element without removing
 pub fn peek(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.peek", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -219,7 +220,7 @@ pub fn peek(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Get number of elements in queue
 pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.size", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -230,7 +231,7 @@ pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if queue is empty
 pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.isEmpty", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -241,7 +242,7 @@ pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Remove all elements from queue
 pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.clear", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;
@@ -252,7 +253,7 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Convert queue to array (FIFO order)
 pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Queue.toArray", 1, args.len(), span));
     }
 
     let queue = extract_queue(&args[0], span)?;

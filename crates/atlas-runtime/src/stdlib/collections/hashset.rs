@@ -11,6 +11,7 @@
 //! - Support for hashable types: number, string, bool, null
 
 use crate::stdlib::collections::hash::HashKey;
+use crate::stdlib::{stdlib_arg_error, stdlib_arity_error};
 use std::collections::HashSet as RustHashSet;
 
 /// Atlas HashSet - unique value collection with O(1) operations
@@ -136,7 +137,7 @@ use std::sync::Mutex;
 /// Create a new empty HashSet
 pub fn new_set(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.new", 0, args.len(), span));
     }
 
     Ok(Value::HashSet(Arc::new(Mutex::new(AtlasHashSet::new()))))
@@ -145,10 +146,10 @@ pub fn new_set(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Create HashSet from array of hashable elements
 pub fn from_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.fromArray", 1, args.len(), span));
     }
 
-    let array = extract_array(&args[0], span)?;
+    let array = extract_array("HashSet.fromArray", &args[0], span)?;
     let mut set = AtlasHashSet::new();
 
     for element in array {
@@ -162,10 +163,10 @@ pub fn from_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Add element to HashSet
 pub fn add(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.add", 2, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.add", &args[0], span)?;
     let key = HashKey::from_value(&args[1], span)?;
 
     set.lock().unwrap().insert(key);
@@ -175,10 +176,10 @@ pub fn add(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Remove element from HashSet
 pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.remove", 2, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.remove", &args[0], span)?;
     let key = HashKey::from_value(&args[1], span)?;
 
     let existed = set.lock().unwrap().remove(&key);
@@ -188,10 +189,10 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if element exists in HashSet
 pub fn has(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.has", 2, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.has", &args[0], span)?;
     let key = HashKey::from_value(&args[1], span)?;
 
     let exists = set.lock().unwrap().contains(&key);
@@ -201,10 +202,10 @@ pub fn has(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Get number of elements in HashSet
 pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.size", 1, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.size", &args[0], span)?;
     let len = set.lock().unwrap().len();
     Ok(Value::Number(len as f64))
 }
@@ -212,10 +213,10 @@ pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if HashSet is empty
 pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.isEmpty", 1, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.isEmpty", &args[0], span)?;
     let empty = set.lock().unwrap().is_empty();
     Ok(Value::Bool(empty))
 }
@@ -223,10 +224,10 @@ pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Clear all elements from HashSet
 pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.clear", 1, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.clear", &args[0], span)?;
     set.lock().unwrap().clear();
     Ok(Value::Null)
 }
@@ -234,11 +235,11 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Union of two HashSets
 pub fn union(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.union", 2, args.len(), span));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.union", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.union", &args[1], span)?;
 
     let result = set_a.lock().unwrap().union(&set_b.lock().unwrap());
     Ok(Value::HashSet(Arc::new(Mutex::new(result))))
@@ -247,11 +248,16 @@ pub fn union(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Intersection of two HashSets
 pub fn intersection(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "HashSet.intersection",
+            2,
+            args.len(),
+            span,
+        ));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.intersection", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.intersection", &args[1], span)?;
 
     let result = set_a.lock().unwrap().intersection(&set_b.lock().unwrap());
     Ok(Value::HashSet(Arc::new(Mutex::new(result))))
@@ -260,11 +266,16 @@ pub fn intersection(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Difference of two HashSets (elements in A but not in B)
 pub fn difference(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "HashSet.difference",
+            2,
+            args.len(),
+            span,
+        ));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.difference", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.difference", &args[1], span)?;
 
     let result = set_a.lock().unwrap().difference(&set_b.lock().unwrap());
     Ok(Value::HashSet(Arc::new(Mutex::new(result))))
@@ -273,11 +284,16 @@ pub fn difference(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Symmetric difference of two HashSets (elements in exactly one set)
 pub fn symmetric_difference(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "HashSet.symmetricDifference",
+            2,
+            args.len(),
+            span,
+        ));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.symmetricDifference", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.symmetricDifference", &args[1], span)?;
 
     let result = set_a
         .lock()
@@ -289,11 +305,11 @@ pub fn symmetric_difference(args: &[Value], span: Span) -> Result<Value, Runtime
 /// Check if set A is subset of set B
 pub fn is_subset(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.isSubset", 2, args.len(), span));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.isSubset", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.isSubset", &args[1], span)?;
 
     let is_sub = set_a.lock().unwrap().is_subset(&set_b.lock().unwrap());
     Ok(Value::Bool(is_sub))
@@ -302,11 +318,16 @@ pub fn is_subset(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if set A is superset of set B
 pub fn is_superset(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "HashSet.isSuperset",
+            2,
+            args.len(),
+            span,
+        ));
     }
 
-    let set_a = extract_hashset(&args[0], span)?;
-    let set_b = extract_hashset(&args[1], span)?;
+    let set_a = extract_hashset("HashSet.isSuperset", &args[0], span)?;
+    let set_b = extract_hashset("HashSet.isSuperset", &args[1], span)?;
 
     let is_super = set_a.lock().unwrap().is_superset(&set_b.lock().unwrap());
     Ok(Value::Bool(is_super))
@@ -315,10 +336,10 @@ pub fn is_superset(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Convert HashSet to array
 pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashSet.toArray", 1, args.len(), span));
     }
 
-    let set = extract_hashset(&args[0], span)?;
+    let set = extract_hashset("HashSet.toArray", &args[0], span)?;
     let elements: Vec<Value> = set
         .lock()
         .unwrap()
@@ -334,18 +355,22 @@ pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 // ============================================================================
 
 /// Extract HashSet from value
-fn extract_hashset(value: &Value, span: Span) -> Result<Arc<Mutex<AtlasHashSet>>, RuntimeError> {
+fn extract_hashset(
+    func_name: &str,
+    value: &Value,
+    span: Span,
+) -> Result<Arc<Mutex<AtlasHashSet>>, RuntimeError> {
     match value {
         Value::HashSet(set) => Ok(Arc::clone(set)),
-        _ => Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => Err(stdlib_arg_error(func_name, "HashSet", value, span)),
     }
 }
 
 /// Extract array from value
-fn extract_array(value: &Value, span: Span) -> Result<Vec<Value>, RuntimeError> {
+fn extract_array(func_name: &str, value: &Value, span: Span) -> Result<Vec<Value>, RuntimeError> {
     match value {
         Value::Array(arr) => Ok(arr.lock().unwrap().clone()),
-        _ => Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => Err(stdlib_arg_error(func_name, "array", value, span)),
     }
 }
 

@@ -147,6 +147,7 @@ impl Default for AtlasStack {
 // ============================================================================
 
 use crate::span::Span;
+use crate::stdlib::stdlib_arity_error;
 use crate::value::RuntimeError;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -165,7 +166,7 @@ fn extract_stack(value: &Value, span: Span) -> Result<Arc<Mutex<AtlasStack>>, Ru
 /// Create new empty stack
 pub fn new_stack(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.new", 0, args.len(), span));
     }
     Ok(Value::Stack(Arc::new(Mutex::new(AtlasStack::new()))))
 }
@@ -173,7 +174,7 @@ pub fn new_stack(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Push element onto top of stack
 pub fn push(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.push", 2, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -186,7 +187,7 @@ pub fn push(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Pop element from top of stack
 pub fn pop(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.pop", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -201,7 +202,7 @@ pub fn pop(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// View top element without removing
 pub fn peek(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.peek", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -216,7 +217,7 @@ pub fn peek(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Get number of elements in stack
 pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.size", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -227,7 +228,7 @@ pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if stack is empty
 pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.isEmpty", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -238,7 +239,7 @@ pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Remove all elements from stack
 pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.clear", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;
@@ -249,7 +250,7 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Convert stack to array (bottom to top order)
 pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("Stack.toArray", 1, args.len(), span));
     }
 
     let stack = extract_stack(&args[0], span)?;

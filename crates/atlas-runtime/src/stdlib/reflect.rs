@@ -2,6 +2,7 @@
 //!
 //! Provides runtime type inspection and value introspection capabilities.
 
+use super::stdlib_arity_error;
 use crate::reflect::{
     get_type_name, get_value_type_info, is_callable, is_primitive_value, same_type,
 };
@@ -17,7 +18,7 @@ use crate::value::{RuntimeError, Value};
 /// ```
 pub fn typeof_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("typeof", 1, args.len(), span));
     }
 
     let type_name = get_type_name(&args[0]);
@@ -34,7 +35,7 @@ pub fn typeof_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn is_callable_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isCallable", 1, args.len(), span));
     }
 
     Ok(Value::Bool(is_callable(&args[0])))
@@ -50,7 +51,7 @@ pub fn is_callable_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// ```
 pub fn is_primitive_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isPrimitive", 1, args.len(), span));
     }
 
     Ok(Value::Bool(is_primitive_value(&args[0])))
@@ -65,7 +66,7 @@ pub fn is_primitive_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// ```
 pub fn same_type_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("sameType", 2, args.len(), span));
     }
 
     Ok(Value::Bool(same_type(&args[0], &args[1])))
@@ -82,7 +83,7 @@ pub fn same_type_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn get_length_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getLength", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -105,14 +106,14 @@ pub fn get_length_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// ```
 pub fn is_empty_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isEmpty", 1, args.len(), span));
     }
 
     match &args[0] {
         Value::Array(arr) => Ok(Value::Bool(arr.lock().unwrap().is_empty())),
         Value::String(s) => Ok(Value::Bool(s.is_empty())),
         _ => Err(RuntimeError::TypeError {
-            msg: "is_empty() requires array or string".to_string(),
+            msg: "isEmpty() requires array or string".to_string(),
             span,
         }),
     }
@@ -129,7 +130,7 @@ pub fn is_empty_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn type_describe_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("typeDescribe", 1, args.len(), span));
     }
 
     let type_info = get_value_type_info(&args[0]);
@@ -145,7 +146,7 @@ pub fn type_describe_fn(args: &[Value], span: Span) -> Result<Value, RuntimeErro
 /// ```
 pub fn clone_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("clone", 1, args.len(), span));
     }
 
     // Value already implements Clone, so this is straightforward
@@ -162,7 +163,7 @@ pub fn clone_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// ```
 pub fn value_to_string_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("valueToString", 1, args.len(), span));
     }
 
     Ok(Value::string(args[0].to_string()))
@@ -181,7 +182,7 @@ pub fn value_to_string_fn(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// ```
 pub fn deep_equals_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("deepEquals", 2, args.len(), span));
     }
 
     let result = deep_equals_impl(&args[0], &args[1]);
@@ -236,7 +237,7 @@ fn deep_equals_impl(a: &Value, b: &Value) -> bool {
 /// ```
 pub fn get_function_name_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getFunctionName", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -258,7 +259,7 @@ pub fn get_function_name_fn(args: &[Value], span: Span) -> Result<Value, Runtime
 /// ```
 pub fn get_function_arity_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("getFunctionArity", 1, args.len(), span));
     }
 
     match &args[0] {

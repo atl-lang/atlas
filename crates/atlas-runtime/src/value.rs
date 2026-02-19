@@ -315,8 +315,11 @@ pub enum RuntimeError {
         span: crate::span::Span,
     },
     /// Invalid stdlib argument
-    #[error("Invalid stdlib argument")]
-    InvalidStdlibArgument { span: crate::span::Span },
+    #[error("{msg}")]
+    InvalidStdlibArgument {
+        msg: String,
+        span: crate::span::Span,
+    },
     /// Invalid index (non-integer)
     #[error("Invalid index: expected number")]
     InvalidIndex { span: crate::span::Span },
@@ -371,7 +374,7 @@ impl RuntimeError {
             RuntimeError::UnknownOpcode { span } => *span,
             RuntimeError::StackUnderflow { span } => *span,
             RuntimeError::UnknownFunction { span, .. } => *span,
-            RuntimeError::InvalidStdlibArgument { span } => *span,
+            RuntimeError::InvalidStdlibArgument { span, .. } => *span,
             RuntimeError::InvalidIndex { span } => *span,
             RuntimeError::FilesystemPermissionDenied { span, .. } => *span,
             RuntimeError::NetworkPermissionDenied { span, .. } => *span,

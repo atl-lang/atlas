@@ -1,6 +1,7 @@
 //! Built-in generic types: Option<T> and Result<T,E>
 //! Type checking and conversion utilities
 
+use super::stdlib_arity_error;
 use crate::json_value::JsonValue;
 use crate::span::Span;
 use crate::stdlib::collections::hash::HashKey;
@@ -199,7 +200,7 @@ pub fn result_err(res: &Value, span: Span) -> Result<Value, RuntimeError> {
 /// "json", "option", "result"
 pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("typeOf", 1, args.len(), span));
     }
 
     let type_name = match &args[0] {
@@ -235,7 +236,7 @@ pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is a string
 pub fn is_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isString", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(args[0], Value::String(_))))
@@ -244,7 +245,7 @@ pub fn is_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is a number (including NaN)
 pub fn is_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isNumber", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(args[0], Value::Number(_))))
@@ -253,7 +254,7 @@ pub fn is_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is a boolean
 pub fn is_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isBool", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(args[0], Value::Bool(_))))
@@ -262,7 +263,7 @@ pub fn is_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is null
 pub fn is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isNull", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(args[0], Value::Null)))
@@ -271,7 +272,7 @@ pub fn is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is an array
 pub fn is_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isArray", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(args[0], Value::Array(_))))
@@ -280,7 +281,7 @@ pub fn is_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is a function
 pub fn is_function(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isFunction", 1, args.len(), span));
     }
 
     Ok(Value::Bool(matches!(
@@ -292,7 +293,7 @@ pub fn is_function(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value is a JSON object
 pub fn is_object(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isObject", 1, args.len(), span));
     }
 
     Ok(Value::Bool(
@@ -303,7 +304,7 @@ pub fn is_object(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value matches a specific runtime type name
 pub fn is_type(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("isType", 2, args.len(), span));
     }
 
     let expected_type = match &args[1] {
@@ -330,7 +331,7 @@ pub fn is_type(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value has a field/key with the given name
 pub fn has_field(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("hasField", 2, args.len(), span));
     }
 
     let field = match &args[1] {
@@ -361,7 +362,7 @@ pub fn has_field(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value has a method with the given name
 pub fn has_method(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("hasMethod", 2, args.len(), span));
     }
 
     let field = match &args[1] {
@@ -392,7 +393,7 @@ pub fn has_method(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Check if value has a tag field matching the given tag value
 pub fn has_tag(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("hasTag", 2, args.len(), span));
     }
 
     let tag_value = match &args[1] {
@@ -443,7 +444,7 @@ pub fn has_tag(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// - result → "Ok(value)" or "Err(error)"
 pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("toString", 1, args.len(), span));
     }
 
     let string_value = match &args[0] {
@@ -503,7 +504,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// - other types → error
 pub fn to_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("toNumber", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -542,7 +543,7 @@ pub fn to_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// - array, function, json, option, result → true
 pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("toBool", 1, args.len(), span));
     }
 
     let bool_value = match &args[0] {
@@ -582,7 +583,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns error if string is invalid for the given radix.
 pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("parseInt", 2, args.len(), span));
     }
 
     let string = match &args[0] {
@@ -653,7 +654,7 @@ pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Returns error if string is not a valid number.
 pub fn parse_float(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("parseFloat", 1, args.len(), span));
     }
 
     let string = match &args[0] {

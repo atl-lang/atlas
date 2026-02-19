@@ -2,6 +2,7 @@
 
 use super::hash::HashKey;
 use crate::span::Span;
+use crate::stdlib::{stdlib_arg_error, stdlib_arity_error};
 use crate::value::{RuntimeError, Value};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -92,10 +93,14 @@ impl Default for AtlasHashMap {
 }
 
 /// Extract array from value with better error message
-fn extract_array(value: &Value, span: Span) -> Result<Arc<Mutex<Vec<Value>>>, RuntimeError> {
+fn extract_array(
+    func_name: &str,
+    value: &Value,
+    span: Span,
+) -> Result<Arc<Mutex<Vec<Value>>>, RuntimeError> {
     match value {
         Value::Array(arr) => Ok(Arc::clone(arr)),
-        _ => Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => Err(stdlib_arg_error(func_name, "array", value, span)),
     }
 }
 
@@ -119,7 +124,7 @@ fn extract_hashmap(value: &Value, span: Span) -> Result<Arc<Mutex<AtlasHashMap>>
 /// New empty HashMap
 pub fn new_map(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.new", 0, args.len(), span));
     }
     Ok(Value::HashMap(Arc::new(Mutex::new(AtlasHashMap::new()))))
 }
@@ -133,14 +138,19 @@ pub fn new_map(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// HashMap with entries
 pub fn from_entries(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error(
+            "HashMap.fromEntries",
+            1,
+            args.len(),
+            span,
+        ));
     }
 
-    let entries_array = extract_array(&args[0], span)?;
+    let entries_array = extract_array("HashMap.fromEntries", &args[0], span)?;
     let mut map = AtlasHashMap::new();
 
     for entry in entries_array.lock().unwrap().iter() {
-        let pair = extract_array(entry, span)?;
+        let pair = extract_array("HashMap.fromEntries", entry, span)?;
         let pair_borrow = pair.lock().unwrap();
 
         if pair_borrow.len() != 2 {
@@ -169,7 +179,7 @@ pub fn from_entries(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Null
 pub fn put(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.put", 3, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -190,7 +200,7 @@ pub fn put(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Option<Value> - Some(value) if key exists, None otherwise
 pub fn get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.get", 2, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -213,7 +223,7 @@ pub fn get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Option<Value> - Some(value) if key existed, None otherwise
 pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.remove", 2, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -236,7 +246,7 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Bool - true if key exists, false otherwise
 pub fn has(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.has", 2, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -255,7 +265,7 @@ pub fn has(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Number - count of entries
 pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.size", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -272,7 +282,7 @@ pub fn size(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Bool - true if empty, false otherwise
 pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.isEmpty", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -289,7 +299,7 @@ pub fn is_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Null
 pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.clear", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -306,7 +316,7 @@ pub fn clear(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Array of keys
 pub fn keys(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.keys", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -329,7 +339,7 @@ pub fn keys(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Array of values
 pub fn values(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.values", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;
@@ -349,7 +359,7 @@ pub fn values(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Array of [key, value] arrays
 pub fn entries(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("HashMap.entries", 1, args.len(), span));
     }
 
     let map = extract_hashmap(&args[0], span)?;

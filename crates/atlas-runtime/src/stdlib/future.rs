@@ -10,6 +10,7 @@
 //! - futureRace: Get first completed future
 //! - futureIsPending, futureIsResolved, futureIsRejected: Status checks
 
+use super::stdlib_arity_error;
 use crate::async_runtime::{future_all, future_race, AtlasFuture};
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -20,7 +21,7 @@ use std::sync::Arc;
 /// Atlas signature: `futureResolve(value: T) -> Future<T>`
 pub fn future_resolve(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureResolve", 1, args.len(), span));
     }
 
     let future = AtlasFuture::resolved(args[0].clone());
@@ -32,7 +33,7 @@ pub fn future_resolve(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// Atlas signature: `futureReject(error: T) -> Future<never>`
 pub fn future_reject(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureReject", 1, args.len(), span));
     }
 
     let future = AtlasFuture::rejected(args[0].clone());
@@ -48,7 +49,7 @@ pub fn future_reject(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Atlas signature: `futureNew() -> Future<T>`
 pub fn future_new(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureNew", 0, args.len(), span));
     }
 
     let future = AtlasFuture::new_pending();
@@ -60,7 +61,7 @@ pub fn future_new(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `futureIsPending(future: Future<T>) -> bool`
 pub fn future_is_pending(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureIsPending", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -77,7 +78,7 @@ pub fn future_is_pending(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// Atlas signature: `futureIsResolved(future: Future<T>) -> bool`
 pub fn future_is_resolved(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureIsResolved", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -94,7 +95,7 @@ pub fn future_is_resolved(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// Atlas signature: `futureIsRejected(future: Future<T>) -> bool`
 pub fn future_is_rejected(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureIsRejected", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -114,7 +115,7 @@ pub fn future_is_rejected(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// Atlas signature: `futureThen(future: Future<T>, handler: fn(T) -> U) -> Future<U>`
 pub fn future_then(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureThen", 2, args.len(), span));
     }
 
     let _future = match &args[0] {
@@ -146,7 +147,7 @@ pub fn future_then(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `futureCatch(future: Future<T>, handler: fn(E) -> T) -> Future<T>`
 pub fn future_catch(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureCatch", 2, args.len(), span));
     }
 
     let _future = match &args[0] {
@@ -178,7 +179,7 @@ pub fn future_catch(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `futureAll(futures: Array<Future<T>>) -> Future<Array<T>>`
 pub fn future_all_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureAll", 1, args.len(), span));
     }
 
     let futures_array = match &args[0] {
@@ -218,7 +219,7 @@ pub fn future_all_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Atlas signature: `futureRace(futures: Array<Future<T>>) -> Future<T>`
 pub fn future_race_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("futureRace", 1, args.len(), span));
     }
 
     let futures_array = match &args[0] {

@@ -35,6 +35,7 @@
 //! - asyncMutexGet: Get value from mutex
 //! - asyncMutexSet: Set value in mutex
 
+use super::stdlib_arity_error;
 use crate::async_runtime;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -50,7 +51,7 @@ use std::time::Duration;
 /// Atlas signature: `spawn(future: Future<T>, name: string | null) -> TaskHandle`
 pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("spawn", 2, args.len(), span));
     }
 
     // Extract future
@@ -106,7 +107,7 @@ pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `taskJoin(handle: TaskHandle) -> Future<T>`
 pub fn task_join(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("taskJoin", 1, args.len(), span));
     }
 
     let handle = match &args[0] {
@@ -129,7 +130,7 @@ pub fn task_join(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `taskStatus(handle: TaskHandle) -> string`
 pub fn task_status(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("taskStatus", 1, args.len(), span));
     }
 
     let handle = match &args[0] {
@@ -157,7 +158,7 @@ pub fn task_status(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `taskCancel(handle: TaskHandle) -> null`
 pub fn task_cancel(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("taskCancel", 1, args.len(), span));
     }
 
     let handle = match &args[0] {
@@ -179,7 +180,7 @@ pub fn task_cancel(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `taskId(handle: TaskHandle) -> number`
 pub fn task_id(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("taskId", 1, args.len(), span));
     }
 
     let handle = match &args[0] {
@@ -200,7 +201,7 @@ pub fn task_id(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `taskName(handle: TaskHandle) -> string | null`
 pub fn task_name(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("taskName", 1, args.len(), span));
     }
 
     let handle = match &args[0] {
@@ -224,7 +225,7 @@ pub fn task_name(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `joinAll(handles: TaskHandle[]) -> Future<T[]>`
 pub fn join_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("joinAll", 1, args.len(), span));
     }
 
     let handles_array = match &args[0] {
@@ -267,7 +268,7 @@ pub fn join_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `channelUnbounded() -> [ChannelSender, ChannelReceiver]`
 pub fn channel_unbounded(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelUnbounded", 0, args.len(), span));
     }
 
     let (sender, receiver) = async_runtime::channel_unbounded();
@@ -283,7 +284,7 @@ pub fn channel_unbounded(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// Atlas signature: `channelBounded(capacity: number) -> [ChannelSender, ChannelReceiver]`
 pub fn channel_bounded(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelBounded", 1, args.len(), span));
     }
 
     let capacity = match &args[0] {
@@ -309,7 +310,7 @@ pub fn channel_bounded(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Atlas signature: `channelSend(sender: ChannelSender, value: T) -> bool`
 pub fn channel_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelSend", 2, args.len(), span));
     }
 
     let sender = match &args[0] {
@@ -333,7 +334,7 @@ pub fn channel_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `channelReceive(receiver: ChannelReceiver) -> Future<T>`
 pub fn channel_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelReceive", 1, args.len(), span));
     }
 
     let receiver = match &args[0] {
@@ -355,7 +356,7 @@ pub fn channel_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Atlas signature: `channelSelect(receivers: ChannelReceiver[]) -> Future<[value, index]>`
 pub fn channel_select(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelSelect", 1, args.len(), span));
     }
 
     let receivers_array = match &args[0] {
@@ -396,7 +397,7 @@ pub fn channel_select(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// Atlas signature: `channelIsClosed(sender: ChannelSender) -> bool`
 pub fn channel_is_closed(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("channelIsClosed", 1, args.len(), span));
     }
 
     match &args[0] {
@@ -417,7 +418,7 @@ pub fn channel_is_closed(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// Atlas signature: `sleep(milliseconds: number) -> Future<null>`
 pub fn sleep_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("sleep", 1, args.len(), span));
     }
 
     let milliseconds = match &args[0] {
@@ -439,7 +440,7 @@ pub fn sleep_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `timer(milliseconds: number) -> Future<null>`
 pub fn timer_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("timer", 1, args.len(), span));
     }
 
     let milliseconds = match &args[0] {
@@ -461,7 +462,7 @@ pub fn timer_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `interval(milliseconds: number) -> Future<null>`
 pub fn interval_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("interval", 1, args.len(), span));
     }
 
     let milliseconds = match &args[0] {
@@ -487,7 +488,7 @@ pub fn interval_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `timeout(future: Future<T>, milliseconds: number) -> Future<T>`
 pub fn timeout_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("timeout", 2, args.len(), span));
     }
 
     let future = match &args[0] {
@@ -523,7 +524,7 @@ pub fn timeout_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// Atlas signature: `asyncMutex(value: T) -> AsyncMutex`
 pub fn async_mutex_new(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("asyncMutex", 1, args.len(), span));
     }
 
     let value = args[0].clone();
@@ -537,7 +538,7 @@ pub fn async_mutex_new(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Atlas signature: `asyncMutexGet(mutex: AsyncMutex) -> T`
 pub fn async_mutex_get(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("asyncMutexGet", 1, args.len(), span));
     }
 
     let mutex = match &args[0] {
@@ -564,7 +565,7 @@ pub fn async_mutex_get(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// Atlas signature: `asyncMutexSet(mutex: AsyncMutex, value: T) -> null`
 pub fn async_mutex_set(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("asyncMutexSet", 2, args.len(), span));
     }
 
     let mutex = match &args[0] {

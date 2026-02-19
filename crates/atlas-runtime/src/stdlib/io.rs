@@ -3,6 +3,7 @@
 //! Provides file and directory operations with security checks and UTF-8 validation.
 //! All operations respect the SecurityContext permission model.
 
+use super::{stdlib_arg_error, stdlib_arity_error};
 use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -19,12 +20,12 @@ pub fn read_file(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("readFile", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("readFile", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -60,17 +61,17 @@ pub fn write_file(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("writeFile", 2, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("writeFile", "string", &args[0], span)),
     };
 
     let contents = match &args[1] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("writeFile", "string", &args[1], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -117,17 +118,17 @@ pub fn append_file(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("appendFile", 2, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("appendFile", "string", &args[0], span)),
     };
 
     let contents = match &args[1] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("appendFile", "string", &args[1], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -183,12 +184,12 @@ pub fn file_exists(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("fileExists", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("fileExists", "string", &args[0], span)),
     };
 
     let path = Path::new(path_str);
@@ -204,12 +205,12 @@ pub fn read_dir(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("readDir", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("readDir", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -256,12 +257,12 @@ pub fn create_dir(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("createDir", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("createDir", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -309,12 +310,12 @@ pub fn remove_file(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("removeFile", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("removeFile", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -350,12 +351,12 @@ pub fn remove_dir(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("removeDir", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("removeDir", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -391,12 +392,12 @@ pub fn file_info(
     security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("fileInfo", 1, args.len(), span));
     }
 
     let path_str = match &args[0] {
         Value::String(s) => s.as_ref(),
-        _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+        _ => return Err(stdlib_arg_error("fileInfo", "string", &args[0], span)),
     };
 
     let path = PathBuf::from(path_str);
@@ -450,14 +451,14 @@ pub fn path_join(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.is_empty() {
-        return Err(RuntimeError::InvalidStdlibArgument { span });
+        return Err(stdlib_arity_error("pathJoin", 1, args.len(), span));
     }
 
     let mut path = PathBuf::new();
-    for arg in args {
+    for (i, arg) in args.iter().enumerate() {
         match arg {
             Value::String(s) => path.push(s.as_ref()),
-            _ => return Err(RuntimeError::InvalidStdlibArgument { span }),
+            _ => return Err(stdlib_arg_error("pathJoin", "string", &args[i], span)),
         }
     }
 
