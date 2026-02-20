@@ -65,8 +65,12 @@ fn test_legend_includes_common_modifiers() {
     let legend = get_legend();
 
     // Check for common modifiers
-    assert!(legend.token_modifiers.contains(&SemanticTokenModifier::DECLARATION));
-    assert!(legend.token_modifiers.contains(&SemanticTokenModifier::READONLY));
+    assert!(legend
+        .token_modifiers
+        .contains(&SemanticTokenModifier::DECLARATION));
+    assert!(legend
+        .token_modifiers
+        .contains(&SemanticTokenModifier::READONLY));
 }
 
 #[test]
@@ -219,8 +223,14 @@ fn test_tokenize_multiline() {
 fn test_tokenize_range_full() {
     let source = "let x = 1;\nlet y = 2;";
     let range = Range {
-        start: Position { line: 0, character: 0 },
-        end: Position { line: 1, character: 10 },
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 10,
+        },
     };
 
     let result = generate_semantic_tokens_range(source, range, None, None);
@@ -236,8 +246,14 @@ fn test_tokenize_range_full() {
 fn test_tokenize_range_partial() {
     let source = "let x = 1;\nlet y = 2;\nlet z = 3;";
     let range = Range {
-        start: Position { line: 1, character: 0 },
-        end: Position { line: 1, character: 10 },
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 10,
+        },
     };
 
     let result = generate_semantic_tokens_range(source, range, None, None);

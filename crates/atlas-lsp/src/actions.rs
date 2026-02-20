@@ -65,7 +65,9 @@ pub fn generate_code_actions(
 
     // Generate refactoring actions if we have AST
     if let Some(program) = ast {
-        actions.extend(generate_refactoring_actions(uri, range, text, program, symbols));
+        actions.extend(generate_refactoring_actions(
+            uri, range, text, program, symbols,
+        ));
     }
 
     // Generate source actions
@@ -433,7 +435,8 @@ fn add_wildcard_arm(
                 if found_match && brace_count == 0 {
                     // Found the closing brace, insert wildcard arm before it
                     let indent = get_line_indent(line);
-                    let wildcard = format!("{}    _ => null, // TODO: handle remaining cases\n", indent);
+                    let wildcard =
+                        format!("{}    _ => null, // TODO: handle remaining cases\n", indent);
 
                     let insert_pos = Position {
                         line: line_num as u32,
@@ -849,9 +852,7 @@ fn contains_statements(text: &str) -> bool {
 fn is_simple_identifier(text: &str) -> bool {
     let trimmed = text.trim();
     !trimmed.is_empty()
-        && trimmed
-            .chars()
-            .all(|c| c.is_alphanumeric() || c == '_')
+        && trimmed.chars().all(|c| c.is_alphanumeric() || c == '_')
         && trimmed.chars().next().is_some_and(|c| !c.is_ascii_digit())
 }
 
@@ -882,9 +883,7 @@ fn convert_concat_to_template(text: &str) -> Option<String> {
             }
         } else {
             // Variable or expression
-            let end = remaining
-                .find(['+', '"'])
-                .unwrap_or(remaining.len());
+            let end = remaining.find(['+', '"']).unwrap_or(remaining.len());
 
             let expr = remaining[..end].trim();
             if !expr.is_empty() {
@@ -931,13 +930,19 @@ mod tests {
     #[test]
     fn test_extract_identifier_single_quote() {
         let msg = "undefined variable 'foo'";
-        assert_eq!(extract_identifier_from_message(msg), Some("foo".to_string()));
+        assert_eq!(
+            extract_identifier_from_message(msg),
+            Some("foo".to_string())
+        );
     }
 
     #[test]
     fn test_extract_identifier_backtick() {
         let msg = "variable `bar` is not defined";
-        assert_eq!(extract_identifier_from_message(msg), Some("bar".to_string()));
+        assert_eq!(
+            extract_identifier_from_message(msg),
+            Some("bar".to_string())
+        );
     }
 
     #[test]
@@ -989,7 +994,10 @@ mod tests {
     fn test_convert_concat_to_template() {
         let input = "\"Hello, \" + name + \"!\"";
         let expected = "`Hello, ${name}!`";
-        assert_eq!(convert_concat_to_template(input), Some(expected.to_string()));
+        assert_eq!(
+            convert_concat_to_template(input),
+            Some(expected.to_string())
+        );
     }
 
     #[test]
@@ -1010,8 +1018,14 @@ mod tests {
     fn test_extract_text_single_line() {
         let text = "let foo = 42;";
         let range = Range {
-            start: Position { line: 0, character: 4 },
-            end: Position { line: 0, character: 7 },
+            start: Position {
+                line: 0,
+                character: 4,
+            },
+            end: Position {
+                line: 0,
+                character: 7,
+            },
         };
         assert_eq!(extract_text_in_range(text, range), "foo");
     }

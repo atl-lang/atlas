@@ -1,14 +1,14 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-20
-**Version:** v0.2 | **Progress:** 119/131 phases (91%)
+**Version:** v0.2 | **Progress:** 120/131 phases (92%)
 
 ---
 
 ## Current Phase
 
-**Last Completed:** phases/lsp/phase-01-hover-actions-tokens.md
-**Next Phase:** phases/lsp/phase-02-symbols-folding-inlay.md
+**Last Completed:** phases/lsp/phase-02-symbols-folding-inlay.md
+**Next Phase:** phases/lsp/phase-03-lsp-integration-tests.md
 
 > **Execution order:** Correctness (12) → Interpreter (2) → CLI (6) → LSP (5) → Polish (5)
 > Correctness phases are BLOCKING — they fix structural compiler bugs that must be resolved before features.
@@ -28,7 +28,7 @@
 | **Typing** | 7/7 | ✅ Archived |
 | **Interpreter** | 2/2 | ✅ Complete |
 | **CLI** | 6/6 | ✅ Complete |
-| **LSP** | 1/5 | 🚧 In progress |
+| **LSP** | 2/5 | 🚧 In progress |
 | **Polish** | 0/5 | ⬜ Pending |
 
 ---
@@ -78,10 +78,10 @@
 ✅ phase-05-package-manager-cli.md
 ✅ phase-06-project-scaffolding.md
 
-### LSP (1/5)
+### LSP (2/5)
 
 ✅ phase-01-hover-actions-tokens.md
-⬜ phase-02-symbols-folding-inlay.md
+✅ phase-02-symbols-folding-inlay.md
 ⬜ phase-03-lsp-integration-tests.md
 ⬜ phase-04-refactoring-actions.md
 ⬜ phase-05-find-references.md

@@ -280,97 +280,289 @@ fn find_builtin_hover(identifier: &str) -> Option<String> {
     let (signature, description) = match identifier {
         // I/O
         "print" => ("fn print(...args: any) -> null", "Prints values to stdout"),
-        "println" => ("fn println(...args: any) -> null", "Prints values to stdout with newline"),
-        "input" => ("fn input(prompt?: string) -> string", "Reads a line from stdin"),
+        "println" => (
+            "fn println(...args: any) -> null",
+            "Prints values to stdout with newline",
+        ),
+        "input" => (
+            "fn input(prompt?: string) -> string",
+            "Reads a line from stdin",
+        ),
 
         // Type conversion
-        "string" => ("fn string(value: any) -> string", "Converts a value to string"),
-        "number" => ("fn number(value: any) -> number", "Converts a value to number"),
+        "string" => (
+            "fn string(value: any) -> string",
+            "Converts a value to string",
+        ),
+        "number" => (
+            "fn number(value: any) -> number",
+            "Converts a value to number",
+        ),
         "bool" => ("fn bool(value: any) -> bool", "Converts a value to boolean"),
-        "int" => ("fn int(value: number) -> number", "Truncates a number to integer"),
+        "int" => (
+            "fn int(value: number) -> number",
+            "Truncates a number to integer",
+        ),
 
         // Type checking
-        "typeof" => ("fn typeof(value: any) -> string", "Returns the type of a value as a string"),
-        "is_number" => ("fn is_number(value: any) -> bool", "Checks if value is a number"),
-        "is_string" => ("fn is_string(value: any) -> bool", "Checks if value is a string"),
-        "is_bool" => ("fn is_bool(value: any) -> bool", "Checks if value is a boolean"),
+        "typeof" => (
+            "fn typeof(value: any) -> string",
+            "Returns the type of a value as a string",
+        ),
+        "is_number" => (
+            "fn is_number(value: any) -> bool",
+            "Checks if value is a number",
+        ),
+        "is_string" => (
+            "fn is_string(value: any) -> bool",
+            "Checks if value is a string",
+        ),
+        "is_bool" => (
+            "fn is_bool(value: any) -> bool",
+            "Checks if value is a boolean",
+        ),
         "is_null" => ("fn is_null(value: any) -> bool", "Checks if value is null"),
-        "is_array" => ("fn is_array(value: any) -> bool", "Checks if value is an array"),
-        "is_function" => ("fn is_function(value: any) -> bool", "Checks if value is a function"),
+        "is_array" => (
+            "fn is_array(value: any) -> bool",
+            "Checks if value is an array",
+        ),
+        "is_function" => (
+            "fn is_function(value: any) -> bool",
+            "Checks if value is a function",
+        ),
 
         // Array operations
-        "len" => ("fn len(collection: array | string | HashMap) -> number", "Returns the length of a collection"),
-        "push" => ("fn push(array: array, value: any) -> array", "Adds an element to the end of an array"),
-        "pop" => ("fn pop(array: array) -> any", "Removes and returns the last element"),
-        "shift" => ("fn shift(array: array) -> any", "Removes and returns the first element"),
-        "unshift" => ("fn unshift(array: array, value: any) -> array", "Adds an element to the beginning"),
-        "slice" => ("fn slice(array: array, start: number, end?: number) -> array", "Returns a portion of an array"),
-        "concat" => ("fn concat(array: array, other: array) -> array", "Concatenates two arrays"),
-        "reverse" => ("fn reverse(array: array) -> array", "Reverses an array in place"),
-        "sort" => ("fn sort(array: array, comparator?: fn) -> array", "Sorts an array"),
-        "map" => ("fn map(array: array, fn: (item: any) -> any) -> array", "Maps a function over an array"),
-        "filter" => ("fn filter(array: array, fn: (item: any) -> bool) -> array", "Filters an array by predicate"),
-        "reduce" => ("fn reduce(array: array, fn: (acc: any, item: any) -> any, initial: any) -> any", "Reduces an array to a single value"),
-        "find" => ("fn find(array: array, fn: (item: any) -> bool) -> any", "Finds first element matching predicate"),
-        "every" => ("fn every(array: array, fn: (item: any) -> bool) -> bool", "Tests if all elements match predicate"),
-        "some" => ("fn some(array: array, fn: (item: any) -> bool) -> bool", "Tests if any element matches predicate"),
-        "includes" => ("fn includes(array: array, value: any) -> bool", "Checks if array contains a value"),
-        "index_of" => ("fn index_of(array: array, value: any) -> number", "Returns index of value or -1"),
-        "join" => ("fn join(array: array, separator?: string) -> string", "Joins array elements into a string"),
-        "flat" => ("fn flat(array: array, depth?: number) -> array", "Flattens nested arrays"),
+        "len" => (
+            "fn len(collection: array | string | HashMap) -> number",
+            "Returns the length of a collection",
+        ),
+        "push" => (
+            "fn push(array: array, value: any) -> array",
+            "Adds an element to the end of an array",
+        ),
+        "pop" => (
+            "fn pop(array: array) -> any",
+            "Removes and returns the last element",
+        ),
+        "shift" => (
+            "fn shift(array: array) -> any",
+            "Removes and returns the first element",
+        ),
+        "unshift" => (
+            "fn unshift(array: array, value: any) -> array",
+            "Adds an element to the beginning",
+        ),
+        "slice" => (
+            "fn slice(array: array, start: number, end?: number) -> array",
+            "Returns a portion of an array",
+        ),
+        "concat" => (
+            "fn concat(array: array, other: array) -> array",
+            "Concatenates two arrays",
+        ),
+        "reverse" => (
+            "fn reverse(array: array) -> array",
+            "Reverses an array in place",
+        ),
+        "sort" => (
+            "fn sort(array: array, comparator?: fn) -> array",
+            "Sorts an array",
+        ),
+        "map" => (
+            "fn map(array: array, fn: (item: any) -> any) -> array",
+            "Maps a function over an array",
+        ),
+        "filter" => (
+            "fn filter(array: array, fn: (item: any) -> bool) -> array",
+            "Filters an array by predicate",
+        ),
+        "reduce" => (
+            "fn reduce(array: array, fn: (acc: any, item: any) -> any, initial: any) -> any",
+            "Reduces an array to a single value",
+        ),
+        "find" => (
+            "fn find(array: array, fn: (item: any) -> bool) -> any",
+            "Finds first element matching predicate",
+        ),
+        "every" => (
+            "fn every(array: array, fn: (item: any) -> bool) -> bool",
+            "Tests if all elements match predicate",
+        ),
+        "some" => (
+            "fn some(array: array, fn: (item: any) -> bool) -> bool",
+            "Tests if any element matches predicate",
+        ),
+        "includes" => (
+            "fn includes(array: array, value: any) -> bool",
+            "Checks if array contains a value",
+        ),
+        "index_of" => (
+            "fn index_of(array: array, value: any) -> number",
+            "Returns index of value or -1",
+        ),
+        "join" => (
+            "fn join(array: array, separator?: string) -> string",
+            "Joins array elements into a string",
+        ),
+        "flat" => (
+            "fn flat(array: array, depth?: number) -> array",
+            "Flattens nested arrays",
+        ),
 
         // String operations
-        "split" => ("fn split(str: string, separator: string) -> array", "Splits a string into an array"),
-        "trim" => ("fn trim(str: string) -> string", "Removes whitespace from both ends"),
-        "to_upper" => ("fn to_upper(str: string) -> string", "Converts string to uppercase"),
-        "to_lower" => ("fn to_lower(str: string) -> string", "Converts string to lowercase"),
-        "starts_with" => ("fn starts_with(str: string, prefix: string) -> bool", "Checks if string starts with prefix"),
-        "ends_with" => ("fn ends_with(str: string, suffix: string) -> bool", "Checks if string ends with suffix"),
-        "contains" => ("fn contains(str: string, substr: string) -> bool", "Checks if string contains substring"),
-        "replace" => ("fn replace(str: string, from: string, to: string) -> string", "Replaces occurrences in string"),
-        "char_at" => ("fn char_at(str: string, index: number) -> string", "Returns character at index"),
-        "substring" => ("fn substring(str: string, start: number, end?: number) -> string", "Returns a substring"),
-        "pad_start" => ("fn pad_start(str: string, length: number, pad?: string) -> string", "Pads string at start"),
-        "pad_end" => ("fn pad_end(str: string, length: number, pad?: string) -> string", "Pads string at end"),
-        "repeat" => ("fn repeat(str: string, count: number) -> string", "Repeats a string"),
+        "split" => (
+            "fn split(str: string, separator: string) -> array",
+            "Splits a string into an array",
+        ),
+        "trim" => (
+            "fn trim(str: string) -> string",
+            "Removes whitespace from both ends",
+        ),
+        "to_upper" => (
+            "fn to_upper(str: string) -> string",
+            "Converts string to uppercase",
+        ),
+        "to_lower" => (
+            "fn to_lower(str: string) -> string",
+            "Converts string to lowercase",
+        ),
+        "starts_with" => (
+            "fn starts_with(str: string, prefix: string) -> bool",
+            "Checks if string starts with prefix",
+        ),
+        "ends_with" => (
+            "fn ends_with(str: string, suffix: string) -> bool",
+            "Checks if string ends with suffix",
+        ),
+        "contains" => (
+            "fn contains(str: string, substr: string) -> bool",
+            "Checks if string contains substring",
+        ),
+        "replace" => (
+            "fn replace(str: string, from: string, to: string) -> string",
+            "Replaces occurrences in string",
+        ),
+        "char_at" => (
+            "fn char_at(str: string, index: number) -> string",
+            "Returns character at index",
+        ),
+        "substring" => (
+            "fn substring(str: string, start: number, end?: number) -> string",
+            "Returns a substring",
+        ),
+        "pad_start" => (
+            "fn pad_start(str: string, length: number, pad?: string) -> string",
+            "Pads string at start",
+        ),
+        "pad_end" => (
+            "fn pad_end(str: string, length: number, pad?: string) -> string",
+            "Pads string at end",
+        ),
+        "repeat" => (
+            "fn repeat(str: string, count: number) -> string",
+            "Repeats a string",
+        ),
 
         // Math
         "abs" => ("fn abs(x: number) -> number", "Returns absolute value"),
-        "floor" => ("fn floor(x: number) -> number", "Rounds down to nearest integer"),
-        "ceil" => ("fn ceil(x: number) -> number", "Rounds up to nearest integer"),
+        "floor" => (
+            "fn floor(x: number) -> number",
+            "Rounds down to nearest integer",
+        ),
+        "ceil" => (
+            "fn ceil(x: number) -> number",
+            "Rounds up to nearest integer",
+        ),
         "round" => ("fn round(x: number) -> number", "Rounds to nearest integer"),
         "sqrt" => ("fn sqrt(x: number) -> number", "Returns square root"),
-        "pow" => ("fn pow(base: number, exp: number) -> number", "Returns base raised to exp"),
-        "min" => ("fn min(...values: number) -> number", "Returns minimum value"),
-        "max" => ("fn max(...values: number) -> number", "Returns maximum value"),
+        "pow" => (
+            "fn pow(base: number, exp: number) -> number",
+            "Returns base raised to exp",
+        ),
+        "min" => (
+            "fn min(...values: number) -> number",
+            "Returns minimum value",
+        ),
+        "max" => (
+            "fn max(...values: number) -> number",
+            "Returns maximum value",
+        ),
         "sin" => ("fn sin(x: number) -> number", "Returns sine of x (radians)"),
-        "cos" => ("fn cos(x: number) -> number", "Returns cosine of x (radians)"),
-        "tan" => ("fn tan(x: number) -> number", "Returns tangent of x (radians)"),
+        "cos" => (
+            "fn cos(x: number) -> number",
+            "Returns cosine of x (radians)",
+        ),
+        "tan" => (
+            "fn tan(x: number) -> number",
+            "Returns tangent of x (radians)",
+        ),
         "log" => ("fn log(x: number) -> number", "Returns natural logarithm"),
         "log10" => ("fn log10(x: number) -> number", "Returns base-10 logarithm"),
         "exp" => ("fn exp(x: number) -> number", "Returns e raised to x"),
-        "random" => ("fn random() -> number", "Returns random number between 0 and 1"),
-        "random_range" => ("fn random_range(min: number, max: number) -> number", "Returns random number in range"),
+        "random" => (
+            "fn random() -> number",
+            "Returns random number between 0 and 1",
+        ),
+        "random_range" => (
+            "fn random_range(min: number, max: number) -> number",
+            "Returns random number in range",
+        ),
 
         // HashMap operations
-        "keys" => ("fn keys(map: HashMap) -> array", "Returns array of map keys"),
-        "values" => ("fn values(map: HashMap) -> array", "Returns array of map values"),
-        "entries" => ("fn entries(map: HashMap) -> array", "Returns array of [key, value] pairs"),
-        "has_key" => ("fn has_key(map: HashMap, key: any) -> bool", "Checks if map contains key"),
-        "remove" => ("fn remove(map: HashMap, key: any) -> any", "Removes and returns value for key"),
+        "keys" => (
+            "fn keys(map: HashMap) -> array",
+            "Returns array of map keys",
+        ),
+        "values" => (
+            "fn values(map: HashMap) -> array",
+            "Returns array of map values",
+        ),
+        "entries" => (
+            "fn entries(map: HashMap) -> array",
+            "Returns array of [key, value] pairs",
+        ),
+        "has_key" => (
+            "fn has_key(map: HashMap, key: any) -> bool",
+            "Checks if map contains key",
+        ),
+        "remove" => (
+            "fn remove(map: HashMap, key: any) -> any",
+            "Removes and returns value for key",
+        ),
 
         // Assertions
-        "assert" => ("fn assert(condition: bool, message?: string) -> null", "Throws if condition is false"),
-        "assert_eq" => ("fn assert_eq(actual: any, expected: any, message?: string) -> null", "Throws if values are not equal"),
-        "assert_ne" => ("fn assert_ne(actual: any, expected: any, message?: string) -> null", "Throws if values are equal"),
+        "assert" => (
+            "fn assert(condition: bool, message?: string) -> null",
+            "Throws if condition is false",
+        ),
+        "assert_eq" => (
+            "fn assert_eq(actual: any, expected: any, message?: string) -> null",
+            "Throws if values are not equal",
+        ),
+        "assert_ne" => (
+            "fn assert_ne(actual: any, expected: any, message?: string) -> null",
+            "Throws if values are equal",
+        ),
 
         // Time
-        "time" => ("fn time() -> number", "Returns current Unix timestamp in seconds"),
-        "sleep" => ("fn sleep(ms: number) -> null", "Pauses execution for milliseconds"),
+        "time" => (
+            "fn time() -> number",
+            "Returns current Unix timestamp in seconds",
+        ),
+        "sleep" => (
+            "fn sleep(ms: number) -> null",
+            "Pauses execution for milliseconds",
+        ),
 
         // Error handling
-        "error" => ("fn error(message: string) -> never", "Throws a runtime error"),
-        "try_catch" => ("fn try_catch(fn: () -> any, handler: (err: string) -> any) -> any", "Catches errors from a function"),
+        "error" => (
+            "fn error(message: string) -> never",
+            "Throws a runtime error",
+        ),
+        "try_catch" => (
+            "fn try_catch(fn: () -> any, handler: (err: string) -> any) -> any",
+            "Catches errors from a function",
+        ),
 
         _ => return None,
     };
@@ -425,7 +617,12 @@ fn format_function_signature(func: &FunctionDecl) -> String {
 
     let return_type = format!(" -> {}", format_type_ref(&func.return_type));
 
-    format!("fn {}({}){}", func.name.name, params.join(", "), return_type)
+    format!(
+        "fn {}({}){}",
+        func.name.name,
+        params.join(", "),
+        return_type
+    )
 }
 
 /// Format a type reference for display
@@ -437,7 +634,11 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
             let formatted: Vec<String> = members.iter().map(format_type_ref).collect();
             formatted.join(" | ")
         }
-        TypeRef::Function { params, return_type, .. } => {
+        TypeRef::Function {
+            params,
+            return_type,
+            ..
+        } => {
             let param_strs: Vec<String> = params.iter().map(format_type_ref).collect();
             format!(
                 "({}) -> {}",
@@ -452,7 +653,9 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
                 .collect();
             format!("{{ {} }}", field_strs.join(", "))
         }
-        TypeRef::Generic { name, type_args, .. } => {
+        TypeRef::Generic {
+            name, type_args, ..
+        } => {
             let arg_strs: Vec<String> = type_args.iter().map(format_type_ref).collect();
             format!("{}<{}>", name, arg_strs.join(", "))
         }
@@ -516,7 +719,10 @@ mod tests {
             line: 0,
             character: 5,
         };
-        assert_eq!(find_identifier_at_position(text, pos), Some("foo".to_string()));
+        assert_eq!(
+            find_identifier_at_position(text, pos),
+            Some("foo".to_string())
+        );
     }
 
     #[test]
@@ -526,7 +732,10 @@ mod tests {
             line: 0,
             character: 0,
         };
-        assert_eq!(find_identifier_at_position(text, pos), Some("foo".to_string()));
+        assert_eq!(
+            find_identifier_at_position(text, pos),
+            Some("foo".to_string())
+        );
     }
 
     #[test]
@@ -536,7 +745,10 @@ mod tests {
             line: 0,
             character: 6,
         };
-        assert_eq!(find_identifier_at_position(text, pos), Some("bar".to_string()));
+        assert_eq!(
+            find_identifier_at_position(text, pos),
+            Some("bar".to_string())
+        );
     }
 
     #[test]
@@ -546,7 +758,10 @@ mod tests {
             line: 1,
             character: 4,
         };
-        assert_eq!(find_identifier_at_position(text, pos), Some("y".to_string()));
+        assert_eq!(
+            find_identifier_at_position(text, pos),
+            Some("y".to_string())
+        );
     }
 
     #[test]
@@ -587,33 +802,21 @@ mod tests {
 
     #[test]
     fn test_format_type_ref_simple() {
-        let type_ref = TypeRef::Named(
-            "number".to_string(),
-            atlas_runtime::span::Span::dummy(),
-        );
+        let type_ref = TypeRef::Named("number".to_string(), atlas_runtime::span::Span::dummy());
         assert_eq!(format_type_ref(&type_ref), "number");
     }
 
     #[test]
     fn test_format_type_ref_array() {
-        let inner = TypeRef::Named(
-            "string".to_string(),
-            atlas_runtime::span::Span::dummy(),
-        );
+        let inner = TypeRef::Named("string".to_string(), atlas_runtime::span::Span::dummy());
         let type_ref = TypeRef::Array(Box::new(inner), atlas_runtime::span::Span::dummy());
         assert_eq!(format_type_ref(&type_ref), "string[]");
     }
 
     #[test]
     fn test_format_type_ref_union() {
-        let t1 = TypeRef::Named(
-            "number".to_string(),
-            atlas_runtime::span::Span::dummy(),
-        );
-        let t2 = TypeRef::Named(
-            "string".to_string(),
-            atlas_runtime::span::Span::dummy(),
-        );
+        let t1 = TypeRef::Named("number".to_string(), atlas_runtime::span::Span::dummy());
+        let t2 = TypeRef::Named("string".to_string(), atlas_runtime::span::Span::dummy());
         let type_ref = TypeRef::Union {
             members: vec![t1, t2],
             span: atlas_runtime::span::Span::dummy(),

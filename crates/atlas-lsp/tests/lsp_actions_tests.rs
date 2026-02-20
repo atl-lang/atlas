@@ -71,17 +71,26 @@ fn test_action_kind_refactor() {
 
 #[test]
 fn test_action_kind_refactor_extract() {
-    assert_eq!(action_kinds::refactor_extract(), CodeActionKind::REFACTOR_EXTRACT);
+    assert_eq!(
+        action_kinds::refactor_extract(),
+        CodeActionKind::REFACTOR_EXTRACT
+    );
 }
 
 #[test]
 fn test_action_kind_refactor_inline() {
-    assert_eq!(action_kinds::refactor_inline(), CodeActionKind::REFACTOR_INLINE);
+    assert_eq!(
+        action_kinds::refactor_inline(),
+        CodeActionKind::REFACTOR_INLINE
+    );
 }
 
 #[test]
 fn test_action_kind_refactor_rewrite() {
-    assert_eq!(action_kinds::refactor_rewrite(), CodeActionKind::REFACTOR_REWRITE);
+    assert_eq!(
+        action_kinds::refactor_rewrite(),
+        CodeActionKind::REFACTOR_REWRITE
+    );
 }
 
 #[test]
@@ -107,8 +116,14 @@ fn test_quickfix_undefined_symbol() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 8 },
-            end: Position { line: 0, character: 9 },
+            start: Position {
+                line: 0,
+                character: 8,
+            },
+            end: Position {
+                line: 0,
+                character: 9,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT0002".to_string())),
@@ -141,8 +156,14 @@ fn test_quickfix_unterminated_string() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 8 },
-            end: Position { line: 0, character: 14 },
+            start: Position {
+                line: 0,
+                character: 8,
+            },
+            end: Position {
+                line: 0,
+                character: 14,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT1002".to_string())),
@@ -172,8 +193,14 @@ fn test_quickfix_immutable_assignment() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 1, character: 0 },
-            end: Position { line: 1, character: 1 },
+            start: Position {
+                line: 1,
+                character: 0,
+            },
+            end: Position {
+                line: 1,
+                character: 1,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT3003".to_string())),
@@ -203,8 +230,14 @@ fn test_quickfix_unused_variable_prefix() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 4 },
-            end: Position { line: 0, character: 10 },
+            start: Position {
+                line: 0,
+                character: 4,
+            },
+            end: Position {
+                line: 0,
+                character: 10,
+            },
         },
         severity: Some(DiagnosticSeverity::WARNING),
         code: Some(NumberOrString::String("AT2001".to_string())),
@@ -234,8 +267,14 @@ fn test_quickfix_unused_import() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 0 },
-            end: Position { line: 0, character: 28 },
+            start: Position {
+                line: 0,
+                character: 0,
+            },
+            end: Position {
+                line: 0,
+                character: 28,
+            },
         },
         severity: Some(DiagnosticSeverity::WARNING),
         code: Some(NumberOrString::String("AT2008".to_string())),
@@ -266,8 +305,14 @@ fn test_refactor_extract_variable() {
 
     // Select "1 + 2 + 3"
     let range = Range {
-        start: Position { line: 0, character: 8 },
-        end: Position { line: 0, character: 17 },
+        start: Position {
+            line: 0,
+            character: 8,
+        },
+        end: Position {
+            line: 0,
+            character: 17,
+        },
     };
 
     let context = create_empty_context();
@@ -298,8 +343,14 @@ fn test_refactor_inline_variable() {
 
     // Select "temp" on line 2
     let range = Range {
-        start: Position { line: 1, character: 8 },
-        end: Position { line: 1, character: 12 },
+        start: Position {
+            line: 1,
+            character: 8,
+        },
+        end: Position {
+            line: 1,
+            character: 12,
+        },
     };
 
     let context = create_empty_context();
@@ -331,8 +382,14 @@ fn test_refactor_convert_to_template() {
 
     // Select the entire expression
     let range = Range {
-        start: Position { line: 0, character: 0 },
-        end: Position { line: 0, character: 22 },
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 22,
+        },
     };
 
     let context = create_empty_context();
@@ -382,8 +439,14 @@ fn test_no_actions_on_empty_selection() {
 
     // Empty selection (cursor only)
     let range = Range {
-        start: Position { line: 0, character: 5 },
-        end: Position { line: 0, character: 5 },
+        start: Position {
+            line: 0,
+            character: 5,
+        },
+        end: Position {
+            line: 0,
+            character: 5,
+        },
     };
 
     let context = create_empty_context();
@@ -401,9 +464,10 @@ fn test_no_actions_on_empty_selection() {
 
     // No refactoring actions for empty selection (but might have source actions)
     let has_refactor = actions.iter().any(|a| match a {
-        CodeActionOrCommand::CodeAction(ca) => {
-            ca.kind.as_ref().map_or(false, |k| k.as_str().starts_with("refactor"))
-        }
+        CodeActionOrCommand::CodeAction(ca) => ca
+            .kind
+            .as_ref()
+            .map_or(false, |k| k.as_str().starts_with("refactor")),
         _ => false,
     });
     assert!(!has_refactor);
@@ -420,9 +484,10 @@ fn test_no_actions_without_diagnostics() {
 
     // No quick fixes without diagnostics
     let has_quickfix = actions.iter().any(|a| match a {
-        CodeActionOrCommand::CodeAction(ca) => {
-            ca.kind.as_ref().map_or(false, |k| *k == CodeActionKind::QUICKFIX)
-        }
+        CodeActionOrCommand::CodeAction(ca) => ca
+            .kind
+            .as_ref()
+            .map_or(false, |k| *k == CodeActionKind::QUICKFIX),
         _ => false,
     });
     assert!(!has_quickfix);
@@ -436,8 +501,14 @@ fn test_action_has_edit() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 8 },
-            end: Position { line: 0, character: 14 },
+            start: Position {
+                line: 0,
+                character: 8,
+            },
+            end: Position {
+                line: 0,
+                character: 14,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT1002".to_string())),
@@ -466,8 +537,14 @@ fn test_action_includes_diagnostic() {
 
     let diag = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 8 },
-            end: Position { line: 0, character: 14 },
+            start: Position {
+                line: 0,
+                character: 8,
+            },
+            end: Position {
+                line: 0,
+                character: 14,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT1002".to_string())),
@@ -496,8 +573,14 @@ fn test_multiple_diagnostics_multiple_fixes() {
 
     let diag1 = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 0, character: 8 },
-            end: Position { line: 0, character: 14 },
+            start: Position {
+                line: 0,
+                character: 8,
+            },
+            end: Position {
+                line: 0,
+                character: 14,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT1002".to_string())),
@@ -508,8 +591,14 @@ fn test_multiple_diagnostics_multiple_fixes() {
 
     let diag2 = tower_lsp::lsp_types::Diagnostic {
         range: Range {
-            start: Position { line: 1, character: 8 },
-            end: Position { line: 1, character: 9 },
+            start: Position {
+                line: 1,
+                character: 8,
+            },
+            end: Position {
+                line: 1,
+                character: 9,
+            },
         },
         severity: Some(DiagnosticSeverity::ERROR),
         code: Some(NumberOrString::String("AT0002".to_string())),

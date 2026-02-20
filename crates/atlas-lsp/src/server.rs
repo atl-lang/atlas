@@ -8,12 +8,16 @@ use tower_lsp::lsp_types::*;
 use tower_lsp::{Client, LanguageServer};
 
 use crate::document::DocumentState;
+use crate::inlay_hints::InlayHintConfig;
 use crate::semantic_tokens;
+use crate::symbols::WorkspaceIndex;
 
 /// Atlas Language Server
 pub struct AtlasLspServer {
     client: Client,
     documents: Arc<Mutex<HashMap<Url, DocumentState>>>,
+    workspace_index: Arc<Mutex<WorkspaceIndex>>,
+    inlay_config: InlayHintConfig,
 }
 
 impl AtlasLspServer {
@@ -22,6 +26,8 @@ impl AtlasLspServer {
         Self {
             client,
             documents: Arc::new(Mutex::new(HashMap::new())),
+            workspace_index: Arc::new(Mutex::new(WorkspaceIndex::new())),
+            inlay_config: InlayHintConfig::default(),
         }
     }
 }
@@ -80,6 +86,14 @@ impl LanguageServer for AtlasLspServer {
                         },
                     ),
                 ),
+                folding_range_provider: Some(FoldingRangeProviderCapability::Simple(true)),
+                workspace_symbol_provider: Some(OneOf::Left(true)),
+                inlay_hint_provider: Some(OneOf::Right(InlayHintServerCapabilities::Options(
+                    InlayHintOptions {
+                        resolve_provider: Some(false),
+                        work_done_progress_options: WorkDoneProgressOptions::default(),
+                    },
+                ))),
                 ..Default::default()
             },
             server_info: Some(ServerInfo {
@@ -107,42 +121,69 @@ impl LanguageServer for AtlasLspServer {
         // Create and analyze document
         let doc = DocumentState::new(uri.clone(), text, version);
 
-        // Publish diagnostics
-        let diagnostics = doc
+        // Collect diagnostics before storing
+        let diagnostics: Vec<_> = doc
             .diagnostics
             .iter()
             .map(crate::convert::diagnostic_to_lsp)
             .collect();
 
-        self.client
-            .publish_diagnostics(uri.clone(), diagnostics, Some(version))
-            .await;
+        // Store document and get AST for indexing
+        let ast_clone = doc.ast.clone();
+        let text_clone = doc.text.clone();
+        {
+            let mut documents = self.documents.lock().await;
+            documents.insert(uri.clone(), doc);
+        }
 
-        // Store document
-        let mut documents = self.documents.lock().await;
-        documents.insert(uri, doc);
+        // Update workspace index with cloned AST
+        if let Some(ast) = ast_clone {
+            let mut index = self.workspace_index.lock().await;
+            index.index_document(uri.clone(), &text_clone, &ast);
+        }
+
+        // Publish diagnostics
+        self.client
+            .publish_diagnostics(uri, diagnostics, Some(version))
+            .await;
     }
 
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
         let version = params.text_document.version;
 
-        let mut documents = self.documents.lock().await;
-        if let Some(doc) = documents.get_mut(&uri) {
-            // Update document text (full sync)
-            for change in params.content_changes {
-                doc.update(change.text, version);
+        // Collect diagnostics and clone AST for indexing
+        let (diagnostics, ast_clone, text_clone) = {
+            let mut documents = self.documents.lock().await;
+            if let Some(doc) = documents.get_mut(&uri) {
+                // Update document text (full sync)
+                for change in params.content_changes {
+                    doc.update(change.text, version);
+                }
+
+                // Collect diagnostics and clone AST
+                let diags: Vec<_> = doc
+                    .diagnostics
+                    .iter()
+                    .map(crate::convert::diagnostic_to_lsp)
+                    .collect();
+
+                (Some(diags), doc.ast.clone(), doc.text.clone())
+            } else {
+                (None, None, String::new())
             }
+        };
 
-            // Publish diagnostics
-            let diagnostics = doc
-                .diagnostics
-                .iter()
-                .map(crate::convert::diagnostic_to_lsp)
-                .collect();
+        // Update workspace index with cloned AST
+        if let Some(ast) = ast_clone {
+            let mut index = self.workspace_index.lock().await;
+            index.index_document(uri.clone(), &text_clone, &ast);
+        }
 
+        // Publish diagnostics after releasing locks
+        if let Some(diags) = diagnostics {
             self.client
-                .publish_diagnostics(uri.clone(), diagnostics, Some(version))
+                .publish_diagnostics(uri, diags, Some(version))
                 .await;
         }
     }
@@ -167,9 +208,62 @@ impl LanguageServer for AtlasLspServer {
         let documents = self.documents.lock().await;
         if let Some(doc) = documents.get(&uri) {
             if let Some(ast) = &doc.ast {
-                let symbols = crate::navigation::extract_document_symbols(ast);
+                // Use the enhanced symbol extractor with proper ranges
+                let symbols = crate::symbols::extract_document_symbols(&doc.text, ast);
                 return Ok(Some(DocumentSymbolResponse::Nested(symbols)));
             }
+        }
+
+        Ok(None)
+    }
+
+    async fn symbol(
+        &self,
+        params: WorkspaceSymbolParams,
+    ) -> Result<Option<Vec<SymbolInformation>>> {
+        let query = params.query;
+        let index = self.workspace_index.lock().await;
+        let symbols = index.search(&query, 100);
+
+        if symbols.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(symbols))
+        }
+    }
+
+    async fn folding_range(&self, params: FoldingRangeParams) -> Result<Option<Vec<FoldingRange>>> {
+        let uri = params.text_document.uri;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            let ranges = crate::folding::generate_folding_ranges(&doc.text, doc.ast.as_ref());
+            if ranges.is_empty() {
+                return Ok(None);
+            }
+            return Ok(Some(ranges));
+        }
+
+        Ok(None)
+    }
+
+    async fn inlay_hint(&self, params: InlayHintParams) -> Result<Option<Vec<InlayHint>>> {
+        let uri = params.text_document.uri;
+        let range = params.range;
+
+        let documents = self.documents.lock().await;
+        if let Some(doc) = documents.get(&uri) {
+            let hints = crate::inlay_hints::generate_inlay_hints(
+                &doc.text,
+                range,
+                doc.ast.as_ref(),
+                doc.symbols.as_ref(),
+                &self.inlay_config,
+            );
+            if hints.is_empty() {
+                return Ok(None);
+            }
+            return Ok(Some(hints));
         }
 
         Ok(None)
