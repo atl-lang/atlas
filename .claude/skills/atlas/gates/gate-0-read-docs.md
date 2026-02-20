@@ -81,4 +81,56 @@ cargo clean
 
 ---
 
+## Step 4: Domain Pattern Verification (CRITICAL)
+
+**Purpose:** Prevent hallucinated syntax by verifying actual codebase patterns before writing code.
+
+**Registry:** `memory/domain-prereqs.md`
+
+### Process
+
+1. **Identify domains** touched by phase (AST, stdlib, VM, type system, etc.)
+2. **For EACH domain**, consult `memory/domain-prereqs.md`
+3. **Run verification queries** listed for that domain
+4. **Note 3-5 patterns** you will use (mentally or in scratch)
+5. **If uncertain**, read more — NEVER guess structure
+
+### Common Domains (see registry for queries)
+
+| Domain | Trigger Keywords | Key Verification |
+|--------|-----------------|------------------|
+| AST | parser, expression, statement, node | `ast.rs` enum variants |
+| Value | Value enum, runtime type | `value.rs` Value variants |
+| Stdlib | builtin, stdlib function | `stdlib/mod.rs` signatures |
+| Interpreter | eval, tree-walk | `interpreter/mod.rs` methods |
+| VM | bytecode, opcode, compile | `vm/` opcodes and execution |
+| Type System | type check, infer, annotation | `type_checker/` types |
+| Errors | RuntimeError, diagnostic | `errors.rs` variants |
+
+### Example
+
+Phase says "Add new AST node for X":
+```bash
+# Before writing ANY code, verify actual AST structure:
+Grep pattern="^pub enum Expr" path="crates/atlas-runtime/src/ast.rs" -A=30
+```
+
+**Output:** You now know the exact variant format. Use it.
+
+### Anti-Pattern (BANNED)
+
+```rust
+// WRONG: Guessing AST structure without verification
+Expr::Function { name, params, body }  // Did you verify this exists?
+
+// RIGHT: Verified from grep output
+Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
+```
+
+---
+
+**BLOCKING:** Cannot proceed to implementation without pattern verification for touched domains.
+
+---
+
 **Next:** GATE 1
