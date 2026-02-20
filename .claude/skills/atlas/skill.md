@@ -92,12 +92,17 @@ git push -u origin HEAD                                   # Push branch
 gh pr create --title "Phase X: Title" --body "..."       # Create PR
 ```
 
-**Wait for CI:** `fmt → clippy → test → ci-success` (poll with `gh pr checks`)
+**Wait for PR CI (~3-4 min):**
+```bash
+gh pr checks <pr-number> --watch                          # Watch until green
+```
 
-**Merge when green:**
+**Merge when green (DO NOT wait for main CI):**
 ```bash
 gh pr merge --squash --delete-branch                      # Merge + cleanup
 git checkout main && git pull                             # Sync local
+# Main CI (benchmarks, coverage) runs 20-40 min — DO NOT WAIT
+# GATE -1 of next phase will catch any failures
 ```
 
 **Cleanup:** If stale branches exist from failed runs, delete them:
@@ -112,6 +117,7 @@ gh api -X DELETE repos/{owner}/{repo}/git/refs/heads/<branch>  # Remote
 
 ## GATE -1: Sanity Check (ALWAYS FIRST)
 
+0. **Main CI health:** `gh run list --branch main --limit 1` — if failed, STOP and alert user
 1. **Verify:** Check phase dependencies in phase file
 2. **Git check:** Ensure on feature branch (not main), working directory clean
 3. **Sanity:** `cargo clean && cargo check -p atlas-runtime`
