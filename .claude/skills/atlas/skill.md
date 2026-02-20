@@ -211,27 +211,24 @@ cargo nextest run -p atlas-runtime                        # Full suite (GATE 6)
 
 ---
 
-## Memory System
+## Memory System (Claude Auto-Memory)
 
-**Source of truth:** `atlas/memory/` (repo, version controlled)
-**Auto-loaded:** `~/.claude/projects/.../memory/MEMORY.md` (minimal pointer only)
+**Location:** Claude's auto-memory directory (auto-loaded at session start)
 
-**Always use REPO paths:**
-```
-memory/MEMORY.md          # Full index
-memory/patterns.md        # Codebase patterns
-memory/decisions.md       # Architectural decisions (DR-XXX)
-memory/testing-patterns.md # Test domain files, corpus workflow
-memory/domain-prereqs.md  # Domain verification queries (GATE 0, Step 4)
-memory/github-config.md   # Repo settings, rulesets
-```
-
-**Rule:** Read/write to repo memory, never to ~/.claude auto-memory.
+**Files:**
+- `MEMORY.md` - Index (auto-loaded, 200 line cap)
+- `patterns.md` - Codebase patterns
+- `decisions.md` - Architectural decisions (DR-XXX)
+- `testing-patterns.md` - Test guidelines
+- `domain-prereqs.md` - Domain verification queries (GATE 0, Step 4)
 
 **Usage:**
-- `memory/domain-prereqs.md` - VERIFY before writing code (BLOCKING)
-- `memory/patterns.md` - implementation patterns
-- `memory/decisions.md` - architectural context
+- Read/write memories using Claude's memory tools
+- `domain-prereqs.md` - VERIFY before writing code (BLOCKING)
+- `patterns.md` - implementation patterns
+- `decisions.md` - architectural context
+
+**Rule:** Memories live in Claude auto-memory, NOT in repo.
 
 ---
 
@@ -245,8 +242,8 @@ memory/github-config.md   # Repo settings, rulesets
 - `phases/` - Work queue (~100 lines each)
 - `docs/specification/` - Language spec (grammar, syntax, types, runtime)
 
-**Key patterns:** See memory/patterns.md
-**Decisions:** See memory/decisions.md (DR-003 to DR-006 for collections)
+**Key patterns:** See auto-memory `patterns.md`
+**Decisions:** See auto-memory `decisions.md` (DR-003 to DR-006 for collections)
 **Gates:** See gates/ directory in this skill
 
 ---
