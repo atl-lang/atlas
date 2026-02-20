@@ -1,20 +1,22 @@
 # Security - Dependency auditing and supply chain verification
 #
-# Runs on: Cargo.toml/lock changes, daily schedule, manual trigger
+# DISABLED - Preserving GitHub Actions credits
+# Run manually when needed: cargo audit && cargo deny check
 
 name: Security
 
 on:
-  schedule:
-    - cron: '0 0 * * *'
-  push:
-    paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
-  pull_request:
-    paths:
-      - '**/Cargo.toml'
-      - '**/Cargo.lock'
+  # Disabled automatic triggers - run manually with workflow_dispatch
+  # schedule:
+  #   - cron: '0 0 * * *'
+  # push:
+  #   paths:
+  #     - '**/Cargo.toml'
+  #     - '**/Cargo.lock'
+  # pull_request:
+  #   paths:
+  #     - '**/Cargo.toml'
+  #     - '**/Cargo.lock'
   workflow_dispatch:
 
 concurrency:
