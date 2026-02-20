@@ -9,8 +9,7 @@
 [![CI](https://github.com/proxikal/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/proxikal/atlas/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
-[![Lines of Code](https://img.shields.io/badge/Lines-125k-green.svg)](#metrics)
-[![Tests](https://img.shields.io/badge/Tests-6400%2B-brightgreen.svg)](#metrics)
+[![Status](https://img.shields.io/badge/Status-v0.2%20Active-blue.svg)](STATUS.md)
 
 </div>
 
@@ -317,8 +316,8 @@ flowchart TB
 | `atlas-lsp` | Language Server Protocol for editors/AI | In Progress |
 | `atlas-config` | Project configuration | Complete |
 | `atlas-build` | Build system | Complete |
-| `atlas-package` | Package manager | Planned |
-| `atlas-jit` | JIT compilation | Planned |
+| `atlas-package` | Package manager | Complete |
+| `atlas-jit` | JIT compilation | Foundation |
 
 ---
 
@@ -373,26 +372,15 @@ atlas dump-types program.atl --format json
 
 | Metric | Value |
 |--------|-------|
-| **Lines of Rust** | 125,334 |
-| **Source Files** | 274 |
-| **Tests** | 6,400+ |
-| **Corpus Tests** | 56 (.atlas files) |
-| **Example Programs** | 40 |
 | **Stdlib Functions** | 200+ |
 | **Stdlib Modules** | 18 |
-| **Benchmarks** | 7 suites |
 | **MSRV** | Rust 1.70 |
+
+*For current test count, lines of code, and progress: see [`STATUS.md`](STATUS.md)*
 
 ### Project Status
 
 **Version:** 0.2 (Active Development)
-**Progress:** 110/131 phases (84%)
-
-```mermaid
-pie title Development Progress
-    "Complete" : 110
-    "Remaining" : 21
-```
 
 | Category | Status |
 |----------|--------|
@@ -401,9 +389,11 @@ pie title Development Progress
 | Standard Library | Complete |
 | Type System (Generics) | Complete |
 | Module System | Complete |
-| CLI & REPL | In Progress |
-| LSP | Planned |
-| Package Manager | Planned |
+| CLI & REPL | Complete |
+| LSP | In Progress |
+| Package Manager | Complete (crate) |
+
+*Current progress tracked in [`STATUS.md`](STATUS.md)*
 
 ---
 

@@ -115,10 +115,10 @@ Atlas currently supports:
 
 See `ROADMAP.md` for planned enhancements:
 
-- Closures (functions cannot capture outer scope)
-- Anonymous function syntax
-- `async/await` language syntax (runtime exists)
-- User-defined generic types
+- Closures (functions cannot capture outer scope) — v0.3
+- Anonymous function syntax — v0.3
+- `async/await` language syntax (runtime exists) — v0.4
+- User-defined generic types — v0.6
 
 ---
 
