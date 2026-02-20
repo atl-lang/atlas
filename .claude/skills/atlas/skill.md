@@ -235,9 +235,13 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 - `patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
 - `decisions.md` - Architectural decisions (search DR-XXX)
 - `testing-patterns.md` - Test domain files, corpus workflow, parity helpers
+- `domain-prereqs.md` - **Domain verification queries** (GATE 0, Step 4)
 - `github-config.md` - Repo settings, rulesets, automation
 
-**Usage:** Read patterns.md for codebase patterns, decisions.md for architectural context.
+**Usage:**
+- `patterns.md` for codebase patterns
+- `decisions.md` for architectural context
+- `domain-prereqs.md` for pattern verification before implementation
 
 ---
 

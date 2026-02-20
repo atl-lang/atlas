@@ -46,6 +46,11 @@ See `language-classification.md` for full details.
 - Fuzz targets in `crates/atlas-runtime/fuzz/` — run when modifying lexer/parser/typechecker
 - Criterion benchmarks in `crates/atlas-runtime/benches/` — run when optimizing execution
 
+**domain-prereqs.md** - Domain verification queries ⚠️ GATE 0, STEP 4
+- Maps domains (AST, stdlib, VM, etc.) to verification grep patterns
+- **MUST consult before implementation** — prevents hallucinated syntax
+- Contains surgical queries, not full file reads
+
 **decisions.md** - Architectural decision log (DR-001 to DR-014)
 
 **github-config.md** - Repository automation settings
@@ -120,6 +125,7 @@ atlas/
 
 ## Pattern Quick Lookup
 
+**Before ANY implementation?** → domain-prereqs.md (verify codebase patterns with grep)
 **Writing Atlas code/tests?** → patterns.md "Grammar Quick Reference" (ALWAYS CHECK FIRST)
 **Implementing intrinsic?** → patterns.md "Intrinsic Pattern"
 **Implementing stdlib function?** → patterns.md "Stdlib Function Pattern"
