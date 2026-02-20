@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 
 mod commands;
 mod config;
+mod testing;
 
 #[derive(Parser)]
 #[command(name = "atlas")]
@@ -22,6 +23,15 @@ enum Commands {
         /// Output diagnostics in JSON format
         #[arg(long)]
         json: bool,
+        /// Watch for file changes and auto-recompile
+        #[arg(long, short = 'w')]
+        watch: bool,
+        /// Don't clear terminal before recompilation (with --watch)
+        #[arg(long)]
+        no_clear: bool,
+        /// Verbose output with timing information (with --watch)
+        #[arg(long, short = 'v')]
+        verbose: bool,
     },
     /// Type-check an Atlas source file without running
     Check {
@@ -79,6 +89,12 @@ enum Commands {
         /// Check formatting without modifying files
         #[arg(long)]
         check: bool,
+        /// Write changes to files (explicit mode)
+        #[arg(long, short = 'w')]
+        write: bool,
+        /// Path to configuration file
+        #[arg(long, short = 'c')]
+        config: Option<std::path::PathBuf>,
         /// Indentation size in spaces
         #[arg(long)]
         indent_size: Option<usize>,
@@ -88,6 +104,12 @@ enum Commands {
         /// Enable or disable trailing commas
         #[arg(long)]
         trailing_commas: Option<bool>,
+        /// Verbose output with timing information
+        #[arg(long, short = 'v')]
+        verbose: bool,
+        /// Suppress non-error output
+        #[arg(long, short = 'q')]
+        quiet: bool,
     },
     /// Profile an Atlas source file (VM execution analysis)
     Profile {
@@ -103,6 +125,26 @@ enum Commands {
         #[arg(long)]
         summary: bool,
     },
+    /// Run tests in a directory
+    Test {
+        /// Filter tests by name pattern
+        pattern: Option<String>,
+        /// Run tests sequentially instead of parallel
+        #[arg(long)]
+        sequential: bool,
+        /// Verbose output (show all test names)
+        #[arg(long, short = 'v')]
+        verbose: bool,
+        /// Disable colored output
+        #[arg(long)]
+        no_color: bool,
+        /// Test directory (defaults to current directory)
+        #[arg(long, default_value = ".")]
+        dir: std::path::PathBuf,
+        /// Output in JSON format
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -116,10 +158,29 @@ fn main() -> Result<()> {
         .ok(); // Optional - not all commands run in a project
 
     match cli.command {
-        Commands::Run { file, json } => {
+        Commands::Run {
+            file,
+            json,
+            watch,
+            no_clear,
+            verbose,
+        } => {
             // Command-line flag overrides environment variable
             let use_json = json || cli_config.default_json;
-            commands::run::run(&file, use_json)?;
+
+            if watch {
+                // Watch mode
+                let config = commands::watch::WatchConfig {
+                    clear_screen: !no_clear,
+                    continue_on_error: true,
+                    json_output: use_json,
+                    verbose,
+                };
+                commands::watch::run_watch(&file, config)?;
+            } else {
+                // Normal run
+                commands::run::run(&file, use_json)?;
+            }
         }
         Commands::Check { file, json } => {
             // Command-line flag overrides environment variable
@@ -161,16 +222,30 @@ fn main() -> Result<()> {
         Commands::Fmt {
             files,
             check,
+            write,
+            config,
             indent_size,
             max_width,
             trailing_commas,
+            verbose,
+            quiet,
         } => {
+            let verbosity = if quiet {
+                commands::fmt::Verbosity::Quiet
+            } else if verbose {
+                commands::fmt::Verbosity::Verbose
+            } else {
+                commands::fmt::Verbosity::Normal
+            };
             let args = commands::fmt::FmtArgs {
                 files,
                 check,
+                write,
+                config_path: config,
                 indent_size,
                 max_width,
                 trailing_commas,
+                verbosity,
             };
             commands::fmt::run(args)?;
         }
@@ -185,6 +260,24 @@ fn main() -> Result<()> {
             args.output_file = output.map(std::path::PathBuf::from);
             args.detailed = !summary;
             commands::profile::run(args)?;
+        }
+        Commands::Test {
+            pattern,
+            sequential,
+            verbose,
+            no_color,
+            dir,
+            json,
+        } => {
+            let args = commands::test::TestArgs {
+                pattern,
+                sequential,
+                verbose,
+                no_color,
+                dir,
+                json,
+            };
+            commands::test::run(args)?;
         }
     }
 
