@@ -1,9 +1,9 @@
 # Atlas CI Pipeline
 #
-# Optimized for speed on PRs while maintaining comprehensive checks on main.
+# Optimized for speed: tests run ONCE on PR, not duplicated on main.
 #
-# PR checks (~3-4 min):     fmt → clippy → test (ubuntu/stable only)
-# Main branch:              Full matrix + coverage + benchmarks
+# PR checks (~3-4 min):     fmt → clippy → test (gate for merge)
+# Main branch (~10-15 min): coverage + benchmarks only (tests already passed in PR)
 # Nightly (scheduled):      Fuzz testing + MSRV verification
 #
 # Reference: https://github.com/actions-rust-lang/setup-rust-toolchain
@@ -76,13 +76,15 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
   # ==========================================================================
-  # Tests - Core validation
+  # Tests - Core validation (PR only - this is the merge gate)
   # ==========================================================================
 
   test:
     name: Test
     needs: clippy
     runs-on: ubuntu-latest
+    # Only run on PRs - tests already passed before merge, don't duplicate on main
+    if: github.event_name == 'pull_request'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -123,7 +125,7 @@ jobs:
 
   test-matrix:
     name: Test (${{ matrix.os }}/${{ matrix.rust }})
-    needs: test
+    needs: clippy  # Wait for fast checks, then run cross-platform tests in parallel
     if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_scope == 'full')
     runs-on: ${{ matrix.os }}
     strategy:
@@ -159,15 +161,16 @@ jobs:
         run: cargo test --doc --all-features
 
   # ==========================================================================
-  # Main-only jobs - Run after merge to main
+  # Main-only jobs - Run after merge (tests already passed in PR)
   # ==========================================================================
-  # Note: Security audits handled by dedicated security.yml workflow
+  # These jobs don't re-run tests - the PR was the gate.
+  # Security audits handled by dedicated security.yml workflow
 
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
+    needs: clippy  # Wait for fast checks, but not test (already passed in PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -189,8 +192,8 @@ jobs:
   bench:
     name: Benchmarks
     runs-on: ubuntu-latest
+    needs: clippy  # Wait for fast checks, but not test (already passed in PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: test
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -273,10 +276,16 @@ jobs:
     steps:
       - name: Check all jobs passed
         run: |
+          # fmt and clippy must always pass
           if [[ "${{ needs.fmt.result }}" != "success" ]] || \
-             [[ "${{ needs.clippy.result }}" != "success" ]] || \
-             [[ "${{ needs.test.result }}" != "success" ]]; then
-            echo "One or more required jobs failed"
+             [[ "${{ needs.clippy.result }}" != "success" ]]; then
+            echo "Format or Clippy failed"
+            exit 1
+          fi
+          # test must pass on PRs, but is skipped on main (already tested in PR)
+          if [[ "${{ needs.test.result }}" != "success" ]] && \
+             [[ "${{ needs.test.result }}" != "skipped" ]]; then
+            echo "Tests failed"
             exit 1
           fi
           echo "All required jobs passed"
