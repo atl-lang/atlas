@@ -11,7 +11,12 @@ use atlas_runtime::{Lexer, Parser};
 use tower_lsp::lsp_types::Position;
 
 /// Parse source and get AST/symbols for testing
-fn parse_source(source: &str) -> (Option<atlas_runtime::ast::Program>, Option<atlas_runtime::symbol::SymbolTable>) {
+fn parse_source(
+    source: &str,
+) -> (
+    Option<atlas_runtime::ast::Program>,
+    Option<atlas_runtime::symbol::SymbolTable>,
+) {
     let mut lexer = Lexer::new(source);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -31,56 +36,101 @@ fn parse_source(source: &str) -> (Option<atlas_runtime::ast::Program>, Option<at
 #[test]
 fn test_find_identifier_simple() {
     let text = "let foo = 42;";
-    let pos = Position { line: 0, character: 5 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("foo".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 5,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("foo".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_at_start() {
     let text = "foo bar";
-    let pos = Position { line: 0, character: 0 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("foo".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 0,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("foo".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_at_end_of_word() {
     let text = "foo bar";
-    let pos = Position { line: 0, character: 2 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("foo".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("foo".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_second_word() {
     let text = "foo bar";
-    let pos = Position { line: 0, character: 5 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("bar".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 5,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("bar".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_multiline() {
     let text = "let x = 1;\nlet y = 2;";
-    let pos = Position { line: 1, character: 4 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("y".to_string()));
+    let pos = Position {
+        line: 1,
+        character: 4,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("y".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_with_underscore() {
     let text = "let my_var = 1;";
-    let pos = Position { line: 0, character: 6 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("my_var".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 6,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("my_var".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_with_numbers() {
     let text = "let var123 = 1;";
-    let pos = Position { line: 0, character: 6 };
-    assert_eq!(find_identifier_at_position(text, pos), Some("var123".to_string()));
+    let pos = Position {
+        line: 0,
+        character: 6,
+    };
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("var123".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_on_operator_returns_none() {
     let text = "x + y";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     assert_eq!(find_identifier_at_position(text, pos), None);
 }
 
@@ -88,23 +138,35 @@ fn test_find_identifier_on_operator_returns_none() {
 fn test_find_identifier_on_semicolon() {
     // Position on ';' which is adjacent to 'x' - finds 'x' since semicolon isn't alphanumeric
     let text = "let x;";
-    let pos = Position { line: 0, character: 5 };
+    let pos = Position {
+        line: 0,
+        character: 5,
+    };
     // Since ';' is not alphanumeric, it acts as boundary and we get 'x'
     // This is expected behavior - cursor at end of identifier
-    assert_eq!(find_identifier_at_position(text, pos), Some("x".to_string()));
+    assert_eq!(
+        find_identifier_at_position(text, pos),
+        Some("x".to_string())
+    );
 }
 
 #[test]
 fn test_find_identifier_past_line_end_returns_none() {
     let text = "foo";
-    let pos = Position { line: 0, character: 10 };
+    let pos = Position {
+        line: 0,
+        character: 10,
+    };
     assert_eq!(find_identifier_at_position(text, pos), None);
 }
 
 #[test]
 fn test_find_identifier_invalid_line_returns_none() {
     let text = "foo";
-    let pos = Position { line: 5, character: 0 };
+    let pos = Position {
+        line: 5,
+        character: 0,
+    };
     assert_eq!(find_identifier_at_position(text, pos), None);
 }
 
@@ -113,7 +175,10 @@ fn test_find_identifier_invalid_line_returns_none() {
 #[test]
 fn test_hover_on_keyword_let() {
     let text = "let x = 42;";
-    let pos = Position { line: 0, character: 1 };
+    let pos = Position {
+        line: 0,
+        character: 1,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -124,7 +189,10 @@ fn test_hover_on_keyword_let() {
 #[test]
 fn test_hover_on_keyword_fn() {
     let text = "fn foo() {}";
-    let pos = Position { line: 0, character: 1 };
+    let pos = Position {
+        line: 0,
+        character: 1,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -135,7 +203,10 @@ fn test_hover_on_keyword_fn() {
 #[test]
 fn test_hover_on_keyword_if() {
     let text = "if true {}";
-    let pos = Position { line: 0, character: 1 };
+    let pos = Position {
+        line: 0,
+        character: 1,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -146,7 +217,10 @@ fn test_hover_on_keyword_if() {
 #[test]
 fn test_hover_on_keyword_while() {
     let text = "while true {}";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -157,7 +231,10 @@ fn test_hover_on_keyword_while() {
 #[test]
 fn test_hover_on_keyword_return() {
     let text = "fn f() { return 1; }";
-    let pos = Position { line: 0, character: 10 };
+    let pos = Position {
+        line: 0,
+        character: 10,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -168,7 +245,10 @@ fn test_hover_on_keyword_return() {
 #[test]
 fn test_hover_on_builtin_print() {
     let text = "print(42);";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -180,7 +260,10 @@ fn test_hover_on_builtin_print() {
 #[test]
 fn test_hover_on_builtin_len() {
     let text = "len(arr);";
-    let pos = Position { line: 0, character: 1 };
+    let pos = Position {
+        line: 0,
+        character: 1,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -192,7 +275,10 @@ fn test_hover_on_builtin_len() {
 #[test]
 fn test_hover_on_builtin_map() {
     let text = "map(arr, fn(x) { x });";
-    let pos = Position { line: 0, character: 1 };
+    let pos = Position {
+        line: 0,
+        character: 1,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -203,7 +289,10 @@ fn test_hover_on_builtin_map() {
 #[test]
 fn test_hover_on_builtin_filter() {
     let text = "filter(arr, fn(x) { x > 0 });";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -214,7 +303,10 @@ fn test_hover_on_builtin_filter() {
 #[test]
 fn test_hover_on_builtin_sqrt() {
     let text = "sqrt(4);";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -228,7 +320,10 @@ fn test_hover_with_ast_function() {
     let source = "fn greet(name: string) -> string { return name; }";
     let (ast, symbols) = parse_source(source);
 
-    let pos = Position { line: 0, character: 4 };
+    let pos = Position {
+        line: 0,
+        character: 4,
+    };
     let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
 
     assert!(hover.is_some());
@@ -241,7 +336,10 @@ fn test_hover_with_ast_variable() {
     let source = "let counter = 0;";
     let (ast, symbols) = parse_source(source);
 
-    let pos = Position { line: 0, character: 6 };
+    let pos = Position {
+        line: 0,
+        character: 6,
+    };
     let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
 
     assert!(hover.is_some());
@@ -252,7 +350,10 @@ fn test_hover_with_ast_variable() {
 #[test]
 fn test_hover_includes_range() {
     let text = "print(42);";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -268,7 +369,10 @@ fn test_hover_includes_range() {
 #[test]
 fn test_hover_on_true_keyword() {
     let text = "let b = true;";
-    let pos = Position { line: 0, character: 9 };
+    let pos = Position {
+        line: 0,
+        character: 9,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -279,7 +383,10 @@ fn test_hover_on_true_keyword() {
 #[test]
 fn test_hover_on_false_keyword() {
     let text = "let b = false;";
-    let pos = Position { line: 0, character: 10 };
+    let pos = Position {
+        line: 0,
+        character: 10,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -290,7 +397,10 @@ fn test_hover_on_false_keyword() {
 #[test]
 fn test_hover_on_null_keyword() {
     let text = "let n = null;";
-    let pos = Position { line: 0, character: 9 };
+    let pos = Position {
+        line: 0,
+        character: 9,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -301,7 +411,10 @@ fn test_hover_on_null_keyword() {
 #[test]
 fn test_hover_uses_markdown() {
     let text = "print(42);";
-    let pos = Position { line: 0, character: 2 };
+    let pos = Position {
+        line: 0,
+        character: 2,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     assert!(hover.is_some());
@@ -315,7 +428,10 @@ fn test_hover_uses_markdown() {
 #[test]
 fn test_hover_on_unknown_identifier_returns_none() {
     let text = "foo_unknown_var;";
-    let pos = Position { line: 0, character: 5 };
+    let pos = Position {
+        line: 0,
+        character: 5,
+    };
     let hover = generate_hover(text, pos, None, None);
 
     // Without AST/symbols, unknown identifiers have no hover

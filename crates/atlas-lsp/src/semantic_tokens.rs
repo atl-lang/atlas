@@ -12,41 +12,41 @@ use tower_lsp::lsp_types::*;
 
 /// Semantic token types we support
 pub const TOKEN_TYPES: &[SemanticTokenType] = &[
-    SemanticTokenType::NAMESPACE,     // 0
-    SemanticTokenType::TYPE,          // 1
-    SemanticTokenType::CLASS,         // 2
-    SemanticTokenType::ENUM,          // 3
-    SemanticTokenType::INTERFACE,     // 4
-    SemanticTokenType::STRUCT,        // 5
+    SemanticTokenType::NAMESPACE,      // 0
+    SemanticTokenType::TYPE,           // 1
+    SemanticTokenType::CLASS,          // 2
+    SemanticTokenType::ENUM,           // 3
+    SemanticTokenType::INTERFACE,      // 4
+    SemanticTokenType::STRUCT,         // 5
     SemanticTokenType::TYPE_PARAMETER, // 6
-    SemanticTokenType::PARAMETER,     // 7
-    SemanticTokenType::VARIABLE,      // 8
-    SemanticTokenType::PROPERTY,      // 9
-    SemanticTokenType::ENUM_MEMBER,   // 10
-    SemanticTokenType::EVENT,         // 11
-    SemanticTokenType::FUNCTION,      // 12
-    SemanticTokenType::METHOD,        // 13
-    SemanticTokenType::MACRO,         // 14
-    SemanticTokenType::KEYWORD,       // 15
-    SemanticTokenType::MODIFIER,      // 16
-    SemanticTokenType::COMMENT,       // 17
-    SemanticTokenType::STRING,        // 18
-    SemanticTokenType::NUMBER,        // 19
-    SemanticTokenType::REGEXP,        // 20
-    SemanticTokenType::OPERATOR,      // 21
+    SemanticTokenType::PARAMETER,      // 7
+    SemanticTokenType::VARIABLE,       // 8
+    SemanticTokenType::PROPERTY,       // 9
+    SemanticTokenType::ENUM_MEMBER,    // 10
+    SemanticTokenType::EVENT,          // 11
+    SemanticTokenType::FUNCTION,       // 12
+    SemanticTokenType::METHOD,         // 13
+    SemanticTokenType::MACRO,          // 14
+    SemanticTokenType::KEYWORD,        // 15
+    SemanticTokenType::MODIFIER,       // 16
+    SemanticTokenType::COMMENT,        // 17
+    SemanticTokenType::STRING,         // 18
+    SemanticTokenType::NUMBER,         // 19
+    SemanticTokenType::REGEXP,         // 20
+    SemanticTokenType::OPERATOR,       // 21
 ];
 
 /// Semantic token modifiers we support
 pub const TOKEN_MODIFIERS: &[SemanticTokenModifier] = &[
-    SemanticTokenModifier::DECLARATION,    // 0
-    SemanticTokenModifier::DEFINITION,     // 1
-    SemanticTokenModifier::READONLY,       // 2
-    SemanticTokenModifier::STATIC,         // 3
-    SemanticTokenModifier::DEPRECATED,     // 4
-    SemanticTokenModifier::ABSTRACT,       // 5
-    SemanticTokenModifier::ASYNC,          // 6
-    SemanticTokenModifier::MODIFICATION,   // 7
-    SemanticTokenModifier::DOCUMENTATION,  // 8
+    SemanticTokenModifier::DECLARATION,     // 0
+    SemanticTokenModifier::DEFINITION,      // 1
+    SemanticTokenModifier::READONLY,        // 2
+    SemanticTokenModifier::STATIC,          // 3
+    SemanticTokenModifier::DEPRECATED,      // 4
+    SemanticTokenModifier::ABSTRACT,        // 5
+    SemanticTokenModifier::ASYNC,           // 6
+    SemanticTokenModifier::MODIFICATION,    // 7
+    SemanticTokenModifier::DOCUMENTATION,   // 8
     SemanticTokenModifier::DEFAULT_LIBRARY, // 9
 ];
 
@@ -155,7 +155,9 @@ fn tokenize_document(
 
     // Classify each token
     for token in &tokens {
-        if let Some(semantic) = classify_token(token, &declarations, &parameters, &builtins, symbols) {
+        if let Some(semantic) =
+            classify_token(token, &declarations, &parameters, &builtins, symbols)
+        {
             semantic_tokens.push(semantic);
         }
     }
@@ -173,43 +175,66 @@ fn classify_token(
 ) -> Option<SemanticTokenInfo> {
     let (token_type, modifiers) = match token.kind {
         // Keywords
-        TokenKind::Let | TokenKind::Var | TokenKind::Fn | TokenKind::Type |
-        TokenKind::If | TokenKind::Else | TokenKind::While | TokenKind::For |
-        TokenKind::In | TokenKind::Return | TokenKind::Break | TokenKind::Continue |
-        TokenKind::Import | TokenKind::Export | TokenKind::From | TokenKind::Extern |
-        TokenKind::Match | TokenKind::As | TokenKind::Extends | TokenKind::Is => {
-            (token_type_idx::KEYWORD, 0)
-        }
+        TokenKind::Let
+        | TokenKind::Var
+        | TokenKind::Fn
+        | TokenKind::Type
+        | TokenKind::If
+        | TokenKind::Else
+        | TokenKind::While
+        | TokenKind::For
+        | TokenKind::In
+        | TokenKind::Return
+        | TokenKind::Break
+        | TokenKind::Continue
+        | TokenKind::Import
+        | TokenKind::Export
+        | TokenKind::From
+        | TokenKind::Extern
+        | TokenKind::Match
+        | TokenKind::As
+        | TokenKind::Extends
+        | TokenKind::Is => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
-        TokenKind::True | TokenKind::False | TokenKind::Null => {
-            (token_type_idx::KEYWORD, 0)
-        }
+        TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),
 
         // Literals
         TokenKind::Number => (token_type_idx::NUMBER, 0),
         TokenKind::String => (token_type_idx::STRING, 0),
 
         // Comments
-        TokenKind::LineComment | TokenKind::BlockComment => {
-            (token_type_idx::COMMENT, 0)
-        }
-        TokenKind::DocComment => {
-            (token_type_idx::COMMENT, token_modifier_bits::DOCUMENTATION)
-        }
+        TokenKind::LineComment | TokenKind::BlockComment => (token_type_idx::COMMENT, 0),
+        TokenKind::DocComment => (token_type_idx::COMMENT, token_modifier_bits::DOCUMENTATION),
 
         // Operators
-        TokenKind::Plus | TokenKind::Minus | TokenKind::Star | TokenKind::Slash |
-        TokenKind::Percent | TokenKind::Bang | TokenKind::EqualEqual |
-        TokenKind::BangEqual | TokenKind::Less | TokenKind::LessEqual |
-        TokenKind::Greater | TokenKind::GreaterEqual | TokenKind::AmpAmp |
-        TokenKind::PipePipe | TokenKind::Ampersand | TokenKind::Pipe |
-        TokenKind::PlusEqual | TokenKind::MinusEqual | TokenKind::StarEqual |
-        TokenKind::SlashEqual | TokenKind::PercentEqual | TokenKind::PlusPlus |
-        TokenKind::MinusMinus | TokenKind::Equal | TokenKind::Arrow |
-        TokenKind::FatArrow | TokenKind::Question => {
-            (token_type_idx::OPERATOR, 0)
-        }
+        TokenKind::Plus
+        | TokenKind::Minus
+        | TokenKind::Star
+        | TokenKind::Slash
+        | TokenKind::Percent
+        | TokenKind::Bang
+        | TokenKind::EqualEqual
+        | TokenKind::BangEqual
+        | TokenKind::Less
+        | TokenKind::LessEqual
+        | TokenKind::Greater
+        | TokenKind::GreaterEqual
+        | TokenKind::AmpAmp
+        | TokenKind::PipePipe
+        | TokenKind::Ampersand
+        | TokenKind::Pipe
+        | TokenKind::PlusEqual
+        | TokenKind::MinusEqual
+        | TokenKind::StarEqual
+        | TokenKind::SlashEqual
+        | TokenKind::PercentEqual
+        | TokenKind::PlusPlus
+        | TokenKind::MinusMinus
+        | TokenKind::Equal
+        | TokenKind::Arrow
+        | TokenKind::FatArrow
+        | TokenKind::Question => (token_type_idx::OPERATOR, 0),
 
         // Identifiers - need context to classify
         TokenKind::Identifier => {
@@ -253,9 +278,10 @@ fn classify_token(
                         atlas_runtime::symbol::SymbolKind::Parameter => {
                             (token_type_idx::PARAMETER, 0)
                         }
-                        atlas_runtime::symbol::SymbolKind::Builtin => {
-                            (token_type_idx::FUNCTION, token_modifier_bits::DEFAULT_LIBRARY)
-                        }
+                        atlas_runtime::symbol::SymbolKind::Builtin => (
+                            token_type_idx::FUNCTION,
+                            token_modifier_bits::DEFAULT_LIBRARY,
+                        ),
                     };
                     return Some(SemanticTokenInfo {
                         start: token.span.start,
@@ -291,10 +317,17 @@ fn classify_token(
         }
 
         // Punctuation - skip these (they're handled by syntax highlighting)
-        TokenKind::LeftParen | TokenKind::RightParen | TokenKind::LeftBrace |
-        TokenKind::RightBrace | TokenKind::LeftBracket | TokenKind::RightBracket |
-        TokenKind::Semicolon | TokenKind::Comma | TokenKind::Dot |
-        TokenKind::Colon | TokenKind::Underscore => {
+        TokenKind::LeftParen
+        | TokenKind::RightParen
+        | TokenKind::LeftBrace
+        | TokenKind::RightBrace
+        | TokenKind::LeftBracket
+        | TokenKind::RightBracket
+        | TokenKind::Semicolon
+        | TokenKind::Comma
+        | TokenKind::Dot
+        | TokenKind::Colon
+        | TokenKind::Underscore => {
             return None;
         }
 
@@ -352,28 +385,89 @@ fn collect_parameters(ast: Option<&Program>) -> std::collections::HashSet<String
 fn get_builtin_names() -> std::collections::HashSet<&'static str> {
     [
         // I/O
-        "print", "println", "input",
+        "print",
+        "println",
+        "input",
         // Type conversion
-        "string", "number", "bool", "int",
+        "string",
+        "number",
+        "bool",
+        "int",
         // Type checking
-        "typeof", "is_number", "is_string", "is_bool", "is_null", "is_array", "is_function",
+        "typeof",
+        "is_number",
+        "is_string",
+        "is_bool",
+        "is_null",
+        "is_array",
+        "is_function",
         // Collections
-        "len", "push", "pop", "shift", "unshift", "slice", "concat", "reverse", "sort",
-        "map", "filter", "reduce", "find", "every", "some", "includes", "index_of", "join", "flat",
+        "len",
+        "push",
+        "pop",
+        "shift",
+        "unshift",
+        "slice",
+        "concat",
+        "reverse",
+        "sort",
+        "map",
+        "filter",
+        "reduce",
+        "find",
+        "every",
+        "some",
+        "includes",
+        "index_of",
+        "join",
+        "flat",
         // String
-        "split", "trim", "to_upper", "to_lower", "starts_with", "ends_with", "contains",
-        "replace", "char_at", "substring", "pad_start", "pad_end", "repeat",
+        "split",
+        "trim",
+        "to_upper",
+        "to_lower",
+        "starts_with",
+        "ends_with",
+        "contains",
+        "replace",
+        "char_at",
+        "substring",
+        "pad_start",
+        "pad_end",
+        "repeat",
         // Math
-        "abs", "floor", "ceil", "round", "sqrt", "pow", "min", "max",
-        "sin", "cos", "tan", "log", "log10", "exp", "random", "random_range",
+        "abs",
+        "floor",
+        "ceil",
+        "round",
+        "sqrt",
+        "pow",
+        "min",
+        "max",
+        "sin",
+        "cos",
+        "tan",
+        "log",
+        "log10",
+        "exp",
+        "random",
+        "random_range",
         // HashMap
-        "keys", "values", "entries", "has_key", "remove",
+        "keys",
+        "values",
+        "entries",
+        "has_key",
+        "remove",
         // Assertions
-        "assert", "assert_eq", "assert_ne",
+        "assert",
+        "assert_eq",
+        "assert_ne",
         // Time
-        "time", "sleep",
+        "time",
+        "sleep",
         // Error handling
-        "error", "try_catch",
+        "error",
+        "try_catch",
     ]
     .into_iter()
     .collect()
@@ -530,7 +624,10 @@ mod tests {
         let tokens = tokenize_document(text, None, None);
 
         // Should have tokens for: fn, foo, return, 1
-        let keyword_count = tokens.iter().filter(|t| t.token_type == token_type_idx::KEYWORD).count();
+        let keyword_count = tokens
+            .iter()
+            .filter(|t| t.token_type == token_type_idx::KEYWORD)
+            .count();
         assert!(keyword_count >= 2); // fn, return
     }
 
@@ -540,7 +637,9 @@ mod tests {
         let tokens = tokenize_document(text, None, None);
 
         // 'print' should be classified as function with DEFAULT_LIBRARY
-        let print_token = tokens.iter().find(|t| t.token_type == token_type_idx::FUNCTION);
+        let print_token = tokens
+            .iter()
+            .find(|t| t.token_type == token_type_idx::FUNCTION);
         assert!(print_token.is_some());
         assert!(print_token.unwrap().modifiers & token_modifier_bits::DEFAULT_LIBRARY != 0);
     }
@@ -550,7 +649,9 @@ mod tests {
         let text = "let s = \"hello\";";
         let tokens = tokenize_document(text, None, None);
 
-        let string_token = tokens.iter().find(|t| t.token_type == token_type_idx::STRING);
+        let string_token = tokens
+            .iter()
+            .find(|t| t.token_type == token_type_idx::STRING);
         assert!(string_token.is_some());
     }
 
@@ -559,7 +660,9 @@ mod tests {
         let text = "let n = 3.14;";
         let tokens = tokenize_document(text, None, None);
 
-        let num_token = tokens.iter().find(|t| t.token_type == token_type_idx::NUMBER);
+        let num_token = tokens
+            .iter()
+            .find(|t| t.token_type == token_type_idx::NUMBER);
         assert!(num_token.is_some());
     }
 
@@ -568,7 +671,9 @@ mod tests {
         let text = "// This is a comment\nlet x = 1;";
         let tokens = tokenize_document(text, None, None);
 
-        let comment_token = tokens.iter().find(|t| t.token_type == token_type_idx::COMMENT);
+        let comment_token = tokens
+            .iter()
+            .find(|t| t.token_type == token_type_idx::COMMENT);
         assert!(comment_token.is_some());
     }
 
@@ -577,7 +682,10 @@ mod tests {
         let text = "let x = a + b;";
         let tokens = tokenize_document(text, None, None);
 
-        let op_tokens: Vec<_> = tokens.iter().filter(|t| t.token_type == token_type_idx::OPERATOR).collect();
+        let op_tokens: Vec<_> = tokens
+            .iter()
+            .filter(|t| t.token_type == token_type_idx::OPERATOR)
+            .collect();
         assert!(op_tokens.len() >= 2); // = and +
     }
 
@@ -585,8 +693,18 @@ mod tests {
     fn test_encode_tokens_delta() {
         let text = "let x = 1;";
         let tokens = vec![
-            SemanticTokenInfo { start: 0, length: 3, token_type: token_type_idx::KEYWORD, modifiers: 0 },
-            SemanticTokenInfo { start: 4, length: 1, token_type: token_type_idx::VARIABLE, modifiers: 0 },
+            SemanticTokenInfo {
+                start: 0,
+                length: 3,
+                token_type: token_type_idx::KEYWORD,
+                modifiers: 0,
+            },
+            SemanticTokenInfo {
+                start: 4,
+                length: 1,
+                token_type: token_type_idx::VARIABLE,
+                modifiers: 0,
+            },
         ];
 
         let encoded = encode_tokens(&tokens, text);
@@ -607,8 +725,18 @@ mod tests {
     fn test_encode_tokens_multiline() {
         let text = "let x = 1;\nlet y = 2;";
         let tokens = vec![
-            SemanticTokenInfo { start: 0, length: 3, token_type: token_type_idx::KEYWORD, modifiers: 0 },
-            SemanticTokenInfo { start: 11, length: 3, token_type: token_type_idx::KEYWORD, modifiers: 0 },
+            SemanticTokenInfo {
+                start: 0,
+                length: 3,
+                token_type: token_type_idx::KEYWORD,
+                modifiers: 0,
+            },
+            SemanticTokenInfo {
+                start: 11,
+                length: 3,
+                token_type: token_type_idx::KEYWORD,
+                modifiers: 0,
+            },
         ];
 
         let encoded = encode_tokens(&tokens, text);
