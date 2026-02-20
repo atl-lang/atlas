@@ -54,7 +54,6 @@ These features exist in the codebase and should NOT be re-planned:
 | **Guard clauses** | `pattern if condition` not in parser | Low |
 | **OR patterns** | `0 \| 1 \| 2` not in Pattern enum | Low |
 | **Rest patterns** | `[first, ...rest]` not implemented | Low |
-| **Package CLI** | `atlas add`, `atlas remove` commands | Low |
 
 ---
 
@@ -62,23 +61,23 @@ These features exist in the codebase and should NOT be re-planned:
 
 **Theme:** First Usable Release
 
-**Status:** 110/131 phases (84%) — see STATUS.md
+**Status:** See STATUS.md for current progress
 
 ### Remaining Work
 
-| Category | Phases | Focus |
+| Category | Status | Focus |
 |----------|--------|-------|
-| Interpreter | 2 | Debugger integration, REPL polish |
-| CLI | 6 | Test runner, watch mode, package CLI |
-| LSP | 5 | Hover, refactoring, find references |
-| Polish | 5 | Testing, docs, stability |
+| Interpreter | Complete | Debugger integration, REPL polish |
+| CLI | Complete | Test runner, watch mode, package CLI |
+| LSP | In Progress | Hover, refactoring, find references |
+| Polish | Pending | Testing, docs, stability |
 
 ### v0.2 Exit Criteria
 
-- [ ] All 131 phases complete
-- [ ] Interpreter/VM parity verified
-- [ ] CLI tools documented
+- [x] Interpreter complete
+- [x] CLI complete
 - [ ] LSP provides usable IDE experience
+- [ ] Polish phases complete
 
 ---
 
@@ -193,31 +192,25 @@ What's missing is **language syntax**:
 
 ---
 
-## v0.7: Package Ecosystem CLI
+## v0.7: Package Ecosystem Polish
 
-**Theme:** Package Management Commands
+**Theme:** Package Management Enhancements
 
 ### Current State
 
-Package **infrastructure** exists:
-- `atlas-package/` crate with full resolver
-- `atlas.toml` manifest parsing
+Package CLI is **complete** (v0.2 CLI-05):
+- `atlas add <pkg>` — adds dependency
+- `atlas remove <pkg>` — removes dependency
+- `atlas update` — updates dependencies
 - Lockfile generation
 - Registry support
-- Conflict resolution
 
-What's missing is **CLI integration**:
-- `atlas add <pkg>` command
-- `atlas remove <pkg>` command
-- `atlas update` command
-- `atlas publish` command
+### v0.7 Focus
 
-### v0.7 Exit Criteria
-
-- [ ] `atlas add foo` adds dependency to atlas.toml
-- [ ] `atlas remove foo` removes it
-- [ ] Lockfile updated automatically
-- [ ] Works with local registry
+- [ ] `atlas publish` command (push to registry)
+- [ ] Private registry authentication
+- [ ] Workspace support (monorepo)
+- [ ] Dependency audit
 
 ---
 
@@ -355,5 +348,5 @@ When creating phases for a new version:
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-02-20*
 *Based on: Codebase verification (not just spec documents)*
