@@ -75,14 +75,14 @@
 ## AI Workflow
 
 ```bash
-# 1. Create PR and enable auto-merge (run ONCE, immediately)
+# 1. Create PR and add to merge queue (run ONCE, immediately)
 git push -u origin HEAD
 gh pr create --title "..." --body "..."
-gh pr merge --squash --auto              # Enables auto-merge, never run again
+gh pr merge --squash --auto              # Adds to queue when CI passes
 
 # 2. Walk away - automation handles everything
 # CI runs (~2 min PR, ~6 min merge queue)
-# Auto-merge when CI passes
+# Queue merges when CI passes
 # Branch auto-deleted
 # Main updated
 
@@ -90,5 +90,11 @@ gh pr merge --squash --auto              # Enables auto-merge, never run again
 git checkout main && git pull
 git branch -d <old-branch>
 ```
+
+**Merge queue notes:**
+- `--squash` flag ignored (queue controls merge method)
+- Message "merge strategy is set by merge queue" = normal
+- `gh pr view --json autoMergeRequest` shows `null` = normal (queue handles it)
+- "already queued to merge" = working correctly
 
 **No manual merge, no manual cleanup, no waiting.**
