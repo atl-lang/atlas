@@ -6,6 +6,7 @@ use std::io;
 mod commands;
 mod config;
 mod debugger;
+mod templates;
 mod testing;
 
 /// Atlas programming language compiler and runtime.
@@ -510,6 +511,58 @@ enum Commands {
         #[arg(long, short = 'v')]
         verbose: bool,
     },
+
+    /// Create a new Atlas project from a template
+    ///
+    /// Creates a new project directory with a complete project structure
+    /// based on the selected template. Includes source files, tests,
+    /// documentation, and configuration.
+    ///
+    /// TEMPLATES:
+    ///     binary  - Executable with CLI support (default)
+    ///     library - Library with tests and examples
+    ///     web     - Web server with HTTP routing
+    ///
+    /// EXAMPLES:
+    ///     atlas new my-app                Create binary project
+    ///     atlas new my-lib --lib          Create library project
+    ///     atlas new my-api --web          Create web server project
+    ///     atlas new my-app --template=binary --author="Jane Doe"
+    #[command(visible_alias = "n")]
+    New {
+        /// Project name (creates directory with this name)
+        name: String,
+        /// Create a library project
+        #[arg(long)]
+        lib: bool,
+        /// Create a web server project
+        #[arg(long)]
+        web: bool,
+        /// Template type (binary, library, web)
+        #[arg(long, short = 't')]
+        template: Option<String>,
+        /// Author name
+        #[arg(long)]
+        author: Option<String>,
+        /// Project description
+        #[arg(long)]
+        description: Option<String>,
+        /// Skip git initialization
+        #[arg(long)]
+        no_git: bool,
+        /// Skip initial commit
+        #[arg(long)]
+        no_commit: bool,
+        /// Force creation (overwrite existing directory)
+        #[arg(long)]
+        force: bool,
+        /// List available templates
+        #[arg(long)]
+        list: bool,
+        /// Verbose output
+        #[arg(long, short = 'v')]
+        verbose: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -799,6 +852,53 @@ fn main() -> Result<()> {
                 verbose,
             };
             commands::publish::run(args)?;
+        }
+        Commands::New {
+            name,
+            lib,
+            web,
+            template,
+            author,
+            description,
+            no_git,
+            no_commit,
+            force,
+            list,
+            verbose,
+        } => {
+            // Handle --list flag
+            if list {
+                commands::new::list_templates();
+                return Ok(());
+            }
+
+            // Determine template type
+            let template_type = if lib {
+                templates::TemplateType::Library
+            } else if web {
+                templates::TemplateType::Web
+            } else if let Some(ref t) = template {
+                t.parse().map_err(|e: String| anyhow::anyhow!("{}", e))?
+            } else {
+                templates::TemplateType::Binary
+            };
+
+            // Determine if we should skip interactive prompts
+            let non_interactive = author.is_some() || description.is_some();
+
+            let args = commands::new::NewArgs {
+                name,
+                template: template_type,
+                author,
+                description,
+                git: !no_git,
+                commit: !no_commit,
+                force,
+                path: std::env::current_dir()?,
+                non_interactive,
+                verbose,
+            };
+            commands::new::run(args)?;
         }
     }
 

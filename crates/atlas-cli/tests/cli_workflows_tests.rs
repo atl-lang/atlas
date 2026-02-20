@@ -113,10 +113,7 @@ print(add(3, 4));
         fs::write(&file, "let x = ;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("run")
-            .arg(&file)
-            .assert()
-            .failure();
+        cmd.arg("run").arg(&file).assert().failure();
     }
 
     #[test]
@@ -126,10 +123,7 @@ print(add(3, 4));
         fs::write(&file, "let x = ;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["run", "--json"])
-            .arg(&file)
-            .assert()
-            .failure();
+        cmd.args(["run", "--json"]).arg(&file).assert().failure();
     }
 }
 
@@ -147,10 +141,7 @@ mod check_workflow {
         fs::write(&file, "let x: number = 42;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("check")
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.arg("check").arg(&file).assert().success();
     }
 
     #[test]
@@ -160,10 +151,7 @@ mod check_workflow {
         fs::write(&file, "let x = 42;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("c")
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.arg("c").arg(&file).assert().success();
     }
 
     #[test]
@@ -188,10 +176,7 @@ mod check_workflow {
         fs::write(&file, "fn foo( {}").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("check")
-            .arg(&file)
-            .assert()
-            .failure();
+        cmd.arg("check").arg(&file).assert().failure();
     }
 
     #[test]
@@ -201,10 +186,7 @@ mod check_workflow {
         fs::write(&file, "let x = 1;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["check", "--json"])
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.args(["check", "--json"]).arg(&file).assert().success();
     }
 }
 
@@ -222,10 +204,7 @@ mod format_workflow {
         fs::write(&file, "let x = 1;\n").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["fmt", "--check"])
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.args(["fmt", "--check"]).arg(&file).assert().success();
     }
 
     #[test]
@@ -236,9 +215,7 @@ mod format_workflow {
 
         let mut cmd = atlas_cmd();
         // Just verify the alias works, don't check exit code since formatting may differ
-        let _ = cmd.args(["f", "--check"])
-            .arg(&file)
-            .assert();
+        let _ = cmd.args(["f", "--check"]).arg(&file).assert();
     }
 
     #[test]
@@ -248,10 +225,7 @@ mod format_workflow {
         fs::write(&file, "let   x=1;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["fmt", "--write"])
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.args(["fmt", "--write"]).arg(&file).assert().success();
 
         // File should be modified
         let content = fs::read_to_string(&file).unwrap();
@@ -267,9 +241,7 @@ mod format_workflow {
         fs::write(subdir.join("b.atl"), "let y = 2;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["fmt", "--check"])
-            .arg(&subdir)
-            .assert();
+        cmd.args(["fmt", "--check"]).arg(&subdir).assert();
         // Just verify it processes the directory
     }
 
@@ -292,9 +264,7 @@ mod format_workflow {
         fs::write(&file, "let x = 1;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["fmt", "--quiet", "--check"])
-            .arg(&file)
-            .assert();
+        cmd.args(["fmt", "--quiet", "--check"]).arg(&file).assert();
     }
 
     #[test]
@@ -337,10 +307,7 @@ mod test_runner_workflow {
         let dir = TempDir::new().unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("t")
-            .arg("--dir")
-            .arg(dir.path())
-            .assert();
+        cmd.arg("t").arg("--dir").arg(dir.path()).assert();
         // Empty directory should handle gracefully
     }
 
@@ -370,9 +337,7 @@ mod test_runner_workflow {
         fs::write(dir.path().join("test_foo.atl"), "// test").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.args(["test", "foo", "--dir"])
-            .arg(dir.path())
-            .assert();
+        cmd.args(["test", "foo", "--dir"]).arg(dir.path()).assert();
     }
 
     #[test]
@@ -399,9 +364,7 @@ mod build_workflow {
         let dir = TempDir::new().unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("b")
-            .current_dir(dir.path())
-            .assert();
+        cmd.arg("b").current_dir(dir.path()).assert();
     }
 
     #[test]
@@ -483,10 +446,7 @@ mod ast_typecheck_workflow {
         fs::write(&file, "let x: number = 42;").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("typecheck")
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.arg("typecheck").arg(&file).assert().success();
     }
 }
 
@@ -504,10 +464,7 @@ mod profile_workflow {
         fs::write(&file, "let x = 1; let y = 2; print(x + y);").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("profile")
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.arg("profile").arg(&file).assert().success();
     }
 
     #[test]
@@ -648,10 +605,7 @@ mod edge_cases {
         fs::write(&file, "print(\"Hello, 世界! 🎉\");").unwrap();
 
         let mut cmd = atlas_cmd();
-        cmd.arg("run")
-            .arg(&file)
-            .assert()
-            .success();
+        cmd.arg("run").arg(&file).assert().success();
     }
 
     #[test]
