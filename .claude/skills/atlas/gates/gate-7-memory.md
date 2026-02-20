@@ -2,64 +2,73 @@
 
 **Condition:** Phase complete, STATUS.md updated, ready to commit
 
-**Purpose:** Keep AI memory accurate. Prevents drift that wastes tokens in future sessions.
+**Purpose:** Keep AI memory accurate and lean. Prevents drift and bloat.
 
 ---
 
 ## Quick Self-Check (10 seconds)
 
-Ask yourself:
+1. **Did I hit an API surprise?** → Update `patterns.md`
+2. **Did I make an architectural decision?** → Update `decisions/{domain}.md`
+3. **Is anything in memory wrong?** → Fix or archive it
+4. **Is any file approaching size limit?** → Split or archive
 
-1. **Did I hit an API surprise?** (wrong signature, unexpected return type, missing method)
-   → Update auto-memory `patterns.md`
+---
 
-2. **Did I discover a new codebase pattern?** (new helper, new module, new convention)
-   → Update auto-memory `patterns.md`
+## File Size Limits (ENFORCED)
 
-3. **Did I make an architectural decision?** (chose between approaches, spec was silent)
-   → Update auto-memory `decisions.md`
+| File | Max | If Exceeded |
+|------|-----|-------------|
+| MEMORY.md | 50 lines | Move to topic files |
+| patterns.md | 150 lines | Archive old patterns |
+| decisions/{x}.md | 100 lines | Split or archive |
 
-4. **Is anything in memory wrong?** (found that memory said X but codebase does Y)
-   → Fix the stale entry
+**Check sizes:** `wc -l ~/.claude/projects/*/memory/*.md`
+
+---
+
+## Memory Structure
+
+```
+memory/
+├── MEMORY.md           # Index ONLY (pointers, not content)
+├── patterns.md         # Active patterns
+├── decisions/          # Split by domain
+│   ├── language.md
+│   ├── runtime.md
+│   ├── stdlib.md
+│   ├── cli.md          # CRITICAL decisions here
+│   ├── typechecker.md
+│   ├── vm.md
+│   └── {new-domain}.md # Add as needed
+└── archive/            # Old stuff goes here
+```
 
 ---
 
 ## Rules
 
-- **Only update if something actually changed.** Most phases won't need memory updates.
-- **Be surgical.** Update the specific line/section, don't rewrite whole files.
-- **Be token-efficient.** One-liner patterns, not paragraphs of explanation.
-- **Verify before writing.** Don't add patterns from a single observation — confirm against codebase.
-- **Remove stale info** rather than flagging it. Flags become permanent noise.
-
----
-
-## What NOT to Save
-
-- Session-specific context (current task, temporary state)
-- Anything already in the skill or gate files
-- Obvious Rust patterns (how `Result` works, etc.)
-- Speculative conclusions from reading one file
-
----
-
-**Cost:** 0-30 seconds per phase. Prevents hours of confusion in future sessions.
+- **Surgical updates.** One-liner patterns, not paragraphs.
+- **Verify before writing.** Confirm against codebase.
+- **Archive, don't delete.** Move to `archive/YYYY-MM-{file}.md`.
+- **Split by domain.** New domain = new file in `decisions/`.
 
 ---
 
 ## Required Output (MANDATORY)
 
-**In your completion summary, you MUST include a Memory line:**
+**In completion summary, include Memory section:**
 
-```
+```markdown
 ### Memory
-- Updated: `patterns.md` (added X pattern)
-- Updated: `decisions.md` (DR-015: reason)
+- Updated: `patterns.md` (added X)
+- Updated: `decisions/cli.md` (DR-003: reason)
+- Archived: `patterns.md` → `archive/2026-02-patterns-v1.md`
 ```
 
-OR if no updates needed:
+OR if no updates:
 
-```
+```markdown
 ### Memory
 - No updates needed
 ```
@@ -70,32 +79,9 @@ OR if no updates needed:
 
 ## Git Finalization (After Memory Check)
 
-1. **Commit all changes:**
-   ```bash
-   git add -A
-   git commit -m "feat(category): Phase X - description"
-   ```
+1. `git add -A && git commit -m "feat(category): description"`
+2. `git push -u origin HEAD && gh pr create && gh pr merge --squash --auto`
+3. Walk away - automation handles merge
+4. Next session syncs main automatically
 
-2. **Push, create PR, enable auto-merge:**
-   ```bash
-   git push -u origin HEAD
-   gh pr create --title "Phase X: Title" --body "## Summary
-   - Key change 1
-   - Key change 2
-
-   🤖 Generated with Claude Code"
-   gh pr merge --squash --auto
-   ```
-
-3. **Walk away** - automation handles everything:
-   - CI runs (~1-1.5 min) — fmt, clippy, check only
-   - Auto-adds to merge queue
-   - Auto-merges and auto-deletes branch
-   - **Do NOT run `gh pr merge` again**
-
-4. **Sync local** (after merge completes):
-   ```bash
-   git checkout main && git pull
-   ```
-
-**Next:** Report completion summary.
+**Next:** Report completion summary with Memory section.

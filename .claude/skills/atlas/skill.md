@@ -216,18 +216,42 @@ cargo nextest run -p atlas-runtime                        # Full suite (GATE 6)
 
 **Location:** Claude's auto-memory directory (auto-loaded at session start)
 
-**Files:**
-- `MEMORY.md` - Index (auto-loaded, 200 line cap)
-- `patterns.md` - Codebase patterns
-- `decisions.md` - Architectural decisions (DR-XXX)
-- `testing-patterns.md` - Test guidelines
-- `domain-prereqs.md` - Domain verification queries (GATE 0, Step 4)
+### Structure (ENFORCED)
+```
+memory/
+├── MEMORY.md           # Index ONLY (50 lines max, auto-loaded)
+├── patterns.md         # Active patterns (150 lines max)
+├── domain-prereqs.md   # Grep queries (stable)
+├── testing-patterns.md # Test guidelines (stable)
+├── decisions/          # Split by domain
+│   ├── language.md     # Language core decisions
+│   ├── runtime.md      # Runtime decisions
+│   ├── stdlib.md       # Stdlib decisions
+│   ├── cli.md          # CLI decisions (CRITICAL)
+│   ├── typechecker.md  # Type system decisions
+│   ├── vm.md           # VM decisions
+│   └── lsp.md          # LSP decisions (add when needed)
+└── archive/            # Deprecated content
+```
 
-**Usage:**
-- Read/write memories using Claude's memory tools
-- `domain-prereqs.md` - VERIFY before writing code (BLOCKING)
-- `patterns.md` - implementation patterns
-- `decisions.md` - architectural context
+### File Size Limits (ENFORCED)
+| File | Max Lines | Action if exceeded |
+|------|-----------|-------------------|
+| MEMORY.md | 50 | Move content to topic files |
+| patterns.md | 150 | Archive old patterns |
+| decisions/{x}.md | 100 | Split further or archive |
+
+### Rules
+1. **MEMORY.md = index only** - No content, just pointers
+2. **Load on-demand** - Don't read all files, read what you need
+3. **Split when growing** - File approaching limit? Split by subtopic
+4. **Archive, don't delete** - Move to `archive/` with date prefix
+5. **Decisions by domain** - New domain? Create new file
+
+### When to Update (GATE 7)
+- Hit API surprise → `patterns.md`
+- Made architectural decision → `decisions/{domain}.md`
+- Found stale info → Fix or archive it
 
 **Rule:** Memories live in Claude auto-memory, NOT in repo.
 
