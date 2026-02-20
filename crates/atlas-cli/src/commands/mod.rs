@@ -7,6 +7,7 @@ pub mod fmt;
 pub mod init;
 pub mod install;
 pub mod lsp;
+pub mod new;
 pub mod profile;
 pub mod publish;
 pub mod remove;

@@ -206,15 +206,9 @@ mod command_aliases {
     #[test]
     fn test_alias_r_equivalent_to_run() {
         // Both should show same help content
-        let run_help = atlas_cmd()
-            .args(["run", "--help"])
-            .output()
-            .unwrap();
+        let run_help = atlas_cmd().args(["run", "--help"]).output().unwrap();
 
-        let r_help = atlas_cmd()
-            .args(["r", "--help"])
-            .output()
-            .unwrap();
+        let r_help = atlas_cmd().args(["r", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&run_help.stdout),
@@ -224,15 +218,9 @@ mod command_aliases {
 
     #[test]
     fn test_alias_t_equivalent_to_test() {
-        let test_help = atlas_cmd()
-            .args(["test", "--help"])
-            .output()
-            .unwrap();
+        let test_help = atlas_cmd().args(["test", "--help"]).output().unwrap();
 
-        let t_help = atlas_cmd()
-            .args(["t", "--help"])
-            .output()
-            .unwrap();
+        let t_help = atlas_cmd().args(["t", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&test_help.stdout),
@@ -242,15 +230,9 @@ mod command_aliases {
 
     #[test]
     fn test_alias_f_equivalent_to_fmt() {
-        let fmt_help = atlas_cmd()
-            .args(["fmt", "--help"])
-            .output()
-            .unwrap();
+        let fmt_help = atlas_cmd().args(["fmt", "--help"]).output().unwrap();
 
-        let f_help = atlas_cmd()
-            .args(["f", "--help"])
-            .output()
-            .unwrap();
+        let f_help = atlas_cmd().args(["f", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&fmt_help.stdout),
@@ -260,15 +242,9 @@ mod command_aliases {
 
     #[test]
     fn test_alias_b_equivalent_to_build() {
-        let build_help = atlas_cmd()
-            .args(["build", "--help"])
-            .output()
-            .unwrap();
+        let build_help = atlas_cmd().args(["build", "--help"]).output().unwrap();
 
-        let b_help = atlas_cmd()
-            .args(["b", "--help"])
-            .output()
-            .unwrap();
+        let b_help = atlas_cmd().args(["b", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&build_help.stdout),
@@ -278,15 +254,9 @@ mod command_aliases {
 
     #[test]
     fn test_alias_c_equivalent_to_check() {
-        let check_help = atlas_cmd()
-            .args(["check", "--help"])
-            .output()
-            .unwrap();
+        let check_help = atlas_cmd().args(["check", "--help"]).output().unwrap();
 
-        let c_help = atlas_cmd()
-            .args(["c", "--help"])
-            .output()
-            .unwrap();
+        let c_help = atlas_cmd().args(["c", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&check_help.stdout),
@@ -296,15 +266,9 @@ mod command_aliases {
 
     #[test]
     fn test_alias_d_equivalent_to_debug() {
-        let debug_help = atlas_cmd()
-            .args(["debug", "--help"])
-            .output()
-            .unwrap();
+        let debug_help = atlas_cmd().args(["debug", "--help"]).output().unwrap();
 
-        let d_help = atlas_cmd()
-            .args(["d", "--help"])
-            .output()
-            .unwrap();
+        let d_help = atlas_cmd().args(["d", "--help"]).output().unwrap();
 
         assert_eq!(
             String::from_utf8_lossy(&debug_help.stdout),
@@ -454,9 +418,7 @@ mod shell_completions {
     #[test]
     fn test_completion_no_shell_arg() {
         let mut cmd = atlas_cmd();
-        cmd.args(["completions"])
-            .assert()
-            .failure();
+        cmd.args(["completions"]).assert().failure();
     }
 }
 
@@ -694,9 +656,7 @@ mod error_handling {
     fn test_conflicting_verbosity_flags() {
         // Quiet and verbose together should work (quiet takes precedence)
         let mut cmd = atlas_cmd();
-        cmd.args(["fmt", "--help"])
-            .assert()
-            .success();
+        cmd.args(["fmt", "--help"]).assert().success();
     }
 
     #[test]
@@ -770,15 +730,23 @@ mod subcommand_structure {
     #[test]
     fn test_all_commands_have_help() {
         let commands = [
-            "run", "check", "build", "repl", "ast", "typecheck",
-            "fmt", "profile", "test", "debug", "lsp", "completions"
+            "run",
+            "check",
+            "build",
+            "repl",
+            "ast",
+            "typecheck",
+            "fmt",
+            "profile",
+            "test",
+            "debug",
+            "lsp",
+            "completions",
         ];
 
         for cmd_name in commands {
             let mut cmd = atlas_cmd();
-            cmd.args([cmd_name, "--help"])
-                .assert()
-                .success();
+            cmd.args([cmd_name, "--help"]).assert().success();
         }
     }
 
@@ -788,9 +756,7 @@ mod subcommand_structure {
 
         for alias in aliases {
             let mut cmd = atlas_cmd();
-            cmd.args([alias, "--help"])
-                .assert()
-                .success();
+            cmd.args([alias, "--help"]).assert().success();
         }
     }
 
@@ -806,8 +772,6 @@ mod subcommand_structure {
     fn test_help_after_help() {
         // This should be handled gracefully
         let mut cmd = atlas_cmd();
-        cmd.args(["--help"])
-            .assert()
-            .success();
+        cmd.args(["--help"]).assert().success();
     }
 }
