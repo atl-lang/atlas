@@ -15,15 +15,21 @@
 
 ---
 
-## File Size Limits (ENFORCED)
+## File Size Limits (BLOCKING)
 
-| File | Max | If Exceeded |
-|------|-----|-------------|
-| MEMORY.md | 50 lines | Move to topic files |
-| patterns.md | 150 lines | Archive old patterns |
-| decisions/{x}.md | 100 lines | Split or archive |
+**Before committing, run this check:**
+```bash
+wc -l ~/.claude/projects/*/memory/*.md ~/.claude/projects/*/memory/decisions/*.md 2>/dev/null | grep -v total
+```
 
-**Check sizes:** `wc -l ~/.claude/projects/*/memory/*.md`
+| File | Max | If Exceeded → MUST DO |
+|------|-----|----------------------|
+| MEMORY.md | 50 | Split content to topic files |
+| patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
+| decisions/{x}.md | 100 | Split into sub-files |
+
+**BLOCKING:** If ANY file exceeds limit, you MUST split/archive BEFORE committing.
+**NO EXCEPTIONS.** This is not optional. Bloated memory = wasted tokens every message.
 
 ---
 
@@ -43,6 +49,19 @@ memory/
 │   └── {new-domain}.md # Add as needed
 └── archive/            # Old stuff goes here
 ```
+
+---
+
+## How to Split patterns.md
+
+When `patterns.md` exceeds 150 lines:
+1. Create `archive/YYYY-MM-patterns.md` with old/stable patterns
+2. Keep only actively-referenced patterns in `patterns.md`
+3. Update MEMORY.md index if needed
+
+**Example split:**
+- `patterns.md` → Active patterns (runtime, stdlib, testing)
+- `archive/2026-02-patterns.md` → Stable patterns (frontend API, error handling)
 
 ---
 
