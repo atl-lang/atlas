@@ -177,8 +177,10 @@ var y: number = add(3, 4);
     };
 
     let result = server.references(params).await.unwrap();
-    // Currently returns None (TODO: implement)
-    assert!(result.is_none());
+    // Should find references: declaration + 2 calls = 3 total
+    assert!(result.is_some());
+    let locations = result.unwrap();
+    assert!(locations.len() >= 2); // At least the 2 call sites, maybe declaration too
 }
 
 #[tokio::test]
