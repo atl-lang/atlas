@@ -1,10 +1,14 @@
 # Atlas CI Pipeline
 #
-# Optimized for speed: tests run ONCE on PR, not duplicated on main.
+# Optimized for speed and minimal CI minutes:
 #
-# PR checks (~3-4 min):     fmt → clippy → test (gate for merge)
-# Main branch (~10-15 min): coverage + benchmarks only (tests already passed in PR)
-# Nightly (scheduled):      Fuzz testing + MSRV verification
+# PR checks (~2 min):       fmt → clippy → test (ubuntu only)
+# Merge queue (~6 min):     fmt → clippy → test-matrix (3 platforms)
+# Main push (~5 min):       coverage only (tests already passed)
+# Nightly (scheduled):      Fuzz testing + MSRV + cross-platform validation
+#
+# Benchmarks: Handled by dedicated bench.yml (has regression tracking)
+# Security:   Handled by dedicated security.yml
 #
 # Reference: https://github.com/actions-rust-lang/setup-rust-toolchain
 
@@ -125,7 +129,8 @@ jobs:
   test-matrix:
     name: Test (${{ matrix.os }}/${{ matrix.rust }})
     needs: clippy  # Wait for fast checks, then run cross-platform tests in parallel
-    if: github.event_name != 'pull_request' && (github.event_name != 'workflow_dispatch' || inputs.run_scope == 'full')
+    # Only merge_group and schedule - NOT main push (already tested in merge queue)
+    if: github.event_name == 'merge_group' || github.event_name == 'schedule'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -160,10 +165,10 @@ jobs:
         run: cargo test --doc --all-features
 
   # ==========================================================================
-  # Main-only jobs - Run after merge (tests already passed in PR)
+  # Main-only jobs - Run after merge (tests already passed in merge queue)
   # ==========================================================================
-  # These jobs don't re-run tests - the PR was the gate.
-  # Security audits handled by dedicated security.yml workflow
+  # Coverage runs here. Benchmarks handled by bench.yml with regression tracking.
+  # Security audits handled by dedicated security.yml workflow.
 
   coverage:
     name: Coverage
@@ -188,28 +193,7 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
-  bench:
-    name: Benchmarks
-    runs-on: ubuntu-latest
-    needs: clippy  # Wait for fast checks, but not test (already passed in PR)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: bench
-
-      - name: Run benchmarks
-        run: cargo bench -p atlas-runtime 2>&1 | tee bench-output.txt
-
-      - name: Upload results
-        uses: actions/upload-artifact@v6
-        with:
-          name: benchmark-results
-          path: |
-            bench-output.txt
-            target/criterion/
+  # Benchmarks handled by dedicated bench.yml workflow (has regression tracking)
 
   # ==========================================================================
   # Scheduled jobs - Nightly only
@@ -225,7 +209,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         id: stable
 
-      - uses: dtolnay/rust-toolchain@1.100.0
+      - uses: dtolnay/rust-toolchain@1.70.0
         id: msrv
 
       - uses: Swatinem/rust-cache@v2
