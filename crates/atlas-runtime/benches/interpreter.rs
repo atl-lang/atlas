@@ -18,7 +18,7 @@ fn interp_run(source: &str) {
 
 fn bench_interp_arithmetic_loop(c: &mut Criterion) {
     c.bench_function("interp_arithmetic_loop_10k", |b| {
-        let code = "let sum = 0; let i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;";
+        let code = "var sum = 0; var i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
@@ -32,7 +32,7 @@ fn bench_interp_fibonacci(c: &mut Criterion) {
 
 fn bench_interp_string_concat(c: &mut Criterion) {
     c.bench_function("interp_string_concat_500", |b| {
-        let code = r#"let s = ""; let i = 0; while (i < 500) { s = s + "x"; i = i + 1; } len(s);"#;
+        let code = r#"var s = ""; var i = 0; while (i < 500) { s = s + "x"; i = i + 1; } len(s);"#;
         b.iter(|| interp_run(black_box(code)));
     });
 }
@@ -40,8 +40,8 @@ fn bench_interp_string_concat(c: &mut Criterion) {
 fn bench_interp_collection_ops(c: &mut Criterion) {
     c.bench_function("interp_array_push_pop_1k", |b| {
         let code = r#"
-            let arr: number[] = [];
-            let i = 0;
+            var arr: number[] = [];
+            var i = 0;
             while (i < 1000) {
                 arr = push(arr, i);
                 i = i + 1;
@@ -54,14 +54,14 @@ fn bench_interp_collection_ops(c: &mut Criterion) {
 
 fn bench_interp_function_calls(c: &mut Criterion) {
     c.bench_function("interp_function_calls_10k", |b| {
-        let code = "fn inc(x: number) -> number { return x + 1; } let r = 0; let i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;";
+        let code = "fn inc(x: number) -> number { return x + 1; } var r = 0; var i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
 
 fn bench_interp_nested_loops(c: &mut Criterion) {
     c.bench_function("interp_nested_loops_100x100", |b| {
-        let code = "let count = 0; let i = 0; while (i < 100) { let j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;";
+        let code = "var count = 0; var i = 0; while (i < 100) { var j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
