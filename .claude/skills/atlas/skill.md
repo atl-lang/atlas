@@ -68,14 +68,7 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 Both engines MUST produce identical output. Parity break = BLOCKING.
 
 ### 7. Testing Protocol
-**Source of truth:** `memory/testing-patterns.md` — READ BEFORE WRITING TESTS
-
-**Quick reference:**
-- Single test: `cargo nextest run -p atlas-runtime -E 'test(name)'`
-- Domain file: `cargo nextest run -p atlas-runtime --test <domain_file>`
-- Full suite: GATE 6 only
-
-**Cardinal rule:** Never create new `tests/*.rs` files. See testing-patterns.md for domain file list.
+**Source of truth:** `memory/testing-patterns.md` — READ BEFORE WRITING ANY TESTS
 
 ---
 
@@ -137,13 +130,7 @@ git push -u origin HEAD && gh pr create ... && gh pr merge --squash --auto
 
 ## GATE -1: Sanity Check (ALWAYS FIRST)
 
-1. **Verify:** Check phase dependencies in phase file
-2. **Git check:** Ensure on feature branch (not main), working directory clean
-3. **Sanity:** `cargo clean && cargo check -p atlas-runtime`
-4. **Security scan:** `cargo audit` (check for known vulnerabilities)
-5. **On failure:** Stop, inform user with error details
-
-**No batch logic** — push after EVERY phase (CI disabled, merges are instant)
+**See:** `gates/gate-minus1-sanity.md` for full steps.
 
 ---
 
@@ -179,15 +166,7 @@ After GATE -1, declare one:
 
 ## Build Commands
 
-**Essential (memorize these):**
-```bash
-cargo check -p atlas-runtime                              # Verify compiles
-cargo clippy -p atlas-runtime -- -D warnings              # Zero warnings
-cargo nextest run -p atlas-runtime -E 'test(name)'        # Single test
-cargo nextest run -p atlas-runtime                        # Full suite (GATE 6)
-```
-
-**Full command reference:** `memory/testing-patterns.md` (corpus, bench, fuzz, etc.)
+**See:** `memory/testing-patterns.md` for all commands (test, clippy, fmt, bench, fuzz).
 
 ---
 
