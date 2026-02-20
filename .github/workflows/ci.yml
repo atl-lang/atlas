@@ -2,10 +2,11 @@
 #
 # Optimized for speed and minimal CI minutes:
 #
-# PR checks (~2 min):       fmt → clippy → test (ubuntu only)
-# Merge queue (~6 min):     fmt → clippy → test-matrix (3 platforms)
-# Main push (~5 min):       coverage only (tests already passed)
-# Nightly (scheduled):      Fuzz testing + MSRV + cross-platform validation
+# PR (code changes):        fmt → clippy → test (ubuntu only) ~2 min
+# PR (docs only):           fmt only ~15s
+# Merge queue:              fmt → clippy → test-matrix (3 platforms) ~6 min
+# Main push:                coverage only ~5 min (tests already passed)
+# Nightly:                  fuzz + MSRV ~10 min
 #
 # Benchmarks: Handled by dedicated bench.yml (has regression tracking)
 # Security:   Handled by dedicated security.yml
@@ -24,10 +25,8 @@ on:
       - ".gitignore"
   pull_request:
     branches: [main]
-    # No paths-ignore: CI must run for merge queue to work
   merge_group:
     branches: [main]
-    # No paths-ignore: Required for queue processing
   schedule:
     # Nightly at 04:00 UTC for fuzz testing and MSRV
     - cron: "0 4 * * *"
@@ -53,6 +52,27 @@ env:
 
 jobs:
   # ==========================================================================
+  # Change detection - Skip expensive jobs for docs-only PRs
+  # ==========================================================================
+
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**/*.rs'
+              - '**/Cargo.toml'
+              - '**/Cargo.lock'
+              - '.github/workflows/**'
+
+  # ==========================================================================
   # Fast checks - Run first, fail fast
   # ==========================================================================
 
@@ -69,7 +89,9 @@ jobs:
   clippy:
     name: Clippy
     runs-on: ubuntu-latest
-    needs: fmt
+    needs: [fmt, changes]
+    # Skip for docs-only PRs
+    if: needs.changes.outputs.code == 'true' || github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -84,10 +106,10 @@ jobs:
 
   test:
     name: Test
-    needs: clippy
+    needs: [clippy, changes]
     runs-on: ubuntu-latest
-    # Only run on PRs - tests already passed before merge, don't duplicate on main
-    if: github.event_name == 'pull_request'
+    # Only run on PRs with code changes - tests already passed before merge
+    if: github.event_name == 'pull_request' && needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
@@ -128,9 +150,9 @@ jobs:
 
   test-matrix:
     name: Test (${{ matrix.os }}/${{ matrix.rust }})
-    needs: clippy  # Wait for fast checks, then run cross-platform tests in parallel
-    # Only merge_group and schedule - NOT main push (already tested in merge queue)
-    if: github.event_name == 'merge_group' || github.event_name == 'schedule'
+    needs: [clippy, changes]
+    # Only merge_group and schedule with code changes - NOT main push
+    if: (github.event_name == 'merge_group' && needs.changes.outputs.code == 'true') || github.event_name == 'schedule'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -254,18 +276,23 @@ jobs:
   ci-success:
     name: CI Success
     if: always()
-    needs: [fmt, clippy, test]
+    needs: [fmt, clippy, test, changes]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs passed
         run: |
-          # fmt and clippy must always pass
-          if [[ "${{ needs.fmt.result }}" != "success" ]] || \
-             [[ "${{ needs.clippy.result }}" != "success" ]]; then
-            echo "Format or Clippy failed"
+          # fmt must always pass
+          if [[ "${{ needs.fmt.result }}" != "success" ]]; then
+            echo "Format failed"
             exit 1
           fi
-          # test must pass on PRs, but is skipped on main (already tested in PR)
+          # clippy must pass or be skipped (docs-only PRs)
+          if [[ "${{ needs.clippy.result }}" != "success" ]] && \
+             [[ "${{ needs.clippy.result }}" != "skipped" ]]; then
+            echo "Clippy failed"
+            exit 1
+          fi
+          # test must pass or be skipped (docs-only PRs, main push)
           if [[ "${{ needs.test.result }}" != "success" ]] && \
              [[ "${{ needs.test.result }}" != "skipped" ]]; then
             echo "Tests failed"
