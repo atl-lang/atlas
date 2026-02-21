@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-21 (Phase 01 complete)
+**Last Updated:** 2026-02-21 (Phase 02 complete)
 **Version:** v0.3 — The Foundation Version
-**Progress:** v0.2 COMPLETE ✅ | v0.3 Block 1 scaffolded — ready for execution
+**Progress:** v0.2 COMPLETE ✅ | v0.3 Block 1 in progress
 
 ---
 
 ## Current State
 
 **Status:** Block 1 in progress — executing phases
-**Last Completed:** Phase 01 — Define CoW Value Types (`ValueArray`, `ValueMap`)
-**Next Phase:** `phases/v0.3/block-01-memory-model/phase-02-value-display-debug.md`
+**Last Completed:** Phase 02 — Migrate `Value::Array` variant to `ValueArray`
+**Next Phase:** `phases/v0.3/block-01-memory-model/phase-03-migrate-collection-variants.md`
 
 > **Active block:** Block 1 — Memory Model (25 phases, execute sequentially)
 > Phase 16 (return value propagation) is the highest-risk phase — read it before starting Phase 07.
