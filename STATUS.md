@@ -89,6 +89,23 @@ Top research priorities (after completion sprint):
 
 ---
 
+## Handoff Protocol
+
+**When you complete a phase:**
+1. Mark ⬜ → ✅ in this file
+2. Update "Last Completed" and "Next Phase"
+3. Update category count in progress table
+4. Update "Last Updated" date
+5. Check memory (GATE 7)
+6. Commit all changes to feature branch
+7. Push and create PR
+8. Wait for CI: `fmt → clippy → test → ci-success`
+9. Merge PR (squash), delete branch
+10. Sync local main: `git checkout main && git pull`
+11. Report completion (user is NOT involved in Git operations)
+
+---
+
 ## Quick Links
 
 | Resource | Location |
