@@ -8,10 +8,11 @@
 
 ## Current State
 
-**Status:** Block 1 scaffolded (25 phases) — begin execution at Phase-01
-**Next action:** `Start Phase-01` in `phases/v0.3/block-01-memory-model/`
+**Status:** Block 1 in progress — executing phases
+**Last Completed:** _(none yet — Block 1 execution not started)_
+**Next Phase:** `phases/v0.3/block-01-memory-model/phase-01-define-cow-value-types.md`
 
-> **Active phases:** `phases/v0.3/block-01-memory-model/` — 25 phases, execute sequentially.
+> **Active block:** Block 1 — Memory Model (25 phases, execute sequentially)
 > Phase 16 (return value propagation) is the highest-risk phase — read it before starting Phase 07.
 
 ---
