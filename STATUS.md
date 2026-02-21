@@ -1,14 +1,14 @@
 # Atlas Implementation Status
 
 **Last Updated:** 2026-02-21
-**Version:** v0.2 completion sprint | **Progress:** 133/133 v0.2 phases + 5/5 completion phases done
+**Version:** v0.2 completion sprint | **Progress:** 133/133 v0.2 phases + 6/6 completion phases done
 
 ---
 
 ## Current Phase
 
-**Status:** v0.2 Completion Sprint — closing gaps before v0.3
-**Next:** v0.3 planning (see V03_EXPLORATION_PLAN.md)
+**Status:** v0.2 Completion Sprint — COMPLETE ✅
+**Next:** v0.3 planning (see docs/internal/V03_EXPLORATION_PLAN.md)
 
 > **Why a completion sprint?** Post-mortem intel revealed 3 genuine v0.2 gaps:
 > match/Result/Option has no dedicated test suite, stdlib has 15-20% shallow implementations,
@@ -25,8 +25,9 @@
 | v02-completion-03 | `phases/v02-completion/phase-03-stdlib-core-hardening.md` | ✅ Complete |
 | v02-completion-04 | `phases/v02-completion/phase-04-stdlib-extended-hardening.md` | ✅ Complete |
 | v02-completion-05 | `phases/v02-completion/phase-05-jit-status-and-closure-foundations.md` | ✅ Complete |
+| v02-completion-06 | `fix/closure-spec-sync` — Closure spec accuracy + capture-by-value behavioral pins | ✅ Complete |
 
-**Execution order:** 01 → 02 → 03 → 04 → 05 (sequential, each depends on previous)
+**Execution order:** 01 → 02 → 03 → 04 → 05 → 06 (sequential, each depends on previous)
 
 ---
 
