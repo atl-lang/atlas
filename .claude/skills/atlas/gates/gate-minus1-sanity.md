@@ -38,7 +38,38 @@ Classify the current worktree state and resolve it autonomously:
 
 ---
 
-## Step 2: Sync from Remote
+## Step 2: Memory Symlink Check
+
+Worktrees each get their own Claude project folder. Without a symlink, each worktree maintains separate memories — defeating the shared memory system.
+
+```bash
+WORKTREE_ID=$(cat .worktree-id 2>/dev/null || echo "unknown")
+MAIN_MEMORY="$HOME/.claude/projects/-Users-proxikal-dev-projects-atlas/memory"
+
+# Determine this worktree's Claude project folder
+case "$WORKTREE_ID" in
+  dev)  PROJECT_DIR="$HOME/.claude/projects/-Users-proxikal-dev-projects-atlas-dev" ;;
+  docs) PROJECT_DIR="$HOME/.claude/projects/-Users-proxikal-dev-projects-atlas-docs" ;;
+  *)    PROJECT_DIR="" ;;  # main worktree — no symlink needed
+esac
+
+# Create symlink if this is a non-main worktree and symlink is missing
+if [ -n "$PROJECT_DIR" ]; then
+  mkdir -p "$PROJECT_DIR"
+  if [ ! -L "$PROJECT_DIR/memory" ]; then
+    ln -s "$MAIN_MEMORY" "$PROJECT_DIR/memory"
+    echo "Memory symlink created for worktree/$WORKTREE_ID"
+  fi
+fi
+```
+
+→ **If symlink already exists:** Nothing to do, proceed.
+→ **If symlink was just created:** Note it once, proceed. Memory is now unified.
+→ **If worktree is `main`:** No action needed — main worktree owns the canonical memory.
+
+---
+
+## Step 3: Sync from Remote
 
 ```bash
 git fetch origin                          # Download remote state (safe, touches nothing)
@@ -52,7 +83,7 @@ git log HEAD..origin/main --oneline       # Is remote ahead of local main?
 
 ---
 
-## Step 3: Other Worktrees (Awareness Only)
+## Step 4: Other Worktrees (Awareness Only)
 
 Read `git worktree list` output from Step 1. For each other worktree:
 
@@ -66,7 +97,7 @@ Read `git worktree list` output from Step 1. For each other worktree:
 
 ---
 
-## Step 4: Branch Setup
+## Step 5: Branch Setup
 
 ```bash
 git rebase main                           # Sync home branch to local main (NOT origin/main)
@@ -77,7 +108,7 @@ If resuming an existing feature branch (from Step 1 State 2): skip branch creati
 
 ---
 
-## Step 5: Full Build Verification
+## Step 6: Full Build Verification
 
 ```bash
 cargo build --workspace
@@ -87,7 +118,7 @@ cargo build --workspace
 
 ---
 
-## Step 6: Security Scan
+## Step 7: Security Scan
 
 ```bash
 cargo audit
@@ -103,7 +134,7 @@ cargo install cargo-audit
 
 ---
 
-## Step 7: Phase Evaluation
+## Step 8: Phase Evaluation
 
 1. **Read phase blockers:** Check `🚨 BLOCKERS` section in phase file
 2. **Verify dependencies:** Check spec → check codebase → decide autonomously
