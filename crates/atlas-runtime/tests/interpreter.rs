@@ -2813,13 +2813,15 @@ fn test_array_assignment() {
 
 #[test]
 fn test_array_reference_semantics() {
+    // CoW value semantics: arr2 is a logical copy of arr1.
+    // Mutating arr1[0] triggers CoW — arr2 retains the original value.
     let code = r#"
         let arr1: number[] = [1, 2, 3];
         let arr2: number[] = arr1;
         arr1[0] = 42;
         arr2[0]
     "#;
-    assert_eval_number(code, 42.0);
+    assert_eval_number(code, 1.0);
 }
 
 #[test]
@@ -2886,6 +2888,8 @@ fn test_array_invalid_index(#[case] code: &str, #[case] error_code: &str) {
 
 #[test]
 fn test_array_mutation_in_function() {
+    // CoW value semantics: function receives a logical copy of the array.
+    // Mutations inside the function do not affect the caller's binding.
     let code = r#"
         fn modify(arr: number[]) -> void {
             arr[0] = 999;
@@ -2894,7 +2898,7 @@ fn test_array_mutation_in_function() {
         modify(numbers);
         numbers[0]
     "#;
-    assert_eval_number(code, 999.0);
+    assert_eval_number(code, 1.0);
 }
 
 #[test]
@@ -2913,13 +2917,15 @@ fn test_array_aliasing_multiple_aliases() {
 
 #[test]
 fn test_array_aliasing_nested_arrays() {
+    // CoW value semantics: `row` is a logical copy of matrix[0].
+    // Mutating row[0] does not affect matrix[0][0].
     let code = r#"
         let matrix: number[][] = [[1, 2], [3, 4]];
         let row: number[] = matrix[0];
         row[0] = 99;
         matrix[0][0]
     "#;
-    assert_eval_number(code, 99.0);
+    assert_eval_number(code, 1.0);
 }
 
 #[test]
@@ -2934,12 +2940,14 @@ fn test_array_aliasing_identity_equality() {
 
 #[test]
 fn test_array_aliasing_different_arrays_not_equal() {
+    // CoW value semantics: equality is structural (same content = equal).
+    // Two independently-constructed [1,2,3] arrays are equal.
     let code = r#"
         let arr1: number[] = [1, 2, 3];
         let arr2: number[] = [1, 2, 3];
         arr1 == arr2
     "#;
-    assert_eval_bool(code, false);
+    assert_eval_bool(code, true);
 }
 
 #[test]

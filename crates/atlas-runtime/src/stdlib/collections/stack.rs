@@ -83,7 +83,7 @@ use crate::span::Span;
 use crate::stdlib::stdlib_arity_error;
 use crate::value::{RuntimeError, ValueStack};
 
-fn extract_stack_ref<'a>(value: &'a Value, span: Span) -> Result<&'a ValueStack, RuntimeError> {
+fn extract_stack_ref(value: &Value, span: Span) -> Result<&ValueStack, RuntimeError> {
     match value {
         Value::Stack(s) => Ok(s),
         _ => Err(RuntimeError::TypeError {

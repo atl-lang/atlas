@@ -202,7 +202,9 @@ pub struct ValueHashMap(Arc<crate::stdlib::collections::hashmap::AtlasHashMap>);
 
 impl ValueHashMap {
     pub fn new() -> Self {
-        ValueHashMap(Arc::new(crate::stdlib::collections::hashmap::AtlasHashMap::new()))
+        ValueHashMap(Arc::new(
+            crate::stdlib::collections::hashmap::AtlasHashMap::new(),
+        ))
     }
 
     pub fn inner(&self) -> &crate::stdlib::collections::hashmap::AtlasHashMap {
@@ -235,7 +237,9 @@ pub struct ValueHashSet(Arc<crate::stdlib::collections::hashset::AtlasHashSet>);
 
 impl ValueHashSet {
     pub fn new() -> Self {
-        ValueHashSet(Arc::new(crate::stdlib::collections::hashset::AtlasHashSet::new()))
+        ValueHashSet(Arc::new(
+            crate::stdlib::collections::hashset::AtlasHashSet::new(),
+        ))
     }
 
     pub fn inner(&self) -> &crate::stdlib::collections::hashset::AtlasHashSet {
@@ -268,7 +272,9 @@ pub struct ValueQueue(Arc<crate::stdlib::collections::queue::AtlasQueue>);
 
 impl ValueQueue {
     pub fn new() -> Self {
-        ValueQueue(Arc::new(crate::stdlib::collections::queue::AtlasQueue::new()))
+        ValueQueue(Arc::new(
+            crate::stdlib::collections::queue::AtlasQueue::new(),
+        ))
     }
 
     pub fn inner(&self) -> &crate::stdlib::collections::queue::AtlasQueue {
@@ -296,7 +302,9 @@ pub struct ValueStack(Arc<crate::stdlib::collections::stack::AtlasStack>);
 
 impl ValueStack {
     pub fn new() -> Self {
-        ValueStack(Arc::new(crate::stdlib::collections::stack::AtlasStack::new()))
+        ValueStack(Arc::new(
+            crate::stdlib::collections::stack::AtlasStack::new(),
+        ))
     }
 
     pub fn inner(&self) -> &crate::stdlib::collections::stack::AtlasStack {
@@ -997,10 +1005,7 @@ mod tests {
     fn test_array_can_be_sent_to_thread() {
         use std::thread;
 
-        let arr = Value::Array(Arc::new(Mutex::new(vec![
-            Value::Number(1.0),
-            Value::Number(2.0),
-        ])));
+        let arr = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
         let handle = thread::spawn(move || arr);
         let result = handle.join().unwrap();
         assert!(matches!(result, Value::Array(_)));
@@ -1496,19 +1501,35 @@ mod cow_type_tests {
 
     #[test]
     fn value_hashmap_cow_insert_does_not_affect_clone() {
+        use crate::stdlib::collections::hash::HashKey;
+        use std::sync::Arc;
         let mut a = ValueHashMap::new();
-        a.inner_mut().insert("x".to_string(), Value::Number(1.0));
+        a.inner_mut().insert(
+            HashKey::String(Arc::new("x".to_string())),
+            Value::Number(1.0),
+        );
         let b = a.clone();
-        a.inner_mut().insert("y".to_string(), Value::Number(2.0));
+        a.inner_mut().insert(
+            HashKey::String(Arc::new("y".to_string())),
+            Value::Number(2.0),
+        );
         assert_eq!(b.inner().len(), 1);
     }
 
     #[test]
     fn value_collection_equality_by_content() {
+        use crate::stdlib::collections::hash::HashKey;
+        use std::sync::Arc;
         let mut a = ValueHashMap::new();
-        a.inner_mut().insert("k".to_string(), Value::Number(1.0));
+        a.inner_mut().insert(
+            HashKey::String(Arc::new("k".to_string())),
+            Value::Number(1.0),
+        );
         let mut b = ValueHashMap::new();
-        b.inner_mut().insert("k".to_string(), Value::Number(1.0));
+        b.inner_mut().insert(
+            HashKey::String(Arc::new("k".to_string())),
+            Value::Number(1.0),
+        );
         assert_eq!(a, b);
     }
 

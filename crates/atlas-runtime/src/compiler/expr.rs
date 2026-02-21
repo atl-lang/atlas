@@ -90,7 +90,97 @@ impl Compiler {
         self.bytecode.emit(Opcode::Call, call.span);
         self.bytecode.emit_u8(call.args.len() as u8);
 
+        // CoW write-back: collection mutation builtins return the new collection.
+        // If the first argument is an identifier, write the result back to that variable.
+        self.emit_cow_writeback_if_needed(func_name, call);
+
         Ok(())
+    }
+
+    /// Emit CoW write-back bytecode after a collection mutation builtin call.
+    ///
+    /// - RETURNS_COLLECTION: `SetLocal/SetGlobal(var)` (peek, keeps value on stack)
+    /// - RETURNS_PAIR `[extracted, new_col]`: dup → index(1) → set_var → pop → index(0)
+    ///   Result on stack becomes just `extracted` (item), new_col is written to var.
+    fn emit_cow_writeback_if_needed(&mut self, func_name: &str, call: &CallExpr) {
+        const RETURNS_COLLECTION: &[&str] = &[
+            "hashMapPut",
+            "hashMapClear",
+            "hashSetAdd",
+            "hashSetClear",
+            "queueEnqueue",
+            "queueClear",
+            "stackPush",
+            "stackClear",
+        ];
+        const RETURNS_PAIR: &[&str] =
+            &["hashMapRemove", "hashSetRemove", "queueDequeue", "stackPop"];
+
+        let first_ident = call.args.first().and_then(|e| {
+            if let Expr::Identifier(id) = e {
+                Some(id.name.as_str())
+            } else {
+                None
+            }
+        });
+        let var_name = match first_ident {
+            Some(n) => n,
+            None => return,
+        };
+
+        if RETURNS_COLLECTION.contains(&func_name) {
+            // Stack: new_collection
+            // Emit SetLocal/SetGlobal (peek — keeps value on stack for caller)
+            self.emit_force_writeback(var_name, call.span);
+        } else if RETURNS_PAIR.contains(&func_name) {
+            // Stack: [extracted, new_collection]
+            // Dup → [..., pair, pair]
+            // Constant(1), GetIndex → [..., pair, new_collection]
+            // SetLocal/SetGlobal(var) — peek, keeps new_collection on stack
+            // Pop → [..., pair]
+            // Constant(0), GetIndex → [..., extracted]
+            self.bytecode.emit(Opcode::Dup, call.span);
+            let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
+            self.bytecode.emit(Opcode::Constant, call.span);
+            self.bytecode.emit_u16(idx1);
+            self.bytecode.emit(Opcode::GetIndex, call.span);
+            self.emit_force_writeback(var_name, call.span);
+            self.bytecode.emit(Opcode::Pop, call.span);
+            let idx0 = self.bytecode.add_constant(crate::value::Value::Number(0.0));
+            self.bytecode.emit(Opcode::Constant, call.span);
+            self.bytecode.emit_u16(idx0);
+            self.bytecode.emit(Opcode::GetIndex, call.span);
+        }
+    }
+
+    /// Emit SetLocal or SetGlobal for `var_name`, bypassing mutability checks.
+    ///
+    /// This mirrors `force_set_collection` in the interpreter: container content
+    /// mutation is not a variable rebinding, so mutability doesn't apply.
+    fn emit_force_writeback(&mut self, var_name: &str, span: Span) {
+        if let Some(local_idx) = self.resolve_local(var_name) {
+            let local = &self.locals[local_idx];
+            if local.depth < self.scope_depth && !self.upvalue_stack.is_empty() {
+                let upvalue_idx = self.register_upvalue(var_name, local_idx);
+                self.bytecode.emit(Opcode::SetUpvalue, span);
+                self.bytecode.emit_u16(upvalue_idx as u16);
+            } else {
+                let function_relative_idx = if local.depth < self.scope_depth {
+                    local_idx
+                } else {
+                    local_idx - self.current_function_base
+                };
+                self.bytecode.emit(Opcode::SetLocal, span);
+                self.bytecode.emit_u16(function_relative_idx as u16);
+            }
+        } else {
+            // Global variable (or doesn't exist — silently skip)
+            let name_idx = self
+                .bytecode
+                .add_constant(crate::value::Value::string(var_name));
+            self.bytecode.emit(Opcode::SetGlobal, span);
+            self.bytecode.emit_u16(name_idx);
+        }
     }
 
     /// Compile a member expression (method call)

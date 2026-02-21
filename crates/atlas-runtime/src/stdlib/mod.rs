@@ -1572,7 +1572,7 @@ fn extract_array(
     span: crate::span::Span,
 ) -> Result<Vec<Value>, RuntimeError> {
     match value {
-        Value::Array(arr) => Ok(arr.lock().unwrap().clone()),
+        Value::Array(arr) => Ok(arr.as_slice().to_vec()),
         _ => Err(stdlib_arg_error(func_name, "array", value, span)),
     }
 }
@@ -1627,7 +1627,7 @@ pub fn print(
 pub fn len(value: &Value, span: crate::span::Span) -> Result<f64, RuntimeError> {
     match value {
         Value::String(s) => Ok(s.chars().count() as f64), // Unicode scalar count
-        Value::Array(arr) => Ok(arr.lock().unwrap().len() as f64),
+        Value::Array(arr) => Ok(arr.len() as f64),
         _ => Err(stdlib_arg_error("len", "string or array", value, span)),
     }
 }

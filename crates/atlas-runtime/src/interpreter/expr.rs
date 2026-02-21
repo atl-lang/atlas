@@ -282,7 +282,16 @@ impl Interpreter {
                     .current_security
                     .as_ref()
                     .expect("Security context not set");
-                crate::stdlib::call_builtin(name, &args, call.span, security, &self.output_writer)
+                let result = crate::stdlib::call_builtin(
+                    name,
+                    &args,
+                    call.span,
+                    security,
+                    &self.output_writer,
+                )?;
+                // CoW write-back: collection mutation builtins return the new collection
+                // but the caller's variable still holds the old value. Write it back.
+                self.apply_cow_writeback(name, result, &call.args, call.span)
             }
             Value::Function(func_ref) => {
                 // Extern function - check if it's an FFI function
@@ -1957,5 +1966,72 @@ impl Interpreter {
                 span,
             }),
         }
+    }
+
+    /// Apply CoW write-back for collection mutation builtins.
+    ///
+    /// When a builtin mutates a collection by returning a new value, we write the
+    /// new value back to the first argument variable (if it's an identifier).
+    ///
+    /// - "returns new collection" builtins: write `result` back to arg[0]
+    /// - "returns [extracted, new collection]" builtins: write `result[1]` back to arg[0]
+    fn apply_cow_writeback(
+        &mut self,
+        name: &str,
+        result: Value,
+        call_args: &[Expr],
+        _span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        // Builtins that return the modified collection directly
+        const RETURNS_COLLECTION: &[&str] = &[
+            "hashMapPut",
+            "hashMapClear",
+            "hashSetAdd",
+            "hashSetClear",
+            "queueEnqueue",
+            "queueClear",
+            "stackPush",
+            "stackClear",
+        ];
+
+        // Builtins that return [extracted_value, new_collection]
+        const RETURNS_PAIR: &[&str] =
+            &["hashMapRemove", "hashSetRemove", "queueDequeue", "stackPop"];
+
+        // Identify first arg as an identifier (only then can we write back)
+        let first_ident = call_args.first().and_then(|e| {
+            if let Expr::Identifier(id) = e {
+                Some(id.name.clone())
+            } else {
+                None
+            }
+        });
+
+        if let Some(var_name) = first_ident {
+            if RETURNS_COLLECTION.contains(&name) {
+                // Bypass mutability check: this is container content mutation,
+                // not a variable rebinding.
+                self.force_set_collection(&var_name, result.clone());
+                return Ok(result);
+            }
+
+            if RETURNS_PAIR.contains(&name) {
+                // result is [extracted_value, new_collection].
+                // Write new_collection back to variable, return only extracted_value.
+                // Atlas-level: `let item = queueDequeue(q)` → item is Option, q is updated.
+                if let Value::Array(ref arr) = result {
+                    let s = arr.as_slice();
+                    if s.len() == 2 {
+                        let extracted = s[0].clone();
+                        let new_col = s[1].clone();
+                        self.force_set_collection(&var_name, new_col);
+                        return Ok(extracted);
+                    }
+                }
+                return Ok(result);
+            }
+        }
+
+        Ok(result)
     }
 }

@@ -159,7 +159,14 @@ pub fn from_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let array = match &args[0] {
         Value::Array(arr) => arr.as_slice().to_vec(),
-        _ => return Err(stdlib_arg_error("HashSet.fromArray", "array", &args[0], span)),
+        _ => {
+            return Err(stdlib_arg_error(
+                "HashSet.fromArray",
+                "array",
+                &args[0],
+                span,
+            ))
+        }
     };
 
     let mut set = AtlasHashSet::new();
@@ -198,7 +205,12 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let existed = if let Value::HashSet(ref mut s) = set_val {
         s.inner_mut().remove(&key)
     } else {
-        return Err(stdlib_arg_error("HashSet.remove", "HashSet", &args[0], span));
+        return Err(stdlib_arg_error(
+            "HashSet.remove",
+            "HashSet",
+            &args[0],
+            span,
+        ));
     };
 
     Ok(Value::array(vec![Value::Bool(existed), set_val]))
@@ -351,7 +363,12 @@ pub fn to_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let set = extract_hashset_ref("HashSet.toArray", &args[0], span)?;
-    let elements: Vec<Value> = set.inner().to_vec().into_iter().map(|k| k.to_value()).collect();
+    let elements: Vec<Value> = set
+        .inner()
+        .to_vec()
+        .into_iter()
+        .map(|k| k.to_value())
+        .collect();
     Ok(Value::array(elements))
 }
 

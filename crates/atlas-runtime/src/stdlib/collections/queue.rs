@@ -86,7 +86,7 @@ use crate::span::Span;
 use crate::stdlib::stdlib_arity_error;
 use crate::value::{RuntimeError, ValueQueue};
 
-fn extract_queue_ref<'a>(value: &'a Value, span: Span) -> Result<&'a ValueQueue, RuntimeError> {
+fn extract_queue_ref(value: &Value, span: Span) -> Result<&ValueQueue, RuntimeError> {
     match value {
         Value::Queue(q) => Ok(q),
         _ => Err(RuntimeError::TypeError {
