@@ -60,10 +60,17 @@ Once configured, you'll have:
 - ✅ **Hover Information** - Type info and documentation on hover
 - ✅ **Code Actions** - Quick fixes and refactorings
 - ✅ **Symbol Navigation** - Go to symbol, outline view
+- ✅ **Workspace Symbols** - Search symbols across the project
 - ✅ **Folding** - Collapse/expand functions and blocks
 - ✅ **Inlay Hints** - Inline type annotations
 - ✅ **Auto-Formatting** - Format document/selection
 - ✅ **Completion** - Context-aware code completion
+- ✅ **Signature Help** - Parameter hints while typing
+- ✅ **Go to Definition** - Ctrl+Click to navigate to definitions
+- ✅ **Find All References** - Find all usages of a symbol
+- ✅ **Call Hierarchy** - Navigate call graphs (incoming/outgoing)
+- ✅ **Rename Symbol** - Rename across the workspace
+- ✅ **Diagnostics** - Real-time errors and warnings
 
 ---
 
@@ -72,9 +79,14 @@ Once configured, you'll have:
 | Action | Shortcut (Mac) | Shortcut (Win/Linux) |
 |--------|----------------|----------------------|
 | Go to Symbol | Cmd+Shift+O | Ctrl+Shift+O |
+| Workspace Symbols | Cmd+T | Ctrl+T |
 | Format Document | Shift+Alt+F | Shift+Alt+F |
 | Hover | Hover mouse | Hover mouse |
 | Code Actions | Cmd+. | Ctrl+. |
+| Go to Definition | F12 | F12 |
+| Find All References | Shift+F12 | Shift+F12 |
+| Rename Symbol | F2 | F2 |
+| Call Hierarchy | Right-click → Call Hierarchy | Right-click → Call Hierarchy |
 | Command Palette | Cmd+Shift+P | Ctrl+Shift+P |
 
 ---

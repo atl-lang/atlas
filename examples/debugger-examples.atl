@@ -1,0 +1,178 @@
+// Atlas Debugger Examples
+// Demonstrates common debugging patterns and techniques
+// Version: v0.2
+//
+// Run with: atlas debug debugger-examples.atl
+// See: docs/vm-debugger-guide.md for full documentation
+
+// ============================================================
+// EXAMPLE 1: Basic Debugging
+// ============================================================
+// Try: set breakpoint at 'divide', step through, inspect variables
+
+fn divide(a: number, b: number) -> Result<number, string> {
+    if b == 0 {
+        return Err("division by zero");
+    }
+    let result = a / b;
+    return Ok(result);
+}
+
+// (debug) break divide
+// (debug) continue
+let r1 = divide(10, 2);
+let r2 = divide(5, 0);
+
+// ============================================================
+// EXAMPLE 2: Loop Debugging
+// ============================================================
+// Try: break at line inside loop, use 'next' to step, watch variables
+
+fn sum_array(arr: array) -> number {
+    let total = 0;
+    let i = 0;
+    while i < len(arr) {
+        total = total + arr[i];   // <-- set breakpoint here
+        i = i + 1;
+    }
+    return total;
+}
+
+let nums = [1, 2, 3, 4, 5];
+let sum = sum_array(nums);
+// (debug) inspect total after each iteration
+
+// ============================================================
+// EXAMPLE 3: Backtrace Navigation
+// ============================================================
+// Try: break at 'inner', use 'backtrace' to see call stack
+
+fn outer(x: number) -> number {
+    return middle(x + 1);
+}
+
+fn middle(x: number) -> number {
+    return inner(x * 2);
+}
+
+fn inner(x: number) -> number {
+    // (debug) vars        -- see x
+    // (debug) backtrace   -- see: inner <- middle <- outer <- main
+    return x + 10;
+}
+
+let deep_result = outer(5);
+// Expected: outer(5) → middle(6) → inner(12) → 22
+
+// ============================================================
+// EXAMPLE 4: Debugging with Result Types
+// ============================================================
+// Try: set breakpoint, inspect Result values
+
+fn parse_age(s: string) -> Result<number, string> {
+    let trimmed = trim(s);
+    if len(trimmed) == 0 {
+        return Err("age cannot be empty");
+    }
+    let n = parseFloat(trimmed);
+    if n < 0 || n > 150 {
+        return Err("age out of range");
+    }
+    return Ok(n);
+}
+
+fn process_user(name: string, age_str: string) -> void {
+    let age_result = parse_age(age_str);
+    // (debug) inspect age_result
+    if is_ok(age_result) {
+        let age = unwrap(age_result);
+        print(concat(name, concat(" is ", concat(str(age), " years old"))));
+    } else {
+        let err = unwrap(result_err(age_result));
+        print(concat("Error for ", concat(name, concat(": ", err))));
+    }
+}
+
+process_user("Alice", "30");
+process_user("Bob", "-5");
+process_user("Charlie", "");
+
+// ============================================================
+// EXAMPLE 5: Debugging Recursive Functions
+// ============================================================
+// Try: step through recursion, watch the stack grow
+
+fn fibonacci(n: number) -> number {
+    if n <= 1 {
+        return n;
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}
+
+// (debug) break fibonacci
+// (debug) continue
+// Watch the recursive calls in backtrace
+let fib10 = fibonacci(10);
+assertEqual(fib10, 55);
+
+// ============================================================
+// EXAMPLE 6: Debugging Object State
+// ============================================================
+// Try: inspect object fields at different points
+
+fn make_counter(initial: number) -> object {
+    return {
+        value: initial,
+        increment: || {
+            // Can inspect 'value' during step
+            return initial + 1;
+        }
+    };
+}
+
+let counter = make_counter(0);
+// (debug) inspect counter
+// (debug) inspect counter.value
+
+// ============================================================
+// EXAMPLE 7: Conditional Breakpoint Scenario
+// ============================================================
+// Try: break at the array access when i == 5
+// (debug) break <line> if i == 5
+
+fn find_negative(arr: array) -> number {
+    for i in 0..len(arr) {
+        let val = arr[i];
+        if val < 0 {
+            return i;    // <-- break here if i == 5
+        }
+    }
+    return -1;
+}
+
+let data = [1, 2, 3, 4, 5, -1, 7, 8];
+let neg_idx = find_negative(data);
+assertEqual(neg_idx, 5);
+
+// ============================================================
+// EXAMPLE 8: Debugging String Processing
+// ============================================================
+
+fn parse_csv_row(row: string) -> array {
+    let cells = split(row, ",");
+    let result = [];
+    for cell in cells {
+        result = result + [trim(cell)];
+    }
+    return result;
+}
+
+let csv_data = "Alice, 30, Engineer\nBob, 25, Designer";
+let rows = split(csv_data, "\n");
+for row in rows {
+    let fields = parse_csv_row(row);
+    // (debug) inspect fields
+    assertLength(fields, 3);
+}
+
+print("Debugger examples complete!");

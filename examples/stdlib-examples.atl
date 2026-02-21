@@ -1,0 +1,592 @@
+// Atlas Standard Library Examples
+// Comprehensive examples demonstrating all stdlib function categories
+// Version: v0.2
+
+// ============================================================
+// CORE FUNCTIONS
+// ============================================================
+
+// print - Output values
+print("Hello, World!");
+print(42);
+print(true);
+print([1, 2, 3]);
+print({ name: "Atlas", version: "0.2" });
+
+// len - Length of strings and arrays
+assertEqual(len("hello"), 5);
+assertEqual(len(""), 0);
+assertEqual(len([1, 2, 3]), 3);
+assertEqual(len([]), 0);
+
+// str / toString - Convert to string
+assertEqual(str(42), "42");
+assertEqual(str(true), "true");
+assertEqual(str(null), "null");
+assertEqual(toString(3.14), "3.14");
+
+// typeof - Get type name
+assertEqual(typeof(42), "number");
+assertEqual(typeof("hi"), "string");
+assertEqual(typeof(true), "bool");
+assertEqual(typeof(null), "null");
+assertEqual(typeof([]), "array");
+assertEqual(typeof({}), "object");
+
+// Type conversion
+assertEqual(toNumber("42"), 42);
+assertEqual(toNumber(true), 1);
+assertEqual(toNumber(false), 0);
+assertEqual(toBool(0), false);
+assertEqual(toBool(1), true);
+assertEqual(toBool(""), false);
+assertEqual(toBool("x"), true);
+
+// hasField - Object field checking
+let obj = { name: "Alice", age: 30 };
+assertEqual(hasField(obj, "name"), true);
+assertEqual(hasField(obj, "email"), false);
+
+// Option functions
+let some_val = Some(42);
+let no_val = None;
+assertEqual(is_some(some_val), true);
+assertEqual(is_none(no_val), true);
+assertEqual(unwrap(some_val), 42);
+assertEqual(unwrap_or(no_val, 0), 0);
+assertEqual(unwrap_or(some_val, 0), 42);
+assertEqual(expect(some_val, "must have value"), 42);
+
+// Result functions
+let ok_val = Ok(99);
+let err_val = Err("oops");
+assertEqual(is_ok(ok_val), true);
+assertEqual(is_err(err_val), true);
+assertEqual(unwrap(ok_val), 99);
+let err_option = result_err(err_val);
+assertEqual(is_some(err_option), true);
+
+// ============================================================
+// STRING FUNCTIONS
+// ============================================================
+
+// split and join
+let parts = split("a,b,c", ",");
+assertEqual(parts, ["a", "b", "c"]);
+assertEqual(join(["x", "y", "z"], "-"), "x-y-z");
+assertEqual(join([], ","), "");
+
+// trim variants
+assertEqual(trim("  hello  "), "hello");
+assertEqual(trimStart("  hello  "), "hello  ");
+assertEqual(trimEnd("  hello  "), "  hello");
+
+// Case conversion
+assertEqual(toUpperCase("hello"), "HELLO");
+assertEqual(toLowerCase("WORLD"), "world");
+assertEqual(toUpperCase("Hello, Atlas!"), "HELLO, ATLAS!");
+
+// startsWith / endsWith / includes
+assertEqual(startsWith("hello world", "hello"), true);
+assertEqual(startsWith("hello world", "world"), false);
+assertEqual(endsWith("hello world", "world"), true);
+assertEqual(endsWith("hello world", "hello"), false);
+assertEqual(includes("hello world", "lo wo"), true);
+assertEqual(includes("hello world", "xyz"), false);
+
+// indexOf / lastIndexOf
+assertEqual(indexOf("hello", "ll"), 2);
+assertEqual(indexOf("hello", "xyz"), -1);
+assertEqual(lastIndexOf("hello hello", "hello"), 6);
+
+// replace
+assertEqual(replace("hello world", "world", "Atlas"), "hello Atlas");
+assertEqual(replace("aaa", "a", "b"), "baa");
+
+// repeat
+assertEqual(repeat("ab", 3), "ababab");
+assertEqual(repeat("x", 0), "");
+
+// substring and charAt
+assertEqual(substring("hello world", 6, 11), "world");
+assertEqual(charAt("hello", 0), "h");
+assertEqual(charAt("hello", 4), "o");
+
+// padStart / padEnd
+assertEqual(padStart("42", 5, "0"), "00042");
+assertEqual(padEnd("hi", 5, "."), "hi...");
+
+// concat
+assertEqual(concat("hello", " world"), "hello world");
+
+// parseInt / parseFloat
+assertEqual(parseInt("42"), 42);
+assertEqual(parseInt("-7"), -7);
+assertEqual(parseFloat("3.14"), 3.14);
+assertEqual(parseFloat("-2.718"), -2.718);
+
+// ============================================================
+// ARRAY FUNCTIONS
+// ============================================================
+
+// reverse
+assertEqual(reverse([1, 2, 3]), [3, 2, 1]);
+assertEqual(reverse(["a", "b", "c"]), ["c", "b", "a"]);
+assertEqual(reverse([]), []);
+
+// flatten
+assertEqual(flatten([[1, 2], [3, 4]]), [1, 2, 3, 4]);
+assertEqual(flatten([1, [2, [3]]]), [1, 2, [3]]);
+
+// slice
+assertEqual(slice([1, 2, 3, 4, 5], 1, 4), [2, 3, 4]);
+assertEqual(slice([1, 2, 3], 0, 2), [1, 2]);
+
+// pop and shift
+let arr1 = [1, 2, 3];
+let last = pop(arr1);
+assertEqual(last, 3);
+
+let arr2 = [1, 2, 3];
+let first = shift(arr2);
+assertEqual(first, 1);
+
+// unshift
+let arr3 = [2, 3];
+unshift(arr3, 1);
+assertEqual(arr3, [1, 2, 3]);
+
+// arrayIncludes
+assertEqual(arrayIncludes([1, 2, 3], 2), true);
+assertEqual(arrayIncludes(["a", "b"], "c"), false);
+assertEqual(arrayIncludes([[1, 2]], [1, 2]), true);
+
+// arrayIndexOf / arrayLastIndexOf
+assertEqual(arrayIndexOf([10, 20, 30], 20), 1);
+assertEqual(arrayIndexOf([1, 2, 3], 99), -1);
+assertEqual(arrayLastIndexOf([1, 2, 1], 1), 2);
+
+// ============================================================
+// MATH FUNCTIONS
+// ============================================================
+
+// Basic math
+assertEqual(abs(-5), 5);
+assertEqual(abs(3), 3);
+assertEqual(floor(3.7), 3);
+assertEqual(floor(-1.2), -2);
+assertEqual(ceil(3.1), 4);
+assertEqual(ceil(-1.9), -1);
+assertEqual(round(3.5), 4);
+assertEqual(round(2.5), 2);
+
+// Powers and roots
+assertEqual(sqrt(9), 3);
+assertEqual(pow(2, 10), 1024);
+assertEqual(pow(3, 0), 1);
+
+// Logarithm and trig
+let ln1 = log(1);
+assertEqual(ln1, 0);
+
+let sin0 = sin(0);
+assertEqual(sin0, 0);
+let cos0 = cos(0);
+assertEqual(cos0, 1);
+
+// min / max / clamp
+assertEqual(max(3, 7), 7);
+assertEqual(min(3, 7), 3);
+assertEqual(clamp(5, 0, 10), 5);
+assertEqual(clamp(-3, 0, 10), 0);
+assertEqual(clamp(15, 0, 10), 10);
+
+// sign
+assertEqual(sign(-7), -1);
+assertEqual(sign(0), 0);
+assertEqual(sign(3), 1);
+
+// random - just verify it's in range
+let r = random();
+assert(r >= 0, "random >= 0");
+assert(r < 1, "random < 1");
+
+// ============================================================
+// TYPE CHECKING FUNCTIONS
+// ============================================================
+
+// Type checking predicates
+assertEqual(isString("hello"), true);
+assertEqual(isString(42), false);
+assertEqual(isNumber(3.14), true);
+assertEqual(isNumber("3"), false);
+assertEqual(isBool(true), true);
+assertEqual(isBool(1), false);
+assertEqual(isNull(null), true);
+assertEqual(isNull(false), false);
+assertEqual(isArray([1, 2]), true);
+assertEqual(isArray("abc"), false);
+assertEqual(isObject({ x: 1 }), true);
+assertEqual(isObject([]), false);
+
+fn my_func() -> void {}
+assertEqual(isFunction(my_func), true);
+assertEqual(isFunction(42), false);
+
+assertEqual(isType(42, "number"), true);
+assertEqual(isType("hi", "string"), true);
+assertEqual(isType(null, "null"), true);
+
+// ============================================================
+// JSON FUNCTIONS
+// ============================================================
+
+// parseJSON and toJSON
+let json_obj = parseJSON('{"name": "Alice", "age": 30}');
+assertEqual(json_obj.name, "Alice");
+assertEqual(json_obj.age, 30);
+
+let json_arr = parseJSON("[1, 2, 3]");
+assertEqual(json_arr, [1, 2, 3]);
+
+let json_str = toJSON({ x: 1 });
+assert(isString(json_str), "toJSON returns string");
+assert(includes(json_str, "x"), "JSON contains key");
+
+// prettifyJSON / minifyJSON
+let pretty = prettifyJSON('{"a":1}');
+assert(includes(pretty, "\n"), "prettified has newlines");
+
+let minified = minifyJSON('{ "a" : 1 }');
+assertEqual(minified, '{"a":1}');
+
+// isValidJSON
+assertEqual(isValidJSON('{"key": "value"}'), true);
+assertEqual(isValidJSON("not json"), false);
+assertEqual(isValidJSON("null"), true);
+assertEqual(isValidJSON("[1,2,3]"), true);
+
+// JSON type extraction
+let num_json = parseJSON("42");
+assertEqual(jsonAsNumber(num_json), 42);
+
+let bool_json = parseJSON("true");
+assertEqual(jsonAsBool(bool_json), true);
+
+let str_json = parseJSON('"hello"');
+assertEqual(jsonAsString(str_json), "hello");
+
+let null_json = parseJSON("null");
+assertEqual(jsonIsNull(null_json), true);
+
+// ============================================================
+// COLLECTIONS: HASHMAP
+// ============================================================
+
+// HashMap basic operations
+let map = hashMapNew();
+assertEqual(hashMapIsEmpty(map), true);
+assertEqual(hashMapSize(map), 0);
+
+hashMapPut(map, "name", "Alice");
+hashMapPut(map, "age", 30);
+assertEqual(hashMapSize(map), 2);
+assertEqual(hashMapHas(map, "name"), true);
+assertEqual(hashMapHas(map, "email"), false);
+
+let name_val = hashMapGet(map, "name");
+assertEqual(is_some(name_val), true);
+assertEqual(unwrap(name_val), "Alice");
+
+let missing = hashMapGet(map, "xyz");
+assertEqual(is_none(missing), true);
+
+let keys = hashMapKeys(map);
+assertEqual(len(keys), 2);
+assert(arrayIncludes(keys, "name"), "keys contains name");
+assert(arrayIncludes(keys, "age"), "keys contains age");
+
+let values = hashMapValues(map);
+assertEqual(len(values), 2);
+
+// Remove
+let removed = hashMapRemove(map, "age");
+assertEqual(is_some(removed), true);
+assertEqual(unwrap(removed), 30);
+assertEqual(hashMapSize(map), 1);
+
+// fromEntries
+let map2 = hashMapFromEntries([["a", 1], ["b", 2], ["c", 3]]);
+assertEqual(hashMapSize(map2), 3);
+assertEqual(unwrap(hashMapGet(map2, "b")), 2);
+
+// entries
+let entries = hashMapEntries(map2);
+assertEqual(len(entries), 3);
+
+// clear
+hashMapClear(map2);
+assertEqual(hashMapIsEmpty(map2), true);
+
+// ============================================================
+// COLLECTIONS: HASHSET
+// ============================================================
+
+// HashSet operations
+let set = hashSetNew();
+assertEqual(hashSetIsEmpty(set), true);
+assertEqual(hashSetSize(set), 0);
+
+hashSetAdd(set, "hello");
+hashSetAdd(set, "world");
+hashSetAdd(set, "hello");    // duplicate, not added
+assertEqual(hashSetSize(set), 2);
+assertEqual(hashSetHas(set, "hello"), true);
+assertEqual(hashSetHas(set, "xyz"), false);
+
+hashSetRemove(set, "hello");
+assertEqual(hashSetHas(set, "hello"), false);
+assertEqual(hashSetSize(set), 1);
+
+// fromArray / toArray
+let set2 = hashSetFromArray([1, 2, 2, 3, 3, 3]);
+assertEqual(hashSetSize(set2), 3);
+let arr = hashSetToArray(set2);
+assertEqual(len(arr), 3);
+
+// Set operations
+let a = hashSetFromArray([1, 2, 3]);
+let b = hashSetFromArray([2, 3, 4]);
+
+let union = hashSetUnion(a, b);
+assertEqual(hashSetSize(union), 4);
+
+let intersection = hashSetIntersection(a, b);
+assertEqual(hashSetSize(intersection), 2);
+
+let diff = hashSetDifference(a, b);
+assertEqual(hashSetSize(diff), 1);
+assertEqual(hashSetHas(diff, 1), true);
+
+let small = hashSetFromArray([2, 3]);
+let large = hashSetFromArray([1, 2, 3, 4]);
+assertEqual(hashSetIsSubset(small, large), true);
+assertEqual(hashSetIsSuperset(large, small), true);
+
+let sym_diff = hashSetSymmetricDifference(a, b);
+assertEqual(hashSetSize(sym_diff), 2);    // {1, 4}
+
+// ============================================================
+// COLLECTIONS: QUEUE
+// ============================================================
+
+let q = queueNew();
+assertEqual(queueIsEmpty(q), true);
+assertEqual(queueSize(q), 0);
+
+queueEnqueue(q, "first");
+queueEnqueue(q, "second");
+queueEnqueue(q, "third");
+assertEqual(queueSize(q), 3);
+
+let front = queuePeek(q);
+assertEqual(is_some(front), true);
+assertEqual(unwrap(front), "first");
+
+let dequeued = queueDequeue(q);
+assertEqual(is_some(dequeued), true);
+assertEqual(unwrap(dequeued), "first");
+assertEqual(queueSize(q), 2);
+
+let q_arr = queueToArray(q);
+assertEqual(q_arr, ["second", "third"]);
+
+queueClear(q);
+assertEqual(queueIsEmpty(q), true);
+
+// Empty queue dequeue returns None
+let empty_dequeue = queueDequeue(q);
+assertEqual(is_none(empty_dequeue), true);
+
+// ============================================================
+// COLLECTIONS: STACK
+// ============================================================
+
+let s = stackNew();
+assertEqual(stackIsEmpty(s), true);
+assertEqual(stackSize(s), 0);
+
+stackPush(s, 1);
+stackPush(s, 2);
+stackPush(s, 3);
+assertEqual(stackSize(s), 3);
+
+let top = stackPeek(s);
+assertEqual(is_some(top), true);
+assertEqual(unwrap(top), 3);
+
+let popped = stackPop(s);
+assertEqual(is_some(popped), true);
+assertEqual(unwrap(popped), 3);
+assertEqual(stackSize(s), 2);
+
+let s_arr = stackToArray(s);
+assertEqual(s_arr, [2, 1]);    // top first
+
+stackClear(s);
+assertEqual(stackIsEmpty(s), true);
+
+// Empty stack pop returns None
+let empty_pop = stackPop(s);
+assertEqual(is_none(empty_pop), true);
+
+// ============================================================
+// REGEX FUNCTIONS
+// ============================================================
+
+// Creating regex
+let re = regexNew("[0-9]+");
+let re_ci = regexNewWithFlags("hello", "i");
+
+// Matching
+assertEqual(regexIsMatch(re, "abc123"), true);
+assertEqual(regexIsMatch(re, "abc"), false);
+assertEqual(regexTest(re_ci, "HELLO"), true);
+
+// Finding matches
+let found = regexFind(re, "abc123def");
+assertEqual(is_some(found), true);
+assertEqual(unwrap(found), "123");
+
+let not_found = regexFind(re, "abc");
+assertEqual(is_none(not_found), true);
+
+// Find all matches
+let all_matches = regexFindAll(re, "a1 b22 c333");
+assertEqual(all_matches, ["1", "22", "333"]);
+
+// Replace
+assertEqual(regexReplace(re, "abc123def456", "NUM"), "abcNUMdef456");
+assertEqual(regexReplaceAll(re, "a1 b2 c3", "N"), "aN bN cN");
+
+// Split
+let splitter = regexNew("[,;]");
+let split_result = regexSplit(splitter, "a,b;c");
+assertEqual(split_result, ["a", "b", "c"]);
+
+// Captures
+let capture_re = regexNew("([0-9]+)-([a-z]+)");
+let caps = regexCaptures(capture_re, "42-hello");
+assertEqual(len(caps), 2);
+assertEqual(caps[0], "42");
+assertEqual(caps[1], "hello");
+
+// Escape
+let escaped = regexEscape("a.b+c");
+assert(includes(escaped, "\\."), "dot is escaped");
+
+// ============================================================
+// REFLECTION FUNCTIONS
+// ============================================================
+
+// reflect_typeof
+assertEqual(reflect_typeof(42), "number");
+assertEqual(reflect_typeof("hi"), "string");
+assertEqual(reflect_typeof([1, 2]), "array");
+
+// reflect_is_primitive
+assertEqual(reflect_is_primitive(42), true);
+assertEqual(reflect_is_primitive("hello"), true);
+assertEqual(reflect_is_primitive([]), false);
+assertEqual(reflect_is_primitive({}), false);
+
+// reflect_is_callable
+fn example_fn() -> void {}
+assertEqual(reflect_is_callable(example_fn), true);
+assertEqual(reflect_is_callable(42), false);
+assertEqual(reflect_is_callable(print), true);
+
+// reflect_get_function_arity
+fn add(a: number, b: number) -> number { return a + b; }
+fn no_args() -> void {}
+assertEqual(reflect_get_function_arity(add), 2);
+assertEqual(reflect_get_function_arity(no_args), 0);
+
+// reflect_get_function_name
+assertEqual(reflect_get_function_name(add), "add");
+
+// reflect_clone
+let original = [1, 2, 3];
+let cloned = reflect_clone(original);
+assertEqual(cloned, original);
+
+// reflect_deep_equals
+assertEqual(reflect_deep_equals([1, 2], [1, 2]), true);
+assertEqual(reflect_deep_equals([1], [2]), false);
+assertEqual(reflect_deep_equals("hello", "hello"), true);
+
+// reflect_same_type
+assertEqual(reflect_same_type(1, 2), true);
+assertEqual(reflect_same_type(1, "1"), false);
+assertEqual(reflect_same_type([], [1, 2]), true);
+
+// reflect_get_length
+let str_len = reflect_get_length("hello");
+assertEqual(is_some(str_len), true);
+assertEqual(unwrap(str_len), 5);
+
+let num_len = reflect_get_length(42);
+assertEqual(is_none(num_len), true);
+
+// reflect_is_empty
+assertEqual(reflect_is_empty([]), true);
+assertEqual(reflect_is_empty(""), true);
+assertEqual(reflect_is_empty([1]), false);
+assertEqual(reflect_is_empty("x"), false);
+
+// reflect_value_to_string
+let repr = reflect_value_to_string([1, 2, 3]);
+assertEqual(isString(repr), true);
+
+// ============================================================
+// ASSERTION FUNCTIONS (Testing Primitives)
+// ============================================================
+
+// Basic assertions
+assert(true, "true is true");
+assertFalse(false, "false is false");
+
+// Equality
+assertEqual(1 + 1, 2);
+assertEqual("hello", "hello");
+assertEqual([1, 2, 3], [1, 2, 3]);
+assertNotEqual(1, 2);
+assertNotEqual("hello", "world");
+
+// Result assertions
+fn safe_div(a: number, b: number) -> Result<number, string> {
+    if b == 0 { return Err("division by zero"); }
+    return Ok(a / b);
+}
+
+let ok_result = safe_div(10, 2);
+let val = assertOk(ok_result);
+assertEqual(val, 5);
+
+let err_result = safe_div(5, 0);
+let err_msg = assertErr(err_result);
+assertEqual(err_msg, "division by zero");
+
+// Option assertions
+let some_opt = Some(42);
+let none_opt = None;
+let opt_val = assertSome(some_opt);
+assertEqual(opt_val, 42);
+assertNone(none_opt);
+
+// Collection assertions
+assertContains([1, 2, 3], 2);
+assertEmpty([]);
+assertLength([1, 2, 3], 3);
+
+print("All stdlib examples passed!");
