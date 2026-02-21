@@ -86,6 +86,6 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Roadmap | `ROADMAP.md` |
 | Specs | `docs/specification/` |
 | v0.2 archive | `phases/*/archive/v0.2/` |
-| Auto-memory | Claude auto-memory (patterns.md, decisions/, testing-patterns.md) |
+| **Auto-memory** | Claude auto-memory (NOT in repo) — `patterns.md`, `decisions/`, `testing-patterns.md` |
 
 **For humans:** Point AI to this file — "Read STATUS.md and continue"
