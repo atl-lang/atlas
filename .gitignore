@@ -12,6 +12,9 @@ Cargo.lock
 *~
 .DS_Store
 
+# Codex app local data
+.codex/
+
 # Testing
 *.profraw
 *.profdata

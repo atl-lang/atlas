@@ -6,7 +6,18 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 # Atlas - AI Workflow
 
 **Type:** Rust compiler | **Progress:** STATUS.md | **Spec:** docs/specification/
-**Memory:** Auto-loaded from `/memory/` (patterns, decisions, gates)
+**Memory:** Claude auto-memory (patterns, decisions) | **Gates:** skill `gates/` directory
+
+---
+
+## On Skill Activation (EVERY SESSION)
+
+```bash
+git checkout main && git pull && git fetch --prune   # Sync main, prune remotes
+git branch | grep -v main | xargs -r git branch -D   # Delete ALL local branches except main
+```
+
+**Why:** PRs merge async via squash (different SHA). Use `-D` not `-d`. Always sync.
 
 ---
 
@@ -17,7 +28,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 **Phase directive = START NOW** (no permission needed)
 
 **Never ask during execution:** "Ready?" "What's next?" "Should I proceed?" "Is this correct?"
-**Answer source:** STATUS.md, phases/, memory/, docs/specification/
+**Answer source:** STATUS.md, phases/, auto-memory/, docs/specification/
 
 **Triggers:** "Next: Phase-XX" | "Start Phase-XX" | User pastes handoff
 
@@ -28,11 +39,12 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 ### 1. Autonomous Execution
 1. Check STATUS.md (verify phase not complete)
 2. **Git Setup:** Create feature branch from main (see Git Workflow below)
-3. Run GATE -1 (sanity check)
+3. Run GATE -1 (sanity check + local security scan)
 4. Declare workflow type
-5. Execute gates 0→1→2→3→4→5→6→7 (uninterrupted)
+5. **Execute applicable gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md` for which to run)
 6. **Git Finalize:** Commit, push, create PR with auto-merge
-7. Deliver completion summary (PR will auto-merge when CI passes)
+7. **Sync immediately:** PR merges in ~30-60s (no CI), sync main and delete local branch
+8. Deliver completion summary
 
 ### 2. Spec Compliance (100%)
 Spec defines it → implement EXACTLY. No shortcuts, no "good enough", no partial implementations.
@@ -44,7 +56,7 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 ### 4. Intelligent Decisions (When Spec Silent)
 1. Analyze codebase patterns
 2. Decide intelligently
-3. Log decision in memory/decisions.md (use DR-XXX format)
+3. Log decision in auto-memory `decisions/{domain}.md` (use DR-XXX format)
 
 **Never:** Ask user | Leave TODO | Guess without analysis
 
@@ -55,17 +67,15 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 ### 6. Interpreter/VM Parity (100% REQUIRED)
 Both engines MUST produce identical output. Parity break = BLOCKING.
 
-### 7. Testing Protocol (SURGICAL)
-**During:** `cargo nextest run -p atlas-runtime -E 'test(exact_name)'` (ONE test)
-**Per-file:** `cargo nextest run -p atlas-runtime --test <domain_file>` (validate domain file)
-**Full suite:** GATE 6 only — `cargo nextest run -p atlas-runtime`
-**Banned:** Creating new `tests/*.rs` files (adds binary bloat), bare `#[ignore]` without reason string
+### 7. Testing Protocol
+**Source of truth:** auto-memory `testing-patterns.md` — READ BEFORE WRITING ANY TESTS
 
-**Test placement rules (non-negotiable):**
-- New tests → existing domain file (see `memory/testing-patterns.md` for the canonical file list)
-- New language behavior → also add `.atlas` corpus file in `tests/corpus/pass/` or `tests/corpus/fail/`
-- Unit tests (no external deps) → `#[cfg(test)]` in source file, NOT in `tests/`
-- Parity tests → use `assert_parity()` helper, NEVER write duplicate interpreter+VM functions
+**CRITICAL:** Different crates have different patterns:
+- **atlas-runtime:** Consolidated domain files (NO new test files)
+- **atlas-lsp:** Inline server creation (NO helper functions - see testing-patterns.md)
+- **atlas-cli:** Integration tests with assert_cmd
+
+**Always check existing test files in the target crate before writing new tests.**
 
 ---
 
@@ -79,32 +89,32 @@ feat/{short-description}      # Features (e.g., feat/array-slice)
 ci/{short-description}        # CI/infra (e.g., ci/optimize-workflows)
 ```
 
-**Before starting work:**
+**START of phase (sync happens here):**
 ```bash
-git checkout main && git pull                    # Sync with remote
+git checkout main && git pull                    # Picks up any merged PRs
+git branch -d <old-branch> 2>/dev/null || true   # Lazy cleanup of old branches
 git checkout -b phase/{category}-{number}        # Create feature branch
 ```
 
-**After GATE 7 (memory check):**
+**END of phase (fire and forget):**
 ```bash
 git add -A && git commit -m "feat(phase): Description"   # Commit all
 git push -u origin HEAD                                   # Push branch
 gh pr create --title "Phase X: Title" --body "..."       # Create PR
-gh pr merge --squash --auto                               # Enable auto-merge (run ONCE)
+gh pr merge --squash --auto                               # Queue for merge
+# DONE - move on immediately, no waiting
 ```
 
-**Walk away - automation handles:**
-- CI runs (~3-4 min)
-- Auto-adds to merge queue when CI passes
-- Queue runs cross-platform tests (~6 min)
-- Auto-merges and auto-deletes branch
-- **Do NOT run `gh pr merge` again**
+**Why no waiting:**
+- Merge queue processes PR in ~30-60s (no CI)
+- Remote branch auto-deleted after merge
+- Next phase START syncs main automatically
+- Branch cleanup is lazy (not blocking)
 
-**Sync local (after merge):**
-```bash
-git checkout main && git pull                             # Sync local
-git branch -d <old-branch>                                # Clean local ref
-```
+**BANNED (wastes time):**
+- `sleep` after pushing — sync happens at next phase START
+- `gh pr view` or `gh pr checks` — never check PR status
+- Any PR monitoring — it WILL merge, trust the queue
 
 **Multi-part phases (A, B, C sub-phases):**
 ```bash
@@ -113,22 +123,13 @@ git branch -d <old-branch>                                # Clean local ref
 cargo nextest run -p atlas-runtime                        # Local validation
 git add -A && git commit -m "feat(phase-XX): Part A - description"
 
-<work on part B>
-cargo nextest run -p atlas-runtime                        # Local validation
-git add -A && git commit -m "feat(phase-XX): Part B - description"
+<work on part B, C, etc. - same pattern>
 
-<work on part C>
-cargo nextest run -p atlas-runtime                        # Local validation
-git add -A && git commit -m "feat(phase-XX): Part C - description"
-
-# ALL parts done, ALL tests pass → push ONCE
+# ALL parts done → push ONCE
 git push -u origin HEAD && gh pr create ... && gh pr merge --squash --auto
 ```
-- **One branch, multiple commits** = traceable history
-- **Local tests between parts** = catch failures early
-- **Push only when complete** = no wasted CI minutes
+- **One branch, multiple commits** = traceable history in PR
 - **Squash merge** = atomic feature on main
-- **If failure:** `git log --oneline` shows which part broke
 
 **User involvement:** NONE. Agent handles entire Git lifecycle autonomously.
 
@@ -136,18 +137,7 @@ git push -u origin HEAD && gh pr create ... && gh pr merge --squash --auto
 
 ## GATE -1: Sanity Check (ALWAYS FIRST)
 
-0. **Main CI health:** `gh run list --branch main --limit 1` — if failed, STOP and alert user
-1. **Verify:** Check phase dependencies in phase file
-2. **Git check:** Ensure on feature branch (not main), working directory clean
-3. **Batch detection:** `git log origin/main..HEAD --oneline`
-   - If commits exist → resuming batch, show list
-   - Count = batch size (phases completed but unpushed)
-4. **Sanity:** `cargo clean && cargo check -p atlas-runtime`
-5. **On failure:** Stop, inform user with error details
-
-**Batch push decision (after each phase):**
-- **PUSH if:** batch ≥ 4 | domain change | tests fail | user requests | session ending
-- **CONTINUE if:** same domain | batch < 4 | tests passing
+**See:** `gates/gate-minus1-sanity.md` for full steps.
 
 ---
 
@@ -168,7 +158,8 @@ After GATE -1, declare one:
 - Task/Explore agents (use Glob + Read + Grep)
 - Breaking parity
 - Stub implementations
-- Assumptions without verification
+- **Writing code that touches AST/Type/Value without running auto-memory `domain-prereqs.md` queries first**
+- Assumptions without verification (grep → verify → write)
 - Testing protocol violations
 
 **Required:**
@@ -182,67 +173,73 @@ After GATE -1, declare one:
 
 ## Build Commands
 
-**During development:**
-```bash
-cargo clean && cargo check -p atlas-runtime                          # Verify
-cargo clippy -p atlas-runtime -- -D warnings                        # Zero warnings
-cargo fmt -p atlas-runtime                                          # Format
-cargo nextest run -p atlas-runtime -E 'test(exact_name)'            # ONE test
-cargo nextest run -p atlas-runtime --test <domain_file>             # Domain file
-```
-
-**Before handoff (GATE 6):**
-```bash
-cargo nextest run -p atlas-runtime --test <domain_file>  # Phase domain file
-cargo nextest run -p atlas-runtime                        # Full suite
-cargo clippy -p atlas-runtime -- -D warnings             # Zero warnings
-```
-
-**Specialized (when relevant):**
-```bash
-cargo nextest run -p atlas-runtime --run-ignored all                 # Include network/slow tests
-cargo nextest run -p atlas-runtime --test corpus                     # Corpus (.atlas files)
-cargo bench -p atlas-runtime --bench vm                              # VM benchmarks
-cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lexer/parser changes)
-```
-
-**`#[ignore]` rules:** Always requires a reason string. `#[ignore = "requires network"]` ✅ — bare `#[ignore]` ❌
+**See:** auto-memory `testing-patterns.md` for all commands (test, clippy, fmt, bench, fuzz).
 
 ---
 
 ## Phase Handoff
 
-**CRITICAL:** Only hand off when ALL tests pass, CI is green, AND PR is merged.
+**CRITICAL:** Only hand off when ALL tests pass locally AND PR is queued.
 
 **Protocol:**
-1. All gates passed (tests, clippy, fmt)
+1. All gates passed (tests, clippy, fmt, security scan)
 2. STATUS.md updated
 3. Memory checked (GATE 7)
-4. Changes committed and pushed
-5. PR created with auto-merge enabled
-6. CI passes → auto-merge → branch auto-deleted
-7. Local main synced
+4. Commit → Push → Create PR → Auto-merge (queued)
+5. Deliver summary — DO NOT WAIT for merge
 
 **Required in summary:**
-- Status: "✅ PHASE COMPLETE - MERGED TO MAIN"
-- Commit: Short SHA of merge commit
+- Status: "✅ PHASE COMPLETE - PR QUEUED"
+- PR URL (merge happens async)
 - Final Stats (bullets)
-- Highlights (2-3 sentences + key bullets)
-- Progress (simple numbers)
-- Next phase ready
+- **Memory:** Updated X / No updates needed (MANDATORY - see GATE 7)
+- Progress (X/131 phases)
+- Next phase
 
 ---
 
-## Memory System (Auto-Loaded)
+## Memory System (Claude Auto-Memory)
 
-**Location:** `/memory/`
-- `MEMORY.md` - Index (always loaded, 200 line cap)
-- `patterns.md` - Codebase patterns (Arc<Mutex<>>, stdlib signatures, etc.)
-- `decisions.md` - Architectural decisions (search DR-XXX)
-- `testing-patterns.md` - Test domain files, corpus workflow, parity helpers
-- `github-config.md` - Repo settings, rulesets, automation
+**Location:** Claude's auto-memory directory (auto-loaded at session start)
 
-**Usage:** Read patterns.md for codebase patterns, decisions.md for architectural context.
+### Structure (ENFORCED)
+```
+memory/
+├── MEMORY.md           # Index ONLY (50 lines max, auto-loaded)
+├── patterns.md         # Active patterns (150 lines max)
+├── domain-prereqs.md   # Grep queries (stable)
+├── testing-patterns.md # Test guidelines (stable)
+├── decisions/          # Split by domain
+│   ├── language.md     # Language core decisions
+│   ├── runtime.md      # Runtime decisions
+│   ├── stdlib.md       # Stdlib decisions
+│   ├── cli.md          # CLI decisions (CRITICAL)
+│   ├── typechecker.md  # Type system decisions
+│   ├── vm.md           # VM decisions
+│   └── lsp.md          # LSP decisions (add when needed)
+└── archive/            # Deprecated content
+```
+
+### File Size Limits (ENFORCED)
+| File | Max Lines | Action if exceeded |
+|------|-----------|-------------------|
+| MEMORY.md | 50 | Move content to topic files |
+| patterns.md | 150 | Archive old patterns |
+| decisions/{x}.md | 100 | Split further or archive |
+
+### Rules
+1. **MEMORY.md = index only** - No content, just pointers
+2. **Load on-demand** - Don't read all files, read what you need
+3. **Split when growing** - File approaching limit? Split by subtopic
+4. **Archive, don't delete** - Move to `archive/` with date prefix
+5. **Decisions by domain** - New domain? Create new file
+
+### When to Update (GATE 7)
+- Hit API surprise → update `patterns.md`
+- Made architectural decision → update `decisions/{domain}.md`
+- Found stale info → fix or archive it
+
+**Rule:** Memories live in Claude auto-memory, NOT in repo.
 
 ---
 
@@ -256,8 +253,8 @@ cargo +nightly fuzz run fuzz_parser -- -max_total_time=60            # Fuzz (lex
 - `phases/` - Work queue (~100 lines each)
 - `docs/specification/` - Language spec (grammar, syntax, types, runtime)
 
-**Key patterns:** See memory/patterns.md
-**Decisions:** See memory/decisions.md (DR-003 to DR-006 for collections)
+**Key patterns:** See auto-memory `patterns.md`
+**Decisions:** See auto-memory `decisions/*.md` (split by domain)
 **Gates:** See gates/ directory in this skill
 
 ---

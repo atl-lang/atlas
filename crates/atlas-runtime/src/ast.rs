@@ -435,6 +435,8 @@ pub struct MatchExpr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct MatchArm {
     pub pattern: Pattern,
+    /// Optional guard clause: `pattern if <guard> => body`
+    pub guard: Option<Box<Expr>>,
     pub body: Expr,
     pub span: Span,
 }
@@ -456,6 +458,8 @@ pub enum Pattern {
     },
     /// Array pattern: [], [x], [x, y]
     Array { elements: Vec<Pattern>, span: Span },
+    /// OR pattern: pat1 | pat2 | pat3
+    Or(Vec<Pattern>, Span),
 }
 
 /// Literal value
@@ -609,6 +613,7 @@ impl Pattern {
             Pattern::Variable(id) => id.span,
             Pattern::Constructor { span, .. } => *span,
             Pattern::Array { span, .. } => *span,
+            Pattern::Or(_, span) => *span,
         }
     }
 }

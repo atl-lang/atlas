@@ -2,79 +2,139 @@
 
 **Condition:** Phase complete, STATUS.md updated, ready to commit
 
-**Purpose:** Keep AI memory accurate. Prevents drift that wastes tokens in future sessions.
+**Purpose:** Keep AI memory accurate and lean. Prevents drift and bloat.
 
 ---
 
 ## Quick Self-Check (10 seconds)
 
-Ask yourself:
+Ask these questions:
 
-1. **Did I hit an API surprise?** (wrong signature, unexpected return type, missing method)
-   → Update `memory/patterns.md`
+1. **Did I hit an API surprise?** (pattern not documented) → Update `patterns.md`
+2. **Did I make an architectural decision?** (new constraint or approach) → Update `decisions/{domain}.md`
+3. **Did I discover a crate-specific pattern?** (like LSP testing) → Update `testing-patterns.md` or `patterns.md`
+4. **Is anything in memory wrong or stale?** → Fix or archive it
+5. **Is any file approaching size limit?** → Split or archive
 
-2. **Did I discover a new codebase pattern?** (new helper, new module, new convention)
-   → Update `memory/patterns.md`
+## When to Update Memory
 
-3. **Did I make an architectural decision?** (chose between approaches, spec was silent)
-   → Update `memory/decisions.md`
+### ✅ DO Update Memory
 
-4. **Is anything in memory wrong?** (found that memory said X but codebase does Y)
-   → Fix the stale entry
+**patterns.md:**
+- Hit an undocumented API quirk that cost time
+- Discovered a crate-specific testing pattern
+- Found a common error pattern with a fix
+- Learned a Rust pattern that's Atlas-specific
+
+**Example:** "LSP tests can't use helper functions due to lifetime issues"
+
+**decisions/{domain}.md:**
+- Made an architectural choice between alternatives
+- Established a new constraint or rule
+- Chose an approach that affects future work
+- Resolved an ambiguity in the spec
+
+**Example:** "DR-015: LSP testing uses inline pattern (no helpers due to tower-lsp lifetime constraints)"
+
+### ❌ DON'T Update Memory
+
+**Skip if:**
+- Just following existing patterns (already documented)
+- Phase-specific work (not reusable knowledge)
+- Obvious or trivial changes
+- Implementation details (not architectural)
+- Temporary workarounds
+
+**Example:** Don't document "Created 10 integration tests" (obvious, not reusable)
+
+---
+
+## File Size Limits (BLOCKING)
+
+**Before committing, run this check:**
+```bash
+wc -l ~/.claude/projects/*/memory/*.md ~/.claude/projects/*/memory/decisions/*.md 2>/dev/null | grep -v total
+```
+
+| File | Max | If Exceeded → MUST DO |
+|------|-----|----------------------|
+| MEMORY.md | 50 | Split content to topic files |
+| patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
+| decisions/{x}.md | 100 | Split into sub-files |
+
+**BLOCKING:** If ANY file exceeds limit, you MUST split/archive BEFORE committing.
+**NO EXCEPTIONS.** This is not optional. Bloated memory = wasted tokens every message.
+
+---
+
+## Memory Structure
+
+```
+memory/
+├── MEMORY.md           # Index ONLY (pointers, not content)
+├── patterns.md         # Active patterns
+├── decisions/          # Split by domain
+│   ├── language.md
+│   ├── runtime.md
+│   ├── stdlib.md
+│   ├── cli.md          # CRITICAL decisions here
+│   ├── typechecker.md
+│   ├── vm.md
+│   └── {new-domain}.md # Add as needed
+└── archive/            # Old stuff goes here
+```
+
+---
+
+## How to Split patterns.md
+
+When `patterns.md` exceeds 150 lines:
+1. Create `archive/YYYY-MM-patterns.md` with old/stable patterns
+2. Keep only actively-referenced patterns in `patterns.md`
+3. Update MEMORY.md index if needed
+
+**Example split:**
+- `patterns.md` → Active patterns (runtime, stdlib, testing)
+- `archive/2026-02-patterns.md` → Stable patterns (frontend API, error handling)
 
 ---
 
 ## Rules
 
-- **Only update if something actually changed.** Most phases won't need memory updates.
-- **Be surgical.** Update the specific line/section, don't rewrite whole files.
-- **Be token-efficient.** One-liner patterns, not paragraphs of explanation.
-- **Verify before writing.** Don't add patterns from a single observation — confirm against codebase.
-- **Remove stale info** rather than flagging it. Flags become permanent noise.
+- **Surgical updates.** One-liner patterns, not paragraphs.
+- **Verify before writing.** Confirm against codebase.
+- **Archive, don't delete.** Move to `archive/YYYY-MM-{file}.md`.
+- **Split by domain.** New domain = new file in `decisions/`.
 
 ---
 
-## What NOT to Save
+## Required Output (MANDATORY)
 
-- Session-specific context (current task, temporary state)
-- Anything already in the skill or gate files
-- Obvious Rust patterns (how `Result` works, etc.)
-- Speculative conclusions from reading one file
+**In completion summary, include Memory section:**
 
----
+```markdown
+### Memory
+- Updated: `patterns.md` (added X)
+- Updated: `decisions/cli.md` (DR-003: reason)
+- Archived: `patterns.md` → `archive/2026-02-patterns-v1.md`
+```
 
-**Cost:** 0-30 seconds per phase. Prevents hours of confusion in future sessions.
+OR if no updates:
+
+```markdown
+### Memory
+- No updates needed
+```
+
+**This is NOT optional.** Visible accountability prevents drift.
 
 ---
 
 ## Git Finalization (After Memory Check)
 
-1. **Commit all changes:**
-   ```bash
-   git add -A
-   git commit -m "feat(category): Phase X - description"
-   ```
+1. `git add -A && git commit -m "feat(category): description"`
+2. `git push -u origin HEAD && gh pr create && gh pr merge --squash --auto`
+3. Walk away - automation handles merge
+4. Next session syncs main automatically
 
-2. **Push, create PR, enable auto-merge:**
-   ```bash
-   git push -u origin HEAD
-   gh pr create --title "Phase X: Title" --body "## Summary
-   - Key change 1
-   - Key change 2
-
-   🤖 Generated with Claude Code"
-   gh pr merge --squash --auto
-   ```
-
-3. **Walk away** - automation handles everything:
-   - CI runs (~3-4 min)
-   - Auto-adds to merge queue
-   - Auto-merges and auto-deletes branch
-   - **Do NOT run `gh pr merge` again**
-
-4. **Sync local** (after merge completes):
-   ```bash
-   git checkout main && git pull
-   ```
-
-**Next:** Report completion summary.
+**Next:** Report completion summary with Memory section.

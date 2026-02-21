@@ -697,6 +697,10 @@ impl FormatVisitor {
         for arm in &m.arms {
             self.write_indent();
             self.visit_pattern(&arm.pattern);
+            if let Some(guard) = &arm.guard {
+                self.write(" if ");
+                self.visit_expr(guard);
+            }
             self.write(" => ");
             self.visit_expr(&arm.body);
             self.write(",");
@@ -734,6 +738,14 @@ impl FormatVisitor {
                     self.visit_pattern(elem);
                 }
                 self.write("]");
+            }
+            Pattern::Or(alternatives, _) => {
+                for (i, alt) in alternatives.iter().enumerate() {
+                    if i > 0 {
+                        self.write(" | ");
+                    }
+                    self.visit_pattern(alt);
+                }
             }
         }
     }

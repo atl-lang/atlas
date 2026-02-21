@@ -21,13 +21,13 @@ cargo clean
 ## Step 2: Read Docs (Selective Reading)
 
 1. **ALWAYS:** Read `STATUS.md` (current state, progress, doc map with routing)
-2. **IF structured development:** Read complete development plan
-3. **ROUTING:** Read `Atlas-SPEC.md` (INDEX only - use routing table)
-4. **SELECTIVE:** Read ONLY the spec files your task needs:
+2. **IF structured development:** Read complete development plan (phase file)
+3. **SELECTIVE:** Read ONLY the spec files your task needs (see routing below)
+4. **CHECK EXISTING CODE:** Before writing tests, read existing test files in the target crate
 
-### Use Routing Table (DO NOT read all specs)
+### Specification Routing (DO NOT read all specs)
 
-**From Atlas-SPEC.md routing table:**
+**Available specs in `docs/specification/`:**
 - Implementing types/generics? → Read `docs/specification/types.md`
 - Parser/grammar work? → Read `docs/specification/syntax.md`
 - Type checking? → Read `docs/specification/language-semantics.md`
@@ -40,8 +40,8 @@ cargo clean
 
 ### Implementation Patterns (As Needed)
 
-- Codebase patterns: `memory/patterns.md`
-- Architectural decisions: `memory/decisions.md`
+- Codebase patterns: auto-memory `patterns.md`
+- Architectural decisions: auto-memory `decisions/*.md`
 
 ---
 
@@ -72,12 +72,64 @@ cargo clean
 2. Does it match spec? (compare to `docs/specification/`)
 3. Is it complete? (check STATUS.md, run tests)
 
-**Before implementing anything:** Search for similar existing code. Follow established patterns. Check `memory/decisions.md` for constraints.
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check auto-memory `decisions/*.md` for constraints.
 
 **Status per dependency:**
 - ✅ Exists, complete, spec-compliant → Proceed
 - ⚠️ Exists but incomplete → Flag, may need to finish first
 - 🚫 Doesn't exist → BLOCKING, report to user
+
+---
+
+## Step 4: Domain Pattern Verification (CRITICAL)
+
+**Purpose:** Prevent hallucinated syntax by verifying actual codebase patterns before writing code.
+
+**Registry:** auto-memory `domain-prereqs.md` (Claude auto-memory)
+
+### Process
+
+1. **Identify domains** touched by phase (AST, stdlib, VM, type system, etc.)
+2. **For EACH domain**, consult auto-memory `domain-prereqs.md`
+3. **Run verification queries** listed for that domain
+4. **Note 3-5 patterns** you will use (mentally or in scratch)
+5. **If uncertain**, read more — NEVER guess structure
+
+### Common Domains (see registry for queries)
+
+| Domain | Trigger Keywords | Key Verification |
+|--------|-----------------|------------------|
+| AST | parser, expression, statement, node | `ast.rs` enum variants |
+| Value | Value enum, runtime type | `value.rs` Value variants |
+| Stdlib | builtin, stdlib function | `stdlib/mod.rs` signatures |
+| Interpreter | eval, tree-walk | `interpreter/mod.rs` methods |
+| VM | bytecode, opcode, compile | `vm/` opcodes and execution |
+| Type System | type check, infer, annotation | `type_checker/` types |
+| Errors | RuntimeError, diagnostic | `errors.rs` variants |
+
+### Example
+
+Phase says "Add new AST node for X":
+```bash
+# Before writing ANY code, verify actual AST structure:
+Grep pattern="^pub enum Expr" path="crates/atlas-runtime/src/ast.rs" -A=30
+```
+
+**Output:** You now know the exact variant format. Use it.
+
+### Anti-Pattern (BANNED)
+
+```rust
+// WRONG: Guessing AST structure without verification
+Expr::Function { name, params, body }  // Did you verify this exists?
+
+// RIGHT: Verified from grep output
+Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
+```
+
+---
+
+**BLOCKING:** Cannot proceed to implementation without pattern verification for touched domains.
 
 ---
 

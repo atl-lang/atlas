@@ -599,8 +599,15 @@ impl Parser {
     fn parse_match_arm(&mut self) -> Result<MatchArm, ()> {
         use crate::ast::MatchArm;
 
-        let pattern = self.parse_pattern()?;
+        let pattern = self.parse_or_pattern()?;
         let pattern_span = pattern.span();
+
+        // Parse optional guard clause: `pattern if <expr> => body`
+        let guard = if self.match_token(TokenKind::If) {
+            Some(Box::new(self.parse_expression()?))
+        } else {
+            None
+        };
 
         self.consume(TokenKind::FatArrow, "Expected '=>' after pattern")?;
 
@@ -609,9 +616,31 @@ impl Parser {
 
         Ok(MatchArm {
             pattern,
+            guard,
             body,
             span: pattern_span.merge(body_span),
         })
+    }
+
+    /// Parse OR pattern: primary | primary | ...
+    fn parse_or_pattern(&mut self) -> Result<crate::ast::Pattern, ()> {
+        use crate::ast::Pattern;
+
+        let first = self.parse_pattern()?;
+        let start_span = first.span();
+
+        // If no `|` follows, return single pattern (no wrapping)
+        if !self.check(TokenKind::Pipe) {
+            return Ok(first);
+        }
+
+        let mut alternatives = vec![first];
+        while self.match_token(TokenKind::Pipe) {
+            alternatives.push(self.parse_pattern()?);
+        }
+
+        let end_span = alternatives.last().unwrap().span();
+        Ok(Pattern::Or(alternatives, start_span.merge(end_span)))
     }
 
     /// Parse pattern
@@ -735,7 +764,7 @@ impl Parser {
         let mut args = Vec::new();
         if !self.check(TokenKind::RightParen) {
             loop {
-                args.push(self.parse_pattern()?);
+                args.push(self.parse_or_pattern()?);
                 if !self.match_token(TokenKind::Comma) {
                     break;
                 }
