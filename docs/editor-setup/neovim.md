@@ -70,6 +70,33 @@ All Atlas LSP features work in Neovim:
 - Symbol navigation (`gd`, `gr`)
 - Formatting (`<leader>f`)
 - Completion (with nvim-cmp)
+- Signature help (auto-triggered on `(` and `,`)
+- Find all references (`gr`)
+- Rename symbol (`<leader>rn`)
+- Call hierarchy (via `:lua vim.lsp.buf.incoming_calls()`)
+- Workspace symbols (`:lua vim.lsp.buf.workspace_symbol()`)
+- Inlay hints (Neovim 0.10+): `:lua vim.lsp.inlay_hint.enable(0, true)`
+- Diagnostics (shown in sign column and virtual text)
+
+### Extended Key Bindings
+
+```lua
+vim.api.nvim_create_autocmd('LspAttach', {
+  callback = function(args)
+    local opts = { buffer = args.buf }
+    vim.keymap.set('n', 'gd', vim.lsp.buf.definition, opts)
+    vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, opts)
+    vim.keymap.set('n', 'gr', vim.lsp.buf.references, opts)
+    vim.keymap.set('n', 'K', vim.lsp.buf.hover, opts)
+    vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, opts)
+    vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, opts)
+    vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, opts)
+    vim.keymap.set('n', '<leader>ws', vim.lsp.buf.workspace_symbol, opts)
+    vim.keymap.set('n', '<leader>ic', vim.lsp.buf.incoming_calls, opts)
+    vim.keymap.set('n', '<leader>oc', vim.lsp.buf.outgoing_calls, opts)
+  end,
+})
+```
 
 ---
 

@@ -1,0 +1,231 @@
+// Atlas Profiler Examples
+// Programs designed to demonstrate profiling and performance analysis
+// Version: v0.2
+//
+// Run with: atlas run profiler-examples.atl --profile
+// See: docs/vm-profiler-guide.md for full documentation
+
+// ============================================================
+// EXAMPLE 1: Algorithm Comparison
+// Profile these to see which is faster
+// ============================================================
+
+fn bubble_sort(arr: array) -> array {
+    let n = len(arr);
+    let result = arr;
+    for i in 0..n {
+        for j in 0..(n - i - 1) {
+            if result[j] > result[j + 1] {
+                let tmp = result[j];
+                result[j] = result[j + 1];
+                result[j + 1] = tmp;
+            }
+        }
+    }
+    return result;
+}
+
+fn insertion_sort(arr: array) -> array {
+    let result = arr;
+    let n = len(result);
+    for i in 1..n {
+        let key = result[i];
+        let j = i - 1;
+        while j >= 0 && result[j] > key {
+            result[j + 1] = result[j];
+            j = j - 1;
+        }
+        result[j + 1] = key;
+    }
+    return result;
+}
+
+// Generate test data
+fn gen_data(size: number) -> array {
+    let data = [];
+    for i in 0..size {
+        data = data + [floor(random() * 1000)];
+    }
+    return data;
+}
+
+// Profile: which sort function appears more in the report?
+let small_data = gen_data(100);
+let bubble_result = bubble_sort(small_data);
+let insert_result = insertion_sort(small_data);
+
+// ============================================================
+// EXAMPLE 2: String Processing Hotspot
+// Profile to see string operations dominate
+// ============================================================
+
+fn process_text(text: string) -> object {
+    let words = regexFindAll(regexNew("[a-zA-Z]+"), toLowerCase(text));
+    let freq = hashMapNew();
+    for word in words {
+        if hashMapHas(freq, word) {
+            hashMapPut(freq, word, unwrap(hashMapGet(freq, word)) + 1);
+        } else {
+            hashMapPut(freq, word, 1);
+        }
+    }
+    return {
+        word_count: len(words),
+        unique_words: hashMapSize(freq),
+        frequencies: freq
+    };
+}
+
+let sample_text = "the quick brown fox jumps over the lazy dog the fox";
+let text_result = process_text(sample_text);
+// Profile shows: regexFindAll, toLowerCase, hashMapPut dominate
+
+// ============================================================
+// EXAMPLE 3: Math-Heavy Computation
+// Profile: sqrt and pow should be the hotspots
+// ============================================================
+
+fn estimate_pi(iterations: number) -> number {
+    let inside = 0;
+    for _ in 0..iterations {
+        let x = random();
+        let y = random();
+        if sqrt(x * x + y * y) <= 1 {
+            inside = inside + 1;
+        }
+    }
+    return 4 * inside / iterations;
+}
+
+let pi_estimate = estimate_pi(1000);
+// Profile: sqrt() will show high call count
+
+// ============================================================
+// EXAMPLE 4: Recursive vs Iterative
+// Compare profiler data for recursive vs iterative fib
+// ============================================================
+
+fn fib_recursive(n: number) -> number {
+    if n <= 1 { return n; }
+    return fib_recursive(n - 1) + fib_recursive(n - 2);
+}
+
+fn fib_iterative(n: number) -> number {
+    if n <= 1 { return n; }
+    let a = 0;
+    let b = 1;
+    for _ in 2..(n + 1) {
+        let tmp = a + b;
+        a = b;
+        b = tmp;
+    }
+    return b;
+}
+
+// Profile: fib_recursive shows exponential call count
+// fib_iterative shows O(n) call count
+let rec_result = fib_recursive(20);
+let iter_result = fib_iterative(35);    // much larger, same time
+
+assertEqual(rec_result, fib_iterative(20));
+
+// ============================================================
+// EXAMPLE 5: Stdlib Call Frequency
+// Profile to understand stdlib overhead
+// ============================================================
+
+fn process_records(records: array) -> array {
+    let result = [];
+    for record in records {
+        // Multiple stdlib calls per record
+        let name = trim(record.name);
+        let email = toLowerCase(record.email);
+        let valid = includes(email, "@") && len(name) > 0;
+        if valid {
+            result = result + [{
+                name: toUpperCase(charAt(name, 0)) + substring(name, 1, len(name)),
+                email: email,
+                id: str(len(result) + 1)
+            }];
+        }
+    }
+    return result;
+}
+
+let records = [
+    { name: " alice ", email: "ALICE@EXAMPLE.COM" },
+    { name: "bob", email: "BOB@EXAMPLE.COM" },
+    { name: "", email: "invalid" },
+    { name: "charlie", email: "CHARLIE@EXAMPLE.COM" }
+];
+let processed = process_records(records);
+// Profile shows: trim, toLowerCase, includes, len called frequently
+
+// ============================================================
+// EXAMPLE 6: Identifying the Hot Path
+// ============================================================
+
+fn matrix_multiply(a: array, b: array) -> array {
+    let n = len(a);
+    let result = [];
+    for i in 0..n {
+        let row = [];
+        for j in 0..n {
+            let sum = 0;
+            for k in 0..n {           // inner loop is the hotspot
+                sum = sum + a[i][k] * b[k][j];
+            }
+            row = row + [sum];
+        }
+        result = result + [row];
+    }
+    return result;
+}
+
+// Create 5x5 identity matrix
+fn identity(n: number) -> array {
+    let result = [];
+    for i in 0..n {
+        let row = [];
+        for j in 0..n {
+            row = row + [i == j ? 1 : 0];
+        }
+        result = result + [row];
+    }
+    return result;
+}
+
+let size = 5;
+let id = identity(size);
+let product = matrix_multiply(id, id);
+// Profile: matrix_multiply innermost loop dominates
+
+// ============================================================
+// EXAMPLE 7: Memory Allocation Patterns
+// Profile to see allocation-heavy operations
+// ============================================================
+
+fn build_large_structure(n: number) -> array {
+    let result = [];
+    for i in 0..n {
+        result = result + [{
+            id: i,
+            name: concat("item-", str(i)),
+            tags: [str(i), concat("tag-", str(i % 10))],
+            metadata: {
+                created: str(i * 1000),
+                priority: i % 5
+            }
+        }];
+    }
+    return result;
+}
+
+let big_data = build_large_structure(200);
+assertEqual(len(big_data), 200);
+// Profile: concat, str, array concatenation are allocation hotspots
+
+print("Profiler examples complete!");
+print(concat("Pi estimate: ", str(pi_estimate)));
+print(concat("Processed records: ", str(len(processed))));
+print(concat("Matrix product [0][0]: ", str(product[0][0])));
