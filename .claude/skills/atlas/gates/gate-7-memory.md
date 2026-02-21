@@ -135,6 +135,6 @@ OR if no updates:
 1. `git add -A && git commit -m "feat(category): description"`
 2. `git checkout main && git merge --no-ff <feature-branch>`
 3. `git branch -d <feature-branch>`
-4. `git checkout worktree/dev && git rebase main`   # REQUIRED — keeps home branch current
+4. `git -C /Users/proxikal/dev/projects/atlas-dev rebase main && git -C /Users/proxikal/dev/projects/atlas-docs rebase main`   # REQUIRED — sync ALL worktree home branches via git -C (never checkout a branch live in another worktree)
 
 **Next:** Report completion summary with Memory section.

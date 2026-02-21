@@ -121,8 +121,12 @@ git checkout main
 git merge --no-ff phase/{category}-{number} -m "feat(phase-XX): Description"
 git branch -d phase/{category}-{number}
 
-# 4. Return home branch and sync it to main (REQUIRED — prevents future merge conflicts)
-git checkout worktree/dev
+# 4. Sync ALL home branches to main (REQUIRED — prevents future merge conflicts)
+# Use git -C to reach other worktrees without checking out their branches
+git -C /Users/proxikal/dev/projects/atlas-dev rebase main
+git -C /Users/proxikal/dev/projects/atlas-docs rebase main
+# Then return to current worktree's home branch
+git checkout worktree/$(cat .worktree-id)
 git rebase main
 ```
 
