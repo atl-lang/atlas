@@ -911,6 +911,11 @@ impl VM {
                             let result = native_fn(&args)?;
                             self.push(result);
                         }
+                        // None() is a valid zero-arg constructor call
+                        Value::Option(None) if arg_count == 0 => {
+                            self.pop(); // Pop the Option(None) function value
+                            self.push(Value::Option(None));
+                        }
                         _ => {
                             return Err(RuntimeError::TypeError {
                                 msg: "Cannot call non-function value".to_string(),

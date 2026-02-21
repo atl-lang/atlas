@@ -77,12 +77,7 @@ fn assert_parity_number(source: &str, expected: f64) {
         "Interpreter wrong: {:?}",
         interp
     );
-    assert_eq!(
-        vm,
-        Value::Number(expected),
-        "VM wrong: {:?}",
-        vm
-    );
+    assert_eq!(vm, Value::Number(expected), "VM wrong: {:?}", vm);
 }
 
 /// Assert both engines produce a specific string.
@@ -107,7 +102,12 @@ fn assert_parity_string(source: &str, expected: &str) {
 fn assert_parity_bool(source: &str, expected: bool) {
     let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(interp, Value::Bool(expected), "Interpreter wrong: {:?}", interp);
+    assert_eq!(
+        interp,
+        Value::Bool(expected),
+        "Interpreter wrong: {:?}",
+        interp
+    );
     assert_eq!(vm, Value::Bool(expected), "VM wrong: {:?}", vm);
 }
 
@@ -120,12 +120,18 @@ fn typecheck(source: &str) -> (bool, Vec<String>) {
     let mut parser = Parser::new(tokens);
     let (program, parse_diags) = parser.parse();
     if !parse_diags.is_empty() {
-        return (false, parse_diags.iter().map(|d| d.message.clone()).collect());
+        return (
+            false,
+            parse_diags.iter().map(|d| d.message.clone()).collect(),
+        );
     }
     let mut binder = Binder::new();
     let (mut symbol_table, bind_diags) = binder.bind(&program);
     if !bind_diags.is_empty() {
-        return (false, bind_diags.iter().map(|d| d.message.clone()).collect());
+        return (
+            false,
+            bind_diags.iter().map(|d| d.message.clone()).collect(),
+        );
     }
     let mut checker = TypeChecker::new(&mut symbol_table);
     let diags = checker.check(&program);
@@ -811,7 +817,11 @@ fn test_number_match_requires_wildcard() {
             };
         }"#,
     );
-    assert!(success, "Number with wildcard should be exhaustive: {:?}", msgs);
+    assert!(
+        success,
+        "Number with wildcard should be exhaustive: {:?}",
+        msgs
+    );
 }
 
 #[test]
@@ -824,7 +834,11 @@ fn test_string_match_requires_wildcard() {
             };
         }"#,
     );
-    assert!(success, "String with wildcard should be exhaustive: {:?}", msgs);
+    assert!(
+        success,
+        "String with wildcard should be exhaustive: {:?}",
+        msgs
+    );
 }
 
 #[test]
@@ -836,9 +850,13 @@ fn test_option_missing_none_rejected() {
             };
         }"#,
     );
-    assert!(!success, "Should reject non-exhaustive Option (missing None)");
     assert!(
-        msgs.iter().any(|m| m.contains("Non-exhaustive") || m.contains("None")),
+        !success,
+        "Should reject non-exhaustive Option (missing None)"
+    );
+    assert!(
+        msgs.iter()
+            .any(|m| m.contains("Non-exhaustive") || m.contains("None")),
         "Should mention missing None: {:?}",
         msgs
     );
@@ -853,9 +871,13 @@ fn test_option_missing_some_rejected() {
             };
         }"#,
     );
-    assert!(!success, "Should reject non-exhaustive Option (missing Some)");
     assert!(
-        msgs.iter().any(|m| m.contains("Non-exhaustive") || m.contains("Some")),
+        !success,
+        "Should reject non-exhaustive Option (missing Some)"
+    );
+    assert!(
+        msgs.iter()
+            .any(|m| m.contains("Non-exhaustive") || m.contains("Some")),
         "Should mention missing Some: {:?}",
         msgs
     );
@@ -870,9 +892,13 @@ fn test_result_missing_err_rejected() {
             };
         }"#,
     );
-    assert!(!success, "Should reject non-exhaustive Result (missing Err)");
     assert!(
-        msgs.iter().any(|m| m.contains("Non-exhaustive") || m.contains("Err")),
+        !success,
+        "Should reject non-exhaustive Result (missing Err)"
+    );
+    assert!(
+        msgs.iter()
+            .any(|m| m.contains("Non-exhaustive") || m.contains("Err")),
         "Should mention missing Err: {:?}",
         msgs
     );
@@ -889,7 +915,8 @@ fn test_result_missing_ok_rejected() {
     );
     assert!(!success, "Should reject non-exhaustive Result (missing Ok)");
     assert!(
-        msgs.iter().any(|m| m.contains("Non-exhaustive") || m.contains("Ok")),
+        msgs.iter()
+            .any(|m| m.contains("Non-exhaustive") || m.contains("Ok")),
         "Should mention missing Ok: {:?}",
         msgs
     );

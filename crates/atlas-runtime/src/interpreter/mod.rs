@@ -347,7 +347,7 @@ impl Interpreter {
             return Ok(value.clone());
         }
 
-        // Constructor literals: None is a zero-arg constructor, evaluates directly to Option::None
+        // Constructor literals: None evaluates directly to Option::None
         if name == "None" {
             return Ok(Value::Option(None));
         }
