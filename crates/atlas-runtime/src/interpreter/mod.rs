@@ -347,6 +347,11 @@ impl Interpreter {
             return Ok(value.clone());
         }
 
+        // Constructor literals: None evaluates directly to Option::None
+        if name == "None" {
+            return Ok(Value::Option(None));
+        }
+
         // Check builtins - return a builtin value
         if crate::stdlib::is_builtin(name) {
             return Ok(Value::Builtin(Arc::from(name)));

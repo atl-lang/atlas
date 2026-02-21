@@ -581,7 +581,10 @@ impl VM {
                             })
                         }
                     };
-                    let value = if let Some(v) = self.globals.get(&name) {
+                    let value = if name == "None" {
+                        // Constructor literal: None always evaluates to Option::None
+                        Value::Option(None)
+                    } else if let Some(v) = self.globals.get(&name) {
                         v.clone()
                     } else if crate::stdlib::is_builtin(&name)
                         || crate::stdlib::is_array_intrinsic(&name)
@@ -907,6 +910,11 @@ impl VM {
 
                             let result = native_fn(&args)?;
                             self.push(result);
+                        }
+                        // None() is a valid zero-arg constructor call
+                        Value::Option(None) if arg_count == 0 => {
+                            self.pop(); // Pop the Option(None) function value
+                            self.push(Value::Option(None));
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {

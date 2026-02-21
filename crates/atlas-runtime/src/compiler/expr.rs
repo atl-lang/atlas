@@ -295,52 +295,76 @@ impl Compiler {
 
     /// Compile a match expression
     ///
-    /// Strategy: Desugar match to if-else chain using existing opcodes.
-    /// Each arm tries to match the pattern, jumping to the next arm on failure.
-    /// On success, bind variables and evaluate the arm body.
+    /// Strategy: Use Dup for non-last arms so the scrutinee is available for
+    /// subsequent arms. Pattern check consumes the copy (dup or original for last
+    /// arm). After body compilation, a temp global is used to save/restore the
+    /// result while popping extra stack values (scrutinee, pattern variables).
+    ///
+    /// This avoids using hidden locals (which break when match is used inside
+    /// other expressions due to temporaries corrupting local indices).
     fn compile_match(&mut self, match_expr: &MatchExpr) -> Result<(), Vec<Diagnostic>> {
-        // Compile scrutinee (leaves value on stack)
+        // Compile scrutinee (leaves value on stack as a temporary)
         self.compile_expr(&match_expr.scrutinee)?;
 
-        let mut arm_end_jumps = Vec::new(); // Jumps to the end after each arm body
+        // Temp global name for saving the match result during cleanup
+        let temp_name = "$match_result";
+        let temp_name_idx = self.bytecode.add_constant(Value::string(temp_name));
+
+        let mut arm_end_jumps = Vec::new();
 
         for (arm_idx, arm) in match_expr.arms.iter().enumerate() {
             let is_last_arm = arm_idx == match_expr.arms.len() - 1;
-
-            // Save current scope state for cleanup
             let locals_before = self.locals.len();
 
             if !is_last_arm {
-                // Duplicate scrutinee for this arm (so next arm can use it)
+                // Dup scrutinee so next arm can use the original
                 self.bytecode.emit(Opcode::Dup, arm.span);
             }
 
-            // Try to match pattern
-            // Pattern matching leaves: scrutinee consumed, match_success (bool) on stack,
-            // and binds variables as locals if successful
+            // Pattern check consumes the top value (dup or scrutinee for last arm).
+            // On success: pushes True, may add pattern variable locals.
+            // On failure: stack clean (copy consumed), jumps to fail target.
             let match_failed_jump =
                 self.compile_pattern_check(&arm.pattern, arm.span, locals_before)?;
 
-            // If pattern matched: pop success flag, evaluate body, jump to end
-            self.bytecode.emit(Opcode::Pop, arm.span); // Pop the true from pattern check
+            // Pop True (pattern success flag)
+            self.bytecode.emit(Opcode::Pop, arm.span);
 
-            // Compile arm body (result stays on stack)
+            // Compile arm body (result on top of stack)
             self.compile_expr(&arm.body)?;
+
+            // Cleanup: remove extras (pattern vars + scrutinee for non-last) from
+            // below the body result. Save result to temp global, pop extras, restore.
+            let pattern_var_count = self.locals.len() - locals_before;
+            let extras = pattern_var_count + if !is_last_arm { 1 } else { 0 };
+
+            if extras > 0 {
+                // Save result to temp global (SetGlobal peeks, value stays)
+                self.bytecode.emit(Opcode::SetGlobal, arm.span);
+                self.bytecode.emit_u16(temp_name_idx);
+                // Pop result copy + all extras
+                for _ in 0..=extras {
+                    self.bytecode.emit(Opcode::Pop, arm.span);
+                }
+                // Restore result from temp global
+                self.bytecode.emit(Opcode::GetGlobal, arm.span);
+                self.bytecode.emit_u16(temp_name_idx);
+            }
 
             // Jump to end (skip other arms)
             if !is_last_arm {
                 self.bytecode.emit(Opcode::Jump, arm.span);
                 let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF); // Placeholder
+                self.bytecode.emit_u16(0xFFFF);
                 arm_end_jumps.push(jump_offset);
             }
 
-            // Patch the jump for failed pattern match (jump here to try next arm)
+            // Patch the failed pattern jump (next arm starts here)
             if let Some(failed_jump) = match_failed_jump {
                 self.bytecode.patch_jump(failed_jump);
             }
 
-            // Clean up locals from this arm (restore state for next arm)
+            // Clean up locals tracking
             self.locals.truncate(locals_before);
         }
 
@@ -349,14 +373,16 @@ impl Compiler {
             self.bytecode.patch_jump(jump_offset);
         }
 
+        // Stack: [body_result] — match expression produces exactly one value
         Ok(())
     }
 
     /// Compile pattern matching check
     ///
-    /// Expects scrutinee on top of stack.
-    /// Leaves: bool (match success) on stack
-    /// Side effects: Binds pattern variables as locals if successful
+    /// Contract:
+    /// - INPUT: scrutinee copy on top of stack (from GetLocal in compile_match)
+    /// - SUCCESS: scrutinee copy consumed, True pushed on stack, pattern vars added as locals
+    /// - FAILURE: scrutinee copy consumed, stack clean, jumps to returned offset
     ///
     /// Returns: Optional jump offset to patch if match fails (None for wildcard/variable)
     fn compile_pattern_check(
@@ -370,7 +396,7 @@ impl Compiler {
         match pattern {
             // Wildcard: always matches, no bindings
             Pattern::Wildcard(_) => {
-                // Pop scrutinee (consumed)
+                // Pop scrutinee copy (consumed)
                 self.bytecode.emit(Opcode::Pop, span);
                 // Push true (match succeeded)
                 self.bytecode.emit(Opcode::True, span);
@@ -379,19 +405,22 @@ impl Compiler {
 
             // Variable: always matches, bind to local
             Pattern::Variable(id) => {
-                // Scrutinee is already on stack - that becomes the variable's value
-                // Add as local variable
-                self.locals.push(Local {
+                // Register local for the pattern variable
+                self.push_local(Local {
                     name: id.name.clone(),
                     depth: self.scope_depth,
-                    mutable: false, // Pattern variables are immutable
+                    mutable: false,
                     scoped_name: None,
                 });
-                let local_idx = self.locals.len() - 1;
+                let local_idx = (self.locals.len() - 1 - self.current_function_base) as u16;
 
-                // Store scrutinee to local (pops scrutinee)
+                // Copy value from stack top to the local's slot position.
+                // This is necessary because temporaries (from enclosing
+                // expressions, scrutinee copies, etc.) may sit between the
+                // previous locals and the stack top, so the value isn't
+                // naturally at the right position.
                 self.bytecode.emit(Opcode::SetLocal, span);
-                self.bytecode.emit_u16(local_idx as u16);
+                self.bytecode.emit_u16(local_idx);
 
                 // Push true (match succeeded)
                 self.bytecode.emit(Opcode::True, span);
@@ -400,8 +429,7 @@ impl Compiler {
 
             // Literal: check equality
             Pattern::Literal(lit, lit_span) => {
-                // Scrutinee is on stack
-                // Push literal value
+                // Scrutinee copy is on stack. Push literal value for comparison.
                 match lit {
                     Literal::Number(n) => {
                         let const_idx = self.bytecode.add_constant(Value::Number(*n));
@@ -424,13 +452,17 @@ impl Compiler {
                     }
                 }
 
-                // Compare: pops both values, pushes bool
+                // Compare: pops both (scrutinee copy + literal), pushes bool
                 self.bytecode.emit(Opcode::Equal, span);
 
-                // If false, jump to next arm
+                // If false, jump to fail target
                 self.bytecode.emit(Opcode::JumpIfFalse, span);
                 let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF); // Placeholder
+                self.bytecode.emit_u16(0xFFFF);
+
+                // On success path: Equal consumed the copy, JumpIfFalse consumed the bool.
+                // Push True to satisfy the contract.
+                self.bytecode.emit(Opcode::True, span);
 
                 Ok(Some(jump_offset))
             }
@@ -449,7 +481,10 @@ impl Compiler {
 
     /// Compile constructor pattern (Some, None, Ok, Err)
     ///
-    /// Uses dedicated pattern matching opcodes to check variant and extract values.
+    /// Contract (same as compile_pattern_check):
+    /// - INPUT: scrutinee copy on top of stack
+    /// - SUCCESS: copy consumed, True on stack, pattern vars as locals
+    /// - FAILURE: copy consumed, stack clean, jumps to returned offset
     fn compile_constructor_pattern(
         &mut self,
         name: &crate::ast::Identifier,
@@ -459,12 +494,8 @@ impl Compiler {
     ) -> Result<Option<usize>, Vec<Diagnostic>> {
         use crate::bytecode::Opcode;
 
-        // Scrutinee is on stack (Option or Result value)
-
         match name.name.as_str() {
             "None" => {
-                // Check if scrutinee is Option::None
-                // Args should be empty for None
                 if !args.is_empty() {
                     return Err(vec![Diagnostic::error_with_code(
                         "AT9995",
@@ -476,21 +507,19 @@ impl Compiler {
                     )]);
                 }
 
-                // Dup scrutinee (keep original for potential next arm)
-                // Actually, we already consumed it - it's on the stack
-                // Check if it's None
+                // IsOptionNone: pops copy, pushes bool
                 self.bytecode.emit(Opcode::IsOptionNone, span);
-
-                // If false (not None), jump to next arm
+                // JumpIfFalse: pops bool. On failure: stack clean, jumps.
                 self.bytecode.emit(Opcode::JumpIfFalse, span);
                 let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF); // Placeholder
+                self.bytecode.emit_u16(0xFFFF);
+                // On success: copy consumed, bool consumed. Push True.
+                self.bytecode.emit(Opcode::True, span);
 
                 Ok(Some(jump_offset))
             }
 
             "Some" => {
-                // Check if scrutinee is Option::Some and extract value
                 if args.len() != 1 {
                     return Err(vec![Diagnostic::error_with_code(
                         "AT9995",
@@ -502,42 +531,16 @@ impl Compiler {
                     )]);
                 }
 
-                // Dup scrutinee to check and extract
-                self.bytecode.emit(Opcode::Dup, span);
-
-                // Check if it's Some
-                self.bytecode.emit(Opcode::IsOptionSome, span);
-
-                // If false (not Some), jump to next arm
-                self.bytecode.emit(Opcode::JumpIfFalse, span);
-                let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF); // Placeholder
-
-                // It is Some! Extract the inner value (pops Option, pushes inner)
-                self.bytecode.emit(Opcode::ExtractOptionValue, span);
-
-                // Now match the inner pattern against the extracted value
-                let inner_failed_jump =
-                    self.compile_pattern_check(&args[0], span, locals_before)?;
-
-                // Inner pattern succeeded - pop the success flag
-                self.bytecode.emit(Opcode::Pop, span);
-
-                // Return the outer jump (for failed IsOptionSome check)
-                // If inner pattern fails, we also need to handle that...
-                // Actually, this is getting complex. Let me think...
-
-                // For MVP, let's handle only variable bindings in constructor args
-                if let Some(inner_jump) = inner_failed_jump {
-                    // Inner pattern can fail - patch it to jump to same place as outer
-                    self.bytecode.patch_jump(inner_jump);
-                }
-
-                Ok(Some(jump_offset))
+                self.compile_wrapping_constructor_pattern(
+                    Opcode::IsOptionSome,
+                    Opcode::ExtractOptionValue,
+                    &args[0],
+                    span,
+                    locals_before,
+                )
             }
 
             "Ok" => {
-                // Similar to Some but for Result
                 if args.len() != 1 {
                     return Err(vec![Diagnostic::error_with_code(
                         "AT9995",
@@ -549,29 +552,16 @@ impl Compiler {
                     )]);
                 }
 
-                self.bytecode.emit(Opcode::Dup, span);
-                self.bytecode.emit(Opcode::IsResultOk, span);
-
-                self.bytecode.emit(Opcode::JumpIfFalse, span);
-                let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF);
-
-                self.bytecode.emit(Opcode::ExtractResultValue, span);
-
-                let inner_failed_jump =
-                    self.compile_pattern_check(&args[0], span, locals_before)?;
-
-                self.bytecode.emit(Opcode::Pop, span);
-
-                if let Some(inner_jump) = inner_failed_jump {
-                    self.bytecode.patch_jump(inner_jump);
-                }
-
-                Ok(Some(jump_offset))
+                self.compile_wrapping_constructor_pattern(
+                    Opcode::IsResultOk,
+                    Opcode::ExtractResultValue,
+                    &args[0],
+                    span,
+                    locals_before,
+                )
             }
 
             "Err" => {
-                // Similar to Ok but checks for Err variant
                 if args.len() != 1 {
                     return Err(vec![Diagnostic::error_with_code(
                         "AT9995",
@@ -583,25 +573,13 @@ impl Compiler {
                     )]);
                 }
 
-                self.bytecode.emit(Opcode::Dup, span);
-                self.bytecode.emit(Opcode::IsResultErr, span);
-
-                self.bytecode.emit(Opcode::JumpIfFalse, span);
-                let jump_offset = self.bytecode.current_offset();
-                self.bytecode.emit_u16(0xFFFF);
-
-                self.bytecode.emit(Opcode::ExtractResultValue, span);
-
-                let inner_failed_jump =
-                    self.compile_pattern_check(&args[0], span, locals_before)?;
-
-                self.bytecode.emit(Opcode::Pop, span);
-
-                if let Some(inner_jump) = inner_failed_jump {
-                    self.bytecode.patch_jump(inner_jump);
-                }
-
-                Ok(Some(jump_offset))
+                self.compile_wrapping_constructor_pattern(
+                    Opcode::IsResultErr,
+                    Opcode::ExtractResultValue,
+                    &args[0],
+                    span,
+                    locals_before,
+                )
             }
 
             _ => Err(vec![Diagnostic::error_with_code(
@@ -615,9 +593,104 @@ impl Compiler {
         }
     }
 
+    /// Compile a wrapping constructor pattern (Some(x), Ok(x), Err(x))
+    ///
+    /// These patterns check a variant, extract the inner value, then recursively
+    /// match the inner pattern.
+    ///
+    /// Stack protocol (same as compile_pattern_check):
+    /// - INPUT: [copy] on stack
+    /// - SUCCESS: copy consumed, [inner_locals...] [True] on stack
+    /// - FAILURE: copy consumed, stack clean, jumps to returned offset
+    ///
+    /// Emitted code structure:
+    /// ```text
+    ///   Dup                              // [copy, dup]
+    ///   check_opcode                     // [copy, bool]
+    ///   JumpIfFalse → outer_fail         // [copy]
+    ///   extract_opcode                   // [inner]
+    ///   <inner pattern check>            // [inner_locals..., True] or jump
+    ///   Jump → success_exit              // skip failure code
+    ///   [inner_fail: Jump → fail_exit]   // (only if inner can fail)
+    ///   outer_fail: Pop                  // [] clean
+    ///   fail_exit: Jump → ???            // compile_match patches this
+    ///   success_exit:                    // [inner_locals..., True]
+    /// ```
+    fn compile_wrapping_constructor_pattern(
+        &mut self,
+        check_opcode: Opcode,
+        extract_opcode: Opcode,
+        inner_pattern: &Pattern,
+        span: Span,
+        locals_before: usize,
+    ) -> Result<Option<usize>, Vec<Diagnostic>> {
+        // Stack: [copy]
+        self.bytecode.emit(Opcode::Dup, span);
+        // Stack: [copy, dup]
+
+        self.bytecode.emit(check_opcode, span);
+        // Stack: [copy, bool]
+
+        self.bytecode.emit(Opcode::JumpIfFalse, span);
+        let outer_fail = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+        // Stack (success path): [copy]
+
+        self.bytecode.emit(extract_opcode, span);
+        // Stack: [inner]
+
+        // Recursively match inner pattern
+        let inner_failed = self.compile_pattern_check(inner_pattern, span, locals_before)?;
+        // Success: [inner_locals..., True]
+
+        // Jump over failure code
+        self.bytecode.emit(Opcode::Jump, span);
+        let success_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // --- Failure paths ---
+
+        // Inner pattern failure (if inner can fail)
+        if let Some(inner_jump) = inner_failed {
+            self.bytecode.patch_jump(inner_jump);
+            // Inner pattern guarantees stack is clean (inner value consumed).
+            // Jump over the outer_fail Pop to the shared fail exit.
+            self.bytecode.emit(Opcode::Jump, span);
+            let inner_to_fail = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // Outer variant check failure: copy still on stack
+            self.bytecode.patch_jump(outer_fail);
+            self.bytecode.emit(Opcode::Pop, span); // Pop copy → clean
+
+            // Shared fail exit (inner and outer paths converge)
+            self.bytecode.patch_jump(inner_to_fail);
+        } else {
+            // No inner failure possible. Only outer fail path.
+            self.bytecode.patch_jump(outer_fail);
+            self.bytecode.emit(Opcode::Pop, span); // Pop copy → clean
+        }
+
+        // Emit fail jump for compile_match to patch
+        self.bytecode.emit(Opcode::Jump, span);
+        let fail_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // Success exit: inner pattern's True is already on stack
+        self.bytecode.patch_jump(success_exit);
+
+        Ok(Some(fail_exit))
+    }
+
     /// Compile array pattern [x, y, z]
     ///
-    /// Checks if scrutinee is an array with correct length, then matches elements.
+    /// Stack protocol (same as compile_pattern_check):
+    /// - INPUT: [copy] (array value) on stack
+    /// - SUCCESS: copy consumed, [element_locals...] [True] on stack
+    /// - FAILURE: copy consumed, stack clean, jumps to returned offset
+    ///
+    /// The array is stored in a temp global ("$match_array") so it can be
+    /// accessed for each element without interfering with stack/local positions.
     fn compile_array_pattern(
         &mut self,
         elements: &[Pattern],
@@ -626,14 +699,20 @@ impl Compiler {
     ) -> Result<Option<usize>, Vec<Diagnostic>> {
         use crate::bytecode::Opcode;
 
-        // Scrutinee (array) is on stack
-        // Strategy:
-        // 1. Dup and check if it's an array
-        // 2. Dup and check length
-        // 3. For each element: get element, match pattern, bind variables
+        let array_global_name = "$match_array";
+        let array_name_idx = self.bytecode.add_constant(Value::string(array_global_name));
+
+        // Stack: [copy] (the array)
+        // Store array to temp global for repeated access
+        self.bytecode.emit(Opcode::SetGlobal, span);
+        self.bytecode.emit_u16(array_name_idx);
+        // Pop the array from stack (SetGlobal peeks)
+        self.bytecode.emit(Opcode::Pop, span);
+        // Stack: [] (array is in temp global)
 
         // Check if value is an array
-        self.bytecode.emit(Opcode::Dup, span);
+        self.bytecode.emit(Opcode::GetGlobal, span);
+        self.bytecode.emit_u16(array_name_idx);
         self.bytecode.emit(Opcode::IsArray, span);
 
         self.bytecode.emit(Opcode::JumpIfFalse, span);
@@ -641,75 +720,93 @@ impl Compiler {
         self.bytecode.emit_u16(0xFFFF);
 
         // Check array length
-        self.bytecode.emit(Opcode::Dup, span);
+        self.bytecode.emit(Opcode::GetGlobal, span);
+        self.bytecode.emit_u16(array_name_idx);
         self.bytecode.emit(Opcode::GetArrayLen, span);
 
-        // Push expected length
         let expected_len = elements.len() as f64;
         let const_idx = self.bytecode.add_constant(Value::Number(expected_len));
         self.bytecode.emit(Opcode::Constant, span);
         self.bytecode.emit_u16(const_idx);
 
-        // Compare lengths
         self.bytecode.emit(Opcode::Equal, span);
 
         self.bytecode.emit(Opcode::JumpIfFalse, span);
         let wrong_length_jump = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF);
 
-        // Array is correct type and length!
-        // Now match each element
+        // Array type and length match. Match each element.
+        // Track element failure info: (jump_offset, element_locals_above_baseline)
+        let mut elem_fail_info: Vec<(usize, usize)> = Vec::new();
+
         for (idx, elem_pattern) in elements.iter().enumerate() {
-            // Dup array
-            self.bytecode.emit(Opcode::Dup, span);
+            // Get array from temp global
+            self.bytecode.emit(Opcode::GetGlobal, span);
+            self.bytecode.emit_u16(array_name_idx);
 
             // Push index
             let idx_const = self.bytecode.add_constant(Value::Number(idx as f64));
             self.bytecode.emit(Opcode::Constant, span);
             self.bytecode.emit_u16(idx_const);
 
-            // Get element at index
+            // Get element (pops array_copy and index, pushes element)
             self.bytecode.emit(Opcode::GetIndex, span);
 
-            // Match pattern against element
-            let elem_failed_jump = self.compile_pattern_check(elem_pattern, span, locals_before)?;
+            // Match element pattern
+            let elem_failed = self.compile_pattern_check(elem_pattern, span, locals_before)?;
 
-            // Pattern matched - pop success flag
+            // Pop True from successful element match
             self.bytecode.emit(Opcode::Pop, span);
 
-            // If pattern matching failed, jump to next arm
-            if let Some(jump) = elem_failed_jump {
-                self.bytecode.patch_jump(jump);
+            if let Some(jump) = elem_failed {
+                // Record how many element locals exist at this failure point
+                let elem_locals = self.locals.len() - locals_before;
+                elem_fail_info.push((jump, elem_locals));
             }
         }
 
-        // All elements matched! Pop the array (we're done with it)
-        self.bytecode.emit(Opcode::Pop, span);
-
-        // Push true (match succeeded)
+        // All elements matched! Push True (contract).
         self.bytecode.emit(Opcode::True, span);
 
-        // Jump to after failure handling
+        // Jump over failure code
         self.bytecode.emit(Opcode::Jump, span);
-        let success_jump = self.bytecode.current_offset();
+        let success_exit = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF);
 
-        // Patch failure jumps to come here
+        // --- Failure paths ---
+
+        // Element failure handlers: pop element locals, jump to fail_exit
+        let mut handler_jumps = Vec::new();
+        for (jump, elem_locals) in &elem_fail_info {
+            self.bytecode.patch_jump(*jump);
+            // Pop element locals from earlier successful elements
+            for _ in 0..*elem_locals {
+                self.bytecode.emit(Opcode::Pop, span);
+            }
+            self.bytecode.emit(Opcode::Jump, span);
+            handler_jumps.push(self.bytecode.current_offset());
+            self.bytecode.emit_u16(0xFFFF);
+        }
+
+        // Type/length check failures: stack is already clean
         self.bytecode.patch_jump(not_array_jump);
         self.bytecode.patch_jump(wrong_length_jump);
 
-        // Failed - push false
-        self.bytecode.emit(Opcode::False, span);
+        // All failure paths converge here
+        for j in &handler_jumps {
+            self.bytecode.patch_jump(*j);
+        }
 
-        // Patch success jump
-        self.bytecode.patch_jump(success_jump);
-
-        // Return jump for failed match
-        self.bytecode.emit(Opcode::JumpIfFalse, span);
-        let final_jump = self.bytecode.current_offset();
+        // Fail exit: compile_match patches this
+        self.bytecode.emit(Opcode::Jump, span);
+        let fail_exit = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF);
 
-        Ok(Some(final_jump))
+        // Success exit
+        self.bytecode.patch_jump(success_exit);
+        // Stack: [element_locals..., True]
+
+        Ok(Some(fail_exit))
     }
 
     /// Compile try expression (error propagation operator ?)

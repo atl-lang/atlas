@@ -308,6 +308,8 @@ impl Interpreter {
                 // Call the native Rust closure
                 native_fn(&args)
             }
+            // None() is a valid call that returns Option::None (zero-arg constructor)
+            Value::Option(None) if args.is_empty() => Ok(Value::Option(None)),
             _ => Err(RuntimeError::TypeError {
                 msg: format!("Cannot call non-function type {}", callee_value.type_name()),
                 span: call.span,
