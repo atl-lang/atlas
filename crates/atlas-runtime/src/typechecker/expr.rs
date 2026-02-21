@@ -904,6 +904,26 @@ impl<'a> TypeChecker<'a> {
                 let _ = self.symbol_table.define(symbol);
             }
 
+            // Check guard if present — must be bool (AT3029)
+            if let Some(guard) = &arm.guard {
+                let guard_type = self.check_expr(guard);
+                if guard_type.normalized() != Type::Bool && guard_type.normalized() != Type::Unknown
+                {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3029",
+                            format!(
+                                "Guard expression must be bool, found {}",
+                                guard_type.display_name()
+                            ),
+                            guard.span(),
+                        )
+                        .with_label("must be bool")
+                        .with_help("guard expressions must evaluate to a boolean value"),
+                    );
+                }
+            }
+
             // Check arm body with bindings in scope
             let arm_type = self.check_expr(&arm.body);
             arm_types.push((arm_type.clone(), arm.body.span(), arm_idx));
@@ -960,6 +980,42 @@ impl<'a> TypeChecker<'a> {
         unified
     }
 
+    /// Check if a pattern covers a given constructor name (including inside OR patterns)
+    fn pattern_covers_constructor(pattern: &crate::ast::Pattern, ctor: &str) -> bool {
+        use crate::ast::Pattern;
+        match pattern {
+            Pattern::Constructor { name, .. } => name.name == ctor,
+            Pattern::Or(alternatives, _) => alternatives
+                .iter()
+                .any(|alt| Self::pattern_covers_constructor(alt, ctor)),
+            _ => false,
+        }
+    }
+
+    /// Check if a pattern covers a given bool literal (including inside OR patterns)
+    fn pattern_covers_bool(pattern: &crate::ast::Pattern, val: bool) -> bool {
+        use crate::ast::{Literal, Pattern};
+        match pattern {
+            Pattern::Literal(Literal::Bool(b), _) => *b == val,
+            Pattern::Or(alternatives, _) => alternatives
+                .iter()
+                .any(|alt| Self::pattern_covers_bool(alt, val)),
+            _ => false,
+        }
+    }
+
+    /// Check if a pattern is a catch-all (wildcard or unguarded variable, including inside OR)
+    fn pattern_is_catch_all(pattern: &crate::ast::Pattern) -> bool {
+        use crate::ast::Pattern;
+        match pattern {
+            Pattern::Wildcard(_) | Pattern::Variable(_) => true,
+            Pattern::Or(alternatives, _) => {
+                alternatives.iter().any(|alt| Self::pattern_is_catch_all(alt))
+            }
+            _ => false,
+        }
+    }
+
     /// Check exhaustiveness of match arms
     fn check_exhaustiveness(
         &mut self,
@@ -967,12 +1023,10 @@ impl<'a> TypeChecker<'a> {
         scrutinee_type: &Type,
         match_span: Span,
     ) {
-        use crate::ast::Pattern;
-
-        // Check if there's a catch-all pattern (wildcard or variable binding)
+        // Check if there's a catch-all pattern (wildcard or variable binding, unguarded)
         let has_catch_all = arms
             .iter()
-            .any(|arm| matches!(arm.pattern, Pattern::Wildcard(_) | Pattern::Variable(_)));
+            .any(|arm| arm.guard.is_none() && Self::pattern_is_catch_all(&arm.pattern));
 
         if has_catch_all {
             // Wildcard or variable catches everything - exhaustive
@@ -991,27 +1045,13 @@ impl<'a> TypeChecker<'a> {
         match scrutinee_norm {
             Type::Generic { name, .. } if name == "Option" => {
                 // Option<T> requires Some and None to be covered
-                let has_some = arms.iter().any(|arm| {
-                    if let Pattern::Constructor {
-                        name: ctor_name, ..
-                    } = &arm.pattern
-                    {
-                        ctor_name.name == "Some"
-                    } else {
-                        false
-                    }
-                });
+                let has_some = arms
+                    .iter()
+                    .any(|arm| arm.guard.is_none() && Self::pattern_covers_constructor(&arm.pattern, "Some"));
 
-                let has_none = arms.iter().any(|arm| {
-                    if let Pattern::Constructor {
-                        name: ctor_name, ..
-                    } = &arm.pattern
-                    {
-                        ctor_name.name == "None"
-                    } else {
-                        false
-                    }
-                });
+                let has_none = arms
+                    .iter()
+                    .any(|arm| arm.guard.is_none() && Self::pattern_covers_constructor(&arm.pattern, "None"));
 
                 if !has_some || !has_none {
                     let missing = if !has_some && !has_none {
@@ -1036,27 +1076,13 @@ impl<'a> TypeChecker<'a> {
 
             Type::Generic { name, .. } if name == "Result" => {
                 // Result<T,E> requires Ok and Err to be covered
-                let has_ok = arms.iter().any(|arm| {
-                    if let Pattern::Constructor {
-                        name: ctor_name, ..
-                    } = &arm.pattern
-                    {
-                        ctor_name.name == "Ok"
-                    } else {
-                        false
-                    }
-                });
+                let has_ok = arms
+                    .iter()
+                    .any(|arm| arm.guard.is_none() && Self::pattern_covers_constructor(&arm.pattern, "Ok"));
 
-                let has_err = arms.iter().any(|arm| {
-                    if let Pattern::Constructor {
-                        name: ctor_name, ..
-                    } = &arm.pattern
-                    {
-                        ctor_name.name == "Err"
-                    } else {
-                        false
-                    }
-                });
+                let has_err = arms
+                    .iter()
+                    .any(|arm| arm.guard.is_none() && Self::pattern_covers_constructor(&arm.pattern, "Err"));
 
                 if !has_ok || !has_err {
                     let missing = if !has_ok && !has_err {
@@ -1081,13 +1107,12 @@ impl<'a> TypeChecker<'a> {
 
             Type::Bool => {
                 // Bool requires true and false to be covered (or wildcard)
-                let has_true = arms
-                    .iter()
-                    .any(|arm| matches!(arm.pattern, Pattern::Literal(Literal::Bool(true), _)));
-
-                let has_false = arms
-                    .iter()
-                    .any(|arm| matches!(arm.pattern, Pattern::Literal(Literal::Bool(false), _)));
+                let has_true = arms.iter().any(|arm| {
+                    arm.guard.is_none() && Self::pattern_covers_bool(&arm.pattern, true)
+                });
+                let has_false = arms.iter().any(|arm| {
+                    arm.guard.is_none() && Self::pattern_covers_bool(&arm.pattern, false)
+                });
 
                 if !has_true || !has_false {
                     let missing = if !has_true && !has_false {
@@ -1228,6 +1253,17 @@ impl<'a> TypeChecker<'a> {
                     );
                     return bindings;
                 }
+                Pattern::Or(alternatives, _) => {
+                    // Check each sub-pattern independently; bindings from first sub-pattern used
+                    for alt in alternatives {
+                        let alt_bindings =
+                            self.check_pattern(alt, &Type::Union(members.clone()));
+                        if bindings.is_empty() {
+                            bindings = alt_bindings;
+                        }
+                    }
+                    return bindings;
+                }
             }
         }
 
@@ -1278,6 +1314,16 @@ impl<'a> TypeChecker<'a> {
             Pattern::Array { elements, span } => {
                 // Check array pattern
                 bindings.extend(self.check_array_pattern(elements, &expected_norm, *span));
+            }
+
+            Pattern::Or(alternatives, _) => {
+                // Check each sub-pattern independently; bindings from first sub-pattern used
+                for alt in alternatives {
+                    let alt_bindings = self.check_pattern(alt, expected_type);
+                    if bindings.is_empty() {
+                        bindings = alt_bindings;
+                    }
+                }
             }
         }
 

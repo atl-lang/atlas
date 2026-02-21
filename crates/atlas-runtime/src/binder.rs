@@ -972,6 +972,11 @@ impl Binder {
                         let _ = self.symbol_table.define(symbol);
                     }
 
+                    // Bind guard expression (if present) with pattern variables in scope
+                    if let Some(guard) = &arm.guard {
+                        self.bind_expr(guard);
+                    }
+
                     // Bind arm body with pattern variables in scope
                     self.bind_expr(&arm.body);
 
@@ -1021,6 +1026,12 @@ impl Binder {
                 // Collect from all element patterns
                 for elem in elements {
                     vars.extend(self.collect_pattern_variables(elem));
+                }
+            }
+            Pattern::Or(alternatives, _) => {
+                // Collect variables from first sub-pattern (all must bind same names)
+                if let Some(first) = alternatives.first() {
+                    vars.extend(self.collect_pattern_variables(first));
                 }
             }
         }

@@ -517,9 +517,18 @@ impl Interpreter {
                 self.push_scope();
 
                 // Bind pattern variables (pattern bindings are immutable - they're destructured values)
-                for (name, value) in bindings {
+                for (name, value) in &bindings {
                     let scope = self.locals.last_mut().unwrap();
-                    scope.insert(name, (value, false));
+                    scope.insert(name.clone(), (value.clone(), false));
+                }
+
+                // Check guard if present — guard failure means try next arm
+                if let Some(guard_expr) = &arm.guard {
+                    let guard_result = self.eval_expr(guard_expr)?;
+                    if guard_result != Value::Bool(true) {
+                        self.pop_scope();
+                        continue; // Guard failed — try next arm
+                    }
                 }
 
                 // Evaluate arm body with bindings in scope
@@ -568,6 +577,16 @@ impl Interpreter {
 
             // Array patterns: [x, y, z]
             Pattern::Array { elements, .. } => self.try_match_array(elements, value),
+
+            // OR patterns: try each sub-pattern, return first match
+            Pattern::Or(alternatives, _) => {
+                for alt in alternatives {
+                    if let Some(bindings) = self.try_match_pattern(alt, value) {
+                        return Some(bindings);
+                    }
+                }
+                None
+            }
         }
     }
 

@@ -2,7 +2,7 @@
 
 **Condition:** Size estimated, plan ready
 
-**⚠️ TESTING REMINDER:** Run TARGETED tests only. Full suite is GATE 6. See `memory/testing-patterns.md`.
+**⚠️ TESTING REMINDER:** Run TARGETED tests only. Full suite is GATE 6. See auto-memory `testing-patterns.md`.
 
 **IMPORTANT:** This gate differs based on workflow type.
 
@@ -39,20 +39,16 @@
 
 ## 🚨 TESTING PROTOCOL
 
-**Do NOT run full test suite in GATE 2. That's GATE 6 only.**
+**Source of truth:** auto-memory `testing-patterns.md`
+
+**GATE 2 rule:** Run targeted tests ONLY. Full suite is GATE 6.
 
 ```bash
-# Single test (during dev)
-cargo nextest run -p atlas-runtime -E 'test(exact_name)'
-
-# Domain file (validate your work area)
-cargo nextest run -p atlas-runtime --test <domain_file>
-
-# Full suite — GATE 6 ONLY
-cargo nextest run -p atlas-runtime
+cargo nextest run -p atlas-runtime -E 'test(name)'      # Single test
+cargo nextest run -p atlas-runtime --test <domain_file> # Domain file
 ```
 
-**Complete rules:** See `memory/testing-patterns.md` for domain file list, corpus workflow, parity helpers, and `#[ignore]` rules.
+See testing-patterns.md for: domain file list, corpus workflow, parity helpers, `#[ignore]` rules.
 
 ---
 

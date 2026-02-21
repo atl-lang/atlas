@@ -1117,3 +1117,476 @@ fn debug_none_value() {
     let interp = interp_eval(src);
     println!("Interp result: {:?}", interp);
 }
+
+// ============================================================================
+// Guard Clauses
+// ============================================================================
+
+#[test]
+fn test_guard_basic_positive() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 => "pos",
+                _ => "non-pos"
+            };
+        }
+        run(5);"#,
+        "pos",
+    );
+}
+
+#[test]
+fn test_guard_basic_negative() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 => "pos",
+                _ => "non-pos"
+            };
+        }
+        run(-3);"#,
+        "non-pos",
+    );
+}
+
+#[test]
+fn test_guard_false_tries_next_arm() {
+    // guard fails → falls to wildcard
+    assert_parity_number(
+        r#"fn run(n: number) -> number {
+            return match n {
+                x if x > 10 => 1,
+                _ => 2
+            };
+        }
+        run(5);"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_guard_uses_bound_variable() {
+    assert_parity_number(
+        r#"fn run(opt: Option<number>) -> number {
+            return match opt {
+                Some(x) if x > 10 => x,
+                Some(x) => 0,
+                None => -1
+            };
+        }
+        run(Some(42));"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_guard_bound_variable_fails() {
+    // x = 5, guard fails, second Some arm matches
+    assert_parity_number(
+        r#"fn run(opt: Option<number>) -> number {
+            return match opt {
+                Some(x) if x > 10 => x,
+                Some(x) => 0,
+                None => -1
+            };
+        }
+        run(Some(5));"#,
+        0.0,
+    );
+}
+
+#[test]
+fn test_guard_accesses_outer_scope() {
+    assert_parity_string(
+        r#"fn run(val: number, limit: number) -> string {
+            return match val {
+                x if x == limit => "hit",
+                _ => "miss"
+            };
+        }
+        run(7, 7);"#,
+        "hit",
+    );
+}
+
+#[test]
+fn test_guard_multiple_guarded_arms_first_wins() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x < 0 => "neg",
+                x if x == 0 => "zero",
+                _ => "pos"
+            };
+        }
+        run(0);"#,
+        "zero",
+    );
+}
+
+#[test]
+fn test_guard_with_boolean_expression() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 && x < 10 => "single digit",
+                _ => "other"
+            };
+        }
+        run(7);"#,
+        "single digit",
+    );
+}
+
+#[test]
+fn test_guard_boolean_expression_fails() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 && x < 10 => "single digit",
+                _ => "other"
+            };
+        }
+        run(15);"#,
+        "other",
+    );
+}
+
+#[test]
+fn test_guard_on_result_constructor() {
+    assert_parity_number(
+        r#"fn run(r: Result<number, string>) -> number {
+            return match r {
+                Ok(v) if v != 0 => v,
+                Ok(_) => 0,
+                Err(e) => -1
+            };
+        }
+        run(Ok(42));"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_guard_on_result_constructor_zero() {
+    assert_parity_number(
+        r#"fn run(r: Result<number, string>) -> number {
+            return match r {
+                Ok(v) if v != 0 => v,
+                Ok(_) => 0,
+                Err(e) => -1
+            };
+        }
+        run(Ok(0));"#,
+        0.0,
+    );
+}
+
+#[test]
+fn test_guard_does_not_satisfy_exhaustiveness_alone() {
+    // Guarded arm does NOT make match exhaustive — wildcard still required
+    let (ok, diags) = typecheck(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 => "pos"
+            };
+        }
+        run(1);"#,
+    );
+    assert!(!ok, "Expected type error for non-exhaustive guarded match");
+    let has_exhaustive_error = diags.iter().any(|d| d.contains("exhaustive") || d.contains("AT3027"));
+    assert!(has_exhaustive_error, "Expected exhaustiveness error, got: {:?}", diags);
+}
+
+#[test]
+fn test_guard_parity_interpreter_vm() {
+    assert_parity_number(
+        r#"fn run(n: number) -> number {
+            return match n {
+                x if x > 0 => x * 2,
+                _ => 0
+            };
+        }
+        run(5);"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_guard_with_multiple_bound_variables() {
+    // Guard with multiple bound variables from array pattern
+    assert_parity_string(
+        r#"fn run(a: number, b: number) -> string {
+            return match [a, b] {
+                [x, y] if x < y => "ascending",
+                [x, y] => "not ascending",
+                _ => "other"
+            };
+        }
+        run(1, 5);"#,
+        "ascending",
+    );
+}
+
+#[test]
+fn test_guard_zero_does_not_match() {
+    // Explicit test: guard `x > 0` on value 0 should fall through
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 0 => "positive",
+                _ => "non-positive"
+            };
+        }
+        run(0);"#,
+        "non-positive",
+    );
+}
+
+// ============================================================================
+// OR Patterns
+// ============================================================================
+
+#[test]
+fn test_or_basic_two_literals() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | 1 => "small",
+                _ => "big"
+            };
+        }
+        run(0);"#,
+        "small",
+    );
+}
+
+#[test]
+fn test_or_basic_second_alternative() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | 1 => "small",
+                _ => "big"
+            };
+        }
+        run(1);"#,
+        "small",
+    );
+}
+
+#[test]
+fn test_or_three_way() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | 1 | 2 => "tiny",
+                _ => "big"
+            };
+        }
+        run(2);"#,
+        "tiny",
+    );
+}
+
+#[test]
+fn test_or_does_not_match_falls_to_next_arm() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | 1 => "small",
+                _ => "big"
+            };
+        }
+        run(5);"#,
+        "big",
+    );
+}
+
+#[test]
+fn test_or_string_patterns() {
+    assert_parity_bool(
+        r#"fn run(s: string) -> bool {
+            return match s {
+                "yes" | "y" | "true" => true,
+                _ => false
+            };
+        }
+        run("y");"#,
+        true,
+    );
+}
+
+#[test]
+fn test_or_string_no_match() {
+    assert_parity_bool(
+        r#"fn run(s: string) -> bool {
+            return match s {
+                "yes" | "y" | "true" => true,
+                _ => false
+            };
+        }
+        run("no");"#,
+        false,
+    );
+}
+
+#[test]
+fn test_or_bool_exhaustive() {
+    // true | false covers all bools — exhaustive without wildcard
+    let (ok, diags) = typecheck(
+        r#"fn run(b: bool) -> string {
+            return match b {
+                true | false => "covered"
+            };
+        }
+        run(true);"#,
+    );
+    assert!(ok, "Expected OR bool pattern to be exhaustive, got: {:?}", diags);
+}
+
+#[test]
+fn test_or_bool_exhaustive_runtime() {
+    assert_parity_string(
+        r#"fn run(b: bool) -> string {
+            return match b {
+                true | false => "covered"
+            };
+        }
+        run(false);"#,
+        "covered",
+    );
+}
+
+#[test]
+fn test_or_option_exhaustive() {
+    // Some(_) | None covers Option — exhaustive
+    let (ok, diags) = typecheck(
+        r#"fn run(opt: Option<number>) -> number {
+            return match opt {
+                Some(_) | None => 0
+            };
+        }
+        run(None);"#,
+    );
+    assert!(ok, "Expected Some | None OR to be exhaustive, got: {:?}", diags);
+}
+
+#[test]
+fn test_or_result_exhaustive() {
+    // Ok(_) | Err(_) covers Result — exhaustive
+    let (ok, diags) = typecheck(
+        r#"fn run(r: Result<number, string>) -> number {
+            return match r {
+                Ok(_) | Err(_) => 0
+            };
+        }
+        run(Ok(1));"#,
+    );
+    assert!(ok, "Expected Ok | Err OR to be exhaustive, got: {:?}", diags);
+}
+
+#[test]
+fn test_or_parity_interpreter_vm() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                1 | 2 | 3 => "low",
+                4 | 5 | 6 => "mid",
+                _ => "high"
+            };
+        }
+        run(5);"#,
+        "mid",
+    );
+}
+
+#[test]
+fn test_or_first_match_wins() {
+    // First arm has OR that matches; second arm not reached
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                1 | 2 => "first",
+                2 | 3 => "second",
+                _ => "other"
+            };
+        }
+        run(2);"#,
+        "first",
+    );
+}
+
+#[test]
+fn test_or_no_bindings_in_literal_alternatives() {
+    // Pure literal OR — no variable binding, just result
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | 1 => "zero or one",
+                _ => "other"
+            };
+        }
+        run(1);"#,
+        "zero or one",
+    );
+}
+
+#[test]
+fn test_or_in_first_arm_wildcard_second() {
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                10 | 20 => "tens",
+                _ => "other"
+            };
+        }
+        run(10);"#,
+        "tens",
+    );
+}
+
+#[test]
+fn test_or_with_wildcard_sub_pattern() {
+    // `0 | _` — the wildcard sub-pattern always matches
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                0 | _ => "anything",
+            };
+        }
+        run(99);"#,
+        "anything",
+    );
+}
+
+#[test]
+fn test_guard_plus_unguarded_wildcard() {
+    // Classic: guarded arm then unguarded wildcard
+    assert_parity_string(
+        r#"fn run(n: number) -> string {
+            return match n {
+                x if x > 100 => "big",
+                _ => "small"
+            };
+        }
+        run(50);"#,
+        "small",
+    );
+}
+
+#[test]
+fn test_or_all_arms_same_type() {
+    // OR pattern result type must be consistent with rest of match
+    assert_parity_number(
+        r#"fn run(n: number) -> number {
+            return match n {
+                0 | 1 | 2 => 99,
+                _ => 0
+            };
+        }
+        run(0);"#,
+        99.0,
+    );
+}

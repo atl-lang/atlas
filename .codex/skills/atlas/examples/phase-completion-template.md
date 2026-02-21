@@ -28,13 +28,18 @@
   - [Achievement 2] ✅
   - [Achievement 3] ✅
 
+  📝 Memory
+
+  - [Updated: `file.md` (what changed)]
+  - OR: No updates needed
+
   📈 Progress
 
   - Overall: XX/75 phases (XX%)
   - [Category]: X/Y complete
   - Next: Phase-YY ([brief description])
 
-  All files updated. Ready for Phase-YY! 🚀
+  Ready for Phase-YY! 🚀
 ```
 
 **Total: ~30 lines. Keep it scannable.**

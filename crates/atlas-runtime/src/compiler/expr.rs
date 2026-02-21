@@ -330,6 +330,18 @@ impl Compiler {
             // Pop True (pattern success flag)
             self.bytecode.emit(Opcode::Pop, arm.span);
 
+            // Compile guard if present — guard failure jumps to next arm
+            let guard_failed_jump = if let Some(guard_expr) = &arm.guard {
+                self.compile_expr(guard_expr)?;
+                // JumpIfFalse: if guard is false, skip this arm
+                self.bytecode.emit(Opcode::JumpIfFalse, arm.span);
+                let guard_jump = self.bytecode.current_offset();
+                self.bytecode.emit_u16(0xFFFF);
+                Some(guard_jump)
+            } else {
+                None
+            };
+
             // Compile arm body (result on top of stack)
             self.compile_expr(&arm.body)?;
 
@@ -359,7 +371,23 @@ impl Compiler {
                 arm_end_jumps.push(jump_offset);
             }
 
-            // Patch the failed pattern jump (next arm starts here)
+            // Guard cleanup (if guard was present): guard failure jumps here, pops stack items,
+            // then falls through to next arm. Pattern failure jumps AFTER cleanup (no pops needed).
+            if let Some(guard_jump) = guard_failed_jump {
+                // Patch guard jump to point here (start of cleanup)
+                self.bytecode.patch_jump(guard_jump);
+                // Pop all extras: pattern vars + dup copy (for non-last arms).
+                // This mirrors the `extras` formula used in the success path, ensuring the stack
+                // is restored to the base scrutinee level for the next arm.
+                let pattern_var_count_guard = self.locals.len() - locals_before;
+                let guard_cleanup_count =
+                    pattern_var_count_guard + if !is_last_arm { 1 } else { 0 };
+                for _ in 0..guard_cleanup_count {
+                    self.bytecode.emit(Opcode::Pop, arm.span);
+                }
+                // Fall through to next arm (match_failed_jump patches below)
+            }
+            // Patch the failed pattern jump (next arm starts here, after any guard cleanup)
             if let Some(failed_jump) = match_failed_jump {
                 self.bytecode.patch_jump(failed_jump);
             }
@@ -475,6 +503,11 @@ impl Compiler {
             // Array: [x, y, z]
             Pattern::Array { elements, span } => {
                 self.compile_array_pattern(elements, *span, locals_before)
+            }
+
+            // OR pattern: sub1 | sub2 | sub3
+            Pattern::Or(alternatives, or_span) => {
+                self.compile_or_pattern(alternatives, *or_span, locals_before)
             }
         }
     }
@@ -807,6 +840,87 @@ impl Compiler {
         // Stack: [element_locals..., True]
 
         Ok(Some(fail_exit))
+    }
+
+    /// Compile OR pattern: pat1 | pat2 | pat3
+    ///
+    /// Contract (same as compile_pattern_check):
+    /// - INPUT: scrutinee on stack top
+    /// - SUCCESS: scrutinee consumed, True on stack, pattern vars added as locals
+    /// - FAILURE: scrutinee consumed, stack clean, jumps to returned offset
+    fn compile_or_pattern(
+        &mut self,
+        alternatives: &[crate::ast::Pattern],
+        span: Span,
+        locals_before: usize,
+    ) -> Result<Option<usize>, Vec<Diagnostic>> {
+        // For each alternative except last: Dup scrutinee, try sub-pattern
+        // On success: jump to success_exit (pop extra dup)
+        // On failure: try next alternative
+        // Last alternative: no Dup, result determines overall success/failure
+
+        let mut success_jumps: Vec<usize> = Vec::new();
+
+        for (i, alt) in alternatives.iter().enumerate() {
+            let is_last = i == alternatives.len() - 1;
+
+            if !is_last {
+                // Dup scrutinee for this alternative (pattern check consumes it)
+                self.bytecode.emit(Opcode::Dup, span);
+            }
+
+            // Try this sub-pattern
+            let sub_failed_jump = self.compile_pattern_check(alt, span, locals_before)?;
+
+            if !is_last {
+                // Sub-pattern succeeded: pop True, emit jump to success block
+                self.bytecode.emit(Opcode::Pop, span);
+                // Push True for overall match success
+                self.bytecode.emit(Opcode::True, span);
+                self.bytecode.emit(Opcode::Jump, span);
+                success_jumps.push(self.bytecode.current_offset());
+                self.bytecode.emit_u16(0xFFFF);
+
+                // Sub-pattern failed: patch its fail jump here to try next alt
+                if let Some(failed_jump) = sub_failed_jump {
+                    self.bytecode.patch_jump(failed_jump);
+                }
+            } else {
+                // Last alternative: its result IS the OR result
+                // If failed, its fail jump is our overall fail jump
+                // Success exit patches below
+                self.bytecode.emit(Opcode::Jump, span);
+                let last_success_exit = self.bytecode.current_offset();
+                self.bytecode.emit_u16(0xFFFF);
+
+                // Fail exit for last alt (and overall fail)
+                let overall_fail_jump = if let Some(failed_jump) = sub_failed_jump {
+                    // Patch last alt failure to emit overall fail jump
+                    self.bytecode.patch_jump(failed_jump);
+                    self.bytecode.emit(Opcode::Jump, span);
+                    let fail_exit = self.bytecode.current_offset();
+                    self.bytecode.emit_u16(0xFFFF);
+                    // Patch success exits from earlier alternatives here
+                    for sj in &success_jumps {
+                        self.bytecode.patch_jump(*sj);
+                    }
+                    self.bytecode.patch_jump(last_success_exit);
+                    Some(fail_exit)
+                } else {
+                    // Last alt always matches (wildcard/variable) — overall always succeeds
+                    for sj in &success_jumps {
+                        self.bytecode.patch_jump(*sj);
+                    }
+                    self.bytecode.patch_jump(last_success_exit);
+                    None
+                };
+
+                return Ok(overall_fail_jump);
+            }
+        }
+
+        // Should never reach here (alternatives is non-empty, last handled above)
+        Ok(None)
     }
 
     /// Compile try expression (error propagation operator ?)
