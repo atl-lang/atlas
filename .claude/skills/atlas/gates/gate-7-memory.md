@@ -135,6 +135,6 @@ OR if no updates:
 1. `git add -A && git commit -m "feat(category): description"`
 2. `git checkout main && git merge --no-ff <feature-branch>`
 3. `git branch -d <feature-branch>`
-4. `git checkout worktree/dev`
+4. `git checkout worktree/dev && git rebase main`   # REQUIRED — keeps home branch current
 
 **Next:** Report completion summary with Memory section.

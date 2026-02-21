@@ -121,8 +121,9 @@ git checkout main
 git merge --no-ff phase/{category}-{number} -m "feat(phase-XX): Description"
 git branch -d phase/{category}-{number}
 
-# 4. Return worktree to home branch
+# 4. Return home branch and sync it to main (REQUIRED — prevents future merge conflicts)
 git checkout worktree/dev
+git rebase main
 ```
 
 **Weekly push (user says "push to GitHub"):**
