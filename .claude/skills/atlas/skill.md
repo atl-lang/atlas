@@ -12,59 +12,13 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 ## On Skill Activation (EVERY SESSION)
 
-### Step 1: Detect Worktree Identity
-
 ```bash
-cat .worktree-id 2>/dev/null || echo "unknown"
+cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
+git fetch origin                                  # Sync from remote
+git rebase origin/main                            # Update this worktree
 ```
 
-| `.worktree-id` | Path | Purpose |
-|----------------|------|---------|
-| `main` | `~/dev/projects/atlas/` | Brainstorm, reference, read-only |
-| `dev` | `~/dev/projects/atlas-dev/` | Executing any numbered phase (code, docs, spec, or mixed) |
-| `docs` | `~/dev/projects/atlas-docs/` | Standalone doc work outside a numbered phase |
-
-### Step 2: Classify the User's Request
-
-**→ Executing a numbered phase** (any output — Rust code, spec updates, doc generation, STATUS.md, or all of the above):
-- Required worktree: `dev`
-- If not in `dev` worktree → switch internally (see Mismatch Protocol below)
-
-**→ Standalone doc work** (spec rewrite, README overhaul, batch phase file creation, skill updates, CLAUDE.md — when NOT driven by a numbered phase):
-- Required worktree: `docs`
-- If not in `docs` worktree → switch internally (see Mismatch Protocol below)
-
-**→ Brainstorm / planning / questions:**
-- Any worktree is fine, no git ops needed
-
-### Step 3: Sync (code/docs work only)
-
-```bash
-git fetch origin
-git rebase origin/main   # Bring this worktree up to date with latest main
-```
-
-### Step 4: Branch Setup
-
-- If on home branch (`worktree/dev` or `worktree/docs`) → create feature branch
-- If already on feature branch → continue (previous session's work)
-- **NEVER work directly on `main`**
-
----
-
-## Mismatch Protocol (AGENT ENFORCED)
-
-If the user's request doesn't match the current worktree, **switch internally — never ask the user to close the session.**
-
-1. Detect the correct worktree path from the identity table
-2. Announce the switch briefly (one line):
-   > "Opened in `atlas/` but this is dev work — switching to `atlas-dev/` automatically."
-3. Use absolute paths for all file operations pointing at the correct worktree
-4. Use `git -C /correct/worktree/path <command>` for all git operations
-5. Proceed immediately — no interruption to the user
-
-**The user never needs to close or reopen a session due to wrong worktree.**
-**Never ask the user which worktree to use — classify it yourself and switch.**
+**Why:** Worktrees are isolated. Always sync from origin/main before starting work.
 
 ---
 
@@ -84,14 +38,13 @@ If the user's request doesn't match the current worktree, **switch internally �
 ## Core Rules (NON-NEGOTIABLE)
 
 ### 1. Autonomous Execution
-1. Detect worktree identity → classify request → handle mismatch if needed
-2. Check STATUS.md (verify phase not complete)
-3. **Git Setup:** Sync from origin/main, create feature branch (see Git Workflow)
-4. Run GATE -1 (sanity check + local security scan)
-5. Declare workflow type
-6. **Execute applicable gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md`)
-7. **Git Finalize:** Commit locally, merge to main (see Git Workflow)
-8. Deliver completion summary
+1. Check STATUS.md (verify phase not complete)
+2. **Git Setup:** Create feature branch from main (see Git Workflow below)
+3. Run GATE -1 (sanity check + local security scan)
+4. Declare workflow type
+5. **Execute applicable gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md` for which to run)
+6. **Git Finalize:** Commit locally → merge to main → clean up feature branch (see Git Workflow)
+7. Deliver completion summary
 
 ### 2. Spec Compliance (100%)
 Spec defines it → implement EXACTLY. No shortcuts, no "good enough", no partial implementations.
@@ -128,68 +81,66 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 
 ## Git Workflow (REQUIRED)
 
-### Branch Naming
+**Branch naming:**
 ```
 phase/{category}-{number}     # Phase work (e.g., phase/correctness-11)
 fix/{short-description}       # Bug fixes (e.g., fix/parser-float-format)
 feat/{short-description}      # Features (e.g., feat/array-slice)
-docs/{short-description}      # Doc/spec/skill updates (e.g., docs/update-spec-closures)
+ci/{short-description}        # CI/infra (e.g., ci/optimize-workflows)
 ```
 
-### START of Work (every session)
+**START of phase (every session):**
 ```bash
 git fetch origin
-git rebase origin/main                           # Sync this worktree with latest main
+git rebase origin/main                           # Sync this worktree
 git checkout -b phase/{category}-{number}        # Create feature branch
 # (or continue existing feature branch if resuming)
 ```
 
-### DURING Work (multi-part phases)
+**DURING phase (multi-part):**
 ```bash
 # Commit locally between parts — never leave uncommitted work at session end
+cargo build --workspace                          # Must pass before committing
+cargo nextest run -p atlas-runtime               # Must be 100%
 git add -A && git commit -m "feat(phase-XX): Part A - description"
-# Continue with Part B, C, etc.
+# Continue Part B, C, etc.
 ```
 
-### END of Phase (local merge — no PR)
+**END of phase (local merge):**
 ```bash
-# 1. Verify everything passes
-cargo build --workspace                          # MUST build clean
-cargo nextest run -p atlas-runtime               # MUST pass 100%
-cargo clippy -p atlas-runtime -- -D warnings     # MUST be clean
+# 1. Final verification — all must pass
+cargo build --workspace
+cargo nextest run -p atlas-runtime
+cargo clippy -p atlas-runtime -- -D warnings
+cargo fmt --check -p atlas-runtime
 
-# 2. Commit final state
-git add -A && git commit -m "feat(phase-XX): Complete description
+# 2. Commit
+git add -A && git commit -m "feat(phase-XX): Description
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
 
-# 3. Merge to main locally
+# 3. Merge to local main
 git checkout main
 git merge --no-ff phase/{category}-{number} -m "feat(phase-XX): Description"
-git branch -d phase/{category}-{number}          # Clean up feature branch
+git branch -d phase/{category}-{number}
 
 # 4. Return worktree to home branch
-git checkout worktree/dev   # (or worktree/docs for docs worktree)
+git checkout worktree/dev
 ```
 
-### Weekly Push (user-initiated or milestone)
+**Weekly push (user says "push to GitHub"):**
 ```bash
-# Run from atlas/ (main worktree) — user says "push to GitHub"
+# From atlas/ (main worktree) only
 git push origin main
 ```
 
-### BANNED
+**BANNED:**
 - Creating PRs for normal phase/doc work
-- Pushing on every phase (weekly cadence only)
-- `git push --force` on main
-- Working on `main` branch directly
-- Leaving uncommitted changes at session end (this broke PR #96)
+- Pushing on every phase
+- Working directly on `main` branch
+- Leaving uncommitted changes at session end
 
-### Why No PRs for Normal Work
-- No CI = PRs provide no protection
-- Squash merge loses commit history
-- Local quality gates (build + test + clippy) ARE the safety net
-- Weekly push keeps GitHub as clean backup/showcase
+**User involvement:** NONE. Agent handles entire Git lifecycle autonomously.
 
 ---
 
@@ -219,14 +170,13 @@ After GATE -1, declare one:
 - **Writing code that touches AST/Type/Value without running auto-memory `domain-prereqs.md` queries first**
 - Assumptions without verification (grep → verify → write)
 - Testing protocol violations
-- Uncommitted work at session end
 
 **Required:**
 - Rust best practices (Result<T, E>, no unwrap in production)
 - Interpreter/VM parity (always)
 - Grammar conformance (docs/specification/)
 - Comprehensive testing (rstest, insta, proptest)
-- Quality gates (build, test, clippy, fmt - all pass before commit)
+- Quality gates (test, clippy, fmt - all pass)
 
 ---
 
@@ -238,7 +188,7 @@ After GATE -1, declare one:
 
 ## Phase Handoff
 
-**CRITICAL:** Only hand off when ALL tests pass AND work is committed locally on main.
+**CRITICAL:** Only hand off when ALL tests pass AND work is committed to local main.
 
 **Protocol:**
 1. All gates passed (build, tests, clippy, fmt, security scan)
@@ -303,11 +253,6 @@ memory/
 
 ## Quick Reference
 
-**Worktree Paths:**
-- `~/dev/projects/atlas/` → `main` worktree (brainstorm/reference)
-- `~/dev/projects/atlas-dev/` → `dev` worktree (executing any numbered phase)
-- `~/dev/projects/atlas-docs/` → `docs` worktree (standalone doc work outside a phase)
-
 **Project structure:**
 - `crates/atlas-runtime/src/` - Runtime core
 - `crates/atlas-runtime/src/stdlib/` - Standard library
@@ -329,4 +274,3 @@ memory/
 **Parity is sacred:** Both engines must match.
 **Autonomous:** Execute immediately on phase directive.
 **World-class:** Complete implementations, 100% spec compliance.
-**Worktree-aware:** Detect identity, classify request, never silently work in wrong worktree.
