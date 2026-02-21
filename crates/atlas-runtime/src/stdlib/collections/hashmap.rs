@@ -105,7 +105,7 @@ fn extract_array_ref<'a>(
     }
 }
 
-fn extract_hashmap_ref<'a>(value: &'a Value, span: Span) -> Result<&'a ValueHashMap, RuntimeError> {
+fn extract_hashmap_ref(value: &Value, span: Span) -> Result<&ValueHashMap, RuntimeError> {
     match value {
         Value::HashMap(map) => Ok(map),
         _ => Err(RuntimeError::TypeError {
@@ -269,7 +269,12 @@ pub fn keys(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     let map = extract_hashmap_ref(&args[0], span)?;
-    let keys: Vec<Value> = map.inner().keys().into_iter().map(|k| k.to_value()).collect();
+    let keys: Vec<Value> = map
+        .inner()
+        .keys()
+        .into_iter()
+        .map(|k| k.to_value())
+        .collect();
     Ok(Value::array(keys))
 }
 
@@ -340,11 +345,7 @@ mod tests {
         let value = Value::string("Alice");
 
         // Put returns the modified map
-        let map_value = put(
-            &[map_value, key.clone(), value.clone()],
-            Span::dummy(),
-        )
-        .unwrap();
+        let map_value = put(&[map_value, key.clone(), value.clone()], Span::dummy()).unwrap();
 
         // Get
         let result = get(&[map_value, key], Span::dummy()).unwrap();

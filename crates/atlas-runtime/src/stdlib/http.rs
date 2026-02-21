@@ -9,7 +9,7 @@ use crate::stdlib::collections::hash::HashKey;
 use crate::stdlib::collections::hashmap::AtlasHashMap;
 use crate::value::{RuntimeError, Value};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 /// Extract the hostname from a URL string for security checking.
@@ -507,7 +507,9 @@ pub fn http_headers(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         );
     }
 
-    Ok(Value::HashMap(Arc::new(Mutex::new(atlas_map))))
+    Ok(Value::HashMap(crate::value::ValueHashMap::from_atlas(
+        atlas_map,
+    )))
 }
 
 /// Get final URL from response (after redirects)

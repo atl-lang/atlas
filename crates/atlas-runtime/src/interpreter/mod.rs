@@ -418,6 +418,27 @@ impl Interpreter {
         })
     }
 
+    /// Force-update a variable's value, bypassing the mutability check.
+    ///
+    /// Used by CoW write-back for collection mutation builtins: the binding
+    /// itself isn't being rebound — the container's contents are being updated.
+    /// This models "mutable container, immutable binding" semantics (like `const` in JS).
+    pub(super) fn force_set_collection(&mut self, name: &str, value: Value) {
+        for scope in self.locals.iter_mut().rev() {
+            if scope.contains_key(name) {
+                // Preserve existing mutability flag
+                let mutable = scope.get(name).map(|(_, m)| *m).unwrap_or(false);
+                scope.insert(name.to_string(), (value, mutable));
+                return;
+            }
+        }
+        if self.globals.contains_key(name) {
+            let mutable = self.globals.get(name).map(|(_, m)| *m).unwrap_or(false);
+            self.globals.insert(name.to_string(), (value, mutable));
+        }
+        // If variable doesn't exist, silently do nothing (best-effort write-back)
+    }
+
     /// Get an array element by index
     pub(super) fn get_array_element(
         &self,
@@ -464,9 +485,11 @@ impl Interpreter {
         match target_expr {
             crate::ast::Expr::Identifier(id) => {
                 // Base case: simple variable — clone → mutate → write back
+                // Use force_set_collection: element mutation is not a variable rebinding.
                 let mut container = self.get_variable(&id.name, span)?;
                 Self::apply_index_mutation(&mut container, idx, value, span)?;
-                self.set_variable(&id.name, container, span)
+                self.force_set_collection(&id.name, container);
+                Ok(())
             }
             crate::ast::Expr::Index(inner) => {
                 // Nested: outer[inner_idx][idx] = value
@@ -510,10 +533,7 @@ impl Interpreter {
                 Ok(())
             }
             (container, _) => Err(RuntimeError::TypeError {
-                msg: format!(
-                    "Cannot index-assign to type '{}'",
-                    container.type_name()
-                ),
+                msg: format!("Cannot index-assign to type '{}'", container.type_name()),
                 span,
             }),
         }
