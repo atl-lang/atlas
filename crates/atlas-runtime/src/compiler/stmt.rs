@@ -304,8 +304,11 @@ impl Compiler {
                 // Compile the value
                 self.compile_expr(&assign.value)?;
 
-                // Emit SetIndex
+                // Emit SetIndex — CoW: mutated container is pushed back onto the stack
                 self.bytecode.emit(Opcode::SetIndex, assign.span);
+                // Write the mutated container back to the variable binding.
+                // compile_stmt emits Pop after compile_assign, so we do NOT Pop here.
+                self.emit_index_cow_write_back(target, assign.span)?;
             }
         }
 
@@ -778,9 +781,11 @@ impl Compiler {
                 self.bytecode.emit(opcode, compound.span);
                 // Stack: [array_set, index_set, result]
 
-                // Now SetIndex
+                // Now SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
-                // Stack: [] (SetIndex consumes all three)
+                // Write back then pop (compound assign is a statement — no residual value)
+                self.emit_index_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
             }
         }
 
@@ -879,8 +884,11 @@ impl Compiler {
                 self.bytecode.emit_u16(one_idx);
                 self.bytecode.emit(Opcode::Add, inc.span);
 
-                // SetIndex
+                // SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
+                // Write back then pop (increment is a statement — no residual value)
+                self.emit_index_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
             }
         }
 
@@ -979,11 +987,43 @@ impl Compiler {
                 self.bytecode.emit_u16(one_idx);
                 self.bytecode.emit(Opcode::Sub, dec.span);
 
-                // SetIndex
+                // SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
+                // Write back then pop (decrement is a statement — no residual value)
+                self.emit_index_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
             }
         }
 
+        Ok(())
+    }
+
+    /// Write the CoW-mutated container (top of stack) back to the variable binding.
+    ///
+    /// `SetIndex` pushes the mutated container back after mutating. This helper emits
+    /// `SetLocal` or `SetGlobal` to store it into the variable. It does NOT emit `Pop`;
+    /// callers that need to discard the value (statement context) must emit `Pop` after.
+    ///
+    /// For nested index targets (`Expr::Index`), the write-back is skipped — the value
+    /// remains on the stack and the caller must still emit `Pop` to maintain stack balance.
+    fn emit_index_cow_write_back(
+        &mut self,
+        target: &Expr,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        if let Expr::Identifier(ident) = target {
+            if let Some(local_idx) = self.resolve_local(&ident.name) {
+                self.bytecode.emit(Opcode::SetLocal, span);
+                self.bytecode.emit_u16(local_idx as u16);
+            } else {
+                let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
+                self.bytecode.emit(Opcode::SetGlobal, span);
+                self.bytecode.emit_u16(name_idx);
+            }
+        }
+        // For nested targets (Expr::Index), the mutated inner element cannot be written
+        // back without stack rotation support. The value remains on the stack;
+        // the caller must Pop it to maintain stack balance.
         Ok(())
     }
 

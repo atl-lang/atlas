@@ -249,6 +249,11 @@ impl ValueHashSet {
     pub fn is_exclusively_owned(&self) -> bool {
         Arc::strong_count(&self.0) == 1
     }
+
+    /// Wrap an existing AtlasHashSet in a CoW wrapper.
+    pub fn from_atlas(s: crate::stdlib::collections::hashset::AtlasHashSet) -> Self {
+        ValueHashSet(Arc::new(s))
+    }
 }
 
 impl PartialEq for ValueHashSet {
