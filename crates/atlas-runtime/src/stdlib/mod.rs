@@ -259,6 +259,50 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // Array functions
         // ====================================================================
+        // Method-call variants (prefixed with "array") — used by arr.method() syntax
+        m.insert("arrayPush", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("arrayPush", 2, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayPush", span)?;
+            Ok(array::push(&arr, args[1].clone()))
+        });
+        m.insert("arrayPop", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arrayPop", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayPop", span)?;
+            array::pop(&arr, span)
+        });
+        m.insert("arrayShift", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arrayShift", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayShift", span)?;
+            array::shift(&arr, span)
+        });
+        m.insert("arrayUnshift", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("arrayUnshift", 2, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayUnshift", span)?;
+            Ok(array::unshift(&arr, args[1].clone()))
+        });
+        m.insert("arrayReverse", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arrayReverse", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayReverse", span)?;
+            Ok(array::reverse(&arr))
+        });
+        m.insert("arraySort", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arraySort", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arraySort", span)?;
+            Ok(array::sort_natural(&arr))
+        });
+        // Free-function variants (legacy names)
         m.insert("pop", |args, span, _, _| {
             if args.len() != 1 {
                 return Err(stdlib_arity_error("pop", 1, args.len(), span));
@@ -1833,7 +1877,14 @@ mod tests {
             "padEnd",
             "startsWith",
             "endsWith",
-            // Array functions
+            // Array functions (method-call variants)
+            "arrayPush",
+            "arrayPop",
+            "arrayShift",
+            "arrayUnshift",
+            "arrayReverse",
+            "arraySort",
+            // Array functions (free-function variants)
             "pop",
             "shift",
             "unshift",

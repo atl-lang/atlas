@@ -334,13 +334,22 @@ impl Interpreter {
         // 1. Evaluate target expression
         let target_value = self.eval_expr(&member.target)?;
 
-        // 2. Build desugared function name via shared dispatch table
-        // The typechecker must have annotated the MemberExpr with a TypeTag.
-        // If this expect fails, it means the typechecker failed to visit this expression.
-        let type_tag = member
-            .type_tag
-            .get()
-            .expect("TypeTag not set by typechecker - this indicates a typechecker traversal bug");
+        // 2. Build desugared function name via shared dispatch table.
+        // Prefer the static TypeTag set by the typechecker; fall back to dynamic dispatch
+        // from the runtime value when the typechecker couldn't infer the type (e.g. `array`
+        // annotation resolves to Unknown in some paths, or the typechecker is not run).
+        let dynamic_tag = match &target_value {
+            Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
+            _ => None,
+        };
+        let type_tag = member.type_tag.get().or(dynamic_tag);
+        let type_tag = type_tag.ok_or_else(|| RuntimeError::TypeError {
+            msg: format!(
+                "Cannot call method '{}' on value of this type",
+                member.member.name
+            ),
+            span: member.span,
+        })?;
         let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
             .ok_or_else(|| RuntimeError::TypeError {
                 msg: format!("No method '{}' on type {:?}", member.member.name, type_tag),
@@ -360,13 +369,38 @@ impl Interpreter {
             .current_security
             .as_ref()
             .expect("Security context not set");
-        crate::stdlib::call_builtin(
+        let result = crate::stdlib::call_builtin(
             &func_name,
             &args,
             member.span,
             security,
             &self.output_writer,
-        )
+        )?;
+
+        // 5. CoW write-back: if the method mutates the receiver, update the receiver variable.
+        //    Only possible when the target is a simple identifier (not a complex expression).
+        if let Expr::Identifier(id) = member.target.as_ref() {
+            if crate::method_dispatch::is_array_mutating_collection(&func_name) {
+                // Push/unshift/reverse: result IS the new array — write it back
+                self.force_set_collection(&id.name, result.clone());
+                return Ok(result);
+            }
+            if crate::method_dispatch::is_array_mutating_pair(&func_name) {
+                // Pop/shift: result is [extracted_value, new_array] — write back new_array, return extracted
+                if let Value::Array(ref arr) = result {
+                    let s = arr.as_slice();
+                    if s.len() == 2 {
+                        let extracted = s[0].clone();
+                        let new_arr = s[1].clone();
+                        self.force_set_collection(&id.name, new_arr);
+                        return Ok(extracted);
+                    }
+                }
+                return Ok(result);
+            }
+        }
+
+        Ok(result)
     }
 
     /// Evaluate try expression (error propagation operator ?)
@@ -1984,19 +2018,35 @@ impl Interpreter {
     ) -> Result<Value, RuntimeError> {
         // Builtins that return the modified collection directly
         const RETURNS_COLLECTION: &[&str] = &[
+            // HashMap
             "hashMapPut",
             "hashMapClear",
+            // HashSet
             "hashSetAdd",
             "hashSetClear",
+            // Queue
             "queueEnqueue",
             "queueClear",
+            // Stack
             "stackPush",
             "stackClear",
+            // Array (free-function variants)
+            "unshift",
+            "reverse",
+            "flatten",
         ];
 
         // Builtins that return [extracted_value, new_collection]
-        const RETURNS_PAIR: &[&str] =
-            &["hashMapRemove", "hashSetRemove", "queueDequeue", "stackPop"];
+        const RETURNS_PAIR: &[&str] = &[
+            // HashMap / HashSet / Queue / Stack
+            "hashMapRemove",
+            "hashSetRemove",
+            "queueDequeue",
+            "stackPop",
+            // Array (free-function variants)
+            "pop",
+            "shift",
+        ];
 
         // Identify first arg as an identifier (only then can we write back)
         let first_ident = call_args.first().and_then(|e| {

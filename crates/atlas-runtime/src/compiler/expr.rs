@@ -104,17 +104,33 @@ impl Compiler {
     ///   Result on stack becomes just `extracted` (item), new_col is written to var.
     fn emit_cow_writeback_if_needed(&mut self, func_name: &str, call: &CallExpr) {
         const RETURNS_COLLECTION: &[&str] = &[
+            // HashMap
             "hashMapPut",
             "hashMapClear",
+            // HashSet
             "hashSetAdd",
             "hashSetClear",
+            // Queue
             "queueEnqueue",
             "queueClear",
+            // Stack
             "stackPush",
             "stackClear",
+            // Array (free-function variants)
+            "unshift",
+            "reverse",
+            "flatten",
         ];
-        const RETURNS_PAIR: &[&str] =
-            &["hashMapRemove", "hashSetRemove", "queueDequeue", "stackPop"];
+        const RETURNS_PAIR: &[&str] = &[
+            // HashMap / HashSet / Queue / Stack
+            "hashMapRemove",
+            "hashSetRemove",
+            "queueDequeue",
+            "stackPop",
+            // Array (free-function variants)
+            "pop",
+            "shift",
+        ];
 
         let first_ident = call.args.first().and_then(|e| {
             if let Expr::Identifier(id) = e {
@@ -224,6 +240,30 @@ impl Compiler {
         let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
         self.bytecode.emit(Opcode::Call, member.span);
         self.bytecode.emit_u8(arg_count as u8);
+
+        // CoW write-back: for mutating array methods, update the receiver variable.
+        // Only possible when the target is a simple identifier.
+        if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
+            let var_name = id.name.as_str();
+            if crate::method_dispatch::is_array_mutating_collection(&func_name) {
+                // Stack: new_array — peek-set to receiver, value stays on stack
+                self.emit_force_writeback(var_name, member.span);
+            } else if crate::method_dispatch::is_array_mutating_pair(&func_name) {
+                // Stack: [extracted, new_array]
+                // Dup → get index 1 (new_array) → set receiver → pop → get index 0 (extracted)
+                self.bytecode.emit(Opcode::Dup, member.span);
+                let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
+                self.bytecode.emit(Opcode::Constant, member.span);
+                self.bytecode.emit_u16(idx1);
+                self.bytecode.emit(Opcode::GetIndex, member.span);
+                self.emit_force_writeback(var_name, member.span);
+                self.bytecode.emit(Opcode::Pop, member.span);
+                let idx0 = self.bytecode.add_constant(crate::value::Value::Number(0.0));
+                self.bytecode.emit(Opcode::Constant, member.span);
+                self.bytecode.emit_u16(idx0);
+                self.bytecode.emit(Opcode::GetIndex, member.span);
+            }
+        }
 
         Ok(())
     }

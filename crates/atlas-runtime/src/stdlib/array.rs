@@ -10,6 +10,35 @@ use crate::value::{RuntimeError, Value};
 // Core Operations
 // ============================================================================
 
+/// Append element to array
+///
+/// Returns new array with element appended at the end
+pub fn push(arr: &[Value], element: Value) -> Value {
+    let mut new_arr = arr.to_vec();
+    new_arr.push(element);
+    Value::array(new_arr)
+}
+
+/// Sort array by natural order (numbers ascending, strings lexicographic)
+///
+/// Returns new sorted array; original is not modified.
+pub fn sort_natural(arr: &[Value]) -> Value {
+    let mut new_arr = arr.to_vec();
+    new_arr.sort_by(compare_values_natural);
+    Value::array(new_arr)
+}
+
+/// Natural comparison for sort: numbers by value, everything else by debug repr
+fn compare_values_natural(a: &Value, b: &Value) -> std::cmp::Ordering {
+    match (a, b) {
+        (Value::Number(x), Value::Number(y)) => {
+            x.partial_cmp(y).unwrap_or(std::cmp::Ordering::Equal)
+        }
+        (Value::String(x), Value::String(y)) => x.as_ref().cmp(y.as_ref()),
+        _ => format!("{a:?}").cmp(&format!("{b:?}")),
+    }
+}
+
 /// Remove and return last element from array
 ///
 /// Returns two-element array: [removed_element, new_array]
