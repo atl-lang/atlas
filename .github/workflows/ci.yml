@@ -1,10 +1,11 @@
 # Atlas CI Pipeline
 #
-# PR / merge queue:  fmt → clippy → check  (~2 min, fast gate)
+# PR / merge queue:  fmt → clippy → check → test (ubuntu)  (~4 min)
 # push to main:      fmt → clippy → test (ubuntu) → test-matrix (3 OS) → coverage
 #                    Nightly: msrv + fuzz
 #
-# Push to main = milestone. Full suite runs.
+# Tests run on BOTH PRs and main push. strict_required_status_checks_policy=true
+# means the branch must be up to date — tests must pass against latest main.
 
 name: CI
 
@@ -97,7 +98,7 @@ jobs:
     name: Test (ubuntu-latest/stable)
     runs-on: ubuntu-latest
     needs: [clippy, changes]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && (github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
