@@ -1,5 +1,7 @@
 ---
-globs: ["**/tests/**/*.rs", "**/*_test.rs"]
+paths:
+  - "**/tests/**/*.rs"
+  - "**/*_test.rs"
 ---
 
 # Atlas Testing Rules
