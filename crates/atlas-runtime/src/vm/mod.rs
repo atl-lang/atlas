@@ -230,6 +230,7 @@ impl VM {
                     bytecode_offset: 0, // Not used for extern functions
                     local_count: 0,     // Not used for extern functions
                     param_ownership: vec![],
+                    param_names: vec![],
                     return_ownership: None,
                 });
                 self.globals.insert(extern_decl.name.clone(), func_value);
@@ -1066,6 +1067,51 @@ impl VM {
                                     }
                                 }
 
+                                // Debug mode: enforce `shared` parameter ownership contracts.
+                                #[cfg(debug_assertions)]
+                                {
+                                    let args_base = self.stack.len() - arg_count;
+                                    for (i, ownership) in func.param_ownership.iter().enumerate() {
+                                        let arg = &self.stack[args_base + i];
+                                        match ownership {
+                                            Some(crate::ast::OwnershipAnnotation::Shared) => {
+                                                if !matches!(arg, Value::SharedValue(_)) {
+                                                    return Err(RuntimeError::TypeError {
+                                                        msg: format!(
+                                                            "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                                            func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?"),
+                                                            arg.type_name()
+                                                        ),
+                                                        span: self
+                                                            .current_span()
+                                                            .unwrap_or_else(crate::span::Span::dummy),
+                                                    });
+                                                }
+                                            }
+                                            Some(crate::ast::OwnershipAnnotation::Own)
+                                            | Some(crate::ast::OwnershipAnnotation::Borrow) => {
+                                                if matches!(arg, Value::SharedValue(_)) {
+                                                    let ann_str = match ownership {
+                                                        Some(
+                                                            crate::ast::OwnershipAnnotation::Own,
+                                                        ) => "own",
+                                                        Some(
+                                                            crate::ast::OwnershipAnnotation::Borrow,
+                                                        ) => "borrow",
+                                                        _ => unreachable!(),
+                                                    };
+                                                    eprintln!(
+                                                        "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                                        ann_str,
+                                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                                    );
+                                                }
+                                            }
+                                            None => {}
+                                        }
+                                    }
+                                }
+
                                 // Push the frame (and its consumed-slot tracking vector)
                                 self.frames.push(frame);
                                 #[cfg(debug_assertions)]
@@ -1135,6 +1181,51 @@ impl VM {
                                                 }
                                             }
                                         }
+                                    }
+                                }
+                            }
+
+                            // Debug mode: enforce `shared` parameter ownership contracts.
+                            #[cfg(debug_assertions)]
+                            {
+                                let args_base = self.stack.len() - arg_count;
+                                for (i, ownership) in func.param_ownership.iter().enumerate() {
+                                    let arg = &self.stack[args_base + i];
+                                    match ownership {
+                                        Some(crate::ast::OwnershipAnnotation::Shared) => {
+                                            if !matches!(arg, Value::SharedValue(_)) {
+                                                return Err(RuntimeError::TypeError {
+                                                    msg: format!(
+                                                        "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?"),
+                                                        arg.type_name()
+                                                    ),
+                                                    span: self
+                                                        .current_span()
+                                                        .unwrap_or_else(crate::span::Span::dummy),
+                                                });
+                                            }
+                                        }
+                                        Some(crate::ast::OwnershipAnnotation::Own)
+                                        | Some(crate::ast::OwnershipAnnotation::Borrow) => {
+                                            if matches!(arg, Value::SharedValue(_)) {
+                                                let ann_str = match ownership {
+                                                    Some(crate::ast::OwnershipAnnotation::Own) => {
+                                                        "own"
+                                                    }
+                                                    Some(
+                                                        crate::ast::OwnershipAnnotation::Borrow,
+                                                    ) => "borrow",
+                                                    _ => unreachable!(),
+                                                };
+                                                eprintln!(
+                                                    "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                                    ann_str,
+                                                    func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                                );
+                                            }
+                                        }
+                                        None => {}
                                     }
                                 }
                             }
@@ -3224,6 +3315,7 @@ mod tests {
             bytecode_offset: function_offset,
             local_count: 1,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let func_idx = bytecode.add_constant(Value::Function(func_ref));
@@ -3271,6 +3363,7 @@ mod tests {
             bytecode_offset: function_offset,
             local_count: 1,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let func_idx = bytecode.add_constant(Value::Function(func_ref));
@@ -3324,6 +3417,7 @@ mod tests {
             bytecode_offset: 10,
             local_count: 2,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let func_idx = bytecode.add_constant(Value::Function(func_ref));
@@ -3389,6 +3483,7 @@ mod tests {
             bytecode_offset: f1_offset,
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let f1_idx = bytecode.add_constant(Value::Function(f1_ref));
@@ -3411,6 +3506,7 @@ mod tests {
             bytecode_offset: f2_offset,
             local_count: 1,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let f2_idx = bytecode.add_constant(Value::Function(f2_ref));

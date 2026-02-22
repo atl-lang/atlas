@@ -44,6 +44,13 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
                     Some(crate::ast::OwnershipAnnotation::Shared) => 3,
                 });
             }
+            // Serialize param_names: count (1 byte) + each name as (len u16 + bytes)
+            bytes.push(func.param_names.len() as u8);
+            for pname in &func.param_names {
+                let pname_bytes = pname.as_bytes();
+                bytes.extend_from_slice(&(pname_bytes.len() as u16).to_be_bytes());
+                bytes.extend_from_slice(pname_bytes);
+            }
             // Serialize return_ownership (1 byte)
             bytes.push(match &func.return_ownership {
                 None => 0,
@@ -215,15 +222,41 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                     _ => None, // Unknown tag: treat as unannotated
                 })
                 .collect();
+            // Deserialize param_names
+            let names_base = 11 + name_len + param_count;
+            if bytes.len() < names_base + 1 {
+                return Err("Truncated param_names count".to_string());
+            }
+            let names_count = bytes[names_base] as usize;
+            let mut names_cursor = names_base + 1;
+            let mut param_names: Vec<String> = Vec::with_capacity(names_count);
+            for _ in 0..names_count {
+                if bytes.len() < names_cursor + 2 {
+                    return Err("Truncated param name length".to_string());
+                }
+                let plen =
+                    u16::from_be_bytes([bytes[names_cursor], bytes[names_cursor + 1]]) as usize;
+                names_cursor += 2;
+                if bytes.len() < names_cursor + plen {
+                    return Err("Truncated param name bytes".to_string());
+                }
+                let pname = String::from_utf8(bytes[names_cursor..names_cursor + plen].to_vec())
+                    .map_err(|e| format!("Invalid UTF-8 in param name: {}", e))?;
+                param_names.push(pname);
+                names_cursor += plen;
+            }
             // Deserialize return_ownership
-            let return_ownership = match bytes[11 + name_len + param_count] {
+            if bytes.len() < names_cursor + 1 {
+                return Err("Truncated return_ownership".to_string());
+            }
+            let return_ownership = match bytes[names_cursor] {
                 0 => None,
                 1 => Some(crate::ast::OwnershipAnnotation::Own),
                 2 => Some(crate::ast::OwnershipAnnotation::Borrow),
                 3 => Some(crate::ast::OwnershipAnnotation::Shared),
                 _ => None,
             };
-            let total_consumed = 11 + name_len + param_count + 1;
+            let total_consumed = names_cursor + 1;
             Ok((
                 Value::Function(crate::value::FunctionRef {
                     name,
@@ -231,6 +264,7 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                     bytecode_offset: offset,
                     local_count: 0, // Not serialized; set on recompile
                     param_ownership,
+                    param_names,
                     return_ownership,
                 }),
                 total_consumed,

@@ -5206,3 +5206,104 @@ fn test_vm_own_borrow_identical_to_interpreter() {
         "VM error should mention 'use of moved value'"
     );
 }
+
+// ─── Phase 12: shared enforcement in VM ──────────────────────────────────────
+
+/// Passing a plain (non-shared) value to a `shared` param must error in the VM (debug mode).
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_shared_param_rejects_plain_value() {
+    let src = r#"
+        fn register(shared handler: number[]) -> void { }
+        let arr: number[] = [1, 2, 3];
+        register(arr);
+    "#;
+    let result = vm_run_source(src);
+    assert!(
+        result.is_err(),
+        "Expected ownership violation error in VM, got: {:?}",
+        result
+    );
+    assert!(
+        result.unwrap_err().contains("ownership violation"),
+        "VM error should mention 'ownership violation'"
+    );
+}
+
+/// Passing an actual SharedValue to a `shared` param must succeed in the VM.
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_shared_param_accepts_shared_value() {
+    use atlas_runtime::value::{Shared, Value};
+
+    let src = r#"
+        fn register(shared handler: number[]) -> void { }
+        register(sv);
+    "#;
+    let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = atlas_runtime::binder::Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = atlas_runtime::typechecker::TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+
+    let bc = compile(src);
+    let mut vm = VM::new(bc);
+    let shared_val = Value::SharedValue(Shared::new(Box::new(Value::array(vec![
+        Value::Number(1.0),
+        Value::Number(2.0),
+    ]))));
+    vm.set_global("sv".to_string(), shared_val);
+
+    let result = vm.run(&SecurityContext::allow_all());
+    assert!(
+        result.is_ok(),
+        "SharedValue passed to shared param should succeed in VM, got: {:?}",
+        result
+    );
+}
+
+/// VM and interpreter produce the same shared-ownership error for identical source.
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_shared_identical_to_interpreter() {
+    use atlas_runtime::interpreter::Interpreter;
+
+    let src = r#"
+        fn register(shared handler: number[]) -> void { }
+        let arr: number[] = [1, 2, 3];
+        register(arr);
+    "#;
+
+    // Interpreter result
+    let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = atlas_runtime::binder::Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = atlas_runtime::typechecker::TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let mut interp = Interpreter::new();
+    let interp_result = interp.eval(&program, &SecurityContext::allow_all());
+
+    // VM result
+    let vm_result = vm_run_source(src);
+
+    // Both must fail with "ownership violation"
+    assert!(
+        interp_result.is_err(),
+        "Interpreter should error on shared violation"
+    );
+    assert!(vm_result.is_err(), "VM should error on shared violation");
+    assert!(
+        format!("{:?}", interp_result.unwrap_err()).contains("ownership violation"),
+        "Interpreter error should mention 'ownership violation'"
+    );
+    assert!(
+        vm_result.unwrap_err().contains("ownership violation"),
+        "VM error should mention 'ownership violation'"
+    );
+}

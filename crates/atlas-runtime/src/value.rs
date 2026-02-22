@@ -475,6 +475,9 @@ pub struct FunctionRef {
     /// `None` = unannotated (value-type copy semantics).
     /// Populated by the compiler; empty for builtins and stdlib functions.
     pub param_ownership: Vec<Option<crate::ast::OwnershipAnnotation>>,
+    /// Parameter names in parameter order, parallel to `param_ownership`.
+    /// Populated by the compiler for error messages; empty for builtins/stdlib.
+    pub param_names: Vec<String>,
     /// Ownership annotation on the return type, if any.
     pub return_ownership: Option<crate::ast::OwnershipAnnotation>,
 }
@@ -828,6 +831,7 @@ mod tests {
                 bytecode_offset: 0,
                 local_count: 0,
                 param_ownership: vec![],
+                param_names: vec![],
                 return_ownership: None,
             })
             .type_name(),
@@ -892,6 +896,7 @@ mod tests {
             bytecode_offset: 0,
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         });
         assert_eq!(func.to_string(), "<fn test>");
@@ -979,6 +984,7 @@ mod tests {
             bytecode_offset: 0,
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         });
         let func2 = Value::Function(FunctionRef {
@@ -987,6 +993,7 @@ mod tests {
             bytecode_offset: 100,
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         });
         let func3 = Value::Function(FunctionRef {
@@ -995,6 +1002,7 @@ mod tests {
             bytecode_offset: 0,
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         });
 

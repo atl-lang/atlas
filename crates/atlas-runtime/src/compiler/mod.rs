@@ -202,6 +202,7 @@ impl Compiler {
             bytecode_offset: 0, // Placeholder - will be updated after Jump
             local_count: 0,     // Will be updated after compiling body
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
@@ -285,6 +286,7 @@ impl Compiler {
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
+            param_names: vec![],
             return_ownership: func.return_ownership.clone(),
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);

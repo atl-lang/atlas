@@ -198,6 +198,7 @@ impl Interpreter {
                         bytecode_offset: 0, // Not used in interpreter
                         local_count: 0,     // Not used in interpreter
                         param_ownership: vec![],
+                        param_names: vec![],
                         return_ownership: None,
                     });
                     self.globals
@@ -239,6 +240,7 @@ impl Interpreter {
                                 bytecode_offset: 0,
                                 local_count: 0,
                                 param_ownership: vec![],
+                                param_names: vec![],
                                 return_ownership: None,
                             });
                             self.globals
@@ -308,6 +310,7 @@ impl Interpreter {
                         bytecode_offset: 0, // Not used for extern functions
                         local_count: 0,     // Not used for extern functions
                         param_ownership: vec![],
+                        param_names: vec![],
                         return_ownership: None,
                     });
                     self.globals

@@ -32,6 +32,7 @@ impl Interpreter {
                     bytecode_offset: 0, // Not used in interpreter
                     local_count: 0,     // Not used in interpreter
                     param_ownership: vec![],
+                    param_names: vec![],
                     return_ownership: None,
                 });
 
