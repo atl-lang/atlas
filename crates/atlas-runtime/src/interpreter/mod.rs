@@ -320,6 +320,9 @@ impl Interpreter {
                 Item::TypeAlias(_) => {
                     // Type aliases are compile-time only
                 }
+                Item::Trait(_) | Item::Impl(_) => {
+                    // Trait/impl dispatch handled in Block 3 phase 13
+                }
             }
         }
 

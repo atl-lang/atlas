@@ -375,6 +375,9 @@ impl Binder {
             Item::TypeAlias(_) => {
                 // Type aliases are handled during collection
             }
+            Item::Trait(_) | Item::Impl(_) => {
+                // Trait/impl binding handled in Block 3 (trait system)
+            }
         }
     }
 
@@ -410,6 +413,9 @@ impl Binder {
             }
             Item::TypeAlias(_) => {
                 // Type aliases are handled during collection
+            }
+            Item::Trait(_) | Item::Impl(_) => {
+                // Trait/impl binding handled in Block 3 (trait system)
             }
         }
     }

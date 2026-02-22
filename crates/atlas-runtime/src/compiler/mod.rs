@@ -189,6 +189,10 @@ impl Compiler {
                 Ok(())
             }
             Item::TypeAlias(_) => Ok(()),
+            Item::Trait(_) | Item::Impl(_) => {
+                // Trait/impl codegen handled in Block 3 phases 12–14
+                Ok(())
+            }
         }
     }
 

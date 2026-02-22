@@ -117,6 +117,7 @@ impl Parser {
                 type_params.push(TypeParam {
                     name: type_param_name,
                     bound,
+                    trait_bounds: vec![],
                     span: type_param_start.merge(type_param_span),
                 });
 
@@ -379,6 +380,7 @@ impl Parser {
                 type_params.push(TypeParam {
                     name: type_param_name,
                     bound,
+                    trait_bounds: vec![],
                     span: type_param_start.merge(type_param_span),
                 });
 

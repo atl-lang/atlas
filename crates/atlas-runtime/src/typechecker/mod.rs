@@ -215,6 +215,9 @@ impl<'a> TypeChecker<'a> {
             Item::TypeAlias(_) => {
                 // Type aliases are validated in a pre-pass
             }
+            Item::Trait(_) | Item::Impl(_) => {
+                // Trait/impl type checking handled in Block 3 phases 6–10
+            }
         }
     }
 
