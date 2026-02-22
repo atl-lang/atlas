@@ -24,7 +24,7 @@ cargo nextest run -p atlas-runtime
 git add <files> && git commit -m "feat(phase-XX): Part A"
 ```
 
-## End of Phase — PR Workflow
+## End of Phase — Commit Only (Batching)
 ```bash
 # 1. Quality gates
 cargo build --workspace
@@ -32,23 +32,28 @@ cargo nextest run -p atlas-runtime
 cargo clippy -p atlas-runtime -- -D warnings
 cargo fmt --check -p atlas-runtime
 
-# 2. Commit + push
+# 2. Commit (do NOT push or PR yet — batch multiple phases)
 git add <files> && git commit -m "$(cat <<'EOF'
-feat(phase-XX): Description
+feat(block-XX/phase-YY): Description
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 EOF
 )"
-git push -u origin phase/{category}-{number}
+```
 
-# 3. PR with auto-merge
+## PR Workflow — Batch Flush (weekly or milestone)
+```bash
+# When ready to flush the batch (weekly cadence or major milestone):
+git push -u origin phase/{category}-{number}
 gh pr create --title "..." --body "..."
 gh pr merge --auto --squash
 
-# 4. After merge: sync
+# After merge: sync
 git checkout main && git pull origin main
 git branch -d phase/{category}-{number}
 ```
+
+**Exception:** Blocking fixes or large standalone milestones may PR immediately.
 
 ## Banned
 - `git push origin main` directly

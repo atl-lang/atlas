@@ -318,3 +318,239 @@ async fn test_completions_with_errors() {
     // Should still provide completions even with errors
     assert!(result.is_some());
 }
+
+// === Ownership Annotation Completion Tests ===
+
+#[tokio::test]
+async fn test_completion_suggests_own_in_param_position() {
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
+    let server = service.inner();
+    let uri = Url::parse("file:///test.atl").unwrap();
+
+    // Cursor is inside the parameter list after 'fn f('
+    let source = "fn f(own x: number) -> number { return x; }";
+    server
+        .did_open(DidOpenTextDocumentParams {
+            text_document: TextDocumentItem {
+                uri: uri.clone(),
+                language_id: "atlas".to_string(),
+                version: 1,
+                text: source.to_string(),
+            },
+        })
+        .await;
+
+    let result = server
+        .completion(CompletionParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
+                // Position: inside the param list, after '('
+                position: Position {
+                    line: 0,
+                    character: 6,
+                },
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+            context: None,
+        })
+        .await
+        .unwrap();
+
+    let items = match result.unwrap() {
+        CompletionResponse::Array(items) => items,
+        CompletionResponse::List(list) => list.items,
+    };
+
+    let labels: Vec<&str> = items.iter().map(|i| i.label.as_str()).collect();
+    assert!(
+        labels.contains(&"own"),
+        "Expected 'own' in completions at param position, got: {labels:?}"
+    );
+    assert!(
+        labels.contains(&"borrow"),
+        "Expected 'borrow' in completions at param position, got: {labels:?}"
+    );
+    assert!(
+        labels.contains(&"shared"),
+        "Expected 'shared' in completions at param position, got: {labels:?}"
+    );
+
+    // Verify KEYWORD kind
+    let own_item = items.iter().find(|i| i.label == "own").unwrap();
+    assert_eq!(own_item.kind, Some(CompletionItemKind::KEYWORD));
+}
+
+#[tokio::test]
+async fn test_completion_no_ownership_in_expression_position() {
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
+    let server = service.inner();
+    let uri = Url::parse("file:///test.atl").unwrap();
+
+    // Cursor is in an expression, NOT in a parameter list
+    let source = "fn f() -> number { let x = 1; return x; }";
+    server
+        .did_open(DidOpenTextDocumentParams {
+            text_document: TextDocumentItem {
+                uri: uri.clone(),
+                language_id: "atlas".to_string(),
+                version: 1,
+                text: source.to_string(),
+            },
+        })
+        .await;
+
+    let result = server
+        .completion(CompletionParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
+                // Position: inside the function body expression
+                position: Position {
+                    line: 0,
+                    character: 28,
+                },
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+            context: None,
+        })
+        .await
+        .unwrap();
+
+    let items = match result.unwrap() {
+        CompletionResponse::Array(items) => items,
+        CompletionResponse::List(list) => list.items,
+    };
+
+    let labels: Vec<&str> = items.iter().map(|i| i.label.as_str()).collect();
+    assert!(
+        !labels.contains(&"own"),
+        "Did not expect 'own' in expression position completions, got: {labels:?}"
+    );
+    assert!(
+        !labels.contains(&"borrow"),
+        "Did not expect 'borrow' in expression position completions, got: {labels:?}"
+    );
+    assert!(
+        !labels.contains(&"shared"),
+        "Did not expect 'shared' in expression position completions, got: {labels:?}"
+    );
+}
+
+#[tokio::test]
+async fn test_function_completion_shows_ownership_in_params() {
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
+    let server = service.inner();
+    let uri = Url::parse("file:///test.atl").unwrap();
+
+    // Use two functions so there's valid top-level code — request completion from inside f
+    let source =
+        "fn process(own data: number) -> number { return data; }\nfn f() -> number { return 1; }";
+    server
+        .did_open(DidOpenTextDocumentParams {
+            text_document: TextDocumentItem {
+                uri: uri.clone(),
+                language_id: "atlas".to_string(),
+                version: 1,
+                text: source.to_string(),
+            },
+        })
+        .await;
+
+    let result = server
+        .completion(CompletionParams {
+            text_document_position: TextDocumentPositionParams {
+                text_document: TextDocumentIdentifier { uri: uri.clone() },
+                // Inside the second function body — expression position, not param
+                position: Position {
+                    line: 1,
+                    character: 22,
+                },
+            },
+            work_done_progress_params: WorkDoneProgressParams::default(),
+            partial_result_params: PartialResultParams::default(),
+            context: None,
+        })
+        .await
+        .unwrap();
+
+    let items = match result.unwrap() {
+        CompletionResponse::Array(items) => items,
+        CompletionResponse::List(list) => list.items,
+    };
+
+    let process_item = items.iter().find(|i| i.label == "process");
+    assert!(
+        process_item.is_some(),
+        "Expected 'process' in completion list"
+    );
+
+    let detail = process_item.unwrap().detail.as_deref().unwrap_or("");
+    assert!(
+        detail.contains("own"),
+        "Expected function completion detail to include ownership annotation 'own', got: {detail}"
+    );
+}
+
+#[tokio::test]
+async fn test_ownership_completion_items_have_documentation() {
+    use atlas_lsp::completion::ownership_annotation_completions;
+
+    let items = ownership_annotation_completions();
+    assert_eq!(items.len(), 3);
+
+    for item in &items {
+        assert!(
+            item.documentation.is_some(),
+            "Item '{}' missing documentation",
+            item.label
+        );
+        assert_eq!(item.kind, Some(CompletionItemKind::KEYWORD));
+        assert!(
+            item.insert_text.is_some(),
+            "Item '{}' missing insert_text",
+            item.label
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_is_in_param_position_detection() {
+    use atlas_lsp::completion::is_in_param_position;
+
+    // Inside parameter list
+    assert!(is_in_param_position(
+        "fn f(x: number) -> void { }",
+        Position {
+            line: 0,
+            character: 6
+        }
+    ));
+
+    // After opening paren, multiple params
+    assert!(is_in_param_position(
+        "fn process(own data: number, y: string) -> void { }",
+        Position {
+            line: 0,
+            character: 12
+        }
+    ));
+
+    // In function body — NOT param position
+    assert!(!is_in_param_position(
+        "fn f() -> void { let x = 1; }",
+        Position {
+            line: 0,
+            character: 20
+        }
+    ));
+
+    // In a function call — NOT param position (no `fn` before `(`)
+    assert!(!is_in_param_position(
+        "print(x);",
+        Position {
+            line: 0,
+            character: 7
+        }
+    ));
+}

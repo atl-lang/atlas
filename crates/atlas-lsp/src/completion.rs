@@ -2,7 +2,116 @@
 
 use atlas_runtime::ast::*;
 use atlas_runtime::symbol::SymbolTable;
-use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
+use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat, Position};
+
+/// Completion items for ownership annotation keywords, shown in parameter position only.
+pub fn ownership_annotation_completions() -> Vec<CompletionItem> {
+    vec![
+        CompletionItem {
+            label: "own".to_string(),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some("Ownership annotation".to_string()),
+            documentation: Some(tower_lsp::lsp_types::Documentation::String(
+                "Move semantics: caller's binding is invalidated after call.".to_string(),
+            )),
+            insert_text: Some("own ${1:name}: ${2:Type}".to_string()),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..Default::default()
+        },
+        CompletionItem {
+            label: "borrow".to_string(),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some("Ownership annotation".to_string()),
+            documentation: Some(tower_lsp::lsp_types::Documentation::String(
+                "Immutable reference: caller retains ownership, no mutation.".to_string(),
+            )),
+            insert_text: Some("borrow ${1:name}: ${2:Type}".to_string()),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..Default::default()
+        },
+        CompletionItem {
+            label: "shared".to_string(),
+            kind: Some(CompletionItemKind::KEYWORD),
+            detail: Some("Ownership annotation".to_string()),
+            documentation: Some(tower_lsp::lsp_types::Documentation::String(
+                "Shared reference: Arc<T> semantics, requires shared<T> value.".to_string(),
+            )),
+            insert_text: Some("shared ${1:name}: ${2:Type}".to_string()),
+            insert_text_format: Some(InsertTextFormat::SNIPPET),
+            ..Default::default()
+        },
+    ]
+}
+
+/// Detect whether the cursor is inside a function parameter list.
+///
+/// Heuristic: walk backwards from the cursor byte offset. If we encounter `(`
+/// before `fn`, we might be in a call. But if `fn` precedes `(`, we are in a
+/// parameter definition context. Returns `true` when we are in param-definition
+/// position (i.e., after `fn name(`).
+pub fn is_in_param_position(text: &str, position: Position) -> bool {
+    let lines: Vec<&str> = text.lines().collect();
+    let line_idx = position.line as usize;
+    if line_idx >= lines.len() {
+        return false;
+    }
+
+    // Build the prefix up to the cursor on the current line
+    let line = lines[line_idx];
+    let col = (position.character as usize).min(line.len());
+    let prefix_on_line = &line[..col];
+
+    // Collect all text up to the cursor (previous lines + prefix)
+    let mut prefix = String::new();
+    for l in lines.iter().take(line_idx) {
+        prefix.push_str(l);
+        prefix.push('\n');
+    }
+    prefix.push_str(prefix_on_line);
+
+    // Walk backwards from the end of the prefix to find context
+    let mut paren_depth: i32 = 0;
+    let chars: Vec<char> = prefix.chars().collect();
+    let mut i = chars.len();
+
+    while i > 0 {
+        i -= 1;
+        match chars[i] {
+            ')' => paren_depth += 1,
+            '(' => {
+                if paren_depth == 0 {
+                    // We found the opening paren — look for `fn` before it
+                    // Skip whitespace and the function name
+                    let before_paren = &prefix[..chars[..i].iter().collect::<String>().len()];
+                    let trimmed = before_paren.trim_end();
+                    // The part before the paren should end with an identifier (function name)
+                    // and before that should be `fn` keyword
+                    let _word_end = trimmed.len();
+                    let word_start = trimmed
+                        .rfind(|c: char| !c.is_alphanumeric() && c != '_')
+                        .map(|p| p + 1)
+                        .unwrap_or(0);
+                    let before_name = trimmed[..word_start].trim_end();
+                    return before_name.ends_with("fn");
+                }
+                paren_depth -= 1;
+            }
+            _ => {}
+        }
+    }
+
+    false
+}
+
+/// Format an ownership annotation as a parameter prefix string
+fn format_ownership(ownership: &Option<OwnershipAnnotation>) -> &'static str {
+    match ownership {
+        Some(OwnershipAnnotation::Own) => "own ",
+        Some(OwnershipAnnotation::Borrow) => "borrow ",
+        Some(OwnershipAnnotation::Shared) => "shared ",
+        None => "",
+    }
+}
 
 /// Generate completion items for keywords
 pub fn keyword_completions() -> Vec<CompletionItem> {
@@ -182,7 +291,14 @@ pub fn symbol_completions(program: &Program, _symbols: &SymbolTable) -> Vec<Comp
             let params: Vec<String> = func
                 .params
                 .iter()
-                .map(|p| format!("{}: {:?}", p.name.name, p.type_ref))
+                .map(|p| {
+                    format!(
+                        "{}{}: {:?}",
+                        format_ownership(&p.ownership),
+                        p.name.name,
+                        p.type_ref
+                    )
+                })
                 .collect();
 
             items.push(CompletionItem {
@@ -213,8 +329,14 @@ pub fn symbol_completions(program: &Program, _symbols: &SymbolTable) -> Vec<Comp
     items
 }
 
-/// Generate all completion items
+/// Generate all completion items for the given cursor position.
+///
+/// `text` and `position` are used for context detection: ownership annotation
+/// completions (`own`, `borrow`, `shared`) are only suggested when the cursor
+/// is inside a function parameter list. Other completions are always included.
 pub fn generate_completions(
+    text: Option<&str>,
+    position: Option<Position>,
     program: Option<&Program>,
     symbols: Option<&SymbolTable>,
 ) -> Vec<CompletionItem> {
@@ -224,6 +346,13 @@ pub fn generate_completions(
     items.extend(keyword_completions());
     items.extend(type_completions());
     items.extend(builtin_completions());
+
+    // Ownership annotations only in parameter position
+    if let (Some(src), Some(pos)) = (text, position) {
+        if is_in_param_position(src, pos) {
+            items.extend(ownership_annotation_completions());
+        }
+    }
 
     // Add symbols from current document if available
     if let (Some(prog), Some(syms)) = (program, symbols) {

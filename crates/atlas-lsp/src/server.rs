@@ -425,8 +425,13 @@ impl LanguageServer for AtlasLspServer {
 
         let documents = self.documents.lock().await;
         if let Some(doc) = documents.get(&uri) {
-            let completions =
-                crate::completion::generate_completions(doc.ast.as_ref(), doc.symbols.as_ref());
+            let position = params.text_document_position.position;
+            let completions = crate::completion::generate_completions(
+                Some(&doc.text),
+                Some(position),
+                doc.ast.as_ref(),
+                doc.symbols.as_ref(),
+            );
             return Ok(Some(CompletionResponse::Array(completions)));
         }
 

@@ -812,6 +812,7 @@ mod tests {
             bytecode_offset: 10, // old offset
             local_count: 0,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         })];
 

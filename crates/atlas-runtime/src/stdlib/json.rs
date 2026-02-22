@@ -601,6 +601,7 @@ mod tests {
             bytecode_offset: 0,
             local_count: 1,
             param_ownership: vec![],
+            param_names: vec![],
             return_ownership: None,
         });
         let result = to_json(&[func], span);

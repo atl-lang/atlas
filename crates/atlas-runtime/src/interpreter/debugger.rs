@@ -340,6 +340,7 @@ impl InterpreterDebuggerSession {
                         bytecode_offset: 0,
                         local_count: 0,
                         param_ownership: vec![],
+                        param_names: vec![],
                         return_ownership: None,
                     });
                     self.interpreter

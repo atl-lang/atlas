@@ -112,18 +112,21 @@ After GATE -1, declare one:
 
 ## Phase Handoff
 
-**CRITICAL:** Only hand off when ALL tests pass AND PR is created/queued.
+**CRITICAL:** Only hand off when ALL tests pass AND commit is made. Do NOT PR after every phase — batch multiple phases per week.
 
 **Protocol:**
 1. All gates passed (build, tests, clippy, fmt, security scan)
 2. **Update STATUS.md** — Last Updated, Current State, Next, block table row
-3. **Commit STATUS.md on the phase branch** (same commit or follow-up before PR)
+3. **Commit STATUS.md on the phase branch** (same commit or follow-up)
 4. Memory checked (GATE 7)
-5. PR → `gh pr merge --auto --squash`
+5. **Commit only** — no push, no PR (batching cadence)
 6. Deliver summary
 
+**PR flush trigger:** Weekly cadence, major milestone, or blocking fix.
+**See `gates/git-workflow.md`** for batch flush commands.
+
 **Required in summary:**
-- Status: "✅ PHASE COMPLETE - PR QUEUED/MERGED"
+- Status: "✅ PHASE COMPLETE - COMMITTED (batch)"
 - Final Stats (bullets)
 - **Memory:** Updated X / No updates needed (MANDATORY)
 - Progress (X/~140 phases — see STATUS.md block table)
