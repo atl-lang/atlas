@@ -5078,3 +5078,131 @@ fn test_bytecode_round_trips_ownership() {
     assert_eq!(func_after.arity, func_before.arity);
     assert_eq!(func_after.bytecode_offset, func_before.bytecode_offset);
 }
+
+// ============================================================================
+// Phase 11: Runtime `own` enforcement in VM (debug mode)
+// ============================================================================
+
+/// Run source through the VM; return Ok(display) or Err(error message).
+fn vm_run_source(source: &str) -> Result<String, String> {
+    use atlas_runtime::binder::Binder;
+    use atlas_runtime::typechecker::TypeChecker;
+    let mut lexer = atlas_runtime::lexer::Lexer::new(source.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let bc = compile(source);
+    let mut vm = VM::new(bc);
+    match vm.run(&SecurityContext::allow_all()) {
+        Ok(value) => Ok(format!("{:?}", value)),
+        Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
+/// Passing a local variable to an `own` param consumes it — subsequent read is a runtime error.
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_own_consumes_local() {
+    let src = r#"
+        fn consume(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        consume(arr);
+        arr;
+    "#;
+    let result = vm_run_source(src);
+    assert!(
+        result.is_err(),
+        "Expected error after consuming arr via VM, got: {:?}",
+        result
+    );
+    let msg = result.unwrap_err();
+    assert!(
+        msg.contains("use of moved value"),
+        "Error should mention 'use of moved value', got: {}",
+        msg
+    );
+}
+
+/// A `borrow` parameter must NOT consume the caller's local in the VM.
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_borrow_does_not_consume_local() {
+    let src = r#"
+        fn read(borrow data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        read(arr);
+        len(arr);
+    "#;
+    let result = vm_run_source(src);
+    assert!(
+        result.is_ok(),
+        "borrow should not consume binding in VM, got: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap(), "Some(Number(3))");
+}
+
+/// Passing a literal to an `own` param must not error (no binding to consume).
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_own_literal_arg_no_consume() {
+    let src = r#"
+        fn consume(own data: array<number>) -> void { }
+        consume([1, 2, 3]);
+        42;
+    "#;
+    let result = vm_run_source(src);
+    assert!(
+        result.is_ok(),
+        "literal arg to own param should not error in VM, got: {:?}",
+        result
+    );
+    assert_eq!(result.unwrap(), "Some(Number(42))");
+}
+
+/// VM and interpreter produce the same error for the same own-violation source.
+#[test]
+#[cfg(debug_assertions)]
+fn test_vm_own_borrow_identical_to_interpreter() {
+    use atlas_runtime::binder::Binder;
+    use atlas_runtime::interpreter::Interpreter;
+    use atlas_runtime::typechecker::TypeChecker;
+
+    let src = r#"
+        fn consume(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        consume(arr);
+        arr;
+    "#;
+
+    // Interpreter result
+    let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let mut interp = Interpreter::new();
+    let interp_result = interp.eval(&program, &SecurityContext::allow_all());
+
+    // VM result
+    let vm_result = vm_run_source(src);
+
+    // Both must fail with "use of moved value"
+    assert!(interp_result.is_err(), "Interpreter should error");
+    assert!(vm_result.is_err(), "VM should error");
+    assert!(
+        format!("{:?}", interp_result.unwrap_err()).contains("use of moved value"),
+        "Interpreter error should mention 'use of moved value'"
+    );
+    assert!(
+        vm_result.unwrap_err().contains("use of moved value"),
+        "VM error should mention 'use of moved value'"
+    );
+}
