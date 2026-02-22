@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-21 (Phase 17 complete)
+**Last Updated:** 2026-02-21 (Phase 18 complete)
 **Version:** v0.3 — The Foundation Version
 **Progress:** v0.2 COMPLETE ✅ | v0.3 Block 1 in progress
 
@@ -9,8 +9,8 @@
 ## Current State
 
 **Status:** Block 1 in progress — executing phases
-**Last Completed:** Phase 17 — Full build clean (workspace zero errors, zero Arc<Mutex<Vec<Value>>> in production)
-**Next Phase:** `phases/v0.3/block-01-memory-model/phase-18-test-suite-green.md`
+**Last Completed:** Phase 18 — Fix aliasing tests (10 CoW value semantics regression tests, both engines)
+**Next Phase:** `phases/v0.3/block-01-memory-model/phase-19-parity-verification.md`
 
 > **Active block:** Block 1 — Memory Model (25 phases, execute sequentially)
 

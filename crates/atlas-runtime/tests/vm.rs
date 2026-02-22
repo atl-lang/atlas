@@ -4953,3 +4953,47 @@ fn test_vm_free_fn_reverse_cow_writeback() {
     let result = run_vm(r#"var arr: array = [1, 2, 3]; reverse(arr); arr[0];"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
+
+// ============================================================================
+// Value semantics regression tests — CoW behavior must never regress (VM)
+// ============================================================================
+
+/// Regression: assignment creates independent copy; mutation of source does not
+/// affect the copy (CoW value semantics).
+#[test]
+fn test_vm_value_semantics_regression_assign_copy() {
+    let result = run_vm(r#"let a: number[] = [1, 2, 3]; let b: number[] = a; a[0] = 99; b[0];"#);
+    assert_eq!(result, Ok("Number(1)".to_string()));
+}
+
+/// Regression: mutation of assigned copy does not affect source.
+#[test]
+fn test_vm_value_semantics_regression_copy_mutation_isolated() {
+    let result = run_vm(r#"let a: number[] = [1, 2, 3]; let b: number[] = a; b[0] = 42; a[0];"#);
+    assert_eq!(result, Ok("Number(1)".to_string()));
+}
+
+/// Regression: push on assigned copy does not grow the source.
+#[test]
+fn test_vm_value_semantics_regression_push_copy_isolated() {
+    let result = run_vm(r#"var a: array = [1, 2, 3]; var b: array = a; b.push(4); len(a);"#);
+    assert_eq!(result, Ok("Number(3)".to_string()));
+}
+
+/// Regression: function parameter is an independent copy — mutations stay local.
+#[test]
+fn test_vm_value_semantics_regression_fn_param_copy() {
+    let result = run_vm(
+        r#"fn fill(arr: number[]) -> void { arr[0] = 999; } let nums: number[] = [1, 2, 3]; fill(nums); nums[0];"#,
+    );
+    assert_eq!(result, Ok("Number(1)".to_string()));
+}
+
+/// Regression: three-way copy — each variable is independent.
+#[test]
+fn test_vm_value_semantics_regression_three_way_copy() {
+    let result = run_vm(
+        r#"let a: number[] = [1, 2, 3]; let b: number[] = a; let c: number[] = b; b[0] = 10; c[1] = 20; a[0] + a[1];"#,
+    );
+    assert_eq!(result, Ok("Number(3)".to_string()));
+}
