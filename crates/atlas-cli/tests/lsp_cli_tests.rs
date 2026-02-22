@@ -139,9 +139,19 @@ fn test_lsp_tcp_accepts_connection() {
         std::thread::sleep(Duration::from_millis(50));
     }
 
-    // Try to connect
+    // Try to connect — retry briefly since the socket may not be accepting yet
+    // even after the "listening on" log line appears (OS scheduling variance in CI).
     let addr = format!("127.0.0.1:{}", port);
-    let connection_result = TcpStream::connect(&addr);
+    let mut connection_result = TcpStream::connect(&addr);
+    if connection_result.is_err() {
+        for _ in 0..10 {
+            std::thread::sleep(Duration::from_millis(50));
+            connection_result = TcpStream::connect(&addr);
+            if connection_result.is_ok() {
+                break;
+            }
+        }
+    }
 
     // Kill the server
     child.kill().ok();
