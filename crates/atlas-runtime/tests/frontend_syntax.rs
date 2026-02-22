@@ -2621,3 +2621,157 @@ fn test_parse_for_in_with_complex_body() {
         "Should parse for-in with complex body"
     );
 }
+
+// ============================================================================
+// Block 3: Trait system — parser tests
+// ============================================================================
+
+#[test]
+fn test_parse_empty_trait() {
+    let (prog, diags) = parse_source("trait Marker { }");
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 1);
+    assert!(matches!(prog.items[0], Item::Trait(_)));
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.name.name, "Marker");
+        assert!(t.methods.is_empty());
+        assert!(t.type_params.is_empty());
+    }
+}
+
+#[test]
+fn test_parse_trait_single_method() {
+    let src = "trait Display { fn display(self: Display) -> string; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 1);
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.name.name, "Display");
+        assert_eq!(t.methods.len(), 1);
+        assert_eq!(t.methods[0].name.name, "display");
+        assert_eq!(t.methods[0].params.len(), 1);
+        assert_eq!(t.methods[0].params[0].name.name, "self");
+    } else {
+        panic!("expected Item::Trait");
+    }
+}
+
+#[test]
+fn test_parse_trait_multiple_methods() {
+    let src = "trait Comparable {
+        fn compare(self: Comparable, other: Comparable) -> number;
+        fn equals(self: Comparable, other: Comparable) -> bool;
+    }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.methods.len(), 2);
+        assert_eq!(t.methods[0].name.name, "compare");
+        assert_eq!(t.methods[0].params.len(), 2);
+        assert_eq!(t.methods[1].name.name, "equals");
+        assert_eq!(t.methods[1].params.len(), 2);
+    } else {
+        panic!("expected Item::Trait");
+    }
+}
+
+#[test]
+fn test_parse_generic_trait() {
+    let src = "trait Container<T> { fn get(self: Container<T>, index: number) -> T; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.name.name, "Container");
+        assert_eq!(t.type_params.len(), 1);
+        assert_eq!(t.type_params[0].name, "T");
+        assert_eq!(t.methods.len(), 1);
+    } else {
+        panic!("expected Item::Trait");
+    }
+}
+
+#[test]
+fn test_parse_trait_method_with_ownership_params() {
+    let src = "trait Processor { fn process(own data: number) -> number; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(
+            t.methods[0].params[0].ownership,
+            Some(OwnershipAnnotation::Own)
+        );
+    } else {
+        panic!("expected Item::Trait");
+    }
+}
+
+#[test]
+fn test_trait_method_requires_semicolon() {
+    // Missing semicolon after method sig — parse error
+    let src = "trait Foo { fn bar() -> number }";
+    let (_, diags) = parse_source(src);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "Missing semicolon should produce a diagnostic"
+    );
+}
+
+#[test]
+fn test_trait_method_with_body_is_error() {
+    // Trait method sigs have no body — `{` after return type is unexpected
+    let src = "trait Foo { fn bar() -> number { return 1; } }";
+    let (_, diags) = parse_source(src);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "Method body in trait declaration should fail"
+    );
+}
+
+#[test]
+fn test_trait_coexists_with_functions() {
+    let src = "trait Display { fn display(self: Display) -> string; }
+               fn greet() -> string { return \"hello\"; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 2);
+    assert!(matches!(prog.items[0], Item::Trait(_)));
+    assert!(matches!(prog.items[1], Item::Function(_)));
+}
+
+#[test]
+fn test_parse_trait_multiple_type_params() {
+    let src = "trait BiMap<K, V> {
+        fn get(self: BiMap<K, V>, key: K) -> V;
+        fn set(self: BiMap<K, V>, key: K, value: V) -> void;
+    }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.type_params.len(), 2);
+        assert_eq!(t.type_params[0].name, "K");
+        assert_eq!(t.type_params[1].name, "V");
+        assert_eq!(t.methods.len(), 2);
+    } else {
+        panic!("expected Item::Trait");
+    }
+}
+
+#[test]
+fn test_parse_trait_method_no_params() {
+    let src = "trait Default { fn default() -> number; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        assert_eq!(t.methods[0].params.len(), 0);
+    } else {
+        panic!("expected Item::Trait");
+    }
+}

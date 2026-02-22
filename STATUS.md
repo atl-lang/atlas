@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-22 (Block 3 Phase 2 complete)
+**Last Updated:** 2026-02-22 (Block 3 Phase 3 complete)
 **Version:** v0.3 — The Foundation Version
 **Progress:** v0.2 COMPLETE ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅
 
@@ -8,9 +8,9 @@
 
 ## Current State
 
-**Status:** Block 3 in progress — Phase 2 complete
-**Last Completed:** Block 3 Phase 2 — AST nodes: TraitDecl, ImplBlock, TraitBound (9,302 tests passing)
-**Next:** Block 3 Phase 3 — Parser: trait declarations
+**Status:** Block 3 in progress — Phase 3 complete
+**Last Completed:** Block 3 Phase 3 — Parser: trait declarations (9,312 tests passing)
+**Next:** Block 3 Phase 4 — Parser: impl blocks
 
 ---
 
@@ -20,7 +20,7 @@
 |-------|-------|--------|--------|
 | 1 | Memory Model (CoW value types, replace Arc<Mutex<>>) | 25 | ✅ Complete (2026-02-21) |
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
-| 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | 🔄 In progress (Phase 2/18) |
+| 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | 🔄 In progress (Phase 3/18) |
 | 4 | Closures + Anonymous Functions | 15–20 | ⬜ Blocked on Block 3 |
 | 5 | Type Inference (locals + return types) | 10–15 | ⬜ Blocked on Block 3 |
 | 6 | Error Handling (`?` operator) | 10–15 | ⬜ Blocked on Block 3 |

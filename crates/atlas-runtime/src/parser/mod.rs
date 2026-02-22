@@ -86,6 +86,8 @@ impl Parser {
             Ok(Item::Function(self.parse_function()?))
         } else if self.check(TokenKind::Type) {
             Ok(Item::TypeAlias(self.parse_type_alias(doc_comment)?))
+        } else if self.check(TokenKind::Trait) {
+            Ok(Item::Trait(self.parse_trait()?))
         } else {
             Ok(Item::Statement(self.parse_statement()?))
         }
@@ -102,95 +104,10 @@ impl Parser {
         };
 
         // Parse optional type parameters: <T, E, ...>
-        let mut type_params = Vec::new();
-        if self.match_token(TokenKind::Less) {
-            loop {
-                let type_param_start = self.peek().span;
-                let type_param_tok = self.consume_identifier("a type parameter name")?;
-                let type_param_name = type_param_tok.lexeme.clone();
-                let type_param_span = type_param_tok.span;
-                let mut bound = None;
-                if self.match_token(TokenKind::Extends) {
-                    bound = Some(self.parse_type_ref()?);
-                }
-
-                type_params.push(TypeParam {
-                    name: type_param_name,
-                    bound,
-                    trait_bounds: vec![],
-                    span: type_param_start.merge(type_param_span),
-                });
-
-                if !self.match_token(TokenKind::Comma) {
-                    break;
-                }
-            }
-            self.consume(TokenKind::Greater, "Expected '>' after type parameters")?;
-        }
+        let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::LeftParen, "Expected '(' after function name")?;
-
-        // Parse parameters
-        let mut params = Vec::new();
-        if !self.check(TokenKind::RightParen) {
-            loop {
-                let param_span_start = self.peek().span;
-
-                // Optional ownership annotation: own | borrow | shared
-                let ownership = if self.match_token(TokenKind::Own) {
-                    Some(OwnershipAnnotation::Own)
-                } else if self.match_token(TokenKind::Borrow) {
-                    Some(OwnershipAnnotation::Borrow)
-                } else if self.match_token(TokenKind::Shared) {
-                    Some(OwnershipAnnotation::Shared)
-                } else {
-                    None
-                };
-
-                // If an annotation was present, the next token must be an identifier
-                let param_name_tok = if ownership.is_some() {
-                    match self.consume_identifier("a parameter name after ownership annotation") {
-                        Ok(tok) => tok,
-                        Err(()) => {
-                            let kw = match ownership {
-                                Some(OwnershipAnnotation::Own) => "own",
-                                Some(OwnershipAnnotation::Borrow) => "borrow",
-                                Some(OwnershipAnnotation::Shared) => "shared",
-                                None => unreachable!(),
-                            };
-                            self.error(&format!(
-                                "Expected parameter name after ownership annotation '{kw}'"
-                            ));
-                            return Err(());
-                        }
-                    }
-                } else {
-                    self.consume_identifier("a parameter name")?
-                };
-
-                let param_name = param_name_tok.lexeme.clone();
-                let param_name_span = param_name_tok.span;
-
-                self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
-                let type_ref = self.parse_type_ref()?;
-                let param_span_end = type_ref.span();
-
-                params.push(Param {
-                    name: Identifier {
-                        name: param_name,
-                        span: param_name_span,
-                    },
-                    type_ref,
-                    ownership,
-                    span: param_span_start.merge(param_span_end),
-                });
-
-                if !self.match_token(TokenKind::Comma) {
-                    break;
-                }
-            }
-        }
-
+        let params = self.parse_params()?;
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
         // Parse return type (required in AST)
@@ -365,31 +282,7 @@ impl Parser {
         };
 
         // Parse optional type parameters: <T, E, ...>
-        let mut type_params = Vec::new();
-        if self.match_token(TokenKind::Less) {
-            loop {
-                let type_param_start = self.peek().span;
-                let type_param_tok = self.consume_identifier("a type parameter name")?;
-                let type_param_name = type_param_tok.lexeme.clone();
-                let type_param_span = type_param_tok.span;
-                let mut bound = None;
-                if self.match_token(TokenKind::Extends) {
-                    bound = Some(self.parse_type_ref()?);
-                }
-
-                type_params.push(TypeParam {
-                    name: type_param_name,
-                    bound,
-                    trait_bounds: vec![],
-                    span: type_param_start.merge(type_param_span),
-                });
-
-                if !self.match_token(TokenKind::Comma) {
-                    break;
-                }
-            }
-            self.consume(TokenKind::Greater, "Expected '>' after type parameters")?;
-        }
+        let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::Equal, "Expected '=' after type alias name")?;
         let type_ref = self.parse_type_ref()?;
@@ -404,6 +297,188 @@ impl Parser {
             type_ref,
             doc_comment,
             span: type_span.merge(end_span),
+        })
+    }
+
+    // =========================================================================
+    // Shared parsing helpers
+    // =========================================================================
+
+    /// Parse optional type parameters: `<T, U extends Bound, ...>` → `Vec<TypeParam>`.
+    /// Returns an empty vec if no `<` is present.
+    fn parse_type_params(&mut self) -> Result<Vec<TypeParam>, ()> {
+        let mut type_params = Vec::new();
+        if self.match_token(TokenKind::Less) {
+            loop {
+                let type_param_start = self.peek().span;
+                let type_param_tok = self.consume_identifier("a type parameter name")?;
+                let type_param_name = type_param_tok.lexeme.clone();
+                let type_param_span = type_param_tok.span;
+                let mut bound = None;
+                if self.match_token(TokenKind::Extends) {
+                    bound = Some(self.parse_type_ref()?);
+                }
+                type_params.push(TypeParam {
+                    name: type_param_name,
+                    bound,
+                    trait_bounds: vec![],
+                    span: type_param_start.merge(type_param_span),
+                });
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+            }
+            self.consume(TokenKind::Greater, "Expected '>' after type parameters")?;
+        }
+        Ok(type_params)
+    }
+
+    /// Parse a comma-separated parameter list (without surrounding parens).
+    /// Caller is responsible for consuming `(` before and `)` after.
+    fn parse_params(&mut self) -> Result<Vec<Param>, ()> {
+        let mut params = Vec::new();
+        if self.check(TokenKind::RightParen) {
+            return Ok(params);
+        }
+        loop {
+            let param_span_start = self.peek().span;
+
+            // Optional ownership annotation: own | borrow | shared
+            let ownership = if self.match_token(TokenKind::Own) {
+                Some(OwnershipAnnotation::Own)
+            } else if self.match_token(TokenKind::Borrow) {
+                Some(OwnershipAnnotation::Borrow)
+            } else if self.match_token(TokenKind::Shared) {
+                Some(OwnershipAnnotation::Shared)
+            } else {
+                None
+            };
+
+            let param_name_tok = if ownership.is_some() {
+                match self.consume_identifier("a parameter name after ownership annotation") {
+                    Ok(tok) => tok,
+                    Err(()) => {
+                        let kw = match ownership {
+                            Some(OwnershipAnnotation::Own) => "own",
+                            Some(OwnershipAnnotation::Borrow) => "borrow",
+                            Some(OwnershipAnnotation::Shared) => "shared",
+                            None => unreachable!(),
+                        };
+                        self.error(&format!(
+                            "Expected parameter name after ownership annotation '{kw}'"
+                        ));
+                        return Err(());
+                    }
+                }
+            } else {
+                self.consume_identifier("a parameter name")?
+            };
+
+            let param_name = param_name_tok.lexeme.clone();
+            let param_name_span = param_name_tok.span;
+
+            self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
+            let type_ref = self.parse_type_ref()?;
+            let param_span_end = type_ref.span();
+
+            params.push(Param {
+                name: Identifier {
+                    name: param_name,
+                    span: param_name_span,
+                },
+                type_ref,
+                ownership,
+                span: param_span_start.merge(param_span_end),
+            });
+
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+            // Allow trailing comma before `)`
+            if self.check(TokenKind::RightParen) {
+                break;
+            }
+        }
+        Ok(params)
+    }
+
+    // =========================================================================
+    // Trait system parsing (v0.3+)
+    // =========================================================================
+
+    /// Parse a trait declaration.
+    ///
+    /// Syntax: `trait Name<T> { fn method(params) -> ReturnType; }`
+    fn parse_trait(&mut self) -> Result<TraitDecl, ()> {
+        let start_span = self.consume(TokenKind::Trait, "Expected 'trait'")?.span;
+
+        let name_tok = self.consume_identifier("a trait name")?;
+        let name = Identifier {
+            name: name_tok.lexeme.clone(),
+            span: name_tok.span,
+        };
+
+        let type_params = self.parse_type_params()?;
+
+        self.consume(TokenKind::LeftBrace, "Expected '{' after trait name")?;
+
+        let mut methods = Vec::new();
+        while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+            methods.push(self.parse_trait_method_sig()?);
+        }
+
+        let end_span = self
+            .consume(TokenKind::RightBrace, "Expected '}' after trait body")?
+            .span;
+
+        Ok(TraitDecl {
+            name,
+            type_params,
+            methods,
+            span: start_span.merge(end_span),
+        })
+    }
+
+    /// Parse a method signature inside a trait body.
+    ///
+    /// Syntax: `fn method_name<T>(param: Type, ...) -> ReturnType;`
+    /// Note: NO block body — terminated by `;`
+    fn parse_trait_method_sig(&mut self) -> Result<TraitMethodSig, ()> {
+        let start_span = self
+            .consume(TokenKind::Fn, "Expected 'fn' in trait body")?
+            .span;
+
+        let name_tok = self.consume_identifier("a method name")?;
+        let name = Identifier {
+            name: name_tok.lexeme.clone(),
+            span: name_tok.span,
+        };
+
+        let type_params = self.parse_type_params()?;
+
+        self.consume(TokenKind::LeftParen, "Expected '(' after method name")?;
+        let params = self.parse_params()?;
+        self.consume(
+            TokenKind::RightParen,
+            "Expected ')' after method parameters",
+        )?;
+
+        self.consume(TokenKind::Arrow, "Expected '->' after method parameters")?;
+        let return_type = self.parse_type_ref()?;
+
+        let end_span = self
+            .consume(
+                TokenKind::Semicolon,
+                "Expected ';' after trait method signature",
+            )?
+            .span;
+
+        Ok(TraitMethodSig {
+            name,
+            type_params,
+            params,
+            return_type,
+            span: start_span.merge(end_span),
         })
     }
 
