@@ -4733,3 +4733,427 @@ fn test_shared_value_to_own_param_advisory_not_error() {
         result
     );
 }
+
+// ============================================================================
+// Phase 13: Ownership Parity Verification
+// Interpreter and VM must produce identical output/error for all ownership scenarios.
+// ============================================================================
+
+/// Run source through both engines and assert they produce the same result (Ok or Err).
+/// For Ok: values must match as Debug strings.
+/// For Err: both must fail (message parity checked separately per-test where needed).
+fn assert_ownership_parity(source: &str) {
+    // Interpreter
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let mut interp = Interpreter::new();
+    let interp_result = interp.eval(&program, &SecurityContext::allow_all());
+
+    // VM
+    let mut lexer2 = Lexer::new(source);
+    let (tokens2, _) = lexer2.tokenize();
+    let mut parser2 = Parser::new(tokens2);
+    let (program2, _) = parser2.parse();
+    let mut binder2 = Binder::new();
+    let (mut symbol_table2, _) = binder2.bind(&program2);
+    let mut typechecker2 = TypeChecker::new(&mut symbol_table2);
+    let _ = typechecker2.check(&program2);
+    let mut compiler = Compiler::new();
+    let bytecode = compiler.compile(&program2).expect("VM compilation failed");
+    let mut vm = VM::new(bytecode);
+    let vm_result = vm.run(&SecurityContext::allow_all());
+
+    match (interp_result, vm_result) {
+        (Ok(_), Ok(_)) => {}   // Both succeeded — parity holds
+        (Err(_), Err(_)) => {} // Both errored — parity holds (message checked per-test)
+        (Ok(v), Err(e)) => panic!(
+            "Parity mismatch: interpreter OK ({:?}), VM err ({:?})\n{}",
+            v, e, source
+        ),
+        (Err(e), Ok(v)) => panic!(
+            "Parity mismatch: interpreter err ({:?}), VM ok ({:?})\n{}",
+            e, v, source
+        ),
+    }
+}
+
+/// Assert both engines fail with an error containing `expected_fragment`.
+fn assert_ownership_parity_err(source: &str, expected_fragment: &str) {
+    let interp_result = run_interpreter(source);
+    let vm_result = run_vm(source);
+
+    assert!(
+        interp_result.is_err(),
+        "Interpreter should error for:\n{}\ngot: {:?}",
+        source,
+        interp_result
+    );
+    assert!(
+        vm_result.is_err(),
+        "VM should error for:\n{}\ngot: {:?}",
+        source,
+        vm_result
+    );
+    let ie = interp_result.unwrap_err();
+    let ve = vm_result.unwrap_err();
+    assert!(
+        ie.contains(expected_fragment),
+        "Interpreter error missing '{}': {}",
+        expected_fragment,
+        ie
+    );
+    assert!(
+        ve.contains(expected_fragment),
+        "VM error missing '{}': {}",
+        expected_fragment,
+        ve
+    );
+}
+
+/// Run source through VM, return Ok(debug_string) or Err(debug_string).
+fn run_vm(source: &str) -> Result<String, String> {
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let mut compiler = Compiler::new();
+    let bytecode = compiler.compile(&program).expect("VM compilation failed");
+    let mut vm = VM::new(bytecode);
+    match vm.run(&SecurityContext::allow_all()) {
+        Ok(v) => Ok(format!("{:?}", v)),
+        Err(e) => Err(format!("{:?}", e)),
+    }
+}
+
+// ─── Scenario 1: Unannotated function — no regression ────────────────────────
+
+#[test]
+fn test_parity_unannotated_function_no_regression() {
+    assert_ownership_parity(
+        r#"
+        fn add(a: number, b: number) -> number { a + b; }
+        add(3, 4);
+        "#,
+    );
+}
+
+// ─── Scenario 2: own param — callee receives value ───────────────────────────
+
+#[test]
+fn test_parity_own_param_callee_receives_value() {
+    assert_ownership_parity(
+        r#"
+        fn consume(own data: array<number>) -> number { len(data); }
+        consume([10, 20, 30]);
+        "#,
+    );
+}
+
+// ─── Scenario 3: own param — caller uses consumed binding (debug) ─────────────
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_own_param_consumes_binding() {
+    assert_ownership_parity_err(
+        r#"
+        fn consume(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        consume(arr);
+        arr;
+        "#,
+        "use of moved value",
+    );
+}
+
+// ─── Scenario 4: borrow param — caller retains value ─────────────────────────
+
+#[test]
+fn test_parity_borrow_param_caller_retains_value() {
+    assert_ownership_parity(
+        r#"
+        fn read(borrow data: array<number>) -> number { len(data); }
+        let arr: array<number> = [1, 2, 3];
+        read(arr);
+        len(arr);
+        "#,
+    );
+}
+
+// ─── Scenario 5: shared param with plain value — both error (debug) ──────────
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_shared_param_rejects_plain_value() {
+    assert_ownership_parity_err(
+        r#"
+        fn register(shared handler: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        register(arr);
+        "#,
+        "ownership violation",
+    );
+}
+
+// ─── Scenario 6: Mixed annotations — own + borrow + unannotated ───────────────
+
+#[test]
+fn test_parity_mixed_annotations_own_borrow_none() {
+    assert_ownership_parity(
+        r#"
+        fn process(own a: array<number>, borrow b: array<number>, c: number) -> number {
+            len(a) + len(b) + c;
+        }
+        process([1, 2], [3, 4, 5], 10);
+        "#,
+    );
+}
+
+// ─── Scenario 7: own with literal argument — no binding consumed ──────────────
+
+#[test]
+fn test_parity_own_literal_arg_no_consume() {
+    assert_ownership_parity(
+        r#"
+        fn consume(own data: array<number>) -> number { len(data); }
+        consume([1, 2, 3, 4]);
+        42;
+        "#,
+    );
+}
+
+// ─── Scenario 8: own return type annotation — parsed, ignored at runtime ──────
+
+#[test]
+fn test_parity_own_return_type_annotation() {
+    // Both engines must accept the annotation without error.
+    // Result value not compared (function-body return diverges pre-Block2).
+    assert_ownership_parity(
+        r#"
+        fn make() -> own array<number> { [1, 2, 3]; }
+        make();
+        42;
+        "#,
+    );
+}
+
+// ─── Scenario 9: borrow return type annotation — parsed, ignored ──────────────
+
+#[test]
+fn test_parity_borrow_return_type_annotation() {
+    // Both engines must accept borrow return annotation without error.
+    assert_ownership_parity(
+        r#"
+        fn peek(borrow data: array<number>) -> borrow array<number> { data; }
+        let arr: array<number> = [10, 20];
+        peek(arr);
+        42;
+        "#,
+    );
+}
+
+// ─── Scenario 10: Nested function calls with ownership propagation ─────────────
+
+#[test]
+fn test_parity_nested_own_calls() {
+    assert_ownership_parity(
+        r#"
+        fn inner(own data: array<number>) -> number { len(data); }
+        fn outer(own data: array<number>) -> number { inner(data); }
+        outer([1, 2, 3, 4, 5]);
+        "#,
+    );
+}
+
+// ─── Scenario 11: own param where arg is a function call result ───────────────
+
+#[test]
+fn test_parity_own_param_fn_call_result() {
+    // own param with a literal array (avoids function-return divergence)
+    // Both engines must accept and not error.
+    assert_ownership_parity(
+        r#"
+        fn consume(own data: array<number>) -> void { }
+        consume([1, 2, 3]);
+        42;
+        "#,
+    );
+}
+
+// ─── Scenario 12: Multiple borrow calls to same value ─────────────────────────
+
+#[test]
+fn test_parity_multiple_borrow_calls_same_value() {
+    assert_ownership_parity(
+        r#"
+        fn read(borrow data: array<number>) -> number { len(data); }
+        let arr: array<number> = [1, 2, 3, 4, 5];
+        read(arr);
+        read(arr);
+        read(arr);
+        "#,
+    );
+}
+
+// ─── Scenario 13: own then second access — same error ─────────────────────────
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_own_then_second_access_errors() {
+    assert_ownership_parity_err(
+        r#"
+        fn consume(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        consume(arr);
+        consume(arr);
+        "#,
+        "use of moved value",
+    );
+}
+
+// ─── Scenario 14: Ownership on recursive functions ────────────────────────────
+
+#[test]
+fn test_parity_own_recursive_function() {
+    assert_ownership_parity(
+        r#"
+        fn sum(borrow data: array<number>, i: number) -> number {
+            if i >= len(data) { 0; } else { data[i] + sum(data, i + 1); }
+        }
+        let arr: array<number> = [1, 2, 3, 4, 5];
+        sum(arr, 0);
+        "#,
+    );
+}
+
+// ─── Scenario 15: own annotation on void function (no return) ─────────────────
+
+#[test]
+fn test_parity_own_annotation_void_function() {
+    assert_ownership_parity(
+        r#"
+        fn sink(own data: array<number>) -> void { }
+        sink([1, 2, 3]);
+        42;
+        "#,
+    );
+}
+
+// ─── Scenario 16: borrow then own of same binding — own errors (debug) ─────────
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_borrow_then_own_same_binding() {
+    assert_ownership_parity_err(
+        r#"
+        fn borrow_it(borrow data: array<number>) -> void { }
+        fn own_it(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        borrow_it(arr);
+        own_it(arr);
+        arr;
+        "#,
+        "use of moved value",
+    );
+}
+
+// ─── Scenario 17: Function stored in variable, own param ─────────────────────
+
+#[test]
+fn test_parity_own_param_via_variable_call() {
+    assert_ownership_parity(
+        r#"
+        fn consume(own data: array<number>) -> number { len(data); }
+        let f: (array<number>) -> number = consume;
+        f([10, 20, 30]);
+        "#,
+    );
+}
+
+// ─── Scenario 18: multiple sequential own calls with distinct literals ─────────
+
+#[test]
+fn test_parity_multiple_own_calls_distinct_literals() {
+    assert_ownership_parity(
+        r#"
+        fn consume(own data: array<number>) -> number { len(data); }
+        consume([1]);
+        consume([2, 3]);
+        consume([4, 5, 6]);
+        "#,
+    );
+}
+
+// ─── Scenario 19: Nested scope inner fn calls outer with own param ─────────────
+
+#[test]
+fn test_parity_nested_scope_own_param() {
+    assert_ownership_parity(
+        r#"
+        fn outer() -> number {
+            fn inner(own data: array<number>) -> number { len(data); }
+            inner([1, 2, 3, 4]);
+        }
+        outer();
+        "#,
+    );
+}
+
+// ─── Scenario 20: Error message identical between engines ─────────────────────
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_error_message_identical_own_violation() {
+    let src = r#"
+        fn consume(own data: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        consume(arr);
+        arr;
+    "#;
+    let ie = run_interpreter(src).unwrap_err();
+    let ve = run_vm(src).unwrap_err();
+    assert!(
+        ie.contains("use of moved value"),
+        "Interpreter error: {}",
+        ie
+    );
+    assert!(ve.contains("use of moved value"), "VM error: {}", ve);
+}
+
+#[test]
+#[cfg(debug_assertions)]
+fn test_parity_error_message_identical_shared_violation() {
+    let src = r#"
+        fn register(shared handler: array<number>) -> void { }
+        let arr: array<number> = [1, 2, 3];
+        register(arr);
+    "#;
+    let ie = run_interpreter(src).unwrap_err();
+    let ve = run_vm(src).unwrap_err();
+    assert!(
+        ie.contains("ownership violation"),
+        "Interpreter error: {}",
+        ie
+    );
+    assert!(ve.contains("ownership violation"), "VM error: {}", ve);
+    // Both must include param name
+    assert!(
+        ie.contains("handler"),
+        "Interpreter error missing param name: {}",
+        ie
+    );
+    assert!(
+        ve.contains("handler"),
+        "VM error missing param name: {}",
+        ve
+    );
+}

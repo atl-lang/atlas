@@ -286,7 +286,7 @@ impl Compiler {
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
-            param_names: vec![],
+            param_names: func.params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: func.return_ownership.clone(),
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
