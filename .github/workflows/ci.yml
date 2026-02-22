@@ -221,16 +221,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs passed
+        env:
+          FMT: ${{ needs.fmt.result }}
+          CLIPPY: ${{ needs.clippy.result }}
+          CHECK: ${{ needs.check.result }}
+          TEST: ${{ needs.test.result }}
+          TEST_MATRIX: ${{ needs.test-matrix.result }}
         run: |
-          echo "fmt:          ${{ needs.fmt.result }}"
-          echo "clippy:       ${{ needs.clippy.result }}"
-          echo "check:        ${{ needs.check.result }}"
-          echo "test:         ${{ needs.test.result }}"
-          echo "test-matrix:  ${{ needs.test-matrix.result }}"
-          for job in fmt clippy check test test-matrix; do
-            result=$(eval echo \$\{\{ needs.$job.result \}\})
+          echo "fmt:          $FMT"
+          echo "clippy:       $CLIPPY"
+          echo "check:        $CHECK"
+          echo "test:         $TEST"
+          echo "test-matrix:  $TEST_MATRIX"
+          for result in "$FMT" "$CLIPPY" "$CHECK" "$TEST" "$TEST_MATRIX"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              echo "$job failed"
+              echo "A required job failed or was cancelled"
               exit 1
             fi
           done
