@@ -52,6 +52,7 @@ pub const DEPRECATED_TYPE_ALIAS: &str = "AT2009";
 pub const OWN_ON_PRIMITIVE: &str = "AT2010";
 pub const BORROW_ON_SHARED: &str = "AT2011";
 pub const BORROW_TO_OWN: &str = "AT2012";
+pub const MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION: &str = "AT2013";
 
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
@@ -312,6 +313,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT2012",
         description: "Passing borrowed value to `own` parameter — ownership cannot transfer",
         help: Some("A `borrow` parameter cannot give up ownership. Pass an owned value instead."),
+    },
+    ErrorCodeInfo {
+        code: "AT2013",
+        description: "Non-Copy type passed without ownership annotation",
+        help: Some("This type is not Copy. Annotate the parameter with `own` or `borrow` to clarify ownership intent."),
     },
     // === AT3xxx: Semantic/Type Checking Errors ===
     ErrorCodeInfo {

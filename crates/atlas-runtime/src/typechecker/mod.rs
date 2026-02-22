@@ -1605,6 +1605,30 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    /// Returns `true` if the given type implements `Copy` (value semantics).
+    /// Built-in value types are always Copy. User types are Copy only if they have
+    /// an explicit `impl Copy for T { }` registered in the trait registry.
+    pub fn is_copy_type(&self, ty: &Type) -> bool {
+        match ty.normalized() {
+            // All built-in value types are Copy
+            Type::Number | Type::String | Type::Bool | Type::Null | Type::Void => true,
+            Type::Array(_) | Type::JsonValue => true,
+            // Function types are Copy (reference-counted internally)
+            Type::Function { .. } => true,
+            // Generic types: Copy if explicitly registered (e.g. shared<T> is NOT Copy)
+            Type::Generic { name, type_args: _ } => self.trait_registry.implements(&name, "Copy"),
+            // Type parameters: conservative — not Copy unless registry says so
+            Type::TypeParameter { name } => self.trait_registry.implements(&name, "Copy"),
+            _ => false,
+        }
+    }
+
+    /// Returns `true` if the given type requires explicit ownership transfer (Move semantics).
+    /// In Block 3: a type is Move if it is not Copy.
+    pub fn is_move_type(&self, ty: &Type) -> bool {
+        !self.is_copy_type(ty)
+    }
+
     /// Try to resolve a method call through the trait/impl system.
     /// Returns the return type if a matching impl method is found, `None` otherwise.
     /// Only fires after stdlib method dispatch has failed (dispatch priority slot 2).

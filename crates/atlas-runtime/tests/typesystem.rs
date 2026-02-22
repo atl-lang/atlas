@@ -6473,3 +6473,114 @@ fn test_trait_method_bool_return_resolves() {
         "bool-returning trait method should resolve correctly: {diags:?}"
     );
 }
+
+// ── Phase 09: Copy/Move + Ownership Integration ─────────────────────────────
+
+#[test]
+fn test_number_passed_without_annotation_no_error() {
+    // number is Copy — no ownership annotation needed
+    let diags = typecheck_source(
+        "
+        fn double(x: number) -> number { return x * 2; }
+        let n: number = 5;
+        let result: number = double(n);
+    ",
+    );
+    // Should produce no ownership-related diagnostics
+    let ownership_diags: Vec<_> = diags.iter().filter(|d| d.code == "AT2013").collect();
+    assert!(
+        ownership_diags.is_empty(),
+        "number is Copy, no AT2013 expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_string_passed_without_annotation_no_error() {
+    let diags = typecheck_source(
+        "
+        fn greet(name: string) -> string { return name; }
+        let s: string = \"hello\";
+        let g: string = greet(s);
+    ",
+    );
+    let ownership_diags: Vec<_> = diags.iter().filter(|d| d.code == "AT2013").collect();
+    assert!(
+        ownership_diags.is_empty(),
+        "string is Copy, no AT2013 expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_bool_passed_without_annotation_no_error() {
+    let diags = typecheck_source(
+        "
+        fn negate(b: bool) -> bool { return !b; }
+        let flag: bool = true;
+        let result: bool = negate(flag);
+    ",
+    );
+    let ownership_diags: Vec<_> = diags.iter().filter(|d| d.code == "AT2013").collect();
+    assert!(
+        ownership_diags.is_empty(),
+        "bool is Copy, no AT2013 expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_array_passed_without_annotation_no_error() {
+    let diags = typecheck_source(
+        "
+        fn first(arr: number[]) -> number { return arr[0]; }
+        let a: number[] = [1, 2, 3];
+        let n: number = first(a);
+    ",
+    );
+    let ownership_diags: Vec<_> = diags.iter().filter(|d| d.code == "AT2013").collect();
+    assert!(
+        ownership_diags.is_empty(),
+        "array is Copy (CoW), no AT2013 expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefine_builtin_copy_trait_is_error() {
+    // Attempting to declare `trait Copy` should produce AT3030
+    let diags = typecheck_source("trait Copy { fn do_copy() -> void; }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Copy should produce AT3030: {diags:?}"
+    );
+}
+
+#[test]
+fn test_explicit_own_on_copy_type_allowed() {
+    // own annotation on Copy type is redundant but not an error
+    let diags = typecheck_source(
+        "
+        fn consume(own x: number) -> number { return x; }
+        let n: number = 42;
+        let result: number = consume(n);
+    ",
+    );
+    // No errors — own on Copy is always valid
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        errors.is_empty(),
+        "Explicit own on Copy type should not produce errors: {diags:?}"
+    );
+}
+
+#[test]
+fn test_impl_copy_for_type_registers_in_trait_registry() {
+    // impl Copy for number (built-in Copy, already in registry) should not AT3030
+    let diags = typecheck_source("impl Copy for number { }");
+    let builtin_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        builtin_errors.is_empty(),
+        "impl Copy for number should not produce AT3030: {diags:?}"
+    );
+}

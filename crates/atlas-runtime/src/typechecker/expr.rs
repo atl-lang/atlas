@@ -232,8 +232,30 @@ impl<'a> TypeChecker<'a> {
                         }
                     }
                 }
-                Some(OwnershipAnnotation::Borrow) | None => {
-                    // borrow and unannotated params accept any value — no diagnostic
+                Some(OwnershipAnnotation::Borrow) => {
+                    // borrow params accept any value — no diagnostic
+                }
+                None => {
+                    // Unannotated param: warn if the argument type is non-Copy (Move type)
+                    if let Some(arg_type) = arg_types.get(i) {
+                        if self.is_move_type(arg_type) && *arg_type != Type::Unknown {
+                            self.diagnostics.push(
+                                Diagnostic::warning_with_code(
+                                    error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION,
+                                    format!(
+                                        "Type '{}' is not Copy — consider annotating with \
+                                         'own' or 'borrow' to clarify ownership intent",
+                                        arg_type.display_name()
+                                    ),
+                                    arg.span(),
+                                )
+                                .with_help(
+                                    "non-Copy types should use explicit 'own' or 'borrow' \
+                                     ownership annotations",
+                                ),
+                            );
+                        }
+                    }
                 }
             }
         }
