@@ -228,14 +228,15 @@ jobs:
           TEST: ${{ needs.test.result }}
           TEST_MATRIX: ${{ needs.test-matrix.result }}
         run: |
-          echo "fmt:          $FMT"
-          echo "clippy:       $CLIPPY"
-          echo "check:        $CHECK"
-          echo "test:         $TEST"
-          echo "test-matrix:  $TEST_MATRIX"
-          for result in "$FMT" "$CLIPPY" "$CHECK" "$TEST" "$TEST_MATRIX"; do
+          echo "fmt:          ${{ needs.fmt.result }}"
+          echo "clippy:       ${{ needs.clippy.result }}"
+          echo "check:        ${{ needs.check.result }}"
+          echo "test:         ${{ needs.test.result }}"
+          echo "test-matrix:  ${{ needs.test-matrix.result }}"
+          for job in fmt clippy check test test-matrix; do
+            result=$(eval echo \$\{\{ needs.$job.result \}\})
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
-              echo "A required job failed or was cancelled"
+              echo "$job failed"
               exit 1
             fi
           done
