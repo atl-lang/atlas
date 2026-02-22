@@ -197,6 +197,8 @@ impl Interpreter {
                         arity: func.params.len(),
                         bytecode_offset: 0, // Not used in interpreter
                         local_count: 0,     // Not used in interpreter
+                        param_ownership: vec![],
+                        return_ownership: None,
                     });
                     self.globals
                         .insert(func.name.name.clone(), (func_value, false));
@@ -236,6 +238,8 @@ impl Interpreter {
                                 arity: func.params.len(),
                                 bytecode_offset: 0,
                                 local_count: 0,
+                                param_ownership: vec![],
+                                return_ownership: None,
                             });
                             self.globals
                                 .insert(func.name.name.clone(), (func_value, false));
@@ -303,6 +307,8 @@ impl Interpreter {
                         arity: extern_decl.params.len(),
                         bytecode_offset: 0, // Not used for extern functions
                         local_count: 0,     // Not used for extern functions
+                        param_ownership: vec![],
+                        return_ownership: None,
                     });
                     self.globals
                         .insert(extern_decl.name.clone(), (func_value, false));
