@@ -2926,3 +2926,169 @@ fn test_parse_trait_and_impl_coexist() {
     assert!(matches!(prog.items[2], Item::Impl(_)));
     assert!(matches!(prog.items[3], Item::Impl(_)));
 }
+
+// ── Phase 05: Trait Bounds on Generic Type Parameters ──────────────────────
+
+#[test]
+fn test_parse_type_param_single_trait_bound() {
+    let src = "fn foo<T: Copy>(x: T) -> T { return x; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params.len(), 1);
+        assert_eq!(f.type_params[0].name, "T");
+        assert_eq!(f.type_params[0].trait_bounds.len(), 1);
+        assert_eq!(f.type_params[0].trait_bounds[0].trait_name, "Copy");
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_type_param_multiple_trait_bounds() {
+    let src = "fn foo<T: Copy + Display>(x: T) -> string { return x.display(); }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params[0].trait_bounds.len(), 2);
+        assert_eq!(f.type_params[0].trait_bounds[0].trait_name, "Copy");
+        assert_eq!(f.type_params[0].trait_bounds[1].trait_name, "Display");
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_multiple_type_params_with_bounds() {
+    let src = "fn pair<T: Display, U: Display>(a: T, b: U) -> string { return \"\"; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params.len(), 2);
+        assert_eq!(f.type_params[0].trait_bounds[0].trait_name, "Display");
+        assert_eq!(f.type_params[1].trait_bounds[0].trait_name, "Display");
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_type_param_no_bound_unchanged() {
+    let src = "fn identity<T>(x: T) -> T { return x; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params[0].trait_bounds.len(), 0);
+        assert!(f.type_params[0].bound.is_none());
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_extends_bound_still_works() {
+    let src = "fn foo<T extends number>(x: T) -> T { return x; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert!(f.type_params[0].bound.is_some());
+        assert_eq!(f.type_params[0].trait_bounds.len(), 0);
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_trait_method_with_bounded_type_param() {
+    let src = "trait Printer { fn print<T: Display>(value: T) -> void; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        let method = &t.methods[0];
+        assert_eq!(method.type_params[0].trait_bounds[0].trait_name, "Display");
+    } else {
+        panic!("expected trait item");
+    }
+}
+
+#[test]
+fn test_parse_impl_method_with_bounded_type_param() {
+    let src = "
+        trait Printer { fn print<T: Display>(value: T) -> void; }
+        impl Printer for ConsolePrinter {
+            fn print<T: Display>(value: T) -> void { }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Impl(ib) = &prog.items[1] {
+        let method = &ib.methods[0];
+        assert_eq!(method.type_params[0].trait_bounds[0].trait_name, "Display");
+    } else {
+        panic!("expected impl item");
+    }
+}
+
+#[test]
+fn test_parse_three_trait_bounds() {
+    let src = "fn multi<T: Copy + Display + Debug>(x: T) -> void { }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params[0].trait_bounds.len(), 3);
+        assert_eq!(f.type_params[0].trait_bounds[0].trait_name, "Copy");
+        assert_eq!(f.type_params[0].trait_bounds[1].trait_name, "Display");
+        assert_eq!(f.type_params[0].trait_bounds[2].trait_name, "Debug");
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_mixed_bounded_and_unbounded_type_params() {
+    let src = "fn mixed<T: Copy, U>(a: T, b: U) -> void { }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Function(f) = &prog.items[0] {
+        assert_eq!(f.type_params.len(), 2);
+        assert_eq!(f.type_params[0].trait_bounds.len(), 1);
+        assert_eq!(f.type_params[0].trait_bounds[0].trait_name, "Copy");
+        assert_eq!(f.type_params[1].trait_bounds.len(), 0);
+    } else {
+        panic!("expected function item");
+    }
+}
+
+#[test]
+fn test_parse_trait_method_two_bounded_type_params() {
+    let src = "trait Converter { fn convert<T: Copy, U: Display>(val: T) -> U; }";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Trait(t) = &prog.items[0] {
+        let method = &t.methods[0];
+        assert_eq!(method.type_params.len(), 2);
+        assert_eq!(method.type_params[0].trait_bounds[0].trait_name, "Copy");
+        assert_eq!(method.type_params[1].trait_bounds[0].trait_name, "Display");
+    } else {
+        panic!("expected trait item");
+    }
+}
+
+#[test]
+fn test_parse_impl_method_three_bounds() {
+    let src = "
+        trait Ops { fn do_it<T: Copy + Display + Debug>(x: T) -> void; }
+        impl Ops for Foo {
+            fn do_it<T: Copy + Display + Debug>(x: T) -> void { }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Impl(ib) = &prog.items[1] {
+        let method = &ib.methods[0];
+        assert_eq!(method.type_params[0].trait_bounds.len(), 3);
+        assert_eq!(method.type_params[0].trait_bounds[2].trait_name, "Debug");
+    } else {
+        panic!("expected impl item");
+    }
+}

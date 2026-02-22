@@ -316,14 +316,34 @@ impl Parser {
                 let type_param_tok = self.consume_identifier("a type parameter name")?;
                 let type_param_name = type_param_tok.lexeme.clone();
                 let type_param_span = type_param_tok.span;
+
+                // Existing: `extends` type-level bound
                 let mut bound = None;
                 if self.match_token(TokenKind::Extends) {
                     bound = Some(self.parse_type_ref()?);
                 }
+
+                // NEW: `:` trait bounds (one or more, separated by `+`)
+                let mut trait_bounds = Vec::new();
+                if self.match_token(TokenKind::Colon) {
+                    loop {
+                        let bound_start = self.peek().span;
+                        let trait_name_tok = self.consume_identifier("a trait name")?;
+                        let bound_end = trait_name_tok.span;
+                        trait_bounds.push(TraitBound {
+                            trait_name: trait_name_tok.lexeme.clone(),
+                            span: bound_start.merge(bound_end),
+                        });
+                        if !self.match_token(TokenKind::Plus) {
+                            break;
+                        }
+                    }
+                }
+
                 type_params.push(TypeParam {
                     name: type_param_name,
                     bound,
-                    trait_bounds: vec![],
+                    trait_bounds,
                     span: type_param_start.merge(type_param_span),
                 });
                 if !self.match_token(TokenKind::Comma) {

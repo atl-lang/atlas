@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-22 (Block 3 Phase 4 complete)
+**Last Updated:** 2026-02-22 (Block 3 Phase 5 complete)
 **Version:** v0.3 — The Foundation Version
 **Progress:** v0.2 COMPLETE ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅
 
@@ -8,9 +8,9 @@
 
 ## Current State
 
-**Status:** Block 3 in progress — Phase 4 complete
-**Last Completed:** Block 3 Phase 4 — Parser: impl blocks (9,320 tests passing)
-**Next:** Block 3 Phase 5 — Parser: trait bounds on type parameters
+**Status:** Block 3 in progress — Phase 5 complete
+**Last Completed:** Block 3 Phase 5 — Parser: trait bounds on type parameters (9,331 tests passing)
+**Next:** Block 3 Phase 6 — Typechecker: trait registry
 
 ---
 
