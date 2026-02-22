@@ -512,7 +512,7 @@ mod tests {
             name: "T".to_string(),
             bound: None,
             trait_bounds: vec![],
-            }];
+        }];
         let type_args = vec![Type::Number];
 
         let subst = mono
@@ -532,12 +532,12 @@ mod tests {
                 name: "T".to_string(),
                 bound: None,
                 trait_bounds: vec![],
-                },
+            },
             TypeParamDef {
                 name: "E".to_string(),
                 bound: None,
                 trait_bounds: vec![],
-                },
+            },
         ];
         let type_args = vec![Type::String, Type::Number];
 
@@ -558,7 +558,7 @@ mod tests {
             name: "T".to_string(),
             bound: None,
             trait_bounds: vec![],
-            }];
+        }];
         let type_args = vec![Type::Number, Type::String]; // Too many
 
         let result = mono.get_substitutions("foo", &type_params, &type_args);
@@ -577,7 +577,7 @@ mod tests {
             name: "T".to_string(),
             bound: None,
             trait_bounds: vec![],
-            }];
+        }];
         let type_args = vec![Type::Number];
 
         // First call

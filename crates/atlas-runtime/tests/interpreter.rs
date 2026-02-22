@@ -5157,3 +5157,108 @@ fn test_parity_error_message_identical_shared_violation() {
         ve
     );
 }
+
+// ============================================================
+// Phase 14 — VM: Trait Dispatch Parity Tests
+// ============================================================
+// Tests in this section verify interpreter parity for trait dispatch.
+// VM tests live in vm.rs Phase 12/13 sections.
+
+#[test]
+fn test_parity_trait_method_string_dispatch() {
+    let atlas = Atlas::new();
+    let result = atlas
+        .eval(
+            "
+        trait Wrap { fn wrap(self: Wrap) -> string; }
+        impl Wrap for string {
+            fn wrap(self: string) -> string { return \"[\" + self + \"]\"; }
+        }
+        let s: string = \"hello\";
+        let r: string = s.wrap();
+        r
+    ",
+        )
+        .expect("Should succeed");
+    assert_eq!(result, Value::string("[hello]"));
+}
+
+#[test]
+fn test_parity_trait_method_number_compute() {
+    let atlas = Atlas::new();
+    let result = atlas
+        .eval(
+            "
+        trait Double { fn double(self: Double) -> number; }
+        impl Double for number {
+            fn double(self: number) -> number { return self * 2; }
+        }
+        let n: number = 21;
+        let r: number = n.double();
+        r
+    ",
+        )
+        .expect("Should succeed");
+    assert_eq!(result, Value::Number(42.0));
+}
+
+#[test]
+fn test_parity_multiple_impl_types_no_collision() {
+    let atlas = Atlas::new();
+
+    let result_n = atlas
+        .eval(
+            "
+        trait Tag { fn tag(self: Tag) -> string; }
+        impl Tag for number {
+            fn tag(self: number) -> string { return \"num\"; }
+        }
+        impl Tag for string {
+            fn tag(self: string) -> string { return \"str\"; }
+        }
+        let n: number = 1;
+        let r: string = n.tag();
+        r
+    ",
+        )
+        .expect("Should succeed");
+    assert_eq!(result_n, Value::string("num"));
+
+    let result_s = atlas
+        .eval(
+            "
+        trait Tag { fn tag(self: Tag) -> string; }
+        impl Tag for number {
+            fn tag(self: number) -> string { return \"num\"; }
+        }
+        impl Tag for string {
+            fn tag(self: string) -> string { return \"str\"; }
+        }
+        let s: string = \"hi\";
+        let r: string = s.tag();
+        r
+    ",
+        )
+        .expect("Should succeed");
+    assert_eq!(result_s, Value::string("str"));
+}
+
+#[test]
+fn test_parity_trait_method_self_arg_is_receiver() {
+    // Verify `self` inside the method body refers to the receiver value
+    let atlas = Atlas::new();
+    let result = atlas
+        .eval(
+            "
+        trait Identity { fn identity(self: Identity) -> number; }
+        impl Identity for number {
+            fn identity(self: number) -> number { return self; }
+        }
+        let n: number = 99;
+        let r: number = n.identity();
+        r
+    ",
+        )
+        .expect("Should succeed");
+    assert_eq!(result, Value::Number(99.0));
+}
