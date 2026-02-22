@@ -55,6 +55,116 @@ pub type FnOwnershipEntry = (
     Option<OwnershipAnnotation>,
 );
 
+/// A registered trait's method signature entry.
+#[derive(Debug, Clone)]
+pub struct TraitMethodEntry {
+    pub name: String,
+    pub type_params: Vec<TypeParamDef>,
+    pub param_types: Vec<Type>,
+    pub return_type: Type,
+}
+
+/// Registry of known traits (built-in + user-defined).
+#[derive(Debug, Default)]
+pub struct TraitRegistry {
+    /// Maps trait name -> list of required method signatures
+    pub traits: HashMap<String, Vec<TraitMethodEntry>>,
+    /// Set of built-in trait names (not user-definable)
+    pub built_in: HashSet<String>,
+    /// Maps (type_name, trait_name) -> whether type implements the trait.
+    /// For built-in types, pre-populated. For user types, populated during impl checking.
+    pub implementations: HashMap<(String, String), bool>,
+}
+
+impl TraitRegistry {
+    pub fn new() -> Self {
+        let mut registry = Self::default();
+        registry.register_built_ins();
+        registry
+    }
+
+    fn register_built_ins(&mut self) {
+        // Copy — types that can be freely copied (value semantics, marker trait)
+        self.register_built_in("Copy", vec![]);
+
+        // Move — types that require explicit ownership transfer (marker trait)
+        self.register_built_in("Move", vec![]);
+
+        // Drop — types with custom destructor logic
+        self.register_built_in(
+            "Drop",
+            vec![TraitMethodEntry {
+                name: "drop".to_string(),
+                type_params: vec![],
+                param_types: vec![],
+                return_type: Type::Void,
+            }],
+        );
+
+        // Display — types that can be converted to a string representation
+        self.register_built_in(
+            "Display",
+            vec![TraitMethodEntry {
+                name: "display".to_string(),
+                type_params: vec![],
+                param_types: vec![],
+                return_type: Type::String,
+            }],
+        );
+
+        // Debug — types that can be serialized to a debug string representation
+        self.register_built_in(
+            "Debug",
+            vec![TraitMethodEntry {
+                name: "debug_repr".to_string(),
+                type_params: vec![],
+                param_types: vec![],
+                return_type: Type::String,
+            }],
+        );
+
+        // All primitive types implement Copy (value semantics)
+        for primitive in &["number", "string", "bool", "null"] {
+            self.mark_implements(primitive, "Copy");
+        }
+        // Built-in types do NOT implement Display/Debug — they use stdlib str()/debug().
+        // User-defined types implement Display/Debug to customize str() output.
+    }
+
+    fn register_built_in(&mut self, name: &str, methods: Vec<TraitMethodEntry>) {
+        self.traits.insert(name.to_string(), methods);
+        self.built_in.insert(name.to_string());
+    }
+
+    pub fn register_user_trait(&mut self, name: &str, methods: Vec<TraitMethodEntry>) {
+        self.traits.insert(name.to_string(), methods);
+    }
+
+    pub fn mark_implements(&mut self, type_name: &str, trait_name: &str) {
+        self.implementations
+            .insert((type_name.to_string(), trait_name.to_string()), true);
+    }
+
+    pub fn implements(&self, type_name: &str, trait_name: &str) -> bool {
+        self.implementations
+            .get(&(type_name.to_string(), trait_name.to_string()))
+            .copied()
+            .unwrap_or(false)
+    }
+
+    pub fn trait_exists(&self, name: &str) -> bool {
+        self.traits.contains_key(name)
+    }
+
+    pub fn get_methods(&self, trait_name: &str) -> Option<&Vec<TraitMethodEntry>> {
+        self.traits.get(trait_name)
+    }
+
+    pub fn is_built_in(&self, name: &str) -> bool {
+        self.built_in.contains(name)
+    }
+}
+
 /// Type checker state
 pub struct TypeChecker<'a> {
     /// Symbol table from binder
@@ -90,6 +200,8 @@ pub struct TypeChecker<'a> {
     /// Maps param name -> ownership annotation. Used by call-site checks to detect
     /// whether an argument is a `borrow` parameter of the enclosing function.
     pub(super) current_fn_param_ownerships: HashMap<String, Option<OwnershipAnnotation>>,
+    /// Registry of all known traits (built-in + user-defined).
+    pub trait_registry: TraitRegistry,
 }
 
 impl<'a> TypeChecker<'a> {
@@ -112,6 +224,7 @@ impl<'a> TypeChecker<'a> {
             alias_resolution_stack: Vec::new(),
             fn_ownership_registry: HashMap::new(),
             current_fn_param_ownerships: HashMap::new(),
+            trait_registry: TraitRegistry::new(),
         }
     }
 
@@ -215,9 +328,8 @@ impl<'a> TypeChecker<'a> {
             Item::TypeAlias(_) => {
                 // Type aliases are validated in a pre-pass
             }
-            Item::Trait(_) | Item::Impl(_) => {
-                // Trait/impl type checking handled in Block 3 phases 6–10
-            }
+            Item::Trait(trait_decl) => self.check_trait_decl(trait_decl),
+            Item::Impl(impl_block) => self.check_impl_block(impl_block),
         }
     }
 
@@ -439,6 +551,73 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+        }
+    }
+
+    /// Check a trait declaration: register it in the trait registry, error on duplicates/builtins.
+    fn check_trait_decl(&mut self, trait_decl: &TraitDecl) {
+        let trait_name = trait_decl.name.name.clone();
+
+        // Error if re-declaring a built-in trait
+        if self.trait_registry.is_built_in(&trait_name) {
+            self.diagnostics.push(Diagnostic::error_with_code(
+                error_codes::TRAIT_REDEFINES_BUILTIN,
+                format!("Cannot redefine built-in trait '{}'", trait_name),
+                trait_decl.name.span,
+            ));
+            return;
+        }
+
+        // Error if duplicate user trait declaration
+        if self.trait_registry.trait_exists(&trait_name) {
+            self.diagnostics.push(Diagnostic::error_with_code(
+                error_codes::TRAIT_ALREADY_DEFINED,
+                format!("Trait '{}' is already defined", trait_name),
+                trait_decl.name.span,
+            ));
+            return;
+        }
+
+        // Resolve method signatures and register
+        let method_entries: Vec<TraitMethodEntry> = trait_decl
+            .methods
+            .iter()
+            .map(|method_sig| {
+                let param_types: Vec<Type> = method_sig
+                    .params
+                    .iter()
+                    .map(|p| self.resolve_type_ref(&p.type_ref))
+                    .collect();
+                let return_type = self.resolve_type_ref(&method_sig.return_type);
+                TraitMethodEntry {
+                    name: method_sig.name.name.clone(),
+                    type_params: method_sig
+                        .type_params
+                        .iter()
+                        .map(|tp| TypeParamDef {
+                            name: tp.name.clone(),
+                            bound: None,
+                        })
+                        .collect(),
+                    param_types,
+                    return_type,
+                }
+            })
+            .collect();
+
+        self.trait_registry
+            .register_user_trait(&trait_name, method_entries);
+    }
+
+    /// Check an impl block: verify the trait exists (full conformance checking in Phase 07).
+    fn check_impl_block(&mut self, impl_block: &ImplBlock) {
+        let trait_name = impl_block.trait_name.name.clone();
+        if !self.trait_registry.trait_exists(&trait_name) {
+            self.diagnostics.push(Diagnostic::error_with_code(
+                error_codes::TRAIT_NOT_FOUND,
+                format!("Trait '{}' is not defined", trait_name),
+                impl_block.trait_name.span,
+            ));
         }
     }
 

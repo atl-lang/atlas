@@ -6006,3 +6006,177 @@ fn caller() -> void {
         "expected AT3028 error for non-shared-to-shared, got: {diags:?}"
     );
 }
+
+// ── Phase 06: Trait Registry + Built-in Traits ─────────────────────────────
+
+#[test]
+fn test_trait_decl_no_diagnostics() {
+    let diags = typecheck_source("trait Marker { }");
+    assert!(
+        diags.is_empty(),
+        "Empty trait should produce no errors: {diags:?}"
+    );
+}
+
+#[test]
+fn test_trait_with_multiple_methods_no_diagnostics() {
+    let diags = typecheck_source(
+        "
+        trait Comparable {
+            fn compare(self: Comparable, other: Comparable) -> number;
+            fn equals(self: Comparable, other: Comparable) -> bool;
+        }
+    ",
+    );
+    assert!(
+        diags.is_empty(),
+        "Multi-method trait should produce no errors: {diags:?}"
+    );
+}
+
+#[test]
+fn test_duplicate_trait_declaration_is_error() {
+    let diags = typecheck_source(
+        "
+        trait Foo { fn bar() -> void; }
+        trait Foo { fn baz() -> void; }
+    ",
+    );
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3031").collect();
+    assert!(
+        !errors.is_empty(),
+        "Duplicate trait should produce AT3031, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefining_builtin_trait_copy_is_error() {
+    let diags = typecheck_source("trait Copy { fn do_copy() -> void; }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Copy should produce AT3030, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefining_builtin_trait_move_is_error() {
+    let diags = typecheck_source("trait Move { }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Move should produce AT3030, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefining_builtin_trait_drop_is_error() {
+    let diags = typecheck_source("trait Drop { }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Drop should produce AT3030, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefining_builtin_trait_display_is_error() {
+    let diags = typecheck_source("trait Display { }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Display should produce AT3030, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_redefining_builtin_trait_debug_is_error() {
+    let diags = typecheck_source("trait Debug { }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
+    assert!(
+        !errors.is_empty(),
+        "Redefining Debug should produce AT3030, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_impl_unknown_trait_is_error() {
+    let diags = typecheck_source("impl UnknownTrait for number { }");
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
+    assert!(
+        !errors.is_empty(),
+        "impl unknown trait should produce AT3032, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_impl_known_user_trait_no_error() {
+    let diags = typecheck_source(
+        "
+        trait Marker { }
+        impl Marker for number { }
+    ",
+    );
+    let trait_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
+    assert!(
+        trait_errors.is_empty(),
+        "impl known trait should not produce AT3032, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_impl_builtin_trait_copy_no_error() {
+    let diags = typecheck_source("impl Copy for number { }");
+    let trait_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
+    assert!(
+        trait_errors.is_empty(),
+        "impl built-in Copy should not produce AT3032, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_trait_with_generic_method_no_diagnostics() {
+    let diags = typecheck_source(
+        "
+        trait Printer {
+            fn print<T: Display>(value: T) -> void;
+        }
+    ",
+    );
+    assert!(
+        diags.is_empty(),
+        "Trait with generic method should produce no errors: {diags:?}"
+    );
+}
+
+#[test]
+fn test_multiple_traits_no_conflict() {
+    let diags = typecheck_source(
+        "
+        trait Foo { fn foo() -> void; }
+        trait Bar { fn bar() -> void; }
+        trait Baz { fn baz() -> void; }
+    ",
+    );
+    assert!(
+        diags.is_empty(),
+        "Multiple distinct traits should produce no errors: {diags:?}"
+    );
+}
+
+#[test]
+fn test_impl_multiple_traits_for_same_type() {
+    let diags = typecheck_source(
+        "
+        trait Foo { fn foo() -> void; }
+        trait Bar { fn bar() -> void; }
+        impl Foo for number { }
+        impl Bar for number { }
+    ",
+    );
+    let trait_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
+    assert!(
+        trait_errors.is_empty(),
+        "impl multiple traits should not error, got: {diags:?}"
+    );
+}
