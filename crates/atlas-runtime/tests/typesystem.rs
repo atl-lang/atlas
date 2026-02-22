@@ -5808,3 +5808,110 @@ fn test_union_operations(#[case] source: &str) {
         assert!(diags.is_empty(), "Expected no errors, got: {:?}", diags);
     }
 }
+
+// ============================================================================
+// Typechecker Ownership Annotation Tests (Phase 06 — Block 2)
+// ============================================================================
+
+fn typecheck_with_checker(
+    source: &str,
+) -> (
+    Vec<atlas_runtime::diagnostic::Diagnostic>,
+    atlas_runtime::typechecker::TypeChecker<'static>,
+) {
+    // This helper is only usable when we own the table — use typecheck_source for diagnostics-only.
+    // For registry inspection we parse + bind inline.
+    use atlas_runtime::binder::Binder;
+    use atlas_runtime::lexer::Lexer;
+    use atlas_runtime::parser::Parser;
+    use atlas_runtime::typechecker::TypeChecker;
+
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut table, _) = binder.bind(&program);
+    // SAFETY: We box the table to pin it in memory for the 'static TypeChecker.
+    // This is test-only scaffolding; the checker is dropped before the box.
+    let table_ptr: *mut _ = &mut table;
+    let checker_table: &'static mut _ = unsafe { &mut *table_ptr };
+    let mut checker = TypeChecker::new(checker_table);
+    let diags = checker.check(&program);
+    (diags, checker)
+}
+
+#[test]
+fn test_typechecker_stores_own_annotation() {
+    use atlas_runtime::ast::OwnershipAnnotation;
+    let src = "fn process(own data: number[]) -> void { }";
+    let (diags, checker) = typecheck_with_checker(src);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+    let entry = checker
+        .fn_ownership_registry
+        .get("process")
+        .expect("process not in ownership registry");
+    assert_eq!(entry.0.len(), 1);
+    assert_eq!(entry.0[0], Some(OwnershipAnnotation::Own));
+    assert_eq!(entry.1, None); // no return annotation
+}
+
+#[test]
+fn test_typechecker_warns_own_on_primitive() {
+    let src = "fn bad(own _x: number) -> void { }";
+    let diags = typecheck_source(src);
+    let warnings: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning && d.code == "AT2010")
+        .collect();
+    assert!(
+        !warnings.is_empty(),
+        "expected AT2010 warning for `own` on primitive, got: {diags:?}"
+    );
+}
+
+#[test]
+fn test_typechecker_accepts_own_on_array() {
+    let src = "fn process(own _data: number[]) -> void { }";
+    let diags = typecheck_source(src);
+    let warnings: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning && d.code == "AT2010")
+        .collect();
+    assert!(
+        warnings.is_empty(),
+        "unexpected AT2010 warning for `own` on array: {diags:?}"
+    );
+}
+
+#[test]
+fn test_typechecker_accepts_borrow_annotation() {
+    let src = "fn read(borrow _data: number[]) -> number { return 0; }";
+    let diags = typecheck_source(src);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+}
+
+#[test]
+fn test_typechecker_stores_return_ownership() {
+    use atlas_runtime::ast::OwnershipAnnotation;
+    let src = "fn allocate(_size: number) -> own number { return 0; }";
+    let (diags, checker) = typecheck_with_checker(src);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "unexpected errors: {errors:?}");
+    let entry = checker
+        .fn_ownership_registry
+        .get("allocate")
+        .expect("allocate not in ownership registry");
+    assert_eq!(entry.1, Some(OwnershipAnnotation::Own));
+}

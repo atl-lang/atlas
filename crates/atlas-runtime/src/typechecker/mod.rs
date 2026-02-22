@@ -18,6 +18,7 @@ mod type_guards;
 pub mod unification;
 
 use crate::ast::*;
+use crate::diagnostic::error_codes;
 use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
@@ -37,6 +38,22 @@ struct AliasMetadata {
     deprecated: bool,
     since: Option<String>,
 }
+
+/// A function parameter with its resolved type and ownership annotation.
+/// Populated during `check_function` and queried by Phase 07 call-site checking.
+#[derive(Debug, Clone)]
+pub struct TypedParam {
+    pub name: String,
+    pub ty: Type,
+    pub ownership: Option<OwnershipAnnotation>,
+}
+
+/// Per-function ownership registry key: the function's unique name string.
+/// Value: (param annotations in declaration order, return annotation).
+pub type FnOwnershipEntry = (
+    Vec<Option<OwnershipAnnotation>>,
+    Option<OwnershipAnnotation>,
+);
 
 /// Type checker state
 pub struct TypeChecker<'a> {
@@ -66,6 +83,9 @@ pub struct TypeChecker<'a> {
     alias_cache: HashMap<AliasKey, Type>,
     /// Stack of aliases being resolved (circular detection)
     alias_resolution_stack: Vec<String>,
+    /// Ownership annotations per function (name -> (param ownerships, return ownership)).
+    /// Populated during `check_function`, queried by call-site checking (Phase 07).
+    pub fn_ownership_registry: HashMap<String, FnOwnershipEntry>,
 }
 
 impl<'a> TypeChecker<'a> {
@@ -86,6 +106,7 @@ impl<'a> TypeChecker<'a> {
             type_aliases,
             alias_cache: HashMap::new(),
             alias_resolution_stack: Vec::new(),
+            fn_ownership_registry: HashMap::new(),
         }
     }
 
@@ -451,6 +472,57 @@ impl<'a> TypeChecker<'a> {
                 (param.name.span, SymbolKind::Parameter),
             );
         }
+
+        // Validate ownership annotations and populate the ownership registry.
+        let mut param_ownerships: Vec<Option<OwnershipAnnotation>> =
+            Vec::with_capacity(func.params.len());
+        for param in &func.params {
+            let ty = self.resolve_type_ref(&param.type_ref);
+            if let Some(ann) = &param.ownership {
+                match ann {
+                    OwnershipAnnotation::Own => {
+                        if matches!(ty, Type::Number | Type::Bool | Type::String) {
+                            self.diagnostics.push(
+                                Diagnostic::warning_with_code(
+                                    error_codes::OWN_ON_PRIMITIVE,
+                                    format!(
+                                        "`own` annotation on parameter `{}` has no effect: \
+                                         primitive types are always copied",
+                                        param.name.name
+                                    ),
+                                    param.name.span,
+                                )
+                                .with_help(
+                                    "remove the `own` annotation from this primitive parameter",
+                                ),
+                            );
+                        }
+                    }
+                    OwnershipAnnotation::Borrow => {
+                        if matches!(&ty, Type::Generic { name, .. } if name == "shared") {
+                            self.diagnostics.push(
+                                Diagnostic::warning_with_code(
+                                    error_codes::BORROW_ON_SHARED,
+                                    format!(
+                                        "`borrow` annotation on parameter `{}` is redundant: \
+                                         `shared<T>` already has reference semantics",
+                                        param.name.name
+                                    ),
+                                    param.name.span,
+                                )
+                                .with_help("remove the `borrow` annotation from this `shared<T>` parameter"),
+                            );
+                        }
+                    }
+                    OwnershipAnnotation::Shared => {}
+                }
+            }
+            param_ownerships.push(param.ownership.clone());
+        }
+        self.fn_ownership_registry.insert(
+            func.name.name.clone(),
+            (param_ownerships, func.return_ownership.clone()),
+        );
 
         // Hoist nested function signatures (like the binder does)
         // This ensures nested functions are available when type-checking their calls

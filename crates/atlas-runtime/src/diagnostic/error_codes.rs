@@ -49,6 +49,8 @@ pub const CONSTANT_CONDITION: &str = "AT2006";
 pub const UNNECESSARY_ANNOTATION: &str = "AT2007";
 pub const UNUSED_IMPORT: &str = "AT2008";
 pub const DEPRECATED_TYPE_ALIAS: &str = "AT2009";
+pub const OWN_ON_PRIMITIVE: &str = "AT2010";
+pub const BORROW_ON_SHARED: &str = "AT2011";
 
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
@@ -280,6 +282,16 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT2009",
         description: "Deprecated type alias",
         help: Some("Use the recommended replacement instead of the deprecated alias."),
+    },
+    ErrorCodeInfo {
+        code: "AT2010",
+        description: "`own` annotation on primitive type has no effect",
+        help: Some("Primitive types (number, bool, string) are always copied. The `own` annotation is ignored."),
+    },
+    ErrorCodeInfo {
+        code: "AT2011",
+        description: "`borrow` annotation on `shared<T>` type is redundant",
+        help: Some("`shared<T>` already has reference semantics. The `borrow` annotation has no additional effect."),
     },
     // === AT3xxx: Semantic/Type Checking Errors ===
     ErrorCodeInfo {
