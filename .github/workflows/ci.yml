@@ -1,16 +1,23 @@
 # Atlas CI Pipeline
 #
-# Runs on every PR and merge queue entry.
-# Validates: fmt, clippy, cargo check.
-# Tests run locally by AI before pushing — not in CI (9k+ tests = expensive minutes).
+# PR / merge queue:  fmt → clippy → check  (~2 min, fast gate)
+# push to main:      fmt → clippy → test (ubuntu) → test-matrix (3 OS) → coverage
+#                    Nightly: msrv + fuzz
+#
+# Push to main = milestone. Full suite runs.
 
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
   merge_group:
     branches: [main]
+  schedule:
+    # Nightly at 04:00 UTC — msrv + fuzz
+    - cron: "0 4 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -20,10 +27,11 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
 
 jobs:
   # ==========================================================================
-  # Change detection - Skip clippy/check for docs-only PRs
+  # Change detection - Skip expensive jobs for docs-only changes
   # ==========================================================================
 
   changes:
@@ -44,7 +52,7 @@ jobs:
               - '.github/workflows/**'
 
   # ==========================================================================
-  # Fast checks
+  # Fast checks — PR + merge queue + main push
   # ==========================================================================
 
   fmt:
@@ -74,7 +82,7 @@ jobs:
     name: Check
     runs-on: ubuntu-latest
     needs: [fmt, changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.outputs.code == 'true' && github.event_name != 'push'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -82,24 +90,153 @@ jobs:
       - run: cargo check --all-targets --all-features
 
   # ==========================================================================
-  # Status check - Required for merge queue
+  # Tests — main push only (milestone runs)
+  # ==========================================================================
+
+  test:
+    name: Test (ubuntu-latest/stable)
+    runs-on: ubuntu-latest
+    needs: [clippy, changes]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && needs.changes.outputs.code == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Run tests
+        run: cargo nextest run --all-features --workspace
+      - name: Run doc tests
+        run: cargo test --doc --all-features
+
+  test-matrix:
+    name: Test (${{ matrix.os }}/${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+          - os: ubuntu-latest
+            rust: beta
+    steps:
+      - name: Configure git line endings
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.rust }}
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Run tests
+        run: cargo nextest run --all-features --workspace
+      - name: Run doc tests
+        run: cargo test --doc --all-features
+
+  # ==========================================================================
+  # Coverage — main push only
+  # ==========================================================================
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install tarpaulin
+        uses: taiki-e/install-action@cargo-tarpaulin
+      - name: Generate coverage
+        run: cargo tarpaulin --all-features --workspace --timeout 300 --out xml
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: cobertura.xml
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # ==========================================================================
+  # Nightly — schedule only
+  # ==========================================================================
+
+  msrv:
+    name: MSRV (1.70.0)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        id: stable
+      - uses: dtolnay/rust-toolchain@1.70.0
+        id: msrv
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: msrv
+      - name: Pin MSRV-compatible dependencies
+        run: |
+          cargo +stable update -p time --precise 0.3.45
+          cargo +stable update -p base64ct --precise 1.7.1
+      - name: Check MSRV
+        run: cargo +1.70.0 check -p atlas-runtime --all-features --locked
+
+  fuzz:
+    name: Fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [fuzz_lexer, fuzz_parser, fuzz_typechecker, fuzz_eval]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: fuzz-${{ matrix.target }}
+          workspaces: crates/atlas-runtime/fuzz
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: Run ${{ matrix.target }} (120s)
+        run: cargo +nightly fuzz run ${{ matrix.target }} -- -max_total_time=120
+        working-directory: crates/atlas-runtime
+
+  # ==========================================================================
+  # Status check — Required for merge queue / branch protection
   # ==========================================================================
 
   ci-success:
     name: CI Success
     if: always()
-    needs: [fmt, clippy, check, changes]
+    needs: [fmt, clippy, check, test, test-matrix, changes]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs passed
+        env:
+          FMT: ${{ needs.fmt.result }}
+          CLIPPY: ${{ needs.clippy.result }}
+          CHECK: ${{ needs.check.result }}
+          TEST: ${{ needs.test.result }}
+          TEST_MATRIX: ${{ needs.test-matrix.result }}
         run: |
-          echo "fmt:     ${{ needs.fmt.result }}"
-          echo "clippy:  ${{ needs.clippy.result }}"
-          echo "check:   ${{ needs.check.result }}"
-          if [[ "${{ needs.fmt.result }}" == "failure" || \
-                "${{ needs.clippy.result }}" == "failure" || \
-                "${{ needs.check.result }}" == "failure" ]]; then
-            echo "One or more CI jobs failed"
-            exit 1
-          fi
-          echo "All CI jobs passed (or skipped for docs-only PRs)"
+          echo "fmt:          $FMT"
+          echo "clippy:       $CLIPPY"
+          echo "check:        $CHECK"
+          echo "test:         $TEST"
+          echo "test-matrix:  $TEST_MATRIX"
+          for result in "$FMT" "$CLIPPY" "$CHECK" "$TEST" "$TEST_MATRIX"; do
+            if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
+              echo "A required job failed or was cancelled"
+              exit 1
+            fi
+          done
+          echo "All required jobs passed (or skipped)"
