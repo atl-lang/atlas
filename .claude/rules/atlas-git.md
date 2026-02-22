@@ -24,15 +24,20 @@ git checkout -b feat/short-description
 # 2. Do work, commit
 git add <files> && git commit -m "feat: description"
 
-# 3. Push + PR
+# 3. Rebase on latest main BEFORE push (strict CI policy requires up-to-date branch)
+git fetch origin && git rebase origin/main
+
+# 4. Push + PR
 git push -u origin feat/short-description
 gh pr create --title "title" --body "body"
 gh pr merge --auto --squash
 
-# 4. After merge: sync and clean up
+# 5. After merge: sync and clean up
 git checkout main && git pull origin main
 git branch -d feat/short-description
 ```
+
+> **Why:** `strict_required_status_checks_policy=true` means CI won't run (and auto-merge stalls) if any commit landed on main after the branch was created. Always rebase immediately before push.
 
 ## Branch Naming
 
