@@ -72,6 +72,9 @@ pub const ARRAY_PATTERN_TYPE_MISMATCH: &str = "AT3026";
 pub const NON_EXHAUSTIVE_MATCH: &str = "AT3027";
 pub const NON_SHARED_TO_SHARED: &str = "AT3028";
 
+// AT3029 - Duplicate impl
+pub const IMPL_ALREADY_EXISTS: &str = "AT3029";
+
 // AT3030+ - Trait System Errors
 pub const TRAIT_REDEFINES_BUILTIN: &str = "AT3030";
 pub const TRAIT_ALREADY_DEFINED: &str = "AT3031";
@@ -395,6 +398,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3028",
         description: "Passing non-`shared<T>` value to `shared` parameter",
         help: Some("Wrap the value in a shared reference before passing it to a `shared` parameter."),
+    },
+    ErrorCodeInfo {
+        code: "AT3029",
+        description: "Duplicate impl block",
+        help: Some("A type can only implement a given trait once. Remove the duplicate impl block."),
     },
     // === AT3030+: Trait System Errors ===
     ErrorCodeInfo {
