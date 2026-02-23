@@ -68,6 +68,12 @@ block/trait-system branch:
 **Exception:** Blocking fixes or critical CI changes may PR immediately on a `fix/`
 or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
 
+**CRITICAL: `fix/`, `ci/`, and `docs/` branches MUST be created from `main`, never from `block/`.**
+Creating a side branch from `block/closures` carries all block commits into the rebase,
+causing conflicts and making it easy to lose work when the branch is deleted.
+If you are on a block branch and need to open a side PR: commit your block work first,
+then `git checkout main && git pull && git checkout -b fix/name`.
+
 ## CI Push Discipline
 
 **Every force-push resets CI from scratch.** Each push cancels the running CI and starts over. On slow runners (windows, tarpaulin) that's 10+ wasted minutes per push.
