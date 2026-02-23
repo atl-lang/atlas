@@ -1,4 +1,6 @@
-//! interpreter — split into domain submodules (interpreter/ directory)
+//! THIN ROUTER — DO NOT ADD TESTS HERE.
+//! Add tests to the submodule files: tests/interpreter/{member,nested_functions,scope,pattern_matching,assignment,for_in,integration}.rs
+//! This file only declares submodules and shared helpers.
 
 mod common;
 

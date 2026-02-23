@@ -31,27 +31,33 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 ## Tests
 
 **Location:** `crates/atlas-runtime/tests/`
-**Rule: NO new top-level test files for existing domains.** Add to the correct domain file below.
-**Size threshold: 3,000 lines → MUST migrate to subdirectory.** See `atlas-architecture.md`.
+**Rule: NO new top-level test files for existing domains.** Add to the correct submodule file below.
 
-| Domain | File | Lines (approx) | Status |
-|--------|------|----------------|--------|
-| Interpreter behavior | `tests/interpreter.rs` | 5,485 | 🔴 Needs subdirectory |
-| VM behavior | `tests/vm.rs` | 5,708 | 🔴 Needs subdirectory |
-| Type system | `tests/typesystem.rs` | 6,807 | 🔴 Needs subdirectory |
-| Stdlib | **`tests/stdlib/`** (migration in progress; `tests/stdlib.rs` pending removal) | ~14,400 | 🔴 Migration pending |
-| System | `tests/system.rs` | ~4,000 | 🔴 Needs subdirectory |
-| Frontend/parse | `tests/frontend_integration.rs` | 3,166 | 🔴 Needs subdirectory |
-| Frontend syntax | `tests/frontend_syntax.rs` | 3,094 | 🔴 Needs subdirectory |
-| Collections/CoW | `tests/collections.rs` | ~1,800 | ✅ |
-| Pattern matching | `tests/pattern_matching.rs` | ~1,600 | ✅ |
-| Closures | `tests/closures.rs` | — | ✅ |
-| Async | `tests/async_runtime.rs` | ~2,300 | ✅ |
-| Parity tests | Add to the relevant domain file with both engines | — | — |
+### Subdirectory-split domains (ADD TESTS TO THE SUBDIR FILES, NOT THE ROUTER)
 
-**Subdirectory migration pattern:**
-`tests/stdlib.rs` → `tests/stdlib/mod.rs` + `tests/stdlib/strings.rs` + `tests/stdlib/math.rs` etc.
-Do NOT create new top-level `.rs` files for domains already in this table.
+The `.rs` root files for these domains are **thin routers** (66–201 lines). Opening them and adding tests there is wrong. Go to the subdirectory.
+
+| Domain | Add tests to... |
+|--------|----------------|
+| Stdlib | `tests/stdlib/` → strings, json, io, types, functions, collections, parity, vm_stdlib, integration, docs_verification |
+| Type system | `tests/typesystem/` → inference, constraints, flow, generics, bindings, integration |
+| VM behavior | `tests/vm/` → integration, member, complex_programs, regression, performance, functions, nested, for_in |
+| Interpreter | `tests/interpreter/` → member, nested_functions, scope, pattern_matching, assignment, for_in, integration |
+| System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
+
+**How to pick the right file:** match the feature domain (e.g., new string builtin → `tests/stdlib/strings.rs`).
+
+### Single-file domains (add directly)
+
+| Domain | File |
+|--------|------|
+| Lexer, parser, syntax | `tests/frontend_syntax.rs` |
+| Frontend pipeline | `tests/frontend_integration.rs` |
+| Collections/CoW | `tests/collections.rs` |
+| Pattern matching | `tests/pattern_matching.rs` |
+| Closures | `tests/closures.rs` |
+| Async | `tests/async_runtime.rs` |
+| Regression | `tests/regression.rs` |
 
 ## Critical Rules
 

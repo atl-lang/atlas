@@ -1,4 +1,6 @@
-//! vm — split into domain submodules (vm/ directory)
+//! THIN ROUTER — DO NOT ADD TESTS HERE.
+//! Add tests to the submodule files: tests/vm/{integration,member,complex_programs,regression,performance,functions,nested,for_in}.rs
+//! This file only declares submodules and shared helpers.
 
 mod common;
 

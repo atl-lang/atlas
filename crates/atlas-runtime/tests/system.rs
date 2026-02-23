@@ -1,4 +1,6 @@
-//! system — split into domain submodules (system/ directory)
+//! THIN ROUTER — DO NOT ADD TESTS HERE.
+//! Add tests to the submodule files: tests/system/{path,filesystem,process,compression}.rs
+//! This file only declares submodules and shared helpers.
 
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::span::Span;

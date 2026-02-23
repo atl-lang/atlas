@@ -1,4 +1,6 @@
-//! stdlib — split into domain submodules (stdlib/ directory)
+//! THIN ROUTER — DO NOT ADD TESTS HERE.
+//! Add tests to the submodule files: tests/stdlib/{integration,strings,json,io,types,functions,collections,parity,vm_stdlib,docs_verification}.rs
+//! This file only declares submodules and shared helpers.
 
 mod common;
 

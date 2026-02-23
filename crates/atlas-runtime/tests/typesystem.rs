@@ -1,4 +1,6 @@
-//! typesystem — split into domain submodules (typesystem/ directory)
+//! THIN ROUTER — DO NOT ADD TESTS HERE.
+//! Add tests to the submodule files: tests/typesystem/{inference,constraints,flow,generics,bindings,integration}.rs
+//! This file only declares submodules and shared helpers.
 
 mod common;
 
