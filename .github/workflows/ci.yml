@@ -1,10 +1,10 @@
 # Atlas CI Pipeline
 #
 # PR / merge queue:
-#   fmt → clippy → test (linux + windows, parallel)                 (~4-5 min)
+#   fmt → clippy → test (linux only)                                (~3 min)
 #
 # push to main:
-#   fmt → clippy → test (linux + windows) → test-matrix (macos + beta) → coverage
+#   fmt → clippy → test (linux) → test-matrix (windows + macos + beta) → coverage
 #   Nightly: msrv (1.85) + fuzz (5 targets)
 #
 # Design principles:
@@ -110,7 +110,7 @@ jobs:
         run: cargo deny check
 
   # ==========================================================================
-  # Tests — linux + windows on PRs; macOS + beta added on main push
+  # Tests — linux on PRs (~2.5 min); windows + macOS + beta added on main push
   # ==========================================================================
 
   test:
@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     steps:
       - name: Configure git line endings
         run: git config --global core.autocrlf false
@@ -146,6 +146,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - os: windows-latest
+            rust: stable
           - os: macos-latest
             rust: stable
           - os: ubuntu-latest
