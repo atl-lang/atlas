@@ -17,6 +17,10 @@ Classify and resolve autonomously:
 ### State: Clean, on main
 → Normal. Proceed to Step 2.
 
+> **Branch cleanup rule:** When deleting stale branches, `block/*` branches are NEVER deleted
+> unless their PR has merged to main. `ci/`, `fix/`, `docs/` branches are safe to delete after merge.
+> Check `git log --all --oneline | grep block/` before any cleanup.
+
 ### State: Uncommitted changes present
 → Inspect every changed file: `git diff` + `git status`
 → **Valid WIP:** stage and commit before starting new work
