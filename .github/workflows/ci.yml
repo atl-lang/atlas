@@ -91,6 +91,35 @@ jobs:
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
   # ==========================================================================
+  # Workflow lint — actionlint on every .github/ change
+  # ==========================================================================
+
+  actionlint:
+    name: Workflow Lint
+    runs-on: ubuntu-latest
+    needs: [changes]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for workflow file changes
+        id: wf_changes
+        run: |
+          git fetch origin main --depth=1
+          if git diff --name-only origin/main HEAD | grep -q "^\.github/"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Run actionlint
+        if: steps.wf_changes.outputs.changed == 'true' || github.event_name == 'push'
+        run: |
+          ACTIONLINT_VERSION="1.7.11"
+          ACTIONLINT_SHA256="900919a84f2229bac68ca9cd4103ea297abc35e9689ebb842c6e34a3d1b01b0a"
+          curl -sSfL -o actionlint.tar.gz "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum -c -
+          tar -xzf actionlint.tar.gz
+          ./actionlint -color
+
+  # ==========================================================================
   # Supply chain — deny check on every code change (gated by ci-success)
   # ==========================================================================
 
@@ -108,6 +137,23 @@ jobs:
           tool: cargo-deny
       - name: Check supply chain
         run: cargo deny check
+
+  # ==========================================================================
+  # Build — explicit build gate (cargo test implies build, but ci-success needs
+  # a named job to gate on for branch protection purposes)
+  # ==========================================================================
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build workspace
+        run: cargo build --workspace --all-features
 
   # ==========================================================================
   # Tests — linux on PRs (~2.5 min); windows + macOS + beta added on main push
@@ -252,7 +298,7 @@ jobs:
   ci-success:
     name: CI Success
     if: always()
-    needs: [fmt, clippy, supply-chain, test, test-matrix, changes]
+    needs: [fmt, clippy, build, actionlint, supply-chain, test, test-matrix, coverage, changes]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs passed
@@ -260,17 +306,23 @@ jobs:
           CHANGES: ${{ needs.changes.result }}
           FMT: ${{ needs.fmt.result }}
           CLIPPY: ${{ needs.clippy.result }}
+          BUILD: ${{ needs.build.result }}
+          ACTIONLINT: ${{ needs.actionlint.result }}
           SUPPLY_CHAIN: ${{ needs.supply-chain.result }}
           TEST: ${{ needs.test.result }}
           TEST_MATRIX: ${{ needs.test-matrix.result }}
+          COVERAGE: ${{ needs.coverage.result }}
         run: |
           echo "changes:      $CHANGES"
           echo "fmt:          $FMT"
           echo "clippy:       $CLIPPY"
+          echo "build:        $BUILD"
+          echo "actionlint:   $ACTIONLINT"
           echo "supply-chain: $SUPPLY_CHAIN"
           echo "test:         $TEST"
           echo "test-matrix:  $TEST_MATRIX"
-          for result in "$CHANGES" "$FMT" "$CLIPPY" "$SUPPLY_CHAIN" "$TEST" "$TEST_MATRIX"; do
+          echo "coverage:     $COVERAGE"
+          for result in "$CHANGES" "$FMT" "$CLIPPY" "$BUILD" "$ACTIONLINT" "$SUPPLY_CHAIN" "$TEST" "$TEST_MATRIX" "$COVERAGE"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               echo "A required job failed or was cancelled"
               exit 1

@@ -74,6 +74,19 @@ or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
 
 Never push to address one comment while others are pending.
 
+## Merge Freeze (MANDATORY)
+
+**`strict_required_status_checks_policy=true` means every merge to main makes every open PR go BEHIND, resetting its CI from scratch.**
+
+When a `fix/` or `ci/` PR is open and running CI:
+- **No new PRs** — do not open any other PR until this one merges
+- **No pushes to any branch that would trigger a main merge** — that includes auto-merge completing on another PR
+- **Do not create "quick fix" branches** to work around waiting — they become the problem
+
+If you find yourself wanting to push something while a CI-critical PR is in flight: **don't**. Wait. The cost of one merge resetting CI is 5–15 minutes of wasted runner time and another rebase cycle.
+
+**The freeze ends when the PR merges.** Then rebase the block branch and continue.
+
 ## Banned
 
 - `git push origin main` directly

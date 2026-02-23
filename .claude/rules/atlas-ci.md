@@ -96,12 +96,52 @@ core paths are never acceptable without an architectural justification.
 Current policy: `yanked = "deny"`, `unsound = "all"`, `unmaintained = "none"`.
 The audit job in security.yml handles CVE severity via `--deny unsound --deny yanked`.
 
+## Three-Layer Workflow Protection
+
+Atlas is 100% AI-developed at hyper pace (v0.3 in 10 days). CI config bugs are invisible until
+post-merge and compound across sessions. Every layer must hold.
+
+### Layer 1 — Machine (actionlint, automatic)
+
+`actionlint` runs on every PR touching `.github/` and on every main push via ci.yml.
+Catches: malformed YAML, invalid `${{ }}` expressions, undefined secrets, bad action references,
+step dependency errors, wrong event syntax.
+**Does NOT catch:** wrong shell commands, bad CLI flags, logic errors in `run:` steps.
+
+### Layer 2 — Behavioral rule (AI-enforced, MANDATORY)
+
+**When adding or modifying any `run:` step in a workflow file:**
+1. Run the exact command locally — not a similar command, the exact command
+2. Verify the output is what the workflow expects (e.g. a file is produced, correct format)
+3. Only commit after local verification passes
+
+This is what catches the class of bug where a CLI flag is wrong or a tool doesn't support
+the expected output format. No amount of YAML linting catches runtime command failures.
+
+**Example of what this rule prevents:** `cargo bench -- --output-format bencher` was committed
+without being run locally. It errored immediately (`Unrecognized option`), produced empty output,
+and failed every post-merge bench run for days. Running it locally for 5 seconds would have caught it.
+
+### Layer 3 — dispatch verification (for new workflows, MANDATORY)
+
+**When a new workflow is added or an existing workflow's trigger/job structure changes:**
+1. Trigger a manual `workflow_dispatch` run before the PR merges
+2. Confirm the run is green in GitHub Actions
+3. Only then allow auto-merge
+
+`workflow_dispatch` is already on all Atlas workflows. Use it.
+Exception: pure YAML/config-only changes that actionlint already verified.
+
+---
+
 ## Verify Checklist (Before Merging Any CI Change)
 
-- [ ] All required checks present: fmt, clippy, supply-chain, test, coverage
-- [ ] `ci-success` needs array includes every required job
+- [ ] All required checks present: fmt, clippy, actionlint, supply-chain, test, coverage
+- [ ] `ci-success` needs array includes every required job (including actionlint)
 - [ ] Path filter uses exclusion model (not allowlist)
 - [ ] No job accidentally skips on non-docs changes
 - [ ] bench.yml has `fail-on-alert: true`
 - [ ] Coverage job runs on PRs (not just main push)
 - [ ] `CODECOV_TOKEN` secret is set in repo settings
+- [ ] Any new/modified `run:` step verified locally (Layer 2)
+- [ ] New workflows or structural changes verified via `workflow_dispatch` (Layer 3)
