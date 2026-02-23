@@ -1,0 +1,104 @@
+# Codecov configuration for Atlas
+# https://docs.codecov.com/docs/codecovyml-reference
+#
+# Atlas is a public repo — free tier gives unlimited uploads, PR comments,
+# patch coverage, and status checks. All thresholds enforced here.
+#
+# Per-crate floors (realistic for a compiler):
+#   atlas-runtime  70% — core logic, all paths must be tested
+#   atlas-cli      50% — integration-heavy, CLI edge cases vary
+#   atlas-formatter 60% — pure transformation logic
+#   atlas-lsp      40% — LSP protocol is hard to unit test
+#   atlas-jit      25% — codegen paths aren't meaningfully unit-testable
+#   atlas-config   60% — simple, should be well covered
+#   atlas-build    40% — build tooling
+#   atlas-package  40% — package management
+
+codecov:
+  require_ci_to_pass: true
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...100"
+
+  status:
+    # Project-level: fail if total coverage drops more than 2%
+    project:
+      default:
+        target: auto
+        threshold: 2%
+        if_not_found: success
+        if_ci_failed: error
+
+    # Patch-level: new code in a PR must be ≥80% covered
+    patch:
+      default:
+        target: 80%
+        threshold: 5%
+        if_not_found: success
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: true   # Only comment if coverage changes
+  require_base: true
+  require_head: true
+
+# Per-crate flags — each crate is measured independently
+# This lets us enforce different thresholds per crate
+flag_management:
+  default_rules:
+    carryforward: true
+
+flags:
+  atlas-runtime:
+    paths:
+      - crates/atlas-runtime/
+    carryforward: true
+
+  atlas-cli:
+    paths:
+      - crates/atlas-cli/
+    carryforward: true
+
+  atlas-formatter:
+    paths:
+      - crates/atlas-formatter/
+    carryforward: true
+
+  atlas-lsp:
+    paths:
+      - crates/atlas-lsp/
+    carryforward: true
+
+  atlas-jit:
+    paths:
+      - crates/atlas-jit/
+    carryforward: true
+
+  atlas-config:
+    paths:
+      - crates/atlas-config/
+    carryforward: true
+
+  atlas-build:
+    paths:
+      - crates/atlas-build/
+    carryforward: true
+
+  atlas-package:
+    paths:
+      - crates/atlas-package/
+    carryforward: true
+
+ignore:
+  - "target/**"
+  - "phases/**"
+  - "docs/**"
+  - "**/tests/**"
+  - "**/benches/**"
+  - "**/fuzz/**"

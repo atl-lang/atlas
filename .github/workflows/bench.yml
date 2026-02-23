@@ -51,9 +51,10 @@ jobs:
           output-file-path: benchmark-results.txt
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          alert-threshold: '110%'
+          alert-threshold: '115%'
           comment-on-alert: true
-          fail-on-alert: false
+          fail-on-alert: true
+          alert-comment-cc-users: '@proxikal'
           save-data-file: true
 
       - name: Upload raw Criterion results
