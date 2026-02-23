@@ -133,12 +133,24 @@ Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
 
 ---
 
-## Step 5: Architecture Health Check
+## Step 5: Architecture Health Check + Baseline Sizing
 
-**Before writing any code**, verify the files you will touch are not already in violation.
+**Before writing any code**, verify the files you will touch are not already in violation AND
+record their current line counts to carry into GATE 1 estimation.
 
 ```bash
+# 1. Check for existing violations
 find crates/ -name "*.rs" -not -path "*/target/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
+
+# 2. Record current line counts for EVERY file you will write to
+wc -l <each target file>
+```
+
+**Record and carry this table into GATE 1 (MANDATORY):**
+
+```
+Target file: src/foo.rs         — current: 1,240 lines
+Target file: tests/stdlib/strings.rs — current: 480 lines
 ```
 
 | Result | Action |
@@ -151,6 +163,10 @@ find crates/ -name "*.rs" -not -path "*/target/*" | xargs wc -l 2>/dev/null | so
 **ARCH-EXCEPTION protocol:** If a file legitimately cannot be split (e.g. VM execute loop),
 it must have `// ARCH-EXCEPTION: <reason>` at the top. If the comment is missing, the file
 is in violation regardless of circumstance.
+
+**Test file routing check:** Before adding any test, verify the target submodule file
+(not the thin router root). Check `.claude/rules/atlas-testing.md` domain table for the
+correct file. Adding to the wrong file or the router root = violation.
 
 **See `.claude/rules/atlas-architecture.md`** for full thresholds and migration patterns.
 

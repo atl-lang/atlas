@@ -6,11 +6,16 @@
 
 ## Action
 
-1. List all functions/features/components needed
-2. Estimate lines per item
-3. Sum total per file
-4. Add 20% buffer
-5. **DECLARE estimate in output**
+**Step 0 (MANDATORY FIRST):** Pull the current line counts from GATE 0 Step 5. Never estimate
+in a vacuum — every projection must start from a real baseline.
+
+1. For each target file, take current line count from GATE 0 Step 5
+2. List all functions/features/components needed
+3. Estimate lines per item
+4. Sum new lines per file
+5. Add 20% buffer to new lines
+6. Projected final = current + buffered new lines
+7. **DECLARE estimate and projection in output**
 
 ---
 
@@ -18,25 +23,30 @@
 
 ```
 File: src/compiler/parser.rs
+Current: 1,240 lines
 - Feature 1: ~X lines
 - Feature 2: ~Y lines
 - Error handling: ~Z lines
-Total: ~N lines
+New lines: ~N lines
 Buffered (×1.2): ~M lines
+PROJECTED FINAL: ~(1240 + M) lines
 ```
 
 ---
 
 ## Decision (Compiler-Aware)
 
-- <800 buffered → Single implementation → GATE 1.5
-- 800-1000 buffered → Acceptable, proceed → GATE 1.5
-- 1000-1500 buffered → Justify complexity OR plan split → GATE 1.5
-- >1500 buffered → MUST justify OR split → GATE 1.5
+Decisions are based on **projected final**, not just new lines:
 
-**Post-phase file size check:** After estimating, project the final line count of each target file
-(existing lines + estimated new lines). If the result would exceed 2,000 lines for source or
-4,000 lines for test files → **plan the split as part of this phase**, not as follow-up work.
+- Projected final < 1,500 → Proceed → GATE 1.5
+- Projected final 1,500–2,000 → Warning zone — justify OR plan split → GATE 1.5
+- Projected final > 2,000 → **BLOCKING: plan split NOW, before writing a single line**
+- Test file projected > 4,000 → **BLOCKING: plan subdirectory migration before adding tests**
+
+**Split obligation:** If a projection hits the blocking threshold, the split plan is
+**in-scope for this phase**. It is not follow-up work. Designing the split happens
+here, before implementation. Writing a large file and splitting it at GATE 6 wastes
+tokens and is disallowed.
 
 **ARCH-EXCEPTION:** If the file legitimately cannot be split, add `// ARCH-EXCEPTION: <reason>`
 at the top and document it in the phase summary. See `.claude/rules/atlas-architecture.md`.

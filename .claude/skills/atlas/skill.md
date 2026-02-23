@@ -85,6 +85,9 @@ See `.claude/rules/atlas-parity.md` (auto-loaded on interpreter/VM/compiler file
 **Source of truth:** auto-memory `testing-patterns.md` — READ BEFORE WRITING ANY TESTS.
 See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 
+### 8. Proactive File Sizing (NO REACTIVE SPLITS)
+**Before writing any code:** read current line counts (GATE 0 Step 5) → project final size (GATE 1) → design any needed split BEFORE the first line is written. Writing a large file and splitting it after the fact wastes tokens and is disallowed. Split structure is decided at estimation time, not discovered at GATE 6.
+
 ---
 
 ## Git Workflow
