@@ -8,12 +8,12 @@
 name: Benchmarks
 
 on:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'crates/atlas-runtime/**'
-  #     - 'Cargo.toml'
-  #     - 'Cargo.lock'
+  push:
+    branches: [main]
+    paths:
+      - 'crates/atlas-runtime/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
   workflow_dispatch:
 
 concurrency:

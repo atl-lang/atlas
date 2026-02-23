@@ -2,8 +2,12 @@
 # https://github.com/EmbarkStudios/cargo-deny
 
 [advisories]
-# Check for security vulnerabilities
-yanked = "warn"
+# Block actual security vulnerabilities and unsound code.
+# "unmaintained" is informational only — warn, don't block.
+vulnerability = "deny"
+unsound = "deny"
+unmaintained = "warn"
+yanked = "deny"
 
 [licenses]
 # Ensure all dependencies use approved licenses
