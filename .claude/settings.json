@@ -1,0 +1,38 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read f; for p in target/ Cargo.lock fuzz/corpus/ fuzz/artifacts/; do if [ -n \"$f\" ] && echo \"$f\" | grep -q \"$p\"; then echo \"Blocked: $f matches protected pattern '$p'\" >&2; exit 2; fi; done; exit 0; }"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // empty' | { read file_path; if [ -n \"$file_path\" ] && echo \"$file_path\" | grep -qE '\\.rs$'; then cargo fmt --manifest-path \"$(git rev-parse --show-toplevel)/Cargo.toml\" -- \"$file_path\" 2>/dev/null || true; fi; }",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[Post-compaction: Atlas critical context]\n- PUSH POLICY: non-code changes (docs, CI, .claude/, config) = direct push to main + [skip ci]. Rust source = PR + CI only.\n- PARITY IS SACRED: every behavior must produce identical output in interpreter AND vm. Parity break = BLOCKING.\n- CoW WRITE-BACK: collection mutation returns new collection. apply_cow_writeback() in interpreter, emit_cow_writeback_if_needed() in VM.\n- NO STUBS: unimplemented!(), todo!(), partial impls are banned. Complete implementations only.\n- TEST LOCATION: crates/atlas-runtime/tests/ — no inline #[cfg(test)] in src/ files.\n- BLOCK BRANCH: all phase commits on block/{name}. PR opens only at block completion.\n- EMERGENCY BYPASS: only for Rust source with 4 criteria met + explicit user confirmation.\n- PRE-PUSH HOOK: .githooks/pre-push runs actionlint + cargo fmt check automatically.'"
+          }
+        ]
+      }
+    ]
+  }
+}
