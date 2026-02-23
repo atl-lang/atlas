@@ -23,23 +23,23 @@ jobs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Get version from tag
         id: get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            VERSION=${{ inputs.tag }}
+            VERSION="${{ inputs.tag }}"
           else
-            VERSION=${GITHUB_REF#refs/tags/}
+            VERSION="${GITHUB_REF#refs/tags/}"
           fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Version: ${VERSION}"
 
       - name: Extract changelog for version
         id: changelog
         run: |
-          VERSION=${{ steps.get_version.outputs.version }}
+          VERSION="${{ steps.get_version.outputs.version }}"
           # Extract section for this version from CHANGELOG.md
           if [ -f CHANGELOG.md ]; then
             awk "/## \[${VERSION}\]/,/## \[/" CHANGELOG.md | sed '$d' > release-notes.md
@@ -89,7 +89,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
