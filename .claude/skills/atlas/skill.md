@@ -102,7 +102,7 @@ See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 
 ## Universal Bans
 
-- Task/Explore agents (use Glob + Read + Grep directly)
+- Ad-hoc agents that write source files, run tests, execute bash, or produce implementation code (Explore/Plan agents are allowed per `atlas-architecture.md` — Glob + Read + Grep for tasks that need ≤ 3 searches)
 - Writing code touching AST/Type/Value without checking quick-refs first (`.claude/rules/atlas-ast.md`, `atlas-typechecker.md`, `atlas-syntax.md` — pre-verified facts, no grep needed)
 - Assumptions without codebase verification (grep → verify → write)
 - Stub implementations, partial work, skipped edge cases

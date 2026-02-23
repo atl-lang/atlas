@@ -39,9 +39,9 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 
 | Domain | Add tests to... |
 |--------|----------------|
-| Stdlib | `tests/stdlib/` → strings, json, io, types, functions, collections, parity, vm_stdlib, integration, docs_verification |
+| Stdlib | `tests/stdlib/` → strings, json, io, types, functions, collections, parity, vm_stdlib, integration, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
 | Type system | `tests/typesystem/` → inference, constraints, flow, generics, bindings, integration |
-| VM behavior | `tests/vm/` → integration, member, complex_programs, regression, performance, functions, nested, for_in |
+| VM behavior | `tests/vm/` → integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
 | Interpreter | `tests/interpreter/` → member, nested_functions, scope, pattern_matching, assignment, for_in, integration |
 | System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
 

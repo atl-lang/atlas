@@ -19,8 +19,8 @@ Every new test file = a new binary = more link time + slower CI. **Add to existi
 | Full frontend pipeline | `tests/frontend_integration.rs` |
 | Type inference, generics | `tests/typesystem/` (inference, constraints, flow, generics, bindings, integration) |
 | Interpreter execution | `tests/interpreter/` (member, nested_functions, scope, pattern_matching, assignment, for_in, integration) |
-| VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in) |
-| Stdlib functions | `tests/stdlib/` (integration, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification) |
+| VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
+| Stdlib functions | `tests/stdlib/` (integration, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
 | Collections (HashMap, Set, Queue) | `tests/collections.rs` |
 | Bytecode compiler, optimizer | `tests/bytecode.rs` |
 | Async, futures, channels | `tests/async_runtime.rs` |
