@@ -25,10 +25,10 @@ Use for ANY change that does not touch Rust source:
 | Cargo metadata only | Version bumps, `[package]` fields, no new deps |
 
 ```bash
-git add <files> && git commit -m "ci: ..." && git push origin main
+git add <files> && git commit -m "ci: ... [skip ci]" && git push origin main
 ```
 
-No branch. No PR. No waiting. Ever.
+**`[skip ci]` is MANDATORY on every direct push.** GitHub skips ALL workflows — no CI, no bench, no nothing. No branch. No PR. No waiting. Ever.
 
 ### Track 2 — PR + CI required (no exceptions)
 
