@@ -8,8 +8,8 @@
 #   Nightly: msrv (1.85) + fuzz (5 targets)
 #
 # Design principles:
-#   - PRs test linux + windows — real divergence point, catches path/CRLF bugs pre-merge
-#   - macOS tested post-merge on main — covered by local dev environment
+#   - PRs test linux only — fast (~3 min), sufficient for logic correctness
+#   - Windows + macOS tested post-merge — catches platform divergence on every block merge
 #   - No redundant `check` job — `test` implies `check`
 #   - Fuzz: 5 targets covering lexer, parser, typechecker, eval, vm
 
@@ -190,7 +190,7 @@ jobs:
             --all-features \
             --workspace \
             --timeout 300 \
-            --exclude-files "target/*" "*/tests/*" "*/benches/*" "*/fuzz/*" \
+            --exclude-files "**/target/**" "**/tests/**" "**/benches/**" "**/fuzz/**" \
             --out xml \
             --output-dir coverage/
       - name: Upload to Codecov
