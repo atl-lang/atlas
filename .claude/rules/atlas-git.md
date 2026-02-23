@@ -1,8 +1,3 @@
----
-paths:
-  - "**"
----
-
 # Atlas Git Workflow
 
 **Single workspace:** `~/dev/projects/atlas/` on `main`. No other worktrees.
