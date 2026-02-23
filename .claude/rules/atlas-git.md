@@ -14,7 +14,7 @@ paths:
 
 ### Track 1 — Direct push to main (no PR, no CI wait)
 
-Use for ANY change that does not touch Rust source:
+Use for ANY change that does not touch Rust source, AND for pure refactors/splits of Rust test files where behavior is unchanged and locally verified:
 
 | Change type | Examples |
 |-------------|---------|
@@ -23,6 +23,7 @@ Use for ANY change that does not touch Rust source:
 | Config | `.coderabbit.yaml`, `deny.toml`, `rust-toolchain.toml` |
 | Docs | `docs/**`, `**.md`, `STATUS.md`, `ROADMAP.md` |
 | Cargo metadata only | Version bumps, `[package]` fields, no new deps |
+| Pure Rust refactors | File splits, renames, moves — zero logic change, full local test suite green (`cargo nextest run -p <crate>`) |
 
 ```bash
 git add <files> && git commit -m "docs(spec): update closure syntax examples [skip ci]" && git push origin main
