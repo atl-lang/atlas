@@ -310,6 +310,11 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         Expr::AnonFn { body, .. } => {
             find_references_in_expr(body, identifier, references);
         }
+        Expr::Block(block) => {
+            for stmt in &block.statements {
+                find_references_in_stmt(stmt, identifier, references);
+            }
+        }
         Expr::Literal(_, _) => {}
     }
 }

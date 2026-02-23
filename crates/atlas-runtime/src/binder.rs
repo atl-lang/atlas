@@ -1021,6 +1021,11 @@ impl Binder {
                 }
                 self.bind_expr(body);
             }
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.bind_statement(stmt);
+                }
+            }
         }
     }
 

@@ -35,6 +35,7 @@ impl Parser {
             TokenKind::LeftBracket => self.parse_array_literal(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Match => self.parse_match_expr(),
+            TokenKind::Fn => self.parse_anon_fn(),
             _ => {
                 self.error("Expected expression");
                 Err(())
@@ -552,6 +553,37 @@ impl Parser {
     }
 
     // parse_function_type removed in favor of parse_paren_type
+
+    /// Parse anonymous function expression: `fn(params) -> ReturnType { body }`
+    fn parse_anon_fn(&mut self) -> Result<Expr, ()> {
+        let start_span = self.consume(TokenKind::Fn, "Expected 'fn'")?.span;
+        self.consume(TokenKind::LeftParen, "Expected '(' after 'fn'")?;
+        let params = self.parse_params()?;
+        self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
+
+        let return_type = if self.match_token(TokenKind::Arrow) {
+            Some(self.parse_type_ref()?)
+        } else {
+            None
+        };
+
+        let body = self.parse_block_expr()?;
+        let body_span = body.span();
+        let span = start_span.merge(body_span);
+
+        Ok(Expr::AnonFn {
+            params,
+            return_type,
+            body: Box::new(body),
+            span,
+        })
+    }
+
+    /// Parse a block as an expression: `{ stmt* }`
+    fn parse_block_expr(&mut self) -> Result<Expr, ()> {
+        let block = self.parse_block()?;
+        Ok(Expr::Block(block))
+    }
 
     /// Parse match expression
     fn parse_match_expr(&mut self) -> Result<Expr, ()> {

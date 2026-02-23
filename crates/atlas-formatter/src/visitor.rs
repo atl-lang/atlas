@@ -559,6 +559,9 @@ impl FormatVisitor {
                 self.visit_expr(body);
                 self.write(" }");
             }
+            Expr::Block(_block) => {
+                // Block formatting deferred to later phase
+            }
         }
     }
 

@@ -27,6 +27,11 @@ impl Compiler {
                 "anonymous functions not yet supported",
                 *span,
             )]),
+            Expr::Block(block) => Err(vec![Diagnostic::error_with_code(
+                "AT0400",
+                "block expressions not yet supported in compiled mode",
+                block.span,
+            )]),
         }
     }
 

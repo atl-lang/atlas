@@ -47,6 +47,12 @@ impl<'a> TypeChecker<'a> {
                 ));
                 Type::Unknown
             }
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.check_statement(stmt);
+                }
+                Type::Unknown
+            }
         }
     }
 

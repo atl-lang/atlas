@@ -234,6 +234,9 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
         Expr::AnonFn { body, .. } => {
             extract_names_from_expr(body, names);
         }
+        Expr::Block(block) => {
+            let _ = block;
+        }
         Expr::Literal(_, _) => {}
     }
 }

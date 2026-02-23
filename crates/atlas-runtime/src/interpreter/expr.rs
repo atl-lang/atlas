@@ -24,6 +24,13 @@ impl Interpreter {
                 msg: "anonymous functions not yet supported".to_string(),
                 span: *span,
             }),
+            Expr::Block(block) => {
+                let mut result = Value::Null;
+                for stmt in &block.statements {
+                    result = self.eval_statement(stmt)?;
+                }
+                Ok(result)
+            }
         }
     }
 

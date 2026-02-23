@@ -459,6 +459,9 @@ pub enum Expr {
         body: Box<Expr>,
         span: Span,
     },
+    /// Block expression: `{ stmt* }`
+    /// Used as the body of anonymous functions and other block-level expressions.
+    Block(Block),
 }
 
 /// Unary expression
@@ -691,6 +694,7 @@ impl Expr {
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
             Expr::AnonFn { span, .. } => *span,
+            Expr::Block(block) => block.span,
         }
     }
 }
