@@ -92,10 +92,24 @@ See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 
 ## Universal Bans
 
-- Task/Explore agents (use Glob + Read + Grep directly)
-- Writing code touching AST/Type/Value without running `domain-prereqs.md` queries first
+- **Code-writing agents** — all file writes, test runs, and implementation stay in the main context
+- Writing code touching AST/Type/Value without checking quick-refs first (`.claude/rules/atlas-ast.md`, `atlas-typechecker.md`, `atlas-syntax.md` — pre-verified facts, no grep needed)
 - Assumptions without codebase verification (grep → verify → write)
 - Stub implementations, partial work, skipped edge cases
+
+## Agent Usage (Allowed)
+
+Exploration and search agents are permitted when direct tools would require > 3 rounds:
+
+| Agent | Model | Allowed for |
+|-------|-------|-------------|
+| `Explore` | haiku | Multi-location codebase searches, structural questions, finding patterns across many files |
+| `Plan` | haiku | Architecture planning before complex multi-file changes |
+
+**Designated agents (always allowed):** `atlas-doc-auditor` — runs at GATE 7, scoped to doc/memory auditing. These are pre-approved, not ad-hoc.
+**Not allowed:** Ad-hoc agents that write source files, run tests, execute bash, or produce implementation code.
+**Rule of thumb:** If Glob + Grep + Read answers it in ≤ 3 calls → do it directly. If you'd need to fan out across 10+ files → use Explore (haiku).
+**See `.claude/rules/atlas-architecture.md`** for the full policy.
 
 ---
 
