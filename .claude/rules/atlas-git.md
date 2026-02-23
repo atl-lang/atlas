@@ -102,6 +102,27 @@ If you find yourself wanting to push something while a CI-critical PR is in flig
 
 **The freeze ends when the PR merges.** Then rebase the block branch and continue.
 
+## Branch Hygiene (MANDATORY)
+
+Stale branches cause confusion, conflicts, and accidental overwrites.
+
+### Rules
+- **At most 3 remote branches:** `main` + `gh-pages` (permanent) + 1 active branch (block/fix/ci/docs)
+- **Never leave a PR open and unattended.** Any `fix/` or `ci/` branch must merge or close before the session ends
+- **Prune after every merge:** `git remote prune origin` to sync local refs
+- **No orphan branches.** A branch with no open PR and no active work must be deleted immediately
+
+### Session-start audit (GATE -1)
+```bash
+git branch -r | grep -v "HEAD\|dependabot"   # should show: origin/main + origin/gh-pages + origin/<active-branch>
+gh pr list                                      # should show 0 or 1 open PR
+git remote prune origin                         # prune stale tracking refs
+```
+
+If more than 1 PR open or more than 3 remote branches → **stop and audit before any work.**
+
+---
+
 ## Banned
 
 - `git push origin main` directly
