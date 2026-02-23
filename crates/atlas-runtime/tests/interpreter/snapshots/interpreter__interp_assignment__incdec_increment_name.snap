@@ -1,0 +1,16 @@
+---
+source: crates/atlas-runtime/tests/interpreter/assignment.rs
+assertion_line: 76
+expression: "program.items[0]"
+---
+Statement:
+  Increment:
+    target:
+      Name:
+        name: x
+        span:
+          start: 0
+          end: 1
+    span:
+      start: 0
+      end: 4
