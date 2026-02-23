@@ -1,0 +1,62 @@
+#!/bin/bash
+# Atlas pre-push hook
+# Runs fast local validation before any push reaches GitHub.
+# Catches errors in seconds instead of after a full CI run.
+#
+# Activated by: git config core.hooksPath .githooks
+# (GATE -1 verifies this is set)
+
+set -e
+
+# Determine changed files vs origin/main
+CHANGED=$(git diff --name-only origin/main...HEAD 2>/dev/null \
+  || git diff --name-only HEAD~1 HEAD 2>/dev/null \
+  || true)
+
+if [ -z "$CHANGED" ]; then
+  exit 0
+fi
+
+ERRORS=0
+
+# ── 1. actionlint on any workflow file changes ─────────────────────────────
+CHANGED_WORKFLOWS=$(echo "$CHANGED" | grep "^\.github/workflows/.*\.yml$" || true)
+if [ -n "$CHANGED_WORKFLOWS" ]; then
+  if ! command -v actionlint >/dev/null 2>&1; then
+    echo "ERROR: actionlint not installed. Run: brew install actionlint"
+    exit 1
+  fi
+  echo "pre-push: actionlint..."
+  # shellcheck disable=SC2086
+  if ! actionlint $CHANGED_WORKFLOWS; then
+    echo "BLOCKED: fix actionlint errors before pushing"
+    ERRORS=1
+  fi
+fi
+
+# ── 2. cargo fmt check on any Rust changes ────────────────────────────────
+CHANGED_RS=$(echo "$CHANGED" | grep "\.rs$" || true)
+if [ -n "$CHANGED_RS" ]; then
+  echo "pre-push: cargo fmt check..."
+  if ! cargo fmt --all --check 2>&1; then
+    echo "BLOCKED: run 'cargo fmt --all' then re-commit"
+    ERRORS=1
+  fi
+fi
+
+# ── 3. deny.toml / Cargo.toml dep changes → cargo check ──────────────────
+CHANGED_DEPS=$(echo "$CHANGED" | grep -E "Cargo\.(toml|lock)$|deny\.toml$" || true)
+if [ -n "$CHANGED_DEPS" ]; then
+  echo "pre-push: cargo check (dep change detected)..."
+  if ! cargo check --all-features --workspace -q 2>&1; then
+    echo "BLOCKED: fix cargo check errors before pushing"
+    ERRORS=1
+  fi
+fi
+
+if [ "$ERRORS" -eq 1 ]; then
+  exit 1
+fi
+
+echo "pre-push: all checks passed"
+exit 0

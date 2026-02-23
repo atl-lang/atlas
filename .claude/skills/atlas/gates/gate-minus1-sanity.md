@@ -129,15 +129,19 @@ grep -c "\.claude" .github/workflows/ci.yml
 
 # 5. actionlint present — workflow protection layer
 grep -c "actionlint" .github/workflows/ci.yml
+
+# 6. Pre-push hook active
+git config core.hooksPath
 ```
 
 | Check | Pass | Fail → Action |
 |-------|------|---------------|
 | MEMORY.md ≤ 50 lines | number ≤ 50 | **BLOCKING** — split/archive before any work |
 | Rule files exist | no output | **BLOCKING** — missing file = broken governance; create or restore before proceeding |
-| pull_request ≥ 1 | count ≥ 1 | CI drifted — open `ci/` fix branch before phase work |
-| .claude excluded ≥ 1 | count ≥ 1 | Path filter gap — open `ci/` fix before any `.claude/` PR |
-| actionlint ≥ 1 | count ≥ 1 | Workflow protection drifted — open `ci/` fix branch |
+| pull_request ≥ 1 | count ≥ 1 | CI drifted — direct push fix to main |
+| .claude excluded ≥ 1 | count ≥ 1 | Path filter gap — direct push fix to main |
+| actionlint ≥ 1 | count ≥ 1 | Workflow protection drifted — direct push fix to main |
+| hooksPath = .githooks | `.githooks` | **BLOCKING** — `git config core.hooksPath .githooks` before any work |
 
 **Cost: 5 tool calls, ~0 context. Every check is BLOCKING if it fails.**
 
@@ -146,21 +150,31 @@ grep -c "actionlint" .github/workflows/ci.yml
 These must be present. Install autonomously — never ask the user.
 
 ```bash
-which actionlint  || brew install actionlint
-which cargo-audit || cargo install cargo-audit --locked
+which actionlint    || brew install actionlint
+which cargo-audit   || cargo install cargo-audit --locked
 which cargo-nextest || cargo install cargo-nextest --locked
 ```
 
-### If you modified a `.github/workflows/` file this session
+### Pre-push Hook (BLOCKING if missing)
 
-Run actionlint locally to verify YAML validity before committing:
+The pre-push hook in `.githooks/pre-push` runs automatically on every push and catches:
+- actionlint errors on workflow file changes
+- cargo fmt failures on Rust changes
+- cargo check failures on Cargo.toml/deny.toml changes
+
+Verify it is active:
 ```bash
-# Install once: brew install actionlint  (or go install github.com/rhysd/actionlint/cmd/actionlint@latest)
-actionlint .github/workflows/ci.yml
-actionlint .github/workflows/bench.yml
+git config core.hooksPath    # must output: .githooks
+ls .githooks/pre-push        # must exist
 ```
 
-Also apply Layer 2 + Layer 3 from `atlas-ci.md` — read it if you haven't.
+If missing or not configured — fix before doing any work:
+```bash
+git config core.hooksPath .githooks
+chmod +x .githooks/pre-push
+```
+
+This is why workflow errors are caught in seconds locally, not after a full CI run on GitHub.
 
 ---
 
