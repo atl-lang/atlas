@@ -115,6 +115,14 @@ reviews:
         - No jobs are accidentally skipped on non-docs branches
         - Docs-only PRs correctly skip Rust jobs via path filters
 
+        Documented architectural decisions — do not flag these as issues:
+        - Coverage (tarpaulin) runs on main push ONLY, not on PRs. This is intentional:
+          tarpaulin takes ~5 min and running it on every PR would kill the hyper-paced
+          block workflow. Codecov uses carryforward=true so PRs still get patch coverage
+          checks against the last baseline without re-running tarpaulin.
+        - The path filter uses an exclusion model (everything except docs/images is code).
+          Do not suggest switching to an allowlist — new config files would silently skip CI.
+
   auto_review:
     enabled: true
     auto_incremental_review: true
