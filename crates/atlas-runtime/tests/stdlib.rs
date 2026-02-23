@@ -54,24 +54,23 @@ fn assert_eval_string_with_io(source: &str, expected: &str) {
 }
 
 // Domain submodules (files live in tests/stdlib/)
-#[path = "stdlib/integration.rs"]
-mod integration;
-#[path = "stdlib/strings.rs"]
-mod strings;
-#[path = "stdlib/json.rs"]
-mod json;
-#[path = "stdlib/io.rs"]
-mod io;
-#[path = "stdlib/types.rs"]
-mod types;
-#[path = "stdlib/functions.rs"]
-mod functions;
 #[path = "stdlib/collections.rs"]
 mod collections;
-#[path = "stdlib/parity.rs"]
-mod parity;
-#[path = "stdlib/vm_stdlib.rs"]
-mod vm_stdlib;
 #[path = "stdlib/docs_verification.rs"]
 mod docs_verification;
-
+#[path = "stdlib/functions.rs"]
+mod functions;
+#[path = "stdlib/integration.rs"]
+mod integration;
+#[path = "stdlib/io.rs"]
+mod io;
+#[path = "stdlib/json.rs"]
+mod json;
+#[path = "stdlib/parity.rs"]
+mod parity;
+#[path = "stdlib/strings.rs"]
+mod strings;
+#[path = "stdlib/types.rs"]
+mod types;
+#[path = "stdlib/vm_stdlib.rs"]
+mod vm_stdlib;

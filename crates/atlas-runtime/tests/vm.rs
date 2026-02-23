@@ -155,7 +155,6 @@ fn assert_error_parity(source: &str) {
 // 1. Optimizer + Debugger Integration (tests 1-10)
 // ============================================================================
 
-
 fn run_vm(source: &str) -> Result<String, String> {
     let mut lexer = Lexer::new(source);
     let (tokens, _) = lexer.tokenize();
@@ -181,21 +180,20 @@ fn run_vm(source: &str) -> Result<String, String> {
     }
 }
 
-
 // Domain submodules (files live in tests/vm/)
+#[path = "vm/complex_programs.rs"]
+mod vm_complex_programs;
+#[path = "vm/for_in.rs"]
+mod vm_for_in;
+#[path = "vm/functions.rs"]
+mod vm_functions;
 #[path = "vm/integration.rs"]
 mod vm_integration;
 #[path = "vm/member.rs"]
 mod vm_member;
-#[path = "vm/complex_programs.rs"]
-mod vm_complex_programs;
-#[path = "vm/regression.rs"]
-mod vm_regression;
-#[path = "vm/performance.rs"]
-mod vm_performance;
-#[path = "vm/functions.rs"]
-mod vm_functions;
 #[path = "vm/nested.rs"]
 mod vm_nested;
-#[path = "vm/for_in.rs"]
-mod vm_for_in;
+#[path = "vm/performance.rs"]
+mod vm_performance;
+#[path = "vm/regression.rs"]
+mod vm_regression;

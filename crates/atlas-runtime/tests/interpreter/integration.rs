@@ -717,7 +717,6 @@ fn test_function_scope() {
 // ============================================================================
 // From integration/interpreter/strings.rs
 
-
 // From integration/interpreter/strings.rs
 // ============================================================================
 

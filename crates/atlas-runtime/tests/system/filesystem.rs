@@ -692,5 +692,3 @@ fn eval_ok(code: &str) -> Value {
     let runtime = Atlas::new_with_security(security);
     runtime.eval(code).unwrap()
 }
-
-

@@ -1202,4 +1202,3 @@ fn test_parity_block03_scenario_j_vm() {
     );
     assert_eq!(result.unwrap(), "Number(14)");
 }
-

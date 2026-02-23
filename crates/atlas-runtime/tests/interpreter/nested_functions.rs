@@ -1061,4 +1061,3 @@ fn test_typecheck_nested_function_underscore_suppresses_warning() {
 }
 
 // ============================================================================
-

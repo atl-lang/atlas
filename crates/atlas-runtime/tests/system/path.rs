@@ -571,4 +571,3 @@ fn test_path_normalization_workflow() {
 // Comprehensive tests for fs module: directories, metadata, symlinks, temporary files
 
 // ============================================================================
-

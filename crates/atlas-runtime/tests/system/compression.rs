@@ -2514,4 +2514,3 @@ fn test_path_normalize_dot_and_dotdot() {
         _ => panic!("Expected string"),
     }
 }
-
