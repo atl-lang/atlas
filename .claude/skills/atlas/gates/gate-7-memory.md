@@ -8,24 +8,35 @@
 
 ## Quick Self-Check (10 seconds)
 
-Ask these questions:
+**Use the objective trigger, not the subjective one:**
+- ❌ Subjective (wrong): "Did I make an architectural decision?"
+- ✅ Objective (right): "Could a future agent, with no session context, make a different choice here?"
 
-1. **Did I hit an API surprise?** (pattern not documented) → Update `patterns.md`
-2. **Did I make an architectural decision?** (new constraint or approach) → Update `decisions/{domain}.md`
+If yes → log it. The bar is low. Log it anyway.
+
+1. **Did I hit an API surprise?** → Update `.claude/rules/atlas-*.md` AND `patterns.md`
+2. **Could a future agent make a different choice about anything I did?** → Update `decisions/{domain}.md`
 3. **Did I discover a crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
-4. **Staleness check — 4 targeted greps:**
+4. **Did I add/rename an AST node, Type variant, opcode, or error code?** → Run `atlas-doc-auditor`
+5. **Closed-loop verification — did everything I created actually land?**
    ```bash
-   # a. Stale worktree refs in memory (must return 0)
-   grep -c "worktree" ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
-   # b. Stale phase/ branch naming in gate (must return 0)
-   grep -c "phase/{category}" .claude/skills/atlas/gates/gate-minus1-sanity.md
-   # c. CI test gate includes PR (must return ≥1)
-   grep -c "pull_request" .github/workflows/ci.yml
-   # d. git-workflow has rebase-before-push (must return ≥1)
-   grep -c "rebase origin/main" .claude/skills/atlas/gates/git-workflow.md
+   # Rule files referenced in MEMORY.md must exist
+   ls .claude/rules/atlas-architecture.md .claude/rules/atlas-testing.md \
+      .claude/rules/atlas-parity.md 2>&1 | grep "No such file"
+   # decisions/workflow.md must exist
+   ls ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/decisions/workflow.md \
+      2>&1 | grep "No such file"
+   # MEMORY.md within limit
+   wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
    ```
-   Any mismatch → fix before committing.
-5. **Is any file approaching size limit?** → Split or archive
+   Any missing file → create it before committing. MEMORY.md > 50 → split before committing.
+6. **Staleness greps:**
+   ```bash
+   grep -c "pull_request" .github/workflows/ci.yml            # must return ≥1
+   grep -c "rebase origin/main" .claude/skills/atlas/gates/git-workflow.md  # must return ≥1
+   grep -c "\.claude" .github/workflows/ci.yml                 # must return ≥1
+   ```
+7. **Is any source file approaching size limit?** → Flag in summary, split if blocking
 
 ## When to Update Memory
 

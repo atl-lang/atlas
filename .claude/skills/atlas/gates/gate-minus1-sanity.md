@@ -105,29 +105,51 @@ cargo audit
 
 ---
 
-## Step 4b: Spot-Check (3 greps, ~1 second)
+## Step 4b: Integrity Spot-Check (BLOCKING)
 
-These catch the most common memory/skill drift without reading full files:
+Runs every session. Catches drift, broken references, and missing files before they compound.
 
 ```bash
 # 1. MEMORY.md line count — must stay ≤ 50
 wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
 
-# 2. CI test gate — must include pull_request (added PR #119)
+# 2. All always-on rule files referenced in MEMORY.md must exist on disk
+ls .claude/rules/atlas-git.md .claude/rules/atlas-comms.md \
+   .claude/rules/atlas-architecture.md .claude/rules/atlas-ci.md \
+   .claude/rules/atlas-testing.md .claude/rules/atlas-parity.md \
+   .claude/rules/atlas-syntax.md .claude/rules/atlas-ast.md \
+   .claude/rules/atlas-typechecker.md .claude/rules/atlas-interpreter.md \
+   .claude/rules/atlas-vm.md 2>&1 | grep "No such file"
+
+# 3. CI test gate — must include pull_request
 grep -c "pull_request" .github/workflows/ci.yml
 
-# 3. actionlint present — workflow protection layer (added ci/workflow-protection-layer)
+# 4. CI path filter — .claude/ must be excluded from code detection
+grep -c "\.claude" .github/workflows/ci.yml
+
+# 5. actionlint present — workflow protection layer
 grep -c "actionlint" .github/workflows/ci.yml
 ```
 
-| Result | Action |
-|--------|--------|
-| MEMORY.md > 50 lines | Split/archive before proceeding — BLOCKING |
-| grep (pull_request) returns 0 | CI has drifted — open `ci/` fix branch before phase work |
-| grep (actionlint) returns 0 | Workflow protection drifted — open `ci/` fix branch |
-| All clean | Proceed |
+| Check | Pass | Fail → Action |
+|-------|------|---------------|
+| MEMORY.md ≤ 50 lines | number ≤ 50 | **BLOCKING** — split/archive before any work |
+| Rule files exist | no output | **BLOCKING** — missing file = broken governance; create or restore before proceeding |
+| pull_request ≥ 1 | count ≥ 1 | CI drifted — open `ci/` fix branch before phase work |
+| .claude excluded ≥ 1 | count ≥ 1 | Path filter gap — open `ci/` fix before any `.claude/` PR |
+| actionlint ≥ 1 | count ≥ 1 | Workflow protection drifted — open `ci/` fix branch |
 
-**Cost: 3 tool calls, ~0 context.** Catches the three highest-churn facts.
+**Cost: 5 tool calls, ~0 context. Every check is BLOCKING if it fails.**
+
+### Required Tools
+
+These must be present. Install autonomously — never ask the user.
+
+```bash
+which actionlint  || brew install actionlint
+which cargo-audit || cargo install cargo-audit --locked
+which cargo-nextest || cargo install cargo-nextest --locked
+```
 
 ### If you modified a `.github/workflows/` file this session
 

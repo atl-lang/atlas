@@ -133,4 +133,27 @@ Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
 
 ---
 
+## Step 5: Architecture Health Check
+
+**Before writing any code**, verify the files you will touch are not already in violation.
+
+```bash
+find crates/ -name "*.rs" -not -path "*/target/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
+```
+
+| Result | Action |
+|--------|--------|
+| Source file > 2,000 lines (no ARCH-EXCEPTION comment) | **BLOCKING** — split before adding any code |
+| Source file 1,500–2,000 lines | Flag in phase summary — do not grow further |
+| Test file > 4,000 lines | **BLOCKING** — migrate to subdirectory before adding tests |
+| Test file 3,000–4,000 lines | Flag in phase summary — plan migration |
+
+**ARCH-EXCEPTION protocol:** If a file legitimately cannot be split (e.g. VM execute loop),
+it must have `// ARCH-EXCEPTION: <reason>` at the top. If the comment is missing, the file
+is in violation regardless of circumstance.
+
+**See `.claude/rules/atlas-architecture.md`** for full thresholds and migration patterns.
+
+---
+
 **Next:** GATE 1

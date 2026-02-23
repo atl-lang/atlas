@@ -1,3 +1,8 @@
+---
+paths:
+  - "**"
+---
+
 # Atlas Git Workflow
 
 **Single workspace:** `~/dev/projects/atlas/` on `main`. No other worktrees.
@@ -63,20 +68,11 @@ block/trait-system branch:
 **Exception:** Blocking fixes or critical CI changes may PR immediately on a `fix/`
 or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
 
-## PR Batching (AI-Pace Rule)
-
-Atlas is 100% AI-maintained. AI generates changes in seconds, not hours. One PR per file change is a human-pace habit that creates CI cascade and wastes runner time.
-
-**Batch related changes into one PR.**
-
-| Situation | Rule |
-|-----------|------|
-| Multiple `ci/`, `docs/`, or process changes in one session | One PR, all batched |
-| Urgent `fix/` that must land immediately | Standalone PR is fine |
-| Changes logically unrelated AND one might revert without the other | Split |
-| Block work | Always one PR per block (separate rule) |
-
-**Before opening any PR, ask:** is there other work in this session that belongs in the same PR? If yes — finish it first, then open one PR for all of it.
+**CRITICAL: `fix/`, `ci/`, and `docs/` branches MUST be created from `main`, never from `block/`.**
+Creating a side branch from `block/closures` carries all block commits into the rebase,
+causing conflicts and making it easy to lose work when the branch is deleted.
+If you are on a block branch and need to open a side PR: commit your block work first,
+then `git checkout main && git pull && git checkout -b fix/name`.
 
 ## CI Push Discipline
 
@@ -89,23 +85,37 @@ Atlas is 100% AI-maintained. AI generates changes in seconds, not hours. One PR 
 
 Never push to address one comment while others are pending.
 
-## Merge Freeze (MANDATORY)
+## Branch Hygiene (MANDATORY)
 
-**`strict_required_status_checks_policy=true` means every merge to main makes every open PR go BEHIND, resetting its CI from scratch.**
+Stale branches are a safety hazard — they cause confusion, conflicts, and accidental overwrites.
 
-When a `fix/` or `ci/` PR is open and running CI:
-- **No new PRs** — do not open any other PR until this one merges
-- **No pushes to any branch that would trigger a main merge** — that includes auto-merge completing on another PR
-- **Do not create "quick fix" branches** to work around waiting — they become the problem
+### Rules
+- **At most 3 remote branches:** `main` + `gh-pages` (permanent) + 1 active branch (block/fix/ci/docs)
+- **Never leave a PR open and unattended.** If a `fix/` or `ci/` branch is opened, it must merge or be closed before the next session ends
+- **Prune after every merge:** `git remote prune origin` after any PR merges to sync local refs
+- **No orphan branches.** A branch with no open PR and no active work must be deleted immediately
 
-If you find yourself wanting to push something while a CI-critical PR is in flight: **don't**. Wait. The cost of one merge resetting CI is 5–15 minutes of wasted runner time and another rebase cycle.
+### Session-start audit (GATE -1)
+Run at the start of every session:
+```bash
+git branch -r | grep -v "HEAD\|dependabot"   # should show: origin/main + origin/gh-pages + origin/<active-branch>
+gh pr list                                      # should show 0 or 1 open PR
+git remote prune origin                         # prune any stale tracking refs
+```
 
-**The freeze ends when the PR merges.** Then rebase the block branch and continue.
+If more than 1 PR is open or more than 2 remote branches exist → **stop and audit before doing any work.**
+
+### When a `fix/` or `ci/` branch is needed
+1. Create it, do the work, push, PR, set auto-merge
+2. **Do not switch back to the block branch until CI passes and PR merges**
+3. After merge: `git checkout block/<name> && git remote prune origin`
 
 ## Banned
 
 - `git push origin main` directly
 - Merge commits (`--no-ff`)
-- `--force` on main (use `--force-with-lease` only when rebasing)
+<<<<<<< HEAD
+- `--force` on main (use `--force-with-lease` only when rebasing your own branch)
 - `--no-verify`
 - Force-pushing to address review comments one at a time
+- Leaving branches open across sessions without a tracking note in STATUS.md
