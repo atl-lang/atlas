@@ -72,7 +72,10 @@ Coverage is enforced by Codecov via `codecov.yml` in the repo root.
 **Patch coverage:** 80% of new lines must be covered.
 **Project drop:** CI fails if total coverage drops more than 2% in a single PR.
 
-Coverage runs on PRs (for the diff comment) and on main push (for the baseline).
+Coverage runs on **main push only** — NOT on PRs. Tarpaulin is slow (~5 min); running it
+on every PR would kill the hyper-paced block workflow. Codecov uses `carryforward: true`
+to apply the last baseline to PR patch checks — PRs still get a Codecov status check,
+just without re-running tarpaulin.
 Tarpaulin excludes: `target/`, `*/tests/`, `*/benches/`, `*/fuzz/`.
 
 ## Benchmark Regression Policy
