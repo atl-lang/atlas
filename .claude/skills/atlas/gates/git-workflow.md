@@ -67,6 +67,44 @@ git checkout main && git pull origin main
 git branch -d block/{name}
 ```
 
+## CodeRabbit Review (MANDATORY — run after every PR is created)
+
+CodeRabbit reviews within ~2 minutes of PR creation. After pushing:
+
+```bash
+# Wait for CodeRabbit, then check
+gh pr view <N> --comments | grep -A 20 "coderabbitai"
+```
+
+**For each CodeRabbit finding, evaluate against documented decisions:**
+
+| Finding type | Action |
+|---|---|
+| Real bug (not covered by any decision) | Fix it — commit to the branch, push |
+| Conflicts with documented decision | Dismiss + teach CodeRabbit |
+
+**Dismiss + teach flow:**
+```bash
+# 1. Dismiss the review so it doesn't block auto-merge
+gh pr comment <N> --body "@coderabbitai resolve"
+
+# 2. Add the decision to .coderabbit.yaml path_instructions
+#    so CodeRabbit won't flag it again on future PRs
+#    Edit .coderabbit.yaml → relevant path block → add explanation under
+#    "Documented architectural decisions — do not flag these as issues:"
+
+# 3. Commit and push the .coderabbit.yaml update to the same PR
+git add .coderabbit.yaml && git commit -m "ci(coderabbit): ..."
+git push
+```
+
+**Decisions to check findings against:**
+- `.claude/rules/atlas-ci.md` — CI architecture, coverage policy, path filter model
+- `.claude/rules/atlas-parity.md` — interpreter/VM parity rules
+- `.claude/rules/atlas-testing.md` — no new test files in atlas-runtime
+- `docs/specification/memory-model.md` — CoW, own/borrow/shared (LOCKED)
+- `ROADMAP.md`, `docs/internal/V03_PLAN.md` — scope decisions
+
 **Why rebase before push:** `strict_required_status_checks_policy=true` in the ruleset
 means GitHub auto-merge will stall if any commit landed on main after the branch was
 last rebased. Always rebase immediately before push to guarantee auto-merge proceeds.
