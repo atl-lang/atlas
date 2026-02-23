@@ -998,3 +998,114 @@ outer();
         14.0,
     );
 }
+
+// ============================================================================
+// Phase 4: Typechecker — AnonFn type resolution
+// ============================================================================
+
+fn typecheck_errors(source: &str) -> Vec<String> {
+    let mut lexer = atlas_runtime::lexer::Lexer::new(source.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = atlas_runtime::binder::Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let diagnostics = typechecker.check(&program);
+    diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .map(|d| d.message.clone())
+        .collect()
+}
+
+fn typecheck_ok(source: &str) {
+    let errors = typecheck_errors(source);
+    assert!(
+        errors.is_empty(),
+        "Expected no type errors, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_typed_params_produces_function_type() {
+    // Typed anon fn — typechecker resolves it without error
+    typecheck_ok(
+        r#"
+let f = fn(x: number) -> number { x + 1; };
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_untyped_params_no_error() {
+    // Arrow fn with untyped params — Unknown type, no crash, no error
+    typecheck_ok(
+        r#"
+let f = (x) => x;
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_return_type_mismatch_errors() {
+    // Declared return type doesn't match body type
+    let errors = typecheck_errors(
+        r#"
+let f = fn(x: number) -> string { x + 1; };
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected type error for return type mismatch"
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_passed_as_arg_no_error() {
+    // Anon fn passed as argument to a higher-order function
+    // Atlas function type syntax: (params) -> return, not fn(params) -> return
+    typecheck_ok(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number {
+    return f(x);
+}
+apply(fn(x: number) -> number { x * 2; }, 5);
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_arrow_syntax_no_error() {
+    // Arrow syntax — no declared types, typechecks without error
+    typecheck_ok(
+        r#"
+let double = (x) => x;
+double(4);
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_captures_borrow_param_errors() {
+    // Capturing a `borrow` param in a closure is an error
+    // Atlas function type syntax: () -> number, not fn() -> number
+    let errors = typecheck_errors(
+        r#"
+fn outer(borrow x: number) -> () -> number {
+    return fn() -> number { x; };
+}
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected error for capturing borrow param in closure"
+    );
+    assert!(
+        errors.iter().any(|e| e.contains("borrow") || e.contains("AT3040")),
+        "Expected borrow capture error, got: {:?}",
+        errors
+    );
+}
+
