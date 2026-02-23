@@ -2,8 +2,12 @@
 # https://github.com/EmbarkStudios/cargo-deny
 
 [advisories]
-# Check for security vulnerabilities
-yanked = "warn"
+# yanked crates are a hard block.
+# unsound = "all" reports all unsound advisories (cargo-audit handles severity).
+# unmaintained = "none" — informational only, doesn't block CI.
+yanked = "deny"
+unsound = "all"
+unmaintained = "none"
 
 [licenses]
 # Ensure all dependencies use approved licenses

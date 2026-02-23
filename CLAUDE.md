@@ -17,6 +17,7 @@
 - **Direct push to main is rejected.** Branch protection enforces PRs + CI.
 - **Single workspace:** `~/dev/projects/atlas/` — no other worktrees.
 - **See `.claude/rules/atlas-git.md`** for full PR workflow and branch naming.
+- **See `.claude/rules/atlas-comms.md`** for PR/commit/docs wording standards.
 
 ## Cross-Platform Testing
 - Use `std::path::Path` APIs, not string manipulation for paths.

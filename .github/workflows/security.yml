@@ -1,7 +1,11 @@
 # Security - Dependency auditing and supply chain verification
 #
 # Runs on PRs that touch Cargo.toml/Cargo.lock, and on a weekly schedule.
-# Run manually: cargo audit && cargo deny check
+# Run locally: cargo audit && cargo deny check
+#
+# Policy:
+#   - vulnerability / unsound / yanked  → deny (blocks CI)
+#   - unmaintained                      → warn (informational only)
 
 name: Security
 
@@ -39,11 +43,13 @@ jobs:
         with:
           tool: cargo-audit
 
+      # Deny actual vulnerabilities and yanked crates.
+      # Unmaintained crates are warned about but do not fail the build.
       - name: Run audit
-        run: cargo audit --deny warnings --json > audit-results.json || true
+        run: cargo audit --deny unsound --deny yanked --json > audit-results.json || true
 
       - name: Check results
-        run: cargo audit --deny warnings
+        run: cargo audit --deny unsound --deny yanked
 
       - name: Upload results
         uses: actions/upload-artifact@v4
@@ -74,17 +80,3 @@ jobs:
               console.log('Could not parse audit results');
             }
 
-  supply-chain:
-    name: Supply Chain
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-deny
-
-      - name: Check all
-        run: cargo deny check

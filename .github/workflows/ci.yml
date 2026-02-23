@@ -1,11 +1,17 @@
 # Atlas CI Pipeline
 #
-# PR / merge queue:  fmt → clippy → check → test (ubuntu)  (~4 min)
-# push to main:      fmt → clippy → test (ubuntu) → test-matrix (3 OS) → coverage
-#                    Nightly: msrv + fuzz
+# PR / merge queue:
+#   fmt → clippy → test (linux + windows, parallel)                 (~4-5 min)
 #
-# Tests run on BOTH PRs and main push. strict_required_status_checks_policy=true
-# means the branch must be up to date — tests must pass against latest main.
+# push to main:
+#   fmt → clippy → test (linux + windows) → test-matrix (macos + beta) → coverage
+#   Nightly: msrv (1.85) + fuzz (5 targets)
+#
+# Design principles:
+#   - PRs test linux + windows — real divergence point, catches path/CRLF bugs pre-merge
+#   - macOS tested post-merge on main — covered by local dev environment
+#   - No redundant `check` job — `test` implies `check`
+#   - Fuzz: 5 targets covering lexer, parser, typechecker, eval, vm
 
 name: CI
 
@@ -32,7 +38,7 @@ env:
 
 jobs:
   # ==========================================================================
-  # Change detection - Skip expensive jobs for docs-only changes
+  # Change detection — skip expensive jobs for docs-only changes
   # ==========================================================================
 
   changes:
@@ -47,10 +53,13 @@ jobs:
         with:
           filters: |
             code:
-              - '**/*.rs'
-              - '**/Cargo.toml'
-              - '**/Cargo.lock'
-              - '.github/workflows/**'
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!phases/**'
+              - '!**/*.png'
+              - '!**/*.jpg'
+              - '!**/*.svg'
 
   # ==========================================================================
   # Fast checks — PR + merge queue + main push
@@ -59,6 +68,8 @@ jobs:
   fmt:
     name: Format
     runs-on: ubuntu-latest
+    needs: [changes]
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -70,7 +81,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     needs: [fmt, changes]
-    if: needs.changes.outputs.code == 'true'
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -79,30 +90,46 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo clippy --all-targets --all-features -- -D warnings
 
-  check:
-    name: Check
+  # ==========================================================================
+  # Supply chain — deny check on every code change (gated by ci-success)
+  # ==========================================================================
+
+  supply-chain:
+    name: Supply Chain
     runs-on: ubuntu-latest
-    needs: [fmt, changes]
-    if: needs.changes.outputs.code == 'true' && github.event_name != 'push'
+    needs: [changes]
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo check --all-targets --all-features
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+      - name: Check supply chain
+        run: cargo deny check
 
   # ==========================================================================
-  # Tests — main push only (milestone runs)
+  # Tests — linux + windows on PRs; macOS + beta added on main push
   # ==========================================================================
 
   test:
-    name: Test (ubuntu-latest/stable)
-    runs-on: ubuntu-latest
+    name: Test (${{ matrix.os }}/stable)
+    runs-on: ${{ matrix.os }}
     needs: [clippy, changes]
-    if: needs.changes.outputs.code == 'true' && (github.event_name == 'pull_request' || github.event_name == 'merge_group' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true' && (github.event_name == 'pull_request' || github.event_name == 'merge_group' || (github.event_name == 'push' && github.ref == 'refs/heads/main'))
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
+      - name: Configure git line endings
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ matrix.os }}
       - name: Install nextest
         uses: taiki-e/install-action@nextest
       - name: Run tests
@@ -120,8 +147,6 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            rust: stable
-          - os: windows-latest
             rust: stable
           - os: ubuntu-latest
             rust: beta
@@ -171,24 +196,17 @@ jobs:
   # ==========================================================================
 
   msrv:
-    name: MSRV (1.70.0)
+    name: MSRV (1.85)
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-        id: stable
-      - uses: dtolnay/rust-toolchain@1.70.0
-        id: msrv
+      - uses: dtolnay/rust-toolchain@1.85
       - uses: Swatinem/rust-cache@v2
         with:
           key: msrv
-      - name: Pin MSRV-compatible dependencies
-        run: |
-          cargo +stable update -p time --precise 0.3.45
-          cargo +stable update -p base64ct --precise 1.7.1
       - name: Check MSRV
-        run: cargo +1.70.0 check -p atlas-runtime --all-features --locked
+        run: cargo +1.85 check -p atlas-runtime --all-features --locked
 
   fuzz:
     name: Fuzz (${{ matrix.target }})
@@ -197,7 +215,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: [fuzz_lexer, fuzz_parser, fuzz_typechecker, fuzz_eval]
+        target:
+          - fuzz_lexer
+          - fuzz_parser
+          - fuzz_typechecker
+          - fuzz_eval
+          - vm_fuzz
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly
@@ -218,23 +241,25 @@ jobs:
   ci-success:
     name: CI Success
     if: always()
-    needs: [fmt, clippy, check, test, test-matrix, changes]
+    needs: [fmt, clippy, supply-chain, test, test-matrix, changes]
     runs-on: ubuntu-latest
     steps:
       - name: Check all jobs passed
         env:
+          CHANGES: ${{ needs.changes.result }}
           FMT: ${{ needs.fmt.result }}
           CLIPPY: ${{ needs.clippy.result }}
-          CHECK: ${{ needs.check.result }}
+          SUPPLY_CHAIN: ${{ needs.supply-chain.result }}
           TEST: ${{ needs.test.result }}
           TEST_MATRIX: ${{ needs.test-matrix.result }}
         run: |
+          echo "changes:      $CHANGES"
           echo "fmt:          $FMT"
           echo "clippy:       $CLIPPY"
-          echo "check:        $CHECK"
+          echo "supply-chain: $SUPPLY_CHAIN"
           echo "test:         $TEST"
           echo "test-matrix:  $TEST_MATRIX"
-          for result in "$FMT" "$CLIPPY" "$CHECK" "$TEST" "$TEST_MATRIX"; do
+          for result in "$CHANGES" "$FMT" "$CLIPPY" "$SUPPLY_CHAIN" "$TEST" "$TEST_MATRIX"; do
             if [[ "$result" == "failure" || "$result" == "cancelled" ]]; then
               echo "A required job failed or was cancelled"
               exit 1
