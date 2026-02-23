@@ -111,9 +111,9 @@ jobs:
           fi
       - name: Run actionlint
         if: steps.wf_changes.outputs.changed == 'true' || github.event_name == 'push'
-        uses: rhysd/actionlint@v1
-        with:
-          fail-on-error: true
+        run: |
+          bash <(curl -s https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
+          ./actionlint -color
 
   # ==========================================================================
   # Supply chain — deny check on every code change (gated by ci-success)
