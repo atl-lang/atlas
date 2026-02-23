@@ -1103,9 +1103,10 @@ fn outer(borrow x: number) -> () -> number {
         "Expected error for capturing borrow param in closure"
     );
     assert!(
-        errors.iter().any(|e| e.contains("borrow") || e.contains("AT3040")),
+        errors
+            .iter()
+            .any(|e| e.contains("borrow") || e.contains("AT3040")),
         "Expected borrow capture error, got: {:?}",
         errors
     );
 }
-

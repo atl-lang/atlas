@@ -1870,8 +1870,7 @@ impl<'a> TypeChecker<'a> {
         // are valid and checked against the declared return type.
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
-        self.current_function_return_type =
-            Some(declared_return.clone().unwrap_or(Type::Unknown));
+        self.current_function_return_type = Some(declared_return.clone().unwrap_or(Type::Unknown));
         self.current_function_info = Some(("<closure>".to_string(), span));
 
         // Enter a new scope for the closure body
