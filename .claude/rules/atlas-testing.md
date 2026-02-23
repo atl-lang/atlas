@@ -10,15 +10,17 @@ Auto-loaded when touching test files. Full patterns in auto-memory `testing-patt
 
 Every new test file = a new binary = more link time + slower CI. **Add to existing domain files.**
 
+**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system` are now split into domain submodules. Each monolith `.rs` is a thin router (66–201 lines). Add tests to the appropriate submodule file, NOT to the router root.
+
 | Domain | File |
 |--------|------|
 | Lexer, parser, syntax | `tests/frontend_syntax.rs` |
 | Diagnostics, error spans | `tests/diagnostics.rs` |
 | Full frontend pipeline | `tests/frontend_integration.rs` |
-| Type inference, generics | `tests/typesystem.rs` |
-| Interpreter execution | `tests/interpreter.rs` |
-| VM execution | `tests/vm.rs` |
-| Stdlib functions | `tests/stdlib.rs` |
+| Type inference, generics | `tests/typesystem/` (inference, constraints, flow, generics, bindings, integration) |
+| Interpreter execution | `tests/interpreter/` (member, nested_functions, scope, pattern_matching, assignment, for_in, integration) |
+| VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in) |
+| Stdlib functions | `tests/stdlib/` (integration, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification) |
 | Collections (HashMap, Set, Queue) | `tests/collections.rs` |
 | Bytecode compiler, optimizer | `tests/bytecode.rs` |
 | Async, futures, channels | `tests/async_runtime.rs` |
