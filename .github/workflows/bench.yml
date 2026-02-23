@@ -1,9 +1,7 @@
 # Benchmarks - Performance regression tracking
 #
-# Manual trigger only (workflow_dispatch) — benchmarks are expensive.
-# Run locally: cargo criterion -p atlas-runtime --output-format bencher
-#
-# To run automatically on main: uncomment the push trigger below.
+# Triggers on Rust source changes to atlas-runtime or manual dispatch.
+# Run locally: cargo bench -p atlas-runtime 2>&1 | grep "test " | tee benchmark-results.txt
 
 name: Benchmarks
 
@@ -42,11 +40,17 @@ jobs:
         with:
           key: bench
 
-      - name: Install cargo-criterion
-        run: cargo install cargo-criterion
+      - name: Run benchmarks
+        run: cargo bench -p atlas-runtime --all-features 2>&1 | grep "^test " | tee benchmark-results.txt
 
-      - name: Run Criterion benchmarks
-        run: cargo criterion -p atlas-runtime --all-features --output-format bencher | tee benchmark-results.txt
+      - name: Verify benchmark output exists
+        run: |
+          if [ ! -s benchmark-results.txt ]; then
+            echo "No benchmark results produced — check that benches compile and run"
+            exit 1
+          fi
+          echo "Benchmark results:"
+          cat benchmark-results.txt
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
@@ -62,10 +66,10 @@ jobs:
           alert-comment-cc-users: '@proxikal'
           save-data-file: true
 
-      - name: Upload raw Criterion results
+      - name: Upload raw results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: criterion-results
-          path: target/criterion/
+          name: bench-results
+          path: benchmark-results.txt
           retention-days: 30

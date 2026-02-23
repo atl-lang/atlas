@@ -6,116 +6,101 @@ paths:
 # Atlas Git Workflow
 
 **Single workspace:** `~/dev/projects/atlas/` on `main`. No other worktrees.
+**100% AI maintained.** proxikal handles GitHub UI only (rulesets, secrets, billing).
 
-## GitHub Branch Protection (main)
+---
 
-- **PRs required** — direct push to `main` is rejected
-- **No merge commits** — linear history only (squash)
-- **CI gate** — "CI Success" check must pass
-- **Auto-merge** — use `gh pr merge --auto --squash`; merges when CI passes
+## Two-Track Push Policy
 
-## PR Workflow
+### Track 1 — Direct push to main (no PR, no CI wait)
+
+Use for ANY change that does not touch Rust source:
+
+| Change type | Examples |
+|-------------|---------|
+| CI/workflows | `.github/workflows/*.yml` |
+| AI workflow | `.claude/**`, `phases/**` |
+| Config | `.coderabbit.yaml`, `deny.toml`, `rust-toolchain.toml` |
+| Docs | `docs/**`, `**.md`, `STATUS.md`, `ROADMAP.md` |
+| Cargo metadata only | Version bumps, `[package]` fields, no new deps |
 
 ```bash
-# 1. Start from clean main
-git checkout main && git pull origin main
-git checkout -b feat/short-description
-
-# 2. Do work, commit
-git add <files> && git commit -m "feat: description"
-
-# 3. Rebase on latest main BEFORE push (strict CI policy requires up-to-date branch)
-git fetch origin && git rebase origin/main
-
-# 4. Push + PR
-git push -u origin feat/short-description
-gh pr create --title "title" --body "body"
-gh pr merge --auto --squash
-
-# 5. After merge: sync and clean up
-git checkout main && git pull origin main
-git branch -d feat/short-description
+git add <files> && git commit -m "ci: ..." && git push origin main
 ```
 
-> **Why:** `strict_required_status_checks_policy=true` means CI won't run (and auto-merge stalls) if any commit landed on main after the branch was created. Always rebase immediately before push.
+No branch. No PR. No waiting. Ever.
 
-## Branch Naming
+### Track 2 — PR + CI required (no exceptions)
+
+Use for ANY change touching Rust source:
+
+- `crates/**/*.rs`
+- `crates/**/Cargo.toml` when adding/changing dependencies
+
+```bash
+git checkout block/{name}   # already on block branch
+# ... implement ...
+git add crates/ && git commit -m "feat: ..."
+# PR opens at block completion, not per-phase
+```
+
+---
+
+## Emergency Bypass (Rust source — rare, strict criteria)
+
+Force-pushing Rust source bypasses CI. Only propose this when ALL of the following are true:
+
+1. **CI failure is infrastructure, not code** — flaky runner, GitHub outage, unrelated test rot
+2. **The change is trivially safe** — typo fix, comment, unreachable dead code removal
+3. **Blocked > 30 minutes** with no CI fix in sight
+4. **Explicitly flag it:** "This qualifies for emergency bypass because [reason]. Confirm?"
+
+**Never propose bypass because:**
+- CI is slow
+- The change "seems obviously correct"
+- We've been waiting a while
+- It's just a one-liner
+
+When in doubt: wait for CI. The bar is high intentionally.
+
+---
+
+## Block Branch Workflow
+
+All phase commits live on `block/{name}`. PR opens only at block completion (final AC check phase).
 
 ```
-block/{name}                # e.g. block/trait-system — ONE branch per block
-feat/{short-description}    # standalone features outside the block plan
-fix/{short-description}     # blocking bug fixes (may PR immediately)
-ci/{short-description}      # CI/infra changes
-docs/{short-description}    # docs-only changes
-```
-
-## Commit Cadence — ONE PR PER BLOCK
-
-All scaffold commits, phase execution commits, and spec/STATUS updates for a block
-live on the **same branch** (`block/{name}`). The PR is opened only when the block's
-final AC check phase is complete.
-
-```
-block/trait-system branch:
+block/closures:
   scaffold commit
-  phase-01 commit
-  phase-02 commit
-  ...
-  phase-18 commit (spec + AC check)
-  ← PR opened here, auto-merged
+  phase-01 commit → phase-12 commit
+  ← PR opened here, CI runs once, auto-squash merges
 ```
 
-**Exception:** Blocking fixes or critical CI changes may PR immediately on a `fix/`
-or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
+**CRITICAL:** `fix/`, `ci/`, `docs/` branches MUST be created from `main`, never from `block/`.
+For non-code fixes mid-block: don't branch at all — direct push to main (Track 1).
 
-**CRITICAL: `fix/`, `ci/`, and `docs/` branches MUST be created from `main`, never from `block/`.**
-Creating a side branch from `block/closures` carries all block commits into the rebase,
-causing conflicts and making it easy to lose work when the branch is deleted.
-If you are on a block branch and need to open a side PR: commit your block work first,
-then `git checkout main && git pull && git checkout -b fix/name`.
+---
 
-## CI Push Discipline
+## Branch Hygiene
 
-**Every force-push resets CI from scratch.** Each push cancels the running CI and starts over. On slow runners (windows, tarpaulin) that's 10+ wasted minutes per push.
-
-**Rule: batch all fixes before pushing.** When CodeRabbit or CI leaves feedback:
-1. Read ALL pending review comments first
-2. Fix everything in one commit
-3. Push once
-
-Never push to address one comment while others are pending.
-
-## Branch Hygiene (MANDATORY)
-
-Stale branches are a safety hazard — they cause confusion, conflicts, and accidental overwrites.
-
-### Rules
-- **At most 3 remote branches:** `main` + `gh-pages` (permanent) + 1 active branch (block/fix/ci/docs)
-- **Never leave a PR open and unattended.** If a `fix/` or `ci/` branch is opened, it must merge or be closed before the next session ends
-- **Prune after every merge:** `git remote prune origin` after any PR merges to sync local refs
-- **No orphan branches.** A branch with no open PR and no active work must be deleted immediately
+- **At most 3 remote branches:** `main` + `gh-pages` + 1 active `block/` branch
+- Track 1 changes never create branches
+- After every PR merge: `git remote prune origin`
 
 ### Session-start audit (GATE -1)
-Run at the start of every session:
 ```bash
-git branch -r | grep -v "HEAD\|dependabot"   # should show: origin/main + origin/gh-pages + origin/<active-branch>
-gh pr list                                      # should show 0 or 1 open PR
-git remote prune origin                         # prune any stale tracking refs
+git branch -r | grep -v "HEAD\|dependabot"   # main + gh-pages [+ block/name]
+gh pr list                                     # 0 or 1 open PR
+git remote prune origin
 ```
 
-If more than 1 PR is open or more than 2 remote branches exist → **stop and audit before doing any work.**
-
-### When a `fix/` or `ci/` branch is needed
-1. Create it, do the work, push, PR, set auto-merge
-2. **Do not switch back to the block branch until CI passes and PR merges**
-3. After merge: `git checkout block/<name> && git remote prune origin`
+---
 
 ## Banned
 
-- `git push origin main` directly
+- PRs for Track 1 changes — direct push instead, always
 - Merge commits (`--no-ff`)
-<<<<<<< HEAD
-- `--force` on main (use `--force-with-lease` only when rebasing your own branch)
+- `--force` without `--force-with-lease`
 - `--no-verify`
-- Force-pushing to address review comments one at a time
-- Leaving branches open across sessions without a tracking note in STATUS.md
+- Branching `fix/`/`ci/`/`docs/` off `block/` branches
+- Proposing emergency bypass without meeting all 4 criteria above
