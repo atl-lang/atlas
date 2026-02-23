@@ -1,46 +1,55 @@
 # Atlas Communications Standard
 
-Applies to: PR titles, PR bodies, commit messages, code comments, docs, issue text — anything public-facing.
+Applies to: PR titles, PR bodies, commit messages, code comments, docs, changelogs — anything written on behalf of Atlas.
+
+## Core principle
+
+Public-facing text describes **what changed and why**, technically and accurately. It does not editorialize, sell, or project ambitions onto the work.
 
 ## Tone
 
-**Professional and factual.** Describe what changed and why. No superlatives, no hype, no internal framing.
+- Factual and precise
+- GitHub-standard professional (same register as rust-lang, tokio, ripgrep PRs)
+- Atlas identity language is fine in appropriate contexts (docs, README, marketing copy):
+  - "AI-first", "AI-driven", "100% AI developed" — these are Atlas canon, use them where relevant
+- Aspirational claims about the project's future do not belong in PRs, commits, or changelogs
 
-## Banned phrases
+## What doesn't belong in PRs and commits
 
-- "world-class", "best-in-class", "cutting-edge", "next-generation"
-- "powerful", "robust", "blazing fast" (unless citing a benchmark)
-- "revolutionary", "innovative", "state-of-the-art"
-- Any internal framing: "AI-driven development", "AI-first standards", "100% AI developed"
-- Grandiose scope claims: "overhaul", "revolutionize", "transform" — use "update", "fix", "add", "change"
+- Superlatives describing quality: "world-class", "best-in-class", "blazing fast" (unless citing a benchmark)
+- Scope framing: "overhaul", "revolutionize", "transform" — prefer "update", "fix", "add", "change", "remove"
+- Motivational narrative: explaining *why we care* rather than *what changed*
+- Audience awareness: PRs are read by contributors, not customers
 
 ## Commit messages
 
-Follow conventional commits. Title is imperative, factual, specific.
+Conventional commits format. Imperative, specific, no filler.
 
 ```
-✅ ci: add macOS to post-merge test matrix
-✅ fix: correct path separator handling on Windows
-✅ feat: add vm_fuzz target to nightly schedule
+# Good
+ci: update MSRV from 1.70 to 1.85
+ci: add Windows to PR test matrix, move macOS to post-merge
+fix: correct path separator handling on Windows
+feat: add vm_fuzz target to nightly schedule
 
-❌ ci: overhaul workflows for world-class compiler standards
-❌ feat: revolutionary new type inference engine
+# Bad
+ci: overhaul workflows for world-class compiler standards
+feat: revolutionary new type inference engine
+fix: make the compiler not crash (super important!!!)
 ```
 
 ## PR titles
 
-Same rules as commit messages. Concise, describes the change.
+One line. Describes the change, not the motivation. Same rules as commit messages.
 
 ## PR bodies
 
-- **What** — what changed (factual)
-- **Why** — reason for the change (technical justification)
-- No marketing language, no internal motivations, no AI attribution in the body text
+Standard sections:
+- **What** — factual list of what changed
+- **Why** — technical justification (not a vision statement)
 
-## Code comments
+If the why is obvious from the what, omit it. No closing remarks, no sign-offs beyond the standard co-author trailer.
 
-Explain the *why* when non-obvious. No praise, no hype.
+## The test
 
-## The rule of thumb
-
-If it reads like a press release, rewrite it. If it reads like a changelog entry, it's correct.
+Read it back. If it could appear unchanged in a changelog entry for a mature open-source project — it's correct. If it sounds like it's trying to impress someone — rewrite it.
