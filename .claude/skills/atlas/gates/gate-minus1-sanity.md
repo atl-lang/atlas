@@ -33,7 +33,39 @@ Classify and resolve autonomously:
 
 ---
 
-## Step 2: Sync from Remote
+## Step 2: Main CI Health Check (BLOCKING)
+
+```bash
+gh run list --branch main --limit 3 --json status,conclusion,displayTitle,databaseId \
+  -q '.[] | "\(.conclusion // .status)  \(.displayTitle[:60])"'
+```
+
+**If the last completed main push CI run shows `failure`:**
+→ This is the first priority of the session — fix it before any phase work
+→ Check what failed: `gh run view <id> --json jobs -q '.jobs[] | "\(.conclusion)  \(.name)"'`
+→ Open a `fix/` or `ci/` branch, fix, PR, wait for green, then proceed
+
+**If runs are `in_progress`:**
+→ Note it. If they're coverage runs from a previous session, wait for completion before opening new PRs (merge freeze rule).
+
+**If last completed run is `success`:** proceed.
+
+**Why this is blocking:** Main CI failing silently between sessions is how 8-hour loops happen. Every session starts with a known-green main.
+
+---
+
+## Step 2b: Open PRs Check
+
+```bash
+gh pr list --state open
+```
+
+→ Open PRs + in-progress CI = **merge freeze in effect** — do not open new PRs until clear
+→ Stale PRs with no CI running: rebase and push to restart CI
+
+---
+
+## Step 3: Sync from Remote
 
 ```bash
 git fetch origin
