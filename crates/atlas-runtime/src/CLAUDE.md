@@ -36,13 +36,13 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 
 | Domain | File | Lines (approx) | Status |
 |--------|------|----------------|--------|
-| Interpreter behavior | `tests/interpreter.rs` | ~5,500 | ⚠️ Near threshold |
-| VM behavior | `tests/vm.rs` | ~5,700 | ⚠️ Near threshold |
-| Type system | `tests/typesystem.rs` | ~6,800 | 🔴 Needs subdirectory |
-| Stdlib | `tests/stdlib.rs` → **`tests/stdlib/`** | ~14,400 | 🔴 Needs subdirectory |
+| Interpreter behavior | `tests/interpreter.rs` | 5,485 | 🔴 Needs subdirectory |
+| VM behavior | `tests/vm.rs` | 5,708 | 🔴 Needs subdirectory |
+| Type system | `tests/typesystem.rs` | 6,807 | 🔴 Needs subdirectory |
+| Stdlib | **`tests/stdlib/`** (migration in progress; `tests/stdlib.rs` pending removal) | ~14,400 | 🔴 Migration pending |
 | System | `tests/system.rs` | ~4,000 | 🔴 Needs subdirectory |
-| Frontend/parse | `tests/frontend_integration.rs` | ~3,200 | ⚠️ Near threshold |
-| Frontend syntax | `tests/frontend_syntax.rs` | ~3,100 | ⚠️ Near threshold |
+| Frontend/parse | `tests/frontend_integration.rs` | 3,166 | 🔴 Needs subdirectory |
+| Frontend syntax | `tests/frontend_syntax.rs` | 3,094 | 🔴 Needs subdirectory |
 | Collections/CoW | `tests/collections.rs` | ~1,800 | ✅ |
 | Pattern matching | `tests/pattern_matching.rs` | ~1,600 | ✅ |
 | Closures | `tests/closures.rs` | — | ✅ |
