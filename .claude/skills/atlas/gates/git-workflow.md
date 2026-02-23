@@ -107,24 +107,23 @@ git push
 
 ## Session-End: Verify Main CI Before Signing Off (MANDATORY)
 
-After the final PR of a session merges to main, **wait for the main push CI to complete**:
+After the final PR of a session merges to main, check the fast jobs — do NOT block on coverage.
 
 ```bash
-# Get the run ID of the latest main push
 gh run list --branch main --limit 1 --json databaseId -q '.[0].databaseId'
-
-# Watch it — poll until complete
-gh run watch <id>
-
-# Verify result
-gh run view <id> --json jobs -q '.jobs[] | "\(.conclusion // .status)  \(.name)"'
+gh run view <id> --json jobs \
+  -q '.jobs[] | select(.name | test("Format|Clippy|Build|Supply|Test|Lint")) | "\(.conclusion // .status)  \(.name)"'
 ```
 
-**If coverage fails:** fix it now, in this session, before signing off.
-**If anything else fails:** fix it now. Never leave main red between sessions.
+**Fast jobs (fmt, clippy, build, supply-chain, test) — ~3-5 min — wait for these:**
+- If any fail: fix before ending the session
 
-Coverage takes ~25 min. If a block PR merges late in a session, explicitly wait for it.
-The user does not monitor GitHub — a red main discovered next session costs hours.
+**Coverage (~25 min) — do NOT wait:**
+- Note the run ID, note it's in progress
+- Coverage status is checked at GATE -1 Step 2 of the next session
+- If it failed overnight: that's job one next session before any phase work
+
+The user does not monitor GitHub. Fast failures get fixed same session. Coverage failures get caught at next session start.
 
 ---
 

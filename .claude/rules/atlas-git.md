@@ -63,6 +63,21 @@ block/trait-system branch:
 **Exception:** Blocking fixes or critical CI changes may PR immediately on a `fix/`
 or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
 
+## PR Batching (AI-Pace Rule)
+
+Atlas is 100% AI-maintained. AI generates changes in seconds, not hours. One PR per file change is a human-pace habit that creates CI cascade and wastes runner time.
+
+**Batch related changes into one PR.**
+
+| Situation | Rule |
+|-----------|------|
+| Multiple `ci/`, `docs/`, or process changes in one session | One PR, all batched |
+| Urgent `fix/` that must land immediately | Standalone PR is fine |
+| Changes logically unrelated AND one might revert without the other | Split |
+| Block work | Always one PR per block (separate rule) |
+
+**Before opening any PR, ask:** is there other work in this session that belongs in the same PR? If yes — finish it first, then open one PR for all of it.
+
 ## CI Push Discipline
 
 **Every force-push resets CI from scratch.** Each push cancels the running CI and starts over. On slow runners (windows, tarpaulin) that's 10+ wasted minutes per push.
