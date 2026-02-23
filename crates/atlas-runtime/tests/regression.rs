@@ -743,7 +743,8 @@ fn stability_stress_recursion_depth_50() {
 
 #[test]
 fn stability_stress_recursion_depth_100() {
-    // Deeper recursion (100 levels).
+    // Deeper recursion (100 levels). Run on a thread with an explicit 8MB stack
+    // to avoid overflow in debug builds where Rust frames are larger than release.
     let code = r#"
         fn sum_down(n: number) -> number {
             if (n <= 0) { return 0; }
@@ -751,7 +752,12 @@ fn stability_stress_recursion_depth_100() {
         }
         sum_down(100);
     "#;
-    assert_eval_number(code, 5050.0);
+    std::thread::Builder::new()
+        .stack_size(8 * 1024 * 1024)
+        .spawn(|| assert_eval_number(code, 5050.0))
+        .unwrap()
+        .join()
+        .unwrap();
 }
 
 #[test]
