@@ -30,7 +30,7 @@ toml = "0.8"
 notify = "8.2"  # File system watching for watch mode
 walkdir = "2.5"  # Directory traversal for test discovery
 rayon = "1.10"  # Parallel test execution
-colored = "2.1"  # Colorized test output
+colored = "3.1"  # Colorized test output
 tokio = { version = "1", features = ["full"] }  # Async runtime for LSP server
 tower-lsp = "0.20"  # LSP framework for TCP server
 
