@@ -13,11 +13,12 @@ for performance-critical, low-level work, while being the most AI-generation-fri
 ever built. These goals are not in conflict. They reinforce each other.
 
 **The trajectory:**
-- v0.1–v0.2: Bootstrap (scripting semantics, Arc<Mutex<>> model, establish correctness)
-- v0.3: Foundation (value semantics, ownership model, traits — the permanent base layer)
-- v0.4–v0.6: Type system maturity (compile-time ownership verification, advanced generics)
-- v0.7–v0.9: Systems features (AOT native compilation, embedded targets, OS-level primitives)
-- v1.0: Stability commitment — first stable release
+- `v0.1`: Bootstrap (scripting semantics, Arc<Mutex<>> model, establish correctness) — **complete**
+- `v0.2`: Foundation (CoW memory model, ownership syntax, trait system) — **complete**
+- `v0.3`: Language completeness (closures, type inference, error handling, JIT, async) — **in progress**
+- `v0.4`–`v0.5`: Type system maturity + AOT compilation (compile-time ownership, native binaries)
+- `v0.6`–`v0.9`: DX, package ecosystem, performance, stabilization
+- `v1.0`: Stability commitment — first stable release
 
 **Why this trajectory is right:**
 - Go chose GC early and permanently closed the systems-programming door. Atlas will not repeat this.
@@ -49,13 +50,25 @@ Full specification: `docs/specification/memory-model.md`
 
 ## Version Strategy
 
-Atlas uses semantic versioning with deliberate pacing:
+Atlas uses **capability milestones**, not development velocity, to drive version numbers.
+Inspired by Zig: `0.x` means "breaking changes are expected, don't rely on this yet."
 
-- **0.x versions:** Language evolution, breaking changes allowed
-- **1.0:** Production-ready, stability commitment begins
-- **Post-1.0:** Semantic versioning strictly followed
+- **`0.x` versions:** Each tag represents a meaningful architectural capability an external observer could distinguish. Breaking changes always possible. Not for public use.
+- **`1.0`:** Stability commitment begins — syntax locked, stdlib stable, security audited.
+- **Post-`1.0`:** Semantic versioning strictly followed.
 
-**Pacing principle:** Don't rush versions. Each version should represent meaningful, complete work.
+**AI-pace rule:** Atlas builds at AI speed (blocks per week, not months). Version numbers do NOT track commit count or block count. A version advances only when a named set of blocks is fully complete and all exit criteria are verified. See `gates/gate-versioning.md` for the authoritative version-to-block map and tagging rules.
+
+### Version-to-Block Map
+
+| Tag | What it means | Blocks | Status |
+|-----|---------------|--------|--------|
+| `v0.1.0` | Working interpreter + VM + CLI + stdlib foundation | Pre-Block-1 baseline | ✅ Tagged 2026-02-23 |
+| `v0.2.0` | CoW memory model + ownership syntax + trait system | Blocks 1–3 | ✅ Tagged 2026-02-23 |
+| `v0.3.0` | Closures + type inference + error handling + JIT + async + quick wins | Blocks 4–9 | ⬜ In progress |
+| `v0.4.0` | Compile-time ownership verification + trait objects + user generics | v0.4 plan | ⬜ Future |
+| `v0.5.0` | AOT native compilation (Cranelift backend) | v0.5 plan | ⬜ Future |
+| `v1.0.0` | Stability commitment | All v0.9 stabilization | ⬜ Future |
 
 ---
 

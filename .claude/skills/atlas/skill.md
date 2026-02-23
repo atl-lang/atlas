@@ -139,8 +139,10 @@ After GATE -1, declare one:
 **See `gates/git-workflow.md`** for batch flush commands.
 
 **GATE V — run at two moments (see `gates/gate-versioning.md`):**
-- After any `fix/` PR merges to main → patch tag check (automatic)
-- After block AC check phase committed → minor version check (verify exit criteria)
+- After final block of a version plan completes → minor version check (verify ALL exit criteria, then tag)
+- After a `fix/` PR that corrects a bug in an already-tagged version → patch tag check
+- Does NOT run: on every fix/ PR, every block, every phase — only on version plan completion and confirmed regressions in tagged releases
+- Version-to-block map is in `gates/gate-versioning.md` — that table is the contract
 
 **Required in summary:**
 - Status: "✅ PHASE COMPLETE - COMMITTED (batch)"

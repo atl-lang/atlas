@@ -1,10 +1,9 @@
 [package]
 name = "atlas-build"
-version = "0.2.0"
-edition = "2021"
-authors = ["Atlas Contributors"]
+version.workspace = true
+edition.workspace = true
 description = "Build system infrastructure for Atlas programming language"
-license = "MIT OR Apache-2.0"
+license.workspace = true
 
 [dependencies]
 atlas-runtime = { path = "../atlas-runtime" }
