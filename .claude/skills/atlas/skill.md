@@ -18,6 +18,13 @@ cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
 
 **Full state audit runs in GATE -1** — worktree state, uncommitted work, unmerged branches, build verification, security scan. See `gates/gate-minus1-sanity.md`.
 
+**GATE -1 is BLOCKING.** No phase work begins until it passes. This includes:
+- Remote branch count (max 2: main + active block)
+- Open PR audit (max 1, must have passing CI + auto-merge set)
+- If violations found: resolve them first, then continue
+
+**Why:** Sessions are short by design (~140k tokens). Each new session MUST audit the full state left by the previous agent — stale branches and failing PRs compound invisibly across session boundaries.
+
 ---
 
 ## Roles
@@ -93,7 +100,7 @@ See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 ## Universal Bans
 
 - Task/Explore agents (use Glob + Read + Grep directly)
-- Writing code touching AST/Type/Value without running `domain-prereqs.md` queries first
+- Writing code touching AST/Type/Value without checking quick-refs first (`.claude/rules/atlas-ast.md`, `atlas-typechecker.md`, `atlas-syntax.md` — pre-verified facts, no grep needed)
 - Assumptions without codebase verification (grep → verify → write)
 - Stub implementations, partial work, skipped edge cases
 
@@ -153,7 +160,8 @@ After GATE -1, declare one:
 4. **Present to user** — wait for approval ("looks right, go")
 5. **Create block branch:** `git checkout -b block/{name}` — ALL work for this block lives here
 6. **Only then** scaffold all phase files
-7. **Commit scaffold — no push, no PR.** The scaffold commit is the first commit on the block branch.
+7. **Update STATUS.md** — set Current State to "Block N SCAFFOLDED", Next to Phase 1, update block table row from ⬜ to 🔨
+8. **Commit scaffold + STATUS.md together — no push, no PR.** The scaffold commit is the first commit on the block branch.
    Phase execution commits follow on the same branch. PR opens only at block completion (Phase N).
 
 **After block execution completes:**

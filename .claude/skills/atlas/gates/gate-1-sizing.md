@@ -34,13 +34,21 @@ Buffered (×1.2): ~M lines
 - 1000-1500 buffered → Justify complexity OR plan split → GATE 1.5
 - >1500 buffered → MUST justify OR split → GATE 1.5
 
+**Post-phase file size check:** After estimating, project the final line count of each target file
+(existing lines + estimated new lines). If the result would exceed 2,000 lines for source or
+4,000 lines for test files → **plan the split as part of this phase**, not as follow-up work.
+
+**ARCH-EXCEPTION:** If the file legitimately cannot be split, add `// ARCH-EXCEPTION: <reason>`
+at the top and document it in the phase summary. See `.claude/rules/atlas-architecture.md`.
+
 ---
 
 ## Compiler Reality
 
 - Simple modules: 200-600 lines
 - Standard modules: 600-1000 lines
-- Complex modules: 1000-2000 lines (VM, bytecode, parser)
+- Complex modules: 1000-1500 lines (aim for this ceiling)
+- Exception files only: 1500-2000+ lines (VM execute loop, main parser switch — requires ARCH-EXCEPTION)
 
 ---
 

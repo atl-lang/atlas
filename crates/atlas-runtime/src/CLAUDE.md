@@ -14,7 +14,7 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `typechecker/` | Type resolution, inference, generics, call-site checks |
 | `compiler/` | AST → bytecode (`mod.rs`, `expr.rs`, `stmt.rs`) |
 | `interpreter/` | Tree-walking eval (`mod.rs`, `expr.rs`, `stmt.rs`) |
-| `vm/mod.rs` | Bytecode execution engine (4100+ lines) |
+| `vm/mod.rs` | Bytecode execution engine — **ARCH-EXCEPTION on file** (execute loop is monolithic by design); intrinsics + inline tests are split candidates, scheduled post-Block-4 |
 | `bytecode/` | Opcode definitions, serialization |
 | `stdlib/` | 25 modules, 300+ functions |
 | `typechecker/mod.rs` | Function type resolution — `params` at line ~202 |
@@ -31,20 +31,27 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 ## Tests
 
 **Location:** `crates/atlas-runtime/tests/`
-**Rule: NO new test files.** Add to existing domain files:
+**Rule: NO new top-level test files for existing domains.** Add to the correct domain file below.
+**Size threshold: 3,000 lines → MUST migrate to subdirectory.** See `atlas-architecture.md`.
 
-| Domain | File |
-|--------|------|
-| Interpreter behavior | `tests/interpreter.rs` |
-| VM behavior | `tests/vm.rs` |
-| Collections/CoW | `tests/collections.rs` |
-| Type system | `tests/typesystem.rs` |
-| Pattern matching | `tests/pattern_matching.rs` |
-| Stdlib | `tests/stdlib.rs` or `tests/stdlib/` |
-| Closures | `tests/closures.rs` |
-| Async | `tests/async_runtime.rs` |
-| Frontend/parse | `tests/frontend_integration.rs` |
-| Parity tests | Add to the relevant domain file with both engines |
+| Domain | File | Lines (approx) | Status |
+|--------|------|----------------|--------|
+| Interpreter behavior | `tests/interpreter.rs` | ~5,500 | ⚠️ Near threshold |
+| VM behavior | `tests/vm.rs` | ~5,700 | ⚠️ Near threshold |
+| Type system | `tests/typesystem.rs` | ~6,800 | 🔴 Needs subdirectory |
+| Stdlib | `tests/stdlib.rs` → **`tests/stdlib/`** | ~14,400 | 🔴 Needs subdirectory |
+| System | `tests/system.rs` | ~4,000 | 🔴 Needs subdirectory |
+| Frontend/parse | `tests/frontend_integration.rs` | ~3,200 | ⚠️ Near threshold |
+| Frontend syntax | `tests/frontend_syntax.rs` | ~3,100 | ⚠️ Near threshold |
+| Collections/CoW | `tests/collections.rs` | ~1,800 | ✅ |
+| Pattern matching | `tests/pattern_matching.rs` | ~1,600 | ✅ |
+| Closures | `tests/closures.rs` | — | ✅ |
+| Async | `tests/async_runtime.rs` | ~2,300 | ✅ |
+| Parity tests | Add to the relevant domain file with both engines | — | — |
+
+**Subdirectory migration pattern:**
+`tests/stdlib.rs` → `tests/stdlib/mod.rs` + `tests/stdlib/strings.rs` + `tests/stdlib/math.rs` etc.
+Do NOT create new top-level `.rs` files for domains already in this table.
 
 ## Critical Rules
 
