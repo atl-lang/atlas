@@ -307,6 +307,9 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         Expr::Try(try_expr) => {
             find_references_in_expr(&try_expr.expr, identifier, references);
         }
+        Expr::AnonFn { body, .. } => {
+            find_references_in_expr(body, identifier, references);
+        }
         Expr::Literal(_, _) => {}
     }
 }

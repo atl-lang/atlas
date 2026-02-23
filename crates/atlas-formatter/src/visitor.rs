@@ -547,6 +547,18 @@ impl FormatVisitor {
                 self.visit_expr(&t.expr);
                 self.write("?");
             }
+            Expr::AnonFn { params, body, .. } => {
+                // Formatter placeholder — full formatting added in Phase 02/03
+                self.write("fn(");
+                for (i, _param) in params.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                }
+                self.write(") { ");
+                self.visit_expr(body);
+                self.write(" }");
+            }
         }
     }
 

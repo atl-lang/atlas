@@ -20,6 +20,10 @@ impl Interpreter {
             Expr::Match(match_expr) => self.eval_match(match_expr),
             Expr::Member(member) => self.eval_member(member),
             Expr::Try(try_expr) => self.eval_try(try_expr),
+            Expr::AnonFn { span, .. } => Err(RuntimeError::TypeError {
+                msg: "anonymous functions not yet supported".to_string(),
+                span: *span,
+            }),
         }
     }
 

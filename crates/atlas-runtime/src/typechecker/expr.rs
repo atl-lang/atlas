@@ -39,6 +39,14 @@ impl<'a> TypeChecker<'a> {
             Expr::Match(match_expr) => self.check_match(match_expr),
             Expr::Member(member) => self.check_member(member),
             Expr::Try(try_expr) => self.check_try(try_expr),
+            Expr::AnonFn { span, .. } => {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    "AT0400",
+                    "anonymous functions not yet supported",
+                    *span,
+                ));
+                Type::Unknown
+            }
         }
     }
 

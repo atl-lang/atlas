@@ -1014,6 +1014,13 @@ impl Binder {
                 // Bind the expression being tried
                 self.bind_expr(&try_expr.expr);
             }
+            Expr::AnonFn { params, body, .. } => {
+                // Walk params and body for name resolution
+                for param in params {
+                    self.bind_expr(&Expr::Identifier(param.name.clone()));
+                }
+                self.bind_expr(body);
+            }
         }
     }
 

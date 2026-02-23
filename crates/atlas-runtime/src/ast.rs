@@ -450,6 +450,15 @@ pub enum Expr {
     Group(GroupExpr),
     Match(MatchExpr),
     Try(TryExpr),
+    /// Anonymous function expression.
+    /// Syntax: `fn(x: number, y: number) -> number { x + y }`
+    /// Arrow:  `(x) => x + 1`  (desugared to this by the parser)
+    AnonFn {
+        params: Vec<Param>,
+        return_type: Option<TypeRef>,
+        body: Box<Expr>,
+        span: Span,
+    },
 }
 
 /// Unary expression
@@ -681,6 +690,7 @@ impl Expr {
             Expr::Group(g) => g.span,
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
+            Expr::AnonFn { span, .. } => *span,
         }
     }
 }

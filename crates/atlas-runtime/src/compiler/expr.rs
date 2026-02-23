@@ -22,6 +22,11 @@ impl Compiler {
             Expr::Match(match_expr) => self.compile_match(match_expr),
             Expr::Member(member) => self.compile_member(member),
             Expr::Try(try_expr) => self.compile_try(try_expr),
+            Expr::AnonFn { span, .. } => Err(vec![Diagnostic::error_with_code(
+                "AT0400",
+                "anonymous functions not yet supported",
+                *span,
+            )]),
         }
     }
 
