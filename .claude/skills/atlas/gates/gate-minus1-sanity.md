@@ -73,7 +73,7 @@ cargo audit
 
 ---
 
-## Step 4b: Spot-Check (2 greps, ~1 second)
+## Step 4b: Spot-Check (3 greps, ~1 second)
 
 These catch the most common memory/skill drift without reading full files:
 
@@ -83,15 +83,30 @@ wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
 
 # 2. CI test gate — must include pull_request (added PR #119)
 grep -c "pull_request" .github/workflows/ci.yml
+
+# 3. actionlint present — workflow protection layer (added ci/workflow-protection-layer)
+grep -c "actionlint" .github/workflows/ci.yml
 ```
 
 | Result | Action |
 |--------|--------|
 | MEMORY.md > 50 lines | Split/archive before proceeding — BLOCKING |
-| grep returns 0 | CI has drifted — open `ci/` fix branch before phase work |
-| Both clean | Proceed |
+| grep (pull_request) returns 0 | CI has drifted — open `ci/` fix branch before phase work |
+| grep (actionlint) returns 0 | Workflow protection drifted — open `ci/` fix branch |
+| All clean | Proceed |
 
-**Cost: 2 tool calls, ~0 context.** Catches the two highest-churn facts.
+**Cost: 3 tool calls, ~0 context.** Catches the three highest-churn facts.
+
+### If you modified a `.github/workflows/` file this session
+
+Run actionlint locally to verify YAML validity before committing:
+```bash
+# Install once: brew install actionlint  (or go install github.com/rhysd/actionlint/cmd/actionlint@latest)
+actionlint .github/workflows/ci.yml
+actionlint .github/workflows/bench.yml
+```
+
+Also apply Layer 2 + Layer 3 from `atlas-ci.md` — read it if you haven't.
 
 ---
 
