@@ -75,4 +75,29 @@ Failures: test_code_actions, test_hover, test_completion, test_inlay_hints
 
 ---
 
+---
+
+## Coverage Awareness (Per-Phase)
+
+Coverage is enforced by Codecov on CI — you don't manually run tarpaulin locally (too slow). But you are responsible for not shipping phases that **actively decrease** coverage:
+
+**Rule:** Every phase that adds new code MUST add tests that cover that code. This is implicit in the AC criteria, but the explicit floor is:
+
+| Crate | Minimum floor | If below → STOP |
+|-------|--------------|-----------------|
+| `atlas-runtime` | 70% | Fix before merge |
+| `atlas-cli` | 50% | Fix before merge |
+| `atlas-formatter` | 60% | Fix before merge |
+| `atlas-lsp` | 40% | Fix before merge |
+| `atlas-jit` | 25% | Fix before merge |
+| `atlas-config` | 60% | Fix before merge |
+| `atlas-build` | 40% | Fix before merge |
+| `atlas-package` | 40% | Fix before merge |
+
+You will not see coverage numbers locally until CI runs. The check is: **did I write tests for every code path I added?** If yes, CI will confirm. If no, fix now.
+
+**Patch coverage floor:** 80% of new lines must be covered. Unreachable/dead code paths are the only valid exception.
+
+---
+
 **Next:** GATE 7 (Memory Check)

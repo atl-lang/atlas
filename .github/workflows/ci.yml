@@ -1,15 +1,15 @@
 # Atlas CI Pipeline
 #
 # PR / merge queue:
-#   fmt → clippy → test (linux + windows, parallel)                 (~4-5 min)
+#   fmt → clippy → test (linux only)                                (~3 min)
 #
 # push to main:
-#   fmt → clippy → test (linux + windows) → test-matrix (macos + beta) → coverage
+#   fmt → clippy → test (linux) → test-matrix (windows + macos + beta) → coverage
 #   Nightly: msrv (1.85) + fuzz (5 targets)
 #
 # Design principles:
-#   - PRs test linux + windows — real divergence point, catches path/CRLF bugs pre-merge
-#   - macOS tested post-merge on main — covered by local dev environment
+#   - PRs test linux only — fast (~3 min), sufficient for logic correctness
+#   - Windows + macOS tested post-merge — catches platform divergence on every block merge
 #   - No redundant `check` job — `test` implies `check`
 #   - Fuzz: 5 targets covering lexer, parser, typechecker, eval, vm
 
@@ -110,7 +110,7 @@ jobs:
         run: cargo deny check
 
   # ==========================================================================
-  # Tests — linux + windows on PRs; macOS + beta added on main push
+  # Tests — linux on PRs (~2.5 min); windows + macOS + beta added on main push
   # ==========================================================================
 
   test:
@@ -121,7 +121,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     steps:
       - name: Configure git line endings
         run: git config --global core.autocrlf false
@@ -146,6 +146,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - os: windows-latest
+            rust: stable
           - os: macos-latest
             rust: stable
           - os: ubuntu-latest
@@ -174,8 +176,8 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-latest
-    needs: [test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [test, changes]
+    if: needs.changes.result == 'success' && needs.changes.outputs.code == 'true' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -183,13 +185,22 @@ jobs:
       - name: Install tarpaulin
         uses: taiki-e/install-action@cargo-tarpaulin
       - name: Generate coverage
-        run: cargo tarpaulin --all-features --workspace --timeout 300 --out xml
+        run: |
+          cargo tarpaulin \
+            --all-features \
+            --workspace \
+            --timeout 300 \
+            --exclude-files "**/target/**" "**/tests/**" "**/benches/**" "**/fuzz/**" \
+            --out xml \
+            --output-dir coverage/
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: cobertura.xml
-          fail_ci_if_error: false
+          files: coverage/cobertura.xml
+          fail_ci_if_error: true
           token: ${{ secrets.CODECOV_TOKEN }}
+          flags: full-suite
+          verbose: true
 
   # ==========================================================================
   # Nightly — schedule only
