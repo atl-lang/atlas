@@ -134,6 +134,23 @@ reviews:
     base_branches:
       - "main"
 
+  tools:
+    github-checks:
+      enabled: true
+      timeout_ms: 120000
+    semgrep:
+      enabled: true
+    shellcheck:
+      enabled: true
+    languagetool:
+      enabled: true
+      disabled_rules:
+        - "EN_QUOTES"
+        - "WHITESPACE_RULE"
+      level: picky
+    ast-grep:
+      enabled: true
+
   finishing_touches:
     docstrings:
       enabled: false  # Atlas uses inline comments, not docstrings on all items
@@ -173,23 +190,6 @@ reviews:
         instructions: >
           Warn if a PR introduces new user-facing error messages in the type checker
           or parser without a corresponding entry in diagnostic/error_codes.rs.
-
-tools:
-  github-checks:
-    enabled: true
-    timeout_ms: 120000
-  semgrep:
-    enabled: true
-  shellcheck:
-    enabled: true
-  languagetool:
-    enabled: true
-    disabled_rules:
-      - "EN_QUOTES"
-      - "WHITESPACE_RULE"
-    level: picky
-  ast-grep:
-    enabled: true
 
 chat:
   auto_reply: true
