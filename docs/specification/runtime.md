@@ -20,33 +20,38 @@ Atlas runtime model defines how values are represented in memory, how execution 
 - `bool` - Boolean (true/false)
 - `null` - Explicit absence
 
-### Reference-Counted Values (Heap-allocated)
-- `string` - Arc<String> (immutable, shared, thread-safe)
-- `array` - Arc<Mutex<Vec<Value>>> (mutable, shared, thread-safe)
+### Heap-Allocated Values
+
+**Canonical memory model:** `docs/specification/memory-model.md` — that document is authoritative. Summary below.
+
+Collections are **copy-on-write value types** by default. Shared mutable state requires explicit `shared<T>`. No `Arc<Mutex<>>` on collections — this was the v0.1–v0.2 bootstrap model, replaced in Block 1.
+
+- `string` - Arc<String> (immutable, shared, thread-safe — CoW semantics at language level)
+- `array` - CoW Vec<Value> (clone-on-write; `shared<array>` for shared mutable)
 - `function` - FunctionRef (name + arity + bytecode offset)
 - `json` - Arc<JsonValue> (immutable, shared, thread-safe)
 - `Option` - Option<Box<Value>> (Some/None)
 - `Result` - Result<Box<Value>, Box<Value>> (Ok/Err)
-- `HashMap` - Arc<Mutex<AtlasHashMap>> (key-value collection)
-- `HashSet` - Arc<Mutex<AtlasHashSet>> (unique value collection)
-- `Queue` - Arc<Mutex<AtlasQueue>> (FIFO collection)
-- `Stack` - Arc<Mutex<AtlasStack>> (LIFO collection)
+- `HashMap` - CoW AtlasHashMap (clone-on-write; `shared<HashMap>` for shared mutable)
+- `HashSet` - CoW AtlasHashSet (clone-on-write)
+- `Queue` - CoW AtlasQueue (clone-on-write)
+- `Stack` - CoW AtlasStack (clone-on-write)
 - `Regex` - Arc<regex::Regex> (compiled regex pattern)
 - `DateTime` - Arc<chrono::DateTime<Utc>> (UTC timestamp)
 - `HttpRequest` - Arc<HttpRequest> (HTTP request config)
 - `HttpResponse` - Arc<HttpResponse> (HTTP response data)
 
-**Note:** All heap-allocated values use `Arc<Mutex<>>` (not `Rc<RefCell<>>`), migrated in phase-18 for thread safety.
-
 ---
 
 ## Memory Model
 
+**Canonical spec:** `docs/specification/memory-model.md` — read that document for the full model.
+
 ### Reference Counting
-- Atomic reference counting (Arc), no GC
-- Shared ownership for strings, arrays, JSON values, collections
-- Interior mutability for mutable types via Mutex (Arc<Mutex<T>>)
-- Deterministic cleanup on scope exit
+- Atomic reference counting (Arc) for immutable shared values (strings, json, regex)
+- CoW (clone-on-write) for mutable collections — no implicit shared state
+- Explicit `shared<T>` for intentional shared mutable state
+- No GC. Deterministic cleanup on scope exit.
 
 ### String Semantics
 - UTF-8 encoded

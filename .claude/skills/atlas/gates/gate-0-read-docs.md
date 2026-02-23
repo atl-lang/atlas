@@ -21,9 +21,10 @@ cargo clean
 ## Step 2: Read Docs (Selective Reading)
 
 1. **ALWAYS:** Read `STATUS.md` (current state, progress, doc map with routing)
-2. **IF structured development:** Read complete development plan (phase file)
-3. **SELECTIVE:** Read ONLY the spec files your task needs (see routing below)
-4. **CHECK EXISTING CODE:** Before writing tests, read existing test files in the target crate
+2. **IF scaffolding session:** Also read `ROADMAP.md` and `docs/internal/V03_PLAN.md` — long-term direction must inform block scope before any phase is planned
+3. **IF structured development:** Read complete development plan (phase file)
+4. **SELECTIVE:** Read ONLY the spec files your task needs (see routing below)
+5. **CHECK EXISTING CODE:** Before writing tests, read existing test files in the target crate
 
 ### Specification Routing (DO NOT read all specs)
 

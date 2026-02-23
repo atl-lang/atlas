@@ -82,6 +82,7 @@ wc -l ~/.claude/projects/*/memory/*.md ~/.claude/projects/*/memory/decisions/*.m
 |------|-----|----------------------|
 | MEMORY.md | 50 | Split content to topic files |
 | patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
+| testing-patterns.md | 300 | Archive old → `archive/YYYY-MM-testing-patterns.md` |
 | decisions/{x}.md | 100 | Split into sub-files |
 
 **BLOCKING:** If ANY file exceeds limit, you MUST split/archive BEFORE committing.

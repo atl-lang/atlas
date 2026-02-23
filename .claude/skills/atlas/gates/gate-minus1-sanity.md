@@ -134,6 +134,22 @@ grep -c "actionlint" .github/workflows/ci.yml
 git config core.hooksPath
 ```
 
+### Step 4c: Pre-PR Path Filter Verification (before opening any PR)
+
+Before opening a PR, verify the changed file types are covered by the CI path exclusion list.
+
+```bash
+# List extensions of files changed vs main
+git diff --name-only main...HEAD | sed 's/.*\.//' | sort -u
+
+# Compare against exclusions in ci.yml
+grep -A20 "paths:" .github/workflows/ci.yml | grep "^\s*- '!"
+```
+
+**Rule:** Every extension/directory you changed must appear in the exclusion list (prefixed with `!`) if it should be treated as docs-only. If a new file type would trigger Rust CI unexpectedly, add it to the exclusion list before opening the PR.
+
+**Example gap that bit us:** `.claude/**` changes were not in the exclusion list — full Rust matrix would have run on a pure workflow PR (DR-W05). The check here catches this class of bug at PR open time, not post-merge.
+
 | Check | Pass | Fail → Action |
 |-------|------|---------------|
 | MEMORY.md ≤ 50 lines | number ≤ 50 | **BLOCKING** — split/archive before any work |
