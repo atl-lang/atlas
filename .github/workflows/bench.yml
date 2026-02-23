@@ -1,7 +1,7 @@
 # Benchmarks - Performance regression tracking
 #
 # Manual trigger only (workflow_dispatch) — benchmarks are expensive.
-# Run locally: cargo bench -p atlas-runtime
+# Run locally: cargo criterion -p atlas-runtime --output-format bencher
 #
 # To run automatically on main: uncomment the push trigger below.
 
@@ -40,8 +40,11 @@ jobs:
         with:
           key: bench
 
+      - name: Install cargo-criterion
+        run: cargo install cargo-criterion
+
       - name: Run Criterion benchmarks
-        run: cargo bench -p atlas-runtime --all-features -- --output-format bencher | tee benchmark-results.txt
+        run: cargo criterion -p atlas-runtime --all-features --output-format bencher | tee benchmark-results.txt
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
