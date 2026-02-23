@@ -105,6 +105,29 @@ git push
 - `docs/specification/memory-model.md` — CoW, own/borrow/shared (LOCKED)
 - `ROADMAP.md`, `docs/internal/V03_PLAN.md` — scope decisions
 
+## Session-End: Verify Main CI Before Signing Off (MANDATORY)
+
+After the final PR of a session merges to main, **wait for the main push CI to complete**:
+
+```bash
+# Get the run ID of the latest main push
+gh run list --branch main --limit 1 --json databaseId -q '.[0].databaseId'
+
+# Watch it — poll until complete
+gh run watch <id>
+
+# Verify result
+gh run view <id> --json jobs -q '.jobs[] | "\(.conclusion // .status)  \(.name)"'
+```
+
+**If coverage fails:** fix it now, in this session, before signing off.
+**If anything else fails:** fix it now. Never leave main red between sessions.
+
+Coverage takes ~25 min. If a block PR merges late in a session, explicitly wait for it.
+The user does not monitor GitHub — a red main discovered next session costs hours.
+
+---
+
 **Why rebase before push:** `strict_required_status_checks_policy=true` in the ruleset
 means GitHub auto-merge will stall if any commit landed on main after the branch was
 last rebased. Always rebase immediately before push to guarantee auto-merge proceeds.
