@@ -68,9 +68,21 @@ block/trait-system branch:
 **Exception:** Blocking fixes or critical CI changes may PR immediately on a `fix/`
 or `ci/` branch. These are the ONLY valid reasons to PR before block completion.
 
+## CI Push Discipline
+
+**Every force-push resets CI from scratch.** Each push cancels the running CI and starts over. On slow runners (windows, tarpaulin) that's 10+ wasted minutes per push.
+
+**Rule: batch all fixes before pushing.** When CodeRabbit or CI leaves feedback:
+1. Read ALL pending review comments first
+2. Fix everything in one commit
+3. Push once
+
+Never push to address one comment while others are pending.
+
 ## Banned
 
 - `git push origin main` directly
 - Merge commits (`--no-ff`)
-- `--force` on main
+- `--force` on main (use `--force-with-lease` only when rebasing)
 - `--no-verify`
+- Force-pushing to address review comments one at a time
