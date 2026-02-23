@@ -89,7 +89,7 @@ Create a language that feels natural for humans and AI agents, combining strict 
 - Language implemented in Rust
 - Runtime structured for library exposure
 - Minimal dependencies
-- Thread-safe value types (`Arc<Mutex<>>`)
+- Thread-safe value types (CoW by default; `shared<T>` for explicit shared mutable state — no `Arc<Mutex<>>` on collections)
 
 ---
 

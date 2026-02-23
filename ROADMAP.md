@@ -99,14 +99,19 @@ Inspired by Zig: `0.x` means "breaking changes are expected, don't rely on this 
 | **for-in loops** | `compiler/stmt.rs` | VM parity complete (v0.2 close) |
 | **Source maps** | `sourcemap/` | v3 spec, inline generation |
 
-### Missing — Targeted in v0.3
+### Complete as of v0.2.0
+
+| Feature | Block | Status |
+|---------|-------|--------|
+| **Value semantics (CoW)** | Block 1 | ✅ Complete |
+| **Ownership syntax** | Block 2 | ✅ Complete |
+| **Trait system** | Block 3 | ✅ Complete |
+
+### In Progress — Targeted in v0.3.0 (Blocks 4–9)
 
 | Feature | Block | Notes |
 |---------|-------|-------|
-| **Value semantics (CoW)** | Block 1 | Replace Arc<Mutex<Value>> — foundational |
-| **Ownership syntax** | Block 2 | `own`, `borrow`, `shared` annotations |
-| **Trait system** | Block 3 | `trait`, `impl`, `Copy`/`Move`/`Drop` built-ins |
-| **Anonymous functions** | Block 4 | `fn(x) { }` and `(x) => x` syntax |
+| **Anonymous functions** | Block 4 | `fn(x) { }` and `(x) => x` syntax — in progress |
 | **Closure value capture** | Block 4 | CoW semantics for captured values |
 | **Type inference** | Block 5 | Local variable and return type inference |
 | **`?` operator** | Block 6 | Result/Option error propagation |
@@ -117,12 +122,12 @@ Inspired by Zig: `0.x` means "breaking changes are expected, don't rely on this 
 
 ---
 
-## Current: v0.3 — The Foundation Version
+## Current: v0.3.0 — Language Completeness (In Progress)
 
-**Status:** Ready for phase scaffolding
+**Status:** Block 4 in execution (Phase 4 complete) — Blocks 1–3 done, Blocks 4–9 remaining
 **Phase plan:** `docs/internal/V03_PLAN.md` — READ THIS BEFORE SCAFFOLDING
 **Phase target:** ~130–150 phases across 9 blocks
-**Theme:** Memory model, ownership, traits — the permanent architectural foundation
+**Theme:** Closures, type inference, error handling, JIT wiring, async syntax, quick wins
 
 ### The 9 Blocks (strict dependency order)
 
@@ -151,7 +156,7 @@ criteria are ALL met. This is the lesson from v0.2 dependency hell. Do not reord
 - [ ] `?` operator propagates Result/Option
 - [ ] JIT hot functions compile to native (10x+ speedup target)
 - [ ] Async/await syntax in both engines
-- [ ] ≥ 9,000 tests, 0 failures
+- [x] ≥ 9,000 tests, 0 failures (9,436 at Block 3 completion — target for v0.3.0 is ≥ 11,000)
 
 ---
 
@@ -327,5 +332,5 @@ The last phase of each block MUST include:
 
 ---
 
-*Last updated: 2026-02-21*
-*Memory model decision locked. v0.3 plan locked. Ready for phase scaffolding.*
+*Last updated: 2026-02-23*
+*v0.2.0 tagged. v0.3.0 in execution (Block 4 active). Versioning policy: capability milestones — see `gates/gate-versioning.md`.*

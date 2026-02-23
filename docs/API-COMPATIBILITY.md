@@ -319,23 +319,19 @@ Before v1.0.0:
 
 ## Version Planning
 
-### v0.1.0 (Current)
+### v0.1.0 (Tagged — complete)
 
-- Initial runtime API scaffold
-- Stub implementations
-- API shape defined
+- Initial runtime API scaffold, interpreter + VM + CLI foundation
 
-### v0.2.0 (Planned)
+### v0.2.0 (Tagged — complete)
 
-- Full implementation of eval()
-- Full implementation of eval_file()
+- CoW memory model, ownership syntax, trait system (Blocks 1–3)
+- Full eval() / eval_file() implementation
 - Complete diagnostic system
 
-### v0.3.0 (Planned)
+### v0.3.0 (In progress)
 
-- REPL integration
-- stdout redirection
-- Configuration options
+- Closures, type inference, error handling (`?`), JIT wiring, async syntax (Blocks 4–9)
 
 ### v1.0.0 (Future)
 
@@ -442,4 +438,4 @@ impl Atlas {
 
 **Document Version:** 1.0
 **Last Updated:** 2026-02-12
-**Applies to:** Atlas v0.1.0+
+**Applies to:** Atlas v0.2.0+

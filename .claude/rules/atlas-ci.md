@@ -98,7 +98,7 @@ The audit job in security.yml handles CVE severity via `--deny unsound --deny ya
 
 ## Three-Layer Workflow Protection
 
-Atlas is 100% AI-developed at hyper pace (v0.3 in 10 days). CI config bugs are invisible until
+Atlas is 100% AI-developed at hyper pace. CI config bugs are invisible until
 post-merge and compound across sessions. Every layer must hold.
 
 ### Layer 1 — Machine (actionlint, automatic)

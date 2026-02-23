@@ -1,5 +1,9 @@
 # Atlas v0.2 Stability Audit Report
 
+> **ARCHIVED HISTORICAL DOCUMENT** — Describes the v0.1/v0.2 era (pre-Block-1).
+> The memory model described here (`Arc<Mutex<T>>`) was superseded by CoW value semantics in Block 1.
+> Do not use this document for current architectural decisions. See `docs/specification/memory-model.md`.
+
 **Generated:** 2026-02-20
 **Version:** v0.2
 **Status:** ✅ PRODUCTION READY — All stability criteria met

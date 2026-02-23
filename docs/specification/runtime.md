@@ -62,8 +62,8 @@ Collections are **copy-on-write value types** by default. Shared mutable state r
 ### Array Semantics
 - Homogeneous elements (all same type)
 - Mutable - element assignment supported
-- Reference-counted - arrays share backing storage
-- Equality is reference identity (not deep equality)
+- **Copy-on-write** — mutation of an array does not affect aliased copies (CoW, not shared backing storage)
+- Equality is deep equality (compares elements)
 - Indexing: whole numbers only (fractional = runtime error)
 - Out-of-bounds: runtime error (`AT0006`)
 
@@ -253,12 +253,12 @@ print(item);  // Prints 100 (outer variable unchanged)
 - Can be passed as arguments
 - Can be returned from functions
 
-### Current Limitations
-- No anonymous function syntax (`fn(x) { ... }`)
-- No closures (functions cannot capture outer scope variables)
-- Can reference globals only
+### Closure Status (v0.2.0 → v0.3.0)
+- VM has `MakeClosure`, `GetUpvalue`, `SetUpvalue` opcodes (complete as of v0.2.0)
+- Anonymous function syntax (`fn(x) { }` and `(x) => x`) — Block 4, in progress
+- Full closure capture with CoW semantics — Block 4, in progress
 
-See `ROADMAP.md` for planned enhancements.
+See `ROADMAP.md` for block status.
 
 ### Calling Convention
 - Callee-saves (function responsible for preserving state)
@@ -323,15 +323,17 @@ str(value: number | bool | null) -> string
 
 ---
 
-## Current Limitations
+## Current Status (v0.2.0 baseline)
 
-The following are not yet supported:
+| Feature | Status |
+|---------|--------|
+| Named functions | ✅ Complete |
+| VM upvalue opcodes (MakeClosure/GetUpvalue/SetUpvalue) | ✅ Complete |
+| Anonymous function syntax (`fn(x) { }`, `(x) => x`) | 🔨 Block 4 in progress |
+| Closure capture with CoW semantics | 🔨 Block 4 in progress |
+| `async fn` / `await` syntax | ⬜ Block 8 (runtime infrastructure exists) |
 
-- **Closures:** Functions cannot capture outer scope variables
-- **Anonymous functions:** No lambda syntax
-- **async/await syntax:** Runtime infrastructure exists, language syntax pending
-
-See `ROADMAP.md` for planned enhancements.
+See `ROADMAP.md` for full v0.3.0 plan.
 
 ---
 
