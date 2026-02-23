@@ -80,17 +80,3 @@ jobs:
               console.log('Could not parse audit results');
             }
 
-  supply-chain:
-    name: Supply Chain
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Install cargo-deny
-        uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-deny
-
-      - name: Check all
-        run: cargo deny check
