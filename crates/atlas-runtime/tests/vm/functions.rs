@@ -856,4 +856,3 @@ fn test_vm_complex_mangling() {
 // when the complete generic function pipeline is integrated.
 
 // ============================================================================
-

@@ -153,5 +153,3 @@ fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
         _ => panic!("Expected array"),
     }
 }
-
-

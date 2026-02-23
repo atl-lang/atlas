@@ -1632,4 +1632,3 @@ fn test_at3xxx_codes_in_expected_range() {
     // AT2013 is a warning, correctly in AT2xxx range
     assert!(error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION.starts_with("AT2"));
 }
-

@@ -15,7 +15,6 @@ use common::*;
 use pretty_assertions::assert_eq;
 use rstest::rstest;
 
-
 // ============================================================================
 // From interpreter_member_tests.rs
 // ============================================================================
@@ -48,19 +47,18 @@ fn test_json_as_string(#[case] source: &str, #[case] expected: &str) {
     assert_eq!(result, expected);
 }
 
-
 // Domain submodules (files live in tests/interpreter/)
-#[path = "interpreter/member.rs"]
-mod interp_member;
-#[path = "interpreter/nested_functions.rs"]
-mod interp_nested_functions;
-#[path = "interpreter/scope.rs"]
-mod interp_scope;
-#[path = "interpreter/pattern_matching.rs"]
-mod interp_pattern_matching;
 #[path = "interpreter/assignment.rs"]
 mod interp_assignment;
 #[path = "interpreter/for_in.rs"]
 mod interp_for_in;
 #[path = "interpreter/integration.rs"]
 mod interp_integration;
+#[path = "interpreter/member.rs"]
+mod interp_member;
+#[path = "interpreter/nested_functions.rs"]
+mod interp_nested_functions;
+#[path = "interpreter/pattern_matching.rs"]
+mod interp_pattern_matching;
+#[path = "interpreter/scope.rs"]
+mod interp_scope;

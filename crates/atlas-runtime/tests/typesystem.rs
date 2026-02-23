@@ -124,17 +124,16 @@ fn has_code(diags: &[Diagnostic], code: &str) -> bool {
 // Bidirectional Type Checking Tests
 // ============================================================================
 
-
 // Domain submodules (files live in tests/typesystem/)
-#[path = "typesystem/inference.rs"]
-mod inference;
+#[path = "typesystem/bindings.rs"]
+mod bindings;
 #[path = "typesystem/constraints.rs"]
 mod constraints;
 #[path = "typesystem/flow.rs"]
 mod flow;
 #[path = "typesystem/generics.rs"]
 mod generics;
-#[path = "typesystem/bindings.rs"]
-mod bindings;
+#[path = "typesystem/inference.rs"]
+mod inference;
 #[path = "typesystem/integration.rs"]
 mod integration;
