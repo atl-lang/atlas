@@ -49,7 +49,13 @@ cargo fmt --check -p <package>                   # Perfectly formatted
 4. **Fix it** — minimal fix, don't refactor unrelated code
 5. **Re-run full suite** — confirm 100%
 
-**Time limit:** If debugging a single failure exceeds 30 minutes, stop and escalate to user. Do not ship with failures.
+**Time limit:** If debugging a single failure exceeds 30 minutes, stop. Do NOT ship with failures. Do NOT ask the user.
+Instead:
+1. Identify the root cause precisely
+2. Check if it's a spec gap, a missing dependency, or a bad test assertion
+3. Fix the root cause — never skip, suppress, or `#[ignore]` a real failure
+4. If the failure reveals a deeper architectural issue, document it in STATUS.md "Blockers" and commit the partial work on the block branch with a clear commit message describing what's broken and why
+5. The next session agent picks it up from STATUS.md — this is the recovery mechanism
 
 ---
 

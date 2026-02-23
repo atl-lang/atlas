@@ -77,7 +77,11 @@ cargo clean
 **Status per dependency:**
 - ✅ Exists, complete, spec-compliant → Proceed
 - ⚠️ Exists but incomplete → Flag, may need to finish first
-- 🚫 Doesn't exist → BLOCKING, report to user
+- 🚫 Doesn't exist → BLOCKING. Do NOT ask the user. Resolve autonomously:
+  - If it's a missing spec definition: check `docs/specification/` — the spec is the authority
+  - If it's a missing implementation that should exist: implement it as a prerequisite phase (commit it, then continue)
+  - If it's a dependency outside v0.3 scope entirely: document the gap in STATUS.md and skip the phase, noting why in the phase file
+  - User is never the answer to a missing dependency
 
 ---
 

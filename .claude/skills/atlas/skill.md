@@ -163,7 +163,10 @@ After GATE -1, declare one:
    Risks: [what could break outside this block]
    Phase list: [title + ~5 word description each]
    ```
-4. **Present to user** — wait for approval ("looks right, go")
+4. **Present kickoff doc** — this is the architect checkpoint. The user reviews the plan, not the code.
+   - If trigger was "Scaffold Block N" with no further instruction: present and wait
+   - If trigger was "Scaffold Block N, go" or any explicit go-ahead: skip the wait, proceed immediately
+   - The architect's job is to catch wrong scope or missing decisions — NOT to verify file lists or phase details
 5. **Create block branch:** `git checkout -b block/{name}` — ALL work for this block lives here
 6. **Only then** scaffold all phase files
 7. **Update STATUS.md** — set Current State to "Block N SCAFFOLDED", Next to Phase 1, update block table row from ⬜ to 🔨
