@@ -11,7 +11,9 @@ on:
   push:
     branches: [main]
     paths:
-      - 'crates/atlas-runtime/**'
+      - 'crates/atlas-runtime/src/**/*.rs'
+      - 'crates/atlas-runtime/benches/**'
+      - 'crates/atlas-runtime/Cargo.toml'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/bench.yml'
