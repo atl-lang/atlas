@@ -685,10 +685,3 @@ fn test_permissions_on_directory() {
 // Process management tests (Phase-12)
 //
 // Tests for command execution, environment variables, and process control.
-
-/// Helper to evaluate code expecting success
-fn eval_ok(code: &str) -> Value {
-    let security = SecurityContext::allow_all();
-    let runtime = Atlas::new_with_security(security);
-    runtime.eval(code).unwrap()
-}

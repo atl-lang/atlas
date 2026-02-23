@@ -12,7 +12,6 @@ use atlas_runtime::parser::Parser;
 use atlas_runtime::repl::ReplCore;
 use atlas_runtime::typechecker::TypeChecker;
 use atlas_runtime::{Atlas, TypecheckDump, Value, TYPECHECK_VERSION};
-use pretty_assertions::assert_eq;
 use rstest::rstest;
 use std::fs;
 use tempfile::TempDir;
@@ -117,10 +116,6 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 // ============================================================================
 // Helpers
 // ============================================================================
-
-fn has_code(diags: &[Diagnostic], code: &str) -> bool {
-    diags.iter().any(|d| d.code == code)
-}
 
 // ============================================================================
 // Bidirectional Type Checking Tests

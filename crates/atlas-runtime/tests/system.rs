@@ -28,13 +28,6 @@ fn call_fn(name: &str, args: &[Value]) -> Result<Value, atlas_runtime::value::Ru
     stdlib::call_builtin(name, args, test_span(), &security, &stdlib::stdout_writer())
 }
 
-fn extract_string(value: &Value) -> String {
-    match value {
-        Value::String(s) => s.as_ref().clone(),
-        _ => panic!("Expected string value"),
-    }
-}
-
 fn extract_number(value: &Value) -> f64 {
     match value {
         Value::Number(n) => *n,
@@ -46,13 +39,6 @@ fn extract_bool(value: &Value) -> bool {
     match value {
         Value::Bool(b) => *b,
         _ => panic!("Expected bool value"),
-    }
-}
-
-fn extract_array(value: &Value) -> Vec<Value> {
-    match value {
-        Value::Array(a) => a.iter().cloned().collect(),
-        _ => panic!("Expected array value"),
     }
 }
 

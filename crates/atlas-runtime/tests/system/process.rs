@@ -128,28 +128,3 @@ fn test_env_requires_permission() {
 // Gzip compression tests
 //
 // Comprehensive tests for gzip compression and decompression
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-fn bytes_to_atlas_array(bytes: &[u8]) -> Value {
-    let values: Vec<Value> = bytes.iter().map(|&b| Value::Number(b as f64)).collect();
-    Value::array(values)
-}
-
-fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
-    match value {
-        Value::Array(arr) => {
-            let arr_guard = arr.as_slice();
-            arr_guard
-                .iter()
-                .map(|v| match v {
-                    Value::Number(n) => *n as u8,
-                    _ => panic!("Expected number in array"),
-                })
-                .collect()
-        }
-        _ => panic!("Expected array"),
-    }
-}
