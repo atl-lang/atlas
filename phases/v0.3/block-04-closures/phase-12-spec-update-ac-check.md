@@ -88,3 +88,17 @@ Update:
 ## Commit
 
 Single commit on `block/closures` branch. PR opens after this phase — block is complete.
+
+## Post-Block-4 Architectural Discussion (REQUIRED before scaffolding Block 5)
+
+Before scaffolding Block 5, surface the following to the user. This is a **conversation, not a unilateral decision** — wait for input.
+
+**Topic: Leading indicators beyond coverage and benchmarks**
+
+Current monitoring is lagging (coverage after merge, benchmarks after merge). Two gaps identified:
+
+1. **Test-to-production-code ratio per crate** — we track total test count but not ratio. A crate could balloon in production code while tests stay flat. Should we track lines-of-test / lines-of-production per crate in STATUS.md at block completion?
+
+2. **Zero-allocation paths in the interpreter hot path** — the interpreter's eval loop should never allocate on the happy path. This isn't tested or tracked anywhere. Options: a `dhat` heap profiler run in CI, a custom allocator in tests that panics on unexpected allocation, or document it as a manual audit per block.
+
+Raise these in the block completion summary and get the user's direction before proceeding.
