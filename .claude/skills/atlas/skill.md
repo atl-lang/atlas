@@ -92,7 +92,10 @@ See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 **See `gates/git-workflow.md`** for all commands.
 **See `.claude/rules/atlas-git.md`** for full rules (auto-loaded everywhere).
 
-**TL;DR:** All changes via PR → CI passes → auto-squash merge. Never push main directly.
+**Two-track push policy:**
+- **Track 1** (docs/config/CI/pure test refactors): direct push to main with `[skip ci]`
+- **Track 2** (any Rust source changes): PR → CI → auto-squash merge
+**Full rules:** `.claude/rules/atlas-git.md` (auto-loaded) — read before pushing anything.
 **Single workspace:** `~/dev/projects/atlas/` — open this in Claude Code, not atlas-dev.
 
 ---

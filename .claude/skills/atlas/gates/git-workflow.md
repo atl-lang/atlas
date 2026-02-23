@@ -134,7 +134,8 @@ last rebased. Always rebase immediately before push to guarantee auto-merge proc
 **Exception:** Blocking fixes (`fix/`) or CI issues (`ci/`) may PR immediately — these are the ONLY valid early-PR cases.
 
 ## Banned
-- `git push origin main` directly
+- `git push origin main` for Rust source changes (Track 2 requires PR)
+- Track 1 direct push WITHOUT `[skip ci]` trailer
 - `--no-ff` merges
 - `--force` on main
 - `--no-verify`
