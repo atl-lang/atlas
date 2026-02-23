@@ -25,10 +25,22 @@ Use for ANY change that does not touch Rust source:
 | Cargo metadata only | Version bumps, `[package]` fields, no new deps |
 
 ```bash
-git add <files> && git commit -m "ci: ... [skip ci]" && git push origin main
+git add <files> && git commit -m "docs(spec): update closure syntax examples [skip ci]" && git push origin main
 ```
 
-**`[skip ci]` is MANDATORY on every direct push.** GitHub skips ALL workflows — no CI, no bench, no nothing. No branch. No PR. No waiting. Ever.
+**`[skip ci]` is MANDATORY on every direct push** — appended to a normal conventional commit message. The message describes the change fully. `[skip ci]` is just a trailer. GitHub skips ALL workflows. No branch. No PR. No waiting. Ever.
+
+```
+# Correct — descriptive message, [skip ci] as trailer
+docs(runtime): update test table line counts [skip ci]
+ci(coderabbit): disable blocking reviews [skip ci]
+chore(status): mark phase-05 complete [skip ci]
+
+# Wrong — message is not the trailer
+[skip ci]
+skip ci
+ci: skip
+```
 
 ### Track 2 — PR + CI required (no exceptions)
 
