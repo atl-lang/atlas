@@ -287,7 +287,8 @@ pub enum OwnershipAnnotation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Param {
     pub name: Identifier,
-    pub type_ref: TypeRef,
+    /// Type annotation. `None` for untyped arrow-fn params — typechecker infers.
+    pub type_ref: Option<TypeRef>,
     /// Ownership annotation (`own`, `borrow`, `shared`), or `None` if unannotated
     pub ownership: Option<OwnershipAnnotation>,
     pub span: Span,
@@ -833,7 +834,7 @@ mod tests {
                 name: "data".to_string(),
                 span: Span::new(0, 4),
             },
-            type_ref: TypeRef::Named("number".to_string(), Span::new(6, 12)),
+            type_ref: Some(TypeRef::Named("number".to_string(), Span::new(6, 12))),
             ownership: Some(OwnershipAnnotation::Own),
             span: Span::new(0, 12),
         };
@@ -847,7 +848,7 @@ mod tests {
                 name: "x".to_string(),
                 span: Span::new(0, 1),
             },
-            type_ref: TypeRef::Named("number".to_string(), Span::new(3, 9)),
+            type_ref: Some(TypeRef::Named("number".to_string(), Span::new(3, 9))),
             ownership: None,
             span: Span::new(0, 9),
         };

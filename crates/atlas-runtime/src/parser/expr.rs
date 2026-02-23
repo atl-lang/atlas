@@ -31,7 +31,13 @@ impl Parser {
             TokenKind::True | TokenKind::False => self.parse_bool(),
             TokenKind::Null => self.parse_null(),
             TokenKind::Identifier => self.parse_identifier(),
-            TokenKind::LeftParen => self.parse_group(),
+            TokenKind::LeftParen => {
+                if let Some(arrow_fn) = self.try_parse_arrow_fn()? {
+                    Ok(arrow_fn)
+                } else {
+                    self.parse_group()
+                }
+            }
             TokenKind::LeftBracket => self.parse_array_literal(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Match => self.parse_match_expr(),
@@ -139,6 +145,125 @@ impl Parser {
         Ok(Expr::Identifier(Identifier {
             name: token.lexeme.clone(),
             span: token.span,
+        }))
+    }
+
+    /// Speculatively attempt to parse an arrow function: `(params) => expr`.
+    ///
+    /// Returns `Ok(Some(expr))` if the token stream is an arrow fn, `Ok(None)` to
+    /// fall through to grouped-expression parsing. The parser position and diagnostics
+    /// are fully restored on failure.
+    fn try_parse_arrow_fn(&mut self) -> Result<Option<Expr>, ()> {
+        let saved_pos = self.current;
+        let saved_diag_len = self.diagnostics.len();
+
+        // Consume '('
+        let start_span = match self.consume(TokenKind::LeftParen, "") {
+            Ok(tok) => tok.span,
+            Err(()) => {
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                return Ok(None);
+            }
+        };
+
+        // Try to parse a comma-separated list of arrow-fn params.
+        // Each param is:  [ownership] ident [: type]
+        // Empty param list `()` is also valid.
+        let mut params: Vec<Param> = Vec::new();
+
+        if !self.check(TokenKind::RightParen) {
+            loop {
+                let param_span_start = self.peek().span;
+
+                // Optional ownership annotation
+                let ownership = if self.match_token(TokenKind::Own) {
+                    Some(OwnershipAnnotation::Own)
+                } else if self.match_token(TokenKind::Borrow) {
+                    Some(OwnershipAnnotation::Borrow)
+                } else if self.match_token(TokenKind::Shared) {
+                    Some(OwnershipAnnotation::Shared)
+                } else {
+                    None
+                };
+
+                // Expect an identifier
+                let ident_tok = match self.consume_identifier("a parameter name") {
+                    Ok(tok) => tok,
+                    Err(()) => {
+                        // Not an ident — definitely not an arrow fn
+                        self.current = saved_pos;
+                        self.diagnostics.truncate(saved_diag_len);
+                        return Ok(None);
+                    }
+                };
+                let param_name = ident_tok.lexeme.clone();
+                let param_name_span = ident_tok.span;
+
+                // Optional type annotation: `: type`
+                let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
+                    match self.parse_type_ref() {
+                        Ok(t) => {
+                            let end = t.span();
+                            (Some(t), end)
+                        }
+                        Err(()) => {
+                            self.current = saved_pos;
+                            self.diagnostics.truncate(saved_diag_len);
+                            return Ok(None);
+                        }
+                    }
+                } else {
+                    (None, param_name_span)
+                };
+
+                params.push(Param {
+                    name: Identifier {
+                        name: param_name,
+                        span: param_name_span,
+                    },
+                    type_ref,
+                    ownership,
+                    span: param_span_start.merge(param_span_end),
+                });
+
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+                // Allow trailing comma
+                if self.check(TokenKind::RightParen) {
+                    break;
+                }
+            }
+        }
+
+        // Expect ')'
+        let close_span = match self.consume(TokenKind::RightParen, "") {
+            Ok(tok) => tok.span,
+            Err(()) => {
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                return Ok(None);
+            }
+        };
+        let _ = close_span;
+
+        // Expect '=>' — this is the decisive token
+        if !self.match_token(TokenKind::FatArrow) {
+            self.current = saved_pos;
+            self.diagnostics.truncate(saved_diag_len);
+            return Ok(None);
+        }
+
+        // Committed — parse the body expression
+        let body = self.parse_expression()?;
+        let body_span = body.span();
+
+        Ok(Some(Expr::AnonFn {
+            params,
+            return_type: None,
+            body: Box::new(body),
+            span: start_span.merge(body_span),
         }))
     }
 

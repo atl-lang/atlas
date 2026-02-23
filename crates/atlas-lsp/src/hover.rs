@@ -286,7 +286,10 @@ fn find_parameter_hover(program: &Program, identifier: &str) -> Option<String> {
                         "{}{}: {}",
                         label,
                         param.name.name,
-                        format_type_ref(&param.type_ref)
+                        param
+                            .type_ref
+                            .as_ref()
+                            .map_or("_".to_string(), format_type_ref)
                     ));
                     hover.push_str("\n```");
                     return Some(hover);
@@ -356,7 +359,7 @@ fn format_trait_method_sig(method: &TraitMethodSig) -> String {
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                format_type_ref(&p.type_ref)
+                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
             )
         })
         .collect();
@@ -378,7 +381,7 @@ fn format_impl_method_sig(method: &ImplMethod) -> String {
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                format_type_ref(&p.type_ref)
+                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
             )
         })
         .collect();
@@ -783,7 +786,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                format_type_ref(&p.type_ref)
+                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
             )
         })
         .collect();

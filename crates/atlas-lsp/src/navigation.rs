@@ -93,7 +93,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     let params: Vec<String> = func
         .params
         .iter()
-        .map(|p| format!("{}: {:?}", p.name.name, p.type_ref))
+        .map(|p| format!("{}: {:?}", p.name.name, p.type_ref.as_ref()))
         .collect();
 
     format!(

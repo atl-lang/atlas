@@ -221,7 +221,10 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     let params: Vec<String> = func
         .params
         .iter()
-        .map(|p| format!("{}: {}", p.name.name, format_type(&p.type_ref)))
+        .map(|p| {
+            let ty = p.type_ref.as_ref().map_or("_".to_string(), format_type);
+            format!("{}: {}", p.name.name, ty)
+        })
         .collect();
     sig.push_str(&params.join(", "));
     sig.push(')');

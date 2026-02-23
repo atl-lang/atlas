@@ -206,7 +206,11 @@ impl Binder {
         let param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| self.resolve_type_ref(&p.type_ref))
+            .map(|p| {
+                p.type_ref
+                    .as_ref()
+                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+            })
             .collect();
 
         let return_type = self.resolve_type_ref(&func.return_type);
@@ -290,7 +294,11 @@ impl Binder {
         let param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| self.resolve_type_ref(&p.type_ref))
+            .map(|p| {
+                p.type_ref
+                    .as_ref()
+                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+            })
             .collect();
 
         let return_type = self.resolve_type_ref(&func.return_type);
@@ -646,7 +654,10 @@ impl Binder {
 
         // Bind parameters
         for param in &func.params {
-            let ty = self.resolve_type_ref(&param.type_ref);
+            let ty = param
+                .type_ref
+                .as_ref()
+                .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
             let symbol = Symbol {
                 name: param.name.name.clone(),
                 ty,
