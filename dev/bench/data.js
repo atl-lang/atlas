@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771913048174,
+  "lastUpdate": 1771957720297,
   "repoUrl": "https://github.com/atl-lang/atlas",
   "entries": {
     "Atlas Runtime Benchmarks": [
@@ -545,6 +545,278 @@ window.BENCHMARK_DATA = {
           {
             "name": "vm_loop_scaling/10000",
             "value": 3446900,
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "name": "proxy",
+            "username": "proxikal",
+            "email": "proxikal@gmail.com"
+          },
+          "committer": {
+            "name": "proxy",
+            "username": "proxikal",
+            "email": "proxikal@gmail.com"
+          },
+          "id": "f72ded4cb90cb81d47a7f23f8f469b4c1c600674",
+          "message": "ci: bump MSRV to 1.88 and fix vm_fuzz SecurityContext call [skip ci]",
+          "timestamp": "2026-02-24T06:25:23Z",
+          "url": "https://github.com/atl-lang/atlas/commit/f72ded4cb90cb81d47a7f23f8f469b4c1c600674"
+        },
+        "date": 1771957719760,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "interp_fibonacci_20",
+            "value": 38759000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interp_arrays/len_10k",
+            "value": 6033400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/fibonacci_20",
+            "value": 8319800.000000001,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/nested_loops",
+            "value": 3331200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "string_replace_large",
+            "value": 62332,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_map_10k_elements",
+            "value": 62578,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_sort_1000_numbers",
+            "value": 59567,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_indexOf_search",
+            "value": 58810,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "math_arithmetic_10k_ops",
+            "value": 7496000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_parse_10kb",
+            "value": 68020,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_nested_access_deep",
+            "value": 68502,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_read_1mb",
+            "value": 161280,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_write_1mb",
+            "value": 6258600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/10",
+            "value": 125390,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/50",
+            "value": 412390,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/200",
+            "value": 1397000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/50",
+            "value": 155670,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/200",
+            "value": 433470,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/500",
+            "value": 1001400.0000000001,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/lex",
+            "value": 1923.8999999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/parse",
+            "value": 3753.6,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/compile",
+            "value": 5005.7,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/len_5k",
+            "value": 2679600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/trim_3k",
+            "value": 604990,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/split_1k",
+            "value": 1205900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/push_1k",
+            "value": 21036,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/pop_500",
+            "value": 31915,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/len_5k",
+            "value": 2650100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/index_5k",
+            "value": 2998100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/abs_5k",
+            "value": 2725300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/sqrt_2k",
+            "value": 1044100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/min_max_3k",
+            "value": 1993500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/type/type_of_3k",
+            "value": 23943,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_add_1000",
+            "value": 352220,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_sub_1000",
+            "value": 350840,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_mul_1000",
+            "value": 320700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_div_1000",
+            "value": 323310,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_function_multi_arg",
+            "value": 411180,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_count_10000",
+            "value": 1923800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_accumulate_5000",
+            "value": 1880500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_nested_100x100",
+            "value": 3128700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_create_20",
+            "value": 10750,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_set_index_1000",
+            "value": 622840,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_comparison_ops_5000",
+            "value": 2816900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_equality_check_5000",
+            "value": 1341000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_string_concat_100",
+            "value": 43380,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/100",
+            "value": 42976,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/1000",
+            "value": 354440,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/5000",
+            "value": 1737900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/10000",
+            "value": 3469100,
             "unit": "ns/iter"
           }
         ]
