@@ -686,7 +686,12 @@ fn extract_function_children(text: &str, func: &FunctionDecl) -> Vec<DocumentSym
         #[allow(deprecated)]
         children.push(DocumentSymbol {
             name: param.name.name.clone(),
-            detail: Some(format_type_ref(&param.type_ref)),
+            detail: Some(
+                param
+                    .type_ref
+                    .as_ref()
+                    .map_or("_".to_string(), format_type_ref),
+            ),
             kind: SymbolKind::VARIABLE,
             range,
             selection_range: range,
@@ -861,7 +866,10 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     let params: Vec<String> = func
         .params
         .iter()
-        .map(|p| format!("{}: {}", p.name.name, format_type_ref(&p.type_ref)))
+        .map(|p| {
+            let ty = p.type_ref.as_ref().map_or("_".to_string(), format_type_ref);
+            format!("{}: {}", p.name.name, ty)
+        })
         .collect();
 
     format!(

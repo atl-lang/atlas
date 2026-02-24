@@ -93,7 +93,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     let params: Vec<String> = func
         .params
         .iter()
-        .map(|p| format!("{}: {:?}", p.name.name, p.type_ref))
+        .map(|p| format!("{}: {:?}", p.name.name, p.type_ref.as_ref()))
         .collect();
 
     format!(
@@ -306,6 +306,14 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         }
         Expr::Try(try_expr) => {
             find_references_in_expr(&try_expr.expr, identifier, references);
+        }
+        Expr::AnonFn { body, .. } => {
+            find_references_in_expr(body, identifier, references);
+        }
+        Expr::Block(block) => {
+            for stmt in &block.statements {
+                find_references_in_stmt(stmt, identifier, references);
+            }
         }
         Expr::Literal(_, _) => {}
     }

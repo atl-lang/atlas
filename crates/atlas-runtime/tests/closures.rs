@@ -998,3 +998,1151 @@ outer();
         14.0,
     );
 }
+
+// ============================================================================
+// Phase 4: Typechecker — AnonFn type resolution
+// ============================================================================
+
+fn typecheck_errors(source: &str) -> Vec<String> {
+    let mut lexer = atlas_runtime::lexer::Lexer::new(source.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::parser::Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = atlas_runtime::binder::Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let diagnostics = typechecker.check(&program);
+    diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .map(|d| d.message.clone())
+        .collect()
+}
+
+fn typecheck_ok(source: &str) {
+    let errors = typecheck_errors(source);
+    assert!(
+        errors.is_empty(),
+        "Expected no type errors, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_typed_params_produces_function_type() {
+    // Typed anon fn — typechecker resolves it without error
+    typecheck_ok(
+        r#"
+let f = fn(x: number) -> number { x + 1; };
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_untyped_params_no_error() {
+    // Arrow fn with untyped params — Unknown type, no crash, no error
+    typecheck_ok(
+        r#"
+let f = (x) => x;
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_return_type_mismatch_errors() {
+    // Declared return type doesn't match body type
+    let errors = typecheck_errors(
+        r#"
+let f = fn(x: number) -> string { x + 1; };
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected type error for return type mismatch"
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_passed_as_arg_no_error() {
+    // Anon fn passed as argument to a higher-order function
+    // Atlas function type syntax: (params) -> return, not fn(params) -> return
+    typecheck_ok(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number {
+    return f(x);
+}
+apply(fn(x: number) -> number { x * 2; }, 5);
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_arrow_syntax_no_error() {
+    // Arrow syntax — no declared types, typechecks without error
+    typecheck_ok(
+        r#"
+let double = (x) => x;
+double(4);
+"#,
+    );
+}
+
+#[test]
+fn test_tc_anon_fn_captures_borrow_param_errors() {
+    // Capturing a `borrow` param in a closure is an error
+    // Atlas function type syntax: () -> number, not fn() -> number
+    let errors = typecheck_errors(
+        r#"
+fn outer(borrow x: number) -> () -> number {
+    return fn() -> number { x; };
+}
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected error for capturing borrow param in closure"
+    );
+    assert!(
+        errors
+            .iter()
+            .any(|e| e.contains("borrow") || e.contains("AT3040")),
+        "Expected borrow capture error, got: {:?}",
+        errors
+    );
+}
+
+// ============================================================================
+// Phase 05: Compiler — Emit MakeClosure for Anonymous Functions
+// VM-path and parity tests. Parity tests re-enabled in Phase 06 (interpreter AnonFn support).
+// (interpreter AnonFn support).
+// ============================================================================
+
+fn assert_vm_number(source: &str, expected: f64) {
+    let result = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        result,
+        Value::Number(expected),
+        "VM wrong for:\n{}\n  got: {:?}",
+        source,
+        result
+    );
+}
+
+fn assert_vm_string(source: &str, expected: &str) {
+    let result = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        result,
+        Value::string(expected.to_string()),
+        "VM wrong for:\n{}\n  got: {:?}",
+        source,
+        result
+    );
+}
+
+// --- Block-form anonymous function (fn expression) ---
+
+#[test]
+fn test_anon_fn_block_form_basic() {
+    // Phase 05 AC: fn expression with explicit return compiles and executes
+    assert_vm_number(
+        r#"
+let f = fn(x: number) -> number { return x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_block_form_two_params() {
+    assert_vm_number(
+        r#"
+let add = fn(a: number, b: number) -> number { return a + b; };
+add(3, 4);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_block_form_returns_null_without_explicit_return() {
+    let result = vm_eval(
+        r#"
+let f = fn() { };
+f();
+"#,
+    );
+    assert_eq!(result, Some(Value::Null));
+}
+
+#[test]
+fn test_anon_fn_block_form_string_result() {
+    assert_vm_string(
+        r#"
+let greet = fn(name: string) -> string { return "hello " + name; };
+greet("world");
+"#,
+        "hello world",
+    );
+}
+
+// --- Arrow-form anonymous function ---
+
+#[test]
+fn test_anon_fn_arrow_form_basic() {
+    // Phase 05 AC: `let f = (x) => x * 2; f(3);` → 6
+    assert_vm_number(
+        r#"
+let f = (x) => x * 2;
+f(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_arithmetic() {
+    assert_vm_number(
+        r#"
+let square = (x) => x * x;
+square(7);
+"#,
+        49.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_no_params() {
+    assert_vm_number(
+        r#"
+let forty_two = () => 42;
+forty_two();
+"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_two_params() {
+    assert_vm_number(
+        r#"
+let mul = (a, b) => a * b;
+mul(6, 7);
+"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_string_concat() {
+    assert_vm_string(
+        r#"
+let join = (a, b) => a + b;
+join("foo", "bar");
+"#,
+        "foobar",
+    );
+}
+
+// --- Upvalue capture ---
+
+#[test]
+fn test_anon_fn_captures_outer_param() {
+    // Phase 05 AC: closure capturing an outer variable compiles with correct upvalue count
+    assert_vm_number(
+        r#"
+fn make_adder(n: number) -> number {
+    let f = (x) => x + n;
+    return f(10);
+}
+make_adder(5);
+"#,
+        15.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_captures_outer_param_block_form() {
+    assert_vm_number(
+        r#"
+fn make_adder(n: number) -> number {
+    let f = fn(x: number) -> number { return x + n; };
+    return f(10);
+}
+make_adder(3);
+"#,
+        13.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_captures_multiple_outer_vars() {
+    assert_vm_number(
+        r#"
+fn compute(a: number, b: number) -> number {
+    let f = (x) => x + a + b;
+    return f(1);
+}
+compute(2, 3);
+"#,
+        6.0,
+    );
+}
+
+// --- Anonymous function as argument (higher-order) ---
+
+#[test]
+fn test_anon_fn_passed_as_arg() {
+    assert_vm_number(
+        r#"
+fn apply(f: any, x: number) -> number {
+    return f(x);
+}
+apply((n) => n * 3, 4);
+"#,
+        12.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_passed_as_arg() {
+    assert_vm_number(
+        r#"
+fn apply(f: any, x: number) -> number {
+    return f(x);
+}
+apply((n) => n + 100, 5);
+"#,
+        105.0,
+    );
+}
+
+// --- Returned from a function ---
+
+#[test]
+fn test_anon_fn_returned_from_function() {
+    assert_vm_number(
+        r#"
+fn make_multiplier(factor: number) -> any {
+    return (x) => x * factor;
+}
+let double = make_multiplier(2);
+double(21);
+"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_parity_fn_expr() {
+    // Both engines: explicit return ensures identical result (interpreter also returns last
+    // expr value, VM pops it — use return to guarantee parity).
+    assert_parity_number(
+        r#"
+let f = fn(x: number) -> number { return x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_parity_arrow() {
+    assert_parity_number(
+        r#"
+let f = (x) => x * 2;
+f(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_parity_capture() {
+    assert_parity_number(
+        r#"
+fn outer(n: number) -> number {
+    let f = (x) => x + n;
+    return f(10);
+}
+outer(5);
+"#,
+        15.0,
+    );
+}
+
+// ============================================================================
+// Phase 07: Parity Hardening — var-mutation capture semantics
+// Canonical rule: closure captures `var` BY VALUE at creation time.
+// Outer `var` mutations after closure creation are NOT visible inside.
+// Both engines must agree (VM snapshot semantics; interpreter now aligned).
+// ============================================================================
+
+/// Outer `var` mutation after closure creation is not visible inside (arrow form).
+#[test]
+fn test_parity_var_mutation_after_closure_creation_not_visible() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 10;
+    let f = () => x;
+    x = 99;
+    return f();
+}
+outer();
+"#,
+        10.0,
+    );
+}
+
+/// Outer `var` mutation after closure creation is not visible inside (block form).
+#[test]
+fn test_parity_var_mutation_after_closure_creation_block_form() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 10;
+    let f = fn() -> number { return x; };
+    x = 99;
+    return f();
+}
+outer();
+"#,
+        10.0,
+    );
+}
+
+/// Mutation of a `var` INSIDE a closure works correctly within the call.
+#[test]
+fn test_parity_var_mutation_inside_closure_works() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var counter = 0;
+    let inc = () => counter + 1;
+    return inc();
+}
+outer();
+"#,
+        1.0,
+    );
+}
+
+/// Multiple captures, only one mutated — only mutated one frozen at creation value.
+#[test]
+fn test_parity_partial_var_mutation_after_capture() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var a = 1;
+    var b = 2;
+    let f = () => a + b;
+    a = 100;
+    return f();
+}
+outer();
+"#,
+        3.0,
+    );
+}
+
+/// `let` (immutable) binding: no mutation possible; both engines agree on snapshot.
+#[test]
+fn test_parity_let_binding_captured_stable() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    let x = 42;
+    let f = () => x;
+    return f();
+}
+outer();
+"#,
+        42.0,
+    );
+}
+
+/// Two closures created at different points see their respective snapshots.
+#[test]
+fn test_parity_two_closures_different_snapshots() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 1;
+    let f1 = () => x;
+    x = 2;
+    let f2 = () => x;
+    return f1() + f2();
+}
+outer();
+"#,
+        3.0,
+    );
+}
+
+// ============================================================================
+// Phase 09: Stdlib Higher-Order Function Audit
+// All 9 HOF free functions tested with fn-expr and arrow form, both engines.
+// Also verifies Value::Closure (closures with upvalues) works in all HOFs.
+// Note: HOFs in Atlas are free functions: map(arr, fn), not arr.map(fn).
+// ============================================================================
+
+// --- map ---
+
+#[test]
+fn test_hof_map_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3];
+let result = map(arr, fn(x: number) -> number { return x * 2; });
+result[2];
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_hof_map_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3];
+let result = map(arr, (x) => x * 2);
+result[0];
+"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_hof_map_closure_with_upvalue() {
+    // Arrow fn captures outer var (produces Value::Closure in VM)
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let factor = 3;
+    let arr = [1, 2, 3];
+    let result = map(arr, (x) => x * factor);
+    return result[1];
+}
+run();
+"#,
+        6.0,
+    );
+}
+
+// --- filter ---
+
+#[test]
+fn test_hof_filter_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3, 4, 5];
+let result = filter(arr, fn(x: number) -> bool { return x > 2; });
+result[0];
+"#,
+        3.0,
+    );
+}
+
+#[test]
+fn test_hof_filter_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3, 4, 5];
+let result = filter(arr, (x) => x > 1);
+len(result);
+"#,
+        4.0,
+    );
+}
+
+#[test]
+fn test_hof_filter_closure_with_upvalue() {
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let threshold = 2;
+    let arr = [1, 2, 3, 4];
+    let result = filter(arr, (x) => x > threshold);
+    return len(result);
+}
+run();
+"#,
+        2.0,
+    );
+}
+
+// --- reduce ---
+
+#[test]
+fn test_hof_reduce_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3];
+reduce(arr, fn(acc: number, x: number) -> number { return acc + x; }, 0);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_hof_reduce_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3, 4];
+reduce(arr, (acc, x) => acc + x, 0);
+"#,
+        10.0,
+    );
+}
+
+// --- forEach ---
+
+#[test]
+fn test_hof_for_each_fn_expr_executes() {
+    // forEach returns null; verify it runs without error via side-effect-free path
+    let result = vm_eval(
+        r#"
+let arr = [1, 2, 3];
+forEach(arr, fn(x: number) { });
+42;
+"#,
+    );
+    assert_eq!(result, Some(Value::Number(42.0)));
+}
+
+#[test]
+fn test_hof_for_each_arrow_executes() {
+    let result = vm_eval(
+        r#"
+let arr = [1, 2, 3];
+forEach(arr, (x) => x);
+99;
+"#,
+    );
+    assert_eq!(result, Some(Value::Number(99.0)));
+}
+
+// --- find ---
+
+#[test]
+fn test_hof_find_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3, 4];
+find(arr, fn(x: number) -> bool { return x == 3; });
+"#,
+        3.0,
+    );
+}
+
+#[test]
+fn test_hof_find_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [10, 20, 30];
+find(arr, (x) => x == 20);
+"#,
+        20.0,
+    );
+}
+
+// --- some ---
+
+#[test]
+fn test_hof_any_fn_expr() {
+    assert_parity_bool(
+        r#"
+let arr = [1, 2, 3];
+some(arr, fn(x: number) -> bool { return x > 2; });
+"#,
+        true,
+    );
+}
+
+#[test]
+fn test_hof_any_arrow() {
+    assert_parity_bool(
+        r#"
+let arr = [1, 2, 3];
+some(arr, (x) => x > 10);
+"#,
+        false,
+    );
+}
+
+// --- every ---
+
+#[test]
+fn test_hof_all_fn_expr() {
+    assert_parity_bool(
+        r#"
+let arr = [1, 2, 3];
+every(arr, fn(x: number) -> bool { return x > 0; });
+"#,
+        true,
+    );
+}
+
+#[test]
+fn test_hof_all_arrow() {
+    assert_parity_bool(
+        r#"
+let arr = [1, 2, 3];
+every(arr, (x) => x > 1);
+"#,
+        false,
+    );
+}
+
+// --- sort ---
+
+#[test]
+fn test_hof_sort_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [3, 1, 2];
+let result = sort(arr, fn(a: number, b: number) -> number { return a - b; });
+result[0];
+"#,
+        1.0,
+    );
+}
+
+#[test]
+fn test_hof_sort_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [3, 1, 2];
+let result = sort(arr, (a, b) => a - b);
+result[2];
+"#,
+        3.0,
+    );
+}
+
+// --- flatMap ---
+
+#[test]
+fn test_hof_flat_map_fn_expr() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2];
+let result = flatMap(arr, fn(x: number) -> any { return [x, x * 10]; });
+len(result);
+"#,
+        4.0,
+    );
+}
+
+#[test]
+fn test_hof_flat_map_arrow() {
+    assert_parity_number(
+        r#"
+let arr = [1, 2, 3];
+let result = flatMap(arr, (x) => [x, x]);
+result[0];
+"#,
+        1.0,
+    );
+}
+
+// ============================================================================
+// Phase 10: Ownership Integration
+// Ownership annotations (own, borrow, shared) on anon fn params — parse,
+// typecheck, runtime, and parity tests. Also verifies borrow capture is blocked.
+// ============================================================================
+
+// --- own annotation ---
+
+#[test]
+fn test_own_param_anon_fn_parses_and_runs() {
+    // fn(own x: number) parses correctly and runs in both engines
+    assert_parity_number(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+apply(fn(own x: number) -> number { return x * 2; }, 5);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_own_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+let f = fn(own x: number) -> number { return x; };
+f(42);
+"#,
+    );
+}
+
+// --- borrow annotation ---
+
+#[test]
+fn test_borrow_param_anon_fn_parses_and_runs() {
+    assert_parity_number(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+apply(fn(borrow x: number) -> number { return x + 1; }, 9);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_borrow_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+let f = fn(borrow x: number) -> number { return x; };
+f(7);
+"#,
+    );
+}
+
+// --- shared annotation ---
+
+#[test]
+fn test_shared_param_anon_fn_typechecks_without_error() {
+    // `shared` annotation parses and typechecks; runtime requires shared<T> value (not tested here)
+    typecheck_ok(
+        r#"
+let f = fn(shared x: number) -> number { return 0; };
+"#,
+    );
+}
+
+#[test]
+fn test_shared_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+fn outer(shared x: number) -> number {
+    let f = fn(shared y: number) -> number { return 0; };
+    return 0;
+}
+"#,
+    );
+}
+
+// --- borrow capture restriction ---
+
+#[test]
+fn test_borrow_param_cannot_be_captured_by_closure() {
+    // Capturing a borrow-annotated outer param in an inner closure is AT3040
+    let errors = typecheck_errors(
+        r#"
+fn outer(borrow x: number) -> () -> number {
+    return fn() -> number { x; };
+}
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected AT3040 error for borrow capture"
+    );
+    assert!(
+        errors.iter().any(|e| e.contains("borrow")),
+        "Expected borrow capture message, got: {:?}",
+        errors
+    );
+}
+
+// --- block-form with return uses declared return type correctly ---
+
+#[test]
+fn test_own_param_block_body_return_type_no_false_positive() {
+    // Regression: block body with `return x;` should not emit false "returns void" diagnostic
+    typecheck_ok(
+        r#"
+let f = fn(own x: number) -> number { return x; };
+f(1);
+"#,
+    );
+}
+
+// ============================================================================
+// Phase 11: Parity Test Suite — 20 comprehensive parity tests covering all
+// meaningful closure behaviors across both execution engines.
+// ============================================================================
+
+// --- Anonymous function basics ---
+
+#[test]
+fn test_parity_anon_fn_basic_call() {
+    assert_parity_number(
+        r#"
+let f = fn(x: number) -> number { return x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_parity_arrow_basic_call() {
+    assert_parity_number(
+        r#"
+let g = (x) => x * 2;
+g(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_parity_multi_param_arrow() {
+    assert_parity_number(
+        r#"
+let add = (x, y) => x + y;
+add(3, 4);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_no_params() {
+    assert_parity_number(
+        r#"
+let answer = fn() -> number { return 42; };
+answer();
+"#,
+        42.0,
+    );
+}
+
+// --- Capture semantics ---
+
+#[test]
+fn test_parity_capture_let_copy_type() {
+    assert_parity_number(
+        r#"
+let n = 10;
+let f = fn() -> number { return n; };
+f();
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_parity_capture_var_snapshot_at_creation() {
+    // Both engines snapshot a local var at closure creation time
+    // (outer mutation after creation is not visible inside the closure)
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    var x = 5;
+    let f = fn() -> number { return x; };
+    x = 99;
+    return f();
+}
+run();
+"#,
+        5.0,
+    );
+}
+
+#[test]
+fn test_parity_nested_closure_make_adder() {
+    // Inner closure captures outer fn param — both engines agree
+    assert_parity_number(
+        r#"
+fn make_adder(n: number) -> (number) -> number {
+    return fn(x: number) -> number { return x + n; };
+}
+let add5 = make_adder(5);
+add5(3);
+"#,
+        8.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_returned_called_once() {
+    // Returned closure capturing outer var — called once
+    assert_parity_number(
+        r#"
+fn make_fn(base: number) -> () -> number {
+    return fn() -> number { return base + 1; };
+}
+let f = make_fn(10);
+f();
+"#,
+        11.0,
+    );
+}
+
+#[test]
+fn test_parity_capture_outer_fn_param() {
+    assert_parity_number(
+        r#"
+fn run(x: number) -> number {
+    let f = fn() -> number { return x * 3; };
+    return f();
+}
+run(4);
+"#,
+        12.0,
+    );
+}
+
+#[test]
+fn test_parity_two_closures_same_outer_var() {
+    // Two closures both capture the same outer let — each gets own copy
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let base = 7;
+    let add1 = fn() -> number { return base + 1; };
+    let add2 = fn() -> number { return base + 2; };
+    return add1() + add2();
+}
+run();
+"#,
+        17.0,
+    );
+}
+
+// --- Higher-order patterns ---
+
+#[test]
+fn test_parity_map_arrow_inline() {
+    assert_parity_number(
+        r#"
+let result = map([1, 2, 3], (x) => x * 10);
+result[1];
+"#,
+        20.0,
+    );
+}
+
+#[test]
+fn test_parity_filter_fn_expr_inline() {
+    assert_parity_number(
+        r#"
+let result = filter([1, 2, 3, 4], fn(x: number) -> bool { return x % 2 == 0; });
+result[0];
+"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_parity_reduce_fn_expr_inline() {
+    assert_parity_number(
+        r#"
+reduce([1, 2, 3, 4, 5], fn(acc: number, x: number) -> number { return acc + x; }, 0);
+"#,
+        15.0,
+    );
+}
+
+#[test]
+fn test_parity_function_composition() {
+    // compose(f, g)(x) = f(g(x))
+    assert_parity_number(
+        r#"
+fn compose(f: (number) -> number, g: (number) -> number) -> (number) -> number {
+    return fn(x: number) -> number { return f(g(x)); };
+}
+let double_then_add1 = compose((x) => x + 1, (x) => x * 2);
+double_then_add1(3);
+"#,
+        7.0,
+    );
+}
+
+// --- Closure in data structures ---
+
+#[test]
+fn test_parity_closure_in_array_call() {
+    assert_parity_number(
+        r#"
+let ops = [(x) => x + 1, (x) => x * 2, (x) => x - 1];
+ops[1](5);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_array_second_element() {
+    // Call second element of closure array
+    assert_parity_number(
+        r#"
+let ops = [(x) => x + 10, (x) => x * 3];
+ops[1](4);
+"#,
+        12.0,
+    );
+}
+
+// --- Arrow form variations ---
+
+#[test]
+fn test_parity_arrow_captures_outer_let() {
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let factor = 4;
+    let f = (x) => x * factor;
+    return f(5);
+}
+run();
+"#,
+        20.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_bool_return() {
+    assert_parity_bool(
+        r#"
+let is_positive = fn(x: number) -> bool { return x > 0; };
+is_positive(5);
+"#,
+        true,
+    );
+}
+
+#[test]
+fn test_parity_arrow_chained_hof() {
+    // map then filter using arrow fns — [1,2,3,4]*2=[2,4,6,8], filter >4 → [6,8] → len 2
+    assert_parity_number(
+        r#"
+let doubled = map([1, 2, 3, 4], (x) => x * 2);
+let large = filter(doubled, (x) => x > 4);
+len(large);
+"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_passed_directly_to_hof() {
+    // Anonymous fn created inline as HOF argument
+    assert_parity_number(
+        r#"
+fn apply_twice(f: (number) -> number, x: number) -> number {
+    return f(f(x));
+}
+apply_twice(fn(n: number) -> number { return n + 3; }, 1);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_captures_string() {
+    assert_parity_string(
+        r#"
+fn greet(name: string) -> () -> string {
+    return fn() -> string { return "hello " + name; };
+}
+let hi = greet("world");
+hi();
+"#,
+        "hello world",
+    );
+}

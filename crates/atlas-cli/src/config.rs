@@ -65,10 +65,14 @@ impl Default for Config {
 mod tests {
     use super::*;
     use std::env;
+    use std::sync::Mutex;
+
+    // Serialize all env-mutating tests to prevent parallel pollution.
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn test_config_defaults() {
-        // Clear environment variables for this test
+        let _g = ENV_LOCK.lock().unwrap();
         env::remove_var("ATLAS_DIAGNOSTICS");
         env::remove_var("ATLAS_NO_COLOR");
         env::remove_var("NO_COLOR");
@@ -86,6 +90,7 @@ mod tests {
 
     #[test]
     fn test_config_json_diagnostics() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_DIAGNOSTICS", "json");
         let config = Config::from_env();
         assert!(config.default_json);
@@ -94,6 +99,7 @@ mod tests {
 
     #[test]
     fn test_config_no_color() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_NO_COLOR", "1");
         let config = Config::from_env();
         assert!(config.no_color);
@@ -108,6 +114,7 @@ mod tests {
 
     #[test]
     fn test_config_custom_history() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_HISTORY_FILE", "/tmp/custom_history");
         let config = Config::from_env();
         assert_eq!(
@@ -119,6 +126,7 @@ mod tests {
 
     #[test]
     fn test_config_no_history() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_NO_HISTORY", "1");
         let config = Config::from_env();
         assert!(config.no_history);
@@ -127,6 +135,7 @@ mod tests {
 
     #[test]
     fn test_repl_show_types_flag() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_REPL_SHOW_TYPES", "0");
         let config = Config::from_env();
         assert!(!config.show_types);
@@ -139,6 +148,7 @@ mod tests {
 
     #[test]
     fn test_get_history_path_custom() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::set_var("ATLAS_HISTORY_FILE", "/tmp/custom");
         let config = Config::from_env();
         assert_eq!(
@@ -150,6 +160,7 @@ mod tests {
 
     #[test]
     fn test_get_history_path_default() {
+        let _g = ENV_LOCK.lock().unwrap();
         env::remove_var("ATLAS_HISTORY_FILE");
         let config = Config::from_env();
         let path = config.get_history_path();

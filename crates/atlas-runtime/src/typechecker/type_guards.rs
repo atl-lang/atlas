@@ -152,8 +152,12 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
             }
         };
 
-        let param_type = self
-            .resolve_type_ref_with_params(&func.params[param_index].type_ref, &func.type_params);
+        let param_type = func.params[param_index]
+            .type_ref
+            .as_ref()
+            .map_or(Type::Unknown, |t| {
+                self.resolve_type_ref_with_params(t, &func.type_params)
+            });
         let target_type = self.resolve_type_ref_with_params(&predicate.target, &func.type_params);
 
         if !target_type.is_assignable_to(&param_type) {

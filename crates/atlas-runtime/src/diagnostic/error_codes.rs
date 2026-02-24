@@ -56,6 +56,9 @@ pub const BORROW_TO_OWN: &str = "AT2012";
 /// Add `own` or `borrow` to the parameter to clarify ownership transfer semantics.
 pub const MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION: &str = "AT2013";
 
+// AT3040+: Closure errors
+pub const CLOSURE_CAPTURES_BORROW: &str = "AT3040";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -475,6 +478,12 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3037",
         description: "Trait bound not satisfied",
         help: Some("The type argument does not satisfy the required trait bound on this type parameter."),
+    },
+    // === AT3040+: Closure Errors ===
+    ErrorCodeInfo {
+        code: "AT3040",
+        description: "Cannot capture borrow in closure",
+        help: Some("Borrows cannot outlive their scope. Capture by copy or use `own` ownership instead."),
     },
     // === AT5xxx: Module System Errors ===
     ErrorCodeInfo {

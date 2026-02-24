@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-23 (Block 4 Phase 4 complete)
+**Last Updated:** 2026-02-23 (Block 4 Phase 12 complete)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅
 
 ---
 
 ## Current State
 
-**Status:** Block 3 COMPLETE — ready for Block 4/5/6 scaffolding (all unblock)
-**Last Completed:** Block 3 Phase 18 — Spec update + AC check (~9,436 tests passing)
-**Next:** Scaffold Block 4 (Closures), Block 5 (Type Inference), or Block 6 (Error Handling)
+**Status:** Block 4 COMPLETE — ready for Block 5 (Type Inference) or Block 6 (Error Handling)
+**Last Completed:** Block 4 Phase 12 — Spec update + AC check (~7,560 tests passing)
+**Next:** Scaffold Block 5 (Type Inference) or Block 6 (Error Handling)
 
 ---
 
@@ -21,7 +21,7 @@
 | 1 | Memory Model (CoW value types, replace Arc<Mutex<>>) | 25 | ✅ Complete (2026-02-21) |
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
 | 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | ✅ Complete (2026-02-22) |
-| 4 | Closures + Anonymous Functions | 15–20 | 🔨 In progress (Phase 4 complete) |
+| 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
 | 5 | Type Inference (locals + return types) | 10–15 | ⬜ Unblocked |
 | 6 | Error Handling (`?` operator) | 10–15 | ⬜ Unblocked |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
@@ -80,6 +80,27 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Clippy | 0 warnings (-D warnings) |
 | Fmt | Clean |
 | Acceptance criteria | **5/5** |
+
+---
+
+## Block 4 Completion Metrics
+
+| Metric | Value |
+|--------|-------|
+| Phases | 12/12 |
+| Tests at completion | **7,560** (runtime; pre-existing `test_smoke` version check excluded) |
+| Tests added this block | **128** (closures.rs: 128 tests) |
+| Test failures | 0 |
+| Parity tests (closures) | 27 new (zero divergence) |
+| HOF tests (fn-expr + arrow + closure) | 20 new |
+| Ownership integration tests | 8 new |
+| LSP hover tests | 4 new (AnonFn type rendering) |
+| Compiler fixes | Complex-callee dispatch (index expressions as fn callees) |
+| Binder fix | AnonFn param scope (defined as symbols, not looked up) |
+| Typechecker fix | Block body return-type inference for `return` statements |
+| Clippy | 0 warnings (-D warnings) |
+| Fmt | Clean |
+| Acceptance criteria | **6/6** |
 
 ---
 

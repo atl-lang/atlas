@@ -298,7 +298,7 @@ pub fn symbol_completions(program: &Program, _symbols: &SymbolTable) -> Vec<Comp
                         "{}{}: {:?}",
                         format_ownership(&p.ownership),
                         p.name.name,
-                        p.type_ref
+                        p.type_ref.as_ref()
                     )
                 })
                 .collect();
@@ -462,7 +462,9 @@ pub fn impl_method_stub_completions(trait_name: &str, program: &Program) -> Vec<
                                     "${{{}:{}: {}}}",
                                     i + 1,
                                     p.name.name,
-                                    format_type_ref_str(&p.type_ref)
+                                    p.type_ref
+                                        .as_ref()
+                                        .map_or("_".to_string(), format_type_ref_str)
                                 )
                             })
                             .collect();

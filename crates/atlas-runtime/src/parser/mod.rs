@@ -408,7 +408,7 @@ impl Parser {
                     name: param_name,
                     span: param_name_span,
                 },
-                type_ref,
+                type_ref: Some(type_ref),
                 ownership,
                 span: param_span_start.merge(param_span_end),
             });
@@ -1152,7 +1152,7 @@ mod tests {
 
         if let Item::Function(func) = &program.items[0] {
             assert_eq!(func.params.len(), 1);
-            match &func.params[0].type_ref {
+            match func.params[0].type_ref.as_ref().unwrap() {
                 TypeRef::Function {
                     params,
                     return_type,

@@ -206,7 +206,11 @@ impl Binder {
         let param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| self.resolve_type_ref(&p.type_ref))
+            .map(|p| {
+                p.type_ref
+                    .as_ref()
+                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+            })
             .collect();
 
         let return_type = self.resolve_type_ref(&func.return_type);
@@ -290,7 +294,11 @@ impl Binder {
         let param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| self.resolve_type_ref(&p.type_ref))
+            .map(|p| {
+                p.type_ref
+                    .as_ref()
+                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+            })
             .collect();
 
         let return_type = self.resolve_type_ref(&func.return_type);
@@ -646,7 +654,10 @@ impl Binder {
 
         // Bind parameters
         for param in &func.params {
-            let ty = self.resolve_type_ref(&param.type_ref);
+            let ty = param
+                .type_ref
+                .as_ref()
+                .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
             let symbol = Symbol {
                 name: param.name.name.clone(),
                 ty,
@@ -1013,6 +1024,34 @@ impl Binder {
             Expr::Try(try_expr) => {
                 // Bind the expression being tried
                 self.bind_expr(&try_expr.expr);
+            }
+            Expr::AnonFn { params, body, .. } => {
+                // Enter a new scope for the anonymous function body
+                self.symbol_table.enter_scope();
+                // Define params as symbols (they are definitions, not references)
+                for param in params {
+                    let ty = param
+                        .type_ref
+                        .as_ref()
+                        .map_or(crate::types::Type::Unknown, |t| self.resolve_type_ref(t));
+                    let symbol = Symbol {
+                        name: param.name.name.clone(),
+                        ty,
+                        mutable: false,
+                        kind: SymbolKind::Parameter,
+                        span: param.name.span,
+                        exported: false,
+                    };
+                    let _ = self.symbol_table.define(symbol);
+                }
+                // Bind the body with params in scope
+                self.bind_expr(body);
+                self.symbol_table.exit_scope();
+            }
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.bind_statement(stmt);
+                }
             }
         }
     }

@@ -231,6 +231,12 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
         Expr::Try(try_expr) => {
             extract_names_from_expr(&try_expr.expr, names);
         }
+        Expr::AnonFn { body, .. } => {
+            extract_names_from_expr(body, names);
+        }
+        Expr::Block(block) => {
+            let _ = block;
+        }
         Expr::Literal(_, _) => {}
     }
 }

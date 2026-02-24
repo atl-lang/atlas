@@ -281,6 +281,39 @@ When generating Atlas code, AI agents should follow these rules:
 
 ---
 
+## Closure Capture Semantics (v0.3 — Block 4 complete)
+
+Anonymous functions and closures capture outer variables at **creation time** using snapshot semantics. This applies to both the interpreter and VM execution engines.
+
+### Capture rules
+
+| Variable kind | Capture behavior |
+|---|---|
+| `let` (Copy type) | Captured by value — outer and inner have independent copies |
+| `var` | Snapshotted at closure creation — outer mutations after creation not visible inside |
+| `borrow` parameter | **Cannot be captured** — AT3040 compile-time error |
+| `own` parameter | Captured by value (moved into closure) |
+| `shared<T>` | Arc clone — multiple closures share the same shared reference |
+
+### Rationale
+
+Snapshot semantics make closure behavior predictable: the closure sees the state of captured variables at the moment it was created, not at the moment it is called. This is consistent with value-semantics and the CoW ownership model.
+
+`borrow` parameters cannot be captured because a borrow is scoped to the caller's frame. A closure may outlive that frame, making the borrow invalid. This is enforced at compile time (AT3040).
+
+### Example
+
+```atlas
+fn run() -> number {
+    var x = 5;
+    let f = fn() -> number { return x; };  // x=5 captured here
+    x = 99;                                 // outer mutation
+    return f();                             // returns 5, not 99
+}
+```
+
+---
+
 ## Relationship to Systems Language Goals
 
 This memory model is the foundation that makes Atlas systems-capable:

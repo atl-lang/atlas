@@ -363,6 +363,14 @@ impl SymbolIndex {
             Expr::Try(try_expr) => {
                 self.index_expr(&try_expr.expr, ctx, false);
             }
+            Expr::AnonFn { body, .. } => {
+                self.index_expr(body, ctx, false);
+            }
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.index_stmt(stmt, ctx);
+                }
+            }
             Expr::Literal(_, _) => {}
         }
     }

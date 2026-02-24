@@ -39,6 +39,18 @@ impl<'a> TypeChecker<'a> {
             Expr::Match(match_expr) => self.check_match(match_expr),
             Expr::Member(member) => self.check_member(member),
             Expr::Try(try_expr) => self.check_try(try_expr),
+            Expr::AnonFn {
+                params,
+                return_type,
+                body,
+                span,
+            } => self.check_anon_fn(params, return_type.as_ref(), body, *span),
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.check_statement(stmt);
+                }
+                Type::Unknown
+            }
         }
     }
 
@@ -1826,6 +1838,186 @@ impl<'a> TypeChecker<'a> {
                 );
                 Type::Unknown
             }
+        }
+    }
+
+    /// Typecheck an anonymous function expression.
+    ///
+    /// Resolves param types (Unknown for untyped arrow-fn params — Block 5 infers them),
+    /// checks the body in a new scope, validates capture semantics, and returns
+    /// `Type::Function { params, return_type }`.
+    pub(super) fn check_anon_fn(
+        &mut self,
+        params: &[crate::ast::Param],
+        return_type_ref: Option<&crate::ast::TypeRef>,
+        body: &Expr,
+        span: Span,
+    ) -> Type {
+        // Resolve param types — None type_ref → Unknown (inferred later in Block 5)
+        let param_types: Vec<Type> = params
+            .iter()
+            .map(|p| {
+                p.type_ref
+                    .as_ref()
+                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+            })
+            .collect();
+
+        // Resolve declared return type (if present)
+        let declared_return = return_type_ref.map(|t| self.resolve_type_ref(t));
+
+        // Save and update function context so return statements inside the closure
+        // are valid and checked against the declared return type.
+        let prev_return_type = self.current_function_return_type.clone();
+        let prev_function_info = self.current_function_info.clone();
+        self.current_function_return_type = Some(declared_return.clone().unwrap_or(Type::Unknown));
+        self.current_function_info = Some(("<closure>".to_string(), span));
+
+        // Enter a new scope for the closure body
+        self.enter_scope();
+
+        // Define params as locals in the closure scope
+        for (param, ty) in params.iter().zip(param_types.iter()) {
+            let symbol = crate::symbol::Symbol {
+                name: param.name.name.clone(),
+                ty: ty.clone(),
+                mutable: false,
+                kind: crate::symbol::SymbolKind::Parameter,
+                span: param.name.span,
+                exported: false,
+            };
+            let _ = self.symbol_table.define(symbol);
+        }
+
+        // Validate capture semantics for identifiers referenced in the body
+        self.check_capture_semantics(body, span);
+
+        // Check the body — for block bodies, extract the last expr type if present
+        let body_type = match body {
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.check_statement(stmt);
+                }
+                // Infer type from the last statement:
+                // - Bare expr statement → use its type
+                // - Return statement → use the returned expr type (check_statement already validated it)
+                // - Anything else → Void
+                block
+                    .statements
+                    .last()
+                    .and_then(|s| match s {
+                        crate::ast::Stmt::Expr(e) => Some(self.check_expr(&e.expr)),
+                        crate::ast::Stmt::Return(r) => r
+                            .value
+                            .as_ref()
+                            .map(|e| self.check_expr(e))
+                            .or(Some(Type::Void)),
+                        _ => None,
+                    })
+                    .unwrap_or(Type::Void)
+            }
+            _ => self.check_expr(body),
+        };
+
+        self.exit_scope();
+
+        // Restore function context
+        self.current_function_return_type = prev_return_type;
+        self.current_function_info = prev_function_info;
+
+        let return_type = match declared_return {
+            Some(declared) => {
+                if !body_type.is_assignable_to(&declared) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            format!(
+                                "closure body returns {} but declared return type is {}",
+                                body_type.display_name(),
+                                declared.display_name()
+                            ),
+                            span,
+                        )
+                        .with_label("return type mismatch"),
+                    );
+                }
+                declared
+            }
+            None => body_type,
+        };
+
+        Type::Function {
+            type_params: vec![],
+            params: param_types,
+            return_type: Box::new(return_type),
+        }
+    }
+
+    /// Walk a closure body expression and emit diagnostics for invalid captures.
+    ///
+    /// Rules:
+    /// - Copy types: captured by copy — always valid
+    /// - Non-Copy types: captured by move — valid, caller loses ownership
+    /// - `borrow`-annotated variables: **error** — borrows cannot outlive their scope
+    fn check_capture_semantics(&mut self, expr: &Expr, closure_span: Span) {
+        match expr {
+            Expr::Identifier(id) => {
+                // Check if this identifier is a borrow-annotated param in the enclosing fn
+                if let Some(ownership) = self.current_fn_param_ownerships.get(&id.name) {
+                    if matches!(ownership, Some(crate::ast::OwnershipAnnotation::Borrow)) {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3040",
+                                format!(
+                                    "cannot capture `{}` by reference in a closure — borrows cannot outlive their scope",
+                                    id.name
+                                ),
+                                closure_span,
+                            )
+                            .with_label("borrow captured here")
+                            .with_help("consider passing the value by copy or using `own` ownership"),
+                        );
+                    }
+                }
+            }
+            Expr::Binary(b) => {
+                self.check_capture_semantics(&b.left, closure_span);
+                self.check_capture_semantics(&b.right, closure_span);
+            }
+            Expr::Unary(u) => self.check_capture_semantics(&u.expr, closure_span),
+            Expr::Call(c) => {
+                self.check_capture_semantics(&c.callee, closure_span);
+                for arg in &c.args {
+                    self.check_capture_semantics(arg, closure_span);
+                }
+            }
+            Expr::Group(g) => self.check_capture_semantics(&g.expr, closure_span),
+            Expr::Block(block) => {
+                for stmt in &block.statements {
+                    self.check_capture_semantics_stmt(stmt, closure_span);
+                }
+            }
+            Expr::AnonFn { body, .. } => {
+                self.check_capture_semantics(body, closure_span);
+            }
+            _ => {}
+        }
+    }
+
+    fn check_capture_semantics_stmt(&mut self, stmt: &crate::ast::Stmt, closure_span: Span) {
+        match stmt {
+            crate::ast::Stmt::Expr(e) => {
+                self.check_capture_semantics(&e.expr, closure_span);
+            }
+            crate::ast::Stmt::Return(r) => {
+                if let Some(val) = &r.value {
+                    self.check_capture_semantics(val, closure_span);
+                }
+            }
+            crate::ast::Stmt::VarDecl(v) => {
+                self.check_capture_semantics(&v.init, closure_span);
+            }
+            _ => {}
         }
     }
 }

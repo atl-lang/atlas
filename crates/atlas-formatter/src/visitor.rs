@@ -465,13 +465,9 @@ impl FormatVisitor {
     fn format_params(&self, params: &[Param]) -> String {
         params
             .iter()
-            .map(|p| {
-                let type_name = self.type_ref_to_string(&p.type_ref);
-                if type_name == "any" {
-                    p.name.name.clone()
-                } else {
-                    format!("{}: {}", p.name.name, type_name)
-                }
+            .map(|p| match &p.type_ref {
+                Some(t) => format!("{}: {}", p.name.name, self.type_ref_to_string(t)),
+                None => p.name.name.clone(),
             })
             .collect::<Vec<_>>()
             .join(", ")
@@ -483,8 +479,8 @@ impl FormatVisitor {
         for (i, p) in params.iter().enumerate() {
             self.write_indent();
             self.write(&p.name.name);
-            let type_name = self.type_ref_to_string(&p.type_ref);
-            if type_name != "any" {
+            if let Some(t) = &p.type_ref {
+                let type_name = self.type_ref_to_string(t);
                 self.write(": ");
                 self.write(&type_name);
             }
@@ -546,6 +542,21 @@ impl FormatVisitor {
             Expr::Try(t) => {
                 self.visit_expr(&t.expr);
                 self.write("?");
+            }
+            Expr::AnonFn { params, body, .. } => {
+                // Formatter placeholder — full formatting added in Phase 02/03
+                self.write("fn(");
+                for (i, _param) in params.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                }
+                self.write(") { ");
+                self.visit_expr(body);
+                self.write(" }");
+            }
+            Expr::Block(_block) => {
+                // Block formatting deferred to later phase
             }
         }
     }

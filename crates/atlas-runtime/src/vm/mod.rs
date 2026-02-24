@@ -1694,7 +1694,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "map() second argument must be function".to_string(),
@@ -1736,7 +1739,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "filter() second argument must be function".to_string(),
@@ -1787,7 +1793,10 @@ impl VM {
         };
 
         let reducer = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "reduce() second argument must be function".to_string(),
@@ -1827,7 +1836,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "forEach() second argument must be function".to_string(),
@@ -1865,7 +1877,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "find() second argument must be function".to_string(),
@@ -1913,7 +1928,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "findIndex() second argument must be function".to_string(),
@@ -1961,7 +1979,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "flatMap() second argument must be function".to_string(),
@@ -2007,7 +2028,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "some() second argument must be function".to_string(),
@@ -2055,7 +2079,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "every() second argument must be function".to_string(),
@@ -2103,7 +2130,10 @@ impl VM {
         };
 
         let comparator = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "sort() second argument must be function".to_string(),
@@ -2164,7 +2194,10 @@ impl VM {
         };
 
         let key_extractor = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "sortBy() second argument must be function".to_string(),
@@ -2237,7 +2270,10 @@ impl VM {
 
         let result_val = &args[0];
         let transform_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_map() second argument must be function".to_string(),
@@ -2274,7 +2310,10 @@ impl VM {
 
         let result_val = &args[0];
         let transform_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_map_err() second argument must be function".to_string(),
@@ -2311,7 +2350,10 @@ impl VM {
 
         let result_val = &args[0];
         let next_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_and_then() second argument must be function".to_string(),
@@ -2347,7 +2389,10 @@ impl VM {
 
         let result_val = &args[0];
         let recovery_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_or_else() second argument must be function".to_string(),
@@ -2392,7 +2437,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() second argument must be function".to_string(),
@@ -2431,7 +2479,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() second argument must be function".to_string(),
@@ -2473,7 +2524,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() second argument must be function".to_string(),
@@ -2529,7 +2583,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetForEach() second argument must be function".to_string(),
@@ -2568,7 +2625,10 @@ impl VM {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetMap() second argument must be function".to_string(),
@@ -2610,7 +2670,10 @@ impl VM {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetFilter() second argument must be function".to_string(),
@@ -2968,6 +3031,51 @@ impl VM {
                 // Restore IP
                 self.ip = saved_ip;
 
+                Ok(return_value)
+            }
+            Value::Closure(closure) => {
+                // Closure call: same as Function but passes captured upvalues to the frame
+                let func = closure.func.clone();
+                let upvalues = closure.upvalues.clone();
+                let saved_ip = self.ip;
+                let saved_frame_depth = self.frames.len();
+                let stack_base = self.stack.len();
+                let arg_count = args.len();
+
+                if func.arity != arg_count {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!(
+                            "Function {} expects {} arguments, got {}",
+                            func.name, func.arity, arg_count
+                        ),
+                        span,
+                    });
+                }
+
+                for arg in args {
+                    self.push(arg);
+                }
+
+                let frame = CallFrame {
+                    function_name: func.name.clone(),
+                    return_ip: saved_ip,
+                    stack_base,
+                    local_count: func.local_count,
+                    upvalues,
+                };
+                self.frames.push(frame);
+                #[cfg(debug_assertions)]
+                self.consumed_slots.push(vec![false; func.local_count]);
+
+                self.ip = func.bytecode_offset;
+
+                let result = self.execute_loop(Some(saved_frame_depth))?;
+                let return_value = result.unwrap_or(Value::Null);
+                self.stack.truncate(stack_base);
+                #[cfg(debug_assertions)]
+                self.value_origins.truncate(stack_base);
+
+                self.ip = saved_ip;
                 Ok(return_value)
             }
             Value::NativeFunction(native_fn) => {

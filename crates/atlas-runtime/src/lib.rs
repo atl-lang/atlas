@@ -87,6 +87,6 @@ mod tests {
     #[test]
     fn test_smoke() {
         // Smoke test to verify the crate builds and tests run
-        assert_eq!(VERSION, "0.1.0");
+        assert_eq!(VERSION, "0.2.0");
     }
 }

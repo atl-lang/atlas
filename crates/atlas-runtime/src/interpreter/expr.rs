@@ -20,6 +20,16 @@ impl Interpreter {
             Expr::Match(match_expr) => self.eval_match(match_expr),
             Expr::Member(member) => self.eval_member(member),
             Expr::Try(try_expr) => self.eval_try(try_expr),
+            Expr::AnonFn {
+                params, body, span, ..
+            } => self.eval_anon_fn(params, body, *span),
+            Expr::Block(block) => {
+                let mut result = Value::Null;
+                for stmt in &block.statements {
+                    result = self.eval_statement(stmt)?;
+                }
+                Ok(result)
+            }
         }
     }
 
@@ -492,6 +502,17 @@ impl Interpreter {
         // Push new scope for function
         self.push_scope();
 
+        // Inject captured outer-scope snapshots (anonymous functions only).
+        // These shadow live scope so that outer `var` mutations after closure
+        // creation are invisible inside, matching VM snapshot semantics.
+        // Parameters bound below will shadow any same-named captured value.
+        if !func.captured.is_empty() {
+            let scope = self.locals.last_mut().unwrap();
+            for (var_name, value) in &func.captured {
+                scope.insert(var_name.clone(), (value.clone(), true));
+            }
+        }
+
         // Bind parameters (parameters are mutable)
         for (param, arg) in func.params.iter().zip(args.iter()) {
             // Debug-mode ownership enforcement for `shared` parameters.
@@ -832,7 +853,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "map() second argument must be function".to_string(),
@@ -875,7 +899,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "filter() second argument must be function".to_string(),
@@ -926,7 +953,10 @@ impl Interpreter {
         };
 
         let reducer = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "reduce() second argument must be function".to_string(),
@@ -967,7 +997,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "forEach() second argument must be function".to_string(),
@@ -1007,7 +1040,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "find() second argument must be function".to_string(),
@@ -1057,7 +1093,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "findIndex() second argument must be function".to_string(),
@@ -1107,7 +1146,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "flatMap() second argument must be function".to_string(),
@@ -1154,7 +1196,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "some() second argument must be function".to_string(),
@@ -1204,7 +1249,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "every() second argument must be function".to_string(),
@@ -1256,7 +1304,10 @@ impl Interpreter {
         };
 
         let comparator = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "sort() second argument must be function".to_string(),
@@ -1318,7 +1369,10 @@ impl Interpreter {
         };
 
         let key_extractor = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "sortBy() second argument must be function".to_string(),
@@ -1373,7 +1427,10 @@ impl Interpreter {
 
         let result_val = &args[0];
         let transform_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_map() second argument must be function".to_string(),
@@ -1410,7 +1467,10 @@ impl Interpreter {
 
         let result_val = &args[0];
         let transform_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_map_err() second argument must be function".to_string(),
@@ -1447,7 +1507,10 @@ impl Interpreter {
 
         let result_val = &args[0];
         let next_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_and_then() second argument must be function".to_string(),
@@ -1484,7 +1547,10 @@ impl Interpreter {
 
         let result_val = &args[0];
         let recovery_fn = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "result_or_else() second argument must be function".to_string(),
@@ -1530,7 +1596,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() second argument must be function".to_string(),
@@ -1571,7 +1640,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() second argument must be function".to_string(),
@@ -1614,7 +1686,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() second argument must be function".to_string(),
@@ -1669,7 +1744,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetForEach() second argument must be function".to_string(),
@@ -1710,7 +1788,10 @@ impl Interpreter {
         };
 
         let callback = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetMap() second argument must be function".to_string(),
@@ -1753,7 +1834,10 @@ impl Interpreter {
         };
 
         let predicate = match &args[1] {
-            Value::Function(_) | Value::Builtin(_) | Value::NativeFunction(_) => &args[1],
+            Value::Function(_)
+            | Value::Closure(_)
+            | Value::Builtin(_)
+            | Value::NativeFunction(_) => &args[1],
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashSetFilter() second argument must be function".to_string(),
@@ -2158,5 +2242,75 @@ impl Interpreter {
         }
 
         Ok(result)
+    }
+
+    /// Evaluate an anonymous function expression.
+    ///
+    /// Evaluate an anonymous function expression.
+    ///
+    /// Registers the function body in `self.function_bodies` under a synthetic
+    /// unique name and returns a `Value::Function` referencing that name.
+    ///
+    /// Outer-scope locals are snapshotted at creation time into `captured` so
+    /// that `var` mutations after closure creation are not visible inside the
+    /// closure body — matching VM snapshot semantics (Block 4 parity rule).
+    fn eval_anon_fn(
+        &mut self,
+        params: &[Param],
+        body: &Expr,
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        use std::collections::HashMap;
+
+        let name = format!("__anon_{}", self.next_func_id);
+        self.next_func_id += 1;
+
+        // Build a Block for call_user_function to execute.
+        // Arrow form: wrap bare expr in an explicit return statement.
+        // Block form: use the block directly.
+        let body_block = match body {
+            Expr::Block(block) => block.clone(),
+            _ => Block {
+                statements: vec![Stmt::Return(ReturnStmt {
+                    value: Some(*Box::new(body.clone())),
+                    span,
+                })],
+                span,
+            },
+        };
+
+        // Snapshot all local-scope variables at closure creation time.
+        // This aligns the interpreter with VM capture-by-value semantics:
+        // outer `var` mutations after closure creation are not visible inside.
+        let param_names: std::collections::HashSet<&str> =
+            params.iter().map(|p| p.name.name.as_str()).collect();
+        let mut captured: HashMap<String, Value> = HashMap::new();
+        for scope in &self.locals {
+            for (var_name, (value, _mutable)) in scope {
+                if !param_names.contains(var_name.as_str()) {
+                    captured
+                        .entry(var_name.clone())
+                        .or_insert_with(|| value.clone());
+                }
+            }
+        }
+
+        let user_func = UserFunction {
+            name: name.clone(),
+            params: params.to_vec(),
+            body: body_block,
+            captured,
+        };
+        self.function_bodies.insert(name.clone(), user_func);
+
+        Ok(Value::Function(crate::value::FunctionRef {
+            name,
+            arity: params.len(),
+            bytecode_offset: 0,
+            local_count: 0,
+            param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
+            param_names: params.iter().map(|p| p.name.name.clone()).collect(),
+            return_ownership: None,
+        }))
     }
 }

@@ -90,3 +90,11 @@ interpreter.get_binding(name: &str) -> Option<Value>  // locals then globals
 interpreter.eval_expr(&expr) -> Result<Value, RuntimeError>
 interpreter.eval_stmt(&stmt) -> Result<(), RuntimeError>
 ```
+
+## Zero-Allocation Goal (DR-B04-01)
+
+The interpreter eval loop should not allocate on the happy path. This is a goal, not a CI gate.
+
+**Check at block completion:** `grep -n "Vec::new\|String::new\|format!" interpreter/expr.rs | wc -l`
+
+Does NOT apply to error paths, stdlib functions, or diagnostics.

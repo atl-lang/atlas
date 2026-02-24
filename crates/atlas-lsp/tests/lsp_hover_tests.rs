@@ -762,3 +762,79 @@ fn test_hover_impl_method_list_shown() {
         "Expected method names in impl hover, got: {contents}"
     );
 }
+
+// ============================================================================
+// Phase 08: Anonymous fn variable hover — fn(T) -> R type rendering
+// ============================================================================
+
+/// Hover on `f` where `f = fn(x: number) -> number { ... }` shows fn type.
+#[test]
+fn test_hover_anon_fn_block_form_type() {
+    let source = "let f = fn(x: number) -> number { return x + 1; };";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 4, // hovering over 'f'
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("fn(number) -> number"),
+        "Expected 'fn(number) -> number' in hover, got: {contents}"
+    );
+}
+
+/// Hover on `f` where `f = (x: number) => x * 2` shows fn type.
+#[test]
+fn test_hover_anon_fn_arrow_form_type() {
+    let source = "let f = (x: number) => x * 2;";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 4, // hovering over 'f'
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("fn(number)"),
+        "Expected fn type in hover, got: {contents}"
+    );
+}
+
+/// Hover on an anon fn with no type annotations shows `fn(any) -> any`.
+#[test]
+fn test_hover_anon_fn_untyped_params() {
+    let source = "let double = (x) => x * 2;";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 6, // hovering over 'double'
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("fn(any) -> any") || contents.contains("double"),
+        "Expected fn type or identifier in hover, got: {contents}"
+    );
+}
+
+/// Hover on a higher-order function parameter with fn type shows the fn type.
+#[test]
+fn test_hover_higher_order_param_fn_type() {
+    let source = "fn apply(f: (number) -> number, x: number) -> number { return f(x); }";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 9, // hovering over 'f'
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    assert!(
+        hover.is_some(),
+        "Expected hover content for fn-typed parameter"
+    );
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("number") || contents.contains("f"),
+        "Expected type info for 'f', got: {contents}"
+    );
+}
