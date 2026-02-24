@@ -502,6 +502,17 @@ impl Interpreter {
         // Push new scope for function
         self.push_scope();
 
+        // Inject captured outer-scope snapshots (anonymous functions only).
+        // These shadow live scope so that outer `var` mutations after closure
+        // creation are invisible inside, matching VM snapshot semantics.
+        // Parameters bound below will shadow any same-named captured value.
+        if !func.captured.is_empty() {
+            let scope = self.locals.last_mut().unwrap();
+            for (var_name, value) in &func.captured {
+                scope.insert(var_name.clone(), (value.clone(), true));
+            }
+        }
+
         // Bind parameters (parameters are mutable)
         for (param, arg) in func.params.iter().zip(args.iter()) {
             // Debug-mode ownership enforcement for `shared` parameters.
@@ -2172,22 +2183,28 @@ impl Interpreter {
 
     /// Evaluate an anonymous function expression.
     ///
+    /// Evaluate an anonymous function expression.
+    ///
     /// Registers the function body in `self.function_bodies` under a synthetic
-    /// unique name, then returns a `Value::Function` referencing that name.
-    /// The interpreter's dynamic scoping means captured outer variables are
-    /// resolved at call time from the live scope stack — no snapshot needed.
+    /// unique name and returns a `Value::Function` referencing that name.
+    ///
+    /// Outer-scope locals are snapshotted at creation time into `captured` so
+    /// that `var` mutations after closure creation are not visible inside the
+    /// closure body — matching VM snapshot semantics (Block 4 parity rule).
     fn eval_anon_fn(
         &mut self,
         params: &[Param],
         body: &Expr,
         span: crate::span::Span,
     ) -> Result<Value, RuntimeError> {
+        use std::collections::HashMap;
+
         let name = format!("__anon_{}", self.next_func_id);
         self.next_func_id += 1;
 
         // Build a Block for call_user_function to execute.
         // Arrow form: wrap bare expr in an explicit return statement.
-        // Block form: use the block directly (caller uses explicit return or gets Null).
+        // Block form: use the block directly.
         let body_block = match body {
             Expr::Block(block) => block.clone(),
             _ => Block {
@@ -2199,10 +2216,27 @@ impl Interpreter {
             },
         };
 
+        // Snapshot all local-scope variables at closure creation time.
+        // This aligns the interpreter with VM capture-by-value semantics:
+        // outer `var` mutations after closure creation are not visible inside.
+        let param_names: std::collections::HashSet<&str> =
+            params.iter().map(|p| p.name.name.as_str()).collect();
+        let mut captured: HashMap<String, Value> = HashMap::new();
+        for scope in &self.locals {
+            for (var_name, (value, _mutable)) in scope {
+                if !param_names.contains(var_name.as_str()) {
+                    captured
+                        .entry(var_name.clone())
+                        .or_insert_with(|| value.clone());
+                }
+            }
+        }
+
         let user_func = UserFunction {
             name: name.clone(),
             params: params.to_vec(),
             body: body_block,
+            captured,
         };
         self.function_bodies.insert(name.clone(), user_func);
 

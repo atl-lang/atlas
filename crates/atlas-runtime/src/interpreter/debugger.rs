@@ -331,6 +331,7 @@ impl InterpreterDebuggerSession {
                             name: func.name.name.clone(),
                             params: func.params.clone(),
                             body: func.body.clone(),
+                            captured: std::collections::HashMap::new(),
                         },
                     );
 

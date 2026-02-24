@@ -1370,3 +1370,112 @@ outer(5);
         15.0,
     );
 }
+
+// ============================================================================
+// Phase 07: Parity Hardening — var-mutation capture semantics
+// Canonical rule: closure captures `var` BY VALUE at creation time.
+// Outer `var` mutations after closure creation are NOT visible inside.
+// Both engines must agree (VM snapshot semantics; interpreter now aligned).
+// ============================================================================
+
+/// Outer `var` mutation after closure creation is not visible inside (arrow form).
+#[test]
+fn test_parity_var_mutation_after_closure_creation_not_visible() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 10;
+    let f = () => x;
+    x = 99;
+    return f();
+}
+outer();
+"#,
+        10.0,
+    );
+}
+
+/// Outer `var` mutation after closure creation is not visible inside (block form).
+#[test]
+fn test_parity_var_mutation_after_closure_creation_block_form() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 10;
+    let f = fn() -> number { return x; };
+    x = 99;
+    return f();
+}
+outer();
+"#,
+        10.0,
+    );
+}
+
+/// Mutation of a `var` INSIDE a closure works correctly within the call.
+#[test]
+fn test_parity_var_mutation_inside_closure_works() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var counter = 0;
+    let inc = () => counter + 1;
+    return inc();
+}
+outer();
+"#,
+        1.0,
+    );
+}
+
+/// Multiple captures, only one mutated — only mutated one frozen at creation value.
+#[test]
+fn test_parity_partial_var_mutation_after_capture() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var a = 1;
+    var b = 2;
+    let f = () => a + b;
+    a = 100;
+    return f();
+}
+outer();
+"#,
+        3.0,
+    );
+}
+
+/// `let` (immutable) binding: no mutation possible; both engines agree on snapshot.
+#[test]
+fn test_parity_let_binding_captured_stable() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    let x = 42;
+    let f = () => x;
+    return f();
+}
+outer();
+"#,
+        42.0,
+    );
+}
+
+/// Two closures created at different points see their respective snapshots.
+#[test]
+fn test_parity_two_closures_different_snapshots() {
+    assert_parity_number(
+        r#"
+fn outer() -> number {
+    var x = 1;
+    let f1 = () => x;
+    x = 2;
+    let f2 = () => x;
+    return f1() + f2();
+}
+outer();
+"#,
+        3.0,
+    );
+}

@@ -36,6 +36,11 @@ pub struct UserFunction {
     pub name: String,
     pub params: Vec<Param>,
     pub body: Block,
+    /// Captured outer-scope variables snapshotted at closure creation time.
+    /// Injected into the function's scope before executing the body so that
+    /// outer `var` mutations after closure creation are not visible inside.
+    /// Empty for named (non-anonymous) functions.
+    pub captured: HashMap<String, Value>,
 }
 
 /// Interpreter state
@@ -187,6 +192,7 @@ impl Interpreter {
                             name: func.name.name.clone(),
                             params: func.params.clone(),
                             body: func.body.clone(),
+                            captured: HashMap::new(),
                         },
                     );
 
@@ -231,6 +237,7 @@ impl Interpreter {
                                     name: func.name.name.clone(),
                                     params: func.params.clone(),
                                     body: func.body.clone(),
+                                    captured: HashMap::new(),
                                 },
                             );
                             // Functions are immutable bindings
@@ -338,6 +345,7 @@ impl Interpreter {
                                 name: mangled_name,
                                 params: method.params.clone(),
                                 body: method.body.clone(),
+                                captured: HashMap::new(),
                             },
                         );
                     }

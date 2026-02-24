@@ -3,6 +3,7 @@
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
 use crate::value::{FunctionRef, RuntimeError, Value};
+use std::collections::HashMap;
 
 impl Interpreter {
     /// Execute a statement
@@ -22,6 +23,7 @@ impl Interpreter {
                         name: func.name.name.clone(),
                         params: func.params.clone(),
                         body: func.body.clone(),
+                        captured: HashMap::new(),
                     },
                 );
 
