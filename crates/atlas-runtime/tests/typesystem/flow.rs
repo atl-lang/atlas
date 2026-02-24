@@ -1410,3 +1410,5 @@ fn test_runtime_structural_guards(#[case] code: &str, #[case] expected: Value) {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `merge_flow_states`

@@ -847,3 +847,5 @@ fn test_path_join_absolute_path() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `path_join`

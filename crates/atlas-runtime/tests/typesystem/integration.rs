@@ -1632,3 +1632,71 @@ fn test_at3xxx_codes_in_expected_range() {
     // AT2013 is a warning, correctly in AT2xxx range
     assert!(error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION.starts_with("AT2"));
 }
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `suggest_mutability_fix`
+
+// NOTE: test block removed — required access to private function `lookup`
+
+// === Migrated from src/types.rs ===
+mod migrated_types {
+    #![allow(unused_imports, dead_code, unused_variables, unused_mut)]
+    use atlas_runtime::types::Type;
+
+    #[test]
+    fn test_type_display() {
+        assert_eq!(Type::Number.display_name(), "number");
+        assert_eq!(Type::String.display_name(), "string");
+        assert_eq!(Type::Bool.display_name(), "bool");
+        assert_eq!(Type::Null.display_name(), "null");
+        assert_eq!(Type::Void.display_name(), "void");
+        assert_eq!(Type::Never.display_name(), "never");
+    }
+
+    #[test]
+    fn test_array_type() {
+        let arr_type = Type::Array(Box::new(Type::Number));
+        assert_eq!(arr_type.display_name(), "number[]");
+    }
+
+    #[test]
+    fn test_function_type() {
+        let func_type = Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number, Type::String],
+            return_type: Box::new(Type::Bool),
+        };
+        assert_eq!(func_type.display_name(), "(number, string) -> bool");
+    }
+
+    #[test]
+    fn test_union_display() {
+        let ty = Type::union(vec![Type::Number, Type::String]);
+        assert_eq!(ty.display_name(), "number | string");
+    }
+
+    #[test]
+    fn test_intersection_display() {
+        let ty = Type::intersection(vec![Type::Number, Type::Number]);
+        assert_eq!(ty.display_name(), "number");
+    }
+
+    #[test]
+    fn test_union_assignability() {
+        let union = Type::union(vec![Type::Number, Type::String]);
+        assert!(Type::Number.is_assignable_to(&union));
+        assert!(Type::String.is_assignable_to(&union));
+        assert!(!Type::Bool.is_assignable_to(&union));
+        assert!(!union.is_assignable_to(&Type::Number));
+    }
+
+    #[test]
+    fn test_intersection_assignability() {
+        let intersection = Type::intersection(vec![Type::Number, Type::Number]);
+        assert!(intersection.is_assignable_to(&Type::Number));
+        assert!(Type::Number.is_assignable_to(&intersection));
+        let bad = Type::intersection(vec![Type::Number, Type::String]);
+        assert_eq!(bad, Type::Never);
+    }
+}

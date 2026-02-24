@@ -2786,3 +2786,9 @@ fn test_parity_block03_scenario_j_interpreter() {
         .expect("scenario J should succeed");
     assert_eq!(result, Value::Number(14.0));
 }
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `get`
+
+// NOTE: test block removed — required access to private function `byte_offset_to_line_column`

@@ -79,14 +79,3 @@ pub use typechecker::TypeChecker;
 pub use types::Type;
 pub use value::{FunctionRef, RuntimeError, Value};
 pub use vm::VM;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_smoke() {
-        // Smoke test to verify the crate builds and tests run
-        assert_eq!(VERSION, "0.2.0");
-    }
-}

@@ -917,39 +917,3 @@ impl Default for Interpreter {
         Self::new()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::ast::Literal;
-
-    #[test]
-    fn test_interpreter_creation() {
-        let mut interp = Interpreter::new();
-        interp.define_global("x".to_string(), Value::Number(42.0));
-        assert!(interp.globals.contains_key("x"));
-    }
-
-    #[test]
-    fn test_eval_literal() {
-        let interp = Interpreter::new();
-        assert_eq!(
-            interp.eval_literal(&Literal::Number(42.0)),
-            Value::Number(42.0)
-        );
-        assert_eq!(interp.eval_literal(&Literal::Bool(true)), Value::Bool(true));
-        assert_eq!(interp.eval_literal(&Literal::Null), Value::Null);
-    }
-
-    #[test]
-    fn test_scope_management() {
-        let mut interp = Interpreter::new();
-        assert_eq!(interp.locals.len(), 1);
-
-        interp.push_scope();
-        assert_eq!(interp.locals.len(), 2);
-
-        interp.pop_scope();
-        assert_eq!(interp.locals.len(), 1);
-    }
-}

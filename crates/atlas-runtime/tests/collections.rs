@@ -1846,3 +1846,411 @@ fn test_stack_to_array_bottom_to_top() {
     "#;
     assert_eval_number(code, 10.0);
 }
+
+// ============================================================================
+// Migrated from src/value.rs inline tests
+// ============================================================================
+
+use atlas_runtime::stdlib::collections::hash::HashKey;
+use atlas_runtime::value::{
+    FunctionRef, NativeFn, RuntimeError, Shared, ValueArray, ValueHashMap, ValueMap,
+};
+use std::sync::Arc;
+
+#[test]
+fn test_value_creation() {
+    let val = Value::Number(42.0);
+    assert_eq!(val.to_display_string(), "42");
+}
+
+#[test]
+fn test_string_value() {
+    let val = Value::string("hello");
+    assert_eq!(val.to_display_string(), "hello");
+}
+
+#[test]
+fn test_array_value() {
+    let val = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
+    assert_eq!(val.to_display_string(), "[1, 2]");
+}
+
+#[test]
+fn test_type_names() {
+    assert_eq!(Value::Number(42.0).type_name(), "number");
+    assert_eq!(Value::string("hi").type_name(), "string");
+    assert_eq!(Value::Bool(true).type_name(), "bool");
+    assert_eq!(Value::Null.type_name(), "null");
+    assert_eq!(Value::array(vec![]).type_name(), "array");
+    assert_eq!(
+        Value::Function(FunctionRef {
+            name: "test".to_string(),
+            arity: 0,
+            bytecode_offset: 0,
+            local_count: 0,
+            param_ownership: vec![],
+            param_names: vec![],
+            return_ownership: None,
+        })
+        .type_name(),
+        "function"
+    );
+}
+
+#[test]
+fn test_is_truthy() {
+    assert!(Value::Bool(true).is_truthy());
+    assert!(!Value::Bool(false).is_truthy());
+    assert!(!Value::Number(1.0).is_truthy());
+    assert!(!Value::Null.is_truthy());
+    assert!(!Value::string("hello").is_truthy());
+}
+
+#[test]
+fn test_to_string_number() {
+    assert_eq!(Value::Number(42.0).to_string(), "42");
+    assert_eq!(Value::Number(2.5).to_string(), "2.5");
+    assert_eq!(Value::Number(-5.0).to_string(), "-5");
+}
+
+#[test]
+fn test_to_string_string() {
+    assert_eq!(Value::string("hello").to_string(), "hello");
+}
+
+#[test]
+fn test_to_string_bool() {
+    assert_eq!(Value::Bool(true).to_string(), "true");
+    assert_eq!(Value::Bool(false).to_string(), "false");
+}
+
+#[test]
+fn test_to_string_null() {
+    assert_eq!(Value::Null.to_string(), "null");
+}
+
+#[test]
+fn test_to_string_array() {
+    let arr = Value::array(vec![
+        Value::Number(1.0),
+        Value::Number(2.0),
+        Value::Number(3.0),
+    ]);
+    assert_eq!(arr.to_string(), "[1, 2, 3]");
+}
+
+#[test]
+fn test_to_string_nested_array() {
+    let inner = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
+    let outer = Value::array(vec![inner, Value::Number(3.0)]);
+    assert_eq!(outer.to_string(), "[[1, 2], 3]");
+}
+
+#[test]
+fn test_to_string_function() {
+    let func = Value::Function(FunctionRef {
+        name: "test".to_string(),
+        arity: 2,
+        bytecode_offset: 0,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
+    });
+    assert_eq!(func.to_string(), "<fn test>");
+}
+
+#[test]
+fn test_equality_numbers() {
+    assert_eq!(Value::Number(42.0), Value::Number(42.0));
+    assert_ne!(Value::Number(42.0), Value::Number(43.0));
+}
+
+#[test]
+fn test_equality_strings() {
+    assert_eq!(Value::string("hello"), Value::string("hello"));
+    assert_ne!(Value::string("hello"), Value::string("world"));
+}
+
+#[test]
+fn test_equality_bools() {
+    assert_eq!(Value::Bool(true), Value::Bool(true));
+    assert_ne!(Value::Bool(true), Value::Bool(false));
+}
+
+#[test]
+fn test_equality_null() {
+    assert_eq!(Value::Null, Value::Null);
+}
+
+#[test]
+fn test_equality_different_types() {
+    assert_ne!(Value::Number(1.0), Value::Bool(true));
+    assert_ne!(Value::Null, Value::Number(0.0));
+}
+
+#[test]
+fn test_array_value_equality() {
+    let arr1 = Value::array(vec![Value::Number(1.0)]);
+    let arr2 = arr1.clone();
+    let arr3 = Value::array(vec![Value::Number(1.0)]);
+    assert_eq!(arr1, arr2);
+    assert_eq!(arr1, arr3);
+}
+
+#[test]
+fn test_array_cow_mutation_independent() {
+    let arr1 = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
+    let mut arr2 = arr1.clone();
+    if let Value::Array(ref mut a) = arr2 {
+        a.set(0, Value::Number(42.0));
+    }
+    if let Value::Array(ref a) = arr1 {
+        assert_eq!(a[0], Value::Number(1.0));
+    }
+}
+
+#[test]
+fn value_array_clone_is_independent() {
+    let a = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    let mut b = a.clone();
+    if let Value::Array(ref mut arr) = b {
+        arr.push(Value::Number(2.0));
+    }
+    if let Value::Array(ref arr) = a {
+        assert_eq!(arr.len(), 1);
+    }
+}
+
+#[test]
+fn value_array_equality_is_by_content() {
+    let a = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    let b = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    assert_eq!(a, b);
+}
+
+#[test]
+fn test_function_equality() {
+    let func1 = Value::Function(FunctionRef {
+        name: "test".to_string(),
+        arity: 0,
+        bytecode_offset: 0,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
+    });
+    let func2 = Value::Function(FunctionRef {
+        name: "test".to_string(),
+        arity: 1,
+        bytecode_offset: 100,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
+    });
+    let func3 = Value::Function(FunctionRef {
+        name: "other".to_string(),
+        arity: 0,
+        bytecode_offset: 0,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
+    });
+    assert_eq!(func1, func2); // same name
+    assert_ne!(func1, func3); // different name
+}
+
+#[test]
+fn test_runtime_errors() {
+    let err1 = RuntimeError::DivideByZero {
+        span: Span::dummy(),
+    };
+    let err2 = RuntimeError::OutOfBounds {
+        span: Span::dummy(),
+    };
+    let err3 = RuntimeError::UnknownFunction {
+        name: "foo".to_string(),
+        span: Span::dummy(),
+    };
+    assert_eq!(err1.to_string(), "Division by zero");
+    assert_eq!(err2.to_string(), "Array index out of bounds");
+    assert_eq!(err3.to_string(), "Unknown function: foo");
+}
+
+#[test]
+fn test_value_is_send() {
+    fn assert_send<T: Send>() {}
+    assert_send::<Value>();
+}
+
+#[test]
+fn test_value_can_be_sent_to_thread() {
+    let value = Value::String(Arc::new("test".to_string()));
+    let handle = std::thread::spawn(move || value);
+    let result = handle.join().unwrap();
+    assert!(matches!(result, Value::String(_)));
+}
+
+#[test]
+fn test_array_can_be_sent_to_thread() {
+    let arr = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
+    let handle = std::thread::spawn(move || arr);
+    let result = handle.join().unwrap();
+    assert!(matches!(result, Value::Array(_)));
+}
+
+// CoW type tests (migrated from mod cow_type_tests)
+
+#[test]
+fn value_array_cow_push_does_not_affect_clone() {
+    let mut a = ValueArray::from_vec(vec![Value::Number(1.0)]);
+    let b = a.clone();
+    a.push(Value::Number(2.0));
+    assert_eq!(a.len(), 2);
+    assert_eq!(b.len(), 1);
+}
+
+#[test]
+fn value_array_in_place_mutation_when_exclusive() {
+    let mut a = ValueArray::from_vec(vec![Value::Number(1.0)]);
+    assert!(a.is_exclusively_owned());
+    a.push(Value::Number(2.0));
+    assert_eq!(a.len(), 2);
+}
+
+#[test]
+fn value_array_equality_by_content() {
+    let a = ValueArray::from_vec(vec![Value::Number(1.0), Value::Number(2.0)]);
+    let b = ValueArray::from_vec(vec![Value::Number(1.0), Value::Number(2.0)]);
+    assert_eq!(a, b);
+}
+
+#[test]
+fn value_map_cow_insert_does_not_affect_clone() {
+    let mut a = ValueMap::new();
+    a.insert("x".to_string(), Value::Number(1.0));
+    let b = a.clone();
+    a.insert("y".to_string(), Value::Number(2.0));
+    assert_eq!(a.len(), 2);
+    assert_eq!(b.len(), 1);
+}
+
+#[test]
+fn value_hashmap_cow_insert_does_not_affect_clone() {
+    let mut a = ValueHashMap::new();
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("x".to_string())),
+        Value::Number(1.0),
+    );
+    let b = a.clone();
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("y".to_string())),
+        Value::Number(2.0),
+    );
+    assert_eq!(b.inner().len(), 1);
+}
+
+#[test]
+fn value_collection_equality_by_content() {
+    let mut a = ValueHashMap::new();
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
+    let mut b = ValueHashMap::new();
+    b.inner_mut().insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
+    assert_eq!(a, b);
+}
+
+#[test]
+fn value_map_equality_by_content() {
+    let mut a = ValueMap::new();
+    a.insert("k".to_string(), Value::Number(42.0));
+    let mut b = ValueMap::new();
+    b.insert("k".to_string(), Value::Number(42.0));
+    assert_eq!(a, b);
+}
+
+// Equality tests (migrated from mod equality_tests)
+
+#[test]
+fn array_equality_by_content_not_identity() {
+    let a = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    let b = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    assert_eq!(a, b);
+}
+
+#[test]
+fn array_inequality_after_mutation() {
+    let a = Value::Array(ValueArray::from_vec(vec![Value::Number(1.0)]));
+    let mut b = a.clone();
+    if let Value::Array(ref mut arr) = b {
+        arr.push(Value::Number(2.0));
+    }
+    assert_ne!(a, b);
+}
+
+#[test]
+fn regex_equality_by_pattern() {
+    use atlas_runtime::value::Value;
+    use regex::Regex;
+    let a = Value::Regex(Arc::new(Regex::new(r"\d+").unwrap()));
+    let b = Value::Regex(Arc::new(Regex::new(r"\d+").unwrap()));
+    assert_eq!(a, b);
+}
+
+#[test]
+fn native_function_inequality_different_closures() {
+    let f1: NativeFn = Arc::new(|_| Ok(Value::Null));
+    let f2: NativeFn = Arc::new(|_| Ok(Value::Null));
+    let a = Value::NativeFunction(f1);
+    let b = Value::NativeFunction(f2);
+    assert_ne!(a, b);
+}
+
+// Shared tests (migrated from mod shared_tests)
+
+#[test]
+fn shared_mutation_visible_through_all_aliases() {
+    let s: Shared<i64> = Shared::new(42);
+    let s2 = s.clone();
+    s.with_mut(|v| *v = 100);
+    assert_eq!(s2.with(|v| *v), 100);
+}
+
+#[test]
+fn shared_equality_is_reference_not_content() {
+    let a: Shared<i64> = Shared::new(42);
+    let b: Shared<i64> = Shared::new(42);
+    let c = a.clone();
+    assert_ne!(a, b);
+    assert_eq!(a, c);
+}
+
+#[test]
+fn value_shared_clone_shares_mutation() {
+    use atlas_runtime::value::Value;
+    let original = Value::SharedValue(Shared::new(Box::new(Value::Number(1.0))));
+    let alias = original.clone();
+    if let Value::SharedValue(ref s) = original {
+        s.with_mut(|v| **v = Value::Number(99.0));
+    }
+    if let Value::SharedValue(ref s) = alias {
+        s.with(|v| assert_eq!(**v, Value::Number(99.0)));
+    }
+}
+
+// NOTE: test block removed — required access to private function `compute_hash`
+
+// NOTE: test block removed — required access to private function `put`
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `len`

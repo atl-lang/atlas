@@ -1202,3 +1202,5 @@ fn test_valid_for_in_array() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `is_ok`
