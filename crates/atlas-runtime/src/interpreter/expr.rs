@@ -20,10 +20,9 @@ impl Interpreter {
             Expr::Match(match_expr) => self.eval_match(match_expr),
             Expr::Member(member) => self.eval_member(member),
             Expr::Try(try_expr) => self.eval_try(try_expr),
-            Expr::AnonFn { span, .. } => Err(RuntimeError::TypeError {
-                msg: "anonymous functions not yet supported".to_string(),
-                span: *span,
-            }),
+            Expr::AnonFn {
+                params, body, span, ..
+            } => self.eval_anon_fn(params, body, *span),
             Expr::Block(block) => {
                 let mut result = Value::Null;
                 for stmt in &block.statements {
@@ -2169,5 +2168,52 @@ impl Interpreter {
         }
 
         Ok(result)
+    }
+
+    /// Evaluate an anonymous function expression.
+    ///
+    /// Registers the function body in `self.function_bodies` under a synthetic
+    /// unique name, then returns a `Value::Function` referencing that name.
+    /// The interpreter's dynamic scoping means captured outer variables are
+    /// resolved at call time from the live scope stack — no snapshot needed.
+    fn eval_anon_fn(
+        &mut self,
+        params: &[Param],
+        body: &Expr,
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        let name = format!("__anon_{}", self.next_func_id);
+        self.next_func_id += 1;
+
+        // Build a Block for call_user_function to execute.
+        // Arrow form: wrap bare expr in an explicit return statement.
+        // Block form: use the block directly (caller uses explicit return or gets Null).
+        let body_block = match body {
+            Expr::Block(block) => block.clone(),
+            _ => Block {
+                statements: vec![Stmt::Return(ReturnStmt {
+                    value: Some(*Box::new(body.clone())),
+                    span,
+                })],
+                span,
+            },
+        };
+
+        let user_func = UserFunction {
+            name: name.clone(),
+            params: params.to_vec(),
+            body: body_block,
+        };
+        self.function_bodies.insert(name.clone(), user_func);
+
+        Ok(Value::Function(crate::value::FunctionRef {
+            name,
+            arity: params.len(),
+            bytecode_offset: 0,
+            local_count: 0,
+            param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
+            param_names: params.iter().map(|p| p.name.name.clone()).collect(),
+            return_ownership: None,
+        }))
     }
 }

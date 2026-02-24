@@ -1113,7 +1113,7 @@ fn outer(borrow x: number) -> () -> number {
 
 // ============================================================================
 // Phase 05: Compiler — Emit MakeClosure for Anonymous Functions
-// VM-path tests only. Parity tests are marked #[ignore] pending Phase 06
+// VM-path and parity tests. Parity tests re-enabled in Phase 06 (interpreter AnonFn support).
 // (interpreter AnonFn support).
 // ============================================================================
 
@@ -1333,14 +1333,13 @@ double(21);
     );
 }
 
-// --- Parity tests (ignored until Phase 06 adds interpreter AnonFn support) ---
-
 #[test]
-#[ignore = "interpreter AnonFn support added in Phase 06"]
 fn test_anon_fn_parity_fn_expr() {
+    // Both engines: explicit return ensures identical result (interpreter also returns last
+    // expr value, VM pops it — use return to guarantee parity).
     assert_parity_number(
         r#"
-let f = fn(x: number) -> number { x + 1; };
+let f = fn(x: number) -> number { return x + 1; };
 f(5);
 "#,
         6.0,
@@ -1348,7 +1347,6 @@ f(5);
 }
 
 #[test]
-#[ignore = "interpreter AnonFn support added in Phase 06"]
 fn test_anon_fn_parity_arrow() {
     assert_parity_number(
         r#"
@@ -1360,13 +1358,12 @@ f(3);
 }
 
 #[test]
-#[ignore = "interpreter AnonFn support added in Phase 06"]
 fn test_anon_fn_parity_capture() {
     assert_parity_number(
         r#"
 fn outer(n: number) -> number {
     let f = (x) => x + n;
-    f(10);
+    return f(10);
 }
 outer(5);
 "#,
