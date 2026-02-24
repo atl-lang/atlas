@@ -17,8 +17,9 @@ If yes → log it. The bar is low. Log it anyway.
 1. **Did I hit an API surprise?** → Update `.claude/rules/atlas-*.md` AND `patterns.md`
 2. **Could a future agent make a different choice about anything I did?** → Update `decisions/{domain}.md`
 3. **Did I discover a crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
-4. **Did I add/rename an AST node, Type variant, opcode, or error code?** → Run `atlas-doc-auditor`
-5. **Closed-loop verification — did everything I created actually land?**
+4. **Did I add/rename an AST node, Type variant, opcode, function name, or error code?** → Run `atlas-doc-auditor`
+5. **Is this a block completion phase?** → **Always run `atlas-doc-auditor`** (full Tier 1+2+3 sweep)
+6. **Closed-loop verification — did everything I created actually land?**
    ```bash
    # Rule files referenced in MEMORY.md must exist
    ls .claude/rules/atlas-architecture.md .claude/rules/atlas-testing.md \
@@ -30,13 +31,13 @@ If yes → log it. The bar is low. Log it anyway.
    wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
    ```
    Any missing file → create it before committing. MEMORY.md > 50 → split before committing.
-6. **Staleness greps:**
+7. **Staleness greps:**
    ```bash
    grep -c "pull_request" .github/workflows/ci.yml            # must return ≥1
    grep -c "rebase origin/main" .claude/skills/atlas/gates/git-workflow.md  # must return ≥1
    grep -c "\.claude" .github/workflows/ci.yml                 # must return ≥1
    ```
-7. **Is any source file approaching size limit?** → Flag in summary, split if blocking
+8. **Is any source file approaching size limit?** → Flag in summary, split if blocking
 
 ## When to Update Memory
 
