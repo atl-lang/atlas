@@ -38,14 +38,23 @@ impl Compiler {
 
     /// Compile a function call expression
     fn compile_call(&mut self, call: &CallExpr) -> Result<(), Vec<Diagnostic>> {
-        // Extract function name from callee (must be an identifier for now)
-        let func_name = match call.callee.as_ref() {
-            Expr::Identifier(ident) => &ident.name,
-            _ => {
-                // Complex callees (like method calls) not supported yet
-                return Ok(());
-            }
+        // Extract function name from callee, or compile a complex callee expression
+        let func_name_owned: Option<String> = match call.callee.as_ref() {
+            Expr::Identifier(ident) => Some(ident.name.clone()),
+            _ => None,
         };
+        if func_name_owned.is_none() {
+            // Complex callee (e.g. index expression, member call on result):
+            // push the callee value, then args, then Call.
+            self.compile_expr(call.callee.as_ref())?;
+            for arg in &call.args {
+                self.compile_expr(arg)?;
+            }
+            self.bytecode.emit(Opcode::Call, call.span);
+            self.bytecode.emit_u8(call.args.len() as u8);
+            return Ok(());
+        }
+        let func_name = func_name_owned.as_deref().unwrap();
 
         // Load the function from local or global scope
         // Don't hardcode builtins - let GetGlobal handle them so natives can override

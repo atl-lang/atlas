@@ -1859,3 +1859,290 @@ f(1);
 "#,
     );
 }
+
+// ============================================================================
+// Phase 11: Parity Test Suite — 20 comprehensive parity tests covering all
+// meaningful closure behaviors across both execution engines.
+// ============================================================================
+
+// --- Anonymous function basics ---
+
+#[test]
+fn test_parity_anon_fn_basic_call() {
+    assert_parity_number(
+        r#"
+let f = fn(x: number) -> number { return x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_parity_arrow_basic_call() {
+    assert_parity_number(
+        r#"
+let g = (x) => x * 2;
+g(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_parity_multi_param_arrow() {
+    assert_parity_number(
+        r#"
+let add = (x, y) => x + y;
+add(3, 4);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_no_params() {
+    assert_parity_number(
+        r#"
+let answer = fn() -> number { return 42; };
+answer();
+"#,
+        42.0,
+    );
+}
+
+// --- Capture semantics ---
+
+#[test]
+fn test_parity_capture_let_copy_type() {
+    assert_parity_number(
+        r#"
+let n = 10;
+let f = fn() -> number { return n; };
+f();
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_parity_capture_var_snapshot_at_creation() {
+    // Both engines snapshot a local var at closure creation time
+    // (outer mutation after creation is not visible inside the closure)
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    var x = 5;
+    let f = fn() -> number { return x; };
+    x = 99;
+    return f();
+}
+run();
+"#,
+        5.0,
+    );
+}
+
+#[test]
+fn test_parity_nested_closure_make_adder() {
+    // Inner closure captures outer fn param — both engines agree
+    assert_parity_number(
+        r#"
+fn make_adder(n: number) -> (number) -> number {
+    return fn(x: number) -> number { return x + n; };
+}
+let add5 = make_adder(5);
+add5(3);
+"#,
+        8.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_returned_called_once() {
+    // Returned closure capturing outer var — called once
+    assert_parity_number(
+        r#"
+fn make_fn(base: number) -> () -> number {
+    return fn() -> number { return base + 1; };
+}
+let f = make_fn(10);
+f();
+"#,
+        11.0,
+    );
+}
+
+#[test]
+fn test_parity_capture_outer_fn_param() {
+    assert_parity_number(
+        r#"
+fn run(x: number) -> number {
+    let f = fn() -> number { return x * 3; };
+    return f();
+}
+run(4);
+"#,
+        12.0,
+    );
+}
+
+#[test]
+fn test_parity_two_closures_same_outer_var() {
+    // Two closures both capture the same outer let — each gets own copy
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let base = 7;
+    let add1 = fn() -> number { return base + 1; };
+    let add2 = fn() -> number { return base + 2; };
+    return add1() + add2();
+}
+run();
+"#,
+        17.0,
+    );
+}
+
+// --- Higher-order patterns ---
+
+#[test]
+fn test_parity_map_arrow_inline() {
+    assert_parity_number(
+        r#"
+let result = map([1, 2, 3], (x) => x * 10);
+result[1];
+"#,
+        20.0,
+    );
+}
+
+#[test]
+fn test_parity_filter_fn_expr_inline() {
+    assert_parity_number(
+        r#"
+let result = filter([1, 2, 3, 4], fn(x: number) -> bool { return x % 2 == 0; });
+result[0];
+"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_parity_reduce_fn_expr_inline() {
+    assert_parity_number(
+        r#"
+reduce([1, 2, 3, 4, 5], fn(acc: number, x: number) -> number { return acc + x; }, 0);
+"#,
+        15.0,
+    );
+}
+
+#[test]
+fn test_parity_function_composition() {
+    // compose(f, g)(x) = f(g(x))
+    assert_parity_number(
+        r#"
+fn compose(f: (number) -> number, g: (number) -> number) -> (number) -> number {
+    return fn(x: number) -> number { return f(g(x)); };
+}
+let double_then_add1 = compose((x) => x + 1, (x) => x * 2);
+double_then_add1(3);
+"#,
+        7.0,
+    );
+}
+
+// --- Closure in data structures ---
+
+#[test]
+fn test_parity_closure_in_array_call() {
+    assert_parity_number(
+        r#"
+let ops = [(x) => x + 1, (x) => x * 2, (x) => x - 1];
+ops[1](5);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_array_second_element() {
+    // Call second element of closure array
+    assert_parity_number(
+        r#"
+let ops = [(x) => x + 10, (x) => x * 3];
+ops[1](4);
+"#,
+        12.0,
+    );
+}
+
+// --- Arrow form variations ---
+
+#[test]
+fn test_parity_arrow_captures_outer_let() {
+    assert_parity_number(
+        r#"
+fn run() -> number {
+    let factor = 4;
+    let f = (x) => x * factor;
+    return f(5);
+}
+run();
+"#,
+        20.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_bool_return() {
+    assert_parity_bool(
+        r#"
+let is_positive = fn(x: number) -> bool { return x > 0; };
+is_positive(5);
+"#,
+        true,
+    );
+}
+
+#[test]
+fn test_parity_arrow_chained_hof() {
+    // map then filter using arrow fns — [1,2,3,4]*2=[2,4,6,8], filter >4 → [6,8] → len 2
+    assert_parity_number(
+        r#"
+let doubled = map([1, 2, 3, 4], (x) => x * 2);
+let large = filter(doubled, (x) => x > 4);
+len(large);
+"#,
+        2.0,
+    );
+}
+
+#[test]
+fn test_parity_anon_fn_passed_directly_to_hof() {
+    // Anonymous fn created inline as HOF argument
+    assert_parity_number(
+        r#"
+fn apply_twice(f: (number) -> number, x: number) -> number {
+    return f(f(x));
+}
+apply_twice(fn(n: number) -> number { return n + 3; }, 1);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_parity_closure_captures_string() {
+    assert_parity_string(
+        r#"
+fn greet(name: string) -> () -> string {
+    return fn() -> string { return "hello " + name; };
+}
+let hi = greet("world");
+hi();
+"#,
+        "hello world",
+    );
+}
