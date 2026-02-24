@@ -201,20 +201,7 @@ fn find_variable_hover(program: &Program, identifier: &str) -> Option<String> {
     for item in &program.items {
         if let Item::Statement(Stmt::VarDecl(var_decl)) = item {
             if var_decl.name.name == identifier {
-                let mut hover = String::new();
-
-                // Show mutability and type
-                let mutability = if var_decl.mutable { "var" } else { "let" };
-                hover.push_str("```atlas\n");
-                hover.push_str(&format!("{} {}", mutability, var_decl.name.name));
-
-                if let Some(ref type_ref) = var_decl.type_ref {
-                    hover.push_str(&format!(": {}", format_type_ref(type_ref)));
-                }
-
-                hover.push_str("\n```");
-
-                return Some(hover);
+                return Some(format_var_decl_hover(var_decl));
             }
         }
     }
@@ -236,21 +223,57 @@ fn find_variable_in_block(stmts: &[Stmt], identifier: &str) -> Option<String> {
     for stmt in stmts {
         if let Stmt::VarDecl(var_decl) = stmt {
             if var_decl.name.name == identifier {
-                let mutability = if var_decl.mutable { "var" } else { "let" };
-                let mut hover = String::new();
-                hover.push_str("```atlas\n");
-                hover.push_str(&format!("{} {}", mutability, var_decl.name.name));
-
-                if let Some(ref type_ref) = var_decl.type_ref {
-                    hover.push_str(&format!(": {}", format_type_ref(type_ref)));
-                }
-
-                hover.push_str("\n```");
-                return Some(hover);
+                return Some(format_var_decl_hover(var_decl));
             }
         }
     }
     None
+}
+
+/// Format a variable declaration as a hover string.
+/// If the variable has no explicit type annotation but is initialized with
+/// an `Expr::AnonFn`, renders the inferred `fn(T...) -> R` type.
+fn format_var_decl_hover(var_decl: &VarDecl) -> String {
+    let mutability = if var_decl.mutable { "var" } else { "let" };
+    let mut hover = String::new();
+    hover.push_str("```atlas\n");
+    hover.push_str(&format!("{} {}", mutability, var_decl.name.name));
+
+    if let Some(ref type_ref) = var_decl.type_ref {
+        hover.push_str(&format!(": {}", format_type_ref(type_ref)));
+    } else if let Expr::AnonFn {
+        params,
+        return_type,
+        ..
+    } = &var_decl.init
+    {
+        hover.push_str(&format!(
+            ": {}",
+            format_anon_fn_type(params, return_type.as_ref())
+        ));
+    }
+
+    hover.push_str("\n```");
+    hover
+}
+
+/// Render an anonymous function's signature as a type string.
+/// Example: params=[x: number, y: number], return_type=number → `fn(number, number) -> number`
+fn format_anon_fn_type(params: &[Param], return_type: Option<&TypeRef>) -> String {
+    let param_strs: Vec<String> = params
+        .iter()
+        .map(|p| {
+            if let Some(tr) = &p.type_ref {
+                format_type_ref(tr)
+            } else {
+                "any".to_string()
+            }
+        })
+        .collect();
+    let ret = return_type
+        .map(format_type_ref)
+        .unwrap_or_else(|| "any".to_string());
+    format!("fn({}) -> {}", param_strs.join(", "), ret)
 }
 
 /// Find hover information for a type alias
