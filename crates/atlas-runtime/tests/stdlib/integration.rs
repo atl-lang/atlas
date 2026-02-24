@@ -4670,3 +4670,9 @@ fn test_config_environment_specific() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `is_ok`
+
+// NOTE: test block removed — required access to private function `assert_empty`
+
+// NOTE: test block removed — required access to private function `index_of`

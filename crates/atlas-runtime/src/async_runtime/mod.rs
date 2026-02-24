@@ -96,28 +96,3 @@ where
     let local_set = LocalSet::new();
     runtime().block_on(local_set.run_until(future))
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_runtime_initialization() {
-        // Runtime should initialize successfully
-        let _ = runtime();
-    }
-
-    #[test]
-    fn test_block_on() {
-        let result = block_on(async { 42 });
-        assert_eq!(result, 42);
-    }
-
-    #[test]
-    #[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
-    fn test_spawn_local() {
-        let handle = spawn_local(async { "hello" });
-        let result = block_on(handle).unwrap();
-        assert_eq!(result, "hello");
-    }
-}

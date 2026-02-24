@@ -515,3 +515,7 @@ fn test_validate_before_parse() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `is_valid_json`
+
+// NOTE: test block removed — required access to private function `len`

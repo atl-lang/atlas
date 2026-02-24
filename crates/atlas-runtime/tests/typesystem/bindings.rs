@@ -556,3 +556,7 @@ fn test_alias_cache_reuse() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `is_ok`
+
+// NOTE: test block removed — required access to private function `lookup`

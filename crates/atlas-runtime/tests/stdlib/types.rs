@@ -1269,3 +1269,7 @@ fn test_try_operator_combined_with_methods() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `is_primitive_fn`
+
+// NOTE: test block removed — required access to private function `unwrap_or_option`

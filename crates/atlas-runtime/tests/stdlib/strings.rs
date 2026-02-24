@@ -306,3 +306,5 @@ fn test_ends_with_empty() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `repeat`

@@ -790,3 +790,140 @@ fn test_cross_complex_expression_tree() {
 }
 
 // ============================================================================
+
+// Migrated from src/vm/mod.rs inline tests — stdlib and parity
+
+#[test]
+fn test_vm_stdlib_print_number() {
+    assert_eq!(vm_eval("print(42);"), Some(Value::Null));
+}
+
+#[test]
+fn test_vm_stdlib_print_string() {
+    assert_eq!(vm_eval("print(\"hello\");"), Some(Value::Null));
+}
+
+#[test]
+fn test_vm_stdlib_print_bool() {
+    assert_eq!(vm_eval("print(true);"), Some(Value::Null));
+}
+
+#[test]
+fn test_vm_stdlib_print_null() {
+    assert_eq!(vm_eval("print(null);"), Some(Value::Null));
+}
+
+#[test]
+fn test_vm_stdlib_len_string() {
+    assert_eq!(vm_eval("len(\"hello\");"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_stdlib_len_unicode_string() {
+    assert_eq!(vm_eval("len(\"🎉\");"), Some(Value::Number(1.0)));
+}
+
+#[test]
+fn test_vm_stdlib_len_array() {
+    assert_eq!(vm_eval("len([1, 2, 3]);"), Some(Value::Number(3.0)));
+}
+
+#[test]
+fn test_vm_stdlib_len_empty_string() {
+    assert_eq!(vm_eval("len(\"\");"), Some(Value::Number(0.0)));
+}
+
+#[test]
+fn test_vm_stdlib_len_empty_array() {
+    assert_eq!(vm_eval("len([]);"), Some(Value::Number(0.0)));
+}
+
+#[test]
+fn test_vm_stdlib_str_number() {
+    assert_eq!(vm_eval("str(42);"), Some(Value::string("42")));
+}
+
+#[test]
+fn test_vm_stdlib_str_bool_true() {
+    assert_eq!(vm_eval("str(true);"), Some(Value::string("true")));
+}
+
+#[test]
+fn test_vm_stdlib_str_bool_false() {
+    assert_eq!(vm_eval("str(false);"), Some(Value::string("false")));
+}
+
+#[test]
+fn test_vm_stdlib_str_null() {
+    assert_eq!(vm_eval("str(null);"), Some(Value::string("null")));
+}
+
+#[test]
+fn test_vm_stdlib_len_in_expression() {
+    assert_eq!(vm_eval("let x = len(\"test\") + 1;"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_stdlib_str_in_concat() {
+    assert_eq!(vm_eval("let x = \"Number: \" + str(42);"), Some(Value::string("Number: 42")));
+}
+
+#[test]
+fn test_vm_stdlib_nested_calls() {
+    assert_eq!(vm_eval("len(str(12345));"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_stdlib_in_variable() {
+    assert_eq!(vm_eval("let x = len(\"hello\"); x;"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_stdlib_in_array() {
+    assert_eq!(vm_eval("let arr = [len(\"a\"), len(\"ab\"), len(\"abc\")]; arr[1];"), Some(Value::Number(2.0)));
+}
+
+#[test]
+fn test_vm_stdlib_matches_interpreter_print() {
+    assert_eq!(vm_eval("print(\"test\");"), Some(Value::Null));
+    let runtime = Atlas::new();
+    assert!(runtime.eval("print(\"test\");").is_ok());
+}
+
+#[test]
+fn test_vm_stdlib_matches_interpreter_len() {
+    assert_eq!(vm_eval("len(\"hello\");"), Some(Value::Number(5.0)));
+    let runtime = Atlas::new();
+    let result = runtime.eval("len(\"hello\");");
+    assert_eq!(result.unwrap(), Value::Number(5.0));
+}
+
+#[test]
+fn test_vm_stdlib_matches_interpreter_str() {
+    assert_eq!(vm_eval("str(42);"), Some(Value::string("42")));
+    let runtime = Atlas::new();
+    let result = runtime.eval("str(42);");
+    assert_eq!(result.unwrap(), Value::string("42"));
+}
+
+#[test]
+fn test_vm_numeric_error_codes_division_by_zero() {
+    let runtime = Atlas::new();
+    let result = runtime.eval("1 / 0");
+    assert!(result.is_err());
+    let diags = result.unwrap_err();
+    assert_eq!(diags.len(), 1);
+    assert_eq!(diags[0].code, "AT0005");
+    assert!(diags[0].message.contains("Divide by zero"));
+}
+
+#[test]
+fn test_vm_numeric_error_codes_invalid_result() {
+    let runtime = Atlas::new();
+    let result = runtime.eval("1e308 * 1e308");
+    assert!(result.is_err());
+    let diags = result.unwrap_err();
+    assert_eq!(diags.len(), 1);
+    assert_eq!(diags[0].code, "AT0007");
+    assert!(diags[0].message.contains("Invalid numeric result"));
+}

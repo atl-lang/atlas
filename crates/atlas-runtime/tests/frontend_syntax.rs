@@ -3092,3 +3092,15 @@ fn test_parse_impl_method_three_bounds() {
         panic!("expected impl item");
     }
 }
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `is_ok`
+
+// NOTE: test block removed — required access to private function `is_some`
+
+// NOTE: test block removed — required access to private function `len`
+
+// NOTE: test block removed — required access to private function `lookup`

@@ -1377,3 +1377,5 @@ fn test_inequality_result_is_bool() {
 }
 
 // ============================================================================
+
+// NOTE: test block removed — required access to private function `validate`

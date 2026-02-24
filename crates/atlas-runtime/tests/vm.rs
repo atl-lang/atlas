@@ -199,3 +199,5 @@ mod vm_nested;
 mod vm_performance;
 #[path = "vm/regression.rs"]
 mod vm_regression;
+#[path = "vm/opcodes.rs"]
+mod vm_opcodes;

@@ -580,4 +580,257 @@ n + arr[0];
     assert_eq!(result, 43.0);
 }
 
+
 // ============================================================================
+// Migrated from src/vm/mod.rs inline tests
+// ============================================================================
+
+use atlas_runtime::value::RuntimeError;
+
+#[test]
+fn test_vm_number_literal() {
+    assert_eq!(vm_eval("42;"), Some(Value::Number(42.0)));
+}
+
+#[test]
+fn test_vm_arithmetic() {
+    assert_eq!(vm_eval("2 + 3;"), Some(Value::Number(5.0)));
+    assert_eq!(vm_eval("10 - 4;"), Some(Value::Number(6.0)));
+    assert_eq!(vm_eval("3 * 4;"), Some(Value::Number(12.0)));
+    assert_eq!(vm_eval("15 / 3;"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_comparison() {
+    assert_eq!(vm_eval("1 < 2;"), Some(Value::Bool(true)));
+    assert_eq!(vm_eval("5 > 10;"), Some(Value::Bool(false)));
+    assert_eq!(vm_eval("3 == 3;"), Some(Value::Bool(true)));
+}
+
+#[test]
+fn test_vm_global_variable() {
+    assert_eq!(vm_eval("let x = 42; x;"), Some(Value::Number(42.0)));
+}
+
+#[test]
+fn test_vm_string_concat() {
+    let result = vm_eval("\"hello\" + \" world\";");
+    if let Some(Value::String(s)) = result {
+        assert_eq!(s.as_ref(), "hello world");
+    } else {
+        panic!("Expected string result");
+    }
+}
+
+#[test]
+fn test_vm_array_literal() {
+    let result = vm_eval("[1, 2, 3];");
+    if let Some(Value::Array(arr)) = result {
+        assert_eq!(arr.len(), 3);
+        assert_eq!(arr[0], Value::Number(1.0));
+        assert_eq!(arr[1], Value::Number(2.0));
+        assert_eq!(arr[2], Value::Number(3.0));
+    } else {
+        panic!("Expected array result");
+    }
+}
+
+#[test]
+fn test_vm_array_index() {
+    assert_eq!(vm_eval("let arr = [10, 20, 30]; arr[1];"), Some(Value::Number(20.0)));
+}
+
+#[test]
+fn test_vm_division_by_zero_rt() {
+    let result = VM::new(compile("10 / 0;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero { .. }));
+}
+
+#[test]
+fn test_vm_bool_literals() {
+    assert_eq!(vm_eval("true;"), Some(Value::Bool(true)));
+    assert_eq!(vm_eval("false;"), Some(Value::Bool(false)));
+}
+
+#[test]
+fn test_vm_null_literal() {
+    assert_eq!(vm_eval("null;"), Some(Value::Null));
+}
+
+#[test]
+fn test_vm_unary_negate() {
+    assert_eq!(vm_eval("-42;"), Some(Value::Number(-42.0)));
+}
+
+#[test]
+fn test_vm_logical_not() {
+    assert_eq!(vm_eval("!true;"), Some(Value::Bool(false)));
+    assert_eq!(vm_eval("!false;"), Some(Value::Bool(true)));
+}
+
+#[test]
+fn test_vm_if_true_branch() {
+    assert_eq!(
+        vm_eval("var x = 0; if (true) { x = 42; } else { x = 0; } x;"),
+        Some(Value::Number(42.0))
+    );
+}
+
+#[test]
+fn test_vm_if_false_branch() {
+    assert_eq!(
+        vm_eval("var x = 0; if (false) { x = 42; } else { x = 99; } x;"),
+        Some(Value::Number(99.0))
+    );
+}
+
+#[test]
+fn test_vm_if_no_else() {
+    assert_eq!(vm_eval("var x = 10; if (false) { x = 42; } x;"), Some(Value::Number(10.0)));
+}
+
+#[test]
+fn test_vm_if_with_comparison() {
+    assert_eq!(
+        vm_eval("var x = 0; if (5 > 3) { x = 1; } else { x = 2; } x;"),
+        Some(Value::Number(1.0))
+    );
+    assert_eq!(
+        vm_eval("var x = 0; if (5 < 3) { x = 1; } else { x = 2; } x;"),
+        Some(Value::Number(2.0))
+    );
+}
+
+#[test]
+fn test_vm_nested_if() {
+    assert_eq!(
+        vm_eval("var x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;"),
+        Some(Value::Number(42.0))
+    );
+}
+
+#[test]
+fn test_vm_while_loop() {
+    assert_eq!(vm_eval("var x = 0; while (x < 5) { x = x + 1; } x;"), Some(Value::Number(5.0)));
+}
+
+#[test]
+fn test_vm_while_loop_never_executes() {
+    assert_eq!(vm_eval("var x = 10; while (x < 5) { x = x + 1; } x;"), Some(Value::Number(10.0)));
+}
+
+#[test]
+fn test_vm_while_loop_sum() {
+    assert_eq!(
+        vm_eval("var sum = 0; var i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;"),
+        Some(Value::Number(55.0))
+    );
+}
+
+#[test]
+fn test_vm_for_loop() {
+    assert_eq!(
+        vm_eval("var sum = 0; for (var i = 0; i < 5; i = i + 1) { sum = sum + i; } sum;"),
+        Some(Value::Number(10.0))
+    );
+}
+
+#[test]
+fn test_vm_loop_countdown() {
+    assert_eq!(
+        vm_eval("var x = 10; var i = 0; while (i < 5) { x = x - 1; i = i + 1; } x;"),
+        Some(Value::Number(5.0))
+    );
+}
+
+#[test]
+fn test_vm_nested_loops() {
+    assert_eq!(
+        vm_eval("var sum = 0; var i = 1; while (i <= 3) { var j = 1; while (j <= 3) { sum = sum + (i * j); j = j + 1; } i = i + 1; } sum;"),
+        Some(Value::Number(36.0))
+    );
+}
+
+#[test]
+fn test_vm_loop_with_break() {
+    assert_eq!(
+        vm_eval("var x = 0; while (true) { x = x + 1; if (x == 5) { break; } } x;"),
+        Some(Value::Number(5.0))
+    );
+}
+
+#[test]
+fn test_vm_loop_with_continue() {
+    assert_eq!(
+        vm_eval("var sum = 0; var i = 0; while (i < 10) { i = i + 1; if (i == 5) { continue; } sum = sum + i; } sum;"),
+        Some(Value::Number(50.0))
+    );
+}
+
+#[test]
+fn test_vm_nested_break() {
+    assert_eq!(
+        vm_eval("var outer = 0; var i = 0; while (i < 3) { var j = 0; while (j < 3) { if (j == 1) { break; } outer = outer + 1; j = j + 1; } i = i + 1; } outer;"),
+        Some(Value::Number(3.0))
+    );
+}
+
+#[test]
+fn test_vm_runtime_error_modulo_by_zero() {
+    let result = VM::new(compile("10 % 0;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero { .. }));
+}
+
+#[test]
+fn test_vm_runtime_error_array_out_of_bounds_read() {
+    let result = VM::new(compile("let arr = [1, 2, 3]; arr[10];")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::OutOfBounds { .. }));
+}
+
+#[test]
+fn test_vm_runtime_error_negative_index() {
+    let result = VM::new(compile("let arr = [1, 2, 3]; arr[-1];")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidIndex { .. }));
+}
+
+#[test]
+fn test_vm_runtime_error_non_integer_index() {
+    let result = VM::new(compile("let arr = [1, 2, 3]; arr[1.5];")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidIndex { .. }));
+}
+
+#[test]
+fn test_vm_runtime_error_invalid_numeric_add() {
+    let result = VM::new(compile("let x = 1.7976931348623157e308 + 1.7976931348623157e308;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+}
+
+#[test]
+fn test_vm_runtime_error_invalid_numeric_multiply() {
+    let result = VM::new(compile("let x = 1e308 * 2.0;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+}
+
+#[test]
+fn test_vm_subtraction_overflow() {
+    let result = VM::new(compile("let x = -1.7976931348623157e308 - 1.7976931348623157e308;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+}
+
+#[test]
+fn test_vm_division_produces_infinity() {
+    let result = VM::new(compile("let x = 1e308 / 1e-308;")).run(&SecurityContext::allow_all());
+    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+}
+
+#[test]
+fn test_vm_multiple_numeric_operations_no_error() {
+    assert_eq!(vm_eval("let x = 10 / 2 + 5 * 3 - 8 % 3;"), Some(Value::Number(18.0)));
+}
+
+#[test]
+fn test_vm_division_by_very_small_number() {
+    // 1.0 / 1e-300 = 1e300, well within f64 range
+    let result = VM::new(compile("let x = 1.0 / 1e-300;")).run(&SecurityContext::allow_all());
+    assert!(result.is_ok());
+}
