@@ -322,11 +322,7 @@ fn greet(name: string) -> void {
 - Nested functions can shadow outer functions and globals
 - Nested functions can call sibling functions at the same scope level
 
-**Current Limitations:**
-- Nested functions cannot capture outer scope variables (no closure)
-- Anonymous/lambda functions not supported
-
-See `ROADMAP.md` for planned enhancements.
+See also: [Anonymous Functions](#anonymous-functions) for closure and lambda syntax.
 
 ### If Statement
 
@@ -639,6 +635,99 @@ count2
 2fast     // Cannot start with digit
 my-var    // Hyphens not allowed
 fn        // Keywords reserved
+```
+
+---
+
+## Anonymous Functions
+
+Anonymous functions (closures) are first-class expressions. Two forms are supported.
+
+### fn Expression
+
+```atlas
+fn ( param-list ) -> return-type { body }
+fn ( param-list ) { body }          // return type inferred
+```
+
+Example:
+
+```atlas
+let double = fn(x: number) -> number { return x * 2; };
+double(5);  // → 10
+```
+
+### Arrow Expression
+
+```atlas
+( param-list ) => expression
+```
+
+Arrow functions use a single expression as the body (no braces, no `return`):
+
+```atlas
+let double = (x) => x * 2;
+double(5);  // → 10
+
+let add = (x, y) => x + y;
+add(3, 4);  // → 7
+```
+
+### Parameter List
+
+```
+param-list:
+    (empty)
+    param
+    param , param-list
+
+param (fn expression):
+    [ownership] identifier : type
+
+param (arrow expression):
+    identifier                  -- type inferred
+```
+
+Ownership annotations (`own`, `borrow`, `shared`) are supported on fn expression params:
+
+```atlas
+let f = fn(own x: number) -> number { return x; };
+let g = fn(borrow x: number) -> number { return x; };
+```
+
+### Function Type Syntax
+
+```
+( type-list ) -> type
+```
+
+Example: `(number, number) -> number` is a function taking two numbers and returning a number.
+
+### Closure Capture Semantics
+
+Closures capture outer variables at **creation time** (snapshot semantics):
+
+- `let` bindings (immutable, Copy types): captured by value
+- `var` bindings: snapshotted at closure creation — outer mutations after creation are not visible inside the closure
+- `borrow`-annotated parameters: **cannot** be captured into closures (AT3040 error)
+
+```atlas
+fn run() -> number {
+    var x = 5;
+    let f = fn() -> number { return x; };
+    x = 99;         // Mutation after creation
+    return f();     // Returns 5, not 99 (snapshot at creation time)
+}
+```
+
+### Higher-Order Functions
+
+Anonymous functions and arrow functions work with all stdlib higher-order functions:
+
+```atlas
+let doubled = map([1, 2, 3], (x) => x * 2);        // [2, 4, 6]
+let evens   = filter([1, 2, 3, 4], (x) => x % 2 == 0);  // [2, 4]
+let sum     = reduce([1, 2, 3], (acc, x) => acc + x, 0); // 6
 ```
 
 ---
