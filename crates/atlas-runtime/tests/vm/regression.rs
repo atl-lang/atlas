@@ -580,7 +580,6 @@ n + arr[0];
     assert_eq!(result, 43.0);
 }
 
-
 // ============================================================================
 // Migrated from src/vm/mod.rs inline tests
 // ============================================================================
@@ -637,13 +636,19 @@ fn test_vm_array_literal() {
 
 #[test]
 fn test_vm_array_index() {
-    assert_eq!(vm_eval("let arr = [10, 20, 30]; arr[1];"), Some(Value::Number(20.0)));
+    assert_eq!(
+        vm_eval("let arr = [10, 20, 30]; arr[1];"),
+        Some(Value::Number(20.0))
+    );
 }
 
 #[test]
 fn test_vm_division_by_zero_rt() {
     let result = VM::new(compile("10 / 0;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero { .. }));
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::DivideByZero { .. }
+    ));
 }
 
 #[test]
@@ -686,7 +691,10 @@ fn test_vm_if_false_branch() {
 
 #[test]
 fn test_vm_if_no_else() {
-    assert_eq!(vm_eval("var x = 10; if (false) { x = 42; } x;"), Some(Value::Number(10.0)));
+    assert_eq!(
+        vm_eval("var x = 10; if (false) { x = 42; } x;"),
+        Some(Value::Number(10.0))
+    );
 }
 
 #[test]
@@ -704,19 +712,27 @@ fn test_vm_if_with_comparison() {
 #[test]
 fn test_vm_nested_if() {
     assert_eq!(
-        vm_eval("var x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;"),
+        vm_eval(
+            "var x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;"
+        ),
         Some(Value::Number(42.0))
     );
 }
 
 #[test]
 fn test_vm_while_loop() {
-    assert_eq!(vm_eval("var x = 0; while (x < 5) { x = x + 1; } x;"), Some(Value::Number(5.0)));
+    assert_eq!(
+        vm_eval("var x = 0; while (x < 5) { x = x + 1; } x;"),
+        Some(Value::Number(5.0))
+    );
 }
 
 #[test]
 fn test_vm_while_loop_never_executes() {
-    assert_eq!(vm_eval("var x = 10; while (x < 5) { x = x + 1; } x;"), Some(Value::Number(10.0)));
+    assert_eq!(
+        vm_eval("var x = 10; while (x < 5) { x = x + 1; } x;"),
+        Some(Value::Number(10.0))
+    );
 }
 
 #[test]
@@ -778,54 +794,90 @@ fn test_vm_nested_break() {
 #[test]
 fn test_vm_runtime_error_modulo_by_zero() {
     let result = VM::new(compile("10 % 0;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::DivideByZero { .. }));
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::DivideByZero { .. }
+    ));
 }
 
 #[test]
 fn test_vm_runtime_error_array_out_of_bounds_read() {
-    let result = VM::new(compile("let arr = [1, 2, 3]; arr[10];")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::OutOfBounds { .. }));
+    let result =
+        VM::new(compile("let arr = [1, 2, 3]; arr[10];")).run(&SecurityContext::allow_all());
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::OutOfBounds { .. }
+    ));
 }
 
 #[test]
 fn test_vm_runtime_error_negative_index() {
-    let result = VM::new(compile("let arr = [1, 2, 3]; arr[-1];")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidIndex { .. }));
+    let result =
+        VM::new(compile("let arr = [1, 2, 3]; arr[-1];")).run(&SecurityContext::allow_all());
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidIndex { .. }
+    ));
 }
 
 #[test]
 fn test_vm_runtime_error_non_integer_index() {
-    let result = VM::new(compile("let arr = [1, 2, 3]; arr[1.5];")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidIndex { .. }));
+    let result =
+        VM::new(compile("let arr = [1, 2, 3]; arr[1.5];")).run(&SecurityContext::allow_all());
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidIndex { .. }
+    ));
 }
 
 #[test]
 fn test_vm_runtime_error_invalid_numeric_add() {
-    let result = VM::new(compile("let x = 1.7976931348623157e308 + 1.7976931348623157e308;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+    let result = VM::new(compile(
+        "let x = 1.7976931348623157e308 + 1.7976931348623157e308;",
+    ))
+    .run(&SecurityContext::allow_all());
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidNumericResult { .. }
+    ));
 }
 
 #[test]
 fn test_vm_runtime_error_invalid_numeric_multiply() {
     let result = VM::new(compile("let x = 1e308 * 2.0;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidNumericResult { .. }
+    ));
 }
 
 #[test]
 fn test_vm_subtraction_overflow() {
-    let result = VM::new(compile("let x = -1.7976931348623157e308 - 1.7976931348623157e308;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+    let result = VM::new(compile(
+        "let x = -1.7976931348623157e308 - 1.7976931348623157e308;",
+    ))
+    .run(&SecurityContext::allow_all());
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidNumericResult { .. }
+    ));
 }
 
 #[test]
 fn test_vm_division_produces_infinity() {
     let result = VM::new(compile("let x = 1e308 / 1e-308;")).run(&SecurityContext::allow_all());
-    assert!(matches!(result.unwrap_err(), RuntimeError::InvalidNumericResult { .. }));
+    assert!(matches!(
+        result.unwrap_err(),
+        RuntimeError::InvalidNumericResult { .. }
+    ));
 }
 
 #[test]
 fn test_vm_multiple_numeric_operations_no_error() {
-    assert_eq!(vm_eval("let x = 10 / 2 + 5 * 3 - 8 % 3;"), Some(Value::Number(18.0)));
+    assert_eq!(
+        vm_eval("let x = 10 / 2 + 5 * 3 - 8 % 3;"),
+        Some(Value::Number(18.0))
+    );
 }
 
 #[test]

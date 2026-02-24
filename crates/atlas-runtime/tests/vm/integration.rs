@@ -860,12 +860,18 @@ fn test_vm_stdlib_str_null() {
 
 #[test]
 fn test_vm_stdlib_len_in_expression() {
-    assert_eq!(vm_eval("let x = len(\"test\") + 1;"), Some(Value::Number(5.0)));
+    assert_eq!(
+        vm_eval("let x = len(\"test\") + 1;"),
+        Some(Value::Number(5.0))
+    );
 }
 
 #[test]
 fn test_vm_stdlib_str_in_concat() {
-    assert_eq!(vm_eval("let x = \"Number: \" + str(42);"), Some(Value::string("Number: 42")));
+    assert_eq!(
+        vm_eval("let x = \"Number: \" + str(42);"),
+        Some(Value::string("Number: 42"))
+    );
 }
 
 #[test]
@@ -875,12 +881,18 @@ fn test_vm_stdlib_nested_calls() {
 
 #[test]
 fn test_vm_stdlib_in_variable() {
-    assert_eq!(vm_eval("let x = len(\"hello\"); x;"), Some(Value::Number(5.0)));
+    assert_eq!(
+        vm_eval("let x = len(\"hello\"); x;"),
+        Some(Value::Number(5.0))
+    );
 }
 
 #[test]
 fn test_vm_stdlib_in_array() {
-    assert_eq!(vm_eval("let arr = [len(\"a\"), len(\"ab\"), len(\"abc\")]; arr[1];"), Some(Value::Number(2.0)));
+    assert_eq!(
+        vm_eval("let arr = [len(\"a\"), len(\"ab\"), len(\"abc\")]; arr[1];"),
+        Some(Value::Number(2.0))
+    );
 }
 
 #[test]

@@ -1970,18 +1970,15 @@ mod vm_tests {
 // === Migrated from src/ffi/caller.rs ===
 mod migrated_ffi_caller {
     #![allow(unused_imports, dead_code, unused_variables, unused_mut)]
+    use atlas_runtime::ffi::caller::{CallError, ExternFunction};
     use atlas_runtime::ffi::types::ExternType;
-    use atlas_runtime::ffi::caller::{ExternFunction, CallError};
     use atlas_runtime::value::Value;
-    use std::os::raw::{c_int, c_double};
-
+    use std::os::raw::{c_double, c_int};
 
     // Simple C functions for testing (defined here as Rust functions with C ABI)
     extern "C" fn test_add(a: c_int, b: c_int) -> c_int {
         a + b
     }
-
-
 
     extern "C" fn test_double(x: c_double) -> c_double {
         x * 2.0
@@ -2079,13 +2076,11 @@ mod migrated_ffi_loader {
     }
 }
 
-
 // === Migrated from src/ffi/types.rs ===
 mod migrated_ffi_types {
     #![allow(unused_imports, dead_code, unused_variables, unused_mut)]
     use atlas_runtime::ffi::types::ExternType;
     use atlas_runtime::types::Type;
-
 
     #[test]
     fn test_extern_type_accepts_atlas_type_valid() {

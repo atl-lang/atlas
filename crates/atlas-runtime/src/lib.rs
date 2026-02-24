@@ -79,4 +79,3 @@ pub use typechecker::TypeChecker;
 pub use types::Type;
 pub use value::{FunctionRef, RuntimeError, Value};
 pub use vm::VM;
-

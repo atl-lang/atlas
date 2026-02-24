@@ -195,9 +195,9 @@ mod vm_integration;
 mod vm_member;
 #[path = "vm/nested.rs"]
 mod vm_nested;
+#[path = "vm/opcodes.rs"]
+mod vm_opcodes;
 #[path = "vm/performance.rs"]
 mod vm_performance;
 #[path = "vm/regression.rs"]
 mod vm_regression;
-#[path = "vm/opcodes.rs"]
-mod vm_opcodes;

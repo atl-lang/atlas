@@ -1644,7 +1644,6 @@ mod migrated_types {
     #![allow(unused_imports, dead_code, unused_variables, unused_mut)]
     use atlas_runtime::types::Type;
 
-
     #[test]
     fn test_type_display() {
         assert_eq!(Type::Number.display_name(), "number");

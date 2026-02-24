@@ -41,7 +41,10 @@ fn test_vm_constants_in_expression() {
 
 #[test]
 fn test_vm_constant_reuse() {
-    assert_eq!(vm_eval("let x = 5; let y = 5; x + y;"), Some(Value::Number(10.0)));
+    assert_eq!(
+        vm_eval("let x = 5; let y = 5; x + y;"),
+        Some(Value::Number(10.0))
+    );
 }
 
 #[test]
@@ -90,7 +93,9 @@ fn test_vm_empty_constant_pool() {
     bytecode.emit(Opcode::True, Span::dummy());
     bytecode.emit(Opcode::Halt, Span::dummy());
 
-    let result = VM::new(bytecode).run(&SecurityContext::allow_all()).unwrap();
+    let result = VM::new(bytecode)
+        .run(&SecurityContext::allow_all())
+        .unwrap();
     assert_eq!(result, Some(Value::Bool(true)));
     // Constants pool stays empty when no Constant opcodes are emitted
 }
@@ -119,7 +124,9 @@ fn test_vm_frame_relative_locals() {
     bytecode.emit(Opcode::Add, Span::dummy());
     bytecode.emit(Opcode::Halt, Span::dummy());
 
-    let result = VM::new(bytecode).run(&SecurityContext::allow_all()).unwrap();
+    let result = VM::new(bytecode)
+        .run(&SecurityContext::allow_all())
+        .unwrap();
     assert_eq!(result, Some(Value::Number(30.0)));
 }
 
@@ -133,7 +140,9 @@ fn test_vm_return_from_main() {
     bytecode.emit(Opcode::Null, Span::dummy());
     bytecode.emit(Opcode::Halt, Span::dummy());
 
-    let result = VM::new(bytecode).run(&SecurityContext::allow_all()).unwrap();
+    let result = VM::new(bytecode)
+        .run(&SecurityContext::allow_all())
+        .unwrap();
     assert_eq!(result, Some(Value::Number(42.0)));
 }
 
@@ -168,7 +177,9 @@ fn test_vm_call_frame_creation() {
     bytecode.emit_u16(idx_42);
     bytecode.emit(Opcode::Return, Span::dummy());
 
-    let result = VM::new(bytecode).run(&SecurityContext::allow_all()).unwrap();
+    let result = VM::new(bytecode)
+        .run(&SecurityContext::allow_all())
+        .unwrap();
     assert_eq!(result, Some(Value::Number(42.0)));
 }
 
@@ -207,7 +218,9 @@ fn test_vm_call_with_arguments() {
     bytecode.emit(Opcode::Add, Span::dummy());
     bytecode.emit(Opcode::Return, Span::dummy());
 
-    let result = VM::new(bytecode).run(&SecurityContext::allow_all()).unwrap();
+    let result = VM::new(bytecode)
+        .run(&SecurityContext::allow_all())
+        .unwrap();
     assert_eq!(result, Some(Value::Number(8.0)));
 }
 

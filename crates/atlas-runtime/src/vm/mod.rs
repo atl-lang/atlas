@@ -3095,4 +3095,3 @@ impl Default for VM {
         Self::new(Bytecode::new())
     }
 }
-

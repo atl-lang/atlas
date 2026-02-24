@@ -1851,8 +1851,10 @@ fn test_stack_to_array_bottom_to_top() {
 // Migrated from src/value.rs inline tests
 // ============================================================================
 
-use atlas_runtime::value::{FunctionRef, NativeFn, RuntimeError, Shared, ValueArray, ValueHashMap, ValueMap};
 use atlas_runtime::stdlib::collections::hash::HashKey;
+use atlas_runtime::value::{
+    FunctionRef, NativeFn, RuntimeError, Shared, ValueArray, ValueHashMap, ValueMap,
+};
 use std::sync::Arc;
 
 #[test]
@@ -1929,7 +1931,11 @@ fn test_to_string_null() {
 
 #[test]
 fn test_to_string_array() {
-    let arr = Value::array(vec![Value::Number(1.0), Value::Number(2.0), Value::Number(3.0)]);
+    let arr = Value::array(vec![
+        Value::Number(1.0),
+        Value::Number(2.0),
+        Value::Number(3.0),
+    ]);
     assert_eq!(arr.to_string(), "[1, 2, 3]");
 }
 
@@ -2026,16 +2032,31 @@ fn value_array_equality_is_by_content() {
 #[test]
 fn test_function_equality() {
     let func1 = Value::Function(FunctionRef {
-        name: "test".to_string(), arity: 0, bytecode_offset: 0,
-        local_count: 0, param_ownership: vec![], param_names: vec![], return_ownership: None,
+        name: "test".to_string(),
+        arity: 0,
+        bytecode_offset: 0,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
     });
     let func2 = Value::Function(FunctionRef {
-        name: "test".to_string(), arity: 1, bytecode_offset: 100,
-        local_count: 0, param_ownership: vec![], param_names: vec![], return_ownership: None,
+        name: "test".to_string(),
+        arity: 1,
+        bytecode_offset: 100,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
     });
     let func3 = Value::Function(FunctionRef {
-        name: "other".to_string(), arity: 0, bytecode_offset: 0,
-        local_count: 0, param_ownership: vec![], param_names: vec![], return_ownership: None,
+        name: "other".to_string(),
+        arity: 0,
+        bytecode_offset: 0,
+        local_count: 0,
+        param_ownership: vec![],
+        param_names: vec![],
+        return_ownership: None,
     });
     assert_eq!(func1, func2); // same name
     assert_ne!(func1, func3); // different name
@@ -2043,9 +2064,16 @@ fn test_function_equality() {
 
 #[test]
 fn test_runtime_errors() {
-    let err1 = RuntimeError::DivideByZero { span: Span::dummy() };
-    let err2 = RuntimeError::OutOfBounds { span: Span::dummy() };
-    let err3 = RuntimeError::UnknownFunction { name: "foo".to_string(), span: Span::dummy() };
+    let err1 = RuntimeError::DivideByZero {
+        span: Span::dummy(),
+    };
+    let err2 = RuntimeError::OutOfBounds {
+        span: Span::dummy(),
+    };
+    let err3 = RuntimeError::UnknownFunction {
+        name: "foo".to_string(),
+        span: Span::dummy(),
+    };
     assert_eq!(err1.to_string(), "Division by zero");
     assert_eq!(err2.to_string(), "Array index out of bounds");
     assert_eq!(err3.to_string(), "Unknown function: foo");
@@ -2112,18 +2140,30 @@ fn value_map_cow_insert_does_not_affect_clone() {
 #[test]
 fn value_hashmap_cow_insert_does_not_affect_clone() {
     let mut a = ValueHashMap::new();
-    a.inner_mut().insert(HashKey::String(Arc::new("x".to_string())), Value::Number(1.0));
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("x".to_string())),
+        Value::Number(1.0),
+    );
     let b = a.clone();
-    a.inner_mut().insert(HashKey::String(Arc::new("y".to_string())), Value::Number(2.0));
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("y".to_string())),
+        Value::Number(2.0),
+    );
     assert_eq!(b.inner().len(), 1);
 }
 
 #[test]
 fn value_collection_equality_by_content() {
     let mut a = ValueHashMap::new();
-    a.inner_mut().insert(HashKey::String(Arc::new("k".to_string())), Value::Number(1.0));
+    a.inner_mut().insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
     let mut b = ValueHashMap::new();
-    b.inner_mut().insert(HashKey::String(Arc::new("k".to_string())), Value::Number(1.0));
+    b.inner_mut().insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
     assert_eq!(a, b);
 }
 

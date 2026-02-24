@@ -550,7 +550,6 @@ mod migrated_profiler_report {
     use atlas_runtime::bytecode::Opcode;
     use atlas_runtime::profiler::ProfileReport;
 
-
     fn sample_report() -> ProfileReport {
         ProfileReport {
             total_instructions: 1000,

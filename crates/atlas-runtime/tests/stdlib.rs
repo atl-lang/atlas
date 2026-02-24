@@ -69,6 +69,8 @@ mod io;
 mod json;
 #[path = "stdlib/parity.rs"]
 mod parity;
+#[path = "stdlib/real_world.rs"]
+mod real_world;
 #[path = "stdlib/strings.rs"]
 mod strings;
 #[path = "stdlib/types.rs"]
