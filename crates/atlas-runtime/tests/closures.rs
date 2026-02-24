@@ -1746,3 +1746,116 @@ result[0];
         1.0,
     );
 }
+
+// ============================================================================
+// Phase 10: Ownership Integration
+// Ownership annotations (own, borrow, shared) on anon fn params — parse,
+// typecheck, runtime, and parity tests. Also verifies borrow capture is blocked.
+// ============================================================================
+
+// --- own annotation ---
+
+#[test]
+fn test_own_param_anon_fn_parses_and_runs() {
+    // fn(own x: number) parses correctly and runs in both engines
+    assert_parity_number(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+apply(fn(own x: number) -> number { return x * 2; }, 5);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_own_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+let f = fn(own x: number) -> number { return x; };
+f(42);
+"#,
+    );
+}
+
+// --- borrow annotation ---
+
+#[test]
+fn test_borrow_param_anon_fn_parses_and_runs() {
+    assert_parity_number(
+        r#"
+fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+apply(fn(borrow x: number) -> number { return x + 1; }, 9);
+"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_borrow_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+let f = fn(borrow x: number) -> number { return x; };
+f(7);
+"#,
+    );
+}
+
+// --- shared annotation ---
+
+#[test]
+fn test_shared_param_anon_fn_typechecks_without_error() {
+    // `shared` annotation parses and typechecks; runtime requires shared<T> value (not tested here)
+    typecheck_ok(
+        r#"
+let f = fn(shared x: number) -> number { return 0; };
+"#,
+    );
+}
+
+#[test]
+fn test_shared_param_typechecks_without_error() {
+    typecheck_ok(
+        r#"
+fn outer(shared x: number) -> number {
+    let f = fn(shared y: number) -> number { return 0; };
+    return 0;
+}
+"#,
+    );
+}
+
+// --- borrow capture restriction ---
+
+#[test]
+fn test_borrow_param_cannot_be_captured_by_closure() {
+    // Capturing a borrow-annotated outer param in an inner closure is AT3040
+    let errors = typecheck_errors(
+        r#"
+fn outer(borrow x: number) -> () -> number {
+    return fn() -> number { x; };
+}
+"#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected AT3040 error for borrow capture"
+    );
+    assert!(
+        errors.iter().any(|e| e.contains("borrow")),
+        "Expected borrow capture message, got: {:?}",
+        errors
+    );
+}
+
+// --- block-form with return uses declared return type correctly ---
+
+#[test]
+fn test_own_param_block_body_return_type_no_false_positive() {
+    // Regression: block body with `return x;` should not emit false "returns void" diagnostic
+    typecheck_ok(
+        r#"
+let f = fn(own x: number) -> number { return x; };
+f(1);
+"#,
+    );
+}

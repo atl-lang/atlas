@@ -1898,16 +1898,21 @@ impl<'a> TypeChecker<'a> {
                 for stmt in &block.statements {
                     self.check_statement(stmt);
                 }
-                // Infer type from the last expression statement (if it's a bare expr)
+                // Infer type from the last statement:
+                // - Bare expr statement → use its type
+                // - Return statement → use the returned expr type (check_statement already validated it)
+                // - Anything else → Void
                 block
                     .statements
                     .last()
-                    .and_then(|s| {
-                        if let crate::ast::Stmt::Expr(e) = s {
-                            Some(self.check_expr(&e.expr))
-                        } else {
-                            None
-                        }
+                    .and_then(|s| match s {
+                        crate::ast::Stmt::Expr(e) => Some(self.check_expr(&e.expr)),
+                        crate::ast::Stmt::Return(r) => r
+                            .value
+                            .as_ref()
+                            .map(|e| self.check_expr(e))
+                            .or(Some(Type::Void)),
+                        _ => None,
                     })
                     .unwrap_or(Type::Void)
             }

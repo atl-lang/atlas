@@ -1026,11 +1026,27 @@ impl Binder {
                 self.bind_expr(&try_expr.expr);
             }
             Expr::AnonFn { params, body, .. } => {
-                // Walk params and body for name resolution
+                // Enter a new scope for the anonymous function body
+                self.symbol_table.enter_scope();
+                // Define params as symbols (they are definitions, not references)
                 for param in params {
-                    self.bind_expr(&Expr::Identifier(param.name.clone()));
+                    let ty = param
+                        .type_ref
+                        .as_ref()
+                        .map_or(crate::types::Type::Unknown, |t| self.resolve_type_ref(t));
+                    let symbol = Symbol {
+                        name: param.name.name.clone(),
+                        ty,
+                        mutable: false,
+                        kind: SymbolKind::Parameter,
+                        span: param.name.span,
+                        exported: false,
+                    };
+                    let _ = self.symbol_table.define(symbol);
                 }
+                // Bind the body with params in scope
                 self.bind_expr(body);
+                self.symbol_table.exit_scope();
             }
             Expr::Block(block) => {
                 for stmt in &block.statements {
