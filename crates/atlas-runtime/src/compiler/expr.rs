@@ -2,7 +2,7 @@
 
 use crate::ast::*;
 use crate::bytecode::Opcode;
-use crate::compiler::{Compiler, Local};
+use crate::compiler::{Compiler, Local, UpvalueCapture, UpvalueContext};
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::value::Value;
@@ -22,11 +22,12 @@ impl Compiler {
             Expr::Match(match_expr) => self.compile_match(match_expr),
             Expr::Member(member) => self.compile_member(member),
             Expr::Try(try_expr) => self.compile_try(try_expr),
-            Expr::AnonFn { span, .. } => Err(vec![Diagnostic::error_with_code(
-                "AT0400",
-                "anonymous functions not yet supported",
-                *span,
-            )]),
+            Expr::AnonFn {
+                params,
+                return_type: _,
+                body,
+                span,
+            } => self.compile_anon_fn(params, body, *span),
             Expr::Block(block) => Err(vec![Diagnostic::error_with_code(
                 "AT0400",
                 "block expressions not yet supported in compiled mode",
@@ -1159,6 +1160,122 @@ impl Compiler {
 
         // 7. Patch ok skip jump
         self.bytecode.patch_jump(ok_skip);
+
+        Ok(())
+    }
+
+    /// Compile an anonymous function expression (`fn(params) { body }` or `(params) => expr`).
+    ///
+    /// Mirrors `compile_nested_function` in stmt.rs, but:
+    /// - Uses a synthetic name (`__anon_N`)
+    /// - Handles `Expr::Block` body (block form) and any other `Expr` body (arrow form)
+    /// - Does NOT store the result in a local or global — value stays on the stack
+    fn compile_anon_fn(
+        &mut self,
+        params: &[Param],
+        body: &Expr,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        let anon_name = format!("__anon_{}", self.next_func_id);
+        self.next_func_id += 1;
+
+        // Jump over the function body so it isn't executed at definition time.
+        self.bytecode.emit(Opcode::Jump, span);
+        let skip_jump = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // placeholder
+
+        let function_offset = self.bytecode.current_offset();
+
+        // --- Compile function body with upvalue tracking ---
+        let old_scope = self.scope_depth;
+        let local_base = self.locals.len();
+        self.scope_depth += 1;
+
+        let prev_watermark = std::mem::replace(&mut self.locals_watermark, local_base);
+
+        for param in params {
+            self.push_local(Local {
+                name: param.name.name.clone(),
+                depth: self.scope_depth,
+                mutable: true,
+                scoped_name: None,
+            });
+        }
+
+        let prev_local_base = std::mem::replace(&mut self.current_function_base, local_base);
+
+        self.upvalue_stack.push(UpvalueContext {
+            parent_base: prev_local_base,
+            captures: Vec::new(),
+        });
+
+        // Body dispatch: block form vs arrow form
+        match body {
+            Expr::Block(block) => {
+                self.compile_block(block)?;
+                // Implicit null return (same as named nested functions)
+                self.bytecode.emit(Opcode::Null, span);
+                self.bytecode.emit(Opcode::Return, span);
+            }
+            _ => {
+                // Arrow form: expression is the return value
+                self.compile_expr(body)?;
+                self.bytecode.emit(Opcode::Return, span);
+            }
+        }
+
+        let upvalue_ctx = self.upvalue_stack.pop().expect("upvalue context missing");
+        let upvalues = upvalue_ctx.captures;
+
+        self.current_function_base = prev_local_base;
+        let total_local_count = self.locals_watermark - local_base;
+        self.locals_watermark = prev_watermark;
+
+        self.scope_depth = old_scope;
+        self.locals.truncate(local_base);
+
+        // Patch the skip jump to land after the function body.
+        self.bytecode.patch_jump(skip_jump);
+
+        // --- Definition site ---
+        let n_upvalues = upvalues.len();
+
+        let func_ref = crate::value::FunctionRef {
+            name: anon_name,
+            arity: params.len(),
+            bytecode_offset: function_offset,
+            local_count: total_local_count,
+            param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
+            param_names: params.iter().map(|p| p.name.name.clone()).collect(),
+            return_ownership: None,
+        };
+        let const_idx = self
+            .bytecode
+            .add_constant(crate::value::Value::Function(func_ref));
+
+        if n_upvalues == 0 {
+            // No upvalues: push the function value directly
+            self.bytecode.emit(Opcode::Constant, span);
+            self.bytecode.emit_u16(const_idx);
+        } else {
+            // Push each captured value, then MakeClosure
+            for (_, capture) in &upvalues {
+                match capture {
+                    UpvalueCapture::Local(abs_local_idx) => {
+                        let outer_rel_idx = *abs_local_idx - prev_local_base;
+                        self.bytecode.emit(Opcode::GetLocal, span);
+                        self.bytecode.emit_u16(outer_rel_idx as u16);
+                    }
+                    UpvalueCapture::Upvalue(parent_upvalue_idx) => {
+                        self.bytecode.emit(Opcode::GetUpvalue, span);
+                        self.bytecode.emit_u16(*parent_upvalue_idx as u16);
+                    }
+                }
+            }
+            self.bytecode.emit(Opcode::MakeClosure, span);
+            self.bytecode.emit_u16(const_idx);
+            self.bytecode.emit_u16(n_upvalues as u16);
+        }
 
         Ok(())
     }

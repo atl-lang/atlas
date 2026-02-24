@@ -1110,3 +1110,266 @@ fn outer(borrow x: number) -> () -> number {
         errors
     );
 }
+
+// ============================================================================
+// Phase 05: Compiler — Emit MakeClosure for Anonymous Functions
+// VM-path tests only. Parity tests are marked #[ignore] pending Phase 06
+// (interpreter AnonFn support).
+// ============================================================================
+
+fn assert_vm_number(source: &str, expected: f64) {
+    let result = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        result,
+        Value::Number(expected),
+        "VM wrong for:\n{}\n  got: {:?}",
+        source,
+        result
+    );
+}
+
+fn assert_vm_string(source: &str, expected: &str) {
+    let result = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        result,
+        Value::string(expected.to_string()),
+        "VM wrong for:\n{}\n  got: {:?}",
+        source,
+        result
+    );
+}
+
+// --- Block-form anonymous function (fn expression) ---
+
+#[test]
+fn test_anon_fn_block_form_basic() {
+    // Phase 05 AC: fn expression with explicit return compiles and executes
+    assert_vm_number(
+        r#"
+let f = fn(x: number) -> number { return x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_block_form_two_params() {
+    assert_vm_number(
+        r#"
+let add = fn(a: number, b: number) -> number { return a + b; };
+add(3, 4);
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_block_form_returns_null_without_explicit_return() {
+    let result = vm_eval(
+        r#"
+let f = fn() { };
+f();
+"#,
+    );
+    assert_eq!(result, Some(Value::Null));
+}
+
+#[test]
+fn test_anon_fn_block_form_string_result() {
+    assert_vm_string(
+        r#"
+let greet = fn(name: string) -> string { return "hello " + name; };
+greet("world");
+"#,
+        "hello world",
+    );
+}
+
+// --- Arrow-form anonymous function ---
+
+#[test]
+fn test_anon_fn_arrow_form_basic() {
+    // Phase 05 AC: `let f = (x) => x * 2; f(3);` → 6
+    assert_vm_number(
+        r#"
+let f = (x) => x * 2;
+f(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_arithmetic() {
+    assert_vm_number(
+        r#"
+let square = (x) => x * x;
+square(7);
+"#,
+        49.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_no_params() {
+    assert_vm_number(
+        r#"
+let forty_two = () => 42;
+forty_two();
+"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_two_params() {
+    assert_vm_number(
+        r#"
+let mul = (a, b) => a * b;
+mul(6, 7);
+"#,
+        42.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_form_string_concat() {
+    assert_vm_string(
+        r#"
+let join = (a, b) => a + b;
+join("foo", "bar");
+"#,
+        "foobar",
+    );
+}
+
+// --- Upvalue capture ---
+
+#[test]
+fn test_anon_fn_captures_outer_param() {
+    // Phase 05 AC: closure capturing an outer variable compiles with correct upvalue count
+    assert_vm_number(
+        r#"
+fn make_adder(n: number) -> number {
+    let f = (x) => x + n;
+    return f(10);
+}
+make_adder(5);
+"#,
+        15.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_captures_outer_param_block_form() {
+    assert_vm_number(
+        r#"
+fn make_adder(n: number) -> number {
+    let f = fn(x: number) -> number { return x + n; };
+    return f(10);
+}
+make_adder(3);
+"#,
+        13.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_captures_multiple_outer_vars() {
+    assert_vm_number(
+        r#"
+fn compute(a: number, b: number) -> number {
+    let f = (x) => x + a + b;
+    return f(1);
+}
+compute(2, 3);
+"#,
+        6.0,
+    );
+}
+
+// --- Anonymous function as argument (higher-order) ---
+
+#[test]
+fn test_anon_fn_passed_as_arg() {
+    assert_vm_number(
+        r#"
+fn apply(f: any, x: number) -> number {
+    return f(x);
+}
+apply((n) => n * 3, 4);
+"#,
+        12.0,
+    );
+}
+
+#[test]
+fn test_anon_fn_arrow_passed_as_arg() {
+    assert_vm_number(
+        r#"
+fn apply(f: any, x: number) -> number {
+    return f(x);
+}
+apply((n) => n + 100, 5);
+"#,
+        105.0,
+    );
+}
+
+// --- Returned from a function ---
+
+#[test]
+fn test_anon_fn_returned_from_function() {
+    assert_vm_number(
+        r#"
+fn make_multiplier(factor: number) -> any {
+    return (x) => x * factor;
+}
+let double = make_multiplier(2);
+double(21);
+"#,
+        42.0,
+    );
+}
+
+// --- Parity tests (ignored until Phase 06 adds interpreter AnonFn support) ---
+
+#[test]
+#[ignore = "interpreter AnonFn support added in Phase 06"]
+fn test_anon_fn_parity_fn_expr() {
+    assert_parity_number(
+        r#"
+let f = fn(x: number) -> number { x + 1; };
+f(5);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+#[ignore = "interpreter AnonFn support added in Phase 06"]
+fn test_anon_fn_parity_arrow() {
+    assert_parity_number(
+        r#"
+let f = (x) => x * 2;
+f(3);
+"#,
+        6.0,
+    );
+}
+
+#[test]
+#[ignore = "interpreter AnonFn support added in Phase 06"]
+fn test_anon_fn_parity_capture() {
+    assert_parity_number(
+        r#"
+fn outer(n: number) -> number {
+    let f = (x) => x + n;
+    f(10);
+}
+outer(5);
+"#,
+        15.0,
+    );
+}
