@@ -1,7 +1,7 @@
 # Benchmarks - Performance regression tracking
 #
 # Triggers on Rust source changes to atlas-runtime or manual dispatch.
-# Run locally: cargo bench -p atlas-runtime 2>&1 | grep "test " | tee benchmark-results.txt
+# Run locally: cargo bench -p atlas-runtime 2>&1 | tee bench-raw.txt
 
 name: Benchmarks
 
@@ -41,23 +41,51 @@ jobs:
           key: bench
 
       - name: Run benchmarks
-        run: cargo bench -p atlas-runtime --all-features 2>&1 | grep "^test " | tee benchmark-results.txt
+        run: cargo bench -p atlas-runtime --all-features 2>&1 | tee bench-raw.txt
+
+      - name: Parse Criterion output to JSON
+        run: |
+          python3 - <<'EOF'
+          import sys, json, re
+
+          results = []
+          mult = {'ns': 1, 'µs': 1000, 'ms': 1_000_000, 's': 1_000_000_000}
+
+          with open('bench-raw.txt') as f:
+              for line in f:
+                  # Criterion format: "bench_name   time:   [low mean high unit]"
+                  m = re.match(r'^(\S+)\s+time:\s+\[[\d.]+ \S+ ([\d.]+) (\S+)', line.strip())
+                  if m:
+                      name = m.group(1)
+                      val = float(m.group(2))
+                      unit = m.group(3)
+                      ns = val * mult.get(unit, 1)
+                      results.append({'name': name, 'unit': 'ns/iter', 'value': ns})
+
+          with open('benchmark-results.json', 'w') as f:
+              json.dump(results, f, indent=2)
+
+          print(f"Parsed {len(results)} benchmark results")
+          for r in results:
+              print(f"  {r['name']}: {r['value']:.0f} ns/iter")
+          EOF
 
       - name: Verify benchmark output exists
         run: |
-          if [ ! -s benchmark-results.txt ]; then
-            echo "No benchmark results produced — check that benches compile and run"
+          count=$(python3 -c "import json; data=json.load(open('benchmark-results.json')); print(len(data))")
+          if [ "$count" -eq 0 ]; then
+            echo "No benchmark results parsed — check Criterion output format"
+            cat bench-raw.txt
             exit 1
           fi
-          echo "Benchmark results:"
-          cat benchmark-results.txt
+          echo "Parsed $count benchmark results"
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: Atlas Runtime Benchmarks
-          tool: 'cargo'
-          output-file-path: benchmark-results.txt
+          tool: 'customSmallerIsBetter'
+          output-file-path: benchmark-results.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           alert-threshold: '115%'
@@ -71,5 +99,7 @@ jobs:
         if: always()
         with:
           name: bench-results
-          path: benchmark-results.txt
+          path: |
+            bench-raw.txt
+            benchmark-results.json
           retention-days: 30
