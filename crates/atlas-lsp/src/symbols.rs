@@ -872,12 +872,11 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         })
         .collect();
 
-    format!(
-        "fn {}({}) -> {}",
-        func.name.name,
-        params.join(", "),
-        format_type_ref(&func.return_type)
-    )
+    let ret = func
+        .return_type
+        .as_ref()
+        .map_or("_".to_string(), format_type_ref);
+    format!("fn {}({}) -> {}", func.name.name, params.join(", "), ret)
 }
 
 /// Format a type reference for display

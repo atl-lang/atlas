@@ -162,7 +162,8 @@ pub struct FunctionDecl {
     /// Type parameters (e.g., <T, E> in fn foo<T, E>(...))
     pub type_params: Vec<TypeParam>,
     pub params: Vec<Param>,
-    pub return_type: TypeRef,
+    /// `None` means the return type is omitted and will be inferred
+    pub return_type: Option<TypeRef>,
     /// Ownership annotation on the return type, or `None` if unannotated
     pub return_ownership: Option<OwnershipAnnotation>,
     /// Optional type predicate for type guards (e.g., `-> bool is x: string`)

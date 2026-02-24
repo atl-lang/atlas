@@ -430,8 +430,10 @@ impl<'a> TypeChecker<'a> {
             })
             .collect();
 
-        // Resolve return type
-        let return_type = self.resolve_type_ref_with_params(&func.return_type, &func.type_params);
+        // Resolve return type (None = omitted, will be inferred later)
+        let return_type = func.return_type.as_ref().map_or(Type::Unknown, |t| {
+            self.resolve_type_ref_with_params(t, &func.type_params)
+        });
 
         let type_params = func
             .type_params
@@ -880,7 +882,10 @@ impl<'a> TypeChecker<'a> {
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
 
-        let return_type = self.resolve_type_ref(&func.return_type);
+        let return_type = func
+            .return_type
+            .as_ref()
+            .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
         self.current_function_return_type = Some(return_type.clone());
         self.current_function_info = Some((func.name.name.clone(), func.name.span));
 
@@ -988,10 +993,12 @@ impl<'a> TypeChecker<'a> {
 
         self.check_block(&func.body);
 
-        // Check if all paths return (if return type != void/null)
+        // Check if all paths return (if return type is explicitly annotated and non-void)
+        // Skip when return_type is Unknown — means annotation was omitted, inference handles it later
         let return_norm = return_type.normalized();
         if return_norm != Type::Void
             && return_norm != Type::Null
+            && return_norm != Type::Unknown
             && !self.block_always_returns(&func.body)
         {
             self.diagnostics.push(

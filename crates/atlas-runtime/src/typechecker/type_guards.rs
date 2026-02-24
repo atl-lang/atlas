@@ -111,9 +111,22 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
             return;
         };
 
-        let return_type = self.resolve_type_ref_with_params(&func.return_type, &func.type_params);
+        // Type predicates require an explicit `-> bool` annotation
+        let Some(return_type_ref) = &func.return_type else {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3001",
+                    "Type predicate requires explicit `-> bool` return type annotation",
+                    predicate.span,
+                )
+                .with_label("type predicate must return bool")
+                .with_help("add `-> bool` before the `is` predicate"),
+            );
+            return;
+        };
+        let return_type = self.resolve_type_ref_with_params(return_type_ref, &func.type_params);
         let return_norm = return_type.normalized();
-        if return_norm != Type::Bool && return_norm != Type::Unknown {
+        if return_norm != Type::Bool {
             self.diagnostics.push(
                 Diagnostic::error_with_code(
                     "AT3001",

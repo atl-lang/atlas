@@ -814,7 +814,10 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         })
         .collect();
 
-    let return_type = format!(" -> {}", format_type_ref(&func.return_type));
+    let return_type = func
+        .return_type
+        .as_ref()
+        .map_or(String::new(), |t| format!(" -> {}", format_type_ref(t)));
 
     format!(
         "fn {}({}){}",
