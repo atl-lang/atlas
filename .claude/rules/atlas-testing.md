@@ -10,7 +10,7 @@ Auto-loaded when touching test files. Full patterns in auto-memory `testing-patt
 
 Every new test file = a new binary = more link time + slower CI. **Add to existing domain files.**
 
-**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system` are now split into domain submodules. Each monolith `.rs` is a thin router (66–201 lines). Add tests to the appropriate submodule file, NOT to the router root.
+**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system`, `bytecode` are now split into domain submodules. Each monolith `.rs` is a thin router (66–201 lines). Add tests to the appropriate submodule file, NOT to the router root.
 
 | Domain | File |
 |--------|------|
@@ -19,10 +19,10 @@ Every new test file = a new binary = more link time + slower CI. **Add to existi
 | Full frontend pipeline | `tests/frontend_integration.rs` |
 | Type inference, generics | `tests/typesystem/` (inference, constraints, flow, generics, bindings, integration) |
 | Interpreter execution | `tests/interpreter/` (member, nested_functions, scope, pattern_matching, assignment, for_in, integration) |
-| VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
-| Stdlib functions | `tests/stdlib/` (integration, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
+| VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, opcodes) |
+| Stdlib functions | `tests/stdlib/` (integration, real_world, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
 | Collections (HashMap, Set, Queue) | `tests/collections.rs` |
-| Bytecode compiler, optimizer | `tests/bytecode.rs` |
+| Bytecode compiler, optimizer, profiler | `tests/bytecode/` (compiler, optimizer, profiler, parity, patterns, mod_tests, validator) — router: `tests/bytecode.rs` |
 | Async, futures, channels | `tests/async_runtime.rs` |
 | Closures | `tests/closures.rs` |
 | Pattern matching | `tests/pattern_matching.rs` |
