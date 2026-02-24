@@ -28,6 +28,7 @@ use atlas_runtime::Binder;
 use atlas_runtime::TypeChecker;
 use atlas_runtime::Compiler;
 use atlas_runtime::VM;
+use atlas_runtime::security::SecurityContext;
 
 fuzz_target!(|data: &[u8]| {
     // Two-path fuzzing: split the fuzz data to exercise both paths.
@@ -155,7 +156,8 @@ fn fuzz_compiler_pipeline(input: &str) {
         Ok(bytecode) => {
             // Execute in VM — must not panic.
             let mut vm = VM::new(bytecode);
-            let _ = vm.run();
+            let security = SecurityContext::new();
+            let _ = vm.run(&security);
         }
         Err(_) => {
             // Compilation errors are expected for some valid-syntax programs.
@@ -180,7 +182,8 @@ fn fuzz_bytecode_validator(data: &[u8]) {
             // Also try executing valid bytecode in the VM.
             // The VM must handle even unusual-but-valid bytecode safely.
             let mut vm = VM::new(bytecode);
-            let _ = vm.run();
+            let security = SecurityContext::new();
+            let _ = vm.run(&security);
         }
         Err(_) => {
             // Deserialization failure is expected for random bytes.

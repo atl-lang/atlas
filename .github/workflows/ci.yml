@@ -5,7 +5,7 @@
 #
 # push to main:
 #   fmt → clippy → test (linux) → test-matrix (windows + macos + beta) → coverage
-#   Nightly: msrv (1.85) + fuzz (5 targets)
+#   Nightly: msrv (1.88) + fuzz (5 targets)
 #
 # Design principles:
 #   - PRs test linux only — fast (~3 min), sufficient for logic correctness
@@ -255,17 +255,17 @@ jobs:
   # ==========================================================================
 
   msrv:
-    name: MSRV (1.85)
+    name: MSRV (1.88)
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@1.85
+      - uses: dtolnay/rust-toolchain@1.88
       - uses: Swatinem/rust-cache@v2
         with:
           key: msrv
       - name: Check MSRV
-        run: cargo +1.85 check -p atlas-runtime --all-features --locked
+        run: cargo +1.88 check -p atlas-runtime --all-features --locked
 
   fuzz:
     name: Fuzz (${{ matrix.target }})
