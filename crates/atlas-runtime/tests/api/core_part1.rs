@@ -1,0 +1,228 @@
+use super::*;
+
+// --- Core API ---
+
+// Integration tests for Runtime API
+//
+// Tests the public embedding API for creating runtimes, evaluating code,
+// calling functions, and managing global variables.
+
+// Runtime Creation Tests
+
+#[test]
+fn test_runtime_creation_interpreter() {
+    let runtime = Runtime::new(ExecutionMode::Interpreter);
+    assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
+}
+
+#[test]
+fn test_runtime_creation_vm() {
+    let runtime = Runtime::new(ExecutionMode::VM);
+    assert_eq!(runtime.mode(), ExecutionMode::VM);
+}
+
+#[test]
+fn test_runtime_with_custom_security() {
+    use atlas_runtime::SecurityContext;
+    let security = SecurityContext::allow_all();
+    let runtime = Runtime::new_with_security(ExecutionMode::Interpreter, security);
+    assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
+}
+
+// Basic eval() Tests - Interpreter Mode
+
+#[test]
+fn test_eval_number_literal_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("42").unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 42.0));
+}
+
+#[test]
+fn test_eval_string_literal_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("\"hello\"").unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "hello"));
+}
+
+#[test]
+fn test_eval_bool_true_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("true").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+#[test]
+fn test_eval_bool_false_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("false").unwrap();
+    assert!(matches!(result, Value::Bool(false)));
+}
+
+#[test]
+fn test_eval_null_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("null").unwrap();
+    assert!(matches!(result, Value::Null));
+}
+
+#[test]
+fn test_eval_arithmetic_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("1 + 2").unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 3.0));
+}
+
+#[test]
+fn test_eval_string_concat_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("\"hello\" + \" \" + \"world\"").unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "hello world"));
+}
+
+#[test]
+fn test_eval_comparison_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("5 > 3").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+#[test]
+fn test_eval_logical_and_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("true && false").unwrap();
+    assert!(matches!(result, Value::Bool(false)));
+}
+
+#[test]
+fn test_eval_logical_or_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("true || false").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+// Basic eval() Tests - VM Mode
+
+#[test]
+fn test_eval_number_literal_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("42").unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 42.0));
+}
+
+#[test]
+fn test_eval_string_literal_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("\"hello\"").unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "hello"));
+}
+
+#[test]
+fn test_eval_bool_true_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("true").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+#[test]
+fn test_eval_bool_false_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("false").unwrap();
+    assert!(matches!(result, Value::Bool(false)));
+}
+
+#[test]
+fn test_eval_null_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("null").unwrap();
+    assert!(matches!(result, Value::Null));
+}
+
+#[test]
+fn test_eval_arithmetic_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("1 + 2").unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 3.0));
+}
+
+#[test]
+fn test_eval_string_concat_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("\"hello\" + \" \" + \"world\"").unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "hello world"));
+}
+
+#[test]
+fn test_eval_comparison_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("5 > 3").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+#[test]
+fn test_eval_logical_and_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("true && false").unwrap();
+    assert!(matches!(result, Value::Bool(false)));
+}
+
+#[test]
+fn test_eval_logical_or_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let result = runtime.eval("true || false").unwrap();
+    assert!(matches!(result, Value::Bool(true)));
+}
+
+// State Persistence Tests - Interpreter
+// Note: Cross-eval state persistence requires persistent symbol tables
+// This is a future enhancement. For v0.2 phase-01, use single-eval programs
+// or set_global/get_global for programmatic state management.
+
+#[test]
+fn test_single_eval_with_multiple_statements() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    // Variables defined and used in the same eval() work fine
+    let result = runtime
+        .eval("var x: number = 1; var y: number = 2; x + y")
+        .unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 3.0));
+}
+
+#[test]
+fn test_function_definition_and_call_single_eval() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    // Define and call function in the same eval()
+    let result = runtime
+        .eval("fn add(x: number, y: number) -> number { return x + y; } add(10, 20)")
+        .unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 30.0));
+}
+
+#[test]
+fn test_function_multiple_calls_single_eval() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime
+        .eval("fn square(x: number) -> number { return x * x; } square(3) + square(4)")
+        .unwrap();
+    assert!(matches!(result, Value::Number(n) if n == 25.0));
+}
+
+// State Persistence Tests - VM
+
+#[test]
+fn test_global_variable_persistence_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    runtime.eval("var x: number = 42;").unwrap();
+    // Note: VM doesn't persist state yet in this phase
+    // This test documents current limitation
+}
+
+#[test]
+fn test_function_definition_persistence_vm() {
+    let mut runtime = Runtime::new(ExecutionMode::VM);
+    runtime
+        .eval("fn add(x: number, y: number) -> number { return x + y; }")
+        .unwrap();
+    // Note: VM doesn't persist state yet in this phase
+}
+
