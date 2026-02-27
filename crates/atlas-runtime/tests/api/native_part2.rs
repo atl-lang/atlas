@@ -244,4 +244,3 @@ fn test_native_with_complex_logic(#[case] mode: ExecutionMode) {
     let result = runtime.eval("fibonacci(10)").unwrap();
     assert_eq!(result, Value::Number(55.0));
 }
-

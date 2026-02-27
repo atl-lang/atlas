@@ -4,7 +4,6 @@ use super::super::*;
 #[allow(unused_imports)]
 use super::helpers::*;
 
-
 // ============================================================================
 // 10. Complex scenarios
 // ============================================================================
@@ -342,4 +341,3 @@ fn test_local_infer_chained_usage() {
         type_errors
     );
 }
-

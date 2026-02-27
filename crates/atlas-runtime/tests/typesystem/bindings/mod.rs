@@ -3,4 +3,4 @@
 // Split to stay under 12KB file size limit per atlas-testing.md
 
 mod intersection_nullability; // Intersection types + nullability rules
-mod type_alias;                // Type alias tests
+mod type_alias; // Type alias tests

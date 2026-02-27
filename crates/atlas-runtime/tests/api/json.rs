@@ -309,4 +309,3 @@ fn test_json_type_display_name() {
 
     assert_eq!(Type::JsonValue.display_name(), "json");
 }
-

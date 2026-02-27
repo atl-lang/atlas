@@ -278,4 +278,3 @@ fn test_vec_empty_from_atlas() {
     let result: Vec<f64> = FromAtlas::from_atlas(&value).unwrap();
     assert_eq!(result.len(), 0);
 }
-

@@ -310,4 +310,3 @@ fn test_trait_method_not_found_on_unimplemented_type() {
         "Method call on unimplemented type should produce AT3035: {diags:?}"
     );
 }
-

@@ -108,4 +108,3 @@ identity(42);
         diags.iter().map(|d| &d.code).collect::<Vec<_>>()
     );
 }
-

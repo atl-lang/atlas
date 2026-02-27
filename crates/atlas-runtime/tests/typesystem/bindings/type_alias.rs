@@ -1,7 +1,6 @@
 use super::super::*;
 use atlas_runtime::diagnostic::Diagnostic;
 
-
 // ============================================================================
 
 // Tests for type aliases (Phase typing-03)

@@ -15,11 +15,11 @@
 //! ALL tests verify interpreter/VM parity (100% identical output).
 
 // Subdomain modules (150 tests total)
+mod config;
 mod csv_part1; // 15 tests - CSV processing (basic operations)
 mod csv_part2; // 15 tests - CSV processing (advanced operations)
 mod json_api; // 30 tests - JSON API response handling
 mod log_analysis_part1; // 15 tests - Log file analysis (basic patterns)
 mod log_analysis_part2; // 15 tests - Log file analysis (advanced aggregation)
 mod pipelines; // 30 tests - Data transformation pipelines
-mod text; // 20 tests - Text processing
-mod config; // 10 tests - Configuration file processing
+mod text; // 20 tests - Text processing // 10 tests - Configuration file processing

@@ -429,4 +429,3 @@ fn test_inference_with_variable() {
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
 }
-

@@ -257,4 +257,3 @@ fn test_sandboxed_runtime_persistent_state() {
     assert_eq!(result1.to_string(), "6");
     assert_eq!(result2.to_string(), "11");
 }
-

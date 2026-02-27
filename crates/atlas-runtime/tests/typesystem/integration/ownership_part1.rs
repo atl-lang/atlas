@@ -312,4 +312,3 @@ fn test_impl_known_user_trait_no_error() {
         "impl known trait should not produce AT3032, got: {diags:?}"
     );
 }
-

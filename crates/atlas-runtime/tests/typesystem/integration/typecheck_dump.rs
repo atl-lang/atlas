@@ -401,4 +401,3 @@ fn test_version_field_is_first_in_json() {
         "Version field should appear before symbols for easier parsing"
     );
 }
-

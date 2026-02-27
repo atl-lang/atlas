@@ -381,4 +381,3 @@ fn test_multiple_native_functions(#[case] mode: ExecutionMode) {
     let result = runtime.eval("sub(10, 5)").unwrap();
     assert_eq!(result, Value::Number(5.0));
 }
-

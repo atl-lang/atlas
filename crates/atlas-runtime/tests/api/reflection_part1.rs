@@ -218,4 +218,3 @@ fn test_value_info_type_checks() {
     assert!(null_info.is_null());
     assert!(!null_info.is_number());
 }
-

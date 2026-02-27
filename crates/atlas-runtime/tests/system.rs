@@ -5,14 +5,11 @@
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::span::Span;
 use atlas_runtime::stdlib;
-use atlas_runtime::stdlib::compression::gzip;
-use atlas_runtime::stdlib::compression::tar;
-use atlas_runtime::stdlib::compression::zip as atlas_zip;
 use atlas_runtime::stdlib::fs;
 use atlas_runtime::value::Value;
 use atlas_runtime::Atlas;
 use std::fs as std_fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tempfile::TempDir;
 
 fn test_span() -> Span {
@@ -70,7 +67,7 @@ fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
 }
 
 // Domain submodules (files live in tests/system/)
-#[path = "system/compression.rs"]
+#[path = "system/compression/mod.rs"]
 mod system_compression;
 #[path = "system/filesystem.rs"]
 mod system_filesystem;

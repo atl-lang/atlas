@@ -283,4 +283,3 @@ fn test_multiple_bounds_one_missing_is_error() {
         "Missing Printable impl — AT3037 expected: {diags:?}"
     );
 }
-

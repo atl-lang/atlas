@@ -328,4 +328,3 @@ fn test_set_global_null_interpreter() {
     let value = runtime.get_global("nothing").unwrap();
     assert!(matches!(value, Value::Null));
 }
-
