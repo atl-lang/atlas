@@ -1,5 +1,22 @@
 use super::*;
 
+// --- Runtime API surface ---
+
+// Integration tests for Atlas runtime API
+//
+// These tests validate the runtime API without using the CLI,
+// ensuring it can be embedded in other applications.
+
+/// Test that runtime can be created and used
+#[test]
+fn test_runtime_api_availability() {
+    let runtime = Atlas::new();
+    let _result: RuntimeResult<Value> = runtime.eval("test");
+    // API is available and types work correctly
+}
+
+/// Test eval with simple input
+#[test]
 fn test_eval_basic() {
     let runtime = Atlas::new();
     let result = runtime.eval("1");

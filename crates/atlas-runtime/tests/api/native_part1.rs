@@ -1,5 +1,22 @@
 use super::*;
 
+// --- Native functions ---
+
+// Native function registration and calling tests
+//
+// Tests native Rust function registration and calling from Atlas code.
+// Verifies both fixed-arity and variadic functions in interpreter and VM modes.
+
+// ============================================================================
+// Test Fixtures
+// ============================================================================
+
+#[rstest]
+#[case::interpreter(ExecutionMode::Interpreter)]
+#[case::vm(ExecutionMode::VM)]
+fn test_register_fixed_arity_native(#[case] mode: ExecutionMode) {
+    let mut runtime = Runtime::new(mode);
+
     // Register a simple add function
     runtime.register_function("add", 2, |args| {
         let a = match &args[0] {
@@ -299,3 +316,69 @@ fn test_native_with_closure_capture(#[case] mode: ExecutionMode) {
                     msg: "Expected number".to_string(),
                     span: Span::dummy(),
                 })
+            }
+        };
+        Ok(Value::Number(n * multiplier))
+    });
+
+    let result = runtime.eval("scale(5)").unwrap();
+    assert_eq!(result, Value::Number(50.0));
+}
+
+#[rstest]
+#[case::interpreter(ExecutionMode::Interpreter)]
+#[case::vm(ExecutionMode::VM)]
+fn test_multiple_native_functions(#[case] mode: ExecutionMode) {
+    let mut runtime = Runtime::new(mode);
+
+    runtime.register_function("add", 2, |args| {
+        let a = match &args[0] {
+            Value::Number(n) => *n,
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "Expected number".to_string(),
+                    span: Span::dummy(),
+                })
+            }
+        };
+        let b = match &args[1] {
+            Value::Number(n) => *n,
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "Expected number".to_string(),
+                    span: Span::dummy(),
+                })
+            }
+        };
+        Ok(Value::Number(a + b))
+    });
+
+    runtime.register_function("sub", 2, |args| {
+        let a = match &args[0] {
+            Value::Number(n) => *n,
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "Expected number".to_string(),
+                    span: Span::dummy(),
+                })
+            }
+        };
+        let b = match &args[1] {
+            Value::Number(n) => *n,
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "Expected number".to_string(),
+                    span: Span::dummy(),
+                })
+            }
+        };
+        Ok(Value::Number(a - b))
+    });
+
+    let result = runtime.eval("add(10, 5)").unwrap();
+    assert_eq!(result, Value::Number(15.0));
+
+    let result = runtime.eval("sub(10, 5)").unwrap();
+    assert_eq!(result, Value::Number(5.0));
+}
+

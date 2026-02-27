@@ -1,5 +1,22 @@
 use super::*;
 
+// --- JSON value handling ---
+
+// Integration tests for JsonValue type
+//
+// Tests both interpreter and VM parity for JSON value operations.
+
+/// Helper to create a test JSON object
+fn make_test_json() -> Value {
+    let mut user = HashMap::new();
+    user.insert("name".to_string(), JsonValue::String("Alice".to_string()));
+    user.insert("age".to_string(), JsonValue::Number(30.0));
+
+    let mut data = HashMap::new();
+    data.insert("user".to_string(), JsonValue::object(user));
+    data.insert("active".to_string(), JsonValue::Bool(true));
+
+    Value::JsonValue(Arc::new(JsonValue::object(data)))
 }
 
 #[test]

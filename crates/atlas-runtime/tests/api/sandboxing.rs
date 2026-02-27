@@ -1,5 +1,22 @@
 use super::*;
 
+// --- Sandboxing ---
+
+// Tests for Runtime sandboxing and configuration
+
+/// A thin Write wrapper around Arc<Mutex<Vec<u8>>> for capturing output in integration tests.
+struct VecWriter(Arc<Mutex<Vec<u8>>>);
+
+impl std::io::Write for VecWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.lock().unwrap().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 #[test]
 fn test_runtime_captures_print_output() {
     use atlas_runtime::stdlib::OutputWriter;

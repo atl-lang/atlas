@@ -226,3 +226,106 @@ fn test_function_definition_persistence_vm() {
     // Note: VM doesn't persist state yet in this phase
 }
 
+// Error Handling Tests
+
+#[test]
+fn test_eval_parse_error_missing_semicolon() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("let x: number =");
+    assert!(matches!(result, Err(EvalError::ParseError(_))));
+}
+
+#[test]
+fn test_eval_parse_error_invalid_syntax() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("@#$%");
+    assert!(matches!(result, Err(EvalError::ParseError(_))));
+}
+
+#[test]
+fn test_eval_type_error_wrong_type() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("let x: number = \"hello\";");
+    assert!(matches!(result, Err(EvalError::TypeError(_))));
+}
+
+#[test]
+fn test_eval_type_error_arithmetic_on_string() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("\"hello\" - \"world\"");
+    assert!(matches!(result, Err(EvalError::TypeError(_))));
+}
+
+#[test]
+fn test_eval_runtime_error_divide_by_zero() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("1 / 0");
+    assert!(matches!(result, Err(EvalError::RuntimeError(_))));
+}
+
+#[test]
+fn test_eval_type_error_undefined_variable() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.eval("nonexistent");
+    // Undefined variables are caught at binding/typecheck phase
+    assert!(result.is_err());
+}
+
+// call() Function Tests
+
+#[test]
+fn test_call_builtin_print() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.call("print", vec![Value::Number(42.0)]).unwrap();
+    assert!(matches!(result, Value::Null));
+}
+
+#[test]
+fn test_call_builtin_str() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let result = runtime.call("str", vec![Value::Number(42.0)]).unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "42"));
+}
+
+#[test]
+fn test_call_builds_on_eval() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    // call() uses eval() internally, so functions must be defined inline
+    let result = runtime.call("str", vec![Value::Number(42.0)]).unwrap();
+    assert!(matches!(result, Value::String(s) if s.as_ref() == "42"));
+}
+
+// get_global/set_global Tests - Interpreter Mode
+
+#[test]
+fn test_set_global_number_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    runtime.set_global("x", Value::Number(42.0));
+    let value = runtime.get_global("x").unwrap();
+    assert!(matches!(value, Value::Number(n) if n == 42.0));
+}
+
+#[test]
+fn test_set_global_string_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    runtime.set_global("message", Value::String(Arc::new("hello".to_string())));
+    let value = runtime.get_global("message").unwrap();
+    assert!(matches!(value, Value::String(s) if s.as_ref() == "hello"));
+}
+
+#[test]
+fn test_set_global_bool_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    runtime.set_global("flag", Value::Bool(true));
+    let value = runtime.get_global("flag").unwrap();
+    assert!(matches!(value, Value::Bool(true)));
+}
+
+#[test]
+fn test_set_global_null_interpreter() {
+    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    runtime.set_global("nothing", Value::Null);
+    let value = runtime.get_global("nothing").unwrap();
+    assert!(matches!(value, Value::Null));
+}
+

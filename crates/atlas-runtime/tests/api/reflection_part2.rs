@@ -1,5 +1,114 @@
 use super::*;
 
+#[test]
+fn test_value_info_get_values() {
+    let num = Value::Number(42.5);
+    let info = ValueInfo::new(num);
+    assert_eq!(info.get_number(), Some(42.5));
+    assert_eq!(info.get_string(), None);
+
+    let bool_val = Value::Bool(false);
+    let info = ValueInfo::new(bool_val);
+    assert_eq!(info.get_bool(), Some(false));
+    assert_eq!(info.get_number(), None);
+}
+
+#[test]
+fn test_value_info_array_elements() {
+    let arr = Value::array(vec![
+        Value::Number(1.0),
+        Value::Number(2.0),
+        Value::Number(3.0),
+    ]);
+    let info = ValueInfo::new(arr);
+
+    let elements = info.get_array_elements().unwrap();
+    assert_eq!(elements.len(), 3);
+    assert_eq!(elements[0], Value::Number(1.0));
+    assert_eq!(elements[1], Value::Number(2.0));
+    assert_eq!(elements[2], Value::Number(3.0));
+}
+
+#[test]
+fn test_get_value_type_info_primitives() {
+    let num = Value::Number(42.0);
+    let info = get_value_type_info(&num);
+    assert_eq!(info.name, "number");
+    assert_eq!(info.kind, TypeKind::Number);
+
+    let str_val = Value::string("hello");
+    let info = get_value_type_info(&str_val);
+    assert_eq!(info.name, "string");
+    assert_eq!(info.kind, TypeKind::String);
+
+    let bool_val = Value::Bool(true);
+    let info = get_value_type_info(&bool_val);
+    assert_eq!(info.name, "bool");
+    assert_eq!(info.kind, TypeKind::Bool);
+
+    let null_val = Value::Null;
+    let info = get_value_type_info(&null_val);
+    assert_eq!(info.name, "null");
+    assert_eq!(info.kind, TypeKind::Null);
+}
+
+#[test]
+fn test_get_value_type_info_array() {
+    let arr = Value::array(vec![Value::Number(1.0), Value::Number(2.0)]);
+    let info = get_value_type_info(&arr);
+    assert_eq!(info.name, "array");
+    assert_eq!(info.kind, TypeKind::Array);
+}
+
+#[test]
+fn test_get_value_type_info_option() {
+    let some_val = Value::Option(Some(Box::new(Value::Number(42.0))));
+    let info = get_value_type_info(&some_val);
+    assert_eq!(info.name, "Option");
+    assert_eq!(info.kind, TypeKind::Option);
+
+    let none_val = Value::Option(None);
+    let info = get_value_type_info(&none_val);
+    assert_eq!(info.name, "Option");
+    assert_eq!(info.kind, TypeKind::Option);
+}
+
+#[test]
+fn test_get_value_type_info_result() {
+    let ok_val = Value::Result(Ok(Box::new(Value::Number(42.0))));
+    let info = get_value_type_info(&ok_val);
+    assert_eq!(info.name, "Result");
+    assert_eq!(info.kind, TypeKind::Result);
+
+    let err_val = Value::Result(Err(Box::new(Value::string("error"))));
+    let info = get_value_type_info(&err_val);
+    assert_eq!(info.name, "Result");
+    assert_eq!(info.kind, TypeKind::Result);
+}
+
+// ============================================================================
+// Stdlib Reflection Integration Tests (Interpreter)
+// ============================================================================
+
+fn run_interpreter(code: &str) -> Value {
+    let runtime = Atlas::new();
+    runtime.eval(code).expect("Interpreter execution failed")
+}
+
+#[rstest]
+#[case("reflect_typeof(42)", "number")]
+#[case("reflect_typeof(\"hello\")", "string")]
+#[case("reflect_typeof(true)", "bool")]
+#[case("reflect_typeof(null)", "null")]
+#[case("reflect_typeof([1, 2, 3])", "array")]
+fn test_interpreter_typeof(#[case] code: &str, #[case] expected: &str) {
+    let result = run_interpreter(code);
+    assert_eq!(result, Value::string(expected));
+}
+
+#[rstest]
+#[case("reflect_is_primitive(42)", true)]
+#[case("reflect_is_primitive(\"test\")", true)]
 #[case("reflect_is_primitive(true)", true)]
 #[case("reflect_is_primitive(null)", true)]
 #[case("reflect_is_primitive([1, 2])", false)]

@@ -1,54 +1,5 @@
 use super::*;
 
-            Value::Number(n) => *n,
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Expected number".to_string(),
-                    span: Span::dummy(),
-                })
-            }
-        };
-        let b = match &args[1] {
-            Value::Number(n) => *n,
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Expected number".to_string(),
-                    span: Span::dummy(),
-                })
-            }
-        };
-        Ok(Value::Number(a + b))
-    });
-
-    runtime.register_function("sub", 2, |args| {
-        let a = match &args[0] {
-            Value::Number(n) => *n,
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Expected number".to_string(),
-                    span: Span::dummy(),
-                })
-            }
-        };
-        let b = match &args[1] {
-            Value::Number(n) => *n,
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Expected number".to_string(),
-                    span: Span::dummy(),
-                })
-            }
-        };
-        Ok(Value::Number(a - b))
-    });
-
-    let result = runtime.eval("add(10, 5)").unwrap();
-    assert_eq!(result, Value::Number(15.0));
-
-    let result = runtime.eval("sub(10, 5)").unwrap();
-    assert_eq!(result, Value::Number(5.0));
-}
-
 #[rstest]
 #[case::interpreter(ExecutionMode::Interpreter)]
 #[case::vm(ExecutionMode::VM)]
