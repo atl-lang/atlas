@@ -12,12 +12,13 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `lexer/mod.rs` | Tokenizer — keyword map, identifier promotion |
 | `parser/mod.rs` | AST construction from token stream |
 | `typechecker/` | Type resolution, inference, generics, call-site checks |
+| `typechecker/inference.rs` | `infer_return_type(body) -> InferredReturn` — return type inference for optional annotations |
 | `compiler/` | AST → bytecode (`mod.rs`, `expr.rs`, `stmt.rs`) |
 | `interpreter/` | Tree-walking eval (`mod.rs`, `expr.rs`, `stmt.rs`) |
 | `vm/mod.rs` | Bytecode execution engine — **ARCH-EXCEPTION on file** (execute loop is monolithic by design); intrinsics + inline tests are split candidates, scheduled post-Block-4 |
 | `bytecode/` | Opcode definitions, serialization |
 | `stdlib/` | 25 modules, 300+ functions |
-| `typechecker/mod.rs` | Function type resolution — `params` at line ~202 |
+| `typechecker/mod.rs` | Function type resolution — `check_function` at line ~876 |
 | `typechecker/expr.rs` | Call-site type checking |
 | `diagnostic.rs` | Diagnostic registry — add new codes here |
 | `binder.rs` | Name resolution pass |
@@ -81,4 +82,6 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
 - `FunctionRef` at `value.rs:464` — holds arity, bytecode_offset, local_count
 - `Param` at `ast.rs:187` — name, type_ref, ownership, span (ownership added Block 2)
+- `FunctionDecl.return_type: Option<TypeRef>` — `None` means inferred (Block 5); `infer_return_type()` in `typechecker/inference.rs`
+- AT3050 (inconsistent returns), AT3051 (uninferrable type param), AT3052 (inferred type incompatible) — registered in `diagnostic/error_codes.rs`
 - Expression statements require semicolons — `f(x)` without `;` fails to parse
