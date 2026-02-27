@@ -1,6 +1,7 @@
 //! Advanced type inference integration tests
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 // ============================================================================

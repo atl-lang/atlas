@@ -2,6 +2,7 @@
 
 use super::*;
 
+#[test]
 fn test_all_expression_types() {
     let expressions = vec![
         // Literal expressions

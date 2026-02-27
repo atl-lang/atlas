@@ -1,6 +1,7 @@
 //! Advanced type inference tests part 2: unification, constraint solving, cross-module, and heuristics tests
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 // ============================================================================

@@ -1,6 +1,7 @@
 //! Advanced type inference tests part 1: bidirectional, higher-rank, let-polymorphism, and flow-sensitive tests
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 // ============================================================================

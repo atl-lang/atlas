@@ -2,6 +2,7 @@
 
 use super::*;
 
+#[test]
 fn test_end_to_end_error_pipeline() {
     let source = "let x: number = \"hello\";";
 

@@ -1,4 +1,5 @@
 use super::super::*;
+#[allow(unused_imports)]
 use pretty_assertions::assert_eq;
 
 // From generic_type_checking_tests.rs

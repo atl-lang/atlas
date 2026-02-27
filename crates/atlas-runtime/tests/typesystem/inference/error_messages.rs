@@ -1,6 +1,7 @@
 //! Type inference error message tests (Block 5 Phase 6)
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 // ============================================================================

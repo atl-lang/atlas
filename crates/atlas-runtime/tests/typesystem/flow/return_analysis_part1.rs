@@ -1,4 +1,5 @@
 use super::super::*;
+#[allow(unused_imports)]
 use pretty_assertions::assert_eq;
 
 // From function_return_analysis_tests.rs

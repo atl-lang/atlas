@@ -23,6 +23,7 @@ fn lex(source: &str) -> (Vec<atlas_runtime::token::Token>, Vec<Diagnostic>) {
     lexer.tokenize()
 }
 
+#[allow(dead_code)]
 fn lex_file(filename: &str) -> Vec<Diagnostic> {
     let path = Path::new("tests/errors").join(filename);
     let source = fs::read_to_string(&path)
@@ -40,6 +41,7 @@ fn parse_source(source: &str) -> (Program, Vec<atlas_runtime::diagnostic::Diagno
     parser.parse()
 }
 
+#[allow(dead_code)]
 fn parse_errors(source: &str) -> Vec<atlas_runtime::diagnostic::Diagnostic> {
     let mut lexer = Lexer::new(source.to_string());
     let (tokens, _) = lexer.tokenize();
@@ -55,6 +57,7 @@ fn is_parser_error_code(code: &str) -> bool {
     )
 }
 
+#[allow(dead_code)]
 fn assert_has_parser_error(
     diagnostics: &[atlas_runtime::diagnostic::Diagnostic],
     expected_substring: &str,
@@ -81,6 +84,7 @@ fn parse_valid(source: &str) -> atlas_runtime::ast::Program {
     program
 }
 
+#[allow(dead_code)]
 fn assert_parse_error_present(diagnostics: &[atlas_runtime::diagnostic::Diagnostic]) {
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let found = diagnostics.iter().any(|d| is_parser_error_code(&d.code));
@@ -94,6 +98,7 @@ fn assert_parse_error_present(diagnostics: &[atlas_runtime::diagnostic::Diagnost
     );
 }
 
+#[allow(dead_code)]
 fn assert_error_mentions(diagnostics: &[atlas_runtime::diagnostic::Diagnostic], keywords: &[&str]) {
     assert!(
         diagnostics.iter().any(|d| {

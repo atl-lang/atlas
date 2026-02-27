@@ -1,6 +1,7 @@
 //! Return type inference tests part 2 (sections 10-11 and Block 5 Phase 3-4)
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 

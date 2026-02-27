@@ -1,6 +1,5 @@
 //! Shared test helpers for type inference tests
 
-use super::super::*;
 use atlas_runtime::binder::Binder;
 use atlas_runtime::diagnostic::{Diagnostic, DiagnosticLevel};
 use atlas_runtime::interpreter::Interpreter;

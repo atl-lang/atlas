@@ -1,6 +1,7 @@
 //! Comprehensive parity test suite (Block 5 Phase 7)
 
 use super::super::*;
+#[allow(unused_imports)]
 use super::helpers::*;
 
 // ============================================================================
