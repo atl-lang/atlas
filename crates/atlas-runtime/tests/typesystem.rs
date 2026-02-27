@@ -128,5 +128,5 @@ mod flow;
 mod generics;
 #[path = "typesystem/inference/mod.rs"]
 mod inference;
-#[path = "typesystem/integration.rs"]
+#[path = "typesystem/integration/mod.rs"]
 mod integration;
