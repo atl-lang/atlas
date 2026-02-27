@@ -53,12 +53,15 @@ jobs:
         with:
           filters: |
             code:
-              - 'crates/**/*.rs'
-              - 'crates/**/Cargo.toml'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - '.cargo/**'
-              - 'build.rs'
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!phases/**'
+              - '!**/*.png'
+              - '!**/*.jpg'
+              - '!**/*.svg'
+              - '!.claude/**'
+              - '!.codex/**'
 
   # ==========================================================================
   # Fast checks — PR + merge queue + main push
