@@ -41,7 +41,7 @@ Decisions are based on **projected final**, not just new lines:
 - Projected final < 1,500 → Proceed → GATE 1.5
 - Projected final 1,500–2,000 → Warning zone — justify OR plan split → GATE 1.5
 - Projected final > 2,000 → **BLOCKING: plan split NOW, before writing a single line**
-- Test file projected > 4,000 → **BLOCKING: plan subdirectory migration before adding tests**
+- Test file projected > 40KB → **BLOCKING: plan subdirectory split before adding tests**
 
 **Split obligation:** If a projection hits the blocking threshold, the split plan is
 **in-scope for this phase**. It is not follow-up work. Designing the split happens

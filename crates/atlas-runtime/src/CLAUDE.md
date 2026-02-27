@@ -34,6 +34,18 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 **Location:** `crates/atlas-runtime/tests/`
 **Rule: NO new top-level test files for existing domains.** Add to the correct submodule file below.
 
+### ⚠️ Size limit: 40KB hard cap per test file
+
+Test files are token-dense. An agent reading a 99KB file burns ~25k tokens before adding a line.
+**Before adding tests to any file, check its size:**
+```bash
+du -sh crates/atlas-runtime/tests/<target-file>.rs
+```
+- **> 40KB:** BLOCKING — split the file first, then add tests
+- **20–40KB:** Warning — note it, plan split before next block
+
+**Check all violations:** `find crates/atlas-runtime/tests -name "*.rs" -size +20k | xargs du -sh | sort -rh`
+
 ### Subdirectory-split domains (ADD TESTS TO THE SUBDIR FILES, NOT THE ROUTER)
 
 The `.rs` root files for these domains are **thin routers** (66–201 lines). Opening them and adding tests there is wrong. Go to the subdirectory.

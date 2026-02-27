@@ -29,11 +29,22 @@ An exception file MUST have this at the top:
 Without this comment, a file over 2,000 lines is a violation regardless of circumstance.
 
 ### Test files
+
+**Threshold unit is file size in bytes (KB), not lines.** Test files are token-dense (Atlas source
+snippets, string literals, long assertion messages) — line counts are a misleading proxy. An agent
+reading a 99KB test file burns ~25k tokens before writing a single line. That is unacceptable on
+an AI-first project.
+
 | Threshold | Action |
 |-----------|--------|
-| < 3,000 lines | Normal |
-| 3,000–4,000 lines | Warning — plan subdirectory migration |
-| > 4,000 lines | **VIOLATION** — migrate to subdirectory before adding tests |
+| < 20KB | Normal |
+| 20–40KB | Warning zone — plan subdirectory split before adding more tests |
+| > 40KB | **VIOLATION** — split before adding any tests |
+
+**Check command:**
+```bash
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh | sort -rh
+```
 
 **Migration pattern:** `tests/stdlib.rs` → `tests/stdlib/mod.rs` + `tests/stdlib/{category}.rs`
 
@@ -82,11 +93,16 @@ use an Explore agent. If you can find it in 1–2 searches, do it directly.
 
 ## Gate Hook — GATE 0
 
-During GATE 0 (pre-work verification), check:
+During GATE 0 (pre-work verification), run both checks:
+
 ```bash
-find crates/ -name "*.rs" -not -path "*/target/*" | xargs wc -l | sort -rn | awk '$1 > 1500 {print}' | head -20
+# Source file violations (line-based)
+find crates/ -name "*.rs" -not -path "*/target/*" -not -path "*/tests/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
+
+# Test file violations (KB-based — the real AI cost metric)
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh 2>/dev/null | sort -rh | head -20
 ```
 
-If any non-exception source file is over 2,000 lines, or any test file is over 4,000 lines:
+If any non-exception source file is over 2,000 lines, or any test file is over 40KB:
 **flag it in your phase summary** even if it's pre-existing. Do not add to violating files.
 If your phase requires adding to a violating file, split it first as a prerequisite step.
