@@ -364,3 +364,66 @@ fn test_hints_have_correct_padding() {
         assert_eq!(hint.padding_right, Some(true));
     }
 }
+
+// === Phase 08: Inferred Return Type Inlay Hints ===
+
+#[test]
+fn test_inferred_return_hint_emitted_for_unannotated_fn() {
+    // fn double(x: number) { return x * 2; } — no return type → hint shows `→ number`
+    let source = "fn double(x: number) { return x * 2; }";
+    let (ast, symbols) = parse_source(source);
+
+    let config = InlayHintConfig::default();
+    let hints = generate_inlay_hints(source, full_range(), Some(&ast), Some(&symbols), &config);
+
+    let return_hints: Vec<_> = hints
+        .iter()
+        .filter(|h| {
+            if let tower_lsp::lsp_types::InlayHintLabel::String(s) = &h.label {
+                s.contains('→')
+            } else {
+                false
+            }
+        })
+        .collect();
+
+    assert!(
+        !return_hints.is_empty(),
+        "Expected a return type inlay hint for unannotated function 'double', got none"
+    );
+    let label = match &return_hints[0].label {
+        tower_lsp::lsp_types::InlayHintLabel::String(s) => s.clone(),
+        _ => String::new(),
+    };
+    assert!(
+        label.contains("number"),
+        "Expected '→ number' hint, got: {label}"
+    );
+}
+
+#[test]
+fn test_no_inferred_return_hint_for_annotated_fn() {
+    // fn identity(x: number) -> number — has annotation → no inferred hint
+    let source = "fn identity(x: number) -> number { return x; }";
+    let (ast, symbols) = parse_source(source);
+
+    let config = InlayHintConfig::default();
+    let hints = generate_inlay_hints(source, full_range(), Some(&ast), Some(&symbols), &config);
+
+    let return_hints: Vec<_> = hints
+        .iter()
+        .filter(|h| {
+            if let tower_lsp::lsp_types::InlayHintLabel::String(s) = &h.label {
+                s.contains('→')
+            } else {
+                false
+            }
+        })
+        .collect();
+
+    assert!(
+        return_hints.is_empty(),
+        "Expected no return type inlay hint for annotated function, got: {:?}",
+        return_hints.iter().map(|h| &h.label).collect::<Vec<_>>()
+    );
+}

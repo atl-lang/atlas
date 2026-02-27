@@ -7,6 +7,7 @@
 
 use atlas_runtime::ast::*;
 use atlas_runtime::symbol::{SymbolKind, SymbolTable};
+use atlas_runtime::types::Type;
 
 /// Format an ownership annotation as a parameter prefix
 fn ownership_prefix(ownership: &Option<OwnershipAnnotation>) -> &'static str {
@@ -45,9 +46,9 @@ pub fn generate_hover(
 
     // Check AST for function declarations
     if let Some(program) = ast {
-        if let Some(hover_info) = find_function_hover(program, &identifier, text) {
+        if let Some(hover_info) = find_function_hover(program, &identifier, text, symbols) {
             contents.push(hover_info);
-        } else if let Some(hover_info) = find_variable_hover(program, &identifier) {
+        } else if let Some(hover_info) = find_variable_hover(program, &identifier, symbols) {
             contents.push(hover_info);
         } else if let Some(hover_info) = find_type_alias_hover(program, &identifier) {
             contents.push(hover_info);
@@ -172,7 +173,12 @@ fn find_identifier_range(text: &str, position: Position) -> Option<Range> {
 }
 
 /// Find hover information for a function declaration
-fn find_function_hover(program: &Program, identifier: &str, source: &str) -> Option<String> {
+fn find_function_hover(
+    program: &Program,
+    identifier: &str,
+    source: &str,
+    symbols: Option<&SymbolTable>,
+) -> Option<String> {
     for item in &program.items {
         if let Item::Function(func) = item {
             if func.name.name == identifier {
@@ -186,7 +192,7 @@ fn find_function_hover(program: &Program, identifier: &str, source: &str) -> Opt
 
                 // Format signature
                 hover.push_str("```atlas\n");
-                hover.push_str(&format_function_signature(func));
+                hover.push_str(&format_function_signature(func, symbols));
                 hover.push_str("\n```");
 
                 return Some(hover);
@@ -197,11 +203,15 @@ fn find_function_hover(program: &Program, identifier: &str, source: &str) -> Opt
 }
 
 /// Find hover information for a variable declaration
-fn find_variable_hover(program: &Program, identifier: &str) -> Option<String> {
+fn find_variable_hover(
+    program: &Program,
+    identifier: &str,
+    symbols: Option<&SymbolTable>,
+) -> Option<String> {
     for item in &program.items {
         if let Item::Statement(Stmt::VarDecl(var_decl)) = item {
             if var_decl.name.name == identifier {
-                return Some(format_var_decl_hover(var_decl));
+                return Some(format_var_decl_hover(var_decl, symbols));
             }
         }
     }
@@ -223,7 +233,7 @@ fn find_variable_in_block(stmts: &[Stmt], identifier: &str) -> Option<String> {
     for stmt in stmts {
         if let Stmt::VarDecl(var_decl) = stmt {
             if var_decl.name.name == identifier {
-                return Some(format_var_decl_hover(var_decl));
+                return Some(format_var_decl_hover(var_decl, None));
             }
         }
     }
@@ -233,7 +243,7 @@ fn find_variable_in_block(stmts: &[Stmt], identifier: &str) -> Option<String> {
 /// Format a variable declaration as a hover string.
 /// If the variable has no explicit type annotation but is initialized with
 /// an `Expr::AnonFn`, renders the inferred `fn(T...) -> R` type.
-fn format_var_decl_hover(var_decl: &VarDecl) -> String {
+fn format_var_decl_hover(var_decl: &VarDecl, symbols: Option<&SymbolTable>) -> String {
     let mutability = if var_decl.mutable { "var" } else { "let" };
     let mut hover = String::new();
     hover.push_str("```atlas\n");
@@ -251,6 +261,9 @@ fn format_var_decl_hover(var_decl: &VarDecl) -> String {
             ": {}",
             format_anon_fn_type(params, return_type.as_ref())
         ));
+    } else if let Some(type_str) = lookup_inferred_type(symbols, &var_decl.name.name) {
+        // Show inferred type from symbol table (only for non-obvious cases)
+        hover.push_str(&format!(": {}", type_str));
     }
 
     hover.push_str("\n```");
@@ -799,8 +812,11 @@ fn find_keyword_hover(identifier: &str) -> Option<String> {
     Some(format!("**{}** — {}", identifier, description))
 }
 
-/// Format a function signature for display
-fn format_function_signature(func: &FunctionDecl) -> String {
+/// Format a function signature for display.
+///
+/// When the function has no explicit return type annotation and `symbols` is provided,
+/// the inferred return type is shown if it was resolved to a non-Unknown type.
+fn format_function_signature(func: &FunctionDecl, symbols: Option<&SymbolTable>) -> String {
     let params: Vec<String> = func
         .params
         .iter()
@@ -814,10 +830,13 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         })
         .collect();
 
-    let return_type = func
-        .return_type
-        .as_ref()
-        .map_or(String::new(), |t| format!(" -> {}", format_type_ref(t)));
+    let return_type = if let Some(t) = &func.return_type {
+        format!(" -> {}", format_type_ref(t))
+    } else if let Some(ret_str) = lookup_inferred_return_type(symbols, &func.name.name) {
+        format!(" -> {}", ret_str)
+    } else {
+        String::new()
+    };
 
     format!(
         "fn {}({}){}",
@@ -825,6 +844,37 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         params.join(", "),
         return_type
     )
+}
+
+/// Look up the inferred type of a variable from the symbol table.
+/// Returns `None` if the symbol doesn't exist, is Unknown, or is a function.
+fn lookup_inferred_type(symbols: Option<&SymbolTable>, name: &str) -> Option<String> {
+    let table = symbols?;
+    let symbol = table.lookup(name)?;
+    if matches!(symbol.kind, SymbolKind::Variable | SymbolKind::Parameter) {
+        let ty_str = symbol.ty.display_name();
+        if ty_str == "unknown" || ty_str == "?" {
+            return None;
+        }
+        Some(ty_str)
+    } else {
+        None
+    }
+}
+
+/// Look up the inferred return type of a function from the symbol table.
+/// Returns `None` if not found, Unknown, or Void.
+fn lookup_inferred_return_type(symbols: Option<&SymbolTable>, func_name: &str) -> Option<String> {
+    let table = symbols?;
+    let symbol = table.lookup(func_name)?;
+    if let Type::Function { return_type, .. } = &symbol.ty {
+        let ty_str = return_type.display_name();
+        if ty_str == "unknown" || ty_str == "?" || ty_str == "void" {
+            return None;
+        }
+        return Some(ty_str);
+    }
+    None
 }
 
 /// Format a type reference for display

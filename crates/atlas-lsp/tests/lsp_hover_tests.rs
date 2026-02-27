@@ -838,3 +838,80 @@ fn test_hover_higher_order_param_fn_type() {
         "Expected type info for 'f', got: {contents}"
     );
 }
+
+// === Phase 08: Inferred Type Hover Tests ===
+
+#[test]
+fn test_hover_inferred_variable_type() {
+    // `let x = 42` with no annotation → hover shows `let x: number`
+    let source = "let x = 42;";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 4,
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    assert!(hover.is_some(), "Expected hover for 'x'");
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("number"),
+        "Expected inferred type 'number' in hover for 'x', got: {contents}"
+    );
+}
+
+#[test]
+fn test_hover_unannotated_variable_no_unknown() {
+    // Variables whose type is Unknown should not show `unknown` in hover
+    let source = "let x = 42;";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 4,
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    let contents = format!("{:?}", hover.unwrap_or_else(|| panic!("no hover")).contents);
+    assert!(
+        !contents.contains("unknown"),
+        "Hover must not show 'unknown', got: {contents}"
+    );
+}
+
+#[test]
+fn test_hover_function_inferred_return_type() {
+    // `fn double(x: number) { return x * 2; }` → hover shows `-> number`
+    let source = "fn double(x: number) { return x * 2; }";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 3,
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    assert!(hover.is_some(), "Expected hover for 'double'");
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("number"),
+        "Expected inferred return type 'number' in hover for 'double', got: {contents}"
+    );
+}
+
+#[test]
+fn test_hover_function_explicit_return_type_unchanged() {
+    // Functions with explicit return type should still display correctly
+    let source = "fn identity(x: number) -> number { return x; }";
+    let (ast, symbols) = parse_source(source);
+    let pos = Position {
+        line: 0,
+        character: 3,
+    };
+    let hover = generate_hover(source, pos, ast.as_ref(), symbols.as_ref());
+    assert!(hover.is_some(), "Expected hover for 'identity'");
+    let contents = format!("{:?}", hover.unwrap().contents);
+    assert!(
+        contents.contains("number"),
+        "Expected return type 'number' in hover, got: {contents}"
+    );
+    assert!(
+        contents.contains("->"),
+        "Expected '->' in hover signature, got: {contents}"
+    );
+}

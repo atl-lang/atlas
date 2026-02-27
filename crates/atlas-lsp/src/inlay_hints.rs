@@ -6,6 +6,7 @@
 
 use atlas_runtime::ast::*;
 use atlas_runtime::symbol::{SymbolKind as AtlasSymbolKind, SymbolTable};
+use atlas_runtime::typechecker::inference::{infer_return_type, InferredReturn};
 use atlas_runtime::types::Type;
 use tower_lsp::lsp_types::{InlayHint, InlayHintKind, InlayHintLabel, Position, Range};
 
@@ -18,6 +19,8 @@ pub struct InlayHintConfig {
     pub show_type_hints: bool,
     /// Show parameter name hints for function calls
     pub show_parameter_hints: bool,
+    /// Show inferred return type hint on functions with omitted return type annotation
+    pub show_inferred_return: bool,
     /// Maximum length for type hints before truncating
     pub max_type_length: usize,
     /// Skip type hints for obvious types (literals)
@@ -29,6 +32,7 @@ impl Default for InlayHintConfig {
         Self {
             show_type_hints: true,
             show_parameter_hints: true,
+            show_inferred_return: true,
             max_type_length: 25,
             skip_obvious_types: true,
         }
@@ -78,6 +82,10 @@ fn extract_item_hints(
 ) {
     match item {
         Item::Function(func) => {
+            // Inferred return type hint on unannotated functions
+            if config.show_inferred_return && func.return_type.is_none() {
+                emit_inferred_return_hint(text, func, symbols, start_offset, end_offset, hints);
+            }
             // Hints for function body
             extract_block_hints(
                 text,
@@ -165,6 +173,10 @@ fn extract_statement_hints(
             );
         }
         Stmt::FunctionDecl(func) => {
+            // Inferred return type hint on unannotated nested functions
+            if config.show_inferred_return && func.return_type.is_none() {
+                emit_inferred_return_hint(text, func, symbols, start_offset, end_offset, hints);
+            }
             extract_block_hints(
                 text,
                 &func.body,
@@ -467,6 +479,54 @@ fn extract_expression_hints(
         }
         _ => {}
     }
+}
+
+/// Emit a `→ T` inlay hint at the start of a function body for unannotated return types.
+///
+/// Uses `infer_return_type` directly on the function body so the hint reflects the actual
+/// inferred type regardless of whether the symbol table was updated by the typechecker.
+fn emit_inferred_return_hint(
+    text: &str,
+    func: &FunctionDecl,
+    _symbols: Option<&SymbolTable>,
+    start_offset: usize,
+    end_offset: usize,
+    hints: &mut Vec<InlayHint>,
+) {
+    // Only emit if the function body is within the requested range
+    if func.body.span.start < start_offset || func.body.span.start > end_offset {
+        return;
+    }
+
+    let ret_type_str = match infer_return_type(&func.body) {
+        InferredReturn::Uniform(ty) => {
+            let s = format_type(&ty);
+            if s == "?" || s == "void" || s == "unknown" {
+                return;
+            }
+            s
+        }
+        _ => return,
+    };
+
+    let truncated = truncate_type(&ret_type_str, 25);
+    // Place the hint at the opening brace of the function body
+    let position = offset_to_position(text, func.body.span.start);
+
+    hints.push(InlayHint {
+        position,
+        label: InlayHintLabel::String(format!("→ {} ", truncated)),
+        kind: Some(InlayHintKind::TYPE),
+        text_edits: None,
+        tooltip: if truncated != ret_type_str {
+            Some(tower_lsp::lsp_types::InlayHintTooltip::String(ret_type_str))
+        } else {
+            None
+        },
+        padding_left: Some(true),
+        padding_right: Some(false),
+        data: None,
+    });
 }
 
 /// Check if a type is obvious from the initializer
