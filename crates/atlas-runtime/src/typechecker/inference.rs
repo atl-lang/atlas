@@ -415,9 +415,8 @@ impl InferenceHeuristics {
 /// (implies void), or `Some(type)` with the inferred return type.
 pub fn infer_return_type(body: &Block) -> InferredReturn {
     let mut return_types = Vec::new();
-    let mut has_implicit_void = false;
 
-    collect_return_types(&body.statements, &mut return_types, &mut has_implicit_void);
+    collect_return_types(&body.statements, &mut return_types);
 
     if return_types.is_empty() {
         return InferredReturn::Void;
@@ -429,19 +428,11 @@ pub fn infer_return_type(body: &Block) -> InferredReturn {
     let all_same = return_types.iter().all(|t| t.normalized() == first_norm);
 
     if all_same {
-        if has_implicit_void && first_norm != Type::Void {
-            // Some paths return a value, some fall through (void)
-            InferredReturn::Inconsistent {
-                types: return_types,
-                has_void_path: true,
-            }
-        } else {
-            InferredReturn::Uniform(first.clone())
-        }
+        InferredReturn::Uniform(first.clone())
     } else {
         InferredReturn::Inconsistent {
             types: return_types,
-            has_void_path: has_implicit_void,
+            has_void_path: false,
         }
     }
 }
@@ -461,11 +452,11 @@ pub enum InferredReturn {
 }
 
 /// Collect return types from statements recursively.
-fn collect_return_types(
-    stmts: &[Stmt],
-    return_types: &mut Vec<Type>,
-    has_implicit_void: &mut bool,
-) {
+///
+/// Only collects types from explicit `return` statements. Branch fall-throughs
+/// (e.g., if-without-else) are handled by the typechecker's `block_always_returns`
+/// check (AT3004), not by inference.
+fn collect_return_types(stmts: &[Stmt], return_types: &mut Vec<Type>) {
     for stmt in stmts {
         match stmt {
             Stmt::Return(ret) => {
@@ -477,30 +468,21 @@ fn collect_return_types(
                 return_types.push(ty);
             }
             Stmt::If(if_stmt) => {
-                collect_return_types(
-                    &if_stmt.then_block.statements,
-                    return_types,
-                    has_implicit_void,
-                );
+                collect_return_types(&if_stmt.then_block.statements, return_types);
                 if let Some(else_block) = &if_stmt.else_block {
-                    collect_return_types(&else_block.statements, return_types, has_implicit_void);
-                } else {
-                    // If without else: the "no else" path might fall through
-                    *has_implicit_void = true;
+                    collect_return_types(&else_block.statements, return_types);
                 }
+                // No else: fall-through is handled by AT3004 (block_always_returns),
+                // not by inference. Do not set has_implicit_void here.
             }
             Stmt::While(while_stmt) => {
-                collect_return_types(&while_stmt.body.statements, return_types, has_implicit_void);
+                collect_return_types(&while_stmt.body.statements, return_types);
             }
             Stmt::For(for_stmt) => {
-                collect_return_types(&for_stmt.body.statements, return_types, has_implicit_void);
+                collect_return_types(&for_stmt.body.statements, return_types);
             }
             Stmt::ForIn(for_in_stmt) => {
-                collect_return_types(
-                    &for_in_stmt.body.statements,
-                    return_types,
-                    has_implicit_void,
-                );
+                collect_return_types(&for_in_stmt.body.statements, return_types);
             }
             _ => {}
         }

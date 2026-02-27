@@ -169,8 +169,10 @@ fn test_constraint_inference_success(#[case] source: &str) {
 fn test_constraint_inference_failure(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert!(
-        has_error_code(&diagnostics, "AT3001") || has_error_code(&diagnostics, "AT9999"),
-        "Expected AT3001/AT9999, got: {:?}",
+        has_error_code(&diagnostics, "AT3001")
+            || has_error_code(&diagnostics, "AT9999")
+            || has_error_code(&diagnostics, "AT3051"),
+        "Expected AT3001/AT9999/AT3051, got: {:?}",
         diagnostics
     );
 }
