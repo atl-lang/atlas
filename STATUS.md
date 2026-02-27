@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-27 (Block test-split Phase 04 in progress — 4/20 large files split)
+**Last Updated:** 2026-02-27 (Block test-split Phase 04 in progress — 5/20 large files split)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
 **Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
 
@@ -9,8 +9,8 @@
 ## Current State
 
 **Status:** Block test-split in progress — 8 phases, Track 1 throughout (no PR needed)
-**Last Completed:** Block test-split Phase 04 (session progress) — api.rs (88KB → 11 files) + real_world.rs (84KB → 9 files) + compression.rs (80KB → 9 files)
-**Next:** Block test-split Phase 04 (continuation) — split remaining 17 large test files (vm_stdlib.rs/debugger.rs/interpreter_integration.rs next: ~80KB each)
+**Last Completed:** Block test-split Phase 04 (session progress) — api.rs (88KB → 11 files) + real_world.rs (84KB → 9 files) + compression.rs (80KB → 9 files) + vm_stdlib.rs (80KB → 7 files)
+**Next:** Block test-split Phase 04 (continuation) — split remaining 16 large test files (debugger.rs/interpreter_integration.rs next: ~80/76KB)
 
 ---
 
