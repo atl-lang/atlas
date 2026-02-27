@@ -10,28 +10,26 @@ Auto-loaded when touching test files. Full patterns in auto-memory `testing-patt
 
 Every new test file = a new binary = more link time + slower CI. **Add to existing domain files.**
 
-## Size Limit: 40KB Hard Cap Per Test File
+## Size Limit: 12KB Maximum Per Test File
 
 Test files are token-dense (Atlas source snippets, string literals, long assertions). An agent
-reading a 99KB test file burns ~25k tokens before writing a line — that is a session-killer.
+reading a large test file burns significant tokens before writing a line.
 
 **Before touching any test file:**
 ```bash
 du -sh <target-file>
 ```
-- **> 40KB:** BLOCKING — split into domain subfiles first
-- **20–40KB:** Warning — note in phase summary, plan split before adding more
+- **> 12KB:** BLOCKING — split into domain subfiles first
+- **10–12KB:** Acceptable — monitor for future split if it grows
+- **Target: ~10KB per file**
 
-**This applies even to files listed as "add directly" below.** If `frontend_syntax.rs` is 99KB,
-it must be split before you add tests, regardless of its "single-file domain" status.
-
-**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system`, `bytecode` are now split into domain submodules. Each monolith `.rs` is a thin router (66–201 lines). Add tests to the appropriate submodule file, NOT to the router root.
+**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system`, `bytecode`, `frontend_syntax`, `frontend_integration` are split into domain submodules. Each monolith `.rs` is a thin router. Add tests to the appropriate submodule file, NOT to the router root.
 
 | Domain | File |
 |--------|------|
-| Lexer, parser, syntax | `tests/frontend_syntax.rs` |
+| Lexer, parser, syntax | `tests/frontend_syntax/` (lexer, parser_basics, parser_errors, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, for_in_traits_part1, traits_part2) — router: `tests/frontend_syntax.rs` |
 | Diagnostics, error spans | `tests/diagnostics.rs` |
-| Full frontend pipeline | `tests/frontend_integration.rs` |
+| Full frontend pipeline | `tests/frontend_integration/` (integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2}) — router: `tests/frontend_integration.rs` |
 | Type inference, generics | `tests/typesystem/` (inference, constraints, flow, generics, bindings, integration) |
 | Interpreter execution | `tests/interpreter/` (member, nested_functions, scope, pattern_matching, assignment, for_in, integration) |
 | VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, opcodes) |

@@ -37,13 +37,13 @@ an AI-first project.
 
 | Threshold | Action |
 |-----------|--------|
-| < 20KB | Normal |
-| 20–40KB | Warning zone — plan subdirectory split before adding more tests |
-| > 40KB | **VIOLATION** — split before adding any tests |
+| < 10KB | Normal — target size |
+| 10–12KB | Acceptable — monitor for future split if it grows |
+| > 12KB | **VIOLATION** — split before adding any tests |
 
 **Check command:**
 ```bash
-find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh | sort -rh
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" | xargs du -sh | sort -rh
 ```
 
 **Migration pattern:** `tests/stdlib.rs` → `tests/stdlib/mod.rs` + `tests/stdlib/{category}.rs`

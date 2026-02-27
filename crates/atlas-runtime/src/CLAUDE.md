@@ -34,17 +34,18 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 **Location:** `crates/atlas-runtime/tests/`
 **Rule: NO new top-level test files for existing domains.** Add to the correct submodule file below.
 
-### ⚠️ Size limit: 40KB hard cap per test file
+### ⚠️ Size limit: 12KB maximum per test file
 
-Test files are token-dense. An agent reading a 99KB file burns ~25k tokens before adding a line.
+Test files are token-dense. An agent reading a large test file burns significant tokens before adding a line.
 **Before adding tests to any file, check its size:**
 ```bash
 du -sh crates/atlas-runtime/tests/<target-file>.rs
 ```
-- **> 40KB:** BLOCKING — split the file first, then add tests
-- **20–40KB:** Warning — note it, plan split before next block
+- **> 12KB:** BLOCKING — split the file first, then add tests
+- **10–12KB:** Acceptable — monitor for future split if it grows
+- **Target: ~10KB per file**
 
-**Check all violations:** `find crates/atlas-runtime/tests -name "*.rs" -size +20k | xargs du -sh | sort -rh`
+**Check all file sizes:** `find crates/atlas-runtime/tests -name "*.rs" -not -path "*/target/*" | xargs du -sh | sort -rh`
 
 ### Subdirectory-split domains (ADD TESTS TO THE SUBDIR FILES, NOT THE ROUTER)
 
@@ -57,6 +58,8 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 | VM behavior | `tests/vm/` → integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
 | Interpreter | `tests/interpreter/` → member, nested_functions, scope, pattern_matching, assignment, for_in, integration |
 | System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
+| Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, for_in_traits_part1, traits_part2 |
+| Frontend integration | `tests/frontend_integration/` → integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2} |
 
 **How to pick the right file:** match the feature domain (e.g., new string builtin → `tests/stdlib/strings.rs`).
 
@@ -64,8 +67,6 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 
 | Domain | File |
 |--------|------|
-| Lexer, parser, syntax | `tests/frontend_syntax.rs` |
-| Frontend pipeline | `tests/frontend_integration.rs` |
 | Collections/CoW | `tests/collections.rs` |
 | Pattern matching | `tests/pattern_matching.rs` |
 | Closures | `tests/closures.rs` |
