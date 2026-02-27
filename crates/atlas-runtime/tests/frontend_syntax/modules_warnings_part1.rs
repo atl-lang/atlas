@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 #[test]
 fn test_export_without_item() {
     let source = r#"export"#;
@@ -44,8 +43,6 @@ fn test_complex_nested_paths() {
 // ============================================================================
 // Warning Detection Tests (from warning_tests.rs)
 // ============================================================================
-
-}
 
 // ============================================================================
 // Unused Variable Warnings (AT2001)
@@ -412,4 +409,3 @@ fn test_emitter_multiple_warnings() {
     assert_eq!(emitter.warnings().len(), 5);
     assert_eq!(emitter.count(), 5);
 }
-

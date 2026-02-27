@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 #[test]
 fn test_pipeline_immutable_assignment_diagnostic() {
     let diag = Diagnostic::error_with_code(

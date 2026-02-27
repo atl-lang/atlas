@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 #[test]
 fn test_warning_suppression_selective_with_deny() {
     let mut config = WarningConfig::new();

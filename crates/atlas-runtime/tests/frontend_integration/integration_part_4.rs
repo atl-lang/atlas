@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 #[test]
 fn test_error_code_ranges() {
     for entry in error_codes::ERROR_CODES {
@@ -330,4 +329,3 @@ fn test_offset_to_line_col_edge_cases() {
 // ============================================================
 // 29. Full Diagnostic Pipeline End-to-End
 // ============================================================
-

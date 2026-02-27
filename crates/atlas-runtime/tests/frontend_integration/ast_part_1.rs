@@ -232,4 +232,3 @@ fn test_all_statement_types() {
     assert!(matches!(statements[7], Stmt::Continue(_)));
     assert!(matches!(statements[8], Stmt::Expr(_)));
 }
-

@@ -2,7 +2,6 @@
 
 use super::*;
 
-
 #[test]
 fn test_parse_impl_with_multiple_methods() {
     let src = "
