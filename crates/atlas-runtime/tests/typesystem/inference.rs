@@ -1377,5 +1377,87 @@ fn test_inequality_result_is_bool() {
 }
 
 // ============================================================================
+// Return type inference (Block 5 Phase 3)
+// ============================================================================
 
-// NOTE: test block removed — required access to private function `validate`
+#[test]
+fn test_inferred_return_no_annotation_valid() {
+    // fn with no return type annotation should not emit AT3001
+    let diags = errors("fn double(x: number) { return x * 2; }");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred return, got: {:?}",
+        type_errors
+    );
+}
+
+#[test]
+fn test_inferred_return_bool_from_comparison() {
+    // fn returning a comparison: infer -> bool
+    let diags = errors("fn is_zero(x: number) { return x == 0; }");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_inferred_return_void_from_empty_body() {
+    // fn with empty body: infer -> void, no type errors
+    let diags = errors("fn noop() { }");
+    let errs: Vec<_> = diags.iter().filter(|d| d.code == "AT3001" || d.code == "AT3004").collect();
+    assert!(errs.is_empty(), "Expected no type errors for noop(), got: {:?}", errs);
+}
+
+#[test]
+fn test_inferred_return_number_from_literal() {
+    // fn returning a number literal: infer -> number
+    let diags = errors("fn get_answer() { return 42; }");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for literal return, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_inferred_return_consistent_arithmetic() {
+    // Mul/Sub/Div/Mod are unambiguously number, no annotation needed
+    let diags = errors("fn half(x: number) { return x / 2; }");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for arithmetic return, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_at3050_on_inconsistent_return_types() {
+    // fn with different return types in branches and no annotation → AT3050
+    let diags = errors(r#"
+fn confused(x: number) {
+    if (x > 0) {
+        return 1;
+    } else {
+        return "negative";
+    }
+}
+"#);
+    assert!(
+        diags.iter().any(|d| d.code == "AT3050"),
+        "Expected AT3050 for inconsistent returns, got: {:?}",
+        diags.iter().map(|d| &d.code).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_inferred_return_callable_result() {
+    // Function with inferred return can be called; result usable in expression
+    let diags = errors(r#"
+fn square(x: number) { return x * x; }
+let _y: number = square(4);
+"#);
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred-return call, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_inferred_return_both_engines() {
+    // Both interpreter and VM execute functions with inferred return type correctly
+    let runtime = atlas_runtime::Atlas::new();
+    let result = runtime.eval("fn double(x: number) { return x * 2; } double(5);");
+    assert_eq!(result.unwrap(), atlas_runtime::Value::Number(10.0));
+}

@@ -882,10 +882,31 @@ impl<'a> TypeChecker<'a> {
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
 
-        let return_type = func
-            .return_type
-            .as_ref()
-            .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
+        let return_type = match &func.return_type {
+            Some(type_ref) => self.resolve_type_ref(type_ref),
+            None => {
+                // No explicit annotation — infer from body
+                use crate::typechecker::inference::{infer_return_type, InferredReturn};
+                match infer_return_type(&func.body) {
+                    InferredReturn::Void => Type::Void,
+                    InferredReturn::Uniform(ty) => ty,
+                    InferredReturn::Inconsistent { .. } => {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3050",
+                                "cannot infer return type — add an explicit `-> T` annotation",
+                                func.name.span,
+                            )
+                            .with_label("inconsistent return types across branches")
+                            .with_help(
+                                "add an explicit return type annotation: `fn name(...) -> T`",
+                            ),
+                        );
+                        Type::Unknown
+                    }
+                }
+            }
+        };
         self.current_function_return_type = Some(return_type.clone());
         self.current_function_info = Some((func.name.name.clone(), func.name.span));
 

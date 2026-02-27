@@ -533,9 +533,10 @@ pub fn infer_expr_type(expr: &Expr) -> Type {
 /// Infer the result type of a binary operation.
 fn infer_binary_type(op: &BinaryOp) -> Type {
     match op {
-        BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => {
-            Type::Number // Could be string for Add, but default to number
-        }
+        // Add is overloaded (number+number and string+string are both valid)
+        // — cannot safely infer a concrete type without full type information.
+        BinaryOp::Add => Type::Unknown,
+        BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => Type::Number,
         BinaryOp::Eq
         | BinaryOp::Ne
         | BinaryOp::Lt
