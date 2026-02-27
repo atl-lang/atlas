@@ -69,6 +69,10 @@ pub const CANNOT_INFER_RETURN_TYPE: &str = "AT3050";
 /// Provide an explicit type argument: `func::<Type>(args)`.
 pub const CANNOT_INFER_TYPE_ARG: &str = "AT3051";
 
+/// Fired when a type that was inferred (or computed) for a variable or expression is
+/// incompatible with how it is used at the call or operator site.
+pub const INFERRED_TYPE_INCOMPATIBLE: &str = "AT3052";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -505,6 +509,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3051",
         description: "Cannot infer type argument",
         help: Some("The type parameter only appears in the return type or is unconstrained. Provide an explicit type argument: `func::<Type>(args)`."),
+    },
+    ErrorCodeInfo {
+        code: "AT3052",
+        description: "Inferred type incompatible with usage",
+        help: Some("The type inferred for this expression is incompatible with how it is used at this site. Add an explicit type annotation or change the usage."),
     },
     // === AT5xxx: Module System Errors ===
     ErrorCodeInfo {

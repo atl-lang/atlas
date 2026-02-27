@@ -894,13 +894,17 @@ impl<'a> TypeChecker<'a> {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3050",
-                                "cannot infer return type — add an explicit `-> T` annotation",
+                                format!(
+                                    "cannot infer return type for '{}' — add an explicit `-> T` annotation",
+                                    func.name.name
+                                ),
                                 func.name.span,
                             )
                             .with_label("inconsistent return types across branches")
-                            .with_help(
-                                "add an explicit return type annotation: `fn name(...) -> T`",
-                            ),
+                            .with_help(format!(
+                                "add an explicit return type annotation: `fn {}(...) -> T`",
+                                func.name.name
+                            )),
                         );
                         Type::Unknown
                     }

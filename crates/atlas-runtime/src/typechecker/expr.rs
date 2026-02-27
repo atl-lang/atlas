@@ -273,6 +273,42 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    /// Emit AT3052 if either operand of a binary expression is an identifier, providing
+    /// context that the inferred type of that variable is incompatible at this use site.
+    fn maybe_emit_at3052_for_binary(&mut self, binary: &BinaryExpr, left_type: &Type, right_type: &Type) {
+        // Emit for the left side if it is an identifier
+        if matches!(*binary.left, Expr::Identifier(_)) {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3052",
+                    format!(
+                        "inferred type '{}' is incompatible with '{}' at this use site",
+                        left_type.display_name(),
+                        right_type.display_name()
+                    ),
+                    binary.left.span(),
+                )
+                .with_label(format!("has inferred type '{}'", left_type.display_name()))
+                .with_help("add an explicit type annotation to clarify the intended type"),
+            );
+        } else if matches!(*binary.right, Expr::Identifier(_)) {
+            // Emit for the right side
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3052",
+                    format!(
+                        "inferred type '{}' is incompatible with '{}' at this use site",
+                        right_type.display_name(),
+                        left_type.display_name()
+                    ),
+                    binary.right.span(),
+                )
+                .with_label(format!("has inferred type '{}'", right_type.display_name()))
+                .with_help("add an explicit type annotation to clarify the intended type"),
+            );
+        }
+    }
+
     /// Check a binary expression
     fn check_binary(&mut self, binary: &BinaryExpr) -> Type {
         let left_type = self.check_expr(&binary.left);
@@ -316,6 +352,7 @@ impl<'a> TypeChecker<'a> {
                         ))
                         .with_help(help),
                     );
+                    self.maybe_emit_at3052_for_binary(binary, &left_type, &right_type);
                     Type::Unknown
                 }
             }
