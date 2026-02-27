@@ -14,12 +14,7 @@ use atlas_runtime::typechecker::TypeChecker;
 use atlas_runtime::value::Value;
 use atlas_runtime::Atlas;
 use common::*;
-use pretty_assertions::assert_eq;
 use rstest::rstest;
-
-// ============================================================================
-// From interpreter_member_tests.rs
-// ============================================================================
 
 fn run_interpreter(source: &str) -> Result<String, String> {
     let mut lexer = Lexer::new(source);
@@ -35,18 +30,6 @@ fn run_interpreter(source: &str) -> Result<String, String> {
         Ok(value) => Ok(format!("{:?}", value)),
         Err(e) => Err(format!("{:?}", e)),
     }
-}
-
-// JSON as_string() Tests
-#[rstest]
-#[case(
-    r#"let data: json = parseJSON("{\"name\":\"Alice\"}"); data["name"].as_string();"#,
-    r#"String("Alice")"#
-)]
-#[case(r#"let data: json = parseJSON("{\"user\":{\"name\":\"Bob\"}}"); data["user"]["name"].as_string();"#, r#"String("Bob")"#)]
-fn test_json_as_string(#[case] source: &str, #[case] expected: &str) {
-    let result = run_interpreter(source).expect("Should succeed");
-    assert_eq!(result, expected);
 }
 
 // Domain submodules (files live in tests/interpreter/)
