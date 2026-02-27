@@ -124,7 +124,7 @@ mod bindings;
 mod constraints;
 #[path = "typesystem/flow.rs"]
 mod flow;
-#[path = "typesystem/generics.rs"]
+#[path = "typesystem/generics/mod.rs"]
 mod generics;
 #[path = "typesystem/inference/mod.rs"]
 mod inference;
