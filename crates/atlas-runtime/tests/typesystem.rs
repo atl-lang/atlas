@@ -120,7 +120,7 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 // Domain submodules (files live in tests/typesystem/)
 #[path = "typesystem/bindings.rs"]
 mod bindings;
-#[path = "typesystem/constraints.rs"]
+#[path = "typesystem/constraints/mod.rs"]
 mod constraints;
 #[path = "typesystem/flow/mod.rs"]
 mod flow;
