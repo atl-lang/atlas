@@ -126,7 +126,7 @@ mod constraints;
 mod flow;
 #[path = "typesystem/generics.rs"]
 mod generics;
-#[path = "typesystem/inference.rs"]
+#[path = "typesystem/inference/mod.rs"]
 mod inference;
 #[path = "typesystem/integration.rs"]
 mod integration;
