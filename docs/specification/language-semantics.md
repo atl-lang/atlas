@@ -60,21 +60,25 @@ Define mutation visibility and aliasing rules for arrays. Atlas arrays are refer
 
 ### Core Rules
 
-**Reference Semantics:**
-- Arrays are reference-counted (`Arc<Mutex<Vec<Value>>>`)
-- Arrays are shared by reference, not deep-copied
-- Assignment copies the reference: `let b = a` creates an alias, not a copy
-- Function arguments pass references: arrays passed to functions share same underlying data
+**Value Semantics (CoW):**
+- Arrays use copy-on-write value semantics (`ValueArray` wraps `Arc<Vec<Value>>`)
+- Assignment copies the value reference, but mutations clone-on-write
+- Function arguments pass values; mutations in a callee do not affect the caller unless explicitly written back
 
 **Mutation Visibility:**
-- Mutation through one reference is visible to ALL aliases
+- Mutations are not visible across aliases by default
 - Example:
   ```atlas
   let a = [1, 2, 3];
-  let b = a;        // b is an alias to same array
-  a[0] = 99;        // Mutate through a
-  // b[0] is now 99  // Visible through b
+  let b = a;        // b is a logical copy of a
+  b[0] = 99;        // Mutates b only
+  // a[0] is still 1
   ```
+
+**Write-back semantics for mutation builtins:**
+- Collection mutation builtins return a NEW collection
+- The runtime writes the result back to the caller's variable to simulate mutation
+- This is enforced consistently in interpreter and VM
 
 **Assignment vs Index Assignment:**
 - Reassignment creates NEW binding: `var a = [1]; a = [2];` (a now points to different array)

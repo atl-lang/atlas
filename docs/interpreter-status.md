@@ -70,11 +70,11 @@ The Atlas interpreter is a tree-walking AST evaluator that provides identical be
 
 All heap-allocated values use `Arc<T>` for cheap cloning:
 - `String` → `Arc<String>` (immutable, reference-counted)
-- `Array` → `Arc<Mutex<Vec<Value>>>` (mutable, thread-safe)
-- `HashMap`, `HashSet`, `Queue`, `Stack` → `Arc<Mutex<T>>`
+- `Array` → `ValueArray` (`Arc<Vec<Value>>` with CoW on mutation)
+- `HashMap`, `HashSet`, `Queue`, `Stack` → CoW wrappers over `Arc<AtlasXxx>`
 - `Regex`, `DateTime`, `HttpRequest/Response` → `Arc<T>`
 
-Clone operations are O(1) pointer increments, not O(n) copies.
+Clone operations are O(1) pointer increments; mutations trigger CoW cloning.
 
 ### Cache System
 

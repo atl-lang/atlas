@@ -65,7 +65,7 @@ The VM's interpreter handles them instead.
 | `Call` | `0x60` | Nested calls require indirect function dispatch |
 | `And` | `0x41` | Short-circuit logic requires control flow blocks |
 | `Or` | `0x42` | Same as And |
-| `Array` | `0x70` | Arrays are heap-allocated `Arc<Mutex<Vec<Value>>>` — not f64 |
+| `Array` | `0x70` | Arrays are CoW `ValueArray` (`Arc<Vec<Value>>`) — not f64 |
 | `GetIndex` | `0x71` | Array indexing requires GC-managed heap access |
 | `SetIndex` | `0x72` | Same as GetIndex |
 | `IsOptionSome` | `0x90` | Option type is not representable as f64 |

@@ -257,11 +257,18 @@ impl Compiler {
             return Ok(());
         }
 
-        // Resolve method via shared dispatch table (type tag set by typechecker)
-        let type_tag = member
-            .type_tag
-            .get()
-            .expect("TypeTag not set — typechecker must run before compile");
+        // Resolve method via shared dispatch table (type tag set by typechecker).
+        // If type_tag is None, the typechecker could not resolve the target type — surface as
+        // a diagnostic rather than panicking (fuzzer safety, and graceful error for callers).
+        let type_tag = member.type_tag.get().ok_or_else(|| {
+            vec![crate::diagnostic::Diagnostic::error(
+                format!(
+                    "Cannot determine type for method call '.{}': target type is unknown",
+                    member.member.name
+                ),
+                member.span,
+            )]
+        })?;
         let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
             .ok_or_else(|| {
                 vec![crate::diagnostic::Diagnostic::error(

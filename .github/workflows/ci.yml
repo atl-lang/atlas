@@ -265,7 +265,7 @@ jobs:
         with:
           key: msrv
       - name: Check MSRV
-        run: cargo +1.88 check -p atlas-runtime --all-features --locked
+        run: cargo +1.88 check -p atlas-runtime --all-features
 
   fuzz:
     name: Fuzz (${{ matrix.target }})

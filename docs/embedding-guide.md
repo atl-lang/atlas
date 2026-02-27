@@ -114,9 +114,9 @@ pub enum Value {
     String(Arc<String>),
     Bool(bool),
     Null,
-    Array(Arc<Mutex<Vec<Value>>>),
-    Object(Arc<Mutex<HashMap<String, Value>>>),
-    Function(Arc<Function>),
+    Array(ValueArray),
+    HashMap(ValueHashMap),
+    Function(FunctionRef),
     Builtin(Arc<str>),
     // ... and more
 }
@@ -126,7 +126,7 @@ pub enum Value {
 
 ```rust
 use atlas_runtime::Value;
-use std::sync::{Arc, Mutex};
+use atlas_runtime::value::{ValueArray, ValueHashMap};
 
 // Primitives
 let num = Value::Number(42.0);
@@ -134,18 +134,18 @@ let s = Value::String(Arc::new("hello".to_string()));
 let b = Value::Bool(true);
 let n = Value::Null;
 
-// Array
-let arr = Value::Array(Arc::new(Mutex::new(vec![
+// Array (CoW value semantics)
+let arr = Value::Array(ValueArray::from_vec(vec![
     Value::Number(1.0),
     Value::Number(2.0),
     Value::Number(3.0),
-])));
+]));
 
-// Object
-let mut fields = std::collections::HashMap::new();
-fields.insert("name".to_string(), Value::String(Arc::new("Alice".to_string())));
-fields.insert("age".to_string(), Value::Number(30.0));
-let obj = Value::Object(Arc::new(Mutex::new(fields)));
+// HashMap (CoW value semantics)
+let mut map = atlas_runtime::stdlib::collections::hashmap::AtlasHashMap::new();
+map.insert("name".to_string(), Value::String(Arc::new("Alice".to_string())));
+map.insert("age".to_string(), Value::Number(30.0));
+let obj = Value::HashMap(ValueHashMap::from_atlas(map));
 ```
 
 ### Converting Atlas Values to Rust
