@@ -75,6 +75,11 @@ tc.diagnostics.push(Diagnostic { ... })
 // impl key lookup
 type_to_impl_key(ty: &Type) -> Option<String>
 // Number->"number", String->"string", Bool->"bool", Generic{name,[]}->"name"
+
+// Return type inference (typechecker/inference.rs) — Block 5
+infer_return_type(body: &Block) -> InferredReturn
+// InferredReturn::Void | Uniform(Type) | Inconsistent { types, has_void_path }
+// Use directly on func.body — do NOT rely on symbol table for inferred return types
 ```
 
 ## Anti-Patterns
