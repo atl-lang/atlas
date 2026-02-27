@@ -64,6 +64,11 @@ pub const CLOSURE_CAPTURES_BORROW: &str = "AT3040";
 /// Add an explicit `-> T` annotation to resolve the ambiguity.
 pub const CANNOT_INFER_RETURN_TYPE: &str = "AT3050";
 
+/// Fired when a generic call cannot infer a type argument because the type parameter
+/// only appears in the return type (not in any function parameter).
+/// Provide an explicit type argument: `func::<Type>(args)`.
+pub const CANNOT_INFER_TYPE_ARG: &str = "AT3051";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -495,6 +500,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3050",
         description: "Cannot infer return type",
         help: Some("Add an explicit return type annotation: `fn name(...) -> T`. This error fires when branches return different types and inference cannot resolve a unique return type."),
+    },
+    ErrorCodeInfo {
+        code: "AT3051",
+        description: "Cannot infer type argument",
+        help: Some("The type parameter only appears in the return type or is unconstrained. Provide an explicit type argument: `func::<Type>(args)`."),
     },
     // === AT5xxx: Module System Errors ===
     ErrorCodeInfo {

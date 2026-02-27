@@ -625,14 +625,23 @@ impl<'a> TypeChecker<'a> {
                 .map(|param| param.name.clone())
                 .collect();
 
-            self.diagnostics.push(
-                Diagnostic::error(
-                    format!("Cannot infer type parameter(s): {}", uninferred.join(", ")),
-                    call.span,
-                )
-                .with_label("type inference failed")
-                .with_help("Try providing explicit type arguments".to_string()),
-            );
+            for param_name in &uninferred {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3051",
+                        format!(
+                            "cannot infer type argument `{}` — add explicit type annotation `<{}>`",
+                            param_name, param_name
+                        ),
+                        call.span,
+                    )
+                    .with_label("type argument cannot be inferred from call arguments")
+                    .with_help(
+                        "This type parameter only appears in the return type or is unconstrained. \
+                         Provide an explicit type argument: `func::<Type>(args)`",
+                    ),
+                );
+            }
             return Type::Unknown;
         }
 
