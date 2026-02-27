@@ -1,0 +1,126 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: factorial
+        span:
+          start: 4
+          end: 13
+      type_params: []
+      params:
+        - name:
+            name: n
+            span:
+              start: 14
+              end: 15
+          type_ref:
+            Named:
+              - number
+              - start: 17
+                end: 23
+          ownership: ~
+          span:
+            start: 14
+            end: 23
+      return_type:
+        Named:
+          - number
+          - start: 28
+            end: 34
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - If:
+              cond:
+                Binary:
+                  op: Le
+                  left:
+                    Identifier:
+                      name: n
+                      span:
+                        start: 45
+                        end: 46
+                  right:
+                    Literal:
+                      - Number: 1
+                      - start: 50
+                        end: 51
+                  span:
+                    start: 45
+                    end: 51
+              then_block:
+                statements:
+                  - Return:
+                      value:
+                        Literal:
+                          - Number: 1
+                          - start: 70
+                            end: 71
+                      span:
+                        start: 63
+                        end: 72
+                span:
+                  start: 53
+                  end: 78
+              else_block:
+                statements:
+                  - Return:
+                      value:
+                        Binary:
+                          op: Mul
+                          left:
+                            Identifier:
+                              name: n
+                              span:
+                                start: 101
+                                end: 102
+                          right:
+                            Call:
+                              callee:
+                                Identifier:
+                                  name: factorial
+                                  span:
+                                    start: 105
+                                    end: 114
+                              args:
+                                - Binary:
+                                    op: Sub
+                                    left:
+                                      Identifier:
+                                        name: n
+                                        span:
+                                          start: 115
+                                          end: 116
+                                    right:
+                                      Literal:
+                                        - Number: 1
+                                        - start: 119
+                                          end: 120
+                                    span:
+                                      start: 115
+                                      end: 120
+                              span:
+                                start: 105
+                                end: 121
+                          span:
+                            start: 101
+                            end: 121
+                      span:
+                        start: 94
+                        end: 122
+                span:
+                  start: 84
+                  end: 128
+              span:
+                start: 41
+                end: 128
+        span:
+          start: 35
+          end: 130
+      span:
+        start: 1
+        end: 130

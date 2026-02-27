@@ -1,0 +1,87 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+      type_params:
+        - name: T
+          bound: ~
+          trait_bounds: []
+          span:
+            start: 18
+            end: 19
+      params: []
+      return_type:
+        Named:
+          - void
+          - start: 26
+            end: 30
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: inner
+                span:
+                  start: 48
+                  end: 53
+              type_params:
+                - name: E
+                  bound: ~
+                  trait_bounds: []
+                  span:
+                    start: 54
+                    end: 55
+              params:
+                - name:
+                    name: x
+                    span:
+                      start: 57
+                      end: 58
+                  type_ref:
+                    Named:
+                      - E
+                      - start: 60
+                        end: 61
+                  ownership: ~
+                  span:
+                    start: 57
+                    end: 61
+              return_type:
+                Named:
+                  - E
+                  - start: 66
+                    end: 67
+              return_ownership: ~
+              predicate: ~
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Identifier:
+                          name: x
+                          span:
+                            start: 93
+                            end: 94
+                      span:
+                        start: 86
+                        end: 95
+                span:
+                  start: 68
+                  end: 109
+              span:
+                start: 45
+                end: 109
+        span:
+          start: 31
+          end: 119
+      span:
+        start: 9
+        end: 119

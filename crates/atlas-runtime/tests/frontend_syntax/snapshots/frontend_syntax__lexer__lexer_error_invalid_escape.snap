@@ -1,0 +1,14 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/lexer.rs
+expression: diagnostics
+---
+- diag_version: 1
+  level: error
+  code: AT1003
+  message: "Invalid escape sequence '\\p'"
+  file: "<unknown>"
+  line: 2
+  column: 54
+  length: 4
+  snippet: "let path = \"C:\\path\\to\\file\";"
+  label: lexer error

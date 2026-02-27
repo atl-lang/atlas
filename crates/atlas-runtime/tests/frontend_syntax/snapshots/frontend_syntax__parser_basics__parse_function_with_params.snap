@@ -1,0 +1,78 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: add
+        span:
+          start: 3
+          end: 6
+      type_params: []
+      params:
+        - name:
+            name: x
+            span:
+              start: 7
+              end: 8
+          type_ref:
+            Named:
+              - number
+              - start: 10
+                end: 16
+          ownership: ~
+          span:
+            start: 7
+            end: 16
+        - name:
+            name: y
+            span:
+              start: 18
+              end: 19
+          type_ref:
+            Named:
+              - number
+              - start: 21
+                end: 27
+          ownership: ~
+          span:
+            start: 18
+            end: 27
+      return_type:
+        Named:
+          - number
+          - start: 32
+            end: 38
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - Return:
+              value:
+                Binary:
+                  op: Add
+                  left:
+                    Identifier:
+                      name: x
+                      span:
+                        start: 48
+                        end: 49
+                  right:
+                    Identifier:
+                      name: y
+                      span:
+                        start: 52
+                        end: 53
+                  span:
+                    start: 48
+                    end: 53
+              span:
+                start: 41
+                end: 54
+        span:
+          start: 39
+          end: 56
+      span:
+        start: 0
+        end: 56

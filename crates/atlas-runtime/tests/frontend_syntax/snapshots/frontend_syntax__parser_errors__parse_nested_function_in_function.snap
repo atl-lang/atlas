@@ -1,0 +1,106 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 23
+            end: 29
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: helper
+                span:
+                  start: 47
+                  end: 53
+              type_params: []
+              params:
+                - name:
+                    name: x
+                    span:
+                      start: 54
+                      end: 55
+                  type_ref:
+                    Named:
+                      - number
+                      - start: 57
+                        end: 63
+                  ownership: ~
+                  span:
+                    start: 54
+                    end: 63
+              return_type:
+                Named:
+                  - number
+                  - start: 68
+                    end: 74
+              return_ownership: ~
+              predicate: ~
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Binary:
+                          op: Mul
+                          left:
+                            Identifier:
+                              name: x
+                              span:
+                                start: 100
+                                end: 101
+                          right:
+                            Literal:
+                              - Number: 2
+                              - start: 104
+                                end: 105
+                          span:
+                            start: 100
+                            end: 105
+                      span:
+                        start: 93
+                        end: 106
+                span:
+                  start: 75
+                  end: 120
+              span:
+                start: 44
+                end: 120
+          - Return:
+              value:
+                Call:
+                  callee:
+                    Identifier:
+                      name: helper
+                      span:
+                        start: 140
+                        end: 146
+                  args:
+                    - Literal:
+                        - Number: 21
+                        - start: 147
+                          end: 149
+                  span:
+                    start: 140
+                    end: 150
+              span:
+                start: 133
+                end: 151
+        span:
+          start: 30
+          end: 161
+      span:
+        start: 9
+        end: 161

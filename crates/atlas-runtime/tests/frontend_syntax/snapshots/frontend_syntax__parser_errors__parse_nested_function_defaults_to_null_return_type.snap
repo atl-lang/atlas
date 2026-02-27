@@ -1,0 +1,71 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - void
+          - start: 23
+            end: 27
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: helper
+                span:
+                  start: 45
+                  end: 51
+              type_params: []
+              params:
+                - name:
+                    name: x
+                    span:
+                      start: 52
+                      end: 53
+                  type_ref:
+                    Named:
+                      - number
+                      - start: 55
+                        end: 61
+                  ownership: ~
+                  span:
+                    start: 52
+                    end: 61
+              return_type: ~
+              return_ownership: ~
+              predicate: ~
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Identifier:
+                          name: x
+                          span:
+                            start: 88
+                            end: 89
+                      span:
+                        start: 81
+                        end: 90
+                span:
+                  start: 63
+                  end: 104
+              span:
+                start: 42
+                end: 104
+        span:
+          start: 28
+          end: 114
+      span:
+        start: 9
+        end: 114

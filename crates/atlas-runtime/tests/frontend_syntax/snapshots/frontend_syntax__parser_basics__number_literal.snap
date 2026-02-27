@@ -1,0 +1,15 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+expression: program
+---
+items:
+  - Statement:
+      Expr:
+        expr:
+          Literal:
+            - Number: 42
+            - start: 0
+              end: 2
+        span:
+          start: 0
+          end: 3
