@@ -75,5 +75,5 @@ mod real_world;
 mod strings;
 #[path = "stdlib/types.rs"]
 mod types;
-#[path = "stdlib/vm_stdlib.rs"]
+#[path = "stdlib/vm_stdlib/mod.rs"]
 mod vm_stdlib;
