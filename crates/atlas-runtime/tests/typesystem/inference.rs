@@ -1461,3 +1461,71 @@ fn test_inferred_return_both_engines() {
     let result = runtime.eval("fn double(x: number) { return x * 2; } double(5);");
     assert_eq!(result.unwrap(), atlas_runtime::Value::Number(10.0));
 }
+
+// ============================================================================
+// Local variable inference (Block 5 Phase 4)
+// ============================================================================
+
+#[test]
+fn test_local_infer_number_literal() {
+    // let x = 42 infers number; using as number is fine
+    let diags = errors("let x = 42; let _y: number = x;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred number, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_string_literal() {
+    let diags = errors(r#"let s = "hello"; let _t: string = s;"#);
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred string, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_bool_literal() {
+    let diags = errors("let b = true; let _c: bool = b;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred bool, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_array_literal() {
+    // [1,2,3] infers number[]
+    let diags = errors("let arr = [1, 2, 3]; let _b: number[] = arr;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred number[], got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_arithmetic_expression() {
+    let diags = errors("let x = 1 + 2; let _y: number = x;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred arithmetic, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_wrong_usage_emits_error() {
+    // Inferred number used as string → AT3001
+    let diags = errors(r#"let x = 42; let _s: string = x;"#);
+    assert!(
+        diags.iter().any(|d| d.code == "AT3001"),
+        "Expected AT3001 for number used as string, got: {:?}",
+        diags.iter().map(|d| &d.code).collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_local_infer_comparison_expression() {
+    // 1 < 2 infers bool
+    let diags = errors("let cmp = 1 < 2; let _b: bool = cmp;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred bool comparison, got: {:?}", type_errors);
+}
+
+#[test]
+fn test_local_infer_chained_usage() {
+    // Inferred type flows through multiple assignments
+    let diags = errors("let x = 10; let y = x * 2; let _z: number = y;");
+    let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
+    assert!(type_errors.is_empty(), "Expected no AT3001 for chained inferred types, got: {:?}", type_errors);
+}
