@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-27 (Block test-split Phase 03 partial — inference split complete)
+**Last Updated:** 2026-02-27 (Block test-split Phase 03 complete — all typesystem files split)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
 **Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
 
@@ -9,8 +9,8 @@
 ## Current State
 
 **Status:** Block test-split in progress — 8 phases, Track 1 throughout (no PR needed)
-**Last Completed:** Block test-split Phase 03 (partial) — typesystem inference split (1/6 files complete)
-**Next:** Block test-split Phase 03 (continuation) — split remaining 5 typesystem files
+**Last Completed:** Block test-split Phase 03 — typesystem test file splits (6/6 files complete)
+**Next:** Block test-split Phase 04 — split remaining large test files (vm, stdlib, interpreter, etc.)
 
 ---
 
