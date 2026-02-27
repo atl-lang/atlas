@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-24 (Block 5 scaffolded)
+**Last Updated:** 2026-02-26 (Block 5 complete)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
 
 ---
 
 ## Current State
 
-**Status:** Block 5 SCAFFOLDED — ready to begin Phase 1 (Type Inference)
-**Last Completed:** Block 4 Phase 12 — Spec update + AC check (~7,560 tests passing)
-**Next:** Start Block 5 Phase 1 (AST optional return type)
+**Status:** Block 5 COMPLETE — all 9 phases done, PR open for CI
+**Last Completed:** Block 5 Phase 09 — Spec update + AC check (8,198 tests passing)
+**Next:** Scaffold Block 6 (Error Handling) or Block 9 (Quick Wins)
 
 ---
 
@@ -22,7 +22,7 @@
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
 | 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | ✅ Complete (2026-02-22) |
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
-| 5 | Type Inference (locals + return types) | 9 | 🔨 Scaffolded |
+| 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-26) |
 | 6 | Error Handling (`?` operator) | 10–15 | ⬜ Unblocked |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
@@ -101,6 +101,25 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Clippy | 0 warnings (-D warnings) |
 | Fmt | Clean |
 | Acceptance criteria | **6/6** |
+
+---
+
+## Block 5 Completion Metrics
+
+| Metric | Value |
+|--------|-------|
+| Phases | 9/9 |
+| Tests at completion | **8,198** (workspace) |
+| Test failures | 0 |
+| Parity tests (inference) | 20 new (zero divergence) |
+| LSP tests added | 6 new (4 hover + 2 inlay hints) |
+| New error codes | AT3050, AT3051, AT3052 |
+| Key changes | Optional return type (FunctionDecl.return_type: Option<TypeRef>), infer_return_type(), check_call_with_inference(), InlayHintConfig.show_inferred_return |
+| Collect_return_types fix | Removed has_implicit_void — AT3004 handles void-path detection, not inference |
+| Spec updated | docs/specification/syntax.md: Type Inference section added |
+| Clippy | 0 warnings (-D warnings) |
+| Fmt | Clean |
+| Acceptance criteria | **5/5** |
 
 ---
 
