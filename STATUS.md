@@ -22,12 +22,8 @@
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
 | 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | ✅ Complete (2026-02-22) |
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
-<<<<<<< HEAD
 | 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-26) |
-=======
-| 5 | Type Inference (locals + return types) | 9 | 🔨 PR open (#156) |
-| ts | Test File Decomposition (maintenance) | 8 | 🔨 Scaffolded |
->>>>>>> block/test-split
+| ts | Test File Decomposition (maintenance) | 8 | 🔨 In progress (Phase 02) |
 | 6 | Error Handling (`?` operator) | 10–15 | ⬜ Unblocked |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
