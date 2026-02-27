@@ -93,15 +93,17 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     let params: Vec<String> = func
         .params
         .iter()
-        .map(|p| format!("{}: {:?}", p.name.name, p.type_ref.as_ref()))
+        .map(|p| {
+            let t = p.type_ref.as_ref().map_or("_".to_string(), format_type_ref);
+            format!("{}: {}", p.name.name, t)
+        })
         .collect();
 
-    format!(
-        "fn {}({}) -> {:?}",
-        func.name.name,
-        params.join(", "),
-        func.return_type
-    )
+    let ret = func
+        .return_type
+        .as_ref()
+        .map_or(String::new(), |t| format!(" -> {}", format_type_ref(t)));
+    format!("fn {}({}){}", func.name.name, params.join(", "), ret)
 }
 
 /// Find the definition location of a symbol
@@ -335,4 +337,24 @@ pub fn generate_hover_info(
     }
 
     None
+}
+
+fn format_type_ref(type_ref: &TypeRef) -> String {
+    match type_ref {
+        TypeRef::Named(name, _) => name.clone(),
+        TypeRef::Array(inner, _) => format!("{}[]", format_type_ref(inner)),
+        TypeRef::Union { members, .. } => {
+            let formatted: Vec<String> = members.iter().map(format_type_ref).collect();
+            formatted.join(" | ")
+        }
+        TypeRef::Function {
+            params,
+            return_type,
+            ..
+        } => {
+            let param_strs: Vec<String> = params.iter().map(format_type_ref).collect();
+            format!("({}) -> {}", param_strs.join(", "), format_type_ref(return_type))
+        }
+        _ => "_".to_string(),
+    }
 }
