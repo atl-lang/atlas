@@ -144,26 +144,30 @@ Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
 record their current line counts to carry into GATE 1 estimation.
 
 ```bash
-# 1. Check for existing violations
-find crates/ -name "*.rs" -not -path "*/target/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
+# 1. Source file violations (line-based)
+find crates/ -name "*.rs" -not -path "*/target/*" -not -path "*/tests/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
 
-# 2. Record current line counts for EVERY file you will write to
-wc -l <each target file>
+# 2. Test file violations (KB-based — token cost is the real constraint for AI agents)
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh 2>/dev/null | sort -rh | head -20
+
+# 3. Record current size for EVERY file you will write to
+wc -l <each target source file>
+du -sh <each target test file>
 ```
 
 **Record and carry this table into GATE 1 (MANDATORY):**
 
 ```
-Target file: src/foo.rs         — current: 1,240 lines
-Target file: tests/stdlib/strings.rs — current: 480 lines
+Target file: src/foo.rs              — current: 1,240 lines
+Target file: tests/stdlib/strings.rs — current: 8KB
 ```
 
 | Result | Action |
 |--------|--------|
 | Source file > 2,000 lines (no ARCH-EXCEPTION comment) | **BLOCKING** — split before adding any code |
 | Source file 1,500–2,000 lines | Flag in phase summary — do not grow further |
-| Test file > 4,000 lines | **BLOCKING** — migrate to subdirectory before adding tests |
-| Test file 3,000–4,000 lines | Flag in phase summary — plan migration |
+| Test file > 40KB | **BLOCKING** — split before adding any tests |
+| Test file 20–40KB | Warning — flag in phase summary, plan split |
 
 **ARCH-EXCEPTION protocol:** If a file legitimately cannot be split (e.g. VM execute loop),
 it must have `// ARCH-EXCEPTION: <reason>` at the top. If the comment is missing, the file

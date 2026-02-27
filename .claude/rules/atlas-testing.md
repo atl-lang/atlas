@@ -10,6 +10,21 @@ Auto-loaded when touching test files. Full patterns in auto-memory `testing-patt
 
 Every new test file = a new binary = more link time + slower CI. **Add to existing domain files.**
 
+## Size Limit: 40KB Hard Cap Per Test File
+
+Test files are token-dense (Atlas source snippets, string literals, long assertions). An agent
+reading a 99KB test file burns ~25k tokens before writing a line — that is a session-killer.
+
+**Before touching any test file:**
+```bash
+du -sh <target-file>
+```
+- **> 40KB:** BLOCKING — split into domain subfiles first
+- **20–40KB:** Warning — note in phase summary, plan split before adding more
+
+**This applies even to files listed as "add directly" below.** If `frontend_syntax.rs` is 99KB,
+it must be split before you add tests, regardless of its "single-file domain" status.
+
 **Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system`, `bytecode` are now split into domain submodules. Each monolith `.rs` is a thin router (66–201 lines). Add tests to the appropriate submodule file, NOT to the router root.
 
 | Domain | File |
