@@ -1,16 +1,16 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-24 (Block 5 scaffolded)
+**Last Updated:** 2026-02-27 (Block test-split scaffolded)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | Block 5 PR open (#156)
 
 ---
 
 ## Current State
 
-**Status:** Block 5 SCAFFOLDED — ready to begin Phase 1 (Type Inference)
-**Last Completed:** Block 4 Phase 12 — Spec update + AC check (~7,560 tests passing)
-**Next:** Start Block 5 Phase 1 (AST optional return type)
+**Status:** Block test-split SCAFFOLDED — 8 phases, Track 1 throughout (no PR needed)
+**Last Completed:** Block 5 Phase 09 — spec update + AC check (8,198 tests, PR #156 open)
+**Next:** Block test-split Phase 01 (router cleanup)
 
 ---
 
@@ -22,7 +22,8 @@
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
 | 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | ✅ Complete (2026-02-22) |
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
-| 5 | Type Inference (locals + return types) | 9 | 🔨 Scaffolded |
+| 5 | Type Inference (locals + return types) | 9 | 🔨 PR open (#156) |
+| ts | Test File Decomposition (maintenance) | 8 | 🔨 Scaffolded |
 | 6 | Error Handling (`?` operator) | 10–15 | ⬜ Unblocked |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
