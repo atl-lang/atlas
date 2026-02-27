@@ -353,7 +353,11 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
             ..
         } => {
             let param_strs: Vec<String> = params.iter().map(format_type_ref).collect();
-            format!("({}) -> {}", param_strs.join(", "), format_type_ref(return_type))
+            format!(
+                "({}) -> {}",
+                param_strs.join(", "),
+                format_type_ref(return_type)
+            )
         }
         _ => "_".to_string(),
     }

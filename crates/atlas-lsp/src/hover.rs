@@ -439,14 +439,23 @@ fn find_symbol_hover(symbols: &SymbolTable, identifier: &str) -> Option<String> 
     match symbol.kind {
         SymbolKind::Variable => {
             let mutability = if symbol.mutable { "var" } else { "let" };
-            hover.push_str(&format!("{} {}: {}", mutability, symbol.name, symbol.ty.display_name()));
+            hover.push_str(&format!(
+                "{} {}: {}",
+                mutability,
+                symbol.name,
+                symbol.ty.display_name()
+            ));
         }
         SymbolKind::Function => {
             hover.push_str(&format!("fn {}", symbol.name));
             hover.push_str(&format!(": {}", symbol.ty.display_name()));
         }
         SymbolKind::Parameter => {
-            hover.push_str(&format!("(parameter) {}: {}", symbol.name, symbol.ty.display_name()));
+            hover.push_str(&format!(
+                "(parameter) {}: {}",
+                symbol.name,
+                symbol.ty.display_name()
+            ));
         }
         SymbolKind::Builtin => {
             hover.push_str(&format!("(builtin) {}", symbol.name));

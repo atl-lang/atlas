@@ -1212,63 +1212,95 @@ fn test_valid_for_in_array() {
 #[test]
 fn test_generic_identity_infers_number() {
     // identity(42) infers T=number without explicit type arg
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn identity<T>(x: T) -> T { return x; }
 let _n: number = identity(42);
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for identity(42), got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for identity(42), got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_generic_identity_infers_string() {
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn identity<T>(x: T) -> T { return x; }
 let _s: string = identity("hello");
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for identity(string), got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for identity(string), got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_generic_first_infers_element_type() {
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn first<T>(arr: T[]) -> T { return arr[0]; }
 let _n: number = first([1, 2, 3]);
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for first([1,2,3]), got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for first([1,2,3]), got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_generic_explicit_type_arg_still_works() {
     // Explicit identity::<number>(42) must still work
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn identity<T>(x: T) -> T { return x; }
 let _n: number = identity::<number>(42);
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for explicit type arg, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for explicit type arg, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_generic_multi_param_inference() {
     // fn pair<T, U>(x: T, y: U) -> T — both T and U inferrable from args
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn pair<T, U>(x: T, y: U) -> T { return x; }
 let _n: number = pair(1, "a");
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for multi-param inference, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for multi-param inference, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_generic_at3051_return_only_type_param() {
     // fn make<T>() -> T cannot infer T from args → AT3051
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn make<T>() -> T { return 42; }
 make();
-"#);
+"#,
+    );
     assert!(
         diags.iter().any(|d| d.code == "AT3051"),
         "Expected AT3051 for uninferrable type param, got: {:?}",

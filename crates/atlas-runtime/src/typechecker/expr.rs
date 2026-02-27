@@ -275,7 +275,12 @@ impl<'a> TypeChecker<'a> {
 
     /// Emit AT3052 if either operand of a binary expression is an identifier, providing
     /// context that the inferred type of that variable is incompatible at this use site.
-    fn maybe_emit_at3052_for_binary(&mut self, binary: &BinaryExpr, left_type: &Type, right_type: &Type) {
+    fn maybe_emit_at3052_for_binary(
+        &mut self,
+        binary: &BinaryExpr,
+        left_type: &Type,
+        right_type: &Type,
+    ) {
         // Emit for the left side if it is an identifier
         if matches!(*binary.left, Expr::Identifier(_)) {
             self.diagnostics.push(

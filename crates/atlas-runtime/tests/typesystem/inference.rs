@@ -65,22 +65,52 @@ fn vm_eval(source: &str) -> Option<Value> {
 fn assert_parity_num(source: &str, expected: f64) {
     let interp = interp_eval(source);
     let vm = vm_eval(source);
-    assert_eq!(interp, Value::Number(expected), "Interpreter mismatch for:\n{}", source);
-    assert_eq!(vm, Some(Value::Number(expected)), "VM mismatch for:\n{}", source);
+    assert_eq!(
+        interp,
+        Value::Number(expected),
+        "Interpreter mismatch for:\n{}",
+        source
+    );
+    assert_eq!(
+        vm,
+        Some(Value::Number(expected)),
+        "VM mismatch for:\n{}",
+        source
+    );
 }
 
 fn assert_parity_str(source: &str, expected: &str) {
     let interp = interp_eval(source);
     let vm = vm_eval(source);
-    assert_eq!(interp, Value::String(std::sync::Arc::new(expected.to_string())), "Interpreter mismatch for:\n{}", source);
-    assert_eq!(vm, Some(Value::String(std::sync::Arc::new(expected.to_string()))), "VM mismatch for:\n{}", source);
+    assert_eq!(
+        interp,
+        Value::String(std::sync::Arc::new(expected.to_string())),
+        "Interpreter mismatch for:\n{}",
+        source
+    );
+    assert_eq!(
+        vm,
+        Some(Value::String(std::sync::Arc::new(expected.to_string()))),
+        "VM mismatch for:\n{}",
+        source
+    );
 }
 
 fn assert_parity_bool(source: &str, expected: bool) {
     let interp = interp_eval(source);
     let vm = vm_eval(source);
-    assert_eq!(interp, Value::Bool(expected), "Interpreter mismatch for:\n{}", source);
-    assert_eq!(vm, Some(Value::Bool(expected)), "VM mismatch for:\n{}", source);
+    assert_eq!(
+        interp,
+        Value::Bool(expected),
+        "Interpreter mismatch for:\n{}",
+        source
+    );
+    assert_eq!(
+        vm,
+        Some(Value::Bool(expected)),
+        "VM mismatch for:\n{}",
+        source
+    );
 }
 
 // From advanced_inference_tests.rs
@@ -1480,15 +1510,26 @@ fn test_inferred_return_bool_from_comparison() {
     // fn returning a comparison: infer -> bool
     let diags = errors("fn is_zero(x: number) { return x == 0; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_inferred_return_void_from_empty_body() {
     // fn with empty body: infer -> void, no type errors
     let diags = errors("fn noop() { }");
-    let errs: Vec<_> = diags.iter().filter(|d| d.code == "AT3001" || d.code == "AT3004").collect();
-    assert!(errs.is_empty(), "Expected no type errors for noop(), got: {:?}", errs);
+    let errs: Vec<_> = diags
+        .iter()
+        .filter(|d| d.code == "AT3001" || d.code == "AT3004")
+        .collect();
+    assert!(
+        errs.is_empty(),
+        "Expected no type errors for noop(), got: {:?}",
+        errs
+    );
 }
 
 #[test]
@@ -1496,7 +1537,11 @@ fn test_inferred_return_number_from_literal() {
     // fn returning a number literal: infer -> number
     let diags = errors("fn get_answer() { return 42; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for literal return, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for literal return, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
@@ -1504,13 +1549,18 @@ fn test_inferred_return_consistent_arithmetic() {
     // Mul/Sub/Div/Mod are unambiguously number, no annotation needed
     let diags = errors("fn half(x: number) { return x / 2; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for arithmetic return, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for arithmetic return, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_at3050_on_inconsistent_return_types() {
     // fn with different return types in branches and no annotation → AT3050
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn confused(x: number) {
     if (x > 0) {
         return 1;
@@ -1518,7 +1568,8 @@ fn confused(x: number) {
         return "negative";
     }
 }
-"#);
+"#,
+    );
     assert!(
         diags.iter().any(|d| d.code == "AT3050"),
         "Expected AT3050 for inconsistent returns, got: {:?}",
@@ -1529,12 +1580,18 @@ fn confused(x: number) {
 #[test]
 fn test_inferred_return_callable_result() {
     // Function with inferred return can be called; result usable in expression
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn square(x: number) { return x * x; }
 let _y: number = square(4);
-"#);
+"#,
+    );
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred-return call, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred-return call, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
@@ -1554,21 +1611,33 @@ fn test_local_infer_number_literal() {
     // let x = 42 infers number; using as number is fine
     let diags = errors("let x = 42; let _y: number = x;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred number, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred number, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_local_infer_string_literal() {
     let diags = errors(r#"let s = "hello"; let _t: string = s;"#);
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred string, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred string, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_local_infer_bool_literal() {
     let diags = errors("let b = true; let _c: bool = b;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred bool, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred bool, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
@@ -1576,14 +1645,22 @@ fn test_local_infer_array_literal() {
     // [1,2,3] infers number[]
     let diags = errors("let arr = [1, 2, 3]; let _b: number[] = arr;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred number[], got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred number[], got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
 fn test_local_infer_arithmetic_expression() {
     let diags = errors("let x = 1 + 2; let _y: number = x;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred arithmetic, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred arithmetic, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
@@ -1602,7 +1679,11 @@ fn test_local_infer_comparison_expression() {
     // 1 < 2 infers bool
     let diags = errors("let cmp = 1 < 2; let _b: bool = cmp;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for inferred bool comparison, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for inferred bool comparison, got: {:?}",
+        type_errors
+    );
 }
 
 #[test]
@@ -1610,7 +1691,11 @@ fn test_local_infer_chained_usage() {
     // Inferred type flows through multiple assignments
     let diags = errors("let x = 10; let y = x * 2; let _z: number = y;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
-    assert!(type_errors.is_empty(), "Expected no AT3001 for chained inferred types, got: {:?}", type_errors);
+    assert!(
+        type_errors.is_empty(),
+        "Expected no AT3001 for chained inferred types, got: {:?}",
+        type_errors
+    );
 }
 
 // ============================================================================
@@ -1619,13 +1704,19 @@ fn test_local_infer_chained_usage() {
 
 #[test]
 fn test_at3050_includes_function_name() {
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn confused(x: number) {
     if (x > 0) { return 1; } else { return "bad"; }
 }
-"#);
+"#,
+    );
     let at3050 = diags.iter().find(|d| d.code == "AT3050");
-    assert!(at3050.is_some(), "Expected AT3050, got: {:?}", diags.iter().map(|d| &d.code).collect::<Vec<_>>());
+    assert!(
+        at3050.is_some(),
+        "Expected AT3050, got: {:?}",
+        diags.iter().map(|d| &d.code).collect::<Vec<_>>()
+    );
     let msg = &at3050.unwrap().message;
     assert!(
         msg.contains("confused"),
@@ -1636,12 +1727,18 @@ fn confused(x: number) {
 
 #[test]
 fn test_at3051_includes_type_param_name() {
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn make<T>() -> T { return 42; }
 make();
-"#);
+"#,
+    );
     let at3051 = diags.iter().find(|d| d.code == "AT3051");
-    assert!(at3051.is_some(), "Expected AT3051, got: {:?}", diags.iter().map(|d| &d.code).collect::<Vec<_>>());
+    assert!(
+        at3051.is_some(),
+        "Expected AT3051, got: {:?}",
+        diags.iter().map(|d| &d.code).collect::<Vec<_>>()
+    );
     let msg = &at3051.unwrap().message;
     assert!(
         msg.contains('T'),
@@ -1676,11 +1773,13 @@ fn test_at3052_message_mentions_inferred_type() {
 #[test]
 fn test_at3050_not_fired_for_consistent_returns() {
     // Consistent return type should NOT trigger AT3050
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn consistent(x: number) {
     if (x > 0) { return 1; } else { return 2; }
 }
-"#);
+"#,
+    );
     assert!(
         !diags.iter().any(|d| d.code == "AT3050"),
         "AT3050 should not fire for consistent returns, got: {:?}",
@@ -1691,10 +1790,12 @@ fn consistent(x: number) {
 #[test]
 fn test_at3051_not_fired_when_type_param_inferrable() {
     // identity(42) can infer T=number → no AT3051
-    let diags = errors(r#"
+    let diags = errors(
+        r#"
 fn identity<T>(x: T) -> T { return x; }
 identity(42);
-"#);
+"#,
+    );
     assert!(
         !diags.iter().any(|d| d.code == "AT3051"),
         "AT3051 should not fire when type param is inferrable, got: {:?}",
@@ -1723,7 +1824,11 @@ fn parity_return_infer_void_no_return() {
     // Function with no return — returns null/void, both engines return Null
     let interp = interp_eval("fn noop() { } noop();");
     let vm = vm_eval("fn noop() { } noop();");
-    assert_eq!(interp, Value::Null, "Interpreter: void fn should return Null");
+    assert_eq!(
+        interp,
+        Value::Null,
+        "Interpreter: void fn should return Null"
+    );
     assert_eq!(vm, Some(Value::Null), "VM: void fn should return Null");
 }
 
@@ -1829,10 +1934,7 @@ fn parity_edge_arrow_fn_inferred() {
 #[test]
 fn parity_edge_hof_with_inferred_return() {
     // HOF: map with fn-expr having inferred return type
-    assert_parity_num(
-        "map([1,2,3], fn(x: number) { return x * 2; })[0];",
-        2.0,
-    );
+    assert_parity_num("map([1,2,3], fn(x: number) { return x * 2; })[0];", 2.0);
 }
 
 #[test]
@@ -1853,8 +1955,5 @@ outer(4);
 #[test]
 fn parity_edge_inferred_return_with_own_param() {
     // own ownership annotation on param, return type inferred
-    assert_parity_num(
-        "fn take(own x: number) { return x; } take(7);",
-        7.0,
-    );
+    assert_parity_num("fn take(own x: number) { return x; } take(7);", 7.0);
 }
