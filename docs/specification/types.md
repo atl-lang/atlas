@@ -311,18 +311,15 @@ fn display_and_return<T: Display>(x: T) -> string {
 
 | Code | Meaning |
 |------|---------|
-| AT3001 | Trait redefines a built-in trait |
-| AT3002 | Trait already defined |
-| AT3003 | Trait not found |
-| AT3004 | Impl is missing a required method |
-| AT3005 | Impl method has wrong signature |
-| AT3006 | Type does not implement the required trait |
-| AT3007 | Copy type required |
-| AT3008 | Trait bound not satisfied |
-| AT3009 | Impl already exists for (type, trait) |
-| AT3010 | (Warning) Move type passed without ownership annotation |
-| AT3035 | Type does not implement the trait required for a method |
-| AT3037 | Generic type argument does not satisfy a trait bound |
+| AT3029 | Impl already exists for (type, trait) |
+| AT3030 | Trait redefines a built-in trait |
+| AT3031 | Trait already defined |
+| AT3032 | Trait not found |
+| AT3033 | Impl is missing a required method |
+| AT3034 | Impl method has wrong signature |
+| AT3035 | Type does not implement the required trait |
+| AT3036 | Copy type required |
+| AT3037 | Trait bound not satisfied |
 
 ### Current Limitations (v0.3)
 
