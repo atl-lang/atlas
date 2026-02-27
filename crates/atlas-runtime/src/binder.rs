@@ -213,7 +213,10 @@ impl Binder {
             })
             .collect();
 
-        let return_type = self.resolve_type_ref(&func.return_type);
+        let return_type = func
+            .return_type
+            .as_ref()
+            .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
 
         // Exit type parameter scope
         self.exit_type_param_scope();
@@ -301,7 +304,10 @@ impl Binder {
             })
             .collect();
 
-        let return_type = self.resolve_type_ref(&func.return_type);
+        let return_type = func
+            .return_type
+            .as_ref()
+            .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
 
         // Exit type parameter scope
         self.exit_type_param_scope();

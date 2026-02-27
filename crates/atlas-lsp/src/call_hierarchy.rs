@@ -229,10 +229,12 @@ fn format_function_signature(func: &FunctionDecl) -> String {
     sig.push_str(&params.join(", "));
     sig.push(')');
 
-    // Return type
-    if !matches!(func.return_type, TypeRef::Named(ref name, _) if name == "void") {
-        sig.push_str(" -> ");
-        sig.push_str(&format_type(&func.return_type));
+    // Return type (omitted when None or explicitly void)
+    if let Some(ref rt) = func.return_type {
+        if !matches!(rt, TypeRef::Named(ref name, _) if name == "void") {
+            sig.push_str(" -> ");
+            sig.push_str(&format_type(rt));
+        }
     }
 
     sig

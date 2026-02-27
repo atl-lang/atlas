@@ -317,7 +317,7 @@ fn greet(name: string) -> void {
 
 **Rules:**
 - Parameter types must be explicit
-- Return type must be explicit
+- Return type may be omitted — it is inferred from the function body (see [Type Inference](#type-inference))
 - Can be declared at top-level or nested within functions/blocks - Nested functions are hoisted within their scope (forward references allowed)
 - Nested functions can shadow outer functions and globals
 - Nested functions can call sibling functions at the same scope level
@@ -729,6 +729,52 @@ let doubled = map([1, 2, 3], (x) => x * 2);        // [2, 4, 6]
 let evens   = filter([1, 2, 3, 4], (x) => x % 2 == 0);  // [2, 4]
 let sum     = reduce([1, 2, 3], (acc, x) => acc + x, 0); // 6
 ```
+
+---
+
+## Type Inference
+
+Atlas uses local type inference. Full Hindley-Milner is not in scope.
+
+### What is inferred
+
+- **Local variable types:** `let x = 42` → `x: number` (from initializer)
+- **Function return types:** `fn f(x: number) { return x * 2; }` → return type `number`
+- **Generic type arguments at call sites:** `identity(42)` → `T = number`
+
+### What requires explicit annotation
+
+- Function parameter types (always required)
+- Generic type parameters that do not appear in parameter position
+- When inference is ambiguous or two branches return different types
+
+### Examples
+
+```atlas
+// Variable type inferred from literal
+let count = 0;          // count: number
+let name = "Atlas";     // name: string
+
+// Return type inferred from body
+fn double(x: number) { return x * 2; }    // inferred: -> number
+fn greet(s: string) { return s + "!"; }   // inferred: -> string
+
+// Generic type argument inferred at call site
+fn identity<T>(x: T) -> T { return x; }
+let n = identity(42);  // T inferred as number
+```
+
+### Inference failure
+
+When inference cannot determine a type, one of the following errors is emitted:
+
+| Code | Cause |
+|------|-------|
+| `AT3050` | Function body returns different types on different paths |
+| `AT3051` | Generic type parameter only appears in return type — cannot infer |
+| `AT3052` | Inferred type is incompatible with actual usage |
+
+Add an explicit annotation to resolve: `fn f(x: number) -> number { ... }`.
 
 ---
 

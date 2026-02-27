@@ -306,11 +306,13 @@ pub fn symbol_completions(program: &Program, _symbols: &SymbolTable) -> Vec<Comp
             items.push(CompletionItem {
                 label: func.name.name.clone(),
                 kind: Some(CompletionItemKind::FUNCTION),
-                detail: Some(format!(
-                    "fn({}) -> {:?}",
-                    params.join(", "),
-                    func.return_type
-                )),
+                detail: Some({
+                    let ret = func
+                        .return_type
+                        .as_ref()
+                        .map_or(String::new(), |t| format!(" -> {}", format_type_ref_str(t)));
+                    format!("fn({}){}", params.join(", "), ret)
+                }),
                 ..Default::default()
             });
         }

@@ -1651,7 +1651,7 @@ fn test_complete_program_construction() {
                         span: Span::new(20, 29),
                     },
                 ],
-                return_type: TypeRef::Named("number".to_string(), Span::new(34, 40)),
+                return_type: Some(TypeRef::Named("number".to_string(), Span::new(34, 40))),
                 return_ownership: None,
                 predicate: None,
                 body: Block {
@@ -2582,21 +2582,21 @@ fn parse_fn_decl(src: &str) -> FunctionDecl {
 fn test_parse_own_return_type() {
     let decl = parse_fn_decl("fn allocate(size: number) -> own number { return 0; }");
     assert_eq!(decl.return_ownership, Some(OwnershipAnnotation::Own));
-    assert!(matches!(decl.return_type, TypeRef::Named(ref n, _) if n == "number"));
+    assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]
 fn test_parse_borrow_return_type() {
     let decl = parse_fn_decl("fn peek(borrow arr: number) -> borrow number { return arr; }");
     assert_eq!(decl.return_ownership, Some(OwnershipAnnotation::Borrow));
-    assert!(matches!(decl.return_type, TypeRef::Named(ref n, _) if n == "number"));
+    assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]
 fn test_parse_unannotated_return_type_unchanged() {
     let decl = parse_fn_decl("fn f() -> number { return 1; }");
     assert_eq!(decl.return_ownership, None);
-    assert!(matches!(decl.return_type, TypeRef::Named(ref n, _) if n == "number"));
+    assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]

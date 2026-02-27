@@ -450,11 +450,10 @@ impl FormatVisitor {
         }
         self.write(")");
 
-        // Return type
-        let type_name = self.type_ref_to_string(&f.return_type);
-        if type_name != "null" {
+        // Return type (only emit if explicitly annotated)
+        if let Some(ref rt) = f.return_type {
             self.write(" -> ");
-            self.write(&type_name);
+            self.write(&self.type_ref_to_string(rt));
         }
 
         self.write(" ");
@@ -883,10 +882,9 @@ impl FormatVisitor {
                 let params_str = self.format_params(&f.params);
                 self.write(&params_str);
                 self.write(")");
-                let type_name = self.type_ref_to_string(&f.return_type);
-                if type_name != "null" {
+                if let Some(ref rt) = f.return_type {
                     self.write(" -> ");
-                    self.write(&type_name);
+                    self.write(&self.type_ref_to_string(rt));
                 }
                 self.write(" ");
                 self.indent_level = indent;
