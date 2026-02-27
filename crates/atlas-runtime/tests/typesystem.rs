@@ -122,7 +122,7 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 mod bindings;
 #[path = "typesystem/constraints.rs"]
 mod constraints;
-#[path = "typesystem/flow.rs"]
+#[path = "typesystem/flow/mod.rs"]
 mod flow;
 #[path = "typesystem/generics/mod.rs"]
 mod generics;
