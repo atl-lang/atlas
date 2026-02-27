@@ -1380,6 +1380,21 @@ fn milestone_stability_no_panic_on_runtime_error() {
     );
 }
 
+// Regression: vm_fuzz (2026-02-26) — compiler panicked instead of returning Err
+// when a method call's TypeTag was None (typechecker left it unset for non-Array/JsonValue types).
+// compiler/expr.rs:264 used .expect() on the Cell; now returns a Diagnostic error.
+#[test]
+fn regression_method_call_unknown_type_no_panic() {
+    // A method call on a number (not Array or JsonValue) — typechecker sets type_tag to None.
+    // The compiler must return a Diagnostic error, not panic.
+    let runtime = Atlas::new();
+    let result = runtime.eval("let x: number = 42; x.foo();");
+    assert!(
+        result.is_err(),
+        "Expected compile/type error for method call on number, got Ok"
+    );
+}
+
 // NOTE: test block removed — required access to private function `len`
 
 // NOTE: test block removed — required access to private function `is_valid_identifier`
