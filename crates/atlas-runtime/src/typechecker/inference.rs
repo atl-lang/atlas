@@ -161,8 +161,9 @@ impl LetPolymorphism {
             // Syntactic values that can be safely generalized
             Expr::Literal(_, _) => BindingKind::SyntacticValue,
             Expr::ArrayLiteral(_) => BindingKind::SyntacticValue,
-            // Closures/lambdas would be here too if Atlas had anonymous functions
-            // For now, group expressions are transparent
+            // Anonymous functions (fn(params) { body } / (x) => x) are syntactic values
+            Expr::AnonFn { .. } => BindingKind::SyntacticValue,
+            // Group expressions are transparent
             Expr::Group(g) => Self::classify_expr(&g.expr),
             // Everything else is a non-value
             _ => BindingKind::NonValue,
