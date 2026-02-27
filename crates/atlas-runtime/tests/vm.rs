@@ -139,10 +139,6 @@ fn assert_error_parity(source: &str) {
     );
 }
 
-// ============================================================================
-// From vm_integration_tests.rs
-// ============================================================================
-
 // VM Integration Tests
 //
 // Tests all bytecode-VM features working together: optimizer, profiler,

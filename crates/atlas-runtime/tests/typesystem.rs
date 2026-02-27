@@ -96,10 +96,6 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
     );
 }
 
-// ============================================================================
-// From advanced_inference_tests.rs
-// ============================================================================
-
 // Advanced Type Inference - Integration Tests (Phase 07)
 //
 // Tests for:
