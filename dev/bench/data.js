@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1771957720297,
+  "lastUpdate": 1772170581261,
   "repoUrl": "https://github.com/atl-lang/atlas",
   "entries": {
     "Atlas Runtime Benchmarks": [
@@ -817,6 +817,280 @@ window.BENCHMARK_DATA = {
           {
             "name": "vm_loop_scaling/10000",
             "value": 3469100,
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "proxikal@gmail.com",
+            "name": "Joshua Cleland",
+            "username": "proxikal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "dcf7b257ce465dfaf4aa215a62cd60418516ed10",
+          "message": "fix(compiler): return diagnostic instead of panic when TypeTag is unset (#155)\n\ncompiler/expr.rs:264 used .expect() on MemberExpr.type_tag, which panics\nwhen the typechecker leaves it as None (non-Array/JsonValue method calls pass\ntypecheck without error but without setting the tag). Converts the expect to\nok_or_else returning a Diagnostic, making the compiler surface an error\ngracefully instead of crashing.\n\nCaught by vm_fuzz nightly run (2026-02-26). Regression test added.\n\nCo-authored-by: Claude Sonnet 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-02-26T23:45:53-05:00",
+          "tree_id": "e31e932b37278688980f38078226c7c9f2842cfe",
+          "url": "https://github.com/atl-lang/atlas/commit/dcf7b257ce465dfaf4aa215a62cd60418516ed10"
+        },
+        "date": 1772170580861,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "interp_fibonacci_20",
+            "value": 38623000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interp_arrays/len_10k",
+            "value": 6043400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/fibonacci_20",
+            "value": 8196999.999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/nested_loops",
+            "value": 3300500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "string_replace_large",
+            "value": 61905,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_map_10k_elements",
+            "value": 62886,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_sort_1000_numbers",
+            "value": 60762,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_indexOf_search",
+            "value": 59896,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "math_arithmetic_10k_ops",
+            "value": 7521400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_parse_10kb",
+            "value": 67827,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_nested_access_deep",
+            "value": 68266,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_read_1mb",
+            "value": 160550,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_write_1mb",
+            "value": 7511000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/10",
+            "value": 123600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/50",
+            "value": 404570,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/200",
+            "value": 1372100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/50",
+            "value": 153660,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/200",
+            "value": 424730,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/500",
+            "value": 993160,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/lex",
+            "value": 1859.2,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/parse",
+            "value": 3742.4,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/compile",
+            "value": 5100.3,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/len_5k",
+            "value": 2593700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/trim_3k",
+            "value": 595890,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/split_1k",
+            "value": 1218000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/push_1k",
+            "value": 21241,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/pop_500",
+            "value": 34945,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/len_5k",
+            "value": 2664700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/index_5k",
+            "value": 3046500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/abs_5k",
+            "value": 2680000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/sqrt_2k",
+            "value": 1028400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/min_max_3k",
+            "value": 1993700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/type/type_of_3k",
+            "value": 23142,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_add_1000",
+            "value": 358380,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_sub_1000",
+            "value": 353540,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_mul_1000",
+            "value": 324680,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_div_1000",
+            "value": 329550,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_function_multi_arg",
+            "value": 399400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_count_10000",
+            "value": 1917300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_accumulate_5000",
+            "value": 1890000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_nested_100x100",
+            "value": 3142700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_create_20",
+            "value": 11019,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_set_index_1000",
+            "value": 625460,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_comparison_ops_5000",
+            "value": 2860900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_equality_check_5000",
+            "value": 1344800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_string_concat_100",
+            "value": 44395,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/100",
+            "value": 44119,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/1000",
+            "value": 358550,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/5000",
+            "value": 1765800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/10000",
+            "value": 3518400,
             "unit": "ns/iter"
           }
         ]
