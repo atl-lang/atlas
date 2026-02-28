@@ -1,6 +1,5 @@
 ---
-paths:
-  - "**"
+globs: ["**"]
 ---
 
 # Atlas Architecture Standards
