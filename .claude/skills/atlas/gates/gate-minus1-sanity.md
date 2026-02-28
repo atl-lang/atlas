@@ -4,7 +4,22 @@
 
 ---
 
-## Step 1: Workspace State Audit (ALWAYS FIRST)
+## Step 0: Clean Build Artifacts (MANDATORY - FIRST ACTION)
+
+**Prevent disk bloat:** Cargo accumulates GB of build artifacts rapidly. Without cleanup between sessions, `target/` can reach 50GB+.
+
+```bash
+du -sh target/ 2>/dev/null || echo "No target directory"
+cargo clean
+```
+
+**Why:** Fresh build environment at session start prevents accumulation. Especially critical when rules weren't auto-loading correctly (agents were doing more rebuilds than necessary).
+
+**ONE TIME ONLY:** Run once at session start, not during implementation.
+
+---
+
+## Step 1: Workspace State Audit
 
 ```bash
 git status --short                        # Uncommitted changes?
