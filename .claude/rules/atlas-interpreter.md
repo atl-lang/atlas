@@ -1,6 +1,5 @@
 ---
-paths:
-  - "crates/atlas-runtime/src/interpreter/**"
+globs: ["crates/atlas-runtime/src/interpreter/**"]
 ---
 
 # Atlas Interpreter Quick-Ref

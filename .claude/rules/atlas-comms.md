@@ -1,3 +1,7 @@
+---
+globs: ["**"]
+---
+
 # Atlas Communications Standard
 
 Applies to: PR titles, PR bodies, commit messages, code comments, docs, changelogs — anything written on behalf of Atlas.

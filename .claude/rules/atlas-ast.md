@@ -1,9 +1,5 @@
 ---
-paths:
-  - "crates/atlas-runtime/src/ast.rs"
-  - "crates/atlas-runtime/src/parser/**"
-  - "crates/atlas-runtime/src/typechecker/**"
-  - "crates/atlas-runtime/src/binder.rs"
+globs: ["crates/atlas-runtime/src/ast.rs", "crates/atlas-runtime/src/parser/**", "crates/atlas-runtime/src/typechecker/**", "crates/atlas-runtime/src/binder.rs"]
 ---
 
 # Atlas AST Quick-Ref
