@@ -39,9 +39,12 @@ fn assert_parity(source: &str) {
             let interp_str = format!("{:?}", interp_val);
             let vm_str = format!("{:?}", vm_val.unwrap_or(Value::Null));
             std::assert_eq!(
-                interp_str, vm_str,
+                interp_str,
+                vm_str,
                 "Parity mismatch for:\n{}\nInterpreter: {}\nVM: {}",
-                source, interp_str, vm_str
+                source,
+                interp_str,
+                vm_str
             );
         }
         (Err(interp_err), Err(vm_err)) => {

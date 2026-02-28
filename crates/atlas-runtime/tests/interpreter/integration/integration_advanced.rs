@@ -321,4 +321,3 @@ fn test_perf_array_operations() {
     "#;
     assert_eval_number(code, 550.0); // sum of 1-10 is 55, times 10 = 550
 }
-

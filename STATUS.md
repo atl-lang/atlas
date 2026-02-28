@@ -1,16 +1,24 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-27 (Block test-split Phase 04 in progress — 7/~20 large files split)
+**Last Updated:** 2026-02-27 (Block 5 complete, test-split PAUSED)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
 **Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
 
 ---
 
+## ⚠️ WEEKLY REMINDER CHECK (AI Agents - Read This First!)
+
+**CHECK:** `TEST-SPLIT-TRACKING.md` — if "Next Reminder" date has passed, alert user and update timestamp.
+
+**Test-split status:** PAUSED at 13/20 files split. Resume when convenient (not blocking v0.3 progress).
+
+---
+
 ## Current State
 
-**Status:** Block test-split in progress — 8 phases, Track 1 throughout (no PR needed)
-**Last Completed:** Block test-split Phase 04 (session progress) — api.rs (88KB → 11 files) + real_world.rs (84KB → 9 files) + compression.rs (80KB → 9 files) + vm_stdlib.rs (80KB → 7 files) + debugger.rs (80KB → 6 files) + interpreter/integration.rs (76KB → 15 files)
-**Next:** Block test-split Phase 04 (continuation) — split remaining 14 large test files (diagnostics.rs next: 68KB)
+**Status:** Block 5 (Type Inference) COMPLETE — merged via PR #156
+**Last Completed:** Block 5 Phase 09 — type inference (locals, returns, generics), LSP inlay hints, 8,198 tests passing
+**Next:** Block 6 (Error Handling - `?` operator) — ready to scaffold
 
 ---
 
@@ -22,9 +30,9 @@
 | 2 | Ownership Syntax (`own`, `borrow`, `shared`) | 16 | ✅ Complete (2026-02-22) |
 | 3 | Trait System (`trait`, `impl`, Copy/Move/Drop) | 18 | ✅ Complete (2026-02-22) |
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
-| 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-26) |
-| ts | Test File Decomposition (maintenance) | 8 | 🔨 In progress (Phase 02) |
-| 6 | Error Handling (`?` operator) | 10–15 | ⬜ Unblocked |
+| 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-27) |
+| ts | Test File Decomposition (maintenance) | 8 | ⏸️ PAUSED (13/20 files split) — see `TEST-SPLIT-TRACKING.md` |
+| 6 | Error Handling (`?` operator) | 10–15 | ⬜ Ready to scaffold |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
 | 9 | Quick Wins (string interp, implicit returns) | 5–10 | ⬜ Unblocked — ready to scaffold |

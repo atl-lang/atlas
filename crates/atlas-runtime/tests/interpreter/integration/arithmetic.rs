@@ -94,4 +94,3 @@ fn test_numeric_error_propagation() {
     "#;
     assert_error_code(code, "AT0005");
 }
-

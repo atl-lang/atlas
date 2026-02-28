@@ -52,13 +52,13 @@ fn new_session(source: &str) -> DebuggerSession {
 // Domain submodules (files live in tests/debugger/)
 #[path = "debugger/breakpoints.rs"]
 mod breakpoints;
-#[path = "debugger/session.rs"]
-mod session;
 #[path = "debugger/inspector.rs"]
 mod inspector;
+#[path = "debugger/interpreter.rs"]
+mod interpreter;
 #[path = "debugger/protocol_part1.rs"]
 mod protocol_part1;
 #[path = "debugger/protocol_part2.rs"]
 mod protocol_part2;
-#[path = "debugger/interpreter.rs"]
-mod interpreter;
+#[path = "debugger/session.rs"]
+mod session;

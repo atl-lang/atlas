@@ -38,9 +38,9 @@ pub fn execute_with_io(source: &str, temp_dir: &TempDir) -> Result<atlas_runtime
         .map_err(|e| format!("{:?}", e))
 }
 
-mod strings;
-mod json;
 mod io_part1;
 mod io_part2;
-mod types_typeof_guards;
+mod json;
+mod strings;
 mod types_option_result;
+mod types_typeof_guards;
