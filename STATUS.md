@@ -20,6 +20,8 @@
 **Last Completed:** Block 5 Phase 09 — type inference (locals, returns, generics), LSP inlay hints, 8,198 tests passing
 **Next:** Block 6 (Error Handling - `?` operator) — ready to scaffold
 
+**IMPORTANT BEFORE CONTINUING:** `docs/codex-findings/important-before-continuing.md`
+
 ---
 
 ## v0.3 Block Progress

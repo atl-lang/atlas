@@ -1,5 +1,5 @@
 ---
-globs: ["crates/atlas-runtime/src/typechecker/**", "crates/atlas-runtime/src/types.rs"]
+paths: ["crates/atlas-runtime/src/typechecker/**", "crates/atlas-runtime/src/types.rs"]
 ---
 
 # Atlas TypeChecker Quick-Ref

@@ -53,6 +53,14 @@ EOF
 ```bash
 # ONLY when the block's final AC check phase is committed:
 
+# 0. Pre-push CodeRabbit check (MANDATORY — task Haiku agent in background before pushing)
+#    Delegate to Haiku:
+#      coderabbit review --base main --plain
+#    Agent returns findings → lead reviews each finding against documented decisions → fix or dismiss
+#    DO NOT push until this step completes and findings are resolved/acknowledged
+#    Haiku prompt: "Run `coderabbit review --base main --plain` in ~/dev/projects/atlas and return
+#    all findings as plain text. Do not fix anything — report only."
+
 # 1. Rebase on latest main BEFORE pushing (strict CI policy requires up-to-date branch)
 git fetch origin
 git rebase origin/main   # resolve any conflicts; re-run tests if rebase had changes

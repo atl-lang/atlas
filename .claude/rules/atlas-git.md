@@ -1,6 +1,3 @@
----
-globs: ["**"]
----
 
 # Atlas Git Workflow
 

@@ -1,6 +1,3 @@
----
-globs: ["**"]
----
 
 # Atlas Architecture Standards
 
