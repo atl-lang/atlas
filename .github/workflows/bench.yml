@@ -95,7 +95,7 @@ jobs:
           save-data-file: true
 
       - name: Upload raw results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bench-results
