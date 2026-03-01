@@ -49,6 +49,8 @@ cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
 ## Core Rules (NON-NEGOTIABLE)
 
 ### 1. Autonomous Execution
+**Delegation:** Lead directs — does not execute. See `gates/session-protection.md` for the full delegation map. GATE -1, git ops, and Rust implementation are always delegated.
+
 1. **Run GATE -1** — full state audit
 2. Check STATUS.md (verify phase not complete)
 3. **Git Setup:** GATE -1 determines branch state — see `gates/git-workflow.md`

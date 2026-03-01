@@ -6,6 +6,8 @@
 
 ## Step 0: Clean Build Artifacts (MANDATORY - FIRST ACTION)
 
+> **Delegate to Haiku agent.** Return: disk usage before/after, any errors.
+
 **Prevent disk bloat:** Cargo accumulates GB of build artifacts rapidly. Without cleanup between sessions, `target/` can reach 50GB+.
 
 ```bash
@@ -20,6 +22,8 @@ cargo clean
 ---
 
 ## Step 1: Workspace State Audit
+
+> **Delegate to Haiku agent.** Return: branch name, uncommitted file list, classification.
 
 ```bash
 git status --short                        # Uncommitted changes?
@@ -54,6 +58,8 @@ Classify and resolve autonomously:
 
 ## Step 2: Main CI Health Check (BLOCKING)
 
+> **Delegate to Haiku agent.** Return: last 3 run conclusions, any failing job names.
+
 ```bash
 gh run list --branch main --limit 3 --json status,conclusion,displayTitle,databaseId \
   -q '.[] | "\(.conclusion // .status)  \(.displayTitle[:60])"'
@@ -86,6 +92,8 @@ gh pr list --state open
 
 ## Step 3: Sync from Remote
 
+> **Delegate to Haiku agent.** Return: sync action taken (pull/rebase/none).
+
 ```bash
 git fetch origin
 git log HEAD..origin/main --oneline       # Is remote ahead of local main?
@@ -105,6 +113,8 @@ if main advanced while the block branch was in progress. Catch it here, not at P
 
 ## Step 3: Full Build Verification
 
+> **Delegate to Haiku agent.** Return: build success/failure and any error lines.
+
 ```bash
 cargo build --workspace
 ```
@@ -114,6 +124,8 @@ cargo build --workspace
 ---
 
 ## Step 4: Security Scan
+
+> **Delegate to Haiku agent.** Return: audit findings summary (direct deps only).
 
 ```bash
 cargo audit
@@ -125,6 +137,8 @@ cargo audit
 ---
 
 ## Step 4b: Integrity Spot-Check (BLOCKING)
+
+> **Delegate to Haiku agent.** Return: pass/fail for each check in the table below.
 
 Runs every session. Catches drift, broken references, and missing files before they compound.
 
