@@ -35,6 +35,18 @@ tar = "0.4"
 zip = "0.6"
 termcolor = "1.4.1"
 
+# Crypto (systems-level stdlib)
+sha2 = "0.10"
+hmac = "0.12"
+aes-gcm = "0.10"
+blake3 = "1"
+hex = "0.4"
+
+# Networking (systems-level stdlib)
+rustls = "0.23"
+webpki-roots = "0.26"
+tungstenite = "0.26"
+
 [dev-dependencies]
 insta.workspace = true
 rstest.workspace = true
