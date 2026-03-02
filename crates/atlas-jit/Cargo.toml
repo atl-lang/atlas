@@ -12,7 +12,7 @@ cranelift-codegen = "0.125"
 cranelift-frontend = "0.125"
 cranelift-jit = "0.125"
 cranelift-module = "0.125"
-cranelift-native = "0.125"
+cranelift-native = "0.129"
 
 # Shared utilities
 thiserror = "2.0"
