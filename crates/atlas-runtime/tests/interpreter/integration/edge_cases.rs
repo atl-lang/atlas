@@ -1,10 +1,5 @@
 use super::*;
 
-fn test_edge_empty_function() {
-    let code = "fn noop() { } noop();";
-    assert_no_error(code);
-}
-
 #[test]
 fn test_edge_deeply_nested_if() {
     let code = r#"
