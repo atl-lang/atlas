@@ -20,6 +20,13 @@ pub mod string;
 pub mod test;
 pub mod types;
 
+// Systems-level stdlib modules
+pub mod crypto;
+pub mod encoding;
+pub mod net;
+pub mod sync;
+pub mod websocket;
+
 use crate::security::SecurityContext;
 use crate::value::{RuntimeError, Value};
 use std::collections::HashMap;
@@ -1541,6 +1548,87 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("assertLength", |a, s, _, _| test::assert_length(a, s));
         m.insert("assertThrows", |a, s, _, _| test::assert_throws(a, s));
         m.insert("assertNoThrow", |a, s, _, _| test::assert_no_throw(a, s));
+
+        // ====================================================================
+        // Crypto
+        // ====================================================================
+        m.insert("sha256", |a, s, _, _| crypto::sha256(a, s));
+        m.insert("sha512", |a, s, _, _| crypto::sha512(a, s));
+        m.insert("blake3Hash", |a, s, _, _| crypto::blake3_hash(a, s));
+        m.insert("hmacSha256", |a, s, _, _| crypto::hmac_sha256(a, s));
+        m.insert("hmacSha256Verify", |a, s, _, _| crypto::hmac_sha256_verify(a, s));
+        m.insert("aesGcmEncrypt", |a, s, _, _| crypto::aes_gcm_encrypt(a, s));
+        m.insert("aesGcmDecrypt", |a, s, _, _| crypto::aes_gcm_decrypt(a, s));
+        m.insert("aesGcmGenerateKey", |a, s, _, _| crypto::aes_gcm_generate_key(a, s));
+
+        // ====================================================================
+        // Encoding
+        // ====================================================================
+        m.insert("base64Encode", |a, s, _, _| encoding::base64_encode(a, s));
+        m.insert("base64Decode", |a, s, _, _| encoding::base64_decode(a, s));
+        m.insert("base64UrlEncode", |a, s, _, _| encoding::base64_url_encode(a, s));
+        m.insert("base64UrlDecode", |a, s, _, _| encoding::base64_url_decode(a, s));
+        m.insert("hexEncode", |a, s, _, _| encoding::hex_encode(a, s));
+        m.insert("hexDecode", |a, s, _, _| encoding::hex_decode(a, s));
+        m.insert("urlEncode", |a, s, _, _| encoding::url_encode(a, s));
+        m.insert("urlDecode", |a, s, _, _| encoding::url_decode(a, s));
+
+        // ====================================================================
+        // Networking (TCP/UDP/TLS)
+        // ====================================================================
+        m.insert("tcpConnect", |a, s, sec, _| net::tcp_connect(a, s, sec));
+        m.insert("tcpWrite", |a, s, _, _| net::tcp_write(a, s));
+        m.insert("tcpRead", |a, s, _, _| net::tcp_read(a, s));
+        m.insert("tcpReadBytes", |a, s, _, _| net::tcp_read_bytes(a, s));
+        m.insert("tcpClose", |a, s, _, _| net::tcp_close(a, s));
+        m.insert("tcpSetTimeout", |a, s, _, _| net::tcp_set_timeout(a, s));
+        m.insert("tcpSetNodelay", |a, s, _, _| net::tcp_set_nodelay(a, s));
+        m.insert("tcpLocalAddr", |a, s, _, _| net::tcp_local_addr(a, s));
+        m.insert("tcpRemoteAddr", |a, s, _, _| net::tcp_remote_addr(a, s));
+        m.insert("tcpListen", |a, s, sec, _| net::tcp_listen(a, s, sec));
+        m.insert("tcpAccept", |a, s, _, _| net::tcp_accept(a, s));
+        m.insert("tcpListenerAddr", |a, s, _, _| net::tcp_listener_addr(a, s));
+        m.insert("tcpListenerClose", |a, s, _, _| net::tcp_listener_close(a, s));
+        m.insert("udpBind", |a, s, sec, _| net::udp_bind(a, s, sec));
+        m.insert("udpSend", |a, s, _, _| net::udp_send(a, s));
+        m.insert("udpReceive", |a, s, _, _| net::udp_receive(a, s));
+        m.insert("udpSetTimeout", |a, s, _, _| net::udp_set_timeout(a, s));
+        m.insert("udpClose", |a, s, _, _| net::udp_close(a, s));
+        m.insert("udpLocalAddr", |a, s, _, _| net::udp_local_addr(a, s));
+        m.insert("tlsConnect", |a, s, sec, _| net::tls_connect(a, s, sec));
+        m.insert("tlsWrite", |a, s, _, _| net::tls_write(a, s));
+        m.insert("tlsRead", |a, s, _, _| net::tls_read(a, s));
+        m.insert("tlsClose", |a, s, _, _| net::tls_close(a, s));
+
+        // ====================================================================
+        // Synchronization primitives
+        // ====================================================================
+        m.insert("rwLockNew", |a, s, _, _| sync::rwlock_new(a, s));
+        m.insert("rwLockRead", |a, s, _, _| sync::rwlock_read(a, s));
+        m.insert("rwLockWrite", |a, s, _, _| sync::rwlock_write(a, s));
+        m.insert("rwLockTryRead", |a, s, _, _| sync::rwlock_try_read(a, s));
+        m.insert("rwLockTryWrite", |a, s, _, _| sync::rwlock_try_write(a, s));
+        m.insert("semaphoreNew", |a, s, _, _| sync::semaphore_new(a, s));
+        m.insert("semaphoreAcquire", |a, s, _, _| sync::semaphore_acquire(a, s));
+        m.insert("semaphoreTryAcquire", |a, s, _, _| sync::semaphore_try_acquire(a, s));
+        m.insert("semaphoreRelease", |a, s, _, _| sync::semaphore_release(a, s));
+        m.insert("semaphoreAvailable", |a, s, _, _| sync::semaphore_available(a, s));
+        m.insert("atomicNew", |a, s, _, _| sync::atomic_new(a, s));
+        m.insert("atomicLoad", |a, s, _, _| sync::atomic_load(a, s));
+        m.insert("atomicStore", |a, s, _, _| sync::atomic_store(a, s));
+        m.insert("atomicAdd", |a, s, _, _| sync::atomic_add(a, s));
+        m.insert("atomicSub", |a, s, _, _| sync::atomic_sub(a, s));
+        m.insert("atomicCompareExchange", |a, s, _, _| sync::atomic_compare_exchange(a, s));
+
+        // ====================================================================
+        // WebSocket
+        // ====================================================================
+        m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
+        m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
+        m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
+        m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
+        m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
+        m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
 
         m
     })
