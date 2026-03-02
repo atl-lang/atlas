@@ -469,10 +469,20 @@ impl Interpreter {
                 self.control_flow = ControlFlow::Return(err_result.clone());
                 Ok(err_result)
             }
+            Value::Option(Some(inner)) => {
+                // Unwrap Some value
+                Ok(*inner)
+            }
+            Value::Option(None) => {
+                // Propagate None by early return
+                let none_val = Value::Option(None);
+                self.control_flow = ControlFlow::Return(none_val.clone());
+                Ok(none_val)
+            }
             _ => {
                 // Type checker should prevent this, but handle gracefully
                 Err(RuntimeError::TypeError {
-                    msg: "? operator requires Result<T, E> type".to_string(),
+                    msg: "? operator requires Result<T, E> or Option<T> type".to_string(),
                     span: try_expr.span,
                 })
             }

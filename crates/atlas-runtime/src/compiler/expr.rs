@@ -1147,34 +1147,45 @@ impl Compiler {
     /// }
     /// ```
     fn compile_try(&mut self, try_expr: &TryExpr) -> Result<(), Vec<Diagnostic>> {
+        use crate::ast::TryTargetKind;
+
         // 1. Compile the expression being tried
         self.compile_expr(&try_expr.expr)?;
 
-        // 2. Duplicate the result value for pattern matching
+        // Determine target kind (set by typechecker, default to Result for backwards compat)
+        let target_kind = try_expr
+            .target_kind
+            .borrow()
+            .unwrap_or(TryTargetKind::Result);
+
+        // 2. Duplicate the value for pattern matching
         self.bytecode.emit(Opcode::Dup, try_expr.span);
 
-        // 3. Check if it's an Ok variant
-        self.bytecode.emit(Opcode::IsResultOk, try_expr.span);
+        // 3. Check if it's the success variant (Ok for Result, Some for Option)
+        let (check_opcode, extract_opcode) = match target_kind {
+            TryTargetKind::Result => (Opcode::IsResultOk, Opcode::ExtractResultValue),
+            TryTargetKind::Option => (Opcode::IsOptionSome, Opcode::ExtractOptionValue),
+        };
+        self.bytecode.emit(check_opcode, try_expr.span);
 
-        // 4. Jump to error handling if false (it's an Err)
+        // 4. Jump to error/none handling if false
         self.bytecode.emit(Opcode::JumpIfFalse, try_expr.span);
         let err_jump = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF); // Placeholder
 
-        // 5. Ok path: extract the Ok value
-        self.bytecode
-            .emit(Opcode::ExtractResultValue, try_expr.span);
+        // 5. Success path: extract the inner value
+        self.bytecode.emit(extract_opcode, try_expr.span);
 
         // Skip error handling
         self.bytecode.emit(Opcode::Jump, try_expr.span);
         let ok_skip = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF); // Placeholder
 
-        // 6. Err path: Result value is still on stack from Dup, return it
+        // 6. Error/None path: value is still on stack from Dup, return it
         self.bytecode.patch_jump(err_jump);
         self.bytecode.emit(Opcode::Return, try_expr.span);
 
-        // 7. Patch ok skip jump
+        // 7. Patch success skip jump
         self.bytecode.patch_jump(ok_skip);
 
         Ok(())

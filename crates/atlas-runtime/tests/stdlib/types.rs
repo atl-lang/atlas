@@ -1273,3 +1273,117 @@ fn test_try_operator_combined_with_methods() {
 // NOTE: test block removed — required access to private function `is_primitive_fn`
 
 // NOTE: test block removed — required access to private function `unwrap_or_option`
+
+// ============================================================================
+// Option `?` Operator Tests (Block 6 Phase 01)
+// ============================================================================
+
+#[test]
+fn test_option_try_unwraps_some() {
+    let code = r#"
+    fn find_value() -> Option<number> {
+        let opt = Some(42);
+        return Some(opt?);
+    }
+    unwrap(find_value())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_option_try_propagates_none() {
+    let code = r#"
+    fn find_value() -> Option<number> {
+        let opt: Option<number> = None();
+        return Some(opt?);
+    }
+    is_none(find_value())
+"#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn test_option_try_multiple_propagations() {
+    let code = r#"
+    fn get_first() -> Option<number> {
+        return Some(10);
+    }
+    fn get_second() -> Option<number> {
+        return Some(20);
+    }
+    fn calculate() -> Option<number> {
+        let a = get_first()?;
+        let b = get_second()?;
+        return Some(a + b);
+    }
+    unwrap(calculate())
+"#;
+    assert_eval_number(code, 30.0);
+}
+
+#[test]
+fn test_option_try_early_return_on_none() {
+    let code = r#"
+    fn get_first() -> Option<number> {
+        return Some(10);
+    }
+    fn get_second() -> Option<number> {
+        return None();
+    }
+    fn calculate() -> Option<number> {
+        let a = get_first()?;
+        let b = get_second()?;
+        return Some(a + b);
+    }
+    is_none(calculate())
+"#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn test_option_try_with_expression() {
+    let code = r#"
+    fn get_number() -> Option<number> {
+        return Some(21);
+    }
+    fn double_it() -> Option<number> {
+        return Some(get_number()? * 2);
+    }
+    unwrap(double_it())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_option_try_nested_calls() {
+    let code = r#"
+    fn inner() -> Option<number> {
+        return Some(42);
+    }
+    fn middle() -> Option<number> {
+        return Some(inner()?);
+    }
+    fn outer() -> Option<number> {
+        return Some(middle()?);
+    }
+    unwrap(outer())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_option_try_nested_none_propagation() {
+    let code = r#"
+    fn inner() -> Option<number> {
+        return None();
+    }
+    fn middle() -> Option<number> {
+        return Some(inner()?);
+    }
+    fn outer() -> Option<number> {
+        return Some(middle()?);
+    }
+    is_none(outer())
+"#;
+    assert_eval_bool(code, true);
+}
