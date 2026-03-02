@@ -238,16 +238,16 @@ fn test_operators_in_context(#[case] source: &str) {
 // ========== Method Call Type Checking ==========
 
 #[rstest]
-#[case::json_as_string(r#"let data: json = parseJSON("{\"name\":\"Alice\"}"); let name: string = data["name"].as_string();"#)]
+#[case::json_as_string(r#"let data: json = unwrap(parseJSON("{\"name\":\"Alice\"}")); let name: string = data["name"].as_string();"#)]
 #[case::json_as_number(
-    r#"let data: json = parseJSON("{\"age\":30}"); let age: number = data["age"].as_number();"#
+    r#"let data: json = unwrap(parseJSON("{\"age\":30}")); let age: number = data["age"].as_number();"#
 )]
-#[case::json_as_bool(r#"let data: json = parseJSON("{\"active\":true}"); let active: bool = data["active"].as_bool();"#)]
-#[case::json_is_null(r#"let data: json = parseJSON("{\"value\":null}"); let is_null: bool = data["value"].is_null();"#)]
-#[case::chained_json_access(r#"let data: json = parseJSON("{\"user\":{\"name\":\"Bob\"}}"); let name: string = data["user"]["name"].as_string();"#)]
-#[case::method_in_expression(r#"let data: json = parseJSON("{\"count\":5}"); let x: number = data["count"].as_number() + 10;"#)]
+#[case::json_as_bool(r#"let data: json = unwrap(parseJSON("{\"active\":true}")); let active: bool = data["active"].as_bool();"#)]
+#[case::json_is_null(r#"let data: json = unwrap(parseJSON("{\"value\":null}")); let is_null: bool = data["value"].is_null();"#)]
+#[case::chained_json_access(r#"let data: json = unwrap(parseJSON("{\"user\":{\"name\":\"Bob\"}}")); let name: string = data["user"]["name"].as_string();"#)]
+#[case::method_in_expression(r#"let data: json = unwrap(parseJSON("{\"count\":5}")); let x: number = data["count"].as_number() + 10;"#)]
 #[case::method_as_arg(
-    r#"let data: json = parseJSON("{\"msg\":\"hi\"}"); print(data["msg"].as_string());"#
+    r#"let data: json = unwrap(parseJSON("{\"msg\":\"hi\"}")); print(data["msg"].as_string());"#
 )]
 fn test_valid_method_calls(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
@@ -293,7 +293,7 @@ fn test_method_return_type_mismatch(#[case] source: &str) {
 #[test]
 fn test_chained_method_calls_type_correctly() {
     let source = r#"
-        let data: json = parseJSON("{\"a\":{\"b\":{\"c\":\"value\"}}}");
+        let data: json = unwrap(parseJSON("{\"a\":{\"b\":{\"c\":\"value\"}}}"));
         let result: string = data["a"]["b"]["c"].as_string();
     "#;
     let diagnostics = typecheck_source(source);
@@ -303,7 +303,7 @@ fn test_chained_method_calls_type_correctly() {
 #[test]
 fn test_method_call_in_conditional() {
     let source = r#"
-        let data: json = parseJSON("{\"enabled\":true}");
+        let data: json = unwrap(parseJSON("{\"enabled\":true}"));
         if (data["enabled"].as_bool()) {
             print("Enabled");
         }
@@ -315,7 +315,7 @@ fn test_method_call_in_conditional() {
 #[test]
 fn test_multiple_method_calls_in_expression() {
     let source = r#"
-        let data: json = parseJSON("{\"a\":5,\"b\":10}");
+        let data: json = unwrap(parseJSON("{\"a\":5,\"b\":10}"));
         let sum: number = data["a"].as_number() + data["b"].as_number();
     "#;
     let diagnostics = typecheck_source(source);

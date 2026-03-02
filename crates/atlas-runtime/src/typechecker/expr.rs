@@ -1843,29 +1843,21 @@ impl<'a> TypeChecker<'a> {
             }
         };
 
-        // Must be inside a function
-        let function_return_type = match &self.current_function_return_type {
-            Some(ty) => ty.clone(),
-            None => {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3028",
-                        "? operator can only be used inside functions",
-                        try_expr.span,
-                    )
-                    .with_label("not in a function")
-                    .with_help("? operator propagates errors by early return"),
-                );
-                return Type::Unknown;
-            }
-        };
-
-        let function_return_norm = function_return_type.normalized();
+        // At top-level (script/REPL context), ? is allowed without a function.
+        // Propagation semantics: Ok(v) → v, Err(e) → early eval termination.
+        let is_top_level = self.current_function_return_type.is_none();
 
         match source {
             TrySource::Result { ok_type, err_type } => {
                 // Annotate for compiler
                 *try_expr.target_kind.borrow_mut() = Some(TryTargetKind::Result);
+
+                if is_top_level {
+                    return ok_type;
+                }
+
+                let function_return_type = self.current_function_return_type.clone().unwrap();
+                let function_return_norm = function_return_type.normalized();
 
                 // Function must return Result<T', E'>
                 match &function_return_norm {
@@ -1918,6 +1910,13 @@ impl<'a> TypeChecker<'a> {
             TrySource::Option { inner_type } => {
                 // Annotate for compiler
                 *try_expr.target_kind.borrow_mut() = Some(TryTargetKind::Option);
+
+                if is_top_level {
+                    return inner_type;
+                }
+
+                let function_return_type = self.current_function_return_type.clone().unwrap();
+                let function_return_norm = function_return_type.normalized();
 
                 // Function must return Option<T'>
                 match &function_return_norm {

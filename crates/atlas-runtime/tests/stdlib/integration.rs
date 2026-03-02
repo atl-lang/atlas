@@ -93,7 +93,7 @@ fn test_substring_map_concat() {
 fn test_index_of_filter_slice() {
     let code = r#"
         fn hasA(s: string) -> bool {
-            return indexOf(s, "a") != -1;
+            return is_some(indexOf(s, "a"));
         }
 
         let words: string[] = ["apple", "banana", "cherry", "date", "avocado"];
@@ -220,7 +220,7 @@ fn test_abs_map_max() {
 fn test_sqrt_map_floor() {
     let code = r#"
         fn sqrtFloor(x: number) -> number {
-            return floor(sqrt(x));
+            return floor(unwrap(sqrt(x)));
         }
 
         fn add(a: number, b: number) -> number {
@@ -238,7 +238,7 @@ fn test_sqrt_map_floor() {
 fn test_clamp_map_range() {
     let code = r#"
         fn clampTo10(n: number) -> number {
-            return clamp(n, 0, 10);
+            return unwrap(clamp(n, 0, 10));
         }
 
         fn numToStr(n: number) -> string {
@@ -320,7 +320,7 @@ fn test_random_clamp_floor() {
         // Test that random works in a pipeline (result is clamped 0-10, then floored)
         let r: number = random();
         let scaled: number = r * 10;
-        let clamped: number = clamp(scaled, 0, 10);
+        let clamped: number = clamp(scaled, 0, 10)?;
         let result: number = floor(clamped);
         result >= 0 && result <= 10
     "#;
@@ -335,7 +335,7 @@ fn test_random_clamp_floor() {
 fn test_parse_json_extract_map() {
     let code = r##"
         let jsonStr: string = "{\"users\": [{\"name\": \"Alice\"}, {\"name\": \"Bob\"}]}";
-        let data: json = parseJSON(jsonStr);
+        let data: json = parseJSON(jsonStr)?;
         let users: json = data["users"];
         let alice: json = users[0];
         let name: string = alice["name"].as_string();
@@ -349,7 +349,7 @@ fn test_typeof_filter_numbers() {
     let code = r##"
         // Test JSON number extraction and type checking
         let jsonStr: string = "[1, 2, 3]";
-        let arr: json = parseJSON(jsonStr);
+        let arr: json = parseJSON(jsonStr)?;
 
         // Extract numbers and verify
         let item0: number = arr[0].as_number();
@@ -364,7 +364,7 @@ fn test_typeof_filter_numbers() {
 #[test]
 fn test_json_to_string_concatenation() {
     let code = r##"
-        let obj: json = parseJSON("{\"name\": \"Atlas\", \"version\": 1}");
+        let obj: json = parseJSON("{\"name\": \"Atlas\", \"version\": 1}")?;
         let name: string = obj["name"].as_string();
         let version: number = obj["version"].as_number();
         name + " v" + toString(version)
@@ -375,7 +375,7 @@ fn test_json_to_string_concatenation() {
 #[test]
 fn test_json_array_length_type_check() {
     let code = r#"
-        let arr: json = parseJSON("[10, 20, 30]");
+        let arr: json = parseJSON("[10, 20, 30]")?;
         // JSON arrays don't have len() directly, need to extract values
         let item0: number = arr[0].as_number();
         let item1: number = arr[1].as_number();
@@ -400,7 +400,7 @@ fn test_prettify_minify_roundtrip() {
 #[test]
 fn test_json_nested_extraction() {
     let code = r##"
-        let json: json = parseJSON("{\"user\":{\"profile\":{\"age\":25}}}");
+        let json: json = parseJSON("{\"user\":{\"profile\":{\"age\":25}}}")?;
         let user: json = json["user"];
         let profile: json = user["profile"];
         let age: number = profile["age"].as_number();
@@ -414,8 +414,8 @@ fn test_parse_float_parse_int_json_mix() {
     let code = r#"
         let floatStr: string = "42.5";
         let intStr: string = "42";
-        let asFloat: number = parseFloat(floatStr);
-        let asInt: number = parseInt(intStr, 10);
+        let asFloat: number = parseFloat(floatStr)?;
+        let asInt: number = parseInt(intStr, 10)?;
         asFloat - asInt
     "#;
     assert_eval_number(code, 0.5);
@@ -424,7 +424,7 @@ fn test_parse_float_parse_int_json_mix() {
 #[test]
 fn test_to_bool_json_boolean() {
     let code = r##"
-        let json: json = parseJSON("{\"active\": true, \"deleted\": false}");
+        let json: json = parseJSON("{\"active\": true, \"deleted\": false}")?;
         let active: bool = json["active"].as_bool();
         let deleted: bool = json["deleted"].as_bool();
         active && !deleted
@@ -435,9 +435,9 @@ fn test_to_bool_json_boolean() {
 #[test]
 fn test_to_json_parse_roundtrip() {
     let code = r##"
-        let original: json = parseJSON("{\"x\": 10}");
+        let original: json = parseJSON("{\"x\": 10}")?;
         let serialized: string = toJSON(original);
-        let parsed: json = parseJSON(serialized);
+        let parsed: json = parseJSON(serialized)?;
         let x: number = parsed["x"].as_number();
         x
     "##;
@@ -494,7 +494,7 @@ fn test_csv_to_json_transformation() {
 
         // Build JSON manually (since we don't have object literals yet)
         let json1: string = "{\"name\":\"" + name1 + "\",\"age\":" + age1 + "}";
-        let parsed: json = parseJSON(json1);
+        let parsed: json = parseJSON(json1)?;
         let extractedName: string = parsed["name"].as_string();
 
         extractedName
@@ -550,11 +550,12 @@ fn test_validation_and_transformation() {
         }
 
         fn extractDomain(email: string) -> string {
-            let atIndex: number = indexOf(email, "@");
-            if (atIndex == -1) {
+            let atIdx = indexOf(email, "@");
+            if (is_none(atIdx)) {
                 return "";
             }
-            return substring(email, toNumber(toString(atIndex)) + 1, len(email));
+            let atIndex: number = unwrap(atIdx);
+            return substring(email, atIndex + 1, len(email));
         }
 
         let emails: string[] = [
@@ -601,7 +602,7 @@ fn test_text_formatting_pipeline() {
             if (len(word) == 0) {
                 return word;
             }
-            let first: string = charAt(word, 0);
+            let first: string = unwrap(charAt(word, 0));
             let rest: string = substring(word, 1, len(word));
             return toUpperCase(first) + toLowerCase(rest);
         }
@@ -656,12 +657,12 @@ fn test_url_parsing_pipeline() {
         let url: string = "https://api.example.com/v1/users?page=2&limit=10";
 
         // Extract protocol
-        let protocolEnd: number = indexOf(url, "://");
-        let protocol: string = substring(url, 0, toNumber(toString(protocolEnd)));
+        let protocolEnd: number = unwrap(indexOf(url, "://"));
+        let protocol: string = substring(url, 0, protocolEnd);
 
         // Extract query string
-        let queryStart: number = indexOf(url, "?");
-        let query: string = substring(url, toNumber(toString(queryStart)) + 1, len(url));
+        let queryStart: number = unwrap(indexOf(url, "?"));
+        let query: string = substring(url, queryStart + 1, len(url));
 
         // Parse query params
         let params: string[] = split(query, "&");
@@ -838,7 +839,7 @@ fn test_trim_all_in_array() {
 fn test_char_at_map() {
     let code = r#"
         fn firstChar(s: string) -> string {
-            return charAt(s, 0);
+            return unwrap(charAt(s, 0));
         }
 
         let words: string[] = ["apple", "banana", "cherry"];
@@ -884,7 +885,7 @@ fn test_ends_with_filter() {
 fn test_index_of_map_to_numbers() {
     let code = r#"
         fn findComma(s: string) -> number {
-            return indexOf(s, ",");
+            return unwrap_or(indexOf(s, ","), -1);
         }
 
         let strings: string[] = ["a,b", "x,y,z", "no comma"];
@@ -898,7 +899,7 @@ fn test_index_of_map_to_numbers() {
 fn test_last_index_of_in_array() {
     let code = r#"
         let items: string[] = ["a", "b", "c", "b", "d"];
-        arrayLastIndexOf(items, "b")
+        unwrap(arrayLastIndexOf(items, "b"))
     "#;
     assert_eval_number(code, 3.0);
 }
@@ -1103,7 +1104,7 @@ fn test_max_of_array_manual() {
 fn test_sqrt_then_round() {
     let code = r#"
         fn sqrtNum(n: number) -> number {
-            return sqrt(n);
+            return unwrap(sqrt(n));
         }
         fn roundNum(n: number) -> number {
             return round(n);
@@ -1135,7 +1136,7 @@ fn test_sign_map_to_direction() {
 fn test_clamp_array_values() {
     let code = r#"
         fn clampTo10(n: number) -> number {
-            return clamp(n, 0, 10);
+            return unwrap(clamp(n, 0, 10));
         }
 
         let numbers: number[] = [-5, 5, 15, 20, 8];
@@ -1191,7 +1192,7 @@ fn test_pow_map_exponents() {
 fn test_log_then_floor() {
     let code = r#"
         fn logNum(n: number) -> number {
-            return log(n);
+            return unwrap(log(n));
         }
         fn floorNum(n: number) -> number {
             return floor(n);
@@ -1287,7 +1288,7 @@ fn test_find_first_match() {
         }
 
         let numbers: number[] = [5, 8, 12, 15, 20];
-        let found: number = find(numbers, greaterThan10);
+        let found: number = find(numbers, greaterThan10)?;
         found
     "#;
     assert_eval_number(code, 12.0);
@@ -1301,7 +1302,7 @@ fn test_find_first_match() {
 fn test_parse_json_array_extract_double() {
     let code = r##"
         let jsonStr: string = "[1, 2, 3]";
-        let arr: json = parseJSON(jsonStr);
+        let arr: json = parseJSON(jsonStr)?;
         let n1: number = arr[0].as_number() * 2;
         let n2: number = arr[1].as_number() * 2;
         let n3: number = arr[2].as_number() * 2;
@@ -1356,7 +1357,7 @@ fn test_type_check_strings_only() {
 #[test]
 fn test_json_object_to_json_string() {
     let code = r##"
-        let obj: json = parseJSON("{\"name\":\"Alice\",\"age\":30}");
+        let obj: json = parseJSON("{\"name\":\"Alice\",\"age\":30}")?;
         let jsonString: string = toJSON(obj);
         includes(jsonString, "Alice")
     "##;
@@ -1381,7 +1382,7 @@ fn test_is_valid_json_with_map() {
 fn test_parse_json_numbers_sum() {
     let code = r##"
         let jsonStr: string = "[10, 20, 30, 40]";
-        let arr: json = parseJSON(jsonStr);
+        let arr: json = parseJSON(jsonStr)?;
         let sum: number = arr[0].as_number() + arr[1].as_number() + arr[2].as_number() + arr[3].as_number();
         sum
     "##;
@@ -1406,7 +1407,7 @@ fn test_to_string_numbers() {
 fn test_to_number_parse_strings() {
     let code = r#"
         fn toNum(s: string) -> number {
-            return toNumber(s);
+            return toNumber(s)?;
         }
 
         let strings: string[] = ["1", "2", "3"];
@@ -1419,8 +1420,8 @@ fn test_to_number_parse_strings() {
 #[test]
 fn test_parse_int_parse_float_comparison() {
     let code = r#"
-        let intVal: number = toNumber("42");
-        let floatVal: number = toNumber("42.7");
+        let intVal: number = toNumber("42")?;
+        let floatVal: number = toNumber("42.7")?;
         intVal + floatVal
     "#;
     assert_eval_number(code, 84.7);
@@ -1495,7 +1496,7 @@ fn test_prettify_json_then_minify() {
 fn test_json_array_of_objects_to_strings() {
     let code = r##"
         let jsonStr: string = "[{\"a\":1},{\"b\":2}]";
-        let arr: json = parseJSON(jsonStr);
+        let arr: json = parseJSON(jsonStr)?;
         let str1: string = toJSON(arr[0]);
         let str2: string = toJSON(arr[1]);
         includes(str1, "a") && includes(str2, "b")
@@ -1519,7 +1520,7 @@ fn test_type_checking_pipeline() {
 fn test_parse_json_nested_array() {
     let code = r##"
         let jsonStr: string = "[[1,2],[3,4]]";
-        let nested: json = parseJSON(jsonStr);
+        let nested: json = parseJSON(jsonStr)?;
         let n1: number = nested[0][0].as_number();
         let n2: number = nested[0][1].as_number();
         let n3: number = nested[1][0].as_number();
@@ -1538,7 +1539,7 @@ fn test_json_roundtrip_with_extraction() {
 
         let original: number[] = [-1, 2, -3, 4, 5];
         let jsonStr: string = toJSON(original);
-        let parsed: json = parseJSON(jsonStr);
+        let parsed: json = parseJSON(jsonStr)?;
         // Extract and filter manually
         let values: number[] = [];
         // Check each value (json arrays don't support map directly)
@@ -1562,7 +1563,7 @@ fn test_write_json_read_parse() {
         writeFile("{path}", jsonStr);
 
         let content: string = readFile("{path}");
-        let parsed: json = parseJSON(content);
+        let parsed: json = parseJSON(content)?;
         parsed[0].as_number() + parsed[4].as_number()
     "##
     );
@@ -1574,12 +1575,12 @@ fn test_json_file_roundtrip() {
     let (_temp, path) = temp_file_path("test_json2.json");
     let code = format!(
         r##"
-        let obj: json = parseJSON("{{\"name\":\"Atlas\",\"version\":2}}");
+        let obj: json = parseJSON("{{\"name\":\"Atlas\",\"version\":2}}")?;
         let jsonStr: string = toJSON(obj);
         writeFile("{path}", jsonStr);
 
         let loaded: string = readFile("{path}");
-        let reparsed: json = parseJSON(loaded);
+        let reparsed: json = parseJSON(loaded)?;
         reparsed["version"].as_number()
     "##
     );
@@ -1628,8 +1629,8 @@ fn test_append_json_array_elements() {
 
         let content: string = readFile("{path}");
         let lines: string[] = split(content, "\n");
-        let arr1: json = parseJSON(lines[0]);
-        let arr2: json = parseJSON(lines[1]);
+        let arr1: json = parseJSON(lines[0])?;
+        let arr2: json = parseJSON(lines[1])?;
         arr1[0].as_number() + arr2[2].as_number()
     "##
     );
@@ -1642,7 +1643,7 @@ fn test_json_array_to_file_lines() {
     let code = format!(
         r#"
         fn toNum(s: string) -> number {{
-            return toNumber(s);
+            return toNumber(s)?;
         }}
 
         let numbers: number[] = [10, 20, 30];
@@ -1650,7 +1651,7 @@ fn test_json_array_to_file_lines() {
         writeFile("{path}", jsonStr);
 
         let content: string = readFile("{path}");
-        let parsed: json = parseJSON(content);
+        let parsed: json = parseJSON(content)?;
         parsed[1].as_number()
     "#
     );
@@ -1668,8 +1669,8 @@ fn test_multiple_json_files_sum() {
 
         let content1: string = readFile("{path1}");
         let content2: string = readFile("{path2}");
-        let arr1: json = parseJSON(content1);
-        let arr2: json = parseJSON(content2);
+        let arr1: json = parseJSON(content1)?;
+        let arr2: json = parseJSON(content2)?;
         arr1[0].as_number() + arr2[0].as_number()
     "##
     );
@@ -1703,7 +1704,7 @@ fn test_read_json_check_type() {
         writeFile("{path}", "{{\"count\":42}}");
 
         let content: string = readFile("{path}");
-        let obj: json = parseJSON(content);
+        let obj: json = parseJSON(content)?;
         let count: number = obj["count"].as_number();
         isNumber(count)
     "##
@@ -1721,7 +1722,7 @@ fn test_json_array_length_via_file() {
         writeFile("{path}", jsonStr);
 
         let content: string = readFile("{path}");
-        let parsed: json = parseJSON(content);
+        let parsed: json = parseJSON(content)?;
         // Extract last element to check array size
         parsed[9].as_number()
     "##
@@ -1734,7 +1735,7 @@ fn test_conditional_file_write_json() {
     let (_temp, path) = temp_file_path("test_json11.json");
     let code = format!(
         r##"
-        let data: json = parseJSON("{{\"enabled\":true}}");
+        let data: json = parseJSON("{{\"enabled\":true}}")?;
         let enabled: bool = data["enabled"].as_bool();
 
         if (enabled) {{
@@ -1774,7 +1775,7 @@ fn test_json_parse_file_nested_access() {
         writeFile("{path}", "{{\"user\":{{\"name\":\"Alice\",\"age\":30}}}}");
 
         let content: string = readFile("{path}");
-        let obj: json = parseJSON(content);
+        let obj: json = parseJSON(content)?;
         let user: json = obj["user"];
         let name: string = user["name"].as_string();
         name
@@ -1793,7 +1794,7 @@ fn test_file_to_json_to_string_array() {
         writeFile("{path}", jsonStr);
 
         let content: string = readFile("{path}");
-        let parsed: json = parseJSON(content);
+        let parsed: json = parseJSON(content)?;
         let first: string = parsed[0].as_string();
         let last: string = parsed[2].as_string();
         first + "," + last
@@ -1810,7 +1811,7 @@ fn test_json_number_extraction_math() {
         writeFile("{path}", "[5,10,15]");
 
         let content: string = readFile("{path}");
-        let arr: json = parseJSON(content);
+        let arr: json = parseJSON(content)?;
         let sum: number = arr[0].as_number() + arr[1].as_number() + arr[2].as_number();
         sum / 3
     "##
@@ -1826,7 +1827,7 @@ fn test_write_read_bool_json() {
         writeFile("{path}", "{{\"active\":true,\"enabled\":false}}");
 
         let content: string = readFile("{path}");
-        let obj: json = parseJSON(content);
+        let obj: json = parseJSON(content)?;
         let active: bool = obj["active"].as_bool();
         let enabled: bool = obj["enabled"].as_bool();
         active && !enabled
@@ -1843,9 +1844,9 @@ fn test_json_file_type_conversion() {
         writeFile("{path}", "{{\"count\":\"42\"}}");
 
         let content: string = readFile("{path}");
-        let obj: json = parseJSON(content);
+        let obj: json = parseJSON(content)?;
         let countStr: string = obj["count"].as_string();
-        let countNum: number = toNumber(countStr);
+        let countNum: number = toNumber(countStr)?;
         countNum * 2
     "##
     );
@@ -1874,7 +1875,7 @@ fn test_json_null_in_file() {
         writeFile("{path}", "{{\"value\":null}}");
 
         let content: string = readFile("{path}");
-        let obj: json = parseJSON(content);
+        let obj: json = parseJSON(content)?;
         let val: json = obj["value"];
         val.is_null()
     "##
@@ -1892,7 +1893,7 @@ fn test_large_json_array_file() {
         writeFile("{path}", jsonStr);
 
         let content: string = readFile("{path}");
-        let parsed: json = parseJSON(content);
+        let parsed: json = parseJSON(content)?;
         let first: number = parsed[0].as_number();
         let last: number = parsed[19].as_number();
         first + last

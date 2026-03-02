@@ -39,8 +39,14 @@ fn test_set_get_env() {
     "#;
     let result = eval_ok(code);
     match result {
-        Value::String(s) => assert_eq!(&*s, "test_value"),
-        other => panic!("Expected String, got {:?}", other),
+        Value::Option(Some(inner)) => match *inner {
+            Value::String(s) => assert_eq!(&*s, "test_value"),
+            other => panic!(
+                "Expected Option(Some(String)), got Option(Some({:?}))",
+                other
+            ),
+        },
+        other => panic!("Expected Option(Some(String(...))), got {:?}", other),
     }
 }
 
@@ -48,7 +54,7 @@ fn test_set_get_env() {
 fn test_get_env_nonexistent() {
     let code = r#"getEnv("NONEXISTENT_VAR_ATLAS_12345")"#;
     let result = eval_ok(code);
-    assert!(matches!(result, Value::Null));
+    assert!(matches!(result, Value::Option(None)));
 }
 
 #[test]
@@ -59,7 +65,7 @@ fn test_unset_env() {
         getEnv("TEST_VAR_UNSET")
     "#;
     let result = eval_ok(code);
-    assert!(matches!(result, Value::Null));
+    assert!(matches!(result, Value::Option(None)));
 }
 
 #[test]

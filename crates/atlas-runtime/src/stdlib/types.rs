@@ -512,28 +512,31 @@ pub fn to_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     match &args[0] {
-        Value::Number(n) => Ok(Value::Number(*n)),
-        Value::Bool(b) => Ok(Value::Number(if *b { 1.0 } else { 0.0 })),
+        Value::Number(n) => Ok(Value::Result(Ok(Box::new(Value::Number(*n))))),
+        Value::Bool(b) => Ok(Value::Result(Ok(Box::new(Value::Number(if *b {
+            1.0
+        } else {
+            0.0
+        }))))),
         Value::String(s) => {
             let trimmed = s.trim();
             if trimmed.is_empty() {
-                return Err(RuntimeError::TypeError {
-                    msg: "Cannot convert empty string to number".to_string(),
-                    span,
-                });
+                return Ok(Value::Result(Err(Box::new(Value::string(
+                    "Cannot convert empty string to number",
+                )))));
             }
-            trimmed
-                .parse::<f64>()
-                .map(Value::Number)
-                .map_err(|_| RuntimeError::TypeError {
-                    msg: format!("Cannot convert '{}' to number", s),
-                    span,
-                })
+            match trimmed.parse::<f64>() {
+                Ok(n) => Ok(Value::Result(Ok(Box::new(Value::Number(n))))),
+                Err(_) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+                    "Cannot convert '{}' to number",
+                    s
+                )))))),
+            }
         }
-        _ => Err(RuntimeError::TypeError {
-            msg: format!("Cannot convert {} to number", type_name(&args[0])),
-            span,
-        }),
+        _ => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Cannot convert {} to number",
+            type_name(&args[0])
+        )))))),
     }
 }
 
@@ -605,10 +608,9 @@ pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let radix = match &args[1] {
         Value::Number(n) => {
             if n.fract() != 0.0 || *n < 2.0 || *n > 36.0 {
-                return Err(RuntimeError::TypeError {
-                    msg: "parseInt() radix must be integer between 2 and 36".to_string(),
-                    span,
-                });
+                return Ok(Value::Result(Err(Box::new(Value::string(
+                    "parseInt() radix must be integer between 2 and 36",
+                )))));
             }
             *n as u32
         }
@@ -622,10 +624,9 @@ pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let trimmed = string.trim();
     if trimmed.is_empty() {
-        return Err(RuntimeError::TypeError {
-            msg: "Cannot parse empty string as integer".to_string(),
-            span,
-        });
+        return Ok(Value::Result(Err(Box::new(Value::string(
+            "Cannot parse empty string as integer",
+        )))));
     }
 
     // Handle sign
@@ -638,19 +639,22 @@ pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     };
 
     if digits.is_empty() {
-        return Err(RuntimeError::TypeError {
-            msg: format!("Invalid integer for radix {}", radix),
-            span,
-        });
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Invalid integer for radix {}",
+            radix
+        ))))));
     }
 
     // Parse with radix
-    let parsed = i64::from_str_radix(digits, radix).map_err(|_| RuntimeError::TypeError {
-        msg: format!("Invalid integer '{}' for radix {}", string, radix),
-        span,
-    })?;
-
-    Ok(Value::Number(sign * parsed as f64))
+    match i64::from_str_radix(digits, radix) {
+        Ok(parsed) => Ok(Value::Result(Ok(Box::new(Value::Number(
+            sign * parsed as f64,
+        ))))),
+        Err(_) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Invalid integer '{}' for radix {}",
+            string, radix
+        )))))),
+    }
 }
 
 /// Parse string as floating-point number
@@ -675,19 +679,18 @@ pub fn parse_float(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let trimmed = string.trim();
     if trimmed.is_empty() {
-        return Err(RuntimeError::TypeError {
-            msg: "Cannot parse empty string as float".to_string(),
-            span,
-        });
+        return Ok(Value::Result(Err(Box::new(Value::string(
+            "Cannot parse empty string as float",
+        )))));
     }
 
-    trimmed
-        .parse::<f64>()
-        .map(Value::Number)
-        .map_err(|_| RuntimeError::TypeError {
-            msg: format!("Cannot parse '{}' as float", string),
-            span,
-        })
+    match trimmed.parse::<f64>() {
+        Ok(n) => Ok(Value::Result(Ok(Box::new(Value::Number(n))))),
+        Err(_) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Cannot parse '{}' as float",
+            string
+        )))))),
+    }
 }
 
 // ============================================================================

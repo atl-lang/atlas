@@ -1630,7 +1630,7 @@ fn test_hof_find_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4];
-find(arr, fn(x: number) -> bool { return x == 3; });
+find(arr, fn(x: number) -> bool { return x == 3; })?;
 "#,
         3.0,
     );
@@ -1641,7 +1641,7 @@ fn test_hof_find_arrow() {
     assert_parity_number(
         r#"
 let arr = [10, 20, 30];
-find(arr, (x) => x == 20);
+find(arr, (x) => x == 20)?;
 "#,
         20.0,
     );

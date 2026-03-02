@@ -1,6 +1,9 @@
 // Documentation Verification Tests (Polish Phase 03)
 use super::*;
-use common::{assert_eval_bool, assert_eval_number, assert_eval_string};
+use common::{
+    assert_eval_bool, assert_eval_number, assert_eval_option_none, assert_eval_option_some_number,
+    assert_eval_option_some_string, assert_eval_result_ok_number, assert_eval_string,
+};
 
 // --- Core functions ---
 
@@ -56,7 +59,7 @@ fn docs_typeof_array() {
 
 #[test]
 fn docs_to_number_string() {
-    assert_eval_number(r#"toNumber("42")"#, 42.0);
+    assert_eval_result_ok_number(r#"toNumber("42")"#, 42.0);
 }
 
 #[test]
@@ -139,12 +142,12 @@ fn docs_includes_false() {
 
 #[test]
 fn docs_index_of_found() {
-    assert_eval_number(r#"indexOf("hello", "ll")"#, 2.0);
+    assert_eval_option_some_number(r#"indexOf("hello", "ll")"#, 2.0);
 }
 
 #[test]
 fn docs_index_of_not_found() {
-    assert_eval_number(r#"indexOf("hello", "xyz")"#, -1.0);
+    assert_eval_option_none(r#"indexOf("hello", "xyz")"#);
 }
 
 #[test]
@@ -169,7 +172,7 @@ fn docs_substring() {
 
 #[test]
 fn docs_char_at() {
-    assert_eval_string(r#"charAt("hello", 0)"#, "h");
+    assert_eval_option_some_string(r#"charAt("hello", 0)"#, "h");
 }
 
 #[test]
@@ -229,7 +232,7 @@ fn docs_array_includes_false() {
 
 #[test]
 fn docs_array_index_of() {
-    assert_eval_number(r#"arrayIndexOf([10, 20, 30], 20)"#, 1.0);
+    assert_eval_option_some_number(r#"arrayIndexOf([10, 20, 30], 20)"#, 1.0);
 }
 
 // --- Math functions ---
@@ -251,7 +254,7 @@ fn docs_ceil() {
 
 #[test]
 fn docs_sqrt() {
-    assert_eval_number(r#"sqrt(9)"#, 3.0);
+    assert_eval_result_ok_number(r#"sqrt(9)"#, 3.0);
 }
 
 #[test]
@@ -271,17 +274,17 @@ fn docs_min() {
 
 #[test]
 fn docs_clamp_in_range() {
-    assert_eval_number(r#"clamp(5, 0, 10)"#, 5.0);
+    assert_eval_result_ok_number(r#"clamp(5, 0, 10)"#, 5.0);
 }
 
 #[test]
 fn docs_clamp_below() {
-    assert_eval_number(r#"clamp(-3, 0, 10)"#, 0.0);
+    assert_eval_result_ok_number(r#"clamp(-3, 0, 10)"#, 0.0);
 }
 
 #[test]
 fn docs_clamp_above() {
-    assert_eval_number(r#"clamp(15, 0, 10)"#, 10.0);
+    assert_eval_result_ok_number(r#"clamp(15, 0, 10)"#, 10.0);
 }
 
 #[test]
@@ -344,7 +347,7 @@ fn docs_parse_json_object() {
     assert_eval_bool(
         r#"
         let json_str = "[1, 2, 3]";
-        let arr: json = parseJSON(json_str);
+        let arr: json = parseJSON(json_str)?;
         jsonAsNumber(arr[0]) == 1
         "#,
         true,
@@ -368,12 +371,12 @@ fn docs_is_valid_json_false() {
 
 #[test]
 fn docs_json_as_number() {
-    assert_eval_number(r#"jsonAsNumber(parseJSON("42"))"#, 42.0);
+    assert_eval_number(r#"jsonAsNumber(parseJSON("42")?)"#, 42.0);
 }
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"jsonIsNull(parseJSON("null"))"#, true);
+    assert_eval_bool(r#"jsonIsNull(parseJSON("null")?)"#, true);
 }
 
 // --- Result / Option functions ---

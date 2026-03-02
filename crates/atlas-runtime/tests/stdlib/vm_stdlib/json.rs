@@ -14,7 +14,7 @@ use super::*;
 #[test]
 fn test_parse_json_null() {
     let code = r#"
-    let result: json = parseJSON("null");
+    let result: json = unwrap(parseJSON("null"));
     typeof(result)
 "#;
     assert_eval_string(code, "json");
@@ -23,103 +23,103 @@ fn test_parse_json_null() {
 #[test]
 fn test_parse_json_boolean_true() {
     // Should return JsonValue, test via typeof
-    let code = r#"typeof(parseJSON("true"))"#;
+    let code = r#"typeof(unwrap(parseJSON("true")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_boolean_false() {
-    let code = r#"typeof(parseJSON("false"))"#;
+    let code = r#"typeof(unwrap(parseJSON("false")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_number() {
-    let code = r#"typeof(parseJSON("42"))"#;
+    let code = r#"typeof(unwrap(parseJSON("42")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_number_float() {
-    let code = r#"typeof(parseJSON("3.14"))"#;
+    let code = r#"typeof(unwrap(parseJSON("3.14")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_number_negative() {
-    let code = r#"typeof(parseJSON("-123"))"#;
+    let code = r#"typeof(unwrap(parseJSON("-123")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_string() {
-    let code = r#"typeof(parseJSON("\"hello\""))"#;
+    let code = r#"typeof(unwrap(parseJSON("\"hello\"")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_empty_string() {
-    let code = r#"typeof(parseJSON("\"\""))"#;
+    let code = r#"typeof(unwrap(parseJSON("\"\"")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_array_empty() {
-    let code = r#"typeof(parseJSON("[]"))"#;
+    let code = r#"typeof(unwrap(parseJSON("[]")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_array_numbers() {
-    let code = r#"typeof(parseJSON("[1,2,3]"))"#;
+    let code = r#"typeof(unwrap(parseJSON("[1,2,3]")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_array_mixed() {
-    let code = r#"typeof(parseJSON("[1,\"two\",true,null]"))"#;
+    let code = r#"typeof(unwrap(parseJSON("[1,\"two\",true,null]")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_array_nested() {
-    let code = r#"typeof(parseJSON("[[1,2],[3,4]]"))"#;
+    let code = r#"typeof(unwrap(parseJSON("[[1,2],[3,4]]")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_object_empty() {
-    let code = r#"typeof(parseJSON("{}"))"#;
+    let code = r#"typeof(unwrap(parseJSON("{}"  )))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_object_simple() {
-    let code = r#"typeof(parseJSON("{\"name\":\"Alice\",\"age\":30}"))"#;
+    let code = r#"typeof(unwrap(parseJSON("{\"name\":\"Alice\",\"age\":30}")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_object_nested() {
-    let code = r#"typeof(parseJSON("{\"user\":{\"name\":\"Bob\"}}"))"#;
+    let code = r#"typeof(unwrap(parseJSON("{\"user\":{\"name\":\"Bob\"}}")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_object_with_array() {
-    let code = r#"typeof(parseJSON("{\"items\":[1,2,3]}"))"#;
+    let code = r#"typeof(unwrap(parseJSON("{\"items\":[1,2,3]}")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_whitespace() {
-    let code = r#"typeof(parseJSON("  { \"a\" : 1 }  "))"#;
+    let code = r#"typeof(unwrap(parseJSON("  { \"a\" : 1 }  ")))"#;
     assert_eval_string(code, "json");
 }
 
 #[test]
 fn test_parse_json_unicode() {
-    let code = r#"typeof(parseJSON("{\"emoji\":\"🎉\"}"))"#;
+    let code = r#"typeof(unwrap(parseJSON("{\"emoji\":\"🎉\"}")))"#;
     assert_eval_string(code, "json");
 }
 
@@ -130,25 +130,25 @@ fn test_parse_json_unicode() {
 #[test]
 fn test_parse_json_invalid_syntax() {
     let code = r#"parseJSON("{invalid}")"#;
-    assert_has_error(code);
+    assert_eval_result_err(code);
 }
 
 #[test]
 fn test_parse_json_trailing_comma() {
     let code = r#"parseJSON("[1,2,]")"#;
-    assert_has_error(code);
+    assert_eval_result_err(code);
 }
 
 #[test]
 fn test_parse_json_single_quote() {
     let code = r#"parseJSON("{'key':'value'}")"#;
-    assert_has_error(code);
+    assert_eval_result_err(code);
 }
 
 #[test]
 fn test_parse_json_unquoted_keys() {
     let code = r#"parseJSON("{key:\"value\"}")"#;
-    assert_has_error(code);
+    assert_eval_result_err(code);
 }
 
 #[test]
@@ -485,7 +485,7 @@ fn test_minify_json_wrong_type() {
 fn test_parse_then_serialize() {
     let code = r#"
     let original: string = "{\"name\":\"Alice\",\"age\":30}";
-    let parsed: json = parseJSON(original);
+    let parsed: json = unwrap(parseJSON(original));
     let serialized: string = toJSON(parsed);
     typeof(serialized)
 "#;
@@ -508,7 +508,7 @@ fn test_validate_before_parse() {
     let code = r#"
     let json_str: string = "{\"valid\":true}";
     let valid: bool = isValidJSON(json_str);
-    let parsed: json = parseJSON(json_str);
+    let parsed: json = unwrap(parseJSON(json_str));
     valid && typeof(parsed) == "json"
 "#;
     assert_eval_bool(code, true);

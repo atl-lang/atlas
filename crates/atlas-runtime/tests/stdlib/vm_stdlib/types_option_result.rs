@@ -18,7 +18,7 @@ fn test_type_conversion_chain() {
     let code = r#"
     let num: number = 42;
     let numStr: string = toString(num);
-    toNumber(numStr)
+    unwrap(toNumber(numStr))
 "#;
     assert_eval_number(code, 42.0);
 }
@@ -26,7 +26,7 @@ fn test_type_conversion_chain() {
 #[test]
 fn test_parse_int_then_to_string() {
     let code = r#"
-    let parsed: number = parseInt("FF", 16);
+    let parsed: number = unwrap(parseInt("FF", 16));
     toString(parsed)
 "#;
     assert_eval_string(code, "255");

@@ -1072,7 +1072,7 @@ impl Interpreter {
         for elem in arr {
             let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(elem),
+                Value::Bool(true) => return Ok(Value::Option(Some(Box::new(elem)))),
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1083,7 +1083,7 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::Null)
+        Ok(Value::Option(None))
     }
 
     /// findIndex(array, predicate) - Find index of first matching element
@@ -1125,7 +1125,9 @@ impl Interpreter {
         for (i, elem) in arr.iter().enumerate() {
             let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(Value::Number(i as f64)),
+                Value::Bool(true) => {
+                    return Ok(Value::Option(Some(Box::new(Value::Number(i as f64)))))
+                }
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1136,7 +1138,7 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::Number(-1.0))
+        Ok(Value::Option(None))
     }
 
     /// flatMap(array, callback) - Map and flatten one level

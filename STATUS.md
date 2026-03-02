@@ -1,8 +1,8 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-03-02 (Block 6 Phases 01-03, 05 complete)
+**Last Updated:** 2026-03-02 (Block 6 COMPLETE)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅ | v0.3 Block 6 COMPLETE ✅
 
 ---
 
@@ -16,9 +16,9 @@
 
 ## Current State
 
-**Status:** Block 6 (Error Handling) IN PROGRESS — 4/5 phases complete
-**Last Completed:** Block 6 Phase 05 — integration tests + binary expression bug fix, 8,285 tests passing
-**Next:** Block 6 Phase 04 — Stdlib Result audit (≥20 functions → Result/Option)
+**Status:** Block 6 (Error Handling) COMPLETE — 5/5 phases
+**Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
+**Next:** Block 7 — JIT Integration (scaffold)
 
 **IMPORTANT BEFORE CONTINUING:** `docs/codex-findings/important-before-continuing.md`
 
@@ -34,7 +34,7 @@
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
 | 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-27) |
 | ts | Test File Decomposition (maintenance) | 8 | ⏸️ PAUSED (13/20 files split) — see `TEST-SPLIT-TRACKING.md` |
-| 6 | Error Handling (`?` operator) | 5 | 🔨 4/5 phases (2026-03-02) |
+| 6 | Error Handling (`?` operator) | 5 | ✅ Complete (2026-03-02) |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
 | 9 | Quick Wins (string interp, implicit returns) | 5–10 | ⬜ Unblocked — ready to scaffold |
@@ -129,6 +129,23 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Collect_return_types fix | Removed has_implicit_void — AT3004 handles void-path detection, not inference |
 | Spec updated | docs/specification/syntax.md: Type Inference section added |
 | Clippy | 0 warnings (-D warnings) |
+| Fmt | Clean |
+| Acceptance criteria | **5/5** |
+
+---
+
+## Block 6 Completion Metrics
+
+| Metric | Value |
+|--------|-------|
+| Phases | 5/5 |
+| Tests at completion | **8,285** (workspace) |
+| Test failures | 0 |
+| Stdlib functions converted | 21+ (indexOf, lastIndexOf, arrayIndexOf, arrayLastIndexOf, charAt, find, findIndex, getEnv → Option; toNumber, parseInt, parseFloat, parseJSON, sqrt, log, asin, acos, clamp → Result) |
+| Internal unwrap fixes | 4 (toJSON serde, 3x fs.rs SystemTime) |
+| Top-level `?` support | Added (typechecker + both engines) |
+| Parity tests | Existing + updated (zero divergence) |
+| Clippy | 0 warnings |
 | Fmt | Clean |
 | Acceptance criteria | **5/5** |
 

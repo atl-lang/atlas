@@ -317,56 +317,56 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 #[rstest]
 #[case(
     r#"
-    let obj = parseJSON("{\"tag\":\"ok\", \"value\": 1}");
+    let obj = unwrap(parseJSON("{\"tag\":\"ok\", \"value\": 1}"));
     hasTag(obj, "ok")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"tag\":\"bad\", \"value\": 1}");
+    let obj = unwrap(parseJSON("{\"tag\":\"bad\", \"value\": 1}"));
     hasTag(obj, "ok")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     hasField(obj, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     hasField(obj, "missing")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     hasMethod(obj, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     hasMethod(obj, "missing")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     isObject(obj)
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = parseJSON("{\"name\":\"atlas\"}");
+    let obj = unwrap(parseJSON("{\"name\":\"atlas\"}"));
     isType(obj, "object")
     "#,
     Value::Bool(true)

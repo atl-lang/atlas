@@ -200,6 +200,8 @@ fn run_vm(source: &str) -> Result<String, String> {
 // Domain submodules (files live in tests/vm/)
 #[path = "vm/complex_programs.rs"]
 mod vm_complex_programs;
+#[path = "vm/error_handling.rs"]
+mod vm_error_handling;
 #[path = "vm/for_in.rs"]
 mod vm_for_in;
 #[path = "vm/functions.rs"]
@@ -216,5 +218,3 @@ mod vm_opcodes;
 mod vm_performance;
 #[path = "vm/regression.rs"]
 mod vm_regression;
-#[path = "vm/error_handling.rs"]
-mod vm_error_handling;

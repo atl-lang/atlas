@@ -163,10 +163,7 @@ fn test_parity_result_try_err() {
 "#;
     let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
     let interp_result = interp_eval(code);
-    assert_eq!(
-        vm_result, interp_result,
-        "Parity mismatch for Result ? Err"
-    );
+    assert_eq!(vm_result, interp_result, "Parity mismatch for Result ? Err");
 }
 
 // ============================================================================
@@ -346,7 +343,10 @@ fn test_parity_try_multiple_expr() {
 "#;
     let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
     let interp_result = interp_eval(code);
-    assert_eq!(vm_result, interp_result, "Parity mismatch for multiple ? in expression");
+    assert_eq!(
+        vm_result, interp_result,
+        "Parity mismatch for multiple ? in expression"
+    );
 }
 
 #[test]
@@ -361,7 +361,10 @@ fn test_parity_try_first_fails() {
 "#;
     let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
     let interp_result = interp_eval(code);
-    assert_eq!(vm_result, interp_result, "Parity mismatch for first ? fails");
+    assert_eq!(
+        vm_result, interp_result,
+        "Parity mismatch for first ? fails"
+    );
 }
 
 #[test]
@@ -376,7 +379,10 @@ fn test_parity_option_try_multiple_expr() {
 "#;
     let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
     let interp_result = interp_eval(code);
-    assert_eq!(vm_result, interp_result, "Parity mismatch for Option multiple ?");
+    assert_eq!(
+        vm_result, interp_result,
+        "Parity mismatch for Option multiple ?"
+    );
 }
 
 #[test]

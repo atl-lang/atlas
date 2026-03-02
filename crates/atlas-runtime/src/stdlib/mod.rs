@@ -157,7 +157,10 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             }
             let s = extract_string(&args[0], "indexOf", span)?;
             let search = extract_string(&args[1], "indexOf", span)?;
-            Ok(Value::Number(string::index_of(s, search)))
+            match string::index_of(s, search) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
         });
         m.insert("lastIndexOf", |args, span, _, _| {
             if args.len() != 2 {
@@ -165,7 +168,10 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             }
             let s = extract_string(&args[0], "lastIndexOf", span)?;
             let search = extract_string(&args[1], "lastIndexOf", span)?;
-            Ok(Value::Number(string::last_index_of(s, search)))
+            match string::last_index_of(s, search) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
         });
         m.insert("includes", |args, span, _, _| {
             if args.len() != 2 {
@@ -205,8 +211,10 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             }
             let s = extract_string(&args[0], "charAt", span)?;
             let index = extract_number(&args[1], "charAt", span)?;
-            let result = string::char_at(s, index, span)?;
-            Ok(Value::string(result))
+            match string::char_at(s, index, span)? {
+                Some(c) => Ok(Value::Option(Some(Box::new(Value::string(c))))),
+                None => Ok(Value::Option(None)),
+            }
         });
         m.insert("repeat", |args, span, _, _| {
             if args.len() != 2 {
@@ -358,14 +366,20 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
                 return Err(stdlib_arity_error("arrayIndexOf", 2, args.len(), span));
             }
             let arr = extract_array(&args[0], "arrayIndexOf", span)?;
-            Ok(Value::Number(array::index_of(&arr, &args[1])))
+            match array::index_of(&arr, &args[1]) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
         });
         m.insert("arrayLastIndexOf", |args, span, _, _| {
             if args.len() != 2 {
                 return Err(stdlib_arity_error("arrayLastIndexOf", 2, args.len(), span));
             }
             let arr = extract_array(&args[0], "arrayLastIndexOf", span)?;
-            Ok(Value::Number(array::last_index_of(&arr, &args[1])))
+            match array::last_index_of(&arr, &args[1]) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
         });
         m.insert("arrayIncludes", |args, span, _, _| {
             if args.len() != 2 {

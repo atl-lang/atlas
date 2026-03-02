@@ -386,7 +386,10 @@ pub fn tmpfile(span: Span) -> Result<Value, RuntimeError> {
     let temp_dir = env::temp_dir();
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("SystemTime error: {}", e),
+            span,
+        })?
         .as_nanos();
     let filename = format!("atlas_tmp_{}.tmp", timestamp);
     let temp_path = temp_dir.join(filename);
@@ -410,7 +413,10 @@ pub fn tmpdir(span: Span) -> Result<Value, RuntimeError> {
     let temp_dir = env::temp_dir();
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("SystemTime error: {}", e),
+            span,
+        })?
         .as_nanos();
     let dirname = format!("atlas_tmp_dir_{}", timestamp);
     let temp_path = temp_dir.join(dirname);
@@ -434,7 +440,10 @@ pub fn tmpfile_named(prefix: &str, span: Span) -> Result<Value, RuntimeError> {
     let temp_dir = env::temp_dir();
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
-        .unwrap()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("SystemTime error: {}", e),
+            span,
+        })?
         .as_nanos();
     let filename = format!("{}_{}.tmp", prefix, timestamp);
     let temp_path = temp_dir.join(filename);

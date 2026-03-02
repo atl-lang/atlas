@@ -54,7 +54,7 @@ fn test_text_uppercase_words() {
 fn test_text_titlecase() {
     let code = r#"
         fn titleCase(word: string) -> string {
-            let first: string = charAt(word, 0.0);
+            let first: string = unwrap(charAt(word, 0.0));
             let rest: string = substring(word, 1.0, len(word));
             let firstUpper: string = toUpperCase(first);
             let restLower: string = toLowerCase(rest);
@@ -144,7 +144,7 @@ fn test_text_reverse_words() {
 fn test_text_acronym() {
     let code = r#"
         fn firstChar(s: string) -> string {
-            return charAt(s, 0.0);
+            return unwrap(charAt(s, 0.0));
         }
 
         let text: string = "Portable Network Graphics";
@@ -236,8 +236,8 @@ fn test_text_extract_numbers() {
     let code = r#"
         let text: string = "Price: 100 Quantity: 50";
         let words: string[] = split(text, " ");
-        let num1: number = parseFloat(words[1]);
-        let num2: number = parseFloat(words[3]);
+        let num1: number = unwrap(parseFloat(words[1]));
+        let num2: number = unwrap(parseFloat(words[3]));
         num1 + num2
     "#;
     assert_eval_number_with_io(code, 150.0);

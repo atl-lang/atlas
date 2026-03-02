@@ -69,24 +69,24 @@ pub fn trim_end(s: &str) -> String {
 
 /// Find first occurrence index
 ///
-/// Returns -1 if not found, index of first occurrence otherwise.
-pub fn index_of(haystack: &str, needle: &str) -> f64 {
+/// Returns Option: Some(index) if found, None if not found.
+pub fn index_of(haystack: &str, needle: &str) -> Option<f64> {
     if needle.is_empty() {
-        return 0.0; // Empty string is at index 0
+        return Some(0.0); // Empty string is at index 0
     }
 
-    haystack.find(needle).map(|idx| idx as f64).unwrap_or(-1.0)
+    haystack.find(needle).map(|idx| idx as f64)
 }
 
 /// Find last occurrence index
 ///
-/// Returns -1 if not found, index of last occurrence otherwise.
-pub fn last_index_of(haystack: &str, needle: &str) -> f64 {
+/// Returns Option: Some(index) if found, None if not found.
+pub fn last_index_of(haystack: &str, needle: &str) -> Option<f64> {
     if needle.is_empty() {
-        return haystack.len() as f64; // Empty string is at the end
+        return Some(haystack.len() as f64); // Empty string is at the end
     }
 
-    haystack.rfind(needle).map(|idx| idx as f64).unwrap_or(-1.0)
+    haystack.rfind(needle).map(|idx| idx as f64)
 }
 
 /// Check if string contains substring
@@ -147,8 +147,9 @@ pub fn substring(s: &str, start: f64, end: f64, span: Span) -> Result<String, Ru
 
 /// Get character at index (returns grapheme cluster, not byte)
 ///
-/// Returns single character string at the given index.
-pub fn char_at(s: &str, index: f64, span: Span) -> Result<String, RuntimeError> {
+/// Returns Option: Some(char) if index is valid, None if out of bounds.
+/// Returns error only for non-integer index.
+pub fn char_at(s: &str, index: f64, span: Span) -> Result<Option<String>, RuntimeError> {
     // Validate index is integer
     if index.fract() != 0.0 {
         return Err(RuntimeError::TypeError {
@@ -160,10 +161,7 @@ pub fn char_at(s: &str, index: f64, span: Span) -> Result<String, RuntimeError> 
     let idx = index as usize;
 
     // Get character at index
-    s.chars()
-        .nth(idx)
-        .map(|c| c.to_string())
-        .ok_or(RuntimeError::OutOfBounds { span })
+    Ok(s.chars().nth(idx).map(|c| c.to_string()))
 }
 
 /// Repeat string count times

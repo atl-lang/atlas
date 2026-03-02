@@ -132,26 +132,26 @@ pub fn flatten(arr: &[Value], _span: Span) -> Result<Value, RuntimeError> {
 
 /// Find first index of element in array
 ///
-/// Returns index as number, or -1 if not found
-pub fn index_of(arr: &[Value], search: &Value) -> f64 {
+/// Returns Option: Some(index) if found, None if not found
+pub fn index_of(arr: &[Value], search: &Value) -> Option<f64> {
     for (i, elem) in arr.iter().enumerate() {
         if values_equal(elem, search) {
-            return i as f64;
+            return Some(i as f64);
         }
     }
-    -1.0
+    None
 }
 
 /// Find last index of element in array
 ///
-/// Returns index as number, or -1 if not found
-pub fn last_index_of(arr: &[Value], search: &Value) -> f64 {
+/// Returns Option: Some(index) if found, None if not found
+pub fn last_index_of(arr: &[Value], search: &Value) -> Option<f64> {
     for (i, elem) in arr.iter().enumerate().rev() {
         if values_equal(elem, search) {
-            return i as f64;
+            return Some(i as f64);
         }
     }
-    -1.0
+    None
 }
 
 /// Check if array contains element
