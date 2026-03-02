@@ -22,7 +22,8 @@
 
 **Critical gaps:** See `advanced-codex-audit.md` + `docs/codex-findings/important-before-continuing.md`
 **Inline tests:** ~574 to audit post-hardening (deferred - language functionality first)
-**Systems-level conversion (v0.4+):** Blocked until core language meets compiler standards — see `ROADMAP.md` + audit findings
+**Systems-level conversion:** Last block done: Block 5 (Type Inference). PAUSED until hardening complete — core language must work first.
+**Version scope:** v0.3 contains ALL work (features + hardening + systems-level). No v0.4 until compiler is professionally complete.
 
 ---
 
