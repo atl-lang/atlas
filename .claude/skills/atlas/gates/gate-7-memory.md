@@ -22,15 +22,14 @@ If yes → log it. The bar is low. Log it anyway.
 6. **Closed-loop verification — did everything I created actually land?**
    ```bash
    # Rule files referenced in MEMORY.md must exist
-   ls .claude/rules/atlas-architecture.md .claude/rules/atlas-testing.md \
+   ls .claude/lazy/architecture.md .claude/rules/atlas-testing.md \
       .claude/rules/atlas-parity.md 2>&1 | grep "No such file"
    # decisions/workflow.md must exist
-   ls ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/decisions/workflow.md \
-      2>&1 | grep "No such file"
+   ls .claude/memory/decisions/workflow.md 2>&1 | grep "No such file"
    # MEMORY.md within limit
-   wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
+   wc -l .claude/memory/MEMORY.md
    ```
-   Any missing file → create it before committing. MEMORY.md > 50 → split before committing.
+   Any missing file → create it before committing. MEMORY.md > 55 → split before committing.
 7. **Staleness greps:**
    ```bash
    grep -c "pull_request" .github/workflows/ci.yml            # must return ≥1
@@ -76,12 +75,12 @@ If yes → log it. The bar is low. Log it anyway.
 
 **Before committing, run this check:**
 ```bash
-wc -l ~/.claude/projects/*/memory/*.md ~/.claude/projects/*/memory/decisions/*.md 2>/dev/null | grep -v total
+wc -l .claude/memory/*.md .claude/memory/decisions/*.md 2>/dev/null | grep -v total
 ```
 
 | File | Max | If Exceeded → MUST DO |
 |------|-----|----------------------|
-| MEMORY.md | 50 | Split content to topic files |
+| MEMORY.md | 55 | Split content to topic files |
 | patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
 | testing-patterns.md | 300 | Archive old → `archive/YYYY-MM-testing-patterns.md` |
 | decisions/{x}.md | 100 | Split into sub-files |

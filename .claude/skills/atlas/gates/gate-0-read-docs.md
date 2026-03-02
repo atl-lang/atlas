@@ -41,8 +41,8 @@ cargo clean
 
 ### Implementation Patterns (As Needed)
 
-- Codebase patterns: auto-memory `patterns.md`
-- Architectural decisions: auto-memory `decisions/*.md`
+- Codebase patterns: .claude/memory `patterns.md`
+- Architectural decisions: .claude/memory `decisions/*.md`
 
 ---
 
@@ -73,7 +73,7 @@ cargo clean
 2. Does it match spec? (compare to `docs/specification/`)
 3. Is it complete? (check STATUS.md, run tests)
 
-**Before implementing anything:** Search for similar existing code. Follow established patterns. Check auto-memory `decisions/*.md` for constraints.
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `decisions/*.md` for constraints.
 
 **Status per dependency:**
 - ✅ Exists, complete, spec-compliant → Proceed
@@ -90,12 +90,12 @@ cargo clean
 
 **Purpose:** Prevent hallucinated syntax by verifying actual codebase patterns before writing code.
 
-**Registry:** auto-memory `domain-prereqs.md` (Claude auto-memory)
+**Registry:** .claude/memory `domain-prereqs.md` (Claude .claude/memory)
 
 ### Process
 
 1. **Identify domains** touched by phase (AST, stdlib, VM, type system, etc.)
-2. **For EACH domain**, consult auto-memory `domain-prereqs.md`
+2. **For EACH domain**, consult .claude/memory `domain-prereqs.md`
 3. **Run verification queries** listed for that domain
 4. **Note 3-5 patterns** you will use (mentally or in scratch)
 5. **If uncertain**, read more — NEVER guess structure

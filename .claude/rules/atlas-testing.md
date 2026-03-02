@@ -7,7 +7,7 @@ paths:
 
 # Atlas Testing Rules
 
-Auto-loaded when touching test files. Full patterns in auto-memory `testing-patterns.md`.
+Auto-loaded when touching test files. Full patterns in `.claude/memory/testing-patterns.md`.
 
 ## Cardinal Rule: No New Test Files in atlas-runtime
 

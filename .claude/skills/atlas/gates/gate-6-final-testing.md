@@ -2,7 +2,7 @@
 
 **Condition:** Implementation complete, ready to commit
 
-**Source of truth:** auto-memory `testing-patterns.md` for crate-specific testing protocols
+**Source of truth:** .claude/memory `testing-patterns.md` for crate-specific testing protocols
 
 ---
 

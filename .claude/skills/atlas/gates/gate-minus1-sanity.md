@@ -143,16 +143,15 @@ cargo audit
 Runs every session. Catches drift, broken references, and missing files before they compound.
 
 ```bash
-# 1. MEMORY.md line count — must stay ≤ 50
-wc -l ~/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
+# 1. MEMORY.md line count — must stay ≤ 55
+wc -l .claude/memory/MEMORY.md
 
-# 2. All always-on rule files referenced in MEMORY.md must exist on disk
-ls .claude/rules/atlas-git.md .claude/rules/atlas-comms.md \
-   .claude/rules/atlas-architecture.md .claude/rules/atlas-ci.md \
-   .claude/rules/atlas-testing.md .claude/rules/atlas-parity.md \
-   .claude/rules/atlas-syntax.md .claude/rules/atlas-ast.md \
-   .claude/rules/atlas-typechecker.md .claude/rules/atlas-interpreter.md \
-   .claude/rules/atlas-vm.md 2>&1 | grep "No such file"
+# 2. All lazy-load and pattern-triggered rule files must exist on disk
+ls .claude/lazy/git.md .claude/lazy/comms.md .claude/lazy/architecture.md \
+   .claude/rules/atlas-ci.md .claude/rules/atlas-testing.md \
+   .claude/rules/atlas-parity.md .claude/rules/atlas-syntax.md \
+   .claude/rules/atlas-ast.md .claude/rules/atlas-typechecker.md \
+   .claude/rules/atlas-interpreter.md .claude/rules/atlas-vm.md 2>&1 | grep "No such file"
 
 # 3. CI test gate — must include pull_request
 grep -c "pull_request" .github/workflows/ci.yml

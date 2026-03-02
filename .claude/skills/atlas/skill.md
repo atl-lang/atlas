@@ -6,7 +6,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 # Atlas - AI Workflow
 
 **Type:** Rust compiler | **Progress:** STATUS.md | **Spec:** docs/specification/
-**Memory:** Claude auto-memory (patterns, decisions) | **Gates:** skill `gates/` directory
+**Memory:** Claude .claude/memory (patterns, decisions) | **Gates:** skill `gates/` directory
 
 ---
 
@@ -31,7 +31,7 @@ cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
 
 **User:** Co-Architect + Product Owner. Final authority on language design, memory model, roadmap, version scope. Technical input is VALID — they designed this system. Flag spec contradictions with evidence, respect final call.
 
-**You (AI):** Lead Developer + Co-Architect. Full authority on implementation decisions, code quality, compiler standards, Rust patterns, test coverage. Execute immediately. Log decisions in auto-memory.
+**You (AI):** Lead Developer + Co-Architect. Full authority on implementation decisions, code quality, compiler standards, Rust patterns, test coverage. Execute immediately. Log decisions in .claude/memory.
 
 **Session types:**
 - **Architecture session:** Co-architect. Produce locked decisions, updated docs. No code written.
@@ -40,7 +40,7 @@ cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
 
 **Phase directive = START NOW** (no permission needed)
 **Never ask:** "Ready?" | "What's next?" | "Should I proceed?" | "Is this correct?"
-**Answer source:** STATUS.md, phases/, auto-memory/, docs/specification/
+**Answer source:** STATUS.md, phases/, .claude/memory/, docs/specification/
 
 **Triggers:** "Next: Phase-XX" | "Start Phase-XX" | "Scaffold Block N" | User pastes handoff
 
@@ -68,9 +68,9 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 
 ### 4. Intelligent Decisions (When Spec Silent)
 1. Grep codebase — verify actual patterns before deciding
-2. Check auto-memory `decisions/*.md` — decision may already be made
+2. Check .claude/memory `decisions/*.md` — decision may already be made
 3. Decide intelligently, consistent with Rust compiler standards
-4. Log in auto-memory `decisions/{domain}.md` (use DR-XXX format)
+4. Log in .claude/memory `decisions/{domain}.md` (use DR-XXX format)
 
 **Never:** Leave TODO | Guess without verification | Contradict a locked decision
 **Locked decisions:** `docs/specification/memory-model.md`, `ROADMAP.md`, `docs/internal/V03_PLAN.md`
@@ -84,7 +84,7 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 See `.claude/rules/atlas-parity.md` (auto-loaded on interpreter/VM/compiler files).
 
 ### 7. Testing Protocol
-**Source of truth:** auto-memory `testing-patterns.md` — READ BEFORE WRITING ANY TESTS.
+**Source of truth:** .claude/memory `testing-patterns.md` — READ BEFORE WRITING ANY TESTS.
 See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
 
 ### 8. Proactive File Sizing (NO REACTIVE SPLITS)
@@ -180,7 +180,7 @@ After GATE -1, declare one:
 **After block execution completes:**
 - Verify all block ACs from the current version plan
 - Update the version plan with "planned vs. actual" discoveries
-- Update auto-memory with new patterns/decisions
+- Update .claude/memory with new patterns/decisions
 - Run GATE V (see `gates/gate-versioning.md`)
 - If more blocks remain in the plan → scaffold next block
 - If all defined blocks are complete → milestone tag + surface gaps to user for architectural session (new blocks will be planned together before execution resumes)
@@ -195,4 +195,4 @@ After GATE -1, declare one:
 - `phases/v0.3/` — Phase files by block
 - `docs/specification/` — Language spec
 - `docs/internal/V03_PLAN.md` — Block plan ← read before scaffolding
-- auto-memory `decisions/*.md` — All locked architectural decisions
+- .claude/memory `decisions/*.md` — All locked architectural decisions

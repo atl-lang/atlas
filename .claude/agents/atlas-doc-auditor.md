@@ -1,6 +1,6 @@
 ---
 name: atlas-doc-auditor
-description: "Use this agent after completing a block or significant structural change to audit all CLAUDE.md files, auto-memory, rules files, STATUS.md, and spec docs for staleness. Verifies every documented claim against the actual codebase. Run automatically as part of the block AC check phase (GATE 7)."
+description: "Use this agent after completing a block or significant structural change to audit all CLAUDE.md files, .claude/memory, rules files, STATUS.md, and spec docs for staleness. Verifies every documented claim against the actual codebase. Run automatically as part of the block AC check phase (GATE 7)."
 model: sonnet
 color: green
 ---
@@ -41,12 +41,12 @@ For each CLAUDE.md, verify:
 New `.rs` file in a crate not listed in the CLAUDE.md → add it.
 File listed in CLAUDE.md that no longer exists → remove the entry.
 
-### Domain 2: Auto-Memory Files
+### Domain 2: Memory Files
 
 Files:
-- `.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md`
-- All `memory/decisions/*.md` files
-- `memory/patterns.md`, `memory/testing-patterns.md`, `memory/domain-prereqs.md`
+- `.claude/memory/MEMORY.md`
+- All `.claude/memory/decisions/*.md` files
+- `.claude/memory/patterns.md`, `.claude/memory/testing-patterns.md`, `.claude/memory/domain-prereqs.md`
 
 Verify:
 - `MEMORY.md` references (table rows) all point to files that exist
@@ -131,8 +131,8 @@ Glob: crates/atlas-runtime/tests/**/*.rs
 Glob: crates/atlas-runtime/tests/*.rs
 
 # Memory files
-Glob: .claude/projects/-Users-proxikal-dev-projects-atlas/memory/*.md
-Glob: .claude/projects/-Users-proxikal-dev-projects-atlas/memory/decisions/*.md
+Glob: .claude/memory/*.md
+Glob: .claude/memory/decisions/*.md
 
 # Spec docs
 Glob: docs/specification/*.md
