@@ -24,6 +24,7 @@ items:
               init:
                 VarDecl:
                   mutable: true
+                  uses_deprecated_var: true
                   name:
                     name: i
                     span:

@@ -1,9 +1,4 @@
 use super::*;
-use pretty_assertions::assert_eq;
-
-fn test_array_method_push_inferred_type() {
-    assert_eval_number(r#"let arr = [1, 2, 3]; arr.push(4); arr[3];"#, 4.0);
-}
 
 /// Parity: interpreter and VM produce same result for push
 #[test]

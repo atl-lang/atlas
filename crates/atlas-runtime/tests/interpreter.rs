@@ -16,22 +16,6 @@ use atlas_runtime::Atlas;
 use common::*;
 use rstest::rstest;
 
-fn run_interpreter(source: &str) -> Result<String, String> {
-    let mut lexer = Lexer::new(source);
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (program, _) = parser.parse();
-    let mut binder = Binder::new();
-    let (mut symbol_table, _) = binder.bind(&program);
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let _ = typechecker.check(&program);
-    let mut interpreter = Interpreter::new();
-    match interpreter.eval(&program, &SecurityContext::allow_all()) {
-        Ok(value) => Ok(format!("{:?}", value)),
-        Err(e) => Err(format!("{:?}", e)),
-    }
-}
-
 // Domain submodules (files live in tests/interpreter/)
 #[path = "interpreter/assignment.rs"]
 mod interp_assignment;

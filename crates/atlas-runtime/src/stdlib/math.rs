@@ -199,11 +199,10 @@ pub fn max(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 // Exponential/Power Operations
 // ============================================================================
 
-/// sqrt(x: number) -> number
+/// sqrt(x: number) -> Result<number, string>
 ///
-/// Returns square root of x.
-/// sqrt(x) where x < 0 returns NaN
-/// sqrt(+∞) = +∞, sqrt(NaN) = NaN
+/// Returns Result: Ok(sqrt) for non-negative x, Err for negative x.
+/// sqrt(+∞) = Ok(+∞), sqrt(NaN) = Err
 pub fn sqrt(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -213,7 +212,15 @@ pub fn sqrt(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     match &args[0] {
-        Value::Number(n) => Ok(Value::Number(n.sqrt())),
+        Value::Number(n) => {
+            if n.is_nan() || *n < 0.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "sqrt() domain error: argument must be non-negative",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.sqrt())))))
+            }
+        }
         _ => Err(RuntimeError::TypeError {
             msg: "sqrt() expects number argument".to_string(),
             span,
@@ -244,11 +251,9 @@ pub fn pow(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
-/// log(x: number) -> number
+/// log(x: number) -> Result<number, string>
 ///
-/// Returns natural logarithm (base e) of x.
-/// log(x) where x < 0 returns NaN
-/// log(0) = -∞, log(+∞) = +∞, log(NaN) = NaN
+/// Returns Result: Ok(ln(x)) for positive x, Err for non-positive x.
 pub fn log(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -258,7 +263,15 @@ pub fn log(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     match &args[0] {
-        Value::Number(n) => Ok(Value::Number(n.ln())),
+        Value::Number(n) => {
+            if n.is_nan() || *n <= 0.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "log() domain error: argument must be positive",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.ln())))))
+            }
+        }
         _ => Err(RuntimeError::TypeError {
             msg: "log() expects number argument".to_string(),
             span,
@@ -333,11 +346,9 @@ pub fn tan(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
-/// asin(x: number) -> number
+/// asin(x: number) -> Result<number, string>
 ///
-/// Returns arcsine of x in radians.
-/// Domain: [-1, 1], outside returns NaN
-/// asin(NaN) = NaN
+/// Returns Result: Ok(asin(x)) for x in [-1, 1], Err otherwise.
 pub fn asin(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -347,7 +358,15 @@ pub fn asin(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     match &args[0] {
-        Value::Number(n) => Ok(Value::Number(n.asin())),
+        Value::Number(n) => {
+            if n.is_nan() || *n < -1.0 || *n > 1.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "asin() domain error: argument must be in [-1, 1]",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.asin())))))
+            }
+        }
         _ => Err(RuntimeError::TypeError {
             msg: "asin() expects number argument".to_string(),
             span,
@@ -355,11 +374,9 @@ pub fn asin(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
-/// acos(x: number) -> number
+/// acos(x: number) -> Result<number, string>
 ///
-/// Returns arccosine of x in radians.
-/// Domain: [-1, 1], outside returns NaN
-/// acos(NaN) = NaN
+/// Returns Result: Ok(acos(x)) for x in [-1, 1], Err otherwise.
 pub fn acos(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(RuntimeError::TypeError {
@@ -369,7 +386,15 @@ pub fn acos(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 
     match &args[0] {
-        Value::Number(n) => Ok(Value::Number(n.acos())),
+        Value::Number(n) => {
+            if n.is_nan() || *n < -1.0 || *n > 1.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "acos() domain error: argument must be in [-1, 1]",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.acos())))))
+            }
+        }
         _ => Err(RuntimeError::TypeError {
             msg: "acos() expects number argument".to_string(),
             span,
@@ -403,11 +428,10 @@ pub fn atan(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 // Utility Functions
 // ============================================================================
 
-/// clamp(value: number, min: number, max: number) -> number
+/// clamp(value: number, min: number, max: number) -> Result<number, string>
 ///
 /// Restricts value to [min, max] range.
-/// If min > max, returns NaN
-/// Propagates NaN if any argument is NaN
+/// Returns Err if min > max or any argument is NaN.
 pub fn clamp(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
         return Err(RuntimeError::TypeError {
@@ -418,11 +442,18 @@ pub fn clamp(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     match (&args[0], &args[1], &args[2]) {
         (Value::Number(value), Value::Number(min_val), Value::Number(max_val)) => {
+            if value.is_nan() || min_val.is_nan() || max_val.is_nan() {
+                return Ok(Value::Result(Err(Box::new(Value::string(
+                    "clamp() domain error: NaN argument",
+                )))));
+            }
             if min_val > max_val {
-                return Ok(Value::Number(f64::NAN));
+                return Ok(Value::Result(Err(Box::new(Value::string(
+                    "clamp() domain error: min > max",
+                )))));
             }
             let clamped = value.max(*min_val).min(*max_val);
-            Ok(Value::Number(clamped))
+            Ok(Value::Result(Ok(Box::new(Value::Number(clamped)))))
         }
         _ => Err(RuntimeError::TypeError {
             msg: "clamp() expects number arguments".to_string(),

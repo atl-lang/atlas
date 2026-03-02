@@ -66,8 +66,8 @@ fn test_constraint_syntax_invalid(#[case] source: &str) {
 #[case("fn f<T extends Equatable>(x: T) -> bool { return true; } let y = f(false);")]
 #[case("fn f<T extends Serializable>(x: T) -> string { return str(x); } let y = f(1);")]
 #[case("fn f<T extends Iterable>(x: T) -> number { return 0; } let y = f([1, 2]);")]
-#[case("fn f<T extends { as_string: () -> string }>(x: T) -> string { return x.as_string(); } let y: json = parseJSON(\"{}\"); let z = f(y);")]
-#[case("fn f<T extends { value: json }>(x: T) -> T { return x; } let y: json = parseJSON(\"{}\"); let z = f(y);")]
+#[case("fn f<T extends { as_string: () -> string }>(x: T) -> string { return x.as_string(); } let y: json = unwrap(parseJSON(\"{}\")); let z = f(y);")]
+#[case("fn f<T extends { value: json }>(x: T) -> T { return x; } let y: json = unwrap(parseJSON(\"{}\")); let z = f(y);")]
 #[case("type Box<T extends number> = T; let x: Box<number> = 1;")]
 #[case("type Box<T extends number | string> = T; let x: Box<string> = \"hi\";")]
 fn test_constraint_checking_success(#[case] source: &str) {
@@ -145,8 +145,8 @@ fn test_multiple_constraints(#[case] source: &str) {
 #[case("fn f<T extends Iterable>(x: T) -> number { return 0; } let y = f([1, 2, 3]);")]
 #[case("fn f<T extends Equatable>(x: T) -> bool { return true; } let y = f(false);")]
 #[case("fn f<T extends Comparable>(x: T) -> bool { return true; } let y = f(42);")]
-#[case("fn f<T extends { as_string: () -> string }>(x: T) -> string { return x.as_string(); } let y: json = parseJSON(\"{}\"); let z = f(y);")]
-#[case("fn f<T extends { value: json }>(x: T) -> T { return x; } let y: json = parseJSON(\"{}\"); let z = f(y);")]
+#[case("fn f<T extends { as_string: () -> string }>(x: T) -> string { return x.as_string(); } let y: json = unwrap(parseJSON(\"{}\")); let z = f(y);")]
+#[case("fn f<T extends { value: json }>(x: T) -> T { return x; } let y: json = unwrap(parseJSON(\"{}\")); let z = f(y);")]
 #[case("type Box<T extends number> = T; fn f<T extends number>(x: T) -> Box<T> { return x; } let y = f(1);")]
 #[case("type Box<T extends Serializable> = T; fn f<T extends Serializable>(x: T) -> Box<T> { return x; } let y = f(\"a\");")]
 fn test_constraint_inference_success(#[case] source: &str) {

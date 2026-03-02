@@ -295,8 +295,8 @@ pub fn get_env(
 
     // Get environment variable
     match env::var(&var_name) {
-        Ok(value) => Ok(Value::string(value)),
-        Err(_) => Ok(Value::Null),
+        Ok(value) => Ok(Value::Option(Some(Box::new(Value::string(value))))),
+        Err(_) => Ok(Value::Option(None)),
     }
 }
 

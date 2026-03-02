@@ -124,7 +124,7 @@ fn test_pipeline_find_and_transform() {
         fn isLarge(x: number) -> bool { return x > 50.0; }
 
         let numbers: number[] = [10.0, 60.0, 30.0, 80.0];
-        let found: number = find(numbers, isLarge);
+        let found: number = unwrap(find(numbers, isLarge));
         found * 2.0
     "#;
     assert_eval_number_with_io(code, 120.0); // 60 * 2
@@ -232,7 +232,7 @@ fn test_pipeline_findindex_and_slice() {
         fn isLarge(x: number) -> bool { return x > 50.0; }
 
         let numbers: number[] = [10.0, 20.0, 60.0, 80.0];
-        let idx: number = findIndex(numbers, isLarge);
+        let idx: number = unwrap(findIndex(numbers, isLarge));
         let fromLarge: number[] = slice(numbers, idx, len(numbers));
         len(fromLarge)
     "#;
@@ -257,7 +257,7 @@ fn test_pipeline_complex_aggregation() {
 fn test_pipeline_string_filter_map() {
     let code = r#"
         fn notEmpty(s: string) -> bool { return len(s) > 0.0; }
-        fn firstChar(s: string) -> string { return charAt(s, 0.0); }
+        fn firstChar(s: string) -> string { return unwrap(charAt(s, 0.0)); }
 
         let words: string[] = ["apple", "", "banana", "", "cherry"];
         let nonEmpty: string[] = filter(words, notEmpty);

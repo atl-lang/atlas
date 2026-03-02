@@ -1795,6 +1795,8 @@ impl<'a> TypeChecker<'a> {
 
     /// Check try expression (error propagation operator ?)
     fn check_try(&mut self, try_expr: &TryExpr) -> Type {
+        use crate::ast::TryTargetKind;
+
         // Type check the expression being tried
         let expr_type = self.check_expr(&try_expr.expr);
         let expr_norm = expr_type.normalized();
@@ -1804,90 +1806,143 @@ impl<'a> TypeChecker<'a> {
             return Type::Unknown;
         }
 
-        // Expression must be a Result<T, E>
-        let (ok_type, err_type) = match &expr_norm {
+        // Expression must be Result<T, E> or Option<T>
+        enum TrySource {
+            Result { ok_type: Type, err_type: Type },
+            Option { inner_type: Type },
+        }
+
+        let source = match &expr_norm {
             Type::Generic { name, type_args } if name == "Result" && type_args.len() == 2 => {
-                (type_args[0].clone(), type_args[1].clone())
+                TrySource::Result {
+                    ok_type: type_args[0].clone(),
+                    err_type: type_args[1].clone(),
+                }
+            }
+            Type::Generic { name, type_args } if name == "Option" && type_args.len() == 1 => {
+                TrySource::Option {
+                    inner_type: type_args[0].clone(),
+                }
             }
             _ => {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3027",
                         format!(
-                            "? operator requires Result<T, E> type, found {}",
+                            "? operator requires Result<T, E> or Option<T> type, found {}",
                             expr_type.display_name()
                         ),
                         try_expr.span,
                     )
-                    .with_label("not a Result type")
-                    .with_help("the ? operator can only be applied to Result<T, E> values"),
-                );
-                return Type::Unknown;
-            }
-        };
-
-        // Must be inside a function that returns Result<T', E'>
-        let function_return_type = match &self.current_function_return_type {
-            Some(ty) => ty.clone(),
-            None => {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3028",
-                        "? operator can only be used inside functions",
-                        try_expr.span,
-                    )
-                    .with_label("not in a function")
-                    .with_help("? operator propagates errors by early return"),
-                );
-                return Type::Unknown;
-            }
-        };
-
-        // Function must return Result<T', E'>
-        let function_return_norm = function_return_type.normalized();
-        match &function_return_norm {
-            Type::Generic { name, type_args } if name == "Result" && type_args.len() == 2 => {
-                let function_err_type = &type_args[1];
-
-                // Error types must be compatible (for now, they must be the same)
-                if err_type.normalized() != function_err_type.normalized() {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3029",
-                            format!(
-                                "? operator error type mismatch: expression has error type {}, but function returns {}",
-                                err_type.display_name(),
-                                function_err_type.display_name()
-                            ),
-                            try_expr.span,
-                        )
-                        .with_label("error type mismatch")
-                        .with_help(format!(
-                            "convert the error type to {} or change the function's error type",
-                            function_err_type.display_name()
-                        )),
-                    );
-                }
-
-                // Return the Ok type (T)
-                ok_type
-            }
-            _ => {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3030",
-                        format!(
-                            "? operator requires function to return Result<T, E>, found {}",
-                            function_return_type.display_name()
-                        ),
-                        try_expr.span,
-                    )
-                    .with_label("function does not return Result")
+                    .with_label("not a Result or Option type")
                     .with_help(
-                        "change the function's return type to Result<T, E> to use ? operator",
+                        "the ? operator can only be applied to Result<T, E> or Option<T> values",
                     ),
                 );
-                Type::Unknown
+                return Type::Unknown;
+            }
+        };
+
+        // At top-level (script/REPL context), ? is allowed without a function.
+        // Propagation semantics: Ok(v) → v, Err(e) → early eval termination.
+        let is_top_level = self.current_function_return_type.is_none();
+
+        match source {
+            TrySource::Result { ok_type, err_type } => {
+                // Annotate for compiler
+                *try_expr.target_kind.borrow_mut() = Some(TryTargetKind::Result);
+
+                if is_top_level {
+                    return ok_type;
+                }
+
+                let function_return_type = self.current_function_return_type.clone().unwrap();
+                let function_return_norm = function_return_type.normalized();
+
+                // Function must return Result<T', E'>
+                match &function_return_norm {
+                    Type::Generic { name, type_args }
+                        if name == "Result" && type_args.len() == 2 =>
+                    {
+                        let function_err_type = &type_args[1];
+
+                        // Error types must be compatible
+                        if err_type.normalized() != function_err_type.normalized() {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3029",
+                                    format!(
+                                        "? operator error type mismatch: expression has error type {}, but function returns {}",
+                                        err_type.display_name(),
+                                        function_err_type.display_name()
+                                    ),
+                                    try_expr.span,
+                                )
+                                .with_label("error type mismatch")
+                                .with_help(format!(
+                                    "convert the error type to {} or change the function's error type",
+                                    function_err_type.display_name()
+                                )),
+                            );
+                        }
+
+                        ok_type
+                    }
+                    _ => {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3030",
+                                format!(
+                                    "? operator on Result requires function to return Result<T, E>, found {}",
+                                    function_return_type.display_name()
+                                ),
+                                try_expr.span,
+                            )
+                            .with_label("function does not return Result")
+                            .with_help(
+                                "change the function's return type to Result<T, E> to use ? on Result values",
+                            ),
+                        );
+                        Type::Unknown
+                    }
+                }
+            }
+            TrySource::Option { inner_type } => {
+                // Annotate for compiler
+                *try_expr.target_kind.borrow_mut() = Some(TryTargetKind::Option);
+
+                if is_top_level {
+                    return inner_type;
+                }
+
+                let function_return_type = self.current_function_return_type.clone().unwrap();
+                let function_return_norm = function_return_type.normalized();
+
+                // Function must return Option<T'>
+                match &function_return_norm {
+                    Type::Generic { name, type_args }
+                        if name == "Option" && type_args.len() == 1 =>
+                    {
+                        inner_type
+                    }
+                    _ => {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3030",
+                                format!(
+                                    "? operator on Option requires function to return Option<T>, found {}",
+                                    function_return_type.display_name()
+                                ),
+                                try_expr.span,
+                            )
+                            .with_label("function does not return Option")
+                            .with_help(
+                                "change the function's return type to Option<T> to use ? on Option values",
+                            ),
+                        );
+                        Type::Unknown
+                    }
+                }
             }
         }
     }

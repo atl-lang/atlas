@@ -96,31 +96,31 @@ fn test_trim_end() {
 #[test]
 fn test_index_of_found() {
     let code = r#"indexOf("hello", "ll")"#;
-    assert_eval_number(code, 2.0);
+    assert_eval_option_some_number(code, 2.0);
 }
 
 #[test]
 fn test_index_of_not_found() {
     let code = r#"indexOf("hello", "x")"#;
-    assert_eval_number(code, -1.0);
+    assert_eval_option_none(code);
 }
 
 #[test]
 fn test_index_of_empty_needle() {
     let code = r#"indexOf("hello", "")"#;
-    assert_eval_number(code, 0.0);
+    assert_eval_option_some_number(code, 0.0);
 }
 
 #[test]
 fn test_last_index_of_found() {
     let code = r#"lastIndexOf("hello", "l")"#;
-    assert_eval_number(code, 3.0);
+    assert_eval_option_some_number(code, 3.0);
 }
 
 #[test]
 fn test_last_index_of_not_found() {
     let code = r#"lastIndexOf("hello", "x")"#;
-    assert_eval_number(code, -1.0);
+    assert_eval_option_none(code);
 }
 
 #[test]
@@ -184,19 +184,19 @@ fn test_substring_out_of_bounds() {
 #[test]
 fn test_char_at_basic() {
     let code = r#"charAt("hello", 0)"#;
-    assert_eval_string(code, "h");
+    assert_eval_option_some_string(code, "h");
 }
 
 #[test]
 fn test_char_at_unicode() {
     let code = r#"charAt("🎉🔥✨", 1)"#;
-    assert_eval_string(code, "🔥");
+    assert_eval_option_some_string(code, "🔥");
 }
 
 #[test]
 fn test_char_at_out_of_bounds() {
     let code = r#"charAt("hello", 10)"#;
-    assert_has_error(code);
+    assert_eval_option_none(code);
 }
 
 #[test]

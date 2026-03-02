@@ -10,7 +10,7 @@ fn test_config_parse_json() {
     let code = format!(
         r#"
         let configStr: string = readFile("{}");
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let host: string = config["host"].as_string();
         host
     "#,
@@ -28,7 +28,7 @@ fn test_config_extract_port() {
     let code = format!(
         r#"
         let configStr: string = readFile("{}");
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let port: number = config["port"].as_number();
         port
     "#,
@@ -41,7 +41,7 @@ fn test_config_extract_port() {
 fn test_config_validate_required_fields() {
     let code = r#"
         let configStr: string = "{\"host\": \"localhost\", \"port\": 8080}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let hasHost: bool = !jsonIsNull(config["host"]);
         let hasPort: bool = !jsonIsNull(config["port"]);
         hasHost && hasPort
@@ -53,7 +53,7 @@ fn test_config_validate_required_fields() {
 fn test_config_missing_field_default() {
     let code = r#"
         let configStr: string = "{\"host\": \"localhost\"}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let port: json = config["port"];
         var portValue: number = 8080.0;
         if (!jsonIsNull(port)) {
@@ -68,7 +68,7 @@ fn test_config_missing_field_default() {
 fn test_config_nested_settings() {
     let code = r#"
         let configStr: string = "{\"database\": {\"host\": \"db.local\", \"port\": 5432}}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let db: json = config["database"];
         let dbHost: string = db["host"].as_string();
         dbHost
@@ -80,7 +80,7 @@ fn test_config_nested_settings() {
 fn test_config_boolean_flags() {
     let code = r#"
         let configStr: string = "{\"debug\": true, \"production\": false}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let debug: bool = config["debug"].as_bool();
         let prod: bool = config["production"].as_bool();
         debug && !prod
@@ -92,7 +92,7 @@ fn test_config_boolean_flags() {
 fn test_config_array_values() {
     let code = r#"
         let configStr: string = "{\"allowed_hosts\": [\"localhost\", \"127.0.0.1\"]}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let hosts: json = config["allowed_hosts"];
         let first: string = hosts[0].as_string();
         first
@@ -109,14 +109,14 @@ fn test_config_write_updated() {
     let code = format!(
         r#"
         let configStr: string = readFile("{}");
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let version: number = config["version"].as_number();
         let newVersion: number = version + 1.0;
         let updated: string = "{{\"version\":" + str(newVersion) + "}}";
         writeFile("{}", updated);
 
         let result: string = readFile("{}");
-        let newConfig: json = parseJSON(result);
+        let newConfig: json = parseJSON(result)?;
         let finalVersion: number = newConfig["version"].as_number();
         finalVersion
     "#,
@@ -133,8 +133,8 @@ fn test_config_merge_defaults() {
         let userConfig: string = "{\"host\": \"custom.com\"}";
         let defaults: string = "{\"host\": \"localhost\", \"port\": 8080, \"debug\": false}";
 
-        let user: json = parseJSON(userConfig);
-        let def: json = parseJSON(defaults);
+        let user: json = parseJSON(userConfig)?;
+        let def: json = parseJSON(defaults)?;
 
         let hostUser: json = user["host"];
         let portUser: json = user["port"];
@@ -168,7 +168,7 @@ fn test_config_prettify_for_humans() {
 fn test_config_array_length() {
     let code = r#"
         let configStr: string = "{\"servers\": [\"server1\", \"server2\", \"server3\"]}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let servers: json = config["servers"];
         let s0: string = servers[0].as_string();
         let s1: string = servers[1].as_string();
@@ -182,7 +182,7 @@ fn test_config_array_length() {
 fn test_config_environment_specific() {
     let code = r#"
         let configStr: string = "{\"env\": \"production\", \"debug\": false}";
-        let config: json = parseJSON(configStr);
+        let config: json = parseJSON(configStr)?;
         let env: string = config["env"].as_string();
         let debug: bool = config["debug"].as_bool();
         let isProd: bool = env == "production";

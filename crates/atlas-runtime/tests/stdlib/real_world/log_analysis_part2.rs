@@ -117,7 +117,7 @@ fn test_log_find_first_error() {
         let logs: string = readFile("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let firstError: string = find(dataLines, isError);
+        let firstError: string = unwrap(find(dataLines, isError));
         firstError
     "#,
         path_for_atlas(&log_path)
@@ -237,7 +237,7 @@ fn test_log_parse_json_lines() {
         let logs: string = readFile("{}");
         let lines: string[] = split(logs, "\n");
         let line1: string = lines[0];
-        let json: json = parseJSON(line1);
+        let json: json = parseJSON(line1)?;
         let level: string = json["level"].as_string();
         level
     "#,
@@ -256,7 +256,7 @@ fn test_log_aggregate_metrics() {
         r#"
         fn sumLatency(total: number, line: string) -> number {{
             let parts: string[] = split(line, ":");
-            let value: number = parseFloat(parts[1]);
+            let value: number = unwrap(parseFloat(parts[1]));
             return total + value;
         }}
 

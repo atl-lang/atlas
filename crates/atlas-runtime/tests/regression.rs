@@ -1262,8 +1262,8 @@ fn milestone_stdlib_string_to_lower() {
 
 #[test]
 fn milestone_stdlib_string_contains() {
-    assert_eval_bool(r#"indexOf("hello world", "world") >= 0;"#, true);
-    assert_eval_bool(r#"indexOf("hello world", "xyz") >= 0;"#, false);
+    assert_eval_bool(r#"is_some(indexOf("hello world", "world"));"#, true);
+    assert_eval_bool(r#"is_some(indexOf("hello world", "xyz"));"#, false);
 }
 
 #[test]

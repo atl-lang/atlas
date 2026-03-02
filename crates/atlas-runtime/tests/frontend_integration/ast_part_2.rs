@@ -202,6 +202,7 @@ fn test_ast_serialization() {
     let program = Program {
         items: vec![Item::Statement(Stmt::VarDecl(VarDecl {
             mutable: false,
+            uses_deprecated_var: false,
             name: Identifier {
                 name: "x".to_string(),
                 span: Span::new(4, 5),

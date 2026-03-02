@@ -6,6 +6,7 @@ items:
   - Statement:
       VarDecl:
         mutable: true
+        uses_deprecated_var: true
         name:
           name: x
           span:

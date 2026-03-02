@@ -24,6 +24,7 @@ expression: json
               {
                 "VarDecl": {
                   "mutable": false,
+                  "uses_deprecated_var": false,
                   "name": {
                     "name": "x",
                     "span": {

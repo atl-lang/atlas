@@ -44,9 +44,22 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
     let mut typechecker = TypeChecker::new(&mut symbol_table);
     let typecheck_diagnostics = typechecker.check(&ast);
 
-    if !typecheck_diagnostics.is_empty() {
+    // Only fail on errors, not warnings
+    let has_errors = typecheck_diagnostics.iter().any(|d| d.is_error());
+    if has_errors {
         print_diagnostics(&typecheck_diagnostics, &source, file_path, json_output);
         return Err(anyhow::anyhow!("Type checking failed"));
+    }
+
+    // Print warnings (they don't block success)
+    let warnings: Vec<_> = typecheck_diagnostics
+        .iter()
+        .filter(|d| d.is_warning())
+        .collect();
+    if !warnings.is_empty() {
+        for diag in warnings {
+            eprintln!("{}", diag.to_human_string());
+        }
     }
 
     // Success!

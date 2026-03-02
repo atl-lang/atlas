@@ -63,6 +63,7 @@ fn test_complete_program_construction() {
             // Variable declaration statement
             Item::Statement(Stmt::VarDecl(VarDecl {
                 mutable: false,
+                uses_deprecated_var: false,
                 name: Identifier {
                     name: "result".to_string(),
                     span: Span::new(64, 70),
@@ -111,6 +112,7 @@ fn test_all_statement_types() {
         // Variable declaration
         Stmt::VarDecl(VarDecl {
             mutable: true,
+            uses_deprecated_var: false,
             name: Identifier {
                 name: "x".to_string(),
                 span: Span::new(0, 1),
@@ -154,6 +156,7 @@ fn test_all_statement_types() {
         Stmt::For(ForStmt {
             init: Box::new(Stmt::VarDecl(VarDecl {
                 mutable: true,
+                uses_deprecated_var: false,
                 name: Identifier {
                     name: "i".to_string(),
                     span: Span::new(8, 9),

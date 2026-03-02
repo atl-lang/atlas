@@ -62,6 +62,92 @@ pub fn assert_eval_bool(source: &str, expected: bool) {
     }
 }
 
+/// Assert that source code evaluates to Option(Some(Number(n)))
+pub fn assert_eval_option_some_number(source: &str, expected: f64) {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Option(Some(val))) => match *val {
+            Value::Number(n) => {
+                assert_eq!(n, expected, "Expected Some({}), got Some({})", expected, n)
+            }
+            other => panic!(
+                "Expected Option(Some(Number({}))), got Option(Some({:?}))",
+                expected, other
+            ),
+        },
+        other => panic!(
+            "Expected Option(Some(Number({}))), got {:?}",
+            expected, other
+        ),
+    }
+}
+
+/// Assert that source code evaluates to Option(None)
+pub fn assert_eval_option_none(source: &str) {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Option(None)) => {}
+        other => panic!("Expected Option(None), got {:?}", other),
+    }
+}
+
+/// Assert that source code evaluates to Option(Some(String(s)))
+pub fn assert_eval_option_some_string(source: &str, expected: &str) {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Option(Some(val))) => match &*val {
+            Value::String(s) => assert_eq!(
+                s.as_ref(),
+                expected,
+                "Expected Some({:?}), got Some({:?})",
+                expected,
+                s.as_ref()
+            ),
+            other => panic!(
+                "Expected Option(Some(String({:?}))), got Option(Some({:?}))",
+                expected, other
+            ),
+        },
+        other => panic!(
+            "Expected Option(Some(String({:?}))), got {:?}",
+            expected, other
+        ),
+    }
+}
+
+/// Assert that source code evaluates to Result(Ok(Number(n)))
+pub fn assert_eval_result_ok_number(source: &str, expected: f64) {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Result(Ok(val))) => match *val {
+            Value::Number(n) => assert_eq!(n, expected, "Expected Ok({}), got Ok({})", expected, n),
+            other => panic!(
+                "Expected Result(Ok(Number({}))), got Result(Ok({:?}))",
+                expected, other
+            ),
+        },
+        other => panic!("Expected Result(Ok(Number({}))), got {:?}", expected, other),
+    }
+}
+
+/// Assert that source code evaluates to Result(Err(...)) — any error
+pub fn assert_eval_result_err(source: &str) {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Result(Err(_))) => {}
+        other => panic!("Expected Result(Err(...)), got {:?}", other),
+    }
+}
+
+/// Assert that source code evaluates to Result(Ok(...)) — any ok value
+pub fn assert_eval_result_ok(source: &str) -> Value {
+    let runtime = Atlas::new();
+    match runtime.eval(source) {
+        Ok(Value::Result(Ok(val))) => *val,
+        other => panic!("Expected Result(Ok(...)), got {:?}", other),
+    }
+}
+
 /// Assert that source code evaluates to null
 ///
 /// # Example

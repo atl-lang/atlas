@@ -44,11 +44,7 @@ All rules use `paths:` frontmatter — load only when touching matching files:
 - **PR BEHIND main = invalid CI run** — auto-merge won't fire. Rebase with `git merge origin/main && git push` (not `gh api update-branch`).
 
 ## Doc Auditor
-Run `atlas-doc-auditor` after every block completion (GATE 7).
-Audits: CLAUDE.md files + `.claude/rules/*.md` + `.claude/memory/*.md` + `.claude/memory/decisions/*.md`
-224 lines — approved exception (global 150-line limit does not apply; atlas-specific 6-domain auditor).
+Run `atlas-doc-auditor` after every block (GATE 7). Audits all CLAUDE.md, rules, memory, decisions. 224 lines — approved exception.
 
 ## CodeRabbit Pre-Push (2026-03-01)
-MANDATORY before any batch push to remote. Task Haiku agent (background):
-`coderabbit review --base main --plain` in ~/dev/projects/atlas
-Review findings before pushing. Documented in git-workflow.md Step 0.
+MANDATORY before batch push: `coderabbit review --base main --plain` via Haiku agent. See git-workflow.md Step 0.

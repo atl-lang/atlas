@@ -1,19 +1,4 @@
 use super::*;
-use pretty_assertions::assert_eq;
-
-fn test_integration_nested_function_with_params() {
-    // Test nested function that takes parameters (avoids closure capture warnings)
-    let code = r#"
-        fn outer(x: number) -> number {
-            fn inner(y: number) -> number {
-                return y * 2;
-            }
-            return inner(x);
-        }
-        outer(10);
-    "#;
-    assert_eval_number(code, 20.0);
-}
 
 #[test]
 fn test_integration_nested_function_calls() {

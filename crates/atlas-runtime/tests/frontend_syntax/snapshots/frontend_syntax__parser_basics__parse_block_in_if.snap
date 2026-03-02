@@ -14,6 +14,7 @@ items:
           statements:
             - VarDecl:
                 mutable: false
+                uses_deprecated_var: false
                 name:
                   name: x
                   span:
@@ -30,6 +31,7 @@ items:
                   end: 22
             - VarDecl:
                 mutable: false
+                uses_deprecated_var: false
                 name:
                   name: y
                   span:

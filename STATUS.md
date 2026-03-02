@@ -1,8 +1,8 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-27 (Block 5 complete, test-split PAUSED)
+**Last Updated:** 2026-03-02 (Block 6 COMPLETE, let mut hardening done)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅ | v0.3 Block 6 COMPLETE ✅
 
 ---
 
@@ -16,11 +16,15 @@
 
 ## Current State
 
-**Status:** Block 5 (Type Inference) COMPLETE — merged via PR #156
-**Last Completed:** Block 5 Phase 09 — type inference (locals, returns, generics), LSP inlay hints, 8,198 tests passing
-**Next:** Block 6 (Error Handling - `?` operator) — ready to scaffold
+**Status:** Block 6 (Error Handling) COMPLETE — 5/5 phases
+**Last Completed:** let mut + AT2014 deprecation warning (completing prior incomplete work), 8,302 tests passing
+**Next:** Block 7 — JIT Integration (scaffold)
 
-**IMPORTANT BEFORE CONTINUING:** `docs/codex-findings/important-before-continuing.md`
+**Current hardening work:** `advanced-codex-audit.md` + `.claude/memory/systems-audit-handoff.md` + `docs/codex-findings/claude-audit-2026-03-02.md` — AI: alert user when 100% complete (more audits pending)
+**Critical gaps:** See `docs/codex-findings/important-before-continuing.md`
+**Inline tests:** ~574 to audit post-hardening (deferred - language functionality first)
+**Systems-level conversion:** Last block done: Block 5 (Type Inference). PAUSED until hardening complete — core language must work first.
+**v0.3 scope:** Make current features work correctly (battle-tested, compiler-grade). Foundation solid before adding more in future versions.
 
 ---
 
@@ -34,7 +38,7 @@
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
 | 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-27) |
 | ts | Test File Decomposition (maintenance) | 8 | ⏸️ PAUSED (13/20 files split) — see `TEST-SPLIT-TRACKING.md` |
-| 6 | Error Handling (`?` operator) | 10–15 | ⬜ Ready to scaffold |
+| 6 | Error Handling (`?` operator) | 5 | ✅ Complete (2026-03-02) |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
 | 9 | Quick Wins (string interp, implicit returns) | 5–10 | ⬜ Unblocked — ready to scaffold |
@@ -134,6 +138,23 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 
 ---
 
+## Block 6 Completion Metrics
+
+| Metric | Value |
+|--------|-------|
+| Phases | 5/5 |
+| Tests at completion | **8,302** (workspace, post-hardening) |
+| Test failures | 0 |
+| Stdlib functions converted | 21+ (indexOf, lastIndexOf, arrayIndexOf, arrayLastIndexOf, charAt, find, findIndex, getEnv → Option; toNumber, parseInt, parseFloat, parseJSON, sqrt, log, asin, acos, clamp → Result) |
+| Internal unwrap fixes | 4 (toJSON serde, 3x fs.rs SystemTime) |
+| Top-level `?` support | Added (typechecker + both engines) |
+| Parity tests | Existing + updated (zero divergence) |
+| Clippy | 0 warnings |
+| Fmt | Clean |
+| Acceptance criteria | **5/5** |
+
+---
+
 ## v0.3 Baseline Metrics (v0.2 close)
 
 | Metric | Value |
@@ -181,6 +202,7 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 |----------|----------|
 | **v0.3 block plan** | `docs/internal/V03_PLAN.md` ← start here |
 | **Memory model spec** | `docs/specification/memory-model.md` ← architectural foundation |
+| **Audit findings** | `advanced-codex-audit.md` + `docs/codex-findings/` ← what's broken |
 | Roadmap | `ROADMAP.md` |
 | Specs | `docs/specification/` |
 | v0.2 archive | `phases/*/archive/v0.2/` |

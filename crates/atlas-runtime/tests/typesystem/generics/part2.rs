@@ -129,7 +129,7 @@ fn test_generic_with_while_loop() {
     let diagnostics = typecheck_source(
         r#"
         fn identity<T>(x: T) -> T {
-            var result = x;
+            let mut result = x;
             while (false) {
                 result = x;
             }

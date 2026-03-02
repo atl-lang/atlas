@@ -34,10 +34,10 @@ fn run_vm(source: &str) -> Result<String, String> {
 // JSON as_string() Tests
 #[rstest]
 #[case(
-    r#"let data: json = parseJSON("{\"name\":\"Alice\"}"); data["name"].as_string();"#,
+    r#"let data: json = unwrap(parseJSON("{\"name\":\"Alice\"}")); data["name"].as_string();"#,
     r#"String("Alice")"#
 )]
-#[case(r#"let data: json = parseJSON("{\"user\":{\"name\":\"Bob\"}}"); data["user"]["name"].as_string();"#, r#"String("Bob")"#)]
+#[case(r#"let data: json = unwrap(parseJSON("{\"user\":{\"name\":\"Bob\"}}")); data["user"]["name"].as_string();"#, r#"String("Bob")"#)]
 fn test_json_as_string(#[case] source: &str, #[case] expected: &str) {
     let result = run_vm(source).expect("Should succeed");
     assert_eq!(result, expected);
@@ -45,7 +45,8 @@ fn test_json_as_string(#[case] source: &str, #[case] expected: &str) {
 
 #[test]
 fn test_json_as_string_error() {
-    let result = run_vm(r#"let data: json = parseJSON("{\"age\":30}"); data["age"].as_string();"#);
+    let result =
+        run_vm(r#"let data: json = unwrap(parseJSON("{\"age\":30}")); data["age"].as_string();"#);
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Cannot extract string"));
 }
@@ -53,11 +54,11 @@ fn test_json_as_string_error() {
 // JSON as_number() Tests
 #[rstest]
 #[case(
-    r#"let data: json = parseJSON("{\"age\":30}"); data["age"].as_number();"#,
+    r#"let data: json = unwrap(parseJSON("{\"age\":30}")); data["age"].as_number();"#,
     "Number(30)"
 )]
 #[case(
-    r#"let data: json = parseJSON("{\"price\":19.99}"); data["price"].as_number();"#,
+    r#"let data: json = unwrap(parseJSON("{\"price\":19.99}")); data["price"].as_number();"#,
     "Number(19.99)"
 )]
 fn test_json_as_number(#[case] source: &str, #[case] expected: &str) {
@@ -67,8 +68,9 @@ fn test_json_as_number(#[case] source: &str, #[case] expected: &str) {
 
 #[test]
 fn test_json_as_number_error() {
-    let result =
-        run_vm(r#"let data: json = parseJSON("{\"name\":\"Alice\"}"); data["name"].as_number();"#);
+    let result = run_vm(
+        r#"let data: json = unwrap(parseJSON("{\"name\":\"Alice\"}")); data["name"].as_number();"#,
+    );
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Cannot extract number"));
 }
@@ -76,11 +78,11 @@ fn test_json_as_number_error() {
 // JSON as_bool() Tests
 #[rstest]
 #[case(
-    r#"let data: json = parseJSON("{\"active\":true}"); data["active"].as_bool();"#,
+    r#"let data: json = unwrap(parseJSON("{\"active\":true}")); data["active"].as_bool();"#,
     "Bool(true)"
 )]
 #[case(
-    r#"let data: json = parseJSON("{\"disabled\":false}"); data["disabled"].as_bool();"#,
+    r#"let data: json = unwrap(parseJSON("{\"disabled\":false}")); data["disabled"].as_bool();"#,
     "Bool(false)"
 )]
 fn test_json_as_bool(#[case] source: &str, #[case] expected: &str) {
@@ -90,7 +92,8 @@ fn test_json_as_bool(#[case] source: &str, #[case] expected: &str) {
 
 #[test]
 fn test_json_as_bool_error() {
-    let result = run_vm(r#"let data: json = parseJSON("{\"count\":5}"); data["count"].as_bool();"#);
+    let result =
+        run_vm(r#"let data: json = unwrap(parseJSON("{\"count\":5}")); data["count"].as_bool();"#);
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("Cannot extract bool"));
 }
@@ -98,15 +101,15 @@ fn test_json_as_bool_error() {
 // JSON is_null() Tests
 #[rstest]
 #[case(
-    r#"let data: json = parseJSON("{\"value\":null}"); data["value"].is_null();"#,
+    r#"let data: json = unwrap(parseJSON("{\"value\":null}")); data["value"].is_null();"#,
     "Bool(true)"
 )]
 #[case(
-    r#"let data: json = parseJSON("{\"value\":\"text\"}"); data["value"].is_null();"#,
+    r#"let data: json = unwrap(parseJSON("{\"value\":\"text\"}")); data["value"].is_null();"#,
     "Bool(false)"
 )]
 #[case(
-    r#"let data: json = parseJSON("{\"value\":42}"); data["value"].is_null();"#,
+    r#"let data: json = unwrap(parseJSON("{\"value\":42}")); data["value"].is_null();"#,
     "Bool(false)"
 )]
 fn test_json_is_null(#[case] source: &str, #[case] expected: &str) {
@@ -119,7 +122,7 @@ fn test_json_is_null(#[case] source: &str, #[case] expected: &str) {
 fn test_chained_methods() {
     let result = run_vm(
         r#"
-        let data: json = parseJSON("{\"user\":{\"name\":\"Charlie\"}}");
+        let data: json = unwrap(parseJSON("{\"user\":{\"name\":\"Charlie\"}}"));
         data["user"]["name"].as_string();
     "#,
     )
@@ -131,7 +134,7 @@ fn test_chained_methods() {
 fn test_method_in_expression() {
     let result = run_vm(
         r#"
-        let data: json = parseJSON("{\"count\":5}");
+        let data: json = unwrap(parseJSON("{\"count\":5}"));
         data["count"].as_number() + 10;
     "#,
     )
@@ -143,7 +146,7 @@ fn test_method_in_expression() {
 fn test_method_in_conditional() {
     let result = run_vm(
         r#"
-        let data: json = parseJSON("{\"enabled\":true}");
+        let data: json = unwrap(parseJSON("{\"enabled\":true}"));
         var result: string = "no";
         if (data["enabled"].as_bool()) {
             result = "yes";
@@ -159,7 +162,7 @@ fn test_method_in_conditional() {
 fn test_multiple_methods() {
     let result = run_vm(
         r#"
-        let data: json = parseJSON("{\"a\":5,\"b\":10}");
+        let data: json = unwrap(parseJSON("{\"a\":5,\"b\":10}"));
         data["a"].as_number() + data["b"].as_number();
     "#,
     )
@@ -170,33 +173,38 @@ fn test_multiple_methods() {
 // Error Cases
 #[test]
 fn test_as_string_on_null() {
-    let result = run_vm(r#"let data: json = parseJSON("{\"v\":null}"); data["v"].as_string();"#);
+    let result =
+        run_vm(r#"let data: json = unwrap(parseJSON("{\"v\":null}")); data["v"].as_string();"#);
     assert!(result.is_err());
 }
 
 #[test]
 fn test_as_number_on_null() {
-    let result = run_vm(r#"let data: json = parseJSON("{\"v\":null}"); data["v"].as_number();"#);
+    let result =
+        run_vm(r#"let data: json = unwrap(parseJSON("{\"v\":null}")); data["v"].as_number();"#);
     assert!(result.is_err());
 }
 
 #[test]
 fn test_as_bool_on_null() {
-    let result = run_vm(r#"let data: json = parseJSON("{\"v\":null}"); data["v"].as_bool();"#);
+    let result =
+        run_vm(r#"let data: json = unwrap(parseJSON("{\"v\":null}")); data["v"].as_bool();"#);
     assert!(result.is_err());
 }
 
 #[test]
 fn test_as_string_on_object() {
-    let result =
-        run_vm(r#"let data: json = parseJSON("{\"obj\":{\"a\":1}}"); data["obj"].as_string();"#);
+    let result = run_vm(
+        r#"let data: json = unwrap(parseJSON("{\"obj\":{\"a\":1}}")); data["obj"].as_string();"#,
+    );
     assert!(result.is_err());
 }
 
 #[test]
 fn test_as_number_on_array() {
-    let result =
-        run_vm(r#"let data: json = parseJSON("{\"arr\":[1,2,3]}"); data["arr"].as_number();"#);
+    let result = run_vm(
+        r#"let data: json = unwrap(parseJSON("{\"arr\":[1,2,3]}")); data["arr"].as_number();"#,
+    );
     assert!(result.is_err());
 }
 

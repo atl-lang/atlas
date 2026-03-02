@@ -82,7 +82,14 @@ impl Interpreter {
 
         // Regular binary operations
         let left = self.eval_expr(&binary.left)?;
+        // If ? operator triggered early return, stop evaluating
+        if self.control_flow != ControlFlow::None {
+            return Ok(left);
+        }
         let right = self.eval_expr(&binary.right)?;
+        if self.control_flow != ControlFlow::None {
+            return Ok(right);
+        }
 
         match binary.op {
             BinaryOp::Add => match (&left, &right) {
@@ -469,10 +476,20 @@ impl Interpreter {
                 self.control_flow = ControlFlow::Return(err_result.clone());
                 Ok(err_result)
             }
+            Value::Option(Some(inner)) => {
+                // Unwrap Some value
+                Ok(*inner)
+            }
+            Value::Option(None) => {
+                // Propagate None by early return
+                let none_val = Value::Option(None);
+                self.control_flow = ControlFlow::Return(none_val.clone());
+                Ok(none_val)
+            }
             _ => {
                 // Type checker should prevent this, but handle gracefully
                 Err(RuntimeError::TypeError {
-                    msg: "? operator requires Result<T, E> type".to_string(),
+                    msg: "? operator requires Result<T, E> or Option<T> type".to_string(),
                     span: try_expr.span,
                 })
             }
@@ -1055,7 +1072,7 @@ impl Interpreter {
         for elem in arr {
             let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(elem),
+                Value::Bool(true) => return Ok(Value::Option(Some(Box::new(elem)))),
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1066,7 +1083,7 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::Null)
+        Ok(Value::Option(None))
     }
 
     /// findIndex(array, predicate) - Find index of first matching element
@@ -1108,7 +1125,9 @@ impl Interpreter {
         for (i, elem) in arr.iter().enumerate() {
             let pred_result = self.call_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(Value::Number(i as f64)),
+                Value::Bool(true) => {
+                    return Ok(Value::Option(Some(Box::new(Value::Number(i as f64)))))
+                }
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1119,7 +1138,7 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::Number(-1.0))
+        Ok(Value::Option(None))
     }
 
     /// flatMap(array, callback) - Map and flatten one level

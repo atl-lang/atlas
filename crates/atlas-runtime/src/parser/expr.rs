@@ -458,6 +458,7 @@ impl Parser {
 
         Ok(Expr::Try(TryExpr {
             expr: Box::new(expr),
+            target_kind: std::cell::RefCell::new(None),
             span: expr_span.merge(question_span),
         }))
     }

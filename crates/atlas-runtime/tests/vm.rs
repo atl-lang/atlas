@@ -33,6 +33,25 @@ fn compile(source: &str) -> Bytecode {
     compiler.compile(&program).expect("Compilation failed")
 }
 
+/// Compile with full pipeline (binder + typechecker) for features that
+/// require type annotations on AST nodes (e.g., ? operator target_kind).
+fn compile_checked(source: &str) -> Bytecode {
+    let mut lexer = Lexer::new(source.to_string());
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (mut symbol_table, _) = binder.bind(&program);
+    let mut typechecker = TypeChecker::new(&mut symbol_table);
+    let _ = typechecker.check(&program);
+    let mut compiler = Compiler::new();
+    compiler.compile(&program).expect("Compilation failed")
+}
+
+fn vm_eval_checked(source: &str) -> Option<Value> {
+    vm_run(compile_checked(source))
+}
+
 fn compile_optimized(source: &str) -> Bytecode {
     let mut lexer = Lexer::new(source.to_string());
     let (tokens, _) = lexer.tokenize();
@@ -181,6 +200,8 @@ fn run_vm(source: &str) -> Result<String, String> {
 // Domain submodules (files live in tests/vm/)
 #[path = "vm/complex_programs.rs"]
 mod vm_complex_programs;
+#[path = "vm/error_handling.rs"]
+mod vm_error_handling;
 #[path = "vm/for_in.rs"]
 mod vm_for_in;
 #[path = "vm/functions.rs"]

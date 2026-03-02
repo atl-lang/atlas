@@ -616,6 +616,78 @@ fn test_immutable_assignment_has_related_span() {
 }
 
 #[test]
+fn test_var_keyword_emits_deprecation_warning() {
+    let source = "var x = 10;";
+
+    let (ast, parse_diags) = parse(source);
+    assert!(
+        parse_diags.is_empty(),
+        "Should parse without errors: {:?}",
+        parse_diags
+    );
+
+    let (mut symbol_table, bind_diags) = bind_program(&ast);
+    assert!(
+        bind_diags.is_empty(),
+        "Should bind without errors: {:?}",
+        bind_diags
+    );
+
+    let type_diags = typecheck_program(&ast, &mut symbol_table);
+
+    // Find the AT2014 deprecation warning
+    let deprecation_warnings: Vec<_> = type_diags.iter().filter(|d| d.code == "AT2014").collect();
+
+    assert_eq!(
+        deprecation_warnings.len(),
+        1,
+        "Should have exactly one AT2014 deprecation warning"
+    );
+
+    let warning = deprecation_warnings[0];
+    assert!(
+        warning.is_warning(),
+        "AT2014 should be a warning, not an error"
+    );
+    assert!(
+        warning.message.contains("deprecated"),
+        "Warning should mention 'deprecated': {}",
+        warning.message
+    );
+    assert!(
+        warning.message.contains("let mut"),
+        "Warning should suggest 'let mut': {}",
+        warning.message
+    );
+    assert!(
+        warning.help.as_ref().is_some_and(|h| h.contains("let mut")),
+        "Help should mention 'let mut': {:?}",
+        warning.help
+    );
+}
+
+#[test]
+fn test_let_mut_does_not_emit_deprecation_warning() {
+    let source = "let mut x = 10;";
+
+    let (ast, parse_diags) = parse(source);
+    assert!(parse_diags.is_empty());
+
+    let (mut symbol_table, bind_diags) = bind_program(&ast);
+    assert!(bind_diags.is_empty());
+
+    let type_diags = typecheck_program(&ast, &mut symbol_table);
+
+    // Should have no AT2014 warnings
+    let deprecation_warnings: Vec<_> = type_diags.iter().filter(|d| d.code == "AT2014").collect();
+
+    assert!(
+        deprecation_warnings.is_empty(),
+        "let mut should not emit deprecation warning"
+    );
+}
+
+#[test]
 fn test_related_span_points_to_correct_location() {
     let source = r#"
         fn first() {}
@@ -855,6 +927,7 @@ fn test_error_code_descriptions(#[case] code: &str, #[case] desc: &str) {
 #[case("AT1002")]
 #[case("AT1003")]
 #[case("AT2001")]
+#[case("AT2014")]
 #[case("AT3003")]
 fn test_error_codes_have_help(#[case] code: &str) {
     let info = error_codes::lookup(code).unwrap();

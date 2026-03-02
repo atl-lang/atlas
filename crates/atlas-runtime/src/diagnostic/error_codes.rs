@@ -56,6 +56,9 @@ pub const BORROW_TO_OWN: &str = "AT2012";
 /// Add `own` or `borrow` to the parameter to clarify ownership transfer semantics.
 pub const MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION: &str = "AT2013";
 
+/// Warning: `var` keyword is deprecated. Use `let mut` for mutable bindings.
+pub const DEPRECATED_VAR_KEYWORD: &str = "AT2014";
+
 // AT3040+: Closure errors
 pub const CLOSURE_CAPTURES_BORROW: &str = "AT3040";
 
@@ -360,6 +363,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT2013",
         description: "Non-Copy type passed without ownership annotation",
         help: Some("This type is not Copy. Annotate the parameter with `own` or `borrow` to clarify ownership intent."),
+    },
+    ErrorCodeInfo {
+        code: "AT2014",
+        description: "The `var` keyword is deprecated",
+        help: Some("Use `let mut` for mutable bindings. The `var` keyword will be removed in a future version."),
     },
     // === AT3xxx: Semantic/Type Checking Errors ===
     ErrorCodeInfo {

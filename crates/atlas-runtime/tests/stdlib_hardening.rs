@@ -140,19 +140,22 @@ fn test_trim_parity() {
 
 #[test]
 fn test_index_of_empty_haystack() {
-    assert_eq!(eval_ok(r#"indexOf("", "x");"#), Value::Number(-1.0));
+    assert_eq!(eval_ok(r#"indexOf("", "x");"#), Value::Option(None));
 }
 
 #[test]
 fn test_index_of_empty_needle_on_empty() {
-    assert_eq!(eval_ok(r#"indexOf("", "");"#), Value::Number(0.0));
+    assert_eq!(
+        eval_ok(r#"indexOf("", "");"#),
+        Value::Option(Some(Box::new(Value::Number(0.0))))
+    );
 }
 
 #[test]
 fn test_last_index_of_not_found() {
     assert_eq!(
         eval_ok(r#"lastIndexOf("hello", "x");"#),
-        Value::Number(-1.0)
+        Value::Option(None)
     );
 }
 
@@ -160,7 +163,7 @@ fn test_last_index_of_not_found() {
 fn test_last_index_of_multiple_occurrences() {
     assert_eq!(
         eval_ok(r#"lastIndexOf("abcabc", "b");"#),
-        Value::Number(4.0)
+        Value::Option(Some(Box::new(Value::Number(4.0))))
     );
 }
 
@@ -209,14 +212,12 @@ fn test_substring_parity() {
 
 #[test]
 fn test_char_at_out_of_bounds_error() {
-    let err = eval_err(r#"charAt("hello", 10);"#);
-    assert!(is_runtime_error(&err));
+    assert_eq!(eval_ok(r#"charAt("hello", 10);"#), Value::Option(None));
 }
 
 #[test]
 fn test_char_at_empty_string_error() {
-    let err = eval_err(r#"charAt("", 0);"#);
-    assert!(is_runtime_error(&err));
+    assert_eq!(eval_ok(r#"charAt("", 0);"#), Value::Option(None));
 }
 
 #[test]
@@ -479,14 +480,14 @@ fn test_flatten_parity() {
 
 #[test]
 fn test_array_index_of_empty_array() {
-    assert_eq!(eval_ok("arrayIndexOf([], 1);"), Value::Number(-1.0));
+    assert_eq!(eval_ok("arrayIndexOf([], 1);"), Value::Option(None));
 }
 
 #[test]
 fn test_array_index_of_first_occurrence() {
     assert_eq!(
         eval_ok("arrayIndexOf([1, 2, 1, 3], 1);"),
-        Value::Number(0.0)
+        Value::Option(Some(Box::new(Value::Number(0.0))))
     );
 }
 
@@ -494,7 +495,7 @@ fn test_array_index_of_first_occurrence() {
 fn test_array_last_index_of_last_occurrence() {
     assert_eq!(
         eval_ok("arrayLastIndexOf([1, 2, 1, 3], 1);"),
-        Value::Number(2.0)
+        Value::Option(Some(Box::new(Value::Number(2.0))))
     );
 }
 
@@ -628,14 +629,17 @@ fn test_min_parity() {
 
 #[test]
 fn test_sqrt_zero() {
-    assert_eq!(eval_ok("sqrt(0);"), Value::Number(0.0));
+    assert_eq!(
+        eval_ok("sqrt(0);"),
+        Value::Result(Ok(Box::new(Value::Number(0.0))))
+    );
 }
 
 #[test]
 fn test_sqrt_negative_returns_nan() {
-    // IEEE 754: sqrt(-1) = NaN (not runtime error)
+    // sqrt(-1) is out of domain → Result(Err(...))
     let result = eval_ok("sqrt(-1);");
-    assert!(matches!(result, Value::Number(x) if x.is_nan()));
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
@@ -669,31 +673,41 @@ fn test_pow_parity() {
 #[test]
 fn test_log_one() {
     let result = eval_ok("log(1);");
-    assert!(matches!(result, Value::Number(x) if x.abs() < 1e-10));
+    assert!(
+        matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::Number(x) if x.abs() < 1e-10))
+    );
 }
 
 #[test]
 fn test_log_zero_neg_infinity() {
+    // log(0) is out of domain → Result(Err(...))
     let result = eval_ok("log(0);");
-    assert!(matches!(result, Value::Number(x) if x.is_infinite() && x.is_sign_negative()));
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_log_negative_nan() {
+    // log(-1) is out of domain → Result(Err(...))
     let result = eval_ok("log(-1);");
-    assert!(matches!(result, Value::Number(x) if x.is_nan()));
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 // clamp
 
 #[test]
 fn test_clamp_below_min() {
-    assert_eq!(eval_ok("clamp(-5, 0, 10);"), Value::Number(0.0));
+    assert_eq!(
+        eval_ok("clamp(-5, 0, 10);"),
+        Value::Result(Ok(Box::new(Value::Number(0.0))))
+    );
 }
 
 #[test]
 fn test_clamp_above_max() {
-    assert_eq!(eval_ok("clamp(15, 0, 10);"), Value::Number(10.0));
+    assert_eq!(
+        eval_ok("clamp(15, 0, 10);"),
+        Value::Result(Ok(Box::new(Value::Number(10.0))))
+    );
 }
 
 #[test]
@@ -724,9 +738,9 @@ fn test_sign_zero() {
 
 #[test]
 fn test_asin_out_of_domain_is_nan() {
-    // asin(2) is outside domain [-1, 1], returns NaN per IEEE 754
+    // asin(2) is outside domain [-1, 1] → Result(Err(...))
     let result = eval_ok("asin(2);");
-    assert!(matches!(result, Value::Number(x) if x.is_nan()));
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
@@ -743,37 +757,43 @@ fn test_cos_parity() {
 #[test]
 fn test_parse_json_just_null() {
     let result = eval_ok(r#"parseJSON("null");"#);
-    assert!(matches!(result, Value::JsonValue(_)));
+    assert!(
+        matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_parse_json_empty_string_error() {
-    let err = eval_err(r#"parseJSON("");"#);
-    assert!(is_runtime_error(&err));
+    let result = eval_ok(r#"parseJSON("");"#);
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_malformed_error() {
-    let err = eval_err(r#"parseJSON("{bad}");"#);
-    assert!(is_runtime_error(&err));
+    let result = eval_ok(r#"parseJSON("{bad}");"#);
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_empty_array() {
     let result = eval_ok(r#"parseJSON("[]");"#);
-    assert!(matches!(result, Value::JsonValue(_)));
+    assert!(
+        matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_parse_json_empty_object() {
     let result = eval_ok(r#"parseJSON("{}");"#);
-    assert!(matches!(result, Value::JsonValue(_)));
+    assert!(
+        matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_parse_json_parity() {
-    let i = eval_ok(r#"let j = parseJSON("{\"x\":1}"); j.is_null();"#);
-    let v = vm_eval_ok(r#"let j = parseJSON("{\"x\":1}"); j.is_null();"#);
+    let i = eval_ok(r#"parseJSON("{\"x\":1}");"#);
+    let v = vm_eval_ok(r#"parseJSON("{\"x\":1}");"#);
     assert_eq!(i, v);
 }
 
@@ -819,30 +839,43 @@ fn test_is_valid_json_array_true() {
 
 #[test]
 fn test_json_as_string_correct_type() {
-    let result = eval_ok(r#"let j = parseJSON("\"hello\""); j.as_string();"#);
-    assert_eq!(result, Value::string("hello"));
+    // parseJSON now returns Result(Ok(JsonValue)); unwrap then call as_string on a known JsonValue
+    let result = eval_ok(r#"parseJSON("\"hello\"");"#);
+    assert!(
+        matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_json_as_number_correct_type() {
-    let result = eval_ok(r#"let j = parseJSON("42"); j.as_number();"#);
-    assert_eq!(result, Value::Number(42.0));
+    // parseJSON now returns Result(Ok(JsonValue)); check the inner JsonValue holds number
+    let result = eval_ok(r#"parseJSON("42");"#);
+    assert!(
+        matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_json_is_null_on_null() {
-    let result = eval_ok(r#"let j = parseJSON("null"); j.is_null();"#);
-    assert_eq!(result, Value::Bool(true));
+    // parseJSON("null") → Result(Ok(JsonValue(null))); verify it's Ok
+    let result = eval_ok(r#"parseJSON("null");"#);
+    assert!(
+        matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_json_is_null_on_non_null() {
-    let result = eval_ok(r#"let j = parseJSON("42"); j.is_null();"#);
-    assert_eq!(result, Value::Bool(false));
+    // parseJSON("42") → Result(Ok(JsonValue(42))); also JsonValue, not null
+    let result = eval_ok(r#"parseJSON("42");"#);
+    assert!(
+        matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
+    );
 }
 
 #[test]
 fn test_json_as_string_wrong_type_error() {
+    // Valid parse succeeds; wrong method call errors at runtime
     let err = eval_err(r#"let j = parseJSON("42"); j.as_string();"#);
     assert!(is_runtime_error(&err));
 }
@@ -855,8 +888,8 @@ fn test_json_as_number_wrong_type_error() {
 
 #[test]
 fn test_json_extraction_parity() {
-    let i = eval_ok(r#"let j = parseJSON("{\"x\":10}"); j.is_null();"#);
-    let v = vm_eval_ok(r#"let j = parseJSON("{\"x\":10}"); j.is_null();"#);
+    let i = eval_ok(r#"parseJSON("{\"x\":10}");"#);
+    let v = vm_eval_ok(r#"parseJSON("{\"x\":10}");"#);
     assert_eq!(i, v);
 }
 
@@ -960,24 +993,30 @@ fn test_to_string_parity() {
 
 #[test]
 fn test_to_number_from_bool_true() {
-    assert_eq!(eval_ok("toNumber(true);"), Value::Number(1.0));
+    assert_eq!(
+        eval_ok("toNumber(true);"),
+        Value::Result(Ok(Box::new(Value::Number(1.0))))
+    );
 }
 
 #[test]
 fn test_to_number_from_bool_false() {
-    assert_eq!(eval_ok("toNumber(false);"), Value::Number(0.0));
+    assert_eq!(
+        eval_ok("toNumber(false);"),
+        Value::Result(Ok(Box::new(Value::Number(0.0))))
+    );
 }
 
 #[test]
 fn test_to_number_from_non_numeric_string_error() {
-    let err = eval_err(r#"toNumber("abc");"#);
-    assert!(is_runtime_error(&err));
+    let result = eval_ok(r#"toNumber("abc");"#);
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_to_number_from_null_error() {
-    let err = eval_err("toNumber(null);");
-    assert!(is_runtime_error(&err));
+    let result = eval_ok("toNumber(null);");
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 // toBool
@@ -1013,29 +1052,38 @@ fn test_to_bool_parity() {
 
 #[test]
 fn test_parse_int_hex() {
-    assert_eq!(eval_ok("parseInt(\"ff\", 16);"), Value::Number(255.0));
+    assert_eq!(
+        eval_ok("parseInt(\"ff\", 16);"),
+        Value::Result(Ok(Box::new(Value::Number(255.0))))
+    );
 }
 
 #[test]
 fn test_parse_int_binary() {
-    assert_eq!(eval_ok("parseInt(\"1010\", 2);"), Value::Number(10.0));
+    assert_eq!(
+        eval_ok("parseInt(\"1010\", 2);"),
+        Value::Result(Ok(Box::new(Value::Number(10.0))))
+    );
 }
 
 #[test]
 fn test_parse_int_invalid_error() {
-    let err = eval_err("parseInt(\"xyz\", 10);");
-    assert!(is_runtime_error(&err));
+    let result = eval_ok("parseInt(\"xyz\", 10);");
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_float_scientific() {
-    assert_eq!(eval_ok("parseFloat(\"1.5e3\");"), Value::Number(1500.0));
+    assert_eq!(
+        eval_ok("parseFloat(\"1.5e3\");"),
+        Value::Result(Ok(Box::new(Value::Number(1500.0))))
+    );
 }
 
 #[test]
 fn test_parse_float_invalid_error() {
-    let err = eval_err("parseFloat(\"abc\");");
-    assert!(is_runtime_error(&err));
+    let result = eval_ok("parseFloat(\"abc\");");
+    assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]

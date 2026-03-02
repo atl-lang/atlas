@@ -325,6 +325,9 @@ pub enum Stmt {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VarDecl {
     pub mutable: bool,
+    /// True if declared with deprecated `var` keyword instead of `let`/`let mut`.
+    /// Used to emit AT2014 deprecation warning.
+    pub uses_deprecated_var: bool,
     pub name: Identifier,
     pub type_ref: Option<TypeRef>,
     pub init: Expr,
@@ -545,13 +548,32 @@ pub struct GroupExpr {
     pub span: Span,
 }
 
+/// Whether the `?` operator targets a Result or Option type.
+/// Set by the typechecker, read by the compiler for opcode selection.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TryTargetKind {
+    Result,
+    Option,
+}
+
 /// Try expression (error propagation operator ?)
 ///
-/// Unwraps Ok value or returns Err early from current function
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Unwraps Ok/Some value or returns Err/None early from current function
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TryExpr {
     pub expr: Box<Expr>,
+    /// Set by the typechecker to indicate whether `?` is applied to Result or Option.
+    /// The compiler reads this to emit the correct opcodes.
+    #[serde(skip)]
+    pub target_kind: std::cell::RefCell<Option<TryTargetKind>>,
     pub span: Span,
+}
+
+impl PartialEq for TryExpr {
+    fn eq(&self, other: &Self) -> bool {
+        // target_kind is an ephemeral annotation — exclude from equality
+        self.expr == other.expr && self.span == other.span
+    }
 }
 
 /// Match expression

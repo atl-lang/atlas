@@ -1891,7 +1891,7 @@ impl VM {
         for elem in arr {
             let pred_result = self.vm_call_function_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(elem),
+                Value::Bool(true) => return Ok(Value::Option(Some(Box::new(elem)))),
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1902,7 +1902,7 @@ impl VM {
             }
         }
 
-        Ok(Value::Null)
+        Ok(Value::Option(None))
     }
 
     fn vm_intrinsic_find_index(
@@ -1942,7 +1942,9 @@ impl VM {
         for (i, elem) in arr.iter().enumerate() {
             let pred_result = self.vm_call_function_value(predicate, vec![elem.clone()], span)?;
             match pred_result {
-                Value::Bool(true) => return Ok(Value::Number(i as f64)),
+                Value::Bool(true) => {
+                    return Ok(Value::Option(Some(Box::new(Value::Number(i as f64)))))
+                }
                 Value::Bool(false) => {}
                 _ => {
                     return Err(RuntimeError::TypeError {
@@ -1953,7 +1955,7 @@ impl VM {
             }
         }
 
-        Ok(Value::Number(-1.0))
+        Ok(Value::Option(None))
     }
 
     fn vm_intrinsic_flat_map(

@@ -1,12 +1,4 @@
 use super::*;
-use pretty_assertions::assert_eq;
-
-fn test_cow_index_mutation_does_not_affect_original() {
-    assert_eval_number(
-        "var a: array = [1, 2, 3]; var b: array = a; b[0] = 99; a[0];",
-        1.0,
-    );
-}
 
 #[test]
 fn test_cow_cloned_array_gets_mutation() {

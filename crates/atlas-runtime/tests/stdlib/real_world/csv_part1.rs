@@ -81,7 +81,7 @@ fn test_csv_filter_by_criteria() {
         r#"
         fn isExpensive(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let price: number = parseFloat(fields[1]);
+            let price: number = unwrap(parseFloat(fields[1]));
             return price >= 2.0;
         }}
 
@@ -137,7 +137,7 @@ fn test_csv_sum_column() {
         r#"
         fn sumAmounts(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let amount: number = parseFloat(fields[1]);
+            let amount: number = unwrap(parseFloat(fields[1]));
             return total + amount;
         }}
 
@@ -218,7 +218,7 @@ fn test_csv_write_transformed() {
         fn transform(row: string) -> string {{
             let fields: string[] = split(row, ",");
             let name: string = fields[0];
-            let value: number = parseFloat(fields[1]);
+            let value: number = unwrap(parseFloat(fields[1]));
             let doubled: number = value * 2.0;
             return name + "," + str(doubled);
         }}
@@ -253,7 +253,7 @@ fn test_csv_calculate_average() {
         r#"
         fn sumScores(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let score: number = parseFloat(fields[1]);
+            let score: number = unwrap(parseFloat(fields[1]));
             return total + score;
         }}
 
@@ -280,7 +280,7 @@ fn test_csv_filter_and_count() {
         r#"
         fn isAdult(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let age: number = parseFloat(fields[1]);
+            let age: number = unwrap(parseFloat(fields[1]));
             return age >= 30.0;
         }}
 
@@ -306,7 +306,7 @@ fn test_csv_max_value() {
         r#"
         fn findMax(current: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let value: number = parseFloat(fields[1]);
+            let value: number = unwrap(parseFloat(fields[1]));
             return max(current, value);
         }}
 

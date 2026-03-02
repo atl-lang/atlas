@@ -50,7 +50,8 @@ fn test_variable_persistence() {
 #[test]
 fn test_mutable_variable_reassignment() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "var count = 0;");
+    // Use `let mut` (recommended) instead of deprecated `var`
+    eval_ok(&mut repl, "let mut count = 0;");
     eval_ok(&mut repl, "count = count + 1;");
     assert_value(&mut repl, "count;", Value::Number(1.0));
     eval_ok(&mut repl, "count = count + 10;");
@@ -259,13 +260,13 @@ fn type_of_expression_matches_expected(input: &str, expected: &str) {
     expected_type,
     case("let x = 42;", "number"),
     case("let name = \"atlas\";", "string"),
-    case("var flag = true;", "bool"),
+    case("let mut flag = true;", "bool"),
     case("let data = [1,2,3];", "number[]"),
-    case("var nothing = null;", "null"),
+    case("let mut nothing = null;", "null"),
     case("let combo = [\"a\", \"b\"];", "string[]"),
-    case("var result = len(\"abc\");", "number"),
+    case("let mut result = len(\"abc\");", "number"),
     case("let nested = [[1,2],[3,4]];", "number[][]"),
-    case("var vector = [1, 2, 3];", "number[]")
+    case("let mut vector = [1, 2, 3];", "number[]")
 )]
 fn let_binding_records_type(input: &str, expected_type: &str) {
     let mut repl = ReplCore::new();
@@ -289,7 +290,7 @@ fn let_binding_records_type(input: &str, expected_type: &str) {
     expected_names,
     case(vec!["let a = 1;", "let b = 2;"], vec!["a", "b"]),
     case(vec!["let z = 0;", "let y = z + 1;", "let x = y + z;"], vec!["x", "y", "z"]),
-    case(vec!["var list = [1,2];", "list = [3,4];"], vec!["list"]),
+    case(vec!["let mut list = [1,2];", "list = [3,4];"], vec!["list"]),
     case(vec!["let msg = \"hi\";", "let num = 7;"], vec!["msg", "num"]),
     case(vec!["let first = true;", "let second = false;", "let third = first && second;"], vec!["first", "second", "third"])
 )]
@@ -334,7 +335,8 @@ fn type_errors_surface_in_type_query(input: &str) {
 #[test]
 fn let_binding_captures_value_and_mutability() {
     let mut repl = ReplCore::new();
-    let res = repl.eval_line("var counter = 3;");
+    // Use `let mut` (recommended) instead of deprecated `var`
+    let res = repl.eval_line("let mut counter = 3;");
     assert!(res.diagnostics.is_empty());
     let binding = res.bindings.first().expect("binding");
     assert!(binding.mutable);

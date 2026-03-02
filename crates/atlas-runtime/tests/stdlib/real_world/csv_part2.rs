@@ -13,8 +13,8 @@ fn test_csv_multi_column_filter() {
         r#"
         fn isHighValueInStock(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let price: number = parseFloat(fields[1]);
-            let stock: number = parseFloat(fields[2]);
+            let price: number = unwrap(parseFloat(fields[1]));
+            let stock: number = unwrap(parseFloat(fields[2]));
             return price >= 1.0 && stock >= 100.0;
         }}
 
@@ -45,7 +45,7 @@ fn test_csv_column_sum_with_condition() {
         fn sumNorth(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
             let region: string = fields[0];
-            let amount: number = parseFloat(fields[1]);
+            let amount: number = unwrap(parseFloat(fields[1]));
             if (region == "North") {{
                 return total + amount;
             }}
@@ -127,8 +127,8 @@ fn test_csv_percentage_calculation() {
         r#"
         fn calcPercentage(row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let sold: number = parseFloat(fields[1]);
-            let total: number = parseFloat(fields[2]);
+            let sold: number = unwrap(parseFloat(fields[1]));
+            let total: number = unwrap(parseFloat(fields[2]));
             return (sold / total) * 100.0;
         }}
 
@@ -238,8 +238,8 @@ fn test_csv_numeric_sort_data() {
         fn compareById(a: string, b: string) -> number {{
             let fieldsA: string[] = split(a, ",");
             let fieldsB: string[] = split(b, ",");
-            let idA: number = parseFloat(fieldsA[0]);
-            let idB: number = parseFloat(fieldsB[0]);
+            let idA: number = unwrap(parseFloat(fieldsA[0]));
+            let idB: number = unwrap(parseFloat(fieldsB[0]));
             return idA - idB;
         }}
 
@@ -350,7 +350,7 @@ fn test_csv_conditional_transformation() {
         r#"
         fn addGrade(row: string) -> string {{
             let fields: string[] = split(row, ",");
-            let score: number = parseFloat(fields[1]);
+            let score: number = unwrap(parseFloat(fields[1]));
             var grade: string = "F";
             if (score >= 90.0) {{
                 grade = "A";
@@ -385,7 +385,7 @@ fn test_csv_min_value() {
         r#"
         fn findMin(current: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let temp: number = parseFloat(fields[1]);
+            let temp: number = unwrap(parseFloat(fields[1]));
             if (current == 0.0) {{
                 return temp;
             }}

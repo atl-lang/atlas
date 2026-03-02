@@ -68,8 +68,16 @@ pub fn run(args: ProfileArgs) -> Result<()> {
     // --- Typecheck ---
     let mut checker = TypeChecker::new(&mut symbol_table);
     let type_diags = checker.check(&ast);
-    if !type_diags.is_empty() {
+    // Only fail on errors, not warnings
+    let has_errors = type_diags.iter().any(|d| d.is_error());
+    if has_errors {
         return Err(diagnostics_to_error(&args.file, type_diags));
+    }
+    // Print warnings to stderr (they don't block execution)
+    for diag in &type_diags {
+        if diag.is_warning() {
+            eprintln!("{}", diag.to_human_string());
+        }
     }
 
     // --- Compile ---

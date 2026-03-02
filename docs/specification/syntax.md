@@ -36,7 +36,7 @@
 ## Keywords
 
 ### Keywords
-`let`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`, `match`, `import`, `export`, `from`, `as`, `trait`, `impl`
+`let`, `mut`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`, `match`, `import`, `export`, `from`, `as`, `trait`, `impl`
 
 **Note:** Keywords cannot be used as identifiers
 
@@ -250,17 +250,24 @@ data["user"]["name"] // Chained indexing
 ### Variable Declaration
 
 ```atlas
-// Explicit type
+// Immutable (default)
 let x: number = 42;
-var y: string = "hello";
 
-// Type inference
-let z = 3.14;  // Inferred as number
+// Mutable (Rust-style)
+let mut y: number = 10;
+
+// Mutable (legacy syntax, deprecated)
+var z: string = "hello";
+
+// Type inference works with all syntaxes
+let a = 3.14;      // Immutable, inferred as number
+let mut b = "hi";  // Mutable, inferred as string
 ```
 
 **Rules:**
-- `let` is immutable
-- `var` is mutable
+- `let` declares an immutable variable
+- `let mut` declares a mutable variable (recommended)
+- `var` declares a mutable variable (deprecated, use `let mut` instead)
 - Type can be inferred from initializer
 - Initializer required
 

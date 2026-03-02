@@ -38,15 +38,18 @@ pub fn parse_json(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     };
 
     // Parse using serde_json
-    let parsed: serde_json::Value =
-        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
-            msg: format!("Invalid JSON: {}", e),
-            span,
-        })?;
-
-    // Convert serde_json::Value to JsonValue
-    let json_value = serde_to_atlas_json(parsed);
-    Ok(Value::JsonValue(Arc::new(json_value)))
+    match serde_json::from_str::<serde_json::Value>(json_str) {
+        Ok(parsed) => {
+            let json_value = serde_to_atlas_json(parsed);
+            Ok(Value::Result(Ok(Box::new(Value::JsonValue(Arc::new(
+                json_value,
+            ))))))
+        }
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Invalid JSON: {}",
+            e
+        )))))),
+    }
 }
 
 /// Convert JsonValue to JSON string
@@ -353,7 +356,10 @@ fn value_to_json(
         }
         Value::String(s) => {
             // Use serde_json to properly escape the string
-            Ok(serde_json::to_string(s.as_ref()).unwrap())
+            serde_json::to_string(s.as_ref()).map_err(|e| RuntimeError::TypeError {
+                msg: format!("Failed to serialize string: {}", e),
+                span,
+            })
         }
         Value::Array(arr_ref) => {
             // Check for circular reference using pointer address
