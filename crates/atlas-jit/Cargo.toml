@@ -9,7 +9,7 @@ atlas-runtime = { path = "../atlas-runtime" }
 
 # Cranelift JIT compilation
 cranelift-codegen = "0.125"
-cranelift-frontend = "0.125"
+cranelift-frontend = "0.129"
 cranelift-jit = "0.125"
 cranelift-module = "0.125"
 cranelift-native = "0.125"
