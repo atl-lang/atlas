@@ -20,7 +20,16 @@
 **Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
 **Next:** Block 7 — JIT Integration (scaffold)
 
-**IMPORTANT BEFORE CONTINUING:** `docs/codex-findings/important-before-continuing.md`
+## ⚠️ CRITICAL: Post-v0.3 Hardening Required
+
+**Before systems-level conversion (borrow checker, lifetimes, manual memory):**
+The scripting-level language **must be stable and feature-complete**. See `docs/internal/PRE-SYSTEMS-HARDENING.md` for:
+- Missing enforcement (sandbox, JIT, bytecode serialization)
+- Stdlib gaps (WebSockets, HTTP, process spawn, compression)
+- Error discipline audit (unwrap/panic → Result-based)
+- Battle-testing requirements
+
+**AI agents:** Complete v0.3 Blocks 1-9 → execute hardening phases H1-H5 → only then begin systems-level work. **Language functionality > code hygiene.**
 
 ---
 
@@ -197,7 +206,9 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Resource | Location |
 |----------|----------|
 | **v0.3 block plan** | `docs/internal/V03_PLAN.md` ← start here |
+| **Post-v0.3 hardening** | `docs/internal/PRE-SYSTEMS-HARDENING.md` ← required before systems-level conversion |
 | **Memory model spec** | `docs/specification/memory-model.md` ← architectural foundation |
+| **Audit findings** | `advanced-codex-audit.md` + `docs/codex-findings/` ← critical gaps to address |
 | Roadmap | `ROADMAP.md` |
 | Specs | `docs/specification/` |
 | v0.2 archive | `phases/*/archive/v0.2/` |
