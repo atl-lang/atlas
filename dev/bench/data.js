@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772170581261,
+  "lastUpdate": 1772441545780,
   "repoUrl": "https://github.com/atl-lang/atlas",
   "entries": {
     "Atlas Runtime Benchmarks": [
@@ -1091,6 +1091,280 @@ window.BENCHMARK_DATA = {
           {
             "name": "vm_loop_scaling/10000",
             "value": 3518400,
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "proxikal@gmail.com",
+            "name": "Joshua Cleland",
+            "username": "proxikal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "c365fd27b6134c781b7a0c42df699bc6a8e07c75",
+          "message": "feat(stdlib): systems-level modules — crypto, encoding, net, sync, websocket (#167)\n\n* feat(stdlib): add systems-level modules — crypto, encoding, net, sync, websocket\n\nCloses critical P1/P2 gaps identified in systems-language audit:\n\nCrypto (8 functions): sha256, sha512, blake3Hash, hmacSha256,\n  hmacSha256Verify, aesGcmEncrypt, aesGcmDecrypt, aesGcmGenerateKey\n\nEncoding (8 functions): base64Encode/Decode, base64UrlEncode/Decode,\n  hexEncode/Decode, urlEncode/Decode\n\nNetworking (22 functions):\n  TCP client: tcpConnect, tcpWrite, tcpRead, tcpReadBytes, tcpClose,\n    tcpSetTimeout, tcpSetNodelay, tcpLocalAddr, tcpRemoteAddr\n  TCP server: tcpListen, tcpAccept, tcpListenerAddr, tcpListenerClose\n  UDP: udpBind, udpSend, udpReceive, udpSetTimeout, udpClose, udpLocalAddr\n  TLS: tlsConnect, tlsWrite, tlsRead, tlsClose\n\nSync primitives (16 functions):\n  RwLock: rwLockNew, rwLockRead, rwLockWrite, rwLockTryRead, rwLockTryWrite\n  Semaphore: semaphoreNew, semaphoreAcquire, semaphoreTryAcquire,\n    semaphoreRelease, semaphoreAvailable\n  Atomic: atomicNew, atomicLoad, atomicStore, atomicAdd, atomicSub,\n    atomicCompareExchange\n\nWebSocket (6 functions): wsConnect, wsSend, wsSendBinary, wsReceive,\n  wsPing, wsClose\n\nAll modules:\n- Respect SecurityContext permission model for network ops\n- Use handle-based resource management (array-tagged IDs)\n- Follow existing stdlib patterns (arity checks, proper errors)\n- 8248 tests pass, 0 failures, 0 clippy warnings\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs: add systems-level audit handoff for next agent session\n\nComprehensive handoff covering completed work (60 new stdlib functions),\nremaining priorities (struct/enum types, ? operator, JIT integration),\nand standards for continuation.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-03-02T03:00:31-05:00",
+          "tree_id": "84d416ee517c058788959aa2ec66d9ec3aa48b5c",
+          "url": "https://github.com/atl-lang/atlas/commit/c365fd27b6134c781b7a0c42df699bc6a8e07c75"
+        },
+        "date": 1772441545184,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "interp_fibonacci_20",
+            "value": 38705000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interp_arrays/len_10k",
+            "value": 6035100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/fibonacci_20",
+            "value": 8365399.999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/nested_loops",
+            "value": 3424100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "string_replace_large",
+            "value": 62051,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_map_10k_elements",
+            "value": 62873,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_sort_1000_numbers",
+            "value": 60300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_indexOf_search",
+            "value": 59325,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "math_arithmetic_10k_ops",
+            "value": 7569900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_parse_10kb",
+            "value": 67853,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_nested_access_deep",
+            "value": 68690,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_read_1mb",
+            "value": 157110,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_write_1mb",
+            "value": 6480100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/10",
+            "value": 122280,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/50",
+            "value": 404690,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/200",
+            "value": 1384900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/50",
+            "value": 153320,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/200",
+            "value": 425660,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/500",
+            "value": 986030,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/lex",
+            "value": 1849.6999999999998,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/parse",
+            "value": 3794.7000000000003,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/compile",
+            "value": 5707.3,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/len_5k",
+            "value": 2624500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/trim_3k",
+            "value": 598010,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/split_1k",
+            "value": 1147000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/push_1k",
+            "value": 21019,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/pop_500",
+            "value": 34293,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/len_5k",
+            "value": 2628000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/index_5k",
+            "value": 2977500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/abs_5k",
+            "value": 2691400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/sqrt_2k",
+            "value": 1038500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/min_max_3k",
+            "value": 2188500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/type/type_of_3k",
+            "value": 23053,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_add_1000",
+            "value": 360200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_sub_1000",
+            "value": 354700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_mul_1000",
+            "value": 326370,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_div_1000",
+            "value": 324730,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_function_multi_arg",
+            "value": 400060,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_count_10000",
+            "value": 1912900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_accumulate_5000",
+            "value": 1870300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_nested_100x100",
+            "value": 3207900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_create_20",
+            "value": 10808,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_set_index_1000",
+            "value": 605990,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_comparison_ops_5000",
+            "value": 2785400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_equality_check_5000",
+            "value": 1343300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_string_concat_100",
+            "value": 43340,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/100",
+            "value": 43398,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/1000",
+            "value": 352870,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/5000",
+            "value": 1733300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/10000",
+            "value": 3450800,
             "unit": "ns/iter"
           }
         ]
