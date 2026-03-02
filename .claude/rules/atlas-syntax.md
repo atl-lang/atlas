@@ -1,5 +1,7 @@
 ---
-paths: ["tests/**", "crates/atlas-runtime/fuzz/**"]
+paths:
+  - "tests/**"
+  - "crates/atlas-runtime/fuzz/**"
 ---
 
 # Atlas Language Syntax Quick-Ref

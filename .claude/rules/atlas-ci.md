@@ -1,5 +1,8 @@
 ---
-paths: [".github/workflows/**", "codecov.yml", "deny.toml"]
+paths:
+  - ".github/workflows/**"
+  - "codecov.yml"
+  - "deny.toml"
 ---
 
 # Atlas CI Standards

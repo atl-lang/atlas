@@ -1,5 +1,8 @@
 ---
-paths: ["crates/atlas-runtime/src/vm/**", "crates/atlas-runtime/src/compiler/**", "crates/atlas-runtime/src/bytecode/**"]
+paths:
+  - "crates/atlas-runtime/src/vm/**"
+  - "crates/atlas-runtime/src/compiler/**"
+  - "crates/atlas-runtime/src/bytecode/**"
 ---
 
 # Atlas VM / Compiler / Bytecode Quick-Ref

@@ -12,10 +12,10 @@
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
 
 ## Git Process
-- **Two-track push policy.** Rust source → PR + CI. Everything else → direct push to main with `[skip ci]`. See `.claude/rules/atlas-git.md`.
+- **Two-track push policy.** Rust source → PR + CI. Everything else → direct push to main with `[skip ci]`. See `.claude/lazy/git.md`.
 - **Single workspace:** `~/dev/projects/atlas/` — no other worktrees.
-- **See `.claude/rules/atlas-git.md`** for full PR workflow, branch naming, and Track 1/Track 2 rules.
-- **See `.claude/rules/atlas-comms.md`** for PR/commit/docs wording standards.
+- **See `.claude/lazy/git.md`** for full PR workflow, branch naming, and Track 1/Track 2 rules.
+- **See `.claude/lazy/comms.md`** for PR/commit/docs wording standards.
 
 ## AI Workflow Exceptions (Project-Specific Overrides)
 - **`.claude/agents/atlas-doc-auditor.md` exceeds global 150-line AI workflow file limit (224 lines).** This is intentional. The auditor covers 6 domains specific to a dual-engine compiler (parity, CoW semantics, interpreter/VM, LSP, JIT) — no global auditor can substitute. Exception approved.

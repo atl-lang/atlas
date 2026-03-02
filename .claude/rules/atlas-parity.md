@@ -1,5 +1,8 @@
 ---
-paths: ["crates/atlas-runtime/src/interpreter/**", "crates/atlas-runtime/src/vm/**", "crates/atlas-runtime/src/compiler/**"]
+paths:
+  - "crates/atlas-runtime/src/interpreter/**"
+  - "crates/atlas-runtime/src/vm/**"
+  - "crates/atlas-runtime/src/compiler/**"
 ---
 
 # Atlas Parity Rules

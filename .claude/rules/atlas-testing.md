@@ -1,5 +1,8 @@
 ---
-paths: ["crates/atlas-runtime/tests/**", "crates/atlas-lsp/tests/**", "crates/**/tests/**"]
+paths:
+  - "crates/atlas-runtime/tests/**"
+  - "crates/atlas-lsp/tests/**"
+  - "crates/**/tests/**"
 ---
 
 # Atlas Testing Rules
