@@ -224,7 +224,20 @@ impl Parser {
         let then_span = then_block.span;
 
         let else_block = if self.match_token(TokenKind::Else) {
-            Some(self.parse_block()?)
+            // Handle `else if` chains: wrap the nested if-statement in a synthetic block
+            if self.check(TokenKind::If) {
+                let nested_if = self.parse_if_stmt()?;
+                let nested_span = match &nested_if {
+                    Stmt::If(if_stmt) => if_stmt.span,
+                    _ => unreachable!(),
+                };
+                Some(Block {
+                    statements: vec![nested_if],
+                    span: nested_span,
+                })
+            } else {
+                Some(self.parse_block()?)
+            }
         } else {
             None
         };

@@ -100,6 +100,47 @@ fn test_parity_nested_if() {
 }
 
 #[test]
+fn test_parity_else_if_chain() {
+    // Test `else if` syntax (not nested `else { if }`)
+    assert_parity(
+        r#"fn classify(x: number) -> number {
+            if (x > 10) {
+                return 2;
+            } else if (x > 5) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        classify(15);"#,
+    );
+    assert_parity(
+        r#"fn classify(x: number) -> number {
+            if (x > 10) {
+                return 2;
+            } else if (x > 5) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        classify(7);"#,
+    );
+    assert_parity(
+        r#"fn classify(x: number) -> number {
+            if (x > 10) {
+                return 2;
+            } else if (x > 5) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+        classify(2);"#,
+    );
+}
+
+#[test]
 fn test_parity_negative_numbers() {
     assert_parity("let x = -5; -x;");
 }
