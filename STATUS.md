@@ -20,7 +20,7 @@
 **Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
 **Next:** Block 7 — JIT Integration (scaffold)
 
-**Current hardening work:** `advanced-codex-audit.md` + `.claude/memory/systems-audit-handoff.md` — AI: alert user when 100% complete (more audits pending)
+**Current hardening work:** `advanced-codex-audit.md` + `.claude/memory/systems-audit-handoff.md` + `docs/codex-findings/claude-audit-2026-03-02.md` — AI: alert user when 100% complete (more audits pending)
 **Critical gaps:** See `docs/codex-findings/important-before-continuing.md`
 **Inline tests:** ~574 to audit post-hardening (deferred - language functionality first)
 **Systems-level conversion:** Last block done: Block 5 (Type Inference). PAUSED until hardening complete — core language must work first.
