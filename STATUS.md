@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-02-27 (Block 5 complete, test-split PAUSED)
+**Last Updated:** 2026-03-02 (Block 6 scaffolded)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
 **Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅
 
@@ -16,9 +16,9 @@
 
 ## Current State
 
-**Status:** Block 5 (Type Inference) COMPLETE — merged via PR #156
+**Status:** Block 6 (Error Handling) SCAFFOLDED — 5 phases planned
 **Last Completed:** Block 5 Phase 09 — type inference (locals, returns, generics), LSP inlay hints, 8,198 tests passing
-**Next:** Block 6 (Error Handling - `?` operator) — ready to scaffold
+**Next:** Block 6 Phase 01 — Option `?` support (extend existing Result-only `?`)
 
 **IMPORTANT BEFORE CONTINUING:** `docs/codex-findings/important-before-continuing.md`
 
@@ -34,7 +34,7 @@
 | 4 | Closures + Anonymous Functions | 12 | ✅ Complete (2026-02-23) |
 | 5 | Type Inference (locals + return types) | 9 | ✅ Complete (2026-02-27) |
 | ts | Test File Decomposition (maintenance) | 8 | ⏸️ PAUSED (13/20 files split) — see `TEST-SPLIT-TRACKING.md` |
-| 6 | Error Handling (`?` operator) | 10–15 | ⬜ Ready to scaffold |
+| 6 | Error Handling (`?` operator) | 5 | 🔨 SCAFFOLDED (2026-03-02) |
 | 7 | JIT Integration (wire atlas-jit to VM) | 10–15 | ⬜ Unblocked — ready to scaffold |
 | 8 | Async/Await Syntax | 10–15 | ⬜ Blocked on Block 6 |
 | 9 | Quick Wins (string interp, implicit returns) | 5–10 | ⬜ Unblocked — ready to scaffold |
