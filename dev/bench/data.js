@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772441545780,
+  "lastUpdate": 1772485985610,
   "repoUrl": "https://github.com/atl-lang/atlas",
   "entries": {
     "Atlas Runtime Benchmarks": [
@@ -1365,6 +1365,280 @@ window.BENCHMARK_DATA = {
           {
             "name": "vm_loop_scaling/10000",
             "value": 3450800,
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "proxikal@gmail.com",
+            "name": "Joshua Cleland",
+            "username": "proxikal"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0aad1edd790967aed322faa6ca2c933e4da54a5f",
+          "message": "feat(parser): complete let mut syntax and var deprecation warning (#168)\n\n* scaffold(block-6): error handling — 5 phases planned\n\nExisting ? operator infrastructure verified:\n- Result ? works in interpreter, compiler, typechecker\n- VM has all required opcodes (IsResultOk, ExtractResultValue, etc.)\n- 10+ interpreter tests exist\n\nGaps identified and phased:\n1. Option ? support (typechecker/interpreter/compiler)\n2. Error type compatibility validation\n3. VM parity tests (none exist)\n4. Stdlib Result audit (≥20 fns)\n5. Integration + edge case tests\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* feat(block-6): add Option ? support — typechecker, interpreter, compiler\n\nPhase 01: extend ? operator from Result-only to also support Option<T>.\n\nChanges:\n- ast.rs: add TryTargetKind enum (Result|Option), TryExpr.target_kind annotation\n- typechecker: check_try() accepts Option<T>, validates function returns Option\n- interpreter: eval_try() handles Value::Option(Some/None)\n- compiler: compile_try() emits IsOptionSome/ExtractOptionValue for Option targets\n- 7 new tests for Option ? (unwrap Some, propagate None, nested, expressions)\n\n8,255 tests pass, 0 failures, 0 clippy warnings.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* feat(block-6): VM parity tests for ? operator — Result + Option\n\nPhase 03: 16 VM-specific tests for ? operator through full pipeline\n(Lexer → Parser → Binder → TypeChecker → Compiler → VM).\n\n- Added compile_checked() helper (includes binder+typechecker for AST annotations)\n- 7 Result ? VM tests (unwrap Ok, propagate Err, multiple, early return, nested)\n- 5 Option ? VM tests (unwrap Some, propagate None, multiple, early None, nested)\n- 4 parity tests (VM vs interpreter produce identical output)\n\n8,271 tests pass, 0 failures, 0 clippy warnings.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* feat(block-6): integration tests + fix ? in binary expressions\n\nPhase 05: integration tests for ? operator cross-feature interactions.\n\nBug fix: interpreter did not check ControlFlow after evaluating left\nside of binary expressions. When a()? + b()? had a() return Err,\nthe ? set ControlFlow::Return but + still tried to evaluate, causing\n\"Invalid operands for +\" error instead of propagating the Err.\n\nFix: check ControlFlow::None after each sub-expression in eval_binary.\n\nTests added:\n- 8 interpreter integration tests (multiple ? in expr, if conditions,\n  chained transforms, Option multiple ?)\n- 6 VM integration tests (multiple ?, chained, if conditions)\n- 5 VM parity integration tests\n\n8,285 tests pass, 0 failures, 0 clippy warnings.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs: update STATUS.md + add Block 6 handoff for next agent session\n\nBlock 6 progress: 4/5 phases complete.\nRemaining: Phase 04 (stdlib Result audit — ≥20 functions).\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* feat(block-6): stdlib Result/Option audit — 21+ functions converted\n\nPhase 04: Convert panicking/sentinel stdlib functions to Result<T,E>\nor Option<T> for safe error handling with the ? operator.\n\nOption conversions: indexOf, lastIndexOf, arrayIndexOf, arrayLastIndexOf,\ncharAt, find, findIndex, getEnv (sentinel -1/null → Option<T>)\n\nResult conversions: toNumber, parseInt, parseFloat, parseJSON, sqrt,\nlog, asin, acos, clamp (panics/NaN → Result<T, String>)\n\nInternal safety: toJSON serde unwrap, 3x fs.rs SystemTime unwraps\n\nAlso: top-level ? operator support (typechecker + both engines),\nsymbol.rs type declarations updated, all 8,285 tests updated and passing.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* fix(tests): remove unused test helpers and imports\n\nAll 11 open PRs were failing Clippy due to unused code:\n- Removed unused assert_parity() helper (mutations.rs)\n- Removed unused run_interpreter() helper (interpreter.rs)\n- Removed 4 test functions missing #[test] attributes\n- Removed 3 unused pretty_assertions imports\n\nFixes CI failures for PRs #157-166.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs: add pre-systems hardening roadmap and STATUS.md integration\n\nCreates comprehensive hardening tracker for post-v0.3 work:\n- Maps 7 critical gaps from audit findings\n- Defines 5 hardening phases (H1-H5) before systems-level conversion\n- Sets acceptance criteria for hardening completion\n- Links to advanced-codex-audit.md and codex-findings/\n\nUpdates STATUS.md:\n- Adds prominent hardening notice in Current State section\n- Links PRE-SYSTEMS-HARDENING.md in Quick Links\n- Clarifies: language functionality > code hygiene\n- Instructs AI agents: complete v0.3 → hardening → systems-level\n\nPriority: Get scripting-level language stable before adding borrow\nchecker, lifetimes, or manual memory management.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* fix(docs): correct v0.3 scope — hardening is part of v0.3, not post-v0.3\n\nTerminology fixes:\n- v0.3 = language completeness + hardening (open-ended)\n- v0.4+ = systems-level (borrow checker, AOT)\n- Hardening phases H1-H5 are PART OF v0.3, not after it\n\nClarifications:\n- Blocks 1-9 are first milestone, not entire v0.3\n- v0.3 complete when acceptance criteria met (tens/hundreds of blocks)\n- Then tag v0.3.0 and begin v0.4 systems-level work\n\nUpdated PRE-SYSTEMS-HARDENING.md title to 'v0.3 Hardening Roadmap\n(Post-v0.2 Stabilization)' and adjusted all references.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* revert: remove over-engineered hardening doc\n\nRemoved PRE-SYSTEMS-HARDENING.md - too much forward-looking complexity.\nSimplified STATUS.md - removed confusing v0.4 references.\n\nFocus: Fix what's broken NOW. Audit findings already document gaps.\nDon't project into future versions.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): add deferred work notes (inline tests + systems-level)\n\n- Inline tests: ~574 to audit after hardening complete\n- Systems-level: blocked on core language compiler readiness\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): link systems-level conversion to ROADMAP\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): clarify v0.3 scope — all systems-level work in v0.3\n\n- Block 5 (Type Inference) = last systems-level block done\n- Systems-level conversion PAUSED until hardening complete\n- v0.3 is open-ended: features + hardening + systems-level\n- No version increment until compiler is professionally complete\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): clarify v0.3 exit criteria - fix current features, not build forever\n\nv0.3 = make what exists work correctly, not feature-complete compiler.\nBattle-test current foundation before future feature additions.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): track current hardening work from audit findings\n\nPointers to:\n- advanced-codex-audit.md (battle-test findings)\n- systems-audit-handoff.md (stdlib + priorities)\n\nAI agents: alert user when hardening 100% complete (more audits pending).\nFeature blocks (7-9) remain visible for post-hardening continuation.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs: add Claude audit findings to tracking (2026-03-02)\n\nMoved CLAUDE-ATLAS-AUDIT-03-02-26.md to docs/codex-findings/claude-audit-2026-03-02.md\nAdded to STATUS.md hardening work tracking.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* feat(parser): complete let mut syntax and var deprecation warning\n\nImplements Rust-style `let mut` for mutable variable declarations and\nadds AT2014 deprecation warning when the legacy `var` keyword is used.\n\nChanges:\n- Add `mut` keyword token and parser support for `let mut x = ...`\n- Track deprecated `var` usage via `uses_deprecated_var` AST field\n- Emit AT2014 warning in typechecker when `var` is detected\n- Fix runtime/CLI to distinguish warnings from errors (only fail on errors)\n- Update suggestions to recommend `let mut` instead of `var`\n- Add comprehensive runtime tests for let mut behavior\n- Update all existing tests to use `let mut` syntax\n- Update syntax.md specification\n\nThe deprecation warning provides a smooth migration path while maintaining\nbackwards compatibility. `var` still works but emits a clear warning.\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* docs(STATUS): record let mut hardening completion\n\n- Updated test count: 8,302 (up from 8,285)\n- AT2014 deprecation warning for `var` now functional\n- let mut syntax fully operational\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n* style: cargo fmt diagnostics.rs\n\nCo-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>\n\n---------\n\nCo-authored-by: Claude Opus 4.6 <noreply@anthropic.com>",
+          "timestamp": "2026-03-02T20:22:07Z",
+          "tree_id": "39123565fea6911b4b2f1d215b1554e7b7b8c8f9",
+          "url": "https://github.com/atl-lang/atlas/commit/0aad1edd790967aed322faa6ca2c933e4da54a5f"
+        },
+        "date": 1772485984595,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "interp_fibonacci_20",
+            "value": 38508000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interp_arrays/len_10k",
+            "value": 6031500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/fibonacci_20",
+            "value": 8202400.000000001,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/nested_loops",
+            "value": 3312200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "string_replace_large",
+            "value": 66251,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_map_10k_elements",
+            "value": 66053,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_sort_1000_numbers",
+            "value": 64155,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_indexOf_search",
+            "value": 63512,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "math_arithmetic_10k_ops",
+            "value": 7593300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_parse_10kb",
+            "value": 71565,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_nested_access_deep",
+            "value": 68988,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_read_1mb",
+            "value": 156810,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_write_1mb",
+            "value": 6473400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/10",
+            "value": 124740,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/50",
+            "value": 409250,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/200",
+            "value": 1394400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/50",
+            "value": 156260,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/200",
+            "value": 432720,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/500",
+            "value": 1005500.0000000001,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/lex",
+            "value": 1847.6999999999998,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/parse",
+            "value": 3716,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/compile",
+            "value": 5447.099999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/len_5k",
+            "value": 2583200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/trim_3k",
+            "value": 593690,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/split_1k",
+            "value": 1230900,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/push_1k",
+            "value": 21526,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/pop_500",
+            "value": 32429.000000000004,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/len_5k",
+            "value": 2614000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/index_5k",
+            "value": 2976800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/abs_5k",
+            "value": 2710800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/sqrt_2k",
+            "value": 20082,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/min_max_3k",
+            "value": 1994400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/type/type_of_3k",
+            "value": 24502,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_add_1000",
+            "value": 353650,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_sub_1000",
+            "value": 349090,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_mul_1000",
+            "value": 319460,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_div_1000",
+            "value": 325630,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_function_multi_arg",
+            "value": 399170,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_count_10000",
+            "value": 1918300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_accumulate_5000",
+            "value": 1890400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_nested_100x100",
+            "value": 3133600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_create_20",
+            "value": 11253,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_set_index_1000",
+            "value": 614860,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_comparison_ops_5000",
+            "value": 2788300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_equality_check_5000",
+            "value": 1357800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_string_concat_100",
+            "value": 43769,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/100",
+            "value": 43370,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/1000",
+            "value": 353260,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/5000",
+            "value": 1727500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/10000",
+            "value": 3451900,
             "unit": "ns/iter"
           }
         ]
