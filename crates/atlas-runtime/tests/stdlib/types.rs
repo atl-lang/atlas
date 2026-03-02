@@ -1387,3 +1387,126 @@ fn test_option_try_nested_none_propagation() {
 "#;
     assert_eval_bool(code, true);
 }
+
+// ============================================================================
+// ? Operator Integration Tests (Block 6 Phase 05)
+// ============================================================================
+
+#[test]
+fn test_try_result_multiple_in_single_expression() {
+    // Multiple ? in one expression: foo()? + bar()?
+    let code = r#"
+    fn a() -> Result<number, string> { return Ok(10); }
+    fn b() -> Result<number, string> { return Ok(32); }
+    fn calc() -> Result<number, string> {
+        return Ok(a()? + b()?);
+    }
+    unwrap(calc())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_try_result_multiple_expr_first_fails() {
+    let code = r#"
+    fn a() -> Result<number, string> { return Err("a failed"); }
+    fn b() -> Result<number, string> { return Ok(32); }
+    fn calc() -> Result<number, string> {
+        return Ok(a()? + b()?);
+    }
+    is_err(calc())
+"#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn test_try_result_in_if_condition() {
+    let code = r#"
+    fn check() -> Result<bool, string> { return Ok(true); }
+    fn run() -> Result<number, string> {
+        if (check()?) {
+            return Ok(42);
+        }
+        return Ok(0);
+    }
+    unwrap(run())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_try_result_chained_transforms() {
+    let code = r#"
+    fn parse_num(s: string) -> Result<number, string> {
+        if (s == "42") { return Ok(42); }
+        return Err("not 42");
+    }
+    fn double(n: number) -> Result<number, string> {
+        return Ok(n * 2);
+    }
+    fn process(s: string) -> Result<number, string> {
+        let n = parse_num(s)?;
+        let d = double(n)?;
+        return Ok(d);
+    }
+    unwrap(process("42"))
+"#;
+    assert_eval_number(code, 84.0);
+}
+
+#[test]
+fn test_try_option_in_if_condition() {
+    let code = r#"
+    fn get() -> Option<bool> { return Some(true); }
+    fn run() -> Option<number> {
+        if (get()?) {
+            return Some(42);
+        }
+        return Some(0);
+    }
+    unwrap(run())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_try_result_direct_function_call() {
+    // ? directly on function call result
+    let code = r#"
+    fn get_value() -> Result<number, string> {
+        return Ok(42);
+    }
+    fn use_it() -> Result<number, string> {
+        let x = get_value()?;
+        return Ok(x);
+    }
+    unwrap(use_it())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_try_option_multiple_in_single_expression() {
+    let code = r#"
+    fn a() -> Option<number> { return Some(10); }
+    fn b() -> Option<number> { return Some(32); }
+    fn calc() -> Option<number> {
+        return Some(a()? + b()?);
+    }
+    unwrap(calc())
+"#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn test_try_option_second_fails() {
+    let code = r#"
+    fn a() -> Option<number> { return Some(10); }
+    fn b() -> Option<number> { return None(); }
+    fn calc() -> Option<number> {
+        return Some(a()? + b()?);
+    }
+    is_none(calc())
+"#;
+    assert_eval_bool(code, true);
+}

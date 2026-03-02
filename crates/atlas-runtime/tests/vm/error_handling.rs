@@ -1,4 +1,5 @@
 use super::*;
+#[allow(unused_imports)]
 use pretty_assertions::assert_eq;
 
 // VM parity tests for ? operator (Block 6 Phase 03)
@@ -288,4 +289,110 @@ fn test_parity_option_try_none() {
         vm_result, interp_result,
         "Parity mismatch for Option ? None"
     );
+}
+
+// ============================================================================
+// Integration Tests — Cross-Feature (Phase 05)
+// ============================================================================
+
+#[test]
+fn test_vm_try_multiple_in_expression() {
+    let code = r#"
+    fn a() -> Result<number, string> { return Ok(10); }
+    fn b() -> Result<number, string> { return Ok(32); }
+    fn calc() -> Result<number, string> {
+        return Ok(a()? + b()?);
+    }
+    unwrap(calc());
+"#;
+    match vm_eval_checked(code) {
+        Some(Value::Number(n)) => assert_eq!(n, 42.0),
+        other => panic!("Expected Number(42), got {:?}", other),
+    }
+}
+
+#[test]
+fn test_vm_try_chained_transforms() {
+    let code = r#"
+    fn parse_num(s: string) -> Result<number, string> {
+        if (s == "42") { return Ok(42); }
+        return Err("not 42");
+    }
+    fn double(n: number) -> Result<number, string> {
+        return Ok(n * 2);
+    }
+    fn process(s: string) -> Result<number, string> {
+        let n = parse_num(s)?;
+        let d = double(n)?;
+        return Ok(d);
+    }
+    unwrap(process("42"));
+"#;
+    match vm_eval_checked(code) {
+        Some(Value::Number(n)) => assert_eq!(n, 84.0),
+        other => panic!("Expected Number(84), got {:?}", other),
+    }
+}
+
+#[test]
+fn test_parity_try_multiple_expr() {
+    let code = r#"
+    fn a() -> Result<number, string> { return Ok(10); }
+    fn b() -> Result<number, string> { return Ok(32); }
+    fn calc() -> Result<number, string> {
+        return Ok(a()? + b()?);
+    }
+    unwrap(calc());
+"#;
+    let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
+    let interp_result = interp_eval(code);
+    assert_eq!(vm_result, interp_result, "Parity mismatch for multiple ? in expression");
+}
+
+#[test]
+fn test_parity_try_first_fails() {
+    let code = r#"
+    fn a() -> Result<number, string> { return Err("a failed"); }
+    fn b() -> Result<number, string> { return Ok(32); }
+    fn calc() -> Result<number, string> {
+        return Ok(a()? + b()?);
+    }
+    is_err(calc());
+"#;
+    let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
+    let interp_result = interp_eval(code);
+    assert_eq!(vm_result, interp_result, "Parity mismatch for first ? fails");
+}
+
+#[test]
+fn test_parity_option_try_multiple_expr() {
+    let code = r#"
+    fn a() -> Option<number> { return Some(10); }
+    fn b() -> Option<number> { return Some(32); }
+    fn calc() -> Option<number> {
+        return Some(a()? + b()?);
+    }
+    unwrap(calc());
+"#;
+    let vm_result = vm_eval_checked(code).unwrap_or(Value::Null);
+    let interp_result = interp_eval(code);
+    assert_eq!(vm_result, interp_result, "Parity mismatch for Option multiple ?");
+}
+
+#[test]
+fn test_vm_try_in_if_condition() {
+    let code = r#"
+    fn check() -> Result<bool, string> { return Ok(true); }
+    fn run() -> Result<number, string> {
+        if (check()?) {
+            return Ok(42);
+        }
+        return Ok(0);
+    }
+    unwrap(run());
+"#;
+    match vm_eval_checked(code) {
+        Some(Value::Number(n)) => assert_eq!(n, 42.0),
+        other => panic!("Expected Number(42), got {:?}", other),
+    }
 }

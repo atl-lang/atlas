@@ -82,7 +82,14 @@ impl Interpreter {
 
         // Regular binary operations
         let left = self.eval_expr(&binary.left)?;
+        // If ? operator triggered early return, stop evaluating
+        if self.control_flow != ControlFlow::None {
+            return Ok(left);
+        }
         let right = self.eval_expr(&binary.right)?;
+        if self.control_flow != ControlFlow::None {
+            return Ok(right);
+        }
 
         match binary.op {
             BinaryOp::Add => match (&left, &right) {
