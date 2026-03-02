@@ -161,21 +161,15 @@ pub fn timeout(future: AtlasFuture, milliseconds: u64) -> AtlasFuture {
     let deadline_clone = timeout_future.clone();
     let inner = future.clone();
 
-    // Thread 1: watch inner future for resolution
-    std::thread::spawn(move || loop {
-        match inner.get_state() {
-            crate::async_runtime::FutureState::Resolved(value) => {
-                result_clone.resolve(value);
-                return;
-            }
-            crate::async_runtime::FutureState::Rejected(error) => {
-                result_clone.reject(error);
-                return;
-            }
-            crate::async_runtime::FutureState::Pending => {
-                std::thread::sleep(Duration::from_millis(1));
-            }
+    // Thread 1: park on inner future's condvar until it settles
+    std::thread::spawn(move || match inner.wait() {
+        crate::async_runtime::FutureState::Resolved(value) => {
+            result_clone.resolve(value);
         }
+        crate::async_runtime::FutureState::Rejected(error) => {
+            result_clone.reject(error);
+        }
+        crate::async_runtime::FutureState::Pending => unreachable!(),
     });
 
     // Thread 2: enforce deadline
@@ -202,20 +196,15 @@ where
         let future = operation();
         let timeout_future = timeout(future, timeout_ms);
 
-        // Wait for this attempt to complete
-        loop {
-            match timeout_future.get_state() {
-                crate::async_runtime::FutureState::Resolved(value) => {
-                    return AtlasFuture::resolved(value);
-                }
-                crate::async_runtime::FutureState::Rejected(error) => {
-                    last_error = error;
-                    break;
-                }
-                crate::async_runtime::FutureState::Pending => {
-                    std::thread::yield_now();
-                }
+        // Park until this attempt settles
+        match timeout_future.wait() {
+            crate::async_runtime::FutureState::Resolved(value) => {
+                return AtlasFuture::resolved(value);
             }
+            crate::async_runtime::FutureState::Rejected(error) => {
+                last_error = error;
+            }
+            crate::async_runtime::FutureState::Pending => unreachable!(),
         }
     }
 

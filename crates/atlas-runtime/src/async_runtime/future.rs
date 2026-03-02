@@ -11,7 +11,7 @@
 
 use crate::value::Value;
 use std::fmt;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 
 /// Future state representing the status of an async computation
 #[derive(Clone)]
@@ -53,6 +53,9 @@ impl fmt::Debug for FutureState {
 #[derive(Clone)]
 pub struct AtlasFuture {
     state: Arc<Mutex<FutureState>>,
+    /// Condvar notified when state transitions from Pending → Resolved/Rejected.
+    /// Waiters park here instead of busy-spinning.
+    notify: Arc<Condvar>,
 }
 
 impl AtlasFuture {
@@ -60,6 +63,7 @@ impl AtlasFuture {
     pub fn new_pending() -> Self {
         Self {
             state: Arc::new(Mutex::new(FutureState::Pending)),
+            notify: Arc::new(Condvar::new()),
         }
     }
 
@@ -67,6 +71,7 @@ impl AtlasFuture {
     pub fn resolved(value: Value) -> Self {
         Self {
             state: Arc::new(Mutex::new(FutureState::Resolved(value))),
+            notify: Arc::new(Condvar::new()),
         }
     }
 
@@ -74,6 +79,7 @@ impl AtlasFuture {
     pub fn rejected(error: Value) -> Self {
         Self {
             state: Arc::new(Mutex::new(FutureState::Rejected(error))),
+            notify: Arc::new(Condvar::new()),
         }
     }
 
@@ -101,10 +107,12 @@ impl AtlasFuture {
     ///
     /// This transitions the future from Pending to Resolved.
     /// If the future is already resolved or rejected, this is a no-op.
+    /// Wakes all threads parked on `wait()`.
     pub fn resolve(&self, value: Value) {
         let mut state = self.state.lock().unwrap();
         if matches!(*state, FutureState::Pending) {
             *state = FutureState::Resolved(value);
+            self.notify.notify_all();
         }
     }
 
@@ -112,11 +120,25 @@ impl AtlasFuture {
     ///
     /// This transitions the future from Pending to Rejected.
     /// If the future is already resolved or rejected, this is a no-op.
+    /// Wakes all threads parked on `wait()`.
     pub fn reject(&self, error: Value) {
         let mut state = self.state.lock().unwrap();
         if matches!(*state, FutureState::Pending) {
             *state = FutureState::Rejected(error);
+            self.notify.notify_all();
         }
+    }
+
+    /// Block until the future settles (Resolved or Rejected).
+    ///
+    /// Parks the calling thread on a condvar — zero CPU while waiting.
+    /// Returns a clone of the settled state.
+    pub fn wait(&self) -> FutureState {
+        let mut state = self.state.lock().unwrap();
+        while matches!(*state, FutureState::Pending) {
+            state = self.notify.wait(state).unwrap();
+        }
+        state.clone()
     }
 
     /// Apply a transformation to a resolved future

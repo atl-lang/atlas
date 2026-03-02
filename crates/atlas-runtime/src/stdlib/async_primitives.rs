@@ -79,19 +79,15 @@ pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
     };
 
-    // Spawn task that polls the AtlasFuture until it resolves.
-    // The future was created by sleep/channelReceive/etc. and will be
-    // resolved by their background timer/IO threads.
+    // Spawn task that parks on the AtlasFuture's condvar until it settles.
+    // Zero CPU while waiting — the background thread (sleep, channelReceive, etc.)
+    // will notify the condvar when it resolves/rejects the future.
     let handle = async_runtime::spawn_task(
         async move {
-            loop {
-                match future.get_state() {
-                    async_runtime::FutureState::Resolved(value) => return value,
-                    async_runtime::FutureState::Rejected(error) => return error,
-                    async_runtime::FutureState::Pending => {
-                        std::thread::yield_now();
-                    }
-                }
+            match future.wait() {
+                async_runtime::FutureState::Resolved(value) => value,
+                async_runtime::FutureState::Rejected(error) => error,
+                async_runtime::FutureState::Pending => unreachable!(),
             }
         },
         name,

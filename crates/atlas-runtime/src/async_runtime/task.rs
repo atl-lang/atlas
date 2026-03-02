@@ -8,7 +8,7 @@ use crate::async_runtime::AtlasFuture;
 use crate::value::Value;
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex as StdMutex};
+use std::sync::{Arc, Condvar, Mutex as StdMutex};
 use tokio::task::JoinHandle;
 
 /// Global task ID counter
@@ -34,6 +34,8 @@ pub(crate) struct TaskState {
     status: StdMutex<TaskStatus>,
     cancelled: AtomicBool,
     result: StdMutex<Option<Result<Value, String>>>,
+    /// Notified when `result` transitions from None → Some.
+    result_ready: Condvar,
 }
 
 /// Handle to a spawned task
@@ -58,6 +60,7 @@ impl TaskHandle {
                 status: StdMutex::new(TaskStatus::Running),
                 cancelled: AtomicBool::new(false),
                 result: StdMutex::new(None),
+                result_ready: Condvar::new(),
             }),
             _marker: std::marker::PhantomData,
         }
@@ -115,18 +118,15 @@ impl TaskHandle {
     /// Wait for task completion and get result
     ///
     /// Returns a Future that resolves to the task's result value.
+    /// Parks on condvar — zero CPU while waiting.
     pub fn join(&self) -> AtlasFuture {
-        // Poll until the task completes (it runs on a separate thread)
-        loop {
-            let result = self.state.result.lock().unwrap().clone();
-            if let Some(res) = result {
-                return match res {
-                    Ok(value) => AtlasFuture::resolved(value),
-                    Err(error) => AtlasFuture::rejected(Value::string(error)),
-                };
-            }
-            // Task still running — yield briefly
-            std::thread::sleep(std::time::Duration::from_millis(1));
+        let mut result = self.state.result.lock().unwrap();
+        while result.is_none() {
+            result = self.state.result_ready.wait(result).unwrap();
+        }
+        match result.as_ref().unwrap() {
+            Ok(value) => AtlasFuture::resolved(value.clone()),
+            Err(error) => AtlasFuture::rejected(Value::string(error.clone())),
         }
     }
 
@@ -222,6 +222,7 @@ where
                 if *status == TaskStatus::Running {
                     *status = TaskStatus::Completed;
                     *state_clone.result.lock().unwrap() = Some(Ok(value));
+                    state_clone.result_ready.notify_all();
                 }
             }
             Err(panic_err) => {
@@ -237,6 +238,7 @@ where
                 if *status == TaskStatus::Running {
                     *status = TaskStatus::Failed;
                     *state_clone.result.lock().unwrap() = Some(Err(error_msg));
+                    state_clone.result_ready.notify_all();
                 }
             }
         }
@@ -255,26 +257,21 @@ where
 {
     let handle = spawn_task(future, None);
 
-    // Poll for completion
-    // In a full implementation, this would be more efficient
-    let start = std::time::Instant::now();
+    // Park on condvar until result is ready — zero CPU while waiting.
+    let mut result = handle.state.result.lock().unwrap();
     let timeout = std::time::Duration::from_secs(30);
-
-    loop {
-        if handle.is_completed() {
-            let result = handle.state.result.lock().unwrap().clone();
-            return result.unwrap_or(Ok(Value::Null));
-        } else if handle.is_failed() || handle.is_cancelled() {
-            let result = handle.state.result.lock().unwrap().clone();
-            return result.unwrap_or(Err("Task failed".to_string()));
-        }
-
-        if start.elapsed() > timeout {
+    while result.is_none() {
+        let (guard, wait_result) = handle
+            .state
+            .result_ready
+            .wait_timeout(result, timeout)
+            .unwrap();
+        result = guard;
+        if result.is_none() && wait_result.timed_out() {
             return Err("Task timeout".to_string());
         }
-
-        std::thread::sleep(std::time::Duration::from_millis(10));
     }
+    result.clone().unwrap_or(Ok(Value::Null))
 }
 
 /// Join multiple tasks
