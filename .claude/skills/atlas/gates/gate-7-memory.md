@@ -1,6 +1,6 @@
 # GATE 7: Memory Check (After Every Phase)
 
-**Condition:** Phase complete, STATUS.md updated, ready to commit
+**Condition:** Phase complete, `atlas-track done` run, ready to commit
 
 **Purpose:** Keep AI memory accurate and lean. Prevents drift and bloat.
 

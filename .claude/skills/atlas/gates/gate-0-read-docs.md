@@ -20,7 +20,7 @@ cargo clean
 
 ## Step 2: Read Docs (Selective Reading)
 
-1. **ALWAYS:** Read `STATUS.md` (current state, progress, doc map with routing)
+1. **ALWAYS:** Run `atlas-track sitrep` (mode, P0 blockers, handoff, block progress)
 2. **IF scaffolding session:** Also read `ROADMAP.md` and `docs/internal/V03_PLAN.md` — long-term direction must inform block scope before any phase is planned
 3. **IF structured development:** Read complete development plan (phase file)
 4. **SELECTIVE:** Read ONLY the spec files your task needs (see routing below)
@@ -71,7 +71,7 @@ cargo clean
 **For EACH dependency in phase file:**
 1. Does it exist in codebase? (grep for implementation)
 2. Does it match spec? (compare to `docs/specification/`)
-3. Is it complete? (check STATUS.md, run tests)
+3. Is it complete? (run `atlas-track blocks`, run tests)
 
 **Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `decisions/*.md` for constraints.
 
@@ -81,7 +81,7 @@ cargo clean
 - 🚫 Doesn't exist → BLOCKING. Do NOT ask the user. Resolve autonomously:
   - If it's a missing spec definition: check `docs/specification/` — the spec is the authority
   - If it's a missing implementation that should exist: implement it as a prerequisite phase (commit it, then continue)
-  - If it's a dependency outside v0.3 scope entirely: document the gap in STATUS.md and skip the phase, noting why in the phase file
+  - If it's a dependency outside v0.3 scope entirely: run `atlas-track open-issue` to document the gap, then skip the phase noting why in the phase file
   - User is never the answer to a missing dependency
 
 ---

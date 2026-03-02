@@ -54,8 +54,8 @@ Instead:
 1. Identify the root cause precisely
 2. Check if it's a spec gap, a missing dependency, or a bad test assertion
 3. Fix the root cause — never skip, suppress, or `#[ignore]` a real failure
-4. If the failure reveals a deeper architectural issue, document it in STATUS.md "Blockers" and commit the partial work on the block branch with a clear commit message describing what's broken and why
-5. The next session agent picks it up from STATUS.md — this is the recovery mechanism
+4. If the failure reveals a deeper architectural issue, run `atlas-track open-issue` to document the blocker, then commit partial work on the block branch with a clear commit message describing what's broken and why
+5. The next session agent runs `atlas-track go opus` and sees the blocker — this is the recovery mechanism
 
 ---
 

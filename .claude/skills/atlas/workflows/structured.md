@@ -1,6 +1,6 @@
 # Structured Development Workflow
 
-**When to use:** Following documented development plan (e.g., from STATUS.md)
+**When to use:** Following documented development plan (check `atlas-track sitrep` for current phase)
 
 **Approach:** Gate-based, implementation-driven (NOT strict TDD)
 
@@ -17,12 +17,12 @@
 | 3 | Verify interpreter/VM parity |
 | 4 | Quality gates (clippy, fmt) |
 | 5 | Doc update (selective) |
-| 6 | Update STATUS.md |
+| 6 | Session handoff (`atlas-track done`) |
 | 7 | Memory check |
 
-**GATE 0 additions:** Read complete development plan from phase file (objective, files, dependencies, implementation details, tests, acceptance criteria). Source: STATUS.md points to current phase.
+**GATE 0 additions:** Read complete development plan from phase file (objective, files, dependencies, implementation details, tests, acceptance criteria). Source: `atlas-track sitrep` shows current block/phase.
 
-**GATE 6 mandatory:** Update STATUS.md, mark work complete, note next steps.
+**GATE 6 mandatory:** Run `atlas-track done` to record handoff for next session.
 
 ---
 

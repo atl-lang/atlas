@@ -5,9 +5,8 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 # Atlas - AI Workflow
 
-**Type:** Rust compiler | **Progress:** STATUS.md | **Spec:** docs/specification/
-**Memory:** Claude .claude/memory (patterns, decisions) | **Gates:** skill `gates/` directory
-**Tracking:** `tracking/atlas.db` — issues, decisions, sessions, blocks (see `tracking/QUERIES.md`)
+**Type:** Rust compiler | **Spec:** docs/specification/ | **Gates:** skill `gates/` directory
+**Tracking:** `atlas-track` CLI — issues, decisions, sessions, blocks (see `tracking/README.md`)
 
 ---
 
@@ -53,7 +52,7 @@ This gives you:
 
 **Phase directive = START NOW** (no permission needed)
 **Never ask:** "Ready?" | "What's next?" | "Should I proceed?" | "Is this correct?"
-**Answer source:** STATUS.md, phases/, .claude/memory/, docs/specification/
+**Answer source:** `atlas-track sitrep`, phases/, .claude/memory/, docs/specification/
 
 **Triggers:** "Next: Phase-XX" | "Start Phase-XX" | "Scaffold Block N" | User pastes handoff
 
@@ -65,7 +64,7 @@ This gives you:
 **Delegation:** Lead directs — does not execute. See `gates/session-protection.md` for the full delegation map. GATE -1, git ops, and Rust implementation are always delegated.
 
 1. **Run GATE -1** — full state audit
-2. Check STATUS.md (verify phase not complete)
+2. Run `atlas-track sitrep` (check mode, P0 blockers, block progress)
 3. **Git Setup:** GATE -1 determines branch state — see `gates/git-workflow.md`
 4. Declare workflow type
 5. **Execute applicable gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md`)
@@ -144,11 +143,10 @@ After GATE -1, declare one:
 
 **Protocol:**
 1. All gates passed (build, tests, clippy, fmt, security scan)
-2. **Update STATUS.md** — Last Updated, Current State, Next, block table row
-3. **Commit STATUS.md on the block branch** (same commit or follow-up)
-4. Memory checked (GATE 7)
-5. **Commit only** — no push, no PR (block-complete cadence)
-6. Deliver summary
+2. Run `atlas-track done <session-id> success "summary" "next steps"`
+3. Memory checked (GATE 7)
+4. **Commit only** — no push, no PR (block-complete cadence)
+5. Deliver summary
 
 **PR flush trigger:** Block complete (final AC check phase done). Exception: blocking fix or CI issue.
 **See `gates/git-workflow.md`** for batch flush commands.
@@ -163,7 +161,7 @@ After GATE -1, declare one:
 - Status: "✅ PHASE COMPLETE - COMMITTED (batch)"
 - Final Stats (bullets)
 - **Memory:** Updated X / No updates needed (MANDATORY)
-- Progress (X/~140 phases — see STATUS.md block table)
+- Progress (X/~140 phases — run `atlas-track blocks`)
 - Next phase
 
 **During Work — Issue Lifecycle:**
@@ -206,8 +204,8 @@ atlas-track sitrep         # Full status without starting session
    - The architect's job is to catch wrong scope or missing decisions — NOT to verify file lists or phase details
 5. **Create block branch:** `git checkout -b block/{name}` — ALL work for this block lives here
 6. **Only then** scaffold all phase files
-7. **Update STATUS.md** — set Current State to "Block N SCAFFOLDED", Next to Phase 1, update block table row from ⬜ to 🔨
-8. **Commit scaffold + STATUS.md together — no push, no PR.** The scaffold commit is the first commit on the block branch.
+7. Run `atlas-track blocks` to verify block state in tracking system
+8. **Commit scaffold — no push, no PR.** The scaffold commit is the first commit on the block branch.
    Phase execution commits follow on the same branch. PR opens only at block completion (Phase N).
 
 **After block execution completes:**

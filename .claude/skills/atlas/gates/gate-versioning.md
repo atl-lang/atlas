@@ -66,7 +66,7 @@ ls docs/internal/V*_PLAN.md | sort | tail -1
 
 | Criterion type | How to verify |
 |----------------|---------------|
-| Block N complete | STATUS.md shows ✅ AND final AC phase committed |
+| Block N complete | `atlas-track blocks` shows complete AND final AC phase committed |
 | Test count ≥ X | `cargo nextest run --workspace 2>&1 \| grep "tests run"` |
 | No Arc<Mutex<Value>> | `grep -r "Arc<Mutex<" crates/ --include="*.rs" \| grep -v test \| grep -v "//"` |
 | Spec updated | Grep for expected sections in `docs/specification/` |
@@ -75,7 +75,7 @@ ls docs/internal/V*_PLAN.md | sort | tail -1
 ### 1c. Decision
 
 - **ALL criteria ✅** → Advance version (Step 1d)
-- **ANY criteria ❌** → Do NOT advance. Log blockers in STATUS.md under "Version Gate Blockers". Continue building.
+- **ANY criteria ❌** → Do NOT advance. Run `atlas-track open-issue` for each blocker. Continue building.
 
 ### 1d. On minor version advance
 

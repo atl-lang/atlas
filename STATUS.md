@@ -6,14 +6,6 @@
 
 ---
 
-## ⚠️ WEEKLY REMINDER CHECK (AI Agents - Read This First!)
-
-**CHECK:** `TEST-SPLIT-TRACKING.md` — if "Next Reminder" date has passed, alert user and update timestamp.
-
-**Test-split status:** PAUSED at 13/20 files split. Resume when convenient (not blocking v0.3 progress).
-
----
-
 ## Current State
 
 **Status:** Block 6 (Error Handling) COMPLETE — 5/5 phases
