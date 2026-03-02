@@ -31,6 +31,11 @@ cmd_go() {
     local agent="${1:-opus}"
     local model="${2:-claude-opus-4-5}"
 
+    # Auto-maintenance: close stale sessions, release orphaned issues
+    auto_close_stale_sessions
+    release_orphaned_issues
+    check_db_size
+
     # Start session
     local sid=$(cmd_start_session "$agent" "$model")
 

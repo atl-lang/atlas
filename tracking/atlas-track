@@ -13,6 +13,7 @@ source "$SCRIPT_DIR/lib/session.sh"
 source "$SCRIPT_DIR/lib/issues.sh"
 source "$SCRIPT_DIR/lib/decisions.sh"
 source "$SCRIPT_DIR/lib/mode.sh"
+source "$SCRIPT_DIR/lib/maintenance.sh"
 
 # Verify database exists
 if [[ ! -f "$DB" ]]; then
@@ -50,6 +51,11 @@ OTHER:
   add-decision "Title" comp "Rule" "Rationale"
   supersede D-001 D-002
   unblock / block-work
+
+MAINTENANCE (auto-runs on go):
+  health                           # Quick status check
+  gc                               # Close stale sessions + release orphans
+  gc --aggressive                  # + archive old, vacuum DB
 EOF
     exit 0
 }
@@ -89,6 +95,10 @@ case "${1:-}" in
     # Mode
     unblock)    cmd_unblock ;;
     block-work) cmd_block_work ;;
+
+    # Maintenance
+    gc)         cmd_gc "${2:---normal}" ;;
+    health)     cmd_health ;;
 
     # Legacy
     start-session) cmd_start_session "${2:-opus}" "${3:-}" ;;
