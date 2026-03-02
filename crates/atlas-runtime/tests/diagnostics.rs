@@ -636,10 +636,7 @@ fn test_var_keyword_emits_deprecation_warning() {
     let type_diags = typecheck_program(&ast, &mut symbol_table);
 
     // Find the AT2014 deprecation warning
-    let deprecation_warnings: Vec<_> = type_diags
-        .iter()
-        .filter(|d| d.code == "AT2014")
-        .collect();
+    let deprecation_warnings: Vec<_> = type_diags.iter().filter(|d| d.code == "AT2014").collect();
 
     assert_eq!(
         deprecation_warnings.len(),
@@ -682,10 +679,7 @@ fn test_let_mut_does_not_emit_deprecation_warning() {
     let type_diags = typecheck_program(&ast, &mut symbol_table);
 
     // Should have no AT2014 warnings
-    let deprecation_warnings: Vec<_> = type_diags
-        .iter()
-        .filter(|d| d.code == "AT2014")
-        .collect();
+    let deprecation_warnings: Vec<_> = type_diags.iter().filter(|d| d.code == "AT2014").collect();
 
     assert!(
         deprecation_warnings.is_empty(),
