@@ -163,8 +163,8 @@ pub fn suggest_return_fix(expected: &Type, found: &Type) -> String {
 /// Suggest a fix for immutable variable assignment.
 pub fn suggest_mutability_fix(var_name: &str) -> String {
     format!(
-        "declare '{}' as mutable: `var {} = ...` instead of `let {} = ...`",
-        var_name, var_name, var_name
+        "declare '{}' as mutable: `let mut {} = ...`",
+        var_name, var_name
     )
 }
 

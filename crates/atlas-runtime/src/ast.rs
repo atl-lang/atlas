@@ -325,6 +325,9 @@ pub enum Stmt {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct VarDecl {
     pub mutable: bool,
+    /// True if declared with deprecated `var` keyword instead of `let`/`let mut`.
+    /// Used to emit AT2014 deprecation warning.
+    pub uses_deprecated_var: bool,
     pub name: Identifier,
     pub type_ref: Option<TypeRef>,
     pub init: Expr,

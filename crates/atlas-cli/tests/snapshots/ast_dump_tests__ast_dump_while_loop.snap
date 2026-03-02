@@ -9,6 +9,7 @@ expression: json
       "Statement": {
         "VarDecl": {
           "mutable": false,
+          "uses_deprecated_var": false,
           "name": {
             "name": "i",
             "span": {

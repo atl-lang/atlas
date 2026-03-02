@@ -50,7 +50,21 @@ impl Parser {
     pub(super) fn parse_var_decl(&mut self) -> Result<Stmt, ()> {
         let keyword_span = self.peek().span;
         let keyword = self.advance().kind;
-        let mutable = keyword == TokenKind::Var;
+
+        // Check for `let mut` or `var`
+        let (mutable, uses_deprecated_var) = match keyword {
+            TokenKind::Var => (true, true), // var x = ... (deprecated)
+            TokenKind::Let => {
+                // Check if followed by `mut`
+                if self.peek().kind == TokenKind::Mut {
+                    self.advance(); // consume 'mut'
+                    (true, false) // let mut x = ... (recommended)
+                } else {
+                    (false, false) // let x = ... (immutable)
+                }
+            }
+            _ => unreachable!("parse_var_decl called with non-let/var token"),
+        };
 
         let name_token = self.consume_identifier("a variable name")?;
         let name = Identifier {
@@ -75,6 +89,7 @@ impl Parser {
 
         Ok(Stmt::VarDecl(VarDecl {
             mutable,
+            uses_deprecated_var,
             name,
             type_ref,
             init,

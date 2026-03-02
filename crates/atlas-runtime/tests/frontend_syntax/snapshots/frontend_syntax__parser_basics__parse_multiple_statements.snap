@@ -6,6 +6,7 @@ items:
   - Statement:
       VarDecl:
         mutable: false
+        uses_deprecated_var: false
         name:
           name: x
           span:
@@ -23,6 +24,7 @@ items:
   - Statement:
       VarDecl:
         mutable: false
+        uses_deprecated_var: false
         name:
           name: y
           span:
@@ -40,6 +42,7 @@ items:
   - Statement:
       VarDecl:
         mutable: false
+        uses_deprecated_var: false
         name:
           name: z
           span:

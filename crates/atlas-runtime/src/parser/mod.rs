@@ -787,6 +787,7 @@ impl Parser {
         matches!(
             kind,
             TokenKind::Let
+                | TokenKind::Mut
                 | TokenKind::Var
                 | TokenKind::Fn
                 | TokenKind::Type

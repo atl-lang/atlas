@@ -59,7 +59,7 @@ fn test_while_condition_string_suggests_comparison() {
 // ============================================================================
 
 #[test]
-fn test_immutable_variable_suggests_var() {
+fn test_immutable_variable_suggests_let_mut() {
     let diags = errors(
         r#"
         let x = 5;
@@ -69,8 +69,11 @@ fn test_immutable_variable_suggests_var() {
     assert!(!diags.is_empty());
     assert_eq!(diags[0].code, "AT3003");
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("var")),
-        "Expected var suggestion, got: {:?}",
+        diags[0]
+            .help
+            .as_ref()
+            .is_some_and(|h| h.contains("let mut")),
+        "Expected 'let mut' suggestion, got: {:?}",
         diags[0].help
     );
 }

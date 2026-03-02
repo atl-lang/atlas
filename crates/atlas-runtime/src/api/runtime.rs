@@ -307,8 +307,17 @@ impl Runtime {
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&ast);
 
-        if !type_diagnostics.is_empty() {
+        // Only fail on errors, not warnings
+        let has_errors = type_diagnostics.iter().any(|d| d.is_error());
+        if has_errors {
             return Err(EvalError::TypeError(type_diagnostics));
+        }
+
+        // Print warnings to stderr (they don't block execution)
+        for diag in &type_diagnostics {
+            if diag.is_warning() {
+                eprintln!("{}", diag.to_human_string());
+            }
         }
 
         // Execute based on mode

@@ -176,6 +176,7 @@ fn classify_token(
     let (token_type, modifiers) = match token.kind {
         // Keywords
         TokenKind::Let
+        | TokenKind::Mut
         | TokenKind::Var
         | TokenKind::Fn
         | TokenKind::Type

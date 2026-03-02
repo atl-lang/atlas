@@ -1142,6 +1142,25 @@ impl<'a> TypeChecker<'a> {
     fn check_statement(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDecl(var) => {
+                // Emit deprecation warning for `var` keyword
+                if var.uses_deprecated_var {
+                    self.diagnostics.push(
+                        Diagnostic::warning_with_code(
+                            "AT2014",
+                            format!(
+                                "The `var` keyword is deprecated; use `let mut {}` instead",
+                                var.name.name
+                            ),
+                            var.span,
+                        )
+                        .with_label("deprecated syntax")
+                        .with_help(format!(
+                            "Replace `var {}` with `let mut {}`",
+                            var.name.name, var.name.name
+                        )),
+                    );
+                }
+
                 // Track this variable declaration
                 self.declared_symbols
                     .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));

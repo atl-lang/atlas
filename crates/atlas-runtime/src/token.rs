@@ -47,7 +47,9 @@ pub enum TokenKind {
     // Keywords
     /// `let` keyword (immutable variable)
     Let,
-    /// `var` keyword (mutable variable)
+    /// `mut` keyword (mutable modifier for let)
+    Mut,
+    /// `var` keyword (mutable variable, deprecated — use `let mut` instead)
     Var,
     /// `fn` keyword (function declaration)
     Fn,
@@ -207,6 +209,7 @@ impl TokenKind {
     pub fn is_keyword(s: &str) -> Option<TokenKind> {
         match s {
             "let" => Some(TokenKind::Let),
+            "mut" => Some(TokenKind::Mut),
             "var" => Some(TokenKind::Var),
             "fn" => Some(TokenKind::Fn),
             "type" => Some(TokenKind::Type),
@@ -248,6 +251,7 @@ impl TokenKind {
             TokenKind::Null => "null",
             TokenKind::Identifier => "identifier",
             TokenKind::Let => "let",
+            TokenKind::Mut => "mut",
             TokenKind::Var => "var",
             TokenKind::Fn => "fn",
             TokenKind::Type => "type",
@@ -316,5 +320,19 @@ impl TokenKind {
             TokenKind::Eof => "EOF",
             TokenKind::Error => "error",
         }
+    }
+}
+#[cfg(test)]
+mod test_mut_keyword {
+    use super::TokenKind;
+
+    #[test]
+    fn test_mut_is_keyword() {
+        assert_eq!(TokenKind::is_keyword("mut"), Some(TokenKind::Mut));
+    }
+
+    #[test]
+    fn test_mut_as_str() {
+        assert_eq!(TokenKind::Mut.as_str(), "mut");
     }
 }

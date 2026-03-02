@@ -184,6 +184,16 @@ impl Diagnostic {
         self
     }
 
+    /// Check if this diagnostic is an error (not a warning)
+    pub fn is_error(&self) -> bool {
+        matches!(self.level, DiagnosticLevel::Error)
+    }
+
+    /// Check if this diagnostic is a warning
+    pub fn is_warning(&self) -> bool {
+        matches!(self.level, DiagnosticLevel::Warning)
+    }
+
     /// Format as human-readable string
     pub fn to_human_string(&self) -> String {
         let mut output = String::new();
