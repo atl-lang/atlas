@@ -21,6 +21,8 @@
 **Next:** Block 7 — JIT Integration (scaffold)
 
 **Critical gaps:** See `advanced-codex-audit.md` + `docs/codex-findings/important-before-continuing.md`
+**Inline tests:** ~574 to audit post-hardening (deferred - language functionality first)
+**Systems-level conversion:** Blocked until core language meets compiler standards (see audit findings)
 
 ---
 
