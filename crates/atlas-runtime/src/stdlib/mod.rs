@@ -1556,18 +1556,26 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("sha512", |a, s, _, _| crypto::sha512(a, s));
         m.insert("blake3Hash", |a, s, _, _| crypto::blake3_hash(a, s));
         m.insert("hmacSha256", |a, s, _, _| crypto::hmac_sha256(a, s));
-        m.insert("hmacSha256Verify", |a, s, _, _| crypto::hmac_sha256_verify(a, s));
+        m.insert("hmacSha256Verify", |a, s, _, _| {
+            crypto::hmac_sha256_verify(a, s)
+        });
         m.insert("aesGcmEncrypt", |a, s, _, _| crypto::aes_gcm_encrypt(a, s));
         m.insert("aesGcmDecrypt", |a, s, _, _| crypto::aes_gcm_decrypt(a, s));
-        m.insert("aesGcmGenerateKey", |a, s, _, _| crypto::aes_gcm_generate_key(a, s));
+        m.insert("aesGcmGenerateKey", |a, s, _, _| {
+            crypto::aes_gcm_generate_key(a, s)
+        });
 
         // ====================================================================
         // Encoding
         // ====================================================================
         m.insert("base64Encode", |a, s, _, _| encoding::base64_encode(a, s));
         m.insert("base64Decode", |a, s, _, _| encoding::base64_decode(a, s));
-        m.insert("base64UrlEncode", |a, s, _, _| encoding::base64_url_encode(a, s));
-        m.insert("base64UrlDecode", |a, s, _, _| encoding::base64_url_decode(a, s));
+        m.insert("base64UrlEncode", |a, s, _, _| {
+            encoding::base64_url_encode(a, s)
+        });
+        m.insert("base64UrlDecode", |a, s, _, _| {
+            encoding::base64_url_decode(a, s)
+        });
         m.insert("hexEncode", |a, s, _, _| encoding::hex_encode(a, s));
         m.insert("hexDecode", |a, s, _, _| encoding::hex_decode(a, s));
         m.insert("urlEncode", |a, s, _, _| encoding::url_encode(a, s));
@@ -1588,7 +1596,9 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("tcpListen", |a, s, sec, _| net::tcp_listen(a, s, sec));
         m.insert("tcpAccept", |a, s, _, _| net::tcp_accept(a, s));
         m.insert("tcpListenerAddr", |a, s, _, _| net::tcp_listener_addr(a, s));
-        m.insert("tcpListenerClose", |a, s, _, _| net::tcp_listener_close(a, s));
+        m.insert("tcpListenerClose", |a, s, _, _| {
+            net::tcp_listener_close(a, s)
+        });
         m.insert("udpBind", |a, s, sec, _| net::udp_bind(a, s, sec));
         m.insert("udpSend", |a, s, _, _| net::udp_send(a, s));
         m.insert("udpReceive", |a, s, _, _| net::udp_receive(a, s));
@@ -1609,16 +1619,26 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("rwLockTryRead", |a, s, _, _| sync::rwlock_try_read(a, s));
         m.insert("rwLockTryWrite", |a, s, _, _| sync::rwlock_try_write(a, s));
         m.insert("semaphoreNew", |a, s, _, _| sync::semaphore_new(a, s));
-        m.insert("semaphoreAcquire", |a, s, _, _| sync::semaphore_acquire(a, s));
-        m.insert("semaphoreTryAcquire", |a, s, _, _| sync::semaphore_try_acquire(a, s));
-        m.insert("semaphoreRelease", |a, s, _, _| sync::semaphore_release(a, s));
-        m.insert("semaphoreAvailable", |a, s, _, _| sync::semaphore_available(a, s));
+        m.insert("semaphoreAcquire", |a, s, _, _| {
+            sync::semaphore_acquire(a, s)
+        });
+        m.insert("semaphoreTryAcquire", |a, s, _, _| {
+            sync::semaphore_try_acquire(a, s)
+        });
+        m.insert("semaphoreRelease", |a, s, _, _| {
+            sync::semaphore_release(a, s)
+        });
+        m.insert("semaphoreAvailable", |a, s, _, _| {
+            sync::semaphore_available(a, s)
+        });
         m.insert("atomicNew", |a, s, _, _| sync::atomic_new(a, s));
         m.insert("atomicLoad", |a, s, _, _| sync::atomic_load(a, s));
         m.insert("atomicStore", |a, s, _, _| sync::atomic_store(a, s));
         m.insert("atomicAdd", |a, s, _, _| sync::atomic_add(a, s));
         m.insert("atomicSub", |a, s, _, _| sync::atomic_sub(a, s));
-        m.insert("atomicCompareExchange", |a, s, _, _| sync::atomic_compare_exchange(a, s));
+        m.insert("atomicCompareExchange", |a, s, _, _| {
+            sync::atomic_compare_exchange(a, s)
+        });
 
         // ====================================================================
         // WebSocket

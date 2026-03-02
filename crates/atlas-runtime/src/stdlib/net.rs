@@ -8,17 +8,23 @@ use crate::span::Span;
 use crate::value::{RuntimeError, Value, ValueArray};
 
 use std::io::{Read, Write};
-use std::net::{TcpListener, TcpStream, UdpSocket, SocketAddr, ToSocketAddrs};
+use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs, UdpSocket};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 // ── Security helper ──────────────────────────────────────────────────
 
-fn check_net_permission(security: &SecurityContext, host: &str, span: Span) -> Result<(), RuntimeError> {
-    security.check_network(host).map_err(|e| RuntimeError::TypeError {
-        msg: format!("network permission denied: {}", e),
-        span,
-    })
+fn check_net_permission(
+    security: &SecurityContext,
+    host: &str,
+    span: Span,
+) -> Result<(), RuntimeError> {
+    security
+        .check_network(host)
+        .map_err(|e| RuntimeError::TypeError {
+            msg: format!("network permission denied: {}", e),
+            span,
+        })
 }
 
 // ── TCP Client ───────────────────────────────────────────────────────
@@ -26,7 +32,11 @@ fn check_net_permission(security: &SecurityContext, host: &str, span: Span) -> R
 /// tcpConnect(address: string, timeout_ms?: number) -> TcpStream handle (as opaque Value)
 ///
 /// Returns a HashMap with a `_handle` key containing the stream.
-pub fn tcp_connect(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
+pub fn tcp_connect(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
     if args.is_empty() || args.len() > 2 {
         return Err(super::stdlib_arity_error("tcpConnect", 1, args.len(), span));
     }
@@ -63,10 +73,12 @@ pub fn tcp_write(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let data = extract_str(&args[1], "tcpWrite", span)?;
 
     let mut stream = stream_mutex.lock().unwrap();
-    let n = stream.write(data.as_bytes()).map_err(|e| RuntimeError::IoError {
-        message: format!("tcpWrite(): {}", e),
-        span,
-    })?;
+    let n = stream
+        .write(data.as_bytes())
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tcpWrite(): {}", e),
+            span,
+        })?;
     stream.flush().map_err(|e| RuntimeError::IoError {
         message: format!("tcpWrite(): flush failed: {}", e),
         span,
@@ -90,16 +102,23 @@ pub fn tcp_read(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     })?;
     buf.truncate(n);
 
-    String::from_utf8(buf).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("tcpRead(): received non-UTF-8 data: {}", e),
-        span,
-    })
+    String::from_utf8(buf)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("tcpRead(): received non-UTF-8 data: {}", e),
+            span,
+        })
 }
 
 /// tcpReadBytes(stream: handle, max_bytes: number) -> array of numbers (raw bytes)
 pub fn tcp_read_bytes(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("tcpReadBytes", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpReadBytes",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpReadBytes", span)?;
     let max_bytes = extract_number(&args[1], "tcpReadBytes", span)? as usize;
@@ -122,54 +141,77 @@ pub fn tcp_close(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpClose", span)?;
     let stream = stream_mutex.lock().unwrap();
-    stream.shutdown(std::net::Shutdown::Both).map_err(|e| RuntimeError::IoError {
-        message: format!("tcpClose(): {}", e),
-        span,
-    })?;
+    stream
+        .shutdown(std::net::Shutdown::Both)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tcpClose(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
 /// tcpSetTimeout(stream: handle, read_ms: number, write_ms: number) -> null
 pub fn tcp_set_timeout(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(super::stdlib_arity_error("tcpSetTimeout", 3, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpSetTimeout",
+            3,
+            args.len(),
+            span,
+        ));
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpSetTimeout", span)?;
     let read_ms = extract_number(&args[1], "tcpSetTimeout", span)? as u64;
     let write_ms = extract_number(&args[2], "tcpSetTimeout", span)? as u64;
 
     let stream = stream_mutex.lock().unwrap();
-    stream.set_read_timeout(Some(Duration::from_millis(read_ms))).map_err(|e| RuntimeError::IoError {
-        message: format!("tcpSetTimeout(): {}", e),
-        span,
-    })?;
-    stream.set_write_timeout(Some(Duration::from_millis(write_ms))).map_err(|e| RuntimeError::IoError {
-        message: format!("tcpSetTimeout(): {}", e),
-        span,
-    })?;
+    stream
+        .set_read_timeout(Some(Duration::from_millis(read_ms)))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tcpSetTimeout(): {}", e),
+            span,
+        })?;
+    stream
+        .set_write_timeout(Some(Duration::from_millis(write_ms)))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tcpSetTimeout(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
 /// tcpSetNodelay(stream: handle, nodelay: bool) -> null
 pub fn tcp_set_nodelay(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("tcpSetNodelay", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpSetNodelay",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpSetNodelay", span)?;
     let nodelay = extract_bool(&args[1], "tcpSetNodelay", span)?;
 
     let stream = stream_mutex.lock().unwrap();
-    stream.set_nodelay(nodelay).map_err(|e| RuntimeError::IoError {
-        message: format!("tcpSetNodelay(): {}", e),
-        span,
-    })?;
+    stream
+        .set_nodelay(nodelay)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tcpSetNodelay(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
 /// tcpLocalAddr(stream: handle) -> string
 pub fn tcp_local_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("tcpLocalAddr", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpLocalAddr",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpLocalAddr", span)?;
     let stream = stream_mutex.lock().unwrap();
@@ -183,7 +225,12 @@ pub fn tcp_local_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 /// tcpRemoteAddr(stream: handle) -> string
 pub fn tcp_remote_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("tcpRemoteAddr", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpRemoteAddr",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let stream_mutex = extract_tcp_stream(&args[0], "tcpRemoteAddr", span)?;
     let stream = stream_mutex.lock().unwrap();
@@ -197,7 +244,11 @@ pub fn tcp_remote_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError
 // ── TCP Server ───────────────────────────────────────────────────────
 
 /// tcpListen(address: string) -> listener handle
-pub fn tcp_listen(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
+pub fn tcp_listen(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(super::stdlib_arity_error("tcpListen", 1, args.len(), span));
     }
@@ -228,7 +279,12 @@ pub fn tcp_accept(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// tcpListenerAddr(listener: handle) -> string
 pub fn tcp_listener_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("tcpListenerAddr", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpListenerAddr",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let listener_mutex = extract_tcp_listener(&args[0], "tcpListenerAddr", span)?;
     let listener = listener_mutex.lock().unwrap();
@@ -242,7 +298,12 @@ pub fn tcp_listener_addr(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// tcpListenerClose(listener: handle) -> null
 pub fn tcp_listener_close(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("tcpListenerClose", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "tcpListenerClose",
+            1,
+            args.len(),
+            span,
+        ));
     }
     // Drop the listener by extracting and dropping the inner value
     let _ = extract_tcp_listener(&args[0], "tcpListenerClose", span)?;
@@ -252,7 +313,11 @@ pub fn tcp_listener_close(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 // ── UDP ──────────────────────────────────────────────────────────────
 
 /// udpBind(address: string) -> socket handle
-pub fn udp_bind(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
+pub fn udp_bind(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(super::stdlib_arity_error("udpBind", 1, args.len(), span));
     }
@@ -276,10 +341,12 @@ pub fn udp_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let target = extract_str(&args[2], "udpSend", span)?;
 
     let socket = socket_mutex.lock().unwrap();
-    let n = socket.send_to(data.as_bytes(), target).map_err(|e| RuntimeError::IoError {
-        message: format!("udpSend(): {}", e),
-        span,
-    })?;
+    let n = socket
+        .send_to(data.as_bytes(), target)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("udpSend(): {}", e),
+            span,
+        })?;
     Ok(Value::Number(n as f64))
 }
 
@@ -293,10 +360,12 @@ pub fn udp_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
     let mut buf = vec![0u8; max_bytes.min(65536)]; // UDP max is 65535
     let socket = socket_mutex.lock().unwrap();
-    let (n, sender) = socket.recv_from(&mut buf).map_err(|e| RuntimeError::IoError {
-        message: format!("udpReceive(): {}", e),
-        span,
-    })?;
+    let (n, sender) = socket
+        .recv_from(&mut buf)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("udpReceive(): {}", e),
+            span,
+        })?;
 
     let data = String::from_utf8_lossy(&buf[..n]).into_owned();
 
@@ -310,16 +379,23 @@ pub fn udp_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// udpSetTimeout(socket: handle, read_ms: number) -> null
 pub fn udp_set_timeout(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("udpSetTimeout", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "udpSetTimeout",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let socket_mutex = extract_udp_socket(&args[0], "udpSetTimeout", span)?;
     let ms = extract_number(&args[1], "udpSetTimeout", span)? as u64;
 
     let socket = socket_mutex.lock().unwrap();
-    socket.set_read_timeout(Some(Duration::from_millis(ms))).map_err(|e| RuntimeError::IoError {
-        message: format!("udpSetTimeout(): {}", e),
-        span,
-    })?;
+    socket
+        .set_read_timeout(Some(Duration::from_millis(ms)))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("udpSetTimeout(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
@@ -335,7 +411,12 @@ pub fn udp_close(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// udpLocalAddr(socket: handle) -> string
 pub fn udp_local_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("udpLocalAddr", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "udpLocalAddr",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let socket_mutex = extract_udp_socket(&args[0], "udpLocalAddr", span)?;
     let socket = socket_mutex.lock().unwrap();
@@ -349,7 +430,11 @@ pub fn udp_local_addr(args: &[Value], span: Span) -> Result<Value, RuntimeError>
 // ── TLS Client ───────────────────────────────────────────────────────
 
 /// tlsConnect(host: string, port: number) -> TLS stream handle
-pub fn tls_connect(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
+pub fn tls_connect(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(super::stdlib_arity_error("tlsConnect", 2, args.len(), span));
     }
@@ -363,25 +448,26 @@ pub fn tls_connect(args: &[Value], span: Span, security: &SecurityContext) -> Re
         span,
     })?;
 
-    let root_store = rustls::RootCertStore::from_iter(
-        webpki_roots::TLS_SERVER_ROOTS.iter().cloned(),
-    );
+    let root_store =
+        rustls::RootCertStore::from_iter(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
     let config = rustls::ClientConfig::builder()
         .with_root_certificates(root_store)
         .with_no_client_auth();
 
-    let server_name = rustls::pki_types::ServerName::try_from(host.to_string())
-        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+    let server_name = rustls::pki_types::ServerName::try_from(host.to_string()).map_err(|e| {
+        RuntimeError::InvalidStdlibArgument {
             msg: format!("tlsConnect(): invalid hostname: {}", e),
             span,
-        })?;
+        }
+    })?;
 
-    let conn = rustls::ClientConnection::new(Arc::new(config), server_name)
-        .map_err(|e| RuntimeError::IoError {
+    let conn = rustls::ClientConnection::new(Arc::new(config), server_name).map_err(|e| {
+        RuntimeError::IoError {
             message: format!("tlsConnect(): TLS handshake failed: {}", e),
             span,
-        })?;
+        }
+    })?;
 
     let mut tls_stream = rustls::StreamOwned::new(conn, tcp_stream);
     // Force handshake completion
@@ -402,10 +488,12 @@ pub fn tls_write(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let data = extract_str(&args[1], "tlsWrite", span)?;
 
     let mut stream = stream_mutex.lock().unwrap();
-    let n = stream.write(data.as_bytes()).map_err(|e| RuntimeError::IoError {
-        message: format!("tlsWrite(): {}", e),
-        span,
-    })?;
+    let n = stream
+        .write(data.as_bytes())
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("tlsWrite(): {}", e),
+            span,
+        })?;
     stream.flush().map_err(|e| RuntimeError::IoError {
         message: format!("tlsWrite(): flush failed: {}", e),
         span,
@@ -429,10 +517,12 @@ pub fn tls_read(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     })?;
     buf.truncate(n);
 
-    String::from_utf8(buf).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("tlsRead(): received non-UTF-8 data: {}", e),
-        span,
-    })
+    String::from_utf8(buf)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("tlsRead(): received non-UTF-8 data: {}", e),
+            span,
+        })
 }
 
 /// tlsClose(stream: handle) -> null
@@ -473,10 +563,14 @@ use std::sync::atomic::{AtomicU64, Ordering};
 static NEXT_HANDLE_ID: AtomicU64 = AtomicU64::new(1);
 
 // Global handle stores (must be thread-safe for async contexts)
-static TCP_STREAMS: std::sync::OnceLock<Mutex<StdHashMap<u64, TcpStreamHandle>>> = std::sync::OnceLock::new();
-static TCP_LISTENERS: std::sync::OnceLock<Mutex<StdHashMap<u64, TcpListenerHandle>>> = std::sync::OnceLock::new();
-static UDP_SOCKETS: std::sync::OnceLock<Mutex<StdHashMap<u64, UdpSocketHandle>>> = std::sync::OnceLock::new();
-static TLS_STREAMS: std::sync::OnceLock<Mutex<StdHashMap<u64, TlsStreamHandle>>> = std::sync::OnceLock::new();
+static TCP_STREAMS: std::sync::OnceLock<Mutex<StdHashMap<u64, TcpStreamHandle>>> =
+    std::sync::OnceLock::new();
+static TCP_LISTENERS: std::sync::OnceLock<Mutex<StdHashMap<u64, TcpListenerHandle>>> =
+    std::sync::OnceLock::new();
+static UDP_SOCKETS: std::sync::OnceLock<Mutex<StdHashMap<u64, UdpSocketHandle>>> =
+    std::sync::OnceLock::new();
+static TLS_STREAMS: std::sync::OnceLock<Mutex<StdHashMap<u64, TlsStreamHandle>>> =
+    std::sync::OnceLock::new();
 
 fn tcp_streams() -> &'static Mutex<StdHashMap<u64, TcpStreamHandle>> {
     TCP_STREAMS.get_or_init(|| Mutex::new(StdHashMap::new()))
@@ -527,7 +621,12 @@ fn wrap_tls_stream(stream: rustls::StreamOwned<rustls::ClientConnection, TcpStre
     make_handle(TLS_STREAM_TAG, id)
 }
 
-fn extract_handle_id(value: &Value, expected_tag: &str, func_name: &str, span: Span) -> Result<u64, RuntimeError> {
+fn extract_handle_id(
+    value: &Value,
+    expected_tag: &str,
+    func_name: &str,
+    span: Span,
+) -> Result<u64, RuntimeError> {
     match value {
         Value::Array(arr) if arr.len() == 2 => {
             let tag = match &arr.as_slice()[0] {
@@ -542,7 +641,10 @@ fn extract_handle_id(value: &Value, expected_tag: &str, func_name: &str, span: S
                 Ok(id)
             } else {
                 Err(RuntimeError::InvalidStdlibArgument {
-                    msg: format!("{}(): expected {} handle, got {} handle", func_name, expected_tag, tag),
+                    msg: format!(
+                        "{}(): expected {} handle, got {} handle",
+                        func_name, expected_tag, tag
+                    ),
                     span,
                 })
             }
@@ -551,36 +653,72 @@ fn extract_handle_id(value: &Value, expected_tag: &str, func_name: &str, span: S
     }
 }
 
-fn extract_tcp_stream(value: &Value, func_name: &str, span: Span) -> Result<TcpStreamHandle, RuntimeError> {
+fn extract_tcp_stream(
+    value: &Value,
+    func_name: &str,
+    span: Span,
+) -> Result<TcpStreamHandle, RuntimeError> {
     let id = extract_handle_id(value, TCP_STREAM_TAG, func_name, span)?;
-    tcp_streams().lock().unwrap().get(&id).cloned().ok_or_else(|| RuntimeError::InvalidStdlibArgument {
-        msg: format!("{}(): TCP stream handle has been closed", func_name),
-        span,
-    })
+    tcp_streams()
+        .lock()
+        .unwrap()
+        .get(&id)
+        .cloned()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: format!("{}(): TCP stream handle has been closed", func_name),
+            span,
+        })
 }
 
-fn extract_tcp_listener(value: &Value, func_name: &str, span: Span) -> Result<TcpListenerHandle, RuntimeError> {
+fn extract_tcp_listener(
+    value: &Value,
+    func_name: &str,
+    span: Span,
+) -> Result<TcpListenerHandle, RuntimeError> {
     let id = extract_handle_id(value, TCP_LISTENER_TAG, func_name, span)?;
-    tcp_listeners().lock().unwrap().get(&id).cloned().ok_or_else(|| RuntimeError::InvalidStdlibArgument {
-        msg: format!("{}(): TCP listener handle has been closed", func_name),
-        span,
-    })
+    tcp_listeners()
+        .lock()
+        .unwrap()
+        .get(&id)
+        .cloned()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: format!("{}(): TCP listener handle has been closed", func_name),
+            span,
+        })
 }
 
-fn extract_udp_socket(value: &Value, func_name: &str, span: Span) -> Result<UdpSocketHandle, RuntimeError> {
+fn extract_udp_socket(
+    value: &Value,
+    func_name: &str,
+    span: Span,
+) -> Result<UdpSocketHandle, RuntimeError> {
     let id = extract_handle_id(value, UDP_SOCKET_TAG, func_name, span)?;
-    udp_sockets().lock().unwrap().get(&id).cloned().ok_or_else(|| RuntimeError::InvalidStdlibArgument {
-        msg: format!("{}(): UDP socket handle has been closed", func_name),
-        span,
-    })
+    udp_sockets()
+        .lock()
+        .unwrap()
+        .get(&id)
+        .cloned()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: format!("{}(): UDP socket handle has been closed", func_name),
+            span,
+        })
 }
 
-fn extract_tls_stream(value: &Value, func_name: &str, span: Span) -> Result<TlsStreamHandle, RuntimeError> {
+fn extract_tls_stream(
+    value: &Value,
+    func_name: &str,
+    span: Span,
+) -> Result<TlsStreamHandle, RuntimeError> {
     let id = extract_handle_id(value, TLS_STREAM_TAG, func_name, span)?;
-    tls_streams().lock().unwrap().get(&id).cloned().ok_or_else(|| RuntimeError::InvalidStdlibArgument {
-        msg: format!("{}(): TLS stream handle has been closed", func_name),
-        span,
-    })
+    tls_streams()
+        .lock()
+        .unwrap()
+        .get(&id)
+        .cloned()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: format!("{}(): TLS stream handle has been closed", func_name),
+            span,
+        })
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -607,7 +745,8 @@ fn extract_bool(value: &Value, func_name: &str, span: Span) -> Result<bool, Runt
 }
 
 fn resolve_addr(addr_str: &str, func_name: &str, span: Span) -> Result<SocketAddr, RuntimeError> {
-    addr_str.to_socket_addrs()
+    addr_str
+        .to_socket_addrs()
         .map_err(|e| RuntimeError::InvalidStdlibArgument {
             msg: format!("{}(): invalid address '{}': {}", func_name, addr_str, e),
             span,

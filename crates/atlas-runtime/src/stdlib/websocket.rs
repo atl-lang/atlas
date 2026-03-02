@@ -22,7 +22,8 @@ use tungstenite::WebSocket;
 type WsHandle = Arc<Mutex<WebSocket<MaybeTlsStream<TcpStream>>>>;
 
 static NEXT_WS_ID: AtomicU64 = AtomicU64::new(1);
-static WS_HANDLES: std::sync::OnceLock<Mutex<StdHashMap<u64, WsHandle>>> = std::sync::OnceLock::new();
+static WS_HANDLES: std::sync::OnceLock<Mutex<StdHashMap<u64, WsHandle>>> =
+    std::sync::OnceLock::new();
 
 fn ws_handles() -> &'static Mutex<StdHashMap<u64, WsHandle>> {
     WS_HANDLES.get_or_init(|| Mutex::new(StdHashMap::new()))
@@ -43,10 +44,15 @@ fn wrap_ws(ws: WebSocket<MaybeTlsStream<TcpStream>>) -> Value {
 
 fn extract_ws(value: &Value, func_name: &str, span: Span) -> Result<WsHandle, RuntimeError> {
     let id = extract_handle_id(value, func_name, span)?;
-    ws_handles().lock().unwrap().get(&id).cloned().ok_or_else(|| RuntimeError::InvalidStdlibArgument {
-        msg: format!("{}(): WebSocket handle has been closed", func_name),
-        span,
-    })
+    ws_handles()
+        .lock()
+        .unwrap()
+        .get(&id)
+        .cloned()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: format!("{}(): WebSocket handle has been closed", func_name),
+            span,
+        })
 }
 
 fn extract_handle_id(value: &Value, func_name: &str, span: Span) -> Result<u64, RuntimeError> {
@@ -64,7 +70,10 @@ fn extract_handle_id(value: &Value, func_name: &str, span: Span) -> Result<u64, 
                 Ok(id)
             } else {
                 Err(RuntimeError::InvalidStdlibArgument {
-                    msg: format!("{}(): expected WebSocket handle, got {} handle", func_name, tag),
+                    msg: format!(
+                        "{}(): expected WebSocket handle, got {} handle",
+                        func_name, tag
+                    ),
                     span,
                 })
             }
@@ -78,21 +87,29 @@ fn extract_handle_id(value: &Value, func_name: &str, span: Span) -> Result<u64, 
 /// wsConnect(url: string) -> websocket handle
 ///
 /// Connects to a WebSocket server. Supports ws:// and wss:// URLs.
-pub fn ws_connect(args: &[Value], span: Span, security: &SecurityContext) -> Result<Value, RuntimeError> {
+pub fn ws_connect(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(super::stdlib_arity_error("wsConnect", 1, args.len(), span));
     }
     let url = extract_str(&args[0], "wsConnect", span)?;
 
-    security.check_network(url).map_err(|e| RuntimeError::TypeError {
-        msg: format!("wsConnect: {}", e),
-        span,
-    })?;
+    security
+        .check_network(url)
+        .map_err(|e| RuntimeError::TypeError {
+            msg: format!("wsConnect: {}", e),
+            span,
+        })?;
 
-    let request = url.into_client_request().map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("wsConnect(): invalid URL: {}", e),
-        span,
-    })?;
+    let request = url
+        .into_client_request()
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("wsConnect(): invalid URL: {}", e),
+            span,
+        })?;
 
     let (ws, _response) = tungstenite::connect(request).map_err(|e| RuntimeError::IoError {
         message: format!("wsConnect(): connection failed: {}", e),
@@ -111,37 +128,56 @@ pub fn ws_send(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let msg = extract_str(&args[1], "wsSend", span)?;
 
     let mut socket = ws.lock().unwrap();
-    socket.send(Message::Text(msg.into())).map_err(|e| RuntimeError::IoError {
-        message: format!("wsSend(): {}", e),
-        span,
-    })?;
+    socket
+        .send(Message::Text(msg.into()))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("wsSend(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
 /// wsSendBinary(handle: websocket, data: array<number>) -> null
 pub fn ws_send_binary(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("wsSendBinary", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "wsSendBinary",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let ws = extract_ws(&args[0], "wsSendBinary", span)?;
     let arr = match &args[1] {
         Value::Array(a) => a.as_slice().to_vec(),
-        _ => return Err(super::stdlib_arg_error("wsSendBinary", "array", &args[1], span)),
+        _ => {
+            return Err(super::stdlib_arg_error(
+                "wsSendBinary",
+                "array",
+                &args[1],
+                span,
+            ))
+        }
     };
 
-    let bytes: Vec<u8> = arr.iter().map(|v| match v {
-        Value::Number(n) => Ok(*n as u8),
-        _ => Err(RuntimeError::InvalidStdlibArgument {
-            msg: "wsSendBinary(): array must contain numbers (0-255)".into(),
-            span,
-        }),
-    }).collect::<Result<Vec<_>, _>>()?;
+    let bytes: Vec<u8> = arr
+        .iter()
+        .map(|v| match v {
+            Value::Number(n) => Ok(*n as u8),
+            _ => Err(RuntimeError::InvalidStdlibArgument {
+                msg: "wsSendBinary(): array must contain numbers (0-255)".into(),
+                span,
+            }),
+        })
+        .collect::<Result<Vec<_>, _>>()?;
 
     let mut socket = ws.lock().unwrap();
-    socket.send(Message::Binary(bytes.into())).map_err(|e| RuntimeError::IoError {
-        message: format!("wsSendBinary(): {}", e),
-        span,
-    })?;
+    socket
+        .send(Message::Binary(bytes.into()))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("wsSendBinary(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 
@@ -168,7 +204,9 @@ pub fn ws_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Message::Ping(_) => ("ping", Value::Null),
         Message::Pong(_) => ("pong", Value::Null),
         Message::Close(frame) => {
-            let data = frame.map(|cf| Value::string(cf.reason.to_string())).unwrap_or(Value::Null);
+            let data = frame
+                .map(|cf| Value::string(cf.reason.to_string()))
+                .unwrap_or(Value::Null);
             ("close", data)
         }
         Message::Frame(_) => ("frame", Value::Null),
@@ -187,10 +225,12 @@ pub fn ws_ping(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
     let ws = extract_ws(&args[0], "wsPing", span)?;
     let mut socket = ws.lock().unwrap();
-    socket.send(Message::Ping(vec![].into())).map_err(|e| RuntimeError::IoError {
-        message: format!("wsPing(): {}", e),
-        span,
-    })?;
+    socket
+        .send(Message::Ping(vec![].into()))
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("wsPing(): {}", e),
+            span,
+        })?;
     Ok(Value::Null)
 }
 

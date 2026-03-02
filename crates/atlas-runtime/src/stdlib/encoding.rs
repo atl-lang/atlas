@@ -7,14 +7,19 @@ use crate::value::{RuntimeError, Value};
 
 // ── Base64 ───────────────────────────────────────────────────────────
 
-use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64_STANDARD;
 use base64::engine::general_purpose::URL_SAFE as BASE64_URL_SAFE;
+use base64::Engine as _;
 
 /// base64Encode(data: string) -> string
 pub fn base64_encode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("base64Encode", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "base64Encode",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let s = extract_str(&args[0], "base64Encode", span)?;
     Ok(Value::string(BASE64_STANDARD.encode(s.as_bytes())))
@@ -23,23 +28,37 @@ pub fn base64_encode(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// base64Decode(encoded: string) -> string
 pub fn base64_decode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("base64Decode", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "base64Decode",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let s = extract_str(&args[0], "base64Decode", span)?;
-    let bytes = BASE64_STANDARD.decode(s).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("base64Decode(): invalid base64: {}", e),
-        span,
-    })?;
-    String::from_utf8(bytes).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("base64Decode(): decoded data is not valid UTF-8: {}", e),
-        span,
-    })
+    let bytes = BASE64_STANDARD
+        .decode(s)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("base64Decode(): invalid base64: {}", e),
+            span,
+        })?;
+    String::from_utf8(bytes)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("base64Decode(): decoded data is not valid UTF-8: {}", e),
+            span,
+        })
 }
 
 /// base64UrlEncode(data: string) -> string (URL-safe base64)
 pub fn base64_url_encode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("base64UrlEncode", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "base64UrlEncode",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let s = extract_str(&args[0], "base64UrlEncode", span)?;
     Ok(Value::string(BASE64_URL_SAFE.encode(s.as_bytes())))
@@ -48,17 +67,26 @@ pub fn base64_url_encode(args: &[Value], span: Span) -> Result<Value, RuntimeErr
 /// base64UrlDecode(encoded: string) -> string (URL-safe base64)
 pub fn base64_url_decode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(super::stdlib_arity_error("base64UrlDecode", 1, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "base64UrlDecode",
+            1,
+            args.len(),
+            span,
+        ));
     }
     let s = extract_str(&args[0], "base64UrlDecode", span)?;
-    let bytes = BASE64_URL_SAFE.decode(s).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("base64UrlDecode(): invalid URL-safe base64: {}", e),
-        span,
-    })?;
-    String::from_utf8(bytes).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("base64UrlDecode(): decoded data is not valid UTF-8: {}", e),
-        span,
-    })
+    let bytes = BASE64_URL_SAFE
+        .decode(s)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("base64UrlDecode(): invalid URL-safe base64: {}", e),
+            span,
+        })?;
+    String::from_utf8(bytes)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("base64UrlDecode(): decoded data is not valid UTF-8: {}", e),
+            span,
+        })
 }
 
 // ── Hex ──────────────────────────────────────────────────────────────
@@ -82,10 +110,12 @@ pub fn hex_decode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         msg: format!("hexDecode(): invalid hex: {}", e),
         span,
     })?;
-    String::from_utf8(bytes).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("hexDecode(): decoded data is not valid UTF-8: {}", e),
-        span,
-    })
+    String::from_utf8(bytes)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("hexDecode(): decoded data is not valid UTF-8: {}", e),
+            span,
+        })
 }
 
 // ── URL Encoding ─────────────────────────────────────────────────────

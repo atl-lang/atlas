@@ -7,7 +7,7 @@ use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 
 use aes_gcm::aead::{Aead, KeyInit, OsRng};
-use aes_gcm::{Aes256Gcm, AeadCore};
+use aes_gcm::{AeadCore, Aes256Gcm};
 use blake3;
 use hmac::{Hmac, Mac};
 use sha2::{Digest, Sha256, Sha512};
@@ -60,9 +60,11 @@ pub fn hmac_sha256(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let data = extract_string_or_bytes(&args[0], "hmacSha256", span)?;
     let key = extract_string_or_bytes(&args[1], "hmacSha256", span)?;
 
-    let mut mac = <HmacSha256 as Mac>::new_from_slice(&key).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("hmacSha256(): invalid key: {}", e),
-        span,
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(&key).map_err(|e| {
+        RuntimeError::InvalidStdlibArgument {
+            msg: format!("hmacSha256(): invalid key: {}", e),
+            span,
+        }
     })?;
     mac.update(&data);
     let result = mac.finalize();
@@ -72,7 +74,12 @@ pub fn hmac_sha256(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// hmacSha256Verify(data: string, key: string, signature: string) -> bool
 pub fn hmac_sha256_verify(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 3 {
-        return Err(super::stdlib_arity_error("hmacSha256Verify", 3, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "hmacSha256Verify",
+            3,
+            args.len(),
+            span,
+        ));
     }
     let data = extract_string_or_bytes(&args[0], "hmacSha256Verify", span)?;
     let key = extract_string_or_bytes(&args[1], "hmacSha256Verify", span)?;
@@ -83,9 +90,11 @@ pub fn hmac_sha256_verify(args: &[Value], span: Span) -> Result<Value, RuntimeEr
         span,
     })?;
 
-    let mut mac = <HmacSha256 as Mac>::new_from_slice(&key).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("hmacSha256Verify(): invalid key: {}", e),
-        span,
+    let mut mac = <HmacSha256 as Mac>::new_from_slice(&key).map_err(|e| {
+        RuntimeError::InvalidStdlibArgument {
+            msg: format!("hmacSha256Verify(): invalid key: {}", e),
+            span,
+        }
     })?;
     mac.update(&data);
     Ok(Value::Bool(mac.verify_slice(&sig_bytes).is_ok()))
@@ -96,7 +105,12 @@ pub fn hmac_sha256_verify(args: &[Value], span: Span) -> Result<Value, RuntimeEr
 /// aesGcmEncrypt(plaintext: string, key: string(hex, 32 bytes)) -> string (hex: nonce + ciphertext)
 pub fn aes_gcm_encrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("aesGcmEncrypt", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "aesGcmEncrypt",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let plaintext = extract_string_or_bytes(&args[0], "aesGcmEncrypt", span)?;
     let key_hex = extract_str(&args[1], "aesGcmEncrypt", span)?;
@@ -107,20 +121,26 @@ pub fn aes_gcm_encrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError
     })?;
     if key_bytes.len() != 32 {
         return Err(RuntimeError::InvalidStdlibArgument {
-            msg: format!("aesGcmEncrypt(): key must be 32 bytes (64 hex chars), got {} bytes", key_bytes.len()),
+            msg: format!(
+                "aesGcmEncrypt(): key must be 32 bytes (64 hex chars), got {} bytes",
+                key_bytes.len()
+            ),
             span,
         });
     }
 
-    let cipher = Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("aesGcmEncrypt(): {}", e),
-        span,
-    })?;
+    let cipher =
+        Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("aesGcmEncrypt(): {}", e),
+            span,
+        })?;
 
     let nonce = Aes256Gcm::generate_nonce(&mut OsRng);
-    let ciphertext = cipher.encrypt(&nonce, plaintext.as_ref()).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("aesGcmEncrypt(): encryption failed: {}", e),
-        span,
+    let ciphertext = cipher.encrypt(&nonce, plaintext.as_ref()).map_err(|e| {
+        RuntimeError::InvalidStdlibArgument {
+            msg: format!("aesGcmEncrypt(): encryption failed: {}", e),
+            span,
+        }
     })?;
 
     // Output: hex(nonce || ciphertext)
@@ -132,7 +152,12 @@ pub fn aes_gcm_encrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError
 /// aesGcmDecrypt(ciphertext_hex: string, key: string(hex, 32 bytes)) -> string
 pub fn aes_gcm_decrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
-        return Err(super::stdlib_arity_error("aesGcmDecrypt", 2, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "aesGcmDecrypt",
+            2,
+            args.len(),
+            span,
+        ));
     }
     let combined_hex = extract_str(&args[0], "aesGcmDecrypt", span)?;
     let key_hex = extract_str(&args[1], "aesGcmDecrypt", span)?;
@@ -147,7 +172,10 @@ pub fn aes_gcm_decrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError
     })?;
     if key_bytes.len() != 32 {
         return Err(RuntimeError::InvalidStdlibArgument {
-            msg: format!("aesGcmDecrypt(): key must be 32 bytes (64 hex chars), got {} bytes", key_bytes.len()),
+            msg: format!(
+                "aesGcmDecrypt(): key must be 32 bytes (64 hex chars), got {} bytes",
+                key_bytes.len()
+            ),
             span,
         });
     }
@@ -161,26 +189,40 @@ pub fn aes_gcm_decrypt(args: &[Value], span: Span) -> Result<Value, RuntimeError
     let (nonce_bytes, ciphertext) = combined.split_at(12);
     let nonce = aes_gcm::Nonce::from_slice(nonce_bytes);
 
-    let cipher = Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("aesGcmDecrypt(): {}", e),
-        span,
-    })?;
+    let cipher =
+        Aes256Gcm::new_from_slice(&key_bytes).map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("aesGcmDecrypt(): {}", e),
+            span,
+        })?;
 
-    let plaintext = cipher.decrypt(nonce, ciphertext).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("aesGcmDecrypt(): decryption failed (wrong key or corrupted data): {}", e),
-        span,
-    })?;
+    let plaintext =
+        cipher
+            .decrypt(nonce, ciphertext)
+            .map_err(|e| RuntimeError::InvalidStdlibArgument {
+                msg: format!(
+                    "aesGcmDecrypt(): decryption failed (wrong key or corrupted data): {}",
+                    e
+                ),
+                span,
+            })?;
 
-    String::from_utf8(plaintext).map(Value::string).map_err(|e| RuntimeError::InvalidStdlibArgument {
-        msg: format!("aesGcmDecrypt(): decrypted data is not valid UTF-8: {}", e),
-        span,
-    })
+    String::from_utf8(plaintext)
+        .map(Value::string)
+        .map_err(|e| RuntimeError::InvalidStdlibArgument {
+            msg: format!("aesGcmDecrypt(): decrypted data is not valid UTF-8: {}", e),
+            span,
+        })
 }
 
 /// aesGcmGenerateKey() -> string (hex, 32 random bytes)
 pub fn aes_gcm_generate_key(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(super::stdlib_arity_error("aesGcmGenerateKey", 0, args.len(), span));
+        return Err(super::stdlib_arity_error(
+            "aesGcmGenerateKey",
+            0,
+            args.len(),
+            span,
+        ));
     }
     let key = Aes256Gcm::generate_key(&mut OsRng);
     Ok(Value::string(hex::encode(key)))
@@ -195,7 +237,11 @@ fn extract_str<'a>(value: &'a Value, func_name: &str, span: Span) -> Result<&'a 
     }
 }
 
-fn extract_string_or_bytes(value: &Value, func_name: &str, span: Span) -> Result<Vec<u8>, RuntimeError> {
+fn extract_string_or_bytes(
+    value: &Value,
+    func_name: &str,
+    span: Span,
+) -> Result<Vec<u8>, RuntimeError> {
     match value {
         Value::String(s) => Ok(s.as_bytes().to_vec()),
         _ => Err(super::stdlib_arg_error(func_name, "string", value, span)),
