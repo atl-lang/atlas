@@ -1,13 +1,20 @@
 //! Async primitives: sleep, timers, mutex, timeout
 //!
-//! Provides essential async primitives for building concurrent applications.
+//! All async primitives return PENDING futures that are resolved by background
+//! threads. This enables real concurrency — `spawn(sleep(5000))` does NOT block
+//! the interpreter. The `await()` function is the cooperative yield point where
+//! the interpreter thread spins until a specific future resolves.
+//!
+//! Architecture: Thread-per-operation cooperative model.
+//! - sleep/interval: timer thread resolves future after delay
+//! - mutex: lock thread resolves future when lock acquired
+//! - timeout: deadline thread races against inner future
 
 use crate::async_runtime::AtlasFuture;
 use crate::value::Value;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex as TokioMutex;
-use tokio::time;
 
 // ============================================================================
 // Sleep and Timers
@@ -15,14 +22,14 @@ use tokio::time;
 
 /// Sleep for a specified duration
 ///
-/// Returns a Future that resolves after the specified number of milliseconds.
-/// Non-blocking - other tasks can run while sleeping.
+/// Returns a PENDING future immediately. A background timer thread resolves
+/// the future after the specified milliseconds elapse.
 pub fn sleep(milliseconds: u64) -> AtlasFuture {
     let future = AtlasFuture::new_pending();
     let future_clone = future.clone();
 
-    tokio::task::spawn_local(async move {
-        time::sleep(Duration::from_millis(milliseconds)).await;
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(milliseconds));
         future_clone.resolve(Value::Null);
     });
 
@@ -31,26 +38,22 @@ pub fn sleep(milliseconds: u64) -> AtlasFuture {
 
 /// Create a timer that fires after a delay
 ///
-/// Similar to sleep but explicitly models a timer that completes.
+/// Identical to sleep — returns a PENDING future resolved by a timer thread.
 pub fn timer(milliseconds: u64) -> AtlasFuture {
     sleep(milliseconds)
 }
 
 /// Create a repeating interval timer
 ///
-/// Returns a Future that can be polled repeatedly.
-/// Each poll waits for the interval duration.
-///
-/// Note: This is a simplified implementation.
-/// A full implementation would use tokio::time::interval.
+/// Returns a PENDING future that resolves after one interval tick.
+/// A background thread handles the timing.
 pub fn interval(milliseconds: u64) -> AtlasFuture {
     let future = AtlasFuture::new_pending();
     let future_clone = future.clone();
 
-    tokio::task::spawn_local(async move {
-        let mut interval = time::interval(Duration::from_millis(milliseconds));
-        interval.tick().await; // First tick completes immediately
-        interval.tick().await; // Wait for first interval
+    std::thread::spawn(move || {
+        // First tick is immediate (matches tokio::time::interval behavior)
+        std::thread::sleep(Duration::from_millis(milliseconds));
         future_clone.resolve(Value::Null);
     });
 
@@ -63,8 +66,8 @@ pub fn interval(milliseconds: u64) -> AtlasFuture {
 
 /// Async-aware mutex for protecting shared data
 ///
-/// Unlike standard mutexes, this can be held across await points.
-/// The lock operation returns a Future that resolves when the lock is acquired.
+/// Lock operations return PENDING futures resolved by background threads
+/// when the lock is acquired.
 #[derive(Clone)]
 pub struct AsyncMutex {
     inner: Arc<TokioMutex<Value>>,
@@ -80,18 +83,18 @@ impl AsyncMutex {
 
     /// Lock the mutex
     ///
-    /// Returns a Future that resolves to the protected value.
-    /// The value should be updated and the lock automatically releases
-    /// when the operation completes.
+    /// Returns a PENDING future that resolves to the protected value
+    /// when the lock is acquired. A background thread handles the blocking.
     pub fn lock(&self) -> AtlasFuture {
         let mutex = Arc::clone(&self.inner);
         let future = AtlasFuture::new_pending();
         let future_clone = future.clone();
 
-        tokio::task::spawn_local(async move {
-            let guard = mutex.lock().await;
-            // Clone the value since we can't return the guard
-            let value = (*guard).clone();
+        std::thread::spawn(move || {
+            let value = super::block_on(async move {
+                let guard = mutex.lock().await;
+                (*guard).clone()
+            });
             future_clone.resolve(value);
         });
 
@@ -108,15 +111,17 @@ impl AsyncMutex {
 
     /// Update the value in the mutex
     ///
-    /// This is a convenience method that locks, updates, and unlocks.
+    /// Returns a PENDING future that resolves when the update completes.
     pub fn update(&self, new_value: Value) -> AtlasFuture {
         let mutex = Arc::clone(&self.inner);
         let future = AtlasFuture::new_pending();
         let future_clone = future.clone();
 
-        tokio::task::spawn_local(async move {
-            let mut guard = mutex.lock().await;
-            *guard = new_value;
+        std::thread::spawn(move || {
+            super::block_on(async move {
+                let mut guard = mutex.lock().await;
+                *guard = new_value;
+            });
             future_clone.resolve(Value::Null);
         });
 
@@ -136,45 +141,48 @@ impl std::fmt::Debug for AsyncMutex {
 
 /// Wrap a Future with a timeout
 ///
-/// Returns a Future that either resolves to the original value,
-/// or rejects with a timeout error if the duration is exceeded.
+/// Returns a PENDING future that either resolves with the inner future's value
+/// or rejects with a timeout error. Two threads race: one watches the inner
+/// future, one enforces the deadline.
 pub fn timeout(future: AtlasFuture, milliseconds: u64) -> AtlasFuture {
-    let timeout_future = AtlasFuture::new_pending();
-    let timeout_clone = timeout_future.clone();
-
-    tokio::task::spawn_local(async move {
-        let duration = Duration::from_millis(milliseconds);
-
-        // Create timeout
-        let timeout_result = time::timeout(duration, async {
-            // Poll the future by checking its state
-            // In a full implementation, this would properly await the future
-            let start = std::time::Instant::now();
-            loop {
-                match future.get_state() {
-                    crate::async_runtime::FutureState::Resolved(value) => {
-                        return Ok(value);
-                    }
-                    crate::async_runtime::FutureState::Rejected(error) => {
-                        return Err(error);
-                    }
-                    crate::async_runtime::FutureState::Pending => {
-                        // Still pending, check timeout
-                        if start.elapsed() > duration {
-                            return Err(Value::string("Operation timed out"));
-                        }
-                        time::sleep(Duration::from_millis(10)).await;
-                    }
-                }
-            }
-        })
-        .await;
-
-        match timeout_result {
-            Ok(Ok(value)) => timeout_clone.resolve(value),
-            Ok(Err(error)) => timeout_clone.reject(error),
-            Err(_) => timeout_clone.reject(Value::string("Operation timed out")),
+    // If already settled, return immediately
+    match future.get_state() {
+        crate::async_runtime::FutureState::Resolved(value) => {
+            return AtlasFuture::resolved(value);
         }
+        crate::async_runtime::FutureState::Rejected(error) => {
+            return AtlasFuture::rejected(error);
+        }
+        crate::async_runtime::FutureState::Pending => {}
+    }
+
+    let timeout_future = AtlasFuture::new_pending();
+    let result_clone = timeout_future.clone();
+    let deadline_clone = timeout_future.clone();
+    let inner = future.clone();
+
+    // Thread 1: watch inner future for resolution
+    std::thread::spawn(move || loop {
+        match inner.get_state() {
+            crate::async_runtime::FutureState::Resolved(value) => {
+                result_clone.resolve(value);
+                return;
+            }
+            crate::async_runtime::FutureState::Rejected(error) => {
+                result_clone.reject(error);
+                return;
+            }
+            crate::async_runtime::FutureState::Pending => {
+                std::thread::sleep(Duration::from_millis(1));
+            }
+        }
+    });
+
+    // Thread 2: enforce deadline
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_millis(milliseconds));
+        // Only reject if still pending (inner may have resolved first)
+        deadline_clone.reject(Value::string("Operation timed out"));
     });
 
     timeout_future
@@ -184,8 +192,6 @@ pub fn timeout(future: AtlasFuture, milliseconds: u64) -> AtlasFuture {
 ///
 /// Attempts the operation up to max_attempts times, with a timeout per attempt.
 /// Returns the first successful result or the last error.
-///
-/// Note: Simplified implementation for current constraints.
 pub fn retry_with_timeout<F>(mut operation: F, max_attempts: usize, timeout_ms: u64) -> AtlasFuture
 where
     F: FnMut() -> AtlasFuture,
@@ -196,11 +202,8 @@ where
         let future = operation();
         let timeout_future = timeout(future, timeout_ms);
 
-        // Poll for result (simplified)
-        let start = std::time::Instant::now();
-        let max_wait = Duration::from_millis(timeout_ms + 100);
-
-        while start.elapsed() < max_wait {
+        // Wait for this attempt to complete
+        loop {
             match timeout_future.get_state() {
                 crate::async_runtime::FutureState::Resolved(value) => {
                     return AtlasFuture::resolved(value);
@@ -210,12 +213,11 @@ where
                     break;
                 }
                 crate::async_runtime::FutureState::Pending => {
-                    std::thread::sleep(Duration::from_millis(10));
+                    std::thread::yield_now();
                 }
             }
         }
     }
 
-    // All attempts failed
     AtlasFuture::rejected(last_error)
 }

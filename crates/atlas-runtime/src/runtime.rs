@@ -1,7 +1,7 @@
 //! Atlas runtime API for embedding
 
 use crate::binder::Binder;
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{Diagnostic, DiagnosticLevel};
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::module_executor::ModuleExecutor;
@@ -100,36 +100,64 @@ impl Atlas {
                 source.to_string()
             };
 
+        // Collect warnings separately — warnings never prevent execution
+        let mut all_warnings = Vec::new();
+
         // Lex the source code
         let mut lexer = Lexer::new(&source_with_semi);
         let (tokens, lex_diagnostics) = lexer.tokenize();
 
-        if !lex_diagnostics.is_empty() {
-            return Err(lex_diagnostics);
+        let (lex_errors, lex_warns): (Vec<_>, Vec<_>) = lex_diagnostics
+            .into_iter()
+            .partition(|d| d.level == DiagnosticLevel::Error);
+        all_warnings.extend(lex_warns);
+        if !lex_errors.is_empty() {
+            all_warnings.extend(lex_errors.iter().cloned());
+            return Err(all_warnings);
         }
 
         // Parse tokens into AST
         let mut parser = Parser::new(tokens);
         let (ast, parse_diagnostics) = parser.parse();
 
-        if !parse_diagnostics.is_empty() {
-            return Err(parse_diagnostics);
+        let (parse_errors, parse_warns): (Vec<_>, Vec<_>) = parse_diagnostics
+            .into_iter()
+            .partition(|d| d.level == DiagnosticLevel::Error);
+        all_warnings.extend(parse_warns);
+        if !parse_errors.is_empty() {
+            all_warnings.extend(parse_errors.iter().cloned());
+            return Err(all_warnings);
         }
 
         // Bind symbols
         let mut binder = Binder::new();
         let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
 
-        if !bind_diagnostics.is_empty() {
-            return Err(bind_diagnostics);
+        let (bind_errors, bind_warns): (Vec<_>, Vec<_>) = bind_diagnostics
+            .into_iter()
+            .partition(|d| d.level == DiagnosticLevel::Error);
+        all_warnings.extend(bind_warns);
+        if !bind_errors.is_empty() {
+            all_warnings.extend(bind_errors.iter().cloned());
+            return Err(all_warnings);
         }
 
         // Type check
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&ast);
 
-        if !type_diagnostics.is_empty() {
-            return Err(type_diagnostics);
+        let (type_errors, type_warns): (Vec<_>, Vec<_>) = type_diagnostics
+            .into_iter()
+            .partition(|d| d.level == DiagnosticLevel::Error);
+        all_warnings.extend(type_warns);
+        if !type_errors.is_empty() {
+            all_warnings.extend(type_errors.iter().cloned());
+            return Err(all_warnings);
+        }
+
+        // Print warnings to stderr (they don't prevent execution)
+        for warn in &all_warnings {
+            eprintln!("warning: {}", warn.message);
         }
 
         // Interpret the AST

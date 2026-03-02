@@ -769,7 +769,12 @@ impl Parser {
 
         self.consume(TokenKind::FatArrow, "Expected '=>' after pattern")?;
 
-        let body = self.parse_expression()?;
+        // Support both expression bodies and block bodies: `=> expr` or `=> { stmts }`
+        let body = if self.check(TokenKind::LeftBrace) {
+            self.parse_block_expr()?
+        } else {
+            self.parse_expression()?
+        };
         let body_span = body.span();
 
         Ok(MatchArm {

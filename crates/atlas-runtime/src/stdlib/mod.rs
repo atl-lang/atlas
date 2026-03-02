@@ -1678,15 +1678,16 @@ pub fn len(value: &Value, span: crate::span::Span) -> Result<f64, RuntimeError> 
 
 /// Convert a value to a string
 ///
-/// Only accepts number, bool, or null per stdlib specification.
-pub fn str(value: &Value, span: crate::span::Span) -> Result<String, RuntimeError> {
+/// Converts any value to its string representation.
+///
+/// For JSON string values, returns the raw string content (without quotes).
+/// For all other values, returns the display representation.
+pub fn str(value: &Value, _span: crate::span::Span) -> Result<String, RuntimeError> {
     match value {
-        Value::Number(_) | Value::Bool(_) | Value::Null => Ok(value.to_display_string()),
-        _ => Err(stdlib_arg_error(
-            "str",
-            "number, bool, or null",
-            value,
-            span,
-        )),
+        Value::JsonValue(json) => match json.as_ref() {
+            crate::json_value::JsonValue::String(s) => Ok(s.clone()),
+            other => Ok(other.to_string()),
+        },
+        _ => Ok(value.to_display_string()),
     }
 }

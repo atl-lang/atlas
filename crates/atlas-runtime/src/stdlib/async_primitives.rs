@@ -40,7 +40,6 @@ use crate::async_runtime;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
 
 // ============================================================================
 // Task Spawning and Management
@@ -80,18 +79,17 @@ pub fn spawn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
     };
 
-    // Spawn task using async_runtime
-    // Poll the AtlasFuture until it completes
+    // Spawn task that polls the AtlasFuture until it resolves.
+    // The future was created by sleep/channelReceive/etc. and will be
+    // resolved by their background timer/IO threads.
     let handle = async_runtime::spawn_task(
         async move {
-            // Poll the future state until resolved or rejected
             loop {
                 match future.get_state() {
                     async_runtime::FutureState::Resolved(value) => return value,
                     async_runtime::FutureState::Rejected(error) => return error,
                     async_runtime::FutureState::Pending => {
-                        // Wait a bit before polling again
-                        tokio::time::sleep(Duration::from_millis(10)).await;
+                        std::thread::yield_now();
                     }
                 }
             }

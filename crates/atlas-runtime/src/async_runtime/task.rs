@@ -6,7 +6,6 @@
 
 use crate::async_runtime::AtlasFuture;
 use crate::value::Value;
-use futures_util::FutureExt;
 use std::fmt;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
@@ -117,20 +116,18 @@ impl TaskHandle {
     ///
     /// Returns a Future that resolves to the task's result value.
     pub fn join(&self) -> AtlasFuture {
-        // Check if already complete
-        let result = self.state.result.lock().unwrap().clone();
-
-        if let Some(res) = result {
-            match res {
-                Ok(value) => return AtlasFuture::resolved(value),
-                Err(error) => return AtlasFuture::rejected(Value::string(error)),
+        // Poll until the task completes (it runs on a separate thread)
+        loop {
+            let result = self.state.result.lock().unwrap().clone();
+            if let Some(res) = result {
+                return match res {
+                    Ok(value) => AtlasFuture::resolved(value),
+                    Err(error) => AtlasFuture::rejected(Value::string(error)),
+                };
             }
+            // Task still running — yield briefly
+            std::thread::sleep(std::time::Duration::from_millis(1));
         }
-
-        // Task still running - return pending future
-        // Note: In a full implementation, this would poll the task
-        // For now, we return pending and rely on external polling
-        AtlasFuture::new_pending()
     }
 
     /// Mark task as completed with result
@@ -203,52 +200,46 @@ where
     let handle = TaskHandle::new(name);
     let state = handle.state_ref();
 
-    // Spawn the task execution in a LocalSet context
+    // Run the future on a dedicated OS thread.
+    // No tokio needed — the future itself handles all async coordination.
     let state_clone = Arc::clone(&state);
     std::thread::spawn(move || {
-        crate::async_runtime::block_on(async move {
-            // Spawn on LocalSet
-            tokio::task::spawn_local(async move {
-                // Check for cancellation before starting
-                if state_clone.cancelled.load(Ordering::SeqCst) {
-                    let mut status = state_clone.status.lock().unwrap();
-                    *status = TaskStatus::Cancelled;
-                    return;
+        // Check for cancellation before starting
+        if state_clone.cancelled.load(Ordering::SeqCst) {
+            let mut status = state_clone.status.lock().unwrap();
+            *status = TaskStatus::Cancelled;
+            return;
+        }
+
+        // Execute the future using block_on (drives it to completion)
+        let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            crate::async_runtime::block_on(future)
+        }));
+
+        match result {
+            Ok(value) => {
+                let mut status = state_clone.status.lock().unwrap();
+                if *status == TaskStatus::Running {
+                    *status = TaskStatus::Completed;
+                    *state_clone.result.lock().unwrap() = Some(Ok(value));
                 }
+            }
+            Err(panic_err) => {
+                let error_msg = if let Some(s) = panic_err.downcast_ref::<&str>() {
+                    s.to_string()
+                } else if let Some(s) = panic_err.downcast_ref::<String>() {
+                    s.clone()
+                } else {
+                    "Task panicked".to_string()
+                };
 
-                // Execute the future
-                let result = std::panic::AssertUnwindSafe(future).catch_unwind().await;
-
-                match result {
-                    Ok(value) => {
-                        // Task completed successfully
-                        let mut status = state_clone.status.lock().unwrap();
-                        if *status == TaskStatus::Running {
-                            *status = TaskStatus::Completed;
-                            *state_clone.result.lock().unwrap() = Some(Ok(value));
-                        }
-                    }
-                    Err(panic_err) => {
-                        // Task panicked
-                        let error_msg = if let Some(s) = panic_err.downcast_ref::<&str>() {
-                            s.to_string()
-                        } else if let Some(s) = panic_err.downcast_ref::<String>() {
-                            s.clone()
-                        } else {
-                            "Task panicked".to_string()
-                        };
-
-                        let mut status = state_clone.status.lock().unwrap();
-                        if *status == TaskStatus::Running {
-                            *status = TaskStatus::Failed;
-                            *state_clone.result.lock().unwrap() = Some(Err(error_msg));
-                        }
-                    }
+                let mut status = state_clone.status.lock().unwrap();
+                if *status == TaskStatus::Running {
+                    *status = TaskStatus::Failed;
+                    *state_clone.result.lock().unwrap() = Some(Err(error_msg));
                 }
-            })
-            .await
-            .ok(); // Ignore join errors
-        });
+            }
+        }
     });
 
     handle
@@ -292,29 +283,21 @@ where
 /// Results are returned in the same order as the input handles.
 pub fn join_all(handles: Vec<TaskHandle>) -> AtlasFuture {
     let mut results = Vec::new();
-    let mut all_complete = true;
 
-    for handle in handles {
-        let result = handle.state.result.lock().unwrap().clone();
-
-        if let Some(res) = result {
-            match res {
-                Ok(value) => results.push(value),
-                Err(error) => {
-                    // Any error causes immediate rejection
-                    return AtlasFuture::rejected(Value::string(error));
-                }
+    for handle in &handles {
+        // Block until each task completes
+        let future = handle.join();
+        match future.get_state() {
+            crate::async_runtime::FutureState::Resolved(value) => results.push(value),
+            crate::async_runtime::FutureState::Rejected(error) => {
+                return AtlasFuture::rejected(error);
             }
-        } else {
-            // At least one task still pending
-            all_complete = false;
-            break;
+            crate::async_runtime::FutureState::Pending => {
+                // Should not happen since join() now blocks
+                return AtlasFuture::new_pending();
+            }
         }
     }
 
-    if all_complete {
-        AtlasFuture::resolved(Value::array(results))
-    } else {
-        AtlasFuture::new_pending()
-    }
+    AtlasFuture::resolved(Value::array(results))
 }

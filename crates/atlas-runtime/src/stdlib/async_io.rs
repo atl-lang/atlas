@@ -595,20 +595,21 @@ pub fn await_future(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
     };
 
-    // For now, futures are immediately resolved due to block_on usage
-    // In future phases with true async, this would poll/wait for completion
-    match future.get_state() {
-        crate::async_runtime::FutureState::Resolved(value) => Ok(value),
-        crate::async_runtime::FutureState::Rejected(error) => Err(RuntimeError::TypeError {
-            msg: format!("Future rejected: {}", error),
-            span,
-        }),
-        crate::async_runtime::FutureState::Pending => {
-            // This shouldn't happen with current block_on implementation
-            Err(RuntimeError::TypeError {
-                msg: "Future is still pending".to_string(),
-                span,
-            })
+    // Cooperative yield point: spin-wait until the future is resolved or rejected.
+    // Background threads (from sleep, channelReceive, spawn, etc.) will resolve
+    // the future when their operation completes. We yield the CPU between checks.
+    loop {
+        match future.get_state() {
+            crate::async_runtime::FutureState::Resolved(value) => return Ok(value),
+            crate::async_runtime::FutureState::Rejected(error) => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!("Future rejected: {}", error),
+                    span,
+                })
+            }
+            crate::async_runtime::FutureState::Pending => {
+                std::thread::yield_now();
+            }
         }
     }
 }
