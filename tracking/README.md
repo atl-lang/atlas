@@ -1,6 +1,6 @@
 # Atlas Tracking System
 
-**CLI:** `tracking/atlas-track` — the ONLY approved interface
+**CLI:** `atlas-track` — the ONLY approved interface
 **Direct SQL is BANNED** — protects against token-burning unbounded queries
 
 ## Token Safety (Enforced)
@@ -20,20 +20,20 @@
 
 ```bash
 # Every session starts with:
-tracking/atlas-track status
-tracking/atlas-track start-session opus  # Returns your session ID
+atlas-track status
+atlas-track start-session opus  # Returns your session ID
 
 # Check what needs work:
-tracking/atlas-track issues P0
+atlas-track issues P0
 
 # Get details on one issue:
-tracking/atlas-track issue H-001
+atlas-track issue H-001
 
 # When you fix something:
-tracking/atlas-track close-issue H-001 S-002 "Root cause" "Fix applied"
+atlas-track close-issue H-001 S-002 "Root cause" "Fix applied"
 
 # Before handoff:
-tracking/atlas-track end-session S-002 success "What was done" "Next steps"
+atlas-track end-session S-002 success "What was done" "Next steps"
 ```
 
 ## Components (Compiler Domains)

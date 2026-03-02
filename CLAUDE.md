@@ -24,7 +24,7 @@
 
 ## Session Start (MANDATORY)
 ```bash
-tracking/atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
 ```
 Act on what you see: stale issues need `fix` or `abandon`, P0 blockers before block work.
 

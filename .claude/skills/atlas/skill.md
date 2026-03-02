@@ -15,7 +15,7 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 **Run this ONE command immediately:**
 ```bash
-tracking/atlas-track go opus
+atlas-track go opus
 ```
 
 This gives you:
@@ -168,22 +168,22 @@ After GATE -1, declare one:
 
 **During Work — Issue Lifecycle:**
 ```bash
-tracking/atlas-track claim H-001              # Mark you're working on it
+atlas-track claim H-001              # Mark you're working on it
 # ... do the actual fix in Rust code ...
-tracking/atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
+atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
 ```
 
 **Session End (MANDATORY — will BLOCK if you have unclosed issues):**
 ```bash
-tracking/atlas-track done S-004 success "What was done" "What should happen next"
+atlas-track done S-004 success "What was done" "What should happen next"
 ```
 
 **Quick Reference:**
 ```bash
-tracking/atlas-track issue H-001    # Full details on one issue
-tracking/atlas-track issues P0      # List P0 blockers (max 5)
-tracking/atlas-track my-issues      # What you're working on
-tracking/atlas-track sitrep         # Full status without starting session
+atlas-track issue H-001    # Full details on one issue
+atlas-track issues P0      # List P0 blockers (max 5)
+atlas-track my-issues      # What you're working on
+atlas-track sitrep         # Full status without starting session
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Atlas Tracking — Agent Protocol
 
-**CLI:** `tracking/atlas-track` — the ONLY approved interface
+**CLI:** `atlas-track` — the ONLY approved interface
 **Direct SQL is BANNED** — no `sqlite3` commands, ever
 
 ## Token Budget Rules (MANDATORY)
@@ -13,7 +13,7 @@
 ## Session Startup (ONE COMMAND)
 
 ```bash
-tracking/atlas-track init opus
+atlas-track init opus
 ```
 
 Output:
@@ -36,31 +36,31 @@ H-011 P0 runtime
 ## Index Queries (IDs only, max 5 rows)
 
 ```bash
-tracking/atlas-track issues          # All open issues (IDs only)
-tracking/atlas-track issues P0       # P0 blockers only
-tracking/atlas-track issues runtime  # Issues for one component
-tracking/atlas-track decisions       # Active decisions
-tracking/atlas-track blocks          # Block progress
-tracking/atlas-track sessions        # Recent sessions
+atlas-track issues          # All open issues (IDs only)
+atlas-track issues P0       # P0 blockers only
+atlas-track issues runtime  # Issues for one component
+atlas-track decisions       # Active decisions
+atlas-track blocks          # Block progress
+atlas-track sessions        # Recent sessions
 ```
 
 ## Detail Queries (single item, when you need specifics)
 
 ```bash
-tracking/atlas-track issue H-001     # One issue's full details
-tracking/atlas-track decision D-001  # One decision's full details
-tracking/atlas-track session S-001   # One session's full details
-tracking/atlas-track block 7         # One block's full details
+atlas-track issue H-001     # One issue's full details
+atlas-track decision D-001  # One decision's full details
+atlas-track session S-001   # One session's full details
+atlas-track block 7         # One block's full details
 ```
 
 ## Session Management (use compound commands)
 
 ```bash
 # Start session (use init instead — does status + start + P0 list)
-tracking/atlas-track init opus
+atlas-track init opus
 
 # End session (use done instead — does end + final status)
-tracking/atlas-track done S-004 success "What was done" "What should happen next"
+atlas-track done S-004 success "What was done" "What should happen next"
 ```
 
 Outcome values: `success`, `partial`, `blocked`, `failed`, `abandoned`
@@ -69,20 +69,20 @@ Outcome values: `success`, `partial`, `blocked`, `failed`, `abandoned`
 
 ```bash
 # Close an issue you fixed (use fix — uses current session, shows remaining P0s)
-tracking/atlas-track fix H-001 "Root cause" "Fix applied"
+atlas-track fix H-001 "Root cause" "Fix applied"
 
 # Open a new issue you discovered
-tracking/atlas-track open-issue "New bug title" P1 high runtime "What's wrong" "What needs to happen"
+atlas-track open-issue "New bug title" P1 high runtime "What's wrong" "What needs to happen"
 ```
 
 ## Mode Control
 
 ```bash
 # Allow new feature work (all P0s resolved)
-tracking/atlas-track unblock
+atlas-track unblock
 
 # Block new work (hardening mode)
-tracking/atlas-track block-work
+atlas-track block-work
 ```
 
 ## Component Values
@@ -109,25 +109,25 @@ tracking/atlas-track block-work
 
 ```bash
 # List active decisions
-tracking/atlas-track decisions
+atlas-track decisions
 
 # List by component
-tracking/atlas-track decisions runtime
+atlas-track decisions runtime
 
 # List all (including superseded/deprecated)
-tracking/atlas-track decisions all
+atlas-track decisions all
 
 # View one decision
-tracking/atlas-track decision D-001
+atlas-track decision D-001
 
 # Add new decision
-tracking/atlas-track add-decision "Title" component "Rule text" "Rationale"
+atlas-track add-decision "Title" component "Rule text" "Rationale"
 
 # Supersede (D-001 replaced by D-002)
-tracking/atlas-track supersede D-001 D-002
+atlas-track supersede D-001 D-002
 
 # Deprecate (no replacement)
-tracking/atlas-track deprecate D-001 "reason"
+atlas-track deprecate D-001 "reason"
 ```
 
 Decision statuses: `active`, `superseded`, `deprecated`, `proposed`
