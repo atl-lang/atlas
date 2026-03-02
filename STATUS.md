@@ -20,18 +20,7 @@
 **Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
 **Next:** Block 7 — JIT Integration (scaffold)
 
-## ⚠️ CRITICAL: v0.3 Is Open-Ended (Hardening In Progress)
-
-**v0.3 scope:** Language completeness + hardening (not just Blocks 1-9).
-**v0.3 complete when:** All acceptance criteria met (could be 50+ blocks total).
-**v0.4+ scope:** Systems-level (borrow checker, AOT compilation, compile-time ownership).
-
-**See `docs/internal/PRE-SYSTEMS-HARDENING.md` for:**
-- 7 critical gaps (sandbox enforcement, stdlib, JIT, bytecode, LSP, errors, parity)
-- 5 hardening phases (H1-H5) required before v0.3 tag
-- Battle-testing requirements
-
-**AI agents:** v0.3 Blocks 1-9 are just the FIRST milestone. Hardening phases H1-H5 are PART OF v0.3, not post-v0.3. **Language functionality > code hygiene.** Don't start v0.4 work until v0.3 is fully stable.
+**Critical gaps:** See `advanced-codex-audit.md` + `docs/codex-findings/important-before-continuing.md`
 
 ---
 
@@ -208,9 +197,8 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Resource | Location |
 |----------|----------|
 | **v0.3 block plan** | `docs/internal/V03_PLAN.md` ← start here |
-| **Post-v0.3 hardening** | `docs/internal/PRE-SYSTEMS-HARDENING.md` ← required before systems-level conversion |
 | **Memory model spec** | `docs/specification/memory-model.md` ← architectural foundation |
-| **Audit findings** | `advanced-codex-audit.md` + `docs/codex-findings/` ← critical gaps to address |
+| **Audit findings** | `advanced-codex-audit.md` + `docs/codex-findings/` ← what's broken |
 | Roadmap | `ROADMAP.md` |
 | Specs | `docs/specification/` |
 | v0.2 archive | `phases/*/archive/v0.2/` |
