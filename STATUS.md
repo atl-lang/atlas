@@ -1,6 +1,6 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-03-02 (Block 6 COMPLETE)
+**Last Updated:** 2026-03-02 (Block 6 COMPLETE, let mut hardening done)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
 **Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅ | v0.3 Block 6 COMPLETE ✅
 
@@ -17,7 +17,7 @@
 ## Current State
 
 **Status:** Block 6 (Error Handling) COMPLETE — 5/5 phases
-**Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
+**Last Completed:** let mut + AT2014 deprecation warning (completing prior incomplete work), 8,302 tests passing
 **Next:** Block 7 — JIT Integration (scaffold)
 
 **Current hardening work:** `advanced-codex-audit.md` + `.claude/memory/systems-audit-handoff.md` + `docs/codex-findings/claude-audit-2026-03-02.md` — AI: alert user when 100% complete (more audits pending)
@@ -143,7 +143,7 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Metric | Value |
 |--------|-------|
 | Phases | 5/5 |
-| Tests at completion | **8,285** (workspace) |
+| Tests at completion | **8,302** (workspace, post-hardening) |
 | Test failures | 0 |
 | Stdlib functions converted | 21+ (indexOf, lastIndexOf, arrayIndexOf, arrayLastIndexOf, charAt, find, findIndex, getEnv → Option; toNumber, parseInt, parseFloat, parseJSON, sqrt, log, asin, acos, clamp → Result) |
 | Internal unwrap fixes | 4 (toJSON serde, 3x fs.rs SystemTime) |
