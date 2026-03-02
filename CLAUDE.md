@@ -10,6 +10,7 @@
 - **Verify before agreeing.** User expresses doubt? Check the facts first, then state confidently.
 - **Protect atlas from everyone.** User confusion, AI shortcuts, bad ideas—all threats.
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
+- **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?" Don't build nice-to-haves when the language is broken.
 
 ## Git Process
 - **Two-track push policy.** Rust source → PR + CI. Everything else → direct push to main with `[skip ci]`. See `.claude/lazy/git.md`.
@@ -20,6 +21,14 @@
 ## AI Workflow Exceptions (Project-Specific Overrides)
 - **`.claude/agents/atlas-doc-auditor.md` exceeds global 150-line AI workflow file limit (224 lines).** This is intentional. The auditor covers 6 domains specific to a dual-engine compiler (parity, CoW semantics, interpreter/VM, LSP, JIT) — no global auditor can substitute. Exception approved.
 - **CodeRabbit pre-push check:** Before any batch push to remote, task a Haiku agent to run `coderabbit review --base main --plain`. Review findings before pushing. See `.claude/skills/atlas/gates/git-workflow.md`.
+
+## Tracking System (Professional-Grade)
+- **Database:** `tracking/atlas.db` — SQLite, queryable by all agents
+- **Query reference:** `tracking/QUERIES.md` — copy-paste SQL for common operations
+- **Session startup:** Run 3-line status check at every session start (see QUERIES.md)
+- **Agent continuity:** Log sessions with outcome and next_steps
+- **Components:** parser, binder, typechecker, interpreter, vm, codegen, jit, runtime, stdlib, lsp, cli, infra, docs
+- **Block work gated:** When `block_work_allowed=0`, resolve P0 issues first
 
 ## Cross-Platform Testing
 - Use `std::path::Path` APIs, not string manipulation for paths.

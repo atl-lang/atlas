@@ -1,0 +1,100 @@
+#!/bin/bash
+# atlas-track — Token-safe tracking CLI for AI agents
+# Usage: atlas-track <command> [args]
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source library files
+source "$SCRIPT_DIR/lib/common.sh"
+source "$SCRIPT_DIR/lib/queries.sh"
+source "$SCRIPT_DIR/lib/session.sh"
+source "$SCRIPT_DIR/lib/issues.sh"
+source "$SCRIPT_DIR/lib/decisions.sh"
+source "$SCRIPT_DIR/lib/mode.sh"
+
+# Verify database exists
+if [[ ! -f "$DB" ]]; then
+    echo "ERROR: Database not found at $DB"
+    exit 1
+fi
+
+usage() {
+    cat << 'EOF'
+atlas-track — Token-safe CLI (use jq)
+
+START (pick one):
+  go opus                          # THE command: init + full sitrep
+  sitrep                           # Status only (no session start)
+
+ISSUES:
+  claim H-001                      # Mark in_progress
+  fix H-001 "cause" "fix"          # Close (auto-captures commit+files)
+  my-issues                        # Your work this session
+
+END:
+  done S-001 success "Sum" "Next"  # End (BLOCKED if unclosed)
+
+INDEX (max 5, jq formatted):
+  issues [P0|component]
+  decisions [component|all]
+  blocks
+
+DETAIL:
+  issue H-001
+  decision D-001
+
+OTHER:
+  abandon H-001 "reason"
+  add-decision "Title" comp "Rule" "Rationale"
+  supersede D-001 D-002
+  unblock / block-work
+EOF
+    exit 0
+}
+
+# Main dispatch
+case "${1:-}" in
+    # Session lifecycle
+    go)         cmd_go "${2:-opus}" "${3:-}" ;;
+    init)       cmd_init "${2:-opus}" "${3:-}" ;;
+    sitrep)     cmd_sitrep ;;
+    claim)      cmd_claim "${2:?'Issue ID required'}" ;;
+    fix)        cmd_fix "${2:?'Issue ID required'}" "${3:?'Root cause required'}" "${4:?'Fix applied required'}" ;;
+    my-issues)  cmd_my_issues ;;
+    done)       cmd_done "${2:?'Session ID required'}" "${3:?'Outcome required'}" "${4:?'Summary required'}" "${5:-}" ;;
+
+    # Issues
+    abandon)    cmd_abandon "${2:?'Issue ID required'}" "${3:-}" ;;
+    reopen)     cmd_reopen "${2:?'Issue ID required'}" ;;
+    open-issue) cmd_open_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" "${6:?}" "${7:?}" ;;
+
+    # Decisions
+    add-decision) cmd_add_decision "${2:?}" "${3:?}" "${4:?}" "${5:-}" ;;
+    supersede)    cmd_supersede "${2:?}" "${3:?}" ;;
+    deprecate)    cmd_deprecate "${2:?}" "${3:-}" ;;
+
+    # Queries
+    status)     cmd_status ;;
+    issues)     cmd_issues "${2:-}" ;;
+    decisions)  cmd_decisions "${2:-}" ;;
+    blocks)     cmd_blocks ;;
+    sessions)   cmd_sessions ;;
+    issue)      cmd_issue_detail "${2:?'Issue ID required'}" ;;
+    decision)   cmd_decision_detail "${2:?'Decision ID required'}" ;;
+    session)    cmd_session_detail "${2:?'Session ID required'}" ;;
+    block)      cmd_block_detail "${2:?'Block number required'}" ;;
+
+    # Mode
+    unblock)    cmd_unblock ;;
+    block-work) cmd_block_work ;;
+
+    # Legacy
+    start-session) cmd_start_session "${2:-opus}" "${3:-}" ;;
+    end-session)   cmd_end_session "${2:?}" "${3:?}" "${4:?}" "${5:-}" ;;
+    close-issue)   cmd_close_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" ;;
+
+    -h|--help|help|"") usage ;;
+    *)          echo "Unknown: $1"; usage ;;
+esac

@@ -7,14 +7,27 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 **Type:** Rust compiler | **Progress:** STATUS.md | **Spec:** docs/specification/
 **Memory:** Claude .claude/memory (patterns, decisions) | **Gates:** skill `gates/` directory
+**Tracking:** `tracking/atlas.db` — issues, decisions, sessions, blocks (see `tracking/QUERIES.md`)
 
 ---
 
-## On Skill Activation (EVERY SESSION)
+## On Skill Activation (EVERY SESSION — DO THIS FIRST)
 
+**Run this ONE command immediately:**
 ```bash
-cat .worktree-id 2>/dev/null || echo "unknown"   # Detect worktree identity
+tracking/atlas-track go opus
 ```
+
+This gives you:
+- Your session ID (note it for `done` command)
+- Mode (hardening = fix P0s, development = new features)
+- Handoff from previous agent (what they did, what's next)
+- P0 blockers (if any)
+- Git branch and recent commits
+- Block progress
+
+**If `Work: BLOCKED`** → You MUST fix P0 issues. No new features.
+**If stale issues shown** → Previous agent didn't close them. Check if fixed, then `fix` or `abandon`.
 
 **Full state audit runs in GATE -1** — worktree state, uncommitted work, unmerged branches, build verification, security scan. See `gates/gate-minus1-sanity.md`.
 
@@ -152,6 +165,26 @@ After GATE -1, declare one:
 - **Memory:** Updated X / No updates needed (MANDATORY)
 - Progress (X/~140 phases — see STATUS.md block table)
 - Next phase
+
+**During Work — Issue Lifecycle:**
+```bash
+tracking/atlas-track claim H-001              # Mark you're working on it
+# ... do the actual fix in Rust code ...
+tracking/atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
+```
+
+**Session End (MANDATORY — will BLOCK if you have unclosed issues):**
+```bash
+tracking/atlas-track done S-004 success "What was done" "What should happen next"
+```
+
+**Quick Reference:**
+```bash
+tracking/atlas-track issue H-001    # Full details on one issue
+tracking/atlas-track issues P0      # List P0 blockers (max 5)
+tracking/atlas-track my-issues      # What you're working on
+tracking/atlas-track sitrep         # Full status without starting session
+```
 
 ---
 
