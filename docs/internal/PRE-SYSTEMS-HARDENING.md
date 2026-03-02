@@ -1,14 +1,15 @@
-# Pre-Systems-Level Hardening Roadmap
+# v0.3 Hardening Roadmap (Post-v0.2 Stabilization)
 
-**Status:** IN PROGRESS (v0.3 feature work complete, hardening phase active)
-**Target:** Functional, battle-tested language ready for systems-level conversion
+**Status:** IN PROGRESS (v0.3 Blocks 1-6 complete, hardening ongoing)
+**Version Context:** v0.3 = language completeness + hardening | v0.4+ = systems-level (borrow checker, AOT)
+**Target:** Functional, battle-tested foundation before compile-time ownership verification (v0.4)
 **Audit Context:** See `advanced-codex-audit.md` + `docs/codex-findings/important-before-continuing.md`
 
 ---
 
-## Priority: Core Language Must Work First
+## Priority: v0.3 Foundation Must Be Stable First
 
-**Before systems-level conversion (Rust-like borrow checker, lifetime analysis, etc.), the current scripting-level language must be stable and complete.** Missing features and broken implementations block hardening.
+**v0.3 is not just features** — it's the architectural foundation for all future versions. Before v0.4 systems-level work (compile-time borrow checking, AOT compilation), the v0.3 scripting-level language must be stable and complete. Missing features and broken implementations block the transition.
 
 ---
 
@@ -58,7 +59,7 @@
 
 ---
 
-## Hardening Work Streams (Post-v0.3 Feature Freeze)
+## Hardening Work Streams (v0.3 Completion)
 
 ### Phase H1: Runtime Enforcement (2-3 blocks)
 - [ ] Time/memory quota enforcement in VM loop
@@ -94,11 +95,11 @@
 
 ---
 
-## Acceptance Criteria (Hardening Complete)
+## Acceptance Criteria (v0.3 Complete, Ready for v0.4)
 
-**The language is ready for systems-level conversion when:**
+**v0.3 is complete and ready for v0.4 systems-level work when:**
 
-1. ✅ All v0.3 blocks complete (Blocks 1-9)
+1. ✅ All v0.3 blocks complete (Blocks 1-9 + any additional hardening blocks)
 2. ✅ Security enforcement works (time/memory/network/FFI gated)
 3. ✅ Stdlib feature parity with Node.js/Python for scripting use cases
 4. ✅ Zero `unwrap()`/`panic!()` in runtime hot paths
@@ -107,7 +108,7 @@
 7. ✅ Parity tests cover async/IO/stdlib (100% identical output)
 8. ✅ Real-world program suite (5+ non-trivial demos) runs successfully
 
-**At that point:** Systems-level features (borrow checker, lifetimes, zero-cost abstractions) can be added without destabilizing the scripting-level foundation.
+**Then tag v0.3.0 and begin v0.4:** Compile-time ownership verification, borrow checker, AOT compilation, zero-cost abstractions.
 
 ---
 
@@ -134,15 +135,17 @@
 ## References
 
 - **Audit reports:** `advanced-codex-audit.md`, `docs/codex-findings/*.md`
-- **Version plan:** `docs/internal/V03_PLAN.md` (Blocks 1-9 feature work)
-- **Post-v0.3:** This file defines hardening → systems-level transition
+- **Version plan:** `docs/internal/V03_PLAN.md` (v0.3 blocks + exit criteria)
+- **Roadmap:** `ROADMAP.md` (v0.2 complete → v0.3 in progress → v0.4 systems-level)
 
 ---
 
 ## Notes for AI Agents
 
-**DO NOT start systems-level work (borrow checker, lifetimes, manual memory, zero-cost abstractions) until hardening is complete.** The scripting-level language must be stable first.
+**v0.3 = foundation + hardening.** v0.4+ = systems-level (borrow checker, AOT compilation).
 
-**When v0.3 blocks finish:** Pause feature work. Execute hardening phases H1-H5. Only after hardening ACs met → begin systems-level conversion.
+**DO NOT start v0.4 work until v0.3 hardening is complete.** The scripting-level foundation must be stable before adding compile-time ownership verification.
 
-**Test cleanup, code hygiene, inline test migration:** Lower priority than language functionality. Defer until post-hardening.
+**When v0.3 feature blocks (1-9) finish:** Execute hardening phases H1-H5. Only after all v0.3 acceptance criteria met → tag v0.3.0 → begin v0.4.
+
+**Test cleanup, code hygiene, inline test migration:** Lower priority than language functionality. Defer until v0.3 hardening complete.

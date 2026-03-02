@@ -20,16 +20,18 @@
 **Last Completed:** Block 6 Phase 04 — Stdlib Result audit (21+ functions converted), 8,285 tests passing
 **Next:** Block 7 — JIT Integration (scaffold)
 
-## ⚠️ CRITICAL: Post-v0.3 Hardening Required
+## ⚠️ CRITICAL: v0.3 Is Open-Ended (Hardening In Progress)
 
-**Before systems-level conversion (borrow checker, lifetimes, manual memory):**
-The scripting-level language **must be stable and feature-complete**. See `docs/internal/PRE-SYSTEMS-HARDENING.md` for:
-- Missing enforcement (sandbox, JIT, bytecode serialization)
-- Stdlib gaps (WebSockets, HTTP, process spawn, compression)
-- Error discipline audit (unwrap/panic → Result-based)
+**v0.3 scope:** Language completeness + hardening (not just Blocks 1-9).
+**v0.3 complete when:** All acceptance criteria met (could be 50+ blocks total).
+**v0.4+ scope:** Systems-level (borrow checker, AOT compilation, compile-time ownership).
+
+**See `docs/internal/PRE-SYSTEMS-HARDENING.md` for:**
+- 7 critical gaps (sandbox enforcement, stdlib, JIT, bytecode, LSP, errors, parity)
+- 5 hardening phases (H1-H5) required before v0.3 tag
 - Battle-testing requirements
 
-**AI agents:** Complete v0.3 Blocks 1-9 → execute hardening phases H1-H5 → only then begin systems-level work. **Language functionality > code hygiene.**
+**AI agents:** v0.3 Blocks 1-9 are just the FIRST milestone. Hardening phases H1-H5 are PART OF v0.3, not post-v0.3. **Language functionality > code hygiene.** Don't start v0.4 work until v0.3 is fully stable.
 
 ---
 
