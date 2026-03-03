@@ -11,6 +11,33 @@ use crate::symbol::{SymbolKind, SymbolTable};
 use crate::typechecker::TypeChecker;
 use crate::types::Type;
 use crate::value::Value;
+use std::io::Write;
+use std::sync::{Arc, Mutex};
+
+struct CaptureWriter {
+    buffer: Arc<Mutex<Vec<u8>>>,
+}
+
+impl Write for CaptureWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        let mut locked = self.buffer.lock().unwrap();
+        locked.extend_from_slice(buf);
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+fn capture_output_writer() -> (crate::stdlib::OutputWriter, Arc<Mutex<Vec<u8>>>) {
+    let buffer = Arc::new(Mutex::new(Vec::new()));
+    let writer = CaptureWriter {
+        buffer: Arc::clone(&buffer),
+    };
+    let output = Arc::new(Mutex::new(Box::new(writer) as Box<dyn Write + Send>));
+    (output, buffer)
+}
 
 /// A captured variable binding for REPL display
 #[derive(Debug, Clone)]
@@ -230,11 +257,21 @@ impl ReplCore {
         }
 
         // Phase 5: Evaluate
-        match self.interpreter.eval(&ast, &self.security) {
+        let (output_writer, output_buffer) = capture_output_writer();
+        let previous_writer = self.interpreter.output_writer();
+        self.interpreter.set_output_writer(output_writer);
+        let eval_result = self.interpreter.eval(&ast, &self.security);
+        self.interpreter.set_output_writer(previous_writer);
+        let stdout = {
+            let locked = output_buffer.lock().unwrap();
+            String::from_utf8_lossy(&locked).to_string()
+        };
+
+        match eval_result {
             Ok(value) => ReplResult {
                 value: Some(value),
                 diagnostics,
-                stdout: String::new(), // TODO: Capture stdout
+                stdout,
                 expr_type,
                 bindings: self.collect_bindings(&declared_vars),
             },
@@ -247,7 +284,7 @@ impl ReplCore {
                 ReplResult {
                     value: None,
                     diagnostics,
-                    stdout: String::new(),
+                    stdout,
                     expr_type,
                     bindings,
                 }

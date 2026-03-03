@@ -139,6 +139,11 @@ impl Interpreter {
         self.output_writer = writer;
     }
 
+    /// Get the current output writer (used by REPL to capture stdout).
+    pub fn output_writer(&self) -> crate::stdlib::OutputWriter {
+        self.output_writer.clone()
+    }
+
     /// Set execution limits for timeout enforcement
     pub fn set_execution_limits(
         &mut self,
