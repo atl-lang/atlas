@@ -41,15 +41,14 @@ Decisions are based on **projected final**, not just new lines:
 - Projected final < 1,500 → Proceed → GATE 1.5
 - Projected final 1,500–2,000 → Warning zone — justify OR plan split → GATE 1.5
 - Projected final > 2,000 → **BLOCKING: plan split NOW, before writing a single line**
-- Test file projected > 40KB → **BLOCKING: plan subdirectory split before adding tests**
+- Test file projected > 12KB → **BLOCKING: plan subdirectory split before adding tests**
 
 **Split obligation:** If a projection hits the blocking threshold, the split plan is
 **in-scope for this phase**. It is not follow-up work. Designing the split happens
 here, before implementation. Writing a large file and splitting it at GATE 6 wastes
 tokens and is disallowed.
 
-**ARCH-EXCEPTION:** If the file legitimately cannot be split, add `// ARCH-EXCEPTION: <reason>`
-at the top and document it in the phase summary. See `.claude/rules/atlas-architecture.md`.
+**ARCH-EXCEPTION:** See `.claude/lazy/architecture.md` for protocol.
 
 ---
 

@@ -14,24 +14,16 @@
 
 ## Git Process (Local-First v2)
 - **Local CI first.** All validation via `cargo fmt/clippy/nextest` + `coderabbit` CLI locally.
-- **Batch pushes.** Commits accumulate on local main. Push after 5 commits OR 24 hours.
+- **Batch pushes.** Commits accumulate on local main. Push every 168 hours.
 - **No PRs for fixes.** Direct push to main after local CI passes. PRs only for major blocks.
 - **Single workspace:** `~/dev/projects/atlas/` — no other worktrees.
 - **See `.claude/lazy/git.md`** for full local-first workflow.
 
-## Local CI Commands
-
+## Quick Check (every fix)
 ```bash
-# Quick (every fix)
 cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run -p atlas-runtime
-
-# Full (batched — Haiku agent)
-coderabbit review --base main --plain
-cargo fmt --check && cargo clippy --workspace -- -D warnings
-cargo build --workspace && cargo nextest run --workspace
 ```
-
-Track batch state in `.claude/memory/local-ci.md`.
+Full CI commands and batch tracking: `.claude/lazy/git.md`
 
 ## Session Start (MANDATORY)
 ```bash

@@ -18,7 +18,7 @@ cargo nextest run -p atlas-runtime  # parallel via num-cpus
 ```
 
 ### Full Local CI (batched — Haiku agent)
-Trigger: **5 commits OR 24 hours** (whichever first)
+Trigger: **every 168 hours** 
 ```bash
 coderabbit review --base main --plain   # local review
 cargo fmt --check                       # format check
@@ -68,9 +68,9 @@ git add crates/ && git commit -m "fix(vm): resolve side effect issue"
 
 ---
 
-## Batch Push Workflow (Daily or 5+ commits)
+## Batch Push Workflow
 
-When batch threshold is met:
+**Check if due:** `git fetch origin && git log origin/main -1 --format="%ci"` — push if 168+ hours ago
 
 ```bash
 # 1. Full local CI (Haiku agent)

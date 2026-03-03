@@ -41,8 +41,11 @@ cargo clean
 
 ### Implementation Patterns (As Needed)
 
-- Codebase patterns: .claude/memory `patterns.md`
-- Architectural decisions: .claude/memory `decisions/*.md`
+**Canonical sources:**
+- Code patterns: `.claude/memory/patterns.md`
+- Domain verification: `.claude/memory/domain-prereqs.md`
+- Architectural decisions: `.claude/memory/decisions/*.md`
+- Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
 
 ---
 
@@ -148,7 +151,7 @@ record their current line counts to carry into GATE 1 estimation.
 find crates/ -name "*.rs" -not -path "*/target/*" -not -path "*/tests/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
 
 # 2. Test file violations (KB-based — token cost is the real constraint for AI agents)
-find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh 2>/dev/null | sort -rh | head -20
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +12k | xargs du -sh 2>/dev/null | sort -rh | head -20
 
 # 3. Record current size for EVERY file you will write to
 wc -l <each target source file>
@@ -166,18 +169,15 @@ Target file: tests/stdlib/strings.rs — current: 8KB
 |--------|--------|
 | Source file > 2,000 lines (no ARCH-EXCEPTION comment) | **BLOCKING** — split before adding any code |
 | Source file 1,500–2,000 lines | Flag in phase summary — do not grow further |
-| Test file > 40KB | **BLOCKING** — split before adding any tests |
-| Test file 20–40KB | Warning — flag in phase summary, plan split |
+| Test file > 12KB | **BLOCKING** — split before adding any tests |
+| Test file 10–12KB | Warning — flag in phase summary, plan split |
 
 **ARCH-EXCEPTION protocol:** If a file legitimately cannot be split (e.g. VM execute loop),
 it must have `// ARCH-EXCEPTION: <reason>` at the top. If the comment is missing, the file
 is in violation regardless of circumstance.
 
-**Test file routing check:** Before adding any test, verify the target submodule file
-(not the thin router root). Check `.claude/rules/atlas-testing.md` domain table for the
-correct file. Adding to the wrong file or the router root = violation.
-
-**See `.claude/rules/atlas-architecture.md`** for full thresholds and migration patterns.
+**Test file routing:** See `.claude/rules/atlas-testing.md` for domain table.
+**Architecture limits:** See `.claude/lazy/architecture.md` for thresholds.
 
 ---
 

@@ -37,12 +37,8 @@ All rules use `paths:` frontmatter — load only when touching matching files:
 - **Typechecker:** `.claude/rules/atlas-typechecker.md` — typechecker/**, types.rs
 - **VM:** `.claude/rules/atlas-vm.md` — vm/**, compiler/**, bytecode/**
 
-## Local-First CI (v2 — 2026-03-03)
-- **Quick checks (every fix):** `cargo fmt --check && cargo clippy && cargo nextest run -p atlas-runtime`
-- **Full CI (batched):** `coderabbit review` + `act` + full `nextest` — Haiku agent
-- **Batch trigger:** 5 commits OR 24 hours
-- **Track state:** `.claude/memory/local-ci.md`
-- **No PRs for fixes** — direct push to main after local CI passes
+## Local-First CI
+**Canonical:** `.claude/lazy/git.md` | **Tracking:** `.claude/memory/local-ci.md`
 
 ## Doc Auditor
 Run `atlas-doc-auditor` after every block (GATE 7). Audits all CLAUDE.md, rules, memory, decisions. 224 lines — approved exception.

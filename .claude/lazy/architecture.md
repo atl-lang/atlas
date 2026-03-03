@@ -96,9 +96,9 @@ During GATE 0 (pre-work verification), run both checks:
 find crates/ -name "*.rs" -not -path "*/target/*" -not -path "*/tests/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
 
 # Test file violations (KB-based — the real AI cost metric)
-find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +20k | xargs du -sh 2>/dev/null | sort -rh | head -20
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +12k | xargs du -sh 2>/dev/null | sort -rh | head -20
 ```
 
-If any non-exception source file is over 2,000 lines, or any test file is over 40KB:
+If any non-exception source file is over 2,000 lines, or any test file is over 12KB:
 **flag it in your phase summary** even if it's pre-existing. Do not add to violating files.
 If your phase requires adding to a violating file, split it first as a prerequisite step.

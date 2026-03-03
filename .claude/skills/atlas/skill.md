@@ -96,24 +96,19 @@ Both engines MUST produce identical output. Parity break = BLOCKING.
 See `.claude/rules/atlas-parity.md` (auto-loaded on interpreter/VM/compiler files).
 
 ### 7. Testing Protocol
-**Source of truth:** .claude/memory `testing-patterns.md` — READ BEFORE WRITING ANY TESTS.
-See `.claude/rules/atlas-testing.md` (auto-loaded on test files).
+**Canonical:** `.claude/rules/atlas-testing.md` (auto-loaded on test files).
+**Full detail:** `.claude/memory/testing-patterns.md`
 
 ### 8. Proactive File Sizing (NO REACTIVE SPLITS)
-**Before writing any code:** read current line counts (GATE 0 Step 5) → project final size (GATE 1) → design any needed split BEFORE the first line is written. Writing a large file and splitting it after the fact wastes tokens and is disallowed. Split structure is decided at estimation time, not discovered at GATE 6.
+**Canonical:** `.claude/lazy/architecture.md` — file size limits and split protocol.
+GATE 0 Step 5 → GATE 1 → design split BEFORE writing. Reactive splits waste tokens and are disallowed.
 
 ---
 
 ## Git Workflow
 
-**See `gates/git-workflow.md`** for all commands.
-**See `.claude/rules/atlas-git.md`** for full rules (auto-loaded everywhere).
-
-**Two-track push policy:**
-- **Track 1** (docs/config/CI/pure test refactors): direct push to main with `[skip ci]`
-- **Track 2** (any Rust source changes): PR → CI → auto-squash merge
-**Full rules:** `.claude/rules/atlas-git.md` (auto-loaded) — read before pushing anything.
-**Single workspace:** `~/dev/projects/atlas/` — open this in Claude Code, not atlas-dev.
+**Canonical source:** `.claude/lazy/git.md` — read before any git operations.
+**Single workspace:** `~/dev/projects/atlas/`
 
 ---
 
