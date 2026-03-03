@@ -226,11 +226,11 @@ fn type_from_typeof_value(value: &str) -> Option<Type> {
         "number" => Some(Type::Number),
         "bool" => Some(Type::Bool),
         "null" => Some(Type::Null),
-        "array" => Some(Type::Array(Box::new(Type::Unknown))),
+        "array" => Some(Type::Array(Box::new(Type::any_placeholder()))),
         "function" => Some(Type::Function {
             type_params: Vec::new(),
             params: Vec::new(),
-            return_type: Box::new(Type::Unknown),
+            return_type: Box::new(Type::any_placeholder()),
         }),
         "json" => Some(Type::JsonValue),
         "object" => Some(Type::JsonValue),

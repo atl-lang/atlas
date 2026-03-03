@@ -31,6 +31,7 @@ use crate::typechecker::TypeChecker;
 use crate::value::{RuntimeError, Value};
 use crate::vm::VM;
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::path::Path;
 
 /// Execution mode for the runtime
@@ -108,6 +109,8 @@ pub struct Runtime {
     accumulated_bytecode: RefCell<crate::bytecode::Bytecode>,
     /// Output writer for print() (threaded to interpreter and VM)
     output: crate::stdlib::OutputWriter,
+    /// Native function arities (None = variadic)
+    native_signatures: RefCell<HashMap<String, Option<usize>>>,
 }
 
 impl Runtime {
@@ -133,6 +136,7 @@ impl Runtime {
             execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
+            native_signatures: RefCell::new(HashMap::new()),
         }
     }
 
@@ -158,6 +162,7 @@ impl Runtime {
             execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
+            native_signatures: RefCell::new(HashMap::new()),
         }
     }
 
@@ -217,6 +222,7 @@ impl Runtime {
             execution_limits: RefCell::new(execution_limits),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
+            native_signatures: RefCell::new(HashMap::new()),
         }
     }
 
@@ -304,10 +310,26 @@ impl Runtime {
                     _ => crate::symbol::SymbolKind::Variable,
                 };
 
+                let ty = match value {
+                    Value::NativeFunction(_) => self
+                        .native_signatures
+                        .borrow()
+                        .get(name)
+                        .and_then(|arity| {
+                            arity.as_ref().map(|count| crate::types::Type::Function {
+                                type_params: Vec::new(),
+                                params: vec![crate::types::Type::any_placeholder(); *count],
+                                return_type: Box::new(crate::types::Type::any_placeholder()),
+                            })
+                        })
+                        .unwrap_or(crate::types::Type::Unknown),
+                    _ => crate::types::Type::Unknown,
+                };
+
                 // Create symbol with placeholder type (runtime values don't have compile-time types)
                 let symbol = crate::symbol::Symbol {
                     name: name.clone(),
-                    ty: crate::types::Type::Unknown, // Dynamic values have unknown type at compile time
+                    ty,
                     mutable: *is_mutable,
                     kind: kind.clone(),
                     span: crate::span::Span::dummy(),
@@ -729,6 +751,9 @@ impl Runtime {
             .build()
             .expect("Failed to build native function");
 
+        self.native_signatures
+            .borrow_mut()
+            .insert(name.to_string(), Some(arity));
         self.set_global(name, native_fn);
     }
 
@@ -779,6 +804,9 @@ impl Runtime {
             .build()
             .expect("Failed to build native function");
 
+        self.native_signatures
+            .borrow_mut()
+            .insert(name.to_string(), None);
         self.set_global(name, native_fn);
     }
 }

@@ -463,7 +463,7 @@ fn collect_return_types(stmts: &[Stmt], return_types: &mut Vec<Type>) {
                 let ty = if let Some(value) = &ret.value {
                     infer_expr_type(value)
                 } else {
-                    Type::Void
+                    Type::Null
                 };
                 return_types.push(ty);
             }
@@ -506,7 +506,10 @@ pub fn infer_expr_type(expr: &Expr) -> Type {
             UnaryOp::Negate => Type::Number,
             UnaryOp::Not => Type::Bool,
         },
-        Expr::ArrayLiteral(_) => Type::Array(Box::new(Type::Unknown)),
+        Expr::ArrayLiteral(_) => Type::Array(Box::new(Type::any_placeholder())),
+        Expr::Identifier(_) => Type::any_placeholder(),
+        Expr::Call(_) => Type::any_placeholder(),
+        Expr::Member(_) => Type::any_placeholder(),
         Expr::Group(group) => infer_expr_type(&group.expr),
         _ => Type::Unknown,
     }
@@ -537,12 +540,16 @@ fn infer_binary_type(op: &BinaryOp) -> Type {
 /// (e.g., variable annotation, return type), we can use it to validate
 /// and refine inference results.
 pub fn check_bidirectional(expected: &Type, inferred: &Type) -> BidirectionalResult {
-    // Unknown can flow to any expected type
-    if inferred.normalized() == Type::Unknown {
-        return BidirectionalResult::Compatible;
-    }
-    if expected.normalized() == Type::Unknown {
-        return BidirectionalResult::Compatible;
+    let expected_norm = expected.normalized();
+    let inferred_norm = inferred.normalized();
+    if expected_norm == Type::Unknown || inferred_norm == Type::Unknown {
+        if expected_norm == Type::Unknown && inferred_norm == Type::Unknown {
+            return BidirectionalResult::Compatible;
+        }
+        return BidirectionalResult::Mismatch {
+            expected: expected.clone(),
+            found: inferred.clone(),
+        };
     }
 
     if inferred.is_assignable_to(expected) {
@@ -575,12 +582,8 @@ pub fn least_upper_bound(a: &Type, b: &Type) -> Option<Type> {
         return Some(a_norm);
     }
 
-    // Unknown is subsumed by any concrete type
-    if a_norm == Type::Unknown {
-        return Some(b_norm);
-    }
-    if b_norm == Type::Unknown {
-        return Some(a_norm);
+    if a_norm == Type::Unknown || b_norm == Type::Unknown {
+        return None;
     }
 
     // Arrays: LUB of element types

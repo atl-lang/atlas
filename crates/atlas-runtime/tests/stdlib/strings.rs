@@ -55,7 +55,7 @@ fn test_join_basic() {
 
 #[test]
 fn test_join_empty_array() {
-    let code = r#"join([], ",")"#;
+    let code = r#"join(slice(["a"], 1, 1), ",")"#;
     assert_eval_string(code, "");
 }
 

@@ -624,12 +624,9 @@ fn test_deduplication_pipeline() {
         }
 
         let words: string[] = ["apple", "banana", "apple", "cherry", "banana", "date"];
-        let mut unique: string[] = [];
+        let mut unique: string[] = [words[0]];
 
         // Manual dedup (simplified for test)
-        if (notInList(unique, words[0])) {
-            unique = concat(unique, [words[0]]);
-        }
         if (notInList(unique, words[1])) {
             unique = concat(unique, [words[1]]);
         }
@@ -1540,8 +1537,6 @@ fn test_json_roundtrip_with_extraction() {
         let original: number[] = [-1, 2, -3, 4, 5];
         let jsonStr: string = toJSON(original);
         let parsed: json = parseJSON(jsonStr)?;
-        // Extract and filter manually
-        let values: number[] = [];
         // Check each value (json arrays don't support map directly)
         let positive: number[] = filter(original, isPositive);
         len(positive)

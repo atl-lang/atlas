@@ -23,7 +23,7 @@ use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
 use crate::symbol::{SymbolKind, SymbolTable};
-use crate::types::{Type, TypeParamDef};
+use crate::types::{Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
@@ -265,6 +265,8 @@ pub struct TypeChecker<'a> {
     pub trait_registry: TraitRegistry,
     /// Registry of all impl blocks keyed by (type_name, trait_name).
     pub impl_registry: ImplRegistry,
+    /// Active type parameters in scope (including outer function params).
+    active_type_params: Vec<crate::ast::TypeParam>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -306,6 +308,7 @@ impl<'a> TypeChecker<'a> {
             current_fn_param_ownerships: HashMap::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
+            active_type_params: Vec::new(),
         }
     }
 
@@ -427,21 +430,26 @@ impl<'a> TypeChecker<'a> {
     /// This mirrors what the binder does, ensuring nested function symbols
     /// are available when type-checking calls to them
     fn hoist_nested_function_signature(&mut self, func: &FunctionDecl) {
+        let mut combined_type_params = self.active_type_params.clone();
+        combined_type_params.extend(func.type_params.clone());
         // Resolve parameter types, handling type parameters
         let param_types: Vec<Type> = func
             .params
             .iter()
             .map(|p| {
-                p.type_ref.as_ref().map_or(Type::Unknown, |t| {
-                    self.resolve_type_ref_with_params(t, &func.type_params)
+                p.type_ref.as_ref().map_or(Type::any_placeholder(), |t| {
+                    self.resolve_type_ref_with_params(t, &combined_type_params)
                 })
             })
             .collect();
 
         // Resolve return type (None = omitted, will be inferred later)
-        let return_type = func.return_type.as_ref().map_or(Type::Unknown, |t| {
-            self.resolve_type_ref_with_params(t, &func.type_params)
-        });
+        let return_type = func
+            .return_type
+            .as_ref()
+            .map_or(Type::any_placeholder(), |t| {
+                self.resolve_type_ref_with_params(t, &combined_type_params)
+            });
 
         let type_params = func
             .type_params
@@ -451,7 +459,7 @@ impl<'a> TypeChecker<'a> {
                 bound: param.bound.as_ref().map(|bound| {
                     Box::new(self.resolve_type_ref_with_params_and_context(
                         bound,
-                        &func.type_params,
+                        &combined_type_params,
                         None,
                     ))
                 }),
@@ -691,7 +699,7 @@ impl<'a> TypeChecker<'a> {
                     .map(|p| {
                         p.type_ref
                             .as_ref()
-                            .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+                            .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
                     })
                     .collect();
                 let return_type = self.resolve_type_ref(&method_sig.return_type);
@@ -785,7 +793,7 @@ impl<'a> TypeChecker<'a> {
                         .map(|p| {
                             p.type_ref
                                 .as_ref()
-                                .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+                                .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
                         })
                         .collect();
 
@@ -852,7 +860,7 @@ impl<'a> TypeChecker<'a> {
             let ty = param
                 .type_ref
                 .as_ref()
-                .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
+                .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t));
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
@@ -889,15 +897,27 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_type_params = std::mem::take(&mut self.active_type_params);
+
+        let mut combined_type_params = prev_type_params.clone();
+        combined_type_params.extend(func.type_params.clone());
+        self.active_type_params = combined_type_params;
+        let all_type_params = self.active_type_params.clone();
 
         let return_type = match &func.return_type {
-            Some(type_ref) => self.resolve_type_ref(type_ref),
+            Some(type_ref) => self.resolve_type_ref_with_params(type_ref, &all_type_params),
             None => {
                 // No explicit annotation — infer from body
                 use crate::typechecker::inference::{infer_return_type, InferredReturn};
                 match infer_return_type(&func.body) {
-                    InferredReturn::Void => Type::Void,
-                    InferredReturn::Uniform(ty) => ty,
+                    InferredReturn::Void => Type::Null,
+                    InferredReturn::Uniform(ty) => {
+                        if ty.normalized() == Type::Unknown {
+                            Type::any_placeholder()
+                        } else {
+                            ty
+                        }
+                    }
                     InferredReturn::Inconsistent { .. } => {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -919,6 +939,14 @@ impl<'a> TypeChecker<'a> {
                 }
             }
         };
+        if let Some(symbol) = self.symbol_table.lookup_mut(&func.name.name) {
+            if let Type::Function {
+                return_type: ret, ..
+            } = &mut symbol.ty
+            {
+                **ret = return_type.clone();
+            }
+        }
         self.current_function_return_type = Some(return_type.clone());
         self.current_function_info = Some((func.name.name.clone(), func.name.span));
 
@@ -933,7 +961,9 @@ impl<'a> TypeChecker<'a> {
             let ty = param
                 .type_ref
                 .as_ref()
-                .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
+                .map_or(Type::any_placeholder(), |t| {
+                    self.resolve_type_ref_with_params(t, &all_type_params)
+                });
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
@@ -959,7 +989,9 @@ impl<'a> TypeChecker<'a> {
             let ty = param
                 .type_ref
                 .as_ref()
-                .map_or(Type::Unknown, |t| self.resolve_type_ref(t));
+                .map_or(Type::any_placeholder(), |t| {
+                    self.resolve_type_ref_with_params(t, &all_type_params)
+                });
             if let Some(ann) = &param.ownership {
                 match ann {
                     OwnershipAnnotation::Own => {
@@ -1297,8 +1329,17 @@ impl<'a> TypeChecker<'a> {
                 let target_norm = target_type.normalized();
                 let value_norm = value_type.normalized();
 
-                // Compound assignment requires both sides to be numbers (allow Unknown for error recovery)
-                if !matches!(target_norm, Type::Number | Type::Unknown) {
+                let target_is_any = matches!(
+                    target_norm,
+                    Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                );
+                let value_is_any = matches!(
+                    value_norm,
+                    Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                );
+
+                // Compound assignment requires both sides to be numbers (allow Unknown/any for recovery)
+                if !matches!(target_norm, Type::Number | Type::Unknown) && !target_is_any {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1315,7 +1356,7 @@ impl<'a> TypeChecker<'a> {
                     );
                 }
 
-                if !matches!(value_norm, Type::Number | Type::Unknown) {
+                if !matches!(value_norm, Type::Number | Type::Unknown) && !value_is_any {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1416,7 +1457,7 @@ impl<'a> TypeChecker<'a> {
             Stmt::If(if_stmt) => {
                 let cond_type = self.check_expr(&if_stmt.cond);
                 let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool && cond_norm != Type::Unknown {
+                if cond_norm != Type::Bool {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1442,7 +1483,7 @@ impl<'a> TypeChecker<'a> {
             Stmt::While(while_stmt) => {
                 let cond_type = self.check_expr(&while_stmt.cond);
                 let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool && cond_norm != Type::Unknown {
+                if cond_norm != Type::Bool {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1466,7 +1507,7 @@ impl<'a> TypeChecker<'a> {
                 self.check_statement(&for_stmt.init);
                 let cond_type = self.check_expr(&for_stmt.cond);
                 let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool && cond_norm != Type::Unknown {
+                if cond_norm != Type::Bool {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1504,6 +1545,15 @@ impl<'a> TypeChecker<'a> {
                 };
 
                 let expected = self.current_function_return_type.as_ref().unwrap();
+                let expected_norm = expected.normalized();
+                if matches!(
+                    expected_norm,
+                    Type::TypeParameter { ref name } if name != ANY_TYPE_PARAM
+                ) {
+                    // Allow generic return types; mismatches are enforced at call sites.
+                    return;
+                }
+
                 if !return_type.is_assignable_to(expected) {
                     let mut diag = Diagnostic::error_with_code(
                         "AT3001",
@@ -1573,12 +1623,15 @@ impl<'a> TypeChecker<'a> {
                 let iterable_type = self.check_expr(&for_in_stmt.iterable);
                 let iterable_norm = iterable_type.normalized();
 
-                // Validate iterable is an array
-                // Note: Unknown types are allowed for now (will be inferred)
+                let iterable_is_any = matches!(
+                    iterable_norm,
+                    Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                );
+
+                // Validate iterable is an array (or any-placeholder for dynamic cases)
                 match iterable_norm {
-                    Type::Array(_) | Type::Unknown => {
-                        // Valid - continue
-                    }
+                    Type::Array(_) => {}
+                    _ if iterable_is_any => {}
                     _ => {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -1598,12 +1651,26 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
 
-                // Infer loop variable type from array element type
-                if let Type::Array(element_type) = &iterable_norm {
-                    // Update symbol table with inferred type
-                    if let Some(symbol) = self.symbol_table.lookup_mut(&for_in_stmt.variable.name) {
-                        symbol.ty = (**element_type).clone();
-                    }
+                // Infer loop variable type from array element type (or any-placeholder)
+                let inferred = match &iterable_norm {
+                    Type::Array(element_type) => (**element_type).clone(),
+                    _ if iterable_is_any => Type::any_placeholder(),
+                    _ => Type::Unknown,
+                };
+
+                // Update symbol table with inferred type
+                if let Some(symbol) = self.symbol_table.lookup_mut(&for_in_stmt.variable.name) {
+                    symbol.ty = inferred.clone();
+                } else {
+                    let symbol = crate::symbol::Symbol {
+                        name: for_in_stmt.variable.name.clone(),
+                        ty: inferred,
+                        span: for_in_stmt.variable.span,
+                        mutable: false,
+                        kind: crate::symbol::SymbolKind::Variable,
+                        exported: false,
+                    };
+                    let _ = self.symbol_table.define(symbol);
                 }
 
                 // Type check the loop body
@@ -1659,7 +1726,7 @@ impl<'a> TypeChecker<'a> {
 
                 // Check that index is a number
                 let index_norm = index_type.normalized();
-                if index_norm != Type::Number && index_norm != Type::Unknown {
+                if index_norm != Type::Number {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1719,9 +1786,18 @@ impl<'a> TypeChecker<'a> {
             // Function types are Copy (reference-counted internally)
             Type::Function { .. } => true,
             // Generic types: Copy if explicitly registered (e.g. shared<T> is NOT Copy)
-            Type::Generic { name, type_args: _ } => self.trait_registry.implements(&name, "Copy"),
+            Type::Generic { name, type_args } => {
+                if name == "Option" || name == "Result" {
+                    type_args.iter().all(|arg| self.is_copy_type(arg))
+                } else {
+                    self.trait_registry.implements(&name, "Copy")
+                }
+            }
             // Type parameters: conservative — not Copy unless registry says so
-            Type::TypeParameter { name } => self.trait_registry.implements(&name, "Copy"),
+            Type::TypeParameter { name } => {
+                name == crate::types::ANY_TYPE_PARAM
+                    || self.trait_registry.implements(&name, "Copy")
+            }
             _ => false,
         }
     }
@@ -1776,15 +1852,23 @@ impl<'a> TypeChecker<'a> {
     ) -> Type {
         match type_ref {
             TypeRef::Named(name, span) => match name.as_str() {
+                _ if self
+                    .active_type_params
+                    .iter()
+                    .any(|param| param.name == *name) =>
+                {
+                    Type::TypeParameter { name: name.clone() }
+                }
                 "number" => Type::Number,
                 "string" => Type::String,
                 "bool" => Type::Bool,
                 "void" => Type::Void,
                 "null" => Type::Null,
+                "any" => Type::any_placeholder(),
                 "json" => Type::JsonValue,
-                "array" => Type::Array(Box::new(Type::Unknown)),
+                "array" => Type::Array(Box::new(Type::any_placeholder())),
                 "Comparable" | "Numeric" => Type::Number,
-                "Iterable" => Type::Array(Box::new(Type::Unknown)),
+                "Iterable" => Type::Array(Box::new(Type::any_placeholder())),
                 "Equatable" => {
                     Type::union(vec![Type::Number, Type::String, Type::Bool, Type::Null])
                 }

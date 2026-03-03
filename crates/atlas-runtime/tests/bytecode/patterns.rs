@@ -375,7 +375,7 @@ fn test_array_pattern_empty() {
                 _ => "not empty"
             };
         }
-        test([]);
+        test([0][0..0]);
     "#;
 
     let interp_result = pm_run_interpreter(source).unwrap();

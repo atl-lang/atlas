@@ -623,8 +623,8 @@ fn stability_edge_empty_string_literal() {
 
 #[test]
 fn stability_edge_empty_array() {
-    // An empty array should be valid and have length 0.
-    assert_no_error("let arr: number[] = [];");
+    // Empty array literals are unknown-typed and should error when assigned to concrete arrays.
+    assert_error_code("let arr: number[] = [];", "AT3001");
 }
 
 #[test]

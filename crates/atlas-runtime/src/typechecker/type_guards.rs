@@ -31,14 +31,14 @@ impl TypeGuardRegistry {
         self.insert_builtin("isNumber", 0, Type::Number);
         self.insert_builtin("isBool", 0, Type::Bool);
         self.insert_builtin("isNull", 0, Type::Null);
-        self.insert_builtin("isArray", 0, Type::Array(Box::new(Type::Unknown)));
+        self.insert_builtin("isArray", 0, Type::Array(Box::new(Type::any_placeholder())));
         self.insert_builtin(
             "isFunction",
             0,
             Type::Function {
                 type_params: Vec::new(),
                 params: Vec::new(),
-                return_type: Box::new(Type::Unknown),
+                return_type: Box::new(Type::any_placeholder()),
             },
         );
         self.insert_builtin("isObject", 0, Type::JsonValue);
@@ -168,7 +168,7 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
         let param_type = func.params[param_index]
             .type_ref
             .as_ref()
-            .map_or(Type::Unknown, |t| {
+            .map_or(Type::any_placeholder(), |t| {
                 self.resolve_type_ref_with_params(t, &func.type_params)
             });
         let target_type = self.resolve_type_ref_with_params(&predicate.target, &func.type_params);
@@ -202,7 +202,7 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
         Type::Structural {
             members: vec![StructuralMemberType {
                 name: name.to_string(),
-                ty: Type::Unknown,
+                ty: Type::any_placeholder(),
             }],
         }
     }
@@ -211,7 +211,7 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
         Type::Structural {
             members: vec![StructuralMemberType {
                 name: name.to_string(),
-                ty: Type::Unknown,
+                ty: Type::any_placeholder(),
             }],
         }
     }

@@ -45,7 +45,7 @@ impl MethodTable {
     }
 
     /// Look up a method for a type
-    pub fn lookup(&self, receiver_type: &Type, method_name: &str) -> Option<&MethodSignature> {
+    pub fn lookup(&self, receiver_type: &Type, method_name: &str) -> Option<MethodSignature> {
         let receiver_type = receiver_type.normalized();
         // Convert Type to string for lookup
         let type_name = match receiver_type {
@@ -53,12 +53,12 @@ impl MethodTable {
             Type::String => "string",
             Type::Number => "number",
             Type::Bool => "bool",
-            Type::Array(_) => "array",
+            Type::Array(elem) => return self.array_method_signature(method_name, &elem),
             _ => return None,
         };
 
         let key = (type_name.to_string(), method_name.to_string());
-        self.methods.get(&key)
+        self.methods.get(&key).cloned()
     }
 
     /// Populate built-in methods for stdlib types
@@ -68,36 +68,6 @@ impl MethodTable {
         self.register("json", "as_number", vec![], Type::Number);
         self.register("json", "as_bool", vec![], Type::Bool);
         self.register("json", "is_null", vec![], Type::Bool);
-
-        // Array methods
-        // Mutating collection methods — return the updated array
-        let any_array = Type::Array(Box::new(Type::Unknown));
-        self.register("array", "push", vec![Type::Unknown], any_array.clone());
-        self.register("array", "unshift", vec![Type::Unknown], any_array.clone());
-        self.register("array", "reverse", vec![], any_array.clone());
-        // Mutating pair methods — return the extracted element (receiver updated as side effect)
-        self.register("array", "pop", vec![], Type::Unknown);
-        self.register("array", "shift", vec![], Type::Unknown);
-        // Non-mutating methods — return new value, receiver unchanged
-        self.register("array", "sort", vec![], any_array.clone());
-        self.register("array", "len", vec![], Type::Number);
-        self.register("array", "includes", vec![Type::Unknown], Type::Bool);
-        self.register("array", "indexOf", vec![Type::Unknown], Type::Number);
-        self.register("array", "lastIndexOf", vec![Type::Unknown], Type::Number);
-        self.register(
-            "array",
-            "slice",
-            vec![Type::Number, Type::Number],
-            any_array.clone(),
-        );
-        self.register(
-            "array",
-            "concat",
-            vec![any_array.clone()],
-            any_array.clone(),
-        );
-        self.register("array", "flatten", vec![], any_array.clone());
-        self.register("array", "join", vec![Type::String], Type::String);
 
         // String methods
         // Core methods
@@ -171,6 +141,36 @@ impl MethodTable {
             vec![Type::Number, Type::String],
             Type::String,
         );
+    }
+
+    fn array_method_signature(&self, method_name: &str, elem: &Type) -> Option<MethodSignature> {
+        let elem_norm = elem.normalized();
+        let array_of_elem = Type::Array(Box::new(elem_norm.clone()));
+
+        let (arg_types, return_type) = match method_name {
+            // Mutating collection methods — return updated array
+            "push" | "unshift" => (vec![elem_norm.clone()], array_of_elem.clone()),
+            "reverse" | "sort" => (vec![], array_of_elem.clone()),
+            // Mutating pair methods — return extracted element
+            "pop" | "shift" => (vec![], elem_norm.clone()),
+            // Non-mutating methods — return new value
+            "len" => (vec![], Type::Number),
+            "includes" => (vec![elem_norm.clone()], Type::Bool),
+            "indexOf" | "lastIndexOf" => (vec![elem_norm.clone()], Type::Number),
+            "slice" => (vec![Type::Number, Type::Number], array_of_elem.clone()),
+            "concat" => (vec![array_of_elem.clone()], array_of_elem.clone()),
+            "flatten" => match elem_norm {
+                Type::Array(inner) => (vec![], Type::Array(inner)),
+                other => (vec![], Type::Array(Box::new(other))),
+            },
+            "join" => (vec![Type::String], Type::String),
+            _ => return None,
+        };
+
+        Some(MethodSignature {
+            arg_types,
+            return_type,
+        })
     }
 }
 

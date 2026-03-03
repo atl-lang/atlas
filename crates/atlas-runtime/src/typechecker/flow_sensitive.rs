@@ -114,7 +114,7 @@ impl FlowState {
 /// Widen two types to a common supertype.
 ///
 /// - Same type → returns that type
-/// - Unknown → returns the other type (Unknown is the bottom type for inference)
+/// - Unknown → returns Unknown (Unknown is an error type, not a wildcard)
 /// - Never → returns the other type (Never is the empty type)
 /// - Otherwise → forms a union
 pub fn widen_types(a: &Type, b: &Type) -> Type {
@@ -124,11 +124,8 @@ pub fn widen_types(a: &Type, b: &Type) -> Type {
     if a_norm == b_norm {
         return a_norm;
     }
-    if a_norm == Type::Unknown {
-        return b_norm;
-    }
-    if b_norm == Type::Unknown {
-        return a_norm;
+    if a_norm == Type::Unknown || b_norm == Type::Unknown {
+        return Type::Unknown;
     }
     if a_norm == Type::Never {
         return b_norm;

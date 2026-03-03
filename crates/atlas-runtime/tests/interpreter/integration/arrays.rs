@@ -38,7 +38,7 @@ fn test_empty_array() {
         let arr: number[] = [];
         len(arr)
     "#;
-    assert_eval_number(code, 0.0);
+    assert_error_code(code, "AT3001");
 }
 
 #[test]

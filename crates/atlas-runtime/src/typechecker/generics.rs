@@ -5,7 +5,7 @@
 //! - Monomorphization (generating specialized versions for each type instantiation)
 //! - Unification, occurs check, and type parameter substitution
 
-use crate::types::{Type, TypeParamDef};
+use crate::types::{Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::HashMap;
 
 /// Type inference error
@@ -45,14 +45,25 @@ impl TypeInferer {
         match (&expected, &actual) {
             // Type parameter unifies with anything (binds to it)
             (Type::TypeParameter { name }, actual_type) => {
-                self.add_substitution(name, actual_type.clone())
+                if name == ANY_TYPE_PARAM {
+                    Ok(())
+                } else {
+                    self.add_substitution(name, actual_type.clone())
+                }
             }
             (expected_type, Type::TypeParameter { name }) => {
-                self.add_substitution(name, expected_type.clone())
+                if name == ANY_TYPE_PARAM {
+                    Ok(())
+                } else {
+                    self.add_substitution(name, expected_type.clone())
+                }
             }
 
-            // Unknown unifies with anything (error recovery)
-            (Type::Unknown, _) | (_, Type::Unknown) => Ok(()),
+            (Type::Unknown, Type::Unknown) => Ok(()),
+            (Type::Unknown, _) | (_, Type::Unknown) => Err(InferenceError::TypeMismatch {
+                expected: expected.clone(),
+                actual: actual.clone(),
+            }),
 
             // Concrete types must match exactly
             (Type::Number, Type::Number) => Ok(()),
@@ -152,6 +163,16 @@ impl TypeInferer {
             return self.unify(&existing, &ty);
         }
 
+        if matches!(ty.normalized(), Type::TypeParameter { name } if name == param) {
+            self.substitutions.insert(
+                param.to_string(),
+                Type::TypeParameter {
+                    name: param.to_string(),
+                },
+            );
+            return Ok(());
+        }
+
         // Occurs check: prevent infinite types like T = Option<T>
         if self.occurs_in(param, &ty) {
             return Err(InferenceError::InfiniteType {
@@ -205,8 +226,15 @@ impl TypeInferer {
     pub fn apply_substitutions(&self, ty: &Type) -> Type {
         match ty {
             Type::TypeParameter { name } => {
+                if name == ANY_TYPE_PARAM {
+                    return Type::any_placeholder();
+                }
                 // Look up substitution
                 if let Some(substituted) = self.substitutions.get(name) {
+                    if matches!(substituted, Type::TypeParameter { name: sub_name } if sub_name == name)
+                    {
+                        return ty.clone();
+                    }
                     // Recursively apply substitutions in case substitution contains type params
                     self.apply_substitutions(substituted)
                 } else {

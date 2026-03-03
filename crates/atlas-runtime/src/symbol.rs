@@ -63,7 +63,7 @@ impl SymbolTable {
             "print",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Unknown], // Accepts any type
+                params: vec![Type::any_placeholder()], // Accepts any type
                 return_type: Box::new(Type::Void),
             },
         );
@@ -71,7 +71,7 @@ impl SymbolTable {
             "len",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Unknown], // String or Array
+                params: vec![Type::any_placeholder()], // String or Array
                 return_type: Box::new(Type::Number),
             },
         );
@@ -79,7 +79,7 @@ impl SymbolTable {
             "str",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Unknown], // Converts any type to string
+                params: vec![Type::any_placeholder()], // Converts any type to string
                 return_type: Box::new(Type::String),
             },
         );
@@ -132,7 +132,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![Type::String, Type::String],
-                return_type: Box::new(Type::Number),
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Number],
+                }),
             },
         );
         table.define_builtin(
@@ -140,7 +143,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![Type::String, Type::String],
-                return_type: Box::new(Type::Number),
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Number],
+                }),
             },
         );
         table.define_builtin(
@@ -242,32 +248,35 @@ impl SymbolTable {
             "pop",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown))],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
             "shift",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown))],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
             "unshift",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                params: vec![
+                    Type::Array(Box::new(Type::any_placeholder())),
+                    Type::any_placeholder(),
+                ],
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
             "reverse",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown))],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
@@ -275,25 +284,30 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
+                    Type::Array(Box::new(Type::any_placeholder())),
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
             "flatten",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Array(Box::new(Type::Unknown))))],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                params: vec![Type::Array(Box::new(Type::Array(Box::new(
+                    Type::any_placeholder(),
+                ))))],
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
             "arrayIndexOf",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
+                params: vec![
+                    Type::Array(Box::new(Type::any_placeholder())),
+                    Type::any_placeholder(),
+                ],
                 return_type: Box::new(Type::Number),
             },
         );
@@ -301,7 +315,10 @@ impl SymbolTable {
             "arrayLastIndexOf",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
+                params: vec![
+                    Type::Array(Box::new(Type::any_placeholder())),
+                    Type::any_placeholder(),
+                ],
                 return_type: Box::new(Type::Number),
             },
         );
@@ -309,7 +326,10 @@ impl SymbolTable {
             "arrayIncludes",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Array(Box::new(Type::Unknown)), Type::Unknown],
+                params: vec![
+                    Type::Array(Box::new(Type::any_placeholder())),
+                    Type::any_placeholder(),
+                ],
                 return_type: Box::new(Type::Bool),
             },
         );
@@ -318,11 +338,11 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Number,
                     Type::Number,
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
 
@@ -332,14 +352,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
-                        return_type: Box::new(Type::Unknown),
+                        params: vec![Type::any_placeholder()],
+                        return_type: Box::new(Type::any_placeholder()),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
@@ -347,14 +367,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
@@ -362,15 +382,15 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown, Type::Unknown],
-                        return_type: Box::new(Type::Unknown),
+                        params: vec![Type::any_placeholder(), Type::any_placeholder()],
+                        return_type: Box::new(Type::any_placeholder()),
                     },
-                    Type::Unknown,
+                    Type::any_placeholder(),
                 ],
-                return_type: Box::new(Type::Unknown),
+                return_type: Box::new(Type::any_placeholder()),
             },
         );
         table.define_builtin(
@@ -378,10 +398,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Void),
                     },
                 ],
@@ -393,16 +413,16 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
                 return_type: Box::new(Type::Generic {
                     name: "Option".to_string(),
-                    type_args: vec![Type::Unknown],
+                    type_args: vec![Type::any_placeholder()],
                 }),
             },
         );
@@ -411,10 +431,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -426,14 +446,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
-                        return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                        params: vec![Type::any_placeholder()],
+                        return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
@@ -441,10 +461,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -456,10 +476,10 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Bool),
                     },
                 ],
@@ -471,14 +491,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown, Type::Unknown],
+                        params: vec![Type::any_placeholder(), Type::any_placeholder()],
                         return_type: Box::new(Type::Number),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
         table.define_builtin(
@@ -486,14 +506,14 @@ impl SymbolTable {
             Type::Function {
                 type_params: vec![],
                 params: vec![
-                    Type::Array(Box::new(Type::Unknown)),
+                    Type::Array(Box::new(Type::any_placeholder())),
                     Type::Function {
                         type_params: vec![],
-                        params: vec![Type::Unknown],
+                        params: vec![Type::any_placeholder()],
                         return_type: Box::new(Type::Number),
                     },
                 ],
-                return_type: Box::new(Type::Array(Box::new(Type::Unknown))),
+                return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
             },
         );
 
@@ -733,10 +753,199 @@ impl SymbolTable {
             },
         );
         table.define_builtin(
+            "jsonIsNull",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "toString",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::String),
+            },
+        );
+        table.define_builtin(
+            "toNumber",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![Type::Number, Type::String],
+                }),
+            },
+        );
+        table.define_builtin(
+            "toBool",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "parseInt",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::String, Type::Number],
+                return_type: Box::new(Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![Type::Number, Type::String],
+                }),
+            },
+        );
+        table.define_builtin(
+            "parseFloat",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![Type::Number, Type::String],
+                }),
+            },
+        );
+        table.define_builtin(
+            "isString",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isNumber",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isBool",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isNull",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isArray",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isFunction",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isObject",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "isType",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder(), Type::String],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "hasField",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder(), Type::String],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "hasMethod",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder(), Type::String],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "hasTag",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder(), Type::String],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "is_some",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::any_placeholder()],
+                }],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "is_none",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::any_placeholder()],
+                }],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "is_ok",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
+                }],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "is_err",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
+                }],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
             "toJSON",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::Unknown], // Accepts any serializable value
+                params: vec![Type::any_placeholder()], // Accepts any serializable value
                 return_type: Box::new(Type::String),
             },
         );

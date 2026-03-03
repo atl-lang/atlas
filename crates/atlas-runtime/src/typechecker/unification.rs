@@ -8,7 +8,7 @@
 //! - Backtracking unification for union types
 //! - Detailed, actionable error messages
 
-use crate::types::{Type, TypeParamDef};
+use crate::types::{Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::HashMap;
 
 // ============================================================================
@@ -205,16 +205,25 @@ impl UnificationEngine {
 
             // Type variable unifies with anything
             (Type::TypeParameter { name }, _) => {
+                if name == ANY_TYPE_PARAM {
+                    return Ok(());
+                }
                 let name = name.clone();
                 self.bind(name, b)
             }
             (_, Type::TypeParameter { name }) => {
+                if name == ANY_TYPE_PARAM {
+                    return Ok(());
+                }
                 let name = name.clone();
                 self.bind(name, a)
             }
 
-            // Unknown is compatible with everything (error recovery)
-            (Type::Unknown, _) | (_, Type::Unknown) => Ok(()),
+            (Type::Unknown, Type::Unknown) => Ok(()),
+            (Type::Unknown, _) | (_, Type::Unknown) => Err(UnificationError::Mismatch {
+                expected: a.clone(),
+                found: b.clone(),
+            }),
 
             // Arrays: unify element types
             (Type::Array(ea), Type::Array(eb)) => {

@@ -94,7 +94,7 @@ fn run_fail(source: &str) -> String {
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
     match runtime.eval(source) {
         Ok(_) => "(no error — expected failure did not occur)".to_string(),
-        Err(e) => format!("{}", e),
+        Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
     }
 }
 
@@ -124,7 +124,7 @@ fn run_fail_file(path: &std::path::Path) -> String {
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
     match runtime.eval_file(path) {
         Ok(_) => "(no error — expected failure did not occur)".to_string(),
-        Err(e) => format!("{}", e),
+        Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
     }
 }
 

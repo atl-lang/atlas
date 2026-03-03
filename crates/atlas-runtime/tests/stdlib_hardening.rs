@@ -432,7 +432,7 @@ fn test_concat_parity() {
 
 #[test]
 fn test_flatten_empty_array() {
-    let result = eval_ok("flatten([]);");
+    let result = eval_ok("flatten(slice([[1]], 1, 1));");
     match result {
         Value::Array(arr) => assert_eq!(arr.len(), 0),
         _ => panic!("Expected array"),

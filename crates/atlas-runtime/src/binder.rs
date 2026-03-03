@@ -1166,9 +1166,11 @@ impl Binder {
                 "bool" => Type::Bool,
                 "void" => Type::Void,
                 "null" => Type::Null,
+                "any" => Type::any_placeholder(),
                 "json" => Type::JsonValue,
+                "array" => Type::Array(Box::new(Type::any_placeholder())),
                 "Comparable" | "Numeric" => Type::Number,
-                "Iterable" => Type::Array(Box::new(Type::Unknown)),
+                "Iterable" => Type::Array(Box::new(Type::any_placeholder())),
                 "Equatable" => {
                     Type::union(vec![Type::Number, Type::String, Type::Bool, Type::Null])
                 }

@@ -6,7 +6,7 @@ use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::typechecker::suggestions;
 use crate::typechecker::TypeChecker;
-use crate::types::{Type, TypeParamDef};
+use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
 
 impl<'a> TypeChecker<'a> {
     /// Check an expression and return its type
@@ -21,6 +21,13 @@ impl<'a> TypeChecker<'a> {
             Expr::Identifier(id) => {
                 // Track that this symbol was used
                 self.used_symbols.insert(id.name.clone());
+
+                if id.name == "None" {
+                    return Type::Generic {
+                        name: "Option".to_string(),
+                        type_args: vec![Type::any_placeholder()],
+                    };
+                }
 
                 if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                     symbol.ty.clone()
@@ -54,13 +61,15 @@ impl<'a> TypeChecker<'a> {
                 Type::Unknown
             }
             Expr::ObjectLiteral(obj) => {
-                // Type check all value expressions
+                let mut members = Vec::with_capacity(obj.entries.len());
                 for entry in &obj.entries {
-                    self.check_expr(&entry.value);
+                    let value_type = self.check_expr(&entry.value);
+                    members.push(StructuralMemberType {
+                        name: entry.key.name.clone(),
+                        ty: value_type,
+                    });
                 }
-                // Object literals evaluate to HashMap at runtime
-                // Type system doesn't have HashMap<K,V> yet, so return Unknown
-                Type::Unknown
+                Type::Structural { members }
             }
             Expr::StructExpr(struct_expr) => {
                 // Type check all field value expressions
@@ -176,9 +185,10 @@ impl<'a> TypeChecker<'a> {
                 self.check_expr(arg)
             };
             if let Some(expected_type) = params.get(i) {
-                if !arg_type.is_assignable_to(expected_type)
-                    && arg_type.normalized() != Type::Unknown
-                {
+                if expected_type.normalized() == Type::Unknown {
+                    continue;
+                }
+                if !arg_type.is_assignable_to(expected_type) {
                     let help = suggestions::suggest_type_mismatch(expected_type, &arg_type)
                         .unwrap_or_else(|| {
                             format!(
@@ -257,7 +267,7 @@ impl<'a> TypeChecker<'a> {
                     if let Some(arg_type) = arg_types.get(i) {
                         let is_shared =
                             matches!(arg_type, Type::Generic { name, .. } if name == "shared");
-                        if !is_shared && *arg_type != Type::Unknown {
+                        if !is_shared {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     error_codes::NON_SHARED_TO_SHARED,
@@ -281,7 +291,10 @@ impl<'a> TypeChecker<'a> {
                 None => {
                     // Unannotated param: warn if the argument type is non-Copy (Move type)
                     if let Some(arg_type) = arg_types.get(i) {
-                        if self.is_move_type(arg_type) && *arg_type != Type::Unknown {
+                        if matches!(arg_type.normalized(), Type::TypeParameter { .. }) {
+                            continue;
+                        }
+                        if self.is_move_type(arg_type) {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
                                     error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION,
@@ -351,6 +364,26 @@ impl<'a> TypeChecker<'a> {
         let right_type = self.check_expr(&binary.right);
         let left_norm = left_type.normalized();
         let right_norm = right_type.normalized();
+
+        let left_is_any =
+            matches!(left_norm, Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM);
+        let right_is_any =
+            matches!(right_norm, Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM);
+        if left_is_any || right_is_any {
+            return match binary.op {
+                BinaryOp::Eq
+                | BinaryOp::Ne
+                | BinaryOp::Lt
+                | BinaryOp::Le
+                | BinaryOp::Gt
+                | BinaryOp::Ge
+                | BinaryOp::And
+                | BinaryOp::Or => Type::Bool,
+                BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod => {
+                    Type::any_placeholder()
+                }
+            };
+        }
 
         // Skip type checking if either side is Unknown (error recovery)
         if left_norm == Type::Unknown || right_norm == Type::Unknown {
@@ -434,7 +467,9 @@ impl<'a> TypeChecker<'a> {
                 Type::Bool
             }
             BinaryOp::Lt | BinaryOp::Le | BinaryOp::Gt | BinaryOp::Ge => {
-                if self.all_union_pairs_valid(&left_norm, &right_norm, |a, b| {
+                let left_cmp = self.comparable_operand_type(&left_norm);
+                let right_cmp = self.comparable_operand_type(&right_norm);
+                if self.all_union_pairs_valid(&left_cmp, &right_cmp, |a, b| {
                     *a == Type::Number && *b == Type::Number
                 }) {
                     Type::Bool
@@ -483,9 +518,13 @@ impl<'a> TypeChecker<'a> {
         let expr_type = self.check_expr(&unary.expr);
         let expr_norm = expr_type.normalized();
 
+        if matches!(expr_norm, Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM) {
+            return Type::any_placeholder();
+        }
+
         match unary.op {
             UnaryOp::Negate => {
-                if expr_norm != Type::Number && expr_norm != Type::Unknown {
+                if expr_norm != Type::Number {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
@@ -504,7 +543,7 @@ impl<'a> TypeChecker<'a> {
                 }
             }
             UnaryOp::Not => {
-                if expr_norm != Type::Bool && expr_norm != Type::Unknown {
+                if expr_norm != Type::Bool {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
@@ -536,6 +575,87 @@ impl<'a> TypeChecker<'a> {
         } else {
             None
         };
+
+        if let Some(ref name) = callee_name {
+            match name.as_str() {
+                "Some" => {
+                    if call.args.len() != 1 {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3023",
+                                format!("Some expects 1 argument, found {}", call.args.len()),
+                                call.span,
+                            )
+                            .with_label("wrong arity")
+                            .with_help("Some requires exactly 1 argument: Some(value)"),
+                        );
+                        return Type::Unknown;
+                    }
+                    let arg_type = self.check_expr(&call.args[0]);
+                    return Type::Generic {
+                        name: "Option".to_string(),
+                        type_args: vec![arg_type],
+                    };
+                }
+                "None" => {
+                    if !call.args.is_empty() {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3023",
+                                format!("None expects 0 arguments, found {}", call.args.len()),
+                                call.span,
+                            )
+                            .with_label("wrong arity")
+                            .with_help("None requires no arguments: None"),
+                        );
+                        return Type::Unknown;
+                    }
+                    return Type::Generic {
+                        name: "Option".to_string(),
+                        type_args: vec![Type::any_placeholder()],
+                    };
+                }
+                "Ok" => {
+                    if call.args.len() != 1 {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3023",
+                                format!("Ok expects 1 argument, found {}", call.args.len()),
+                                call.span,
+                            )
+                            .with_label("wrong arity")
+                            .with_help("Ok requires exactly 1 argument: Ok(value)"),
+                        );
+                        return Type::Unknown;
+                    }
+                    let arg_type = self.check_expr(&call.args[0]);
+                    return Type::Generic {
+                        name: "Result".to_string(),
+                        type_args: vec![arg_type, Type::any_placeholder()],
+                    };
+                }
+                "Err" => {
+                    if call.args.len() != 1 {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3023",
+                                format!("Err expects 1 argument, found {}", call.args.len()),
+                                call.span,
+                            )
+                            .with_label("wrong arity")
+                            .with_help("Err requires exactly 1 argument: Err(value)"),
+                        );
+                        return Type::Unknown;
+                    }
+                    let arg_type = self.check_expr(&call.args[0]);
+                    return Type::Generic {
+                        name: "Result".to_string(),
+                        type_args: vec![Type::any_placeholder(), arg_type],
+                    };
+                }
+                _ => {}
+            }
+        }
 
         // Pre-evaluate arg types for ownership checking (avoids double-evaluation in check_expr
         // for the `shared` param path). check_call_against_signature re-evaluates independently.
@@ -630,7 +750,7 @@ impl<'a> TypeChecker<'a> {
                 for arg in &call.args {
                     self.check_expr(arg);
                 }
-                Type::Unknown
+                Type::any_placeholder()
             }
             _ => {
                 self.diagnostics.push(
@@ -738,8 +858,13 @@ impl<'a> TypeChecker<'a> {
 
         for l in &left_members {
             for r in &right_members {
-                if l.normalized() == Type::Unknown || r.normalized() == Type::Unknown {
+                if matches!(l.normalized(), Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM)
+                    || matches!(r.normalized(), Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM)
+                {
                     continue;
+                }
+                if l.normalized() == Type::Unknown || r.normalized() == Type::Unknown {
+                    return false;
                 }
                 if !predicate(l, r) {
                     return false;
@@ -755,8 +880,13 @@ impl<'a> TypeChecker<'a> {
 
         for l in &left_members {
             for r in &right_members {
-                if l.normalized() == Type::Unknown || r.normalized() == Type::Unknown {
+                if matches!(l.normalized(), Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM)
+                    || matches!(r.normalized(), Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM)
+                {
                     return true;
+                }
+                if l.normalized() == Type::Unknown || r.normalized() == Type::Unknown {
+                    return false;
                 }
                 if l.is_assignable_to(r) || r.is_assignable_to(l) {
                     return true;
@@ -771,6 +901,114 @@ impl<'a> TypeChecker<'a> {
             Type::Union(members) => members,
             other => vec![other],
         }
+    }
+
+    fn lookup_type_param_bound(&self, name: &str) -> Option<Type> {
+        let (func_name, _) = self.current_function_info.as_ref()?;
+        let symbol = self.symbol_table.lookup(func_name)?;
+        if let Type::Function { type_params, .. } = &symbol.ty {
+            type_params
+                .iter()
+                .find(|param| param.name == name)
+                .and_then(|param| param.bound.as_ref().map(|b| *b.clone()))
+        } else {
+            None
+        }
+    }
+
+    fn check_structural_method_call(
+        &mut self,
+        method_name: &str,
+        members: &[StructuralMemberType],
+        member: &MemberExpr,
+    ) -> Option<Type> {
+        let required = members.iter().find(|m| m.name == method_name)?;
+        let Type::Function {
+            params,
+            return_type,
+            ..
+        } = &required.ty
+        else {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3010",
+                    format!(
+                        "Type '{}' has no method named '{}'",
+                        required.ty.display_name(),
+                        method_name
+                    ),
+                    member.member.span,
+                )
+                .with_label("method not found")
+                .with_help(format!(
+                    "type '{}' does not support method '{}'",
+                    required.ty.display_name(),
+                    method_name
+                )),
+            );
+            return Some(Type::Unknown);
+        };
+
+        let provided_args = member.args.as_ref().map(|args| args.len()).unwrap_or(0);
+        let expected_args = params.len();
+        if provided_args != expected_args {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3005",
+                    format!(
+                        "Method '{}' expects {} arguments, found {}",
+                        method_name, expected_args, provided_args
+                    ),
+                    member.span,
+                )
+                .with_label("argument count mismatch")
+                .with_help(format!(
+                    "method '{}' requires exactly {} argument{}",
+                    method_name,
+                    expected_args,
+                    if expected_args == 1 { "" } else { "s" }
+                )),
+            );
+        }
+
+        if let Some(args) = &member.args {
+            for (i, arg) in args.iter().enumerate() {
+                let arg_type = self.check_expr(arg);
+                if let Some(expected_type) = params.get(i) {
+                    if !arg_type.is_assignable_to(expected_type) {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3001",
+                                format!(
+                                    "Argument {} has wrong type: expected {}, found {}",
+                                    i + 1,
+                                    expected_type.display_name(),
+                                    arg_type.display_name()
+                                ),
+                                arg.span(),
+                            )
+                            .with_label("type mismatch")
+                            .with_help(format!(
+                                "argument {} must be of type {}",
+                                i + 1,
+                                expected_type.display_name()
+                            )),
+                        );
+                    }
+                }
+            }
+        }
+
+        Some(*return_type.clone())
+    }
+
+    fn comparable_operand_type(&mut self, ty: &Type) -> Type {
+        if let Type::TypeParameter { name } = ty.normalized() {
+            if let Some(bound) = self.lookup_type_param_bound(&name) {
+                return bound.normalized();
+            }
+        }
+        ty.normalized()
     }
 
     /// Check a member expression (method call)
@@ -801,7 +1039,7 @@ impl<'a> TypeChecker<'a> {
             let mut signatures = Vec::new();
 
             for member_ty in &members {
-                if let Some(sig) = self.method_table.lookup(member_ty, method_name).cloned() {
+                if let Some(sig) = self.method_table.lookup(member_ty, method_name) {
                     signatures.push(sig.clone());
                     return_types.push(sig.return_type);
                 } else {
@@ -854,9 +1092,7 @@ impl<'a> TypeChecker<'a> {
                         let arg_type = self.check_expr(arg);
                         for sig in &signatures {
                             if let Some(expected_type) = sig.arg_types.get(i) {
-                                if !arg_type.is_assignable_to(expected_type)
-                                    && arg_type.normalized() != Type::Unknown
-                                {
+                                if !arg_type.is_assignable_to(expected_type) {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3001",
@@ -890,7 +1126,20 @@ impl<'a> TypeChecker<'a> {
             return Type::Unknown;
         }
 
-        let method_sig = self.method_table.lookup(&target_type, method_name).cloned();
+        if let Type::TypeParameter { name } = &target_norm {
+            if let Some(bound) = self.lookup_type_param_bound(name) {
+                let bound_norm = bound.normalized();
+                if let Type::Structural { members } = bound_norm {
+                    if let Some(return_type) =
+                        self.check_structural_method_call(method_name, &members, member)
+                    {
+                        return return_type;
+                    }
+                }
+            }
+        }
+
+        let method_sig = self.method_table.lookup(&target_type, method_name);
 
         if let Some(method_sig) = method_sig {
             // Check argument count
@@ -922,9 +1171,7 @@ impl<'a> TypeChecker<'a> {
                 for (i, arg) in args.iter().enumerate() {
                     let arg_type = self.check_expr(arg);
                     if let Some(expected_type) = method_sig.arg_types.get(i) {
-                        if !arg_type.is_assignable_to(expected_type)
-                            && arg_type.normalized() != Type::Unknown
-                        {
+                        if !arg_type.is_assignable_to(expected_type) {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3001",
@@ -1022,11 +1269,28 @@ impl<'a> TypeChecker<'a> {
         let target_type = self.check_expr(&index.target);
         let target_norm = target_type.normalized();
 
+        if matches!(target_norm, Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM) {
+            match &index.index {
+                IndexValue::Single(expr) => {
+                    self.check_expr(expr);
+                }
+                IndexValue::Slice(slice) => {
+                    if let Some(expr) = &slice.start {
+                        self.check_expr(expr);
+                    }
+                    if let Some(expr) = &slice.end {
+                        self.check_expr(expr);
+                    }
+                }
+            }
+            return Type::any_placeholder();
+        }
+
         let check_slice_bound = |this: &mut Self, bound: &Option<Box<Expr>>| {
             if let Some(expr) = bound {
                 let bound_type = this.check_expr(expr);
                 let bound_norm = bound_type.normalized();
-                if bound_norm != Type::Number && bound_norm != Type::Unknown {
+                if bound_norm != Type::Number {
                     this.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1048,7 +1312,7 @@ impl<'a> TypeChecker<'a> {
             (IndexValue::Single(expr), Type::Array(elem_type)) => {
                 let index_type = self.check_expr(expr);
                 let index_norm = index_type.normalized();
-                if index_norm != Type::Number && index_norm != Type::Unknown {
+                if index_norm != Type::Number {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1073,10 +1337,7 @@ impl<'a> TypeChecker<'a> {
             (IndexValue::Single(expr), Type::JsonValue) => {
                 let index_type = self.check_expr(expr);
                 let index_norm = index_type.normalized();
-                if index_norm != Type::String
-                    && index_norm != Type::Number
-                    && index_norm != Type::Unknown
-                {
+                if index_norm != Type::String && index_norm != Type::Number {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1096,7 +1357,7 @@ impl<'a> TypeChecker<'a> {
             (IndexValue::Single(expr), Type::String) => {
                 let index_type = self.check_expr(expr);
                 let index_norm = index_type.normalized();
-                if index_norm != Type::Number && index_norm != Type::Unknown {
+                if index_norm != Type::Number {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",
@@ -1120,7 +1381,7 @@ impl<'a> TypeChecker<'a> {
                             IndexValue::Single(expr) => {
                                 let index_type = self.check_expr(expr);
                                 let index_norm = index_type.normalized();
-                                if index_norm != Type::Number && index_norm != Type::Unknown {
+                                if index_norm != Type::Number {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3001",
@@ -1146,10 +1407,7 @@ impl<'a> TypeChecker<'a> {
                             if let IndexValue::Single(expr) = index_value {
                                 let index_type = self.check_expr(expr);
                                 let index_norm = index_type.normalized();
-                                if index_norm != Type::String
-                                    && index_norm != Type::Number
-                                    && index_norm != Type::Unknown
-                                {
+                                if index_norm != Type::String && index_norm != Type::Number {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3001",
@@ -1181,7 +1439,7 @@ impl<'a> TypeChecker<'a> {
                             if let IndexValue::Single(expr) = index_value {
                                 let index_type = self.check_expr(expr);
                                 let index_norm = index_type.normalized();
-                                if index_norm != Type::Number && index_norm != Type::Unknown {
+                                if index_norm != Type::Number {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3001",
@@ -1245,7 +1503,7 @@ impl<'a> TypeChecker<'a> {
     /// Check an array literal
     fn check_array_literal(&mut self, arr: &ArrayLiteral) -> Type {
         if arr.elements.is_empty() {
-            // Empty array - infer as array of unknown
+            // Empty array - element type is unknown until constrained
             return Type::Array(Box::new(Type::Unknown));
         }
 
@@ -1255,7 +1513,7 @@ impl<'a> TypeChecker<'a> {
         // Check that all elements have the same type
         for (i, elem) in arr.elements.iter().enumerate().skip(1) {
             let elem_type = self.check_expr(elem);
-            if !elem_type.is_assignable_to(&first_type) && elem_type.normalized() != Type::Unknown {
+            if !elem_type.is_assignable_to(&first_type) {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3001",
@@ -1316,8 +1574,7 @@ impl<'a> TypeChecker<'a> {
             // Check guard if present — must be bool (AT3029)
             if let Some(guard) = &arm.guard {
                 let guard_type = self.check_expr(guard);
-                if guard_type.normalized() != Type::Bool && guard_type.normalized() != Type::Unknown
-                {
+                if guard_type.normalized() != Type::Bool {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3029",
@@ -1361,7 +1618,7 @@ impl<'a> TypeChecker<'a> {
             if let Some(lub) = crate::typechecker::inference::least_upper_bound(&unified, arm_type)
             {
                 unified = lub;
-            } else if arm_type.normalized() != Type::Unknown {
+            } else {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3021",
@@ -2015,8 +2272,19 @@ impl<'a> TypeChecker<'a> {
                     {
                         let function_err_type = &type_args[1];
 
-                        // Error types must be compatible
-                        if err_type.normalized() != function_err_type.normalized() {
+                        let err_norm = err_type.normalized();
+                        let function_err_norm = function_err_type.normalized();
+                        let err_is_any = matches!(
+                            err_norm,
+                            Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                        );
+                        let function_err_is_any = matches!(
+                            function_err_norm,
+                            Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                        );
+
+                        // Error types must be compatible (any-placeholder is always compatible)
+                        if !err_is_any && !function_err_is_any && err_norm != function_err_norm {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3029",
@@ -2038,21 +2306,8 @@ impl<'a> TypeChecker<'a> {
                         ok_type
                     }
                     _ => {
-                        self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3030",
-                                format!(
-                                    "? operator on Result requires function to return Result<T, E>, found {}",
-                                    function_return_type.display_name()
-                                ),
-                                try_expr.span,
-                            )
-                            .with_label("function does not return Result")
-                            .with_help(
-                                "change the function's return type to Result<T, E> to use ? on Result values",
-                            ),
-                        );
-                        Type::Unknown
+                        // Allow `?` as an unwrap in non-Result functions (runtime error on Err).
+                        ok_type
                     }
                 }
             }
@@ -2075,21 +2330,8 @@ impl<'a> TypeChecker<'a> {
                         inner_type
                     }
                     _ => {
-                        self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3030",
-                                format!(
-                                    "? operator on Option requires function to return Option<T>, found {}",
-                                    function_return_type.display_name()
-                                ),
-                                try_expr.span,
-                            )
-                            .with_label("function does not return Option")
-                            .with_help(
-                                "change the function's return type to Option<T> to use ? on Option values",
-                            ),
-                        );
-                        Type::Unknown
+                        // Allow `?` as an unwrap in non-Option functions (runtime error on None).
+                        inner_type
                     }
                 }
             }
@@ -2098,7 +2340,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Typecheck an anonymous function expression.
     ///
-    /// Resolves param types (Unknown for untyped arrow-fn params — Block 5 infers them),
+    /// Resolves param types (any for untyped arrow-fn params — Block 5 infers them),
     /// checks the body in a new scope, validates capture semantics, and returns
     /// `Type::Function { params, return_type }`.
     pub(super) fn check_anon_fn(
@@ -2108,13 +2350,13 @@ impl<'a> TypeChecker<'a> {
         body: &Expr,
         span: Span,
     ) -> Type {
-        // Resolve param types — None type_ref → Unknown (inferred later in Block 5)
+        // Resolve param types — None type_ref → any (inferred later in Block 5)
         let param_types: Vec<Type> = params
             .iter()
             .map(|p| {
                 p.type_ref
                     .as_ref()
-                    .map_or(Type::Unknown, |t| self.resolve_type_ref(t))
+                    .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
             })
             .collect();
 
@@ -2125,7 +2367,8 @@ impl<'a> TypeChecker<'a> {
         // are valid and checked against the declared return type.
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
-        self.current_function_return_type = Some(declared_return.clone().unwrap_or(Type::Unknown));
+        self.current_function_return_type =
+            Some(declared_return.clone().unwrap_or(Type::any_placeholder()));
         self.current_function_info = Some(("<closure>".to_string(), span));
 
         // Enter a new scope for the closure body

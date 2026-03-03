@@ -39,6 +39,27 @@ fn test_at3035_not_fired_when_impl_exists() {
     );
 }
 
+#[test]
+fn test_record_literal_infers_structural_type() {
+    let diags = typecheck_source(
+        r#"
+        let r = record { a: 1, b: "ok" };
+        let _s: { a: number, b: string } = r;
+        "#,
+    );
+    assert!(!has_error(&diags), "Errors: {:?}", diags);
+}
+
+#[test]
+fn test_unknown_not_assignable_to_concrete() {
+    let diags = typecheck_source(
+        r#"
+        let _nums: number[] = [];
+        "#,
+    );
+    assert_has_error(&diags, "AT3001");
+}
+
 // AT2013 — MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION (warning, not error)
 #[test]
 fn test_at2013_is_warning_not_error() {
@@ -149,5 +170,20 @@ mod migrated_types {
         assert!(Type::Number.is_assignable_to(&intersection));
         let bad = Type::intersection(vec![Type::Number, Type::String]);
         assert_eq!(bad, Type::Never);
+    }
+
+    #[test]
+    fn test_unknown_assignability() {
+        assert!(!Type::Unknown.is_assignable_to(&Type::Number));
+        assert!(!Type::Number.is_assignable_to(&Type::Unknown));
+        assert!(Type::Unknown.is_assignable_to(&Type::Unknown));
+    }
+
+    #[test]
+    fn test_any_placeholder_assignability() {
+        let any = Type::any_placeholder();
+        assert!(Type::Number.is_assignable_to(&any));
+        assert!(any.is_assignable_to(&Type::Number));
+        assert!(any.is_assignable_to(&Type::any_placeholder()));
     }
 }

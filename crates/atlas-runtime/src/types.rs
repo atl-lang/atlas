@@ -4,6 +4,8 @@ use crate::ffi::ExternType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
+pub const ANY_TYPE_PARAM: &str = "__any";
+
 /// Generic type parameter with optional constraint bound
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TypeParamDef {
@@ -71,6 +73,16 @@ pub enum Type {
 }
 
 impl Type {
+    pub fn any_placeholder() -> Type {
+        Type::TypeParameter {
+            name: ANY_TYPE_PARAM.to_string(),
+        }
+    }
+
+    fn is_any_placeholder(ty: &Type) -> bool {
+        matches!(ty, Type::TypeParameter { name } if name == ANY_TYPE_PARAM)
+    }
+
     /// Construct a normalized union type from members.
     pub fn union(mut members: Vec<Type>) -> Type {
         let mut flat = Vec::new();
@@ -166,14 +178,19 @@ impl Type {
         let self_norm = self.normalized();
         let other_norm = other.normalized();
 
-        // Unknown type is assignable to anything (error recovery)
-        if matches!(self_norm, Type::Unknown) || matches!(other_norm, Type::Unknown) {
+        if Self::is_any_placeholder(&self_norm) || Self::is_any_placeholder(&other_norm) {
             return true;
+        }
+
+        // Unknown type is not assignable (error recovery only)
+        if matches!(self_norm, Type::Unknown) || matches!(other_norm, Type::Unknown) {
+            return matches!(self_norm, Type::Unknown) && matches!(other_norm, Type::Unknown);
         }
 
         match (&self_norm, &other_norm) {
             (Type::Never, _) => true,
             (_, Type::Never) => matches!(self_norm, Type::Never),
+            (Type::Void, Type::Null) | (Type::Null, Type::Void) => true,
             // Same type is always assignable
             (a, b) if a == b => true,
             (Type::Union(members), target) => {
@@ -191,6 +208,23 @@ impl Type {
 
             // Array types must have compatible element types
             (Type::Array(a), Type::Array(b)) => a.is_assignable_to(b),
+            (
+                Type::Generic {
+                    name: n1,
+                    type_args: a1,
+                },
+                Type::Generic {
+                    name: n2,
+                    type_args: a2,
+                },
+            ) => {
+                n1 == n2
+                    && a1.len() == a2.len()
+                    && a1
+                        .iter()
+                        .zip(a2.iter())
+                        .all(|(left, right)| left.is_assignable_to(right))
+            }
 
             // Function types must have compatible signatures
             (
@@ -207,8 +241,8 @@ impl Type {
                     ..
                 },
             ) => {
-                // Treat () -> unknown as a wildcard function type for guard checks
-                if tp2.is_empty() && p2.is_empty() && matches!(r2.normalized(), Type::Unknown) {
+                // Treat () -> __any as a wildcard function type for guard checks
+                if tp2.is_empty() && p2.is_empty() && Type::is_any_placeholder(&r2.normalized()) {
                     return true;
                 }
 
@@ -328,7 +362,13 @@ impl Type {
                     format!("{}<{}>", name, args)
                 }
             }
-            Type::TypeParameter { name } => name.clone(),
+            Type::TypeParameter { name } => {
+                if name == ANY_TYPE_PARAM {
+                    "any".to_string()
+                } else {
+                    name.clone()
+                }
+            }
             Type::Unknown => "?".to_string(),
             Type::Extern(extern_type) => extern_type.display_name().to_string(),
             Type::Union(members) => members

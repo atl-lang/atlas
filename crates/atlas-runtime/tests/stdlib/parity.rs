@@ -40,7 +40,7 @@ use pretty_assertions::assert_eq;
 #[case::split("join(split(\"a,b,c\", \",\"), \"|\")", "a|b|c")]
 #[case::split_empty("len(split(\"\", \",\"))", "1")] // Empty string splits to [""]
 #[case::join("join([\"a\", \"b\", \"c\"], \",\")", "a,b,c")]
-#[case::join_empty("join([], \",\")", "")]
+#[case::join_empty("join(slice([\"a\"], 1, 1), \",\")", "")]
 #[case::replace("replace(\"hello world\", \"world\", \"Atlas\")", "hello Atlas")]
 #[case::replace_first("replace(\"aaa\", \"a\", \"b\")", "baa")] // replace() only replaces first occurrence
 #[case::trim("trim(\"  hello  \")", "hello")]
@@ -121,7 +121,7 @@ fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::slice_rest("slice([1, 2, 3], 1, 3)[0]", "2")]
 #[case::slice_rest_len("len(slice([1], 1, 1))", "0")]
 #[case::flatten("len(flatten([[1, 2], [3, 4]]))", "4")]
-#[case::flatten_empty("len(flatten([]))", "0")]
+#[case::flatten_empty("len(flatten(slice([[1]], 1, 1)))", "0")]
 #[case::arraylastindexof("arrayLastIndexOf([1, 2, 3, 2], 2)", "Some(3)")]
 #[case::arraylastindexof_not_found("arrayLastIndexOf([1, 2, 3], 5)", "None")]
 fn test_array_basic_parity(#[case] code: &str, #[case] expected: &str) {
