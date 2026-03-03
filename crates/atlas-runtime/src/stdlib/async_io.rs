@@ -595,8 +595,8 @@ pub fn await_future(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
     };
 
-    // For now, futures are immediately resolved due to block_on usage
-    // In future phases with true async, this would poll/wait for completion
+    // Check the future state - with synchronous primitives, futures should
+    // already be resolved when await is called
     match future.get_state() {
         crate::async_runtime::FutureState::Resolved(value) => Ok(value),
         crate::async_runtime::FutureState::Rejected(error) => Err(RuntimeError::TypeError {
@@ -604,9 +604,11 @@ pub fn await_future(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
             span,
         }),
         crate::async_runtime::FutureState::Pending => {
-            // This shouldn't happen with current block_on implementation
+            // With synchronous primitives, this shouldn't happen
+            // but handle it gracefully
             Err(RuntimeError::TypeError {
-                msg: "Future is still pending".to_string(),
+                msg: "Future is still pending (async operations are not yet fully supported)"
+                    .to_string(),
                 span,
             })
         }
