@@ -1,0 +1,117 @@
+#!/bin/bash
+# Atlas pre-commit hook - BRUTAL VERIFICATION
+# Spawns Haiku 4.5 to verify work is ACTUALLY complete before allowing commit.
+# No more half-assed implementations claiming to be done.
+#
+# Activated by: git config core.hooksPath .githooks
+
+set -e
+
+# Skip for commits that are clearly non-code (pure docs, tracking db)
+STAGED=$(git diff --cached --name-only)
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+# Check if ONLY tracking db or docs changed (skip verification)
+NON_CODE_ONLY=$(echo "$STAGED" | grep -vE '\.(rs|atlas|toml)$' | grep -vE '^(crates/|src/)' || true)
+CODE_FILES=$(echo "$STAGED" | grep -E '\.(rs|atlas)$' || true)
+
+if [ -z "$CODE_FILES" ]; then
+  echo "pre-commit: no code files staged, skipping verification"
+  exit 0
+fi
+
+# Get in-progress issues
+IN_PROGRESS=$(sqlite3 tracking/atlas.db "SELECT id, title FROM issues WHERE status = 'in_progress'" 2>/dev/null || echo "")
+
+# Get commit message from prepare-commit-msg if available, or prompt
+COMMIT_MSG_FILE=".git/COMMIT_EDITMSG"
+COMMIT_MSG=""
+if [ -f "$COMMIT_MSG_FILE" ]; then
+  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+fi
+
+# Build context for Haiku
+STAGED_DIFF=$(git diff --cached --stat)
+STAGED_FILES=$(git diff --cached --name-only | head -20)
+# Get actual diff content (limited to prevent token explosion)
+STAGED_CONTENT=$(git diff --cached -U5 | head -500)
+
+echo "══════════════════════════════════════════════════════════════════"
+echo "PRE-COMMIT VERIFICATION: Spawning Haiku 4.5 for brutal assessment"
+echo "══════════════════════════════════════════════════════════════════"
+echo "Staged files:"
+echo "$STAGED_FILES"
+echo ""
+echo "In-progress issues: ${IN_PROGRESS:-none}"
+echo "──────────────────────────────────────────────────────────────────"
+echo ""
+
+# Create verification prompt
+VERIFY_PROMPT=$(cat <<'PROMPT_END'
+You are a BRUTAL code auditor. Your job is to verify this commit ACTUALLY implements what it claims.
+
+## Staged Changes
+STAGED_FILES_PLACEHOLDER
+
+## Staged Diff Summary
+STAGED_DIFF_PLACEHOLDER
+
+## Actual Diff Content (first 500 lines)
+STAGED_CONTENT_PLACEHOLDER
+
+## In-Progress Issues
+IN_PROGRESS_PLACEHOLDER
+
+## Your Task
+1. Analyze the ACTUAL DIFF CONTENT above line by line
+2. Check if the implementation is COMPLETE (not stubbed, not TODO, not half-done)
+3. Verify tests are included in the diff for any new functionality
+4. Check for obvious bugs, missing error handling, incomplete logic
+5. If the diff is for a bug fix, verify the fix actually addresses the root cause
+
+## Response Format
+You MUST respond with EXACTLY one of:
+- "PASS: <brief reason>" if the implementation is genuinely complete
+- "FAIL: <specific issues found>" if ANYTHING is incomplete, stubbed, or broken
+
+Be BRUTAL. If there's ANY doubt, FAIL it. List specific file:line issues.
+Do NOT be nice. Do NOT give benefit of the doubt.
+If you see TODO, FIXME, unimplemented!(), or stub code: FAIL.
+If tests are missing for new functionality: FAIL.
+If error handling is missing: FAIL.
+
+This project has wasted 10B+ tokens on half-assed work. No more.
+PROMPT_END
+)
+
+# Substitute placeholders
+VERIFY_PROMPT="${VERIFY_PROMPT/STAGED_FILES_PLACEHOLDER/$STAGED_FILES}"
+VERIFY_PROMPT="${VERIFY_PROMPT/STAGED_DIFF_PLACEHOLDER/$STAGED_DIFF}"
+VERIFY_PROMPT="${VERIFY_PROMPT/STAGED_CONTENT_PLACEHOLDER/$STAGED_CONTENT}"
+VERIFY_PROMPT="${VERIFY_PROMPT/IN_PROGRESS_PLACEHOLDER/$IN_PROGRESS}"
+
+# Run Haiku verification (unset CLAUDECODE to allow nested invocation)
+RESULT=$(unset CLAUDECODE; claude -p "$VERIFY_PROMPT" --model haiku --max-turns 10 2>&1) || {
+  echo "ERROR: Haiku verification failed to run"
+  echo "$RESULT"
+  exit 1
+}
+
+echo "$RESULT"
+echo ""
+echo "══════════════════════════════════════════════════════════════════"
+
+# Check result
+if echo "$RESULT" | grep -q "^PASS:"; then
+  echo "✓ VERIFICATION PASSED - Commit allowed"
+  exit 0
+else
+  echo "✗ VERIFICATION FAILED - Commit blocked"
+  echo ""
+  echo "Fix the issues above, then try again."
+  echo "If you believe this is a false positive, use: git commit --no-verify"
+  echo "(But you better be damn sure)"
+  exit 1
+fi
