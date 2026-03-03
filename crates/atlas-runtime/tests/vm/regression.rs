@@ -927,3 +927,97 @@ fn test_vm_division_by_very_small_number() {
     let result = VM::new(compile("let x = 1.0 / 1e-300;")).run(&SecurityContext::allow_all());
     assert!(result.is_ok());
 }
+
+// ============================================================================
+// H-004: Compound assignment side-effect evaluation (Dup2 fix)
+// ============================================================================
+
+#[test]
+fn test_compound_assignment_index_evaluates_once() {
+    // H-004 fix: arr[f()] += 1 should only call f() once, not twice.
+    // We use a counter variable to track how many times the index function is called.
+    let result = vm_number(
+        r#"
+var counter = 0;
+fn get_idx() -> number {
+    counter = counter + 1;
+    return 0;
+}
+var arr = [10];
+arr[get_idx()] += 5;
+counter;
+"#,
+    );
+    // If index is evaluated only once, counter should be 1
+    // If evaluated twice (the bug), counter would be 2
+    assert_eq!(
+        result, 1.0,
+        "Index expression should be evaluated exactly once"
+    );
+}
+
+#[test]
+fn test_compound_assignment_index_evaluates_once_parity() {
+    // Same test, but verify interpreter and VM behave identically
+    let source = r#"
+var counter = 0;
+fn get_idx() -> number {
+    counter = counter + 1;
+    return 0;
+}
+var arr = [10];
+arr[get_idx()] += 5;
+counter;
+"#;
+    assert_parity(source);
+}
+
+#[test]
+fn test_compound_assignment_target_evaluates_once() {
+    // Test that the target array expression is evaluated only once.
+    // NOTE: This tests the case where arr[idx] += val with arr being an expression.
+    // However, Atlas CoW semantics mean that get_arr()[0] += 50 modifies a *copy*
+    // returned by get_arr(), which is then discarded. The original array is unchanged.
+    // This is expected behavior for value semantics.
+    // For H-004, the key test is that get_idx() is called once, not twice.
+    let result = vm_number(
+        r#"
+var counter = 0;
+var arr = [100];
+fn get_idx() -> number {
+    counter = counter + 1;
+    return 0;
+}
+arr[get_idx()] += 50;
+counter;
+"#,
+    );
+    // Index function should be evaluated only once
+    assert_eq!(
+        result, 1.0,
+        "Index expression should be evaluated exactly once"
+    );
+}
+
+#[test]
+fn test_compound_assignment_array_value_correct() {
+    // Verify the compound assignment actually works correctly
+    let result = vm_number(
+        r#"
+var arr = [10, 20, 30];
+arr[1] += 5;
+arr[1];
+"#,
+    );
+    assert_eq!(result, 25.0);
+}
+
+#[test]
+fn test_compound_assignment_all_ops() {
+    // Test all compound operators work with array indexing
+    assert_eq!(vm_number("var a = [10]; a[0] += 5; a[0];"), 15.0);
+    assert_eq!(vm_number("var a = [10]; a[0] -= 3; a[0];"), 7.0);
+    assert_eq!(vm_number("var a = [10]; a[0] *= 2; a[0];"), 20.0);
+    assert_eq!(vm_number("var a = [10]; a[0] /= 2; a[0];"), 5.0);
+    assert_eq!(vm_number("var a = [10]; a[0] %= 3; a[0];"), 1.0);
+}

@@ -100,6 +100,10 @@ pub enum Opcode {
     Pop = 0x80,
     /// Duplicate top of stack
     Dup = 0x81,
+    /// Duplicate top 2 stack values: [a, b] -> [a, b, a, b]
+    Dup2 = 0x82,
+    /// Rotate top 3 stack values: [a, b, c] -> [b, c, a]
+    Rot3 = 0x83,
 
     // ===== Pattern matching (0x90-0x9F) =====
     /// Pop value, push true if Option::Some, false otherwise
@@ -165,6 +169,8 @@ impl TryFrom<u8> for Opcode {
             0x72 => Ok(Opcode::SetIndex),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
+            0x82 => Ok(Opcode::Dup2),
+            0x83 => Ok(Opcode::Rot3),
             0x90 => Ok(Opcode::IsOptionSome),
             0x91 => Ok(Opcode::IsOptionNone),
             0x92 => Ok(Opcode::IsResultOk),

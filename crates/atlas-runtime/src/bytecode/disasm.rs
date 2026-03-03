@@ -88,6 +88,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::SetIndex
         | Opcode::Pop
         | Opcode::Dup
+        | Opcode::Dup2
+        | Opcode::Rot3
         | Opcode::IsOptionSome
         | Opcode::IsOptionNone
         | Opcode::IsResultOk

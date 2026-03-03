@@ -1547,6 +1547,25 @@ impl VM {
                     self.push(value);
                 }
 
+                Opcode::Dup2 => {
+                    // Duplicate top 2 stack values: [a, b] -> [a, b, a, b]
+                    let b = self.peek(0).clone();
+                    let a = self.peek(1).clone();
+                    self.push(a);
+                    self.push(b);
+                }
+
+                Opcode::Rot3 => {
+                    // Rotate top 3 stack values: [a, b, c] -> [b, c, a]
+                    // Pop c, b, a then push b, c, a
+                    let c = self.pop();
+                    let b = self.pop();
+                    let a = self.pop();
+                    self.push(b);
+                    self.push(c);
+                    self.push(a);
+                }
+
                 // ===== Pattern Matching =====
                 Opcode::IsOptionSome => {
                     let value = self.pop();

@@ -60,9 +60,11 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x71] = Some(Opcode::GetIndex);
     table[0x72] = Some(Opcode::SetIndex);
 
-    // Stack manipulation (0x80-0x81)
+    // Stack manipulation (0x80-0x83)
     table[0x80] = Some(Opcode::Pop);
     table[0x81] = Some(Opcode::Dup);
+    table[0x82] = Some(Opcode::Dup2);
+    table[0x83] = Some(Opcode::Rot3);
 
     // Pattern matching (0x90-0x97)
     table[0x90] = Some(Opcode::IsOptionSome);

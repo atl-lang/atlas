@@ -108,18 +108,33 @@ impl Interpreter {
     }
 
     /// Evaluate a compound assignment (+=, -=, *=, /=, %=)
+    ///
+    /// H-004 fix: For index targets (arr[idx] += val), we evaluate target and index
+    /// exactly once to avoid side effects being triggered multiple times.
     fn eval_compound_assign(&mut self, compound: &CompoundAssign) -> Result<Value, RuntimeError> {
-        // Get current value
-        let current = match &compound.target {
-            AssignTarget::Name(id) => self.get_variable(&id.name, compound.span)?,
-            AssignTarget::Index {
+        // For index targets, evaluate target and index once upfront and cache the values.
+        // This prevents side effects from being evaluated twice (H-004).
+        let cached_index_parts: Option<(Value, Value, crate::span::Span)> =
+            if let AssignTarget::Index {
                 target,
                 index,
                 span,
-            } => {
+            } = &compound.target
+            {
                 let arr_val = self.eval_expr(target.as_ref())?;
                 let idx_val = self.eval_expr(index.as_ref())?;
-                self.get_array_element(arr_val, idx_val, *span)?
+                Some((arr_val, idx_val, *span))
+            } else {
+                None
+            };
+
+        // Get current value
+        let current = match &compound.target {
+            AssignTarget::Name(id) => self.get_variable(&id.name, compound.span)?,
+            AssignTarget::Index { .. } => {
+                // Use cached values
+                let (ref arr_val, ref idx_val, span) = cached_index_parts.as_ref().unwrap();
+                self.get_array_element(arr_val.clone(), idx_val.clone(), *span)?
             }
         };
 
@@ -172,12 +187,9 @@ impl Interpreter {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, compound.span)?;
             }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
+            AssignTarget::Index { target, span, .. } => {
+                // Use cached index value (not re-evaluated)
+                let (_, idx_val, _) = cached_index_parts.unwrap();
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
         }

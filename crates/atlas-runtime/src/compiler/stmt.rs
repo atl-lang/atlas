@@ -664,115 +664,32 @@ impl Compiler {
                 index,
                 span,
             } => {
-                // Get array[index]
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
-                // Duplicate array and index for later SetIndex
-                // Stack: [array, index]
-                // We need: [array, index] for GetIndex, then [array, index, new_value] for SetIndex
-                // But we don't have a good way to duplicate both values
-                // We'd need: [array, index, array, index] -> GetIndex -> [array, index, old_value]
-                // Then: [array, index, old_value, new_operand] -> Op -> [array, index, result]
-                // Then: SetIndex
-
-                // Since we don't have Dup2, we need to recompile:
-                // Option 1: Recompile array and index twice
-                // Option 2: Use locals to save them
-                // For simplicity, let's recompile (not optimal but works):
-
-                // First get the current value
-                self.compile_expr(target)?; // Recompile array
-                self.compile_expr(index)?; // Recompile index
-                self.bytecode.emit(Opcode::GetIndex, *span);
-
-                // Now apply the operation
-                self.compile_expr(&compound.value)?;
-                let opcode = match compound.op {
-                    CompoundOp::AddAssign => Opcode::Add,
-                    CompoundOp::SubAssign => Opcode::Sub,
-                    CompoundOp::MulAssign => Opcode::Mul,
-                    CompoundOp::DivAssign => Opcode::Div,
-                    CompoundOp::ModAssign => Opcode::Mod,
-                };
-                self.bytecode.emit(opcode, compound.span);
-
-                // Now set it back: need array, index, value
-                self.compile_expr(target)?; // Recompile array again
-                self.compile_expr(index)?; // Recompile index again
-                                           // Stack is now: [result, array, index]
-                                           // But we need: [array, index, result]
-                                           // We need to rotate... but we don't have that opcode
-
-                // Let's use a different approach with a temp on stack
-                // Actually, this is getting complex. Let me use locals.
-                // For now, let's just note this limitation and use a simpler approach:
-
-                // Save result to a temporary by using the stack
-                // We have: [result] from the operation
-                // We need: [array, index, result]
-                // Compile array: [result, array]
-                // Compile index: [result, array, index]
-                // Now we need to get result to top: we need [array, index, result]
-
-                // Without rotate/swap, this is tricky. Let me think...
-                // Actually, we can store result in a temp local if in local scope
-                // Or just do multiple GetIndex/SetIndex sequences
-
-                // Simplest working solution: compute result, then do full set sequence:
-                // Current stack: [result]
-                // We'll emit: array, index, result (by using stack manipulation)
-
-                // You know what, let me just restructure to compute things in right order:
-                // We'll compute: array, index, then old_value, then operation, giving new_value
-                // But that puts new_value on top with array and index buried
-
-                // Cleanest approach: emit array and index first, dup them, getindex, operate, setindex
-                // But we don't have dup2 to dup both array and index
-
-                // For MVP, let's just recompile array and index multiple times (inefficient but correct):
-                // Get current: arr[idx]
-                // Compute: old_value op new_value = result
-                // Set: arr[idx] = result
-
-                // But the issue remains: after computing result, we need array and index under it
-
-                // Let me try a different approach: save to temp local if possible
-                // Check scope depth and use a local
-
-                // Actually, let's just accept the limitation for now and not support
-                // compound assignment on array indices in v0.1, or implement correctly:
-
-                // CORRECT IMPLEMENTATION using recompilation:
-                // Step 1: Push array, index, get value
-                // Step 2: Compute operation (old_value on stack, push operand, apply op)
-                // Step 3: Push array, index again, then rotate/swap to get value on top
+                // Compound assignment on array index: arr[idx] op= value
                 //
-                // Since we don't have rotate, we need to structure it as:
-                // Push array, index (will be consumed by SetIndex)
-                // Push array, index again (will be consumed by GetIndex)
-                // GetIndex (leaves old_value)
-                // Push operand
-                // Apply operation (leaves result)
-                // Now stack is [array_for_set, index_for_set, result] - PERFECT!
+                // Using Dup2 to avoid re-evaluating target and index (which could have side effects).
+                // Stack sequence:
+                //   1. Compile target, index once: [array, index]
+                //   2. Dup2: [array, index, array, index]
+                //   3. GetIndex: [array, index, old_value]
+                //   4. Compile operand, apply op: [array, index, result]
+                //   5. SetIndex: consumes array, index, result
 
-                // Let's implement that:
-
-                // For SetIndex at the end (push array and index first)
+                // Step 1: Compile target and index exactly once
                 self.compile_expr(target)?;
                 self.compile_expr(index)?;
                 // Stack: [array, index]
 
-                // For GetIndex (push array and index again)
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
-                // Stack: [array_set, index_set, array_get, index_get]
+                // Step 2: Duplicate both for later SetIndex
+                self.bytecode.emit(Opcode::Dup2, *span);
+                // Stack: [array, index, array, index]
 
+                // Step 3: Get current value
                 self.bytecode.emit(Opcode::GetIndex, *span);
-                // Stack: [array_set, index_set, old_value]
+                // Stack: [array, index, old_value]
 
-                // Apply operation
+                // Step 4: Apply operation
                 self.compile_expr(&compound.value)?;
-                // Stack: [array_set, index_set, old_value, operand]
+                // Stack: [array, index, old_value, operand]
 
                 let opcode = match compound.op {
                     CompoundOp::AddAssign => Opcode::Add,
@@ -782,9 +699,9 @@ impl Compiler {
                     CompoundOp::ModAssign => Opcode::Mod,
                 };
                 self.bytecode.emit(opcode, compound.span);
-                // Stack: [array_set, index_set, result]
+                // Stack: [array, index, result]
 
-                // Now SetIndex — CoW: mutated container is pushed back
+                // Step 5: SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
                 // Write back then pop (compound assign is a statement — no residual value)
                 self.emit_index_cow_write_back(target, *span)?;

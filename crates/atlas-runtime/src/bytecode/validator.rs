@@ -290,6 +290,8 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::SetIndex => "SetIndex",
         Opcode::Pop => "Pop",
         Opcode::Dup => "Dup",
+        Opcode::Dup2 => "Dup2",
+        Opcode::Rot3 => "Rot3",
         Opcode::IsOptionSome => "IsOptionSome",
         Opcode::IsOptionNone => "IsOptionNone",
         Opcode::IsResultOk => "IsResultOk",
@@ -403,8 +405,12 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::GetUpvalue
         | Opcode::Dup => Some(1),
 
+        // Dup2: duplicates top 2 values, net +2
+        Opcode::Dup2 => Some(2),
+
         // Neutral (peek-based or pop-1/push-1)
-        Opcode::SetLocal
+        Opcode::Rot3 // rotates top 3, no net change
+        | Opcode::SetLocal
         | Opcode::SetGlobal
         | Opcode::SetUpvalue
         | Opcode::Negate
