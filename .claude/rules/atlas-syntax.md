@@ -86,6 +86,17 @@ x + 1;    // ← semicolon REQUIRED for statement
 
 **Expression statements require semicolons.** `f(x)` without `;` is a parse error.
 
+## String Interpolation
+
+```atlas
+let name = "Ada";
+let count = "3";
+"Hello ${name}, you have ${count} items";
+```
+
+Interpolation uses `${expr}` inside double-quoted strings and desugars to
+string concatenation with `+`.
+
 **Block expressions (tail expression):**
 ```atlas
 let x = {
