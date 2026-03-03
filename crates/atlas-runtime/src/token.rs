@@ -108,6 +108,8 @@ pub enum TokenKind {
     Struct,
     /// `enum` keyword
     Enum,
+    /// `record` keyword
+    Record,
 
     // Operators
     /// `+` (addition)
@@ -244,6 +246,7 @@ impl TokenKind {
             "impl" => Some(TokenKind::Impl),
             "struct" => Some(TokenKind::Struct),
             "enum" => Some(TokenKind::Enum),
+            "record" => Some(TokenKind::Record),
             _ => None,
         }
     }
@@ -284,6 +287,7 @@ impl TokenKind {
             TokenKind::Impl => "impl",
             TokenKind::Struct => "struct",
             TokenKind::Enum => "enum",
+            TokenKind::Record => "record",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",

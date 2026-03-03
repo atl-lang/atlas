@@ -551,7 +551,7 @@ impl Compiler {
         Ok(())
     }
 
-    /// Compile an object literal: `{ key: value, key2: value2 }`
+    /// Compile an object literal: `record { key: value, key2: value2 }`
     fn compile_object_literal(&mut self, obj: &ObjectLiteral) -> Result<(), Vec<Diagnostic>> {
         // Push key-value pairs onto stack (interleaved: key1, val1, key2, val2, ...)
         for entry in &obj.entries {

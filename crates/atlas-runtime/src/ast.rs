@@ -549,7 +549,7 @@ pub enum Expr {
     Index(IndexExpr),
     Member(MemberExpr),
     ArrayLiteral(ArrayLiteral),
-    /// Object literal expression: `{ key: value, key2: value2 }`
+    /// Object literal expression: `record { key: value, key2: value2 }`
     ObjectLiteral(ObjectLiteral),
     /// Struct instantiation: `User { name: "Alice", age: 30 }`
     StructExpr(StructExpr),
@@ -646,7 +646,7 @@ pub struct ArrayLiteral {
     pub span: Span,
 }
 
-/// Object literal expression: `{ key: value, key2: value2 }`
+/// Object literal expression: `record { key: value, key2: value2 }`
 ///
 /// Desugars to HashMap<string, T> at runtime.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]

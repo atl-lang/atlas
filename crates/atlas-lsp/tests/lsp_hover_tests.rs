@@ -784,10 +784,10 @@ fn test_hover_anon_fn_block_form_type() {
     );
 }
 
-/// Hover on `f` where `f = (x: number) => x * 2` shows fn type.
+/// Hover on `f` where `f = fn(x: number) -> number { ... }` shows fn type.
 #[test]
 fn test_hover_anon_fn_arrow_form_type() {
-    let source = "let f = (x: number) => x * 2;";
+    let source = "let f = fn(x: number) -> number { return x * 2; };";
     let (ast, symbols) = parse_source(source);
     let pos = Position {
         line: 0,
@@ -804,7 +804,7 @@ fn test_hover_anon_fn_arrow_form_type() {
 /// Hover on an anon fn with no type annotations shows `fn(any) -> any`.
 #[test]
 fn test_hover_anon_fn_untyped_params() {
-    let source = "let double = (x) => x * 2;";
+    let source = "let double = fn(x) { return x * 2; };";
     let (ast, symbols) = parse_source(source);
     let pos = Position {
         line: 0,

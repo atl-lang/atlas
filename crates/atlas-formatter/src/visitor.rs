@@ -830,12 +830,12 @@ impl FormatVisitor {
 
     fn visit_object_literal(&mut self, o: &atlas_runtime::ast::ObjectLiteral) {
         if o.entries.is_empty() {
-            self.write("{}");
+            self.write("record {}");
             return;
         }
 
         // Always format object literals with one entry per line
-        self.write("{");
+        self.write("record {");
         self.writeln();
         self.indent_level += 1;
         for (i, entry) in o.entries.iter().enumerate() {

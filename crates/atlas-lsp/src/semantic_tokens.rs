@@ -201,7 +201,8 @@ fn classify_token(
         | TokenKind::Trait
         | TokenKind::Impl
         | TokenKind::Struct
-        | TokenKind::Enum => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Enum
+        | TokenKind::Record => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),

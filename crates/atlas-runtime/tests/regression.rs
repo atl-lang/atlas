@@ -1504,7 +1504,7 @@ fn struct_expr_empty() {
 #[test]
 fn object_literal_basic() {
     let code = r#"
-        let obj = { name: "Bob", count: 42 };
+        let obj = record { name: "Bob", count: 42 };
         unwrap(hashMapGet(obj, "name"))
     "#;
     assert_eval_string(code, "Bob");
@@ -1513,7 +1513,7 @@ fn object_literal_basic() {
 #[test]
 fn object_literal_number_value() {
     let code = r#"
-        let obj = { x: 10, y: 20 };
+        let obj = record { x: 10, y: 20 };
         unwrap(hashMapGet(obj, "x"))
     "#;
     assert_eval_number(code, 10.0);
@@ -1522,7 +1522,7 @@ fn object_literal_number_value() {
 #[test]
 fn object_literal_trailing_comma() {
     let code = r#"
-        let obj = { a: 1, b: 2, };
+        let obj = record { a: 1, b: 2, };
         hashMapSize(obj)
     "#;
     assert_eval_number(code, 2.0);
@@ -1531,7 +1531,7 @@ fn object_literal_trailing_comma() {
 #[test]
 fn object_literal_empty() {
     let code = r#"
-        let obj = {};
+        let obj = record {};
         hashMapSize(obj)
     "#;
     assert_eval_number(code, 0.0);
@@ -1545,7 +1545,7 @@ fn object_literal_empty() {
 fn hashmap_tojson_basic() {
     // Test that toJSON works with object literals (which create HashMaps)
     let code = r#"
-        let obj = { name: "test" };
+        let obj = record { name: "test" };
         let json = toJSON(obj);
         len(json) > 0
     "#;
@@ -1555,7 +1555,7 @@ fn hashmap_tojson_basic() {
 #[test]
 fn hashmap_tojson_multiple_fields() {
     let code = r#"
-        let obj = { a: 1, b: 2 };
+        let obj = record { a: 1, b: 2 };
         let json = toJSON(obj);
         // JSON should contain both keys - check length
         len(json) > 10
@@ -1567,7 +1567,7 @@ fn hashmap_tojson_multiple_fields() {
 fn hashmap_tojson_nested() {
     // Object literals with nested arrays should serialize
     let code = r#"
-        let obj = { items: [1, 2, 3] };
+        let obj = record { items: [1, 2, 3] };
         let json = toJSON(obj);
         // Should contain "items" and array
         len(json) > 15

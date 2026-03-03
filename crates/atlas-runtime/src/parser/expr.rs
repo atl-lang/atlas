@@ -33,15 +33,8 @@ impl Parser {
             TokenKind::Identifier => self.parse_identifier(),
             TokenKind::LeftParen => self.parse_group(),
             TokenKind::LeftBracket => self.parse_array_literal(),
-            TokenKind::LeftBrace => {
-                // Try object literal first: { key: value, ... }
-                // Fall back to block expression if not object literal syntax
-                if let Some(obj) = self.try_parse_object_literal()? {
-                    Ok(obj)
-                } else {
-                    self.parse_block_expr()
-                }
-            }
+            TokenKind::Record => self.parse_record_literal(),
+            TokenKind::LeftBrace => self.parse_block_expr(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
@@ -306,109 +299,58 @@ impl Parser {
         }))
     }
 
-    /// Try to parse an object literal: `{ key: value, key2: value2 }`.
+    /// Parse a record literal: `record { key: value, key2: value2 }`.
     ///
-    /// Returns `Ok(Some(expr))` if this is an object literal, `Ok(None)` to
-    /// fall through to block expression parsing. Uses backtracking on failure.
-    ///
-    /// Object literal syntax:
-    /// - `{ }` - empty object
-    /// - `{ key: value }` - single entry
-    /// - `{ key: value, key2: value2 }` - multiple entries
-    /// - Trailing comma is allowed: `{ key: value, }`
-    fn try_parse_object_literal(&mut self) -> Result<Option<Expr>, ()> {
-        let saved_pos = self.current;
-        let saved_diag_len = self.diagnostics.len();
+    /// Record literal syntax:
+    /// - `record { }` - empty record
+    /// - `record { key: value }` - single entry
+    /// - `record { key: value, key2: value2 }` - multiple entries
+    /// - Trailing comma is allowed: `record { key: value, }`
+    fn parse_record_literal(&mut self) -> Result<Expr, ()> {
+        let start_span = self.consume(TokenKind::Record, "Expected 'record'")?.span;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after record")?;
 
-        // Consume '{'
-        let start_span = match self.consume(TokenKind::LeftBrace, "") {
-            Ok(tok) => tok.span,
-            Err(()) => {
-                self.current = saved_pos;
-                self.diagnostics.truncate(saved_diag_len);
-                return Ok(None);
-            }
-        };
-
-        // Empty braces `{}` is an empty object literal
-        if self.check(TokenKind::RightBrace) {
-            let end_span = self
-                .consume(TokenKind::RightBrace, "Expected '}'")
-                .unwrap()
-                .span;
-            return Ok(Some(Expr::ObjectLiteral(ObjectLiteral {
-                entries: Vec::new(),
-                span: start_span.merge(end_span),
-            })));
-        }
-
-        // Check if this looks like an object literal: identifier followed by `:`
-        // If the first token is not an identifier, or no `:` follows, it's a block
-        if !self.check(TokenKind::Identifier) {
-            self.current = saved_pos;
-            self.diagnostics.truncate(saved_diag_len);
-            return Ok(None);
-        }
-
-        // Peek ahead: if ident is NOT followed by `:`, it's a block (e.g., `{ x; }` or `{ x }`)
-        let next_idx = self.current + 1;
-        if next_idx >= self.tokens.len() || self.tokens[next_idx].kind != TokenKind::Colon {
-            self.current = saved_pos;
-            self.diagnostics.truncate(saved_diag_len);
-            return Ok(None);
-        }
-
-        // Committed to object literal parsing
         let mut entries = Vec::new();
 
-        loop {
-            let entry_start = self.peek().span;
+        if !self.check(TokenKind::RightBrace) {
+            loop {
+                let entry_start = self.peek().span;
 
-            // Parse key (identifier)
-            let key_token = match self.consume_identifier("object key") {
-                Ok(tok) => tok,
-                Err(()) => {
-                    // Error in object literal - don't backtrack, report error
-                    return Err(());
+                let key_token = self.consume_identifier("record key")?;
+                let key = Identifier {
+                    name: key_token.lexeme.clone(),
+                    span: key_token.span,
+                };
+
+                self.consume(TokenKind::Colon, "Expected ':' after record key")?;
+
+                let value = self.parse_expression()?;
+                let entry_end = value.span();
+
+                entries.push(ObjectEntry {
+                    key,
+                    value,
+                    span: entry_start.merge(entry_end),
+                });
+
+                if !self.match_token(TokenKind::Comma) {
+                    break;
                 }
-            };
-            let key = Identifier {
-                name: key_token.lexeme.clone(),
-                span: key_token.span,
-            };
 
-            // Expect ':'
-            self.consume(TokenKind::Colon, "Expected ':' after object key")?;
-
-            // Parse value expression
-            let value = self.parse_expression()?;
-            let entry_end = value.span();
-
-            entries.push(ObjectEntry {
-                key,
-                value,
-                span: entry_start.merge(entry_end),
-            });
-
-            // Check for comma or end
-            if !self.match_token(TokenKind::Comma) {
-                break;
-            }
-
-            // Allow trailing comma
-            if self.check(TokenKind::RightBrace) {
-                break;
+                if self.check(TokenKind::RightBrace) {
+                    break;
+                }
             }
         }
 
         let end_span = self
-            .consume(TokenKind::RightBrace, "Expected '}' after object literal")?
+            .consume(TokenKind::RightBrace, "Expected '}' after record literal")?
             .span;
 
-        Ok(Some(Expr::ObjectLiteral(ObjectLiteral {
+        Ok(Expr::ObjectLiteral(ObjectLiteral {
             entries,
             span: start_span.merge(end_span),
-        })))
+        }))
     }
 
     /// Parse unary expression

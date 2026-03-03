@@ -757,7 +757,7 @@ impl Interpreter {
         Ok(Value::array(elements))
     }
 
-    /// Evaluate object literal: `{ key: value, key2: value2 }`
+    /// Evaluate object literal: `record { key: value, key2: value2 }`
     fn eval_object_literal(
         &mut self,
         obj: &crate::ast::ObjectLiteral,
