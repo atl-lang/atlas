@@ -1,6 +1,5 @@
 ---
 source: crates/atlas-runtime/tests/interpreter/assignment.rs
-assertion_line: 42
 expression: "program.items[0]"
 ---
 Statement:

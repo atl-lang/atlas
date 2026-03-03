@@ -15,20 +15,22 @@ Statement:
                   start: 0
                   end: 6
             index:
-              Identifier:
-                name: row
-                span:
-                  start: 7
-                  end: 10
+              Single:
+                Identifier:
+                  name: row
+                  span:
+                    start: 7
+                    end: 10
             span:
               start: 0
               end: 11
         index:
-          Identifier:
-            name: col
-            span:
-              start: 12
-              end: 15
+          Single:
+            Identifier:
+              name: col
+              span:
+                start: 12
+                end: 15
         span:
           start: 0
           end: 16

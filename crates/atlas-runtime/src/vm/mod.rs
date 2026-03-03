@@ -1595,6 +1595,95 @@ impl VM {
                     // back to the variable, then Pop removes it from the expression stack.
                     self.push(array);
                 }
+                Opcode::Slice => {
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let end = match self.pop() {
+                        Value::Number(n) => n,
+                        _ => return Err(RuntimeError::InvalidIndex { span }),
+                    };
+                    let start = match self.pop() {
+                        Value::Number(n) => n,
+                        _ => return Err(RuntimeError::InvalidIndex { span }),
+                    };
+                    let target = self.pop();
+                    match target {
+                        Value::Array(arr) => {
+                            let sliced =
+                                crate::stdlib::array::slice(arr.as_slice(), start, end, span)?;
+                            self.push(sliced);
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Cannot slice non-array".to_string(),
+                                span,
+                            })
+                        }
+                    }
+                }
+                Opcode::SliceFrom => {
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let start = match self.pop() {
+                        Value::Number(n) => n,
+                        _ => return Err(RuntimeError::InvalidIndex { span }),
+                    };
+                    let target = self.pop();
+                    match target {
+                        Value::Array(arr) => {
+                            let end = arr.len() as f64;
+                            let sliced =
+                                crate::stdlib::array::slice(arr.as_slice(), start, end, span)?;
+                            self.push(sliced);
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Cannot slice non-array".to_string(),
+                                span,
+                            })
+                        }
+                    }
+                }
+                Opcode::SliceTo => {
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let end = match self.pop() {
+                        Value::Number(n) => n,
+                        _ => return Err(RuntimeError::InvalidIndex { span }),
+                    };
+                    let target = self.pop();
+                    match target {
+                        Value::Array(arr) => {
+                            let sliced =
+                                crate::stdlib::array::slice(arr.as_slice(), 0.0, end, span)?;
+                            self.push(sliced);
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Cannot slice non-array".to_string(),
+                                span,
+                            })
+                        }
+                    }
+                }
+                Opcode::SliceFull => {
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let target = self.pop();
+                    match target {
+                        Value::Array(arr) => {
+                            let sliced = crate::stdlib::array::slice(
+                                arr.as_slice(),
+                                0.0,
+                                arr.len() as f64,
+                                span,
+                            )?;
+                            self.push(sliced);
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Cannot slice non-array".to_string(),
+                                span,
+                            })
+                        }
+                    }
+                }
 
                 Opcode::HashMap => {
                     use crate::stdlib::collections::hash::HashKey;

@@ -980,7 +980,17 @@ impl Binder {
             }
             Expr::Index(index) => {
                 self.bind_expr(&index.target);
-                self.bind_expr(&index.index);
+                match &index.index {
+                    IndexValue::Single(expr) => self.bind_expr(expr),
+                    IndexValue::Slice(slice) => {
+                        if let Some(start) = &slice.start {
+                            self.bind_expr(start);
+                        }
+                        if let Some(end) = &slice.end {
+                            self.bind_expr(end);
+                        }
+                    }
+                }
             }
             Expr::ArrayLiteral(arr) => {
                 for elem in &arr.elements {

@@ -184,6 +184,12 @@ pub enum TokenKind {
     Comma,
     /// `.` (dot for member access)
     Dot,
+    /// `..` (range operator)
+    Range,
+    /// `..` (range from)
+    RangeFrom,
+    /// `..` (range to)
+    RangeTo,
     /// `:` (colon)
     Colon,
     /// `::` (double colon for enum variant paths)
@@ -325,6 +331,9 @@ impl TokenKind {
             TokenKind::Semicolon => ";",
             TokenKind::Comma => ",",
             TokenKind::Dot => ".",
+            TokenKind::Range => "..",
+            TokenKind::RangeFrom => "..",
+            TokenKind::RangeTo => "..",
             TokenKind::Colon => ":",
             TokenKind::ColonColon => "::",
             TokenKind::Arrow => "->",

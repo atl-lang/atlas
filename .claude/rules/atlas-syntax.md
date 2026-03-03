@@ -125,6 +125,15 @@ expr.method(args)
 
 Desugared to trait dispatch: `arr.length()` → `Array::length(arr)`
 
+## Array Slicing
+
+```atlas
+arr[1..3]   // elements 1..2 (end exclusive)
+arr[1..]    // elements 1..end
+arr[..3]    // elements 0..2
+arr[..]     // full clone
+```
+
 ## Match Expression
 
 ```atlas

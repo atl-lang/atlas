@@ -245,7 +245,10 @@ fn classify_token(
         | TokenKind::Arrow
         | TokenKind::FatArrow
         | TokenKind::Question
-        | TokenKind::ColonColon => (token_type_idx::OPERATOR, 0),
+        | TokenKind::ColonColon
+        | TokenKind::Range
+        | TokenKind::RangeFrom
+        | TokenKind::RangeTo => (token_type_idx::OPERATOR, 0),
 
         // Identifiers - need context to classify
         TokenKind::Identifier => {

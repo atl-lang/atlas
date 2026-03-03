@@ -603,7 +603,22 @@ pub struct CallExpr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IndexExpr {
     pub target: Box<Expr>,
-    pub index: Box<Expr>,
+    pub index: IndexValue,
+    pub span: Span,
+}
+
+/// Index expression payload (single index or slice)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum IndexValue {
+    Single(Box<Expr>),
+    Slice(SliceExpr),
+}
+
+/// Array slice expression inside an index
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct SliceExpr {
+    pub start: Option<Box<Expr>>,
+    pub end: Option<Box<Expr>>,
     pub span: Span,
 }
 
@@ -884,6 +899,16 @@ impl Expr {
             Expr::AnonFn { span, .. } => *span,
             Expr::Block(block) => block.span,
             Expr::EnumVariant(e) => e.span,
+        }
+    }
+}
+
+impl IndexValue {
+    /// Get the span of this index value
+    pub fn span(&self) -> Span {
+        match self {
+            IndexValue::Single(expr) => expr.span(),
+            IndexValue::Slice(slice) => slice.span,
         }
     }
 }

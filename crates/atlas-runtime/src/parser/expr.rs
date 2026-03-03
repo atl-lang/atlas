@@ -489,14 +489,60 @@ impl Parser {
     fn parse_index(&mut self, target: Expr) -> Result<Expr, ()> {
         let target_span = target.span();
         self.consume(TokenKind::LeftBracket, "Expected '['")?;
-        let index = self.parse_expression()?;
-        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
+        let index = if let Some(range_span) = self.consume_range_token() {
+            let end_expr = if self.check(TokenKind::RightBracket) {
+                None
+            } else {
+                Some(self.parse_expression()?)
+            };
+            let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
+            IndexValue::Slice(SliceExpr {
+                start: None,
+                end: end_expr.map(Box::new),
+                span: range_span.merge(end_span),
+            })
+        } else {
+            let start_expr = self.parse_expression()?;
+            if self.consume_range_token().is_some() {
+                let start_span = start_expr.span();
+                let end_expr = if self.check(TokenKind::RightBracket) {
+                    None
+                } else {
+                    Some(self.parse_expression()?)
+                };
+                let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
+                IndexValue::Slice(SliceExpr {
+                    start: Some(Box::new(start_expr)),
+                    end: end_expr.map(Box::new),
+                    span: start_span.merge(end_span),
+                })
+            } else {
+                let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
+                return Ok(Expr::Index(IndexExpr {
+                    target: Box::new(target),
+                    index: IndexValue::Single(Box::new(start_expr)),
+                    span: target_span.merge(end_span),
+                }));
+            }
+        };
+        let end_span = self.tokens[self.current - 1].span;
 
         Ok(Expr::Index(IndexExpr {
             target: Box::new(target),
-            index: Box::new(index),
+            index,
             span: target_span.merge(end_span),
         }))
+    }
+
+    fn consume_range_token(&mut self) -> Option<Span> {
+        if self.check(TokenKind::Range)
+            || self.check(TokenKind::RangeFrom)
+            || self.check(TokenKind::RangeTo)
+        {
+            Some(self.advance().span)
+        } else {
+            None
+        }
     }
 
     /// Parse member expression (method call or property access)

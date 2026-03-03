@@ -215,7 +215,17 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
         }
         Expr::Index(index) => {
             extract_names_from_expr(&index.target, names);
-            extract_names_from_expr(&index.index, names);
+            match &index.index {
+                IndexValue::Single(expr) => extract_names_from_expr(expr, names),
+                IndexValue::Slice(slice) => {
+                    if let Some(start) = &slice.start {
+                        extract_names_from_expr(start, names);
+                    }
+                    if let Some(end) = &slice.end {
+                        extract_names_from_expr(end, names);
+                    }
+                }
+            }
         }
         Expr::Member(member) => {
             extract_names_from_expr(&member.target, names);

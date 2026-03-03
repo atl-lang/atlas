@@ -16,10 +16,11 @@ items:
                       start: 0
                       end: 4
                 index:
-                  Literal:
-                    - String: user
-                    - start: 5
-                      end: 11
+                  Single:
+                    Literal:
+                      - String: user
+                      - start: 5
+                        end: 11
                 span:
                   start: 0
                   end: 12

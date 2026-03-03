@@ -306,7 +306,17 @@ fn extract_expression_folds(text: &str, expr: &Expr, ranges: &mut Vec<FoldingRan
         }
         Expr::Index(index) => {
             extract_expression_folds(text, &index.target, ranges);
-            extract_expression_folds(text, &index.index, ranges);
+            match &index.index {
+                IndexValue::Single(expr) => extract_expression_folds(text, expr, ranges),
+                IndexValue::Slice(slice) => {
+                    if let Some(start) = &slice.start {
+                        extract_expression_folds(text, start, ranges);
+                    }
+                    if let Some(end) = &slice.end {
+                        extract_expression_folds(text, end, ranges);
+                    }
+                }
+            }
         }
         Expr::Member(member) => {
             extract_expression_folds(text, &member.target, ranges);

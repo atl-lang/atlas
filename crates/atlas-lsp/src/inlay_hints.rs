@@ -434,15 +434,41 @@ fn extract_expression_hints(
                 end_offset,
                 hints,
             );
-            extract_expression_hints(
-                text,
-                &index.index,
-                symbols,
-                config,
-                start_offset,
-                end_offset,
-                hints,
-            );
+            match &index.index {
+                IndexValue::Single(expr) => extract_expression_hints(
+                    text,
+                    expr,
+                    symbols,
+                    config,
+                    start_offset,
+                    end_offset,
+                    hints,
+                ),
+                IndexValue::Slice(slice) => {
+                    if let Some(start) = &slice.start {
+                        extract_expression_hints(
+                            text,
+                            start,
+                            symbols,
+                            config,
+                            start_offset,
+                            end_offset,
+                            hints,
+                        );
+                    }
+                    if let Some(end) = &slice.end {
+                        extract_expression_hints(
+                            text,
+                            end,
+                            symbols,
+                            config,
+                            start_offset,
+                            end_offset,
+                            hints,
+                        );
+                    }
+                }
+            }
         }
         Expr::Group(group) => {
             extract_expression_hints(

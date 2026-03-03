@@ -380,7 +380,17 @@ fn collect_calls_from_expr(expr: &Expr, calls: &mut Vec<CallExpr>) {
         }
         Expr::Index(index) => {
             collect_calls_from_expr(&index.target, calls);
-            collect_calls_from_expr(&index.index, calls);
+            match &index.index {
+                IndexValue::Single(expr) => collect_calls_from_expr(expr, calls),
+                IndexValue::Slice(slice) => {
+                    if let Some(start) = &slice.start {
+                        collect_calls_from_expr(start, calls);
+                    }
+                    if let Some(end) = &slice.end {
+                        collect_calls_from_expr(end, calls);
+                    }
+                }
+            }
         }
         Expr::Member(member) => {
             collect_calls_from_expr(&member.target, calls);

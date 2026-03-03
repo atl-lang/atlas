@@ -16,10 +16,11 @@ Statement:
                   start: 0
                   end: 3
             index:
-              Literal:
-                - Number: 0
-                - start: 4
-                  end: 5
+              Single:
+                Literal:
+                  - Number: 0
+                  - start: 4
+                    end: 5
             span:
               start: 0
               end: 6

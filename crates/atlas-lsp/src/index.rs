@@ -358,7 +358,17 @@ impl SymbolIndex {
             }
             Expr::Index(index) => {
                 self.index_expr(&index.target, ctx, false);
-                self.index_expr(&index.index, ctx, false);
+                match &index.index {
+                    IndexValue::Single(expr) => self.index_expr(expr, ctx, false),
+                    IndexValue::Slice(slice) => {
+                        if let Some(start) = &slice.start {
+                            self.index_expr(start, ctx, false);
+                        }
+                        if let Some(end) = &slice.end {
+                            self.index_expr(end, ctx, false);
+                        }
+                    }
+                }
             }
             Expr::Member(member) => {
                 self.index_expr(&member.target, ctx, false);

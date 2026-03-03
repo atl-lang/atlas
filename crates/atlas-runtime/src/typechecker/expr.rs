@@ -1020,13 +1020,34 @@ impl<'a> TypeChecker<'a> {
     /// Check an index expression
     fn check_index(&mut self, index: &IndexExpr) -> Type {
         let target_type = self.check_expr(&index.target);
-        let index_type = self.check_expr(&index.index);
         let target_norm = target_type.normalized();
-        let index_norm = index_type.normalized();
 
-        match target_norm {
+        let check_slice_bound = |this: &mut Self, bound: &Option<Box<Expr>>| {
+            if let Some(expr) = bound {
+                let bound_type = this.check_expr(expr);
+                let bound_norm = bound_type.normalized();
+                if bound_norm != Type::Number && bound_norm != Type::Unknown {
+                    this.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            format!(
+                                "Slice index must be number, found {}",
+                                bound_type.display_name()
+                            ),
+                            expr.span(),
+                        )
+                        .with_label("type mismatch")
+                        .with_help("slice indices must be numbers"),
+                    );
+                }
+            }
+        };
+
+        match (&index.index, target_norm) {
             // Array indexing: requires number index, returns element type
-            Type::Array(elem_type) => {
+            (IndexValue::Single(expr), Type::Array(elem_type)) => {
+                let index_type = self.check_expr(expr);
+                let index_norm = index_type.normalized();
                 if index_norm != Type::Number && index_norm != Type::Unknown {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
@@ -1035,7 +1056,7 @@ impl<'a> TypeChecker<'a> {
                                 "Array index must be number, found {}",
                                 index_type.display_name()
                             ),
-                            index.index.span(),
+                            expr.span(),
                         )
                         .with_label("type mismatch")
                         .with_help("array indices must be numbers"),
@@ -1043,8 +1064,15 @@ impl<'a> TypeChecker<'a> {
                 }
                 *elem_type
             }
+            (IndexValue::Slice(slice), Type::Array(elem_type)) => {
+                check_slice_bound(self, &slice.start);
+                check_slice_bound(self, &slice.end);
+                Type::Array(elem_type)
+            }
             // JSON indexing: accepts string or number, always returns json
-            Type::JsonValue => {
+            (IndexValue::Single(expr), Type::JsonValue) => {
+                let index_type = self.check_expr(expr);
+                let index_norm = index_type.normalized();
                 if index_norm != Type::String
                     && index_norm != Type::Number
                     && index_norm != Type::Unknown
@@ -1056,7 +1084,7 @@ impl<'a> TypeChecker<'a> {
                                 "JSON index must be string or number, found {}",
                                 index_type.display_name()
                             ),
-                            index.index.span(),
+                            expr.span(),
                         )
                         .with_label("type mismatch")
                         .with_help("use a string key or numeric index to access JSON values"),
@@ -1065,7 +1093,9 @@ impl<'a> TypeChecker<'a> {
                 Type::JsonValue
             }
             // String indexing: requires number index, returns single-char string
-            Type::String => {
+            (IndexValue::Single(expr), Type::String) => {
+                let index_type = self.check_expr(expr);
+                let index_norm = index_type.normalized();
                 if index_norm != Type::Number && index_norm != Type::Unknown {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
@@ -1074,7 +1104,7 @@ impl<'a> TypeChecker<'a> {
                                 "String index must be number, found {}",
                                 index_type.display_name()
                             ),
-                            index.index.span(),
+                            expr.span(),
                         )
                         .with_label("type mismatch")
                         .with_help("string indices must be numbers"),
@@ -1082,65 +1112,102 @@ impl<'a> TypeChecker<'a> {
                 }
                 Type::String
             }
-            Type::Union(members) => {
+            (index_value, Type::Union(members)) => {
                 let mut result_types = Vec::new();
                 for member in members {
                     match member {
-                        Type::Array(elem_type) => {
-                            if index_norm != Type::Number && index_norm != Type::Unknown {
-                                self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "Array index must be number, found {}",
-                                            index_type.display_name()
-                                        ),
-                                        index.index.span(),
-                                    )
-                                    .with_label("type mismatch")
-                                    .with_help("array indices must be numbers"),
-                                );
+                        Type::Array(elem_type) => match index_value {
+                            IndexValue::Single(expr) => {
+                                let index_type = self.check_expr(expr);
+                                let index_norm = index_type.normalized();
+                                if index_norm != Type::Number && index_norm != Type::Unknown {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3001",
+                                            format!(
+                                                "Array index must be number, found {}",
+                                                index_type.display_name()
+                                            ),
+                                            expr.span(),
+                                        )
+                                        .with_label("type mismatch")
+                                        .with_help("array indices must be numbers"),
+                                    );
+                                }
+                                result_types.push(*elem_type);
                             }
-                            result_types.push(*elem_type);
-                        }
+                            IndexValue::Slice(slice) => {
+                                check_slice_bound(self, &slice.start);
+                                check_slice_bound(self, &slice.end);
+                                result_types.push(Type::Array(elem_type));
+                            }
+                        },
                         Type::JsonValue => {
-                            if index_norm != Type::String
-                                && index_norm != Type::Number
-                                && index_norm != Type::Unknown
-                            {
+                            if let IndexValue::Single(expr) = index_value {
+                                let index_type = self.check_expr(expr);
+                                let index_norm = index_type.normalized();
+                                if index_norm != Type::String
+                                    && index_norm != Type::Number
+                                    && index_norm != Type::Unknown
+                                {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3001",
+                                            format!(
+                                                "JSON index must be string or number, found {}",
+                                                index_type.display_name()
+                                            ),
+                                            expr.span(),
+                                        )
+                                        .with_label("type mismatch")
+                                        .with_help("use a string key or numeric index to access JSON values"),
+                                    );
+                                }
+                                result_types.push(Type::JsonValue);
+                            } else {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
                                         "AT3001",
-                                        format!(
-                                            "JSON index must be string or number, found {}",
-                                            index_type.display_name()
-                                        ),
-                                        index.index.span(),
+                                        "Slice syntax is only valid for arrays".to_string(),
+                                        index_value.span(),
                                     )
-                                    .with_label("type mismatch")
-                                    .with_help(
-                                        "use a string key or numeric index to access JSON values",
-                                    ),
+                                    .with_label("not indexable")
+                                    .with_help("only arrays can be sliced"),
                                 );
+                                return Type::Unknown;
                             }
-                            result_types.push(Type::JsonValue);
                         }
                         Type::String => {
-                            if index_norm != Type::Number && index_norm != Type::Unknown {
+                            if let IndexValue::Single(expr) = index_value {
+                                let index_type = self.check_expr(expr);
+                                let index_norm = index_type.normalized();
+                                if index_norm != Type::Number && index_norm != Type::Unknown {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3001",
+                                            format!(
+                                                "String index must be number, found {}",
+                                                index_type.display_name()
+                                            ),
+                                            expr.span(),
+                                        )
+                                        .with_label("type mismatch")
+                                        .with_help("string indices must be numbers"),
+                                    );
+                                }
+                                result_types.push(Type::String);
+                            } else {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
                                         "AT3001",
-                                        format!(
-                                            "String index must be number, found {}",
-                                            index_type.display_name()
-                                        ),
-                                        index.index.span(),
+                                        "Slice syntax is only valid for arrays".to_string(),
+                                        index_value.span(),
                                     )
-                                    .with_label("type mismatch")
-                                    .with_help("string indices must be numbers"),
+                                    .with_label("not indexable")
+                                    .with_help("only arrays can be sliced"),
                                 );
+                                return Type::Unknown;
                             }
-                            result_types.push(Type::String);
                         }
                         _ => {
                             self.diagnostics.push(
@@ -1158,7 +1225,8 @@ impl<'a> TypeChecker<'a> {
                 }
                 Type::union(result_types)
             }
-            Type::Unknown => Type::Unknown,
+            (IndexValue::Single(_), Type::Unknown) => Type::Unknown,
+            (IndexValue::Slice(_), Type::Unknown) => Type::Unknown,
             _ => {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(

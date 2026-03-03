@@ -490,3 +490,79 @@ fn test_slice_empty_range() {
         _ => panic!("Expected array"),
     }
 }
+
+// ============================================================================
+// slice syntax tests
+// ============================================================================
+
+#[test]
+fn test_slice_syntax_range() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3, 4];
+        arr[1..3];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 2);
+            assert_eq!(borrowed[0], Value::Number(2.0));
+            assert_eq!(borrowed[1], Value::Number(3.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_slice_syntax_from() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3, 4];
+        arr[1..];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 3);
+            assert_eq!(borrowed[0], Value::Number(2.0));
+            assert_eq!(borrowed[2], Value::Number(4.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_slice_syntax_to() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3, 4];
+        arr[..3];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 3);
+            assert_eq!(borrowed[0], Value::Number(1.0));
+            assert_eq!(borrowed[2], Value::Number(3.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_slice_syntax_full() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3];
+        arr[..];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 3);
+            assert_eq!(borrowed[0], Value::Number(1.0));
+            assert_eq!(borrowed[2], Value::Number(3.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}

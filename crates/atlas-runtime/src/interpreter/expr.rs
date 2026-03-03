@@ -684,60 +684,91 @@ impl Interpreter {
     /// Evaluate array indexing
     fn eval_index(&mut self, index: &IndexExpr) -> Result<Value, RuntimeError> {
         let target = self.eval_expr(&index.target)?;
-        let idx = self.eval_expr(&index.index)?;
+        match &index.index {
+            IndexValue::Single(expr) => {
+                let idx = self.eval_expr(expr)?;
+                match target {
+                    Value::Array(arr) => {
+                        if let Value::Number(n) = idx {
+                            let index_val = n as i64;
+                            if n.fract() != 0.0 || n < 0.0 {
+                                return Err(RuntimeError::InvalidIndex { span: index.span });
+                            }
 
-        match target {
-            Value::Array(arr) => {
-                if let Value::Number(n) = idx {
-                    let index_val = n as i64;
-                    if n.fract() != 0.0 || n < 0.0 {
-                        return Err(RuntimeError::InvalidIndex { span: index.span });
+                            if index_val >= 0 && (index_val as usize) < arr.len() {
+                                Ok(arr[index_val as usize].clone())
+                            } else {
+                                Err(RuntimeError::OutOfBounds { span: index.span })
+                            }
+                        } else {
+                            Err(RuntimeError::InvalidIndex { span: index.span })
+                        }
                     }
+                    Value::String(s) => {
+                        if let Value::Number(n) = idx {
+                            let index_val = n as i64;
+                            if n.fract() != 0.0 || n < 0.0 {
+                                return Err(RuntimeError::InvalidIndex { span: index.span });
+                            }
 
-                    if index_val >= 0 && (index_val as usize) < arr.len() {
-                        Ok(arr[index_val as usize].clone())
-                    } else {
-                        Err(RuntimeError::OutOfBounds { span: index.span })
+                            let chars: Vec<char> = s.chars().collect();
+                            if index_val >= 0 && (index_val as usize) < chars.len() {
+                                Ok(Value::string(chars[index_val as usize].to_string()))
+                            } else {
+                                Err(RuntimeError::OutOfBounds { span: index.span })
+                            }
+                        } else {
+                            Err(RuntimeError::InvalidIndex { span: index.span })
+                        }
                     }
-                } else {
-                    Err(RuntimeError::InvalidIndex { span: index.span })
+                    Value::JsonValue(json) => {
+                        // JSON indexing with string or number, returns JsonValue
+                        let result = match idx {
+                            Value::String(key) => json.index_str(key.as_ref()),
+                            Value::Number(n) => json.index_num(n),
+                            _ => {
+                                return Err(RuntimeError::TypeError {
+                                    msg: "JSON index must be string or number".to_string(),
+                                    span: index.span,
+                                })
+                            }
+                        };
+                        Ok(Value::JsonValue(Arc::new(result)))
+                    }
+                    _ => Err(RuntimeError::TypeError {
+                        msg: "Cannot index non-array/string/json".to_string(),
+                        span: index.span,
+                    }),
                 }
             }
-            Value::String(s) => {
-                if let Value::Number(n) = idx {
-                    let index_val = n as i64;
-                    if n.fract() != 0.0 || n < 0.0 {
-                        return Err(RuntimeError::InvalidIndex { span: index.span });
-                    }
-
-                    let chars: Vec<char> = s.chars().collect();
-                    if index_val >= 0 && (index_val as usize) < chars.len() {
-                        Ok(Value::string(chars[index_val as usize].to_string()))
-                    } else {
-                        Err(RuntimeError::OutOfBounds { span: index.span })
-                    }
-                } else {
-                    Err(RuntimeError::InvalidIndex { span: index.span })
-                }
-            }
-            Value::JsonValue(json) => {
-                // JSON indexing with string or number, returns JsonValue
-                let result = match idx {
-                    Value::String(key) => json.index_str(key.as_ref()),
-                    Value::Number(n) => json.index_num(n),
-                    _ => {
-                        return Err(RuntimeError::TypeError {
-                            msg: "JSON index must be string or number".to_string(),
-                            span: index.span,
-                        })
-                    }
+            IndexValue::Slice(slice) => {
+                let start = match &slice.start {
+                    Some(expr) => match self.eval_expr(expr)? {
+                        Value::Number(n) => Some(n),
+                        _ => return Err(RuntimeError::InvalidIndex { span: index.span }),
+                    },
+                    None => None,
                 };
-                Ok(Value::JsonValue(Arc::new(result)))
+                let end = match &slice.end {
+                    Some(expr) => match self.eval_expr(expr)? {
+                        Value::Number(n) => Some(n),
+                        _ => return Err(RuntimeError::InvalidIndex { span: index.span }),
+                    },
+                    None => None,
+                };
+
+                match target {
+                    Value::Array(arr) => {
+                        let start = start.unwrap_or(0.0);
+                        let end = end.unwrap_or(arr.len() as f64);
+                        crate::stdlib::array::slice(arr.as_slice(), start, end, index.span)
+                    }
+                    _ => Err(RuntimeError::TypeError {
+                        msg: "Cannot slice non-array".to_string(),
+                        span: index.span,
+                    }),
+                }
             }
-            _ => Err(RuntimeError::TypeError {
-                msg: "Cannot index non-array/string/json".to_string(),
-                span: index.span,
-            }),
         }
     }
 

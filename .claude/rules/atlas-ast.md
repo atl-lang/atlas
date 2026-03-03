@@ -46,6 +46,8 @@ pub enum Expr {
     Index(IndexExpr),
     Member(MemberExpr),
     ArrayLiteral(ArrayLiteral),
+    ObjectLiteral(ObjectLiteral),
+    StructExpr(StructExpr),
     Group(GroupExpr),
     Match(MatchExpr),
     Try(TryExpr),
@@ -57,6 +59,7 @@ pub enum Expr {
         span: Span,
     },
     Block(Block),
+    EnumVariant(EnumVariantExpr),
 }
 ```
 
@@ -88,8 +91,8 @@ pub span: Span
 
 // Block
 pub statements: Vec<Stmt>
+pub tail_expr: Option<Box<Expr>>
 pub span: Span
-// !! Block has NO tail_expr field !!
 
 // Identifier
 pub name: String
@@ -99,6 +102,22 @@ pub span: Span
 pub cond: Expr
 pub then_block: Block
 pub else_block: Option<Block>
+pub span: Span
+
+// IndexExpr
+pub target: Box<Expr>
+pub index: IndexValue
+pub span: Span
+
+// IndexValue
+pub enum IndexValue {
+    Single(Box<Expr>),
+    Slice(SliceExpr),
+}
+
+// SliceExpr
+pub start: Option<Box<Expr>>
+pub end: Option<Box<Expr>>
 pub span: Span
 ```
 
@@ -128,11 +147,10 @@ pub enum OwnershipAnnotation { Own, Borrow, Shared }
 // WRONG
 Stmt::Let(...)           // → Stmt::VarDecl(VarDecl)
 Stmt::Var(...)           // → Stmt::VarDecl(VarDecl)
-block.tail_expr          // → Block has no tail_expr
 Expr::If(...)            // → Stmt::If(IfStmt), not an Expr variant
 param.type_ref.unwrap()  // → Param.type_ref is Option<TypeRef>
 
 // RIGHT
 Stmt::VarDecl(VarDecl { mutable: false, .. })
-block.statements.last()
+block.tail_expr
 ```

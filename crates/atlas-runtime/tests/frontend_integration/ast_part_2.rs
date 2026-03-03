@@ -48,7 +48,10 @@ fn test_all_expression_types() {
                 name: "arr".to_string(),
                 span: Span::new(0, 3),
             })),
-            index: Box::new(Expr::Literal(Literal::Number(0.0), Span::new(4, 5))),
+            index: IndexValue::Single(Box::new(Expr::Literal(
+                Literal::Number(0.0),
+                Span::new(4, 5),
+            ))),
             span: Span::new(0, 6),
         }),
         // Array literal

@@ -37,6 +37,8 @@ pub struct Lexer {
     pending_tokens: VecDeque<Token>,
     /// Stack of interpolation brace depths (one per active interpolation)
     interpolation_stack: Vec<usize>,
+    /// Last emitted token kind (for context-sensitive lexing)
+    last_token_kind: Option<TokenKind>,
 }
 
 impl Lexer {
@@ -58,6 +60,7 @@ impl Lexer {
             pending_comments: Vec::new(),
             pending_tokens: VecDeque::new(),
             interpolation_stack: Vec::new(),
+            last_token_kind: None,
         }
     }
 
@@ -68,6 +71,7 @@ impl Lexer {
         loop {
             let token = self.next_token();
             let is_eof = token.kind == TokenKind::Eof;
+            self.last_token_kind = Some(token.kind);
             tokens.push(token);
             if is_eof {
                 break;
@@ -85,6 +89,7 @@ impl Lexer {
         loop {
             let token = self.next_token();
             let is_eof = token.kind == TokenKind::Eof;
+            self.last_token_kind = Some(token.kind);
 
             // Drain any pending comment tokens collected before this token
             tokens.append(&mut self.pending_comments);
@@ -248,12 +253,24 @@ impl Lexer {
             // Numbers
             c if c.is_ascii_digit() => self.number(),
 
-            // Dot (member access) or start of decimal number
+            // Dot (member access) or range operator
             '.' => {
-                // Check if this is the start of a decimal number (e.g., .5)
-                // NOTE: Atlas doesn't support .5 syntax, only 0.5
-                // So . is always a member access operator
-                self.make_token(TokenKind::Dot, ".")
+                if self.match_char('.') {
+                    let next_non_ws = self.peek_next_non_whitespace();
+                    let range_kind = if next_non_ws == Some(']') {
+                        TokenKind::RangeFrom
+                    } else if matches!(self.last_token_kind, Some(TokenKind::LeftBracket)) {
+                        TokenKind::RangeTo
+                    } else {
+                        TokenKind::Range
+                    };
+                    self.make_token(range_kind, "..")
+                } else {
+                    // Check if this is the start of a decimal number (e.g., .5)
+                    // NOTE: Atlas doesn't support .5 syntax, only 0.5
+                    // So . is always a member access operator
+                    self.make_token(TokenKind::Dot, ".")
+                }
             }
 
             // Identifiers and keywords
@@ -364,6 +381,18 @@ impl Lexer {
                 _ => return,
             }
         }
+    }
+
+    fn peek_next_non_whitespace(&self) -> Option<char> {
+        let mut idx = self.current;
+        while idx < self.chars.len() {
+            let c = self.chars[idx];
+            if !matches!(c, ' ' | '\r' | '\t' | '\n') {
+                return Some(c);
+            }
+            idx += 1;
+        }
+        None
     }
 
     /// Scan a string literal

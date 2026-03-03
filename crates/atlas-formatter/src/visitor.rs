@@ -779,7 +779,18 @@ impl FormatVisitor {
     fn visit_index(&mut self, i: &IndexExpr) {
         self.visit_expr(&i.target);
         self.write("[");
-        self.visit_expr(&i.index);
+        match &i.index {
+            IndexValue::Single(expr) => self.visit_expr(expr),
+            IndexValue::Slice(slice) => {
+                if let Some(start) = &slice.start {
+                    self.visit_expr(start);
+                }
+                self.write("..");
+                if let Some(end) = &slice.end {
+                    self.visit_expr(end);
+                }
+            }
+        }
         self.write("]");
     }
 

@@ -296,7 +296,19 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         }
         Expr::Index(index) => {
             find_references_in_expr(&index.target, identifier, references);
-            find_references_in_expr(&index.index, identifier, references);
+            match &index.index {
+                IndexValue::Single(expr) => {
+                    find_references_in_expr(expr, identifier, references);
+                }
+                IndexValue::Slice(slice) => {
+                    if let Some(start) = &slice.start {
+                        find_references_in_expr(start, identifier, references);
+                    }
+                    if let Some(end) = &slice.end {
+                        find_references_in_expr(end, identifier, references);
+                    }
+                }
+            }
         }
         Expr::Member(member) => {
             find_references_in_expr(&member.target, identifier, references);

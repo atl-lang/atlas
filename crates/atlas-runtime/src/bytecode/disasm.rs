@@ -86,6 +86,10 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::Return
         | Opcode::GetIndex
         | Opcode::SetIndex
+        | Opcode::Slice
+        | Opcode::SliceFrom
+        | Opcode::SliceTo
+        | Opcode::SliceFull
         | Opcode::Pop
         | Opcode::Dup
         | Opcode::Dup2

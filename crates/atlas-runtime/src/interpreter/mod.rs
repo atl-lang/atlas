@@ -609,7 +609,15 @@ impl Interpreter {
             crate::ast::Expr::Index(inner) => {
                 // Nested: outer[inner_idx][idx] = value
                 // 1. Evaluate inner index expression
-                let inner_idx = self.eval_expr(&inner.index)?;
+                let inner_idx = match &inner.index {
+                    crate::ast::IndexValue::Single(expr) => self.eval_expr(expr)?,
+                    crate::ast::IndexValue::Slice(_) => {
+                        return Err(RuntimeError::TypeError {
+                            msg: "Invalid assignment target".to_string(),
+                            span,
+                        })
+                    }
+                };
                 // 2. Clone the intermediate element (eval_expr reads outer[inner_idx])
                 let mut elem = self.eval_expr(target_expr)?;
                 // 3. Mutate the element at idx (CoW triggers if shared)

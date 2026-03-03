@@ -578,11 +578,30 @@ impl Compiler {
         // Compile the target (array)
         self.compile_expr(&index.target)?;
 
-        // Compile the index
-        self.compile_expr(&index.index)?;
-
-        // Emit GetIndex instruction
-        self.bytecode.emit(Opcode::GetIndex, index.span);
+        match &index.index {
+            IndexValue::Single(expr) => {
+                self.compile_expr(expr)?;
+                self.bytecode.emit(Opcode::GetIndex, index.span);
+            }
+            IndexValue::Slice(slice) => match (&slice.start, &slice.end) {
+                (Some(start), Some(end)) => {
+                    self.compile_expr(start)?;
+                    self.compile_expr(end)?;
+                    self.bytecode.emit(Opcode::Slice, index.span);
+                }
+                (Some(start), None) => {
+                    self.compile_expr(start)?;
+                    self.bytecode.emit(Opcode::SliceFrom, index.span);
+                }
+                (None, Some(end)) => {
+                    self.compile_expr(end)?;
+                    self.bytecode.emit(Opcode::SliceTo, index.span);
+                }
+                (None, None) => {
+                    self.bytecode.emit(Opcode::SliceFull, index.span);
+                }
+            },
+        }
 
         Ok(())
     }

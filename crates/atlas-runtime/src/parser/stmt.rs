@@ -152,11 +152,17 @@ impl Parser {
     pub(super) fn expr_to_assign_target(&mut self, expr: Expr) -> Result<AssignTarget, ()> {
         match expr {
             Expr::Identifier(ident) => Ok(AssignTarget::Name(ident)),
-            Expr::Index(idx) => Ok(AssignTarget::Index {
-                target: idx.target,
-                index: idx.index,
-                span: idx.span,
-            }),
+            Expr::Index(idx) => match idx.index {
+                IndexValue::Single(index) => Ok(AssignTarget::Index {
+                    target: idx.target,
+                    index,
+                    span: idx.span,
+                }),
+                IndexValue::Slice(_) => {
+                    self.error("Invalid assignment target");
+                    Err(())
+                }
+            },
             _ => {
                 self.error("Invalid assignment target");
                 Err(())

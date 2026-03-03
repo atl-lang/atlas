@@ -78,6 +78,46 @@ fn test_array_whole_number_float_index() {
     assert_eval_number(code, 2.0);
 }
 
+#[test]
+fn test_array_slice_range() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3, 4];
+        let part: number[] = arr[1..3];
+        part[0] + part[1] + len(part)
+    "#;
+    assert_eval_number(code, 7.0);
+}
+
+#[test]
+fn test_array_slice_from() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3, 4];
+        let part: number[] = arr[1..];
+        part[0] + part[2] + len(part)
+    "#;
+    assert_eval_number(code, 9.0);
+}
+
+#[test]
+fn test_array_slice_to() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3, 4];
+        let part: number[] = arr[..3];
+        part[0] + part[2] + len(part)
+    "#;
+    assert_eval_number(code, 7.0);
+}
+
+#[test]
+fn test_array_slice_full() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3];
+        let part: number[] = arr[..];
+        part[0] + part[2] + len(part)
+    "#;
+    assert_eval_number(code, 7.0);
+}
+
 #[rstest]
 #[case("let arr: number[] = [1, 2, 3]; arr[5]", "AT0006")]
 #[case("let arr: number[] = [1, 2, 3]; arr[10] = 99; arr[0]", "AT0006")]
