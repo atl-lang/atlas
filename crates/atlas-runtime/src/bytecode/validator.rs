@@ -278,8 +278,6 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::Greater => "Greater",
         Opcode::GreaterEqual => "GreaterEqual",
         Opcode::Not => "Not",
-        Opcode::And => "And",
-        Opcode::Or => "Or",
         Opcode::Jump => "Jump",
         Opcode::JumpIfFalse => "JumpIfFalse",
         Opcode::Loop => "Loop",
@@ -436,8 +434,6 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::LessEqual
         | Opcode::Greater
         | Opcode::GreaterEqual
-        | Opcode::And
-        | Opcode::Or
         | Opcode::GetIndex => Some(-1),
 
         // Pop 3, push 1 (value assigned back)

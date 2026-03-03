@@ -41,10 +41,9 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x34] = Some(Opcode::Greater);
     table[0x35] = Some(Opcode::GreaterEqual);
 
-    // Logical (0x40-0x42)
+    // Logical (0x40)
     table[0x40] = Some(Opcode::Not);
-    table[0x41] = Some(Opcode::And);
-    table[0x42] = Some(Opcode::Or);
+    // Note: And/Or short-circuit is handled by JumpIfFalse during compilation
 
     // Control flow (0x50-0x52)
     table[0x50] = Some(Opcode::Jump);

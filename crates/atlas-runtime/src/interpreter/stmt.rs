@@ -106,16 +106,19 @@ impl Interpreter {
 
     /// Evaluate a compound assignment (+=, -=, *=, /=, %=)
     fn eval_compound_assign(&mut self, compound: &CompoundAssign) -> Result<Value, RuntimeError> {
+        // Cache index value to avoid re-evaluating side-effecting expressions.
+        // This ensures arr[i++] += 1 only increments i once.
+        let cached_index = match &compound.target {
+            AssignTarget::Index { index, .. } => Some(self.eval_expr(index.as_ref())?),
+            _ => None,
+        };
+
         // Get current value
         let current = match &compound.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, compound.span)?,
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
+            AssignTarget::Index { target, span, .. } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
-                let idx_val = self.eval_expr(index.as_ref())?;
+                let idx_val = cached_index.clone().unwrap();
                 self.get_array_element(arr_val, idx_val, *span)?
             }
         };
@@ -164,17 +167,13 @@ impl Interpreter {
             }
         };
 
-        // Store the result
+        // Store the result using cached index to avoid re-evaluation
         match &compound.target {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, compound.span)?;
             }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
+            AssignTarget::Index { target, span, .. } => {
+                let idx_val = cached_index.unwrap();
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
         }
@@ -184,16 +183,18 @@ impl Interpreter {
 
     /// Evaluate an increment (++)
     fn eval_increment(&mut self, inc: &IncrementStmt) -> Result<Value, RuntimeError> {
+        // Cache index value to avoid re-evaluating side-effecting expressions.
+        let cached_index = match &inc.target {
+            AssignTarget::Index { index, .. } => Some(self.eval_expr(index.as_ref())?),
+            _ => None,
+        };
+
         // Get current value
         let current = match &inc.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, inc.span)?,
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
+            AssignTarget::Index { target, span, .. } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
-                let idx_val = self.eval_expr(index.as_ref())?;
+                let idx_val = cached_index.clone().unwrap();
                 self.get_array_element(arr_val, idx_val, *span)?
             }
         };
@@ -215,17 +216,13 @@ impl Interpreter {
             }
         };
 
-        // Store the result
+        // Store the result using cached index
         match &inc.target {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, inc.span)?;
             }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
+            AssignTarget::Index { target, span, .. } => {
+                let idx_val = cached_index.unwrap();
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
         }
@@ -235,16 +232,18 @@ impl Interpreter {
 
     /// Evaluate a decrement (--)
     fn eval_decrement(&mut self, dec: &DecrementStmt) -> Result<Value, RuntimeError> {
+        // Cache index value to avoid re-evaluating side-effecting expressions.
+        let cached_index = match &dec.target {
+            AssignTarget::Index { index, .. } => Some(self.eval_expr(index.as_ref())?),
+            _ => None,
+        };
+
         // Get current value
         let current = match &dec.target {
             AssignTarget::Name(id) => self.get_variable(&id.name, dec.span)?,
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
+            AssignTarget::Index { target, span, .. } => {
                 let arr_val = self.eval_expr(target.as_ref())?;
-                let idx_val = self.eval_expr(index.as_ref())?;
+                let idx_val = cached_index.clone().unwrap();
                 self.get_array_element(arr_val, idx_val, *span)?
             }
         };
@@ -266,17 +265,13 @@ impl Interpreter {
             }
         };
 
-        // Store the result
+        // Store the result using cached index
         match &dec.target {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, result, dec.span)?;
             }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
+            AssignTarget::Index { target, span, .. } => {
+                let idx_val = cached_index.unwrap();
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
         }

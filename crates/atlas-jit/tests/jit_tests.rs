@@ -836,16 +836,6 @@ fn test_unsupported_call() {
 }
 
 #[test]
-fn test_unsupported_and() {
-    assert_unsupported(Opcode::And);
-}
-
-#[test]
-fn test_unsupported_or() {
-    assert_unsupported(Opcode::Or);
-}
-
-#[test]
 fn test_unsupported_array() {
     assert_unsupported(Opcode::Array);
 }

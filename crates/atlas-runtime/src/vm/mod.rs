@@ -904,12 +904,6 @@ impl VM {
                         }
                     }
                 }
-                Opcode::And | Opcode::Or => {
-                    // TODO: Short-circuit evaluation
-                    return Err(RuntimeError::UnknownOpcode {
-                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                    });
-                }
 
                 // ===== Control Flow =====
                 Opcode::Jump => {

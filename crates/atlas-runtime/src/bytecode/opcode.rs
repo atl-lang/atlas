@@ -68,10 +68,8 @@ pub enum Opcode {
     // ===== Logical (0x40-0x4F) =====
     /// Pop a, push !a
     Not = 0x40,
-    /// Short-circuit: if TOS is false, skip next instruction
-    And = 0x41,
-    /// Short-circuit: if TOS is true, skip next instruction
-    Or = 0x42,
+    // Note: And/Or short-circuit is handled by JumpIfFalse during compilation,
+    // not via dedicated opcodes. This matches standard compiler design.
 
     // ===== Control flow (0x50-0x5F) =====
     /// Unconditional jump [i16 offset]
@@ -153,8 +151,6 @@ impl TryFrom<u8> for Opcode {
             0x34 => Ok(Opcode::Greater),
             0x35 => Ok(Opcode::GreaterEqual),
             0x40 => Ok(Opcode::Not),
-            0x41 => Ok(Opcode::And),
-            0x42 => Ok(Opcode::Or),
             0x50 => Ok(Opcode::Jump),
             0x51 => Ok(Opcode::JumpIfFalse),
             0x52 => Ok(Opcode::Loop),

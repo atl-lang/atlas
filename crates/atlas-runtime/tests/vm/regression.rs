@@ -927,3 +927,55 @@ fn test_vm_division_by_very_small_number() {
     let result = VM::new(compile("let x = 1.0 / 1e-300;")).run(&SecurityContext::allow_all());
     assert!(result.is_ok());
 }
+
+// ============================================================================
+// H-004: Compound assignment side effects (index evaluated once)
+// ============================================================================
+
+#[test]
+fn test_compound_assign_index_side_effect_parity() {
+    // Verifies arr[i++] += 1 only increments i once (H-004 fix)
+    let source = r#"
+        var arr = [10, 20, 30];
+        var i = 0;
+        fn getIndex() -> Number {
+            i = i + 1;
+            return i - 1;
+        }
+        arr[getIndex()] += 5;
+        [arr[0], arr[1], arr[2], i];
+    "#;
+    assert_parity(source);
+}
+
+#[test]
+fn test_increment_index_side_effect_parity() {
+    // Verifies arr[f()]++ only calls f() once (H-004 fix)
+    let source = r#"
+        var arr = [10, 20, 30];
+        var callCount = 0;
+        fn getIndex() -> Number {
+            callCount = callCount + 1;
+            return 1;
+        }
+        arr[getIndex()]++;
+        [arr[1], callCount];
+    "#;
+    assert_parity(source);
+}
+
+#[test]
+fn test_decrement_index_side_effect_parity() {
+    // Verifies arr[f()]-- only calls f() once (H-004 fix)
+    let source = r#"
+        var arr = [10, 20, 30];
+        var callCount = 0;
+        fn getIndex() -> Number {
+            callCount = callCount + 1;
+            return 2;
+        }
+        arr[getIndex()]--;
+        [arr[2], callCount];
+    "#;
+    assert_parity(source);
+}

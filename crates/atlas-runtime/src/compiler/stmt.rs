@@ -664,115 +664,51 @@ impl Compiler {
                 index,
                 span,
             } => {
-                // Get array[index]
+                // Use temp locals to avoid re-evaluating side-effecting expressions.
+                // This ensures arr[i++] += 1 only increments i once.
+                let locals_before = self.locals.len();
+
+                // Evaluate target once, store in temp local
                 self.compile_expr(target)?;
+                let target_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__cmp_target".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+
+                // Evaluate index once, store in temp local
                 self.compile_expr(index)?;
-                // Duplicate array and index for later SetIndex
-                // Stack: [array, index]
-                // We need: [array, index] for GetIndex, then [array, index, new_value] for SetIndex
-                // But we don't have a good way to duplicate both values
-                // We'd need: [array, index, array, index] -> GetIndex -> [array, index, old_value]
-                // Then: [array, index, old_value, new_operand] -> Op -> [array, index, result]
-                // Then: SetIndex
+                let index_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__cmp_index".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+                // Stack: [target_val, index_val]
 
-                // Since we don't have Dup2, we need to recompile:
-                // Option 1: Recompile array and index twice
-                // Option 2: Use locals to save them
-                // For simplicity, let's recompile (not optimal but works):
+                // Push target, index for SetIndex (will be at bottom)
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
+                // Stack: [target_val, index_val, target_copy, index_copy]
 
-                // First get the current value
-                self.compile_expr(target)?; // Recompile array
-                self.compile_expr(index)?; // Recompile index
-                self.bytecode.emit(Opcode::GetIndex, *span);
-
-                // Now apply the operation
-                self.compile_expr(&compound.value)?;
-                let opcode = match compound.op {
-                    CompoundOp::AddAssign => Opcode::Add,
-                    CompoundOp::SubAssign => Opcode::Sub,
-                    CompoundOp::MulAssign => Opcode::Mul,
-                    CompoundOp::DivAssign => Opcode::Div,
-                    CompoundOp::ModAssign => Opcode::Mod,
-                };
-                self.bytecode.emit(opcode, compound.span);
-
-                // Now set it back: need array, index, value
-                self.compile_expr(target)?; // Recompile array again
-                self.compile_expr(index)?; // Recompile index again
-                                           // Stack is now: [result, array, index]
-                                           // But we need: [array, index, result]
-                                           // We need to rotate... but we don't have that opcode
-
-                // Let's use a different approach with a temp on stack
-                // Actually, this is getting complex. Let me use locals.
-                // For now, let's just note this limitation and use a simpler approach:
-
-                // Save result to a temporary by using the stack
-                // We have: [result] from the operation
-                // We need: [array, index, result]
-                // Compile array: [result, array]
-                // Compile index: [result, array, index]
-                // Now we need to get result to top: we need [array, index, result]
-
-                // Without rotate/swap, this is tricky. Let me think...
-                // Actually, we can store result in a temp local if in local scope
-                // Or just do multiple GetIndex/SetIndex sequences
-
-                // Simplest working solution: compute result, then do full set sequence:
-                // Current stack: [result]
-                // We'll emit: array, index, result (by using stack manipulation)
-
-                // You know what, let me just restructure to compute things in right order:
-                // We'll compute: array, index, then old_value, then operation, giving new_value
-                // But that puts new_value on top with array and index buried
-
-                // Cleanest approach: emit array and index first, dup them, getindex, operate, setindex
-                // But we don't have dup2 to dup both array and index
-
-                // For MVP, let's just recompile array and index multiple times (inefficient but correct):
-                // Get current: arr[idx]
-                // Compute: old_value op new_value = result
-                // Set: arr[idx] = result
-
-                // But the issue remains: after computing result, we need array and index under it
-
-                // Let me try a different approach: save to temp local if possible
-                // Check scope depth and use a local
-
-                // Actually, let's just accept the limitation for now and not support
-                // compound assignment on array indices in v0.1, or implement correctly:
-
-                // CORRECT IMPLEMENTATION using recompilation:
-                // Step 1: Push array, index, get value
-                // Step 2: Compute operation (old_value on stack, push operand, apply op)
-                // Step 3: Push array, index again, then rotate/swap to get value on top
-                //
-                // Since we don't have rotate, we need to structure it as:
-                // Push array, index (will be consumed by SetIndex)
-                // Push array, index again (will be consumed by GetIndex)
-                // GetIndex (leaves old_value)
-                // Push operand
-                // Apply operation (leaves result)
-                // Now stack is [array_for_set, index_for_set, result] - PERFECT!
-
-                // Let's implement that:
-
-                // For SetIndex at the end (push array and index first)
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
-                // Stack: [array, index]
-
-                // For GetIndex (push array and index again)
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
-                // Stack: [array_set, index_set, array_get, index_get]
+                // Push target, index for GetIndex
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
+                // Stack: [target_val, index_val, target_set, index_set, target_get, index_get]
 
                 self.bytecode.emit(Opcode::GetIndex, *span);
-                // Stack: [array_set, index_set, old_value]
+                // Stack: [target_val, index_val, target_set, index_set, old_value]
 
                 // Apply operation
                 self.compile_expr(&compound.value)?;
-                // Stack: [array_set, index_set, old_value, operand]
+                // Stack: [target_val, index_val, target_set, index_set, old_value, operand]
 
                 let opcode = match compound.op {
                     CompoundOp::AddAssign => Opcode::Add,
@@ -782,13 +718,27 @@ impl Compiler {
                     CompoundOp::ModAssign => Opcode::Mod,
                 };
                 self.bytecode.emit(opcode, compound.span);
-                // Stack: [array_set, index_set, result]
+                // Stack: [target_val, index_val, target_set, index_set, result]
 
-                // Now SetIndex — CoW: mutated container is pushed back
+                // SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
-                // Write back then pop (compound assign is a statement — no residual value)
+                // Stack: [target_val, index_val, new_container]
+
+                // Write back the mutated container
                 self.emit_index_cow_write_back(target, *span)?;
+                // Stack: [target_val, index_val]
+
+                // Pop statement result
                 self.bytecode.emit(Opcode::Pop, *span);
+                // Stack: [target_val, index_val]
+
+                // Pop temp locals (index first, then target)
+                self.bytecode.emit(Opcode::Pop, *span);
+                self.bytecode.emit(Opcode::Pop, *span);
+                // Stack: []
+
+                // Remove temp locals from tracking
+                self.locals.truncate(locals_before);
             }
         }
 
@@ -871,14 +821,40 @@ impl Compiler {
                 index,
                 span,
             } => {
-                // Same pattern as compound assign for index
-                // Push array, index for SetIndex
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
+                // Use temp locals to avoid re-evaluating side-effecting expressions.
+                let locals_before = self.locals.len();
 
-                // Push array, index for GetIndex
+                // Evaluate target once, store in temp local
                 self.compile_expr(target)?;
+                let target_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__inc_target".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+
+                // Evaluate index once, store in temp local
                 self.compile_expr(index)?;
+                let index_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__inc_index".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+
+                // Push target, index for SetIndex
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
+
+                // Push target, index for GetIndex
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
                 self.bytecode.emit(Opcode::GetIndex, *span);
 
                 // Push 1 and add
@@ -889,9 +865,13 @@ impl Compiler {
 
                 // SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
-                // Write back then pop (increment is a statement — no residual value)
                 self.emit_index_cow_write_back(target, *span)?;
                 self.bytecode.emit(Opcode::Pop, *span);
+
+                // Pop temp locals
+                self.bytecode.emit(Opcode::Pop, *span);
+                self.bytecode.emit(Opcode::Pop, *span);
+                self.locals.truncate(locals_before);
             }
         }
 
@@ -974,14 +954,40 @@ impl Compiler {
                 index,
                 span,
             } => {
-                // Same pattern as increment for index
-                // Push array, index for SetIndex
-                self.compile_expr(target)?;
-                self.compile_expr(index)?;
+                // Use temp locals to avoid re-evaluating side-effecting expressions.
+                let locals_before = self.locals.len();
 
-                // Push array, index for GetIndex
+                // Evaluate target once, store in temp local
                 self.compile_expr(target)?;
+                let target_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__dec_target".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+
+                // Evaluate index once, store in temp local
                 self.compile_expr(index)?;
+                let index_slot = (self.locals.len() - self.current_function_base) as u16;
+                self.push_local(Local {
+                    name: "__dec_index".to_string(),
+                    depth: self.scope_depth + 1,
+                    mutable: false,
+                    scoped_name: None,
+                });
+
+                // Push target, index for SetIndex
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
+
+                // Push target, index for GetIndex
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(target_slot);
+                self.bytecode.emit(Opcode::GetLocal, *span);
+                self.bytecode.emit_u16(index_slot);
                 self.bytecode.emit(Opcode::GetIndex, *span);
 
                 // Push 1 and subtract
@@ -992,9 +998,13 @@ impl Compiler {
 
                 // SetIndex — CoW: mutated container is pushed back
                 self.bytecode.emit(Opcode::SetIndex, *span);
-                // Write back then pop (decrement is a statement — no residual value)
                 self.emit_index_cow_write_back(target, *span)?;
                 self.bytecode.emit(Opcode::Pop, *span);
+
+                // Pop temp locals
+                self.bytecode.emit(Opcode::Pop, *span);
+                self.bytecode.emit(Opcode::Pop, *span);
+                self.locals.truncate(locals_before);
             }
         }
 
