@@ -1,0 +1,15 @@
+# Atlas Audits
+
+Daily and on-demand audit reports.
+
+## Files
+
+- `YYYY-MM-DD.md` - Daily audit report
+- `YYYY-MM-DD-HHMM.md` - Additional audits on same day
+
+## Generate
+
+```bash
+./scripts/daily-audit           # Local checks only
+./scripts/daily-audit --codex   # With AI analysis
+```

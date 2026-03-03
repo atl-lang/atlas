@@ -1,0 +1,397 @@
+#!/bin/bash
+# ══════════════════════════════════════════════════════════════════════════════
+# ATLAS DAILY AUDIT
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Deep analysis too slow for pre-commit. Run manually or via cron.
+#
+# Usage:
+#   ./scripts/daily-audit                        # Full audit (local only)
+#   ./scripts/daily-audit --quick                # Skip benchmarks
+#   ./scripts/daily-audit --codex                # AI analysis (uses config default)
+#   ./scripts/daily-audit --codex --model=MODEL  # AI analysis with specific model
+#   ./scripts/daily-audit --section X            # Run only section X
+#
+# Sections: unsafe, todo, dead, panic, coverage, bench, tracker
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+set -e
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+NC='\033[0m'
+BOLD='\033[1m'
+
+PROJECT_ROOT="$(git rev-parse --show-toplevel)"
+cd "$PROJECT_ROOT"
+
+QUICK_MODE=false
+CODEX_MODE=false
+CODEX_MODEL="gpt-5.1-codex-mini"  # GPT-5.1 Codex Mini
+SECTION=""
+
+for arg in "$@"; do
+  case $arg in
+    --quick) QUICK_MODE=true ;;
+    --codex) CODEX_MODE=true ;;
+    --codex=*) CODEX_MODE=true; CODEX_MODEL="${arg#*=}" ;;
+    --model=*) CODEX_MODEL="${arg#*=}" ;;
+    --section) SECTION="$2"; shift ;;
+    --section=*) SECTION="${arg#*=}" ;;
+  esac
+done
+
+# Create audits directory
+AUDIT_DIR="$PROJECT_ROOT/audits"
+mkdir -p "$AUDIT_DIR"
+
+AUDIT_DATE=$(date +%Y-%m-%d)
+AUDIT_TIME=$(date +%H%M)
+AUDIT_FILE="$AUDIT_DIR/${AUDIT_DATE}.md"
+
+# If file exists, append time to make unique
+if [ -f "$AUDIT_FILE" ]; then
+  AUDIT_FILE="$AUDIT_DIR/${AUDIT_DATE}-${AUDIT_TIME}.md"
+fi
+ISSUES_TO_SEED=""
+
+echo ""
+echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+echo -e "${BOLD}              ATLAS DAILY AUDIT - ${AUDIT_DATE}${NC}"
+echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+echo ""
+
+# Initialize report
+cat > "$AUDIT_FILE" << EOF
+# Atlas Daily Audit - ${AUDIT_DATE}
+
+Generated: $(date)
+Mode: ${QUICK_MODE:+Quick}${QUICK_MODE:-Full}
+
+EOF
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 1. UNSAFE CODE AUDIT
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_unsafe_audit() {
+  echo -e "${BLUE}[1/7]${NC} Unsafe Code Audit"
+
+  echo "## 1. Unsafe Code Audit" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Find all unsafe blocks
+  UNSAFE_COUNT=$(grep -r "unsafe" crates/*/src --include="*.rs" 2>/dev/null | grep -v "// SAFETY:" | wc -l | tr -d ' ')
+  UNSAFE_WITH_SAFETY=$(grep -r "unsafe" crates/*/src --include="*.rs" -A1 2>/dev/null | grep -c "// SAFETY:" || echo 0)
+
+  echo "- Total unsafe usages: $UNSAFE_COUNT" >> "$AUDIT_FILE"
+  echo "- With SAFETY comments: $UNSAFE_WITH_SAFETY" >> "$AUDIT_FILE"
+
+  # Find unsafe without SAFETY comment
+  MISSING_SAFETY=$(grep -rn "unsafe" crates/*/src --include="*.rs" 2>/dev/null | while read -r line; do
+    file=$(echo "$line" | cut -d: -f1)
+    lineno=$(echo "$line" | cut -d: -f2)
+    # Check if next line has SAFETY comment
+    next_line=$(sed -n "$((lineno+1))p" "$file" 2>/dev/null)
+    if ! echo "$next_line" | grep -q "// SAFETY:"; then
+      prev_line=$(sed -n "$((lineno-1))p" "$file" 2>/dev/null)
+      if ! echo "$prev_line" | grep -q "// SAFETY:"; then
+        echo "$file:$lineno"
+      fi
+    fi
+  done)
+
+  if [ -n "$MISSING_SAFETY" ]; then
+    echo "" >> "$AUDIT_FILE"
+    echo "### Missing SAFETY comments:" >> "$AUDIT_FILE"
+    echo '```' >> "$AUDIT_FILE"
+    echo "$MISSING_SAFETY" | head -20 >> "$AUDIT_FILE"
+    echo '```' >> "$AUDIT_FILE"
+    echo -e "   ${YELLOW}⚠${NC} Found unsafe blocks without SAFETY comments"
+    ISSUES_TO_SEED="${ISSUES_TO_SEED}P2|high|runtime|Unsafe blocks missing SAFETY comments|$(echo "$MISSING_SAFETY" | wc -l | tr -d ' ') unsafe blocks lack safety documentation|Add // SAFETY: comments explaining invariants\n"
+  else
+    echo -e "   ${GREEN}✓${NC} All unsafe blocks have SAFETY comments"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 2. TODO/FIXME SCAN
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_todo_scan() {
+  echo -e "${BLUE}[2/7]${NC} TODO/FIXME Scan"
+
+  echo "## 2. TODO/FIXME Scan" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  TODO_COUNT=$(grep -rn "// TODO\|// FIXME\|// HACK\|todo!()\|unimplemented!()" crates/*/src --include="*.rs" 2>/dev/null | grep -v "/tests/" | wc -l | tr -d ' ')
+
+  echo "- Total TODOs in production code: $TODO_COUNT" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  if [ "$TODO_COUNT" -gt 0 ]; then
+    echo "### Locations:" >> "$AUDIT_FILE"
+    echo '```' >> "$AUDIT_FILE"
+    grep -rn "// TODO\|// FIXME\|// HACK\|todo!()\|unimplemented!()" crates/*/src --include="*.rs" 2>/dev/null | grep -v "/tests/" | head -30 >> "$AUDIT_FILE"
+    echo '```' >> "$AUDIT_FILE"
+    echo -e "   ${YELLOW}⚠${NC} Found $TODO_COUNT TODOs in production code"
+  else
+    echo -e "   ${GREEN}✓${NC} No TODOs in production code"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 3. DEAD CODE CHECK
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_dead_code_check() {
+  echo -e "${BLUE}[3/7]${NC} Dead Code Check"
+
+  echo "## 3. Dead Code Analysis" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Count allow(dead_code) annotations
+  DEAD_CODE_ALLOWS=$(grep -rn "#\[allow(dead_code)\]" crates/*/src --include="*.rs" 2>/dev/null | wc -l | tr -d ' ')
+  UNUSED_ALLOWS=$(grep -rn "#\[allow(unused" crates/*/src --include="*.rs" 2>/dev/null | wc -l | tr -d ' ')
+
+  echo "- #[allow(dead_code)]: $DEAD_CODE_ALLOWS" >> "$AUDIT_FILE"
+  echo "- #[allow(unused*)]: $UNUSED_ALLOWS" >> "$AUDIT_FILE"
+
+  if [ "$DEAD_CODE_ALLOWS" -gt 10 ]; then
+    echo -e "   ${YELLOW}⚠${NC} High dead code annotation count: $DEAD_CODE_ALLOWS"
+  else
+    echo -e "   ${GREEN}✓${NC} Dead code annotations within limits"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 4. UNWRAP/PANIC DENSITY
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_panic_check() {
+  echo -e "${BLUE}[4/7]${NC} Unwrap/Panic Density"
+
+  echo "## 4. Unwrap/Panic Density" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Count by crate
+  for crate in crates/*/; do
+    crate_name=$(basename "$crate")
+    unwraps=$(grep -rn "\.unwrap()" "$crate/src" --include="*.rs" 2>/dev/null | grep -v "/tests/" | wc -l | tr -d ' ')
+    panics=$(grep -rn "panic!(" "$crate/src" --include="*.rs" 2>/dev/null | grep -v "/tests/" | wc -l | tr -d ' ')
+    expects=$(grep -rn "\.expect(" "$crate/src" --include="*.rs" 2>/dev/null | grep -v "/tests/" | wc -l | tr -d ' ')
+    echo "- $crate_name: $unwraps unwrap, $panics panic, $expects expect" >> "$AUDIT_FILE"
+  done
+
+  TOTAL_UNWRAPS=$(grep -rn "\.unwrap()" crates/*/src --include="*.rs" 2>/dev/null | grep -v "/tests/" | wc -l | tr -d ' ')
+  if [ "$TOTAL_UNWRAPS" -gt 50 ]; then
+    echo -e "   ${YELLOW}⚠${NC} High unwrap count: $TOTAL_UNWRAPS"
+  else
+    echo -e "   ${GREEN}✓${NC} Unwrap count acceptable: $TOTAL_UNWRAPS"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 5. TEST COVERAGE (quick estimate)
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_coverage_check() {
+  echo -e "${BLUE}[5/7]${NC} Test Coverage Estimate"
+
+  echo "## 5. Test Coverage" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Count test functions
+  TEST_COUNT=$(grep -rn "#\[test\]" crates/*/tests --include="*.rs" 2>/dev/null | wc -l | tr -d ' ')
+  SRC_LINES=$(find crates/*/src -name "*.rs" -exec cat {} \; 2>/dev/null | wc -l | tr -d ' ')
+  TEST_LINES=$(find crates/*/tests -name "*.rs" -exec cat {} \; 2>/dev/null | wc -l | tr -d ' ')
+
+  RATIO=$(echo "scale=2; $TEST_LINES / $SRC_LINES * 100" | bc 2>/dev/null || echo "?")
+
+  echo "- Source lines: $SRC_LINES" >> "$AUDIT_FILE"
+  echo "- Test lines: $TEST_LINES" >> "$AUDIT_FILE"
+  echo "- Test/Source ratio: ${RATIO}%" >> "$AUDIT_FILE"
+  echo "- Test functions: $TEST_COUNT" >> "$AUDIT_FILE"
+
+  echo -e "   ${CYAN}ℹ${NC} Test/source ratio: ${RATIO}%"
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 6. BENCHMARK CHECK (skip if --quick)
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_benchmark_check() {
+  if [ "$QUICK_MODE" = true ]; then
+    echo -e "${BLUE}[6/7]${NC} Benchmarks ${YELLOW}SKIPPED${NC} (--quick mode)"
+    echo "## 6. Benchmarks" >> "$AUDIT_FILE"
+    echo "" >> "$AUDIT_FILE"
+    echo "Skipped (quick mode)" >> "$AUDIT_FILE"
+    echo "" >> "$AUDIT_FILE"
+    return
+  fi
+
+  echo -e "${BLUE}[6/7]${NC} Benchmark Smoke Test"
+
+  echo "## 6. Benchmarks" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Just verify benchmarks compile and run briefly
+  if cargo bench --no-run -p atlas-runtime 2>/dev/null; then
+    echo "- Benchmarks compile: ✓" >> "$AUDIT_FILE"
+    echo -e "   ${GREEN}✓${NC} Benchmarks compile"
+  else
+    echo "- Benchmarks compile: ✗" >> "$AUDIT_FILE"
+    echo -e "   ${RED}✗${NC} Benchmark compilation failed"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# 7. TRACKER HEALTH
+# ══════════════════════════════════════════════════════════════════════════════
+
+run_tracker_health() {
+  echo -e "${BLUE}[7/7]${NC} Tracker Health"
+
+  echo "## 7. Issue Tracker Health" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  P0_COUNT=$(sqlite3 tracking/atlas.db "SELECT COUNT(*) FROM issues WHERE priority='P0' AND status='open'" 2>/dev/null || echo "?")
+  P1_COUNT=$(sqlite3 tracking/atlas.db "SELECT COUNT(*) FROM issues WHERE priority='P1' AND status='open'" 2>/dev/null || echo "?")
+  TOTAL_OPEN=$(sqlite3 tracking/atlas.db "SELECT COUNT(*) FROM issues WHERE status='open'" 2>/dev/null || echo "?")
+  STALE=$(sqlite3 tracking/atlas.db "SELECT COUNT(*) FROM issues WHERE status='in_progress' AND date(found_date) < date('now', '-7 days')" 2>/dev/null || echo "0")
+
+  echo "- Open P0s: $P0_COUNT" >> "$AUDIT_FILE"
+  echo "- Open P1s: $P1_COUNT" >> "$AUDIT_FILE"
+  echo "- Total open: $TOTAL_OPEN" >> "$AUDIT_FILE"
+  echo "- Stale (in_progress >7d): $STALE" >> "$AUDIT_FILE"
+
+  echo -e "   Open: ${YELLOW}${P0_COUNT} P0${NC}, ${P1_COUNT} P1, ${TOTAL_OPEN} total"
+
+  if [ "$STALE" -gt 0 ]; then
+    echo -e "   ${YELLOW}⚠${NC} $STALE stale issues (in_progress >7 days)"
+  fi
+  echo "" >> "$AUDIT_FILE"
+}
+
+# ══════════════════════════════════════════════════════════════════════════════
+# RUN ALL SECTIONS
+# ══════════════════════════════════════════════════════════════════════════════
+
+if [ -n "$SECTION" ]; then
+  case $SECTION in
+    1|unsafe) run_unsafe_audit ;;
+    2|todo) run_todo_scan ;;
+    3|dead) run_dead_code_check ;;
+    4|panic) run_panic_check ;;
+    5|coverage) run_coverage_check ;;
+    6|bench) run_benchmark_check ;;
+    7|tracker) run_tracker_health ;;
+    *) echo "Unknown section: $SECTION" ;;
+  esac
+else
+  run_unsafe_audit
+  run_todo_scan
+  run_dead_code_check
+  run_panic_check
+  run_coverage_check
+  run_benchmark_check
+  run_tracker_health
+fi
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SUMMARY
+# ══════════════════════════════════════════════════════════════════════════════
+
+echo ""
+echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}Audit complete.${NC} Report: ${CYAN}${AUDIT_FILE}${NC}"
+echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+echo ""
+
+# Seed any issues found
+if [ -n "$ISSUES_TO_SEED" ]; then
+  echo -e "${MAGENTA}Issues to consider seeding:${NC}"
+  echo -e "$ISSUES_TO_SEED" | while IFS='|' read -r priority severity component title problem fix; do
+    if [ -n "$priority" ]; then
+      echo -e "  - [$priority] $title"
+    fi
+  done
+  echo ""
+  echo "Run with --seed to add these to tracker"
+fi
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CODEX AI ANALYSIS (if --codex flag)
+# ══════════════════════════════════════════════════════════════════════════════
+
+if [ "$CODEX_MODE" = true ]; then
+  echo ""
+  echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+  echo -e "${MAGENTA}${BOLD}CODEX DEEP ANALYSIS${NC}"
+  echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+  echo ""
+
+  # Load shared intel rules
+  INTEL_RULES=$(cat "$PROJECT_ROOT/.githooks/prompts/intel-rules.md" 2>/dev/null || echo "")
+
+  # Build prompt for Codex (full codebase scan mode)
+  CODEX_PROMPT=$(cat <<EOF
+# Atlas Full Intel Audit
+
+Mode: HARDENING. Scope: FULL CODEBASE (not just diff)
+Codebase: 95K lines Rust, 8 crates
+
+${INTEL_RULES}
+
+## Local Audit Results (already collected)
+
+$(cat "$AUDIT_FILE")
+
+## Your Mission
+
+Scan the ENTIRE codebase for problems the local checks MISSED.
+This is a FULL INTEL RUN. Report ALL findings with file:line.
+
+Focus areas:
+1. Unsafe code without SAFETY comments
+2. Incomplete implementations (stubs, partial work, TODOs)
+3. Dead code and orphaned files
+4. Parity violations (vm vs interpreter)
+5. Architectural issues (duplicate systems)
+6. Quality issues (unwrap, panic, missing tests)
+
+Report EVERYTHING. Do not summarize. Do not suggest fixes.
+EOF
+)
+
+  echo -e "   ${YELLOW}Spawning Codex (${CODEX_MODEL})...${NC}"
+  echo ""
+
+  # Run Codex and capture output
+  echo "" >> "$AUDIT_FILE"
+  echo "---" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+  echo "## Codex Analysis (${CODEX_MODEL})" >> "$AUDIT_FILE"
+  echo "" >> "$AUDIT_FILE"
+
+  # Run and tee to both terminal and file
+  codex exec -m "$CODEX_MODEL" "$CODEX_PROMPT" 2>&1 | tee -a "$AUDIT_FILE" || {
+    echo -e "${RED}Codex analysis failed${NC}"
+  }
+
+  echo ""
+  echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
+  echo -e "${GREEN}Full report saved:${NC} ${CYAN}${AUDIT_FILE}${NC}"
+fi
