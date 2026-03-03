@@ -38,8 +38,8 @@ fn test_compound_assignments(#[case] source: &str, #[case] expected: f64) {
 // ============================================================================
 
 #[rstest]
-#[case("let mut x = 5; x++; x;", 6.0)]
-#[case("let mut x = 5; x--; x;", 4.0)]
+#[case("let mut x = 5; x += 1; x;", 6.0)]
+#[case("let mut x = 5; x -= 1; x;", 4.0)]
 fn test_increment_decrement(#[case] source: &str, #[case] expected: f64) {
     let result = execute_source(source);
     assert!(result.is_ok());
@@ -66,7 +66,7 @@ fn test_array_compound_assignment() {
 
 #[test]
 fn test_array_increment() {
-    let result = execute_source("let arr = [5, 10, 15]; arr[1]++; arr[1];");
+    let result = execute_source("let arr = [5, 10, 15]; arr[1] += 1; arr[1];");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(11.0)));
 }
@@ -173,9 +173,9 @@ fn test_mixed_operators() {
     let result = execute_source(
         r#"
         let mut x = 5;
-        x++;
+        x += 1;
         x *= 2;
-        x--;
+        x -= 1;
         x;
     "#,
     );
@@ -211,7 +211,7 @@ fn test_loop_with_compound_assignment() {
         let mut i = 0;
         while (i < 5) {
             sum += i;
-            i++;
+            i += 1;
         }
         sum;
     "#,

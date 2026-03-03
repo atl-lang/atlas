@@ -2,6 +2,8 @@
 
 use super::*;
 
+mod parser_errors_part2;
+
 // Error Recovery
 // ============================================================================
 
@@ -68,10 +70,10 @@ fn test_parse_nested_function_in_while_block() {
             let mut i: number = 0;
             while (i < 5) {
                 fn increment() -> void {
-                    i++;
+                    i += 1;
                 }
                 increment();
-                i++;
+                i += 1;
             }
         }
     "#;
@@ -84,7 +86,7 @@ fn test_parse_nested_function_in_while_block() {
 fn test_parse_nested_function_in_for_block() {
     let source = r#"
         fn outer() -> void {
-            for (let mut i: number = 0; i < 5; i++) {
+            for i in [0, 1, 2, 3, 4] {
                 fn log(x: number) -> void {
                     print(str(x));
                 }
@@ -313,67 +315,10 @@ fn test_while_loop_errors(#[case] source: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case("for { }", "variable")] // for-in syntax: expects variable name, not '('
-#[case("for (let i = 0 { }", ";")]
-#[case("for (let i = 0; i < 10 { }", ";")]
-#[case("for (let i = 0; i < 10; i++ { }", ")")]
-#[case("for (let i = 0; i < 10; i++) }", "{")]
+#[case("for i { }", "in")]
+#[case("for i in [1, 2 }", "]")]
+#[case("for i in [1, 2] }", "{")]
 fn test_for_loop_errors(#[case] source: &str, #[case] expected: &str) {
     let diagnostics = parse_errors(source);
     assert_has_parser_error(&diagnostics, expected);
 }
-
-// ============================================================================
-// Expression Errors
-// ============================================================================
-
-#[rstest]
-#[case("1 +", "expression")]
-#[case("1 + + 2", "expression")]
-#[case("let x = (1 + 2;", "')'")]
-#[case("let x = [1, 2, 3;", "']'")]
-#[case("arr[];", "expression")]
-#[case("arr[0;", "']'")]
-#[case("foo(1, 2, 3;", "')'")]
-fn test_expression_errors(#[case] source: &str, #[case] expected: &str) {
-    let diagnostics = parse_errors(source);
-    assert_has_parser_error(&diagnostics, expected);
-}
-
-// ============================================================================
-// Block Errors
-// ============================================================================
-
-#[rstest]
-#[case("{ let x = 1", "}")]
-#[case("fn foo() -> number { return 1", "}")]
-fn test_block_errors(#[case] source: &str, #[case] expected: &str) {
-    let diagnostics = parse_errors(source);
-    assert_has_parser_error(&diagnostics, expected);
-}
-
-// ============================================================================
-// Array Literal Errors
-// ============================================================================
-
-#[test]
-fn test_array_literal_unclosed() {
-    // Note: This might get consumed as expression start, so just check for error
-    let diagnostics = parse_errors("[1, 2");
-    assert!(!diagnostics.is_empty(), "Expected error for unclosed array");
-}
-
-// ============================================================================
-// Unary Operator Errors
-// ============================================================================
-
-#[rstest]
-#[case("-", "expression")]
-#[case("!", "expression")]
-fn test_unary_errors(#[case] source: &str, #[case] expected: &str) {
-    let diagnostics = parse_errors(source);
-    assert_has_parser_error(&diagnostics, expected);
-}
-
-// ============================================================================
-// Operator Precedence Tests (from operator_precedence_tests.rs)
-// ============================================================================

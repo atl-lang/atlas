@@ -17,16 +17,16 @@ fn test_array_compound_assign_add() {
     );
 }
 
-/// Increment (`++`) on array index writes back correctly.
+/// Compound assignment (`+= 1`) on array index writes back correctly.
 #[test]
 fn test_array_increment_writes_back() {
-    assert_eval_number("let mut arr: array = [5, 6, 7]; arr[0]++; arr[0];", 6.0);
+    assert_eval_number("let mut arr: array = [5, 6, 7]; arr[0] += 1; arr[0];", 6.0);
 }
 
-/// Decrement (`--`) on array index writes back correctly.
+/// Compound assignment (`-= 1`) on array index writes back correctly.
 #[test]
 fn test_array_decrement_writes_back() {
-    assert_eval_number("let mut arr: array = [5, 6, 7]; arr[2]--; arr[2];", 6.0);
+    assert_eval_number("let mut arr: array = [5, 6, 7]; arr[2] -= 1; arr[2];", 6.0);
 }
 
 /// Multiple mutations accumulate on the same variable.

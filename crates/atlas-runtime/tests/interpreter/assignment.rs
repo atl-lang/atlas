@@ -65,10 +65,10 @@ fn test_compound_assignments(#[case] name: &str, #[case] source: &str) {
 // ============================================================================
 
 #[rstest]
-#[case("increment_name", "x++;")]
-#[case("decrement_name", "x--;")]
-#[case("increment_array", "arr[0]++;")]
-#[case("decrement_array", "arr[i]--;")]
+#[case("increment_name", "x += 1;")]
+#[case("decrement_name", "x -= 1;")]
+#[case("increment_array", "arr[0] += 1;")]
+#[case("decrement_array", "arr[i] -= 1;")]
 fn test_increment_decrement(#[case] name: &str, #[case] source: &str) {
     let (program, diagnostics) = parse_source(source);
 

@@ -78,23 +78,29 @@ items:
                       predicate: ~
                       body:
                         statements:
-                          - Increment:
+                          - CompoundAssign:
                               target:
                                 Name:
                                   name: i
                                   span:
                                     start: 154
                                     end: 155
+                              op: AddAssign
+                              value:
+                                Literal:
+                                  - Number: 1
+                                  - start: 159
+                                    end: 160
                               span:
                                 start: 154
-                                end: 158
+                                end: 161
                         tail_expr: ~
                         span:
                           start: 132
-                          end: 176
+                          end: 179
                       span:
                         start: 109
-                        end: 176
+                        end: 179
                   - Expr:
                       expr:
                         Call:
@@ -102,36 +108,42 @@ items:
                             Identifier:
                               name: increment
                               span:
-                                start: 193
-                                end: 202
+                                start: 196
+                                end: 205
                           args: []
                           span:
-                            start: 193
-                            end: 204
+                            start: 196
+                            end: 207
                       span:
-                        start: 193
-                        end: 205
-                  - Increment:
+                        start: 196
+                        end: 208
+                  - CompoundAssign:
                       target:
                         Name:
                           name: i
                           span:
-                            start: 222
-                            end: 223
+                            start: 225
+                            end: 226
+                      op: AddAssign
+                      value:
+                        Literal:
+                          - Number: 1
+                          - start: 230
+                            end: 231
                       span:
-                        start: 222
-                        end: 226
+                        start: 225
+                        end: 232
                 tail_expr: ~
                 span:
                   start: 91
-                  end: 240
+                  end: 246
               span:
                 start: 77
-                end: 240
+                end: 246
         tail_expr: ~
         span:
           start: 28
-          end: 250
+          end: 256
       span:
         start: 9
-        end: 250
+        end: 256

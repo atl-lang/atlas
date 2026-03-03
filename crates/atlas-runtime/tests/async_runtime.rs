@@ -12,6 +12,9 @@ use rstest::*;
 use std::fs;
 use tempfile::TempDir;
 
+#[path = "async_runtime/async_runtime_loops.rs"]
+mod async_runtime_loops;
+
 // --- Future/Promise type and async foundation ---
 
 // Integration tests for Future/Promise type and async foundation
@@ -1811,47 +1814,6 @@ fn test_channel_with_array_messages() {
 
 #[test]
 #[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
-fn test_channel_multiple_sends_before_receive() {
-    let code = r#"
-        let channel = channelUnbounded();
-        let sender = channel[0];
-        let receiver = channel[1];
-
-        // Send many messages
-        for (let mut i: number = 0; i < 10; i = i + 1) {
-            channelSend(sender, i);
-        }
-
-        // Receive first message
-        await channelReceive(receiver)
-    "#;
-    let result = eval_ok(code);
-    assert_eq!(result, Value::Number(0.0));
-}
-
-#[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
-fn test_channel_interleaved_send_receive() {
-    let code = r#"
-        let channel = channelUnbounded();
-        let sender = channel[0];
-        let receiver = channel[1];
-
-        let mut sum: number = 0;
-        for (let mut i: number = 0; i < 5; i = i + 1) {
-            channelSend(sender, i);
-            let val = await channelReceive(receiver);
-            sum = sum + val;
-        }
-
-        sum
-    "#;
-    let result = eval_ok(code);
-    assert_eq!(result, Value::Number(10.0)); // 0+1+2+3+4 = 10
-}
-
-#[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_with_null_messages() {
     let code = r#"
         let channel = channelUnbounded();
@@ -2279,35 +2241,6 @@ fn test_mutex_shared_between_tasks() {
     let result = eval_ok(code);
     // Should be either 10 or 30 depending on task order
     assert!(matches!(result, Value::Number(n) if n == 10.0 || n == 30.0));
-}
-
-#[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
-fn test_complex_async_workflow() {
-    let code = r#"
-        let channel = channelUnbounded();
-        let sender = channel[0];
-        let receiver = channel[1];
-
-        // Producer task
-        spawn(async {
-            for (let mut i: number = 1; i <= 5; i = i + 1) {
-                await sleep(2);
-                channelSend(sender, i);
-            }
-        }, "producer");
-
-        // Consumer task
-        let mut sum: number = 0;
-        for (let mut i: number = 0; i < 5; i = i + 1) {
-            let val = await channelReceive(receiver);
-            sum = sum + val;
-        }
-
-        sum
-    "#;
-    let result = eval_ok(code);
-    assert_eq!(result, Value::Number(15.0)); // 1+2+3+4+5
 }
 
 #[test]

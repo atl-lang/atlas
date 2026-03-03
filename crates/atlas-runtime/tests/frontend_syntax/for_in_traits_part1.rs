@@ -138,7 +138,7 @@ fn test_parse_for_in_error_missing_variable() {
 }
 
 #[test]
-fn test_traditional_for_still_works() {
+fn test_traditional_for_errors() {
     let source = r#"
         for (let i = 0; i < 10; i = i + 1) {
             print(i);
@@ -152,8 +152,8 @@ fn test_traditional_for_still_works() {
     let mut parser = Parser::new(tokens);
     let (_program, parse_diags) = parser.parse();
     assert!(
-        parse_diags.is_empty(),
-        "Traditional for loops should still work"
+        !parse_diags.is_empty(),
+        "Traditional for loops should now error"
     );
 }
 

@@ -91,7 +91,7 @@ fn test_while_loop_with_continue() {
 fn test_for_loop() {
     let code = r#"
         let mut sum: number = 0;
-        for (let mut i: number = 0; i < 5; i = i + 1) {
+        for i in [0, 1, 2, 3, 4] {
             sum = sum + i;
         }
         sum
@@ -103,7 +103,7 @@ fn test_for_loop() {
 fn test_for_loop_with_break() {
     let code = r#"
         let mut result: number = 0;
-        for (let mut i: number = 0; i < 10; i = i + 1) {
+        for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
             if (i == 5) {
                 break;
             }
@@ -118,7 +118,7 @@ fn test_for_loop_with_break() {
 fn test_for_loop_with_continue() {
     let code = r#"
         let mut sum: number = 0;
-        for (let mut i: number = 0; i < 5; i = i + 1) {
+        for i in [0, 1, 2, 3, 4] {
             if (i == 2) {
                 continue;
             }
@@ -133,7 +133,7 @@ fn test_for_loop_with_continue() {
 fn test_for_loop_with_increment() {
     let code = r#"
         let mut sum: number = 0;
-        for (let mut i: number = 0; i < 5; i++) {
+        for i in [0, 1, 2, 3, 4] {
             sum += i;
         }
         sum

@@ -156,50 +156,22 @@ fn test_all_statement_types() {
             },
             span: Span::new(0, 13),
         }),
-        // For loop
-        Stmt::For(ForStmt {
-            init: Box::new(Stmt::VarDecl(VarDecl {
-                mutable: true,
-                uses_deprecated_var: false,
-                name: Identifier {
-                    name: "i".to_string(),
-                    span: Span::new(8, 9),
-                },
-                type_ref: None,
-                init: Expr::Literal(Literal::Number(0.0), Span::new(12, 13)),
-                span: Span::new(4, 14),
-            })),
-            cond: Expr::Binary(BinaryExpr {
-                op: BinaryOp::Lt,
-                left: Box::new(Expr::Identifier(Identifier {
-                    name: "i".to_string(),
-                    span: Span::new(16, 17),
-                })),
-                right: Box::new(Expr::Literal(Literal::Number(10.0), Span::new(20, 22))),
-                span: Span::new(16, 22),
-            }),
-            step: Box::new(Stmt::Assign(Assign {
-                target: AssignTarget::Name(Identifier {
-                    name: "i".to_string(),
-                    span: Span::new(24, 25),
-                }),
-                value: Expr::Binary(BinaryExpr {
-                    op: BinaryOp::Add,
-                    left: Box::new(Expr::Identifier(Identifier {
-                        name: "i".to_string(),
-                        span: Span::new(28, 29),
-                    })),
-                    right: Box::new(Expr::Literal(Literal::Number(1.0), Span::new(32, 33))),
-                    span: Span::new(28, 33),
-                }),
-                span: Span::new(24, 33),
+        // For-in loop
+        Stmt::ForIn(ForInStmt {
+            variable: Identifier {
+                name: "i".to_string(),
+                span: Span::new(4, 5),
+            },
+            iterable: Box::new(Expr::Identifier(Identifier {
+                name: "items".to_string(),
+                span: Span::new(9, 14),
             })),
             body: Block {
                 statements: vec![],
                 tail_expr: None,
-                span: Span::new(35, 37),
+                span: Span::new(16, 18),
             },
-            span: Span::new(0, 37),
+            span: Span::new(0, 18),
         }),
         // Return statement
         Stmt::Return(ReturnStmt {
@@ -234,7 +206,7 @@ fn test_all_statement_types() {
     assert!(matches!(statements[1], Stmt::Assign(_)));
     assert!(matches!(statements[2], Stmt::If(_)));
     assert!(matches!(statements[3], Stmt::While(_)));
-    assert!(matches!(statements[4], Stmt::For(_)));
+    assert!(matches!(statements[4], Stmt::ForIn(_)));
     assert!(matches!(statements[5], Stmt::Return(_)));
     assert!(matches!(statements[6], Stmt::Break(_)));
     assert!(matches!(statements[7], Stmt::Continue(_)));

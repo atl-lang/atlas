@@ -350,7 +350,7 @@ fn test_flow_loop_with_for() {
     let diags = typecheck_source(
         r#"
         let mut sum = 0;
-        for (let mut i = 0; i < 5; i++) {
+        for i in [0, 1, 2, 3, 4] {
             sum = sum + i;
         }
         "#,

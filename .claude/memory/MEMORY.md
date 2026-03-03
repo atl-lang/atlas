@@ -22,29 +22,8 @@
 
 **Guardian enforcement:** If adding a decision with syntax rules, you MUST also add pattern to `~/.claude/hooks/atlas/decision-patterns.json`. Pre-write hook blocks violations automatically.
 
-## P0 BLOCKERS (DO THESE FIRST)
-**NOTHING else ships until these are done. Added 2026-03-03.**
-
-1. **Struct/Enum Types** — User-defined types. Currently can only use primitives + HashMap.
-   - Struct declaration: `struct User { name: string, age: number }`
-   - Struct instantiation: `User {name: "Alice", age: 30}`
-   - Enum with variants: `enum Status { Active, Pending(string) }`
-   - Pattern matching on user types
-   - Trait impl for user types
-
-2. **Object Literal Syntax** — `{key: value}` syntax for inline structured data.
-   - Every AI model expects this syntax
-   - Current workaround (`hashMapNew` + `hashMapPut`) is unacceptable
-   - Critical for "AI-first" claim in PRD
-
-**Why P0:** These were deferred too long. Atlas has traits, ownership, CoW, closures, type inference — but no way to define domain types. That's backwards.
-
 ## Status
 `STATUS.md` in repo. `ROADMAP.md` for long-term direction (systems language, no GC, AI-gen-friendly).
-
-## Recent Blocks
-Block 5 (2026-02-26) — Type inference: `FunctionDecl.return_type: Option<TypeRef>`, `infer_return_type()`, AT3050/AT3051/AT3052, LSP inlay hints
-Block 4 (2026-02-23) — AnonFn + HOFs: `fn(p) { body }` and `(p) => expr`, free function syntax `map(arr, fn...)`, capture semantics (AT3040)
 
 ## Pattern-Triggered Rules (Auto-Load on File Match)
 All rules use `paths:` frontmatter — load only when touching matching files:

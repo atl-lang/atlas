@@ -590,7 +590,7 @@ mod tests {
 
     #[test]
     fn test_roundtrip_number() {
-        for n in [0.0, 1.0, -1.0, 3.14159, f64::MAX, f64::MIN] {
+        for n in [0.0, 1.0, -1.0, std::f64::consts::PI, f64::MAX, f64::MIN] {
             let mut bytes = Vec::new();
             serialize_value(&Value::Number(n), &mut bytes);
             let (val, consumed) = deserialize_value(&bytes).unwrap();

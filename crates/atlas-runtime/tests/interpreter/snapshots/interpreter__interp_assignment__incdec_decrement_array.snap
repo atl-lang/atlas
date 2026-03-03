@@ -1,10 +1,9 @@
 ---
 source: crates/atlas-runtime/tests/interpreter/assignment.rs
-assertion_line: 76
 expression: "program.items[0]"
 ---
 Statement:
-  Decrement:
+  CompoundAssign:
     target:
       Index:
         target:
@@ -22,6 +21,12 @@ Statement:
         span:
           start: 0
           end: 6
+    op: SubAssign
+    value:
+      Literal:
+        - Number: 1
+        - start: 10
+          end: 11
     span:
       start: 0
-      end: 9
+      end: 12

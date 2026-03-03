@@ -157,7 +157,7 @@ fn test_parse_assignments(#[case] source: &str, #[case] snapshot_name: &str) {
 #[case::if_stmt("if (true) { x; }", "if_statement")]
 #[case::if_else("if (true) { x; } else { y; }", "if_else_statement")]
 #[case::while_loop("while (true) { x; }", "while_loop")]
-#[case::for_loop("for (let i = 0; i < 10; i = i + 1) { x; }", "for_loop")]
+#[case::for_loop("for i in [0, 1, 2, 3, 4] { x; }", "for_loop")]
 fn test_parse_control_flow(#[case] source: &str, #[case] snapshot_name: &str) {
     let (program, diagnostics) = parse_source(source);
     assert_eq!(diagnostics.len(), 0);

@@ -217,7 +217,6 @@ fn test_null_logical_errors(#[case] source: &str) {
 #[rstest]
 #[case::if_condition("if (null) { let x: number = 1; }")]
 #[case::while_condition("while (null) { break; }")]
-#[case::for_condition("for (let i: number = 0; null; i = i + 1) { break; }")]
 fn test_null_in_conditionals(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");

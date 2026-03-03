@@ -1,6 +1,8 @@
 use super::*;
 use pretty_assertions::assert_eq;
 
+mod regression_loops;
+
 // From vm_regression_tests.rs
 // ============================================================================
 
@@ -787,14 +789,6 @@ fn test_vm_while_loop_sum() {
             "let mut sum = 0; let mut i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;"
         ),
         Some(Value::Number(55.0))
-    );
-}
-
-#[test]
-fn test_vm_for_loop() {
-    assert_eq!(
-        vm_eval("let mut sum = 0; for (let mut i = 0; i < 5; i = i + 1) { sum = sum + i; } sum;"),
-        Some(Value::Number(10.0))
     );
 }
 

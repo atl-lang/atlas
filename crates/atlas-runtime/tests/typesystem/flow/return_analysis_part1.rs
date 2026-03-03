@@ -364,7 +364,7 @@ fn test_return_in_for_loop_not_sufficient() {
     let diagnostics = typecheck_source(
         r#"
         fn test() -> number {
-            for (let mut i: number = 0; i < 10; i = i + 1) {
+            for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
                 return i;
             }
         }
@@ -379,7 +379,7 @@ fn test_return_after_for_loop() {
         r#"
         fn sum() -> number {
             let mut s: number = 0;
-            for (let mut i: number = 0; i < 10; i = i + 1) {
+            for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
                 s = s + i;
             }
             return s;

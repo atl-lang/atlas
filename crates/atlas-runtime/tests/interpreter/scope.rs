@@ -72,8 +72,8 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 )]
 #[case::if_block(r#"let x: number = 1; if (x > 0) { let y: number = 2; }"#)]
 #[case::while_block(r#"let i: number = 0; while (i < 10) { let temp: number = i; }"#)]
-#[case::for_loop_init(r#"for (let i: number = 0; i < 10; i = i + 1) { let x = i; }"#)]
-#[case::for_loop_body(r#"for (let i: number = 0; i < 10; i = i + 1) { let sum: number = 0; }"#)]
+#[case::for_loop_init(r#"for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let x = i; }"#)]
+#[case::for_loop_body(r#"for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let sum: number = 0; }"#)]
 #[case::empty_block(r#"let x: number = 1; { } let y = x;"#)]
 #[case::nested_empty(r#"{ { { } } }"#)]
 fn test_valid_block_scoping(#[case] source: &str) {
@@ -96,11 +96,11 @@ fn test_valid_block_scoping(#[case] source: &str) {
     "AT2002"
 )]
 #[case::for_init_out_of_scope(
-    r#"for (let i: number = 0; i < 10; i = i + 1) { let x = i; } let y = i;"#,
+    r#"for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let x = i; } let y = i;"#,
     "AT2002"
 )]
 #[case::for_body_out_of_scope(
-    r#"for (let i: number = 0; i < 10; i = i + 1) { let sum: number = 0; } let x = sum;"#,
+    r#"for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let sum: number = 0; } let x = sum;"#,
     "AT2002"
 )]
 fn test_out_of_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
@@ -126,7 +126,7 @@ fn test_out_of_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
 )]
 #[case::while_shadow(r#"let i: number = 0; while (i < 10) { let i: string = "shadow"; }"#)]
 #[case::for_shadow(
-    r#"let i: number = 999; for (let i: number = 0; i < 10; i = i + 1) { let x = i; }"#
+    r#"let i: number = 999; for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let x = i; }"#
 )]
 #[case::shadow_restored(r#"let x: number = 1; { let x: string = "shadow"; } let y = x;"#)]
 #[case::nested_fn_shadow(r#"fn outer(x: number) -> number { { let x: string = "shadow"; { let x: bool = true; } } return x; }"#)]

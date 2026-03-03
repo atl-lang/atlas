@@ -1,6 +1,8 @@
 use super::*;
 use pretty_assertions::assert_eq;
 
+mod functions_loops;
+
 // From vm_first_class_functions_tests.rs
 // ============================================================================
 
@@ -256,24 +258,6 @@ fn test_conditional_function_call() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
-#[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
-fn test_function_in_loop() {
-    let source = r#"
-        fn apply(f: (number) -> number, x: number) -> number {
-            return f(x);
-        }
-        fn inc(n: number) -> number { return n + 1; }
-        let mut result = 0;
-        for (let mut i = 0; i < 3; i++) {
-            result = apply(inc, result);
-        }
-        result;
-    "#;
-    assert_eval_number(source, 3.0);
-}
-
 // ============================================================================
 // Category 3: Function Returns (15 tests)
 // ============================================================================
@@ -483,69 +467,6 @@ fn test_function_variable_in_global_scope() {
 // Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
 #[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
-fn test_map_pattern_with_function() {
-    let source = r#"
-        fn applyToArray(arr: number[], f: (number) -> number) -> number[] {
-            let mut result: number[] = [];
-            for (let mut i = 0; i < len(arr); i++) {
-                result = result + [f(arr[i])];
-            }
-            return result;
-        }
-        fn double(x: number) -> number { return x * 2; }
-        let arr = [1, 2, 3];
-        let doubled = applyToArray(arr, double);
-        doubled[0] + doubled[1] + doubled[2];
-    "#;
-    assert_eval_number(source, 12.0);
-}
-
-// Requires nested functions or closure capture (deferred to v0.3+)
-#[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
-fn test_filter_pattern_with_function() {
-    let source = r#"
-        fn filterArray(arr: number[], predicate: (number) -> bool) -> number[] {
-            let mut result: number[] = [];
-            for (let mut i = 0; i < len(arr); i++) {
-                if (predicate(arr[i])) {
-                    result = result + [arr[i]];
-                }
-            }
-            return result;
-        }
-        fn isEven(x: number) -> bool { return x % 2 == 0; }
-        let arr = [1, 2, 3, 4, 5, 6];
-        let evens = filterArray(arr, isEven);
-        len(evens);
-    "#;
-    assert_eval_number(source, 3.0);
-}
-
-#[test]
-fn test_reduce_pattern_with_function() {
-    let source = r#"
-        fn reduceArray(
-            arr: number[],
-            reducer: (number, number) -> number,
-            initial: number
-        ) -> number {
-            let mut acc = initial;
-            for (let mut i = 0; i < len(arr); i++) {
-                acc = reducer(acc, arr[i]);
-            }
-            return acc;
-        }
-        fn add(a: number, b: number) -> number { return a + b; }
-        let arr = [1, 2, 3, 4, 5];
-        reduceArray(arr, add, 0);
-    "#;
-    assert_eval_number(source, 15.0);
-}
-
-// Requires nested functions or closure capture (deferred to v0.3+)
-#[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_composition() {
     let source = r#"
         fn compose(
@@ -597,29 +518,6 @@ fn test_function_array_element() {
         funcs[0](5) + funcs[1](5);
     "#;
     assert_eval_number(source, 25.0);
-}
-
-// Requires nested functions or closure capture (deferred to v0.3+)
-#[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
-fn test_complex_function_passing() {
-    let source = r#"
-        fn transform(
-            arr: number[],
-            f1: (number) -> number,
-            f2: (number) -> number
-        ) -> number {
-            let mut sum = 0;
-            for (let mut i = 0; i < len(arr); i++) {
-                sum = sum + f1(f2(arr[i]));
-            }
-            return sum;
-        }
-        fn double(x: number) -> number { return x * 2; }
-        fn square(x: number) -> number { return x * x; }
-        transform([1, 2, 3], double, square);
-    "#;
-    assert_eval_number(source, 28.0);
 }
 
 // ============================================================================

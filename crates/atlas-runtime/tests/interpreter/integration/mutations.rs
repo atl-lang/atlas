@@ -1,10 +1,10 @@
 use super::*;
 
 #[rstest]
-#[case(r#"let mut x: number = 5; x++; x"#, 6.0)]
-#[case(r#"let mut x: number = 10; x--; x"#, 9.0)]
-#[case(r#"let mut x: number = 0; x++; x++; x++; x"#, 3.0)]
-#[case(r#"let mut x: number = 10; x--; x--; x"#, 8.0)]
+#[case(r#"let mut x: number = 5; x += 1; x"#, 6.0)]
+#[case(r#"let mut x: number = 10; x -= 1; x"#, 9.0)]
+#[case(r#"let mut x: number = 0; x += 1; x += 1; x += 1; x"#, 3.0)]
+#[case(r#"let mut x: number = 10; x -= 1; x -= 1; x"#, 8.0)]
 fn test_increment_decrement_basics(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -13,7 +13,7 @@ fn test_increment_decrement_basics(#[case] code: &str, #[case] expected: f64) {
 fn test_increment_array_element() {
     let code = r#"
         let arr: number[] = [5, 10, 15];
-        arr[0]++;
+        arr[0] += 1;
         arr[0]
     "#;
     assert_eval_number(code, 6.0);
@@ -23,7 +23,7 @@ fn test_increment_array_element() {
 fn test_decrement_array_element() {
     let code = r#"
         let arr: number[] = [5, 10, 15];
-        arr[2]--;
+        arr[2] -= 1;
         arr[2]
     "#;
     assert_eval_number(code, 14.0);
@@ -36,7 +36,7 @@ fn test_increment_in_loop() {
         let mut i: number = 0;
         while (i < 5) {
             sum += i;
-            i++;
+            i += 1;
         }
         sum
     "#;
@@ -44,10 +44,10 @@ fn test_increment_in_loop() {
 }
 
 #[rstest]
-#[case("let x: number = 5; x++; x", "AT3003")]
+#[case("let x: number = 5; x += 1; x", "AT3003")]
 #[case("let x: number = 10; x += 5; x", "AT3003")]
 #[case("let x: number = 1; x = 2; x", "AT3003")] // Basic assignment to let
-#[case("let x: number = 5; x--; x", "AT3003")] // Decrement
+#[case("let x: number = 5; x -= 1; x", "AT3003")] // Decrement
 fn test_immutable_mutation_errors(#[case] code: &str, #[case] error_code: &str) {
     assert_error_code(code, error_code);
 }
@@ -59,8 +59,8 @@ fn test_immutable_mutation_errors(#[case] code: &str, #[case] error_code: &str) 
 #[case("let mut x: number = 50; x /= 5; x", 10.0)]
 #[case("let mut x: number = 17; x %= 5; x", 2.0)]
 #[case("let mut x: number = 1; x = 2; x", 2.0)] // Basic assignment to var
-#[case("let mut x: number = 5; x++; x", 6.0)] // Increment
-#[case("let mut x: number = 5; x--; x", 4.0)] // Decrement
+#[case("let mut x: number = 5; x += 1; x", 6.0)] // Increment
+#[case("let mut x: number = 5; x -= 1; x", 4.0)] // Decrement
 fn test_mutable_var_assignments(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -76,8 +76,8 @@ fn test_mutable_var_assignments(#[case] code: &str, #[case] expected: f64) {
 #[case("let mut x: number = 50; x /= 5; x", 10.0)]
 #[case("let mut x: number = 17; x %= 5; x", 2.0)]
 #[case("let mut x: number = 1; x = 2; x", 2.0)] // Basic assignment
-#[case("let mut x: number = 5; x++; x", 6.0)] // Increment
-#[case("let mut x: number = 5; x--; x", 4.0)] // Decrement
+#[case("let mut x: number = 5; x += 1; x", 6.0)] // Increment
+#[case("let mut x: number = 5; x -= 1; x", 4.0)] // Decrement
 fn test_mutable_let_mut_assignments(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -89,7 +89,7 @@ fn test_let_mut_in_loop() {
         let mut i: number = 0;
         while (i < 5) {
             sum += i;
-            i++;
+            i += 1;
         }
         sum
     "#;

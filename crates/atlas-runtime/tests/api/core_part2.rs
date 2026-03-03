@@ -100,7 +100,7 @@ fn test_complex_program_with_loops_interpreter() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     let program = r#"
         let mut sum: number = 0;
-        for (let mut i: number = 1; i <= 10; i = i + 1) {
+        for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
             sum = sum + i;
         }
         sum

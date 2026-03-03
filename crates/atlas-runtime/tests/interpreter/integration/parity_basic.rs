@@ -10,7 +10,7 @@ use super::*;
 #[case("2 + 3 * 4;")]
 #[case("(2 + 3) * 4;")]
 #[case("-5;")]
-#[case("--5;")]
+#[case("-(-5);")]
 fn test_parity_arithmetic(#[case] code: &str) {
     assert_parity(code);
 }

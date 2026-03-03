@@ -4,70 +4,38 @@ expression: program
 ---
 items:
   - Statement:
-      For:
-        init:
-          VarDecl:
-            mutable: false
-            uses_deprecated_var: false
-            name:
-              name: i
-              span:
-                start: 9
-                end: 10
-            type_ref: ~
-            init:
-              Literal:
-                - Number: 0
-                - start: 13
-                  end: 14
+      ForIn:
+        variable:
+          name: i
+          span:
+            start: 4
+            end: 5
+        iterable:
+          ArrayLiteral:
+            elements:
+              - Literal:
+                  - Number: 0
+                  - start: 10
+                    end: 11
+              - Literal:
+                  - Number: 1
+                  - start: 13
+                    end: 14
+              - Literal:
+                  - Number: 2
+                  - start: 16
+                    end: 17
+              - Literal:
+                  - Number: 3
+                  - start: 19
+                    end: 20
+              - Literal:
+                  - Number: 4
+                  - start: 22
+                    end: 23
             span:
-              start: 5
-              end: 15
-        cond:
-          Binary:
-            op: Lt
-            left:
-              Identifier:
-                name: i
-                span:
-                  start: 16
-                  end: 17
-            right:
-              Literal:
-                - Number: 10
-                - start: 20
-                  end: 22
-            span:
-              start: 16
-              end: 22
-        step:
-          Assign:
-            target:
-              Name:
-                name: i
-                span:
-                  start: 24
-                  end: 25
-            value:
-              Binary:
-                op: Add
-                left:
-                  Identifier:
-                    name: i
-                    span:
-                      start: 28
-                      end: 29
-                right:
-                  Literal:
-                    - Number: 1
-                    - start: 32
-                      end: 33
-                span:
-                  start: 28
-                  end: 33
-            span:
-              start: 24
-              end: 25
+              start: 9
+              end: 24
         body:
           statements:
             - Expr:
@@ -75,15 +43,15 @@ items:
                   Identifier:
                     name: x
                     span:
-                      start: 37
-                      end: 38
+                      start: 27
+                      end: 28
                 span:
-                  start: 37
-                  end: 39
+                  start: 27
+                  end: 29
           tail_expr: ~
           span:
-            start: 35
-            end: 41
+            start: 25
+            end: 31
         span:
           start: 0
-          end: 41
+          end: 31
