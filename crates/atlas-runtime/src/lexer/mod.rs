@@ -5,6 +5,7 @@
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::token::{Token, TokenKind};
+use std::collections::VecDeque;
 
 mod literals;
 
@@ -32,6 +33,10 @@ pub struct Lexer {
     emit_comments: bool,
     /// Pending comment tokens to emit
     pending_comments: Vec<Token>,
+    /// Pending tokens for interpolation sequences
+    pending_tokens: VecDeque<Token>,
+    /// Stack of interpolation brace depths (one per active interpolation)
+    interpolation_stack: Vec<usize>,
 }
 
 impl Lexer {
@@ -51,6 +56,8 @@ impl Lexer {
             diagnostics: Vec::new(),
             emit_comments: false,
             pending_comments: Vec::new(),
+            pending_tokens: VecDeque::new(),
+            interpolation_stack: Vec::new(),
         }
     }
 
@@ -94,6 +101,10 @@ impl Lexer {
 
     /// Scan the next token
     fn next_token(&mut self) -> Token {
+        if let Some(token) = self.pending_tokens.pop_front() {
+            return token;
+        }
+
         self.skip_whitespace_and_comments();
 
         // Mark start of token
@@ -111,8 +122,24 @@ impl Lexer {
             // Single-character tokens
             '(' => self.make_token(TokenKind::LeftParen, "("),
             ')' => self.make_token(TokenKind::RightParen, ")"),
-            '{' => self.make_token(TokenKind::LeftBrace, "{"),
-            '}' => self.make_token(TokenKind::RightBrace, "}"),
+            '{' => {
+                if let Some(depth) = self.interpolation_stack.last_mut() {
+                    *depth += 1;
+                }
+                self.make_token(TokenKind::LeftBrace, "{")
+            }
+            '}' => {
+                if let Some(depth) = self.interpolation_stack.last_mut() {
+                    if *depth == 1 {
+                        self.interpolation_stack.pop();
+                        let token = self.make_token(TokenKind::InterpolationEnd, "}");
+                        self.queue_string_continuation();
+                        return token;
+                    }
+                    *depth -= 1;
+                }
+                self.make_token(TokenKind::RightBrace, "}")
+            }
             '[' => self.make_token(TokenKind::LeftBracket, "["),
             ']' => self.make_token(TokenKind::RightBracket, "]"),
             ';' => self.make_token(TokenKind::Semicolon, ";"),

@@ -117,7 +117,47 @@ impl Parser {
     fn parse_string(&mut self) -> Result<Expr, ()> {
         let token = self.advance();
         let span = token.span;
-        Ok(Expr::Literal(Literal::String(token.lexeme.clone()), span))
+        let first = Expr::Literal(Literal::String(token.lexeme.clone()), span);
+
+        if !self.check(TokenKind::InterpolationStart) {
+            return Ok(first);
+        }
+
+        let mut parts = Vec::new();
+        parts.push(first);
+
+        while self.check(TokenKind::InterpolationStart) {
+            self.advance(); // consume ${
+            let expr = self.parse_expression()?;
+            self.consume(
+                TokenKind::InterpolationEnd,
+                "Expected '}' to close string interpolation",
+            )?;
+            let next = self.consume(
+                TokenKind::String,
+                "Expected string segment after interpolation",
+            )?;
+            let next_expr = Expr::Literal(Literal::String(next.lexeme.clone()), next.span);
+            parts.push(expr);
+            parts.push(next_expr);
+        }
+
+        let mut iter = parts.into_iter();
+        let mut combined = iter
+            .next()
+            .expect("string interpolation must have at least one part");
+
+        for part in iter {
+            let span = Span::new(combined.span().start, part.span().end);
+            combined = Expr::Binary(BinaryExpr {
+                op: BinaryOp::Add,
+                left: Box::new(combined),
+                right: Box::new(part),
+                span,
+            });
+        }
+
+        Ok(combined)
     }
 
     /// Parse boolean literal

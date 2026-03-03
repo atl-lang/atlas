@@ -196,6 +196,10 @@ pub enum TokenKind {
     Underscore,
     /// `?` (error propagation operator)
     Question,
+    /// `${` start of string interpolation
+    InterpolationStart,
+    /// `}` end of string interpolation (only in interpolated strings)
+    InterpolationEnd,
 
     // Comments (emitted in comment-preserving mode)
     /// Single-line comment (// ...)
@@ -327,6 +331,8 @@ impl TokenKind {
             TokenKind::FatArrow => "=>",
             TokenKind::Underscore => "_",
             TokenKind::Question => "?",
+            TokenKind::InterpolationStart => "${",
+            TokenKind::InterpolationEnd => "}",
             TokenKind::LineComment => "// comment",
             TokenKind::BlockComment => "/* comment */",
             TokenKind::DocComment => "/// comment",

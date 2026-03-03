@@ -1,4 +1,5 @@
 use super::*;
+use atlas_runtime::value::Value;
 use pretty_assertions::assert_eq;
 
 mod regression_loops;
@@ -14,6 +15,23 @@ mod regression_loops;
 // ============================================================================
 // Helpers
 // ============================================================================
+
+fn assert_parity_string(source: &str, expected: &str) {
+    let interp = interp_eval(source);
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        interp,
+        Value::string(expected.to_string()),
+        "Interpreter wrong: {:?}",
+        interp
+    );
+    assert_eq!(
+        vm,
+        Value::string(expected.to_string()),
+        "VM wrong: {:?}",
+        vm
+    );
+}
 
 // ============================================================================
 // 1. Interpreter-VM Parity (tests 1-25)
@@ -62,6 +80,30 @@ fn test_parity_comparisons(#[case] source: &str) {
 #[test]
 fn test_parity_string_concat() {
     assert_parity(r#""hello" + " " + "world";"#);
+}
+
+#[test]
+fn test_parity_string_interpolation_basic() {
+    assert_parity_string(
+        r#"
+let name = "Ada";
+let count = "3";
+"Hello ${name}, you have ${count} items";
+"#,
+        "Hello Ada, you have 3 items",
+    );
+}
+
+#[test]
+fn test_parity_string_interpolation_nested() {
+    assert_parity_string(
+        r#"
+let name = "Ada";
+let role = "dev";
+"User ${"(${name}) ${role}"}";
+"#,
+        "User (Ada) dev",
+    );
 }
 
 #[test]

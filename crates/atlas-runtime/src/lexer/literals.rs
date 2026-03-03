@@ -1,25 +1,99 @@
 //! Literal parsing for the lexer
 
 use crate::lexer::Lexer;
+use crate::span::Span;
 use crate::token::{Token, TokenKind};
+
+enum StringScan {
+    Complete(Token),
+    Interpolation { part: Token, interp_span: Span },
+    Error(Token),
+}
 
 impl Lexer {
     /// Scan a string literal
     pub(super) fn string(&mut self) -> Token {
+        let part_start_pos = self.start_pos;
+        match self.scan_string_part(part_start_pos) {
+            StringScan::Complete(token) => token,
+            StringScan::Interpolation { part, interp_span } => {
+                self.pending_tokens.push_back(Token::new(
+                    TokenKind::InterpolationStart,
+                    "${",
+                    interp_span,
+                ));
+                self.interpolation_stack.push(1);
+                part
+            }
+            StringScan::Error(token) => token,
+        }
+    }
+
+    pub(super) fn queue_string_continuation(&mut self) {
+        let part_start_pos = self.current;
+        self.start_pos = part_start_pos;
+        self.start_line = self.line;
+        self.start_column = self.column;
+
+        let next = match self.scan_string_part(part_start_pos) {
+            StringScan::Complete(token) => {
+                self.pending_tokens.push_back(token);
+                return;
+            }
+            StringScan::Interpolation { part, interp_span } => {
+                self.pending_tokens.push_back(part);
+                self.pending_tokens.push_back(Token::new(
+                    TokenKind::InterpolationStart,
+                    "${",
+                    interp_span,
+                ));
+                self.interpolation_stack.push(1);
+                return;
+            }
+            StringScan::Error(token) => token,
+        };
+
+        self.pending_tokens.push_back(next);
+    }
+
+    fn scan_string_part(&mut self, part_start_pos: usize) -> StringScan {
         let mut value = String::new();
         let mut has_error = false;
         let mut error_token = None;
 
-        while !self.is_at_end() && self.peek() != '"' {
-            if self.peek() == '\n' {
+        while !self.is_at_end() {
+            let current_char = self.peek();
+
+            if current_char == '"' {
+                self.advance(); // Closing "
+                let span = Span::new(part_start_pos, self.current);
+                let token = Token::new(TokenKind::String, value, span);
+                return if let Some(err) = error_token {
+                    StringScan::Error(err)
+                } else {
+                    StringScan::Complete(token)
+                };
+            }
+
+            if !has_error && current_char == '$' && self.peek_next() == Some('{') {
+                let span = Span::new(part_start_pos, self.current);
+                let part = Token::new(TokenKind::String, value, span);
+                let interp_start = self.current;
+                self.advance(); // $
+                self.advance(); // {
+                let interp_span = Span::new(interp_start, self.current);
+                return StringScan::Interpolation { part, interp_span };
+            }
+
+            if current_char == '\n' {
                 self.line += 1;
                 self.column = 1;
             }
 
-            if self.peek() == '\\' {
+            if current_char == '\\' {
                 self.advance(); // consume backslash
                 if self.is_at_end() {
-                    return self.error_unterminated_string();
+                    return StringScan::Error(self.error_unterminated_string());
                 }
 
                 let escape_char = self.peek();
@@ -30,13 +104,12 @@ impl Lexer {
                     '\\' => '\\',
                     '"' => '"',
                     _ => {
-                        // Record error but continue parsing to find end of string
                         if !has_error {
                             error_token = Some(self.error_invalid_escape(escape_char));
                             has_error = true;
                         }
-                        self.advance(); // consume the invalid character
-                        continue; // Skip adding to value
+                        self.advance(); // consume invalid char
+                        continue;
                     }
                 };
 
@@ -47,18 +120,7 @@ impl Lexer {
             }
         }
 
-        if self.is_at_end() {
-            return self.error_unterminated_string();
-        }
-
-        self.advance(); // Closing "
-
-        // If we had an error, return that instead of a valid token
-        if let Some(err) = error_token {
-            err
-        } else {
-            self.make_token(TokenKind::String, &value)
-        }
+        StringScan::Error(self.error_unterminated_string())
     }
 
     /// Scan a number literal (integer, float, or scientific notation)
