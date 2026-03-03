@@ -12,15 +12,26 @@
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
 - **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?" Don't build nice-to-haves when the language is broken.
 
-## Git Process
-- **Two-track push policy.** Rust source → PR + CI. Everything else → direct push to main with `[skip ci]`. See `.claude/lazy/git.md`.
+## Git Process (Local-First v2)
+- **Local CI first.** All validation via `cargo fmt/clippy/nextest` + `coderabbit` CLI locally.
+- **Batch pushes.** Commits accumulate on local main. Push after 5 commits OR 24 hours.
+- **No PRs for fixes.** Direct push to main after local CI passes. PRs only for major blocks.
 - **Single workspace:** `~/dev/projects/atlas/` — no other worktrees.
-- **See `.claude/lazy/git.md`** for full PR workflow, branch naming, and Track 1/Track 2 rules.
-- **See `.claude/lazy/comms.md`** for PR/commit/docs wording standards.
+- **See `.claude/lazy/git.md`** for full local-first workflow.
 
-## AI Workflow Exceptions (Project-Specific Overrides)
-- **`.claude/agents/atlas-doc-auditor.md` exceeds global 150-line AI workflow file limit (224 lines).** This is intentional. The auditor covers 6 domains specific to a dual-engine compiler (parity, CoW semantics, interpreter/VM, LSP, JIT) — no global auditor can substitute. Exception approved.
-- **CodeRabbit pre-push check:** Before any batch push to remote, task a Haiku agent to run `coderabbit review --base main --plain`. Review findings before pushing. See `.claude/skills/atlas/gates/git-workflow.md`.
+## Local CI Commands
+
+```bash
+# Quick (every fix)
+cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run -p atlas-runtime
+
+# Full (batched — Haiku agent)
+coderabbit review --base main --plain
+cargo fmt --check && cargo clippy --workspace -- -D warnings
+cargo build --workspace && cargo nextest run --workspace
+```
+
+Track batch state in `.claude/memory/local-ci.md`.
 
 ## Session Start (MANDATORY)
 ```bash

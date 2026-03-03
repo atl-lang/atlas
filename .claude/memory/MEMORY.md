@@ -37,14 +37,12 @@ All rules use `paths:` frontmatter — load only when touching matching files:
 - **Typechecker:** `.claude/rules/atlas-typechecker.md` — typechecker/**, types.rs
 - **VM:** `.claude/rules/atlas-vm.md` — vm/**, compiler/**, bytecode/**
 
-## CI Facts
-- `strict_required_status_checks_policy=true` — no bypass
-- Codecov via GitHub App, not token
-- Bench regression hard-fails at 115%
-- **PR BEHIND main = invalid CI run** — auto-merge won't fire. Rebase with `git merge origin/main && git push` (not `gh api update-branch`).
+## Local-First CI (v2 — 2026-03-03)
+- **Quick checks (every fix):** `cargo fmt --check && cargo clippy && cargo nextest run -p atlas-runtime`
+- **Full CI (batched):** `coderabbit review` + `act` + full `nextest` — Haiku agent
+- **Batch trigger:** 5 commits OR 24 hours
+- **Track state:** `.claude/memory/local-ci.md`
+- **No PRs for fixes** — direct push to main after local CI passes
 
 ## Doc Auditor
 Run `atlas-doc-auditor` after every block (GATE 7). Audits all CLAUDE.md, rules, memory, decisions. 224 lines — approved exception.
-
-## CodeRabbit Pre-Push (2026-03-01)
-MANDATORY before batch push: `coderabbit review --base main --plain` via Haiku agent. See git-workflow.md Step 0.

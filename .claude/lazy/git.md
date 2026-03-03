@@ -6,110 +6,116 @@
 
 ---
 
-## Two-Track Push Policy
+## Local-First Policy (v2 — March 2026)
 
-### Track 1 — Direct push to main (no PR, no CI wait)
+All CI and review happens locally. Remote pushes are batched.
 
-Use for ANY change that does not touch Rust source, AND for pure refactors/splits of Rust test files where behavior is unchanged and locally verified:
+### Quick Checks (after every fix)
+```bash
+cargo fmt --check
+cargo clippy --workspace -- -D warnings
+cargo nextest run -p atlas-runtime  # parallel via num-cpus
+```
+
+### Full Local CI (batched — Haiku agent)
+Trigger: **5 commits OR 24 hours** (whichever first)
+```bash
+coderabbit review --base main --plain   # local review
+cargo fmt --check                       # format check
+cargo clippy --workspace -- -D warnings # lint
+cargo build --workspace                 # build
+cargo nextest run --workspace           # full test suite
+```
+
+Track state in `.claude/memory/local-ci.md`.
+
+---
+
+## Two-Track Commit Policy
+
+### Track 1 — Direct commit to main (no PR)
+
+Use for ANY change that does not touch Rust source:
 
 | Change type | Examples |
 |-------------|---------|
 | CI/workflows | `.github/workflows/*.yml` |
 | AI workflow | `.claude/**`, `phases/**` |
 | Config | `.coderabbit.yaml`, `deny.toml`, `rust-toolchain.toml` |
-| Docs | `docs/**`, `**.md`, `STATUS.md`, `ROADMAP.md` |
+| Docs | `docs/**`, `**.md` |
 | Cargo metadata only | Version bumps, `[package]` fields, no new deps |
-| Pure Rust refactors | File splits, renames, moves — zero logic change, full local test suite green (`cargo nextest run -p <crate>`) |
 
 ```bash
-git add <files> && git commit -m "docs(spec): update closure syntax examples [skip ci]" && git push origin main
+git add <files> && git commit -m "docs(spec): update closure syntax examples"
+# Push happens at batch time, not per-commit
 ```
 
-**`[skip ci]` is MANDATORY on every direct push** — appended to a normal conventional commit message. The message describes the change fully. `[skip ci]` is just a trailer. GitHub skips ALL workflows. No branch. No PR. No waiting. Ever.
+### Track 2 — Commit to main, batch PR later
 
-```
-# Correct — descriptive message, [skip ci] as trailer
-docs(runtime): update test table line counts [skip ci]
-ci(coderabbit): disable blocking reviews [skip ci]
-chore(status): mark phase-05 complete [skip ci]
-
-# Wrong — message is not the trailer
-[skip ci]
-skip ci
-ci: skip
-```
-
-### Track 2 — PR + CI required (no exceptions)
-
-Use for ANY change touching Rust source:
-
-- `crates/**/*.rs`
-- `crates/**/Cargo.toml` when adding/changing dependencies
+For Rust source changes (`crates/**/*.rs`, `Cargo.toml` deps):
 
 ```bash
-git checkout block/{name}   # already on block branch
-# ... implement ...
-git add crates/ && git commit -m "feat: ..."
-# PR opens at block completion, not per-phase
+# 1. Quick local checks
+cargo fmt --check && cargo clippy --workspace -- -D warnings
+cargo nextest run -p atlas-runtime
+
+# 2. Commit to main locally
+git add crates/ && git commit -m "fix(vm): resolve side effect issue"
+
+# 3. DO NOT PUSH YET — accumulate commits
+# Push happens at batch time after full local CI
 ```
 
 ---
 
-## Emergency Bypass (Rust source — rare, strict criteria)
+## Batch Push Workflow (Daily or 5+ commits)
 
-Force-pushing Rust source bypasses CI. Only propose this when ALL of the following are true:
+When batch threshold is met:
 
-1. **CI failure is infrastructure, not code** — flaky runner, GitHub outage, unrelated test rot
-2. **The change is trivially safe** — typo fix, comment, unreachable dead code removal
-3. **Blocked > 30 minutes** with no CI fix in sight
-4. **Explicitly flag it:** "This qualifies for emergency bypass because [reason]. Confirm?"
+```bash
+# 1. Full local CI (Haiku agent)
+coderabbit review --base main --plain
+act -j Build -j Clippy -j Format
+cargo nextest run --workspace
 
-**Never propose bypass because:**
-- CI is slow
-- The change "seems obviously correct"
-- We've been waiting a while
-- It's just a one-liner
+# 2. If all pass, push to remote
+git push origin main
 
-When in doubt: wait for CI. The bar is high intentionally.
+# 3. Update tracking
+# Edit .claude/memory/local-ci.md with timestamp
+```
+
+**No PRs for routine fixes.** Direct push to main after local CI validates.
 
 ---
 
-## Block Branch Workflow
+## PR Workflow (Blocks Only)
 
-All phase commits live on `block/{name}`. PR opens only at block completion (final AC check phase).
+PRs are reserved for major block completions, not individual fixes.
 
+```bash
+# Only at block completion:
+git checkout -b block/{name}
+# ... all block phases ...
+git push -u origin block/{name}
+gh pr create --title "feat(block-XX): ..." --body "..."
+gh pr merge --auto --squash
 ```
-block/closures:
-  scaffold commit
-  phase-01 commit → phase-12 commit
-  ← PR opened here, CI runs once, auto-squash merges
-```
-
-**CRITICAL:** `fix/`, `ci/`, `docs/` branches MUST be created from `main`, never from `block/`.
-For non-code fixes mid-block: don't branch at all — direct push to main (Track 1).
 
 ---
 
 ## Branch Hygiene
 
-- **At most 3 remote branches:** `main` + `gh-pages` + 1 active `block/` branch
-- Track 1 changes never create branches
-- After every PR merge: `git remote prune origin`
-
-### Session-start audit (GATE -1)
-```bash
-git branch -r | grep -v "HEAD\|dependabot"   # main + gh-pages [+ block/name]
-gh pr list                                     # 0 or 1 open PR
-git remote prune origin
-```
+- **At most 2 remote branches:** `main` + `gh-pages`
+- Block branches are temporary (created at block end, deleted after merge)
+- No `fix/`, `ci/`, `docs/` branches — commit directly to main
 
 ---
 
 ## Banned
 
-- PRs for Track 1 changes — direct push instead, always
-- Merge commits (`--no-ff`)
+- PRs for individual fixes — batch push instead
+- Pushing without local CI validation
 - `--force` without `--force-with-lease`
 - `--no-verify`
-- Branching `fix/`/`ci/`/`docs/` off `block/` branches
-- Proposing emergency bypass without meeting all 4 criteria above
+- Creating branches for non-block work
