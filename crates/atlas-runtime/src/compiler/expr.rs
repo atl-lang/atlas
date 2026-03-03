@@ -28,11 +28,7 @@ impl Compiler {
                 body,
                 span,
             } => self.compile_anon_fn(params, body, *span),
-            Expr::Block(block) => Err(vec![Diagnostic::error_with_code(
-                "AT0400",
-                "block expressions not yet supported in compiled mode",
-                block.span,
-            )]),
+            Expr::Block(block) => self.compile_block_expr(block),
         }
     }
 
@@ -1303,6 +1299,33 @@ impl Compiler {
             self.bytecode.emit_u16(const_idx);
             self.bytecode.emit_u16(n_upvalues as u16);
         }
+
+        Ok(())
+    }
+
+    /// Compile a block expression - creates a new scope and returns the last value
+    fn compile_block_expr(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
+        let old_scope = self.scope_depth;
+        let local_base = self.locals.len();
+        self.scope_depth += 1;
+
+        // Compile all statements in the block
+        for stmt in &block.statements {
+            self.compile_stmt(stmt)?;
+        }
+
+        // Block expressions evaluate to the last expression's value, or Null if empty.
+        // Since statements don't leave values on stack (they pop after ExprStmt),
+        // we need to push Null as the result.
+        self.bytecode.emit(Opcode::Null, block.span);
+
+        // Pop locals created in this scope
+        let locals_to_pop = self.locals.len() - local_base;
+        for _ in 0..locals_to_pop {
+            self.bytecode.emit(Opcode::Pop, block.span);
+        }
+        self.locals.truncate(local_base);
+        self.scope_depth = old_scope;
 
         Ok(())
     }

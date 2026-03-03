@@ -46,9 +46,11 @@ impl<'a> TypeChecker<'a> {
                 span,
             } => self.check_anon_fn(params, return_type.as_ref(), body, *span),
             Expr::Block(block) => {
+                self.enter_scope();
                 for stmt in &block.statements {
                     self.check_statement(stmt);
                 }
+                self.exit_scope();
                 Type::Unknown
             }
         }

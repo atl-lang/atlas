@@ -30,11 +30,12 @@ impl Parser {
             TokenKind::Break => self.parse_break_stmt(),
             TokenKind::Continue => self.parse_continue_stmt(),
             TokenKind::LeftBrace => {
-                // Standalone block statement
+                // Standalone block statement - wrap as Expr::Block
                 let block = self.parse_block()?;
+                let span = block.span;
                 Ok(Stmt::Expr(ExprStmt {
-                    expr: Expr::Literal(Literal::Null, block.span),
-                    span: block.span,
+                    expr: Expr::Block(block),
+                    span,
                 }))
             }
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),

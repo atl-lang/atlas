@@ -1055,9 +1055,11 @@ impl Binder {
                 self.symbol_table.exit_scope();
             }
             Expr::Block(block) => {
+                self.symbol_table.enter_scope();
                 for stmt in &block.statements {
                     self.bind_statement(stmt);
                 }
+                self.symbol_table.exit_scope();
             }
         }
     }

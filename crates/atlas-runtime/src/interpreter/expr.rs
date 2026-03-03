@@ -24,10 +24,19 @@ impl Interpreter {
                 params, body, span, ..
             } => self.eval_anon_fn(params, body, *span),
             Expr::Block(block) => {
+                self.push_scope();
                 let mut result = Value::Null;
                 for stmt in &block.statements {
                     result = self.eval_statement(stmt)?;
+                    // Handle control flow
+                    if matches!(
+                        self.control_flow,
+                        ControlFlow::Return(_) | ControlFlow::Break | ControlFlow::Continue
+                    ) {
+                        break;
+                    }
                 }
+                self.pop_scope();
                 Ok(result)
             }
         }
