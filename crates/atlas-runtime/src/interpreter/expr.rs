@@ -100,7 +100,12 @@ impl Interpreter {
                     }
                     Ok(Value::Number(result))
                 }
-                (Value::String(a), Value::String(b)) => Ok(Value::string(format!("{}{}", a, b))),
+                (Value::String(a), Value::String(b)) => {
+                    let result = format!("{}{}", a, b);
+                    // Track memory for the new concatenated string
+                    self.track_memory(Self::estimate_string_size(&result))?;
+                    Ok(Value::string(result))
+                }
                 _ => Err(RuntimeError::TypeError {
                     msg: "Invalid operands for +".to_string(),
                     span: binary.span,
@@ -666,7 +671,13 @@ impl Interpreter {
     ) -> Result<Value, RuntimeError> {
         let elements: Result<Vec<Value>, _> =
             arr.elements.iter().map(|e| self.eval_expr(e)).collect();
-        Ok(Value::array(elements?))
+        let elements = elements?;
+
+        // Track memory allocation before creating the array
+        let estimated_size = Self::estimate_array_size(&elements);
+        self.track_memory(estimated_size)?;
+
+        Ok(Value::array(elements))
     }
 
     /// Evaluate match expression

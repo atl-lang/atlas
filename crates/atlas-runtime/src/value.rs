@@ -788,6 +788,13 @@ pub enum RuntimeError {
     /// FFI/extern function call denied
     #[error("Permission denied: FFI call to {function}")]
     FfiPermissionDenied { function: String },
+    /// Memory limit exceeded
+    #[error("Memory limit exceeded: attempted to allocate {requested} bytes, limit is {limit} bytes (used: {used} bytes)")]
+    MemoryLimitExceeded {
+        requested: usize,
+        used: usize,
+        limit: usize,
+    },
 }
 
 impl RuntimeError {
@@ -812,6 +819,7 @@ impl RuntimeError {
             RuntimeError::UnhashableType { span, .. } => *span,
             RuntimeError::Timeout { .. } => crate::span::Span::dummy(),
             RuntimeError::FfiPermissionDenied { .. } => crate::span::Span::dummy(),
+            RuntimeError::MemoryLimitExceeded { .. } => crate::span::Span::dummy(),
         }
     }
 }

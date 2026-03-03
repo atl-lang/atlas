@@ -295,6 +295,17 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
             "AT0304",
             format!("Permission denied: FFI call to {}", function),
         ),
+        RuntimeError::MemoryLimitExceeded {
+            requested,
+            used,
+            limit,
+        } => (
+            "AT0501",
+            format!(
+                "Memory limit exceeded: attempted to allocate {} bytes, limit is {} bytes (used: {} bytes)",
+                requested, limit, used
+            ),
+        ),
     };
 
     let help = match error {

@@ -357,3 +357,172 @@ fn test_timeout_respects_limit() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap().to_string(), "6");
 }
+
+// --- Memory Limit Enforcement Tests (H-001) ---
+
+#[test]
+fn test_memory_limit_enforcement_interpreter_array() {
+    // Create config with very small memory limit (1KB)
+    let config = RuntimeConfig::new()
+        .with_max_memory_bytes(1024)
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Try to create a large array - should fail with memory limit
+    // Each element is ~64 bytes, so 40 elements = ~2560 bytes + overhead > 1024
+    let result = runtime.eval(
+        r#"
+        let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                   31, 32, 33, 34, 35, 36, 37, 38, 39, 40];
+        arr
+        "#,
+    );
+
+    // Should fail with memory limit error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Memory") || err_msg.contains("memory"),
+        "Expected memory limit error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_memory_limit_enforcement_vm_array() {
+    // Create config with very small memory limit (1KB)
+    let config = RuntimeConfig::new()
+        .with_max_memory_bytes(1024)
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Try to create a large array - should fail with memory limit
+    // Each element is ~64 bytes, so 40 elements = ~2560 bytes + overhead > 1024
+    let result = runtime.eval(
+        r#"
+        let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                   11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+                   21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                   31, 32, 33, 34, 35, 36, 37, 38, 39, 40];
+        arr
+        "#,
+    );
+
+    // Should fail with memory limit error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Memory") || err_msg.contains("memory"),
+        "Expected memory limit error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_memory_limit_enforcement_interpreter_string_concat() {
+    // Create config with very small memory limit (500 bytes)
+    let config = RuntimeConfig::new()
+        .with_max_memory_bytes(500)
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Try to create a large string through concatenation - should fail
+    let result = runtime.eval(
+        r#"
+        var s: string = "a";
+        for (var i: number = 0; i < 20; i = i + 1) {
+            s = s + s;
+        }
+        s
+        "#,
+    );
+
+    // Should fail with memory limit error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Memory") || err_msg.contains("memory"),
+        "Expected memory limit error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_memory_limit_enforcement_vm_string_concat() {
+    // Create config with very small memory limit (500 bytes)
+    let config = RuntimeConfig::new()
+        .with_max_memory_bytes(500)
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Try to create a large string through concatenation - should fail
+    let result = runtime.eval(
+        r#"
+        var s: string = "a";
+        for (var i: number = 0; i < 20; i = i + 1) {
+            s = s + s;
+        }
+        s
+        "#,
+    );
+
+    // Should fail with memory limit error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Memory") || err_msg.contains("memory"),
+        "Expected memory limit error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_no_memory_limit_without_config() {
+    // Create config without memory limit
+    let config = RuntimeConfig::new().with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Create a reasonably sized array - should complete normally
+    let result = runtime.eval(
+        r#"
+        let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        len(arr)
+        "#,
+    );
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().to_string(), "10");
+}
+
+#[test]
+fn test_memory_limit_allows_small_allocations() {
+    // Create config with generous memory limit (10MB)
+    let config = RuntimeConfig::new()
+        .with_max_memory_bytes(10_000_000)
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Create small arrays and strings - should work fine
+    let result = runtime.eval(
+        r#"
+        let arr = [1, 2, 3, 4, 5];
+        let s = "hello" + " world";
+        len(arr)
+        "#,
+    );
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().to_string(), "5");
+}

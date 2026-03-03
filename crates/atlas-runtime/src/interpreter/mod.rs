@@ -157,6 +157,41 @@ impl Interpreter {
         }
     }
 
+    /// Track memory allocation and check if it exceeds the limit.
+    ///
+    /// Call this before creating heap-allocated values (arrays, strings, maps).
+    /// Returns Ok(()) if within limits, Err if limit exceeded.
+    #[inline]
+    fn track_memory(&self, bytes: usize) -> Result<(), RuntimeError> {
+        if let Some(ref limits) = self.execution_limits {
+            limits.track_allocation(bytes)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Estimate the memory size of a Value slice (for arrays)
+    ///
+    /// Conservative estimate: each Value is ~64 bytes on stack + heap allocations.
+    /// For nested structures, we only count the immediate level.
+    #[inline]
+    fn estimate_array_size(elements: &[Value]) -> usize {
+        // Base overhead for Arc<Vec<_>> (~24 bytes) + Vec capacity
+        const ARRAY_OVERHEAD: usize = 24;
+        // Conservative estimate per Value slot
+        const VALUE_SIZE: usize = 64;
+
+        ARRAY_OVERHEAD + elements.len() * VALUE_SIZE
+    }
+
+    /// Estimate the memory size of a string
+    #[inline]
+    fn estimate_string_size(s: &str) -> usize {
+        // Arc<String> overhead (~24 bytes) + string data
+        const STRING_OVERHEAD: usize = 24;
+        STRING_OVERHEAD + s.len()
+    }
+
     /// Register a builtin function in globals
     /// Builtins are immutable - they cannot be reassigned
     fn register_builtin(&mut self, name: &str, _arity: usize) {

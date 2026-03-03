@@ -168,6 +168,41 @@ impl VM {
         self.execution_limits = Some(limits);
     }
 
+    /// Track memory allocation and check if it exceeds the limit.
+    ///
+    /// Call this before creating heap-allocated values (arrays, strings, maps).
+    /// Returns Ok(()) if within limits, Err if limit exceeded.
+    #[inline]
+    fn track_memory(&self, bytes: usize) -> Result<(), RuntimeError> {
+        if let Some(ref limits) = self.execution_limits {
+            limits.track_allocation(bytes)
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Estimate the memory size of a Value slice (for arrays)
+    ///
+    /// Conservative estimate: each Value is ~64 bytes on stack + heap allocations.
+    /// For nested structures, we only count the immediate level.
+    #[inline]
+    fn estimate_array_size(len: usize) -> usize {
+        // Base overhead for Arc<Vec<_>> (~24 bytes) + Vec capacity
+        const ARRAY_OVERHEAD: usize = 24;
+        // Conservative estimate per Value slot
+        const VALUE_SIZE: usize = 64;
+
+        ARRAY_OVERHEAD + len * VALUE_SIZE
+    }
+
+    /// Estimate the memory size of a string
+    #[inline]
+    fn estimate_string_size(len: usize) -> usize {
+        // Arc<String> overhead (~24 bytes) + string data
+        const STRING_OVERHEAD: usize = 24;
+        STRING_OVERHEAD + len
+    }
+
     /// Set a JIT compiler for hot function execution
     ///
     /// When set, the VM will attempt to JIT-compile and execute hot functions
@@ -831,6 +866,10 @@ impl VM {
                             self.push(Value::Number(result));
                         }
                         (Value::String(x), Value::String(y)) => {
+                            // Track memory for the concatenated string
+                            let new_len = x.len() + y.len();
+                            self.track_memory(Self::estimate_string_size(new_len))?;
+
                             // Reuse string buffer to reduce allocations
                             self.string_buffer.clear();
                             self.string_buffer.push_str(x);
@@ -1391,6 +1430,10 @@ impl VM {
                 // ===== Arrays =====
                 Opcode::Array => {
                     let size = self.read_u16()? as usize;
+
+                    // Track memory allocation before creating the array
+                    self.track_memory(Self::estimate_array_size(size))?;
+
                     let mut elements = Vec::with_capacity(size);
                     for _ in 0..size {
                         elements.push(self.pop());

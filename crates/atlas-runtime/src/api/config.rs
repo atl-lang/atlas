@@ -5,13 +5,13 @@
 
 use crate::stdlib::{stdout_writer, OutputWriter};
 use crate::value::RuntimeError;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 /// Execution limits for sandbox enforcement
 ///
-/// Tracks execution time and provides methods to check if limits are exceeded.
-/// Used by both interpreter and VM to enforce timeout limits.
+/// Tracks execution time and memory usage, providing methods to check if limits are exceeded.
+/// Used by both interpreter and VM to enforce timeout and memory limits.
 #[derive(Debug)]
 pub struct ExecutionLimits {
     /// Maximum execution time before timeout (None = unlimited)
@@ -22,6 +22,10 @@ pub struct ExecutionLimits {
     instruction_count: AtomicU64,
     /// Check interval: how many instructions between time checks (for VM performance)
     check_interval: u64,
+    /// Maximum memory allocation in bytes (None = unlimited)
+    max_memory: Option<usize>,
+    /// Current memory usage in bytes (tracked via track_allocation/track_deallocation)
+    current_memory: AtomicUsize,
 }
 
 impl ExecutionLimits {
@@ -33,23 +37,28 @@ impl ExecutionLimits {
             instruction_count: AtomicU64::new(0),
             // Check every 10000 instructions to amortize syscall overhead
             check_interval: 10000,
+            max_memory: config.max_memory_bytes,
+            current_memory: AtomicUsize::new(0),
         }
     }
 
-    /// Create unlimited execution limits (no timeout)
+    /// Create unlimited execution limits (no timeout or memory limit)
     pub fn unlimited() -> Self {
         Self {
             max_time: None,
             start_time: None,
             instruction_count: AtomicU64::new(0),
             check_interval: 10000,
+            max_memory: None,
+            current_memory: AtomicUsize::new(0),
         }
     }
 
-    /// Start the execution timer
+    /// Start the execution timer and reset memory tracking
     pub fn start(&mut self) {
         self.start_time = Some(Instant::now());
         self.instruction_count.store(0, Ordering::Relaxed);
+        self.current_memory.store(0, Ordering::Relaxed);
     }
 
     /// Check if execution time limit has been exceeded
@@ -98,9 +107,67 @@ impl ExecutionLimits {
         self.start_time.map(|s| s.elapsed())
     }
 
-    /// Check if limits are active (has a timeout configured)
+    /// Check if limits are active (has a timeout or memory limit configured)
     pub fn is_active(&self) -> bool {
-        self.max_time.is_some()
+        self.max_time.is_some() || self.max_memory.is_some()
+    }
+
+    /// Check if memory limit is configured
+    pub fn has_memory_limit(&self) -> bool {
+        self.max_memory.is_some()
+    }
+
+    /// Track an allocation and check if it exceeds the memory limit.
+    ///
+    /// Returns Ok(()) if within limits, Err if limit exceeded.
+    /// Call this before creating heap-allocated values (arrays, strings, maps).
+    #[inline]
+    pub fn track_allocation(&self, bytes: usize) -> Result<(), RuntimeError> {
+        let Some(max) = self.max_memory else {
+            return Ok(()); // No limit configured
+        };
+
+        let current = self.current_memory.fetch_add(bytes, Ordering::Relaxed);
+        let new_total = current + bytes;
+
+        if new_total > max {
+            // Revert the allocation since we're over limit
+            self.current_memory.fetch_sub(bytes, Ordering::Relaxed);
+            return Err(RuntimeError::MemoryLimitExceeded {
+                requested: bytes,
+                used: current,
+                limit: max,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Release tracked memory (for future use when values are dropped).
+    ///
+    /// This is best-effort - we don't track individual allocations precisely,
+    /// so this may not perfectly match allocations. Used primarily for
+    /// explicit cleanup operations.
+    #[inline]
+    pub fn release_memory(&self, bytes: usize) {
+        if self.max_memory.is_none() {
+            return; // No limit configured, no tracking
+        }
+
+        // Saturating subtract to avoid underflow
+        let current = self.current_memory.load(Ordering::Relaxed);
+        let new_value = current.saturating_sub(bytes);
+        self.current_memory.store(new_value, Ordering::Relaxed);
+    }
+
+    /// Get current memory usage in bytes
+    pub fn current_memory_usage(&self) -> usize {
+        self.current_memory.load(Ordering::Relaxed)
+    }
+
+    /// Get memory limit in bytes (if configured)
+    pub fn memory_limit(&self) -> Option<usize> {
+        self.max_memory
     }
 }
 
@@ -111,6 +178,8 @@ impl Clone for ExecutionLimits {
             start_time: self.start_time,
             instruction_count: AtomicU64::new(self.instruction_count.load(Ordering::Relaxed)),
             check_interval: self.check_interval,
+            max_memory: self.max_memory,
+            current_memory: AtomicUsize::new(self.current_memory.load(Ordering::Relaxed)),
         }
     }
 }
