@@ -4,7 +4,116 @@
 //! including execution limits, memory constraints, and capability restrictions.
 
 use crate::stdlib::{stdout_writer, OutputWriter};
-use std::time::Duration;
+use crate::value::RuntimeError;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{Duration, Instant};
+
+/// Execution limits for sandbox enforcement
+///
+/// Tracks execution time and provides methods to check if limits are exceeded.
+/// Used by both interpreter and VM to enforce timeout limits.
+#[derive(Debug)]
+pub struct ExecutionLimits {
+    /// Maximum execution time before timeout (None = unlimited)
+    pub max_time: Option<Duration>,
+    /// Execution start time (set when limits are activated)
+    start_time: Option<Instant>,
+    /// Instruction counter for amortized time checks in VM
+    instruction_count: AtomicU64,
+    /// Check interval: how many instructions between time checks (for VM performance)
+    check_interval: u64,
+}
+
+impl ExecutionLimits {
+    /// Create execution limits from configuration
+    pub fn from_config(config: &RuntimeConfig) -> Self {
+        Self {
+            max_time: config.max_execution_time,
+            start_time: None,
+            instruction_count: AtomicU64::new(0),
+            // Check every 10000 instructions to amortize syscall overhead
+            check_interval: 10000,
+        }
+    }
+
+    /// Create unlimited execution limits (no timeout)
+    pub fn unlimited() -> Self {
+        Self {
+            max_time: None,
+            start_time: None,
+            instruction_count: AtomicU64::new(0),
+            check_interval: 10000,
+        }
+    }
+
+    /// Start the execution timer
+    pub fn start(&mut self) {
+        self.start_time = Some(Instant::now());
+        self.instruction_count.store(0, Ordering::Relaxed);
+    }
+
+    /// Check if execution time limit has been exceeded
+    ///
+    /// Returns Ok(()) if within limits, Err if timeout exceeded.
+    pub fn check_timeout(&self) -> Result<(), RuntimeError> {
+        let Some(max_time) = self.max_time else {
+            return Ok(()); // No limit configured
+        };
+
+        let Some(start) = self.start_time else {
+            return Ok(()); // Timer not started
+        };
+
+        let elapsed = start.elapsed();
+        if elapsed > max_time {
+            return Err(RuntimeError::Timeout {
+                elapsed,
+                limit: max_time,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Increment instruction count and check timeout if interval reached (for VM)
+    ///
+    /// This amortizes the cost of time checks over many instructions.
+    /// Returns Ok(()) if within limits, Err if timeout exceeded.
+    #[inline]
+    pub fn tick_and_check(&self) -> Result<(), RuntimeError> {
+        if self.max_time.is_none() {
+            return Ok(()); // Fast path: no limit configured
+        }
+
+        let count = self.instruction_count.fetch_add(1, Ordering::Relaxed);
+        if count.is_multiple_of(self.check_interval) {
+            self.check_timeout()
+        } else {
+            Ok(())
+        }
+    }
+
+    /// Get elapsed execution time
+    pub fn elapsed(&self) -> Option<Duration> {
+        self.start_time.map(|s| s.elapsed())
+    }
+
+    /// Check if limits are active (has a timeout configured)
+    pub fn is_active(&self) -> bool {
+        self.max_time.is_some()
+    }
+}
+
+impl Clone for ExecutionLimits {
+    fn clone(&self) -> Self {
+        Self {
+            max_time: self.max_time,
+            start_time: self.start_time,
+            instruction_count: AtomicU64::new(self.instruction_count.load(Ordering::Relaxed)),
+            check_interval: self.check_interval,
+        }
+    }
+}
 
 /// Runtime configuration for execution limits and sandboxing
 ///

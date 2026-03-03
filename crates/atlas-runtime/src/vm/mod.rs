@@ -71,6 +71,8 @@ pub struct VM {
     debug_pause_pending: bool,
     /// Security context for current execution (set during run())
     current_security: Option<std::sync::Arc<crate::security::SecurityContext>>,
+    /// Execution limits for timeout enforcement
+    execution_limits: Option<std::sync::Arc<crate::api::config::ExecutionLimits>>,
     /// Output writer for print() (defaults to stdout)
     output_writer: crate::stdlib::OutputWriter,
     /// FFI library loader (phase-10b)
@@ -124,6 +126,7 @@ impl VM {
             debugger: None,
             debug_pause_pending: false,
             current_security: None,
+            execution_limits: None,
             output_writer: crate::stdlib::stdout_writer(),
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
@@ -155,6 +158,14 @@ impl VM {
     /// Set the output writer (used by Runtime to redirect print() output)
     pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
         self.output_writer = writer;
+    }
+
+    /// Set execution limits for timeout enforcement
+    pub fn set_execution_limits(
+        &mut self,
+        limits: std::sync::Arc<crate::api::config::ExecutionLimits>,
+    ) {
+        self.execution_limits = Some(limits);
     }
 
     /// Set a JIT compiler for hot function execution
@@ -522,6 +533,11 @@ impl VM {
             // Check termination conditions
             if self.ip >= self.bytecode.instructions.len() {
                 break;
+            }
+
+            // Check execution timeout (amortized - only checks every N instructions)
+            if let Some(ref limits) = self.execution_limits {
+                limits.tick_and_check()?;
             }
 
             // Check if we've returned from the target frame

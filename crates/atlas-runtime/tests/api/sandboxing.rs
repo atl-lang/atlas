@@ -257,3 +257,103 @@ fn test_sandboxed_runtime_persistent_state() {
     assert_eq!(result1.to_string(), "6");
     assert_eq!(result2.to_string(), "11");
 }
+
+// --- Timeout Enforcement Tests (H-001) ---
+
+#[test]
+fn test_timeout_enforcement_interpreter() {
+    // Create config with very short timeout (100ms)
+    let config = RuntimeConfig::new()
+        .with_max_execution_time(Duration::from_millis(100))
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Run an infinite loop - should timeout
+    let result = runtime.eval(
+        r#"
+        var x: number = 0;
+        while (true) {
+            x = x + 1;
+        }
+        "#,
+    );
+
+    // Should fail with timeout error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Timeout") || err_msg.contains("timeout"),
+        "Expected timeout error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_timeout_enforcement_vm() {
+    // Create config with very short timeout (100ms)
+    let config = RuntimeConfig::new()
+        .with_max_execution_time(Duration::from_millis(100))
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Run an infinite loop - should timeout
+    let result = runtime.eval(
+        r#"
+        var x: number = 0;
+        while (true) {
+            x = x + 1;
+        }
+        "#,
+    );
+
+    // Should fail with timeout error
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    let err_msg = format!("{:?}", err);
+    assert!(
+        err_msg.contains("Timeout") || err_msg.contains("timeout"),
+        "Expected timeout error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_no_timeout_without_limit() {
+    // Create config without timeout
+    let config = RuntimeConfig::new().with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Run a finite loop - should complete normally
+    let result = runtime.eval(
+        r#"
+        var sum: number = 0;
+        for (var i: number = 0; i < 1000; i = i + 1) {
+            sum = sum + i;
+        }
+        sum
+        "#,
+    );
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().to_string(), "499500");
+}
+
+#[test]
+fn test_timeout_respects_limit() {
+    // Create config with 500ms timeout
+    let config = RuntimeConfig::new()
+        .with_max_execution_time(Duration::from_millis(500))
+        .with_io_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Run a fast operation - should complete before timeout
+    let result = runtime.eval("1 + 2 + 3");
+
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap().to_string(), "6");
+}

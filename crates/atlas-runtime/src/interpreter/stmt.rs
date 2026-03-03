@@ -8,6 +8,9 @@ use std::collections::HashMap;
 impl Interpreter {
     /// Execute a statement
     pub(super) fn eval_statement(&mut self, stmt: &Stmt) -> Result<Value, RuntimeError> {
+        // Check execution timeout at statement boundaries
+        self.check_timeout()?;
+
         match stmt {
             Stmt::VarDecl(var) => self.eval_var_decl(var),
             Stmt::FunctionDecl(func) => {

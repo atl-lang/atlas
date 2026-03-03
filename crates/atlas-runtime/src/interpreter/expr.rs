@@ -313,6 +313,15 @@ impl Interpreter {
             Value::Function(func_ref) => {
                 // Extern function - check if it's an FFI function
                 if let Some(extern_fn) = self.extern_functions.get(&func_ref.name) {
+                    // Check FFI permission before calling extern function
+                    if let Some(ref security) = self.current_security {
+                        // FFI requires process execution permission (it's running native code)
+                        if security.check_process(&func_ref.name).is_err() {
+                            return Err(RuntimeError::FfiPermissionDenied {
+                                function: func_ref.name.clone(),
+                            });
+                        }
+                    }
                     // Call the extern function using FFI
                     return unsafe { extern_fn.call(&args) }.map_err(|e| RuntimeError::TypeError {
                         msg: format!("FFI call error: {}", e),

@@ -102,6 +102,8 @@ pub struct Runtime {
     interpreter: RefCell<Interpreter>,
     /// Security context for permission checks
     security: SecurityContext,
+    /// Execution limits (timeout, memory) for sandbox enforcement
+    execution_limits: RefCell<super::config::ExecutionLimits>,
     /// Accumulated bytecode for VM mode (persists across eval() calls)
     accumulated_bytecode: RefCell<crate::bytecode::Bytecode>,
     /// Output writer for print() (threaded to interpreter and VM)
@@ -128,6 +130,7 @@ impl Runtime {
             mode,
             interpreter: RefCell::new(interp),
             security: SecurityContext::new(),
+            execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
         }
@@ -152,6 +155,7 @@ impl Runtime {
             mode,
             interpreter: RefCell::new(interp),
             security,
+            execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
         }
@@ -177,8 +181,9 @@ impl Runtime {
         } else {
             SecurityContext::new() // Deny-all by default
         };
-        // Note: max_execution_time and max_memory_bytes are stored in config but not yet enforced
-        // TODO: Implement timeout and memory limit enforcement
+
+        // Create execution limits from config (timeout enforcement)
+        let execution_limits = super::config::ExecutionLimits::from_config(&config);
 
         let output = config.output.clone();
         let mut interp = Interpreter::new();
@@ -187,6 +192,7 @@ impl Runtime {
             mode,
             interpreter: RefCell::new(interp),
             security,
+            execution_limits: RefCell::new(execution_limits),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
             output,
         }
@@ -320,10 +326,21 @@ impl Runtime {
             }
         }
 
+        // Start execution timer and prepare limits for sharing
+        let execution_limits = {
+            let mut limits = self.execution_limits.borrow_mut();
+            limits.start();
+            std::sync::Arc::new(limits.clone())
+        };
+
         // Execute based on mode
         match self.mode {
             ExecutionMode::Interpreter => {
                 let mut interpreter = self.interpreter.borrow_mut();
+                // Set execution limits for timeout enforcement
+                if execution_limits.is_active() {
+                    interpreter.set_execution_limits(execution_limits);
+                }
                 interpreter
                     .eval(&ast, &self.security)
                     .map_err(EvalError::RuntimeError)
@@ -346,6 +363,11 @@ impl Runtime {
                 let accumulated = self.accumulated_bytecode.borrow().clone();
                 let mut vm = VM::new(accumulated);
                 vm.set_output_writer(self.output.clone());
+
+                // Set execution limits for timeout enforcement
+                if execution_limits.is_active() {
+                    vm.set_execution_limits(execution_limits);
+                }
 
                 // Set IP to start of new code (so we don't re-execute old code)
                 vm.set_ip(new_code_start);

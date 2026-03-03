@@ -284,6 +284,17 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
                 type_name
             ),
         ),
+        RuntimeError::Timeout { elapsed, limit } => (
+            "AT0500",
+            format!(
+                "Execution timeout: {:?} elapsed, limit was {:?}",
+                elapsed, limit
+            ),
+        ),
+        RuntimeError::FfiPermissionDenied { function } => (
+            "AT0304",
+            format!("Permission denied: FFI call to {}", function),
+        ),
     };
 
     let help = match error {

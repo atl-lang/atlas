@@ -779,6 +779,15 @@ pub enum RuntimeError {
         type_name: String,
         span: crate::span::Span,
     },
+    /// Execution timeout exceeded
+    #[error("Execution timeout: {elapsed:?} elapsed, limit was {limit:?}")]
+    Timeout {
+        elapsed: std::time::Duration,
+        limit: std::time::Duration,
+    },
+    /// FFI/extern function call denied
+    #[error("Permission denied: FFI call to {function}")]
+    FfiPermissionDenied { function: String },
 }
 
 impl RuntimeError {
@@ -801,6 +810,8 @@ impl RuntimeError {
             RuntimeError::EnvironmentPermissionDenied { span, .. } => *span,
             RuntimeError::IoError { span, .. } => *span,
             RuntimeError::UnhashableType { span, .. } => *span,
+            RuntimeError::Timeout { .. } => crate::span::Span::dummy(),
+            RuntimeError::FfiPermissionDenied { .. } => crate::span::Span::dummy(),
         }
     }
 }

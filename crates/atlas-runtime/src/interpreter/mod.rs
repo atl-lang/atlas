@@ -62,6 +62,8 @@ pub struct Interpreter {
     pub(super) monomorphizer: crate::typechecker::generics::Monomorphizer,
     /// Security context for current evaluation (set during eval())
     pub(super) current_security: Option<std::sync::Arc<crate::security::SecurityContext>>,
+    /// Execution limits for timeout enforcement
+    pub(super) execution_limits: Option<std::sync::Arc<crate::api::config::ExecutionLimits>>,
     /// Output writer for print() (defaults to stdout)
     pub(super) output_writer: crate::stdlib::OutputWriter,
     /// Counter for generating unique nested function names
@@ -92,6 +94,7 @@ impl Interpreter {
             control_flow: ControlFlow::None,
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
             current_security: None,
+            execution_limits: None,
             output_writer: crate::stdlib::stdout_writer(),
             next_func_id: 0,
             library_loader: LibraryLoader::new(),
@@ -134,6 +137,24 @@ impl Interpreter {
     /// Set the output writer (used by Runtime to redirect print() output)
     pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
         self.output_writer = writer;
+    }
+
+    /// Set execution limits for timeout enforcement
+    pub fn set_execution_limits(
+        &mut self,
+        limits: std::sync::Arc<crate::api::config::ExecutionLimits>,
+    ) {
+        self.execution_limits = Some(limits);
+    }
+
+    /// Check if execution timeout has been exceeded
+    #[inline]
+    fn check_timeout(&self) -> Result<(), RuntimeError> {
+        if let Some(ref limits) = self.execution_limits {
+            limits.check_timeout()
+        } else {
+            Ok(())
+        }
     }
 
     /// Register a builtin function in globals
@@ -679,6 +700,7 @@ impl Interpreter {
                 control_flow: ControlFlow::None,
                 monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
                 current_security: None,
+                execution_limits: None, // Callbacks don't inherit timeout limits
                 output_writer: output_writer.clone(),
                 next_func_id: 0,
                 library_loader: LibraryLoader::new(),
