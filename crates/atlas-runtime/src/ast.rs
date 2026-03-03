@@ -557,8 +557,10 @@ pub enum Expr {
     Match(MatchExpr),
     Try(TryExpr),
     /// Anonymous function expression.
+    ///
     /// Syntax: `fn(x: number, y: number) -> number { x + y }`
-    /// Arrow:  `(x) => x + 1`  (desugared to this by the parser)
+    ///
+    /// Type annotations are optional: `fn(x) { x + 1 }` is also valid.
     AnonFn {
         params: Vec<Param>,
         return_type: Option<TypeRef>,

@@ -127,9 +127,9 @@ fn parity_generic_multi_type_params() {
 // --- Edge cases (4 tests) ---
 
 #[test]
-fn parity_edge_arrow_fn_inferred() {
-    // Arrow fn with inferred return: (x) => x + 1
-    assert_parity_num("let f = (x: number) => x + 1; f(5);", 6.0);
+fn parity_edge_anon_fn_inferred() {
+    // Anonymous fn with inferred return: fn(x) { x + 1 }
+    assert_parity_num("let f = fn(x: number) { x + 1 }; f(5);", 6.0);
 }
 
 #[test]

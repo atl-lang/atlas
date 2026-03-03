@@ -1043,7 +1043,7 @@ fn test_tc_anon_fn_untyped_params_no_error() {
     // Arrow fn with untyped params — Unknown type, no crash, no error
     typecheck_ok(
         r#"
-let f = (x) => x;
+let f = fn(x) { x };
 "#,
     );
 }
@@ -1081,7 +1081,7 @@ fn test_tc_anon_fn_arrow_syntax_no_error() {
     // Arrow syntax — no declared types, typechecks without error
     typecheck_ok(
         r#"
-let double = (x) => x;
+let double = fn(x) { x };
 double(4);
 "#,
     );
@@ -1190,10 +1190,10 @@ greet("world");
 
 #[test]
 fn test_anon_fn_arrow_form_basic() {
-    // Phase 05 AC: `let f = (x) => x * 2; f(3);` → 6
+    // Phase 05 AC: `let f = fn(x) { x * 2 }; f(3);` → 6
     assert_vm_number(
         r#"
-let f = (x) => x * 2;
+let f = fn(x) { x * 2 };
 f(3);
 "#,
         6.0,
@@ -1204,7 +1204,7 @@ f(3);
 fn test_anon_fn_arrow_form_arithmetic() {
     assert_vm_number(
         r#"
-let square = (x) => x * x;
+let square = fn(x) { x * x };
 square(7);
 "#,
         49.0,
@@ -1215,7 +1215,7 @@ square(7);
 fn test_anon_fn_arrow_form_no_params() {
     assert_vm_number(
         r#"
-let forty_two = () => 42;
+let forty_two = fn() { 42 };
 forty_two();
 "#,
         42.0,
@@ -1226,7 +1226,7 @@ forty_two();
 fn test_anon_fn_arrow_form_two_params() {
     assert_vm_number(
         r#"
-let mul = (a, b) => a * b;
+let mul = fn(a, b) { a * b };
 mul(6, 7);
 "#,
         42.0,
@@ -1237,7 +1237,7 @@ mul(6, 7);
 fn test_anon_fn_arrow_form_string_concat() {
     assert_vm_string(
         r#"
-let join = (a, b) => a + b;
+let join = fn(a, b) { a + b };
 join("foo", "bar");
 "#,
         "foobar",
@@ -1252,7 +1252,7 @@ fn test_anon_fn_captures_outer_param() {
     assert_vm_number(
         r#"
 fn make_adder(n: number) -> number {
-    let f = (x) => x + n;
+    let f = fn(x) { x + n };
     return f(10);
 }
 make_adder(5);
@@ -1280,7 +1280,7 @@ fn test_anon_fn_captures_multiple_outer_vars() {
     assert_vm_number(
         r#"
 fn compute(a: number, b: number) -> number {
-    let f = (x) => x + a + b;
+    let f = fn(x) { x + a + b };
     return f(1);
 }
 compute(2, 3);
@@ -1298,7 +1298,7 @@ fn test_anon_fn_passed_as_arg() {
 fn apply(f: any, x: number) -> number {
     return f(x);
 }
-apply((n) => n * 3, 4);
+apply(fn(n) { n * 3 }, 4);
 "#,
         12.0,
     );
@@ -1311,7 +1311,7 @@ fn test_anon_fn_arrow_passed_as_arg() {
 fn apply(f: any, x: number) -> number {
     return f(x);
 }
-apply((n) => n + 100, 5);
+apply(fn(n) { n + 100 }, 5);
 "#,
         105.0,
     );
@@ -1324,7 +1324,7 @@ fn test_anon_fn_returned_from_function() {
     assert_vm_number(
         r#"
 fn make_multiplier(factor: number) -> any {
-    return (x) => x * factor;
+    return fn(x) { x * factor };
 }
 let double = make_multiplier(2);
 double(21);
@@ -1350,7 +1350,7 @@ f(5);
 fn test_anon_fn_parity_arrow() {
     assert_parity_number(
         r#"
-let f = (x) => x * 2;
+let f = fn(x) { x * 2 };
 f(3);
 "#,
         6.0,
@@ -1362,7 +1362,7 @@ fn test_anon_fn_parity_capture() {
     assert_parity_number(
         r#"
 fn outer(n: number) -> number {
-    let f = (x) => x + n;
+    let f = fn(x) { x + n };
     return f(10);
 }
 outer(5);
@@ -1385,7 +1385,7 @@ fn test_parity_var_mutation_after_closure_creation_not_visible() {
         r#"
 fn outer() -> number {
     let mut x = 10;
-    let f = () => x;
+    let f = fn() { x };
     x = 99;
     return f();
 }
@@ -1419,7 +1419,7 @@ fn test_parity_var_mutation_inside_closure_works() {
         r#"
 fn outer() -> number {
     let mut counter = 0;
-    let inc = () => counter + 1;
+    let inc = fn() { counter + 1 };
     return inc();
 }
 outer();
@@ -1436,7 +1436,7 @@ fn test_parity_partial_var_mutation_after_capture() {
 fn outer() -> number {
     let mut a = 1;
     let mut b = 2;
-    let f = () => a + b;
+    let f = fn() { a + b };
     a = 100;
     return f();
 }
@@ -1453,7 +1453,7 @@ fn test_parity_let_binding_captured_stable() {
         r#"
 fn outer() -> number {
     let x = 42;
-    let f = () => x;
+    let f = fn() { x };
     return f();
 }
 outer();
@@ -1469,9 +1469,9 @@ fn test_parity_two_closures_different_snapshots() {
         r#"
 fn outer() -> number {
     let mut x = 1;
-    let f1 = () => x;
+    let f1 = fn() { x };
     x = 2;
-    let f2 = () => x;
+    let f2 = fn() { x };
     return f1() + f2();
 }
 outer();
@@ -1506,7 +1506,7 @@ fn test_hof_map_arrow() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3];
-let result = map(arr, (x) => x * 2);
+let result = map(arr, fn(x) { x * 2 });
 result[0];
 "#,
         2.0,
@@ -1521,7 +1521,7 @@ fn test_hof_map_closure_with_upvalue() {
 fn run() -> number {
     let factor = 3;
     let arr = [1, 2, 3];
-    let result = map(arr, (x) => x * factor);
+    let result = map(arr, fn(x) { x * factor });
     return result[1];
 }
 run();
@@ -1549,7 +1549,7 @@ fn test_hof_filter_arrow() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4, 5];
-let result = filter(arr, (x) => x > 1);
+let result = filter(arr, fn(x) { x > 1 });
 len(result);
 "#,
         4.0,
@@ -1563,7 +1563,7 @@ fn test_hof_filter_closure_with_upvalue() {
 fn run() -> number {
     let threshold = 2;
     let arr = [1, 2, 3, 4];
-    let result = filter(arr, (x) => x > threshold);
+    let result = filter(arr, fn(x) { x > threshold });
     return len(result);
 }
 run();
@@ -1590,7 +1590,7 @@ fn test_hof_reduce_arrow() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4];
-reduce(arr, (acc, x) => acc + x, 0);
+reduce(arr, fn(acc, x) { acc + x }, 0);
 "#,
         10.0,
     );
@@ -1616,7 +1616,7 @@ fn test_hof_for_each_arrow_executes() {
     let result = vm_eval(
         r#"
 let arr = [1, 2, 3];
-forEach(arr, (x) => x);
+forEach(arr, fn(x) { x });
 99;
 "#,
     );
@@ -1641,7 +1641,7 @@ fn test_hof_find_arrow() {
     assert_parity_number(
         r#"
 let arr = [10, 20, 30];
-find(arr, (x) => x == 20)?;
+find(arr, fn(x) { x == 20 })?;
 "#,
         20.0,
     );
@@ -1665,7 +1665,7 @@ fn test_hof_any_arrow() {
     assert_parity_bool(
         r#"
 let arr = [1, 2, 3];
-some(arr, (x) => x > 10);
+some(arr, fn(x) { x > 10 });
 "#,
         false,
     );
@@ -1689,7 +1689,7 @@ fn test_hof_all_arrow() {
     assert_parity_bool(
         r#"
 let arr = [1, 2, 3];
-every(arr, (x) => x > 1);
+every(arr, fn(x) { x > 1 });
 "#,
         false,
     );
@@ -1714,7 +1714,7 @@ fn test_hof_sort_arrow() {
     assert_parity_number(
         r#"
 let arr = [3, 1, 2];
-let result = sort(arr, (a, b) => a - b);
+let result = sort(arr, fn(a, b) { a - b });
 result[2];
 "#,
         3.0,
@@ -1740,7 +1740,7 @@ fn test_hof_flat_map_arrow() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3];
-let result = flatMap(arr, (x) => [x, x]);
+let result = flatMap(arr, fn(x) { [x, x] });
 result[0];
 "#,
         1.0,
@@ -1882,7 +1882,7 @@ f(5);
 fn test_parity_arrow_basic_call() {
     assert_parity_number(
         r#"
-let g = (x) => x * 2;
+let g = fn(x) { x * 2 };
 g(3);
 "#,
         6.0,
@@ -1893,7 +1893,7 @@ g(3);
 fn test_parity_multi_param_arrow() {
     assert_parity_number(
         r#"
-let add = (x, y) => x + y;
+let add = fn(x, y) { x + y };
 add(3, 4);
 "#,
         7.0,
@@ -2010,7 +2010,7 @@ run();
 fn test_parity_map_arrow_inline() {
     assert_parity_number(
         r#"
-let result = map([1, 2, 3], (x) => x * 10);
+let result = map([1, 2, 3], fn(x) { x * 10 });
 result[1];
 "#,
         20.0,
@@ -2046,7 +2046,7 @@ fn test_parity_function_composition() {
 fn compose(f: (number) -> number, g: (number) -> number) -> (number) -> number {
     return fn(x: number) -> number { return f(g(x)); };
 }
-let double_then_add1 = compose((x) => x + 1, (x) => x * 2);
+let double_then_add1 = compose(fn(x) { x + 1 }, fn(x) { x * 2 });
 double_then_add1(3);
 "#,
         7.0,
@@ -2059,7 +2059,7 @@ double_then_add1(3);
 fn test_parity_closure_in_array_call() {
     assert_parity_number(
         r#"
-let ops = [(x) => x + 1, (x) => x * 2, (x) => x - 1];
+let ops = [fn(x) { x + 1 }, fn(x) { x * 2 }, fn(x) { x - 1 } ];
 ops[1](5);
 "#,
         10.0,
@@ -2071,7 +2071,7 @@ fn test_parity_closure_array_second_element() {
     // Call second element of closure array
     assert_parity_number(
         r#"
-let ops = [(x) => x + 10, (x) => x * 3];
+let ops = [fn(x) { x + 10 }, fn(x) { x * 3 } ];
 ops[1](4);
 "#,
         12.0,
@@ -2086,7 +2086,7 @@ fn test_parity_arrow_captures_outer_let() {
         r#"
 fn run() -> number {
     let factor = 4;
-    let f = (x) => x * factor;
+    let f = fn(x) { x * factor };
     return f(5);
 }
 run();
@@ -2111,8 +2111,8 @@ fn test_parity_arrow_chained_hof() {
     // map then filter using arrow fns — [1,2,3,4]*2=[2,4,6,8], filter >4 → [6,8] → len 2
     assert_parity_number(
         r#"
-let doubled = map([1, 2, 3, 4], (x) => x * 2);
-let large = filter(doubled, (x) => x > 4);
+let doubled = map([1, 2, 3, 4], fn(x) { x * 2 });
+let large = filter(doubled, fn(x) { x > 4 });
 len(large);
 "#,
         2.0,
