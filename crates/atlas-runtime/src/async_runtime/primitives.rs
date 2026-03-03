@@ -7,7 +7,6 @@ use crate::value::Value;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex as TokioMutex;
-use tokio::time;
 
 // ============================================================================
 // Sleep and Timers
@@ -16,17 +15,12 @@ use tokio::time;
 /// Sleep for a specified duration
 ///
 /// Returns a Future that resolves after the specified number of milliseconds.
-/// Non-blocking - other tasks can run while sleeping.
+/// Currently blocks the current thread (true async will be added in future versions).
 pub fn sleep(milliseconds: u64) -> AtlasFuture {
-    let future = AtlasFuture::new_pending();
-    let future_clone = future.clone();
-
-    tokio::task::spawn_local(async move {
-        time::sleep(Duration::from_millis(milliseconds)).await;
-        future_clone.resolve(Value::Null);
-    });
-
-    future
+    // Synchronous sleep - blocks the current thread
+    // True non-blocking async will require language-level async/await support
+    std::thread::sleep(Duration::from_millis(milliseconds));
+    AtlasFuture::resolved(Value::Null)
 }
 
 /// Create a timer that fires after a delay
@@ -41,20 +35,12 @@ pub fn timer(milliseconds: u64) -> AtlasFuture {
 /// Returns a Future that can be polled repeatedly.
 /// Each poll waits for the interval duration.
 ///
-/// Note: This is a simplified implementation.
-/// A full implementation would use tokio::time::interval.
+/// Note: This is a simplified synchronous implementation.
+/// True non-blocking async will require language-level async/await support.
 pub fn interval(milliseconds: u64) -> AtlasFuture {
-    let future = AtlasFuture::new_pending();
-    let future_clone = future.clone();
-
-    tokio::task::spawn_local(async move {
-        let mut interval = time::interval(Duration::from_millis(milliseconds));
-        interval.tick().await; // First tick completes immediately
-        interval.tick().await; // Wait for first interval
-        future_clone.resolve(Value::Null);
-    });
-
-    future
+    // Synchronous implementation - wait for the interval then resolve
+    std::thread::sleep(Duration::from_millis(milliseconds));
+    AtlasFuture::resolved(Value::Null)
 }
 
 // ============================================================================
@@ -81,21 +67,12 @@ impl AsyncMutex {
     /// Lock the mutex
     ///
     /// Returns a Future that resolves to the protected value.
-    /// The value should be updated and the lock automatically releases
-    /// when the operation completes.
+    /// Currently uses blocking lock (true async will be added in future versions).
     pub fn lock(&self) -> AtlasFuture {
-        let mutex = Arc::clone(&self.inner);
-        let future = AtlasFuture::new_pending();
-        let future_clone = future.clone();
-
-        tokio::task::spawn_local(async move {
-            let guard = mutex.lock().await;
-            // Clone the value since we can't return the guard
-            let value = (*guard).clone();
-            future_clone.resolve(value);
-        });
-
-        future
+        // Synchronous blocking lock
+        let guard = self.inner.blocking_lock();
+        let value = (*guard).clone();
+        AtlasFuture::resolved(value)
     }
 
     /// Try to lock without blocking
@@ -109,18 +86,12 @@ impl AsyncMutex {
     /// Update the value in the mutex
     ///
     /// This is a convenience method that locks, updates, and unlocks.
+    /// Currently uses blocking lock (true async will be added in future versions).
     pub fn update(&self, new_value: Value) -> AtlasFuture {
-        let mutex = Arc::clone(&self.inner);
-        let future = AtlasFuture::new_pending();
-        let future_clone = future.clone();
-
-        tokio::task::spawn_local(async move {
-            let mut guard = mutex.lock().await;
-            *guard = new_value;
-            future_clone.resolve(Value::Null);
-        });
-
-        future
+        // Synchronous blocking lock
+        let mut guard = self.inner.blocking_lock();
+        *guard = new_value;
+        AtlasFuture::resolved(Value::Null)
     }
 }
 
@@ -138,46 +109,29 @@ impl std::fmt::Debug for AsyncMutex {
 ///
 /// Returns a Future that either resolves to the original value,
 /// or rejects with a timeout error if the duration is exceeded.
+/// Currently uses synchronous polling (true async will be added in future versions).
 pub fn timeout(future: AtlasFuture, milliseconds: u64) -> AtlasFuture {
-    let timeout_future = AtlasFuture::new_pending();
-    let timeout_clone = timeout_future.clone();
+    let duration = Duration::from_millis(milliseconds);
+    let start = std::time::Instant::now();
+    let poll_interval = Duration::from_millis(10);
 
-    tokio::task::spawn_local(async move {
-        let duration = Duration::from_millis(milliseconds);
-
-        // Create timeout
-        let timeout_result = time::timeout(duration, async {
-            // Poll the future by checking its state
-            // In a full implementation, this would properly await the future
-            let start = std::time::Instant::now();
-            loop {
-                match future.get_state() {
-                    crate::async_runtime::FutureState::Resolved(value) => {
-                        return Ok(value);
-                    }
-                    crate::async_runtime::FutureState::Rejected(error) => {
-                        return Err(error);
-                    }
-                    crate::async_runtime::FutureState::Pending => {
-                        // Still pending, check timeout
-                        if start.elapsed() > duration {
-                            return Err(Value::string("Operation timed out"));
-                        }
-                        time::sleep(Duration::from_millis(10)).await;
-                    }
-                }
+    // Poll the future until resolved, rejected, or timeout
+    loop {
+        match future.get_state() {
+            crate::async_runtime::FutureState::Resolved(value) => {
+                return AtlasFuture::resolved(value);
             }
-        })
-        .await;
-
-        match timeout_result {
-            Ok(Ok(value)) => timeout_clone.resolve(value),
-            Ok(Err(error)) => timeout_clone.reject(error),
-            Err(_) => timeout_clone.reject(Value::string("Operation timed out")),
+            crate::async_runtime::FutureState::Rejected(error) => {
+                return AtlasFuture::rejected(error);
+            }
+            crate::async_runtime::FutureState::Pending => {
+                if start.elapsed() > duration {
+                    return AtlasFuture::rejected(Value::string("Operation timed out"));
+                }
+                std::thread::sleep(poll_interval);
+            }
         }
-    });
-
-    timeout_future
+    }
 }
 
 /// Retry an operation with timeout
