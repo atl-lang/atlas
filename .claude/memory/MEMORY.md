@@ -8,6 +8,7 @@
 | `.claude/lazy/git.md` | Git operations (commit, push, PR, branch management) |
 | `.claude/lazy/architecture.md` | GATE 0 (file size limits), adding code to large files, subagent decisions |
 | `.claude/lazy/comms.md` | Writing PRs, commits, docs, changelogs |
+| `.claude/lazy/tracking-db.md` | SQL queries, issue management, session tracking schema |
 | `domain-prereqs.md` | Before writing ANY code touching AST/Type/Value |
 | `patterns.md` | Implementing features (collections, stdlib, trait dispatch, frontend API) |
 | `testing-patterns.md` | Full detail beyond what rule file covers |
