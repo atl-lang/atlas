@@ -12,8 +12,9 @@ pub enum TypeTag {
     JsonValue,
     Array,
     HttpResponse,
+    String,
     // Future types added here as stdlib phases add method support:
-    // String, HashMap, HashSet, DateTime, Regex, ...
+    // HashMap, HashSet, DateTime, Regex, ...
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -23,6 +24,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::JsonValue => Some(format!("json{}", capitalize_first(method_name))),
         TypeTag::Array => resolve_array_method(method_name),
         TypeTag::HttpResponse => resolve_http_response_method(method_name),
+        TypeTag::String => resolve_string_method(method_name),
     }
 }
 
@@ -35,6 +37,36 @@ fn resolve_http_response_method(method_name: &str) -> Option<String> {
         "header" => "httpHeader",
         "url" => "httpUrl",
         "isSuccess" => "httpIsSuccess",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a string method call to its stdlib function name.
+fn resolve_string_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        // Core methods
+        "length" => "len",
+        "charAt" => "charAt",
+        "substring" => "substring",
+        // Search methods
+        "indexOf" => "indexOf",
+        "lastIndexOf" => "lastIndexOf",
+        "includes" => "includes",
+        "startsWith" => "startsWith",
+        "endsWith" => "endsWith",
+        // Transform methods
+        "toUpperCase" => "toUpperCase",
+        "toLowerCase" => "toLowerCase",
+        "trim" => "trim",
+        "trimStart" => "trimStart",
+        "trimEnd" => "trimEnd",
+        "repeat" => "repeat",
+        "replace" => "replace",
+        "split" => "split",
+        // Padding methods
+        "padStart" => "padStart",
+        "padEnd" => "padEnd",
         _ => return None,
     };
     Some(func_name.to_string())

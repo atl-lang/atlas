@@ -183,6 +183,7 @@ fn test_array_literal_type_errors(#[case] source: &str) {
 #[case::variable_index("let x = [1, 2, 3]; let i: number = 1; let y = x[i];")]
 #[case::expression_index("let x = [1, 2, 3]; let y = x[1 + 1];")]
 #[case::nested_index("let x = [[1, 2], [3, 4]]; let y = x[0][1];")]
+#[case::string_indexing(r#"let x: string = "hello"; let y = x[0];"#)]
 fn test_array_indexing(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_no_errors(&diagnostics);
@@ -192,7 +193,6 @@ fn test_array_indexing(#[case] source: &str) {
 #[case::string_index(r#"let x = [1, 2, 3]; let y = x["hello"];"#)]
 #[case::bool_index("let x = [1, 2, 3]; let y = x[true];")]
 #[case::non_array("let x: number = 5; let y = x[0];")]
-#[case::string_indexing(r#"let x: string = "hello"; let y = x[0];"#)]
 fn test_array_indexing_errors(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");

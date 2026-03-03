@@ -1508,6 +1508,34 @@ impl VM {
                                 });
                             }
                         }
+                        Value::String(s) => {
+                            // String indexing by character position (Unicode-aware)
+                            if let Value::Number(index) = index_val {
+                                if index.fract() != 0.0 || index < 0.0 {
+                                    return Err(RuntimeError::InvalidIndex {
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                                }
+                                let idx = index as usize;
+                                let chars: Vec<char> = s.chars().collect();
+                                if idx >= chars.len() {
+                                    return Err(RuntimeError::OutOfBounds {
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                                }
+                                self.push(Value::string(chars[idx].to_string()));
+                            } else {
+                                return Err(RuntimeError::InvalidIndex {
+                                    span: self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy),
+                                });
+                            }
+                        }
                         Value::JsonValue(json) => {
                             // JSON indexing accepts string or number
                             let result = match index_val {
@@ -1526,7 +1554,7 @@ impl VM {
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {
-                                msg: "Cannot index non-array/json".to_string(),
+                                msg: "Cannot index non-array/string/json".to_string(),
                                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
                             })
                         }

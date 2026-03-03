@@ -307,3 +307,96 @@ fn test_ends_with_empty() {
     let code = r#"endsWith("hello", "")"#;
     assert_eval_bool(code, true);
 }
+
+// ============================================================================
+// String Indexing Tests (H-022 VM parity)
+// ============================================================================
+
+#[test]
+fn test_string_index_basic() {
+    let code = r#""hello"[0]"#;
+    assert_eval_string(code, "h");
+}
+
+#[test]
+fn test_string_index_middle() {
+    let code = r#""hello"[2]"#;
+    assert_eval_string(code, "l");
+}
+
+#[test]
+fn test_string_index_last() {
+    let code = r#""hello"[4]"#;
+    assert_eval_string(code, "o");
+}
+
+#[test]
+fn test_string_index_unicode() {
+    let code = r#""🎉🔥✨"[1]"#;
+    assert_eval_string(code, "🔥");
+}
+
+#[test]
+fn test_string_index_out_of_bounds() {
+    let code = r#""hello"[10]"#;
+    assert_has_error(code);
+}
+
+#[test]
+fn test_string_index_negative() {
+    let code = r#""hello"[-1]"#;
+    assert_has_error(code);
+}
+
+#[test]
+fn test_string_index_non_integer() {
+    let code = r#""hello"[1.5]"#;
+    assert_has_error(code);
+}
+
+// ============================================================================
+// String Length Method Tests (H-022 VM parity)
+// ============================================================================
+
+#[test]
+fn test_string_length_basic() {
+    let code = r#""hello".length()"#;
+    assert_eval_number(code, 5.0);
+}
+
+#[test]
+fn test_string_length_empty() {
+    let code = r#""".length()"#;
+    assert_eval_number(code, 0.0);
+}
+
+#[test]
+fn test_string_length_unicode() {
+    let code = r#""🎉🔥✨".length()"#;
+    assert_eval_number(code, 3.0);
+}
+
+#[test]
+fn test_string_length_via_variable() {
+    let code = r#"
+        let s = "hello world";
+        s.length()
+    "#;
+    assert_eval_number(code, 11.0);
+}
+
+// ============================================================================
+// String Method Chaining Tests (H-022 VM parity)
+// ============================================================================
+
+#[test]
+fn test_string_trim_length() {
+    let code = r#""  hello  ".trim().length()"#;
+    assert_eval_number(code, 5.0);
+}
+
+#[test]
+fn test_string_to_upper_includes() {
+    let code = r#""hello".toUpperCase().includes("ELL")"#;
+    assert_eval_bool(code, true);
+}

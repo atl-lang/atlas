@@ -98,6 +98,79 @@ impl MethodTable {
         );
         self.register("array", "flatten", vec![], any_array.clone());
         self.register("array", "join", vec![Type::String], Type::String);
+
+        // String methods
+        // Core methods
+        self.register("string", "length", vec![], Type::Number);
+        self.register(
+            "string",
+            "charAt",
+            vec![Type::Number],
+            Type::Generic {
+                name: "Option".to_string(),
+                type_args: vec![Type::String],
+            },
+        );
+        self.register(
+            "string",
+            "substring",
+            vec![Type::Number, Type::Number],
+            Type::String,
+        );
+        // Search methods
+        self.register(
+            "string",
+            "indexOf",
+            vec![Type::String],
+            Type::Generic {
+                name: "Option".to_string(),
+                type_args: vec![Type::Number],
+            },
+        );
+        self.register(
+            "string",
+            "lastIndexOf",
+            vec![Type::String],
+            Type::Generic {
+                name: "Option".to_string(),
+                type_args: vec![Type::Number],
+            },
+        );
+        self.register("string", "includes", vec![Type::String], Type::Bool);
+        self.register("string", "startsWith", vec![Type::String], Type::Bool);
+        self.register("string", "endsWith", vec![Type::String], Type::Bool);
+        // Transform methods
+        self.register("string", "toUpperCase", vec![], Type::String);
+        self.register("string", "toLowerCase", vec![], Type::String);
+        self.register("string", "trim", vec![], Type::String);
+        self.register("string", "trimStart", vec![], Type::String);
+        self.register("string", "trimEnd", vec![], Type::String);
+        self.register("string", "repeat", vec![Type::Number], Type::String);
+        self.register(
+            "string",
+            "replace",
+            vec![Type::String, Type::String],
+            Type::String,
+        );
+        self.register(
+            "string",
+            "split",
+            vec![Type::String],
+            Type::Array(Box::new(Type::String)),
+        );
+        // Padding methods
+        self.register(
+            "string",
+            "padStart",
+            vec![Type::Number, Type::String],
+            Type::String,
+        );
+        self.register(
+            "string",
+            "padEnd",
+            vec![Type::Number, Type::String],
+            Type::String,
+        );
     }
 }
 

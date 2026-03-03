@@ -411,6 +411,7 @@ impl Interpreter {
         let dynamic_tag = match &target_value {
             Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
+            Value::String(_) => Some(crate::method_dispatch::TypeTag::String),
             _ => None,
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);

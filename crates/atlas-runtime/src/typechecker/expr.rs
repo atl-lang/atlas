@@ -751,6 +751,7 @@ impl<'a> TypeChecker<'a> {
         let type_tag = match target_type.normalized() {
             Type::JsonValue => Some(crate::method_dispatch::TypeTag::JsonValue),
             Type::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
+            Type::String => Some(crate::method_dispatch::TypeTag::String),
             _ => None,
         };
         member.type_tag.set(type_tag);
@@ -1032,6 +1033,24 @@ impl<'a> TypeChecker<'a> {
                 }
                 Type::JsonValue
             }
+            // String indexing: requires number index, returns single-char string
+            Type::String => {
+                if index_norm != Type::Number && index_norm != Type::Unknown {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            format!(
+                                "String index must be number, found {}",
+                                index_type.display_name()
+                            ),
+                            index.index.span(),
+                        )
+                        .with_label("type mismatch")
+                        .with_help("string indices must be numbers"),
+                    );
+                }
+                Type::String
+            }
             Type::Union(members) => {
                 let mut result_types = Vec::new();
                 for member in members {
@@ -1075,6 +1094,23 @@ impl<'a> TypeChecker<'a> {
                             }
                             result_types.push(Type::JsonValue);
                         }
+                        Type::String => {
+                            if index_norm != Type::Number && index_norm != Type::Unknown {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        "AT3001",
+                                        format!(
+                                            "String index must be number, found {}",
+                                            index_type.display_name()
+                                        ),
+                                        index.index.span(),
+                                    )
+                                    .with_label("type mismatch")
+                                    .with_help("string indices must be numbers"),
+                                );
+                            }
+                            result_types.push(Type::String);
+                        }
                         _ => {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
@@ -1083,7 +1119,7 @@ impl<'a> TypeChecker<'a> {
                                     index.target.span(),
                                 )
                                 .with_label("not indexable")
-                                .with_help("only arrays and json values can be indexed"),
+                                .with_help("only arrays, strings, and json values can be indexed"),
                             );
                             return Type::Unknown;
                         }
@@ -1100,7 +1136,7 @@ impl<'a> TypeChecker<'a> {
                         index.target.span(),
                     )
                     .with_label("not indexable")
-                    .with_help("only arrays and json values can be indexed"),
+                    .with_help("only arrays, strings, and json values can be indexed"),
                 );
                 Type::Unknown
             }

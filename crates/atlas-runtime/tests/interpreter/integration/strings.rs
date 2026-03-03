@@ -9,9 +9,7 @@ fn test_string_concatenation() {
     assert_eval_string(code, "Hello, World!");
 }
 
-// TODO: Enable when typechecker supports string indexing
 #[test]
-#[ignore = "typechecker does not yet support string indexing"]
 fn test_string_indexing() {
     let code = r#"
         let s: string = "Hello";
