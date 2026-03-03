@@ -1,0 +1,5 @@
+// Forwarding helpers (Atlas port)
+// NOTE: No transport write interfaces; no-op placeholders.
+
+export fn forward_to_child(payload: string) -> void { return; }
+export fn forward_to_client(payload: string) -> void { return; }

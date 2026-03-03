@@ -1,0 +1,13 @@
+// Continue bootstrap (Atlas port)
+// Source: hydra/internal/bootstrap/continue.go
+
+import { configure_generic_mcp } from "./generic";
+import { detect_client_config_path } from "./pathutil";
+
+export fn configure_continue(path: string, registry_path: string, dry_run: bool) -> Result<null, string> {
+    let p = path;
+    if (len(p) == 0) {
+        p = detect_client_config_path("continue")?;
+    }
+    return configure_generic_mcp(p, registry_path, dry_run, "continue");
+}

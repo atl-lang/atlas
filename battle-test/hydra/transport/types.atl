@@ -1,0 +1,33 @@
+// Transport Types for Hydra Atlas (json-based)
+// NOTE: Atlas grammar does not currently support enums/structs; using json objects.
+
+export fn protocol_unknown() -> string { return "unknown"; }
+export fn protocol_ndjson() -> string { return "ndjson"; }
+export fn protocol_lsp() -> string { return "lsp"; }
+
+export fn protocol_name(protocol: string) -> string {
+    if (protocol == "lsp") { return "LSP"; }
+    if (protocol == "ndjson") { return "NDJSON"; }
+    return "Unknown";
+}
+
+export fn new_message_result(payload: string, remaining: string, consumed: number) -> Result<json, string> {
+    let obj = { payload: payload, remaining: remaining, consumed: consumed };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn new_transport_state(buffer: string, protocol: string, detected: bool) -> Result<json, string> {
+    let obj = { buffer: buffer, protocol: protocol, protocol_detected: detected };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn new_process_result(protocol: string, message: string, transport: json) -> Result<json, string> {
+    let obj = { protocol: protocol, message: message, transport: transport };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

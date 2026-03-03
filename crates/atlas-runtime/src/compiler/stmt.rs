@@ -57,7 +57,7 @@ impl Compiler {
             captures: Vec::new(),
         });
 
-        self.compile_block(&func.body)?;
+        self.compile_block_with_tail(&func.body, func.span)?;
 
         // Pop upvalue context — now we know all captured outer-scope variables
         let upvalue_ctx = self.upvalue_stack.pop().expect("upvalue context missing");
@@ -66,9 +66,6 @@ impl Compiler {
         self.current_function_base = prev_local_base;
         let total_local_count = self.locals_watermark - local_base;
         self.locals_watermark = prev_watermark;
-
-        self.bytecode.emit(Opcode::Null, func.span);
-        self.bytecode.emit(Opcode::Return, func.span);
 
         self.scope_depth = old_scope;
         self.locals.truncate(local_base);
@@ -977,11 +974,32 @@ impl Compiler {
         }
     }
 
-    /// Compile a block
+    /// Compile a block (statements only, tail expression handled by caller)
     pub(super) fn compile_block(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
         for stmt in &block.statements {
             self.compile_stmt(stmt)?;
         }
+        Ok(())
+    }
+
+    /// Compile a block with tail expression support for function bodies
+    pub(super) fn compile_block_with_tail(
+        &mut self,
+        block: &Block,
+        span: crate::span::Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        // Compile all statements
+        for stmt in &block.statements {
+            self.compile_stmt(stmt)?;
+        }
+        // If block has tail expression, it's the implicit return value
+        if let Some(tail) = &block.tail_expr {
+            self.compile_expr(tail)?;
+        } else {
+            // No tail expression = implicit null return
+            self.bytecode.emit(Opcode::Null, span);
+        }
+        self.bytecode.emit(Opcode::Return, span);
         Ok(())
     }
 }

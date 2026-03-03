@@ -1,0 +1,6 @@
+// SizeLimiter mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/SizeLimiter.go
+
+export fn limit(response: json, max_kb: number) -> json {
+    return response;
+}

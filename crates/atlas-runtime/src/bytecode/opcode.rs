@@ -94,6 +94,9 @@ pub enum Opcode {
     GetIndex = 0x71,
     /// Pop value, pop index, pop array, array[index] = value
     SetIndex = 0x72,
+    /// Create HashMap [u16 size] from stack (key-value pairs interleaved)
+    /// Stack: [key1, val1, key2, val2, ...] → HashMap
+    HashMap = 0x73,
 
     // ===== Stack manipulation (0x80-0x8F) =====
     /// Pop and discard top of stack
@@ -122,6 +125,15 @@ pub enum Opcode {
     IsArray = 0x96,
     /// Pop array, push length (number)
     GetArrayLen = 0x97,
+    /// Create enum variant [u8 arg_count]
+    /// Stack: [enum_name, variant_name, args...] → EnumValue
+    EnumVariant = 0x98,
+    /// Check if value is enum variant with specific enum_name and variant_name
+    /// Stack: [value, enum_name, variant_name] → bool
+    CheckEnumVariant = 0x99,
+    /// Extract data array from EnumValue
+    /// Stack: [EnumValue] → Array
+    ExtractEnumData = 0x9A,
 
     // ===== Special (0xF0-0xFF) =====
     /// End of bytecode
@@ -167,6 +179,7 @@ impl TryFrom<u8> for Opcode {
             0x70 => Ok(Opcode::Array),
             0x71 => Ok(Opcode::GetIndex),
             0x72 => Ok(Opcode::SetIndex),
+            0x73 => Ok(Opcode::HashMap),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),
@@ -179,6 +192,9 @@ impl TryFrom<u8> for Opcode {
             0x95 => Ok(Opcode::ExtractResultValue),
             0x96 => Ok(Opcode::IsArray),
             0x97 => Ok(Opcode::GetArrayLen),
+            0x98 => Ok(Opcode::EnumVariant),
+            0x99 => Ok(Opcode::CheckEnumVariant),
+            0x9A => Ok(Opcode::ExtractEnumData),
             0xFF => Ok(Opcode::Halt),
             _ => Err(()),
         }

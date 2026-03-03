@@ -92,9 +92,21 @@ let g = getDouble();
 g(5);  // 10
 ```
 
-### Current Limitations
-- No anonymous function syntax (`fn(x) { ... }`)
-- All function values must be named functions
+### Anonymous Functions
+
+Atlas supports two forms of anonymous functions (closures):
+
+```atlas
+// fn expression form
+let double = fn(x: number) -> number { return x * 2; };
+
+// Arrow expression form (single expression body)
+let triple = (x) => x * 3;
+```
+
+See `syntax.md` for full details on parameter syntax and capture semantics.
+
+### Closure Behavior Notes
 - **Let-bound variables at top-level scope** are accessible from any named function — works in
   both interpreter and VM.
 - **Var-bound variables at top-level scope** are readable and mutable from any named function —

@@ -48,6 +48,8 @@ pub enum TypeKind {
     Option,
     /// Result type
     Result,
+    /// User-defined enum type
+    Enum,
 }
 
 /// Field information for struct types
@@ -411,6 +413,7 @@ impl TypeInfo {
             TypeKind::Extern => format!("extern type {}", self.name),
             TypeKind::Option => "Option type".to_string(),
             TypeKind::Result => "Result type".to_string(),
+            TypeKind::Enum => format!("enum {}", self.name),
         }
     }
 }

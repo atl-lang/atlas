@@ -230,6 +230,7 @@ pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::AsyncMutex(_) => "AsyncMutex",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
+        Value::EnumValue { enum_name, .. } => return Ok(Value::string(enum_name.clone())),
     };
 
     Ok(Value::string(type_name))
@@ -493,6 +494,18 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
         Value::SharedValue(_) => "[Shared]".to_string(),
+        Value::EnumValue {
+            enum_name,
+            variant_name,
+            data,
+        } => {
+            if data.is_empty() {
+                format!("{}::{}", enum_name, variant_name)
+            } else {
+                let args: Vec<String> = data.iter().map(|v| v.to_string()).collect();
+                format!("{}::{}({})", enum_name, variant_name, args.join(", "))
+            }
+        }
     };
 
     Ok(Value::string(string_value))
@@ -579,7 +592,8 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::ChannelReceiver(_)
         | Value::AsyncMutex(_)
         | Value::Closure(_)
-        | Value::SharedValue(_) => true,
+        | Value::SharedValue(_)
+        | Value::EnumValue { .. } => true,
     };
 
     Ok(Value::Bool(bool_value))
@@ -726,6 +740,7 @@ fn type_name(value: &Value) -> &str {
         Value::AsyncMutex(_) => "AsyncMutex",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
+        Value::EnumValue { .. } => "enum",
     }
 }
 
@@ -764,5 +779,17 @@ fn value_to_display_string(value: &Value) -> String {
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
         Value::SharedValue(_) => "[Shared]".to_string(),
+        Value::EnumValue {
+            enum_name,
+            variant_name,
+            data,
+        } => {
+            if data.is_empty() {
+                format!("{}::{}", enum_name, variant_name)
+            } else {
+                let args: Vec<String> = data.iter().map(|v| v.to_string()).collect();
+                format!("{}::{}({})", enum_name, variant_name, args.join(", "))
+            }
+        }
     }
 }

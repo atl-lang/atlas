@@ -57,12 +57,14 @@ items:
                       span:
                         start: 81
                         end: 90
+                tail_expr: ~
                 span:
                   start: 63
                   end: 104
               span:
                 start: 42
                 end: 104
+        tail_expr: ~
         span:
           start: 28
           end: 114

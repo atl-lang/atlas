@@ -1,0 +1,19 @@
+// Minimal working Atlas example
+
+fn greet(name: string) -> string {
+    return "Hello, " + name + "!";
+}
+
+fn main() -> void {
+    print("=== Atlas Hello World ===");
+
+    let message: string = greet("Atlas");
+    print(message);
+
+    let count: number = 42;
+    print("Count: " + str(count));
+
+    print("=== Done ===");
+}
+
+main();

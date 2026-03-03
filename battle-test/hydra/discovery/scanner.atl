@@ -1,0 +1,15 @@
+// Discovery scanner (Atlas port, simplified)
+
+export fn scan_paths(paths: array) -> Result<array, string> {
+    let results = [];
+    for p in paths {
+        if (pathExists(p)) {
+            let data = readFile(p);
+            if (isValidJSON(data)) {
+                let cfg = parseJSON(data)?;
+                results = results + [cfg];
+            }
+        }
+    }
+    return Ok(results);
+}

@@ -1,0 +1,33 @@
+// Working Transport Test - Start Simple
+
+fn test_strings() -> void {
+    print("=== Testing Basic Atlas ===");
+
+    // Test 1: String operations
+    let msg: string = "Hello from Atlas";
+    print(msg);
+
+    // Test 2: String concatenation
+    let a: string = "Protocol: ";
+    let b: string = "NDJSON";
+    print(a + b);
+
+    // Test 3: JSON parsing
+    let json_str: string = "{\"protocol\":\"ndjson\",\"version\":1}";
+    let result: Result<JsonValue, string> = parseJSON(json_str);
+
+    match result {
+        Ok(data) => {
+            print("JSON parsed successfully");
+            let protocol: string = jsonAsString(jsonGet(data, "protocol"));
+            print("Protocol from JSON: " + protocol);
+        },
+        Err(e) => {
+            print("JSON parse failed: " + e);
+        }
+    }
+
+    print("=== All basic tests passed ===");
+}
+
+test_strings();

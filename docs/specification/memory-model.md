@@ -330,4 +330,4 @@ This memory model is the foundation that makes Atlas systems-capable:
 ---
 
 *This specification is final. Changes require explicit architectural decision record.*
-*See `memory/decisions/runtime.md` for the DR entry.*
+*See `memory/patterns/runtime.md` for the DR entry.*

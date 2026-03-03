@@ -1,0 +1,18 @@
+// CLI init (Atlas port, simplified)
+// Source: hydra/internal/cli/init.go
+
+import { default_registry } from "../config/config";
+import { registry_path_from_args, expand_home } from "./pathutil";
+
+export fn cmd_init(args: json) -> Result<json, string> {
+    let reg_path = expand_home(registry_path_from_args(args));
+    if (fsIsFile(reg_path)) {
+        return Err("registry already exists at " + reg_path);
+    }
+    let reg = default_registry()?;
+    let pretty = prettifyJSON(toJSON(reg), 2);
+    let dir = pathDirname(reg_path);
+    let _ = createDir(dir);
+    writeFile(reg_path, pretty);
+    return Ok(reg);
+}

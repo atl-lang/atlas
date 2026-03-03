@@ -774,12 +774,15 @@ fn test_option_and_result_together() {
 #[test]
 fn test_option_in_conditional() {
     let code = r#"
-        let opt = Some(42);
-        if (is_some(opt)) {
-            unwrap(opt);
-        } else {
-            0;
+        fn test() -> number {
+            let opt = Some(42);
+            if (is_some(opt)) {
+                return unwrap(opt);
+            } else {
+                return 0;
+            }
         }
+        test()
     "#;
     assert_eval_number(code, 42.0);
 }
@@ -787,12 +790,15 @@ fn test_option_in_conditional() {
 #[test]
 fn test_result_in_conditional() {
     let code = r#"
-        let res = Ok(42);
-        if (is_ok(res)) {
-            unwrap(res);
-        } else {
-            0;
+        fn test() -> number {
+            let res = Ok(42);
+            if (is_ok(res)) {
+                return unwrap(res);
+            } else {
+                return 0;
+            }
         }
+        test()
     "#;
     assert_eval_number(code, 42.0);
 }

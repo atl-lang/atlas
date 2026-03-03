@@ -1,0 +1,32 @@
+// Test returning from match blocks
+
+fn test_match_return() -> bool {
+    let json_obj = { test: true };
+    let json_str: string = toJSON(json_obj);
+    let result: Result<json, string> = parseJSON(json_str);
+
+    match result {
+        Ok(data) => {
+            return true;
+        },
+        Err(_) => {
+            return false;
+        }
+    }
+}
+
+fn main() -> void {
+    print("=== Match Return Test ===");
+    print("");
+
+    let result: bool = test_match_return();
+
+    if (result) {
+        print("✓ Can return from match blocks");
+    }
+
+    print("");
+    print("=== Test Complete ===");
+}
+
+main();

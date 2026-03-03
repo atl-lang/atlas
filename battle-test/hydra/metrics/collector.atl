@@ -1,0 +1,121 @@
+// Metrics collector (Atlas port, simplified)
+
+export fn new_collector() -> Result<json, string> {
+    let obj = {
+        requests_total: 0,
+        requests_success: 0,
+        requests_failed: 0,
+        total_latency_ms: 0,
+        max_latency_ms: 0,
+        queue_waits_total: 0,
+        total_queue_wait_ms: 0,
+        max_queue_wait_ms: 0,
+        restarts_total: 0,
+        restart_reasons: {}
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn record_request(collector: json, duration_ms: number, success: bool) -> Result<json, string> {
+    let total = collector["requests_total"].as_number() + 1;
+    let succ = collector["requests_success"].as_number() + (success ? 1 : 0);
+    let fail = collector["requests_failed"].as_number() + (success ? 0 : 1);
+    let total_latency = collector["total_latency_ms"].as_number() + duration_ms;
+    let max_latency = collector["max_latency_ms"].as_number();
+    if (duration_ms > max_latency) { max_latency = duration_ms; }
+
+    let obj = {
+        requests_total: total,
+        requests_success: succ,
+        requests_failed: fail,
+        total_latency_ms: total_latency,
+        max_latency_ms: max_latency,
+        queue_waits_total: collector["queue_waits_total"],
+        total_queue_wait_ms: collector["total_queue_wait_ms"],
+        max_queue_wait_ms: collector["max_queue_wait_ms"],
+        restarts_total: collector["restarts_total"],
+        restart_reasons: collector["restart_reasons"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn record_queue_wait(collector: json, duration_ms: number) -> Result<json, string> {
+    let total = collector["queue_waits_total"].as_number() + 1;
+    let total_wait = collector["total_queue_wait_ms"].as_number() + duration_ms;
+    let max_wait = collector["max_queue_wait_ms"].as_number();
+    if (duration_ms > max_wait) { max_wait = duration_ms; }
+
+    let obj = {
+        requests_total: collector["requests_total"],
+        requests_success: collector["requests_success"],
+        requests_failed: collector["requests_failed"],
+        total_latency_ms: collector["total_latency_ms"],
+        max_latency_ms: collector["max_latency_ms"],
+        queue_waits_total: total,
+        total_queue_wait_ms: total_wait,
+        max_queue_wait_ms: max_wait,
+        restarts_total: collector["restarts_total"],
+        restart_reasons: collector["restart_reasons"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn record_restart(collector: json, reason: string) -> Result<json, string> {
+    let total = collector["restarts_total"].as_number() + 1;
+    let obj = {
+        requests_total: collector["requests_total"],
+        requests_success: collector["requests_success"],
+        requests_failed: collector["requests_failed"],
+        total_latency_ms: collector["total_latency_ms"],
+        max_latency_ms: collector["max_latency_ms"],
+        queue_waits_total: collector["queue_waits_total"],
+        total_queue_wait_ms: collector["total_queue_wait_ms"],
+        max_queue_wait_ms: collector["max_queue_wait_ms"],
+        restarts_total: total,
+        restart_reasons: collector["restart_reasons"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn snapshot(collector: json) -> Result<json, string> {
+    let avg_latency = 0;
+    if (collector["requests_total"].as_number() > 0) {
+        avg_latency = collector["total_latency_ms"].as_number() / collector["requests_total"].as_number();
+    }
+    let avg_queue_wait = 0;
+    if (collector["queue_waits_total"].as_number() > 0) {
+        avg_queue_wait = collector["total_queue_wait_ms"].as_number() / collector["queue_waits_total"].as_number();
+    }
+
+    let obj = {
+        requests_total: collector["requests_total"],
+        requests_success: collector["requests_success"],
+        requests_failed: collector["requests_failed"],
+        restarts_total: collector["restarts_total"],
+        queue_waits_total: collector["queue_waits_total"],
+        avg_latency_ms: avg_latency,
+        max_latency_ms: collector["max_latency_ms"],
+        avg_queue_wait_ms: avg_queue_wait,
+        max_queue_wait_ms: collector["max_queue_wait_ms"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn health_score(collector: json) -> number {
+    // Simplified: 100 - error rate * 100
+    if (collector["requests_total"].as_number() == 0) { return 100; }
+    let err_rate = collector["requests_failed"].as_number() / collector["requests_total"].as_number();
+    let score = 100 - (err_rate * 100);
+    if (score < 0) { return 0; }
+    return score;
+}

@@ -39,6 +39,15 @@ impl Parser {
                 }
             }
             TokenKind::LeftBracket => self.parse_array_literal(),
+            TokenKind::LeftBrace => {
+                // Try object literal first: { key: value, ... }
+                // Fall back to block expression if not object literal syntax
+                if let Some(obj) = self.try_parse_object_literal()? {
+                    Ok(obj)
+                } else {
+                    self.parse_block_expr()
+                }
+            }
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
@@ -139,12 +148,133 @@ impl Parser {
         Ok(Expr::Literal(Literal::Null, span))
     }
 
-    /// Parse identifier
+    /// Parse identifier, struct expression, or enum variant expression
     fn parse_identifier(&mut self) -> Result<Expr, ()> {
         let token = self.advance();
-        Ok(Expr::Identifier(Identifier {
+        let ident = Identifier {
             name: token.lexeme.clone(),
             span: token.span,
+        };
+
+        // Check for enum variant expression: `EnumName::VariantName` or `EnumName::VariantName(args)`
+        if self.check(TokenKind::ColonColon) {
+            return self.parse_enum_variant(ident);
+        }
+
+        // Check for struct expression: `TypeName { field: value, ... }`
+        // This requires the identifier to start with an uppercase letter (type name convention)
+        if self.check(TokenKind::LeftBrace)
+            && ident.name.chars().next().is_some_and(|c| c.is_uppercase())
+        {
+            return self.parse_struct_expr(ident);
+        }
+
+        Ok(Expr::Identifier(ident))
+    }
+
+    /// Parse enum variant expression: `EnumName::VariantName` or `EnumName::VariantName(args)`
+    fn parse_enum_variant(&mut self, enum_name: Identifier) -> Result<Expr, ()> {
+        let start_span = enum_name.span;
+        self.consume(TokenKind::ColonColon, "Expected '::' after enum name")?;
+
+        // Parse variant name
+        let variant_token = self.consume_identifier("an enum variant name")?;
+        let variant_name = Identifier {
+            name: variant_token.lexeme.clone(),
+            span: variant_token.span,
+        };
+
+        // Check for optional arguments: EnumName::VariantName(arg1, arg2, ...)
+        let args = if self.check(TokenKind::LeftParen) {
+            self.advance(); // consume '('
+            let mut args = Vec::new();
+
+            if !self.check(TokenKind::RightParen) {
+                loop {
+                    args.push(self.parse_expression()?);
+
+                    if !self.check(TokenKind::Comma) {
+                        break;
+                    }
+                    self.advance(); // consume ','
+                }
+            }
+
+            self.consume(
+                TokenKind::RightParen,
+                "Expected ')' after enum variant arguments",
+            )?;
+            Some(args)
+        } else {
+            None
+        };
+
+        let end_span = args
+            .as_ref()
+            .and_then(|a| a.last())
+            .map(|e| e.span())
+            .unwrap_or(variant_name.span);
+
+        Ok(Expr::EnumVariant(crate::ast::EnumVariantExpr {
+            enum_name,
+            variant_name,
+            args,
+            span: crate::span::Span::new(start_span.start, end_span.end),
+        }))
+    }
+
+    /// Parse struct expression: `TypeName { field: value, ... }`
+    fn parse_struct_expr(&mut self, struct_name: Identifier) -> Result<Expr, ()> {
+        let start_span = struct_name.span;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after struct type name")?;
+
+        let mut fields = Vec::new();
+
+        // Handle empty struct: `Point {}`
+        if !self.check(TokenKind::RightBrace) {
+            loop {
+                let field_start = self.peek().span;
+
+                // Parse field name
+                let field_name_token = self.consume_identifier("a field name")?;
+                let field_name = Identifier {
+                    name: field_name_token.lexeme.clone(),
+                    span: field_name_token.span,
+                };
+
+                // Expect ':'
+                self.consume(TokenKind::Colon, "Expected ':' after field name")?;
+
+                // Parse field value
+                let value = self.parse_expression()?;
+                let field_end = value.span();
+
+                fields.push(StructFieldInit {
+                    name: field_name,
+                    value,
+                    span: field_start.merge(field_end),
+                });
+
+                // Check for comma or end
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+
+                // Allow trailing comma
+                if self.check(TokenKind::RightBrace) {
+                    break;
+                }
+            }
+        }
+
+        let end_span = self
+            .consume(TokenKind::RightBrace, "Expected '}' after struct fields")?
+            .span;
+
+        Ok(Expr::StructExpr(StructExpr {
+            name: struct_name,
+            fields,
+            span: start_span.merge(end_span),
         }))
     }
 
@@ -299,6 +429,111 @@ impl Parser {
             elements,
             span: start_span.merge(end_span),
         }))
+    }
+
+    /// Try to parse an object literal: `{ key: value, key2: value2 }`.
+    ///
+    /// Returns `Ok(Some(expr))` if this is an object literal, `Ok(None)` to
+    /// fall through to block expression parsing. Uses backtracking on failure.
+    ///
+    /// Object literal syntax:
+    /// - `{ }` - empty object
+    /// - `{ key: value }` - single entry
+    /// - `{ key: value, key2: value2 }` - multiple entries
+    /// - Trailing comma is allowed: `{ key: value, }`
+    fn try_parse_object_literal(&mut self) -> Result<Option<Expr>, ()> {
+        let saved_pos = self.current;
+        let saved_diag_len = self.diagnostics.len();
+
+        // Consume '{'
+        let start_span = match self.consume(TokenKind::LeftBrace, "") {
+            Ok(tok) => tok.span,
+            Err(()) => {
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                return Ok(None);
+            }
+        };
+
+        // Empty braces `{}` is an empty object literal
+        if self.check(TokenKind::RightBrace) {
+            let end_span = self
+                .consume(TokenKind::RightBrace, "Expected '}'")
+                .unwrap()
+                .span;
+            return Ok(Some(Expr::ObjectLiteral(ObjectLiteral {
+                entries: Vec::new(),
+                span: start_span.merge(end_span),
+            })));
+        }
+
+        // Check if this looks like an object literal: identifier followed by `:`
+        // If the first token is not an identifier, or no `:` follows, it's a block
+        if !self.check(TokenKind::Identifier) {
+            self.current = saved_pos;
+            self.diagnostics.truncate(saved_diag_len);
+            return Ok(None);
+        }
+
+        // Peek ahead: if ident is NOT followed by `:`, it's a block (e.g., `{ x; }` or `{ x }`)
+        let next_idx = self.current + 1;
+        if next_idx >= self.tokens.len() || self.tokens[next_idx].kind != TokenKind::Colon {
+            self.current = saved_pos;
+            self.diagnostics.truncate(saved_diag_len);
+            return Ok(None);
+        }
+
+        // Committed to object literal parsing
+        let mut entries = Vec::new();
+
+        loop {
+            let entry_start = self.peek().span;
+
+            // Parse key (identifier)
+            let key_token = match self.consume_identifier("object key") {
+                Ok(tok) => tok,
+                Err(()) => {
+                    // Error in object literal - don't backtrack, report error
+                    return Err(());
+                }
+            };
+            let key = Identifier {
+                name: key_token.lexeme.clone(),
+                span: key_token.span,
+            };
+
+            // Expect ':'
+            self.consume(TokenKind::Colon, "Expected ':' after object key")?;
+
+            // Parse value expression
+            let value = self.parse_expression()?;
+            let entry_end = value.span();
+
+            entries.push(ObjectEntry {
+                key,
+                value,
+                span: entry_start.merge(entry_end),
+            });
+
+            // Check for comma or end
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+
+            // Allow trailing comma
+            if self.check(TokenKind::RightBrace) {
+                break;
+            }
+        }
+
+        let end_span = self
+            .consume(TokenKind::RightBrace, "Expected '}' after object literal")?
+            .span;
+
+        Ok(Some(Expr::ObjectLiteral(ObjectLiteral {
+            entries,
+            span: start_span.merge(end_span),
+        })))
     }
 
     /// Parse unary expression
@@ -855,6 +1090,7 @@ impl Parser {
             TokenKind::LeftBracket => self.parse_array_pattern(),
 
             // Constructor pattern or variable binding: Identifier or Identifier(...)
+            // Also handles enum variant patterns: EnumName::VariantName
             TokenKind::Identifier => {
                 let id_token = self.advance();
                 let id = Identifier {
@@ -862,8 +1098,50 @@ impl Parser {
                     span: id_token.span,
                 };
 
-                // Check if this is a constructor pattern (has arguments)
-                if self.check(TokenKind::LeftParen) {
+                // Check for enum variant pattern: EnumName::VariantName
+                if self.check(TokenKind::ColonColon) {
+                    self.advance(); // consume ::
+                    let variant_token =
+                        self.consume(TokenKind::Identifier, "Expected variant name after '::'")?;
+                    let variant_id = Identifier {
+                        name: variant_token.lexeme.clone(),
+                        span: variant_token.span,
+                    };
+
+                    // Check for arguments: EnumName::VariantName(args)
+                    if self.check(TokenKind::LeftParen) {
+                        // Parse tuple variant pattern with arguments
+                        self.advance(); // consume (
+                        let mut args = Vec::new();
+                        if !self.check(TokenKind::RightParen) {
+                            loop {
+                                args.push(self.parse_pattern()?);
+                                if !self.match_token(TokenKind::Comma) {
+                                    break;
+                                }
+                            }
+                        }
+                        let end_span =
+                            self.consume(TokenKind::RightParen, "Expected ')' after arguments")?;
+                        let span = id.span.merge(end_span.span);
+                        Ok(Pattern::EnumVariant {
+                            enum_name: id,
+                            variant_name: variant_id,
+                            args,
+                            span,
+                        })
+                    } else {
+                        // Unit enum variant pattern (no arguments)
+                        let span = id.span.merge(variant_id.span);
+                        Ok(Pattern::EnumVariant {
+                            enum_name: id,
+                            variant_name: variant_id,
+                            args: Vec::new(),
+                            span,
+                        })
+                    }
+                } else if self.check(TokenKind::LeftParen) {
+                    // Check if this is a constructor pattern (has arguments)
                     self.parse_constructor_pattern(id)
                 } else {
                     // Check if this is a zero-argument constructor (None, unit-like variants)

@@ -117,7 +117,13 @@ impl Lexer {
             ']' => self.make_token(TokenKind::RightBracket, "]"),
             ';' => self.make_token(TokenKind::Semicolon, ";"),
             ',' => self.make_token(TokenKind::Comma, ","),
-            ':' => self.make_token(TokenKind::Colon, ":"),
+            ':' => {
+                if self.match_char(':') {
+                    self.make_token(TokenKind::ColonColon, "::")
+                } else {
+                    self.make_token(TokenKind::Colon, ":")
+                }
+            }
             '?' => self.make_token(TokenKind::Question, "?"),
 
             // Operators with potential compound forms

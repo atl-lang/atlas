@@ -1,0 +1,105 @@
+// Transport Reader for Hydra Atlas (json-based)
+
+import { protocol_lsp, protocol_ndjson, new_message_result } from "./types";
+
+export fn detect_protocol(initial_data: string) -> string {
+    if (len(initial_data) >= 14) {
+        let peek = substr(initial_data, 0, 14);
+        if (peek == "Content-Length") {
+            return protocol_lsp();
+        }
+    }
+    return protocol_ndjson();
+}
+
+export fn read_ndjson(input: string) -> Result<json, string> {
+    let lines = split(input, "\n");
+    if (len(lines) == 0) {
+        return Err("No data available");
+    }
+
+    let line = trim(lines[0]);
+    if (len(line) == 0) {
+        return Err("Empty line");
+    }
+
+    let consumed = len(lines[0]) + 1;
+    let remaining = "";
+    if (consumed < len(input)) {
+        remaining = substr(input, consumed, len(input));
+    }
+
+    return new_message_result(line, remaining, consumed);
+}
+
+fn parse_content_length(line: string) -> Result<number, string> {
+    if (!startsWith(line, "Content-Length: ")) {
+        return Err("Not a Content-Length header");
+    }
+
+    let value = substr(line, 16, len(line));
+    value = trim(replace(value, "\r", ""));
+
+    let re = regexNew("^[0-9]+$");
+    if (!regexIsMatch(re, value)) {
+        return Err("Invalid Content-Length value: " + value);
+    }
+
+    return Ok(parseFloat(value));
+}
+
+export fn read_lsp(input: string) -> Result<json, string> {
+    let header_end = indexOf(input, "\r\n\r\n");
+    if (header_end == -1) {
+        return Err("Incomplete headers - waiting for \\r\\n\\r\\n");
+    }
+
+    let headers = substr(input, 0, header_end);
+    let header_lines = split(headers, "\r\n");
+
+    let content_length = 0;
+    for line in header_lines {
+        if (startsWith(line, "Content-Length:")) {
+            let len_result = parse_content_length(line);
+            match len_result {
+                Ok(len) => { content_length = len; },
+                Err(e) => { return Err(e); }
+            }
+        }
+    }
+
+    if (content_length == 0) {
+        return Err("Missing Content-Length header");
+    }
+
+    let body_start = header_end + 4;
+    let body_end = body_start + content_length;
+
+    if (body_end > len(input)) {
+        let msg = "Incomplete body - need " + str(content_length) + " bytes, have " + str(len(input) - body_start);
+        return Err(msg);
+    }
+
+    let payload = substr(input, body_start, body_end);
+
+    let remaining = "";
+    if (body_end < len(input)) {
+        remaining = substr(input, body_end, len(input));
+    }
+
+    return new_message_result(payload, remaining, body_end);
+}
+
+export fn read_message(buffer: string, protocol: string) -> Result<json, string> {
+    if (len(buffer) == 0) {
+        return Err("Empty buffer");
+    }
+
+    if (protocol == protocol_lsp()) {
+        return read_lsp(buffer);
+    }
+    if (protocol == protocol_ndjson()) {
+        return read_ndjson(buffer);
+    }
+    return Err("Protocol not detected yet");
+}

@@ -1,0 +1,12 @@
+// Tool registry (Atlas port)
+
+import { tool_definition } from "./tool_definitions";
+
+export fn get_tools(names: array) -> array {
+    let tools = [];
+    for name in names {
+        let def = tool_definition(name)?;
+        if (!def.is_null()) { tools = tools + [def]; }
+    }
+    return tools;
+}

@@ -287,6 +287,20 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             type_args: vec![],
             alias_target: None,
         },
+        Value::EnumValue {
+            enum_name,
+            variant_name,
+            ..
+        } => TypeInfo {
+            name: format!("{}::{}", enum_name, variant_name),
+            kind: TypeKind::Enum,
+            fields: vec![],
+            parameters: vec![],
+            return_type: None,
+            element_type: None,
+            type_args: vec![],
+            alias_target: None,
+        },
     }
 }
 

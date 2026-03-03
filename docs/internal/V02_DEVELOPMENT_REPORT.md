@@ -306,7 +306,7 @@ Atlas uses a classic compiler pipeline:
 Source → Lexer → Parser → Binder → TypeChecker → [Interpreter | Compiler → VM]
 ```
 
-**Key architectural decisions (see `memory/decisions/`):**
+**Key architectural decisions (see `memory/patterns/`):**
 
 - **Value enum:** `Arc<Mutex<T>>` for shared mutable values (DR-001)
 - **Security:** `SecurityContext` threaded via `Arc` (not raw pointer) (DR-002)

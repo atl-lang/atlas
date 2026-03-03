@@ -77,14 +77,55 @@ fn f(shared x: T)  // shared mutable
 -> own T           // return ownership (own/borrow only — NOT shared)
 ```
 
-## Expression Statements
+## Expression Statements & Block Expressions
 
 ```atlas
-f(x);     // ← semicolon REQUIRED
-x + 1;    // ← semicolon REQUIRED
+f(x);     // ← semicolon REQUIRED for statement
+x + 1;    // ← semicolon REQUIRED for statement
 ```
 
 **Expression statements require semicolons.** `f(x)` without `;` is a parse error.
+
+**Block expressions (tail expression):**
+```atlas
+let x = {
+    let a = 5;
+    a + 1        // NO semicolon → block's value
+};               // x == 6
+```
+Last expression WITHOUT semicolon = tail expression (implicit return).
+
+## Try Operator (`?`)
+
+```atlas
+let n = parseInt(s)?;   // Propagates None if parseInt fails
+let content = readFile(path)?;  // Propagates Err if read fails
+```
+
+Works inside functions returning `Option<T>` or `Result<T, E>`.
+
+## Member Access / Method Calls
+
+```atlas
+arr.length()
+str.indexOf("x")
+expr.method(args)
+```
+
+Desugared to trait dispatch: `arr.length()` → `Array::length(arr)`
+
+## Match Expression
+
+```atlas
+match value {
+    0 => "zero",
+    1 => "one",
+    x if x < 0 => "negative",
+    _ => "other",
+}
+```
+
+Pattern types: literals, constructors (`Some(v)`, `None()`), wildcards (`_`), guards (`if cond`).
 
 ## Import Syntax
 

@@ -1,0 +1,11 @@
+// Restart tool (Atlas port)
+
+export fn hydra_restart(reason: string) -> bool {
+    // No supervisor hook
+    return true;
+}
+
+export fn hydra_force_restart(confirm: bool) -> bool {
+    if (!confirm) { return false; }
+    return true;
+}

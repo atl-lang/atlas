@@ -1,0 +1,9 @@
+// Ultra simple test
+
+fn main() -> void {
+    print("Hello from Hydra Atlas");
+    let x: number = 42;
+    print(str(x));
+}
+
+main();

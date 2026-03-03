@@ -406,6 +406,10 @@ impl Interpreter {
                         );
                     }
                 }
+                Item::Struct(_) | Item::Enum(_) => {
+                    // Struct/enum declarations are type-info only — no runtime action needed.
+                    // The type system handles struct/enum definitions.
+                }
             }
         }
 

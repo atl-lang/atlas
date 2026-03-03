@@ -198,6 +198,24 @@ impl SymbolIndex {
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl indexing handled in Block 3
             }
+            Item::Struct(struct_decl) => {
+                self.add_definition(
+                    &struct_decl.name.name,
+                    &struct_decl.name.span,
+                    SymbolKind::Type,
+                    None,
+                    ctx,
+                );
+            }
+            Item::Enum(enum_decl) => {
+                self.add_definition(
+                    &enum_decl.name.name,
+                    &enum_decl.name.span,
+                    SymbolKind::Type,
+                    None,
+                    ctx,
+                );
+            }
         }
     }
 
@@ -351,6 +369,16 @@ impl SymbolIndex {
                     self.index_expr(elem, ctx, false);
                 }
             }
+            Expr::ObjectLiteral(obj) => {
+                for entry in &obj.entries {
+                    self.index_expr(&entry.value, ctx, false);
+                }
+            }
+            Expr::StructExpr(struct_expr) => {
+                for field in &struct_expr.fields {
+                    self.index_expr(&field.value, ctx, false);
+                }
+            }
             Expr::Group(group) => {
                 self.index_expr(&group.expr, ctx, false);
             }
@@ -372,6 +400,14 @@ impl SymbolIndex {
                 }
             }
             Expr::Literal(_, _) => {}
+            Expr::EnumVariant(ev) => {
+                // Index any arguments in the enum variant
+                if let Some(args) = &ev.args {
+                    for arg in args {
+                        self.index_expr(arg, ctx, false);
+                    }
+                }
+            }
         }
     }
 

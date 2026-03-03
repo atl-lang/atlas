@@ -1,0 +1,34 @@
+// Test Result types
+
+fn divide(a: number, b: number) -> Result<number, string> {
+    if (b == 0) {
+        return Err("division by zero");
+    }
+    return Ok(a / b);
+}
+
+fn main() -> void {
+    print("Testing Result types");
+
+    let r1: Result<number, string> = divide(10, 2);
+    match r1 {
+        Ok(val) => {
+            print("Result: " + str(val));
+        },
+        Err(e) => {
+            print("Error: " + e);
+        }
+    }
+
+    let r2: Result<number, string> = divide(10, 0);
+    match r2 {
+        Ok(val) => {
+            print("Result: " + str(val));
+        },
+        Err(e) => {
+            print("Error: " + e);
+        }
+    }
+}
+
+main();

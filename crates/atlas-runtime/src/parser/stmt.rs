@@ -234,6 +234,7 @@ impl Parser {
                 };
                 Some(Block {
                     statements: vec![nested_if],
+                    tail_expr: None,
                     span: nested_span,
                 })
             } else {
@@ -461,12 +462,24 @@ impl Parser {
         Ok(Stmt::Continue(continue_span.merge(end_span)))
     }
 
-    /// Parse a block
+    /// Parse a block with support for implicit returns (Rust-style tail expressions)
+    ///
+    /// If the last item in a block is an expression without a trailing semicolon,
+    /// it becomes the block's value (tail expression) rather than a statement.
     pub(super) fn parse_block(&mut self) -> Result<Block, ()> {
         let start_span = self.consume(TokenKind::LeftBrace, "Expected '{'")?.span;
         let mut statements = Vec::new();
+        let mut tail_expr: Option<Box<Expr>> = None;
 
         while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+            // Try to detect tail expression: if this could be an expression and
+            // is followed by `}` (no semicolon), it's the block's return value
+            if let Some(expr) = self.try_parse_tail_expression()? {
+                tail_expr = Some(Box::new(expr));
+                break;
+            }
+
+            // Otherwise, parse a regular statement
             match self.parse_statement() {
                 Ok(stmt) => statements.push(stmt),
                 Err(_) => self.synchronize(),
@@ -477,7 +490,76 @@ impl Parser {
 
         Ok(Block {
             statements,
+            tail_expr,
             span: start_span.merge(end_span),
         })
+    }
+
+    /// Try to parse a tail expression (expression followed by `}` with no semicolon)
+    ///
+    /// Returns Some(expr) if successful, None if this isn't a tail expression context.
+    /// Uses backtracking to avoid consuming tokens if it's not a tail expression.
+    fn try_parse_tail_expression(&mut self) -> Result<Option<Expr>, ()> {
+        // Skip tokens that definitely start statements, not expressions
+        match self.peek().kind {
+            TokenKind::Let
+            | TokenKind::Var
+            | TokenKind::If
+            | TokenKind::While
+            | TokenKind::For
+            | TokenKind::Return
+            | TokenKind::Break
+            | TokenKind::Continue
+            | TokenKind::Fn => return Ok(None),
+            _ => {}
+        }
+
+        // Save position for potential backtrack
+        let saved_pos = self.current;
+        let saved_diag_len = self.diagnostics.len();
+
+        // Try to parse an expression
+        let expr = match self.parse_expression() {
+            Ok(e) => e,
+            Err(_) => {
+                // Not an expression, restore and let parse_statement handle it
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                return Ok(None);
+            }
+        };
+
+        // Check what follows the expression
+        match self.peek().kind {
+            TokenKind::RightBrace => {
+                // Expression followed by `}` = tail expression (implicit return)
+                Ok(Some(expr))
+            }
+            TokenKind::Semicolon => {
+                // Expression followed by `;` = regular statement, backtrack
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                Ok(None)
+            }
+            TokenKind::Equal
+            | TokenKind::PlusEqual
+            | TokenKind::MinusEqual
+            | TokenKind::StarEqual
+            | TokenKind::SlashEqual
+            | TokenKind::PercentEqual
+            | TokenKind::PlusPlus
+            | TokenKind::MinusMinus => {
+                // Assignment or compound assignment, backtrack
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                Ok(None)
+            }
+            _ => {
+                // Unexpected token after expression - let parse_statement produce error
+                self.current = saved_pos;
+                self.diagnostics.truncate(saved_diag_len);
+                Ok(None)
+            }
+        }
     }
 }

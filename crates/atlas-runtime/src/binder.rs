@@ -402,6 +402,10 @@ impl Binder {
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl binding handled in Block 3 (trait system)
             }
+            Item::Struct(_) | Item::Enum(_) => {
+                // Struct/enum type declarations are handled by the type system
+                // The binder focuses on value bindings, not type definitions
+            }
         }
     }
 
@@ -440,6 +444,9 @@ impl Binder {
             }
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl binding handled in Block 3 (trait system)
+            }
+            Item::Struct(_) | Item::Enum(_) => {
+                // Struct/enum type declarations are handled by the type system
             }
         }
     }
@@ -980,6 +987,18 @@ impl Binder {
                     self.bind_expr(elem);
                 }
             }
+            Expr::ObjectLiteral(obj) => {
+                // Bind all value expressions in the object literal
+                for entry in &obj.entries {
+                    self.bind_expr(&entry.value);
+                }
+            }
+            Expr::StructExpr(struct_expr) => {
+                // Bind all field value expressions in the struct instantiation
+                for field in &struct_expr.fields {
+                    self.bind_expr(&field.value);
+                }
+            }
             Expr::Group(group) => {
                 self.bind_expr(&group.expr);
             }
@@ -1061,6 +1080,14 @@ impl Binder {
                 }
                 self.symbol_table.exit_scope();
             }
+            Expr::EnumVariant(ev) => {
+                // Bind any arguments in the enum variant
+                if let Some(args) = &ev.args {
+                    for arg in args {
+                        self.bind_expr(arg);
+                    }
+                }
+            }
         }
     }
 
@@ -1095,6 +1122,12 @@ impl Binder {
                 // Collect variables from first sub-pattern (all must bind same names)
                 if let Some(first) = alternatives.first() {
                     vars.extend(self.collect_pattern_variables(first));
+                }
+            }
+            Pattern::EnumVariant { args, .. } => {
+                // Collect from nested patterns in enum variant args
+                for arg in args {
+                    vars.extend(self.collect_pattern_variables(arg));
                 }
             }
         }

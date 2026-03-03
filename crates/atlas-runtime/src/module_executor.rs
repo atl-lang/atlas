@@ -46,7 +46,7 @@ impl ModuleCache {
 /// Module executor for interpreter-based execution
 ///
 /// Borrows an interpreter to ensure imports populate the caller's state.
-/// See DR-013 in memory/decisions.md.
+/// See `.claude/memory/patterns/runtime.md` for module execution patterns.
 pub struct ModuleExecutor<'a> {
     /// Module loader for resolving and loading dependencies
     loader: ModuleLoader,

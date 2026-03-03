@@ -80,6 +80,7 @@ items:
                 span:
                   start: 37
                   end: 39
+          tail_expr: ~
           span:
             start: 35
             end: 41

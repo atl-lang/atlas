@@ -1,0 +1,63 @@
+// Supervisor - Simple version for testing
+
+// State constants
+fn STATE_STOPPED() -> number { return 0; }
+fn STATE_RUNNING() -> number { return 2; }
+fn STATE_FAILED() -> number { return 4; }
+
+fn state_name(state: number) -> string {
+    if (state == 0) { return "STOPPED"; }
+    if (state == 2) { return "RUNNING"; }
+    if (state == 4) { return "FAILED"; }
+    return "UNKNOWN";
+}
+
+// Create supervisor
+export fn new_supervisor(command: string) -> object {
+    let sup: object = {
+        state: 0,
+        command: command,
+        restart_count: 0
+    };
+    return sup;
+}
+
+// Start process
+export fn start_process(supervisor: object, command: string) -> Result<object, string> {
+    print("[Supervisor] Starting: " + command);
+
+    // Try to execute
+    let exec_result: Result<object, string> = exec([command]);
+
+    match exec_result {
+        Ok(data) => {
+            print("[Supervisor] Started successfully");
+            let updated: object = {
+                state: 2,
+                command: command,
+                restart_count: 0
+            };
+            return Ok(updated);
+        },
+        Err(e) => {
+            print("[Supervisor] Failed: " + e);
+            let failed: object = {
+                state: 4,
+                command: command,
+                restart_count: 0
+            };
+            return Ok(failed);
+        }
+    }
+}
+
+// Get state
+export fn get_state(supervisor: object) -> number {
+    return supervisor["state"];
+}
+
+// Get state name
+export fn get_state_name(supervisor: object) -> string {
+    let s: number = supervisor["state"];
+    return state_name(s);
+}

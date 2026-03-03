@@ -162,7 +162,7 @@ See `ROADMAP.md` for planned enhancements:
 
 - **Current state:** See `STATUS.md`
 - **Future plans:** See `ROADMAP.md`
-- **Decisions:** See `memory/decisions.md`
+- **Decisions:** See `memory/patterns.md`
 
 Specs describe current implementation. Version history tracked in STATUS.md.
 

@@ -1,7 +1,18 @@
 # Atlas Syntax Specification
 
 **Purpose:** Define Atlas grammar, keywords, and syntax rules.
-**Status:** Living document — reflects current implementation.
+**Status:** Living document — reflects current v0.2 implementation.
+
+> **v0.3 Breaking Changes:** This document describes v0.2 syntax. Several constructs
+> documented here are being REMOVED in v0.3. Before generating Atlas code, check
+> `/docs/language-design/` for the authoritative grammar decisions:
+> - `var` keyword → REMOVED (use `let mut`)
+> - `++`/`--` operators → REMOVED (use `+= 1`)
+> - C-style `for(;;)` → REMOVED (use `for-in` or `while`)
+> - Arrow functions `() => expr` → REMOVED (use `fn() {}`)
+> - Object literals `{ key: val }` → Changed to `record { key: val }`
+>
+> **Rule:** When this spec and `/docs/language-design/` conflict, design docs win.
 
 ---
 
@@ -209,7 +220,88 @@ var--   // Post-decrement (decrements, returns old value)
 fnName(arg1, arg2, arg3)
 fnName()  // No arguments
 
-// With type arguments identity<number>(42)
+// With type arguments
+identity<number>(42)
+```
+
+### Member Access / Method Calls
+
+```atlas
+// Property access
+expr.member
+
+// Method calls
+arr.length()
+str.indexOf("x")
+result.unwrap()
+
+// Chained method calls
+str.trim().toLowerCase()
+```
+
+**Dispatch:** Method calls on values are desugared to trait method dispatch:
+- `arr.length()` → `Array::length(arr)`
+- `str.indexOf("x")` → `String::indexOf(str, "x")`
+
+**Available methods:** See stdlib documentation for methods on each type.
+
+### Try Operator (`?`)
+
+The try operator propagates `None` or `Err` values, enabling early returns from functions that return `Option<T>` or `Result<T, E>`.
+
+```atlas
+fn parse_and_double(s: string) -> Option<number> {
+    let n = parseInt(s)?;    // Returns None if parseInt fails
+    Some(n * 2)
+}
+
+fn read_config(path: string) -> Result<string, string> {
+    let content = readFile(path)?;  // Propagates Err if file read fails
+    Ok(content)
+}
+```
+
+**Rules:**
+- `?` can only be used inside functions returning `Option<T>` or `Result<T, E>`
+- On `None` or `Err(e)`, immediately returns from the enclosing function
+- On `Some(v)` or `Ok(v)`, unwraps to `v` and continues
+
+### Block Expressions
+
+Blocks can be used as expressions. The value of a block is determined by its **tail expression** — the last expression without a trailing semicolon.
+
+```atlas
+// Block as expression
+let x = {
+    let a = 5;
+    let b = 10;
+    a + b           // No semicolon → this is the block's value
+};
+// x == 15
+
+// With semicolon → returns null
+let y = {
+    let a = 5;
+    a + 10;         // Semicolon → expression statement, not tail
+};
+// y == null
+```
+
+**Rules (Rust semantics):**
+- Last item with NO semicolon = tail expression (block returns its value)
+- Last item WITH semicolon = statement (block returns `null`)
+- Explicit `return` inside block propagates to enclosing function
+
+```atlas
+fn example() -> number {
+    let result = {
+        if (true) {
+            return 42;    // Returns from example(), not from block
+        }
+        0
+    };
+    result
+}
 ```
 
 ### Array Indexing
@@ -461,6 +553,57 @@ continue;   // Skip to next iteration
 fn();       // Function call
 expr;       // Any expression (value discarded)
 ```
+
+### Match Expression
+
+Pattern matching on values with exhaustive case handling.
+
+```atlas
+match value {
+    pattern1 => expression1,
+    pattern2 => expression2,
+    _ => default_expression,    // Wildcard catches all remaining cases
+}
+```
+
+**Example — Literal patterns:**
+```atlas
+fn describe(n: number) -> string {
+    match n {
+        0 => "zero",
+        1 => "one",
+        _ => "many",
+    }
+}
+```
+
+**Example — Option/Result patterns:**
+```atlas
+fn safe_divide(a: number, b: number) -> string {
+    let result = if (b == 0) { None() } else { Some(a / b) };
+    match result {
+        Some(v) => toString(v),
+        None() => "division by zero",
+    }
+}
+```
+
+**Example — With guards:**
+```atlas
+fn classify(n: number) -> string {
+    match n {
+        x if x < 0 => "negative",
+        x if x == 0 => "zero",
+        _ => "positive",
+    }
+}
+```
+
+**Rules:**
+- Match arms are evaluated top-to-bottom; first matching arm wins
+- All arms must return the same type
+- Wildcard `_` matches any value (use as last arm for exhaustiveness)
+- Guards (`if condition`) add extra conditions to patterns
 
 ---
 

@@ -105,6 +105,12 @@ pub enum TokenKind {
     /// `impl` keyword
     Impl,
 
+    // Type declarations (v0.3+)
+    /// `struct` keyword
+    Struct,
+    /// `enum` keyword
+    Enum,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -180,6 +186,8 @@ pub enum TokenKind {
     Dot,
     /// `:` (colon)
     Colon,
+    /// `::` (double colon for enum variant paths)
+    ColonColon,
     /// `->` (arrow for function return type)
     Arrow,
     /// `=>` (fat arrow for match arms)
@@ -237,6 +245,8 @@ impl TokenKind {
             "shared" => Some(TokenKind::Shared),
             "trait" => Some(TokenKind::Trait),
             "impl" => Some(TokenKind::Impl),
+            "struct" => Some(TokenKind::Struct),
+            "enum" => Some(TokenKind::Enum),
             _ => None,
         }
     }
@@ -276,6 +286,8 @@ impl TokenKind {
             TokenKind::Shared => "shared",
             TokenKind::Trait => "trait",
             TokenKind::Impl => "impl",
+            TokenKind::Struct => "struct",
+            TokenKind::Enum => "enum",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",
@@ -310,6 +322,7 @@ impl TokenKind {
             TokenKind::Comma => ",",
             TokenKind::Dot => ".",
             TokenKind::Colon => ":",
+            TokenKind::ColonColon => "::",
             TokenKind::Arrow => "->",
             TokenKind::FatArrow => "=>",
             TokenKind::Underscore => "_",

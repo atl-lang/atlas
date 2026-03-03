@@ -117,6 +117,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::AsyncMutex(_) => "AsyncMutex",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
+        Value::EnumValue { .. } => "enum",
     }
 }
 

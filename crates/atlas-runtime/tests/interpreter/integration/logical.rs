@@ -46,12 +46,17 @@ fn test_variable_arithmetic() {
 
 #[test]
 fn test_block_scope() {
+    // Test that inner block has its own scope where x can shadow outer x
     let code = r#"
-        let x: number = 1;
-        if (true) {
-            let x: number = 2;
-            x;
+        fn test_scope() -> number {
+            let x: number = 1;
+            if (true) {
+                let x: number = 2;
+                return x;
+            }
+            return x;
         }
+        test_scope()
     "#;
     assert_eval_number(code, 2.0);
 }

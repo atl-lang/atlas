@@ -1,0 +1,72 @@
+// Transport Manager for Hydra Atlas (json-based)
+
+import { protocol_unknown, protocol_lsp, protocol_ndjson, protocol_name, new_message_result, new_transport_state, new_process_result } from "./types";
+import { detect_protocol, read_message } from "./reader";
+import { format_message, validate_jsonrpc } from "./writer";
+
+// Create a new transport instance
+export fn new_transport() -> Result<json, string> {
+    return new_transport_state("", protocol_unknown(), false);
+}
+
+// Process incoming data and detect protocol if needed
+export fn process_input(transport: json, data: string) -> Result<json, string> {
+    let buffer = transport["buffer"].as_string();
+    let detected = transport["protocol_detected"].as_bool();
+    let protocol = transport["protocol"].as_string();
+
+    let new_buffer = buffer + data;
+
+    if (!detected) {
+        let proto = detect_protocol(new_buffer);
+        let updated = new_transport_state(new_buffer, proto, true)?;
+        return new_process_result(proto, "", updated);
+    }
+
+    let read_result = read_message(new_buffer, protocol);
+    match read_result {
+        Ok(msg_data) => {
+            let remaining = msg_data["remaining"].as_string();
+            let payload = msg_data["payload"].as_string();
+            let updated = new_transport_state(remaining, protocol, true)?;
+            return new_process_result(protocol, payload, updated);
+        },
+        Err(err) => {
+            // Incomplete buffer: keep it
+            if (startsWith(err, "Incomplete")) {
+                let updated = new_transport_state(new_buffer, protocol, true)?;
+                return new_process_result(protocol, "", updated);
+            }
+            return Err(err);
+        }
+    }
+}
+
+// Send a message through the transport
+export fn send_message(transport: json, payload: string) -> Result<string, string> {
+    let valid = validate_jsonrpc(payload);
+    match valid {
+        Ok(_) => {},
+        Err(e) => { return Err("Invalid JSON-RPC: " + e); }
+    }
+
+    let detected = transport["protocol_detected"].as_bool();
+    if (!detected) {
+        return Err("Protocol not detected yet - cannot send");
+    }
+
+    let protocol = transport["protocol"].as_string();
+    return format_message(payload, protocol);
+}
+
+export fn get_protocol(transport: json) -> string {
+    return transport["protocol"].as_string();
+}
+
+export fn is_ready(transport: json) -> bool {
+    return transport["protocol_detected"].as_bool();
+}
+
+export fn get_protocol_name(transport: json) -> string {
+    return protocol_name(transport["protocol"].as_string());
+}

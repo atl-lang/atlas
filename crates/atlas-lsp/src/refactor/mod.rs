@@ -96,6 +96,12 @@ pub fn extract_all_names(program: &Program) -> Vec<String> {
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl refactoring handled in Block 3
             }
+            Item::Struct(struct_decl) => {
+                names.push(struct_decl.name.name.clone());
+            }
+            Item::Enum(enum_decl) => {
+                names.push(enum_decl.name.name.clone());
+            }
         }
     }
 
@@ -219,6 +225,16 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
                 extract_names_from_expr(elem, names);
             }
         }
+        Expr::ObjectLiteral(obj) => {
+            for entry in &obj.entries {
+                extract_names_from_expr(&entry.value, names);
+            }
+        }
+        Expr::StructExpr(struct_expr) => {
+            for field in &struct_expr.fields {
+                extract_names_from_expr(&field.value, names);
+            }
+        }
         Expr::Group(group) => {
             extract_names_from_expr(&group.expr, names);
         }
@@ -238,6 +254,14 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
             let _ = block;
         }
         Expr::Literal(_, _) => {}
+        Expr::EnumVariant(ev) => {
+            // Extract names from any arguments
+            if let Some(args) = &ev.args {
+                for arg in args {
+                    extract_names_from_expr(arg, names);
+                }
+            }
+        }
     }
 }
 

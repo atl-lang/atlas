@@ -1,0 +1,26 @@
+// Watcher mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/Watcher.go
+
+export fn new_watcher() -> json {
+    return { events: [], running: false };
+}
+
+export fn start(w: json) -> json {
+    return { events: w["events"], running: true };
+}
+
+export fn stop(w: json) -> json {
+    return { events: w["events"], running: false };
+}
+
+export fn add_event(w: json, path: string, kind: string) -> json {
+    let events = w["events"].is_null() ? [] : w["events"];
+    let ev = { path: path, kind: kind };
+    return { events: events + [ev], running: w["running"] };
+}
+
+export fn drain_events(w: json) -> array {
+    let events = w["events"].is_null() ? [] : w["events"];
+    let cleared = { events: [], running: w["running"] };
+    return [events, cleared];
+}

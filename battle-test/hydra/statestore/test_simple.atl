@@ -1,0 +1,73 @@
+// Simple StateStore Test
+import {
+    new_store,
+    save_state,
+    load_state,
+    has_state,
+    clear_state
+} from "./statestore";
+
+fn main() -> void {
+    print("=== StateStore Test ===");
+    print("");
+
+    // Test 1: Create store
+    print("Test 1: Create Store");
+    let session_id: string = "test-123";
+    let store_path: string = new_store(session_id);
+    print("  Path: " + store_path);
+    print("  ✓ Store created");
+    print("");
+
+    // Test 2: Save state
+    print("Test 2: Save State");
+    let state_json: string = "{\"count\":42,\"name\":\"hydra\"}";
+    let saved: bool = save_state(store_path, state_json);
+
+    if (saved) {
+        print("  ✓ State saved");
+    }
+    print("");
+
+    // Test 3: Check exists
+    print("Test 3: State Exists");
+    let exists: bool = has_state(store_path);
+
+    if (exists) {
+        print("  ✓ State exists");
+    }
+    print("");
+
+    // Test 4: Load state
+    print("Test 4: Load State");
+    let loaded: string = load_state(store_path);
+
+    if (len(loaded) > 0) {
+        print("  Content: " + loaded);
+        print("  ✓ State loaded");
+    }
+    print("");
+
+    // Test 5: Clear state
+    print("Test 5: Clear State");
+    let cleared: bool = clear_state(store_path);
+
+    if (cleared) {
+        print("  ✓ State cleared");
+    }
+    print("");
+
+    // Test 6: Verify cleared state
+    print("Test 6: Verify Cleared");
+    let cleared_content: string = load_state(store_path);
+
+    if (cleared_content == "{}") {
+        print("  Content: " + cleared_content);
+        print("  ✓ State is empty object");
+    }
+    print("");
+
+    print("=== Tests Complete ===");
+}
+
+main();

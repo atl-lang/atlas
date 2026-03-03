@@ -1,0 +1,28 @@
+// CLI uninit (Atlas port, simplified)
+// Source: hydra/internal/cli/uninit.go
+
+import { detect_client_config_path } from "../bootstrap/pathutil";
+import { expand_home } from "./pathutil";
+
+export fn cmd_uninit(args: json) -> Result<json, string> {
+    let client = args["client"].is_null() ? "claude" : args["client"].as_string();
+    let explicit = args["config"].is_null() ? "" : args["config"].as_string();
+    let path = "";
+
+    if (len(explicit) > 0) {
+        path = expand_home(explicit);
+    } else {
+        path = detect_client_config_path(client)?;
+    }
+
+    let backup = path + ".hydra.bak";
+    if (!fsIsFile(backup)) { return Err("no backup found at " + backup); }
+
+    let data = readFile(backup);
+    let dir = pathDirname(path);
+    let _ = createDir(dir);
+    writeFile(path, data);
+    removeFile(backup);
+
+    return Ok({ restored: path });
+}

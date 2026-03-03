@@ -215,7 +215,8 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
         | Opcode::SetGlobal
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
-        | Opcode::Array => {
+        | Opcode::Array
+        | Opcode::HashMap => {
             if ip + 1 >= code.len() {
                 return Err(opcode_name(opcode));
             }
@@ -288,6 +289,7 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::Array => "Array",
         Opcode::GetIndex => "GetIndex",
         Opcode::SetIndex => "SetIndex",
+        Opcode::HashMap => "HashMap",
         Opcode::Pop => "Pop",
         Opcode::Dup => "Dup",
         Opcode::Dup2 => "Dup2",
@@ -300,6 +302,9 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::ExtractResultValue => "ExtractResultValue",
         Opcode::IsArray => "IsArray",
         Opcode::GetArrayLen => "GetArrayLen",
+        Opcode::EnumVariant => "EnumVariant",
+        Opcode::CheckEnumVariant => "CheckEnumVariant",
+        Opcode::ExtractEnumData => "ExtractEnumData",
         Opcode::Halt => "Halt",
         Opcode::MakeClosure => "MakeClosure",
         Opcode::GetUpvalue => "GetUpvalue",
@@ -425,6 +430,7 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::ExtractResultValue
         | Opcode::IsArray
         | Opcode::GetArrayLen
+        | Opcode::ExtractEnumData
         | Opcode::Halt => Some(0),
 
         // Pop 1
@@ -449,8 +455,12 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         // Pop 3, push 1 (value assigned back)
         Opcode::SetIndex => Some(-2),
 
+        // CheckEnumVariant: pop 3 (value, enum_name, variant_name), push 1 (bool)
+        Opcode::CheckEnumVariant => Some(-2),
+
         // Variable-arity — skip (MakeClosure pops n_upvalues, push 1; net depends on operand)
-        Opcode::Call | Opcode::Array | Opcode::MakeClosure => None,
+        // EnumVariant pops enum_name, variant_name, and args; pushes 1
+        Opcode::Call | Opcode::Array | Opcode::HashMap | Opcode::MakeClosure | Opcode::EnumVariant => None,
 
         // Return drains the frame — stop tracking
         Opcode::Return => None,

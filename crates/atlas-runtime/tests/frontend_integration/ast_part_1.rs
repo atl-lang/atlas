@@ -56,6 +56,7 @@ fn test_complete_program_construction() {
                         })),
                         span: Span::new(43, 56),
                     })],
+                    tail_expr: None,
                     span: Span::new(41, 58),
                 },
                 span: Span::new(0, 58),
@@ -135,10 +136,12 @@ fn test_all_statement_types() {
             cond: Expr::Literal(Literal::Bool(true), Span::new(4, 8)),
             then_block: Block {
                 statements: vec![],
+                tail_expr: None,
                 span: Span::new(9, 11),
             },
             else_block: Some(Block {
                 statements: vec![],
+                tail_expr: None,
                 span: Span::new(17, 19),
             }),
             span: Span::new(0, 19),
@@ -148,6 +151,7 @@ fn test_all_statement_types() {
             cond: Expr::Literal(Literal::Bool(true), Span::new(6, 10)),
             body: Block {
                 statements: vec![],
+                tail_expr: None,
                 span: Span::new(11, 13),
             },
             span: Span::new(0, 13),
@@ -192,6 +196,7 @@ fn test_all_statement_types() {
             })),
             body: Block {
                 statements: vec![],
+                tail_expr: None,
                 span: Span::new(35, 37),
             },
             span: Span::new(0, 37),

@@ -404,10 +404,55 @@ fn value_to_json(
             msg: "Cannot serialize Result to JSON".to_string(),
             span,
         }),
-        Value::HashMap(_) => Err(RuntimeError::TypeError {
-            msg: "Cannot serialize HashMap to JSON".to_string(),
-            span,
-        }),
+        Value::HashMap(map_ref) => {
+            use crate::stdlib::collections::hash::HashKey;
+
+            // Check for circular reference using pointer address
+            let ptr = Arc::as_ptr(map_ref.arc()) as usize;
+            if !visited.insert(ptr) {
+                return Err(RuntimeError::TypeError {
+                    msg: "Circular reference detected in HashMap".to_string(),
+                    span,
+                });
+            }
+
+            let inner = map_ref.inner();
+            let map_entries = inner.entries();
+            let mut json_entries = Vec::with_capacity(map_entries.len());
+
+            for (key, value) in map_entries {
+                // Convert HashKey to string for JSON object key
+                let key_str = match &key {
+                    HashKey::String(s) => s.as_ref().clone(),
+                    HashKey::Number(n) => {
+                        let f = n.into_inner();
+                        if f.fract() == 0.0 && f.abs() < 1e15 {
+                            format!("{:.0}", f)
+                        } else {
+                            f.to_string()
+                        }
+                    }
+                    HashKey::Bool(b) => b.to_string(),
+                    HashKey::Null => "null".to_string(),
+                };
+
+                // Escape the key string for JSON
+                let escaped_key =
+                    serde_json::to_string(&key_str).map_err(|e| RuntimeError::TypeError {
+                        msg: format!("Failed to serialize key: {}", e),
+                        span,
+                    })?;
+
+                // Recursively serialize the value
+                let value_json = value_to_json(&value, visited, span)?;
+
+                json_entries.push(format!("{}:{}", escaped_key, value_json));
+            }
+
+            visited.remove(&ptr);
+
+            Ok(format!("{{{}}}", json_entries.join(",")))
+        }
         Value::HashSet(_) => Err(RuntimeError::TypeError {
             msg: "Cannot serialize HashSet to JSON".to_string(),
             span,
@@ -456,6 +501,25 @@ fn value_to_json(
             msg: "Cannot serialize SharedValue to JSON".to_string(),
             span,
         }),
+        Value::EnumValue {
+            enum_name,
+            variant_name,
+            data,
+        } => {
+            // Serialize as object: { "enum": "EnumName", "variant": "VariantName", "data": [...] }
+            let mut parts = vec![
+                format!("\"enum\":\"{}\"", enum_name),
+                format!("\"variant\":\"{}\"", variant_name),
+            ];
+            if !data.is_empty() {
+                let mut data_parts = Vec::with_capacity(data.len());
+                for v in data {
+                    data_parts.push(value_to_json(v, visited, span)?);
+                }
+                parts.push(format!("\"data\":[{}]", data_parts.join(",")));
+            }
+            Ok(format!("{{{}}}", parts.join(",")))
+        }
     }
 }
 

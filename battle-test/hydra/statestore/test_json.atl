@@ -1,0 +1,77 @@
+// Test StateStore with JSON parsing
+import {
+    new_store,
+    save_state,
+    load_state,
+    has_state
+} from "./statestore";
+
+fn main() -> void {
+    print("=== StateStore JSON Parse Test ===");
+    print("");
+
+    // Test 1: Create store
+    print("Test 1: Create Store");
+    let session_id: string = "test-json-456";
+    let store_path: string = new_store(session_id);
+    print("  Path: " + store_path);
+    print("  ✓ Store created");
+    print("");
+
+    // Test 2: Save JSON using object literal
+    print("Test 2: Save JSON using object literal");
+    let json_obj = { server: "mcp-server", pid: 12345, restarts: 3 };
+    let json_str: string = toJSON(json_obj);
+    let saved: bool = save_state(store_path, json_str);
+
+    if (saved) {
+        print("  ✓ JSON string saved");
+    }
+    print("");
+
+    // Test 3: Load and parse JSON
+    print("Test 3: Load and Parse JSON");
+    let loaded_str: string = load_state(store_path);
+    print("  Loaded: " + loaded_str);
+
+    let parse_result: Result<json, string> = parseJSON(loaded_str);
+
+    let parsed_ok: bool = match parse_result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (parsed_ok) {
+        print("  ✓ JSON parsed successfully");
+    }
+    print("");
+
+    // Test 4: Verify with toJSON
+    print("Test 4: Verify with toJSON");
+
+    let has_data: bool = match parse_result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (!has_data) {
+        print("  ✗ Parse failed");
+        print("");
+        print("=== JSON Tests Failed ===");
+        return;
+    }
+
+    let json_data: json = match parse_result {
+        Ok(data) => data,
+        Err(_) => null  // Won't happen since we checked above
+    };
+
+    let serialized: string = toJSON(json_data);
+    print("  Serialized: " + serialized);
+    print("  ✓ Round-trip successful");
+    print("");
+
+    print("=== JSON Tests Complete ===");
+}
+
+main();

@@ -1,0 +1,18 @@
+// Logger mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/Logger.go
+
+export fn new_logger() -> json {
+    return { entries: [] };
+}
+
+fn append_entry(logger: json, level: string, msg: string) -> json {
+    let entries = logger["entries"].is_null() ? [] : logger["entries"];
+    let entry = { level: level, msg: msg };
+    let updated = entries + [entry];
+    return { entries: updated };
+}
+
+export fn log_debug(logger: json, msg: string) -> json { return append_entry(logger, "debug", msg); }
+export fn log_info(logger: json, msg: string) -> json { return append_entry(logger, "info", msg); }
+export fn log_warn(logger: json, msg: string) -> json { return append_entry(logger, "warn", msg); }
+export fn log_error(logger: json, msg: string) -> json { return append_entry(logger, "error", msg); }

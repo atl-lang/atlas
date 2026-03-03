@@ -1,0 +1,3 @@
+// Proxy errors (Atlas port)
+
+export fn err_collision() -> string { return "namespace collision"; }

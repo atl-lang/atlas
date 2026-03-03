@@ -1,0 +1,29 @@
+// Tool injection (Atlas port)
+
+import { merge_tools } from "./tools";
+
+// Attempt to merge tools into JSON-RPC result payload
+export fn try_merge_tools(payload: string, hydra_tools: array, collision_policy: string) -> Result<string, string> {
+    let msg = parseJSON(payload)?;
+    if (msg["result"].is_null()) {
+        return Ok(payload);
+    }
+    if (msg["result"]["tools"].is_null()) {
+        return Ok(payload);
+    }
+
+    let tools = msg["result"]["tools"];
+    let child_names = [];
+    for t in tools {
+        if (!t["name"].is_null()) {
+            child_names = child_names + [t["name"].as_string()];
+        } else {
+            child_names = child_names + [t.as_string()];
+        }
+    }
+
+    let merged = merge_tools(child_names, hydra_tools, collision_policy)?;
+    msg["result"]["tools"] = merged;
+
+    return Ok(toJSON(msg));
+}

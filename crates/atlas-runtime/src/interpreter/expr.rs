@@ -25,21 +25,78 @@ impl Interpreter {
             } => self.eval_anon_fn(params, body, *span),
             Expr::Block(block) => {
                 self.push_scope();
-                let mut result = Value::Null;
+                // Execute all statements
                 for stmt in &block.statements {
-                    result = self.eval_statement(stmt)?;
+                    self.eval_statement(stmt)?;
                     // Handle control flow
                     if matches!(
                         self.control_flow,
                         ControlFlow::Return(_) | ControlFlow::Break | ControlFlow::Continue
                     ) {
-                        break;
+                        self.pop_scope();
+                        return Ok(Value::Null);
                     }
                 }
+                // Evaluate tail expression if present (implicit return)
+                let result = if let Some(tail) = &block.tail_expr {
+                    self.eval_expr(tail)?
+                } else {
+                    Value::Null
+                };
                 self.pop_scope();
                 Ok(result)
             }
+            Expr::ObjectLiteral(obj) => self.eval_object_literal(obj),
+            Expr::StructExpr(struct_expr) => self.eval_struct_expr(struct_expr),
+            Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
         }
+    }
+
+    /// Evaluate a struct instantiation expression
+    ///
+    /// For now, struct expressions evaluate to a HashMap (same representation as object literals)
+    fn eval_struct_expr(
+        &mut self,
+        struct_expr: &crate::ast::StructExpr,
+    ) -> Result<Value, RuntimeError> {
+        use crate::stdlib::collections::hash::HashKey;
+        use crate::value::ValueHashMap;
+
+        let mut map = ValueHashMap::new();
+
+        for field in &struct_expr.fields {
+            // Field name is always a string (from identifier)
+            let key = HashKey::String(Arc::new(field.name.name.clone()));
+            // Evaluate the field value expression
+            let value = self.eval_expr(&field.value)?;
+            map.inner_mut().insert(key, value);
+        }
+
+        Ok(Value::HashMap(map))
+    }
+
+    /// Evaluate an enum variant expression
+    fn eval_enum_variant(
+        &mut self,
+        ev: &crate::ast::EnumVariantExpr,
+    ) -> Result<Value, RuntimeError> {
+        // Evaluate any arguments
+        let data = if let Some(args) = &ev.args {
+            let mut data = Vec::with_capacity(args.len());
+            for arg in args {
+                data.push(self.eval_expr(arg)?);
+            }
+            data
+        } else {
+            Vec::new()
+        };
+
+        // Create the enum value
+        Ok(Value::EnumValue {
+            enum_name: ev.enum_name.name.clone(),
+            variant_name: ev.variant_name.name.clone(),
+            data,
+        })
     }
 
     /// Evaluate a literal
@@ -599,6 +656,7 @@ impl Interpreter {
 
         // Execute function body
         let mut result = Value::Null;
+        let mut had_explicit_return = false;
         for stmt in &func.body.statements {
             result = self.eval_statement(stmt)?;
 
@@ -606,7 +664,16 @@ impl Interpreter {
             if let ControlFlow::Return(val) = &self.control_flow {
                 result = val.clone();
                 self.control_flow = ControlFlow::None;
+                had_explicit_return = true;
                 break;
+            }
+        }
+
+        // Evaluate tail expression if present (implicit return)
+        // Skip if we already had an explicit return statement
+        if !had_explicit_return {
+            if let Some(tail) = &func.body.tail_expr {
+                result = self.eval_expr(tail)?;
             }
         }
 
@@ -688,6 +755,27 @@ impl Interpreter {
         self.track_memory(estimated_size)?;
 
         Ok(Value::array(elements))
+    }
+
+    /// Evaluate object literal: `{ key: value, key2: value2 }`
+    fn eval_object_literal(
+        &mut self,
+        obj: &crate::ast::ObjectLiteral,
+    ) -> Result<Value, RuntimeError> {
+        use crate::stdlib::collections::hash::HashKey;
+        use crate::value::ValueHashMap;
+
+        let mut map = ValueHashMap::new();
+
+        for entry in &obj.entries {
+            // Key is always a string (from identifier)
+            let key = HashKey::String(Arc::new(entry.key.name.clone()));
+            // Evaluate the value expression
+            let value = self.eval_expr(&entry.value)?;
+            map.inner_mut().insert(key, value);
+        }
+
+        Ok(Value::HashMap(map))
     }
 
     /// Evaluate match expression
@@ -772,6 +860,45 @@ impl Interpreter {
                     }
                 }
                 None
+            }
+
+            // Enum variant patterns: State::Running, Color::Rgb(r, g, b)
+            Pattern::EnumVariant {
+                enum_name,
+                variant_name,
+                args,
+                ..
+            } => {
+                // Must match an EnumValue with same enum_name and variant_name
+                if let Value::EnumValue {
+                    enum_name: val_enum,
+                    variant_name: val_variant,
+                    data,
+                } = value
+                {
+                    // Check enum and variant names match
+                    if enum_name.name != *val_enum || variant_name.name != *val_variant {
+                        return None;
+                    }
+
+                    // Check argument count matches
+                    if args.len() != data.len() {
+                        return None;
+                    }
+
+                    // Recursively match arguments
+                    let mut all_bindings = Vec::new();
+                    for (pattern, val) in args.iter().zip(data.iter()) {
+                        if let Some(bindings) = self.try_match_pattern(pattern, val) {
+                            all_bindings.extend(bindings);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Some(all_bindings)
+                } else {
+                    None
+                }
             }
         }
     }
@@ -2316,15 +2443,13 @@ impl Interpreter {
         self.next_func_id += 1;
 
         // Build a Block for call_user_function to execute.
-        // Arrow form: wrap bare expr in an explicit return statement.
+        // Arrow form: expression becomes the tail_expr (implicit return).
         // Block form: use the block directly.
         let body_block = match body {
             Expr::Block(block) => block.clone(),
             _ => Block {
-                statements: vec![Stmt::Return(ReturnStmt {
-                    value: Some(*Box::new(body.clone())),
-                    span,
-                })],
+                statements: vec![],
+                tail_expr: Some(Box::new(body.clone())),
                 span,
             },
         };

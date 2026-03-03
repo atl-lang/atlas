@@ -1,0 +1,28 @@
+// Test match syntax
+
+fn divide(a: number, b: number) -> Result<number, string> {
+    if (b == 0) {
+        return Err("division by zero");
+    }
+    return Ok(a / b);
+}
+
+fn main() -> void {
+    print("Testing match");
+
+    let r1: Result<number, string> = divide(10, 2);
+    let result1: string = match r1 {
+        Ok(val) => "Success: " + str(val),
+        Err(e) => "Error: " + e
+    };
+    print(result1);
+
+    let r2: Result<number, string> = divide(10, 0);
+    let result2: string = match r2 {
+        Ok(val) => "Success: " + str(val),
+        Err(e) => "Error: " + e
+    };
+    print(result2);
+}
+
+main();

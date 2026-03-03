@@ -1,0 +1,73 @@
+// Proxy core (Atlas port, synchronous)
+// Source: /Users/proxikal/dev/projects/hydra/internal/proxy/proxy.go
+
+import { state_stopped, state_starting, state_running, state_failed, new_proxy_status } from "./types";
+import { new_queue, enqueue, drain, size } from "./queue";
+
+// Create a new proxy instance (json state)
+export fn new_proxy(opts: json) -> Result<json, string> {
+    let qsize = opts["queue_size"].is_null() ? 100 : opts["queue_size"].as_number();
+    let qttl = opts["queue_ttl_seconds"].is_null() ? 30 : opts["queue_ttl_seconds"].as_number();
+    let queue = new_queue(qsize, qttl)?;
+
+    let obj = {
+        state: state_stopped(),
+        queue: queue,
+        last_error: "",
+        last_restart_reason: "",
+        started_ms: 0,
+        crash_export_path: opts["crash_export_path"].is_null() ? "/tmp/hydra-recorder-crash.json" : opts["crash_export_path"].as_string(),
+        crash_export_enabled: opts["crash_export_enabled"].is_null() ? false : opts["crash_export_enabled"].as_bool()
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn run_proxy(proxy: json) -> Result<json, string> {
+    // Synchronous placeholder: mark running
+    let obj = {
+        state: state_running(),
+        queue: proxy["queue"],
+        last_error: "",
+        last_restart_reason: "",
+        started_ms: proxy["started_ms"],
+        crash_export_path: proxy["crash_export_path"],
+        crash_export_enabled: proxy["crash_export_enabled"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn shutdown_proxy(proxy: json) -> Result<json, string> {
+    let obj = {
+        state: state_stopped(),
+        queue: proxy["queue"],
+        last_error: proxy["last_error"],
+        last_restart_reason: proxy["last_restart_reason"],
+        started_ms: proxy["started_ms"],
+        crash_export_path: proxy["crash_export_path"],
+        crash_export_enabled: proxy["crash_export_enabled"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn status(proxy: json) -> Result<json, string> {
+    let st = new_proxy_status()?;
+    let obj = {
+        state: proxy["state"],
+        pid: 0,
+        uptime_seconds: 0,
+        restarts_in_window: 0,
+        queue_size: size(proxy["queue"]),
+        can_recover: proxy["state"].as_string() == state_failed(),
+        last_restart_reason: proxy["last_restart_reason"],
+        last_error: proxy["last_error"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

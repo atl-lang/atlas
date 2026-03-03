@@ -1,0 +1,56 @@
+// Proxy types (Atlas port, json-based)
+// Source: /Users/proxikal/dev/projects/hydra/internal/proxy/types.go
+
+export fn state_stopped() -> string { return "STOPPED"; }
+export fn state_starting() -> string { return "STARTING"; }
+export fn state_running() -> string { return "RUNNING"; }
+export fn state_restarting() -> string { return "RESTARTING"; }
+export fn state_failed() -> string { return "FAILED"; }
+
+export fn new_proxy_status() -> Result<json, string> {
+    let obj = {
+        state: state_stopped(),
+        pid: 0,
+        uptime_seconds: 0,
+        restarts_in_window: 0,
+        queue_size: 0,
+        can_recover: false,
+        last_restart_reason: "",
+        last_error: ""
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn new_options(queue_size: number, queue_ttl_seconds: number, collision_policy: string) -> Result<json, string> {
+    let obj = {
+        queue_size: queue_size,
+        queue_ttl_seconds: queue_ttl_seconds,
+        collision_policy: collision_policy,
+        crash_export_path: "",
+        crash_export_enabled: false
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn new_dependencies() -> Result<json, string> {
+    let obj = {
+        logger: null,
+        sanitizer: null,
+        supervisor: null,
+        child: null,
+        client: null,
+        recorder: null,
+        redactor: null,
+        state_store: null,
+        metrics: null,
+        learner: null,
+        hydra_tools: []
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

@@ -15,7 +15,7 @@
 If yes → log it. The bar is low. Log it anyway.
 
 1. **Did I hit an API surprise?** → Update `.claude/rules/atlas-*.md` AND `patterns.md`
-2. **Could a future agent make a different choice about anything I did?** → Update `decisions/{domain}.md`
+2. **Could a future agent make a different choice about anything I did?** → Run `atlas-track add-decision`
 3. **Did I discover a crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
 4. **Did I add/rename an AST node, Type variant, opcode, function name, or error code?** → Run `atlas-doc-auditor`
 5. **Is this a block completion phase?** → **Always run `atlas-doc-auditor`** (full Tier 1+2+3 sweep)
@@ -25,7 +25,7 @@ If yes → log it. The bar is low. Log it anyway.
    ls .claude/lazy/architecture.md .claude/rules/atlas-testing.md \
       .claude/rules/atlas-parity.md 2>&1 | grep "No such file"
    # decisions/workflow.md must exist
-   ls .claude/memory/decisions/workflow.md 2>&1 | grep "No such file"
+   ls .claude/memory/patterns/workflow.md 2>&1 | grep "No such file"
    # MEMORY.md within limit
    wc -l .claude/memory/MEMORY.md
    ```
@@ -50,13 +50,13 @@ If yes → log it. The bar is low. Log it anyway.
 
 **Example:** "LSP tests can't use helper functions due to lifetime issues"
 
-**decisions/{domain}.md:**
+**atlas-track (decisions):**
 - Made an architectural choice between alternatives
 - Established a new constraint or rule
 - Chose an approach that affects future work
 - Resolved an ambiguity in the spec
 
-**Example:** "DR-015: LSP testing uses inline pattern (no helpers due to tower-lsp lifetime constraints)"
+**Example:** `atlas-track add-decision "LSP testing uses inline pattern" "No helpers due to tower-lsp lifetime constraints"` → D-XXX
 
 ### ❌ DON'T Update Memory
 
@@ -75,7 +75,7 @@ If yes → log it. The bar is low. Log it anyway.
 
 **Before committing, run this check:**
 ```bash
-wc -l .claude/memory/*.md .claude/memory/decisions/*.md 2>/dev/null | grep -v total
+wc -l .claude/memory/*.md .claude/memory/patterns/*.md 2>/dev/null | grep -v total
 ```
 
 | File | Max | If Exceeded → MUST DO |
@@ -83,7 +83,7 @@ wc -l .claude/memory/*.md .claude/memory/decisions/*.md 2>/dev/null | grep -v to
 | MEMORY.md | 55 | Split content to topic files |
 | patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
 | testing-patterns.md | 300 | Archive old → `archive/YYYY-MM-testing-patterns.md` |
-| decisions/{x}.md | 100 | Split into sub-files |
+| patterns/{x}.md | 100 | Split into sub-files |
 
 **BLOCKING:** If ANY file exceeds limit, you MUST split/archive BEFORE committing.
 **NO EXCEPTIONS.** This is not optional. Bloated memory = wasted tokens every message.
@@ -96,15 +96,17 @@ wc -l .claude/memory/*.md .claude/memory/decisions/*.md 2>/dev/null | grep -v to
 memory/
 ├── MEMORY.md           # Index ONLY (pointers, not content)
 ├── patterns.md         # Active patterns
-├── decisions/          # Split by domain
+├── patterns/           # Split by domain
 │   ├── language.md
 │   ├── runtime.md
 │   ├── stdlib.md
-│   ├── cli.md          # CRITICAL decisions here
+│   ├── cli.md
 │   ├── typechecker.md
 │   ├── vm.md
 │   └── {new-domain}.md # Add as needed
 └── archive/            # Old stuff goes here
+
+# Decisions go to atlas-track (D-XXX), NOT memory files
 ```
 
 ---
@@ -127,7 +129,8 @@ When `patterns.md` exceeds 150 lines:
 - **Surgical updates.** One-liner patterns, not paragraphs.
 - **Verify before writing.** Confirm against codebase.
 - **Archive, don't delete.** Move to `archive/YYYY-MM-{file}.md`.
-- **Split by domain.** New domain = new file in `decisions/`.
+- **Decisions → atlas-track.** Run `atlas-track add-decision`, NOT memory files.
+- **Patterns → memory.** New domain = new file in `patterns/`.
 
 ---
 
@@ -138,7 +141,7 @@ When `patterns.md` exceeds 150 lines:
 ```markdown
 ### Memory
 - Updated: `patterns.md` (added X)
-- Updated: `decisions/cli.md` (DR-003: reason)
+- Decision: `atlas-track add-decision` → D-XXX (reason)
 - Archived: `patterns.md` → `archive/2026-02-patterns-v1.md`
 ```
 

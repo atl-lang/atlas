@@ -200,7 +200,9 @@ fn classify_token(
         | TokenKind::Borrow
         | TokenKind::Shared
         | TokenKind::Trait
-        | TokenKind::Impl => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Impl
+        | TokenKind::Struct
+        | TokenKind::Enum => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),
@@ -240,7 +242,8 @@ fn classify_token(
         | TokenKind::Equal
         | TokenKind::Arrow
         | TokenKind::FatArrow
-        | TokenKind::Question => (token_type_idx::OPERATOR, 0),
+        | TokenKind::Question
+        | TokenKind::ColonColon => (token_type_idx::OPERATOR, 0),
 
         // Identifiers - need context to classify
         TokenKind::Identifier => {

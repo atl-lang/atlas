@@ -170,7 +170,7 @@ impl Compiler {
                 // Imports don't generate bytecode directly. In VM mode, Runtime::eval_file()
                 // uses ModuleLoader to load ALL modules in dependency order, then compiles
                 // each module to bytecode. Imported symbols become globals when the dependency
-                // module's bytecode executes first. See DR-014 in memory/decisions.md.
+                // module's bytecode executes first.
                 Ok(())
             }
             Item::Export(export_decl) => {
@@ -195,6 +195,11 @@ impl Compiler {
                 Ok(())
             }
             Item::Impl(impl_block) => self.compile_impl_block(impl_block),
+            Item::Struct(_) | Item::Enum(_) => {
+                // Struct/enum declarations are type-info only — no bytecode emitted.
+                // The type system tracks struct/enum definitions for type checking.
+                Ok(())
+            }
         }
     }
 
@@ -262,7 +267,7 @@ impl Compiler {
         // Track function base for nested function support
         let prev_function_base = std::mem::replace(&mut self.current_function_base, old_locals_len);
 
-        // Compile function body
+        // Compile function body statements
         self.compile_block(&func.body)?;
 
         // Restore function base
@@ -277,8 +282,12 @@ impl Compiler {
         // Restore watermark for the enclosing function (or top level)
         self.locals_watermark = prev_watermark;
 
-        // If function doesn't end with explicit return, add implicit "return null"
-        self.bytecode.emit(Opcode::Null, func.span);
+        // Handle implicit return: tail expression or null
+        if let Some(tail) = &func.body.tail_expr {
+            self.compile_expr(tail)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, func.span);
+        }
         self.bytecode.emit(Opcode::Return, func.span);
 
         // Restore scope and locals
@@ -383,7 +392,12 @@ impl Compiler {
         let total_local_count = self.locals_watermark - old_locals_len;
         self.locals_watermark = prev_watermark;
 
-        self.bytecode.emit(Opcode::Null, span);
+        // Handle implicit return: tail expression or null
+        if let Some(tail) = &method.body.tail_expr {
+            self.compile_expr(tail)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, span);
+        }
         self.bytecode.emit(Opcode::Return, span);
 
         self.scope_depth = old_scope;

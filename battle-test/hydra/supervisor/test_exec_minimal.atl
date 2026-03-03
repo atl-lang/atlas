@@ -1,0 +1,35 @@
+// Minimal exec test
+fn main() -> void {
+    print("=== Minimal Exec Test ===");
+
+    // Test: Simple echo command
+    let cmd: array = ["echo", "hello"];
+    let result: Result<json, string> = exec(cmd);
+
+    let worked: bool = match result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (worked) {
+        print("✓ exec worked!");
+    }
+
+    let has_error: bool = match result {
+        Ok(_) => false,
+        Err(_) => true
+    };
+
+    if (has_error) {
+        let err_msg: string = match result {
+            Ok(_) => "",
+            Err(e) => e
+        };
+        print("✗ exec failed: " + err_msg);
+    }
+
+    print("");
+    print("=== Test Complete ===");
+}
+
+main();

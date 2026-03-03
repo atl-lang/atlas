@@ -1,0 +1,19 @@
+// Redactor (Atlas port)
+
+export fn new_redactor(replacement: string) -> json {
+    let rep = replacement;
+    if (len(rep) == 0) { rep = "[REDACTED]"; }
+    let obj = { replacement: rep };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return parsed;
+}
+
+export fn redact(redactor: json, content: string, patterns: array) -> string {
+    let result = content;
+    for pattern in patterns {
+        let re = regexNew(pattern)?;
+        result = regexReplaceAll(re, result, redactor["replacement"].as_string());
+    }
+    return result;
+}

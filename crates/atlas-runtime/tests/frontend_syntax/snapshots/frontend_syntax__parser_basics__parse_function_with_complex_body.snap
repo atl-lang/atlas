@@ -63,6 +63,7 @@ items:
                       span:
                         start: 63
                         end: 72
+                tail_expr: ~
                 span:
                   start: 53
                   end: 78
@@ -112,12 +113,14 @@ items:
                       span:
                         start: 94
                         end: 122
+                tail_expr: ~
                 span:
                   start: 84
                   end: 128
               span:
                 start: 41
                 end: 128
+        tail_expr: ~
         span:
           start: 35
           end: 130

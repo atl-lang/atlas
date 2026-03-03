@@ -1,0 +1,45 @@
+// Message handler (Atlas port)
+
+import { state_running, state_starting, state_restarting } from "./types";
+import { enqueue } from "./queue";
+import { forward_to_child, forward_to_client } from "./forwarding";
+import { record } from "./recording";
+import { try_merge_tools } from "./tool_injection";
+
+fn extract_id(payload: string) -> json {
+    let msg = parseJSON(payload)?;
+    return msg["id"];
+}
+
+// route client message
+export fn route_client_message(proxy: json, payload: string) -> Result<json, string> {
+    let _ = record("client", payload, true);
+    return handle_client_message(proxy, payload);
+}
+
+export fn handle_client_message(proxy: json, payload: string) -> Result<json, string> {
+    let id = extract_id(payload)?;
+    let state = proxy["state"].as_string();
+
+    if (state == state_running()) {
+        forward_to_child(payload);
+        return Ok(proxy);
+    }
+
+    if (state == state_starting() || state == state_restarting()) {
+        let q = enqueue(proxy["queue"], id, payload)?;
+        let updated = { state: proxy["state"], queue: q, last_error: proxy["last_error"], last_restart_reason: proxy["last_restart_reason"], started_ms: proxy["started_ms"], crash_export_path: proxy["crash_export_path"], crash_export_enabled: proxy["crash_export_enabled"] };
+        let encoded = toJSON(updated);
+        let parsed = parseJSON(encoded)?;
+        return Ok(parsed);
+    }
+
+    return Ok(proxy);
+}
+
+export fn handle_child_message(proxy: json, payload: string, hydra_tools: array, collision_policy: string) -> Result<json, string> {
+    let _ = record("child", payload, false);
+    let merged = try_merge_tools(payload, hydra_tools, collision_policy)?;
+    forward_to_client(merged);
+    return Ok(proxy);
+}

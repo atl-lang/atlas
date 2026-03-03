@@ -29,7 +29,71 @@ impl Compiler {
                 span,
             } => self.compile_anon_fn(params, body, *span),
             Expr::Block(block) => self.compile_block_expr(block),
+            Expr::ObjectLiteral(obj) => self.compile_object_literal(obj),
+            Expr::StructExpr(struct_expr) => self.compile_struct_expr(struct_expr),
+            Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
         }
+    }
+
+    /// Compile a struct instantiation expression
+    fn compile_struct_expr(&mut self, struct_expr: &StructExpr) -> Result<(), Vec<Diagnostic>> {
+        // For now, struct expressions compile like object literals (HashMap-based)
+        // A future optimization could use a more efficient struct representation
+
+        // Push field values onto stack (interleaved with keys)
+        for field in &struct_expr.fields {
+            // Push field name as string constant
+            let key_idx = self
+                .bytecode
+                .add_constant(Value::string(field.name.name.clone()));
+            self.bytecode.emit(Opcode::Constant, field.name.span);
+            self.bytecode.emit_u16(key_idx);
+
+            // Compile and push field value
+            self.compile_expr(&field.value)?;
+        }
+
+        // Emit HashMap opcode with count
+        self.bytecode.emit(Opcode::HashMap, struct_expr.span);
+        self.bytecode.emit_u16(struct_expr.fields.len() as u16);
+
+        Ok(())
+    }
+
+    /// Compile an enum variant expression
+    fn compile_enum_variant(
+        &mut self,
+        ev: &crate::ast::EnumVariantExpr,
+    ) -> Result<(), Vec<Diagnostic>> {
+        // Push enum name and variant name as string constants
+        let enum_name_idx = self
+            .bytecode
+            .add_constant(Value::string(ev.enum_name.name.clone()));
+        let variant_name_idx = self
+            .bytecode
+            .add_constant(Value::string(ev.variant_name.name.clone()));
+
+        // Push the names
+        self.bytecode.emit(Opcode::Constant, ev.enum_name.span);
+        self.bytecode.emit_u16(enum_name_idx);
+        self.bytecode.emit(Opcode::Constant, ev.variant_name.span);
+        self.bytecode.emit_u16(variant_name_idx);
+
+        // Compile and push any arguments
+        let arg_count = if let Some(args) = &ev.args {
+            for arg in args {
+                self.compile_expr(arg)?;
+            }
+            args.len() as u8
+        } else {
+            0
+        };
+
+        // Emit the enum variant construction opcode
+        self.bytecode.emit(Opcode::EnumVariant, ev.span);
+        self.bytecode.emit_u8(arg_count);
+
+        Ok(())
     }
 
     /// Compile a function call expression
@@ -487,6 +551,28 @@ impl Compiler {
         Ok(())
     }
 
+    /// Compile an object literal: `{ key: value, key2: value2 }`
+    fn compile_object_literal(&mut self, obj: &ObjectLiteral) -> Result<(), Vec<Diagnostic>> {
+        // Push key-value pairs onto stack (interleaved: key1, val1, key2, val2, ...)
+        for entry in &obj.entries {
+            // Push key as string constant
+            let key_idx = self
+                .bytecode
+                .add_constant(Value::string(entry.key.name.clone()));
+            self.bytecode.emit(Opcode::Constant, entry.key.span);
+            self.bytecode.emit_u16(key_idx);
+
+            // Compile value expression
+            self.compile_expr(&entry.value)?;
+        }
+
+        // Emit HashMap instruction with entry count
+        self.bytecode.emit(Opcode::HashMap, obj.span);
+        self.bytecode.emit_u16(obj.entries.len() as u16);
+
+        Ok(())
+    }
+
     /// Compile an index expression
     fn compile_index(&mut self, index: &IndexExpr) -> Result<(), Vec<Diagnostic>> {
         // Compile the target (array)
@@ -717,6 +803,20 @@ impl Compiler {
             Pattern::Or(alternatives, or_span) => {
                 self.compile_or_pattern(alternatives, *or_span, locals_before)
             }
+
+            // Enum variant pattern: State::Running, Color::Rgb(r, g, b)
+            Pattern::EnumVariant {
+                enum_name,
+                variant_name,
+                args,
+                span,
+            } => self.compile_enum_variant_pattern(
+                enum_name,
+                variant_name,
+                args,
+                *span,
+                locals_before,
+            ),
         }
     }
 
@@ -1050,6 +1150,164 @@ impl Compiler {
         Ok(Some(fail_exit))
     }
 
+    /// Compile enum variant pattern: State::Running, Color::Rgb(r, g, b)
+    ///
+    /// Contract (same as compile_pattern_check):
+    /// - INPUT: scrutinee on stack top
+    /// - SUCCESS: scrutinee consumed, True on stack, pattern vars added as locals
+    /// - FAILURE: scrutinee consumed, stack clean, jumps to returned offset
+    fn compile_enum_variant_pattern(
+        &mut self,
+        enum_name: &crate::ast::Identifier,
+        variant_name: &crate::ast::Identifier,
+        args: &[Pattern],
+        span: Span,
+        locals_before: usize,
+    ) -> Result<Option<usize>, Vec<Diagnostic>> {
+        use crate::bytecode::Opcode;
+
+        // Stack: [copy] (the enum value)
+
+        // Dup for check (CheckEnumVariant will consume one copy)
+        self.bytecode.emit(Opcode::Dup, span);
+        // Stack: [copy, dup]
+
+        // Push enum_name and variant_name
+        let enum_name_idx = self
+            .bytecode
+            .add_constant(Value::string(enum_name.name.clone()));
+        self.bytecode.emit(Opcode::Constant, span);
+        self.bytecode.emit_u16(enum_name_idx);
+        // Stack: [copy, dup, enum_name]
+
+        let variant_name_idx = self
+            .bytecode
+            .add_constant(Value::string(variant_name.name.clone()));
+        self.bytecode.emit(Opcode::Constant, span);
+        self.bytecode.emit_u16(variant_name_idx);
+        // Stack: [copy, dup, enum_name, variant_name]
+
+        // CheckEnumVariant: pops (dup, enum_name, variant_name), pushes bool
+        self.bytecode.emit(Opcode::CheckEnumVariant, span);
+        // Stack: [copy, bool]
+
+        // Jump if variant doesn't match
+        self.bytecode.emit(Opcode::JumpIfFalse, span);
+        let variant_fail = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+        // Stack (on success path): [copy]
+
+        if args.is_empty() {
+            // Unit enum variant (no data to match)
+            // Pop the copy since we don't need it
+            self.bytecode.emit(Opcode::Pop, span);
+            // Push True for success
+            self.bytecode.emit(Opcode::True, span);
+
+            // Jump over failure code
+            self.bytecode.emit(Opcode::Jump, span);
+            let success_exit = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // Failure path: pop the copy and jump to fail
+            self.bytecode.patch_jump(variant_fail);
+            self.bytecode.emit(Opcode::Pop, span);
+
+            // Emit fail exit jump
+            self.bytecode.emit(Opcode::Jump, span);
+            let fail_exit = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // Success exit
+            self.bytecode.patch_jump(success_exit);
+
+            Ok(Some(fail_exit))
+        } else {
+            // Tuple enum variant - need to extract data and match args
+            // ExtractEnumData: pops EnumValue, pushes Array of data
+            self.bytecode.emit(Opcode::ExtractEnumData, span);
+            // Stack: [data_array]
+
+            // Now we treat this like an array pattern match
+            // Store data array to temp global
+            let data_global_name = "$match_enum_data";
+            let data_name_idx = self.bytecode.add_constant(Value::string(data_global_name));
+
+            self.bytecode.emit(Opcode::SetGlobal, span);
+            self.bytecode.emit_u16(data_name_idx);
+            self.bytecode.emit(Opcode::Pop, span);
+            // Stack: [] (data array is in temp global)
+
+            // Check data length matches arg count
+            self.bytecode.emit(Opcode::GetGlobal, span);
+            self.bytecode.emit_u16(data_name_idx);
+            self.bytecode.emit(Opcode::GetArrayLen, span);
+
+            let expected_len = args.len() as f64;
+            let len_const_idx = self.bytecode.add_constant(Value::Number(expected_len));
+            self.bytecode.emit(Opcode::Constant, span);
+            self.bytecode.emit_u16(len_const_idx);
+            self.bytecode.emit(Opcode::Equal, span);
+
+            self.bytecode.emit(Opcode::JumpIfFalse, span);
+            let len_fail = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // Match each argument pattern against data elements
+            let mut inner_fails = Vec::new();
+
+            for (i, arg_pattern) in args.iter().enumerate() {
+                // Get element from data array
+                self.bytecode.emit(Opcode::GetGlobal, span);
+                self.bytecode.emit_u16(data_name_idx);
+
+                let idx_const = self.bytecode.add_constant(Value::Number(i as f64));
+                self.bytecode.emit(Opcode::Constant, span);
+                self.bytecode.emit_u16(idx_const);
+                self.bytecode.emit(Opcode::GetIndex, span);
+                // Stack: [element_i]
+
+                // Recursively match the argument pattern
+                if let Some(fail_jump) =
+                    self.compile_pattern_check(arg_pattern, span, locals_before)?
+                {
+                    inner_fails.push(fail_jump);
+                }
+                // Stack after success: [True] (or with locals added)
+
+                // Pop the True from sub-pattern (we'll emit our own at the end)
+                self.bytecode.emit(Opcode::Pop, span);
+            }
+
+            // All patterns matched - emit success True
+            self.bytecode.emit(Opcode::True, span);
+
+            // Jump over failure paths
+            self.bytecode.emit(Opcode::Jump, span);
+            let success_exit = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // --- Failure paths ---
+
+            // Patch all inner pattern failures and length failure to same cleanup
+            self.bytecode.patch_jump(variant_fail);
+            self.bytecode.patch_jump(len_fail);
+            for fail_jump in inner_fails {
+                self.bytecode.patch_jump(fail_jump);
+            }
+
+            // Emit fail exit jump
+            self.bytecode.emit(Opcode::Jump, span);
+            let fail_exit = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+
+            // Success exit
+            self.bytecode.patch_jump(success_exit);
+
+            Ok(Some(fail_exit))
+        }
+    }
+
     /// Compile OR pattern: pat1 | pat2 | pat3
     ///
     /// Contract (same as compile_pattern_check):
@@ -1236,8 +1494,13 @@ impl Compiler {
         match body {
             Expr::Block(block) => {
                 self.compile_block(block)?;
-                // Implicit null return (same as named nested functions)
-                self.bytecode.emit(Opcode::Null, span);
+                // If block has tail expression, it's the implicit return value
+                if let Some(tail) = &block.tail_expr {
+                    self.compile_expr(tail)?;
+                } else {
+                    // No tail expression = implicit null return
+                    self.bytecode.emit(Opcode::Null, span);
+                }
                 self.bytecode.emit(Opcode::Return, span);
             }
             _ => {
@@ -1303,7 +1566,7 @@ impl Compiler {
         Ok(())
     }
 
-    /// Compile a block expression - creates a new scope and returns the last value
+    /// Compile a block expression - creates a new scope and returns tail expression value
     fn compile_block_expr(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
         let old_scope = self.scope_depth;
         let local_base = self.locals.len();
@@ -1314,18 +1577,20 @@ impl Compiler {
             self.compile_stmt(stmt)?;
         }
 
-        // Block expressions evaluate to the last expression's value, or Null if empty.
-        // Since statements don't leave values on stack (they pop after ExprStmt),
-        // we need to push Null as the result.
-        self.bytecode.emit(Opcode::Null, block.span);
-
-        // Pop locals created in this scope
+        // Pop locals created in this scope BEFORE evaluating tail expression
         let locals_to_pop = self.locals.len() - local_base;
         for _ in 0..locals_to_pop {
             self.bytecode.emit(Opcode::Pop, block.span);
         }
         self.locals.truncate(local_base);
         self.scope_depth = old_scope;
+
+        // Compile tail expression if present (implicit return), otherwise Null
+        if let Some(tail) = &block.tail_expr {
+            self.compile_expr(tail)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, block.span);
+        }
 
         Ok(())
     }

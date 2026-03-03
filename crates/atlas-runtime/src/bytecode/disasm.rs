@@ -98,6 +98,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::ExtractResultValue
         | Opcode::IsArray
         | Opcode::GetArrayLen
+        | Opcode::CheckEnumVariant
+        | Opcode::ExtractEnumData
         | Opcode::Halt => {
             format!("{:04}  {:?}", start_offset, opcode)
         }
@@ -110,7 +112,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::SetGlobal
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
-        | Opcode::Array => {
+        | Opcode::Array
+        | Opcode::HashMap => {
             let operand = read_u16(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
@@ -125,8 +128,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
             )
         }
 
-        // u8 operand (call arg count)
-        Opcode::Call => {
+        // u8 operand (call arg count, enum variant arg count)
+        Opcode::Call | Opcode::EnumVariant => {
             let operand = read_u8(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
@@ -206,5 +209,10 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::AsyncMutex(_) => "<AsyncMutex>".to_string(),
         Value::Closure(c) => format!("<fn {}>", c.func.name),
         Value::SharedValue(_) => "<shared>".to_string(),
+        Value::EnumValue {
+            enum_name,
+            variant_name,
+            ..
+        } => format!("<{}::{}>", enum_name, variant_name),
     }
 }

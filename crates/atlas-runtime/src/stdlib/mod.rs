@@ -1769,7 +1769,11 @@ pub fn print(
     output: &OutputWriter,
 ) -> Result<(), RuntimeError> {
     match value {
-        Value::String(_) | Value::Number(_) | Value::Bool(_) | Value::Null => {
+        Value::String(_)
+        | Value::Number(_)
+        | Value::Bool(_)
+        | Value::Null
+        | Value::EnumValue { .. } => {
             let mut w = output.lock().unwrap();
             writeln!(w, "{}", value.to_display_string()).map_err(|_| RuntimeError::TypeError {
                 msg: "write failed".into(),
@@ -1779,7 +1783,7 @@ pub fn print(
         }
         _ => Err(stdlib_arg_error(
             "print",
-            "string, number, bool, or null",
+            "string, number, bool, null, or enum",
             value,
             span,
         )),

@@ -1,0 +1,80 @@
+// Transport Test v2 - Using correct Atlas syntax
+
+fn detect_protocol(data: string) -> number {
+    if (len(data) >= 14) {
+        let peek: string = substring(data, 0, 14);
+        if (peek == "Content-Length") {
+            return 2; // LSP
+        }
+    }
+    return 1; // NDJSON
+}
+
+fn protocol_name(protocol: number) -> string {
+    if (protocol == 2) {
+        return "LSP";
+    }
+    if (protocol == 1) {
+        return "NDJSON";
+    }
+    return "Unknown";
+}
+
+fn test_ndjson() -> void {
+    print("Test: NDJSON Detection");
+
+    let msg: string = "{\"jsonrpc\":\"2.0\",\"id\":1}\n";
+    let proto: number = detect_protocol(msg);
+
+    print("  Detected: " + protocol_name(proto));
+
+    if (proto == 1) {
+        print("  ✓ NDJSON detected correctly");
+    }
+}
+
+fn test_lsp() -> void {
+    print("Test: LSP Detection");
+
+    let msg: string = "Content-Length: 25\r\n\r\n{\"jsonrpc\":\"2.0\"}";
+    let proto: number = detect_protocol(msg);
+
+    print("  Detected: " + protocol_name(proto));
+
+    if (proto == 2) {
+        print("  ✓ LSP detected correctly");
+    }
+}
+
+fn test_json_parsing() -> void {
+    print("Test: JSON Parsing");
+
+    let json_obj = { jsonrpc: "2.0", method: "initialize", id: 1 };
+    let json_str: string = toJSON(json_obj);
+    let result: Result<json, string> = parseJSON(json_str);
+
+    let status: string = match result {
+        Ok(data) => "✓ JSON parsed successfully",
+        Err(e) => "✗ Parse failed: " + e
+    };
+
+    print("  " + status);
+}
+
+fn main() -> void {
+    print("=== Hydra Atlas Transport Tests ===");
+    print("");
+
+    test_ndjson();
+    print("");
+
+    test_lsp();
+    print("");
+
+    test_json_parsing();
+
+    print("");
+    print("=== Tests Complete ===");
+}
+
+main();

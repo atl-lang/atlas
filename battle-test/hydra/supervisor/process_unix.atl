@@ -1,0 +1,5 @@
+// Supervisor process (unix, simplified)
+
+export fn setup_unix_process() -> Result<null, string> {
+    return Ok(null);
+}

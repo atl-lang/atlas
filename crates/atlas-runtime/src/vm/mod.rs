@@ -1596,6 +1596,36 @@ impl VM {
                     self.push(array);
                 }
 
+                Opcode::HashMap => {
+                    use crate::stdlib::collections::hash::HashKey;
+                    use crate::value::ValueHashMap;
+
+                    let entry_count = self.read_u16()? as usize;
+                    let mut map = ValueHashMap::new();
+
+                    // Stack has [key1, val1, key2, val2, ...] in order
+                    // Pop them in reverse (LIFO) and insert
+                    let mut entries = Vec::with_capacity(entry_count);
+                    for _ in 0..entry_count {
+                        let value = self.pop();
+                        let key_val = self.pop();
+                        entries.push((key_val, value));
+                    }
+                    // Reverse to get original order
+                    entries.reverse();
+
+                    for (key_val, value) in entries {
+                        // Convert Value to HashKey (keys must be hashable)
+                        let key = HashKey::from_value(
+                            &key_val,
+                            self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        )?;
+                        map.inner_mut().insert(key, value);
+                    }
+
+                    self.push(Value::HashMap(map));
+                }
+
                 // ===== Stack Manipulation =====
                 Opcode::Pop => {
                     // Don't pop if this is the last instruction before Halt
@@ -1696,6 +1726,103 @@ impl VM {
                         }
                     }
                 }
+                Opcode::EnumVariant => {
+                    let arg_count = self.read_u8()? as usize;
+
+                    // Pop args in reverse order
+                    let mut args = Vec::with_capacity(arg_count);
+                    for _ in 0..arg_count {
+                        args.push(self.pop());
+                    }
+                    args.reverse();
+
+                    // Pop variant name and enum name
+                    let variant_name = self.pop();
+                    let enum_name = self.pop();
+
+                    // Extract string values
+                    let enum_name_str = match enum_name {
+                        Value::String(s) => (*s).clone(),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "EnumVariant requires string enum name".to_string(),
+                                span: Span::dummy(),
+                            })
+                        }
+                    };
+                    let variant_name_str = match variant_name {
+                        Value::String(s) => (*s).clone(),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "EnumVariant requires string variant name".to_string(),
+                                span: Span::dummy(),
+                            })
+                        }
+                    };
+
+                    // Create the enum value
+                    self.push(Value::EnumValue {
+                        enum_name: enum_name_str,
+                        variant_name: variant_name_str,
+                        data: args,
+                    });
+                }
+
+                Opcode::CheckEnumVariant => {
+                    // Stack: [value, enum_name, variant_name] -> [bool]
+                    let variant_name = self.pop();
+                    let enum_name = self.pop();
+                    let value = self.pop();
+
+                    // Extract expected names
+                    let expected_enum = match &enum_name {
+                        Value::String(s) => s.as_str(),
+                        _ => {
+                            self.push(Value::Bool(false));
+                            continue;
+                        }
+                    };
+                    let expected_variant = match &variant_name {
+                        Value::String(s) => s.as_str(),
+                        _ => {
+                            self.push(Value::Bool(false));
+                            continue;
+                        }
+                    };
+
+                    // Check if value matches
+                    let matches = match &value {
+                        Value::EnumValue {
+                            enum_name: val_enum,
+                            variant_name: val_variant,
+                            ..
+                        } => val_enum == expected_enum && val_variant == expected_variant,
+                        _ => false,
+                    };
+
+                    self.push(Value::Bool(matches));
+                }
+
+                Opcode::ExtractEnumData => {
+                    // Stack: [EnumValue] -> [Array]
+                    let value = self.pop();
+
+                    match value {
+                        Value::EnumValue { data, .. } => {
+                            // Convert data Vec<Value> to an Array
+                            self.push(Value::array(data));
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "ExtractEnumData requires EnumValue, got {}",
+                                    value.type_name()
+                                ),
+                                span: Span::dummy(),
+                            });
+                        }
+                    }
+                }
 
                 // ===== Special =====
                 Opcode::Halt => break,
@@ -1771,7 +1898,8 @@ impl VM {
                     | Opcode::Jump
                     | Opcode::JumpIfFalse
                     | Opcode::Loop
-                    | Opcode::Array => ip += 2,
+                    | Opcode::Array
+                    | Opcode::HashMap => ip += 2,
                     Opcode::MakeClosure => ip += 4,
                     Opcode::Call => ip += 1,
                     _ => {}

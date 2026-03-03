@@ -37,6 +37,7 @@ items:
                         span:
                           start: 25
                           end: 35
+                  tail_expr: ~
                   span:
                     start: 23
                     end: 37
@@ -44,6 +45,7 @@ items:
                 span:
                   start: 12
                   end: 37
+          tail_expr: ~
           span:
             start: 10
             end: 39

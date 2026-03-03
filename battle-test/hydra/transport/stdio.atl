@@ -1,0 +1,61 @@
+// Stdio transport (Atlas port, in-memory simulation)
+// Source: /Users/proxikal/dev/projects/hydra/internal/transport/stdio.go
+
+import { protocol_unknown } from "./types";
+import { detect_protocol, read_message } from "./reader";
+import { format_message } from "./writer";
+
+// Create a new stdio transport state (buffer-based)
+export fn new_stdio(initial_buffer: string) -> Result<json, string> {
+    let obj = {
+        buffer: initial_buffer,
+        protocol: protocol_unknown(),
+        protocol_detected: false
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+// Detect protocol using current buffer
+export fn detect_protocol_stdio(transport: json) -> Result<json, string> {
+    let buffer = transport["buffer"].as_string();
+    let proto = detect_protocol(buffer);
+    let obj = {
+        buffer: buffer,
+        protocol: proto,
+        protocol_detected: true
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+// Read next message from buffer
+export fn read_stdio(transport: json) -> Result<json, string> {
+    let detected = transport["protocol_detected"].as_bool();
+    let protocol = transport["protocol"].as_string();
+    let buffer = transport["buffer"].as_string();
+
+    let proto = protocol;
+    if (!detected) {
+        proto = detect_protocol(buffer);
+    }
+
+    let msg = read_message(buffer, proto)?;
+    return Ok(msg);
+}
+
+// Write a payload using detected protocol
+export fn write_stdio(transport: json, payload: string) -> Result<string, string> {
+    let detected = transport["protocol_detected"].as_bool();
+    if (!detected) {
+        return Err("Protocol not detected");
+    }
+    let protocol = transport["protocol"].as_string();
+    return format_message(payload, protocol);
+}
+
+export fn close_stdio(transport: json) -> Result<null, string> {
+    return Ok(null);
+}

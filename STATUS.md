@@ -1,19 +1,30 @@
 # Atlas Implementation Status
 
-**Last Updated:** 2026-03-02 (Block 6 COMPLETE, let mut hardening done)
+**Last Updated:** 2026-03-03 (Grammar rewrite decisions locked)
 **Version:** v0.2.0 (tagged) — building toward v0.3.0
-**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1 COMPLETE ✅ | v0.3 Block 2 COMPLETE ✅ | v0.3 Block 3 COMPLETE ✅ | v0.3 Block 4 COMPLETE ✅ | v0.3 Block 5 COMPLETE ✅ | v0.3 Block 6 COMPLETE ✅
+**Progress:** v0.2.0 TAGGED ✅ | v0.3 Block 1-6 COMPLETE ✅ | **Grammar Rewrite: IN PROGRESS**
 
 ---
 
 ## Current State
 
-**Status:** Block 6 (Error Handling) COMPLETE — 5/5 phases
-**Last Completed:** let mut + AT2014 deprecation warning (completing prior incomplete work), 8,302 tests passing
-**Next:** Block 7 — JIT Integration (scaffold)
+**Status:** v0.3 Grammar Rewrite — PRIORITY WORK
+**Last Completed:** Block 6 (Error Handling), Guardian pre-write hook installed
+**Next:** Implement grammar decisions D-011 to D-015 (remove old syntax from parser/lexer)
 
-**Current hardening work:** `advanced-codex-audit.md` + `.claude/memory/systems-audit-handoff.md` + `docs/codex-findings/claude-audit-2026-03-02.md` — AI: alert user when 100% complete (more audits pending)
-**Critical gaps:** See `docs/codex-findings/important-before-continuing.md`
+**⚠️ GRAMMAR REWRITE (DO THIS FIRST):**
+| Decision | What to Remove | Status |
+|----------|----------------|--------|
+| D-011 | `var` keyword → use `let mut` | ⬜ Implement |
+| D-012 | `++`/`--` and C-style `for` | ⬜ Implement |
+| D-013 | Arrow functions `=>` (except match) | ⬜ Implement |
+| D-014 | Add `record` keyword for object literals | ⬜ Implement |
+| D-015 | `Type::Unknown` = error state | ⬜ Implement |
+
+**Run:** `atlas-track decisions` for details. Rationale in `docs/language-design/rationale/`.
+**Guardian:** Pre-write hook blocks old syntax. See `~/.claude/hooks/atlas/decision-patterns.json`.
+
+**After grammar rewrite:** Resume Block 7 (JIT Integration)
 **Inline tests:** ~574 to audit post-hardening (deferred - language functionality first)
 **Systems-level conversion:** Last block done: Block 5 (Type Inference). PAUSED until hardening complete — core language must work first.
 **v0.3 scope:** Make current features work correctly (battle-tested, compiler-grade). Foundation solid before adding more in future versions.
@@ -198,6 +209,8 @@ until all acceptance criteria in its dependency block are met. See V03_PLAN.md.
 | Roadmap | `ROADMAP.md` |
 | Specs | `docs/specification/` |
 | v0.2 archive | `phases/*/archive/v0.2/` |
-| **Auto-memory** | Claude auto-memory (NOT in repo) — `patterns.md`, `decisions/`, `testing-patterns.md` |
+| **Auto-memory** | `.claude/memory/` — `patterns.md`, `patterns/*.md`, `testing-patterns.md` |
+| **Guardian hook** | `~/.claude/hooks/atlas/` — pre-write validation, decision enforcement |
+| **Grammar decisions** | `docs/language-design/rationale/` + `atlas-track decisions` |
 
 **For humans:** Point AI to this file — "Read STATUS.md and continue"

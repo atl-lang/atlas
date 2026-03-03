@@ -1,0 +1,12 @@
+// Sanitizer mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/Sanitizer.go
+
+import { classify_chunk } from "../sanitizer/classifier";
+
+export fn classify(chunk: string) -> string {
+    return classify_chunk(chunk);
+}
+
+export fn validate_utf8(data: string) -> string {
+    return data;
+}

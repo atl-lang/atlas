@@ -80,12 +80,29 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 
 ### 4. Intelligent Decisions (When Spec Silent)
 1. Grep codebase — verify actual patterns before deciding
-2. Check .claude/memory `decisions/*.md` — decision may already be made
+2. Check `atlas-track decisions` — decision may already be made
 3. Decide intelligently, consistent with Rust compiler standards
-4. Log in .claude/memory `decisions/{domain}.md` (use DR-XXX format)
+4. Log decision: `atlas-track add-decision "Title" component "Rule" "Rationale"`
+5. **If decision has enforceable syntax pattern** → Add to `~/.claude/hooks/atlas/decision-patterns.json`
 
 **Never:** Leave TODO | Guess without verification | Contradict a locked decision
 **Locked decisions:** `docs/specification/memory-model.md`, `ROADMAP.md`, `docs/internal/V03_PLAN.md`
+
+### 4a. Atlas Guardian (Pre-Write Hook)
+**Location:** `~/.claude/hooks/atlas/validate.sh` + `decision-patterns.json`
+**What it does:** Blocks code that violates decisions BEFORE it's written.
+
+**When adding a decision with syntax rules, you MUST add a pattern:**
+```json
+// In ~/.claude/hooks/atlas/decision-patterns.json
+"D-XXX": {
+  "title": "Your decision",
+  "file_filter": "\\.atl$",
+  "block": [{"pattern": "regex_here", "message": "What to do instead"}]
+}
+```
+
+**This is NOT optional.** If a decision can be enforced by regex, add the pattern. Future agents will be blocked if they violate it.
 
 ### 5. World-Class Quality (NO SHORTCUTS)
 **Banned:** `// TODO`, `unimplemented!()`, "MVP for now", partial implementations, stubs
@@ -221,4 +238,4 @@ atlas-track sitrep         # Full status without starting session
 - `phases/v0.3/` — Phase files by block
 - `docs/specification/` — Language spec
 - `docs/internal/V03_PLAN.md` — Block plan ← read before scaffolding
-- .claude/memory `decisions/*.md` — All locked architectural decisions
+- `atlas-track decisions` — All locked decisions (D-XXX format)

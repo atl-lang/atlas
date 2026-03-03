@@ -453,22 +453,29 @@ impl Interpreter {
         Ok(value)
     }
 
-    /// Evaluate a block
+    /// Evaluate a block with support for tail expressions (implicit returns)
     pub(super) fn eval_block(&mut self, block: &Block) -> Result<Value, RuntimeError> {
         self.push_scope();
 
-        let mut last_value = Value::Null;
-
+        // Execute all statements
         for stmt in &block.statements {
-            last_value = self.eval_statement(stmt)?;
+            self.eval_statement(stmt)?;
 
             // Check for control flow
             if self.control_flow != ControlFlow::None {
-                break;
+                self.pop_scope();
+                return Ok(Value::Null);
             }
         }
 
+        // Evaluate tail expression if present (implicit return)
+        let result = if let Some(tail) = &block.tail_expr {
+            self.eval_expr(tail)?
+        } else {
+            Value::Null
+        };
+
         self.pop_scope();
-        Ok(last_value)
+        Ok(result)
     }
 }

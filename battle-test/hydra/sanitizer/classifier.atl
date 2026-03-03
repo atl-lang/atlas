@@ -1,0 +1,10 @@
+// Sanitizer classifier (Atlas port)
+
+export fn classify_chunk(chunk: string) -> string {
+    let trimmed = trim(chunk);
+    if (len(trimmed) == 0) { return "Empty"; }
+    if (startsWith(trimmed, "{")) {
+        if (isValidJSON(trimmed)) { return "JSONRPC"; }
+    }
+    return "Noise";
+}

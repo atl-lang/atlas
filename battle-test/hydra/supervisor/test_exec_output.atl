@@ -1,0 +1,35 @@
+// Test exec output access
+fn main() -> void {
+    print("=== Exec Output Test ===");
+
+    // Test: echo command
+    let cmd: array = ["echo", "Hello from exec!"];
+    let result: Result<json, string> = exec(cmd);
+
+    let worked: bool = match result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (!worked) {
+        print("✗ exec failed");
+        return;
+    }
+
+    print("✓ exec succeeded");
+    print("");
+
+    // Convert result to JSON string for display
+    let output_str: string = match result {
+        Ok(data) => toJSON(data),
+        Err(_) => "{}"
+    };
+
+    print("Output:");
+    print("  " + output_str);
+    print("");
+
+    print("=== Test Complete ===");
+}
+
+main();

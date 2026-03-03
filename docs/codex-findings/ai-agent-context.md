@@ -12,7 +12,7 @@ Evidence:
 - /Users/proxikal/dev/projects/atlas/STATUS.md:155-159
 
 What/Why:
-- Multiple documents reference `memory/decisions/*.md` (auto-memory) and DR-* entries, but the decision logs are explicitly “NOT in repo.” This removes key architectural rationale used to guide AI agents.
+- Multiple documents reference `memory/patterns/*.md` (auto-memory) and DR-* entries, but the decision logs are explicitly “NOT in repo.” This removes key architectural rationale used to guide AI agents.
 
 Impact:
 - AI agents lack authoritative decision context, increasing the chance of regressions or contradictory changes.

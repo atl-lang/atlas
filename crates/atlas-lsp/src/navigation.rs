@@ -160,6 +160,16 @@ fn find_references_in_item(item: &Item, identifier: &str, references: &mut Vec<R
         }
         Item::Import(_) | Item::Export(_) | Item::Extern(_) => {}
         Item::Trait(_) | Item::Impl(_) => {}
+        Item::Struct(struct_decl) => {
+            if struct_decl.name.name == identifier {
+                references.push(Range::default());
+            }
+        }
+        Item::Enum(enum_decl) => {
+            if enum_decl.name.name == identifier {
+                references.push(Range::default());
+            }
+        }
     }
 }
 
@@ -297,6 +307,16 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
                 find_references_in_expr(elem, identifier, references);
             }
         }
+        Expr::ObjectLiteral(obj) => {
+            for entry in &obj.entries {
+                find_references_in_expr(&entry.value, identifier, references);
+            }
+        }
+        Expr::StructExpr(struct_expr) => {
+            for field in &struct_expr.fields {
+                find_references_in_expr(&field.value, identifier, references);
+            }
+        }
         Expr::Group(group) => {
             find_references_in_expr(&group.expr, identifier, references);
         }
@@ -318,6 +338,14 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
             }
         }
         Expr::Literal(_, _) => {}
+        Expr::EnumVariant(ev) => {
+            // Check arguments for references
+            if let Some(args) = &ev.args {
+                for arg in args {
+                    find_references_in_expr(arg, identifier, references);
+                }
+            }
+        }
     }
 }
 

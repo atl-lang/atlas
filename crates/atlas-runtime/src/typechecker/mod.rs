@@ -411,6 +411,14 @@ impl<'a> TypeChecker<'a> {
             }
             Item::Trait(trait_decl) => self.check_trait_decl(trait_decl),
             Item::Impl(impl_block) => self.check_impl_block(impl_block),
+            Item::Struct(_struct_decl) => {
+                // TODO: Validate struct field types and check for cycles
+                // For now, just skip - struct type validation coming in later phase
+            }
+            Item::Enum(_enum_decl) => {
+                // TODO: Validate enum variant types and check for cycles
+                // For now, just skip - enum type validation coming in later phase
+            }
         }
     }
 
@@ -1112,14 +1120,16 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    /// Check if a block always returns
+    /// Check if a block always returns (explicit return or tail expression)
     fn block_always_returns(&self, block: &Block) -> bool {
+        // Check if any statement always returns
         for stmt in &block.statements {
             if self.statement_always_returns(stmt) {
                 return true;
             }
         }
-        false
+        // If block has a tail expression, it always returns (implicit return)
+        block.tail_expr.is_some()
     }
 
     /// Check if a statement always returns

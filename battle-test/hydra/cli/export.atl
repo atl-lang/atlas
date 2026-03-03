@@ -1,0 +1,11 @@
+// CLI export (Atlas port, simplified)
+// Source: hydra/internal/cli/export.go
+
+import { load_registry } from "../config/loader";
+import { registry_path_from_args } from "./pathutil";
+
+export fn cmd_export(args: json) -> Result<json, string> {
+    let reg_path = registry_path_from_args(args);
+    let reg = load_registry(reg_path)?;
+    return Ok({ json: prettifyJSON(toJSON(reg), 2) });
+}

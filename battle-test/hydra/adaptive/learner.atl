@@ -1,0 +1,16 @@
+// Adaptive learner (Atlas port, simplified)
+
+export fn new_learner() -> Result<json, string> {
+    let obj = { history: [] };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn record_event(learner: json, event: json) -> Result<json, string> {
+    let hist = learner["history"] + [event];
+    let obj = { history: hist };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

@@ -2,7 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(cargo test:*)",
-      "Bash(cargo run:*)"
+      "Bash(cargo run:*)",
+      "Bash(atlas-track go:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/proxikal/.claude/hooks/atlas/validate.sh"
+          }
+        ]
+      }
     ]
   }
 }

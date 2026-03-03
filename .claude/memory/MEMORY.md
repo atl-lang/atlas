@@ -12,13 +12,32 @@
 | `domain-prereqs.md` | Before writing ANY code touching AST/Type/Value |
 | `patterns.md` | Implementing features (collections, stdlib, trait dispatch, frontend API) |
 | `testing-patterns.md` | Full detail beyond what rule file covers |
-| `decisions/{domain}.md` | Architectural context before any domain decision |
+| `patterns/{domain}.md` | Implementation patterns (P-XXX format) |
 
-## Decisions Index
-`runtime` · `language` · `stdlib` · `cli` · `typechecker` · `vm` · `workflow`
-- runtime: Memory model LOCKED (CoW, own/borrow/shared, DR-B01/B02)
-- cli: Permissions CRITICAL — NO permission flags ever
-- workflow: File size limits, subagent policy, branch rules (DR-W01–W06)
+## Decisions
+**Source of truth:** `atlas-track decisions` (D-XXX format)
+- Run `atlas-track decisions` to see all decisions
+- Extended rationale: `docs/language-design/rationale/`
+- Implementation patterns: `.claude/memory/patterns/`
+
+**Guardian enforcement:** If adding a decision with syntax rules, you MUST also add pattern to `~/.claude/hooks/atlas/decision-patterns.json`. Pre-write hook blocks violations automatically.
+
+## P0 BLOCKERS (DO THESE FIRST)
+**NOTHING else ships until these are done. Added 2026-03-03.**
+
+1. **Struct/Enum Types** — User-defined types. Currently can only use primitives + HashMap.
+   - Struct declaration: `struct User { name: string, age: number }`
+   - Struct instantiation: `User {name: "Alice", age: 30}`
+   - Enum with variants: `enum Status { Active, Pending(string) }`
+   - Pattern matching on user types
+   - Trait impl for user types
+
+2. **Object Literal Syntax** — `{key: value}` syntax for inline structured data.
+   - Every AI model expects this syntax
+   - Current workaround (`hashMapNew` + `hashMapPut`) is unacceptable
+   - Critical for "AI-first" claim in PRD
+
+**Why P0:** These were deferred too long. Atlas has traits, ownership, CoW, closures, type inference — but no way to define domain types. That's backwards.
 
 ## Status
 `STATUS.md` in repo. `ROADMAP.md` for long-term direction (systems language, no GC, AI-gen-friendly).

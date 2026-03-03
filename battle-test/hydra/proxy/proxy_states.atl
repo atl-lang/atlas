@@ -1,0 +1,18 @@
+// Proxy state helpers (Atlas port)
+
+import { state_failed } from "./types";
+
+export fn crash_loop(proxy: json, err: string) -> Result<json, string> {
+    let obj = {
+        state: state_failed(),
+        queue: proxy["queue"],
+        last_error: err,
+        last_restart_reason: proxy["last_restart_reason"].is_null() ? "crash_loop" : proxy["last_restart_reason"],
+        started_ms: proxy["started_ms"],
+        crash_export_path: proxy["crash_export_path"],
+        crash_export_enabled: proxy["crash_export_enabled"]
+    };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

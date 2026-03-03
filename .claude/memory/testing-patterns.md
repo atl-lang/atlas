@@ -12,7 +12,7 @@
 
 The test suite was consolidated from many small files into domain files (infra phases 01-03). Every new test file is a new binary: more link time, more process overhead, slower CI. New tests go into the **existing domain files** listed below.
 
-**The only exception:** If a new domain is added that genuinely has no existing home, get explicit approval and document the reasoning in `memory/decisions.md`.
+**The only exception:** If a new domain is added that genuinely has no existing home, get explicit approval and document the reasoning in `memory/patterns.md`.
 
 **IMPORTANT:** This rule applies to `atlas-runtime` only. Other crates (`atlas-lsp`, `atlas-cli`) may have different test organization patterns.
 

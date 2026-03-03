@@ -1,0 +1,24 @@
+// Test exec function directly
+
+fn main() -> void {
+    print("=== Exec Test ===");
+    print("");
+
+    // Test simple command
+    print("Running: echo Hello");
+    let result: Result<object, string> = exec(["echo", "Hello"]);
+
+    match result {
+        Ok(data) => {
+            print("✓ Command succeeded");
+        },
+        Err(e) => {
+            print("✗ Command failed: " + e);
+        }
+    }
+
+    print("");
+    print("=== Test Complete ===");
+}
+
+main();

@@ -1,0 +1,14 @@
+// CLI inspect (Atlas port, simplified)
+// Source: hydra/internal/cli/inspect.go
+
+import { load_registry } from "../config/loader";
+import { registry_path_from_args, server_name_from_args } from "./pathutil";
+
+export fn cmd_inspect(args: json) -> Result<json, string> {
+    let name = server_name_from_args(args)?;
+    let reg_path = registry_path_from_args(args);
+    let reg = load_registry(reg_path)?;
+    let srv = reg["servers"][name];
+    if (srv.is_null()) { return Err("server not found: " + name); }
+    return Ok(srv);
+}

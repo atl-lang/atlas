@@ -1,0 +1,9 @@
+// Test module - simple export
+
+export fn greet(name: string) -> string {
+    return "Hello, " + name;
+}
+
+export fn add(a: number, b: number) -> number {
+    return a + b;
+}

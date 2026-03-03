@@ -53,6 +53,35 @@ impl<'a> TypeChecker<'a> {
                 self.exit_scope();
                 Type::Unknown
             }
+            Expr::ObjectLiteral(obj) => {
+                // Type check all value expressions
+                for entry in &obj.entries {
+                    self.check_expr(&entry.value);
+                }
+                // Object literals evaluate to HashMap at runtime
+                // Type system doesn't have HashMap<K,V> yet, so return Unknown
+                Type::Unknown
+            }
+            Expr::StructExpr(struct_expr) => {
+                // Type check all field value expressions
+                for field in &struct_expr.fields {
+                    self.check_expr(&field.value);
+                }
+                // TODO: Look up struct definition and verify fields match
+                // For now, return Unknown (struct type tracking coming in later phase)
+                Type::Unknown
+            }
+            Expr::EnumVariant(ev) => {
+                // Type check any arguments in the enum variant
+                if let Some(args) = &ev.args {
+                    for arg in args {
+                        self.check_expr(arg);
+                    }
+                }
+                // TODO: Look up enum definition and verify variant exists with correct arity
+                // For now, return Unknown (enum type tracking coming in later phase)
+                Type::Unknown
+            }
         }
     }
 
@@ -1573,6 +1602,13 @@ impl<'a> TypeChecker<'a> {
                     }
                     return bindings;
                 }
+                Pattern::EnumVariant { args, .. } => {
+                    // For enum variants in a union, check nested patterns recursively
+                    for arg in args {
+                        bindings.extend(self.check_pattern(arg, &Type::Unknown));
+                    }
+                    return bindings;
+                }
             }
         }
 
@@ -1632,6 +1668,13 @@ impl<'a> TypeChecker<'a> {
                     if bindings.is_empty() {
                         bindings = alt_bindings;
                     }
+                }
+            }
+
+            Pattern::EnumVariant { args, .. } => {
+                // For enum variant patterns, check nested patterns recursively
+                for arg in args {
+                    bindings.extend(self.check_pattern(arg, &Type::Unknown));
                 }
             }
         }

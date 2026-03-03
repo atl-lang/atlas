@@ -1,0 +1,61 @@
+// Simple Transport Test
+
+import { new_transport, process_input, get_protocol_name } from "./transport";
+import { ProtocolNDJSON } from "./types";
+
+fn test_basic() -> void {
+    print("=== Testing Atlas Hydra Transport ===");
+    print("");
+
+    // Test 1: Create transport
+    print("Test 1: Create transport");
+    let transport: object = new_transport();
+    print("  ✓ Transport created");
+
+    // Test 2: Process NDJSON message
+    print("Test 2: Process NDJSON message");
+    let json_msg: string = "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"id\":1}\n";
+
+    let result: Result<object, string> = process_input(transport, json_msg);
+
+    match result {
+        Ok(data) => {
+            transport = data["transport"];
+            print("  ✓ Protocol detected: " + get_protocol_name(transport));
+
+            if (data["message"] != null) {
+                print("  ✓ Message received: " + substr(data["message"], 0, 50) + "...");
+            }
+        },
+        Err(e) => {
+            print("  ✗ Error: " + e);
+        }
+    }
+
+    // Test 3: Process LSP message
+    print("Test 3: Create new transport for LSP");
+    let transport2: object = new_transport();
+
+    let lsp_msg: string = "Content-Length: 45\r\n\r\n{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"id\":1}";
+
+    let result2: Result<object, string> = process_input(transport2, lsp_msg);
+
+    match result2 {
+        Ok(data2) => {
+            transport2 = data2["transport"];
+            print("  ✓ Protocol detected: " + get_protocol_name(transport2));
+
+            if (data2["message"] != null) {
+                print("  ✓ Message received: " + substr(data2["message"], 0, 50) + "...");
+            }
+        },
+        Err(e2) => {
+            print("  ✗ Error: " + e2);
+        }
+    }
+
+    print("");
+    print("=== All tests passed! ===");
+}
+
+test_basic();

@@ -370,7 +370,9 @@ impl InterpreterDebuggerSession {
                 | Item::Extern(_)
                 | Item::TypeAlias(_)
                 | Item::Trait(_)
-                | Item::Impl(_) => {
+                | Item::Impl(_)
+                | Item::Struct(_)
+                | Item::Enum(_) => {
                     // These don't need debug pauses
                 }
             }

@@ -44,7 +44,7 @@ cargo clean
 **Canonical sources:**
 - Code patterns: `.claude/memory/patterns.md`
 - Domain verification: `.claude/memory/domain-prereqs.md`
-- Architectural decisions: `.claude/memory/decisions/*.md`
+- Architectural decisions: `.claude/memory/patterns/*.md`
 - Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
 
 ---
@@ -76,7 +76,7 @@ cargo clean
 2. Does it match spec? (compare to `docs/specification/`)
 3. Is it complete? (run `atlas-track blocks`, run tests)
 
-**Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `decisions/*.md` for constraints.
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `patterns/*.md` for constraints.
 
 **Status per dependency:**
 - ✅ Exists, complete, spec-compliant → Proceed

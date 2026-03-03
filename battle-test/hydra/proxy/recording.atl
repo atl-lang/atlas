@@ -1,0 +1,6 @@
+// Recording hooks (Atlas port)
+// NOTE: Recorder API not implemented; this is a no-op wrapper.
+
+export fn record(source: string, payload: string, is_client: bool) -> void {
+    return;
+}

@@ -1,0 +1,35 @@
+// Hydra logger (Atlas port)
+// Source: /Users/proxikal/dev/projects/hydra/internal/logger/logger.go
+
+// NOTE: Atlas stdlib does not expose stderr logging; using print() as fallback.
+
+fn format_props(props: json) -> string {
+    // Best-effort: json -> string
+    return toJSON(props);
+}
+
+export fn debug(msg: string, props: json) -> void {
+    let line = "DEBUG " + msg + " " + format_props(props);
+    print(line);
+}
+
+export fn info(msg: string, props: json) -> void {
+    let line = "INFO " + msg + " " + format_props(props);
+    print(line);
+}
+
+export fn warn(msg: string, props: json) -> void {
+    let line = "WARN " + msg + " " + format_props(props);
+    print(line);
+}
+
+export fn error(msg: string, err: string, props: json) -> void {
+    let line = "ERROR " + msg + " err=" + err + " " + format_props(props);
+    print(line);
+}
+
+// Constructor equivalent (Go New)
+export fn new_logger(level: string) -> void {
+    // Level handling omitted in Atlas port (no logger levels yet)
+    return;
+}

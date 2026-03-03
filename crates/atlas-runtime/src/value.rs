@@ -248,6 +248,11 @@ impl ValueHashMap {
     pub fn from_atlas(m: crate::stdlib::collections::hashmap::AtlasHashMap) -> Self {
         ValueHashMap(Arc::new(m))
     }
+
+    /// Expose inner Arc for cases that need pointer identity (e.g., circular reference detection).
+    pub fn arc(&self) -> &Arc<crate::stdlib::collections::hashmap::AtlasHashMap> {
+        &self.0
+    }
 }
 
 impl PartialEq for ValueHashMap {
@@ -467,6 +472,14 @@ pub enum Value {
     /// Explicitly shared reference — reference semantics (see Shared<T>).
     /// Mutations are visible to all aliases. Used for `shared<T>` annotated values.
     SharedValue(Shared<Box<Value>>),
+    /// User-defined enum variant value
+    /// Stores the enum type name, variant name, and any associated data
+    EnumValue {
+        enum_name: String,
+        variant_name: String,
+        /// Data for tuple variants (e.g., `Color::Rgb(r, g, b)`)
+        data: Vec<Value>,
+    },
 }
 
 /// Function reference
@@ -541,6 +554,7 @@ impl Value {
             Value::AsyncMutex(_) => "AsyncMutex",
             Value::Closure(_) => "function",
             Value::SharedValue(_) => "shared",
+            Value::EnumValue { enum_name, .. } => enum_name.as_str(),
         }
     }
 
@@ -660,6 +674,18 @@ impl fmt::Display for Value {
             Value::AsyncMutex(_) => write!(f, "<AsyncMutex>"),
             Value::Closure(c) => write!(f, "<fn {}>", c.func.name),
             Value::SharedValue(s) => s.with(|v| write!(f, "shared({})", v)),
+            Value::EnumValue {
+                enum_name,
+                variant_name,
+                data,
+            } => {
+                if data.is_empty() {
+                    write!(f, "{}::{}", enum_name, variant_name)
+                } else {
+                    let args: Vec<String> = data.iter().map(|v| v.to_string()).collect();
+                    write!(f, "{}::{}({})", enum_name, variant_name, args.join(", "))
+                }
+            }
         }
     }
 }
@@ -693,6 +719,15 @@ impl fmt::Debug for Value {
             Value::AsyncMutex(_) => write!(f, "AsyncMutex"),
             Value::Closure(c) => write!(f, "Closure({:?})", c.func),
             Value::SharedValue(s) => s.with(|v| write!(f, "SharedValue({:?})", v)),
+            Value::EnumValue {
+                enum_name,
+                variant_name,
+                data,
+            } => write!(
+                f,
+                "EnumValue({}::{}, data={:?})",
+                enum_name, variant_name, data
+            ),
         }
     }
 }

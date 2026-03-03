@@ -136,6 +136,7 @@ items:
                               span:
                                 start: 144
                                 end: 158
+                        tail_expr: ~
                         span:
                           start: 122
                           end: 176
@@ -163,12 +164,14 @@ items:
                       span:
                         start: 193
                         end: 200
+                tail_expr: ~
                 span:
                   start: 78
                   end: 214
               span:
                 start: 42
                 end: 214
+        tail_expr: ~
         span:
           start: 28
           end: 224

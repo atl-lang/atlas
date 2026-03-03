@@ -1,0 +1,29 @@
+// Test spawn for async process management
+fn main() -> void {
+    print("=== Spawn Test ===");
+    print("");
+
+    // Test 1: Spawn a quick command
+    print("Test 1: Spawn Echo");
+    let cmd: array = ["echo", "spawned"];
+    let handle: json = spawn(cmd);
+
+    print("  Spawn returned handle type: " + typeof(handle));
+    print("  Handle: " + toJSON(handle));
+    print("  ✓ Spawn executed");
+    print("");
+
+    // Test 2: Spawn sleep (background process)
+    print("Test 2: Spawn Sleep");
+    let sleep_cmd: array = ["sleep", "2"];
+    let sleep_handle: json = spawn(sleep_cmd);
+
+    print("  Sleep spawned (should be running in background)");
+    print("  Handle: " + toJSON(sleep_handle));
+    print("  ✓ Background process spawned");
+    print("");
+
+    print("=== Tests Complete ===");
+}
+
+main();

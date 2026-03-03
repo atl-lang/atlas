@@ -71,6 +71,10 @@ pub enum Item {
     Trait(TraitDecl),
     /// Impl block: `impl TraitName for TypeName { ... }`
     Impl(ImplBlock),
+    /// Struct declaration: `struct User { name: string, age: number }`
+    Struct(StructDecl),
+    /// Enum declaration: `enum Color { Red, Green, Blue, Rgb(number, number, number) }`
+    Enum(EnumDecl),
 }
 
 /// Import declaration
@@ -258,6 +262,94 @@ impl ImplBlock {
     }
 }
 
+/// A field in a struct declaration.
+///
+/// Syntax: `name: type`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructField {
+    pub name: Identifier,
+    pub type_ref: TypeRef,
+    pub span: Span,
+}
+
+/// A struct declaration.
+///
+/// Syntax: `struct User { name: string, age: number }`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructDecl {
+    pub name: Identifier,
+    /// Type parameters for generic structs (e.g., `struct Pair<T, U>`)
+    pub type_params: Vec<TypeParam>,
+    pub fields: Vec<StructField>,
+    pub span: Span,
+}
+
+impl StructDecl {
+    pub fn span(&self) -> Span {
+        self.span
+    }
+}
+
+/// A variant in an enum declaration.
+///
+/// Variants can be:
+/// - Unit: `Red` (no associated data)
+/// - Tuple: `Rgb(number, number, number)` (positional data)
+/// - Struct: `Named { x: number, y: number }` (named fields)
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum EnumVariant {
+    /// Unit variant: `Red`
+    Unit { name: Identifier, span: Span },
+    /// Tuple variant: `Rgb(number, number, number)`
+    Tuple {
+        name: Identifier,
+        fields: Vec<TypeRef>,
+        span: Span,
+    },
+    /// Struct variant: `Named { x: number, y: number }`
+    Struct {
+        name: Identifier,
+        fields: Vec<StructField>,
+        span: Span,
+    },
+}
+
+impl EnumVariant {
+    pub fn name(&self) -> &Identifier {
+        match self {
+            EnumVariant::Unit { name, .. } => name,
+            EnumVariant::Tuple { name, .. } => name,
+            EnumVariant::Struct { name, .. } => name,
+        }
+    }
+
+    pub fn span(&self) -> Span {
+        match self {
+            EnumVariant::Unit { span, .. } => *span,
+            EnumVariant::Tuple { span, .. } => *span,
+            EnumVariant::Struct { span, .. } => *span,
+        }
+    }
+}
+
+/// An enum declaration.
+///
+/// Syntax: `enum Color { Red, Green, Blue, Rgb(number, number, number) }`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EnumDecl {
+    pub name: Identifier,
+    /// Type parameters for generic enums (e.g., `enum Option<T>`)
+    pub type_params: Vec<TypeParam>,
+    pub variants: Vec<EnumVariant>,
+    pub span: Span,
+}
+
+impl EnumDecl {
+    pub fn span(&self) -> Span {
+        self.span
+    }
+}
+
 /// Type parameter declaration (e.g., T in fn foo<T>(...))
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeParam {
@@ -296,9 +388,14 @@ pub struct Param {
 }
 
 /// Block of statements
+///
+/// Supports Rust-style implicit returns: if the last item in a block is an expression
+/// without a trailing semicolon, it becomes the block's value (stored in `tail_expr`).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Block {
     pub statements: Vec<Stmt>,
+    /// Optional trailing expression (implicit return value)
+    pub tail_expr: Option<Box<Expr>>,
     pub span: Span,
 }
 
@@ -452,6 +549,10 @@ pub enum Expr {
     Index(IndexExpr),
     Member(MemberExpr),
     ArrayLiteral(ArrayLiteral),
+    /// Object literal expression: `{ key: value, key2: value2 }`
+    ObjectLiteral(ObjectLiteral),
+    /// Struct instantiation: `User { name: "Alice", age: 30 }`
+    StructExpr(StructExpr),
     Group(GroupExpr),
     Match(MatchExpr),
     Try(TryExpr),
@@ -467,6 +568,8 @@ pub enum Expr {
     /// Block expression: `{ stmt* }`
     /// Used as the body of anonymous functions and other block-level expressions.
     Block(Block),
+    /// Enum variant expression: `EnumName::VariantName` or `EnumName::VariantName(args)`
+    EnumVariant(EnumVariantExpr),
 }
 
 /// Unary expression
@@ -541,10 +644,60 @@ pub struct ArrayLiteral {
     pub span: Span,
 }
 
+/// Object literal expression: `{ key: value, key2: value2 }`
+///
+/// Desugars to HashMap<string, T> at runtime.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ObjectLiteral {
+    /// Key-value pairs (keys are identifiers, values are expressions)
+    pub entries: Vec<ObjectEntry>,
+    pub span: Span,
+}
+
+/// A single key-value pair in an object literal
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ObjectEntry {
+    pub key: Identifier,
+    pub value: Expr,
+    pub span: Span,
+}
+
+/// Struct instantiation expression.
+///
+/// Syntax: `User { name: "Alice", age: 30 }`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructExpr {
+    /// The struct type name (e.g., `User`)
+    pub name: Identifier,
+    /// Field initializers
+    pub fields: Vec<StructFieldInit>,
+    pub span: Span,
+}
+
+/// A field initializer in a struct expression
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct StructFieldInit {
+    pub name: Identifier,
+    pub value: Expr,
+    pub span: Span,
+}
+
 /// Grouped expression (parenthesized)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GroupExpr {
     pub expr: Box<Expr>,
+    pub span: Span,
+}
+
+/// Enum variant expression: `EnumName::VariantName` or `EnumName::VariantName(args)`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct EnumVariantExpr {
+    /// The enum type name (e.g., `State` in `State::Running`)
+    pub enum_name: Identifier,
+    /// The variant name (e.g., `Running` in `State::Running`)
+    pub variant_name: Identifier,
+    /// Arguments for tuple variants (e.g., `[x, y]` in `Color::Rgb(x, y, z)`)
+    pub args: Option<Vec<Expr>>,
     pub span: Span,
 }
 
@@ -613,6 +766,13 @@ pub enum Pattern {
     Array { elements: Vec<Pattern>, span: Span },
     /// OR pattern: pat1 | pat2 | pat3
     Or(Vec<Pattern>, Span),
+    /// Enum variant pattern: State::Running, Color::Rgb(r, g, b)
+    EnumVariant {
+        enum_name: Identifier,
+        variant_name: Identifier,
+        args: Vec<Pattern>,
+        span: Span,
+    },
 }
 
 /// Literal value
@@ -714,11 +874,14 @@ impl Expr {
             Expr::Index(i) => i.span,
             Expr::Member(m) => m.span,
             Expr::ArrayLiteral(a) => a.span,
+            Expr::ObjectLiteral(o) => o.span,
+            Expr::StructExpr(s) => s.span,
             Expr::Group(g) => g.span,
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
             Expr::AnonFn { span, .. } => *span,
             Expr::Block(block) => block.span,
+            Expr::EnumVariant(e) => e.span,
         }
     }
 }
@@ -769,6 +932,7 @@ impl Pattern {
             Pattern::Constructor { span, .. } => *span,
             Pattern::Array { span, .. } => *span,
             Pattern::Or(_, span) => *span,
+            Pattern::EnumVariant { span, .. } => *span,
         }
     }
 }

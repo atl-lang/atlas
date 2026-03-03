@@ -206,6 +206,9 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         Value::SharedValue(_) => {
             panic!("Cannot serialize SharedValue in bytecode constants");
         }
+        Value::EnumValue { .. } => {
+            panic!("Cannot serialize EnumValue in bytecode constants");
+        }
     }
 }
 

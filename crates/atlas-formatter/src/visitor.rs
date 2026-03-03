@@ -163,7 +163,105 @@ impl FormatVisitor {
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl formatting handled in Block 3
             }
+            Item::Struct(s) => {
+                self.emit_leading_comments(s.span.start);
+                self.visit_struct_decl(s);
+            }
+            Item::Enum(e) => {
+                self.emit_leading_comments(e.span.start);
+                self.visit_enum_decl(e);
+            }
         }
+    }
+
+    fn visit_struct_decl(&mut self, s: &atlas_runtime::ast::StructDecl) {
+        self.write("struct ");
+        self.write(&s.name.name);
+
+        // Type parameters
+        if !s.type_params.is_empty() {
+            self.write("<");
+            for (i, tp) in s.type_params.iter().enumerate() {
+                if i > 0 {
+                    self.write(", ");
+                }
+                self.write(&tp.name);
+            }
+            self.write(">");
+        }
+
+        self.write(" {\n");
+        self.indent_level += 1;
+
+        for field in &s.fields {
+            self.write_indent();
+            self.write(&field.name.name);
+            self.write(": ");
+            self.visit_type_ref(&field.type_ref);
+            self.write(",\n");
+        }
+
+        self.indent_level -= 1;
+        self.write_indent();
+        self.write("}\n");
+    }
+
+    fn visit_enum_decl(&mut self, e: &atlas_runtime::ast::EnumDecl) {
+        self.write("enum ");
+        self.write(&e.name.name);
+
+        // Type parameters
+        if !e.type_params.is_empty() {
+            self.write("<");
+            for (i, tp) in e.type_params.iter().enumerate() {
+                if i > 0 {
+                    self.write(", ");
+                }
+                self.write(&tp.name);
+            }
+            self.write(">");
+        }
+
+        self.write(" {\n");
+        self.indent_level += 1;
+
+        for variant in &e.variants {
+            self.write_indent();
+            match variant {
+                atlas_runtime::ast::EnumVariant::Unit { name, .. } => {
+                    self.write(&name.name);
+                }
+                atlas_runtime::ast::EnumVariant::Tuple { name, fields, .. } => {
+                    self.write(&name.name);
+                    self.write("(");
+                    for (i, f) in fields.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.visit_type_ref(f);
+                    }
+                    self.write(")");
+                }
+                atlas_runtime::ast::EnumVariant::Struct { name, fields, .. } => {
+                    self.write(&name.name);
+                    self.write(" { ");
+                    for (i, f) in fields.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.write(&f.name.name);
+                        self.write(": ");
+                        self.visit_type_ref(&f.type_ref);
+                    }
+                    self.write(" }");
+                }
+            }
+            self.write(",\n");
+        }
+
+        self.indent_level -= 1;
+        self.write_indent();
+        self.write("}\n");
     }
 
     // === Statements ===
@@ -532,6 +630,7 @@ impl FormatVisitor {
             Expr::Index(i) => self.visit_index(i),
             Expr::Member(m) => self.visit_member(m),
             Expr::ArrayLiteral(a) => self.visit_array_literal(a),
+            Expr::ObjectLiteral(o) => self.visit_object_literal(o),
             Expr::Group(g) => {
                 self.write("(");
                 self.visit_expr(&g.expr);
@@ -556,6 +655,34 @@ impl FormatVisitor {
             }
             Expr::Block(_block) => {
                 // Block formatting deferred to later phase
+            }
+            Expr::StructExpr(s) => {
+                self.write(&s.name.name);
+                self.write(" { ");
+                for (i, field) in s.fields.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.write(&field.name.name);
+                    self.write(": ");
+                    self.visit_expr(&field.value);
+                }
+                self.write(" }");
+            }
+            Expr::EnumVariant(ev) => {
+                self.write(&ev.enum_name.name);
+                self.write("::");
+                self.write(&ev.variant_name.name);
+                if let Some(args) = &ev.args {
+                    self.write("(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.visit_expr(arg);
+                    }
+                    self.write(")");
+                }
             }
         }
     }
@@ -701,6 +828,31 @@ impl FormatVisitor {
         }
     }
 
+    fn visit_object_literal(&mut self, o: &atlas_runtime::ast::ObjectLiteral) {
+        if o.entries.is_empty() {
+            self.write("{}");
+            return;
+        }
+
+        // Always format object literals with one entry per line
+        self.write("{");
+        self.writeln();
+        self.indent_level += 1;
+        for (i, entry) in o.entries.iter().enumerate() {
+            self.write_indent();
+            self.write(&entry.key.name);
+            self.write(": ");
+            self.visit_expr(&entry.value);
+            if i < o.entries.len() - 1 || self.config.trailing_commas {
+                self.write(",");
+            }
+            self.writeln();
+        }
+        self.indent_level -= 1;
+        self.write_indent();
+        self.write("}");
+    }
+
     fn visit_match(&mut self, m: &MatchExpr) {
         self.write("match ");
         self.visit_expr(&m.scrutinee);
@@ -758,6 +910,26 @@ impl FormatVisitor {
                         self.write(" | ");
                     }
                     self.visit_pattern(alt);
+                }
+            }
+            Pattern::EnumVariant {
+                enum_name,
+                variant_name,
+                args,
+                ..
+            } => {
+                self.write(&enum_name.name);
+                self.write("::");
+                self.write(&variant_name.name);
+                if !args.is_empty() {
+                    self.write("(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.visit_pattern(arg);
+                    }
+                    self.write(")");
                 }
             }
         }

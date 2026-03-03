@@ -22,6 +22,7 @@ items:
                 span:
                   start: 12
                   end: 14
+          tail_expr: ~
           span:
             start: 10
             end: 16

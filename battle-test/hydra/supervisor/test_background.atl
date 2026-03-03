@@ -1,0 +1,53 @@
+// Test background process execution
+fn main() -> void {
+    print("=== Background Process Test ===");
+    print("");
+
+    // For a real supervisor, we need to:
+    // 1. Spawn a long-running process
+    // 2. Monitor it without blocking
+    // 3. Detect when it exits
+
+    // Since exec() is synchronous, let's test if we can
+    // at least run a quick background task
+
+    print("Test 1: Quick exec");
+    let result: Result<json, string> = exec(["echo", "quick"]);
+
+    let worked: bool = match result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (worked) {
+        print("  ✓ Quick exec works");
+    }
+    print("");
+
+    // Test 2: See if we can run something in background
+    // (This will block, but let's see the timing)
+    print("Test 2: Sleep command (will block)");
+    print("  Starting sleep 1...");
+
+    let sleep_result: Result<json, string> = exec(["sleep", "1"]);
+
+    let sleep_worked: bool = match sleep_result {
+        Ok(_) => true,
+        Err(_) => false
+    };
+
+    if (sleep_worked) {
+        print("  ✓ Sleep completed (blocked for 1 second)");
+    }
+    print("");
+
+    print("=== Tests Complete ===");
+    print("");
+    print("FINDING: exec() is synchronous and blocks until process completes");
+    print("For true async supervision, we'd need:");
+    print("  - Background process spawning");
+    print("  - Process monitoring/polling");
+    print("  - Non-blocking I/O");
+}
+
+main();

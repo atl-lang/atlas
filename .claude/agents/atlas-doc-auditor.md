@@ -45,7 +45,7 @@ File listed in CLAUDE.md that no longer exists → remove the entry.
 
 Files:
 - `.claude/memory/MEMORY.md`
-- All `.claude/memory/decisions/*.md` files
+- All `.claude/memory/patterns/*.md` files
 - `.claude/memory/patterns.md`, `.claude/memory/testing-patterns.md`, `.claude/memory/domain-prereqs.md`
 
 Verify:
@@ -132,7 +132,7 @@ Glob: crates/atlas-runtime/tests/*.rs
 
 # Memory files
 Glob: .claude/memory/*.md
-Glob: .claude/memory/decisions/*.md
+Glob: .claude/memory/patterns/*.md
 
 # Spec docs
 Glob: docs/specification/*.md

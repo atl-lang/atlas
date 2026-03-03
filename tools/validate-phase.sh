@@ -72,8 +72,7 @@ check_dir "memory"
 check_file "memory/MEMORY.md"
 check_file "memory/patterns.md"
 check_file "memory/testing-patterns.md"
-check_file "memory/decisions.md"
-check_file "memory/gates.md"
+check_dir "memory/patterns"
 
 # Check if phase references specific files
 echo ""

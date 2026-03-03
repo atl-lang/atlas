@@ -1,0 +1,11 @@
+// RateLimiter mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/RateLimiter.go
+
+export fn new_rate_limiter() -> json {
+    return { allow: true };
+}
+
+export fn allow(limiter: json) -> bool {
+    if (limiter["allow"].is_null()) { return true; }
+    return limiter["allow"].as_bool();
+}

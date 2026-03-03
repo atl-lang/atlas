@@ -1,0 +1,19 @@
+// Supervisor process (Atlas port, simplified)
+// Source: hydra/internal/supervisor/process.go
+
+import { execute_command } from "./supervisor";
+
+export fn start_process(cmd: array, cwd: string) -> Result<json, string> {
+    // No async process; exec synchronously
+    let out = execute_command(cmd)?;
+    return Ok(out);
+}
+
+export fn stop_process(pid: number) -> Result<null, string> {
+    // No process control; no-op
+    return Ok(null);
+}
+
+export fn uptime(start_ms: number, now_ms: number) -> number {
+    return now_ms - start_ms;
+}

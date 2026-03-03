@@ -1,0 +1,6 @@
+// FS watcher paths (Atlas port, simplified)
+
+export fn collect_paths(root: string, ignore: array) -> array {
+    // No filesystem walk; return root only
+    return [root];
+}

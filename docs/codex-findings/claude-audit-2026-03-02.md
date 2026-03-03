@@ -68,10 +68,12 @@ Atlas Comprehensive Friction/Gap/Constraint Audit
   Current state: spawn_task() fires and forgets. No task groups, no cancellation scopes, no nurseries.
   Impact: Task leaks in long-running services. Compare: Go's errgroup, Python's TaskGroup, Kotlin's coroutineScope.
 
-  11. No ? Operator (Error Propagation)
+  11. ~~No ? Operator (Error Propagation)~~ **RESOLVED**
 
-  Current state: Must pattern-match every Result. Planned for v0.3 Block 6.
-  Impact: Error-heavy code is extremely verbose. Every function that can fail needs 5+ lines of boilerplate instead of let x = try_thing()?;
+  **Status:** Implemented in v0.3. The `?` operator now works for `Option<T>` and `Result<T, E>`.
+  ```atlas
+  let x = try_thing()?;  // Propagates None/Err, unwraps Some/Ok
+  ```
 
   12. No Backpressure on Channels
 

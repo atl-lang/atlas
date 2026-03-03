@@ -1,0 +1,18 @@
+// Test imports
+import { greet, add } from "./test_module";
+
+fn main() -> void {
+    print("=== Import Test ===");
+    print("");
+
+    let msg: string = greet("Atlas");
+    print(msg);
+
+    let sum: number = add(5, 3);
+    print("5 + 3 = " + str(sum));
+
+    print("");
+    print("=== Test Complete ===");
+}
+
+main();

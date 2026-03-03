@@ -1,0 +1,8 @@
+// Size limiter (Atlas port)
+
+export fn limit_response(result_json: string, max_kb: number) -> string {
+    let max_bytes = max_kb * 1024;
+    if (len(result_json) <= max_bytes) { return result_json; }
+    let truncated = { _truncated: true, _original_size: len(result_json), _message: "[TRUNCATED: Response exceeded size limit]" };
+    return toJSON(truncated);
+}

@@ -1,0 +1,43 @@
+// Recorder (Atlas port, simplified)
+
+export fn new_recorder(enabled: bool, buffer_size: number) -> Result<json, string> {
+    let size = buffer_size;
+    if (size <= 0) { size = 50; }
+    let obj = { enabled: enabled, buffer: [], max_size: size };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+fn append_entry(rec: json, entry: json) -> Result<json, string> {
+    let buf = rec["buffer"];
+    let max_size = rec["max_size"].as_number();
+    let new_buf = buf + [entry];
+    if (len(new_buf) > max_size) {
+        // drop oldest
+        new_buf = slice(new_buf, len(new_buf) - max_size, len(new_buf));
+    }
+    let obj = { enabled: rec["enabled"], buffer: new_buf, max_size: rec["max_size"] };
+    let encoded = toJSON(obj);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn record_request(rec: json, direction: string, payload: string) -> Result<json, string> {
+    if (!rec["enabled"].as_bool()) { return Ok(rec); }
+    let entry = { direction: direction, type: "request", payload: payload };
+    return append_entry(rec, entry);
+}
+
+export fn record_response(rec: json, direction: string, payload: string) -> Result<json, string> {
+    if (!rec["enabled"].as_bool()) { return Ok(rec); }
+    let entry = { direction: direction, type: "response", payload: payload };
+    return append_entry(rec, entry);
+}
+
+export fn export_recorder(rec: json, path: string) -> Result<null, string> {
+    if (!rec["enabled"].as_bool()) { return Err("recorder disabled"); }
+    let json_str = toJSON(rec["buffer"]);
+    writeFile(path, json_str);
+    return Ok(null);
+}

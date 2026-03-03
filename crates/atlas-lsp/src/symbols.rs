@@ -377,6 +377,30 @@ fn extract_indexed_symbols(uri: &Url, text: &str, program: &Program) -> Vec<Inde
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl symbol extraction handled in Block 3
             }
+            Item::Struct(struct_decl) => {
+                let range = span_to_range(text, struct_decl.span);
+                symbols.push(IndexedSymbol {
+                    name: struct_decl.name.name.clone(),
+                    kind: SymbolKind::STRUCT,
+                    location: Location {
+                        uri: uri.clone(),
+                        range,
+                    },
+                    container_name: None,
+                });
+            }
+            Item::Enum(enum_decl) => {
+                let range = span_to_range(text, enum_decl.span);
+                symbols.push(IndexedSymbol {
+                    name: enum_decl.name.name.clone(),
+                    kind: SymbolKind::ENUM,
+                    location: Location {
+                        uri: uri.clone(),
+                        range,
+                    },
+                    container_name: None,
+                });
+            }
         }
     }
 

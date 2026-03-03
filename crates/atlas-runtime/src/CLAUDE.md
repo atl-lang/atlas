@@ -82,7 +82,7 @@ Parity break = BLOCKING. Never ship a phase with parity divergence.
 **CoW write-back pattern.** Collection mutation builtins return a NEW collection.
 The interpreter (`apply_cow_writeback()`) and VM (`emit_cow_writeback_if_needed()`) write
 the result back to the caller's variable. Both `let` and `var` bindings can be mutated
-this way — it's content mutation, not rebinding. See DR-004 in auto-memory decisions/runtime.md.
+this way — it's content mutation, not rebinding. See `.claude/memory/patterns/runtime.md`.
 
 **value.rs blast radius.** Adding a new `Value` variant requires updating:
 `type_name()`, `Display`, `PartialEq`, equality semantics, bytecode serialization,

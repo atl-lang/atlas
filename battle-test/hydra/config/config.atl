@@ -1,0 +1,71 @@
+// Hydra config (Atlas port)
+// Source: /Users/proxikal/dev/projects/hydra/internal/config/config.go
+
+// NOTE: Atlas lacks struct declarations in grammar; using object literals.
+
+export fn default_registry() -> Result<json, string> {
+    let registry = {
+        version: "1.0",
+        defaults: {
+            debounce_ms: 500,
+            graceful_shutdown_ms: 2000,
+            max_output_size_kb: 50,
+            log_rate_limit_per_second: 10,
+            restart_queue_max_messages: 100,
+            restart_queue_ttl_seconds: 30,
+            restart_timeout_seconds: 10
+        },
+        servers: {}
+    };
+    let encoded = toJSON(registry);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}
+
+export fn default_server_config() -> Result<json, string> {
+    let cfg = {
+        command: "",
+        args: [],
+        watch: {
+            enabled: false,
+            paths: ["."],
+            extensions: [".py", ".js", ".ts", ".go"],
+            ignore_files: [".gitignore"],
+            ignore: [".git", "node_modules", "__pycache__", ".hydra"]
+        },
+        behavior: {
+            debounce_ms: 500,
+            restart_delay_ms: 0,
+            max_restarts: 10,
+            graceful_shutdown_ms: 2000,
+            restart_window_seconds: 60
+        },
+        injectable_tools: {
+            enabled: true,
+            tools: ["hydra_restart", "hydra_logs", "hydra_status", "hydra_force_restart"],
+            on_collision: "error"
+        },
+        recorder: {
+            enabled: false,
+            buffer_size: 50,
+            include_request_bodies: false,
+            include_response_bodies: false,
+            export_on_crash: true,
+            export_path: "/tmp/hydra-traffic-{timestamp}.json"
+        },
+        security: {
+            redact_patterns: [
+                "sk-[A-Za-z0-9]{32,}",
+                "API[_-]?KEY",
+                "password",
+                "Bearer [A-Za-z0-9._-]+",
+                "ghp_[A-Za-z0-9]{36}",
+                "xox[baprs]-[A-Za-z0-9-]+"
+            ],
+            redact_replacement: "[REDACTED by Hydra]"
+        }
+    };
+    let encoded = toJSON(cfg);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

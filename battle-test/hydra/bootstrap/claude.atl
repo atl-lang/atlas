@@ -1,0 +1,13 @@
+// Claude Desktop bootstrap (Atlas port)
+// Source: hydra/internal/bootstrap/claude.go
+
+import { configure_generic_mcp } from "./generic";
+import { detect_client_config_path } from "./pathutil";
+
+export fn configure_claude(path: string, registry_path: string, dry_run: bool) -> Result<null, string> {
+    let p = path;
+    if (len(p) == 0) {
+        p = detect_client_config_path("claude")?;
+    }
+    return configure_generic_mcp(p, registry_path, dry_run, "claude");
+}

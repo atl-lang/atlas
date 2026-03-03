@@ -1,0 +1,53 @@
+// Test string operations
+
+fn test_substring() -> void {
+    print("Test: substring");
+
+    let text: string = "Hello World";
+    let first: string = substring(text, 0, 5);
+
+    print("  First 5 chars: " + first);
+
+    if (first == "Hello") {
+        print("  ✓ substring works");
+    }
+}
+
+fn test_trim() -> void {
+    print("Test: trim");
+
+    let text: string = "  spaces  ";
+    let trimmed: string = trim(text);
+
+    if (trimmed == "spaces") {
+        print("  ✓ trim works");
+    }
+}
+
+fn test_startsWith() -> void {
+    print("Test: startsWith");
+
+    let text: string = "[DEBUG] message";
+
+    if (startsWith(text, "[DEBUG]")) {
+        print("  ✓ startsWith works");
+    }
+}
+
+fn main() -> void {
+    print("=== String Operations Test ===");
+    print("");
+
+    test_substring();
+    print("");
+
+    test_trim();
+    print("");
+
+    test_startsWith();
+
+    print("");
+    print("=== Tests Complete ===");
+}
+
+main();

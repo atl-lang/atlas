@@ -90,9 +90,163 @@ impl Parser {
             Ok(Item::Trait(self.parse_trait()?))
         } else if self.check(TokenKind::Impl) {
             Ok(Item::Impl(self.parse_impl_block()?))
+        } else if self.check(TokenKind::Struct) {
+            Ok(Item::Struct(self.parse_struct()?))
+        } else if self.check(TokenKind::Enum) {
+            Ok(Item::Enum(self.parse_enum()?))
         } else {
             Ok(Item::Statement(self.parse_statement()?))
         }
+    }
+
+    /// Parse a struct declaration: `struct Name<T> { field: Type, ... }`
+    fn parse_struct(&mut self) -> Result<crate::ast::StructDecl, ()> {
+        let struct_start = self.consume(TokenKind::Struct, "Expected 'struct'")?.span;
+
+        let name_token = self.consume_identifier("a struct name")?;
+        let name = crate::ast::Identifier {
+            name: name_token.lexeme.clone(),
+            span: name_token.span,
+        };
+
+        // Parse optional type parameters: <T, U, ...>
+        let type_params = self.parse_type_params()?;
+
+        self.consume(TokenKind::LeftBrace, "Expected '{' after struct name")?;
+
+        let mut fields = Vec::new();
+        while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+            let field_name_token = self.consume_identifier("a field name")?;
+            let field_name = crate::ast::Identifier {
+                name: field_name_token.lexeme.clone(),
+                span: field_name_token.span,
+            };
+
+            self.consume(TokenKind::Colon, "Expected ':' after field name")?;
+
+            let type_ref = self.parse_type_ref()?;
+
+            let field_span = crate::span::Span::new(field_name.span.start, type_ref.span().end);
+            fields.push(crate::ast::StructField {
+                name: field_name,
+                type_ref,
+                span: field_span,
+            });
+
+            // Trailing comma is optional before closing brace
+            if !self.check(TokenKind::RightBrace) {
+                self.consume(TokenKind::Comma, "Expected ',' between struct fields")?;
+            }
+        }
+
+        let end_span = self.consume(TokenKind::RightBrace, "Expected '}' after struct fields")?;
+
+        Ok(crate::ast::StructDecl {
+            name,
+            type_params,
+            fields,
+            span: crate::span::Span::new(struct_start.start, end_span.span.end),
+        })
+    }
+
+    /// Parse an enum declaration: `enum Name<T> { Variant, Variant(Type), ... }`
+    fn parse_enum(&mut self) -> Result<crate::ast::EnumDecl, ()> {
+        let enum_start = self.consume(TokenKind::Enum, "Expected 'enum'")?.span;
+
+        let name_token = self.consume_identifier("an enum name")?;
+        let name = crate::ast::Identifier {
+            name: name_token.lexeme.clone(),
+            span: name_token.span,
+        };
+
+        // Parse optional type parameters: <T, U, ...>
+        let type_params = self.parse_type_params()?;
+
+        self.consume(TokenKind::LeftBrace, "Expected '{' after enum name")?;
+
+        let mut variants = Vec::new();
+        while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+            let variant_name_token = self.consume_identifier("a variant name")?;
+            // Extract all needed data before making more mutable borrows
+            let variant_name_str = variant_name_token.lexeme.clone();
+            let variant_name_span = variant_name_token.span;
+            let variant_name = crate::ast::Identifier {
+                name: variant_name_str,
+                span: variant_name_span,
+            };
+
+            let variant = if self.check(TokenKind::LeftParen) {
+                // Tuple variant: Variant(Type, Type, ...)
+                self.advance();
+                let mut tuple_fields = Vec::new();
+                while !self.check(TokenKind::RightParen) && !self.is_at_end() {
+                    tuple_fields.push(self.parse_type_ref()?);
+                    if !self.check(TokenKind::RightParen) {
+                        self.consume(TokenKind::Comma, "Expected ',' between tuple fields")?;
+                    }
+                }
+                let end = self.consume(TokenKind::RightParen, "Expected ')' after tuple fields")?;
+                crate::ast::EnumVariant::Tuple {
+                    name: variant_name,
+                    fields: tuple_fields,
+                    span: crate::span::Span::new(variant_name_span.start, end.span.end),
+                }
+            } else if self.check(TokenKind::LeftBrace) {
+                // Struct variant: Variant { field: Type, ... }
+                self.advance();
+                let mut struct_fields = Vec::new();
+                while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+                    let field_name_token = self.consume_identifier("a field name")?;
+                    let field_name_str = field_name_token.lexeme.clone();
+                    let field_name_span = field_name_token.span;
+                    let field_name = crate::ast::Identifier {
+                        name: field_name_str,
+                        span: field_name_span,
+                    };
+                    self.consume(TokenKind::Colon, "Expected ':' after field name")?;
+                    let type_ref = self.parse_type_ref()?;
+                    let field_span =
+                        crate::span::Span::new(field_name_span.start, type_ref.span().end);
+                    struct_fields.push(crate::ast::StructField {
+                        name: field_name,
+                        type_ref,
+                        span: field_span,
+                    });
+                    if !self.check(TokenKind::RightBrace) {
+                        self.consume(TokenKind::Comma, "Expected ',' between fields")?;
+                    }
+                }
+                let end =
+                    self.consume(TokenKind::RightBrace, "Expected '}' after struct fields")?;
+                crate::ast::EnumVariant::Struct {
+                    name: variant_name,
+                    fields: struct_fields,
+                    span: crate::span::Span::new(variant_name_span.start, end.span.end),
+                }
+            } else {
+                // Unit variant: just the name
+                crate::ast::EnumVariant::Unit {
+                    name: variant_name,
+                    span: variant_name_span,
+                }
+            };
+
+            variants.push(variant);
+
+            // Trailing comma is optional before closing brace
+            if !self.check(TokenKind::RightBrace) {
+                self.consume(TokenKind::Comma, "Expected ',' between enum variants")?;
+            }
+        }
+
+        let end_span = self.consume(TokenKind::RightBrace, "Expected '}' after enum variants")?;
+
+        Ok(crate::ast::EnumDecl {
+            name,
+            type_params,
+            variants,
+            span: crate::span::Span::new(enum_start.start, end_span.span.end),
+        })
     }
 
     /// Parse a function declaration

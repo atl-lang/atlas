@@ -96,6 +96,34 @@ fn extract_item_folds(text: &str, item: &Item, ranges: &mut Vec<FoldingRange>) {
         Item::Trait(_) | Item::Impl(_) => {
             // Trait/impl folding handled in Block 3
         }
+        Item::Struct(struct_decl) => {
+            // Struct declarations are foldable
+            let range = span_to_range(text, struct_decl.span);
+            if range.end.line > range.start.line {
+                ranges.push(FoldingRange {
+                    start_line: range.start.line,
+                    start_character: Some(range.start.character),
+                    end_line: range.end.line,
+                    end_character: Some(range.end.character),
+                    kind: Some(FoldingRangeKind::Region),
+                    collapsed_text: None,
+                });
+            }
+        }
+        Item::Enum(enum_decl) => {
+            // Enum declarations are foldable
+            let range = span_to_range(text, enum_decl.span);
+            if range.end.line > range.start.line {
+                ranges.push(FoldingRange {
+                    start_line: range.start.line,
+                    start_character: Some(range.start.character),
+                    end_line: range.end.line,
+                    end_character: Some(range.end.character),
+                    kind: Some(FoldingRangeKind::Region),
+                    collapsed_text: None,
+                });
+            }
+        }
     }
 }
 

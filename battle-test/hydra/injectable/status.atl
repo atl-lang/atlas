@@ -1,0 +1,5 @@
+// Status tool (Atlas port)
+
+export fn hydra_status(snapshot: json) -> json {
+    return snapshot;
+}

@@ -168,10 +168,14 @@ fn regression_function_local_variables() {
 #[test]
 fn regression_if_then() {
     let code = r#"
-        let x: number = 10;
-        if (x > 5) {
-            x + 10;
+        fn test() -> number {
+            let x: number = 10;
+            if (x > 5) {
+                return x + 10;
+            }
+            0
         }
+        test()
     "#;
     assert_eval_number(code, 20.0);
 }
@@ -179,12 +183,15 @@ fn regression_if_then() {
 #[test]
 fn regression_if_else() {
     let code = r#"
-        let x: number = 3;
-        if (x > 5) {
-            10;
-        } else {
-            20;
+        fn test() -> number {
+            let x: number = 3;
+            if (x > 5) {
+                return 10;
+            } else {
+                return 20;
+            }
         }
+        test()
     "#;
     assert_eval_number(code, 20.0);
 }
@@ -805,14 +812,17 @@ fn stability_stress_long_string() {
 fn stability_stress_many_function_calls() {
     // Many sequential function calls should not exhaust resources.
     let code = r#"
-        fn inc(x: number) -> number { return x + 1; }
-        var n: number = 0;
-        var i: number = 0;
-        while (i < 200) {
-            n = inc(n);
-            i = i + 1;
+        fn test() -> number {
+            fn inc(x: number) -> number { return x + 1; }
+            var n: number = 0;
+            var i: number = 0;
+            while (i < 200) {
+                n = inc(n);
+                i = i + 1;
+            }
+            n
         }
-        n;
+        test()
     "#;
     assert_eval_number(code, 200.0);
 }
@@ -821,18 +831,21 @@ fn stability_stress_many_function_calls() {
 fn stability_stress_deep_if_else_nesting() {
     // Deeply nested conditionals (10 levels).
     let code = r#"
-        let x: number = 5;
-        if (x > 0) {
-            if (x > 1) {
-                if (x > 2) {
-                    if (x > 3) {
-                        if (x > 4) {
-                            42;
-                        } else { 0; }
-                    } else { 0; }
-                } else { 0; }
-            } else { 0; }
-        } else { 0; }
+        fn test() -> number {
+            let x: number = 5;
+            if (x > 0) {
+                if (x > 1) {
+                    if (x > 2) {
+                        if (x > 3) {
+                            if (x > 4) {
+                                return 42;
+                            } else { return 0; }
+                        } else { return 0; }
+                    } else { return 0; }
+                } else { return 0; }
+            } else { return 0; }
+        }
+        test()
     "#;
     assert_eval_number(code, 42.0);
 }
@@ -1155,20 +1168,31 @@ fn milestone_feature_logical_operators() {
 
 #[test]
 fn milestone_feature_if_else() {
-    assert_eval_number("if (true) { 1; } else { 2; }", 1.0);
-    assert_eval_number("if (false) { 1; } else { 2; }", 2.0);
+    // Note: if statements don't implicitly return values in Rust semantics.
+    // Use explicit return in functions to test if-else branch selection.
+    assert_eval_number(
+        "fn test() -> number { if (true) { return 1; } else { return 2; } } test()",
+        1.0,
+    );
+    assert_eval_number(
+        "fn test() -> number { if (false) { return 1; } else { return 2; } } test()",
+        2.0,
+    );
 }
 
 #[test]
 fn milestone_feature_while_loop() {
     let code = r#"
-        var i: number = 0;
-        var sum: number = 0;
-        while (i < 5) {
-            sum = sum + i;
-            i = i + 1;
+        fn test() -> number {
+            var i: number = 0;
+            var sum: number = 0;
+            while (i < 5) {
+                sum = sum + i;
+                i = i + 1;
+            }
+            sum
         }
-        sum;
+        test()
     "#;
     assert_eval_number(code, 10.0);
 }
@@ -1440,3 +1464,125 @@ fn regression_method_call_unknown_type_no_panic() {
 // NOTE: test block removed — required access to private function `is_err`
 
 // NOTE: test block removed — required access to private function `is_none`
+
+// ============================================================================
+// Struct Expressions (compile to HashMap at runtime)
+// ============================================================================
+
+#[test]
+fn struct_expr_basic() {
+    // Struct expressions are syntactic sugar for creating HashMap objects
+    let code = r#"
+        let user = User { name: "Alice", age: 30 };
+        unwrap(hashMapGet(user, "name"))
+    "#;
+    assert_eval_string(code, "Alice");
+}
+
+#[test]
+fn struct_expr_access_field() {
+    let code = r#"
+        let point = Point { x: 10, y: 20 };
+        unwrap(hashMapGet(point, "y"))
+    "#;
+    assert_eval_number(code, 20.0);
+}
+
+#[test]
+fn struct_expr_empty() {
+    let code = r#"
+        let empty = Empty {};
+        hashMapSize(empty)
+    "#;
+    assert_eval_number(code, 0.0);
+}
+
+// ============================================================================
+// Object Literals (compile to HashMap at runtime)
+// ============================================================================
+
+#[test]
+fn object_literal_basic() {
+    let code = r#"
+        let obj = { name: "Bob", count: 42 };
+        unwrap(hashMapGet(obj, "name"))
+    "#;
+    assert_eval_string(code, "Bob");
+}
+
+#[test]
+fn object_literal_number_value() {
+    let code = r#"
+        let obj = { x: 10, y: 20 };
+        unwrap(hashMapGet(obj, "x"))
+    "#;
+    assert_eval_number(code, 10.0);
+}
+
+#[test]
+fn object_literal_trailing_comma() {
+    let code = r#"
+        let obj = { a: 1, b: 2, };
+        hashMapSize(obj)
+    "#;
+    assert_eval_number(code, 2.0);
+}
+
+#[test]
+fn object_literal_empty() {
+    let code = r#"
+        let obj = {};
+        hashMapSize(obj)
+    "#;
+    assert_eval_number(code, 0.0);
+}
+
+// ============================================================================
+// HashMap JSON Serialization (toJSON)
+// ============================================================================
+
+#[test]
+fn hashmap_tojson_basic() {
+    // Test that toJSON works with object literals (which create HashMaps)
+    let code = r#"
+        let obj = { name: "test" };
+        let json = toJSON(obj);
+        len(json) > 0
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn hashmap_tojson_multiple_fields() {
+    let code = r#"
+        let obj = { a: 1, b: 2 };
+        let json = toJSON(obj);
+        // JSON should contain both keys - check length
+        len(json) > 10
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn hashmap_tojson_nested() {
+    // Object literals with nested arrays should serialize
+    let code = r#"
+        let obj = { items: [1, 2, 3] };
+        let json = toJSON(obj);
+        // Should contain "items" and array
+        len(json) > 15
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn struct_expr_tojson() {
+    // Struct expressions should also serialize via toJSON
+    let code = r#"
+        let user = User { name: "Alice", active: true };
+        let json = toJSON(user);
+        // Should contain the data
+        len(json) > 20
+    "#;
+    assert_eval_bool(code, true);
+}

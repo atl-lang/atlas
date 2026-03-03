@@ -1,0 +1,61 @@
+// Env substitution for config (Atlas port)
+// Source: /Users/proxikal/dev/projects/hydra/internal/config/envsubst.go
+
+// Replace ${env:VAR} with environment variable value
+export fn substitute_env_vars(value: string) -> string {
+    let mut result = "";
+    let mut i = 0;
+    while (i < len(value)) {
+        let idx = indexOf(substr(value, i, len(value)), "${env:");
+        if (idx == -1) {
+            result = result + substr(value, i, len(value));
+            break;
+        }
+        let start = i + idx;
+        result = result + substr(value, i, start);
+        let end_idx = indexOf(substr(value, start + 6, len(value)), "}");
+        if (end_idx == -1) {
+            result = result + substr(value, start, len(value));
+            break;
+        }
+        let var_name = substr(value, start + 6, start + 6 + end_idx);
+        let env_val = getEnv(var_name);
+        if (!env_val.is_null()) {
+            result = result + env_val.as_string();
+        }
+        i = start + 6 + end_idx + 1;
+    }
+    return result;
+}
+
+// Best-effort substitution on known config fields
+export fn substitute_env_vars_in_config(cfg: json) -> Result<json, string> {
+    let command = cfg["command"].is_null() ? "" : cfg["command"].as_string();
+    let cwd = cfg["cwd"].is_null() ? "" : cfg["cwd"].as_string();
+    let env_file = cfg["env_file"].is_null() ? "" : cfg["env_file"].as_string();
+    let pre_restart = cfg["behavior"]["pre_restart_command"].is_null() ? "" : cfg["behavior"]["pre_restart_command"].as_string();
+
+    let new_cfg = {
+        command: substitute_env_vars(command),
+        args: cfg["args"],
+        cwd: substitute_env_vars(cwd),
+        env_file: substitute_env_vars(env_file),
+        environment: cfg["environment"],
+        watch: cfg["watch"],
+        behavior: {
+            debounce_ms: cfg["behavior"]["debounce_ms"],
+            restart_delay_ms: cfg["behavior"]["restart_delay_ms"],
+            max_restarts: cfg["behavior"]["max_restarts"],
+            graceful_shutdown_ms: cfg["behavior"]["graceful_shutdown_ms"],
+            restart_window_seconds: cfg["behavior"]["restart_window_seconds"],
+            pre_restart_command: substitute_env_vars(pre_restart)
+        },
+        injectable_tools: cfg["injectable_tools"],
+        recorder: cfg["recorder"],
+        security: cfg["security"]
+    };
+
+    let encoded = toJSON(new_cfg);
+    let parsed = parseJSON(encoded)?;
+    return Ok(parsed);
+}

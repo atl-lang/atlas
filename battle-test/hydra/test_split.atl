@@ -1,0 +1,46 @@
+// Test split and for loop
+
+fn test_split() -> void {
+    print("Test: split");
+
+    let text: string = "line1\nline2\nline3";
+    let lines: array = split(text, "\n");
+
+    print("  Split into lines");
+
+    let count: number = len(lines);
+    print("  Count: " + str(count));
+
+    if (count == 3) {
+        print("  ✓ split works");
+    }
+}
+
+fn test_for_loop() -> void {
+    print("Test: for loop");
+
+    let text: string = "a\nb\nc";
+    let lines: array = split(text, "\n");
+
+    print("  Iterating:");
+    for line in lines {
+        print("    - " + line);
+    }
+
+    print("  ✓ for loop works");
+}
+
+fn main() -> void {
+    print("=== Split and Loop Test ===");
+    print("");
+
+    test_split();
+    print("");
+
+    test_for_loop();
+
+    print("");
+    print("=== Tests Complete ===");
+}
+
+main();

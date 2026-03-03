@@ -1,0 +1,12 @@
+// CLI add (Atlas port, simplified)
+// Source: hydra/internal/cli/add.go
+
+import { load_registry } from "../config/loader";
+import { registry_path_from_args, server_name_from_args } from "./pathutil";
+
+export fn cmd_add(args: json) -> Result<json, string> {
+    let _ = server_name_from_args(args)?;
+    let reg_path = registry_path_from_args(args);
+    let _ = load_registry(reg_path)?;
+    return Err("registry write not supported: Atlas JSON lacks object key insertion");
+}

@@ -1,0 +1,36 @@
+// Transport mock (Atlas port, simplified)
+// Source: hydra/internal/mocks/Transport.go
+
+export fn new_transport() -> json {
+    return { reads: [], writes: [] };
+}
+
+export fn push_read(transport: json, payload: string) -> json {
+    let reads = transport["reads"].is_null() ? [] : transport["reads"];
+    return { reads: reads + [payload], writes: transport["writes"] };
+}
+
+export fn read(transport: json) -> array {
+    let reads = transport["reads"].is_null() ? [] : transport["reads"];
+    if (len(reads) == 0) { return ["", transport]; }
+    let payload = reads[0].as_string();
+    let mut rest = [];
+    let mut i = 1;
+    while (i < len(reads)) {
+        rest = rest + [reads[i]];
+        i = i + 1;
+    }
+    let updated = { reads: rest, writes: transport["writes"] };
+    return [payload, updated];
+}
+
+export fn write(transport: json, payload: string) -> json {
+    let writes = transport["writes"].is_null() ? [] : transport["writes"];
+    return { reads: transport["reads"], writes: writes + [payload] };
+}
+
+export fn detect_protocol(transport: json) -> string {
+    return "unknown";
+}
+
+export fn close_transport(transport: json) -> json { return transport; }
