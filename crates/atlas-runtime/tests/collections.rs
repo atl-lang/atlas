@@ -517,7 +517,6 @@ fn test_hashset_empty_is_subset() {
 }
 
 #[test]
-#[ignore = "deadlocks: hashSetIsSubset with same Arc<Mutex> arg locks mutex twice"]
 fn test_hashset_set_is_subset_of_itself() {
     let result = eval(
         r#"
@@ -553,7 +552,6 @@ fn test_hashset_empty_not_superset_of_nonempty() {
 }
 
 #[test]
-#[ignore = "deadlocks: hashSetIsSuperset with same Arc<Mutex> arg locks mutex twice"]
 fn test_hashset_set_is_superset_of_itself() {
     let result = eval(
         r#"

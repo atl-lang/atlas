@@ -21,8 +21,11 @@ Block 7 (v0.3) completes this crate — adds control flow + wires to VM.
 `GetLocal`, `SetLocal`, `Pop`, `Dup`, `Return`, `Halt`
 
 **Unsupported opcodes** (bail out to interpreter — Block 7 adds these):
-`GetGlobal`, `SetGlobal`, `Jump`, `JumpIfFalse`, `Loop`, `Call`, `And`, `Or`,
+`GetGlobal`, `SetGlobal`, `Jump`, `JumpIfFalse`, `Loop`, `Call`,
 and all collection/closure opcodes
+
+**Note:** `And`/`Or` opcodes exist in the enum but are never emitted by the compiler.
+The compiler uses `JumpIfFalse` for short-circuit evaluation instead.
 
 **Threshold:** Default 100 invocations → compilation triggered.
 
@@ -38,10 +41,11 @@ stores param_count and uses correct call convention.
 1. `Jump`, `JumpIfFalse`, `Loop` opcodes in `codegen.rs` — enables loop compilation
 2. `Call` opcode — indirect dispatch to compiled or interpreted functions
 3. `GetGlobal`/`SetGlobal` — access VM's global value array via pointer
-4. `And`/`Or` short-circuit via Cranelift conditional blocks
-5. Wire `hotspot.rs` threshold check into VM execution loop
-6. Replace interpreter loop for hot functions with native function pointer
-7. JIT cache invalidation on bytecode change (REPL support)
+4. Wire `hotspot.rs` threshold check into VM execution loop
+5. Replace interpreter loop for hot functions with native function pointer
+6. JIT cache invalidation on bytecode change (REPL support)
+
+**Note:** And/Or opcodes are not needed — compiler uses JumpIfFalse for short-circuit.
 
 ## Key Types
 

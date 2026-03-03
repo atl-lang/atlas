@@ -526,3 +526,114 @@ fn test_memory_limit_allows_small_allocations() {
     assert!(result.is_ok());
     assert_eq!(result.unwrap().to_string(), "5");
 }
+
+// --- Security Split Tests (H-001 fix verification) ---
+
+#[test]
+fn test_allow_io_true_network_false_blocks_http() {
+    // CRITICAL: This tests the security split fix
+    // allow_io=true should NOT grant network access when allow_network=false
+    let config = RuntimeConfig::new()
+        .with_io_allowed(true)
+        .with_network_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // HTTP request should be blocked even though IO is allowed
+    let result = runtime.eval(r#"httpGet("https://example.com")"#);
+
+    // Should fail with security/permission error
+    assert!(
+        result.is_err(),
+        "HTTP request should be blocked when allow_network=false"
+    );
+    let err_msg = format!("{:?}", result.unwrap_err());
+    assert!(
+        err_msg.contains("ermission") || err_msg.contains("denied") || err_msg.contains("ecurity"),
+        "Expected permission/security error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_allow_io_true_network_false_blocks_http_vm() {
+    // Same test but for VM mode
+    let config = RuntimeConfig::new()
+        .with_io_allowed(true)
+        .with_network_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // HTTP request should be blocked even though IO is allowed
+    let result = runtime.eval(r#"httpGet("https://example.com")"#);
+
+    // Should fail with security/permission error
+    assert!(
+        result.is_err(),
+        "HTTP request should be blocked when allow_network=false"
+    );
+    let err_msg = format!("{:?}", result.unwrap_err());
+    assert!(
+        err_msg.contains("ermission") || err_msg.contains("denied") || err_msg.contains("ecurity"),
+        "Expected permission/security error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_allow_io_false_network_true_blocks_filesystem() {
+    // allow_network=true should NOT grant filesystem access when allow_io=false
+    let config = RuntimeConfig::new()
+        .with_io_allowed(false)
+        .with_network_allowed(true);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Filesystem access should be blocked
+    let result = runtime.eval(r#"readFile("/etc/passwd")"#);
+
+    // Should fail with security/permission error
+    assert!(
+        result.is_err(),
+        "Filesystem access should be blocked when allow_io=false"
+    );
+    let err_msg = format!("{:?}", result.unwrap_err());
+    assert!(
+        err_msg.contains("ermission") || err_msg.contains("denied") || err_msg.contains("ecurity"),
+        "Expected permission/security error, got: {}",
+        err_msg
+    );
+}
+
+#[test]
+fn test_both_permissions_independent() {
+    // Test that both can be enabled independently
+    let config = RuntimeConfig::new()
+        .with_io_allowed(true)
+        .with_network_allowed(true);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+
+    // Both should work (we're just checking it doesn't error on setup)
+    // Actual network calls might fail for other reasons (no network), but not permission
+    let result = runtime.eval("1 + 1");
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_neither_permission_blocks_both() {
+    // Neither permission = both blocked
+    let config = RuntimeConfig::new()
+        .with_io_allowed(false)
+        .with_network_allowed(false);
+
+    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+
+    // Filesystem should be blocked
+    let fs_result = runtime.eval(r#"readFile("/etc/passwd")"#);
+    assert!(fs_result.is_err(), "Filesystem should be blocked");
+
+    // HTTP should also be blocked
+    let http_result = runtime.eval(r#"httpGet("https://example.com")"#);
+    assert!(http_result.is_err(), "HTTP should be blocked");
+}

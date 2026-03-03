@@ -176,11 +176,33 @@ impl Runtime {
     /// ```
     pub fn with_config(mode: ExecutionMode, config: super::config::RuntimeConfig) -> Self {
         // Create security context based on config flags
-        let security = if config.allow_io {
-            SecurityContext::allow_all() // For now, simplified - allows all if IO is allowed
-        } else {
-            SecurityContext::new() // Deny-all by default
-        };
+        // IMPORTANT: allow_io and allow_network are SEPARATE permissions
+        let mut security = SecurityContext::new(); // Deny-all by default
+
+        if config.allow_io {
+            // Grant filesystem permissions only (not network)
+            #[cfg(not(windows))]
+            {
+                security.grant_filesystem_read(std::path::Path::new("/"), true);
+                security.grant_filesystem_write(std::path::Path::new("/"), true);
+            }
+            #[cfg(windows)]
+            {
+                let system_drive =
+                    std::env::var("SYSTEMDRIVE").unwrap_or_else(|_| "C:".to_string());
+                let root = format!("{}\\", system_drive);
+                security.grant_filesystem_read(std::path::Path::new(&root), true);
+                security.grant_filesystem_write(std::path::Path::new(&root), true);
+            }
+            // Also grant process and environment access with IO
+            security.grant_process("*");
+            security.grant_environment("*");
+        }
+
+        if config.allow_network {
+            // Grant network permissions separately
+            security.grant_network("*");
+        }
 
         // Create execution limits from config (timeout enforcement)
         let execution_limits = super::config::ExecutionLimits::from_config(&config);
