@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1772501677381,
+  "lastUpdate": 1772509627977,
   "repoUrl": "https://github.com/atl-lang/atlas",
   "entries": {
     "Atlas Runtime Benchmarks": [
@@ -1913,6 +1913,280 @@ window.BENCHMARK_DATA = {
           {
             "name": "vm_loop_scaling/10000",
             "value": 3537600,
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "proxikal@gmail.com",
+            "name": "proxy",
+            "username": "proxikal"
+          },
+          "committer": {
+            "email": "proxikal@gmail.com",
+            "name": "proxy",
+            "username": "proxikal"
+          },
+          "distinct": true,
+          "id": "550011ffe22935848a315ece411665b401d7bd27",
+          "message": "chore(tracking): update issue status for H-004",
+          "timestamp": "2026-03-02T21:53:45-05:00",
+          "tree_id": "e0aa38f4cac1df4ff7e41f71d0ef16390b15dbc5",
+          "url": "https://github.com/atl-lang/atlas/commit/550011ffe22935848a315ece411665b401d7bd27"
+        },
+        "date": 1772509627316,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "interp_fibonacci_20",
+            "value": 38902000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "interp_arrays/len_10k",
+            "value": 6153800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/fibonacci_20",
+            "value": 8276899.999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "parity/vm/nested_loops",
+            "value": 3601800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "string_replace_large",
+            "value": 65394.00000000001,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_map_10k_elements",
+            "value": 65111.99999999999,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_sort_1000_numbers",
+            "value": 62475,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "array_indexOf_search",
+            "value": 62239,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "math_arithmetic_10k_ops",
+            "value": 7802600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_parse_10kb",
+            "value": 70334,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "json_nested_access_deep",
+            "value": 66922,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_read_1mb",
+            "value": 160380,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "file_write_1mb",
+            "value": 7778400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/10",
+            "value": 125760,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/50",
+            "value": 413230,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_functions/200",
+            "value": 1396200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/50",
+            "value": 157500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/200",
+            "value": 434670,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "typecheck_scopes/500",
+            "value": 995780,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/lex",
+            "value": 1898.2,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/parse",
+            "value": 3785.7,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "pipeline/stages/compile",
+            "value": 5604.4,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/len_5k",
+            "value": 2893500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/trim_3k",
+            "value": 685500,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/string/split_1k",
+            "value": 1274200,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/push_1k",
+            "value": 21294,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/pop_500",
+            "value": 33424,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/len_5k",
+            "value": 2943700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/array/index_5k",
+            "value": 3326800,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/abs_5k",
+            "value": 3032700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/sqrt_2k",
+            "value": 21224,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/math/min_max_3k",
+            "value": 2178100,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "stdlib/type/type_of_3k",
+            "value": 24914,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_add_1000",
+            "value": 382360,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_sub_1000",
+            "value": 380300,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_mul_1000",
+            "value": 349730,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_arithmetic_div_1000",
+            "value": 350120,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_function_multi_arg",
+            "value": 449780,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_count_10000",
+            "value": 2100700,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_accumulate_5000",
+            "value": 1999400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_nested_100x100",
+            "value": 3422000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_create_20",
+            "value": 11025,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_array_set_index_1000",
+            "value": 648770,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_comparison_ops_5000",
+            "value": 3070600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_equality_check_5000",
+            "value": 1442600,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_string_concat_100",
+            "value": 46639,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/100",
+            "value": 46091,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/1000",
+            "value": 384000,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/5000",
+            "value": 1872400,
+            "unit": "ns/iter"
+          },
+          {
+            "name": "vm_loop_scaling/10000",
+            "value": 3738800,
             "unit": "ns/iter"
           }
         ]
