@@ -288,7 +288,7 @@ fn test_session_run_without_breakpoints_completes() {
 
 #[test]
 fn test_session_conditional_code_debug() {
-    let source = "let x = 5;\nlet y = 0;\nif x > 3 {\n  y = x * 2;\n}";
+    let source = "let x = 5;\nlet mut y = 0;\nif x > 3 {\n  y = x * 2;\n}";
     let bc = compile(source);
     let mut session = DebuggerSession::new(bc, source, "test.atlas");
     // Set step-into to go through conditional

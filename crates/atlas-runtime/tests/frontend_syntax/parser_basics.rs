@@ -155,9 +155,13 @@ fn test_parse_assignments(#[case] source: &str, #[case] snapshot_name: &str) {
 
 #[rstest]
 #[case::if_stmt("if (true) { x; }", "if_statement")]
+#[case::if_stmt_no_parens("if true { x; }", "if_statement_no_parens")]
 #[case::if_else("if (true) { x; } else { y; }", "if_else_statement")]
+#[case::if_else_no_parens("if true { x; } else { y; }", "if_else_statement_no_parens")]
 #[case::while_loop("while (true) { x; }", "while_loop")]
+#[case::while_loop_no_parens("while true { x; }", "while_loop_no_parens")]
 #[case::for_loop("for i in [0, 1, 2, 3, 4] { x; }", "for_loop")]
+#[case::for_loop_parens("for (i in [0, 1, 2, 3, 4]) { x; }", "for_loop_parens")]
 fn test_parse_control_flow(#[case] source: &str, #[case] snapshot_name: &str) {
     let (program, diagnostics) = parse_source(source);
     assert_eq!(diagnostics.len(), 0);
@@ -185,14 +189,14 @@ fn test_parse_flow_control_statements(#[case] source: &str, #[case] snapshot_nam
 
 #[test]
 fn test_parse_block_in_if() {
-    let (program, diagnostics) = parse_source("if (true) { let x = 1; let y = 2; }");
+    let (program, diagnostics) = parse_source("if true { let x = 1; let y = 2; }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }
 
 #[test]
 fn test_parse_nested_blocks() {
-    let (program, diagnostics) = parse_source("if (true) { if (false) { let x = 1; } }");
+    let (program, diagnostics) = parse_source("if true { if false { let x = 1; } }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }

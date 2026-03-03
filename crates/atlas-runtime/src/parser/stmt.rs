@@ -168,9 +168,7 @@ impl Parser {
     pub(super) fn parse_if_stmt(&mut self) -> Result<Stmt, ()> {
         let if_span = self.consume(TokenKind::If, "Expected 'if'")?.span;
 
-        self.consume(TokenKind::LeftParen, "Expected '(' after 'if'")?;
-        let cond = self.parse_expression()?;
-        self.consume(TokenKind::RightParen, "Expected ')' after if condition")?;
+        let cond = self.parse_condition("if")?;
 
         let then_block = self.parse_block()?;
         let then_span = then_block.span;
@@ -209,9 +207,7 @@ impl Parser {
     pub(super) fn parse_while_stmt(&mut self) -> Result<Stmt, ()> {
         let while_span = self.consume(TokenKind::While, "Expected 'while'")?.span;
 
-        self.consume(TokenKind::LeftParen, "Expected '(' after 'while'")?;
-        let cond = self.parse_expression()?;
-        self.consume(TokenKind::RightParen, "Expected ')' after while condition")?;
+        let cond = self.parse_condition("while")?;
 
         let body = self.parse_block()?;
         let body_span = body.span;
@@ -228,6 +224,7 @@ impl Parser {
     /// Syntax: `for item in array { body }`
     pub(super) fn parse_for_in_stmt(&mut self) -> Result<Stmt, ()> {
         let for_span = self.consume(TokenKind::For, "Expected 'for'")?.span;
+        let has_parens = self.match_token(TokenKind::LeftParen);
 
         // Parse variable name
         let name_token = self.consume_identifier("variable name after 'for'")?;
@@ -242,6 +239,10 @@ impl Parser {
         // Parse iterable expression
         let iterable = Box::new(self.parse_expression()?);
 
+        if has_parens {
+            self.consume(TokenKind::RightParen, "Expected ')' after for-in clause")?;
+        }
+
         // Parse body block
         let body = self.parse_block()?;
         let body_span = body.span;
@@ -252,6 +253,18 @@ impl Parser {
             body,
             span: for_span.merge(body_span),
         }))
+    }
+
+    fn parse_condition(&mut self, keyword: &str) -> Result<Expr, ()> {
+        let has_parens = self.match_token(TokenKind::LeftParen);
+        let cond = self.parse_expression()?;
+        if has_parens {
+            self.consume(
+                TokenKind::RightParen,
+                &format!("Expected ')' after {keyword} condition"),
+            )?;
+        }
+        Ok(cond)
     }
 
     /// Parse return statement

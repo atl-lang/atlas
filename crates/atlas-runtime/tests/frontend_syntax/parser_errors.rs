@@ -288,7 +288,7 @@ fn test_function_declaration_errors(#[case] source: &str, #[case] expected: &str
 // ============================================================================
 
 #[rstest]
-#[case("if { }", "(")]
+#[case("if { }", "{")]
 #[case("if (true { }", ")")]
 #[case("if (true) }", "{")]
 fn test_if_statement_errors(#[case] source: &str, #[case] expected: &str) {
@@ -301,7 +301,7 @@ fn test_if_statement_errors(#[case] source: &str, #[case] expected: &str) {
 // ============================================================================
 
 #[rstest]
-#[case("while { }", "(")]
+#[case("while { }", "{")]
 #[case("while (true { }", ")")]
 #[case("while (true) }", "{")]
 fn test_while_loop_errors(#[case] source: &str, #[case] expected: &str) {
