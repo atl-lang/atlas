@@ -396,6 +396,7 @@ impl Interpreter {
         // annotation resolves to Unknown in some paths, or the typechecker is not run).
         let dynamic_tag = match &target_value {
             Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
+            Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
             _ => None,
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);

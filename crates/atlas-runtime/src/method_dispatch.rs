@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 pub enum TypeTag {
     JsonValue,
     Array,
+    HttpResponse,
     // Future types added here as stdlib phases add method support:
     // String, HashMap, HashSet, DateTime, Regex, ...
 }
@@ -21,7 +22,22 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
     match type_tag {
         TypeTag::JsonValue => Some(format!("json{}", capitalize_first(method_name))),
         TypeTag::Array => resolve_array_method(method_name),
+        TypeTag::HttpResponse => resolve_http_response_method(method_name),
     }
+}
+
+/// Resolve an HttpResponse method call to its stdlib function name.
+fn resolve_http_response_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "status" => "httpStatus",
+        "body" => "httpBody",
+        "headers" => "httpHeaders",
+        "header" => "httpHeader",
+        "url" => "httpUrl",
+        "isSuccess" => "httpIsSuccess",
+        _ => return None,
+    };
+    Some(func_name.to_string())
 }
 
 /// Resolve an array method call to its stdlib function name.
