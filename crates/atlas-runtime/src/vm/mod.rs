@@ -95,6 +95,8 @@ pub struct VM {
     /// passed to an `own` parameter.  Subsequent `GetGlobal` for the same name errors.
     #[cfg(debug_assertions)]
     consumed_globals: std::collections::HashSet<String>,
+    /// Optional JIT compiler for hot function execution
+    jit: Option<Box<dyn crate::JitCompiler>>,
 }
 
 impl VM {
@@ -132,6 +134,7 @@ impl VM {
             consumed_slots: vec![vec![false; main_local_count]],
             #[cfg(debug_assertions)]
             consumed_globals: std::collections::HashSet::new(),
+            jit: None,
         }
     }
 
@@ -152,6 +155,20 @@ impl VM {
     /// Set the output writer (used by Runtime to redirect print() output)
     pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
         self.output_writer = writer;
+    }
+
+    /// Set a JIT compiler for hot function execution
+    ///
+    /// When set, the VM will attempt to JIT-compile and execute hot functions
+    /// instead of interpreting them. Functions that use unsupported opcodes
+    /// or haven't been called enough times will fall back to interpretation.
+    pub fn set_jit(&mut self, jit: Box<dyn crate::JitCompiler>) {
+        self.jit = Some(jit);
+    }
+
+    /// Get JIT statistics if JIT is enabled
+    pub fn jit_stats(&self) -> Option<crate::JitStats> {
+        self.jit.as_ref().map(|j| j.stats())
     }
 
     /// Set a global variable
@@ -1013,6 +1030,48 @@ impl VM {
                                     });
                                 }
 
+                                // Try JIT execution for hot numeric functions
+                                if self.jit.is_some() {
+                                    // Gather info before borrowing jit mutably
+                                    let args_base = self.stack.len() - arg_count;
+                                    let mut numeric_args: Vec<f64> = Vec::with_capacity(arg_count);
+                                    let mut all_numeric = true;
+
+                                    for i in 0..arg_count {
+                                        match &self.stack[args_base + i] {
+                                            Value::Number(n) => numeric_args.push(*n),
+                                            _ => {
+                                                all_numeric = false;
+                                                break;
+                                            }
+                                        }
+                                    }
+
+                                    if all_numeric {
+                                        let function_end =
+                                            self.find_function_end(func.bytecode_offset);
+                                        let bytecode_offset = func.bytecode_offset;
+
+                                        // Now borrow jit mutably for the call
+                                        if let Some(ref mut jit) = self.jit {
+                                            if let Some(result) = jit.try_execute(
+                                                &self.bytecode,
+                                                bytecode_offset,
+                                                function_end,
+                                                &numeric_args,
+                                            ) {
+                                                // JIT succeeded — pop args and function, push result
+                                                for _ in 0..arg_count {
+                                                    self.pop();
+                                                }
+                                                self.pop(); // Pop function value
+                                                self.push(Value::Number(result));
+                                                continue; // Skip to next instruction
+                                            }
+                                        }
+                                    }
+                                }
+
                                 // Create a new call frame
                                 let frame = CallFrame {
                                     function_name: func.name.clone(),
@@ -1542,6 +1601,46 @@ impl VM {
                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
             }),
         }
+    }
+
+    /// Find the end of a function body (the Return opcode)
+    ///
+    /// Scans bytecode from `start` looking for a Return opcode. Returns the
+    /// offset just past the Return instruction. Used by JIT to determine
+    /// function boundaries.
+    fn find_function_end(&self, start: usize) -> usize {
+        let instructions = &self.bytecode.instructions;
+        let mut ip = start;
+
+        while ip < instructions.len() {
+            let byte = instructions[ip];
+            if let Ok(opcode) = Opcode::try_from(byte) {
+                ip += 1;
+                match opcode {
+                    Opcode::Return | Opcode::Halt => return ip,
+                    // Skip operand bytes for opcodes that have them
+                    Opcode::Constant
+                    | Opcode::GetLocal
+                    | Opcode::SetLocal
+                    | Opcode::GetGlobal
+                    | Opcode::SetGlobal
+                    | Opcode::GetUpvalue
+                    | Opcode::SetUpvalue
+                    | Opcode::Jump
+                    | Opcode::JumpIfFalse
+                    | Opcode::Loop
+                    | Opcode::Array => ip += 2,
+                    Opcode::MakeClosure => ip += 4,
+                    Opcode::Call => ip += 1,
+                    _ => {}
+                }
+            } else {
+                ip += 1;
+            }
+        }
+
+        // If no Return found, return end of bytecode
+        instructions.len()
     }
 
     #[inline(always)]

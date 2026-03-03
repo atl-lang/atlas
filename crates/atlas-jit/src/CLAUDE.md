@@ -13,19 +13,25 @@ Block 7 (v0.3) completes this crate — adds control flow + wires to VM.
 | `cache.rs` | Compiled function cache — maps bytecode offset → native function pointer |
 | `backend.rs` | Cranelift backend setup, module configuration |
 
-## Current State (Block 1 complete, Block 7 pending)
+## Current State (H-003 fixed, Block 7 pending)
 
-**Supported opcodes** (already implemented in codegen.rs):
+**Supported opcodes** (implemented in codegen.rs):
 `Constant`, `True`, `False`, `Null`, `Add`, `Sub`, `Mul`, `Div`, `Mod`, `Negate`,
 `Equal`, `NotEqual`, `Less`, `LessEqual`, `Greater`, `GreaterEqual`, `Not`,
-`Pop`, `Return`
+`GetLocal`, `SetLocal`, `Pop`, `Dup`, `Return`, `Halt`
 
 **Unsupported opcodes** (bail out to interpreter — Block 7 adds these):
 `GetGlobal`, `SetGlobal`, `Jump`, `JumpIfFalse`, `Loop`, `Call`, `And`, `Or`,
-`GetLocal`, `SetLocal` and all collection/closure opcodes
+and all collection/closure opcodes
 
-**Threshold:** Default 1000 invocations → compilation triggered.
-**Not wired to VM yet** — `JitEngine` exists but VM doesn't call it. Block 7 wires it.
+**Threshold:** Default 100 invocations → compilation triggered.
+
+**VM Integration:** JIT is wired via `VM::set_jit()`. When set, the VM calls
+`JitCompiler::try_execute()` for hot numeric functions. Functions with
+non-numeric args or unsupported opcodes fall back to interpretation.
+
+**ABI:** Functions compile with correct arity (0-6 params supported). Cache
+stores param_count and uses correct call convention.
 
 ## Block 7 Scope (what gets added)
 

@@ -20,6 +20,7 @@ pub mod debugger;
 pub mod diagnostic;
 pub mod ffi;
 pub mod interpreter;
+pub mod jit_trait;
 pub mod json_value;
 pub mod lexer;
 pub mod method_dispatch;
@@ -79,3 +80,6 @@ pub use typechecker::TypeChecker;
 pub use types::Type;
 pub use value::{FunctionRef, RuntimeError, Value};
 pub use vm::VM;
+
+// JIT integration
+pub use jit_trait::{JitCompiler, JitStats};

@@ -30,6 +30,50 @@ pub mod hotspot;
 
 use thiserror::Error;
 
+/// Call a JIT-compiled function pointer with the given arguments
+///
+/// # Safety
+/// The code_ptr must be valid and point to a function with the correct signature.
+/// The arity must match args.len().
+unsafe fn call_jit_function(code_ptr: *const u8, args: &[f64]) -> f64 {
+    match args.len() {
+        0 => {
+            let func: unsafe fn() -> f64 = std::mem::transmute(code_ptr);
+            func()
+        }
+        1 => {
+            let func: unsafe fn(f64) -> f64 = std::mem::transmute(code_ptr);
+            func(args[0])
+        }
+        2 => {
+            let func: unsafe fn(f64, f64) -> f64 = std::mem::transmute(code_ptr);
+            func(args[0], args[1])
+        }
+        3 => {
+            let func: unsafe fn(f64, f64, f64) -> f64 = std::mem::transmute(code_ptr);
+            func(args[0], args[1], args[2])
+        }
+        4 => {
+            let func: unsafe fn(f64, f64, f64, f64) -> f64 = std::mem::transmute(code_ptr);
+            func(args[0], args[1], args[2], args[3])
+        }
+        5 => {
+            let func: unsafe fn(f64, f64, f64, f64, f64) -> f64 = std::mem::transmute(code_ptr);
+            func(args[0], args[1], args[2], args[3], args[4])
+        }
+        6 => {
+            let func: unsafe fn(f64, f64, f64, f64, f64, f64) -> f64 =
+                std::mem::transmute(code_ptr);
+            func(args[0], args[1], args[2], args[3], args[4], args[5])
+        }
+        _ => {
+            // For functions with more than 6 args, fall back to zero
+            // (unsupported — caller should have bailed)
+            0.0
+        }
+    }
+}
+
 /// JIT compilation errors
 #[derive(Debug, Error)]
 pub enum JitError {
@@ -128,11 +172,18 @@ impl JitEngine {
     ///
     /// Returns `Some(result)` if the function was executed via JIT,
     /// or `None` if the interpreter should handle it.
+    ///
+    /// # Parameters
+    /// - `function_offset`: bytecode offset where the function body starts
+    /// - `bytecode`: the bytecode container
+    /// - `function_end`: bytecode offset where the function ends (exclusive)
+    /// - `args`: argument values as f64 (JIT only supports numeric arguments)
     pub fn notify_call(
         &mut self,
         function_offset: usize,
         bytecode: &atlas_runtime::bytecode::Bytecode,
         function_end: usize,
+        args: &[f64],
     ) -> Option<f64> {
         if !self.config.enabled {
             return None;
@@ -143,10 +194,14 @@ impl JitEngine {
         // Check if already cached
         if self.cache.contains(function_offset) {
             if let Some(entry) = self.cache.get(function_offset) {
-                let result = unsafe {
-                    let func: unsafe fn() -> f64 = std::mem::transmute(entry.code_ptr);
-                    func()
-                };
+                // Verify arity matches
+                if entry.param_count != args.len() {
+                    self.interpreter_fallbacks += 1;
+                    return None;
+                }
+                // Copy pointer before releasing borrow
+                let code_ptr = entry.code_ptr;
+                let result = unsafe { call_jit_function(code_ptr, args) };
                 self.jit_executions += 1;
                 return Some(result);
             }
@@ -154,7 +209,7 @@ impl JitEngine {
 
         // Check if hot enough to compile
         if self.tracker.is_hot(function_offset) {
-            match self.try_compile(function_offset, bytecode, function_end) {
+            match self.try_compile(function_offset, bytecode, function_end, args) {
                 Ok(result) => {
                     self.jit_executions += 1;
                     return Some(result);
@@ -176,14 +231,30 @@ impl JitEngine {
         offset: usize,
         bytecode: &atlas_runtime::bytecode::Bytecode,
         end: usize,
+        args: &[f64],
     ) -> JitResult<f64> {
-        let func = self.translator.translate(bytecode, offset, end)?;
+        let param_count = args.len();
+
+        // Use the parameterized translation when we have arguments
+        let func = if param_count > 0 {
+            self.translator
+                .translate_with_params(bytecode, offset, end, param_count)?
+        } else {
+            self.translator.translate(bytecode, offset, end)?
+        };
+
         let compiled = self.backend.compile(func)?;
 
-        let result = unsafe { compiled.call_no_args() };
+        // Execute with the correct calling convention
+        let result = unsafe { call_jit_function(compiled.code_ptr, args) };
+
+        // Estimate code size based on bytecode length
+        // Average: ~20 bytes of native code per bytecode byte (conservative estimate)
+        let bytecode_size = end.saturating_sub(offset);
+        let estimated_code_size = (bytecode_size * 20).max(64);
 
         self.cache
-            .insert(offset, compiled.code_ptr, 64, 0)
+            .insert(offset, compiled.code_ptr, estimated_code_size, param_count)
             .map_err(|e| JitError::CacheFull {
                 limit: e.limit,
                 used: e.used,
@@ -244,7 +315,7 @@ impl JitEngine {
     }
 }
 
-/// Statistics from the JIT engine
+/// Statistics from the JIT engine (internal, extended)
 #[derive(Debug, Clone)]
 pub struct JitStats {
     /// Total JIT compilations performed
@@ -263,4 +334,43 @@ pub struct JitStats {
     pub tracked_functions: usize,
     /// Number of functions that have been compiled
     pub compiled_functions: usize,
+}
+
+// Implement the JitCompiler trait so the VM can use JitEngine
+impl atlas_runtime::JitCompiler for JitEngine {
+    fn try_execute(
+        &mut self,
+        bytecode: &atlas_runtime::bytecode::Bytecode,
+        function_offset: usize,
+        function_end: usize,
+        args: &[f64],
+    ) -> Option<f64> {
+        self.notify_call(function_offset, bytecode, function_end, args)
+    }
+
+    fn is_enabled(&self) -> bool {
+        self.config.enabled
+    }
+
+    fn stats(&self) -> atlas_runtime::JitStats {
+        atlas_runtime::JitStats {
+            compilations: self.compilations,
+            jit_executions: self.jit_executions,
+            interpreter_fallbacks: self.interpreter_fallbacks,
+            cached_functions: self.cache.len(),
+            cache_bytes: self.cache.total_bytes(),
+        }
+    }
+
+    fn invalidate_cache(&mut self) {
+        self.cache.invalidate_all();
+    }
+
+    fn reset(&mut self) {
+        self.tracker.reset();
+        self.cache.clear();
+        self.compilations = 0;
+        self.jit_executions = 0;
+        self.interpreter_fallbacks = 0;
+    }
 }

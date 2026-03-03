@@ -640,7 +640,7 @@ fn test_engine_disabled_returns_none() {
     let mut engine = JitEngine::new(JitConfig::for_testing()).unwrap();
     engine.disable();
     let bc = num_bc(42.0);
-    let result = engine.notify_call(0, &bc, bc.instructions.len());
+    let result = engine.notify_call(0, &bc, bc.instructions.len(), &[]);
     assert!(result.is_none());
 }
 
@@ -649,7 +649,7 @@ fn test_engine_below_threshold_returns_none() {
     let mut engine = JitEngine::new(JitConfig::for_testing()).unwrap();
     let bc = num_bc(42.0);
     // Threshold is 2, call only once
-    let result = engine.notify_call(0, &bc, bc.instructions.len());
+    let result = engine.notify_call(0, &bc, bc.instructions.len(), &[]);
     assert!(result.is_none());
 }
 
@@ -660,9 +660,9 @@ fn test_engine_compiles_after_threshold() {
     let end = bc.instructions.len();
 
     // First call: below threshold
-    assert!(engine.notify_call(0, &bc, end).is_none());
+    assert!(engine.notify_call(0, &bc, end, &[]).is_none());
     // Second call: at threshold (2), should compile and execute
-    let result = engine.notify_call(0, &bc, end);
+    let result = engine.notify_call(0, &bc, end, &[]);
     assert_eq!(result, Some(42.0));
 
     let stats = engine.stats();
@@ -677,11 +677,11 @@ fn test_engine_cache_hit() {
     let end = bc.instructions.len();
 
     // Warm up
-    engine.notify_call(0, &bc, end);
-    engine.notify_call(0, &bc, end); // compiles
+    engine.notify_call(0, &bc, end, &[]);
+    engine.notify_call(0, &bc, end, &[]); // compiles
 
     // Third call should be a cache hit
-    let result = engine.notify_call(0, &bc, end);
+    let result = engine.notify_call(0, &bc, end, &[]);
     assert_eq!(result, Some(42.0));
 
     let stats = engine.stats();
@@ -705,8 +705,8 @@ fn test_engine_reset() {
     let mut engine = JitEngine::new(JitConfig::for_testing()).unwrap();
     let bc = num_bc(42.0);
     let end = bc.instructions.len();
-    engine.notify_call(0, &bc, end);
-    engine.notify_call(0, &bc, end);
+    engine.notify_call(0, &bc, end, &[]);
+    engine.notify_call(0, &bc, end, &[]);
 
     engine.reset();
     let stats = engine.stats();
@@ -720,8 +720,8 @@ fn test_engine_invalidate_cache() {
     let mut engine = JitEngine::new(JitConfig::for_testing()).unwrap();
     let bc = num_bc(42.0);
     let end = bc.instructions.len();
-    engine.notify_call(0, &bc, end);
-    engine.notify_call(0, &bc, end); // compile
+    engine.notify_call(0, &bc, end, &[]);
+    engine.notify_call(0, &bc, end, &[]); // compile
 
     engine.invalidate_cache();
     // Cache invalidated but tracker still knows it was compiled,
@@ -739,8 +739,8 @@ fn test_engine_unsupported_fallback() {
     bc.emit_u16(0);
     let end = bc.instructions.len();
 
-    engine.notify_call(0, &bc, end);
-    let result = engine.notify_call(0, &bc, end); // tries to compile, fails
+    engine.notify_call(0, &bc, end, &[]);
+    let result = engine.notify_call(0, &bc, end, &[]); // tries to compile, fails
     assert!(result.is_none());
 
     let stats = engine.stats();
@@ -770,12 +770,12 @@ fn test_engine_multiple_functions() {
     let mut engine = JitEngine::new(JitConfig::for_testing()).unwrap();
 
     // Warm up both
-    engine.notify_call(fn1_start, &bc, fn1_end);
-    engine.notify_call(fn2_start, &bc, fn2_end);
+    engine.notify_call(fn1_start, &bc, fn1_end, &[]);
+    engine.notify_call(fn2_start, &bc, fn2_end, &[]);
 
     // Compile both
-    assert_eq!(engine.notify_call(fn1_start, &bc, fn1_end), Some(10.0));
-    assert_eq!(engine.notify_call(fn2_start, &bc, fn2_end), Some(20.0));
+    assert_eq!(engine.notify_call(fn1_start, &bc, fn1_end, &[]), Some(10.0));
+    assert_eq!(engine.notify_call(fn2_start, &bc, fn2_end, &[]), Some(20.0));
 
     let stats = engine.stats();
     assert_eq!(stats.compilations, 2);
