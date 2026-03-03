@@ -35,6 +35,9 @@ tar = "0.4"
 zip = "0.6"
 termcolor = "1.4.1"
 
+# Bytecode checksum
+crc32fast = "1.4"
+
 # Crypto (systems-level stdlib)
 sha2 = "0.10"
 hmac = "0.12"

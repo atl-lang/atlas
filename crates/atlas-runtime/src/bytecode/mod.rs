@@ -15,7 +15,9 @@ pub use optimizer::{
     ConstantFoldingPass, DeadCodeEliminationPass, OptimizationPass, OptimizationStats, Optimizer,
     PeepholePass,
 };
-use serialize::{deserialize_span, deserialize_value, serialize_span, serialize_value};
+use serialize::{
+    compute_checksum, deserialize_span, deserialize_value, serialize_span, serialize_value,
+};
 pub use validator::{validate, ValidationError, ValidationErrorKind};
 
 use crate::span::Span;
@@ -29,7 +31,8 @@ use crate::value::Value;
 ///
 /// Version history:
 /// - Version 1: Initial bytecode format (Phase 10)
-pub const BYTECODE_VERSION: u16 = 1;
+/// - Version 2: Added CRC32 checksum, extended value serialization (H-002)
+pub const BYTECODE_VERSION: u16 = 2;
 
 /// Debug information for bytecode
 ///
@@ -138,6 +141,7 @@ impl Bytecode {
     /// - Constants: count u32 + serialized values
     /// - Instructions: length u32 + bytecode bytes
     /// - Debug info (optional): count u32 + debug spans
+    /// - Checksum: CRC32 u32 (over all preceding bytes)
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut bytes = Vec::new();
 
@@ -170,15 +174,38 @@ impl Bytecode {
             }
         }
 
+        // Checksum (CRC32 over all preceding bytes)
+        let checksum = compute_checksum(&bytes);
+        bytes.extend_from_slice(&checksum.to_be_bytes());
+
         bytes
     }
 
     /// Deserialize bytecode from binary format (.atb file)
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, String> {
-        // Read and validate header
-        if bytes.len() < 8 {
+        // Minimum size: header (8) + checksum (4)
+        if bytes.len() < 12 {
             return Err("Invalid bytecode file: too short".to_string());
         }
+
+        // Verify checksum first
+        let data_len = bytes.len() - 4;
+        let stored_checksum = u32::from_be_bytes([
+            bytes[data_len],
+            bytes[data_len + 1],
+            bytes[data_len + 2],
+            bytes[data_len + 3],
+        ]);
+        let computed_checksum = compute_checksum(&bytes[..data_len]);
+        if stored_checksum != computed_checksum {
+            return Err(format!(
+                "Bytecode checksum mismatch: file may be corrupted. \
+                 Expected {:#x}, got {:#x}.",
+                stored_checksum, computed_checksum
+            ));
+        }
+
+        // Read and validate header
         if &bytes[0..4] != b"ATB\0" {
             return Err("Invalid bytecode file: bad magic number. Expected 'ATB\\0', this may not be an Atlas bytecode file.".to_string());
         }
@@ -197,7 +224,7 @@ impl Bytecode {
         let mut offset = 8;
 
         // Read constants
-        if offset + 4 > bytes.len() {
+        if offset + 4 > data_len {
             return Err("Invalid bytecode: constants section truncated".to_string());
         }
         let const_count = u32::from_be_bytes([
@@ -210,13 +237,13 @@ impl Bytecode {
 
         let mut constants = Vec::with_capacity(const_count);
         for _ in 0..const_count {
-            let (value, consumed) = deserialize_value(&bytes[offset..])?;
+            let (value, consumed) = deserialize_value(&bytes[offset..data_len])?;
             constants.push(value);
             offset += consumed;
         }
 
         // Read instructions
-        if offset + 4 > bytes.len() {
+        if offset + 4 > data_len {
             return Err("Invalid bytecode: instructions section truncated".to_string());
         }
         let instr_len = u32::from_be_bytes([
@@ -227,7 +254,7 @@ impl Bytecode {
         ]) as usize;
         offset += 4;
 
-        if offset + instr_len > bytes.len() {
+        if offset + instr_len > data_len {
             return Err("Invalid bytecode: instructions data truncated".to_string());
         }
         let instructions = bytes[offset..offset + instr_len].to_vec();
@@ -236,7 +263,7 @@ impl Bytecode {
         // Read debug info (optional)
         let mut debug_info = Vec::new();
         if has_debug_info {
-            if offset + 4 > bytes.len() {
+            if offset + 4 > data_len {
                 return Err("Invalid bytecode: debug info section truncated".to_string());
             }
             let debug_count = u32::from_be_bytes([
@@ -248,7 +275,7 @@ impl Bytecode {
             offset += 4;
 
             for _ in 0..debug_count {
-                if offset + 4 > bytes.len() {
+                if offset + 4 > data_len {
                     return Err("Invalid bytecode: debug span truncated".to_string());
                 }
                 let instruction_offset = u32::from_be_bytes([
@@ -259,7 +286,7 @@ impl Bytecode {
                 ]) as usize;
                 offset += 4;
 
-                let (span, consumed) = deserialize_span(&bytes[offset..])?;
+                let (span, consumed) = deserialize_span(&bytes[offset..data_len])?;
                 debug_info.push(DebugSpan {
                     instruction_offset,
                     span,
@@ -268,12 +295,11 @@ impl Bytecode {
             }
         }
 
-        // Verify we consumed exactly the expected amount of data
-        if offset != bytes.len() {
+        // Verify we consumed exactly the data portion (checksum already verified)
+        if offset != data_len {
             return Err(format!(
-                "Invalid bytecode: expected {} bytes, but only consumed {}",
-                bytes.len(),
-                offset
+                "Invalid bytecode: expected {} bytes of data, but consumed {}",
+                data_len, offset
             ));
         }
 

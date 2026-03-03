@@ -313,6 +313,11 @@ impl ValueQueue {
     pub fn is_exclusively_owned(&self) -> bool {
         Arc::strong_count(&self.0) == 1
     }
+
+    /// Wrap an existing AtlasQueue in a CoW wrapper.
+    pub fn from_atlas(q: crate::stdlib::collections::queue::AtlasQueue) -> Self {
+        ValueQueue(Arc::new(q))
+    }
 }
 
 impl PartialEq for ValueQueue {
@@ -342,6 +347,11 @@ impl ValueStack {
 
     pub fn is_exclusively_owned(&self) -> bool {
         Arc::strong_count(&self.0) == 1
+    }
+
+    /// Wrap an existing AtlasStack in a CoW wrapper.
+    pub fn from_atlas(s: crate::stdlib::collections::stack::AtlasStack) -> Self {
+        ValueStack(Arc::new(s))
     }
 }
 
