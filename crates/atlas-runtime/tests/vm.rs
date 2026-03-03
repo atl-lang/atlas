@@ -208,6 +208,8 @@ mod vm_for_in;
 mod vm_functions;
 #[path = "vm/integration.rs"]
 mod vm_integration;
+#[path = "vm/logical.rs"]
+mod vm_logical;
 #[path = "vm/member.rs"]
 mod vm_member;
 #[path = "vm/nested.rs"]

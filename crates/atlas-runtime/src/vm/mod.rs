@@ -976,11 +976,47 @@ impl VM {
                         }
                     }
                 }
-                Opcode::And | Opcode::Or => {
-                    // TODO: Short-circuit evaluation
-                    return Err(RuntimeError::UnknownOpcode {
-                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                    });
+                Opcode::And => {
+                    // Non-short-circuit And: both operands already evaluated
+                    // Short-circuit is handled by compiler via JumpIfFalse
+                    let b = self.pop();
+                    let a = self.pop();
+                    match (&a, &b) {
+                        (Value::Bool(a_val), Value::Bool(b_val)) => {
+                            self.push(Value::Bool(*a_val && *b_val));
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "Cannot apply && to {} and {}",
+                                    a.type_name(),
+                                    b.type_name()
+                                ),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    }
+                }
+                Opcode::Or => {
+                    // Non-short-circuit Or: both operands already evaluated
+                    // Short-circuit is handled by compiler via JumpIfFalse
+                    let b = self.pop();
+                    let a = self.pop();
+                    match (&a, &b) {
+                        (Value::Bool(a_val), Value::Bool(b_val)) => {
+                            self.push(Value::Bool(*a_val || *b_val));
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "Cannot apply || to {} and {}",
+                                    a.type_name(),
+                                    b.type_name()
+                                ),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    }
                 }
 
                 // ===== Control Flow =====
