@@ -42,3 +42,14 @@ atlas-dev
 
 # Worktree identity (local machine only, never commit)
 .worktree-id
+
+# Local databases (tracking, caches)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# Local settings
+.claude/settings.local.json
