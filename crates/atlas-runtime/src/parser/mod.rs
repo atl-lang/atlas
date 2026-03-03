@@ -58,7 +58,7 @@ impl Parser {
     pub fn parse(&mut self) -> (Program, Vec<Diagnostic>) {
         let mut items = Vec::new();
 
-        while !self.is_at_end() {
+        while !self.is_at_end_raw() {
             let doc_comment = self.collect_doc_comments();
             if self.is_at_end() {
                 break;
@@ -274,11 +274,12 @@ impl Parser {
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
             } else if self.check(TokenKind::Shared) {
+                let span = self.peek().span;
                 self.advance();
                 self.diagnostics.push(Diagnostic::error(
                     "`shared` is not valid as a return ownership annotation; \
                      callers receive a `shared<T>` typed value instead",
-                    self.peek().span,
+                    span,
                 ));
                 return Err(());
             } else {
@@ -868,19 +869,18 @@ impl Parser {
 
     /// Advance to next token and return reference to previous
     pub(super) fn advance(&mut self) -> &Token {
-        if !self.is_at_end() {
-            self.current += 1;
-        }
-        &self.tokens[self.current - 1]
+        self.skip_trivia();
+        self.advance_raw()
     }
 
     /// Peek at current token
-    pub(super) fn peek(&self) -> &Token {
-        &self.tokens[self.current]
+    pub(super) fn peek(&mut self) -> &Token {
+        self.skip_trivia();
+        self.peek_raw()
     }
 
     /// Check if current token matches kind
-    pub(super) fn check(&self, kind: TokenKind) -> bool {
+    pub(super) fn check(&mut self, kind: TokenKind) -> bool {
         !self.is_at_end() && self.peek().kind == kind
     }
 
@@ -912,8 +912,9 @@ impl Parser {
     }
 
     /// Check if at end of token stream
-    pub(super) fn is_at_end(&self) -> bool {
-        self.current >= self.tokens.len() || self.tokens[self.current].kind == TokenKind::Eof
+    pub(super) fn is_at_end(&mut self) -> bool {
+        self.skip_trivia();
+        self.is_at_end_raw()
     }
 
     /// Record an error
@@ -960,13 +961,45 @@ impl Parser {
         )
     }
 
+    fn is_comment_token(kind: TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::LineComment | TokenKind::BlockComment | TokenKind::DocComment
+        )
+    }
+
+    fn skip_trivia(&mut self) {
+        while !self.is_at_end_raw() && Self::is_comment_token(self.peek_raw().kind) {
+            self.current += 1;
+        }
+    }
+
+    fn peek_raw(&self) -> &Token {
+        &self.tokens[self.current]
+    }
+
+    fn advance_raw(&mut self) -> &Token {
+        if !self.is_at_end_raw() {
+            self.current += 1;
+        }
+        &self.tokens[self.current - 1]
+    }
+
+    fn check_raw(&self, kind: TokenKind) -> bool {
+        !self.is_at_end_raw() && self.peek_raw().kind == kind
+    }
+
+    fn is_at_end_raw(&self) -> bool {
+        self.current >= self.tokens.len() || self.tokens[self.current].kind == TokenKind::Eof
+    }
+
     /// Consume an identifier token with enhanced error message for keywords
     pub(super) fn consume_identifier(&mut self, context: &str) -> Result<&Token, ()> {
-        let current = self.peek();
+        let current = self.peek().clone();
 
         // Check if it's a reserved keyword
         if Self::is_reserved_keyword(current.kind) {
-            let keyword_name = &current.lexeme;
+            let keyword_name = current.lexeme;
 
             // Special message for import/match (reserved for future)
             if current.kind == TokenKind::Import || current.kind == TokenKind::Match {
@@ -1023,19 +1056,28 @@ impl Parser {
     }
 
     fn collect_doc_comments(&mut self) -> Option<String> {
-        if !self.check(TokenKind::DocComment) {
+        while self.check_raw(TokenKind::LineComment) || self.check_raw(TokenKind::BlockComment) {
+            self.advance_raw();
+        }
+
+        if !self.check_raw(TokenKind::DocComment) {
             return None;
         }
 
         let mut lines = Vec::new();
-        while self.check(TokenKind::DocComment) {
-            let token = self.advance();
+        while self.check_raw(TokenKind::DocComment) {
+            let token = self.advance_raw();
             let text = token
                 .lexeme
                 .trim_start_matches("///")
                 .trim_start()
                 .to_string();
             lines.push(text);
+
+            while self.check_raw(TokenKind::LineComment) || self.check_raw(TokenKind::BlockComment)
+            {
+                self.advance_raw();
+            }
         }
 
         Some(lines.join("\n"))

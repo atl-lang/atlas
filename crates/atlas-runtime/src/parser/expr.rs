@@ -4,7 +4,7 @@ use super::E_BAD_NUMBER;
 use crate::ast::*;
 use crate::parser::{Parser, Precedence};
 use crate::span::Span;
-use crate::token::{Token, TokenKind};
+use crate::token::TokenKind;
 
 impl Parser {
     /// Parse an expression
@@ -70,13 +70,14 @@ impl Parser {
     }
 
     /// Get current token precedence
-    pub(super) fn current_precedence(&self) -> Precedence {
-        self.token_precedence(self.peek())
+    pub(super) fn current_precedence(&mut self) -> Precedence {
+        let kind = self.peek().kind;
+        self.token_precedence_kind(kind)
     }
 
-    /// Get precedence for a token
-    pub(super) fn token_precedence(&self, token: &Token) -> Precedence {
-        match token.kind {
+    /// Get precedence for a token kind
+    pub(super) fn token_precedence_kind(&self, kind: TokenKind) -> Precedence {
+        match kind {
             TokenKind::PipePipe => Precedence::Or,
             TokenKind::AmpAmp => Precedence::And,
             TokenKind::EqualEqual | TokenKind::BangEqual => Precedence::Equality,

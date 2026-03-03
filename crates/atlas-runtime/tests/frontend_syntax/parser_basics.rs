@@ -2,6 +2,15 @@
 
 use super::*;
 
+fn parse_source_with_comments(
+    source: &str,
+) -> (Program, Vec<atlas_runtime::diagnostic::Diagnostic>) {
+    let mut lexer = Lexer::new(source.to_string());
+    let (tokens, _) = lexer.tokenize_with_comments();
+    let mut parser = Parser::new(tokens);
+    parser.parse()
+}
+
 // ============================================================================
 // Literal Expressions - Snapshot Testing
 // ============================================================================
@@ -199,6 +208,34 @@ fn test_parse_nested_blocks() {
     let (program, diagnostics) = parse_source("if true { if false { let x = 1; } }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
+}
+
+// ============================================================================
+// Comment Handling
+// ============================================================================
+
+#[test]
+fn test_parse_comments_inside_expressions() {
+    let source = "let x = 1 /* add two */ + 2; let y = x // keep\n + 3;";
+    let (_program, diagnostics) = parse_source_with_comments(source);
+    assert_eq!(diagnostics.len(), 0, "Expected no errors for: {}", source);
+}
+
+#[test]
+fn test_parse_comments_inside_blocks() {
+    let source = r#"
+        fn add(x: number, y: number) -> number {
+            let sum = x + y; // inline comment
+            /// doc comment inside block should be ignored
+            return sum;
+        }
+    "#;
+    let (_program, diagnostics) = parse_source_with_comments(source);
+    assert_eq!(
+        diagnostics.len(),
+        0,
+        "Expected no errors for block comments"
+    );
 }
 
 // ============================================================================
