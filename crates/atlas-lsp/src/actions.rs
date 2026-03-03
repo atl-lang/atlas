@@ -232,7 +232,7 @@ fn fix_unterminated_string(
     ))
 }
 
-/// Fix immutable assignment by changing let to var
+/// Fix immutable assignment by changing let to let mut
 fn fix_immutable_assignment(
     uri: &Url,
     text: &str,
@@ -245,24 +245,24 @@ fn fix_immutable_assignment(
     let lines: Vec<&str> = text.lines().collect();
 
     for (line_num, line) in lines.iter().enumerate() {
-        // Look for "let <identifier>"
+        // Look for "let <identifier>" (but not "let mut <identifier>")
         if let Some(pos) = line.find(&format!("let {}", identifier)) {
-            let start = Position {
+            // Insert "mut " after "let "
+            let insert_pos = Position {
                 line: line_num as u32,
-                character: pos as u32,
-            };
-            let end = Position {
-                line: line_num as u32,
-                character: (pos + 3) as u32, // "let" is 3 chars
+                character: (pos + 4) as u32, // after "let "
             };
 
             let edit = TextEdit {
-                range: Range { start, end },
-                new_text: "var".to_string(),
+                range: Range {
+                    start: insert_pos,
+                    end: insert_pos,
+                },
+                new_text: "mut ".to_string(),
             };
 
             return Some(create_code_action(
-                format!("Change '{}' to mutable (var)", identifier),
+                format!("Change '{}' to mutable (let mut)", identifier),
                 uri.clone(),
                 vec![edit],
                 action_kinds::quick_fix(),
@@ -292,10 +292,12 @@ fn fix_unused_variable(
 
     for (line_num, line) in lines.iter().enumerate() {
         // Look for variable declaration patterns
-        for pattern in &[format!("let {}", identifier), format!("var {}", identifier)] {
+        for (pattern, offset) in &[
+            (format!("let mut {}", identifier), 8), // "let mut " is 8 chars
+            (format!("let {}", identifier), 4),     // "let " is 4 chars
+        ] {
             if let Some(let_pos) = line.find(pattern.as_str()) {
-                // Both "let " and "var " are 4 chars
-                let var_start = let_pos + 4;
+                let var_start = let_pos + offset;
 
                 let start = Position {
                     line: line_num as u32,
@@ -338,9 +340,7 @@ fn remove_unused_variable(
     for (line_num, line) in lines.iter().enumerate() {
         // Check if this line is just a variable declaration containing the identifier
         let trimmed = line.trim();
-        if (trimmed.starts_with("let ") || trimmed.starts_with("var "))
-            && trimmed.contains(&identifier)
-        {
+        if trimmed.starts_with("let ") && trimmed.contains(&identifier) {
             // Remove the entire line
             let start = Position {
                 line: line_num as u32,
@@ -827,7 +827,7 @@ fn is_valid_expression(text: &str) -> bool {
     }
 
     // Must not contain statement keywords at the start
-    let statement_starters = ["let ", "var ", "if ", "while ", "for ", "return ", "fn "];
+    let statement_starters = ["let ", "if ", "while ", "for ", "return ", "fn "];
     for starter in &statement_starters {
         if trimmed.starts_with(starter) {
             return false;

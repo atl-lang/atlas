@@ -127,10 +127,10 @@ pub fn keyword_completions() -> Vec<CompletionItem> {
             ..Default::default()
         },
         CompletionItem {
-            label: "var".to_string(),
+            label: "let mut".to_string(),
             kind: Some(CompletionItemKind::KEYWORD),
             detail: Some("Mutable variable declaration".to_string()),
-            insert_text: Some("var ${1:name}: ${2:type} = ${3:value};".to_string()),
+            insert_text: Some("let mut ${1:name}: ${2:type} = ${3:value};".to_string()),
             insert_text_format: Some(InsertTextFormat::SNIPPET),
             ..Default::default()
         },

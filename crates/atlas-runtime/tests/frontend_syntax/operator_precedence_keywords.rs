@@ -81,8 +81,8 @@ fn assert_error_mentions(diagnostics: &[atlas_runtime::diagnostic::Diagnostic], 
 #[rstest]
 #[case("let import = 1;", &["variable", "identifier"])]
 #[case("let match = 1;", &["variable", "identifier"])]
-#[case("var import = 1;", &["variable", "identifier"])]
-#[case("var match = 1;", &["variable", "identifier"])]
+#[case("let mut import = 1;", &["variable", "identifier"])]
+#[case("let mut match = 1;", &["variable", "identifier"])]
 fn test_future_keywords_as_variables(#[case] source: &str, #[case] expected_mentions: &[&str]) {
     let (_program, diagnostics) = parse_source(source);
     assert_parse_error_present(&diagnostics);
@@ -115,7 +115,7 @@ fn test_future_keywords_as_parameters(#[case] source: &str, #[case] expected_men
 // ============================================================================
 
 #[rstest]
-#[case("var let = 1;")]
+#[case("let mut let = 1;")]
 #[case("let fn = 1;")]
 #[case("let if = 1;")]
 #[case("let while = 1;")]

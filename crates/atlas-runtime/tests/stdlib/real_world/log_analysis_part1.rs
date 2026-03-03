@@ -106,7 +106,7 @@ fn test_log_extract_error_messages() {
         let lines: string[] = split(logs, "\n");
         let line: string = lines[0];
         let parts: string[] = split(line, "ERROR: ");
-        var msg: string = "";
+        let mut msg: string = "";
         if (len(parts) >= 2.0) {{
             msg = parts[1];
         }}

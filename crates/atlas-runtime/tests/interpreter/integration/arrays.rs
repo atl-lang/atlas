@@ -161,8 +161,8 @@ fn test_array_aliasing_different_arrays_not_equal() {
 #[test]
 fn test_array_aliasing_reassignment_breaks_link() {
     let code = r#"
-        var arr1: number[] = [1, 2, 3];
-        var arr2: number[] = arr1;
+        let mut arr1: number[] = [1, 2, 3];
+        let mut arr2: number[] = arr1;
         arr2 = [10, 20, 30];
         arr2[0] = 99;
         arr1[0]
@@ -174,8 +174,8 @@ fn test_array_aliasing_reassignment_breaks_link() {
 fn test_array_sum_with_function() {
     let code = r#"
         fn sum_array(arr: number[]) -> number {
-            var total: number = 0;
-            var i: number = 0;
+            let mut total: number = 0;
+            let mut i: number = 0;
             while (i < len(arr)) {
                 total = total + arr[i];
                 i = i + 1;

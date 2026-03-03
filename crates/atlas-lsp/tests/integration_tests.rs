@@ -133,7 +133,7 @@ async fn test_multiple_documents_simultaneously() {
                 uri,
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: format!("var x{}: number = {};", i, i * 10),
+                text: format!("let mut x{}: number = {};", i, i * 10),
             },
         };
         server.did_open(open_params).await;
@@ -274,7 +274,7 @@ async fn test_unicode_content() {
             uri: uri.clone(),
             language_id: "atlas".to_string(),
             version: 1,
-            text: r#"var greeting: string = "Hello 世界 🌍";"#.to_string(),
+            text: r#"let mut greeting: string = "Hello 世界 🌍";"#.to_string(),
         },
     };
     server.did_open(open_params).await;

@@ -183,7 +183,7 @@ fn test_hover_on_keyword_let() {
 
     assert!(hover.is_some());
     let contents = format!("{:?}", hover.unwrap().contents);
-    assert!(contents.contains("immutable"));
+    assert!(contents.contains("variable binding"));
 }
 
 #[test]

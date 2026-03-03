@@ -31,7 +31,7 @@ fn helper() -> number {
 }
 
 fn main() -> void {
-    var x: number = helper();
+    let mut x: number = helper();
     print(x);
 }
 "#;
@@ -106,7 +106,7 @@ fn caller2() -> number {
 }
 
 fn caller3() -> number {
-    var x: number = utility();
+    let mut x: number = utility();
     return x;
 }
 "#;
@@ -226,7 +226,7 @@ fn process(data: number) -> number {
 }
 
 fn main() -> void {
-    var result: number = process(42);
+    let mut result: number = process(42);
     print(result);
 }
 "#;
@@ -402,8 +402,8 @@ fn helper2() -> number {
 }
 
 fn main() -> void {
-    var a: number = helper1();
-    var b: number = helper2();
+    let mut a: number = helper1();
+    let mut b: number = helper2();
 }
 "#;
 
@@ -646,7 +646,7 @@ fn customFunc() -> number {
 }
 
 fn mixed() -> void {
-    var x: number = customFunc();
+    let mut x: number = customFunc();
     print(x);
 }
 "#;

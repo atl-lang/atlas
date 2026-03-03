@@ -1,6 +1,6 @@
-// Tests that var variables can be reassigned
+// Tests that let mut variables can be reassigned
 fn test() {
-    var x: number = 1;
+    let mut x: number = 1;
     x = 2;
     print(x);
 }

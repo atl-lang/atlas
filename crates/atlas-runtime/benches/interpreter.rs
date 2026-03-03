@@ -37,7 +37,8 @@ fn parse_only(source: &str) {
 
 fn bench_interp_arithmetic_loop(c: &mut Criterion) {
     c.bench_function("interp_arithmetic_loop_10k", |b| {
-        let code = "var sum = 0; var i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;";
+        let code =
+            "let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
@@ -51,7 +52,8 @@ fn bench_interp_fibonacci(c: &mut Criterion) {
 
 fn bench_interp_string_concat(c: &mut Criterion) {
     c.bench_function("interp_string_concat_500", |b| {
-        let code = r#"var s = ""; var i = 0; while (i < 500) { s = s + "x"; i = i + 1; } len(s);"#;
+        let code =
+            r#"let mut s = ""; let mut i = 0; while (i < 500) { s = s + "x"; i = i + 1; } len(s);"#;
         b.iter(|| interp_run(black_box(code)));
     });
 }
@@ -60,7 +62,7 @@ fn bench_interp_collection_ops(c: &mut Criterion) {
     c.bench_function("interp_array_push_pop_1k", |b| {
         let code = r#"
             var arr: number[] = [];
-            var i = 0;
+            let mut i = 0;
             while (i < 1000) {
                 arr = push(arr, i);
                 i = i + 1;
@@ -73,14 +75,14 @@ fn bench_interp_collection_ops(c: &mut Criterion) {
 
 fn bench_interp_function_calls(c: &mut Criterion) {
     c.bench_function("interp_function_calls_10k", |b| {
-        let code = "fn inc(x: number) -> number { return x + 1; } var r = 0; var i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;";
+        let code = "fn inc(x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
 
 fn bench_interp_nested_loops(c: &mut Criterion) {
     c.bench_function("interp_nested_loops_100x100", |b| {
-        let code = "var count = 0; var i = 0; while (i < 100) { var j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;";
+        let code = "let mut count = 0; let mut i = 0; while (i < 100) { let mut j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;";
         b.iter(|| interp_run(black_box(code)));
     });
 }
@@ -94,19 +96,19 @@ fn bench_interp_variable_lookup(c: &mut Criterion) {
 
     // Single variable access in tight loop
     group.bench_function("single_var_10k", |b| {
-        let code = "let x = 42; var sum = 0; var i = 0; while (i < 10000) { sum = sum + x; i = i + 1; } sum;";
+        let code = "let x = 42; let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + x; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Multiple variable accesses per iteration
     group.bench_function("multi_var_10k", |b| {
-        let code = "let a = 1; let b = 2; let c = 3; let d = 4; var sum = 0; var i = 0; while (i < 10000) { sum = sum + a + b + c + d; i = i + 1; } sum;";
+        let code = "let a = 1; let b = 2; let c = 3; let d = 4; let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + a + b + c + d; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Global vs local variable access
     group.bench_function("global_access_10k", |b| {
-        let code = "var global = 0; fn inner() -> number { global = global + 1; return global; } var i = 0; while (i < 10000) { inner(); i = i + 1; } global;";
+        let code = "let mut global = 0; fn inner() -> number { global = global + 1; return global; } let mut i = 0; while (i < 10000) { inner(); i = i + 1; } global;";
         b.iter(|| interp_run(black_box(code)));
     });
 
@@ -122,15 +124,15 @@ fn bench_interp_scope_depth(c: &mut Criterion) {
 
     // Shallow scope (1 level)
     group.bench_function("depth_1", |b| {
-        let code = "var sum = 0; var i = 0; while (i < 1000) { let x = i; sum = sum + x; i = i + 1; } sum;";
+        let code = "let mut sum = 0; let mut i = 0; while (i < 1000) { let x = i; sum = sum + x; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Medium scope (3 levels)
     group.bench_function("depth_3", |b| {
         let code = r#"
-            var sum = 0;
-            var i = 0;
+            let mut sum = 0;
+            let mut i = 0;
             while (i < 1000) {
                 let a = i;
                 if (true) {
@@ -159,8 +161,8 @@ fn bench_interp_scope_depth(c: &mut Criterion) {
                 }
                 return level2(x) + 1;
             }
-            var sum = 0;
-            var i = 0;
+            let mut sum = 0;
+            let mut i = 0;
             while (i < 1000) {
                 sum = sum + level1(i);
                 i = i + 1;
@@ -219,25 +221,25 @@ fn bench_interp_call_overhead(c: &mut Criterion) {
     // Empty function calls
     group.bench_function("empty_fn_10k", |b| {
         let code =
-            "fn noop() -> number { return 0; } var i = 0; while (i < 10000) { noop(); i = i + 1; }";
+            "fn noop() -> number { return 0; } let mut i = 0; while (i < 10000) { noop(); i = i + 1; }";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Function with 1 parameter
     group.bench_function("1_param_fn_10k", |b| {
-        let code = "fn id(x: number) -> number { return x; } var i = 0; while (i < 10000) { id(i); i = i + 1; }";
+        let code = "fn id(x: number) -> number { return x; } let mut i = 0; while (i < 10000) { id(i); i = i + 1; }";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Function with 3 parameters
     group.bench_function("3_param_fn_10k", |b| {
-        let code = "fn add3(a: number, b: number, c: number) -> number { return a + b + c; } var i = 0; while (i < 10000) { add3(i, i, i); i = i + 1; }";
+        let code = "fn add3(a: number, b: number, c: number) -> number { return a + b + c; } let mut i = 0; while (i < 10000) { add3(i, i, i); i = i + 1; }";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Nested function calls
     group.bench_function("nested_calls_5k", |b| {
-        let code = "fn f(x: number) -> number { return x + 1; } fn g(x: number) -> number { return f(x) + 1; } fn h(x: number) -> number { return g(x) + 1; } var i = 0; var sum = 0; while (i < 5000) { sum = sum + h(i); i = i + 1; } sum;";
+        let code = "fn f(x: number) -> number { return x + 1; } fn g(x: number) -> number { return f(x) + 1; } fn h(x: number) -> number { return g(x) + 1; } let mut i = 0; let mut sum = 0; while (i < 5000) { sum = sum + h(i); i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
@@ -259,13 +261,13 @@ fn bench_interp_arrays(c: &mut Criterion) {
 
     // Array indexing
     group.bench_function("index_access_10k", |b| {
-        let code = "let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; var sum = 0; var i = 0; while (i < 10000) { sum = sum + arr[i % 10]; i = i + 1; } sum;";
+        let code = "let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + arr[i % 10]; i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
     // Array length
     group.bench_function("len_10k", |b| {
-        let code = "let arr = [1, 2, 3, 4, 5]; var sum = 0; var i = 0; while (i < 10000) { sum = sum + len(arr); i = i + 1; } sum;";
+        let code = "let arr = [1, 2, 3, 4, 5]; let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + len(arr); i = i + 1; } sum;";
         b.iter(|| interp_run(black_box(code)));
     });
 
@@ -307,7 +309,7 @@ fn bench_interp_throughput(c: &mut Criterion) {
             iterations,
             |b, &n| {
                 let code = format!(
-                    "var sum = 0; var i = 0; while (i < {}) {{ sum = sum + i; i = i + 1; }} sum;",
+                    "let mut sum = 0; let mut i = 0; while (i < {}) {{ sum = sum + i; i = i + 1; }} sum;",
                     n
                 );
                 b.iter(|| interp_run(black_box(&code)));
@@ -327,19 +329,19 @@ fn bench_interp_builtins(c: &mut Criterion) {
 
     // Print (to null writer) - tests builtin dispatch
     group.bench_function("builtin_len_10k", |b| {
-        let code = r#"let s = "hello world"; var sum = 0; var i = 0; while (i < 10000) { sum = sum + len(s); i = i + 1; } sum;"#;
+        let code = r#"let s = "hello world"; let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + len(s); i = i + 1; } sum;"#;
         b.iter(|| interp_run(black_box(code)));
     });
 
     // String operations
     group.bench_function("string_trim_1k", |b| {
-        let code = r#"var i = 0; while (i < 1000) { trim("  hello  "); i = i + 1; }"#;
+        let code = r#"let mut i = 0; while (i < 1000) { trim("  hello  "); i = i + 1; }"#;
         b.iter(|| interp_run(black_box(code)));
     });
 
     // String upper/lower
     group.bench_function("string_case_1k", |b| {
-        let code = r#"var i = 0; while (i < 1000) { toUpperCase("hello"); toLowerCase("WORLD"); i = i + 1; }"#;
+        let code = r#"let mut i = 0; while (i < 1000) { toUpperCase("hello"); toLowerCase("WORLD"); i = i + 1; }"#;
         b.iter(|| interp_run(black_box(code)));
     });
 

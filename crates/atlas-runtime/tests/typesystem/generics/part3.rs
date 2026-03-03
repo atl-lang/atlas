@@ -189,7 +189,7 @@ fn test_for_in_number_suggests_range() {
 fn test_compound_assign_wrong_type() {
     let diags = errors(
         r#"
-        var x: string = "hello";
+        let mut x: string = "hello";
         x += 1;
     "#,
     );
@@ -319,7 +319,7 @@ fn test_valid_if_bool() {
 fn test_valid_var_mutation() {
     let diags = errors(
         r#"
-        var x = 5;
+        let mut x = 5;
         x = 10;
     "#,
     );

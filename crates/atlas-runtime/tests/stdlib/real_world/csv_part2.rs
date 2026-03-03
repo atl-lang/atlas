@@ -351,7 +351,7 @@ fn test_csv_conditional_transformation() {
         fn addGrade(row: string) -> string {{
             let fields: string[] = split(row, ",");
             let score: number = unwrap(parseFloat(fields[1]));
-            var grade: string = "F";
+            let mut grade: string = "F";
             if (score >= 90.0) {{
                 grade = "A";
             }} else {{

@@ -60,7 +60,7 @@ fn test_extract_variable_symbol() {
 
 #[test]
 fn test_extract_mutable_variable_symbol() {
-    let source = "var y = 42;";
+    let source = "let mut y = 42;";
     let ast = parse_source(source);
     let symbols = extract_document_symbols(source, &ast);
 

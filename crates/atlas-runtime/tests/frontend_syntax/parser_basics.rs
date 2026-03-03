@@ -127,7 +127,7 @@ fn test_parse_function_calls(#[case] source: &str, #[case] snapshot_name: &str) 
 #[rstest]
 #[case::let_decl("let x = 42;", "let_declaration")]
 #[case::let_mut_decl("let mut x = 42;", "let_mut_declaration")]
-#[case::var_decl("var x = 42;", "var_declaration")]
+#[case::var_decl("let mut x = 42;", "var_declaration")]
 #[case::with_type("let x: number = 42;", "var_declaration_with_type")]
 #[case::let_mut_with_type("let mut x: number = 42;", "let_mut_declaration_with_type")]
 fn test_parse_var_declarations(#[case] source: &str, #[case] snapshot_name: &str) {

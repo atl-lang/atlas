@@ -1,12 +1,12 @@
-var sum: number = 0;
-var i: number = 1;
+let mut sum: number = 0;
+let mut i: number = 1;
 while (i <= 5) {
     sum = sum + i;
     i = i + 1;
 }
 print(sum);
 
-var countdown: number = 5;
+let mut countdown: number = 5;
 while (countdown > 0) {
     print(countdown);
     countdown = countdown - 1;

@@ -748,7 +748,7 @@ fn test_module_executes_once() {
         temp_dir.path(),
         "counter",
         r#"
-export var count: number = 0;
+export let mut count: number = 0;
 count = count + 1;
 "#,
     );
@@ -787,7 +787,7 @@ fn test_shared_module_executes_once() {
         temp_dir.path(),
         "shared",
         r#"
-export var counter: number = 0;
+export let mut counter: number = 0;
 counter = counter + 1;
 "#,
     );
@@ -1412,7 +1412,7 @@ fn test_vm_module_executes_once() {
         temp_dir.path(),
         "counter",
         r#"
-export var count: number = 0;
+export let mut count: number = 0;
 count = count + 1;
 "#,
     );

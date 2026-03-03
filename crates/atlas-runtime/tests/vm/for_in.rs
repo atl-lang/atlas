@@ -12,7 +12,7 @@ use pretty_assertions::assert_eq;
 fn test_for_in_basic_execution() {
     let source = r#"
         let arr: array = [1, 2, 3];
-        var sum: number = 0;
+        let mut sum: number = 0;
         for item in arr {
             sum = sum + item;
         }
@@ -30,7 +30,7 @@ fn test_for_in_basic_execution() {
 fn test_for_in_empty_array() {
     let source = r#"
         let arr: array = [];
-        var count: number = 0;
+        let mut count: number = 0;
         for item in arr {
             count = count + 1;
         }
@@ -48,7 +48,7 @@ fn test_for_in_empty_array() {
 fn test_for_in_with_strings() {
     let source = r#"
         let words: array = ["hello", "world"];
-        var result: string = "";
+        let mut result: string = "";
         for word in words {
             result = result + word + " ";
         }
@@ -69,7 +69,7 @@ fn test_for_in_with_strings() {
 fn test_for_in_nested() {
     let source = r#"
         let matrix: array = [[1, 2], [3, 4]];
-        var sum: number = 0;
+        let mut sum: number = 0;
         for row in matrix {
             for item in row {
                 sum = sum + item;
@@ -89,7 +89,7 @@ fn test_for_in_nested() {
 fn test_for_in_modifies_external_variable() {
     let source = r#"
         let arr: array = [10, 20, 30];
-        var total: number = 0;
+        let mut total: number = 0;
         for x in arr {
             total = total + x;
         }
@@ -106,7 +106,7 @@ fn test_for_in_modifies_external_variable() {
 fn test_for_in_with_break() {
     let source = r#"
         let arr: array = [1, 2, 3, 4, 5];
-        var sum: number = 0;
+        let mut sum: number = 0;
         for item in arr {
             if (item > 3) {
                 break;
@@ -130,7 +130,7 @@ fn test_for_in_with_break() {
 fn test_for_in_with_continue() {
     let source = r#"
         let arr: array = [1, 2, 3, 4, 5];
-        var sum: number = 0;
+        let mut sum: number = 0;
         for item in arr {
             if (item == 3) {
                 continue;
@@ -177,7 +177,7 @@ fn test_for_in_variable_shadowing() {
 fn test_for_in_in_function() {
     let source = r#"
         fn sum_array(arr: array) -> number {
-            var total: number = 0;
+            let mut total: number = 0;
             for item in arr {
                 total = total + item;
             }
@@ -283,7 +283,7 @@ fn test_parity_result_or_else_invalid_callback() {
 fn test_forin_vm_sum_array() {
     assert_parity(
         r#"
-var sum = 0;
+let mut sum = 0;
 let arr = [1, 2, 3, 4, 5];
 for x in arr {
     sum = sum + x;
@@ -297,7 +297,7 @@ sum;
 fn test_forin_vm_empty_array() {
     assert_parity(
         r#"
-var count = 0;
+let mut count = 0;
 let arr: number[] = [];
 for x in arr {
     count = count + 1;
@@ -311,7 +311,7 @@ count;
 fn test_forin_vm_single_element() {
     assert_parity(
         r#"
-var result = 0;
+let mut result = 0;
 let arr = [42];
 for x in arr {
     result = x;
@@ -325,7 +325,7 @@ result;
 fn test_forin_vm_string_array() {
     assert_parity(
         r#"
-var count = 0;
+let mut count = 0;
 let words = ["hello", "world", "atlas"];
 for w in words {
     count = count + 1;
@@ -339,7 +339,7 @@ count;
 fn test_forin_vm_nested_loop() {
     assert_parity(
         r#"
-var total = 0;
+let mut total = 0;
 let outer = [1, 2, 3];
 let inner = [10, 20];
 for a in outer {
@@ -356,7 +356,7 @@ total;
 fn test_forin_vm_break() {
     assert_parity(
         r#"
-var found = 0;
+let mut found = 0;
 let arr = [1, 2, 3, 4, 5];
 for x in arr {
     if (x == 3) {
@@ -373,7 +373,7 @@ found;
 fn test_forin_vm_last_value() {
     assert_parity(
         r#"
-var last = 0;
+let mut last = 0;
 let arr = [10, 20, 30];
 for x in arr {
     last = x;
@@ -390,69 +390,69 @@ last;
 
 #[test]
 fn test_vm_array_push_cow_writeback() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; arr.push(4); arr[3];"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; arr.push(4); arr[3];"#);
     assert_eq!(result, Ok("Number(4)".to_string()));
 }
 
 #[test]
 fn test_vm_array_push_len_increases() {
-    let result = run_vm(r#"var arr: array = [1, 2]; arr.push(9); len(arr);"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2]; arr.push(9); len(arr);"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
 #[test]
 fn test_vm_array_pop_returns_element() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; let x = arr.pop(); x;"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; let x = arr.pop(); x;"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
 #[test]
 fn test_vm_array_pop_shrinks_receiver() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; arr.pop(); len(arr);"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; arr.pop(); len(arr);"#);
     assert_eq!(result, Ok("Number(2)".to_string()));
 }
 
 #[test]
 fn test_vm_array_sort_non_mutating() {
     // sort() should not update the receiver
-    let result = run_vm(r#"var arr: array = [3, 1, 2]; let s = arr.sort(); arr[0];"#);
+    let result = run_vm(r#"let mut arr: array = [3, 1, 2]; let s = arr.sort(); arr[0];"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
 #[test]
 fn test_vm_array_sort_result_sorted() {
-    let result = run_vm(r#"var arr: array = [3, 1, 2]; let s = arr.sort(); s[0];"#);
+    let result = run_vm(r#"let mut arr: array = [3, 1, 2]; let s = arr.sort(); s[0];"#);
     assert_eq!(result, Ok("Number(1)".to_string()));
 }
 
 #[test]
 fn test_vm_array_push_parity() {
-    let code = r#"var arr: array = [10, 20]; arr.push(30); arr[2];"#;
+    let code = r#"let mut arr: array = [10, 20]; arr.push(30); arr[2];"#;
     let vm_result = run_vm(code);
     assert_eq!(vm_result, Ok("Number(30)".to_string()));
 }
 
 #[test]
 fn test_vm_free_fn_pop_cow_writeback() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; let x = pop(arr); x;"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; let x = pop(arr); x;"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
 #[test]
 fn test_vm_free_fn_pop_receiver_updated() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; pop(arr); len(arr);"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; pop(arr); len(arr);"#);
     assert_eq!(result, Ok("Number(2)".to_string()));
 }
 
 #[test]
 fn test_vm_free_fn_shift_cow_writeback() {
-    let result = run_vm(r#"var arr: array = [10, 20, 30]; let x = shift(arr); x;"#);
+    let result = run_vm(r#"let mut arr: array = [10, 20, 30]; let x = shift(arr); x;"#);
     assert_eq!(result, Ok("Number(10)".to_string()));
 }
 
 #[test]
 fn test_vm_free_fn_reverse_cow_writeback() {
-    let result = run_vm(r#"var arr: array = [1, 2, 3]; reverse(arr); arr[0];"#);
+    let result = run_vm(r#"let mut arr: array = [1, 2, 3]; reverse(arr); arr[0];"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
@@ -478,7 +478,8 @@ fn test_vm_value_semantics_regression_copy_mutation_isolated() {
 /// Regression: push on assigned copy does not grow the source.
 #[test]
 fn test_vm_value_semantics_regression_push_copy_isolated() {
-    let result = run_vm(r#"var a: array = [1, 2, 3]; var b: array = a; b.push(4); len(a);"#);
+    let result =
+        run_vm(r#"let mut a: array = [1, 2, 3]; let mut b: array = a; b.push(4); len(a);"#);
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
 
@@ -1052,7 +1053,7 @@ fn test_parity_block03_scenario_b_vm() {
             fn greater_than(self: number, other: number) -> bool { return self > other; }
         }
         let x: number = 10;
-        var r: string = "no";
+        let mut r: string = "no";
         if (x.greater_than(5)) { r = "yes"; }
         r
         "#,
@@ -1141,8 +1142,8 @@ fn test_parity_block03_scenario_g_vm() {
         trait Counter { fn count_to(self: Counter, n: number) -> number; }
         impl Counter for number {
             fn count_to(self: number, n: number) -> number {
-                var total: number = 0;
-                var i: number = self;
+                let mut total: number = 0;
+                let mut i: number = self;
                 while (i <= n) { total = total + i; i = i + 1; }
                 return total;
             }

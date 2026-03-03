@@ -33,7 +33,7 @@ fn test_parity_block03_scenario_b_interpreter() {
             fn greater_than(self: number, other: number) -> bool { return self > other; }
         }
         let x: number = 10;
-        var r: string = "no";
+        let mut r: string = "no";
         if (x.greater_than(5)) { r = "yes"; }
         r
         "#,
@@ -137,8 +137,8 @@ fn test_parity_block03_scenario_g_interpreter() {
         trait Counter { fn count_to(self: Counter, n: number) -> number; }
         impl Counter for number {
             fn count_to(self: number, n: number) -> number {
-                var total: number = 0;
-                var i: number = self;
+                let mut total: number = 0;
+                let mut i: number = self;
                 while (i <= n) { total = total + i; i = i + 1; }
                 return total;
             }

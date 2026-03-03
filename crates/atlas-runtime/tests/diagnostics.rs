@@ -615,56 +615,8 @@ fn test_immutable_assignment_has_related_span() {
     );
 }
 
-#[test]
-fn test_var_keyword_emits_deprecation_warning() {
-    let source = "var x = 10;";
-
-    let (ast, parse_diags) = parse(source);
-    assert!(
-        parse_diags.is_empty(),
-        "Should parse without errors: {:?}",
-        parse_diags
-    );
-
-    let (mut symbol_table, bind_diags) = bind_program(&ast);
-    assert!(
-        bind_diags.is_empty(),
-        "Should bind without errors: {:?}",
-        bind_diags
-    );
-
-    let type_diags = typecheck_program(&ast, &mut symbol_table);
-
-    // Find the AT2014 deprecation warning
-    let deprecation_warnings: Vec<_> = type_diags.iter().filter(|d| d.code == "AT2014").collect();
-
-    assert_eq!(
-        deprecation_warnings.len(),
-        1,
-        "Should have exactly one AT2014 deprecation warning"
-    );
-
-    let warning = deprecation_warnings[0];
-    assert!(
-        warning.is_warning(),
-        "AT2014 should be a warning, not an error"
-    );
-    assert!(
-        warning.message.contains("deprecated"),
-        "Warning should mention 'deprecated': {}",
-        warning.message
-    );
-    assert!(
-        warning.message.contains("let mut"),
-        "Warning should suggest 'let mut': {}",
-        warning.message
-    );
-    assert!(
-        warning.help.as_ref().is_some_and(|h| h.contains("let mut")),
-        "Help should mention 'let mut': {:?}",
-        warning.help
-    );
-}
+// Note: test_var_keyword_emits_deprecation_warning was removed because
+// the var keyword has been removed entirely (D-001)
 
 #[test]
 fn test_let_mut_does_not_emit_deprecation_warning() {

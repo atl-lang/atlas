@@ -184,7 +184,7 @@ arr[1];
 fn test_run_if_statement() {
     let source = r#"
 if (true) {
-    42;
+    print(42);
 }
 "#;
     let (_dir, path) = create_test_file("test.atl", source);
@@ -200,8 +200,8 @@ if (true) {
 #[test]
 fn test_run_while_loop() {
     let source = r#"
-var i: number = 0;
-var sum: number = 0;
+let mut i: number = 0;
+let mut sum: number = 0;
 while (i < 5) {
     sum = sum + i;
     i = i + 1;

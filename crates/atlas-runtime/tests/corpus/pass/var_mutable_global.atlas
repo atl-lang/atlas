@@ -1,4 +1,4 @@
-// Tests that top-level var can be reassigned
-var x: number = 1;
+// Tests that top-level let mut can be reassigned
+let mut x: number = 1;
 x = 2;
 print(x);

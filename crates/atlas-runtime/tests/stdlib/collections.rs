@@ -221,7 +221,7 @@ fn test_hashmap_foreach_executes_callback() {
     // Verify callback executes by counting iterations
     let result = eval(
         r#"
-        var count: number = 0;
+        let mut count: number = 0;
         fn callback(_v: number, _k: string) -> void {
             count = count + 1;
         }
@@ -409,7 +409,7 @@ fn test_hashmap_large_map() {
             return v < 25;
         }
         let hmap = hashMapNew();
-        var i: number = 0;
+        let mut i: number = 0;
         while (i < 50) {
             hashMapPut(hmap, toString(i), i);
             i = i + 1;
@@ -492,7 +492,7 @@ fn test_hashset_foreach_returns_null() {
 fn test_hashset_foreach_executes_callback() {
     let result = eval(
         r#"
-        var count: number = 0;
+        let mut count: number = 0;
         fn callback(_elem: number) -> void {
             count = count + 1;
         }
@@ -641,7 +641,7 @@ fn test_hashset_large_set() {
             return elem % 3 == 0;
         }
         let hset = hashSetNew();
-        var i: number = 0;
+        let mut i: number = 0;
         while (i < 30) {
             hashSetAdd(hset, i);
             i = i + 1;
@@ -774,7 +774,7 @@ fn test_integration_complex_transformation() {
         fn greaterOrEqual4(v: number, _k: string) -> bool {
             return v >= 4;
         }
-        var sum: number = 0;
+        let mut sum: number = 0;
         fn addToSum(v: number) -> void {
             sum = sum + v;
         }
@@ -817,7 +817,7 @@ fn test_integration_hashmap_keys_to_hashset() {
 fn test_parity_hashmap_foreach() {
     let result = eval(
         r#"
-        var sum: number = 0;
+        let mut sum: number = 0;
         fn addToSum(v: number, _k: string) -> void {
             sum = sum + v;
         }
@@ -868,7 +868,7 @@ fn test_parity_hashmap_filter() {
 fn test_parity_hashset_foreach() {
     let result = eval(
         r#"
-        var sum: number = 0;
+        let mut sum: number = 0;
         fn addToSum(elem: number) -> void {
             sum = sum + elem;
         }

@@ -183,7 +183,7 @@ fn test_single_eval_with_multiple_statements() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     // Variables defined and used in the same eval() work fine
     let result = runtime
-        .eval("var x: number = 1; var y: number = 2; x + y")
+        .eval("let mut x: number = 1; let mut y: number = 2; x + y")
         .unwrap();
     assert!(matches!(result, Value::Number(n) if n == 3.0));
 }
@@ -212,7 +212,7 @@ fn test_function_multiple_calls_single_eval() {
 #[test]
 fn test_global_variable_persistence_vm() {
     let mut runtime = Runtime::new(ExecutionMode::VM);
-    runtime.eval("var x: number = 42;").unwrap();
+    runtime.eval("let mut x: number = 42;").unwrap();
     // Note: VM doesn't persist state yet in this phase
     // This test documents current limitation
 }

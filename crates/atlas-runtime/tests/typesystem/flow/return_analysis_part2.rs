@@ -44,9 +44,9 @@ fn test_nested_loops_with_return() {
     let diagnostics = typecheck_source(
         r#"
         fn test() -> number {
-            var i: number = 0;
+            let mut i: number = 0;
             while (i < 10) {
-                var j: number = 0;
+                let mut j: number = 0;
                 while (j < 10) {
                     j = j + 1;
                 }

@@ -59,6 +59,7 @@ expression: json
                 }
               }
             ],
+            "tail_expr": null,
             "span": {
               "start": 11,
               "end": 37

@@ -17,7 +17,7 @@ fn add(a: number, b: number) -> number {
     return a + b;
 }
 
-var counter: number = 0;
+let mut counter: number = 0;
 
 fn increment() -> number {
     counter = counter + 1;
@@ -104,7 +104,7 @@ async fn test_goto_definition_placeholder() {
 fn add(a: number, b: number) -> number {
     return a + b;
 }
-var result: number = add(1, 2);
+let mut result: number = add(1, 2);
 "#;
 
     let open_params = DidOpenTextDocumentParams {
@@ -146,8 +146,8 @@ async fn test_references_placeholder() {
 fn add(a: number, b: number) -> number {
     return a + b;
 }
-var x: number = add(1, 2);
-var y: number = add(3, 4);
+let mut x: number = add(1, 2);
+let mut y: number = add(3, 4);
 "#;
 
     let open_params = DidOpenTextDocumentParams {

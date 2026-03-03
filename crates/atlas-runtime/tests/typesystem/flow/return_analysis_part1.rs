@@ -346,8 +346,8 @@ fn test_return_after_loop() {
     let diagnostics = typecheck_source(
         r#"
         fn sum(n: number) -> number {
-            var s: number = 0;
-            var i: number = 0;
+            let mut s: number = 0;
+            let mut i: number = 0;
             while (i < n) {
                 s = s + i;
                 i = i + 1;
@@ -364,7 +364,7 @@ fn test_return_in_for_loop_not_sufficient() {
     let diagnostics = typecheck_source(
         r#"
         fn test() -> number {
-            for (var i: number = 0; i < 10; i = i + 1) {
+            for (let mut i: number = 0; i < 10; i = i + 1) {
                 return i;
             }
         }
@@ -378,8 +378,8 @@ fn test_return_after_for_loop() {
     let diagnostics = typecheck_source(
         r#"
         fn sum() -> number {
-            var s: number = 0;
-            for (var i: number = 0; i < 10; i = i + 1) {
+            let mut s: number = 0;
+            for (let mut i: number = 0; i < 10; i = i + 1) {
                 s = s + i;
             }
             return s;

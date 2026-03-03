@@ -225,7 +225,7 @@ fn test_vm_nested_function_calling_outer() {
 #[test]
 fn test_vm_nested_function_void() {
     let source = r#"
-        var result: number = 0;
+        let mut result: number = 0;
 
         fn outer() -> void {
             fn setResult() -> void {

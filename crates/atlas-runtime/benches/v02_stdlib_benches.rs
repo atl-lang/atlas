@@ -37,9 +37,9 @@ fn vm_run(source: &str) {
 
 fn bench_string_len(c: &mut Criterion) {
     let source = r#"
-        var s = "hello, world! this is a test string for benchmarking.";
-        var i = 0;
-        var total = 0;
+        let mut s = "hello, world! this is a test string for benchmarking.";
+        let mut i = 0;
+        let mut total = 0;
         while (i < 5000) {
             total = total + len(s);
             i = i + 1;
@@ -53,10 +53,10 @@ fn bench_string_len(c: &mut Criterion) {
 
 fn bench_string_to_upper(c: &mut Criterion) {
     let source = r#"
-        var s = "hello world";
-        var i = 0;
+        let mut s = "hello world";
+        let mut i = 0;
         while (i < 2000) {
-            var _ = to_upper(s);
+            let mut _ = to_upper(s);
             i = i + 1;
         }
         "done";
@@ -68,10 +68,10 @@ fn bench_string_to_upper(c: &mut Criterion) {
 
 fn bench_string_to_lower(c: &mut Criterion) {
     let source = r#"
-        var s = "HELLO WORLD";
-        var i = 0;
+        let mut s = "HELLO WORLD";
+        let mut i = 0;
         while (i < 2000) {
-            var _ = to_lower(s);
+            let mut _ = to_lower(s);
             i = i + 1;
         }
         "done";
@@ -83,10 +83,10 @@ fn bench_string_to_lower(c: &mut Criterion) {
 
 fn bench_string_trim(c: &mut Criterion) {
     let source = r#"
-        var s = "   hello world   ";
-        var i = 0;
+        let mut s = "   hello world   ";
+        let mut i = 0;
         while (i < 3000) {
-            var _ = trim(s);
+            let mut _ = trim(s);
             i = i + 1;
         }
         "done";
@@ -98,10 +98,10 @@ fn bench_string_trim(c: &mut Criterion) {
 
 fn bench_string_contains(c: &mut Criterion) {
     let source = r#"
-        var haystack = "the quick brown fox jumps over the lazy dog";
-        var needle = "fox";
-        var count = 0;
-        var i = 0;
+        let mut haystack = "the quick brown fox jumps over the lazy dog";
+        let mut needle = "fox";
+        let mut count = 0;
+        let mut i = 0;
         while (i < 3000) {
             if (contains(haystack, needle)) { count = count + 1; }
             i = i + 1;
@@ -115,9 +115,9 @@ fn bench_string_contains(c: &mut Criterion) {
 
 fn bench_string_starts_with(c: &mut Criterion) {
     let source = r#"
-        var s = "hello world";
-        var count = 0;
-        var i = 0;
+        let mut s = "hello world";
+        let mut count = 0;
+        let mut i = 0;
         while (i < 3000) {
             if (starts_with(s, "hello")) { count = count + 1; }
             i = i + 1;
@@ -131,10 +131,10 @@ fn bench_string_starts_with(c: &mut Criterion) {
 
 fn bench_string_split(c: &mut Criterion) {
     let source = r#"
-        var s = "a,b,c,d,e,f,g,h,i,j";
-        var i = 0;
+        let mut s = "a,b,c,d,e,f,g,h,i,j";
+        let mut i = 0;
         while (i < 1000) {
-            var parts = split(s, ",");
+            let mut parts = split(s, ",");
             i = i + 1;
         }
         "done";
@@ -146,10 +146,10 @@ fn bench_string_split(c: &mut Criterion) {
 
 fn bench_string_replace(c: &mut Criterion) {
     let source = r#"
-        var s = "hello world hello world hello";
-        var i = 0;
+        let mut s = "hello world hello world hello";
+        let mut i = 0;
         while (i < 1000) {
-            var _ = replace(s, "hello", "hi");
+            let mut _ = replace(s, "hello", "hi");
             i = i + 1;
         }
         "done";
@@ -163,7 +163,7 @@ fn bench_string_concat_loop(c: &mut Criterion) {
     let mut group = c.benchmark_group("stdlib/string/concat_size");
     for size in [50usize, 100, 200] {
         let src = format!(
-            r#"var s = ""; var i = 0; while (i < {}) {{ s = s + "x"; i = i + 1; }} len(s);"#,
+            r#"let mut s = ""; let mut i = 0; while (i < {}) {{ s = s + "x"; i = i + 1; }} len(s);"#,
             size
         );
         group.throughput(Throughput::Elements(size as u64));
@@ -181,7 +181,7 @@ fn bench_string_concat_loop(c: &mut Criterion) {
 fn bench_array_push(c: &mut Criterion) {
     let source = r#"
         var arr: number[] = [];
-        var i = 0;
+        let mut i = 0;
         while (i < 1000) {
             arr = push(arr, i);
             i = i + 1;
@@ -197,7 +197,7 @@ fn bench_array_pop(c: &mut Criterion) {
     // Build array first, then pop all elements
     let source = r#"
         var arr: number[] = [];
-        var i = 0;
+        let mut i = 0;
         while (i < 500) {
             arr = push(arr, i);
             i = i + 1;
@@ -215,8 +215,8 @@ fn bench_array_pop(c: &mut Criterion) {
 fn bench_array_len(c: &mut Criterion) {
     let source = r#"
         var arr: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        var total = 0;
-        var i = 0;
+        let mut total = 0;
+        let mut i = 0;
         while (i < 5000) {
             total = total + len(arr);
             i = i + 1;
@@ -231,8 +231,8 @@ fn bench_array_len(c: &mut Criterion) {
 fn bench_array_index(c: &mut Criterion) {
     let source = r#"
         var arr: number[] = [10, 20, 30, 40, 50];
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 5000) {
             sum = sum + arr[0] + arr[2] + arr[4];
             i = i + 1;
@@ -248,7 +248,7 @@ fn bench_array_sizes(c: &mut Criterion) {
     let mut group = c.benchmark_group("stdlib/array/push_size");
     for size in [100usize, 500, 1000] {
         let src = format!(
-            r#"var arr: number[] = []; var i = 0; while (i < {}) {{ arr = push(arr, i); i = i + 1; }} len(arr);"#,
+            r#"let mut arr: number[] = []; let mut i = 0; while (i < {}) {{ arr = push(arr, i); i = i + 1; }} len(arr);"#,
             size
         );
         group.throughput(Throughput::Elements(size as u64));
@@ -265,8 +265,8 @@ fn bench_array_sizes(c: &mut Criterion) {
 
 fn bench_math_abs(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 5000) {
             sum = sum + abs(i - 2500);
             i = i + 1;
@@ -280,10 +280,10 @@ fn bench_math_abs(c: &mut Criterion) {
 
 fn bench_math_floor_ceil(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 3000) {
-            var x = i + 0.5;
+            let mut x = i + 0.5;
             sum = sum + floor(x) + ceil(x);
             i = i + 1;
         }
@@ -296,8 +296,8 @@ fn bench_math_floor_ceil(c: &mut Criterion) {
 
 fn bench_math_sqrt(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 1;
+        let mut sum = 0;
+        let mut i = 1;
         while (i <= 2000) {
             sum = sum + sqrt(i);
             i = i + 1;
@@ -311,8 +311,8 @@ fn bench_math_sqrt(c: &mut Criterion) {
 
 fn bench_math_min_max(c: &mut Criterion) {
     let source = r#"
-        var result = 0;
-        var i = 0;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 3000) {
             result = max(min(i, 100), 0);
             i = i + 1;
@@ -330,9 +330,9 @@ fn bench_math_min_max(c: &mut Criterion) {
 
 fn bench_type_to_string(c: &mut Criterion) {
     let source = r#"
-        var i = 0;
+        let mut i = 0;
         while (i < 3000) {
-            var _ = to_string(i);
+            let mut _ = to_string(i);
             i = i + 1;
         }
         "done";
@@ -344,9 +344,9 @@ fn bench_type_to_string(c: &mut Criterion) {
 
 fn bench_type_to_number(c: &mut Criterion) {
     let source = r#"
-        var s = "42";
-        var sum = 0;
-        var i = 0;
+        let mut s = "42";
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 3000) {
             sum = sum + to_number(s);
             i = i + 1;
@@ -360,8 +360,8 @@ fn bench_type_to_number(c: &mut Criterion) {
 
 fn bench_type_type_of(c: &mut Criterion) {
     let source = r#"
-        var count = 0;
-        var i = 0;
+        let mut count = 0;
+        let mut i = 0;
         while (i < 3000) {
             if (type_of(i) == "number") { count = count + 1; }
             i = i + 1;

@@ -46,7 +46,7 @@ fn typing_integration_infers_types(input: &str, expected: &str) {
     case("let check: bool = 1;"),
     case("let x: string = 1;"),
     case("let arr: number[] = [1, \"b\"];"),
-    case("var flag: bool = 2;"),
+    case("let mut flag: bool = 2;"),
     case("fn add(a: number, b: number) -> number { return \"x\"; };"),
     case("match true { 1 => 2 };"),
     case("let mismatch: number = true;"),
@@ -59,7 +59,7 @@ fn typing_integration_infers_types(input: &str, expected: &str) {
     case("let x = [1,2]; x + 1;"),
     case("if (true) { let x: number = \"bad\"; };"),
     case("let s: string = len([1,2]);"),
-    case("var arr = [1,2]; arr[0] = \"x\";"),
+    case("let mut arr = [1,2]; arr[0] = \"x\";"),
     case("let bools: bool[] = [true, 1];")
 )]
 fn typing_integration_reports_errors(input: &str) {

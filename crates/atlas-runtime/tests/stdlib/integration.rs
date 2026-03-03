@@ -457,7 +457,7 @@ fn test_is_valid_json_filter_strings() {
         let valid3: bool = isValidJSON(str3);
         let valid4: bool = isValidJSON(str4);
 
-        var count: number = 0;
+        let mut count: number = 0;
         if (valid1) { count = count + 1; }
         if (valid2) { count = count + 1; }
         if (valid3) { count = count + 1; }
@@ -624,7 +624,7 @@ fn test_deduplication_pipeline() {
         }
 
         let words: string[] = ["apple", "banana", "apple", "cherry", "banana", "date"];
-        var unique: string[] = [];
+        let mut unique: string[] = [];
 
         // Manual dedup (simplified for test)
         if (notInList(unique, words[0])) {

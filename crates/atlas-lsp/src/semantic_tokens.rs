@@ -177,7 +177,6 @@ fn classify_token(
         // Keywords
         TokenKind::Let
         | TokenKind::Mut
-        | TokenKind::Var
         | TokenKind::Fn
         | TokenKind::Type
         | TokenKind::If

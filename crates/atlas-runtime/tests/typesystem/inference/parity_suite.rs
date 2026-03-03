@@ -82,7 +82,7 @@ fn parity_local_bool_not() {
 
 #[test]
 fn parity_local_var_reassignment() {
-    assert_parity_num("var x = 10; x = 20; x;", 20.0);
+    assert_parity_num("let mut x = 10; x = 20; x;", 20.0);
 }
 
 #[test]

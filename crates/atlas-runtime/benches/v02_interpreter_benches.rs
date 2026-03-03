@@ -46,13 +46,13 @@ fn vm_run_unoptimized(source: &str) {
 /// The interpreter uses a scope chain — deeper scopes require more traversals.
 fn bench_variable_lookup_flat(c: &mut Criterion) {
     let source = r#"
-        var a = 1;
-        var b = 2;
-        var c = 3;
-        var d = 4;
-        var e = 5;
-        var result = 0;
-        var i = 0;
+        let mut a = 1;
+        let mut b = 2;
+        let mut c = 3;
+        let mut d = 4;
+        let mut e = 5;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 5000) {
             result = a + b + c + d + e;
             i = i + 1;
@@ -80,14 +80,14 @@ fn bench_variable_lookup_flat(c: &mut Criterion) {
 
 fn bench_variable_lookup_deep_scope(c: &mut Criterion) {
     let source = r#"
-        var outer = 100;
-        var i = 0;
-        var result = 0;
+        let mut outer = 100;
+        let mut i = 0;
+        let mut result = 0;
         while (i < 1000) {
-            var mid = outer + i;
-            var j = 0;
+            let mut mid = outer + i;
+            let mut j = 0;
             while (j < 5) {
-                var inner = mid + j;
+                let mut inner = mid + j;
                 result = result + inner + outer;
                 j = j + 1;
             }
@@ -121,8 +121,8 @@ fn bench_variable_lookup_deep_scope(c: &mut Criterion) {
 fn bench_function_call_overhead(c: &mut Criterion) {
     let source = r#"
         fn identity(x: number) -> number { return x; }
-        var result = 0;
-        var i = 0;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 5000) {
             result = identity(i);
             i = i + 1;
@@ -177,8 +177,8 @@ fn bench_function_call_mutual_recursion(c: &mut Criterion) {
             if (n == 0) { return false; }
             return is_even(n - 1);
         }
-        var i = 0;
-        var count = 0;
+        let mut i = 0;
+        let mut count = 0;
         while (i < 100) {
             if (is_even(i)) { count = count + 1; }
             i = i + 1;
@@ -211,8 +211,8 @@ fn bench_function_call_mutual_recursion(c: &mut Criterion) {
 /// Deep expression trees stress AST traversal in the interpreter.
 fn bench_ast_traversal_deep_expressions(c: &mut Criterion) {
     let source = r#"
-        var i = 0;
-        var result = 0;
+        let mut i = 0;
+        let mut result = 0;
         while (i < 2000) {
             result = ((i + 1) * (i + 2) - (i * i)) / (i + 1 + 1);
             i = i + 1;
@@ -232,8 +232,8 @@ fn bench_ast_traversal_deep_expressions(c: &mut Criterion) {
 
 fn bench_ast_traversal_control_flow(c: &mut Criterion) {
     let source = r#"
-        var i = 0;
-        var fizzbuzz = 0;
+        let mut i = 0;
+        let mut fizzbuzz = 0;
         while (i < 1000) {
             if (i - (i / 15) * 15 == 0) {
                 fizzbuzz = fizzbuzz + 1;
@@ -275,8 +275,8 @@ fn bench_ast_traversal_control_flow(c: &mut Criterion) {
 
 fn bench_loop_counting(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 10000) {
             sum = sum + i;
             i = i + 1;
@@ -296,10 +296,10 @@ fn bench_loop_counting(c: &mut Criterion) {
 
 fn bench_loop_nested(c: &mut Criterion) {
     let source = r#"
-        var total = 0;
-        var i = 0;
+        let mut total = 0;
+        let mut i = 0;
         while (i < 100) {
-            var j = 0;
+            let mut j = 0;
             while (j < 100) {
                 total = total + 1;
                 j = j + 1;
@@ -334,11 +334,11 @@ fn bench_loop_nested(c: &mut Criterion) {
 fn bench_interp_scope_creation(c: &mut Criterion) {
     // Many short-lived scopes stress scope push/pop
     let source = r#"
-        var result = 0;
-        var i = 0;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 3000) {
             {
-                var tmp = i * 2;
+                let mut tmp = i * 2;
                 result = result + tmp;
             }
             i = i + 1;
@@ -381,8 +381,8 @@ fn bench_interp_conditional_heavy(c: &mut Criterion) {
                 }
             }
         }
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 2000) {
             sum = sum + classify(i);
             i = i + 1;

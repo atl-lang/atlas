@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn test_if_then() {
     let code = r#"
-        var x: number = 0;
+        let mut x: number = 0;
         if (true) {
             x = 42;
         }
@@ -15,7 +15,7 @@ fn test_if_then() {
 #[test]
 fn test_if_else() {
     let code = r#"
-        var x: number = 0;
+        let mut x: number = 0;
         if (false) {
             x = 10;
         } else {
@@ -30,7 +30,7 @@ fn test_if_else() {
 fn test_if_with_comparison() {
     let code = r#"
         let x: number = 5;
-        var result: number = 0;
+        let mut result: number = 0;
         if (x > 3) {
             result = 1;
         } else {
@@ -44,8 +44,8 @@ fn test_if_with_comparison() {
 #[test]
 fn test_while_loop() {
     let code = r#"
-        var i: number = 0;
-        var sum: number = 0;
+        let mut i: number = 0;
+        let mut sum: number = 0;
         while (i < 5) {
             sum = sum + i;
             i = i + 1;
@@ -58,7 +58,7 @@ fn test_while_loop() {
 #[test]
 fn test_while_loop_with_break() {
     let code = r#"
-        var i: number = 0;
+        let mut i: number = 0;
         while (i < 10) {
             if (i == 5) {
                 break;
@@ -73,8 +73,8 @@ fn test_while_loop_with_break() {
 #[test]
 fn test_while_loop_with_continue() {
     let code = r#"
-        var i: number = 0;
-        var sum: number = 0;
+        let mut i: number = 0;
+        let mut sum: number = 0;
         while (i < 5) {
             i = i + 1;
             if (i == 3) {
@@ -90,8 +90,8 @@ fn test_while_loop_with_continue() {
 #[test]
 fn test_for_loop() {
     let code = r#"
-        var sum: number = 0;
-        for (var i: number = 0; i < 5; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 5; i = i + 1) {
             sum = sum + i;
         }
         sum
@@ -102,8 +102,8 @@ fn test_for_loop() {
 #[test]
 fn test_for_loop_with_break() {
     let code = r#"
-        var result: number = 0;
-        for (var i: number = 0; i < 10; i = i + 1) {
+        let mut result: number = 0;
+        for (let mut i: number = 0; i < 10; i = i + 1) {
             if (i == 5) {
                 break;
             }
@@ -117,8 +117,8 @@ fn test_for_loop_with_break() {
 #[test]
 fn test_for_loop_with_continue() {
     let code = r#"
-        var sum: number = 0;
-        for (var i: number = 0; i < 5; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 5; i = i + 1) {
             if (i == 2) {
                 continue;
             }
@@ -132,8 +132,8 @@ fn test_for_loop_with_continue() {
 #[test]
 fn test_for_loop_with_increment() {
     let code = r#"
-        var sum: number = 0;
-        for (var i: number = 0; i < 5; i++) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 5; i++) {
             sum += i;
         }
         sum

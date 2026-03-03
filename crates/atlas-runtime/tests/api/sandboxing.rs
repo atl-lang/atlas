@@ -121,8 +121,8 @@ fn test_sandboxed_runtime_loops() {
     let result = runtime
         .eval(
             r#"
-        var sum: number = 0;
-        for (var i: number = 0; i < 10; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 10; i = i + 1) {
             sum = sum + i;
         }
         sum
@@ -272,7 +272,7 @@ fn test_timeout_enforcement_interpreter() {
     // Run an infinite loop - should timeout
     let result = runtime.eval(
         r#"
-        var x: number = 0;
+        let mut x: number = 0;
         while (true) {
             x = x + 1;
         }
@@ -302,7 +302,7 @@ fn test_timeout_enforcement_vm() {
     // Run an infinite loop - should timeout
     let result = runtime.eval(
         r#"
-        var x: number = 0;
+        let mut x: number = 0;
         while (true) {
             x = x + 1;
         }
@@ -330,8 +330,8 @@ fn test_no_timeout_without_limit() {
     // Run a finite loop - should complete normally
     let result = runtime.eval(
         r#"
-        var sum: number = 0;
-        for (var i: number = 0; i < 1000; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 1000; i = i + 1) {
             sum = sum + i;
         }
         sum
@@ -436,8 +436,8 @@ fn test_memory_limit_enforcement_interpreter_string_concat() {
     // Try to create a large string through concatenation - should fail
     let result = runtime.eval(
         r#"
-        var s: string = "a";
-        for (var i: number = 0; i < 20; i = i + 1) {
+        let mut s: string = "a";
+        for (let mut i: number = 0; i < 20; i = i + 1) {
             s = s + s;
         }
         s
@@ -467,8 +467,8 @@ fn test_memory_limit_enforcement_vm_string_concat() {
     // Try to create a large string through concatenation - should fail
     let result = runtime.eval(
         r#"
-        var s: string = "a";
-        for (var i: number = 0; i < 20; i = i + 1) {
+        let mut s: string = "a";
+        for (let mut i: number = 0; i < 20; i = i + 1) {
             s = s + s;
         }
         s

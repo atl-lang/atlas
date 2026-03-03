@@ -27,8 +27,8 @@ async fn test_find_references_local_variable() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
-    var y: number = x + 1;
+    let mut x: number = 5;
+    let mut y: number = x + 1;
     return x + y;
 }
 "#;
@@ -51,7 +51,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri: uri.clone() },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -131,7 +131,7 @@ async fn test_find_references_with_definition() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
+    let mut x: number = 5;
     return x + 1;
 }
 "#;
@@ -153,7 +153,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri: uri.clone() },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -183,7 +183,7 @@ async fn test_find_references_excluding_definition() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
+    let mut x: number = 5;
     return x + 1;
 }
 "#;
@@ -205,7 +205,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -234,10 +234,10 @@ async fn test_references_to_shadowed_variables() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
-    var y: number = x;
+    let mut x: number = 5;
+    let mut y: number = x;
     {
-        var x: number = 10;
+        let mut x: number = 10;
         y = y + x;
     }
     return x + y;
@@ -261,7 +261,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -332,9 +332,9 @@ async fn test_references_in_nested_scopes() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
+    let mut x: number = 5;
     if (x > 0) {
-        var y: number = x + 1;
+        let mut y: number = x + 1;
         x = x + y;
     }
     return x;
@@ -358,7 +358,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -400,7 +400,7 @@ fn helper(x: number) -> number {
 
     let source2 = r#"
 fn main() -> number {
-    var result: number = helper(5);
+    let mut result: number = helper(5);
     return result;
 }
 "#;
@@ -512,7 +512,7 @@ async fn test_index_updates_on_file_change() {
     let uri = test_uri("test");
     let initial_source = r#"
 fn example() -> number {
-    var x: number = 5;
+    let mut x: number = 5;
     return x;
 }
 "#;
@@ -535,7 +535,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri: uri.clone() },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -552,8 +552,8 @@ fn example() -> number {
     // Update document with more references
     let updated_source = r#"
 fn example() -> number {
-    var x: number = 5;
-    var y: number = x + 1;
+    let mut x: number = 5;
+    let mut y: number = x + 1;
     return x + y;
 }
 "#;
@@ -594,7 +594,7 @@ async fn test_index_cleared_on_file_close() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var x: number = 5;
+    let mut x: number = 5;
     return x;
 }
 "#;
@@ -617,7 +617,7 @@ fn example() -> number {
             text_document: TextDocumentIdentifier { uri: uri.clone() },
             position: Position {
                 line: 2,
-                character: 8,
+                character: 12,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -659,7 +659,7 @@ fn helper() -> number {
 
     let source2 = r#"
 fn main() -> number {
-    var x: number = helper();
+    let mut x: number = helper();
     return x;
 }
 "#;
@@ -693,7 +693,7 @@ fn main() -> number {
             text_document: TextDocumentIdentifier { uri: uri2 },
             position: Position {
                 line: 2,
-                character: 8, // "x"
+                character: 12, // "x"
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -722,7 +722,7 @@ async fn test_index_updates_on_file_add() {
                 uri: uri1.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "var x: number = 1;".to_string(),
+                text: "let mut x: number = 1;".to_string(),
             },
         })
         .await;
@@ -734,7 +734,7 @@ async fn test_index_updates_on_file_add() {
                 uri: uri2.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "var y: number = 2;".to_string(),
+                text: "let mut y: number = 2;".to_string(),
             },
         })
         .await;
@@ -791,7 +791,7 @@ async fn test_index_updates_on_file_delete() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "var x: number = 1;".to_string(),
+                text: "let mut x: number = 1;".to_string(),
             },
         })
         .await;
@@ -837,7 +837,7 @@ async fn test_incremental_indexing() {
                 uri: uri.clone(),
                 language_id: "atlas".to_string(),
                 version: 1,
-                text: "var x: number = 1;".to_string(),
+                text: "let mut x: number = 1;".to_string(),
             },
         })
         .await;
@@ -853,7 +853,7 @@ async fn test_incremental_indexing() {
                 content_changes: vec![TextDocumentContentChangeEvent {
                     range: None,
                     range_length: None,
-                    text: format!("var x: number = {};", i),
+                    text: format!("let mut x: number = {};", i),
                 }],
             })
             .await;
@@ -973,7 +973,7 @@ async fn test_references_to_for_in_variable() {
     let uri = test_uri("test");
     let source = r#"
 fn example() -> number {
-    var arr: array = [1, 2, 3];
+    let mut arr: array = [1, 2, 3];
     for (item in arr) {
         print(item);
     }
@@ -1071,8 +1071,8 @@ async fn test_references_in_binary_expression() {
     let uri = test_uri("test");
     let source = r#"
 fn compute() -> number {
-    var a: number = 10;
-    var b: number = a + a * 2;
+    let mut a: number = 10;
+    let mut b: number = a + a * 2;
     return b;
 }
 "#;
@@ -1094,7 +1094,7 @@ fn compute() -> number {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 2,
-                character: 8, // "a" definition
+                character: 12, // "a" definition
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -1119,7 +1119,7 @@ async fn test_references_with_assignment() {
     let uri = test_uri("test");
     let source = r#"
 fn update() -> number {
-    var counter: number = 0;
+    let mut counter: number = 0;
     counter = counter + 1;
     counter = counter + 1;
     return counter;
@@ -1143,7 +1143,7 @@ fn update() -> number {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 2,
-                character: 8, // "counter" definition
+                character: 12, // "counter" definition
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -1166,7 +1166,7 @@ async fn test_references_position_accuracy() {
     let server = service.inner();
 
     let uri = test_uri("test");
-    let source = "fn test() -> number { var x: number = 1; return x; }";
+    let source = "fn test() -> number { let mut x: number = 1; return x; }";
 
     server
         .did_open(DidOpenTextDocumentParams {
@@ -1185,7 +1185,7 @@ async fn test_references_position_accuracy() {
             text_document: TextDocumentIdentifier { uri },
             position: Position {
                 line: 0,
-                character: 26, // "x" in var declaration
+                character: 30, // "x" in let mut declaration
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),

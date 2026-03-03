@@ -65,7 +65,7 @@ fn test_parse_nested_function_in_if_block() {
 fn test_parse_nested_function_in_while_block() {
     let source = r#"
         fn outer() -> void {
-            var i: number = 0;
+            let mut i: number = 0;
             while (i < 5) {
                 fn increment() -> void {
                     i++;
@@ -84,7 +84,7 @@ fn test_parse_nested_function_in_while_block() {
 fn test_parse_nested_function_in_for_block() {
     let source = r#"
         fn outer() -> void {
-            for (var i: number = 0; i < 5; i++) {
+            for (let mut i: number = 0; i < 5; i++) {
                 fn log(x: number) -> void {
                     print(str(x));
                 }

@@ -152,9 +152,9 @@ a(0);
 #[test]
 fn test_iterative_fibonacci() {
     let source = r#"
-var a = 0;
-var b = 1;
-var i = 0;
+let mut a = 0;
+let mut b = 1;
+let mut i = 0;
 while (i < 30) {
     let temp = a + b;
     a = b;
@@ -169,8 +169,8 @@ b;
 #[test]
 fn test_iterative_sum_of_squares() {
     let source = r#"
-var sum = 0;
-var i = 1;
+let mut sum = 0;
+let mut i = 1;
 while (i <= 10) {
     sum = sum + i * i;
     i = i + 1;
@@ -184,8 +184,8 @@ sum;
 fn test_iterative_collatz_steps() {
     // Count Collatz steps for n=27 (famous for taking 111 steps)
     let source = r#"
-var n = 27;
-var steps = 0;
+let mut n = 27;
+let mut steps = 0;
 while (n != 1) {
     if (n % 2 == 0) {
         n = n / 2;
@@ -203,10 +203,10 @@ steps;
 fn test_iterative_bubble_sort_simulation() {
     let source = r#"
 let arr = [5, 3, 8, 1, 9, 2, 7, 4, 6, 0];
-var n = 10;
-var i = 0;
+let mut n = 10;
+let mut i = 0;
 while (i < n) {
-    var j = 0;
+    let mut j = 0;
     while (j < n - 1 - i) {
         if (arr[j] > arr[j + 1]) {
             let temp = arr[j];
@@ -226,10 +226,10 @@ arr[0];
 fn test_iterative_bubble_sort_last() {
     let source = r#"
 let arr = [5, 3, 8, 1, 9, 2, 7, 4, 6, 0];
-var n = 10;
-var i = 0;
+let mut n = 10;
+let mut i = 0;
 while (i < n) {
-    var j = 0;
+    let mut j = 0;
     while (j < n - 1 - i) {
         if (arr[j] > arr[j + 1]) {
             let temp = arr[j];
@@ -249,8 +249,8 @@ arr[9];
 fn test_iterative_find_max() {
     let source = r#"
 let arr = [3, 7, 1, 9, 4, 6, 8, 2, 5, 0];
-var max_val = arr[0];
-var i = 1;
+let mut max_val = arr[0];
+let mut i = 1;
 while (i < 10) {
     if (arr[i] > max_val) {
         max_val = arr[i];
@@ -266,8 +266,8 @@ max_val;
 fn test_iterative_find_min() {
     let source = r#"
 let arr = [3, 7, 1, 9, 4, 6, 8, 2, 5, 10];
-var min_val = arr[0];
-var i = 1;
+let mut min_val = arr[0];
+let mut i = 1;
 while (i < 10) {
     if (arr[i] < min_val) {
         min_val = arr[i];
@@ -282,8 +282,8 @@ min_val;
 #[test]
 fn test_iterative_count_evens() {
     let source = r#"
-var count = 0;
-var i = 0;
+let mut count = 0;
+let mut i = 0;
 while (i < 100) {
     if (i % 2 == 0) {
         count = count + 1;
@@ -298,8 +298,8 @@ count;
 #[test]
 fn test_iterative_running_average() {
     let source = r#"
-var sum = 0;
-var i = 1;
+let mut sum = 0;
+let mut i = 1;
 while (i <= 100) {
     sum = sum + i;
     i = i + 1;
@@ -313,9 +313,9 @@ sum / 100;
 fn test_iterative_geometric_series() {
     // Sum of 1 + 1/2 + 1/4 + 1/8 + ... (20 terms)
     let source = r#"
-var sum = 0;
-var term = 1;
-var i = 0;
+let mut sum = 0;
+let mut term = 1;
+let mut i = 0;
 while (i < 20) {
     sum = sum + term;
     term = term / 2;
@@ -332,8 +332,8 @@ fn test_iterative_matrix_diagonal_sum() {
     // Simulate a 3x3 matrix as flat array and sum diagonal
     let source = r#"
 let matrix = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-var diag_sum = 0;
-var i = 0;
+let mut diag_sum = 0;
+let mut i = 0;
 while (i < 3) {
     diag_sum = diag_sum + matrix[i * 3 + i];
     i = i + 1;
@@ -347,9 +347,9 @@ diag_sum;
 fn test_iterative_linear_search() {
     let source = r#"
 let arr = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-var target = 70;
-var found = -1;
-var i = 0;
+let mut target = 70;
+let mut found = -1;
+let mut i = 0;
 while (i < 10) {
     if (arr[i] == target) {
         found = i;
@@ -365,8 +365,8 @@ found;
 fn test_iterative_reverse_array() {
     let source = r#"
 let arr = [1, 2, 3, 4, 5];
-var left = 0;
-var right = 4;
+let mut left = 0;
+let mut right = 4;
 while (left < right) {
     let temp = arr[left];
     arr[left] = arr[right];
@@ -382,8 +382,8 @@ arr[0] * 10000 + arr[1] * 1000 + arr[2] * 100 + arr[3] * 10 + arr[4];
 #[test]
 fn test_iterative_power_of_two() {
     let source = r#"
-var result = 1;
-var i = 0;
+let mut result = 1;
+let mut i = 0;
 while (i < 20) {
     result = result * 2;
     i = i + 1;
@@ -396,12 +396,12 @@ result;
 #[test]
 fn test_iterative_triple_nested_loops() {
     let source = r#"
-var count = 0;
-var i = 0;
+let mut count = 0;
+let mut i = 0;
 while (i < 10) {
-    var j = 0;
+    let mut j = 0;
     while (j < 10) {
-        var k = 0;
+        let mut k = 0;
         while (k < 10) {
             count = count + 1;
             k = k + 1;
@@ -446,7 +446,7 @@ fn test_function_higher_order_map_simulation() {
     let source = r#"
 fn double(x: number) -> number { return x * 2; }
 let arr = [1, 2, 3, 4, 5];
-var i = 0;
+let mut i = 0;
 while (i < 5) {
     arr[i] = double(arr[i]);
     i = i + 1;
@@ -463,8 +463,8 @@ fn accumulate(arr_sum: number, val: number) -> number {
     return arr_sum + val;
 }
 let arr = [10, 20, 30, 40, 50];
-var total = 0;
-var i = 0;
+let mut total = 0;
+let mut i = 0;
 while (i < 5) {
     total = accumulate(total, arr[i]);
     i = i + 1;
@@ -479,8 +479,8 @@ fn test_function_predicate_filter_simulation() {
     let source = r#"
 fn is_positive(x: number) -> bool { return x > 0; }
 let arr = [-3, -1, 0, 2, 5, -4, 7, 1];
-var count = 0;
-var i = 0;
+let mut count = 0;
+let mut i = 0;
 while (i < 8) {
     if (is_positive(arr[i])) {
         count = count + 1;
@@ -521,8 +521,8 @@ classify(5) + classify(-3) + classify(0);
 fn test_function_string_builder_simulation() {
     let source = r#"
 fn repeat_char(ch: string, n: number) -> string {
-    var result = "";
-    var i = 0;
+    let mut result = "";
+    let mut i = 0;
     while (i < n) {
         result = result + ch;
         i = i + 1;
@@ -564,8 +564,8 @@ min(3, 7) + max(3, 7);
 fn test_array_sum_elements() {
     let source = r#"
 let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-var sum = 0;
-var i = 0;
+let mut sum = 0;
+let mut i = 0;
 while (i < 10) {
     sum = sum + arr[i];
     i = i + 1;
@@ -580,8 +580,8 @@ fn test_array_dot_product() {
     let source = r#"
 let a = [1, 2, 3, 4, 5];
 let b = [5, 4, 3, 2, 1];
-var dot = 0;
-var i = 0;
+let mut dot = 0;
+let mut i = 0;
 while (i < 5) {
     dot = dot + a[i] * b[i];
     i = i + 1;
@@ -595,18 +595,18 @@ dot;
 fn test_array_selection_sort() {
     let source = r#"
 let arr = [64, 25, 12, 22, 11];
-var n = 5;
-var i = 0;
+let mut n = 5;
+let mut i = 0;
 while (i < n - 1) {
-    var min_idx = i;
-    var j = i + 1;
+    let mut min_idx = i;
+    let mut j = i + 1;
     while (j < n) {
         if (arr[j] < arr[min_idx]) {
             min_idx = j;
         }
         j = j + 1;
     }
-    var temp = arr[min_idx];
+    let mut temp = arr[min_idx];
     arr[min_idx] = arr[i];
     arr[i] = temp;
     i = i + 1;
@@ -620,9 +620,9 @@ arr[0] * 10000 + arr[1] * 1000 + arr[2] * 100 + arr[3] * 10 + arr[4];
 fn test_array_count_occurrences() {
     let source = r#"
 let arr = [1, 2, 3, 2, 1, 2, 3, 2, 1, 2];
-var target = 2;
-var count = 0;
-var i = 0;
+let mut target = 2;
+let mut count = 0;
+let mut i = 0;
 while (i < 10) {
     if (arr[i] == target) {
         count = count + 1;
@@ -640,7 +640,7 @@ fn test_array_prefix_sum() {
 let arr = [1, 2, 3, 4, 5];
 let prefix = [0, 0, 0, 0, 0];
 prefix[0] = arr[0];
-var i = 1;
+let mut i = 1;
 while (i < 5) {
     prefix[i] = prefix[i - 1] + arr[i];
     i = i + 1;
@@ -656,10 +656,10 @@ fn test_array_two_sum() {
     let source = r#"
 let arr = [2, 7, 11, 15];
 let target = 9;
-var found = false;
-var i = 0;
+let mut found = false;
+let mut i = 0;
 while (i < 4) {
-    var j = i + 1;
+    let mut j = i + 1;
     while (j < 4) {
         if (arr[i] + arr[j] == target) {
             found = true;
@@ -694,7 +694,7 @@ fn test_array_element_wise_operations() {
 let a = [1, 2, 3, 4, 5];
 let b = [5, 4, 3, 2, 1];
 let result = [0, 0, 0, 0, 0];
-var i = 0;
+let mut i = 0;
 while (i < 5) {
     result[i] = a[i] + b[i];
     i = i + 1;
@@ -710,8 +710,8 @@ fn test_array_partition() {
     let source = r#"
 let arr = [3, 7, 1, 9, 4, 6, 8, 2, 5, 0];
 let pivot = 5;
-var less_count = 0;
-var i = 0;
+let mut less_count = 0;
+let mut i = 0;
 while (i < 10) {
     if (arr[i] < pivot) {
         less_count = less_count + 1;
@@ -727,10 +727,10 @@ less_count;
 fn test_array_consecutive_differences() {
     let source = r#"
 let arr = [1, 4, 2, 8, 5];
-var max_diff = 0;
-var i = 0;
+let mut max_diff = 0;
+let mut i = 0;
 while (i < 4) {
-    var diff = arr[i + 1] - arr[i];
+    let mut diff = arr[i + 1] - arr[i];
     if (diff < 0) { diff = -diff; }
     if (diff > max_diff) { max_diff = diff; }
     i = i + 1;
@@ -747,8 +747,8 @@ max_diff;
 #[test]
 fn test_string_build_sequence() {
     let source = r#"
-var result = "";
-var i = 0;
+let mut result = "";
+let mut i = 0;
 while (i < 3) {
     result = result + "abc";
     i = i + 1;
@@ -774,8 +774,8 @@ a + b + c + d;
 fn test_string_repeat_pattern() {
     let source = r#"
 fn repeat(s: string, n: number) -> string {
-    var result = "";
-    var i = 0;
+    let mut result = "";
+    let mut i = 0;
     while (i < n) {
         result = result + s;
         i = i + 1;
@@ -790,8 +790,8 @@ repeat("ab", 4);
 #[test]
 fn test_string_conditional_build() {
     let source = r#"
-var result = "";
-var i = 0;
+let mut result = "";
+let mut i = 0;
 while (i < 5) {
     if (i % 2 == 0) {
         result = result + "E";
@@ -808,7 +808,7 @@ result;
 #[test]
 fn test_string_empty_operations() {
     let source = r#"
-var s = "";
+let mut s = "";
 s = s + "";
 s = s + "a";
 s = s + "";
@@ -831,8 +831,8 @@ result;
 #[test]
 fn test_string_long_concatenation() {
     let source = r#"
-var s = "";
-var i = 0;
+let mut s = "";
+let mut i = 0;
 while (i < 100) {
     s = s + "x";
     i = i + 1;
@@ -864,8 +864,8 @@ fn test_math_sum_formula_verification() {
     // Verify sum formula: sum(1..n) = n*(n+1)/2
     let source = r#"
 let n = 100;
-var loop_sum = 0;
-var i = 1;
+let mut loop_sum = 0;
+let mut i = 1;
 while (i <= n) {
     loop_sum = loop_sum + i;
     i = i + 1;
@@ -879,8 +879,8 @@ loop_sum == formula_sum;
 #[test]
 fn test_math_sum_of_cubes() {
     let source = r#"
-var sum = 0;
-var i = 1;
+let mut sum = 0;
+let mut i = 1;
 while (i <= 5) {
     sum = sum + i * i * i;
     i = i + 1;
@@ -893,8 +893,8 @@ sum;
 #[test]
 fn test_math_harmonic_sum() {
     let source = r#"
-var sum = 0;
-var i = 1;
+let mut sum = 0;
+let mut i = 1;
 while (i <= 10) {
     sum = sum + 1 / i;
     i = i + 1;
@@ -909,9 +909,9 @@ sum;
 fn test_math_alternating_series() {
     // 1 - 1/3 + 1/5 - 1/7 + ... (converges to pi/4)
     let source = r#"
-var sum = 0;
-var sign = 1;
-var i = 0;
+let mut sum = 0;
+let mut sign = 1;
+let mut i = 0;
 while (i < 1000) {
     sum = sum + sign / (2 * i + 1);
     sign = -sign;
@@ -928,8 +928,8 @@ sum;
 fn test_math_integer_sqrt_approx() {
     // Newton's method for sqrt(2)
     let source = r#"
-var x = 1;
-var i = 0;
+let mut x = 1;
+let mut i = 0;
 while (i < 20) {
     x = (x + 2 / x) / 2;
     i = i + 1;
@@ -944,9 +944,9 @@ x;
 fn test_math_exponential_approx() {
     // e ≈ sum(1/n!) for n=0..10
     let source = r#"
-var e = 0;
-var factorial = 1;
-var i = 0;
+let mut e = 0;
+let mut factorial = 1;
+let mut i = 0;
 while (i < 10) {
     e = e + 1 / factorial;
     i = i + 1;
@@ -997,7 +997,7 @@ fn test_math_fibonacci_parametric(#[case] n: i32, #[case] expected: f64) {
 fn test_control_nested_if_else() {
     let source = r#"
 let x = 15;
-var result = 0;
+let mut result = 0;
 if (x > 20) {
     result = 3;
 } else {
@@ -1016,9 +1016,9 @@ result;
 fn test_control_while_with_break_simulation() {
     // Simulate break with a flag
     let source = r#"
-var i = 0;
-var found = -1;
-var done = false;
+let mut i = 0;
+let mut found = -1;
+let mut done = false;
 while (i < 100) {
     if (!done) {
         if (i * i > 50) {
@@ -1036,10 +1036,10 @@ found;
 #[test]
 fn test_control_fizzbuzz_count() {
     let source = r#"
-var fizz = 0;
-var buzz = 0;
-var fizzbuzz = 0;
-var i = 1;
+let mut fizz = 0;
+let mut buzz = 0;
+let mut fizzbuzz = 0;
+let mut i = 1;
 while (i <= 100) {
     if (i % 15 == 0) {
         fizzbuzz = fizzbuzz + 1;
@@ -1063,9 +1063,9 @@ fizz * 10000 + buzz * 100 + fizzbuzz;
 #[test]
 fn test_control_state_machine() {
     let source = r#"
-var state = 0;
-var output = 0;
-var i = 0;
+let mut state = 0;
+let mut output = 0;
+let mut i = 0;
 while (i < 10) {
     if (state == 0) {
         state = 1;
@@ -1092,7 +1092,7 @@ output;
 fn test_control_early_return() {
     let source = r#"
 fn find_first_over(threshold: number) -> number {
-    var i = 0;
+    let mut i = 0;
     while (i < 100) {
         if (i * i > threshold) {
             return i;
@@ -1112,8 +1112,8 @@ fn test_control_multiple_conditions() {
 fn in_range(x: number, lo: number, hi: number) -> bool {
     return x >= lo && x <= hi;
 }
-var count = 0;
-var i = 0;
+let mut count = 0;
+let mut i = 0;
 while (i < 20) {
     if (in_range(i, 5, 15)) {
         count = count + 1;
@@ -1134,7 +1134,7 @@ let c = true;
 let r1 = a && b || c;
 let r2 = !(a && b);
 let r3 = a || b && c;
-var count = 0;
+let mut count = 0;
 if (r1) { count = count + 1; }
 if (r2) { count = count + 1; }
 if (r3) { count = count + 1; }
@@ -1147,7 +1147,7 @@ count;
 fn test_control_deeply_nested_conditions() {
     let source = r#"
 let x = 42;
-var result = 0;
+let mut result = 0;
 if (x > 0) {
     if (x > 10) {
         if (x > 20) {
@@ -1179,8 +1179,8 @@ fn process(x: number) -> number {
     if (x % 2 == 0) { return x / 2; }
     return x * 3 + 1;
 }
-var n = 7;
-var steps = 0;
+let mut n = 7;
+let mut steps = 0;
 while (n != 1) {
     n = process(n);
     steps = steps + 1;
@@ -1193,7 +1193,7 @@ steps;
 #[test]
 fn test_control_short_circuit_and() {
     let source = r#"
-var evaluated = 0;
+let mut evaluated = 0;
 fn side_effect() -> bool {
     evaluated = evaluated + 1;
     return true;

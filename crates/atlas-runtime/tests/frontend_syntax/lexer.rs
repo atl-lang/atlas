@@ -64,7 +64,7 @@ fn test_number_literals(#[case] input: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case("let", TokenKind::Let)]
-#[case("var", TokenKind::Var)]
+#[case("mut", TokenKind::Mut)]
 #[case("fn", TokenKind::Fn)]
 #[case("if", TokenKind::If)]
 #[case("else", TokenKind::Else)]

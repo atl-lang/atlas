@@ -72,7 +72,7 @@ use super::type_guards_part1::eval;
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        var result: number = 0;
+        let mut result: number = 0;
         if (isString(x)) { result = 1; }
         if (isNumber(x)) { result = 2; }
         return result;

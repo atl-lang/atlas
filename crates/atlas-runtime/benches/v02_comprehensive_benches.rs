@@ -112,8 +112,8 @@ fn bench_pipeline_stages(c: &mut Criterion) {
 
 fn bench_engines_arithmetic(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 5000) {
             sum = sum + i;
             i = i + 1;
@@ -154,8 +154,8 @@ fn bench_engines_fibonacci(c: &mut Criterion) {
 
 fn bench_engines_string_ops(c: &mut Criterion) {
     let source = r#"
-        var s = "";
-        var i = 0;
+        let mut s = "";
+        let mut i = 0;
         while (i < 200) {
             s = s + "x";
             i = i + 1;
@@ -202,8 +202,8 @@ fn bench_engines_recursion(c: &mut Criterion) {
 /// Target: overhead < 10% for typical workloads.
 fn bench_profiler_overhead(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 2000) {
             sum = sum + i;
             i = i + 1;
@@ -274,10 +274,10 @@ fn bench_profiler_overhead_fibonacci(c: &mut Criterion) {
 fn bench_realworld_bubble_sort(c: &mut Criterion) {
     let source = r#"
         fn bubble_sort_step(arr: number[], n: number) -> number[] {
-            var i = 0;
+            let mut i = 0;
             while (i < n - 1) {
                 if (arr[i] > arr[i + 1]) {
-                    var tmp = arr[i];
+                    let mut tmp = arr[i];
                     arr[i] = arr[i + 1];
                     arr[i + 1] = tmp;
                 }
@@ -287,8 +287,8 @@ fn bench_realworld_bubble_sort(c: &mut Criterion) {
         }
 
         var data: number[] = [64, 34, 25, 12, 22, 11, 90];
-        var n = len(data);
-        var pass = 0;
+        let mut n = len(data);
+        let mut pass = 0;
         while (pass < n) {
             data = bubble_sort_step(data, n);
             pass = pass + 1;
@@ -308,7 +308,7 @@ fn bench_realworld_prime_sieve(c: &mut Criterion) {
     let source = r#"
         fn is_prime(n: number) -> bool {
             if (n < 2) { return false; }
-            var i = 2;
+            let mut i = 2;
             while (i * i <= n) {
                 if (n - (n / i) * i == 0) { return false; }
                 i = i + 1;
@@ -316,8 +316,8 @@ fn bench_realworld_prime_sieve(c: &mut Criterion) {
             return true;
         }
 
-        var count = 0;
-        var n = 2;
+        let mut count = 0;
+        let mut n = 2;
         while (n <= 200) {
             if (is_prime(n)) { count = count + 1; }
             n = n + 1;
@@ -336,8 +336,8 @@ fn bench_realworld_prime_sieve(c: &mut Criterion) {
 fn bench_realworld_string_processing(c: &mut Criterion) {
     let source = r#"
         var words: string[] = ["atlas", "language", "compiler", "runtime", "benchmark"];
-        var result = "";
-        var i = 0;
+        let mut result = "";
+        let mut i = 0;
         while (i < len(words)) {
             if (i > 0) { result = result + " "; }
             result = result + to_upper(words[i]);
@@ -358,9 +358,9 @@ fn bench_realworld_accumulator(c: &mut Criterion) {
     // Simulates a common pattern: accumulating values in a collection
     let source = r#"
         var results: number[] = [];
-        var i = 0;
+        let mut i = 0;
         while (i < 200) {
-            var val = i * i;
+            let mut val = i * i;
             results = push(results, val);
             i = i + 1;
         }
@@ -378,8 +378,8 @@ fn bench_realworld_accumulator(c: &mut Criterion) {
 fn bench_realworld_factorial_loop(c: &mut Criterion) {
     let source = r#"
         fn factorial(n: number) -> number {
-            var result = 1;
-            var i = 1;
+            let mut result = 1;
+            let mut i = 1;
             while (i <= n) {
                 result = result * i;
                 i = i + 1;
@@ -387,8 +387,8 @@ fn bench_realworld_factorial_loop(c: &mut Criterion) {
             return result;
         }
 
-        var total = 0;
-        var i = 1;
+        let mut total = 0;
+        let mut i = 1;
         while (i <= 20) {
             total = total + factorial(i);
             i = i + 1;
@@ -412,7 +412,7 @@ fn bench_throughput_arithmetic(c: &mut Criterion) {
     let mut group = c.benchmark_group("throughput/arithmetic");
     for iterations in [1000usize, 5000, 10000] {
         let source = format!(
-            "var sum = 0; var i = 0; while (i < {}) {{ sum = sum + i; i = i + 1; }} sum;",
+            "let mut sum = 0; let mut i = 0; while (i < {}) {{ sum = sum + i; i = i + 1; }} sum;",
             iterations
         );
         group.throughput(Throughput::Elements(iterations as u64));
@@ -431,7 +431,7 @@ fn bench_throughput_function_calls(c: &mut Criterion) {
     let mut group = c.benchmark_group("throughput/function_calls");
     for calls in [500usize, 2000, 5000] {
         let source = format!(
-            "fn inc(x: number) -> number {{ return x + 1; }} var r = 0; var i = 0; while (i < {}) {{ r = inc(r); i = i + 1; }} r;",
+            "fn inc(x: number) -> number {{ return x + 1; }} let mut r = 0; let mut i = 0; while (i < {}) {{ r = inc(r); i = i + 1; }} r;",
             calls
         );
         group.throughput(Throughput::Elements(calls as u64));
@@ -450,9 +450,9 @@ fn bench_throughput_function_calls(c: &mut Criterion) {
 /// They must not regress significantly from the recorded baseline.txt values.
 fn bench_regression_lexer(c: &mut Criterion) {
     let source = r#"
-        var x = 42;
-        var y = 100;
-        var z = x + y;
+        let mut x = 42;
+        let mut y = 100;
+        let mut z = x + y;
         z;
     "#;
     c.bench_function("regression/v01/lexer_simple", |b| {
@@ -474,14 +474,16 @@ fn bench_regression_parser(c: &mut Criterion) {
 }
 
 fn bench_regression_vm_loop(c: &mut Criterion) {
-    let source = "var sum = 0; var i = 0; while (i < 1000) { sum = sum + i; i = i + 1; } sum;";
+    let source =
+        "let mut sum = 0; let mut i = 0; while (i < 1000) { sum = sum + i; i = i + 1; } sum;";
     c.bench_function("regression/v01/vm_loop_1k", |b| {
         b.iter(|| vm_run(black_box(source), false));
     });
 }
 
 fn bench_regression_interpreter_loop(c: &mut Criterion) {
-    let source = "var sum = 0; var i = 0; while (i < 1000) { sum = sum + i; i = i + 1; } sum;";
+    let source =
+        "let mut sum = 0; let mut i = 0; while (i < 1000) { sum = sum + i; i = i + 1; } sum;";
     c.bench_function("regression/v01/interp_loop_1k", |b| {
         b.iter(|| interp_run(black_box(source)));
     });

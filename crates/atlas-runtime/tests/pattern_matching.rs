@@ -1059,8 +1059,8 @@ fn test_match_result_from_user_function() {
 fn test_match_in_loop() {
     assert_parity_number(
         r#"fn run() -> number {
-            var total: number = 0;
-            var i: number = 0;
+            let mut total: number = 0;
+            let mut i: number = 0;
             while (i < 3) {
                 total = total + match i {
                     0 => 1,

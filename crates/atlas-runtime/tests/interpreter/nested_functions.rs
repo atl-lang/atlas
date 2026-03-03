@@ -258,7 +258,7 @@ fn test_bind_nested_function_in_if_block() {
 fn test_bind_nested_function_in_while_block() {
     let source = r#"
         fn outer() -> number {
-            var i: number = 0;
+            let mut i: number = 0;
             while (i < 1) {
                 fn helper() -> number {
                     return 42;
@@ -279,7 +279,7 @@ fn test_bind_nested_function_in_while_block() {
 fn test_bind_nested_function_in_for_block() {
     let source = r#"
         fn outer() -> number {
-            for (var i: number = 0; i < 5; i++) {
+            for (let mut i: number = 0; i < 5; i++) {
                 fn helper(x: number) -> number {
                     return x;
                 }
@@ -525,7 +525,7 @@ fn test_interp_nested_function_calling_outer() {
 #[test]
 fn test_interp_nested_function_void() {
     let source = r#"
-        var result: number = 0;
+        let mut result: number = 0;
 
         fn outer() -> void {
             fn setResult() -> void {

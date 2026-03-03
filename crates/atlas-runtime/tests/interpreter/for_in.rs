@@ -14,7 +14,7 @@ fn test_for_in_large_array() {
             20, 21, 22, 23, 24, 25, 26, 27, 28, 29
         ];
 
-        var sum: number = 0;
+        let mut sum: number = 0;
         for item in arr {
             sum = sum + item;
         }
@@ -37,7 +37,7 @@ fn test_for_in_deeply_nested() {
             [[5, 6], [7, 8]]
         ];
 
-        var sum: number = 0;
+        let mut sum: number = 0;
         for layer in arr3d {
             for row in layer {
                 for item in row {
@@ -60,7 +60,7 @@ fn test_for_in_with_array_iteration_count() {
     // Test that iteration count is correct
     let source = r#"
         let arr: array = [1, 2, 3, 4, 5];
-        var count: number = 0;
+        let mut count: number = 0;
 
         for item in arr {
             count = count + 1;
@@ -108,8 +108,8 @@ fn test_for_in_with_early_return() {
 fn test_for_in_with_complex_expressions() {
     let source = r#"
         let arr: array = [1, 2, 3, 4, 5];
-        var sum_even: number = 0;
-        var sum_odd: number = 0;
+        let mut sum_even: number = 0;
+        let mut sum_odd: number = 0;
 
         for item in arr {
             if (item % 2 == 0) {
@@ -136,7 +136,7 @@ fn test_for_in_with_complex_expressions() {
 fn test_for_in_break_in_nested_loop() {
     let source = r#"
         let matrix: array = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
-        var found: bool = false;
+        let mut found: bool = false;
 
         for row in matrix {
             for item in row {
@@ -164,7 +164,7 @@ fn test_for_in_multiple_sequential() {
     let source = r#"
         let arr1: array = [1, 2, 3];
         let arr2: array = [4, 5, 6];
-        var sum: number = 0;
+        let mut sum: number = 0;
 
         for item in arr1 {
             sum = sum + item;
@@ -191,7 +191,7 @@ fn test_for_in_with_function_calls() {
         }
 
         let arr: array = [1, 2, 3];
-        var sum: number = 0;
+        let mut sum: number = 0;
 
         for item in arr {
             sum = sum + double(item);
@@ -219,7 +219,7 @@ fn test_for_in_with_hashmap_keys() {
         hashMapPut(hmap, "c", 3);
 
         let keys: array = hashMapKeys(hmap);
-        var count: number = 0;
+        let mut count: number = 0;
 
         for key in keys {
             count = count + 1;
@@ -243,7 +243,7 @@ fn test_for_in_with_hashset() {
         hashSetAdd(set, 30);
 
         let arr: array = hashSetToArray(set);
-        var sum: number = 0;
+        let mut sum: number = 0;
 
         for item in arr {
             sum = sum + item;
@@ -262,7 +262,7 @@ fn test_for_in_with_hashset() {
 fn test_for_in_with_result_early_return() {
     let source = r#"
         fn process(arr: array) -> number {
-            var sum: number = 0;
+            let mut sum: number = 0;
             for item in arr {
                 if (item < 0) {
                     return -999;
@@ -289,8 +289,8 @@ fn test_for_in_with_result_early_return() {
 fn test_for_in_with_conditional_sum() {
     let source = r#"
         let arr: array = [1, -1, 2, -2, 3, -3];
-        var pos_sum: number = 0;
-        var neg_sum: number = 0;
+        let mut pos_sum: number = 0;
+        let mut neg_sum: number = 0;
 
         for num in arr {
             if (num > 0) {
@@ -326,7 +326,7 @@ fn test_for_in_performance() {
         r#"
         let arr: array = {};
 
-        var sum: number = 0;
+        let mut sum: number = 0;
         for item in arr {{
             sum = sum + item;
         }}

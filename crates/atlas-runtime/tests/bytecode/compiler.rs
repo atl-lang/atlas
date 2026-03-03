@@ -22,11 +22,11 @@ fn execute_source(source: &str) -> Result<Option<Value>, atlas_runtime::value::R
 // ============================================================================
 
 #[rstest]
-#[case("var x = 10; x += 5; x;", 15.0)]
-#[case("var x = 10; x -= 3; x;", 7.0)]
-#[case("var x = 4; x *= 3; x;", 12.0)]
-#[case("var x = 20; x /= 4; x;", 5.0)]
-#[case("var x = 17; x %= 5; x;", 2.0)]
+#[case("let mut x = 10; x += 5; x;", 15.0)]
+#[case("let mut x = 10; x -= 3; x;", 7.0)]
+#[case("let mut x = 4; x *= 3; x;", 12.0)]
+#[case("let mut x = 20; x /= 4; x;", 5.0)]
+#[case("let mut x = 17; x %= 5; x;", 2.0)]
 fn test_compound_assignments(#[case] source: &str, #[case] expected: f64) {
     let result = execute_source(source);
     assert!(result.is_ok());
@@ -38,8 +38,8 @@ fn test_compound_assignments(#[case] source: &str, #[case] expected: f64) {
 // ============================================================================
 
 #[rstest]
-#[case("var x = 5; x++; x;", 6.0)]
-#[case("var x = 5; x--; x;", 4.0)]
+#[case("let mut x = 5; x++; x;", 6.0)]
+#[case("let mut x = 5; x--; x;", 4.0)]
 fn test_increment_decrement(#[case] source: &str, #[case] expected: f64) {
     let result = execute_source(source);
     assert!(result.is_ok());
@@ -157,7 +157,7 @@ fn test_function_calling_function() {
 fn test_multiple_compound_assignments() {
     let result = execute_source(
         r#"
-        var x = 10;
+        let mut x = 10;
         x += 5;
         x *= 2;
         x -= 3;
@@ -172,7 +172,7 @@ fn test_multiple_compound_assignments() {
 fn test_mixed_operators() {
     let result = execute_source(
         r#"
-        var x = 5;
+        let mut x = 5;
         x++;
         x *= 2;
         x--;
@@ -207,8 +207,8 @@ fn test_array_in_function() {
 fn test_loop_with_compound_assignment() {
     let result = execute_source(
         r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 5) {
             sum += i;
             i++;

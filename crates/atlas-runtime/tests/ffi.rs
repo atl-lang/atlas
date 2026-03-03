@@ -699,8 +699,8 @@ fn test_ffi_multiple_calls() {
         extern "m" fn sqrt(x: CDouble) -> CDouble;
 
         fn sum_of_roots() -> number {
-            var total = 0;
-            var i = 1;
+            let mut total = 0;
+            let mut i = 1;
             while (i <= 10) {
                 total = total + sqrt(i);
                 i = i + 1;

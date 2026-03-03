@@ -75,7 +75,7 @@ fn test_while_loop_valid_types() {
     let diags = errors(
         r#"
         fn countdown(n: number) -> number {
-            var count = n;
+            let mut count = n;
             while (count > 0) {
                 count = count - 1;
             }
@@ -93,7 +93,7 @@ fn test_for_in_valid_array() {
         r#"
         fn sum_arr() -> number {
             let arr = [1, 2, 3];
-            var total = 0;
+            let mut total = 0;
             for x in arr {
                 total = total + x;
             }

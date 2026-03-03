@@ -22,25 +22,25 @@ items:
         statements:
           - VarDecl:
               mutable: true
-              uses_deprecated_var: true
+              uses_deprecated_var: false
               name:
                 name: i
                 span:
-                  start: 46
-                  end: 47
+                  start: 50
+                  end: 51
               type_ref:
                 Named:
                   - number
-                  - start: 49
-                    end: 55
+                  - start: 53
+                    end: 59
               init:
                 Literal:
                   - Number: 0
-                  - start: 58
-                    end: 59
+                  - start: 62
+                    end: 63
               span:
                 start: 42
-                end: 60
+                end: 64
           - While:
               cond:
                 Binary:
@@ -49,31 +49,31 @@ items:
                     Identifier:
                       name: i
                       span:
-                        start: 80
-                        end: 81
+                        start: 84
+                        end: 85
                   right:
                     Literal:
                       - Number: 5
-                      - start: 84
-                        end: 85
+                      - start: 88
+                        end: 89
                   span:
-                    start: 80
-                    end: 85
+                    start: 84
+                    end: 89
               body:
                 statements:
                   - FunctionDecl:
                       name:
                         name: increment
                         span:
-                          start: 108
-                          end: 117
+                          start: 112
+                          end: 121
                       type_params: []
                       params: []
                       return_type:
                         Named:
                           - void
-                          - start: 123
-                            end: 127
+                          - start: 127
+                            end: 131
                       return_ownership: ~
                       predicate: ~
                       body:
@@ -83,18 +83,18 @@ items:
                                 Name:
                                   name: i
                                   span:
-                                    start: 150
-                                    end: 151
+                                    start: 154
+                                    end: 155
                               span:
-                                start: 150
-                                end: 154
+                                start: 154
+                                end: 158
                         tail_expr: ~
                         span:
-                          start: 128
-                          end: 172
+                          start: 132
+                          end: 176
                       span:
-                        start: 105
-                        end: 172
+                        start: 109
+                        end: 176
                   - Expr:
                       expr:
                         Call:
@@ -102,36 +102,36 @@ items:
                             Identifier:
                               name: increment
                               span:
-                                start: 189
-                                end: 198
+                                start: 193
+                                end: 202
                           args: []
                           span:
-                            start: 189
-                            end: 200
+                            start: 193
+                            end: 204
                       span:
-                        start: 189
-                        end: 201
+                        start: 193
+                        end: 205
                   - Increment:
                       target:
                         Name:
                           name: i
                           span:
-                            start: 218
-                            end: 219
+                            start: 222
+                            end: 223
                       span:
-                        start: 218
-                        end: 222
+                        start: 222
+                        end: 226
                 tail_expr: ~
                 span:
-                  start: 87
-                  end: 236
+                  start: 91
+                  end: 240
               span:
-                start: 73
-                end: 236
+                start: 77
+                end: 240
         tail_expr: ~
         span:
           start: 28
-          end: 246
+          end: 250
       span:
         start: 9
-        end: 246
+        end: 250

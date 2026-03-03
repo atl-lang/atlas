@@ -252,7 +252,7 @@ fn test_let_bind_with_explicit_annotation() {
 fn test_let_bind_mutable_allows_reassign() {
     let diags = typecheck_source(
         r#"
-        var x = 5;
+        let mut x = 5;
         x = 10;
         "#,
     );
@@ -312,7 +312,7 @@ fn test_flow_widen_at_merge_point() {
     let diags = typecheck_source(
         r#"
         fn get_val(flag: bool) -> number {
-            var result = 0;
+            let mut result = 0;
             if (flag) {
                 result = 1;
             } else {
@@ -336,7 +336,7 @@ fn test_flow_immutable_tracking_precise() {
 fn test_flow_loop_basic() {
     let diags = typecheck_source(
         r#"
-        var i = 0;
+        let mut i = 0;
         while (i < 10) {
             i = i + 1;
         }
@@ -349,8 +349,8 @@ fn test_flow_loop_basic() {
 fn test_flow_loop_with_for() {
     let diags = typecheck_source(
         r#"
-        var sum = 0;
-        for (var i = 0; i < 5; i++) {
+        let mut sum = 0;
+        for (let mut i = 0; i < 5; i++) {
             sum = sum + i;
         }
         "#,

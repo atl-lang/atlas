@@ -159,7 +159,7 @@ double_base();
 fn test_top_level_var_readable_from_fn() {
     assert_parity_number(
         r#"
-var counter = 5;
+let mut counter = 5;
 fn read_counter() -> number { return counter; }
 read_counter();
 "#,
@@ -172,7 +172,7 @@ fn test_top_level_var_mutable_from_fn() {
     // Var mutation via named fn — top-level var is global, writable
     assert_parity_number(
         r#"
-var counter = 0;
+let mut counter = 0;
 fn increment() { counter = counter + 1; }
 increment();
 increment();
@@ -187,7 +187,7 @@ counter;
 fn test_top_level_var_mutation_and_read() {
     assert_parity_number(
         r#"
-var total = 100;
+let mut total = 100;
 fn subtract(n: number) { total = total - n; }
 subtract(30);
 subtract(20);
@@ -216,7 +216,7 @@ fn test_two_fns_sharing_top_level_var() {
     // Two fns cooperating via a shared mutable top-level var
     assert_parity_number(
         r#"
-var acc = 0;
+let mut acc = 0;
 fn add_one() { acc = acc + 1; }
 fn add_ten() { acc = acc + 10; }
 add_one();
@@ -233,7 +233,7 @@ fn test_fn_reads_updated_top_level_var() {
     // Function sees the CURRENT value of var, not a captured snapshot
     assert_parity_number(
         r#"
-var x = 1;
+let mut x = 1;
 fn get_x() -> number { return x; }
 x = 99;
 get_x();
@@ -261,7 +261,7 @@ fn test_top_level_let_no_snapshot() {
     // This test verifies the function sees the changed value, not a captured one
     assert_parity_number(
         r#"
-var val = 10;
+let mut val = 10;
 fn get_val() -> number { return val; }
 val = 20;
 get_val();
@@ -362,7 +362,7 @@ fn test_recursive_fn_with_global_counter() {
     // Recursive calls accumulate into a top-level var
     assert_parity_number(
         r#"
-var sum = 0;
+let mut sum = 0;
 fn accumulate(n: number) {
     if (n > 0) {
         sum = sum + n;
@@ -381,7 +381,7 @@ fn test_mutually_referencing_fns_via_global() {
     // Two fns that communicate through a top-level var
     assert_parity_number(
         r#"
-var state = 0;
+let mut state = 0;
 fn step_a() { state = state + 1; }
 fn step_b() { state = state * 2; }
 step_a();
@@ -572,7 +572,7 @@ fn test_fn_value_survives_scope_exit_for_globals() {
     // Store fn reference, change the global var, call fn — sees new value
     assert_parity_number(
         r#"
-var factor = 2;
+let mut factor = 2;
 fn times_factor(x: number) -> number { return x * factor; }
 let saved = times_factor;
 factor = 3;
@@ -603,8 +603,8 @@ fn test_parameter_does_not_bleed_to_outer_scope() {
     // A function's parameter should not be visible after the function returns
     assert_parity_number(
         r#"
-var x = 99;
-fn set_inner(y: number) { var x = y; }
+let mut x = 99;
+fn set_inner(y: number) { let mut x = y; }
 set_inner(1);
 x;
 "#,
@@ -631,7 +631,7 @@ fn test_multiple_calls_do_not_pollute_scope() {
     assert_parity_number(
         r#"
 fn make_local() -> number {
-    var n = 10;
+    let mut n = 10;
     n = n + 5;
     return n;
 }
@@ -879,7 +879,7 @@ fn test_vm_upvalue_captures_var_at_definition_time() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var x = 5;
+    let mut x = 5;
     fn get_x() -> number {
         return x;
     }
@@ -899,7 +899,7 @@ fn test_vm_upvalue_var_mutation_before_inner_def_is_captured() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var x = 5;
+    let mut x = 5;
     x = 20;
     fn get_x() -> number {
         return x;
@@ -921,7 +921,7 @@ fn test_vm_upvalue_is_snapshot_not_live_reference() {
     let result = vm_eval_last(
         r#"
 fn outer() -> number {
-    var x = 5;
+    let mut x = 5;
     fn get_x() -> number {
         return x;
     }
@@ -984,7 +984,7 @@ fn test_vm_two_inner_fns_capture_same_var_independently() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var cap = 7;
+    let mut cap = 7;
     fn get_a() -> number {
         return cap;
     }
@@ -1384,7 +1384,7 @@ fn test_parity_var_mutation_after_closure_creation_not_visible() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var x = 10;
+    let mut x = 10;
     let f = () => x;
     x = 99;
     return f();
@@ -1401,7 +1401,7 @@ fn test_parity_var_mutation_after_closure_creation_block_form() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var x = 10;
+    let mut x = 10;
     let f = fn() -> number { return x; };
     x = 99;
     return f();
@@ -1418,7 +1418,7 @@ fn test_parity_var_mutation_inside_closure_works() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var counter = 0;
+    let mut counter = 0;
     let inc = () => counter + 1;
     return inc();
 }
@@ -1434,8 +1434,8 @@ fn test_parity_partial_var_mutation_after_capture() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var a = 1;
-    var b = 2;
+    let mut a = 1;
+    let mut b = 2;
     let f = () => a + b;
     a = 100;
     return f();
@@ -1468,7 +1468,7 @@ fn test_parity_two_closures_different_snapshots() {
     assert_parity_number(
         r#"
 fn outer() -> number {
-    var x = 1;
+    let mut x = 1;
     let f1 = () => x;
     x = 2;
     let f2 = () => x;
@@ -1932,7 +1932,7 @@ fn test_parity_capture_var_snapshot_at_creation() {
     assert_parity_number(
         r#"
 fn run() -> number {
-    var x = 5;
+    let mut x = 5;
     let f = fn() -> number { return x; };
     x = 99;
     return f();

@@ -622,12 +622,12 @@ impl Runtime {
                 // Would need to store globals separately and merge on each eval
                 // For v0.2 phase-01, we'll use eval to set globals
                 let set_code = match &value {
-                    Value::Number(n) => format!("var {}: number = {};", name, n),
+                    Value::Number(n) => format!("let mut {}: number = {};", name, n),
                     Value::String(s) => {
-                        format!("var {}: string = \"{}\";", name, s.replace('"', "\\\""))
+                        format!("let mut {}: string = \"{}\";", name, s.replace('"', "\\\""))
                     }
-                    Value::Bool(b) => format!("var {}: bool = {};", name, b),
-                    Value::Null => format!("var {}: null = null;", name),
+                    Value::Bool(b) => format!("let mut {}: bool = {};", name, b),
+                    Value::Null => format!("let mut {}: null = null;", name),
                     _ => return, // Can't set other complex types via code generation
                 };
                 let _ = self.eval(&set_code);

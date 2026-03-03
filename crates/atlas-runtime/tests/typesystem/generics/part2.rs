@@ -236,7 +236,7 @@ fn test_var_type_mismatch_bool_string() {
 fn test_assignment_type_mismatch() {
     let diags = errors(
         r#"
-        var x: number = 1;
+        let mut x: number = 1;
         x = "hello";
     "#,
     );

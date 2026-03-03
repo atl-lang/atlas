@@ -55,7 +55,7 @@ fn test_config_missing_field_default() {
         let configStr: string = "{\"host\": \"localhost\"}";
         let config: json = parseJSON(configStr)?;
         let port: json = config["port"];
-        var portValue: number = 8080.0;
+        let mut portValue: number = 8080.0;
         if (!jsonIsNull(port)) {
             portValue = port.as_number();
         }
@@ -139,12 +139,12 @@ fn test_config_merge_defaults() {
         let hostUser: json = user["host"];
         let portUser: json = user["port"];
 
-        var finalHost: string = user["host"].as_string();
+        let mut finalHost: string = user["host"].as_string();
         if (jsonIsNull(hostUser)) {
             finalHost = def["host"].as_string();
         }
 
-        var finalPort: number = def["port"].as_number();
+        let mut finalPort: number = def["port"].as_number();
         if (!jsonIsNull(portUser)) {
             finalPort = user["port"].as_number();
         }

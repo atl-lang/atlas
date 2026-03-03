@@ -147,7 +147,7 @@ fn test_method_in_conditional() {
     let result = run_vm(
         r#"
         let data: json = unwrap(parseJSON("{\"enabled\":true}"));
-        var result: string = "no";
+        let mut result: string = "no";
         if (data["enabled"].as_bool()) {
             result = "yes";
         };

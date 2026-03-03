@@ -24,25 +24,25 @@ items:
               init:
                 VarDecl:
                   mutable: true
-                  uses_deprecated_var: true
+                  uses_deprecated_var: false
                   name:
                     name: i
                     span:
-                      start: 51
-                      end: 52
+                      start: 55
+                      end: 56
                   type_ref:
                     Named:
                       - number
-                      - start: 54
-                        end: 60
+                      - start: 58
+                        end: 64
                   init:
                     Literal:
                       - Number: 0
-                      - start: 63
-                        end: 64
+                      - start: 67
+                        end: 68
                   span:
                     start: 47
-                    end: 65
+                    end: 69
               cond:
                 Binary:
                   op: Lt
@@ -50,56 +50,56 @@ items:
                     Identifier:
                       name: i
                       span:
-                        start: 66
-                        end: 67
+                        start: 70
+                        end: 71
                   right:
                     Literal:
                       - Number: 5
-                      - start: 70
-                        end: 71
+                      - start: 74
+                        end: 75
                   span:
-                    start: 66
-                    end: 71
+                    start: 70
+                    end: 75
               step:
                 Increment:
                   target:
                     Name:
                       name: i
                       span:
-                        start: 73
-                        end: 74
+                        start: 77
+                        end: 78
                   span:
-                    start: 73
-                    end: 74
+                    start: 77
+                    end: 78
               body:
                 statements:
                   - FunctionDecl:
                       name:
                         name: log
                         span:
-                          start: 99
-                          end: 102
+                          start: 103
+                          end: 106
                       type_params: []
                       params:
                         - name:
                             name: x
                             span:
-                              start: 103
-                              end: 104
+                              start: 107
+                              end: 108
                           type_ref:
                             Named:
                               - number
-                              - start: 106
-                                end: 112
+                              - start: 110
+                                end: 116
                           ownership: ~
                           span:
-                            start: 103
-                            end: 112
+                            start: 107
+                            end: 116
                       return_type:
                         Named:
                           - void
-                          - start: 117
-                            end: 121
+                          - start: 121
+                            end: 125
                       return_ownership: ~
                       predicate: ~
                       body:
@@ -111,38 +111,38 @@ items:
                                     Identifier:
                                       name: print
                                       span:
-                                        start: 144
-                                        end: 149
+                                        start: 148
+                                        end: 153
                                   args:
                                     - Call:
                                         callee:
                                           Identifier:
                                             name: str
                                             span:
-                                              start: 150
-                                              end: 153
+                                              start: 154
+                                              end: 157
                                         args:
                                           - Identifier:
                                               name: x
                                               span:
-                                                start: 154
-                                                end: 155
+                                                start: 158
+                                                end: 159
                                         span:
-                                          start: 150
-                                          end: 156
+                                          start: 154
+                                          end: 160
                                   span:
-                                    start: 144
-                                    end: 157
+                                    start: 148
+                                    end: 161
                               span:
-                                start: 144
-                                end: 158
+                                start: 148
+                                end: 162
                         tail_expr: ~
                         span:
-                          start: 122
-                          end: 176
+                          start: 126
+                          end: 180
                       span:
-                        start: 96
-                        end: 176
+                        start: 100
+                        end: 180
                   - Expr:
                       expr:
                         Call:
@@ -150,31 +150,31 @@ items:
                             Identifier:
                               name: log
                               span:
-                                start: 193
-                                end: 196
+                                start: 197
+                                end: 200
                           args:
                             - Identifier:
                                 name: i
                                 span:
-                                  start: 197
-                                  end: 198
+                                  start: 201
+                                  end: 202
                           span:
-                            start: 193
-                            end: 199
+                            start: 197
+                            end: 203
                       span:
-                        start: 193
-                        end: 200
+                        start: 197
+                        end: 204
                 tail_expr: ~
                 span:
-                  start: 78
-                  end: 214
+                  start: 82
+                  end: 218
               span:
                 start: 42
-                end: 214
+                end: 218
         tail_expr: ~
         span:
           start: 28
-          end: 224
+          end: 228
       span:
         start: 9
-        end: 224
+        end: 228

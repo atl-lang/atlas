@@ -125,6 +125,7 @@ expression: json
                 }
               }
             ],
+            "tail_expr": null,
             "span": {
               "start": 35,
               "end": 53

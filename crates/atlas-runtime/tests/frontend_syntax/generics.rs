@@ -299,7 +299,7 @@ fn test_parse_export_let() {
 
 #[test]
 fn test_parse_export_var() {
-    let source = r#"export var counter = 0;"#;
+    let source = r#"export let mut counter = 0;"#;
     let (success, msgs) = parse(source);
     assert!(success, "Should parse export var: {:?}", msgs);
 }

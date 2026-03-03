@@ -15,15 +15,16 @@ use pretty_assertions::assert_eq;
 
 #[test]
 fn test_arithmetic_add_loop_correctness() {
-    let result =
-        vm_number("var sum = 0; var i = 1; while (i <= 100) { sum = sum + i; i = i + 1; } sum;");
+    let result = vm_number(
+        "let mut sum = 0; let mut i = 1; while (i <= 100) { sum = sum + i; i = i + 1; } sum;",
+    );
     assert_eq!(result, 5050.0);
 }
 
 #[test]
 fn test_arithmetic_sub_correctness() {
     let result = vm_number(
-        "var result = 1000; var i = 0; while (i < 10) { result = result - i; i = i + 1; } result;",
+        "let mut result = 1000; let mut i = 0; while (i < 10) { result = result - i; i = i + 1; } result;",
     );
     assert_eq!(result, 955.0);
 }
@@ -31,21 +32,21 @@ fn test_arithmetic_sub_correctness() {
 #[test]
 fn test_arithmetic_mul_correctness() {
     let result = vm_number(
-        "var result = 1; var i = 1; while (i <= 10) { result = result * i; i = i + 1; } result;",
+        "let mut result = 1; let mut i = 1; while (i <= 10) { result = result * i; i = i + 1; } result;",
     );
     assert_eq!(result, 3628800.0);
 }
 
 #[test]
 fn test_arithmetic_div_correctness() {
-    let result = vm_number("var r = 1000000; r = r / 10; r = r / 10; r = r / 10; r;");
+    let result = vm_number("let mut r = 1000000; r = r / 10; r = r / 10; r = r / 10; r;");
     assert_eq!(result, 1000.0);
 }
 
 #[test]
 fn test_arithmetic_mod_correctness() {
     let result = vm_number(
-        "var count = 0; var i = 0; while (i < 100) { if (i % 3 == 0) { count = count + 1; } i = i + 1; } count;",
+        "let mut count = 0; let mut i = 0; while (i < 100) { if (i % 3 == 0) { count = count + 1; } i = i + 1; } count;",
     );
     assert_eq!(result, 34.0);
 }
@@ -97,7 +98,7 @@ fn test_function_nested_calls() {
 #[test]
 fn test_function_many_calls_loop() {
     let result = vm_number(
-        "fn increment(x: number) -> number { return x + 1; } var r = 0; var i = 0; while (i < 100) { r = increment(r); i = i + 1; } r;",
+        "fn increment(x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 100) { r = increment(r); i = i + 1; } r;",
     );
     assert_eq!(result, 100.0);
 }
@@ -139,21 +140,22 @@ fn test_function_call_in_expression() {
 
 #[test]
 fn test_loop_simple_counting() {
-    let result = vm_number("var i = 0; while (i < 1000) { i = i + 1; } i;");
+    let result = vm_number("let mut i = 0; while (i < 1000) { i = i + 1; } i;");
     assert_eq!(result, 1000.0);
 }
 
 #[test]
 fn test_loop_accumulation() {
-    let result =
-        vm_number("var sum = 0; var i = 1; while (i <= 1000) { sum = sum + i; i = i + 1; } sum;");
+    let result = vm_number(
+        "let mut sum = 0; let mut i = 1; while (i <= 1000) { sum = sum + i; i = i + 1; } sum;",
+    );
     assert_eq!(result, 500500.0);
 }
 
 #[test]
 fn test_loop_nested() {
     let result = vm_number(
-        "var count = 0; var i = 0; while (i < 50) { var j = 0; while (j < 50) { count = count + 1; j = j + 1; } i = i + 1; } count;",
+        "let mut count = 0; let mut i = 0; while (i < 50) { let mut j = 0; while (j < 50) { count = count + 1; j = j + 1; } i = i + 1; } count;",
     );
     assert_eq!(result, 2500.0);
 }
@@ -161,7 +163,7 @@ fn test_loop_nested() {
 #[test]
 fn test_loop_with_conditionals() {
     let result = vm_number(
-        "var evens = 0; var i = 0; while (i < 100) { if (i % 2 == 0) { evens = evens + 1; } i = i + 1; } evens;",
+        "let mut evens = 0; let mut i = 0; while (i < 100) { if (i % 2 == 0) { evens = evens + 1; } i = i + 1; } evens;",
     );
     assert_eq!(result, 50.0);
 }
@@ -169,22 +171,23 @@ fn test_loop_with_conditionals() {
 #[test]
 fn test_loop_variable_update() {
     let result = vm_number(
-        "var a = 0; var b = 1; var i = 0; while (i < 20) { let temp = a + b; a = b; b = temp; i = i + 1; } b;",
+        "let mut a = 0; let mut b = 1; let mut i = 0; while (i < 20) { let temp = a + b; a = b; b = temp; i = i + 1; } b;",
     );
     assert_eq!(result, 10946.0);
 }
 
 #[test]
 fn test_loop_large_iteration() {
-    let result =
-        vm_number("var sum = 0; var i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;");
+    let result = vm_number(
+        "let mut sum = 0; let mut i = 0; while (i < 10000) { sum = sum + i; i = i + 1; } sum;",
+    );
     assert_eq!(result, 49995000.0);
 }
 
 #[test]
 fn test_loop_function_call_inside() {
     let result = vm_number(
-        "fn square(x: number) -> number { return x * x; } var sum = 0; var i = 1; while (i <= 10) { sum = sum + square(i); i = i + 1; } sum;",
+        "fn square(x: number) -> number { return x * x; } let mut sum = 0; let mut i = 1; while (i <= 10) { sum = sum + square(i); i = i + 1; } sum;",
     );
     assert_eq!(result, 385.0);
 }
@@ -192,7 +195,7 @@ fn test_loop_function_call_inside() {
 #[test]
 fn test_loop_deeply_nested() {
     let result = vm_number(
-        "var count = 0; var i = 0; while (i < 10) { var j = 0; while (j < 10) { var k = 0; while (k < 10) { count = count + 1; k = k + 1; } j = j + 1; } i = i + 1; } count;",
+        "let mut count = 0; let mut i = 0; while (i < 10) { let mut j = 0; while (j < 10) { let mut k = 0; while (k < 10) { count = count + 1; k = k + 1; } j = j + 1; } i = i + 1; } count;",
     );
     assert_eq!(result, 1000.0);
 }
@@ -210,7 +213,7 @@ fn test_array_creation_and_access() {
 #[test]
 fn test_array_index_in_loop() {
     let result = vm_number(
-        "let arr = [1, 2, 3, 4, 5]; var sum = 0; var i = 0; while (i < 5) { sum = sum + arr[i]; i = i + 1; } sum;",
+        "let arr = [1, 2, 3, 4, 5]; let mut sum = 0; let mut i = 0; while (i < 5) { sum = sum + arr[i]; i = i + 1; } sum;",
     );
     assert_eq!(result, 15.0);
 }
@@ -226,7 +229,7 @@ fn test_array_set_index() {
 #[test]
 fn test_array_element_sum() {
     let result = vm_number(
-        "let arr = [10, 20, 30, 40, 50]; var sum = 0; var i = 0; while (i < 5) { sum = sum + arr[i]; i = i + 1; } sum;",
+        "let arr = [10, 20, 30, 40, 50]; let mut sum = 0; let mut i = 0; while (i < 5) { sum = sum + arr[i]; i = i + 1; } sum;",
     );
     assert_eq!(result, 150.0);
 }
@@ -234,7 +237,7 @@ fn test_array_element_sum() {
 #[test]
 fn test_array_large_creation() {
     let result = vm_number(
-        "let arr = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]; var sum = 0; var i = 0; while (i < 20) { sum = sum + arr[i]; i = i + 1; } sum;",
+        "let arr = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]; let mut sum = 0; let mut i = 0; while (i < 20) { sum = sum + arr[i]; i = i + 1; } sum;",
     );
     assert_eq!(result, 210.0);
 }
@@ -242,7 +245,7 @@ fn test_array_large_creation() {
 #[test]
 fn test_array_modification_in_loop() {
     let result = vm_number(
-        "let arr = [1, 2, 3, 4, 5]; var i = 0; while (i < 5) { arr[i] = arr[i] * 2; i = i + 1; } arr[0] + arr[1] + arr[2] + arr[3] + arr[4];",
+        "let arr = [1, 2, 3, 4, 5]; let mut i = 0; while (i < 5) { arr[i] = arr[i] * 2; i = i + 1; } arr[0] + arr[1] + arr[2] + arr[3] + arr[4];",
     );
     assert_eq!(result, 30.0);
 }
@@ -284,7 +287,7 @@ fn test_stack_complex_expression_chain() {
 #[test]
 fn test_comparison_less_greater() {
     let result = vm_number(
-        "var count = 0; if (1 < 2) { count = count + 1; } if (2 > 1) { count = count + 1; } if (1 <= 1) { count = count + 1; } if (2 >= 2) { count = count + 1; } count;",
+        "let mut count = 0; if (1 < 2) { count = count + 1; } if (2 > 1) { count = count + 1; } if (1 <= 1) { count = count + 1; } if (2 >= 2) { count = count + 1; } count;",
     );
     assert_eq!(result, 4.0);
 }
@@ -292,7 +295,7 @@ fn test_comparison_less_greater() {
 #[test]
 fn test_equality_check() {
     let result = vm_number(
-        "var count = 0; if (1 == 1) { count = count + 1; } if (1 != 2) { count = count + 1; } count;",
+        "let mut count = 0; if (1 == 1) { count = count + 1; } if (1 != 2) { count = count + 1; } count;",
     );
     assert_eq!(result, 2.0);
 }
@@ -306,7 +309,7 @@ fn test_boolean_not() {
 #[test]
 fn test_comparison_in_loop() {
     let result = vm_number(
-        "var max_val = 0; var i = 0; while (i < 100) { if (i > max_val) { max_val = i; } i = i + 1; } max_val;",
+        "let mut max_val = 0; let mut i = 0; while (i < 100) { if (i > max_val) { max_val = i; } i = i + 1; } max_val;",
     );
     assert_eq!(result, 99.0);
 }
@@ -324,7 +327,7 @@ fn test_string_concat_correctness() {
 #[test]
 fn test_string_concat_loop() {
     let result =
-        vm_string(r#"var s = ""; var i = 0; while (i < 5) { s = s + "a"; i = i + 1; } s;"#);
+        vm_string(r#"let mut s = ""; let mut i = 0; while (i < 5) { s = s + "a"; i = i + 1; } s;"#);
     assert_eq!(result, "aaaaa");
 }
 
@@ -359,8 +362,9 @@ fn test_dispatch_number() {
 #[test]
 fn test_perf_large_loop_completes() {
     let start = Instant::now();
-    let result =
-        vm_number("var sum = 0; var i = 0; while (i < 50000) { sum = sum + i; i = i + 1; } sum;");
+    let result = vm_number(
+        "let mut sum = 0; let mut i = 0; while (i < 50000) { sum = sum + i; i = i + 1; } sum;",
+    );
     let elapsed = start.elapsed();
     assert_eq!(result, 1249975000.0);
     assert!(elapsed.as_secs() < 5, "Loop took too long: {:?}", elapsed);
@@ -381,7 +385,7 @@ fn test_perf_recursive_fib_completes() {
 fn test_perf_nested_loops_complete() {
     let start = Instant::now();
     let result = vm_number(
-        "var count = 0; var i = 0; while (i < 100) { var j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;",
+        "let mut count = 0; let mut i = 0; while (i < 100) { let mut j = 0; while (j < 100) { count = count + 1; j = j + 1; } i = i + 1; } count;",
     );
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);
@@ -396,7 +400,7 @@ fn test_perf_nested_loops_complete() {
 fn test_perf_function_calls_complete() {
     let start = Instant::now();
     let result = vm_number(
-        "fn add(a: number, b: number) -> number { return a + b; } var sum = 0; var i = 0; while (i < 10000) { sum = add(sum, 1); i = i + 1; } sum;",
+        "fn add(a: number, b: number) -> number { return a + b; } let mut sum = 0; let mut i = 0; while (i < 10000) { sum = add(sum, 1); i = i + 1; } sum;",
     );
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);

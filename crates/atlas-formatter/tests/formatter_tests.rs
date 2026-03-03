@@ -29,7 +29,7 @@ fn test_let_declaration() {
 
 #[test]
 fn test_var_declaration() {
-    assert_eq!(fmt("var x = 10;"), "var x = 10;\n");
+    assert_eq!(fmt("let mut x = 10;"), "let mut x = 10;\n");
 }
 
 #[test]

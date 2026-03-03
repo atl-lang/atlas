@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn test_edge_deeply_nested_if() {
     let code = r#"
-        var x = 0;
+        let mut x = 0;
         if (true) {
             if (true) {
                 if (true) {
@@ -20,7 +20,7 @@ fn test_edge_deeply_nested_if() {
 fn test_edge_boolean_short_circuit_and() {
     // If short-circuit works, second function should not be called
     let code = r#"
-        var called = 0;
+        let mut called = 0;
         fn side_effect() -> bool {
             called = called + 1;
             return true;
@@ -35,7 +35,7 @@ fn test_edge_boolean_short_circuit_and() {
 fn test_edge_boolean_short_circuit_or() {
     // If short-circuit works, second function should not be called
     let code = r#"
-        var called = 0;
+        let mut called = 0;
         fn side_effect() -> bool {
             called = called + 1;
             return false;
@@ -68,7 +68,7 @@ fn test_edge_while_loop_early_break() {
     // Otherwise test early return from function containing loop
     let code = r#"
         fn first_over_5() -> number {
-            var i = 0;
+            let mut i = 0;
             while (i < 100) {
                 if (i > 5) { return i; }
                 i = i + 1;
@@ -90,15 +90,18 @@ fn test_edge_while_loop_early_break() {
 /// Now `assign_at_index` clones the container, mutates via CoW, and writes back.
 #[test]
 fn test_array_index_assignment_write_back() {
-    assert_eval_number("var arr: array = [10, 20, 30]; arr[1] = 99; arr[1];", 99.0);
+    assert_eval_number(
+        "let mut arr: array = [10, 20, 30]; arr[1] = 99; arr[1];",
+        99.0,
+    );
 }
 
 #[test]
 fn test_array_index_assignment_first_element() {
-    assert_eval_number("var arr: array = [1, 2, 3]; arr[0] = 42; arr[0];", 42.0);
+    assert_eval_number("let mut arr: array = [1, 2, 3]; arr[0] = 42; arr[0];", 42.0);
 }
 
 #[test]
 fn test_array_index_assignment_last_element() {
-    assert_eval_number("var arr: array = [1, 2, 3]; arr[2] = 77; arr[2];", 77.0);
+    assert_eval_number("let mut arr: array = [1, 2, 3]; arr[2] = 77; arr[2];", 77.0);
 }

@@ -29,7 +29,7 @@ fn test_opt_debug_simple_program() {
 
 #[test]
 fn test_opt_debug_breakpoint_creation() {
-    let source = "var x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
+    let source = "let mut x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
     let bc = compile(source);
     let mut session = DebuggerSession::new(bc, source, "test.atlas");
     let response = session.process_request(DebugRequest::SetBreakpoint {
@@ -43,7 +43,7 @@ fn test_opt_debug_breakpoint_creation() {
 
 #[test]
 fn test_opt_debug_optimized_breakpoint() {
-    let source = "var x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
+    let source = "let mut x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
     let bc = compile_optimized(source);
     let mut session = DebuggerSession::new(bc, source, "test.atlas");
     let response = session.process_request(DebugRequest::SetBreakpoint {
@@ -103,7 +103,8 @@ fn test_opt_debug_arithmetic_optimized_semantic() {
 
 #[test]
 fn test_opt_debug_loop_semantics_preserved() {
-    let source = "var sum = 0; var i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;";
+    let source =
+        "let mut sum = 0; let mut i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;";
     let plain = vm_eval(source);
     let opt = vm_eval_opt(source);
     assert_eq!(plain, opt);
@@ -326,7 +327,7 @@ fn test_debugger_remove_breakpoint() {
 
 #[test]
 fn test_debugger_run_until_pause() {
-    let source = "var x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
+    let source = "let mut x = 10;\nlet y = 20;\nlet z = x + y;\nz;";
     let bc = compile(source);
     let mut session = DebuggerSession::new(bc, source, "test.atlas");
     session.process_request(DebugRequest::SetBreakpoint {
@@ -385,7 +386,7 @@ fn test_all_features_arithmetic() {
 
 #[test]
 fn test_all_features_variables() {
-    let source = "var x = 10; let y = 20; x + y;";
+    let source = "let mut x = 10; let y = 20; x + y;";
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -393,7 +394,7 @@ fn test_all_features_variables() {
 
 #[test]
 fn test_all_features_conditionals() {
-    let source = "var x = 10; if (x > 5) { x = x * 2; } x;";
+    let source = "let mut x = 10; if (x > 5) { x = x * 2; } x;";
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -401,7 +402,8 @@ fn test_all_features_conditionals() {
 
 #[test]
 fn test_all_features_while_loop() {
-    let source = "var sum = 0; var i = 0; while (i < 50) { sum = sum + i; i = i + 1; } sum;";
+    let source =
+        "let mut sum = 0; let mut i = 0; while (i < 50) { sum = sum + i; i = i + 1; } sum;";
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -484,7 +486,7 @@ fn test_optimizer_constant_folding_mul() {
 
 #[test]
 fn test_optimizer_preserves_side_effects() {
-    let source = "var x = 0; x = x + 1; x = x + 1; x = x + 1; x;";
+    let source = "let mut x = 0; x = x + 1; x = x + 1; x = x + 1; x;";
     let opt = vm_number_opt(source);
     assert_eq!(opt, 3.0);
 }
@@ -498,7 +500,7 @@ fn test_optimizer_nested_arithmetic() {
 
 #[test]
 fn test_optimizer_mixed_types() {
-    let source = r#"let x = 5; var s = "hello"; x;"#;
+    let source = r#"let x = 5; let mut s = "hello"; x;"#;
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -506,7 +508,8 @@ fn test_optimizer_mixed_types() {
 
 #[test]
 fn test_optimizer_loop_invariant() {
-    let source = "var sum = 0; var i = 0; while (i < 100) { sum = sum + 2 * 3; i = i + 1; } sum;";
+    let source =
+        "let mut sum = 0; let mut i = 0; while (i < 100) { sum = sum + 2 * 3; i = i + 1; } sum;";
     let opt = vm_number_opt(source);
     assert_eq!(opt, 600.0);
 }
@@ -567,14 +570,14 @@ fn test_validate_function_program() {
 
 #[test]
 fn test_validate_loop_program() {
-    let bc = compile("var i = 0; while (i < 10) { i = i + 1; } i;");
+    let bc = compile("let mut i = 0; while (i < 10) { i = i + 1; } i;");
     let result = atlas_runtime::bytecode::validate(&bc);
     assert!(result.is_ok(), "Validation failed: {:?}", result);
 }
 
 #[test]
 fn test_validate_conditional_program() {
-    let bc = compile("var x = 10; if (x > 5) { x = 20; } else { x = 0; } x;");
+    let bc = compile("let mut x = 10; if (x > 5) { x = 20; } else { x = 0; } x;");
     let result = atlas_runtime::bytecode::validate(&bc);
     assert!(result.is_ok(), "Validation failed: {:?}", result);
 }
@@ -701,7 +704,7 @@ fn test_cross_basic_arithmetic(#[case] source: &str, #[case] expected: f64) {
 #[rstest]
 #[case("let x = 5; x;", 5.0)]
 #[case("let x = 5; let y = 10; x + y;", 15.0)]
-#[case("var x = 5; x = x + 1; x;", 6.0)] // var because x is reassigned
+#[case("let mut x = 5; x = x + 1; x;", 6.0)] // var because x is reassigned
 #[case("let x = 100; let y = x / 2; y;", 50.0)]
 fn test_cross_variables(#[case] source: &str, #[case] expected: f64) {
     let plain = vm_number(source);
@@ -711,10 +714,10 @@ fn test_cross_variables(#[case] source: &str, #[case] expected: f64) {
 }
 
 #[rstest]
-#[case("var r = 0; if (true) { r = 1; } else { r = 2; } r;", 1.0)]
-#[case("var r = 0; if (false) { r = 1; } else { r = 2; } r;", 2.0)]
-#[case("var r = 0; if (1 < 2) { r = 10; } else { r = 20; } r;", 10.0)]
-#[case("var r = 0; if (1 > 2) { r = 10; } else { r = 20; } r;", 20.0)]
+#[case("let mut r = 0; if (true) { r = 1; } else { r = 2; } r;", 1.0)]
+#[case("let mut r = 0; if (false) { r = 1; } else { r = 2; } r;", 2.0)]
+#[case("let mut r = 0; if (1 < 2) { r = 10; } else { r = 20; } r;", 10.0)]
+#[case("let mut r = 0; if (1 > 2) { r = 10; } else { r = 20; } r;", 20.0)]
 fn test_cross_conditionals(#[case] source: &str, #[case] expected: f64) {
     let plain = vm_number(source);
     let opt = vm_number_opt(source);
@@ -733,7 +736,7 @@ fn test_cross_fibonacci_parity() {
 
 #[test]
 fn test_cross_string_concatenation() {
-    let source = r#"var s = "a"; s = s + "b"; s = s + "c"; s;"#;
+    let source = r#"let mut s = "a"; s = s + "b"; s = s + "c"; s;"#;
     let plain = vm_string(source);
     assert_eq!(plain, "abc");
 }
@@ -749,7 +752,7 @@ fn test_cross_array_manipulation() {
 
 #[test]
 fn test_cross_nested_loops() {
-    let source = "var total = 0; var i = 0; while (i < 5) { var j = 0; while (j < 5) { total = total + 1; j = j + 1; } i = i + 1; } total;";
+    let source = "let mut total = 0; let mut i = 0; while (i < 5) { let mut j = 0; while (j < 5) { total = total + 1; j = j + 1; } i = i + 1; } total;";
     let plain = vm_number(source);
     let opt = vm_number_opt(source);
     assert_eq!(plain, opt);
@@ -758,7 +761,7 @@ fn test_cross_nested_loops() {
 
 #[test]
 fn test_cross_comparison_chain() {
-    let source = "var count = 0; if (1 < 2) { count = count + 1; } if (2 <= 2) { count = count + 1; } if (3 > 2) { count = count + 1; } if (3 >= 3) { count = count + 1; } count;";
+    let source = "let mut count = 0; if (1 < 2) { count = count + 1; } if (2 <= 2) { count = count + 1; } if (3 > 2) { count = count + 1; } if (3 >= 3) { count = count + 1; } count;";
     let plain = vm_number(source);
     let opt = vm_number_opt(source);
     assert_eq!(plain, 4.0);

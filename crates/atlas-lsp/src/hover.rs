@@ -244,7 +244,7 @@ fn find_variable_in_block(stmts: &[Stmt], identifier: &str) -> Option<String> {
 /// If the variable has no explicit type annotation but is initialized with
 /// an `Expr::AnonFn`, renders the inferred `fn(T...) -> R` type.
 fn format_var_decl_hover(var_decl: &VarDecl, symbols: Option<&SymbolTable>) -> String {
-    let mutability = if var_decl.mutable { "var" } else { "let" };
+    let mutability = if var_decl.mutable { "let mut" } else { "let" };
     let mut hover = String::new();
     hover.push_str("```atlas\n");
     hover.push_str(&format!("{} {}", mutability, var_decl.name.name));
@@ -438,7 +438,7 @@ fn find_symbol_hover(symbols: &SymbolTable, identifier: &str) -> Option<String> 
 
     match symbol.kind {
         SymbolKind::Variable => {
-            let mutability = if symbol.mutable { "var" } else { "let" };
+            let mutability = if symbol.mutable { "let mut" } else { "let" };
             hover.push_str(&format!(
                 "{} {}: {}",
                 mutability,
@@ -769,8 +769,8 @@ fn find_builtin_hover(identifier: &str) -> Option<String> {
 /// Find hover information for keywords
 fn find_keyword_hover(identifier: &str) -> Option<String> {
     let description = match identifier {
-        "let" => "Declares an immutable variable binding.",
-        "var" => "Declares a mutable variable binding.",
+        "let" => "Declares a variable binding. Use `let mut` for mutable bindings.",
+        "mut" => "Modifier for mutable variable bindings. Use with `let mut`.",
         "fn" => "Declares a function.",
         "if" => "Conditional branching statement.",
         "else" => "Alternative branch in conditional statement.",
@@ -1052,7 +1052,7 @@ mod tests {
     #[test]
     fn test_keyword_hover_let() {
         let hover = find_keyword_hover("let").unwrap();
-        assert!(hover.contains("immutable"));
+        assert!(hover.contains("variable binding"));
     }
 
     #[test]

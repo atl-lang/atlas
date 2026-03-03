@@ -97,7 +97,7 @@ fn test_function_wrong_arity(#[case] code: &str, #[case] error_code: &str) {
 #[test]
 fn test_function_void_return() {
     let code = r#"
-        var result: number = 0;
+        let mut result: number = 0;
         fn set_result(x: number) -> void {
             result = x;
         }
@@ -146,7 +146,7 @@ fn test_function_call_stack_depth() {
 #[test]
 fn test_function_local_variable_isolation() {
     let code = r#"
-        var global: number = 100;
+        let mut global: number = 100;
         fn modify_local() -> number {
             let global: number = 50;
             return global;

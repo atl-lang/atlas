@@ -70,7 +70,7 @@ fn test_typecheck_dump_array_type() {
 
 #[test]
 fn test_typecheck_dump_mutable_variable() {
-    let source = "var counter: number = 0;";
+    let source = "let mut counter: number = 0;";
     let json = run_typecheck_dump(source);
     assert_snapshot!(json);
 }
@@ -79,8 +79,8 @@ fn test_typecheck_dump_mutable_variable() {
 fn test_typecheck_dump_function_with_loop() {
     let source = r#"
 fn sum(n: number) -> number {
-    var total: number = 0;
-    var i: number = 0;
+    let mut total: number = 0;
+    let mut i: number = 0;
     while (i < n) {
         total = total + i;
         i = i + 1;

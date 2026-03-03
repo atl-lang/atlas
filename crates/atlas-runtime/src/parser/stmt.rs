@@ -9,7 +9,7 @@ impl Parser {
     /// Parse a statement
     pub(super) fn parse_statement(&mut self) -> Result<Stmt, ()> {
         match self.peek().kind {
-            TokenKind::Let | TokenKind::Var => self.parse_var_decl(),
+            TokenKind::Let => self.parse_var_decl(),
             TokenKind::If => self.parse_if_stmt(),
             TokenKind::While => self.parse_while_stmt(),
             TokenKind::For => {
@@ -50,21 +50,14 @@ impl Parser {
     /// Parse a variable declaration
     pub(super) fn parse_var_decl(&mut self) -> Result<Stmt, ()> {
         let keyword_span = self.peek().span;
-        let keyword = self.advance().kind;
+        self.advance(); // consume 'let'
 
-        // Check for `let mut` or `var`
-        let (mutable, uses_deprecated_var) = match keyword {
-            TokenKind::Var => (true, true), // var x = ... (deprecated)
-            TokenKind::Let => {
-                // Check if followed by `mut`
-                if self.peek().kind == TokenKind::Mut {
-                    self.advance(); // consume 'mut'
-                    (true, false) // let mut x = ... (recommended)
-                } else {
-                    (false, false) // let x = ... (immutable)
-                }
-            }
-            _ => unreachable!("parse_var_decl called with non-let/var token"),
+        // Check for `let mut`
+        let mutable = if self.peek().kind == TokenKind::Mut {
+            self.advance(); // consume 'mut'
+            true // let mut x = ... (mutable)
+        } else {
+            false // let x = ... (immutable)
         };
 
         let name_token = self.consume_identifier("a variable name")?;
@@ -90,7 +83,7 @@ impl Parser {
 
         Ok(Stmt::VarDecl(VarDecl {
             mutable,
-            uses_deprecated_var,
+            uses_deprecated_var: false, // var keyword removed (D-001)
             name,
             type_ref,
             init,
@@ -279,7 +272,7 @@ impl Parser {
         self.consume(TokenKind::LeftParen, "Expected '(' after 'for'")?;
 
         // Parse initializer - create dummy statement if missing
-        let init = if self.check(TokenKind::Let) || self.check(TokenKind::Var) {
+        let init = if self.check(TokenKind::Let) {
             Box::new(self.parse_var_decl()?)
         } else if !self.check(TokenKind::Semicolon) {
             let expr = self.parse_expression()?;
@@ -503,7 +496,6 @@ impl Parser {
         // Skip tokens that definitely start statements, not expressions
         match self.peek().kind {
             TokenKind::Let
-            | TokenKind::Var
             | TokenKind::If
             | TokenKind::While
             | TokenKind::For

@@ -38,9 +38,9 @@ fn test_parity_boolean(#[case] code: &str) {
 // Variable parity tests
 #[rstest]
 #[case("let x = 10; x;")]
-#[case("var y = 5; y = y + 1; y;")]
+#[case("let mut y = 5; y = y + 1; y;")]
 #[case("let a = 1; let b = 2; a + b;")]
-#[case("var c = 0; c = c + 1; c = c + 1; c;")]
+#[case("let mut c = 0; c = c + 1; c = c + 1; c;")]
 fn test_parity_variables(#[case] code: &str) {
     assert_parity(code);
 }
@@ -57,19 +57,19 @@ fn test_parity_functions(#[case] code: &str) {
 
 // Control flow parity tests
 #[rstest]
-#[case("var r = 0; if (true) { r = 1; } else { r = 2; } r;")]
-#[case("var r = 0; if (false) { r = 1; } else { r = 2; } r;")]
-#[case("var r = 0; if (1 < 2) { r = 10; } else { r = 20; } r;")]
-#[case("var x = 0; if (x == 0) { x = 1; } x;")]
+#[case("let mut r = 0; if (true) { r = 1; } else { r = 2; } r;")]
+#[case("let mut r = 0; if (false) { r = 1; } else { r = 2; } r;")]
+#[case("let mut r = 0; if (1 < 2) { r = 10; } else { r = 20; } r;")]
+#[case("let mut x = 0; if (x == 0) { x = 1; } x;")]
 fn test_parity_if_else(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Loop parity tests
 #[rstest]
-#[case("var i = 0; while (i < 5) { i = i + 1; } i;")]
-#[case("var sum = 0; var i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;")]
-#[case("var count = 0; while (count < 3) { count = count + 1; } count;")]
+#[case("let mut i = 0; while (i < 5) { i = i + 1; } i;")]
+#[case("let mut sum = 0; let mut i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;")]
+#[case("let mut count = 0; while (count < 3) { count = count + 1; } count;")]
 fn test_parity_while_loop(#[case] code: &str) {
     assert_parity(code);
 }
@@ -119,24 +119,24 @@ fn test_parity_array_length(#[case] code: &str) {
 
 // Array: push (CoW — original unaffected)
 #[rstest]
-#[case("var a: array = [1, 2]; var b: array = a; b.push(3); len(a);")]
-#[case("var a: array = [1]; a.push(2); a.push(3); len(a);")]
+#[case("let mut a: array = [1, 2]; let mut b: array = a; b.push(3); len(a);")]
+#[case("let mut a: array = [1]; a.push(2); a.push(3); len(a);")]
 fn test_parity_array_push_cow(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Array: pop (CoW — pops from receiver, returns length)
 #[rstest]
-#[case("var a: array = [1, 2, 3]; a.pop(); len(a);")]
-#[case("var a: array = [1, 2, 3]; var b: array = a; a.pop(); len(b);")]
+#[case("let mut a: array = [1, 2, 3]; a.pop(); len(a);")]
+#[case("let mut a: array = [1, 2, 3]; let mut b: array = a; a.pop(); len(b);")]
 fn test_parity_array_pop(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Array: sort (returns new sorted array, receiver unchanged)
 #[rstest]
-#[case("var a: array = [3, 1, 2]; let s = a.sort(); s[0];")]
-#[case("var a: array = [3, 1, 2]; let s = a.sort(); a[0];")]
+#[case("let mut a: array = [3, 1, 2]; let s = a.sort(); s[0];")]
+#[case("let mut a: array = [3, 1, 2]; let s = a.sort(); a[0];")]
 fn test_parity_array_sort(#[case] code: &str) {
     assert_parity(code);
 }
@@ -151,8 +151,8 @@ fn test_parity_array_concat(#[case] code: &str) {
 
 // Array: for-each (sum over elements)
 #[rstest]
-#[case("var sum: number = 0; for x in [1, 2, 3] { sum = sum + x; } sum;")]
-#[case("var count: number = 0; for _x in [10, 20, 30] { count = count + 1; } count;")]
+#[case("let mut sum: number = 0; for x in [1, 2, 3] { sum = sum + x; } sum;")]
+#[case("let mut count: number = 0; for _x in [10, 20, 30] { count = count + 1; } count;")]
 fn test_parity_array_foreach(#[case] code: &str) {
     assert_parity(code);
 }
@@ -176,7 +176,7 @@ fn test_parity_hashmap_get(#[case] code: &str) {
 
 // Map (HashMap): set with CoW — original unaffected after copy
 #[rstest]
-#[case("var m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); var n: HashMap = m; hashMapPut(n, \"b\", 2); hashMapSize(m);")]
+#[case("let mut m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); let mut n: HashMap = m; hashMapPut(n, \"b\", 2); hashMapSize(m);")]
 fn test_parity_hashmap_set_cow(#[case] code: &str) {
     assert_parity(code);
 }
@@ -218,7 +218,7 @@ fn test_parity_stack_operations(#[case] code: &str) {
 // CoW semantics: identical behavior in both engines
 #[rstest]
 #[case("let a: number[] = [1, 2, 3]; let b: number[] = a; a[0] = 99; b[0];")]
-#[case("var a: array = [1, 2]; var b: array = a; b.push(9); len(a);")]
+#[case("let mut a: array = [1, 2]; let mut b: array = a; b.push(9); len(a);")]
 #[case("let a: number[] = [1, 2, 3]; let b: number[] = a; b[2] = 100; a[2];")]
 fn test_parity_cow_semantics(#[case] code: &str) {
     assert_parity(code);

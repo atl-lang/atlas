@@ -402,7 +402,7 @@ impl Parser {
 
         let item = if self.check(TokenKind::Fn) {
             ExportItem::Function(self.parse_function()?)
-        } else if self.check(TokenKind::Let) || self.check(TokenKind::Var) {
+        } else if self.check(TokenKind::Let) {
             // Parse variable declaration
             let stmt = self.parse_statement()?;
             match stmt {
@@ -415,7 +415,7 @@ impl Parser {
         } else if self.check(TokenKind::Type) {
             ExportItem::TypeAlias(self.parse_type_alias(None)?)
         } else {
-            self.error("Expected 'fn', 'let', 'var', or 'type' after 'export'");
+            self.error("Expected 'fn', 'let', or 'type' after 'export'");
             return Err(());
         };
 
@@ -942,7 +942,6 @@ impl Parser {
             kind,
             TokenKind::Let
                 | TokenKind::Mut
-                | TokenKind::Var
                 | TokenKind::Fn
                 | TokenKind::Type
                 | TokenKind::If
@@ -1012,7 +1011,6 @@ impl Parser {
                 TokenKind::Fn
                 | TokenKind::Type
                 | TokenKind::Let
-                | TokenKind::Var
                 | TokenKind::If
                 | TokenKind::While
                 | TokenKind::For

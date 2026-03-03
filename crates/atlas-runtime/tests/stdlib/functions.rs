@@ -35,7 +35,7 @@ fn test_store_function_in_let() {
 fn test_store_function_in_var() {
     let source = r#"
         fn triple(x: number) -> number { return x * 3; }
-        var f = triple;
+        let mut f = triple;
         f(4);
     "#;
     assert_eval_number(source, 12.0);
@@ -46,7 +46,7 @@ fn test_reassign_function_variable() {
     let source = r#"
         fn add(a: number, b: number) -> number { return a + b; }
         fn mul(a: number, b: number) -> number { return a * b; }
-        var f = add;
+        let mut f = add;
         let x = f(2, 3);
         f = mul;
         let y = f(2, 3);
@@ -269,8 +269,8 @@ fn test_function_in_loop() {
             return f(x);
         }
         fn inc(n: number) -> number { return n + 1; }
-        var result = 0;
-        for (var i = 0; i < 3; i++) {
+        let mut result = 0;
+        for (let mut i = 0; i < 3; i++) {
             result = apply(inc, result);
         }
         result;
@@ -488,8 +488,8 @@ fn test_function_variable_in_global_scope() {
 fn test_map_pattern_with_function() {
     let source = r#"
         fn applyToArray(arr: number[], f: (number) -> number) -> number[] {
-            var result: number[] = [];
-            for (var i = 0; i < len(arr); i++) {
+            let mut result: number[] = [];
+            for (let mut i = 0; i < len(arr); i++) {
                 result = result + [f(arr[i])];
             }
             return result;
@@ -508,8 +508,8 @@ fn test_map_pattern_with_function() {
 fn test_filter_pattern_with_function() {
     let source = r#"
         fn filterArray(arr: number[], predicate: (number) -> bool) -> number[] {
-            var result: number[] = [];
-            for (var i = 0; i < len(arr); i++) {
+            let mut result: number[] = [];
+            for (let mut i = 0; i < len(arr); i++) {
                 if (predicate(arr[i])) {
                     result = result + [arr[i]];
                 }
@@ -532,8 +532,8 @@ fn test_reduce_pattern_with_function() {
             reducer: (number, number) -> number,
             initial: number
         ) -> number {
-            var acc = initial;
-            for (var i = 0; i < len(arr); i++) {
+            let mut acc = initial;
+            for (let mut i = 0; i < len(arr); i++) {
                 acc = reducer(acc, arr[i]);
             }
             return acc;
@@ -578,7 +578,7 @@ fn test_callback_pattern() {
         ) -> void {
             callback(x * 2);
         }
-        var result = 0;
+        let mut result = 0;
         fn setResult(x: number) -> void {
             result = x;
         }
@@ -611,8 +611,8 @@ fn test_complex_function_passing() {
             f1: (number) -> number,
             f2: (number) -> number
         ) -> number {
-            var sum = 0;
-            for (var i = 0; i < len(arr); i++) {
+            let mut sum = 0;
+            for (let mut i = 0; i < len(arr); i++) {
                 sum = sum + f1(f2(arr[i]));
             }
             return sum;
@@ -1278,7 +1278,7 @@ fn test_option_chain_with_assertions() {
     eval_ok(
         r#"
         fn find_value(arr: array, target: number) -> Option<number> {
-            var found = None();
+            let mut found = None();
             for item in arr {
                 if (item == target) {
                     found = Some(item);

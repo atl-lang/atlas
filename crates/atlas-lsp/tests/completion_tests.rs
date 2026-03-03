@@ -195,8 +195,8 @@ async fn test_variable_completions_from_document() {
     let uri = Url::parse("file:///test.atl").unwrap();
 
     let source = r#"
-var counter: number = 0;
-var name: string = "test";
+let mut counter: number = 0;
+let mut name: string = "test";
 "#;
 
     let open_params = DidOpenTextDocumentParams {

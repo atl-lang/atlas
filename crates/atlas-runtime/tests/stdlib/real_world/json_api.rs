@@ -267,7 +267,7 @@ fn test_json_array_filter_pattern() {
         let a1: bool = item1["active"].as_bool();
         let a2: bool = item2["active"].as_bool();
         // Count active
-        var count: number = 0.0;
+        let mut count: number = 0.0;
         if (a0) { count = count + 1.0; }
         if (a1) { count = count + 1.0; }
         if (a2) { count = count + 1.0; }
@@ -360,7 +360,7 @@ fn test_json_conditional_field_access() {
         let jsonStr: string = "{\"premium\": true, \"features\": {\"advanced\": true}}";
         let data: json = unwrap(parseJSON(jsonStr));
         let premium: bool = data["premium"].as_bool();
-        var result: bool = false;
+        let mut result: bool = false;
         if (premium) {
             let features: json = data["features"];
             let advanced: bool = features["advanced"].as_bool();

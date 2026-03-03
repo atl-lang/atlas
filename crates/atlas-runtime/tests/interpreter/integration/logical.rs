@@ -27,7 +27,7 @@ fn test_variable_declaration_and_use() {
 #[test]
 fn test_variable_assignment() {
     let code = r#"
-        var x: number = 10;
+        let mut x: number = 10;
         x = 20;
         x
     "#;
@@ -64,7 +64,7 @@ fn test_block_scope() {
 #[test]
 fn test_function_scope() {
     let code = r#"
-        var x: number = 10;
+        let mut x: number = 10;
         fn foo(x: number) -> number {
             return x + 1;
         }

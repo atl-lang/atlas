@@ -298,7 +298,7 @@ pub fn is_reserved_keyword(name: &str) -> bool {
     matches!(
         name,
         "let"
-            | "var"
+            | "mut"
             | "fn"
             | "if"
             | "else"

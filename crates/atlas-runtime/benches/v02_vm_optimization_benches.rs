@@ -42,10 +42,10 @@ fn compile_and_run(source: &str, optimized: bool) {
 /// a single constant load instead of a tree of arithmetic opcodes.
 fn bench_constant_folding_arithmetic(c: &mut Criterion) {
     let source = r#"
-        var a = 1 + 2 + 3 + 4 + 5;
-        var b = 10 * 20 + 30 - 5;
-        var c = 100 / 4 * 2;
-        var d = a + b + c;
+        let mut a = 1 + 2 + 3 + 4 + 5;
+        let mut b = 10 * 20 + 30 - 5;
+        let mut c = 100 / 4 * 2;
+        let mut d = a + b + c;
         d;
     "#;
 
@@ -62,9 +62,9 @@ fn bench_constant_folding_arithmetic(c: &mut Criterion) {
 fn bench_constant_folding_chain(c: &mut Criterion) {
     // Long chain of constants that folds down to a single value
     let source = r#"
-        var x = 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2;
-        var y = 1000 - 100 - 10 - 1;
-        var z = x + y;
+        let mut x = 2 * 2 * 2 * 2 * 2 * 2 * 2 * 2;
+        let mut y = 1000 - 100 - 10 - 1;
+        let mut z = x + y;
         z;
     "#;
 
@@ -85,10 +85,10 @@ fn bench_constant_folding_chain(c: &mut Criterion) {
 fn bench_constant_folding_comparisons(c: &mut Criterion) {
     // Constant boolean expressions — should fold to true/false
     let source = r#"
-        var a = 5 > 3;
-        var b = 10 == 10;
-        var c = 7 != 8;
-        var d = a && b && c;
+        let mut a = 5 > 3;
+        let mut b = 10 == 10;
+        let mut c = 7 != 8;
+        let mut d = a && b && c;
         d;
     "#;
 
@@ -112,12 +112,12 @@ fn bench_dce_after_return(c: &mut Criterion) {
     let source = r#"
         fn compute(x: number) -> number {
             return x * 2;
-            var unused = 999;
-            var also_unused = "never reached";
+            let mut unused = 999;
+            let mut also_unused = "never reached";
             return 0;
         }
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 1000) {
             sum = sum + compute(i);
             i = i + 1;
@@ -144,8 +144,8 @@ fn bench_dce_combined_with_constants(c: &mut Criterion) {
             }
             return n - 1;
         }
-        var result = 0;
-        var i = 0;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 500) {
             result = classify(i);
             i = i + 1;
@@ -177,8 +177,8 @@ fn bench_peephole_not_patterns(c: &mut Criterion) {
         fn check(x: number) -> bool {
             return !!( x > 0 );
         }
-        var count = 0;
-        var i = 0;
+        let mut count = 0;
+        let mut i = 0;
         while (i < 1000) {
             if (check(i)) { count = count + 1; }
             i = i + 1;
@@ -209,8 +209,8 @@ fn bench_peephole_negation(c: &mut Criterion) {
         fn negate_twice(x: number) -> number {
             return -(-x);
         }
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 2000) {
             sum = sum + negate_twice(i);
             i = i + 1;
@@ -257,11 +257,11 @@ fn bench_combined_fibonacci(c: &mut Criterion) {
 
 fn bench_combined_loop_heavy(c: &mut Criterion) {
     let source = r#"
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 5000) {
-            var inner = 0;
-            var j = 0;
+            let mut inner = 0;
+            let mut j = 0;
             while (j < 10) {
                 inner = inner + j;
                 j = j + 1;
@@ -292,8 +292,8 @@ fn bench_combined_function_calls(c: &mut Criterion) {
         fn triple(x: number) -> number { return x * 3; }
         fn compute(x: number) -> number { return double(x) + triple(x); }
 
-        var result = 0;
-        var i = 0;
+        let mut result = 0;
+        let mut i = 0;
         while (i < 1000) {
             result = compute(i);
             i = i + 1;
@@ -321,11 +321,11 @@ fn bench_combined_function_calls(c: &mut Criterion) {
 
 fn bench_combined_string_ops(c: &mut Criterion) {
     let source = r#"
-        var prefix = "hello_";
-        var i = 0;
-        var count = 0;
+        let mut prefix = "hello_";
+        let mut i = 0;
+        let mut count = 0;
         while (i < 200) {
-            var s = prefix + "world";
+            let mut s = prefix + "world";
             count = count + len(s);
             i = i + 1;
         }
@@ -349,8 +349,8 @@ fn bench_combined_string_ops(c: &mut Criterion) {
 fn bench_combined_arithmetic_heavy(c: &mut Criterion) {
     let source = r#"
         fn power(base: number, exp: number) -> number {
-            var result = 1;
-            var i = 0;
+            let mut result = 1;
+            let mut i = 0;
             while (i < exp) {
                 result = result * base;
                 i = i + 1;
@@ -358,8 +358,8 @@ fn bench_combined_arithmetic_heavy(c: &mut Criterion) {
             return result;
         }
 
-        var total = 0;
-        var i = 0;
+        let mut total = 0;
+        let mut i = 0;
         while (i < 100) {
             total = total + power(2, 10);
             i = i + 1;
@@ -386,7 +386,7 @@ fn bench_combined_real_world(c: &mut Criterion) {
     let source = r#"
         fn is_prime(n: number) -> bool {
             if (n < 2) { return false; }
-            var i = 2;
+            let mut i = 2;
             while (i * i <= n) {
                 if (n - (n / i) * i == 0) { return false; }
                 i = i + 1;
@@ -394,8 +394,8 @@ fn bench_combined_real_world(c: &mut Criterion) {
             return true;
         }
 
-        var count = 0;
-        var n = 2;
+        let mut count = 0;
+        let mut n = 2;
         while (n <= 100) {
             if (is_prime(n)) { count = count + 1; }
             n = n + 1;

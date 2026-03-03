@@ -298,7 +298,7 @@ impl FormatVisitor {
     fn visit_var_decl(&mut self, v: &VarDecl) {
         self.write_indent();
         if v.mutable {
-            self.write("var ");
+            self.write("let mut ");
         } else {
             self.write("let ");
         }
@@ -460,7 +460,7 @@ impl FormatVisitor {
         match stmt {
             Stmt::VarDecl(v) => {
                 if v.mutable {
-                    self.write("var ");
+                    self.write("let mut ");
                 } else {
                     self.write("let ");
                 }
@@ -1065,7 +1065,7 @@ impl FormatVisitor {
             }
             ExportItem::Variable(v) => {
                 if v.mutable {
-                    self.write("var ");
+                    self.write("let mut ");
                 } else {
                     self.write("let ");
                 }

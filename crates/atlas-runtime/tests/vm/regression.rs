@@ -28,10 +28,10 @@ fn test_parity_arithmetic(#[case] source: &str) {
 }
 
 #[rstest]
-#[case("var x = 10; x;")]
+#[case("let mut x = 10; x;")]
 #[case("let x = 5; let y = 3; x + y;")]
-#[case("var x = 10; x = 20; x;")]
-#[case("var x = 1; x = x + 1; x = x + 1; x;")]
+#[case("let mut x = 10; x = 20; x;")]
+#[case("let mut x = 1; x = x + 1; x = x + 1; x;")]
 fn test_parity_variables(#[case] source: &str) {
     assert_parity(source);
 }
@@ -89,13 +89,15 @@ fn test_parity_recursion() {
 
 #[test]
 fn test_parity_while_loop() {
-    assert_parity("var sum = 0; var i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;");
+    assert_parity(
+        "let mut sum = 0; let mut i = 0; while (i < 10) { sum = sum + i; i = i + 1; } sum;",
+    );
 }
 
 #[test]
 fn test_parity_nested_if() {
     assert_parity(
-        "let x = 15; var r = 0; if (x > 10) { if (x > 20) { r = 2; } else { r = 1; } } r;",
+        "let x = 15; let mut r = 0; if (x > 10) { if (x > 20) { r = 2; } else { r = 1; } } r;",
     );
 }
 
@@ -202,13 +204,13 @@ fn test_edge_single_element_array() {
 
 #[test]
 fn test_edge_boolean_as_condition() {
-    let result = vm_number("var x = 0; if (true) { x = 1; } x;");
+    let result = vm_number("let mut x = 0; if (true) { x = 1; } x;");
     assert_eq!(result, 1.0);
 }
 
 #[test]
 fn test_edge_while_false() {
-    let result = vm_number("var x = 42; while (false) { x = 0; } x;");
+    let result = vm_number("let mut x = 42; while (false) { x = 0; } x;");
     assert_eq!(result, 42.0);
 }
 
@@ -216,7 +218,7 @@ fn test_edge_while_false() {
 fn test_edge_nested_function_scope() {
     let source = r#"
 fn outer() -> number {
-    var x = 10;
+    let mut x = 10;
     fn inner() -> number {
         return 20;
     }
@@ -237,7 +239,7 @@ fn test_edge_function_no_return() {
 
 #[test]
 fn test_edge_multiple_assignments() {
-    let result = vm_number("var x = 1; x = 2; x = 3; x = 4; x = 5; x;");
+    let result = vm_number("let mut x = 1; x = 2; x = 3; x = 4; x = 5; x;");
     assert_eq!(result, 5.0);
 }
 
@@ -274,19 +276,19 @@ fn test_edge_null_equality() {
 
 #[test]
 fn test_edge_compound_assignment_add() {
-    let result = vm_number("var x = 10; x += 5; x;");
+    let result = vm_number("let mut x = 10; x += 5; x;");
     assert_eq!(result, 15.0);
 }
 
 #[test]
 fn test_edge_compound_assignment_sub() {
-    let result = vm_number("var x = 10; x -= 3; x;");
+    let result = vm_number("let mut x = 10; x -= 3; x;");
     assert_eq!(result, 7.0);
 }
 
 #[test]
 fn test_edge_compound_assignment_mul() {
-    let result = vm_number("var x = 4; x *= 3; x;");
+    let result = vm_number("let mut x = 4; x *= 3; x;");
     assert_eq!(result, 12.0);
 }
 
@@ -312,7 +314,7 @@ fn test_v01_string_literal() {
 #[test]
 fn test_v01_if_else() {
     assert_eq!(
-        vm_number("var x = 10; var r = 0; if (x > 5) { r = 1; } else { r = 0; } r;"),
+        vm_number("let mut x = 10; let mut r = 0; if (x > 5) { r = 1; } else { r = 0; } r;"),
         1.0
     );
 }
@@ -320,7 +322,7 @@ fn test_v01_if_else() {
 #[test]
 fn test_v01_while_loop() {
     assert_eq!(
-        vm_number("var i = 0; while (i < 10) { i = i + 1; } i;"),
+        vm_number("let mut i = 0; while (i < 10) { i = i + 1; } i;"),
         10.0
     );
 }
@@ -376,8 +378,9 @@ outer(5);
 #[test]
 fn test_perf_large_loop() {
     let start = std::time::Instant::now();
-    let result =
-        vm_number("var sum = 0; var i = 0; while (i < 100000) { sum = sum + i; i = i + 1; } sum;");
+    let result = vm_number(
+        "let mut sum = 0; let mut i = 0; while (i < 100000) { sum = sum + i; i = i + 1; } sum;",
+    );
     let elapsed = start.elapsed();
     assert_eq!(result, 4999950000.0);
     assert!(elapsed.as_secs() < 10, "Large loop too slow: {:?}", elapsed);
@@ -399,7 +402,7 @@ fn test_perf_recursive_fib() {
 #[test]
 fn test_perf_nested_loops() {
     let start = std::time::Instant::now();
-    let result = vm_number("var c = 0; var i = 0; while (i < 100) { var j = 0; while (j < 100) { c = c + 1; j = j + 1; } i = i + 1; } c;");
+    let result = vm_number("let mut c = 0; let mut i = 0; while (i < 100) { let mut j = 0; while (j < 100) { c = c + 1; j = j + 1; } i = i + 1; } c;");
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);
     assert!(
@@ -412,7 +415,7 @@ fn test_perf_nested_loops() {
 #[test]
 fn test_perf_function_calls() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn inc(x: number) -> number { return x + 1; } var r = 0; var i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
+    let result = vm_number("fn inc(x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);
     assert!(
@@ -425,8 +428,9 @@ fn test_perf_function_calls() {
 #[test]
 fn test_perf_string_concat() {
     let start = std::time::Instant::now();
-    let result =
-        vm_string(r#"var s = ""; var i = 0; while (i < 100) { s = s + "x"; i = i + 1; } s;"#);
+    let result = vm_string(
+        r#"let mut s = ""; let mut i = 0; while (i < 100) { s = s + "x"; i = i + 1; } s;"#,
+    );
     let elapsed = start.elapsed();
     assert_eq!(result.len(), 100);
     assert!(
@@ -441,7 +445,7 @@ fn test_perf_array_operations() {
     let start = std::time::Instant::now();
     let source = r#"
 let arr = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-var i = 0;
+let mut i = 0;
 while (i < 1000) {
     arr[i % 10] = arr[i % 10] + 1;
     i = i + 1;
@@ -475,8 +479,8 @@ fn power(b: number, e: number) -> number {
     if (e == 0) { return 1; }
     return b * power(b, e - 1);
 }
-var sum = 0;
-var i = 1;
+let mut sum = 0;
+let mut i = 1;
 while (i <= 10) {
     sum = sum + power(i, 3);
     i = i + 1;
@@ -509,8 +513,8 @@ a + b + c + d + e + f + g + h + i + j;
 fn test_perf_conditional_heavy() {
     let result = vm_number(
         r#"
-var count = 0;
-var i = 0;
+let mut count = 0;
+let mut i = 0;
 while (i < 1000) {
     if (i % 2 == 0) { count = count + 1; }
     if (i % 3 == 0) { count = count + 1; }
@@ -542,7 +546,7 @@ fn test_regression_unary_minus_in_expression() {
 
 #[test]
 fn test_regression_reassignment_in_loop() {
-    let result = vm_number("var x = 0; var i = 0; while (i < 5) { x = i; i = i + 1; } x;");
+    let result = vm_number("let mut x = 0; let mut i = 0; while (i < 5) { x = i; i = i + 1; } x;");
     assert_eq!(result, 4.0);
 }
 
@@ -569,8 +573,8 @@ fn test_regression_array_in_function() {
         r#"
 fn sum_arr() -> number {
     let arr = [1, 2, 3, 4, 5];
-    var sum = 0;
-    var i = 0;
+    let mut sum = 0;
+    let mut i = 0;
     while (i < 5) {
         sum = sum + arr[i];
         i = i + 1;
@@ -612,7 +616,7 @@ fn test_regression_mixed_types_in_scope() {
     let result = vm_number(
         r#"
 let n = 42;
-var s = "hello";
+let mut s = "hello";
 let b = true;
 let arr = [1, 2, 3];
 n + arr[0];
@@ -717,7 +721,7 @@ fn test_vm_logical_not() {
 #[test]
 fn test_vm_if_true_branch() {
     assert_eq!(
-        vm_eval("var x = 0; if (true) { x = 42; } else { x = 0; } x;"),
+        vm_eval("let mut x = 0; if (true) { x = 42; } else { x = 0; } x;"),
         Some(Value::Number(42.0))
     );
 }
@@ -725,7 +729,7 @@ fn test_vm_if_true_branch() {
 #[test]
 fn test_vm_if_false_branch() {
     assert_eq!(
-        vm_eval("var x = 0; if (false) { x = 42; } else { x = 99; } x;"),
+        vm_eval("let mut x = 0; if (false) { x = 42; } else { x = 99; } x;"),
         Some(Value::Number(99.0))
     );
 }
@@ -733,7 +737,7 @@ fn test_vm_if_false_branch() {
 #[test]
 fn test_vm_if_no_else() {
     assert_eq!(
-        vm_eval("var x = 10; if (false) { x = 42; } x;"),
+        vm_eval("let mut x = 10; if (false) { x = 42; } x;"),
         Some(Value::Number(10.0))
     );
 }
@@ -741,11 +745,11 @@ fn test_vm_if_no_else() {
 #[test]
 fn test_vm_if_with_comparison() {
     assert_eq!(
-        vm_eval("var x = 0; if (5 > 3) { x = 1; } else { x = 2; } x;"),
+        vm_eval("let mut x = 0; if (5 > 3) { x = 1; } else { x = 2; } x;"),
         Some(Value::Number(1.0))
     );
     assert_eq!(
-        vm_eval("var x = 0; if (5 < 3) { x = 1; } else { x = 2; } x;"),
+        vm_eval("let mut x = 0; if (5 < 3) { x = 1; } else { x = 2; } x;"),
         Some(Value::Number(2.0))
     );
 }
@@ -754,7 +758,7 @@ fn test_vm_if_with_comparison() {
 fn test_vm_nested_if() {
     assert_eq!(
         vm_eval(
-            "var x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;"
+            "let mut x = 0; if (true) { if (true) { x = 42; } else { x = 0; } } else { x = 99; } x;"
         ),
         Some(Value::Number(42.0))
     );
@@ -763,7 +767,7 @@ fn test_vm_nested_if() {
 #[test]
 fn test_vm_while_loop() {
     assert_eq!(
-        vm_eval("var x = 0; while (x < 5) { x = x + 1; } x;"),
+        vm_eval("let mut x = 0; while (x < 5) { x = x + 1; } x;"),
         Some(Value::Number(5.0))
     );
 }
@@ -771,7 +775,7 @@ fn test_vm_while_loop() {
 #[test]
 fn test_vm_while_loop_never_executes() {
     assert_eq!(
-        vm_eval("var x = 10; while (x < 5) { x = x + 1; } x;"),
+        vm_eval("let mut x = 10; while (x < 5) { x = x + 1; } x;"),
         Some(Value::Number(10.0))
     );
 }
@@ -779,7 +783,9 @@ fn test_vm_while_loop_never_executes() {
 #[test]
 fn test_vm_while_loop_sum() {
     assert_eq!(
-        vm_eval("var sum = 0; var i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;"),
+        vm_eval(
+            "let mut sum = 0; let mut i = 1; while (i <= 10) { sum = sum + i; i = i + 1; } sum;"
+        ),
         Some(Value::Number(55.0))
     );
 }
@@ -787,7 +793,7 @@ fn test_vm_while_loop_sum() {
 #[test]
 fn test_vm_for_loop() {
     assert_eq!(
-        vm_eval("var sum = 0; for (var i = 0; i < 5; i = i + 1) { sum = sum + i; } sum;"),
+        vm_eval("let mut sum = 0; for (let mut i = 0; i < 5; i = i + 1) { sum = sum + i; } sum;"),
         Some(Value::Number(10.0))
     );
 }
@@ -795,7 +801,7 @@ fn test_vm_for_loop() {
 #[test]
 fn test_vm_loop_countdown() {
     assert_eq!(
-        vm_eval("var x = 10; var i = 0; while (i < 5) { x = x - 1; i = i + 1; } x;"),
+        vm_eval("let mut x = 10; let mut i = 0; while (i < 5) { x = x - 1; i = i + 1; } x;"),
         Some(Value::Number(5.0))
     );
 }
@@ -803,7 +809,7 @@ fn test_vm_loop_countdown() {
 #[test]
 fn test_vm_nested_loops() {
     assert_eq!(
-        vm_eval("var sum = 0; var i = 1; while (i <= 3) { var j = 1; while (j <= 3) { sum = sum + (i * j); j = j + 1; } i = i + 1; } sum;"),
+        vm_eval("let mut sum = 0; let mut i = 1; while (i <= 3) { let mut j = 1; while (j <= 3) { sum = sum + (i * j); j = j + 1; } i = i + 1; } sum;"),
         Some(Value::Number(36.0))
     );
 }
@@ -811,7 +817,7 @@ fn test_vm_nested_loops() {
 #[test]
 fn test_vm_loop_with_break() {
     assert_eq!(
-        vm_eval("var x = 0; while (true) { x = x + 1; if (x == 5) { break; } } x;"),
+        vm_eval("let mut x = 0; while (true) { x = x + 1; if (x == 5) { break; } } x;"),
         Some(Value::Number(5.0))
     );
 }
@@ -819,7 +825,7 @@ fn test_vm_loop_with_break() {
 #[test]
 fn test_vm_loop_with_continue() {
     assert_eq!(
-        vm_eval("var sum = 0; var i = 0; while (i < 10) { i = i + 1; if (i == 5) { continue; } sum = sum + i; } sum;"),
+        vm_eval("let mut sum = 0; let mut i = 0; while (i < 10) { i = i + 1; if (i == 5) { continue; } sum = sum + i; } sum;"),
         Some(Value::Number(50.0))
     );
 }
@@ -827,7 +833,7 @@ fn test_vm_loop_with_continue() {
 #[test]
 fn test_vm_nested_break() {
     assert_eq!(
-        vm_eval("var outer = 0; var i = 0; while (i < 3) { var j = 0; while (j < 3) { if (j == 1) { break; } outer = outer + 1; j = j + 1; } i = i + 1; } outer;"),
+        vm_eval("let mut outer = 0; let mut i = 0; while (i < 3) { let mut j = 0; while (j < 3) { if (j == 1) { break; } outer = outer + 1; j = j + 1; } i = i + 1; } outer;"),
         Some(Value::Number(3.0))
     );
 }
@@ -938,12 +944,12 @@ fn test_compound_assignment_index_evaluates_once() {
     // We use a counter variable to track how many times the index function is called.
     let result = vm_number(
         r#"
-var counter = 0;
+let mut counter = 0;
 fn get_idx() -> number {
     counter = counter + 1;
     return 0;
 }
-var arr = [10];
+let mut arr = [10];
 arr[get_idx()] += 5;
 counter;
 "#,
@@ -960,12 +966,12 @@ counter;
 fn test_compound_assignment_index_evaluates_once_parity() {
     // Same test, but verify interpreter and VM behave identically
     let source = r#"
-var counter = 0;
+let mut counter = 0;
 fn get_idx() -> number {
     counter = counter + 1;
     return 0;
 }
-var arr = [10];
+let mut arr = [10];
 arr[get_idx()] += 5;
 counter;
 "#;
@@ -982,8 +988,8 @@ fn test_compound_assignment_target_evaluates_once() {
     // For H-004, the key test is that get_idx() is called once, not twice.
     let result = vm_number(
         r#"
-var counter = 0;
-var arr = [100];
+let mut counter = 0;
+let mut arr = [100];
 fn get_idx() -> number {
     counter = counter + 1;
     return 0;
@@ -1004,7 +1010,7 @@ fn test_compound_assignment_array_value_correct() {
     // Verify the compound assignment actually works correctly
     let result = vm_number(
         r#"
-var arr = [10, 20, 30];
+let mut arr = [10, 20, 30];
 arr[1] += 5;
 arr[1];
 "#,
@@ -1015,9 +1021,9 @@ arr[1];
 #[test]
 fn test_compound_assignment_all_ops() {
     // Test all compound operators work with array indexing
-    assert_eq!(vm_number("var a = [10]; a[0] += 5; a[0];"), 15.0);
-    assert_eq!(vm_number("var a = [10]; a[0] -= 3; a[0];"), 7.0);
-    assert_eq!(vm_number("var a = [10]; a[0] *= 2; a[0];"), 20.0);
-    assert_eq!(vm_number("var a = [10]; a[0] /= 2; a[0];"), 5.0);
-    assert_eq!(vm_number("var a = [10]; a[0] %= 3; a[0];"), 1.0);
+    assert_eq!(vm_number("let mut a = [10]; a[0] += 5; a[0];"), 15.0);
+    assert_eq!(vm_number("let mut a = [10]; a[0] -= 3; a[0];"), 7.0);
+    assert_eq!(vm_number("let mut a = [10]; a[0] *= 2; a[0];"), 20.0);
+    assert_eq!(vm_number("let mut a = [10]; a[0] /= 2; a[0];"), 5.0);
+    assert_eq!(vm_number("let mut a = [10]; a[0] %= 3; a[0];"), 1.0);
 }

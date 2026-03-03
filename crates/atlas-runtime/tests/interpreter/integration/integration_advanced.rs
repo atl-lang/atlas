@@ -126,8 +126,8 @@ fn test_integration_factorial() {
 fn test_integration_sum_to_n() {
     let code = r#"
         fn sum_to(n: number) -> number {
-            var sum = 0;
-            var i = 1;
+            let mut sum = 0;
+            let mut i = 1;
             while (i <= n) {
                 sum = sum + i;
                 i = i + 1;
@@ -144,7 +144,7 @@ fn test_integration_is_prime() {
     let code = r#"
         fn is_prime(n: number) -> bool {
             if (n < 2) { return false; }
-            var i = 2;
+            let mut i = 2;
             while (i * i <= n) {
                 if (n % i == 0) { return false; }
                 i = i + 1;
@@ -161,7 +161,7 @@ fn test_integration_is_not_prime() {
     let code = r#"
         fn is_prime(n: number) -> bool {
             if (n < 2) { return false; }
-            var i = 2;
+            let mut i = 2;
             while (i * i <= n) {
                 if (n % i == 0) { return false; }
                 i = i + 1;
@@ -240,17 +240,17 @@ fn test_integration_stdlib_replace() {
 
 #[test]
 fn test_perf_loop_1000_iterations() {
-    let code = "var i = 0; while (i < 1000) { i = i + 1; } i;";
+    let code = "let mut i = 0; while (i < 1000) { i = i + 1; } i;";
     assert_eval_number(code, 1000.0);
 }
 
 #[test]
 fn test_perf_nested_loop_correctness() {
     let code = r#"
-        var count = 0;
-        var i = 0;
+        let mut count = 0;
+        let mut i = 0;
         while (i < 10) {
-            var j = 0;
+            let mut j = 0;
             while (j < 10) {
                 count = count + 1;
                 j = j + 1;
@@ -265,8 +265,8 @@ fn test_perf_nested_loop_correctness() {
 #[test]
 fn test_perf_string_accumulation() {
     let code = r#"
-        var s = "";
-        var i = 0;
+        let mut s = "";
+        let mut i = 0;
         while (i < 50) {
             s = s + "x";
             i = i + 1;
@@ -280,8 +280,8 @@ fn test_perf_string_accumulation() {
 fn test_perf_function_calls_correctness() {
     let code = r#"
         fn inc(x: number) -> number { return x + 1; }
-        var r = 0;
-        var i = 0;
+        let mut r = 0;
+        let mut i = 0;
         while (i < 100) {
             r = inc(r);
             i = i + 1;
@@ -296,8 +296,8 @@ fn test_perf_array_operations() {
     // Test array indexing performance
     let code = r#"
         let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        var sum = 0;
-        var i = 0;
+        let mut sum = 0;
+        let mut i = 0;
         while (i < 100) {
             sum = sum + arr[i % 10];
             i = i + 1;

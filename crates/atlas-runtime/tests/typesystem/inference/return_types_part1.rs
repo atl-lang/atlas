@@ -302,7 +302,7 @@ fn test_var_inferred_bool() {
 fn test_var_mutable_same_type() {
     let diags = errors(
         r#"
-        var x = 1;
+        let mut x = 1;
         x = 2;
         x = 3;
     "#,
@@ -314,7 +314,7 @@ fn test_var_mutable_same_type() {
 fn test_var_mutable_wrong_type() {
     let diags = errors(
         r#"
-        var x: number = 1;
+        let mut x: number = 1;
         x = "hello";
     "#,
     );

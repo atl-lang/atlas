@@ -1,10 +1,10 @@
 use super::*;
 
 #[rstest]
-#[case(r#"var x: number = 5; x++; x"#, 6.0)]
-#[case(r#"var x: number = 10; x--; x"#, 9.0)]
-#[case(r#"var x: number = 0; x++; x++; x++; x"#, 3.0)]
-#[case(r#"var x: number = 10; x--; x--; x"#, 8.0)]
+#[case(r#"let mut x: number = 5; x++; x"#, 6.0)]
+#[case(r#"let mut x: number = 10; x--; x"#, 9.0)]
+#[case(r#"let mut x: number = 0; x++; x++; x++; x"#, 3.0)]
+#[case(r#"let mut x: number = 10; x--; x--; x"#, 8.0)]
 fn test_increment_decrement_basics(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -32,8 +32,8 @@ fn test_decrement_array_element() {
 #[test]
 fn test_increment_in_loop() {
     let code = r#"
-        var sum: number = 0;
-        var i: number = 0;
+        let mut sum: number = 0;
+        let mut i: number = 0;
         while (i < 5) {
             sum += i;
             i++;
@@ -53,14 +53,14 @@ fn test_immutable_mutation_errors(#[case] code: &str, #[case] error_code: &str) 
 }
 
 #[rstest]
-#[case("var x: number = 10; x += 5; x", 15.0)]
-#[case("var x: number = 20; x -= 8; x", 12.0)]
-#[case("var x: number = 7; x *= 3; x", 21.0)]
-#[case("var x: number = 50; x /= 5; x", 10.0)]
-#[case("var x: number = 17; x %= 5; x", 2.0)]
-#[case("var x: number = 1; x = 2; x", 2.0)] // Basic assignment to var
-#[case("var x: number = 5; x++; x", 6.0)] // Increment
-#[case("var x: number = 5; x--; x", 4.0)] // Decrement
+#[case("let mut x: number = 10; x += 5; x", 15.0)]
+#[case("let mut x: number = 20; x -= 8; x", 12.0)]
+#[case("let mut x: number = 7; x *= 3; x", 21.0)]
+#[case("let mut x: number = 50; x /= 5; x", 10.0)]
+#[case("let mut x: number = 17; x %= 5; x", 2.0)]
+#[case("let mut x: number = 1; x = 2; x", 2.0)] // Basic assignment to var
+#[case("let mut x: number = 5; x++; x", 6.0)] // Increment
+#[case("let mut x: number = 5; x--; x", 4.0)] // Decrement
 fn test_mutable_var_assignments(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -111,7 +111,7 @@ fn test_let_mut_chained_operations() {
 #[test]
 fn test_compound_chained() {
     let code = r#"
-        var x: number = 10;
+        let mut x: number = 10;
         x += 5;
         x *= 2;
         x -= 10;
@@ -133,7 +133,7 @@ fn test_compound_array_element() {
 #[test]
 fn test_compound_divide_by_zero() {
     let code = r#"
-        var x: number = 10;
+        let mut x: number = 10;
         x /= 0;
         x
     "#;

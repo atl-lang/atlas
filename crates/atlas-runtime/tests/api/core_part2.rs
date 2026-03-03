@@ -99,8 +99,8 @@ fn test_complex_program_with_control_flow_interpreter() {
 fn test_complex_program_with_loops_interpreter() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     let program = r#"
-        var sum: number = 0;
-        for (var i: number = 1; i <= 10; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 1; i <= 10; i = i + 1) {
             sum = sum + i;
         }
         sum

@@ -326,8 +326,8 @@ add(2, 3);
 #[test]
 fn test_run_with_loops() {
     let code = r#"
-var sum = 0;
-var i = 0;
+let mut sum = 0;
+let mut i = 0;
 while (i < 5) {
     sum = sum + i;
     i = i + 1;
@@ -346,7 +346,7 @@ sum;
 fn test_run_with_conditionals() {
     let code = r#"
 let x = 10;
-var result = "";
+let mut result = "";
 if (x > 5) {
     result = "big";
 } else {

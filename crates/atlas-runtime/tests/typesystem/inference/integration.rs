@@ -153,7 +153,7 @@ fn test_integration_for_in_with_inferred_element_type() {
     let diags = typecheck_source(
         r#"
         fn sum_array(nums: number[]) -> number {
-            var total = 0;
+            let mut total = 0;
             for n in nums {
                 total = total + n;
             }

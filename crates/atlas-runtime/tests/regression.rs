@@ -114,8 +114,8 @@ fn regression_let_variables(#[case] code: &str, #[case] expected: f64) {
 // ============================================================================
 
 #[rstest]
-#[case("var x: number = 10; x = 20; x;", 20.0)]
-#[case("var x: number = 1; x = x + 1; x;", 2.0)]
+#[case("let mut x: number = 10; x = 20; x;", 20.0)]
+#[case("let mut x: number = 1; x = x + 1; x;", 2.0)]
 fn regression_var_variables(#[case] code: &str, #[case] expected: f64) {
     assert_eval_number(code, expected);
 }
@@ -203,8 +203,8 @@ fn regression_if_else() {
 #[test]
 fn regression_while_loop() {
     let code = r#"
-        var i: number = 0;
-        var sum: number = 0;
+        let mut i: number = 0;
+        let mut sum: number = 0;
         while (i < 5) {
             sum = sum + i;
             i = i + 1;
@@ -217,7 +217,7 @@ fn regression_while_loop() {
 #[test]
 fn regression_while_with_break() {
     let code = r#"
-        var i: number = 0;
+        let mut i: number = 0;
         while (i < 10) {
             if (i == 5) {
                 break;
@@ -232,8 +232,8 @@ fn regression_while_with_break() {
 #[test]
 fn regression_while_with_continue() {
     let code = r#"
-        var i: number = 0;
-        var sum: number = 0;
+        let mut i: number = 0;
+        let mut sum: number = 0;
         while (i < 5) {
             i = i + 1;
             if (i == 3) {
@@ -271,7 +271,7 @@ fn regression_array_indexing() {
 #[test]
 fn regression_array_mutation() {
     let code = r#"
-        var arr: number[] = [1, 2, 3];
+        let mut arr: number[] = [1, 2, 3];
         arr[0] = 99;
         arr[0];
     "#;
@@ -372,8 +372,8 @@ fn regression_fibonacci() {
 fn regression_array_sum() {
     let code = r#"
         let arr: number[] = [1, 2, 3, 4, 5];
-        var sum: number = 0;
-        var i: number = 0;
+        let mut sum: number = 0;
+        let mut i: number = 0;
         while (i < len(arr)) {
             sum = sum + arr[i];
             i = i + 1;
@@ -555,8 +555,8 @@ fn stability_determinism_boolean_logic() {
 #[test]
 fn stability_determinism_while_loop() {
     let code = r#"
-        var sum: number = 0;
-        var i: number = 0;
+        let mut sum: number = 0;
+        let mut i: number = 0;
         while (i < 10) {
             sum = sum + i;
             i = i + 1;
@@ -814,8 +814,8 @@ fn stability_stress_many_function_calls() {
     let code = r#"
         fn test() -> number {
             fn inc(x: number) -> number { return x + 1; }
-            var n: number = 0;
-            var i: number = 0;
+            let mut n: number = 0;
+            let mut i: number = 0;
             while (i < 200) {
                 n = inc(n);
                 i = i + 1;
@@ -854,8 +854,8 @@ fn stability_stress_deep_if_else_nesting() {
 fn stability_stress_while_1000_iterations() {
     // 1000 loop iterations should complete successfully.
     let code = r#"
-        var sum: number = 0;
-        var i: number = 0;
+        let mut sum: number = 0;
+        let mut i: number = 0;
         while (i < 1000) {
             sum = sum + 1;
             i = i + 1;
@@ -1002,7 +1002,7 @@ fn stability_release_comparison_operators() {
 fn stability_release_loop_termination() {
     // Loops must terminate correctly in release mode (no optimizer infinite loop).
     let code = r#"
-        var x: number = 10;
+        let mut x: number = 10;
         while (x > 0) {
             x = x - 1;
         }
@@ -1015,7 +1015,7 @@ fn stability_release_loop_termination() {
 fn stability_release_variable_mutation() {
     // Variable mutation must work correctly (not cached/inlined incorrectly).
     let code = r#"
-        var x: number = 1;
+        let mut x: number = 1;
         x = x + 1;
         x = x * 2;
         x;
@@ -1118,7 +1118,7 @@ fn milestone_type_system_enforces_let_immutability() {
 #[test]
 fn milestone_type_system_allows_var_mutation() {
     // var variables must be mutable.
-    assert_eval_number("var x: number = 1; x = 2; x;", 2.0);
+    assert_eval_number("let mut x: number = 1; x = 2; x;", 2.0);
 }
 
 #[test]
@@ -1184,8 +1184,8 @@ fn milestone_feature_if_else() {
 fn milestone_feature_while_loop() {
     let code = r#"
         fn test() -> number {
-            var i: number = 0;
-            var sum: number = 0;
+            let mut i: number = 0;
+            let mut sum: number = 0;
             while (i < 5) {
                 sum = sum + i;
                 i = i + 1;
@@ -1202,8 +1202,8 @@ fn milestone_feature_for_loop() {
     assert_no_error(
         r#"
         let arr: number[] = [1, 2, 3];
-        var sum: number = 0;
-        var i: number = 0;
+        let mut sum: number = 0;
+        let mut i: number = 0;
         while (i < 3) {
             sum = sum + arr[i];
             i = i + 1;

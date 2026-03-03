@@ -3,7 +3,7 @@ use super::*;
 /// Parity: interpreter and VM produce same result for push
 #[test]
 fn test_array_method_push_parity_via_atlas_eval() {
-    let code = r#"var arr: array = [1, 2, 3]; arr.push(99); arr[3];"#;
+    let code = r#"let mut arr: array = [1, 2, 3]; arr.push(99); arr[3];"#;
     assert_eval_number(code, 99.0);
 }
 
@@ -40,8 +40,8 @@ fn test_value_semantics_regression_copy_mutation_isolated() {
 #[test]
 fn test_value_semantics_regression_push_copy_isolated() {
     let code = r#"
-        var a: array = [1, 2, 3];
-        var b: array = a;
+        let mut a: array = [1, 2, 3];
+        let mut b: array = a;
         b.push(4);
         len(a)
     "#;

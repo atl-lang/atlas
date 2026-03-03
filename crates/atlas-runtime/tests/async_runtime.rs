@@ -1818,7 +1818,7 @@ fn test_channel_multiple_sends_before_receive() {
         let receiver = channel[1];
 
         // Send many messages
-        for (var i: number = 0; i < 10; i = i + 1) {
+        for (let mut i: number = 0; i < 10; i = i + 1) {
             channelSend(sender, i);
         }
 
@@ -1837,8 +1837,8 @@ fn test_channel_interleaved_send_receive() {
         let sender = channel[0];
         let receiver = channel[1];
 
-        var sum: number = 0;
-        for (var i: number = 0; i < 5; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 5; i = i + 1) {
             channelSend(sender, i);
             let val = await channelReceive(receiver);
             sum = sum + val;
@@ -2161,7 +2161,7 @@ fn test_async_mutex_sequential_locks() {
     let code = r#"
         let mutex = asyncMutex(0);
 
-        var guard: AsyncMutexGuard = await asyncMutexLock(mutex);
+        let mut guard: AsyncMutexGuard = await asyncMutexLock(mutex);
         asyncMutexSet(guard, 1);
         asyncMutexUnlock(guard);
 
@@ -2291,15 +2291,15 @@ fn test_complex_async_workflow() {
 
         // Producer task
         spawn(async {
-            for (var i: number = 1; i <= 5; i = i + 1) {
+            for (let mut i: number = 1; i <= 5; i = i + 1) {
                 await sleep(2);
                 channelSend(sender, i);
             }
         }, "producer");
 
         // Consumer task
-        var sum: number = 0;
-        for (var i: number = 0; i < 5; i = i + 1) {
+        let mut sum: number = 0;
+        for (let mut i: number = 0; i < 5; i = i + 1) {
             let val = await channelReceive(receiver);
             sum = sum + val;
         }

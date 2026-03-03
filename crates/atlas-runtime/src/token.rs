@@ -49,8 +49,6 @@ pub enum TokenKind {
     Let,
     /// `mut` keyword (mutable modifier for let)
     Mut,
-    /// `var` keyword (mutable variable, deprecated — use `let mut` instead)
-    Var,
     /// `fn` keyword (function declaration)
     Fn,
     /// `type` keyword (type alias declaration)
@@ -218,7 +216,6 @@ impl TokenKind {
         match s {
             "let" => Some(TokenKind::Let),
             "mut" => Some(TokenKind::Mut),
-            "var" => Some(TokenKind::Var),
             "fn" => Some(TokenKind::Fn),
             "type" => Some(TokenKind::Type),
             "if" => Some(TokenKind::If),
@@ -262,7 +259,6 @@ impl TokenKind {
             TokenKind::Identifier => "identifier",
             TokenKind::Let => "let",
             TokenKind::Mut => "mut",
-            TokenKind::Var => "var",
             TokenKind::Fn => "fn",
             TokenKind::Type => "type",
             TokenKind::If => "if",

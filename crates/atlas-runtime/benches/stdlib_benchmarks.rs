@@ -76,7 +76,7 @@ fn bench_array_map(c: &mut Criterion) {
 
             fn buildArray(n: number) -> number[] {
                 var arr: number[] = [];
-                var i = 0;
+                let mut i = 0;
                 while (i < n) {
                     arr = push(arr, i);
                     i = i + 1;
@@ -104,7 +104,7 @@ fn bench_array_filter(c: &mut Criterion) {
 
             fn buildArray(n: number) -> number[] {
                 var arr: number[] = [];
-                var i = 0;
+                let mut i = 0;
                 while (i < n) {
                     arr = push(arr, i);
                     i = i + 1;
@@ -132,7 +132,7 @@ fn bench_array_reduce(c: &mut Criterion) {
 
             fn buildArray(n: number) -> number[] {
                 var arr: number[] = [];
-                var i = 0;
+                let mut i = 0;
                 while (i < n) {
                     arr = push(arr, i);
                     i = i + 1;
@@ -156,7 +156,7 @@ fn bench_array_sort(c: &mut Criterion) {
         let code = r#"
             fn buildArray(n: number) -> number[] {
                 var arr: number[] = [];
-                var i = 0;
+                let mut i = 0;
                 while (i < n) {
                     arr = push(arr, random() * 1000);
                     i = i + 1;
@@ -180,7 +180,7 @@ fn bench_array_indexof(c: &mut Criterion) {
         let code = r#"
             fn buildArray(n: number) -> number[] {
                 var arr: number[] = [];
-                var i = 0;
+                let mut i = 0;
                 while (i < n) {
                     arr = push(arr, i);
                     i = i + 1;
@@ -207,8 +207,8 @@ fn bench_math_arithmetic(c: &mut Criterion) {
         // 10K arithmetic operations
         let code = r#"
             fn compute(n: number) -> number {
-                var sum = 0;
-                var i = 0;
+                let mut sum = 0;
+                let mut i = 0;
                 while (i < n) {
                     sum = sum + (i * 2) - (i / 2) + (i % 10);
                     i = i + 1;
@@ -230,8 +230,8 @@ fn bench_math_functions(c: &mut Criterion) {
         // 10K math function calls
         let code = r#"
             fn compute(n: number) -> number {
-                var sum = 0;
-                var i = 0;
+                let mut sum = 0;
+                let mut i = 0;
                 while (i < n) {
                     sum = sum + sqrt(abs(i)) + pow(2, 3) + floor(i / 2);
                     i = i + 1;
