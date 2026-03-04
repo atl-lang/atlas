@@ -11,7 +11,7 @@ use std::path::PathBuf;
 pub struct Config {
     /// Default to JSON diagnostic output (ATLAS_DIAGNOSTICS=json)
     pub default_json: bool,
-    /// Disable colored output (ATLAS_NO_COLOR=1 or NO_COLOR=1)
+    /// Disable colored output (ATLAS_NO_COLOR/NO_COLOR; "0"/"false"/"no" opt out)
     #[allow(dead_code)]
     pub no_color: bool,
     /// Custom history file path (ATLAS_HISTORY_FILE=/path/to/file)
@@ -29,7 +29,14 @@ impl Config {
             default_json: env::var("ATLAS_DIAGNOSTICS")
                 .map(|v| v.to_lowercase() == "json")
                 .unwrap_or(false),
-            no_color: env::var("ATLAS_NO_COLOR").is_ok() || env::var("NO_COLOR").is_ok(),
+            no_color: env::var("ATLAS_NO_COLOR")
+                .ok()
+                .map(|value| parse_no_color_value(&value))
+                .unwrap_or(false)
+                || env::var("NO_COLOR")
+                    .ok()
+                    .map(|value| parse_no_color_value(&value))
+                    .unwrap_or(false),
             history_file: env::var("ATLAS_HISTORY_FILE").ok().map(PathBuf::from),
             no_history: env::var("ATLAS_NO_HISTORY").is_ok(),
             show_types: env::var("ATLAS_REPL_SHOW_TYPES")
@@ -52,6 +59,19 @@ impl Config {
             return Some(path.clone());
         }
         dirs::home_dir().map(|home| home.join(".atlas").join("history"))
+    }
+}
+
+fn parse_no_color_value(value: &str) -> bool {
+    let lower = value.trim().to_lowercase();
+    if lower.is_empty() {
+        return true;
+    }
+
+    match lower.as_str() {
+        "0" | "false" | "no" => false,
+        "1" | "true" | "yes" => true,
+        _ => true,
     }
 }
 
@@ -110,6 +130,25 @@ mod tests {
         let config = Config::from_env();
         assert!(config.no_color);
         env::remove_var("NO_COLOR");
+    }
+
+    #[test]
+    fn test_config_no_color_false_values() {
+        let _g = ENV_LOCK.lock().unwrap();
+        env::set_var("NO_COLOR", "0");
+        let config = Config::from_env();
+        assert!(!config.no_color);
+        env::remove_var("NO_COLOR");
+
+        env::set_var("NO_COLOR", "false");
+        let config = Config::from_env();
+        assert!(!config.no_color);
+        env::remove_var("NO_COLOR");
+
+        env::set_var("ATLAS_NO_COLOR", "no");
+        let config = Config::from_env();
+        assert!(!config.no_color);
+        env::remove_var("ATLAS_NO_COLOR");
     }
 
     #[test]

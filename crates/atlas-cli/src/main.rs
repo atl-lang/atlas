@@ -252,7 +252,7 @@ enum Commands {
         #[arg(long, short = 'v')]
         verbose: bool,
         /// Disable colored output
-        #[arg(long, env = "NO_COLOR", value_parser = clap::builder::BoolishValueParser::new())]
+        #[arg(long)]
         no_color: bool,
         /// Test directory (defaults to current directory)
         #[arg(long, default_value = ".")]
@@ -688,11 +688,12 @@ fn main() -> Result<()> {
             dir,
             json,
         } => {
+            let disable_color = no_color || cli_config.no_color;
             let args = commands::test::TestArgs {
                 pattern,
                 sequential,
                 verbose,
-                no_color,
+                no_color: disable_color,
                 dir,
                 json,
             };
