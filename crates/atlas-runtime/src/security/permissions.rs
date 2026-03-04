@@ -302,6 +302,56 @@ impl SecurityContext {
         ctx
     }
 
+    /// Create a test-friendly context that allows filesystem, process, and env access
+    ///
+    /// Network access remains denied to keep a minimal sandbox during tests.
+    pub fn test_mode() -> Self {
+        let mut ctx = Self::new();
+
+        #[cfg(not(windows))]
+        {
+            ctx.filesystem_read.grant(Permission::FilesystemRead {
+                path: PathBuf::from("/"),
+                recursive: true,
+            });
+            ctx.filesystem_write.grant(Permission::FilesystemWrite {
+                path: PathBuf::from("/"),
+                recursive: true,
+            });
+        }
+        #[cfg(windows)]
+        {
+            let system_drive = std::env::var("SYSTEMDRIVE").unwrap_or_else(|_| "C:".to_string());
+            let root = format!("{}\\", system_drive);
+            let verbatim_root = format!(r"\\?\{}\\", system_drive);
+            ctx.filesystem_read.grant(Permission::FilesystemRead {
+                path: PathBuf::from(&root),
+                recursive: true,
+            });
+            ctx.filesystem_read.grant(Permission::FilesystemRead {
+                path: PathBuf::from(&verbatim_root),
+                recursive: true,
+            });
+            ctx.filesystem_write.grant(Permission::FilesystemWrite {
+                path: PathBuf::from(&root),
+                recursive: true,
+            });
+            ctx.filesystem_write.grant(Permission::FilesystemWrite {
+                path: PathBuf::from(&verbatim_root),
+                recursive: true,
+            });
+        }
+
+        ctx.process.grant(Permission::Process {
+            command: "*".to_string(),
+        });
+        ctx.environment.grant(Permission::Environment {
+            var: "*".to_string(),
+        });
+
+        ctx
+    }
+
     // Permission granting methods
 
     /// Grant filesystem read permission

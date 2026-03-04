@@ -2,8 +2,10 @@
 
 use crate::testing::discovery::{TestFunction, TestSuite};
 use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::SecurityContext;
 use rayon::prelude::*;
 use std::fs;
+use std::path::Path;
 use std::time::{Duration, Instant};
 
 /// Result of running a single test
@@ -130,8 +132,14 @@ impl TestRunner {
             }
         };
 
+        let security = if is_test_file(&test.file) {
+            SecurityContext::test_mode()
+        } else {
+            SecurityContext::new()
+        };
+
         // Create isolated runtime for this test (using VM mode for state persistence)
-        let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+        let mut runtime = Runtime::new_with_security(ExecutionMode::Interpreter, security);
 
         // Execute the file to define functions
         if let Err(e) = runtime.eval(&source) {
@@ -165,6 +173,12 @@ impl TestRunner {
     }
 }
 
+fn is_test_file(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.ends_with(".test.atl"))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -174,6 +188,12 @@ mod tests {
 
     fn create_test_file(content: &str) -> NamedTempFile {
         let mut file = NamedTempFile::with_suffix(".at").unwrap();
+        write!(file, "{}", content).unwrap();
+        file
+    }
+
+    fn create_test_file_with_suffix(content: &str, suffix: &str) -> NamedTempFile {
+        let mut file = NamedTempFile::with_suffix(suffix).unwrap();
         write!(file, "{}", content).unwrap();
         file
     }
@@ -321,5 +341,45 @@ fn test_c() { assert(true, "ok"); }
             duration: Duration::from_millis(50),
         };
         assert_eq!(fail.duration(), Duration::from_millis(50));
+    }
+
+    #[test]
+    fn test_runner_test_mode_allows_process_and_env() {
+        let file = create_test_file_with_suffix(
+            r#"
+fn test_process_env() {
+    setEnv("ATLAS_TEST_VAR", "ok");
+    let value = unwrap(getEnv("ATLAS_TEST_VAR"));
+    assertEqual(value, "ok");
+
+    let result = exec(["/bin/echo", "ok"]);
+    unwrap(result);
+
+    let handle = spawnProcess(["/bin/echo", "ok"]);
+    processWait(handle);
+    unsetEnv("ATLAS_TEST_VAR");
+}
+"#,
+            ".test.atl",
+        );
+
+        let test = TestFunction {
+            name: "test_process_env".to_string(),
+            file: file.path().to_path_buf(),
+            line: 2,
+        };
+
+        let runner = TestRunner::new();
+        let result = runner.run_single_test(&test);
+
+        match result.result {
+            TestResult::Pass { .. } => {}
+            TestResult::Fail { error, .. } => {
+                panic!("test run failed: {}", error);
+            }
+            TestResult::Timeout { .. } => {
+                panic!("test run timed out");
+            }
+        }
     }
 }
