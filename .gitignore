@@ -54,3 +54,4 @@ atlas-dev
 # Local settings
 .claude/settings.local.json
 CODEX_VERIFY.md
+!.codex/skills/
