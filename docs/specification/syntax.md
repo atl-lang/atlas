@@ -212,6 +212,70 @@ let obj = record { name: "Alice" };
 
 ---
 
+## Types
+
+### Type Forms
+
+```atlas
+number        // Primitive type
+string
+bool
+void
+null
+json
+
+number[]      // Array type
+(number) -> number           // Function type
+(number, string) -> bool
+
+Box<number>   // Generic type
+
+{ id: number, name: string } // Structural type
+```
+
+**Rules:**
+- Arrays are written as `T[]` (postfix)
+- Function types are written as `(arg-types) -> return-type`
+- Generic types use `Name<T, U>`
+- Structural types use `{ field: type }` syntax and require at least one member
+
+### Structural Types
+
+Structural types describe the required fields (and method signatures) a value must support.
+
+```atlas
+// Field-only structural type
+type User = { id: number, name: string };
+
+// Structural type with function member
+type Logger = { log: (string) -> void };
+```
+
+**Rules:**
+- At least one member is required (empty `{}` is not allowed)
+- Members are named and separated by commas
+
+### Type Aliases
+
+```atlas
+// Basic alias
+type UserId = number;
+
+// Generic alias
+type Box<T> = T[];
+
+// Exported alias
+export type Point = { x: number, y: number };
+```
+
+**Rules:**
+- `type` declarations are module-level (top-level) only
+- Alias names must be unique in the module
+- Generic parameters are optional: `type Result<T, E> = ...`
+- Use `export type` to expose aliases from a module
+
+---
+
 ## Expressions
 
 ### Operator Precedence (highest to lowest)
@@ -450,23 +514,6 @@ data["user"]["name"] // Chained indexing
 - Array element types are invariant and homogeneous
 - Arrays are mutable; element assignment supported
 - Array equality is reference identity (not deep equality)
-
-### Structural Types
-
-Structural types describe the required fields (and method signatures) a value must support.
-
-```atlas
-// Field-only structural type
-type User = { id: number, name: string };
-
-// Structural type with function member
-type Logger = { log: (string) -> void };
-```
-
-**Rules:**
-- Structural types use `{ field: type }` syntax
-- At least one member is required (empty `{}` is not allowed)
-- Members are named and separated by commas
 
 ---
 
