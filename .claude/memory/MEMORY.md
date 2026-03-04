@@ -22,9 +22,6 @@
 
 **Guardian enforcement:** If adding a decision with syntax rules, you MUST also add pattern to `~/.claude/hooks/atlas/decision-patterns.json`. Pre-write hook blocks violations automatically.
 
-## Status
-`STATUS.md` in repo. `ROADMAP.md` for long-term direction (systems language, no GC, AI-gen-friendly).
-
 ## Pattern-Triggered Rules (Auto-Load on File Match)
 All rules use `paths:` frontmatter — load only when touching matching files:
 - **AST:** `.claude/rules/atlas-ast.md` — ast.rs, parser/, typechecker/, binder.rs
