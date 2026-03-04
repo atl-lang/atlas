@@ -94,7 +94,7 @@ fn add(a: number, b: number) -> number {
 }
 
 #[tokio::test]
-async fn test_goto_definition_placeholder() {
+async fn test_goto_definition() {
     let (service, _socket) = LspService::new(AtlasLspServer::new);
     let server = service.inner();
 
@@ -123,7 +123,7 @@ let mut result: number = add(1, 2);
             text_document: TextDocumentIdentifier { uri: uri.clone() },
             position: Position {
                 line: 4,
-                character: 22,
+                character: 26,
             },
         },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -131,8 +131,28 @@ let mut result: number = add(1, 2);
     };
 
     let result = server.goto_definition(params).await.unwrap();
-    // Currently returns None (TODO: implement with position info)
-    assert!(result.is_none());
+    assert!(result.is_some());
+
+    let response = result.unwrap();
+    let location = match response {
+        GotoDefinitionResponse::Scalar(location) => location,
+        GotoDefinitionResponse::Array(mut locations) => {
+            assert!(!locations.is_empty());
+            locations.remove(0)
+        }
+        GotoDefinitionResponse::Link(mut links) => {
+            assert!(!links.is_empty());
+            let link = links.remove(0);
+            Location {
+                uri: link.target_uri,
+                range: link.target_range,
+            }
+        }
+    };
+
+    assert_eq!(location.uri, uri);
+    assert_eq!(location.range.start.line, 1);
+    assert_eq!(location.range.start.character, 3);
 }
 
 #[tokio::test]

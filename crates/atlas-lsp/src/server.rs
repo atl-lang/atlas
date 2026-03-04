@@ -297,14 +297,17 @@ impl LanguageServer for AtlasLspServer {
         let uri = params.text_document_position_params.text_document.uri;
         let position = params.text_document_position_params.position;
 
-        let documents = self.documents.lock().await;
-        if let Some(doc) = documents.get(&uri) {
-            if let (Some(_ast), Some(_symbols)) = (&doc.ast, &doc.symbols) {
-                if let Some(_identifier) =
-                    crate::navigation::find_identifier_at_position(&doc.text, position)
-                {
-                    // TODO: Implement actual go-to-definition once we have position info in symbol table
-                }
+        let text = {
+            let documents = self.documents.lock().await;
+            documents.get(&uri).map(|doc| doc.text.clone())
+        };
+
+        if let Some(text) = text {
+            let symbol_index = self.symbol_index.lock().await;
+            if let Some(location) =
+                crate::navigation::find_definition(&symbol_index, &uri, &text, position)
+            {
+                return Ok(Some(GotoDefinitionResponse::Scalar(location)));
             }
         }
 

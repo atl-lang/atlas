@@ -2,7 +2,9 @@
 
 use atlas_runtime::ast::*;
 use atlas_runtime::symbol::SymbolTable;
-use tower_lsp::lsp_types::{DocumentSymbol, Position, Range, SymbolKind};
+use tower_lsp::lsp_types::{DocumentSymbol, Location, Position, Range, SymbolKind, Url};
+
+use crate::index::SymbolIndex;
 
 /// Find the identifier at a given position in the source
 pub fn find_identifier_at_position(text: &str, position: Position) -> Option<String> {
@@ -108,12 +110,27 @@ fn format_function_signature(func: &FunctionDecl) -> String {
 
 /// Find the definition location of a symbol
 pub fn find_definition(
-    _program: &Program,
-    _symbols: &SymbolTable,
-    _identifier: &str,
-) -> Option<Range> {
-    // TODO: Implement once we have position info in symbol table
-    None
+    index: &SymbolIndex,
+    uri: &Url,
+    text: &str,
+    position: Position,
+) -> Option<Location> {
+    if let Some(definition) = index.find_definition_at(uri, position) {
+        return Some(definition.location);
+    }
+
+    let identifier = find_identifier_at_position(text, position)?;
+    let definitions = index.find_definitions(&identifier);
+
+    if definitions.is_empty() {
+        return None;
+    }
+
+    if let Some(definition) = definitions.iter().find(|def| def.location.uri == *uri) {
+        return Some(definition.location.clone());
+    }
+
+    Some(definitions[0].location.clone())
 }
 
 /// Find all references to a symbol
