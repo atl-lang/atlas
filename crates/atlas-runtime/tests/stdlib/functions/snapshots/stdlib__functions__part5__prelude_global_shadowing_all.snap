@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'print' in global scope"
-  file: "<input>"
+  file: "../../tests/prelude/global_shadowing_all.atl"
   line: 2
   column: 4
   length: 5
@@ -17,7 +17,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'len' in global scope"
-  file: "<input>"
+  file: "../../tests/prelude/global_shadowing_all.atl"
   line: 3
   column: 5
   length: 3
@@ -28,7 +28,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'str' in global scope"
-  file: "<input>"
+  file: "../../tests/prelude/global_shadowing_all.atl"
   line: 4
   column: 9
   length: 3

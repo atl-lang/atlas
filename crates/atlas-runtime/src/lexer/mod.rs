@@ -6,8 +6,12 @@ use crate::diagnostic::Diagnostic;
 use crate::span::{intern_file, register_source, FileId, Span};
 use crate::token::{Token, TokenKind};
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 mod literals;
+
+/// Counter for generating unique lexer IDs (prevents source cache collisions in tests)
+static LEXER_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
 /// Lexer state for tokenizing source code
 pub struct Lexer {
@@ -48,7 +52,9 @@ impl Lexer {
     pub fn new(source: impl Into<String>) -> Self {
         let source = source.into();
         let chars: Vec<char> = source.chars().collect();
-        let file = intern_file("<input>");
+        // Use unique file ID to prevent source cache collisions in parallel tests
+        let id = LEXER_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let file = intern_file(format!("<input:{}>", id));
         register_source(file, source.clone());
         Self {
             source,

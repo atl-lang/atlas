@@ -188,7 +188,8 @@ fn lex_file(filename: &str) -> Vec<Diagnostic> {
     let source = fs::read_to_string(&path)
         .unwrap_or_else(|_| panic!("Failed to read test file: {}", path.display()));
 
-    let mut lexer = Lexer::new(&source);
+    // Use unique file path to avoid source cache collisions between parallel tests
+    let mut lexer = Lexer::new(&source).with_file(path.to_string_lossy());
     let (_, diagnostics) = lexer.tokenize();
     diagnostics
 }

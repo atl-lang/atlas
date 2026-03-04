@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1002
   message: Unterminated string literal
-  file: "<input>"
+  file: tests/errors/unterminated_string.atl
   line: 2
   column: 15
   length: 24

@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1001
   message: "Unexpected character '@'"
-  file: "<input>"
+  file: tests/errors/unexpected_char.atl
   line: 2
   column: 11
   length: 1
@@ -16,7 +16,7 @@ expression: diagnostics
   level: error
   code: AT1001
   message: "Unexpected character '$'"
-  file: "<input>"
+  file: tests/errors/unexpected_char.atl
   line: 3
   column: 9
   length: 1
@@ -26,7 +26,7 @@ expression: diagnostics
   level: error
   code: AT1001
   message: "Unexpected character '#'"
-  file: "<input>"
+  file: tests/errors/unexpected_char.atl
   line: 4
   column: 9
   length: 1

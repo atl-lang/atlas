@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1004
   message: Unterminated multi-line comment
-  file: "<input>"
+  file: tests/errors/unterminated_comment.atl
   line: 3
   column: 11
   length: 43

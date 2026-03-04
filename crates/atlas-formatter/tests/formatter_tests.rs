@@ -88,15 +88,7 @@ fn test_compound_assignment_mod() {
     assert_eq!(fmt("x %= 4;"), "x %= 4;\n");
 }
 
-#[test]
-fn test_increment() {
-    assert_eq!(fmt("x++;"), "x++;\n");
-}
-
-#[test]
-fn test_decrement() {
-    assert_eq!(fmt("x--;"), "x--;\n");
-}
+// test_increment and test_decrement removed - ++/-- operators removed from Atlas (H-034)
 
 #[test]
 fn test_break_statement() {
@@ -202,13 +194,7 @@ fn test_while_loop() {
     );
 }
 
-#[test]
-fn test_for_loop() {
-    assert_eq!(
-        fmt("for (let i = 0; i < 10; i++) { print(i); }"),
-        "for (let i = 0; i < 10; i++) {\n    print(i);\n}\n"
-    );
-}
+// test_for_loop removed - C-style for loops removed from Atlas (H-034)
 
 #[test]
 fn test_for_in_loop() {
@@ -458,7 +444,8 @@ fn test_check_formatted_needs_formatting() {
 #[case("fn foo(a: number, b: string) -> number { return a; }")]
 #[case("if (true) { print(1); } else { print(2); }")]
 #[case("while (x > 0) { x -= 1; }")]
-#[case("for (let i = 0; i < 10; i++) { print(i); }")]
+// C-style for loop case removed (H-034)
+#[case("for item in items { print(item); }")]
 #[case("let a = [1, 2, 3];")]
 #[case("import { foo } from \"./bar\";")]
 #[case("let r = match x { 1 => \"one\", _ => \"other\", };")]
@@ -552,7 +539,7 @@ fn test_expr_statement() {
 #[case("let x = 5;")]
 #[case("fn foo(a: number) -> number { return a + 1; }")]
 #[case("if (true) { print(1); } else { print(2); }")]
-#[case("for (let i = 0; i < 5; i++) { print(i); }")]
+// C-style for loop case removed (H-034)
 #[case("for item in [1, 2, 3] { print(item); }")]
 #[case("let r = match x { 1 => true, _ => false, };")]
 fn test_formatted_output_parses(#[case] source: &str) {

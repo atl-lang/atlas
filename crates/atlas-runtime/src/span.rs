@@ -201,11 +201,18 @@ pub fn intern_file(path: impl AsRef<str>) -> FileId {
 
 pub fn file_path(file: FileId) -> Arc<str> {
     let table = file_table().lock().expect("file table lock poisoned");
-    table
+    let path = table
         .paths
         .get(file as usize)
         .cloned()
-        .unwrap_or_else(|| table.paths[0].clone())
+        .unwrap_or_else(|| table.paths[0].clone());
+
+    // Strip the unique counter suffix (e.g., "<input:42>" -> "<input>") for display
+    // The counter is used internally for source cache isolation in parallel tests
+    if path.starts_with("<input:") && path.ends_with('>') {
+        return Arc::from("<input>");
+    }
+    path
 }
 
 pub fn register_source(file: FileId, source: impl Into<Arc<str>>) {

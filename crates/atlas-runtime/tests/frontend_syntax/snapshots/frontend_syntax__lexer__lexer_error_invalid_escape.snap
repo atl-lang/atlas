@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1003
   message: "Invalid escape sequence '\\p'"
-  file: "<input>"
+  file: tests/errors/invalid_escape.atl
   line: 2
   column: 12
   length: 4

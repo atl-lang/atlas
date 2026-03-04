@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'len' in global scope"
-  file: "<input>"
+  file: "../../tests/prelude/global_shadowing_variable.atl"
   line: 2
   column: 5
   length: 3
