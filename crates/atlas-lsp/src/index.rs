@@ -15,6 +15,8 @@ pub struct SymbolDefinition {
     pub name: String,
     /// Location of the definition
     pub location: Location,
+    /// Span of the definition in source text
+    pub span: Span,
     /// Kind of symbol (function, variable, type, etc.)
     pub kind: SymbolKind,
     /// Scope information (e.g., function name for local variables)
@@ -52,6 +54,8 @@ pub struct SymbolIndex {
     file_definitions: HashMap<Url, Vec<String>>,
     /// Map from file URI to all symbols referenced in that file
     file_references: HashMap<Url, Vec<String>>,
+    /// Map from file URI to the latest source text
+    file_texts: HashMap<Url, String>,
 }
 
 impl SymbolIndex {
@@ -66,6 +70,8 @@ impl SymbolIndex {
         self.remove_document(uri);
 
         if let Some(program) = ast {
+            self.file_texts.insert(uri.clone(), text.to_string());
+
             // Track definitions and references in this file
             let mut ctx = IndexContext {
                 uri: uri.clone(),
@@ -105,6 +111,8 @@ impl SymbolIndex {
                 }
             }
         }
+
+        self.file_texts.remove(uri);
     }
 
     /// Find all definitions of a symbol
@@ -133,8 +141,17 @@ impl SymbolIndex {
 
     /// Find the definition at a specific location
     pub fn find_definition_at(&self, _uri: &Url, _position: Position) -> Option<SymbolDefinition> {
-        // TODO: Implement position-based lookup
-        // This requires converting Position to byte offset and checking Spans
+        let text = self.file_texts.get(_uri)?;
+        let offset = position_to_offset(_position, text);
+
+        for defs in self.definitions.values() {
+            for def in defs {
+                if def.location.uri == *_uri && def.span.contains(offset) {
+                    return Some(def.clone());
+                }
+            }
+        }
+
         None
     }
 
@@ -192,8 +209,79 @@ impl SymbolIndex {
                     ctx,
                 );
             }
-            Item::Import(_) | Item::Export(_) | Item::Extern(_) => {
-                // TODO: Handle imports/exports for cross-file indexing
+            Item::Import(import) => {
+                for specifier in &import.specifiers {
+                    match specifier {
+                        ImportSpecifier::Named { name, span } => {
+                            self.add_definition(
+                                &name.name,
+                                span,
+                                SymbolKind::Variable,
+                                Some(import.source.clone()),
+                                ctx,
+                            );
+                        }
+                        ImportSpecifier::Namespace { alias, span } => {
+                            self.add_definition(
+                                &alias.name,
+                                span,
+                                SymbolKind::Variable,
+                                Some(import.source.clone()),
+                                ctx,
+                            );
+                        }
+                    }
+                }
+            }
+            Item::Export(export) => match &export.item {
+                ExportItem::Function(func) => {
+                    self.add_definition(
+                        &func.name.name,
+                        &func.name.span,
+                        SymbolKind::Function,
+                        None,
+                        ctx,
+                    );
+
+                    let prev_scope = ctx.current_scope.clone();
+                    ctx.current_scope = Some(func.name.name.clone());
+
+                    for param in &func.params {
+                        self.add_definition(
+                            &param.name.name,
+                            &param.name.span,
+                            SymbolKind::Parameter,
+                            ctx.current_scope.clone(),
+                            ctx,
+                        );
+                    }
+
+                    self.index_block(&func.body, ctx);
+
+                    ctx.current_scope = prev_scope;
+                }
+                ExportItem::Variable(var) => {
+                    self.add_definition(
+                        &var.name.name,
+                        &var.name.span,
+                        SymbolKind::Variable,
+                        ctx.current_scope.clone(),
+                        ctx,
+                    );
+                    self.index_expr(&var.init, ctx, false);
+                }
+                ExportItem::TypeAlias(alias) => {
+                    self.add_definition(
+                        &alias.name.name,
+                        &alias.name.span,
+                        SymbolKind::Type,
+                        None,
+                        ctx,
+                    );
+                }
+            },
+            Item::Extern(_) => {
+                // Extern indexing handled in Block 3
             }
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl indexing handled in Block 3
@@ -438,6 +526,7 @@ impl SymbolIndex {
                 uri: ctx.uri.clone(),
                 range: span_to_range(span, ctx.text),
             },
+            span: *span,
             kind,
             scope,
         };

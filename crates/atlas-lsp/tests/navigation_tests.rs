@@ -212,3 +212,81 @@ async fn test_document_symbols_empty_file() {
         assert!(symbols.is_empty());
     }
 }
+
+#[tokio::test]
+async fn test_symbol_index_find_definition_at() {
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
+    let _server = service.inner();
+
+    let uri = Url::parse("file:///index_test.atl").unwrap();
+    let source = r#"fn add(a: number) -> number {
+    return a;
+}
+
+let mut result: number = add(1);
+"#;
+
+    let mut lexer = atlas_runtime::Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = atlas_runtime::Parser::new(tokens);
+    let (program, _diagnostics) = parser.parse();
+
+    let mut index = atlas_lsp::index::SymbolIndex::new();
+    index.index_document(&uri, source, Some(&program));
+
+    let definition = index.find_definition_at(
+        &uri,
+        Position {
+            line: 0,
+            character: 4,
+        },
+    );
+
+    assert!(definition.is_some());
+    let definition = definition.unwrap();
+    assert_eq!(definition.name, "add");
+    assert_eq!(definition.kind, atlas_lsp::index::SymbolKind::Function);
+    assert_eq!(definition.location.uri, uri);
+}
+
+#[tokio::test]
+async fn test_symbol_index_import_export_indexing() {
+    let (service, _socket) = LspService::new(AtlasLspServer::new);
+    let _server = service.inner();
+
+    let export_uri = Url::parse("file:///export.atl").unwrap();
+    let export_source = r#"export fn foo() -> number {
+    return 1;
+}
+"#;
+
+    let mut export_lexer = atlas_runtime::Lexer::new(export_source);
+    let (export_tokens, _) = export_lexer.tokenize();
+    let mut export_parser = atlas_runtime::Parser::new(export_tokens);
+    let (export_program, _export_diagnostics) = export_parser.parse();
+
+    let import_uri = Url::parse("file:///import.atl").unwrap();
+    let import_source = r#"import { foo } from "./export";
+let mut value: number = foo();
+"#;
+
+    let mut import_lexer = atlas_runtime::Lexer::new(import_source);
+    let (import_tokens, _) = import_lexer.tokenize();
+    let mut import_parser = atlas_runtime::Parser::new(import_tokens);
+    let (import_program, _import_diagnostics) = import_parser.parse();
+
+    let mut index = atlas_lsp::index::SymbolIndex::new();
+    index.index_document(&export_uri, export_source, Some(&export_program));
+    index.index_document(&import_uri, import_source, Some(&import_program));
+
+    let definitions = index.find_definitions("foo");
+    let mut uris: Vec<Url> = definitions
+        .iter()
+        .map(|def| def.location.uri.clone())
+        .collect();
+    uris.sort();
+    uris.dedup();
+
+    assert!(uris.contains(&export_uri));
+    assert!(uris.contains(&import_uri));
+}
