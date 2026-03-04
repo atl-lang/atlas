@@ -10,6 +10,30 @@ description: Atlas - AI-first programming language compiler. Doc-driven developm
 
 ---
 
+## Atlas Vision (NEVER VIOLATE)
+
+**AI-First:** If it's hard for AI to generate, it's wrong. Atlas exists to make AI code generation effortless.
+
+**No Versions, No Deferrals:** There is no "out of scope", no "future version", no "roadmap". If you're given a task, DO IT NOW. The only scope is: does the spec support it?
+
+**NEVER SAY:**
+- "This is outside the scope of v0.X"
+- "This should be deferred to a future version"
+- "This is a v0.4 feature"
+- "The roadmap doesn't include this"
+- "This isn't planned yet"
+
+**ALWAYS DO:**
+- Implement what's asked
+- If spec is unclear, implement sensibly and note it
+- If truly impossible (missing language feature), explain WHY and what would unblock it
+
+**Every component is in scope:** LSP, JIT, package manager, runtime, VM - ALL OF IT. No excuses.
+
+**Spec version notes are informational only.** If spec says "v0.4 feature", that's documentation of when it was designed - NOT permission to defer. If you're asked to implement it, implement it.
+
+---
+
 ## On Skill Activation (EVERY SESSION — DO THIS FIRST)
 
 **Run this ONE command immediately:**
@@ -85,8 +109,8 @@ ALL must be met. Phase says "50+ tests" → deliver 50+ (not 45).
 4. Log decision: `atlas-track add-decision "Title" component "Rule" "Rationale"`
 5. **If decision has enforceable syntax pattern** → Add to `~/.claude/hooks/atlas/decision-patterns.json`
 
-**Never:** Leave TODO | Guess without verification | Contradict a locked decision
-**Locked decisions:** `docs/specification/memory-model.md`, `ROADMAP.md`, `docs/internal/V03_PLAN.md`
+**Never:** Leave TODO | Guess without verification | Contradict a locked decision | Defer to "future version"
+**Locked decisions:** `docs/specification/memory-model.md`
 
 ### 4a. Atlas Guardian (Pre-Write Hook)
 **Location:** `~/.claude/hooks/atlas/validate.sh` + `decision-patterns.json`
@@ -198,11 +222,22 @@ atlas-track sitrep         # Full status without starting session
 
 ---
 
+## Work Selection (Logical Next Step)
+
+No rigid roadmaps. Each session:
+1. Run `atlas-track sitrep` — see P0 blockers, open issues, current state
+2. **If P0 blockers exist** → fix them first
+3. **If user specifies task** → do that
+4. **Otherwise** → pick highest-impact issue or enhancement
+
+Prioritization: P0 blockers > P1 bugs > P2 features > cleanup
+
+---
+
 ## Scaffolding Protocol (trigger: "Scaffold Block N")
 
-1. **Read** `docs/internal/V03_PLAN.md` — block spec, ACs, dependency rules
-2. **Audit blast radius** — grep every file the block will touch
-3. **Produce Block Kickoff doc:**
+1. **Audit blast radius** — grep every file the block will touch
+2. **Produce Block Kickoff doc:**
    ```
    Block N Kickoff: {Theme}
    Files affected: [verified list]
@@ -221,12 +256,10 @@ atlas-track sitrep         # Full status without starting session
    Phase execution commits follow on the same branch. PR opens only at block completion (Phase N).
 
 **After block execution completes:**
-- Verify all block ACs from the current version plan
-- Update the version plan with "planned vs. actual" discoveries
+- Verify all acceptance criteria met
 - Update .claude/memory with new patterns/decisions
-- Run GATE V (see `gates/gate-versioning.md`)
-- If more blocks remain in the plan → scaffold next block
-- If all defined blocks are complete → milestone tag + surface gaps to user for architectural session (new blocks will be planned together before execution resumes)
+- Run `atlas-track done` with summary
+- Identify logical next steps with user
 
 ---
 
@@ -235,7 +268,6 @@ atlas-track sitrep         # Full status without starting session
 - `crates/atlas-runtime/src/` — Runtime core (see `crates/atlas-runtime/src/CLAUDE.md`)
 - `crates/atlas-lsp/src/` — LSP server (see `crates/atlas-lsp/src/CLAUDE.md`)
 - `crates/atlas-jit/src/` — JIT (see `crates/atlas-jit/src/CLAUDE.md`)
-- `phases/v0.3/` — Phase files by block
-- `docs/specification/` — Language spec
-- `docs/internal/V03_PLAN.md` — Block plan ← read before scaffolding
+- `docs/specification/` — Language spec (source of truth)
 - `atlas-track decisions` — All locked decisions (D-XXX format)
+- `atlas-track issues` — Current bugs and tasks
