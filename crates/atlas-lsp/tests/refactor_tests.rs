@@ -226,6 +226,83 @@ fn test_extract_function_rejects_invalid_name() {
     assert!(result.is_err());
 }
 
+#[test]
+fn test_extract_function_captures_variables() {
+    let source = "let x = 1;\nlet y = 2;\nlet z = x + y;";
+    let program = parse_program(source);
+    let uri = test_uri();
+
+    let range = Range {
+        start: Position {
+            line: 2,
+            character: 0,
+        },
+        end: Position {
+            line: 2,
+            character: 14,
+        },
+    };
+
+    let result = extract_function(&uri, range, source, &program, None, Some("compute"));
+    assert!(result.is_ok());
+
+    let workspace_edit = result.unwrap();
+    let changes = workspace_edit.changes.unwrap();
+    let edits = changes.get(&uri).unwrap();
+
+    let mut has_signature = false;
+    let mut has_call = false;
+
+    for edit in edits {
+        if edit.new_text.contains("fn compute(x, y)") {
+            has_signature = true;
+        }
+        if edit.new_text.contains("compute(x, y);") {
+            has_call = true;
+        }
+    }
+
+    assert!(has_signature);
+    assert!(has_call);
+}
+
+#[test]
+fn test_extract_function_inferrs_return_type() {
+    let source = "fn outer() -> number {\nreturn 1;\n}";
+    let program = parse_program(source);
+    let uri = test_uri();
+
+    let range = Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 9,
+        },
+    };
+
+    let result = extract_function(&uri, range, source, &program, None, Some("compute"));
+    assert!(result.is_ok());
+
+    let workspace_edit = result.unwrap();
+    let changes = workspace_edit.changes.unwrap();
+    let edits = changes.get(&uri).unwrap();
+
+    let mut has_return_type = false;
+
+    for edit in edits {
+        if edit.new_text.contains("fn compute() -> number")
+            || edit.new_text.contains("fn compute() -> number {")
+        {
+            has_return_type = true;
+        }
+    }
+
+    assert!(has_return_type);
+}
+
 // ============================================================================
 // Inline Variable Tests
 // ============================================================================
