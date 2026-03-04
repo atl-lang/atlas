@@ -15,10 +15,13 @@ use atlas_runtime::sourcemap::{
     generate_from_debug_spans, generate_inline_source_map, generate_source_map, SourceMapOptions,
 };
 use atlas_runtime::{
-    Binder, Diagnostic, DiagnosticLevel, Lexer, Parser, Span, TypeChecker, DIAG_VERSION,
+    Binder, Diagnostic, DiagnosticLevel, Lexer, Parser, SecurityContext, Span, TypeChecker,
+    DIAG_VERSION,
 };
 use rstest::rstest;
+use std::io::Write;
 use std::path::Path;
+use tempfile::NamedTempFile;
 
 // ============================================================================
 // Cross-platform test helpers
@@ -1136,7 +1139,7 @@ fn test_format_related_location() {
 
 #[test]
 fn test_parse_error_has_diagnostics() {
-    let runtime = atlas_runtime::Atlas::new();
+    let runtime = atlas_runtime::Atlas::new_with_security(SecurityContext::allow_all());
     let result = runtime.eval("let x: number =");
     assert!(result.is_err());
     let diags = result.unwrap_err();
@@ -1151,6 +1154,42 @@ fn test_parse_error_has_code() {
     let diags = result.unwrap_err();
     // Error code should be set (not empty)
     assert!(!diags[0].code.is_empty());
+}
+
+#[test]
+fn test_runtime_error_stack_trace_includes_call_chain() {
+    let mut temp_file = NamedTempFile::new().unwrap();
+    let source = r#"fn level1() {
+    level2();
+}
+fn level2() {
+    level3();
+}
+fn level3() {
+    let arr = [1, 2];
+    arr[5];
+}
+level1();
+"#;
+    write!(temp_file, "{}", source).unwrap();
+
+    let runtime = atlas_runtime::Atlas::new_with_security(SecurityContext::allow_all());
+    let diags = runtime
+        .eval_file(temp_file.path().to_str().unwrap())
+        .unwrap_err();
+    let diag = &diags[0];
+
+    assert!(diag.message.contains("in function level3"));
+    assert_eq!(diag.stack_trace.len(), 3);
+    assert_eq!(diag.stack_trace[0].function, "level3");
+    assert_eq!(diag.stack_trace[0].line, 9);
+    assert_eq!(diag.stack_trace[0].column, 5);
+    assert_eq!(diag.stack_trace[1].function, "level2");
+    assert_eq!(diag.stack_trace[1].line, 2);
+    assert_eq!(diag.stack_trace[1].column, 5);
+    assert_eq!(diag.stack_trace[2].function, "level1");
+    assert_eq!(diag.stack_trace[2].line, 11);
+    assert_eq!(diag.stack_trace[2].column, 1);
 }
 
 #[test]

@@ -55,10 +55,26 @@ fn format_diagnostic(diag: &atlas_runtime::Diagnostic, fallback_file: &str) -> S
     };
 
     // Format: file:line:col: level: message
-    format!(
+    let mut output = format!(
         "{}:{}:{}: {}: {}",
         file, diag.line, diag.column, level_str, diag.message
-    )
+    );
+
+    if !diag.stack_trace.is_empty() {
+        for frame in &diag.stack_trace {
+            let frame_file = if frame.file == "<unknown>" || frame.file == "<input>" {
+                fallback_file
+            } else {
+                frame.file.as_str()
+            };
+            output.push_str(&format!(
+                "\n  at {} ({}:{}:{})",
+                frame.function, frame_file, frame.line, frame.column
+            ));
+        }
+    }
+
+    output
 }
 
 #[cfg(test)]

@@ -51,6 +51,19 @@ pub struct RelatedLocation {
     pub message: String,
 }
 
+/// Stack trace frame for runtime errors.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StackTraceFrame {
+    /// Function name.
+    pub function: String,
+    /// File path.
+    pub file: String,
+    /// Line number (1-based).
+    pub line: usize,
+    /// Column number (1-based).
+    pub column: usize,
+}
+
 /// A diagnostic message (error or warning)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Diagnostic {
@@ -80,6 +93,9 @@ pub struct Diagnostic {
     /// Related locations (optional)
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub related: Vec<RelatedLocation>,
+    /// Runtime stack trace (optional)
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub stack_trace: Vec<StackTraceFrame>,
     /// Suggested fix (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub help: Option<String>,
@@ -105,6 +121,7 @@ impl Diagnostic {
             label: "".to_string(),
             notes: Vec::new(),
             related: Vec::new(),
+            stack_trace: Vec::new(),
             help: None,
         }
     }
@@ -128,6 +145,7 @@ impl Diagnostic {
             label: String::new(),
             notes: Vec::new(),
             related: Vec::new(),
+            stack_trace: Vec::new(),
             help: None,
         }
     }
@@ -191,6 +209,12 @@ impl Diagnostic {
         self
     }
 
+    /// Add a stack trace
+    pub fn with_stack_trace(mut self, stack_trace: Vec<StackTraceFrame>) -> Self {
+        self.stack_trace = stack_trace;
+        self
+    }
+
     /// Check if this diagnostic is an error (not a warning)
     pub fn is_error(&self) -> bool {
         matches!(self.level, DiagnosticLevel::Error)
@@ -246,6 +270,16 @@ impl Diagnostic {
                 "   = note: related location at {}:{}:{}: {}\n",
                 related.file, related.line, related.column, related.message
             ));
+        }
+
+        // Stack trace
+        if !self.stack_trace.is_empty() {
+            for frame in &self.stack_trace {
+                output.push_str(&format!(
+                    "  at {} ({}:{}:{})\n",
+                    frame.function, frame.file, frame.line, frame.column
+                ));
+            }
         }
 
         // Help

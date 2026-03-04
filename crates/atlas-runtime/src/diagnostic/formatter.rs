@@ -98,6 +98,11 @@ impl DiagnosticFormatter {
             )?;
         }
 
+        // Stack trace
+        if !diag.stack_trace.is_empty() {
+            self.write_stack_trace(w, diag)?;
+        }
+
         // Help
         if let Some(help) = &diag.help {
             self.write_help(w, help)?;
@@ -203,6 +208,17 @@ impl DiagnosticFormatter {
         w.reset()?;
 
         writeln!(w, ": {}", help)?;
+        Ok(())
+    }
+
+    fn write_stack_trace(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
+        for frame in &diag.stack_trace {
+            writeln!(
+                w,
+                "  at {} ({}:{}:{})",
+                frame.function, frame.file, frame.line, frame.column
+            )?;
+        }
         Ok(())
     }
 

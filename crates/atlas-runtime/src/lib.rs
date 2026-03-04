@@ -36,6 +36,7 @@ pub mod runtime;
 pub mod security;
 pub mod sourcemap;
 pub mod span;
+pub(crate) mod stack_trace;
 pub mod stdlib;
 pub mod symbol;
 pub mod token;

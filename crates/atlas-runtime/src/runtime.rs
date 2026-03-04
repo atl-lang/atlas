@@ -1,7 +1,7 @@
 //! Atlas runtime API for embedding
 
 use crate::binder::Binder;
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::{Diagnostic, StackTraceFrame};
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::module_executor::ModuleExecutor;
@@ -150,7 +150,19 @@ impl Atlas {
 
         match interpreter.eval(&ast, &self.security) {
             Ok(value) => Ok(value),
-            Err(runtime_error) => Err(vec![runtime_error_to_diagnostic(runtime_error)]),
+            Err(runtime_error) => {
+                let stack_trace = interpreter.stack_trace_frames(
+                    runtime_error.span(),
+                    Some((file, source_with_semi.as_str())),
+                );
+                let function_name = stack_trace.first().map(|frame| frame.function.clone());
+                interpreter.reset_call_stack();
+                Err(vec![runtime_error_to_diagnostic(
+                    runtime_error,
+                    stack_trace,
+                    function_name,
+                )])
+            }
         }
     }
 
@@ -194,6 +206,8 @@ impl Atlas {
                         path: abs_path.display().to_string(),
                         span: Span::dummy(),
                     },
+                    Vec::new(),
+                    None,
                 )]
             })?;
 
@@ -232,7 +246,11 @@ impl Default for Atlas {
 }
 
 /// Convert a RuntimeError to a Diagnostic
-fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
+pub(crate) fn runtime_error_to_diagnostic(
+    error: RuntimeError,
+    stack_trace: Vec<StackTraceFrame>,
+    function_name: Option<String>,
+) -> Diagnostic {
     // Map runtime errors to their corresponding diagnostic codes from Atlas-SPEC.md
     // Extract span from error (all RuntimeError variants now include span)
     let span = error.span();
@@ -314,6 +332,12 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
         RuntimeError::InternalError { msg, .. } => ("AT9995", format!("Internal error: {}", msg)),
     };
 
+    let message = if let Some(function_name) = function_name {
+        format!("{} in function {}", message, function_name)
+    } else {
+        message
+    };
+
     let help = match error {
         RuntimeError::DivideByZero { .. } => "division by zero is undefined",
         RuntimeError::OutOfBounds { .. } => "check array bounds before accessing",
@@ -334,5 +358,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
         _ => "check the error message for details",
     };
 
-    Diagnostic::error_with_code(code, message, span).with_help(help)
+    Diagnostic::error_with_code(code, message, span)
+        .with_stack_trace(stack_trace)
+        .with_help(help)
 }

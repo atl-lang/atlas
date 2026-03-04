@@ -632,6 +632,8 @@ impl Interpreter {
             });
         }
 
+        self.push_call_frame(func.name.clone(), call_span);
+
         // Push new scope for function
         self.push_scope();
 
@@ -724,6 +726,7 @@ impl Interpreter {
         }
 
         self.pop_scope();
+        self.pop_call_frame();
         Ok(result)
     }
 

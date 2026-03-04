@@ -15,6 +15,7 @@ mod expr;
 mod stmt;
 
 use crate::ast::{Block, ImportDecl, ImportSpecifier, Item, Param, Program};
+use crate::diagnostic::StackTraceFrame;
 use crate::ffi::{CallbackHandle, ExternFunction, LibraryLoader};
 use crate::module_loader::ModuleLoader;
 use crate::resolver::ModuleResolver;
@@ -22,6 +23,12 @@ use crate::value::{FunctionRef, RuntimeError, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::Arc;
+
+#[derive(Debug, Clone)]
+struct RuntimeCallFrame {
+    function_name: String,
+    call_span: Option<crate::span::Span>,
+}
 
 /// Control flow signal for handling break, continue, and return
 #[derive(Debug, Clone, PartialEq)]
@@ -83,6 +90,8 @@ pub struct Interpreter {
     /// Lookup cache for optimized variable resolution (infrastructure for future optimization)
     #[allow(dead_code)]
     lookup_cache: cache::InterpreterCache,
+    /// Call stack for runtime error reporting
+    call_stack: Vec<RuntimeCallFrame>,
 }
 
 impl Interpreter {
@@ -105,6 +114,10 @@ impl Interpreter {
             current_module_path: None,
             module_exports_cache: HashMap::new(),
             lookup_cache: cache::InterpreterCache::new(),
+            call_stack: vec![RuntimeCallFrame {
+                function_name: "<main>".to_string(),
+                call_span: None,
+            }],
         };
 
         // Register builtin functions in globals
@@ -240,6 +253,8 @@ impl Interpreter {
         program: &Program,
         security: &crate::security::SecurityContext,
     ) -> Result<Value, RuntimeError> {
+        self.reset_call_stack();
+
         // Store security context for builtin calls
         self.current_security = Some(std::sync::Arc::new(security.clone()));
 
@@ -421,6 +436,64 @@ impl Interpreter {
         }
 
         Ok(last_value)
+    }
+
+    /// Build a stack trace for the current call stack.
+    pub fn stack_trace_frames(
+        &self,
+        error_span: crate::span::Span,
+        source_override: Option<(&str, &str)>,
+    ) -> Vec<StackTraceFrame> {
+        let include_main = self.call_stack.len() == 1;
+        let mut frames = Vec::new();
+        for frame in self.call_stack.iter().rev() {
+            if !include_main && frame.function_name == "<main>" {
+                continue;
+            }
+            let span = if frames.is_empty() {
+                error_span
+            } else {
+                frame.call_span.unwrap_or_else(crate::span::Span::dummy)
+            };
+            frames.push(crate::stack_trace::stack_frame_from_span(
+                frame.function_name.clone(),
+                span,
+                source_override,
+            ));
+        }
+        frames
+    }
+
+    /// Get the current function name (innermost frame).
+    pub fn current_function_name(&self) -> String {
+        self.call_stack
+            .last()
+            .map(|frame| frame.function_name.clone())
+            .unwrap_or_else(|| "<main>".to_string())
+    }
+
+    /// Reset the call stack to the main frame.
+    pub fn reset_call_stack(&mut self) {
+        self.call_stack.truncate(1);
+        if self.call_stack.is_empty() {
+            self.call_stack.push(RuntimeCallFrame {
+                function_name: "<main>".to_string(),
+                call_span: None,
+            });
+        }
+    }
+
+    fn push_call_frame(&mut self, function_name: String, call_span: crate::span::Span) {
+        self.call_stack.push(RuntimeCallFrame {
+            function_name,
+            call_span: Some(call_span),
+        });
+    }
+
+    fn pop_call_frame(&mut self) {
+        if self.call_stack.len() > 1 {
+            self.call_stack.pop();
+        }
     }
 
     /// Convert ExternTypeAnnotation (AST) to ExternType (FFI runtime)
@@ -863,6 +936,10 @@ impl Interpreter {
                 current_module_path: None,
                 module_exports_cache: HashMap::new(),
                 lookup_cache: cache::InterpreterCache::new(),
+                call_stack: vec![RuntimeCallFrame {
+                    function_name: "<main>".to_string(),
+                    call_span: None,
+                }],
             };
 
             // Get function body

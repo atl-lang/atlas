@@ -131,9 +131,13 @@ impl<'a> ModuleExecutor<'a> {
             .interpreter
             .eval(&module.ast, self.security)
             .map_err(|e| {
-                vec![Diagnostic::error(
-                    format!("Runtime error in module {}: {}", module.path.display(), e),
-                    e.span(),
+                let stack_trace = self.interpreter.stack_trace_frames(e.span(), None);
+                let function_name = stack_trace.first().map(|frame| frame.function.clone());
+                self.interpreter.reset_call_stack();
+                vec![crate::runtime::runtime_error_to_diagnostic(
+                    e,
+                    stack_trace,
+                    function_name,
                 )]
             })?;
 

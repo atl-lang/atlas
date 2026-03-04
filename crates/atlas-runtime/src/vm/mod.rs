@@ -17,6 +17,7 @@ pub use frame::CallFrame;
 pub use profiler::Profiler;
 
 use crate::bytecode::{Bytecode, Opcode};
+use crate::diagnostic::StackTraceFrame;
 use crate::ffi::{ExternFunction, LibraryLoader};
 use crate::span::Span;
 use crate::value::{RuntimeError, Value, ValueArray, ValueHashMap, ValueHashSet};
@@ -2197,15 +2198,28 @@ impl VM {
         unsafe { self.frames.last().unwrap_unchecked() }
     }
 
-    /// Generate a stack trace from the current call frames
-    /// Returns a vector of function names from innermost to outermost
-    #[allow(dead_code)]
-    fn stack_trace(&self) -> Vec<String> {
-        self.frames
-            .iter()
-            .rev()
-            .map(|frame| frame.function_name.clone())
-            .collect()
+    /// Generate a stack trace from the current call frames.
+    /// Returns frames from innermost to outermost.
+    pub fn stack_trace(&self, error_span: crate::span::Span) -> Vec<StackTraceFrame> {
+        let include_main = self.frames.len() == 1;
+        let mut frames = Vec::new();
+        for frame in self.frames.iter().rev() {
+            if !include_main && frame.function_name == "<main>" {
+                continue;
+            }
+            let span = if frames.is_empty() {
+                error_span
+            } else {
+                self.span_for_offset(frame.return_ip.saturating_sub(1))
+                    .unwrap_or_else(crate::span::Span::dummy)
+            };
+            frames.push(crate::stack_trace::stack_frame_from_span(
+                frame.function_name.clone(),
+                span,
+                None,
+            ));
+        }
+        frames
     }
 
     // ========================================================================

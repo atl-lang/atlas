@@ -1,5 +1,7 @@
 use super::*;
 use pretty_assertions::assert_eq;
+use std::io::Write;
+use tempfile::NamedTempFile;
 
 // From nested_function_vm_tests.rs
 // ============================================================================
@@ -81,6 +83,51 @@ fn test_vm_nested_function_string() {
 
     let result = nested_run_vm(source).unwrap();
     assert_eq!(result, Value::string("Hello, World"));
+}
+
+#[test]
+fn test_vm_runtime_error_stack_trace() {
+    let mut temp_file = NamedTempFile::new().unwrap();
+    let source = r#"fn level1() {
+    level2();
+}
+fn level2() {
+    level3();
+}
+fn level3() {
+    let arr = [1, 2];
+    arr[5];
+}
+level1();
+"#;
+    write!(temp_file, "{}", source).unwrap();
+    let file_path = temp_file.path().to_str().unwrap();
+
+    let mut lexer = Lexer::new(source.to_string()).with_file(file_path);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, _) = parser.parse();
+    let mut binder = Binder::new();
+    let (_symbol_table, _) = binder.bind(&program);
+    let mut compiler = Compiler::new();
+    let bytecode = compiler.compile(&program).expect("Compilation failed");
+
+    let mut vm = VM::new(bytecode);
+    let err = vm
+        .run(&SecurityContext::allow_all())
+        .expect_err("Expected runtime error");
+    let stack_trace = vm.stack_trace(err.span());
+
+    assert_eq!(stack_trace.len(), 3);
+    assert_eq!(stack_trace[0].function, "level3");
+    assert_eq!(stack_trace[0].line, 9);
+    assert_eq!(stack_trace[0].column, 5);
+    assert_eq!(stack_trace[1].function, "level2");
+    assert_eq!(stack_trace[1].line, 2);
+    assert_eq!(stack_trace[1].column, 5);
+    assert_eq!(stack_trace[2].function, "level1");
+    assert_eq!(stack_trace[2].line, 11);
+    assert_eq!(stack_trace[2].column, 1);
 }
 
 // ============================================================================

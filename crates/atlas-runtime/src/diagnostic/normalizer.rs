@@ -26,6 +26,18 @@ pub fn normalize_diagnostic_for_testing(diag: &Diagnostic) -> Diagnostic {
         })
         .collect();
 
+    // Normalize stack trace entries
+    normalized.stack_trace = diag
+        .stack_trace
+        .iter()
+        .map(|frame| crate::diagnostic::StackTraceFrame {
+            function: frame.function.clone(),
+            file: normalize_path(&frame.file),
+            line: frame.line,
+            column: frame.column,
+        })
+        .collect();
+
     normalized
 }
 
