@@ -392,6 +392,9 @@ impl<'a> TypeChecker<'a> {
 
         match binary.op {
             BinaryOp::Add => {
+                if let Some(array_type) = self.array_concat_result(&left_norm, &right_norm) {
+                    return array_type;
+                }
                 if self.all_union_pairs_valid(&left_norm, &right_norm, |a, b| {
                     (*a == Type::Number && *b == Type::Number)
                         || (*a == Type::String && *b == Type::String)
@@ -403,7 +406,7 @@ impl<'a> TypeChecker<'a> {
                     }
                 } else {
                     let help = suggestions::suggest_binary_operator_fix("+", &left_type, &right_type)
-                        .unwrap_or_else(|| "ensure both operands are numbers (for addition) or both are strings (for concatenation)".to_string());
+                        .unwrap_or_else(|| "ensure both operands are numbers (for addition), strings (for concatenation), or arrays with compatible element types".to_string());
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
@@ -847,6 +850,40 @@ impl<'a> TypeChecker<'a> {
         }
 
         inferred_return
+    }
+
+    fn array_concat_result(&self, left: &Type, right: &Type) -> Option<Type> {
+        let left_elem = self.array_elem_type_if_all_arrays(left)?;
+        let right_elem = self.array_elem_type_if_all_arrays(right)?;
+
+        if left_elem.is_assignable_to(&right_elem) {
+            Some(Type::Array(Box::new(right_elem)))
+        } else if right_elem.is_assignable_to(&left_elem) {
+            Some(Type::Array(Box::new(left_elem)))
+        } else {
+            None
+        }
+    }
+
+    fn array_elem_type_if_all_arrays(&self, ty: &Type) -> Option<Type> {
+        match ty.normalized() {
+            Type::Array(elem) => Some(*elem),
+            Type::Union(members) => {
+                let mut element_types = Vec::with_capacity(members.len());
+                for member in members {
+                    match member.normalized() {
+                        Type::Array(elem) => element_types.push(*elem),
+                        _ => return None,
+                    }
+                }
+                if element_types.is_empty() {
+                    None
+                } else {
+                    Some(Type::union(element_types))
+                }
+            }
+            _ => None,
+        }
     }
 
     fn all_union_pairs_valid<F>(&self, left: &Type, right: &Type, mut predicate: F) -> bool

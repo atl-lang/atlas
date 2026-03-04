@@ -1,0 +1,4 @@
+let nums: number[] = [1, 2];
+let words: string[] = ["a"]; 
+let bad = nums + words;
+print(bad);

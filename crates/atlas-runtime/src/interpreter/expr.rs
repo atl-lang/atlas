@@ -174,6 +174,14 @@ impl Interpreter {
                     self.track_memory(Self::estimate_string_size(&result))?;
                     Ok(Value::string(result))
                 }
+                (Value::Array(a), Value::Array(b)) => {
+                    let mut elements = Vec::with_capacity(a.len() + b.len());
+                    elements.extend_from_slice(a.as_slice());
+                    elements.extend_from_slice(b.as_slice());
+                    let estimated_size = Self::estimate_array_size(&elements);
+                    self.track_memory(estimated_size)?;
+                    Ok(Value::array(elements))
+                }
                 _ => Err(RuntimeError::TypeError {
                     msg: "Invalid operands for +".to_string(),
                     span: binary.span,

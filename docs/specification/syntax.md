@@ -1049,5 +1049,5 @@ This section summarizes the most common migration issues from v0.2 to v0.3:
 ### Important Library Notes
 
 - `hashMapPut(map, key, val)` returns a new map (copy-on-write) — reassign the result: `map = hashMapPut(map, key, val)`
-- Array concatenation with `+` is not supported — use `concat()` or `arrayPush()`
+- Array concatenation with `+` is supported (equivalent to `concat()`)
 - Empty array `[]` requires type context — use `slice([""], 0, 0)` as workaround

@@ -109,7 +109,7 @@ Each entry in `related` array:
 **Type Mismatch:**
 ```
 ❌ Bad:  "fix the type error"
-✅ Good: "ensure both operands are numbers (for addition) or both are strings (for concatenation)"
+✅ Good: "ensure both operands are numbers (for addition), strings (for concatenation), or arrays with compatible element types"
 ```
 
 **Undefined Symbol:**
@@ -309,7 +309,7 @@ Each entry in `related` array:
 .with_help(format!("declare '{}' before using it, or check for typos", id.name))
 
 // Typechecker - type mismatch
-.with_help("ensure both operands are numbers (for addition) or both are strings (for concatenation)")
+.with_help("ensure both operands are numbers (for addition), strings (for concatenation), or arrays with compatible element types")
 
 // Typechecker - unused variable
 .with_help(format!("remove the variable or prefix with underscore: _{}", name))

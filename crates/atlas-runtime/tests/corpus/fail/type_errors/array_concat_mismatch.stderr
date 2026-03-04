@@ -1,0 +1,1 @@
+Type error: '+' requires matching types, found number[] and string[]inferred type 'number[]' is incompatible with 'string[]' at this use site

@@ -34,10 +34,10 @@ Lock string behavior for correctness and AI predictability. Strings in Atlas are
 - This ensures consistent behavior across ASCII and multi-byte characters
 
 **Concatenation:**
-- String concatenation uses `+` operator
-- `+` is ONLY valid between two strings: `string + string → string`
+- String concatenation uses `+` when both operands are strings: `string + string → string`
 - Mixing types is a compile-time error: `"hello" + 5` → `AT0001` (type mismatch)
 - No implicit string coercion from other types
+ - Array concatenation rules are defined in [Operator Type Rules](#operator-type-rules)
 
 **Immutability:**
 - Strings are immutable once created
@@ -146,28 +146,32 @@ Define operator validity and typing rules for consistency. Every operator has ex
 
 ### Arithmetic Operators
 
-**Binary Arithmetic:** `+ - * / %`
+**Binary Arithmetic:** `- * / %`
 - **Valid for:** `number` operands only
 - **Returns:** `number`
 - **Type error:** Using with non-number operands → `AT0001` type mismatch
-- **Example:** `5 + 3` → `8`
-- **Example:** `5 + "3"` → `AT0001` (type mismatch)
+- **Example:** `5 * 3` → `15`
+- **Example:** `5 * "3"` → `AT0001` (type mismatch)
 
 **Unary Minus:** `-expr`
 - **Valid for:** `number` only
 - **Returns:** `number`
 - **Example:** `-5` → `-5`
 
-### String Concatenation
+### Addition & Concatenation
 
-**String Concatenation:** `+`
-- **Valid for:** `string + string` ONLY
-- **Returns:** `string`
-- **Type error:** Mixing types → `AT0001`
+**`+` Operator:**
+- **Valid for:**
+  - `number + number → number`
+  - `string + string → string`
+  - `array<T> + array<U> → array<V>` where `T` and `U` are compatible and `V` is the wider element type
+- **Type error:** Mixing categories → `AT0001`
+- **Example:** `5 + 3` → `8`
 - **Example:** `"hello" + " " + "world"` → `"hello world"`
+- **Example:** `[1, 2] + [3, 4]` → `[1, 2, 3, 4]`
 - **Example:** `"hello" + 5` → `AT0001` (type mismatch)
 
-**Note:** `+` is overloaded for `number + number` and `string + string`, but NEVER mixed types.
+**Note:** `+` is overloaded for `number + number`, `string + string`, and `array + array`, but NEVER mixed categories.
 
 ### Comparison Operators
 

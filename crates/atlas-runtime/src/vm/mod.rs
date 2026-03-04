@@ -917,6 +917,15 @@ impl VM {
                             self.string_buffer.push_str(y);
                             self.push(Value::String(Arc::new(self.string_buffer.clone())));
                         }
+                        (Value::Array(x), Value::Array(y)) => {
+                            let new_len = x.len() + y.len();
+                            self.track_memory(Self::estimate_array_size(new_len))?;
+
+                            let mut elements = Vec::with_capacity(new_len);
+                            elements.extend_from_slice(x.as_slice());
+                            elements.extend_from_slice(y.as_slice());
+                            self.push(Value::Array(ValueArray::from_vec(elements)));
+                        }
                         _ => {
                             return Err(RuntimeError::TypeError {
                                 msg: "Invalid operands for +".to_string(),
