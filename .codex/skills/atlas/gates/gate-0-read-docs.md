@@ -1,0 +1,184 @@
+# GATE 0: Environment Prep + Read Docs
+
+**Condition:** Starting any task
+
+---
+
+## Step 1: Clean Build Artifacts (MANDATORY)
+
+**Prevent disk bloat:** Cargo accumulates GB of build artifacts rapidly (51GB in ~5 hours).
+
+```bash
+cargo clean
+```
+
+**Why:** Fresh build environment prevents accumulation. Clean slate for each task.
+
+**ONE TIME ONLY:** Run once at task start, not during implementation.
+
+---
+
+## Step 2: Read Docs (Selective Reading)
+
+1. **ALWAYS:** Run `atlas-track sitrep` (mode, P0 blockers, handoff, block progress)
+2. **IF scaffolding session:** Also read `ROADMAP.md` and `docs/internal/V03_PLAN.md` — long-term direction must inform block scope before any phase is planned
+3. **IF structured development:** Read complete development plan (phase file)
+4. **SELECTIVE:** Read ONLY the spec files your task needs (see routing below)
+5. **CHECK EXISTING CODE:** Before writing tests, read existing test files in the target crate
+
+### Specification Routing (DO NOT read all specs)
+
+**Available specs in `docs/specification/`:**
+- Implementing types/generics? → Read `docs/specification/types.md`
+- Parser/grammar work? → Read `docs/specification/syntax.md`
+- Type checking? → Read `docs/specification/language-semantics.md`
+- Runtime/execution? → Read `docs/specification/runtime.md`
+- Module system? → Read `docs/specification/modules.md`
+- REPL behavior? → Read `docs/specification/repl.md`
+- Bytecode/VM? → Read `docs/specification/bytecode.md`
+- Error codes? → Read `docs/specification/diagnostics.md`
+- Stdlib API? → Read `docs/specification/stdlib.md`
+
+### Implementation Patterns (As Needed)
+
+**Canonical sources:**
+- Code patterns: `.claude/memory/patterns.md`
+- Domain verification: `.claude/memory/domain-prereqs.md`
+- Architectural decisions: `.claude/memory/patterns/*.md`
+- Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
+
+---
+
+## ⚠️ CRITICAL: Lazy Loading Rules
+
+**DO:**
+- Read Atlas-SPEC.md as index/routing ONLY
+- Use routing table to find exact file needed
+- Read ONLY relevant spec files for task
+
+**DON'T:**
+- Read all spec files at once
+- Skip the routing table
+- Guess which spec to read
+
+**Token savings:** 80-95% (read 5-15kb instead of 150kb)
+
+---
+
+**BLOCKING:** Cannot proceed without understanding current state and requirements.
+
+---
+
+## Step 3: Check Dependencies (formerly GATE 0.5)
+
+**For EACH dependency in phase file:**
+1. Does it exist in codebase? (grep for implementation)
+2. Does it match spec? (compare to `docs/specification/`)
+3. Is it complete? (run `atlas-track blocks`, run tests)
+
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `patterns/*.md` for constraints.
+
+**Status per dependency:**
+- ✅ Exists, complete, spec-compliant → Proceed
+- ⚠️ Exists but incomplete → Flag, may need to finish first
+- 🚫 Doesn't exist → BLOCKING. Do NOT ask the user. Resolve autonomously:
+  - If it's a missing spec definition: check `docs/specification/` — the spec is the authority
+  - If it's a missing implementation that should exist: implement it as a prerequisite phase (commit it, then continue)
+  - If it's a dependency outside v0.3 scope entirely: run `atlas-track open-issue` to document the gap, then skip the phase noting why in the phase file
+  - User is never the answer to a missing dependency
+
+---
+
+## Step 4: Domain Pattern Verification (CRITICAL)
+
+**Purpose:** Prevent hallucinated syntax by verifying actual codebase patterns before writing code.
+
+**Registry:** .claude/memory `domain-prereqs.md` (Claude .claude/memory)
+
+### Process
+
+1. **Identify domains** touched by phase (AST, stdlib, VM, type system, etc.)
+2. **For EACH domain**, consult .claude/memory `domain-prereqs.md`
+3. **Run verification queries** listed for that domain
+4. **Note 3-5 patterns** you will use (mentally or in scratch)
+5. **If uncertain**, read more — NEVER guess structure
+
+### Common Domains (see registry for queries)
+
+| Domain | Trigger Keywords | Key Verification |
+|--------|-----------------|------------------|
+| AST | parser, expression, statement, node | `ast.rs` enum variants |
+| Value | Value enum, runtime type | `value.rs` Value variants |
+| Stdlib | builtin, stdlib function | `stdlib/mod.rs` signatures |
+| Interpreter | eval, tree-walk | `interpreter/mod.rs` methods |
+| VM | bytecode, opcode, compile | `vm/` opcodes and execution |
+| Type System | type check, infer, annotation | `type_checker/` types |
+| Errors | RuntimeError, diagnostic | `errors.rs` variants |
+
+### Example
+
+Phase says "Add new AST node for X":
+```bash
+# Before writing ANY code, verify actual AST structure:
+Grep pattern="^pub enum Expr" path="crates/atlas-runtime/src/ast.rs" -A=30
+```
+
+**Output:** You now know the exact variant format. Use it.
+
+### Anti-Pattern (BANNED)
+
+```rust
+// WRONG: Guessing AST structure without verification
+Expr::Function { name, params, body }  // Did you verify this exists?
+
+// RIGHT: Verified from grep output
+Expr::FunctionDef { name, params, body, return_type }  // Matches actual code
+```
+
+---
+
+**BLOCKING:** Cannot proceed to implementation without pattern verification for touched domains.
+
+---
+
+## Step 5: Architecture Health Check + Baseline Sizing
+
+**Before writing any code**, verify the files you will touch are not already in violation AND
+record their current line counts to carry into GATE 1 estimation.
+
+```bash
+# 1. Source file violations (line-based)
+find crates/ -name "*.rs" -not -path "*/target/*" -not -path "*/tests/*" | xargs wc -l 2>/dev/null | sort -rn | awk '$1 > 1500 {print}' | head -20
+
+# 2. Test file violations (KB-based — token cost is the real constraint for AI agents)
+find crates/ -path "*/tests/*.rs" -not -path "*/target/*" -size +12k | xargs du -sh 2>/dev/null | sort -rh | head -20
+
+# 3. Record current size for EVERY file you will write to
+wc -l <each target source file>
+du -sh <each target test file>
+```
+
+**Record and carry this table into GATE 1 (MANDATORY):**
+
+```
+Target file: src/foo.rs              — current: 1,240 lines
+Target file: tests/stdlib/strings.rs — current: 8KB
+```
+
+| Result | Action |
+|--------|--------|
+| Source file > 2,000 lines (no ARCH-EXCEPTION comment) | **BLOCKING** — split before adding any code |
+| Source file 1,500–2,000 lines | Flag in phase summary — do not grow further |
+| Test file > 12KB | **BLOCKING** — split before adding any tests |
+| Test file 10–12KB | Warning — flag in phase summary, plan split |
+
+**ARCH-EXCEPTION protocol:** If a file legitimately cannot be split (e.g. VM execute loop),
+it must have `// ARCH-EXCEPTION: <reason>` at the top. If the comment is missing, the file
+is in violation regardless of circumstance.
+
+**Test file routing:** See `.claude/rules/atlas-testing.md` for domain table.
+**Architecture limits:** See `.claude/lazy/architecture.md` for thresholds.
+
+---
+
+**Next:** GATE 1

@@ -284,3 +284,17 @@ Do NOT stop for:
 - Say "out of scope" or "future version" or "not in roadmap"
 - Defer work for any reason
 - Refuse to implement because "it's complex"
+
+---
+
+## Reference Files (Read When Needed)
+
+| File | When to Read |
+|------|--------------|
+| `gates/gate-3-parity.md` | Before committing changes to interpreter OR VM |
+| `gates/gate-4-quality.md` | Before committing any code |
+| `gates/gate-6-final-testing.md` | Before marking task complete |
+| `gates/git-workflow.md` | Before any git operations |
+| `references/big-implementations.md` | For large features or refactors |
+| `workflows/bug-fix.md` | For bug fix tasks |
+| `workflows/structured.md` | For structured development tasks |
