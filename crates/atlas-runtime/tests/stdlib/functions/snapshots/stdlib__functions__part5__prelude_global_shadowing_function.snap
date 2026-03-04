@@ -1,6 +1,6 @@
 ---
-source: crates/atlas-runtime/tests/stdlib/functions.rs
-assertion_line: 1443
+source: crates/atlas-runtime/tests/stdlib/functions/part5.rs
+assertion_line: 48
 expression: diagnostics
 ---
 - diag_version: 1

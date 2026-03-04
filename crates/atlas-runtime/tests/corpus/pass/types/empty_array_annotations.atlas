@@ -1,0 +1,11 @@
+let nums: number[] = [];
+let strs: string[] = [];
+let bools: bool[] = [];
+let jsons: json[] = [];
+let nested: number[][] = [];
+
+print(len(nums));
+print(len(strs));
+print(len(bools));
+print(len(jsons));
+print(len(nested));

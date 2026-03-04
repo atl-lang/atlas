@@ -61,7 +61,7 @@ fn assert_eval_string_with_io(source: &str, expected: &str) {
 mod collections;
 #[path = "stdlib/docs_verification.rs"]
 mod docs_verification;
-#[path = "stdlib/functions.rs"]
+#[path = "stdlib/functions/mod.rs"]
 mod functions;
 #[path = "stdlib/integration.rs"]
 mod integration;

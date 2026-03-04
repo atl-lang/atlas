@@ -19,7 +19,7 @@ use rstest::rstest;
 // Domain submodules (files live in tests/interpreter/)
 #[path = "interpreter/assignment.rs"]
 mod interp_assignment;
-#[path = "interpreter/for_in.rs"]
+#[path = "interpreter/for_in/mod.rs"]
 mod interp_for_in;
 #[path = "interpreter/integration.rs"]
 mod interp_integration;

@@ -1208,12 +1208,23 @@ impl<'a> TypeChecker<'a> {
                     .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));
 
                 let init_type = self.check_expr(&var.init);
+                let is_empty_array_literal = matches!(
+                    &var.init,
+                    Expr::ArrayLiteral(ArrayLiteral { elements, .. }) if elements.is_empty()
+                );
 
                 // Determine the final type for this variable
                 let final_type = if let Some(type_ref) = &var.type_ref {
                     let declared_type =
                         self.resolve_type_ref_with_context(type_ref, Some(&init_type));
-                    if !init_type.is_assignable_to(&declared_type) {
+                    let declared_is_array = matches!(declared_type.normalized(), Type::Array(_))
+                        || matches!(
+                            declared_type.normalized(),
+                            Type::Generic { name, type_args } if name == "Array" && type_args.len() == 1
+                        );
+                    if is_empty_array_literal && declared_is_array {
+                        // Empty array literals must be typed by annotation.
+                    } else if !init_type.is_assignable_to(&declared_type) {
                         let help = suggestions::suggest_type_mismatch(&declared_type, &init_type)
                             .unwrap_or_else(|| {
                                 format!(
@@ -1242,6 +1253,19 @@ impl<'a> TypeChecker<'a> {
                     }
                     declared_type
                 } else {
+                    if is_empty_array_literal {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                error_codes::INFERRED_TYPE_INCOMPATIBLE,
+                                "Cannot infer type of empty array literal".to_string(),
+                                var.span,
+                            )
+                            .with_label("type annotation required")
+                            .with_help(
+                                "add an explicit array type annotation: `let x: number[] = []`",
+                            ),
+                        );
+                    }
                     // No explicit type annotation - use inferred type
                     init_type
                 };

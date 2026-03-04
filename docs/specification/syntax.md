@@ -129,6 +129,7 @@ null
 **Rules:**
 - All elements must have the same type
 - `[]` not allowed without type context (no implicit empty array)
+- Type context can come from an explicit annotation (e.g., `let xs: number[] = []`)
 - Trailing commas not allowed
 - **Note:** Empty array workaround if type context is unavailable: `slice([""], 0, 0)` creates an empty array
 

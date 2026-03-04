@@ -54,10 +54,10 @@ fn test_record_literal_infers_structural_type() {
 fn test_unknown_not_assignable_to_concrete() {
     let diags = typecheck_source(
         r#"
-        let _nums: number[] = [];
+        let _nums = [];
         "#,
     );
-    assert_has_error(&diags, "AT3001");
+    assert_has_error(&diags, "AT3052");
 }
 
 // AT2013 — MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION (warning, not error)
