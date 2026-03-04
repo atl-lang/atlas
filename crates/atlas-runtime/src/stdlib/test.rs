@@ -27,8 +27,8 @@
 //! - `assertLength(array, expected)` — assert array length matches
 //!
 //! ## Error
-//! - `assertThrows(fn)` — assert NativeFunction throws (returns Err)
-//! - `assertNoThrow(fn)` — assert NativeFunction does not throw
+//! - `assertThrows(fn)` — assert callable throws (returns Err)
+//! - `assertNoThrow(fn)` — assert callable does not throw
 
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
@@ -395,35 +395,86 @@ pub fn assert_length(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 // Error assertions
 // ============================================================================
 
+fn select_callable<'a>(
+    fn_name: &'a str,
+    args: &'a [Value],
+    allow_atlas: bool,
+    span: Span,
+) -> Result<&'a Value, RuntimeError> {
+    check_arity(fn_name, args, 1, span)?;
+
+    match &args[0] {
+        Value::NativeFunction(_) => Ok(&args[0]),
+        Value::Function(_) | Value::Closure(_) | Value::Builtin(_) if allow_atlas => Ok(&args[0]),
+        Value::Function(_) | Value::Closure(_) | Value::Builtin(_) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "{} requires a NativeFunction (Rust closure). Bytecode functions defined in Atlas code need interpreter context.",
+                fn_name
+            ),
+            span,
+        }),
+        other => Err(type_error("function", other.type_name(), span)),
+    }
+}
+
+pub fn assert_throws_with<F>(
+    args: &[Value],
+    span: Span,
+    allow_atlas: bool,
+    mut invoke: F,
+) -> Result<Value, RuntimeError>
+where
+    F: FnMut(&Value) -> Result<Value, RuntimeError>,
+{
+    let callable = select_callable("assertThrows", args, allow_atlas, span)?;
+
+    match invoke(callable) {
+        Ok(_) => Err(assertion_error(
+            "assertThrows: expected function to throw, but it returned successfully",
+            span,
+        )),
+        Err(_) => Ok(Value::Null),
+    }
+}
+
+pub fn assert_no_throw_with<F>(
+    args: &[Value],
+    span: Span,
+    allow_atlas: bool,
+    mut invoke: F,
+) -> Result<Value, RuntimeError>
+where
+    F: FnMut(&Value) -> Result<Value, RuntimeError>,
+{
+    let callable = select_callable("assertNoThrow", args, allow_atlas, span)?;
+
+    match invoke(callable) {
+        Ok(_) => Ok(Value::Null),
+        Err(e) => Err(assertion_error(
+            format!(
+                "assertNoThrow: expected function to succeed, but it threw: {}",
+                e
+            ),
+            span,
+        )),
+    }
+}
+
 /// `assertThrows(fn: NativeFunction) -> void`
 ///
 /// Calls `fn` with no arguments and asserts it returns an error.
 /// Works with `NativeFunction` values (Rust closures passed via the Atlas API).
-///
-/// Note: Bytecode functions (defined in Atlas code) require interpreter context
-/// and cannot be called directly from stdlib. Use NativeFunction for this assertion.
 pub fn assert_throws(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    check_arity("assertThrows", args, 1, span)?;
-
-    match &args[0] {
-        Value::NativeFunction(f) => {
-            match f(&[]) {
-                Ok(_) => Err(assertion_error(
-                    "assertThrows: expected function to throw, but it returned successfully",
-                    span,
-                )),
-                Err(_) => Ok(Value::Null), // threw as expected
-            }
-        }
-        Value::Function(_) => Err(RuntimeError::TypeError {
+    assert_throws_with(args, span, false, |callable| match callable {
+        Value::NativeFunction(f) => f(&[]),
+        _ => Err(RuntimeError::TypeError {
             msg: "assertThrows requires a NativeFunction (Rust closure). \
                   Bytecode functions defined in Atlas code need interpreter context. \
                   Wrap your test logic in a native function via the Atlas embedding API."
                 .to_string(),
             span,
         }),
-        other => Err(type_error("function", other.type_name(), span)),
-    }
+    })
 }
 
 /// `assertNoThrow(fn: NativeFunction) -> void`
@@ -431,30 +482,16 @@ pub fn assert_throws(args: &[Value], span: Span) -> Result<Value, RuntimeError> 
 /// Calls `fn` with no arguments and asserts it does NOT return an error.
 /// Works with `NativeFunction` values (Rust closures passed via the Atlas API).
 pub fn assert_no_throw(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    check_arity("assertNoThrow", args, 1, span)?;
-
-    match &args[0] {
-        Value::NativeFunction(f) => {
-            match f(&[]) {
-                Ok(_) => Ok(Value::Null), // no throw = success
-                Err(e) => Err(assertion_error(
-                    format!(
-                        "assertNoThrow: expected function to succeed, but it threw: {}",
-                        e
-                    ),
-                    span,
-                )),
-            }
-        }
-        Value::Function(_) => Err(RuntimeError::TypeError {
+    assert_no_throw_with(args, span, false, |callable| match callable {
+        Value::NativeFunction(f) => f(&[]),
+        _ => Err(RuntimeError::TypeError {
             msg: "assertNoThrow requires a NativeFunction (Rust closure). \
                   Bytecode functions defined in Atlas code need interpreter context. \
                   Wrap your test logic in a native function via the Atlas embedding API."
                 .to_string(),
             span,
         }),
-        other => Err(type_error("function", other.type_name(), span)),
-    }
+    })
 }
 
 // ============================================================================

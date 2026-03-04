@@ -2261,6 +2261,9 @@ impl VM {
             // Regex intrinsics (callback-based)
             "regexReplaceWith" => self.vm_intrinsic_regex_replace_with(args, span),
             "regexReplaceAllWith" => self.vm_intrinsic_regex_replace_all_with(args, span),
+            // Test intrinsics (callable assertions)
+            "assertThrows" => self.vm_intrinsic_assert_throws(args, span),
+            "assertNoThrow" => self.vm_intrinsic_assert_no_throw(args, span),
             _ => Err(RuntimeError::UnknownFunction {
                 name: name.to_string(),
                 span,
@@ -3562,6 +3565,30 @@ impl VM {
         result.push_str(&text[last_end..]);
 
         Ok(Value::string(result))
+    }
+
+    // ========================================================================
+    // Test Intrinsics (Callable assertions)
+    // ========================================================================
+
+    fn vm_intrinsic_assert_throws(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        crate::stdlib::test::assert_throws_with(args, span, true, |callable| {
+            self.vm_call_function_value(callable, vec![], span)
+        })
+    }
+
+    fn vm_intrinsic_assert_no_throw(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        crate::stdlib::test::assert_no_throw_with(args, span, true, |callable| {
+            self.vm_call_function_value(callable, vec![], span)
+        })
     }
 
     /// Helper: Call a function value with arguments (VM version)

@@ -236,7 +236,20 @@ fn test_assertion_coverage() -> void {
     assertEmpty(empty_list);
     assertLength([1, 2, 3], 3);
 
-    // Error assertions require NativeFunction; stdlib functions are native.
+    // Error assertions accept Atlas callables and stdlib/native functions.
     assertThrows(dateTimeFromTimestamp);
     assertNoThrow(dateTimeNow);
+}
+
+// ============================================================================
+// Exception handling tests
+// ============================================================================
+
+fn will_throw() -> void {
+    let arr = [1, 2, 3];
+    let _x = arr[99];
+}
+
+fn test_exception_handling() -> void {
+    assertThrows(will_throw);
 }

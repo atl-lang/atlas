@@ -381,6 +381,8 @@ impl Interpreter {
                     "regexReplaceAllWith" => {
                         return self.intrinsic_regex_replace_all_with(&args, span)
                     }
+                    "assertThrows" => return self.intrinsic_assert_throws(&args, span),
+                    "assertNoThrow" => return self.intrinsic_assert_no_throw(&args, span),
                     _ => {}
                 }
 
@@ -2394,6 +2396,30 @@ impl Interpreter {
         result.push_str(&text[last_end..]);
 
         Ok(Value::string(result))
+    }
+
+    // ========================================================================
+    // Test Intrinsics (Callable assertions)
+    // ========================================================================
+
+    fn intrinsic_assert_throws(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        crate::stdlib::test::assert_throws_with(args, span, true, |callable| {
+            self.call_value(callable, vec![], span)
+        })
+    }
+
+    fn intrinsic_assert_no_throw(
+        &mut self,
+        args: &[Value],
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        crate::stdlib::test::assert_no_throw_with(args, span, true, |callable| {
+            self.call_value(callable, vec![], span)
+        })
     }
 
     /// Helper: Call a function value with arguments

@@ -1774,6 +1774,9 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             // Regex intrinsics (callback-based)
             | "regexReplaceWith"
             | "regexReplaceAllWith"
+            // Test intrinsics (callback-based)
+            | "assertThrows"
+            | "assertNoThrow"
     )
 }
 
