@@ -69,7 +69,7 @@ fn test_multiplication() -> void {
 
 1. **Files:** Only `*.test.atl` files are considered
 2. **Functions:** Functions matching `test_*` pattern are discovered
-3. **Signature:** Test functions must have `fn test_*(...) -> void` signature (no parameters)
+3. **Signature:** Test functions must have **no parameters**. Return values are ignored.
 4. **Recursive:** Test discovery is recursive through project directories
 
 ### Valid Test Functions
@@ -84,6 +84,12 @@ fn test_basic() -> void {
 fn test_inferred_return() {
     assertEqual(1, 1);
 }
+
+// Also OK: return value is ignored by the test runner
+fn test_returns_number() -> number {
+    assert(true, "still a valid test");
+    return 42;
+}
 ```
 
 ### Invalid Test Functions
@@ -92,11 +98,6 @@ fn test_inferred_return() {
 // Wrong: takes parameters
 fn test_with_args(x: number) -> void {
     assertEqual(x, 5);
-}
-
-// Wrong: non-void return type
-fn test_returns_value() -> number {
-    return 42;
 }
 
 // Not discovered: doesn't match pattern
@@ -157,8 +158,8 @@ Example: `tests/unit/math.test.atl::test_fibonacci`
 # Run all tests
 atlas test
 
-# Run tests matching pattern
-atlas test --filter substring
+# Run tests matching pattern (positional argument)
+atlas test substring
 
 # Run tests sequentially (default is parallel)
 atlas test --sequential
@@ -177,7 +178,6 @@ atlas test --dir ./tests
 
 | Flag | Description |
 |------|-------------|
-| `--filter <pattern>` | Only run tests with names matching pattern |
 | `--sequential` | Run tests one at a time (default: parallel) |
 | `--verbose` | Show all test names and detailed output |
 | `--no-color` | Disable colored output |

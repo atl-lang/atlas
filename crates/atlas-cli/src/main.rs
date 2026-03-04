@@ -231,8 +231,9 @@ enum Commands {
 
     /// Run tests in a directory
     ///
-    /// Discovers and runs Atlas test files. Test files should export
-    /// functions prefixed with 'test_' that return true on success.
+    /// Discovers and runs Atlas test files. Test files should define
+    /// functions prefixed with 'test_' that take no parameters.
+    /// Return values are ignored; use stdlib assertions to signal failures.
     ///
     /// EXAMPLES:
     ///     atlas test                      Run all tests

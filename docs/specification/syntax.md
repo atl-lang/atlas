@@ -104,6 +104,22 @@ All numbers are 64-bit floating-point (IEEE 754)
 "C:\\Users\\name"
 ```
 
+#### Multiline Strings
+
+Atlas uses standard double-quoted strings for multiline text. Newlines inside a
+string literal are preserved as `\n` characters.
+
+```atlas
+let s = "line 1
+line 2
+line 3";
+```
+
+**Rules:**
+- Multiline strings use normal `"` delimiters (no triple-quote syntax)
+- Newlines are part of the string value
+- All normal escape sequences still apply
+
 #### String Interpolation
 
 String interpolation allows embedding expressions inside strings using `${...}` syntax:
@@ -496,6 +512,41 @@ export type Point = { x: number, y: number };
 - Generic parameters are optional: `type Result<T, E> = ...`
 - Use `export type` to expose aliases from a module
 
+### Enum Declaration
+
+```atlas
+enum Result<T, E> {
+    Ok(T),
+    Err(E),
+}
+
+enum Shape {
+    Unit,
+    Circle(number),
+    Rect { w: number, h: number },
+}
+```
+
+**Rules:**
+- `enum` declarations are module-level (top-level) only
+- Optional type parameters are supported: `enum Option<T> { None, Some(T) }`
+- Variant forms: `Unit`, `Tuple(number, number)`, `Struct { w: number, h: number }`
+- Trailing commas are allowed between variants
+
+### Enum Construction
+
+```atlas
+let a = Result::Ok(123);
+let b = Result::Err("oops");
+let c = Shape::Unit;
+let d = Shape::Circle(10);
+```
+
+**Rules:**
+- Unit and tuple variants use `EnumName::VariantName` or `EnumName::VariantName(args)`
+- **Struct variants do not currently have a constructor expression.**
+  Attempting `Shape::Rect { w: 1, h: 2 }` is a syntax error in v0.3.
+
 ### Assignment
 
 ```atlas
@@ -797,6 +848,33 @@ import * as math from "./math";
 let sum = math.add(1, 2);
 let pi = math.PI;
 ```
+
+### Module Exports
+
+```atlas
+export fn add(a: number, b: number) -> number {
+    return a + b;
+}
+
+export let PI = 3.14159;
+
+export type Point = { x: number, y: number };
+```
+
+**Rules:**
+- `export` supports `fn`, `let`, and `type` declarations only
+- `export struct` and `export enum` are syntax errors in v0.3
+
+### Type Import/Export Semantics
+
+**Current behavior:**
+- `export type` is **compile-time only** and does not create a runtime export
+- `import { name }` imports **runtime values only**
+- Importing a `type` alias name will fail with "`'<name>' is not exported from module`"
+
+**Workarounds:**
+- Import functions/values and re-declare shared aliases locally
+- Keep type aliases module-private and expose constructors/helpers instead
 
 ---
 

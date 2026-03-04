@@ -167,20 +167,18 @@ atlas t [options] [filter]
 
 | Option | Description |
 |--------|-------------|
-| `--filter <pattern>` | Only run tests matching pattern |
-| `--file <path>` | Run tests in a specific file only |
-| `--verbose`, `-v` | Show all test output (not just failures) |
-| `--no-capture` | Don't capture stdout during tests |
+| `[filter]` | Positional pattern; only run tests with names containing this substring |
+| `--sequential` | Run tests sequentially (default: parallel) |
+| `--verbose`, `-v` | Show all test names |
+| `--no-color` | Disable colored output |
 | `--json` | Output results as JSON |
-| `--bail` | Stop after first failure |
-| `--parallel` | Run tests in parallel (default: sequential) |
-| `--timeout <ms>` | Per-test timeout in milliseconds (default: 30000) |
+| `--dir <path>` | Test directory (default: current directory) |
 
 **Test discovery:**
 
 Atlas finds test functions by name prefix:
 - Any function named `test_*` is a test
-- Functions must take no arguments and return `void`
+- Functions must take no arguments; return values are ignored
 
 ```atlas
 fn test_addition() -> void {
@@ -197,9 +195,9 @@ fn test_string_ops() -> void {
 
 ```bash
 atlas test                           # run all tests
-atlas test --filter addition         # run tests matching "addition"
-atlas test --file src/math.atl       # test one file
-atlas test --bail --verbose          # stop on first failure, verbose
+atlas test addition                  # run tests matching "addition"
+atlas test --dir ./tests             # run tests in a specific directory
+atlas test --sequential --verbose    # sequential run, show all test names
 atlas t --json > results.json        # JSON output
 ```
 
