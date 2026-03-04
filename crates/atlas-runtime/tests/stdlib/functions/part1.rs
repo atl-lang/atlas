@@ -103,9 +103,7 @@ fn test_function_variable_with_same_name() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_variable_in_block() {
     let source = r#"
         fn square(x: number) -> number { return x * x; }
@@ -117,9 +115,7 @@ fn test_function_variable_in_block() {
     assert_eval_number(source, 9.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_variable_shadowing() {
     let source = r#"
         fn add(a: number, b: number) -> number { return a + b; }
@@ -137,9 +133,7 @@ fn test_function_variable_shadowing() {
 // Category 2: Function Parameters (25 tests)
 // ============================================================================
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_pass_function_as_argument() {
     let source = r#"
         fn apply(f: (number) -> number, x: number) -> number {
@@ -151,9 +145,7 @@ fn test_pass_function_as_argument() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_pass_builtin_as_argument() {
     let source = r#"
         fn applyStr(f: (number) -> string, x: number) -> string {
@@ -164,9 +156,7 @@ fn test_pass_builtin_as_argument() {
     assert_eval_string(source, "42");
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_pass_function_through_variable() {
     let source = r#"
         fn apply(f: (number) -> number, x: number) -> number {
@@ -179,9 +169,7 @@ fn test_pass_function_through_variable() {
     assert_eval_number(source, 12.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_multiple_function_parameters() {
     let source = r#"
         fn compose(
@@ -198,9 +186,7 @@ fn test_multiple_function_parameters() {
     assert_eval_number(source, 12.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_parameter_called_multiple_times() {
     let source = r#"
         fn applyTwice(f: (number) -> number, x: number) -> number {
@@ -212,9 +198,7 @@ fn test_function_parameter_called_multiple_times() {
     assert_eval_number(source, 12.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_parameter_with_string() {
     let source = r#"
         fn apply(f: (string) -> number, s: string) -> number {
@@ -225,9 +209,7 @@ fn test_function_parameter_with_string() {
     assert_eval_number(source, 5.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_parameter_two_args() {
     let source = r#"
         fn applyBinary(

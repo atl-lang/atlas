@@ -2,9 +2,7 @@ use super::*;
 
 // ============================================================================
 
-// Requires nested function declarations (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested function declarations — deferred to v0.3+"]
 fn test_return_function() {
     let source = r#"
         fn getDouble() -> (number) -> number {
@@ -42,9 +40,7 @@ fn test_return_function_from_parameter() {
     assert_eval_number(source, 12.0);
 }
 
-// Requires nested function declarations (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested function declarations — deferred to v0.3+"]
 fn test_conditional_function_return() {
     let source = r#"
         fn getFunc(flag: bool) -> (number) -> number {
@@ -61,9 +57,7 @@ fn test_conditional_function_return() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested function declarations (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested function declarations — deferred to v0.3+"]
 fn test_return_function_and_call_immediately() {
     let source = r#"
         fn getDouble() -> (number) -> number {
@@ -97,9 +91,7 @@ fn test_type_error_not_a_function() {
     assert_error_code(source, "AT3006");
 }
 
-// Requires nested function declarations (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested function declarations — deferred to v0.3+"]
 fn test_type_error_wrong_return_type() {
     let source = r#"
         fn getString() -> string {
@@ -120,9 +112,7 @@ fn test_type_valid_function_assignment() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_type_valid_function_parameter() {
     let source = r#"
         fn apply(f: (string) -> number, s: string) -> number {
@@ -183,9 +173,7 @@ fn test_function_with_many_params() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_variable_in_global_scope() {
     let source = r#"
         fn double(x: number) -> number { return x * 2; }
@@ -202,9 +190,7 @@ fn test_function_variable_in_global_scope() {
 // Category 6: Integration Tests (15 tests)
 // ============================================================================
 
-// Requires nested function declarations (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested function declarations — deferred to v0.3+"]
 fn test_function_composition() {
     let source = r#"
         fn compose(
@@ -224,9 +210,7 @@ fn test_function_composition() {
     assert_eval_number(source, 11.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_callback_pattern() {
     let source = r#"
         fn processValue(
@@ -245,9 +229,7 @@ fn test_callback_pattern() {
     assert_eval_number(source, 10.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_array_element() {
     let source = r#"
         fn double(x: number) -> number { return x * 2; }

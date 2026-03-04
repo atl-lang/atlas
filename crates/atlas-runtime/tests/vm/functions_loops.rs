@@ -1,8 +1,6 @@
 use super::*;
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_function_in_loop() {
     let source = r#"
         fn apply(f: (number) -> number, x: number) -> number {
@@ -19,9 +17,7 @@ fn test_function_in_loop() {
     assert_eval_number(source, 3.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_map_pattern_with_function() {
     let source = r#"
         fn applyToArray(arr: number[], f: (number) -> number) -> number[] {
@@ -39,9 +35,7 @@ fn test_map_pattern_with_function() {
     assert_eval_number(source, 12.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_filter_pattern_with_function() {
     let source = r#"
         fn filterArray(arr: number[], predicate: (number) -> bool) -> number[] {
@@ -82,9 +76,7 @@ fn test_reduce_pattern_with_function() {
     assert_eval_number(source, 15.0);
 }
 
-// Requires nested functions or closure capture (deferred to v0.3+)
 #[test]
-#[ignore = "requires nested functions or closure capture — deferred to v0.3+"]
 fn test_complex_function_passing() {
     let source = r#"
         fn transform(
