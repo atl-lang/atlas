@@ -1048,6 +1048,6 @@ This section summarizes the most common migration issues from v0.2 to v0.3:
 
 ### Important Library Notes
 
-- `hashMapPut(map, key, val)` returns a new map (copy-on-write) — reassign the result: `map = hashMapPut(map, key, val)`
+- `hashMapPut(map, key, val)` mutates the map in place and returns the map for chaining. Use `hashMapCopy(map)` when you need an explicit copy.
 - Array concatenation with `+` is supported (equivalent to `concat()`)
 - Empty array `[]` requires type context — use `slice([""], 0, 0)` as workaround

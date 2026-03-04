@@ -1,7 +1,8 @@
 //! Runtime value representation
 //!
-//! All Atlas values use **value semantics** — copying a value creates an independent
-//! copy. Mutations to a copy never affect the original.
+//! Atlas values default to **value semantics** — copying a value creates an independent
+//! copy. Mutations to a copy never affect the original, unless the type explicitly
+//! opts into shared mutation (e.g., HashMap).
 //!
 //! ## Value Categories
 //!
@@ -13,10 +14,12 @@
 //! ### Copy-on-write (cheap to clone via refcount, independent on mutation)
 //! - `String(Arc<String>)` — immutable interned string, shared until reassigned
 //! - `Array(ValueArray)` — `Arc<Vec<Value>>` with `Arc::make_mut` CoW
-//! - `HashMap(ValueHashMap)` — `Arc<AtlasHashMap>` with CoW
 //! - `HashSet(ValueHashSet)` — `Arc<AtlasHashSet>` with CoW
 //! - `Queue(ValueQueue)` — `Arc<VecDeque<Value>>` with CoW
 //! - `Stack(ValueStack)` — `Arc<Vec<Value>>` with CoW
+//!
+//! ### Shared mutable collections (reference semantics)
+//! - `HashMap(ValueHashMap)` — `Arc<Mutex<AtlasHashMap>>` (mutations visible to aliases)
 //!
 //! ### Explicit reference semantics (opt-in only)
 //! - `SharedValue(Arc<Mutex<Value>>)` — mutations visible to all aliases.
@@ -29,10 +32,10 @@
 //!
 //! ## CoW Write-Back (Phase 15–16)
 //!
-//! Mutating stdlib functions (e.g. `arrayPush`, `arrayPop`) return a new collection.
+//! Mutating stdlib functions (e.g. `arrayPush`, `arrayPop`) return an updated collection.
 //! The interpreter and VM automatically write back the updated collection to the
-//! variable that was passed as the first argument, preserving value semantics without
-//! requiring the programmer to reassign manually.
+//! variable that was passed as the first argument, preserving value semantics for
+//! CoW collections and providing ergonomic mutation for HashMap.
 
 use crate::json_value::JsonValue;
 use std::collections::HashMap;
@@ -222,43 +225,56 @@ impl From<HashMap<String, Value>> for ValueMap {
     }
 }
 
-/// Copy-on-write wrapper for AtlasHashMap
+/// Shared-mutation wrapper for AtlasHashMap.
 #[derive(Clone, Debug, Default)]
-pub struct ValueHashMap(Arc<crate::stdlib::collections::hashmap::AtlasHashMap>);
+pub struct ValueHashMap(Arc<Mutex<crate::stdlib::collections::hashmap::AtlasHashMap>>);
 
 impl ValueHashMap {
     pub fn new() -> Self {
-        ValueHashMap(Arc::new(
+        ValueHashMap(Arc::new(Mutex::new(
             crate::stdlib::collections::hashmap::AtlasHashMap::new(),
-        ))
+        )))
     }
 
-    pub fn inner(&self) -> &crate::stdlib::collections::hashmap::AtlasHashMap {
-        &self.0
+    pub fn with<R>(
+        &self,
+        f: impl FnOnce(&crate::stdlib::collections::hashmap::AtlasHashMap) -> R,
+    ) -> R {
+        let guard = self.0.lock().expect("ValueHashMap lock poisoned");
+        f(&guard)
     }
 
-    pub fn inner_mut(&mut self) -> &mut crate::stdlib::collections::hashmap::AtlasHashMap {
-        Arc::make_mut(&mut self.0)
+    pub fn with_mut<R>(
+        &self,
+        f: impl FnOnce(&mut crate::stdlib::collections::hashmap::AtlasHashMap) -> R,
+    ) -> R {
+        let mut guard = self.0.lock().expect("ValueHashMap lock poisoned");
+        f(&mut guard)
     }
 
     pub fn is_exclusively_owned(&self) -> bool {
         Arc::strong_count(&self.0) == 1
     }
 
-    /// Wrap an existing AtlasHashMap in a CoW wrapper.
+    /// Wrap an existing AtlasHashMap in a shared wrapper.
     pub fn from_atlas(m: crate::stdlib::collections::hashmap::AtlasHashMap) -> Self {
-        ValueHashMap(Arc::new(m))
+        ValueHashMap(Arc::new(Mutex::new(m)))
     }
 
     /// Expose inner Arc for cases that need pointer identity (e.g., circular reference detection).
-    pub fn arc(&self) -> &Arc<crate::stdlib::collections::hashmap::AtlasHashMap> {
+    pub fn arc(&self) -> &Arc<Mutex<crate::stdlib::collections::hashmap::AtlasHashMap>> {
         &self.0
     }
 }
 
 impl PartialEq for ValueHashMap {
     fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
+        if Arc::ptr_eq(&self.0, &other.0) {
+            return true;
+        }
+        let left = self.with(|inner| inner.clone());
+        let right = other.with(|inner| inner.clone());
+        left == right
     }
 }
 
@@ -582,7 +598,7 @@ impl PartialEq for Value {
     ///
     /// **Value types** (content equality — two equal values may be different allocations):
     /// - Number, String, Bool, Null: primitive equality
-    /// - Array, HashMap, HashSet, Queue, Stack: CoW wrappers compare by content
+    /// - Array, HashMap, HashSet, Queue, Stack: collections compare by content
     /// - Regex: compare by pattern string
     /// - DateTime: compare timestamps
     /// - HttpRequest, HttpResponse: compare by field content
@@ -664,7 +680,10 @@ impl fmt::Display for Value {
                 Ok(val) => write!(f, "Ok({})", val),
                 Err(err) => write!(f, "Err({})", err),
             },
-            Value::HashMap(map) => write!(f, "<HashMap size={}>", map.inner().len()),
+            Value::HashMap(map) => {
+                let len = map.with(|inner| inner.len());
+                write!(f, "<HashMap size={}>", len)
+            }
             Value::HashSet(set) => write!(f, "<HashSet size={}>", set.inner().len()),
             Value::Queue(queue) => write!(f, "<Queue size={}>", queue.inner().len()),
             Value::Stack(stack) => write!(f, "<Stack size={}>", stack.inner().len()),
@@ -710,7 +729,10 @@ impl fmt::Debug for Value {
             Value::JsonValue(json) => write!(f, "JsonValue({:?})", json),
             Value::Option(opt) => write!(f, "Option({:?})", opt),
             Value::Result(res) => write!(f, "Result({:?})", res),
-            Value::HashMap(map) => write!(f, "HashMap(size={})", map.inner().len()),
+            Value::HashMap(map) => {
+                let len = map.with(|inner| inner.len());
+                write!(f, "HashMap(size={})", len)
+            }
             Value::HashSet(set) => write!(f, "HashSet(size={})", set.inner().len()),
             Value::Queue(queue) => write!(f, "Queue(size={})", queue.inner().len()),
             Value::Stack(stack) => write!(f, "Stack(size={})", stack.inner().len()),

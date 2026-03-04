@@ -91,7 +91,9 @@ fn transform(shared data: Buffer) -> Buffer {
 
 ## Value Types (Copy-on-Write)
 
-All collection and object types are **value types** with copy-on-write semantics:
+Most collection and object types are **value types** with copy-on-write semantics.
+**HashMap is the exception**: it uses shared mutation (reference semantics) for AI
+ergonomics. Use `hashMapCopy(map)` when you need an explicit copy.
 
 ```atlas
 let a = [1, 2, 3]
@@ -101,18 +103,20 @@ print(a)            // [1, 2, 3]
 print(b)            // [1, 2, 3, 4]
 ```
 
-**CoW guarantees:**
+**CoW guarantees (non-HashMap collections):**
 - Reading a value never allocates
 - Mutation of an exclusively-owned value is in-place (no copy)
 - Mutation of a shared value triggers copy before mutation
-- AI can treat all values as independent — no aliasing to reason about
+- AI can treat these values as independent — no aliasing to reason about
 
 **Types that are value types:**
 - `array<T>` — was `Arc<Mutex<Vec<Value>>>`
-- `map<K, V>` — was `Arc<Mutex<HashMap<...>>>`
 - `string` — already value type, no change
 - `number`, `bool`, `null` — already value types, no change
 - User-defined structs (v0.3+) — value type by default
+
+**Types that use shared mutation:**
+- `map<K, V>` — `HashMap` uses shared mutation; assignment aliases. Use `hashMapCopy` to isolate.
 
 **Types that are explicit reference types:**
 - `shared<T>` — explicit opt-in
@@ -153,7 +157,8 @@ When no annotation is specified:
 
 ## Implementation Notes (v0.3 — Block 1 complete)
 
-The v0.3 Block 1 migration replaced all implicit reference semantics with CoW value types.
+The v0.3 Block 1 migration replaced most implicit reference semantics with CoW value types,
+except HashMap which now uses shared mutation for AI ergonomics.
 These notes document the concrete Rust types behind each Atlas concept.
 
 ### CoW Wrapper Types
@@ -161,7 +166,7 @@ These notes document the concrete Rust types behind each Atlas concept.
 | Atlas type | Rust implementation | CoW mechanism |
 |-----------|-------------------|---------------|
 | `array<T>` | `ValueArray(Arc<Vec<Value>>)` | `Arc::make_mut` on mutation |
-| `map<K,V>` | `ValueHashMap(Arc<AtlasHashMap>)` | `Arc::make_mut` on mutation |
+| `map<K,V>` | `ValueHashMap(Arc<Mutex<AtlasHashMap>>)` | Shared mutation (lock + in-place) |
 | `set<T>` | `ValueHashSet(Arc<AtlasHashSet>)` | `Arc::make_mut` on mutation |
 | `Queue<T>` | `ValueQueue(Arc<VecDeque<Value>>)` | `Arc::make_mut` on mutation |
 | `Stack<T>` | `ValueStack(Arc<Vec<Value>>)` | `Arc::make_mut` on mutation |
@@ -171,11 +176,13 @@ These notes document the concrete Rust types behind each Atlas concept.
 
 Stdlib mutation functions return the updated collection. Both engines (interpreter and VM)
 detect when the first argument is a local variable and automatically write the returned
-collection back to that variable. This preserves value semantics transparently:
+collection back to that variable. This preserves value semantics transparently for CoW
+collections. HashMap still participates in write-back for ergonomic mutation and chaining:
 
 ```atlas
 arr.push(x)    // interpreter/VM calls arrayPush(arr, x), writes result back to arr
 arr.pop()      // calls arrayPop(arr), writes [result, new_arr] pair; arr shrinks
+hashMapPut(m, "k", 1) // mutates in place; write-back keeps bindings consistent
 ```
 
 The write-back is triggered by `TypeTag::Array` / `TypeTag::HashMap` in method dispatch.
@@ -200,14 +207,14 @@ model and is entirely replaced in v0.3.
 
 **Migration strategy:**
 1. Replace `Arc<Mutex<Vec<Value>>>` (arrays) with CoW `ValueArray` struct
-2. Replace `Arc<Mutex<HashMap<...>>>` (maps) with CoW `ValueMap` struct
+2. Replace `Arc<Mutex<HashMap<...>>>` (maps) with shared-mutation `ValueHashMap` wrapper
 3. Introduce `Shared<T>` wrapper for explicit reference semantics
 4. Update all 300+ stdlib functions to operate on value types
 5. Update interpreter and VM to use value semantics throughout
 6. Maintain parity between engines throughout migration
 
 **Breaking changes:**
-- Array/map mutation semantics change: mutations no longer affect aliased copies
+- HashMap mutation semantics change: assignments alias; use `hashMapCopy` for isolation
 - `Arc::ptr_eq` identity checks (like the hashset fix) become unnecessary
 - Thread-safety model changes: shared mutation requires explicit `shared<T>`
 

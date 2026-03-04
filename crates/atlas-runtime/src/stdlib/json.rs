@@ -621,8 +621,7 @@ fn value_to_json(
                 });
             }
 
-            let inner = map_ref.inner();
-            let map_entries = inner.entries();
+            let map_entries = map_ref.with(|inner| inner.entries());
             let mut json_entries = Vec::with_capacity(map_entries.len());
 
             for (key, value) in map_entries {

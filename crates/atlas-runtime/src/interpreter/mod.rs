@@ -683,8 +683,9 @@ impl Interpreter {
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
-                match map.inner().get(&key) {
-                    Some(value) => Ok(value.clone()),
+                let found = map.with(|inner| inner.get(&key).cloned());
+                match found {
+                    Some(value) => Ok(value),
                     None => Err(RuntimeError::TypeError {
                         msg: format!("Missing field '{}'", field.name),
                         span,
@@ -732,7 +733,7 @@ impl Interpreter {
         }
     }
 
-    /// Apply a single field mutation to a container value (CoW semantics).
+    /// Apply a single field mutation to a container value.
     fn apply_member_mutation(
         container: &mut Value,
         field: &crate::ast::Identifier,
@@ -743,7 +744,9 @@ impl Interpreter {
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
-                map.inner_mut().insert(key, value);
+                map.with_mut(|inner| {
+                    inner.insert(key, value);
+                });
                 Ok(())
             }
             other => Err(RuntimeError::TypeError {

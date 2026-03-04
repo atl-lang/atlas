@@ -64,14 +64,16 @@ impl Interpreter {
         use crate::stdlib::collections::hash::HashKey;
         use crate::value::ValueHashMap;
 
-        let mut map = ValueHashMap::new();
+        let map = ValueHashMap::new();
 
         for field in &struct_expr.fields {
             // Field name is always a string (from identifier)
             let key = HashKey::String(Arc::new(field.name.name.clone()));
             // Evaluate the field value expression
             let value = self.eval_expr(&field.value)?;
-            map.inner_mut().insert(key, value);
+            map.with_mut(|inner| {
+                inner.insert(key, value);
+            });
         }
 
         Ok(Value::HashMap(map))
@@ -824,14 +826,16 @@ impl Interpreter {
         use crate::stdlib::collections::hash::HashKey;
         use crate::value::ValueHashMap;
 
-        let mut map = ValueHashMap::new();
+        let map = ValueHashMap::new();
 
         for entry in &obj.entries {
             // Key is always a string (from identifier)
             let key = HashKey::String(Arc::new(entry.key.name.clone()));
             // Evaluate the value expression
             let value = self.eval_expr(&entry.value)?;
-            map.inner_mut().insert(key, value);
+            map.with_mut(|inner| {
+                inner.insert(key, value);
+            });
         }
 
         Ok(Value::HashMap(map))
@@ -1828,7 +1832,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -1872,7 +1876,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -1894,11 +1898,13 @@ impl Interpreter {
             }
         };
 
-        let mut result_map = crate::value::ValueHashMap::new();
+        let result_map = crate::value::ValueHashMap::new();
         for (key, value) in map {
             // Call callback with (value, key) arguments
             let new_value = self.call_value(callback, vec![value, key.clone().to_value()], span)?;
-            result_map.inner_mut().insert(key, new_value);
+            result_map.with_mut(|inner| {
+                inner.insert(key, new_value);
+            });
         }
 
         Ok(Value::HashMap(result_map))
@@ -1918,7 +1924,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),
@@ -1940,14 +1946,16 @@ impl Interpreter {
             }
         };
 
-        let mut result_map = crate::value::ValueHashMap::new();
+        let result_map = crate::value::ValueHashMap::new();
         for (key, value) in map {
             // Call predicate with (value, key) arguments
             let pred_result =
                 self.call_value(predicate, vec![value.clone(), key.clone().to_value()], span)?;
             match pred_result {
                 Value::Bool(true) => {
-                    result_map.inner_mut().insert(key, value);
+                    result_map.with_mut(|inner| {
+                        inner.insert(key, value);
+                    });
                 }
                 Value::Bool(false) => {}
                 _ => {

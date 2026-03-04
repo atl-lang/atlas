@@ -24,7 +24,10 @@ Atlas runtime model defines how values are represented in memory, how execution 
 
 **Canonical memory model:** `docs/specification/memory-model.md` — that document is authoritative. Summary below.
 
-Collections are **copy-on-write value types** by default. Shared mutable state requires explicit `shared<T>`. No `Arc<Mutex<>>` on collections — this was the v0.1–v0.2 bootstrap model, replaced in Block 1.
+Collections are **copy-on-write value types** by default. HashMap is the exception: it
+uses shared mutation for AI ergonomics. Shared mutable state for other types requires
+explicit `shared<T>`. No `Arc<Mutex<>>` on most collections — this was the v0.1–v0.2
+bootstrap model, replaced in Block 1.
 
 - `string` - Arc<String> (immutable, shared, thread-safe — CoW semantics at language level)
 - `array` - CoW Vec<Value> (clone-on-write; `shared<array>` for shared mutable)
@@ -32,7 +35,7 @@ Collections are **copy-on-write value types** by default. Shared mutable state r
 - `json` - Arc<JsonValue> (immutable, shared, thread-safe)
 - `Option` - Option<Box<Value>> (Some/None)
 - `Result` - Result<Box<Value>, Box<Value>> (Ok/Err)
-- `HashMap` - CoW AtlasHashMap (clone-on-write; `shared<HashMap>` for shared mutable)
+- `HashMap` - Shared AtlasHashMap (mutations visible to aliases; use `hashMapCopy` to copy)
 - `HashSet` - CoW AtlasHashSet (clone-on-write)
 - `Queue` - CoW AtlasQueue (clone-on-write)
 - `Stack` - CoW AtlasStack (clone-on-write)
@@ -49,7 +52,7 @@ Collections are **copy-on-write value types** by default. Shared mutable state r
 
 ### Reference Counting
 - Atomic reference counting (Arc) for immutable shared values (strings, json, regex)
-- CoW (clone-on-write) for mutable collections — no implicit shared state
+- CoW (clone-on-write) for mutable collections — no implicit shared state (except HashMap)
 - Explicit `shared<T>` for intentional shared mutable state
 - No GC. Deterministic cleanup on scope exit.
 

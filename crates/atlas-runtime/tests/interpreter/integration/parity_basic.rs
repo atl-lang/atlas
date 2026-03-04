@@ -174,10 +174,10 @@ fn test_parity_hashmap_get(#[case] code: &str) {
     assert_parity(code);
 }
 
-// Map (HashMap): set with CoW — original unaffected after copy
+// Map (HashMap): set with shared mutation — aliases see updates
 #[rstest]
 #[case("let mut m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); let mut n: HashMap = m; hashMapPut(n, \"b\", 2); hashMapSize(m);")]
-fn test_parity_hashmap_set_cow(#[case] code: &str) {
+fn test_parity_hashmap_set_shared(#[case] code: &str) {
     assert_parity(code);
 }
 

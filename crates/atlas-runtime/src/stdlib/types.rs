@@ -356,7 +356,7 @@ pub fn has_field(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         )),
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
-            let exists = map.inner().contains_key(&key);
+            let exists = map.with(|inner| inner.contains_key(&key));
             Ok(Value::Bool(exists))
         }
         _ => Ok(Value::Bool(false)),
@@ -387,7 +387,7 @@ pub fn has_method(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         )),
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
-            let exists = map.inner().contains_key(&key);
+            let exists = map.with(|inner| inner.contains_key(&key));
             Ok(Value::Bool(exists))
         }
         _ => Ok(Value::Bool(false)),
@@ -421,7 +421,8 @@ pub fn has_tag(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string("tag"), span)?;
-            if let Some(Value::String(value)) = map.inner().get(&key) {
+            let value = map.with(|inner| inner.get(&key).cloned());
+            if let Some(Value::String(value)) = value {
                 return Ok(Value::Bool(value.as_ref() == tag_value));
             }
             Ok(Value::Bool(false))

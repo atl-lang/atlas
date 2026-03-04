@@ -141,7 +141,7 @@ let arr = Value::Array(ValueArray::from_vec(vec![
     Value::Number(3.0),
 ]));
 
-// HashMap (CoW value semantics)
+// HashMap (shared mutation semantics)
 let mut map = atlas_runtime::stdlib::collections::hashmap::AtlasHashMap::new();
 map.insert("name".to_string(), Value::String(Arc::new("Alice".to_string())));
 map.insert("age".to_string(), Value::Number(30.0));

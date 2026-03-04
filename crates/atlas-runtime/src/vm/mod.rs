@@ -1661,19 +1661,22 @@ impl VM {
                         crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
 
                     match map_val {
-                        Value::HashMap(map) => match map.inner().get(&key) {
-                            Some(value) => self.push(value.clone()),
-                            None => {
-                                let field = match key_val {
-                                    Value::String(s) => s.as_ref().to_string(),
-                                    other => other.type_name().to_string(),
-                                };
-                                return Err(RuntimeError::TypeError {
-                                    msg: format!("Missing field '{}'", field),
-                                    span,
-                                });
+                        Value::HashMap(map) => {
+                            let found = map.with(|inner| inner.get(&key).cloned());
+                            match found {
+                                Some(value) => self.push(value),
+                                None => {
+                                    let field = match key_val {
+                                        Value::String(s) => s.as_ref().to_string(),
+                                        other => other.type_name().to_string(),
+                                    };
+                                    return Err(RuntimeError::TypeError {
+                                        msg: format!("Missing field '{}'", field),
+                                        span,
+                                    });
+                                }
                             }
-                        },
+                        }
                         other => {
                             return Err(RuntimeError::TypeError {
                                 msg: format!(
@@ -1695,7 +1698,9 @@ impl VM {
 
                     match &mut map_val {
                         Value::HashMap(map) => {
-                            map.inner_mut().insert(key, value);
+                            map.with_mut(|inner| {
+                                inner.insert(key, value);
+                            });
                         }
                         other => {
                             return Err(RuntimeError::TypeError {
@@ -1805,7 +1810,7 @@ impl VM {
                     use crate::value::ValueHashMap;
 
                     let entry_count = self.read_u16()? as usize;
-                    let mut map = ValueHashMap::new();
+                    let map = ValueHashMap::new();
 
                     // Stack has [key1, val1, key2, val2, ...] in order
                     // Pop them in reverse (LIFO) and insert
@@ -1824,7 +1829,9 @@ impl VM {
                             &key_val,
                             self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         )?;
-                        map.inner_mut().insert(key, value);
+                        map.with_mut(|inner| {
+                            inner.insert(key, value);
+                        });
                     }
 
                     self.push(Value::HashMap(map));
@@ -3005,7 +3012,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -3047,7 +3054,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -3092,7 +3099,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.inner().entries(),
+            Value::HashMap(m) => m.with(|inner| inner.entries()),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),

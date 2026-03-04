@@ -212,7 +212,7 @@ fn test_zip_list_metadata_fields() {
             use atlas_runtime::stdlib::collections::hash::HashKey;
             use std::sync::Arc;
 
-            let map_guard = map.inner();
+            let map_guard = map.with(|inner| inner.clone());
 
             // Must have all required fields
             let name_key = HashKey::String(Arc::new("name".to_string()));

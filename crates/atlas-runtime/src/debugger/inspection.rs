@@ -278,7 +278,8 @@ fn format_value_recursive(value: &Value, depth: usize, max_depth: usize) -> Stri
             }
         }
         Value::HashMap(m) => {
-            format!("{{HashMap, {} entries}}", m.inner().len())
+            let len = m.with(|inner| inner.len());
+            format!("{{HashMap, {} entries}}", len)
         }
         Value::HashSet(s) => {
             format!("{{HashSet, {} items}}", s.inner().len())

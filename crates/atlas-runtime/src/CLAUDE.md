@@ -79,10 +79,11 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 interpreter (`interpreter/mod.rs`) and VM (`vm/mod.rs`). If you touch one, you touch both.
 Parity break = BLOCKING. Never ship a phase with parity divergence.
 
-**CoW write-back pattern.** Collection mutation builtins return a NEW collection.
-The interpreter (`apply_cow_writeback()`) and VM (`emit_cow_writeback_if_needed()`) write
-the result back to the caller's variable. Both `let` and `var` bindings can be mutated
-this way — it's content mutation, not rebinding. See `.claude/memory/patterns/runtime.md`.
+**CoW write-back pattern.** Collection mutation builtins return an updated collection,
+and the interpreter (`apply_cow_writeback()`) and VM (`emit_cow_writeback_if_needed()`)
+write it back to the caller's variable. HashMap uses shared mutation; others are CoW.
+Both `let` and `var` bindings can be mutated this way — it's content mutation, not
+rebinding. See `.claude/memory/patterns/runtime.md`.
 
 **value.rs blast radius.** Adding a new `Value` variant requires updating:
 `type_name()`, `Display`, `PartialEq`, equality semantics, bytecode serialization,
@@ -91,7 +92,7 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 ## Key Invariants (verified 2026-02-21)
 
 - `ValueArray` = `Arc<Vec<Value>>` — CoW via `Arc::make_mut`
-- `ValueHashMap` = `Arc<AtlasHashMap>` — CoW via `Arc::make_mut`
+- `ValueHashMap` = `Arc<Mutex<AtlasHashMap>>` — shared mutation via locking
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
 - `FunctionRef` at `value.rs:464` — holds arity, bytecode_offset, local_count
 - `Param` at `ast.rs:187` — name, type_ref, ownership, span (ownership added Block 2)

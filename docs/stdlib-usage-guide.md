@@ -502,6 +502,9 @@ fn make_memoized(fn_impl: function) -> function {
 }
 ```
 
+**Note:** `hashMapPut` mutates the map in place. Assignments alias the same map.
+Use `hashMapCopy(map)` when you need an independent copy before mutation.
+
 ### Frequency Counter
 
 ```atlas

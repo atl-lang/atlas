@@ -664,6 +664,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             collections::hashmap::from_entries(a, s)
         });
         m.insert("hashMapPut", |a, s, _, _| collections::hashmap::put(a, s));
+        m.insert("hashMapCopy", |a, s, _, _| collections::hashmap::copy(a, s));
         m.insert("hashMapGet", |a, s, _, _| collections::hashmap::get(a, s));
         m.insert("hashMapRemove", |a, s, _, _| {
             collections::hashmap::remove(a, s)

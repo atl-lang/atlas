@@ -2204,12 +2204,22 @@ let map = hashMapNew();
 
 ---
 
-### `hashMapPut(map: object, key: string, value: any) -> void`
+### `hashMapPut(map: object, key: string, value: any) -> object`
 
-Inserts or updates a key-value pair.
+Inserts or updates a key-value pair. Mutates the map in place and returns the map for chaining.
 
 ```atlas
 hashMapPut(map, "name", "Alice");
+```
+
+---
+
+### `hashMapCopy(map: object) -> object`
+
+Creates a deep copy of a HashMap. Useful when you want an independent map before mutation.
+
+```atlas
+let copy = hashMapCopy(map);
 ```
 
 ---

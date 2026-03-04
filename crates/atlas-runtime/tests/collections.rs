@@ -117,6 +117,39 @@ fn test_hashhm_put_get() {
 }
 
 #[test]
+fn test_hashmap_put_mutates_in_place_and_returns_map() {
+    let code = r#"
+        let hm = hashMapNew();
+        let updated = hashMapPut(hm, "key", "value");
+        hashMapSize(hm) + hashMapSize(updated)
+    "#;
+    assert_eval_number(code, 2.0);
+}
+
+#[test]
+fn test_hashmap_alias_sees_mutation() {
+    let code = r#"
+        let hm = hashMapNew();
+        let alias = hm;
+        hashMapPut(hm, "key", "value");
+        hashMapSize(alias)
+    "#;
+    assert_eval_number(code, 1.0);
+}
+
+#[test]
+fn test_hashmap_copy_is_independent() {
+    let code = r#"
+        let hm = hashMapNew();
+        hashMapPut(hm, "a", 1);
+        let copy = hashMapCopy(hm);
+        hashMapPut(copy, "b", 2);
+        hashMapSize(hm)
+    "#;
+    assert_eval_number(code, 1.0);
+}
+
+#[test]
 fn test_hashhm_get_nonexistent() {
     let code = r#"
         let hm = hashMapNew();
@@ -2136,32 +2169,41 @@ fn value_map_cow_insert_does_not_affect_clone() {
 }
 
 #[test]
-fn value_hashmap_cow_insert_does_not_affect_clone() {
-    let mut a = ValueHashMap::new();
-    a.inner_mut().insert(
-        HashKey::String(Arc::new("x".to_string())),
-        Value::Number(1.0),
-    );
+fn value_hashmap_shared_insert_affects_clone() {
+    let a = ValueHashMap::new();
+    a.with_mut(|inner| {
+        inner.insert(
+            HashKey::String(Arc::new("x".to_string())),
+            Value::Number(1.0),
+        );
+    });
     let b = a.clone();
-    a.inner_mut().insert(
-        HashKey::String(Arc::new("y".to_string())),
-        Value::Number(2.0),
-    );
-    assert_eq!(b.inner().len(), 1);
+    a.with_mut(|inner| {
+        inner.insert(
+            HashKey::String(Arc::new("y".to_string())),
+            Value::Number(2.0),
+        );
+    });
+    let len = b.with(|inner| inner.len());
+    assert_eq!(len, 2);
 }
 
 #[test]
 fn value_collection_equality_by_content() {
-    let mut a = ValueHashMap::new();
-    a.inner_mut().insert(
-        HashKey::String(Arc::new("k".to_string())),
-        Value::Number(1.0),
-    );
-    let mut b = ValueHashMap::new();
-    b.inner_mut().insert(
-        HashKey::String(Arc::new("k".to_string())),
-        Value::Number(1.0),
-    );
+    let a = ValueHashMap::new();
+    a.with_mut(|inner| {
+        inner.insert(
+            HashKey::String(Arc::new("k".to_string())),
+            Value::Number(1.0),
+        );
+    });
+    let b = ValueHashMap::new();
+    b.with_mut(|inner| {
+        inner.insert(
+            HashKey::String(Arc::new("k".to_string())),
+            Value::Number(1.0),
+        );
+    });
     assert_eq!(a, b);
 }
 
