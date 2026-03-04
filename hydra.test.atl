@@ -1,0 +1,242 @@
+import * as hydra from "./hydra";
+
+// ============================================================================
+// Router tests
+// ============================================================================
+
+fn test_router_pattern_matching() -> void {
+    let router = hydra.routerNew();
+
+    let users_router = hydra.routerAdd(
+        router,
+        hydra.methodGet(),
+        "/users/:id",
+        fn(req: hydra.Request) -> hydra.Response {
+            let id_opt = hydra.requestParam(req, "id");
+            let id = match id_opt {
+                Some(value) => value,
+                None => "missing",
+                _ => "missing"
+            };
+            return hydra.responseText(hydra.statusOk(), "user-" + id);
+        }
+    );
+
+    let router2 = hydra.routerAdd(
+        users_router,
+        hydra.methodGet(),
+        "/assets/*",
+        fn(req: hydra.Request) -> hydra.Response {
+            let wildcard_opt = hydra.requestParam(req, "wildcard");
+            let wildcard = match wildcard_opt {
+                Some(value) => value,
+                None => "",
+                _ => ""
+            };
+            return hydra.responseText(hydra.statusOk(), "asset:" + wildcard);
+        }
+    );
+
+    let req = hydra.requestNew(hydra.methodGet(), "/users/42", "");
+    let res1 = hydra.routerHandle(router2, req).response;
+    assertEqual(res1.body, "user-42");
+
+    let req2 = hydra.requestNew(hydra.methodGet(), "/assets/js/app.js", "");
+    let res2 = hydra.routerHandle(router2, req2).response;
+    assertEqual(res2.body, "asset:js/app.js");
+
+    assertEqual(hydra.routerRouteCount(router2), 2);
+}
+
+// ============================================================================
+// Middleware tests
+// ============================================================================
+
+fn test_middleware_order() -> void {
+    let router = hydra.routerNew();
+
+    let mw1: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) -> hydra.Response {
+        let res = next(req);
+        return hydra.responseText(res.status, "A" + res.body);
+    };
+
+    let mw2: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) -> hydra.Response {
+        let res = next(req);
+        return hydra.responseText(res.status, "B" + res.body);
+    };
+
+    let router2 = hydra.routerUse(router, mw1);
+    let router3 = hydra.routerUse(router2, mw2);
+
+    let router4 = hydra.routerAdd(
+        router3,
+        hydra.methodGet(),
+        "/",
+        fn(_req: hydra.Request) -> hydra.Response {
+            return hydra.responseText(hydra.statusOk(), "handler");
+        }
+    );
+
+    let req = hydra.requestNew(hydra.methodGet(), "/", "");
+    let res = hydra.routerHandle(router4, req).response;
+
+    // mw1 wraps mw2 wraps handler => A + (B + handler)
+    assertEqual(res.body, "ABhandler");
+}
+
+// ============================================================================
+// Request/Response tests
+// ============================================================================
+
+fn test_request_response_basics() -> void {
+    let req = hydra.requestNew(hydra.methodPost(), "/submit?count=3", "payload");
+    let query_opt = hydra.requestQuery(req, "count");
+    let query = match query_opt {
+        Some(value) => value,
+        None => "",
+        _ => ""
+    };
+
+    assertEqual(query, "3");
+
+    let res = hydra.responseJson(hydra.statusCreated(), record { ok: true, count: 3 });
+    let header_opt = hashMapGet(res.headers, "Content-Type");
+    let header = assertSome(header_opt);
+    assertContains([header], "application/json; charset=utf-8");
+
+    let status_line = hydra.renderStatusLine(res.status);
+    assertEqual(status_line, "HTTP/1.1 201 Created");
+
+    // Generic + trait bound rendering
+    assertEqual(hydra.renderAll(["A", "B"]), "AB");
+    assertEqual(hydra.renderAll([1, 2, 3]), "123");
+}
+
+// ============================================================================
+// Static file tests
+// ============================================================================
+
+fn test_static_file_serving() -> void {
+    let temp_dir = fsTmpDir();
+    let static_root = pathJoin(temp_dir, "hydra_static");
+    fsMkdirp(static_root);
+
+    let file_path = pathJoin(static_root, "hello.txt");
+    writeFile(file_path, "Hello Hydra");
+
+    let router = hydra.routerNew();
+    let router2 = hydra.routerAdd(
+        router,
+        hydra.methodGet(),
+        "/static/*",
+        hydra.staticFileHandler(static_root)
+    );
+
+    let req = hydra.requestNew(hydra.methodGet(), "/static/hello.txt", "");
+    let res = hydra.routerHandle(router2, req).response;
+
+    assertEqual(res.body, "Hello Hydra");
+    assertEqual(hydra.statusCode(res.status), 200);
+}
+
+// ============================================================================
+// Template rendering tests
+// ============================================================================
+
+fn test_template_rendering() -> void {
+    let template = "Hello {{name}}
+Welcome to {{site}}";
+    let data = hashMapNew();
+    hashMapPut(data, "name", "Ada");
+    hashMapPut(data, "site", "Hydra");
+
+    let rendered = hydra.renderTemplateString(template, data);
+    assertContains([rendered], "Hello Ada");
+    assertContains([rendered], "Welcome to Hydra");
+
+    let temp_dir = fsTmpDir();
+    let file_path = pathJoin(temp_dir, "template.txt");
+    writeFile(file_path, "Hi {{name}}");
+
+    let rendered_file = hydra.renderTemplateFile(file_path, data);
+    assertEqual(rendered_file, "Hi Ada");
+}
+
+// ============================================================================
+// Session tests
+// ============================================================================
+
+fn test_sessions_persist() -> void {
+    let router = hydra.routerNew();
+
+    let router2 = hydra.routerAdd(
+        router,
+        hydra.methodGet(),
+        "/visit",
+        fn(req: hydra.Request) -> hydra.Response {
+            let count_opt = hashMapGet(req.session, "count");
+            let mut count = match count_opt {
+                Some(value) => value,
+                None => 0,
+                _ => 0
+            };
+            count += 1;
+            hashMapPut(req.session, "count", count);
+            return hydra.responseText(hydra.statusOk(), str(count));
+        }
+    );
+
+    // First request creates a session
+    let req1 = hydra.requestNew(hydra.methodGet(), "/visit", "");
+    let res1 = hydra.routerHandle(router2, req1);
+    let response1 = res1.response;
+
+    assertEqual(response1.body, "1");
+
+    let cookie_opt = hashMapGet(response1.headers, "Set-Cookie");
+    let cookie = assertSome(cookie_opt);
+    assertContains([cookie], "sid=");
+
+    // Second request with same session id
+    let session_id = substring(cookie, 4, len(cookie));
+    let req2 = hydra.requestWithHeader(
+        hydra.requestNew(hydra.methodGet(), "/visit", ""),
+        "Cookie",
+        "sid=" + session_id
+    );
+
+    let res2 = hydra.routerHandle(res1.router, req2);
+    let response2 = res2.response;
+    assertEqual(response2.body, "2");
+}
+
+// ============================================================================
+// Assertion coverage tests (use all 13 assertions)
+// ============================================================================
+
+fn test_assertion_coverage() -> void {
+    assert(true, "basic assert");
+    assertFalse(false, "basic assertFalse");
+
+    assertEqual(2 + 2, 4);
+    assertNotEqual("hydra", "python");
+
+    let ok_res: Result<number, string> = Ok(5);
+    let err_res: Result<number, string> = Err("bad");
+    assertEqual(assertOk(ok_res), 5);
+    assertEqual(assertErr(err_res), "bad");
+
+    let some_opt: Option<string> = Some("present");
+    let none_opt: Option<string> = None();
+    assertEqual(assertSome(some_opt), "present");
+    assertNone(none_opt);
+
+    assertContains(["a", "b", "c"], "b");
+    let empty_list: string[] = [];
+    assertEmpty(empty_list);
+    assertLength([1, 2, 3], 3);
+
+    // Error assertions require NativeFunction; stdlib functions are native.
+    assertThrows(dateTimeFromTimestamp);
+    assertNoThrow(dateTimeNow);
+}

@@ -1,0 +1,640 @@
+// Hydra web framework - Atlas v0.3
+// Production-quality primitives for routing, middleware, templates, sessions, and static files.
+
+// ============================================================================
+// Core HTTP types
+// ============================================================================
+
+enum Method {
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    OPTIONS,
+    HEAD
+}
+
+enum Status {
+    OK,
+    CREATED,
+    NO_CONTENT,
+    BAD_REQUEST,
+    UNAUTHORIZED,
+    FORBIDDEN,
+    NOT_FOUND,
+    INTERNAL_SERVER_ERROR,
+    REDIRECT
+}
+
+struct Request {
+    method: Method,
+    path: string,
+    query: HashMap,
+    headers: HashMap,
+    body: string,
+    params: HashMap,
+    sessionId: string,
+    session: HashMap
+}
+
+struct Response {
+    status: Status,
+    headers: HashMap,
+    body: string
+}
+
+// Higher-order types
+// NOTE: function type syntax is (T1, T2) -> R
+// Handler takes Request and returns Response
+// Middleware takes Request and a next Handler, returns Response
+
+type Handler = (Request) -> Response;
+type Middleware = (Request, Handler) -> Response;
+
+type ParsedUrl = { path: string, query: HashMap };
+
+type SessionInfo = {
+    router: Router,
+    request: Request,
+    sessionId: string,
+    isNew: bool
+};
+
+type RouteMatch = { route: Route, params: HashMap };
+
+type HandleResult = { response: Response, router: Router };
+
+struct Route {
+    method: Method,
+    pattern: string,
+    handler: Handler
+}
+
+struct Router {
+    routes: Route[],
+    middleware: Middleware[],
+    sessions: HashMap,
+    nextSessionId: number
+}
+
+// ============================================================================
+// Traits (generic + trait bounds demonstration)
+// ============================================================================
+
+trait Renderable {
+    fn render(self: Renderable) -> string;
+}
+
+impl Renderable for string {
+    fn render(self: string) -> string {
+        return self;
+    }
+}
+
+impl Renderable for number {
+    fn render(self: number) -> string {
+        return str(self);
+    }
+}
+
+export fn renderAll<T: Renderable>(items: T[]) -> string {
+    let rendered = map(items, fn(item: T) -> string { return item.render(); });
+    return join(rendered, "");
+}
+
+// ============================================================================
+// Request / Response helpers
+// ============================================================================
+
+export fn methodGet() -> Method { return GET(); }
+export fn methodPost() -> Method { return POST(); }
+export fn methodPut() -> Method { return PUT(); }
+export fn methodDelete() -> Method { return DELETE(); }
+export fn methodPatch() -> Method { return PATCH(); }
+export fn methodOptions() -> Method { return OPTIONS(); }
+export fn methodHead() -> Method { return HEAD(); }
+
+export fn statusOk() -> Status { return OK(); }
+export fn statusCreated() -> Status { return CREATED(); }
+export fn statusNoContent() -> Status { return NO_CONTENT(); }
+export fn statusBadRequest() -> Status { return BAD_REQUEST(); }
+export fn statusUnauthorized() -> Status { return UNAUTHORIZED(); }
+export fn statusForbidden() -> Status { return FORBIDDEN(); }
+export fn statusNotFound() -> Status { return NOT_FOUND(); }
+export fn statusInternalServerError() -> Status { return INTERNAL_SERVER_ERROR(); }
+export fn statusRedirect() -> Status { return REDIRECT(); }
+
+export fn requestNew(method: Method, url: string, body: string) -> Request {
+    let parsed = splitPathAndQuery(url);
+    let headers = hashMapNew();
+    let params = hashMapNew();
+    let session = hashMapNew();
+
+    return Request {
+        method: method,
+        path: parsed.path,
+        query: parsed.query,
+        headers: headers,
+        body: body,
+        params: params,
+        sessionId: "",
+        session: session
+    };
+}
+
+export fn requestWithHeader(request: Request, name: string, value: string) -> Request {
+    let headers = request.headers;
+    hashMapPut(headers, name, value);
+    return Request {
+        method: request.method,
+        path: request.path,
+        query: request.query,
+        headers: headers,
+        body: request.body,
+        params: request.params,
+        sessionId: request.sessionId,
+        session: request.session
+    };
+}
+
+export fn responseText(status: Status, body: string) -> Response {
+    let headers = hashMapNew();
+    hashMapPut(headers, "Content-Type", "text/plain; charset=utf-8");
+    return Response { status: status, headers: headers, body: body };
+}
+
+export fn responseJson(status: Status, payload: JsonValue) -> Response {
+    let headers = hashMapNew();
+    hashMapPut(headers, "Content-Type", "application/json; charset=utf-8");
+    return Response { status: status, headers: headers, body: toJSON(payload) };
+}
+
+export fn responseSetHeader(response: Response, name: string, value: string) -> Response {
+    let headers = response.headers;
+    hashMapPut(headers, name, value);
+    return Response { status: response.status, headers: headers, body: response.body };
+}
+
+export fn responseWithStatus(response: Response, status: Status) -> Response {
+    return Response { status: status, headers: response.headers, body: response.body };
+}
+
+export fn responseNotFound() -> Response {
+    return responseText(NOT_FOUND(), "Not Found");
+}
+
+export fn statusCode(status: Status) -> number {
+    return match status {
+        OK => 200,
+        CREATED => 201,
+        NO_CONTENT => 204,
+        BAD_REQUEST => 400,
+        UNAUTHORIZED => 401,
+        FORBIDDEN => 403,
+        NOT_FOUND => 404,
+        INTERNAL_SERVER_ERROR => 500,
+        REDIRECT => 302,
+        _ => 500
+    };
+}
+
+export fn statusReason(status: Status) -> string {
+    return match status {
+        OK => "OK",
+        CREATED => "Created",
+        NO_CONTENT => "No Content",
+        BAD_REQUEST => "Bad Request",
+        UNAUTHORIZED => "Unauthorized",
+        FORBIDDEN => "Forbidden",
+        NOT_FOUND => "Not Found",
+        INTERNAL_SERVER_ERROR => "Internal Server Error",
+        REDIRECT => "Found",
+        _ => "Unknown"
+    };
+}
+
+// ============================================================================
+// Router
+// ============================================================================
+
+export fn routerNew() -> Router {
+    let routes: Route[] = [];
+    let middleware: Middleware[] = [];
+    let sessions = hashMapNew();
+    return Router {
+        routes: routes,
+        middleware: middleware,
+        sessions: sessions,
+        nextSessionId: 1
+    };
+}
+
+export fn routerAdd(router: Router, method: Method, pattern: string, handler: Handler) -> Router {
+    let route = Route { method: method, pattern: pattern, handler: handler };
+    let routes = arrayPush(router.routes, route);
+    return Router {
+        routes: routes,
+        middleware: router.middleware,
+        sessions: router.sessions,
+        nextSessionId: router.nextSessionId
+    };
+}
+
+export fn routerUse(router: Router, mw: Middleware) -> Router {
+    let mws = arrayPush(router.middleware, mw);
+    return Router {
+        routes: router.routes,
+        middleware: mws,
+        sessions: router.sessions,
+        nextSessionId: router.nextSessionId
+    };
+}
+
+export fn routerRouteCount(router: Router) -> number {
+    return len(router.routes);
+}
+
+export fn routerHandle(router: Router, request: Request) -> HandleResult {
+    let session_info = attachSession(router, request);
+    let router_with_session = session_info.router;
+    let req_with_session = session_info.request;
+
+    let matched = findRoute(router_with_session, req_with_session);
+    let response = match matched {
+        Some(match_val) => {
+            let params = match_val.params;
+            let route = match_val.route;
+            let req = Request {
+                method: req_with_session.method,
+                path: req_with_session.path,
+                query: req_with_session.query,
+                headers: req_with_session.headers,
+                body: req_with_session.body,
+                params: params,
+                sessionId: req_with_session.sessionId,
+                session: req_with_session.session
+            };
+            let composed = applyMiddleware(route.handler, router_with_session.middleware);
+            composed(req)
+        },
+        None => responseNotFound(),
+        _ => responseNotFound()
+    };
+
+    let updated = persistSession(router_with_session, req_with_session);
+    let final_response = if session_info.isNew {
+        responseSetHeader(response, "Set-Cookie", "sid=" + session_info.sessionId)
+    } else {
+        response
+    };
+
+    return record { response: final_response, router: updated };
+}
+
+fn findRoute(router: Router, request: Request) -> Option<RouteMatch> {
+    let routes = router.routes;
+    let mut idx = 0;
+    while idx < len(routes) {
+        let route = routes[idx];
+        if route.method == request.method {
+            let params_opt = matchPattern(route.pattern, request.path);
+            let match_val = match params_opt {
+                Some(params) => Some(record { route: route, params: params }),
+                None => None,
+                _ => None
+            };
+            if match_val != None() {
+                return match_val;
+            }
+        }
+        idx += 1;
+    }
+    return None();
+}
+
+fn applyMiddleware(handler: Handler, middleware: Middleware[]) -> Handler {
+    if len(middleware) == 0 {
+        return handler;
+    }
+
+    let mut current = handler;
+    let mut idx = len(middleware) - 1;
+    while true {
+        let mw = middleware[idx];
+        let next = current;
+        current = fn(req: Request) -> Response {
+            return mw(req, next);
+        };
+        if idx == 0 { break; }
+        idx -= 1;
+    }
+    return current;
+}
+
+// ============================================================================
+// Route matching
+// ============================================================================
+
+fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
+    if pattern == "*" {
+        return Some(hashMapNew());
+    }
+
+    let pattern_parts = pathSegments(pattern);
+    let path_parts = pathSegments(path);
+
+    let params = hashMapNew();
+    let mut p_idx = 0;
+    let mut s_idx = 0;
+
+    while p_idx < len(pattern_parts) {
+        let part = pattern_parts[p_idx];
+
+        if part == "*" {
+            let remaining = slice(path_parts, s_idx, len(path_parts));
+            let joined = join(remaining, "/");
+            hashMapPut(params, "wildcard", joined);
+            return Some(params);
+        }
+
+        if s_idx >= len(path_parts) {
+            return None();
+        }
+
+        if startsWith(part, ":") {
+            let key = substring(part, 1, len(part));
+            hashMapPut(params, key, path_parts[s_idx]);
+        } else {
+            if part != path_parts[s_idx] {
+                return None();
+            }
+        }
+
+        p_idx += 1;
+        s_idx += 1;
+    }
+
+    if s_idx != len(path_parts) {
+        return None();
+    }
+
+    return Some(params);
+}
+
+fn pathSegments(path: string) -> string[] {
+    let parts = split(path, "/");
+    let mut clean: string[] = [];
+    for part in parts {
+        if part != "" {
+            clean = arrayPush(clean, part);
+        }
+    }
+    return clean;
+}
+
+// ============================================================================
+// Query parsing
+// ============================================================================
+
+fn splitPathAndQuery(url: string) -> ParsedUrl {
+    let parts = split(url, "?");
+    if len(parts) == 1 {
+        return record { path: url, query: hashMapNew() };
+    }
+
+    let path = parts[0];
+    let query = parseQueryString(parts[1]);
+    return record { path: path, query: query };
+}
+
+fn parseQueryString(query: string) -> HashMap {
+    let result = hashMapNew();
+    if query == "" {
+        return result;
+    }
+
+    let pairs = split(query, "&");
+    for pair in pairs {
+        if pair == "" { continue; }
+        let kv = split(pair, "=");
+        if len(kv) == 1 {
+            hashMapPut(result, kv[0], "");
+        } else {
+            hashMapPut(result, kv[0], kv[1]);
+        }
+    }
+    return result;
+}
+
+// ============================================================================
+// Templates
+// ============================================================================
+
+export fn renderTemplateString(template: string, data: HashMap) -> string {
+    let keys = hashMapKeys(data);
+    let mut rendered = template;
+
+    for key in keys {
+        let value_opt = hashMapGet(data, key);
+        let value = match value_opt {
+            Some(v) => str(v),
+            None => "",
+            _ => ""
+        };
+        rendered = replace(rendered, "{{" + key + "}}", value);
+    }
+
+    return rendered;
+}
+
+export fn renderTemplateFile(path: string, data: HashMap) -> string {
+    let template = readFile(path);
+    return renderTemplateString(template, data);
+}
+
+// ============================================================================
+// Static files
+// ============================================================================
+
+export fn staticFileHandler(root: string) -> Handler {
+    return fn(req: Request) -> Response {
+        let wildcard_opt = hashMapGet(req.params, "wildcard");
+        let file_rel = match wildcard_opt {
+            Some(v) => v,
+            None => "",
+            _ => ""
+        };
+
+        let actual = if file_rel == "" {
+            pathJoin(root, "index.html")
+        } else {
+            pathJoin(root, file_rel)
+        };
+
+        if fileExists(actual) {
+            let body = readFile(actual);
+            return responseText(OK(), body);
+        }
+
+        return responseNotFound();
+    };
+}
+
+// ============================================================================
+// Sessions
+// ============================================================================
+
+fn attachSession(router: Router, request: Request) -> SessionInfo {
+    let existing = sessionIdFromRequest(request);
+
+    let info = match existing {
+        Some(session_id) => {
+            let data_opt = hashMapGet(router.sessions, session_id);
+            let session = match data_opt {
+                Some(value) => value,
+                None => hashMapNew(),
+                _ => hashMapNew()
+            };
+            let req = Request {
+                method: request.method,
+                path: request.path,
+                query: request.query,
+                headers: request.headers,
+                body: request.body,
+                params: request.params,
+                sessionId: session_id,
+                session: session
+            };
+            record { router: router, request: req, sessionId: session_id, isNew: false }
+        },
+        None => {
+            let created = createSession(router);
+            let req = Request {
+                method: request.method,
+                path: request.path,
+                query: request.query,
+                headers: request.headers,
+                body: request.body,
+                params: request.params,
+                sessionId: created.sessionId,
+                session: created.session
+            };
+            record { router: created.router, request: req, sessionId: created.sessionId, isNew: true }
+        },
+        _ => record { router: router, request: request, sessionId: "", isNew: false }
+    };
+
+    return info;
+}
+
+fn createSession(router: Router) -> { router: Router, sessionId: string, session: HashMap } {
+    let session = hashMapNew();
+
+    let mut id_num = router.nextSessionId;
+    id_num += 1; // += operator (v0.3)
+    let session_id = "sid-" + str(id_num - 1);
+
+    let sessions = router.sessions;
+    hashMapPut(sessions, session_id, session);
+
+    let updated = Router {
+        routes: router.routes,
+        middleware: router.middleware,
+        sessions: sessions,
+        nextSessionId: id_num
+    };
+
+    return record { router: updated, sessionId: session_id, session: session };
+}
+
+fn persistSession(router: Router, request: Request) -> Router {
+    if request.sessionId == "" {
+        return router;
+    }
+    let sessions = router.sessions;
+    hashMapPut(sessions, request.sessionId, request.session);
+    return Router {
+        routes: router.routes,
+        middleware: router.middleware,
+        sessions: sessions,
+        nextSessionId: router.nextSessionId
+    };
+}
+
+fn sessionIdFromRequest(request: Request) -> Option<string> {
+    let id_opt = hashMapGet(request.headers, "X-Session-Id");
+    if id_opt != None() {
+        return id_opt;
+    }
+
+    let cookie_opt = hashMapGet(request.headers, "Cookie");
+    let cookie = match cookie_opt {
+        Some(value) => value,
+        None => "",
+        _ => ""
+    };
+
+    if cookie == "" {
+        return None();
+    }
+
+    let parts = split(cookie, ";");
+    for part in parts {
+        let trimmed = trim(part);
+        if startsWith(trimmed, "sid=") {
+            let value = substring(trimmed, 4, len(trimmed));
+            return Some(value);
+        }
+    }
+
+    return None();
+}
+
+// ============================================================================
+// Utilities
+// ============================================================================
+
+export fn parseQueryNumber(request: Request, key: string) -> Result<number, string> {
+    let opt = hashMapGet(request.query, key);
+    return match opt {
+        Some(value) => {
+            let text = str(value);
+            if text == "" { return Err("empty query value"); }
+            return Ok(parseFloat(text));
+        },
+        None => Err("missing query key"),
+        _ => Err("missing query key")
+    };
+}
+
+export fn requestParam(request: Request, key: string) -> Option<string> {
+    return hashMapGet(request.params, key);
+}
+
+export fn requestQuery(request: Request, key: string) -> Option<string> {
+    return hashMapGet(request.query, key);
+}
+
+export fn renderStatusLine(status: Status) -> string {
+    return "HTTP/1.1 " + str(statusCode(status)) + " " + statusReason(status);
+}
+
+// A small record to prove record field assignment in v0.3
+export fn metricsNew() -> { hits: number } {
+    let metrics = record { hits: 0 };
+    metrics.hits += 1;
+    return metrics;
+}
+
+// ============================================================================
+// Dev helpers (new stdlib: process spawn + fs watchers)
+// ============================================================================
+
+export fn watchTemplateDir(path: string) -> Watcher {
+    return fsWatch(path);
+}
+
+export fn spawnCommand(command: string[]) -> ProcessHandle {
+    return spawnProcess(command);
+}
