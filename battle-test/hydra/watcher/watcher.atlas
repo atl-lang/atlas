@@ -1,0 +1,68 @@
+fn should_ignore(path: string, ignore: string[]) -> bool {
+    let base = pathBasename(path);
+    for pat in ignore {
+        if (base == pat) {
+            return true;
+        }
+    }
+    return false;
+}
+
+export fn watcher_snapshot(paths: string[], ignore: string[]) -> HashMap<string, number> {
+    let mut snapshot = hashMapNew();
+    for root in paths {
+        let entries = readDir(root);
+        for name in entries {
+            let full = pathJoin(root, name);
+            if (should_ignore(full, ignore)) {
+                continue;
+            }
+            let info = fileInfo(full);
+            let is_file: bool = jsonAsBool(info["isFile"]);
+            if (is_file) {
+                let mtime = jsonAsNumber(info["modified"]);
+                snapshot = hashMapPut(snapshot, full, mtime);
+            }
+        }
+    }
+    return snapshot;
+}
+
+export fn watcher_diff(borrow old_snapshot: HashMap<string, number>, borrow new_snapshot: HashMap<string, number>) -> string[] {
+    let mut changed: string[] = slice([""], 0, 0);
+    let keys: string[] = hashMapKeys(new_snapshot);
+    for key in keys {
+        let missing: bool = !hashMapHas(old_snapshot, key);
+        if (missing) {
+            changed = arrayPush(changed, key);
+        } else {
+            let old_val = unwrap(hashMapGet(old_snapshot, key));
+            let new_val = unwrap(hashMapGet(new_snapshot, key));
+            let different: bool = old_val != new_val;
+            if (different) {
+                changed = arrayPush(changed, key);
+            }
+        }
+    }
+    return changed;
+}
+
+fn test_watcher_diff_new_file() -> bool {
+    let old = hashMapNew();
+    let mut new = hashMapNew();
+    new = hashMapPut(new, "a.txt", 10);
+    let diff = watcher_diff(old, new);
+    assertEqual(len(diff), 1);
+    assertEqual(diff[0], "a.txt");
+    return true;
+}
+
+fn test_watcher_diff_modified_file() -> bool {
+    let mut old = hashMapNew();
+    let mut new = hashMapNew();
+    old = hashMapPut(old, "a.txt", 1);
+    new = hashMapPut(new, "a.txt", 2);
+    let diff = watcher_diff(old, new);
+    assertEqual(len(diff), 1);
+    return true;
+}

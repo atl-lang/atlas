@@ -1,0 +1,151 @@
+// StateStore is encoded as a string-only map to avoid unsupported record field access.
+// Keys:
+// - "initialize" => JSON string (or empty)
+// - "subs" => newline-delimited URIs
+// - "sub_ids" => newline-delimited "uri=id" entries
+
+type StateStore = HashMap<string, string>;
+
+fn store_get(borrow store: StateStore, key: string) -> string {
+    let has_key: bool = hashMapHas(store, key);
+    if (has_key) {
+        return unwrap(hashMapGet(store, key));
+    }
+    return "";
+}
+
+fn store_set(store: StateStore, key: string, value: string) -> StateStore {
+    return hashMapPut(store, key, value);
+}
+
+fn split_lines(value: string) -> string[] {
+    let mut parts: string[] = slice([""], 0, 0);
+    let has_value: bool = value != "";
+    if (has_value) {
+        parts = split(value, "\n");
+    }
+    return parts;
+}
+
+fn join_lines(parts: string[]) -> string {
+    let is_empty: bool = len(parts) == 0;
+    if (is_empty) {
+        return "";
+    }
+    return join(parts, "\n");
+}
+
+export fn new_state_store() -> StateStore {
+    let mut store = hashMapNew();
+    store = store_set(store, "initialize", "");
+    store = store_set(store, "subs", "");
+    store = store_set(store, "sub_ids", "");
+    return store;
+}
+
+export fn state_set_initialize(own store: StateStore, params: json) -> StateStore {
+    let updated = store_set(store, "initialize", toJSON(params));
+    return updated;
+}
+
+export fn state_get_initialize(borrow store: StateStore) -> json {
+    let raw = store_get(store, "initialize");
+    let has_value: bool = raw != "";
+    if (!has_value) {
+        return unwrap(parseJSON("null"));
+    }
+    return unwrap(parseJSON(raw));
+}
+
+export fn state_add_subscription(own store: StateStore, uri: string) -> StateStore {
+    let raw = store_get(store, "subs");
+    let parts: string[] = split_lines(raw);
+    let mut exists = false;
+    for p in parts {
+        if (p == uri) {
+            exists = true;
+        }
+    }
+    if (!exists) {
+        let updated = arrayPush(parts, uri);
+        let updated_store = store_set(store, "subs", join_lines(updated));
+        return updated_store;
+    }
+    return store;
+}
+
+export fn state_remove_subscription(own store: StateStore, uri: string) -> StateStore {
+    let raw = store_get(store, "subs");
+    let parts: string[] = split_lines(raw);
+    let mut filtered: string[] = slice([""], 0, 0);
+    for p in parts {
+        if (p != uri) {
+            filtered = arrayPush(filtered, p);
+        }
+    }
+    let updated = store_set(store, "subs", join_lines(filtered));
+    return updated;
+}
+
+export fn state_get_subscriptions(borrow store: StateStore) -> string[] {
+    let raw = store_get(store, "subs");
+    return split_lines(raw);
+}
+
+export fn state_update_subscription_id(own store: StateStore, uri: string, id: string) -> StateStore {
+    let raw = store_get(store, "sub_ids");
+    let parts: string[] = split_lines(raw);
+    let mut updated: string[] = slice([""], 0, 0);
+    let mut found = false;
+    for p in parts {
+        let matches_uri: bool = startsWith(p, uri + "=");
+        if (matches_uri) {
+            updated = arrayPush(updated, uri + "=" + id);
+            found = true;
+        } else {
+            updated = arrayPush(updated, p);
+        }
+    }
+    if (!found) {
+        updated = arrayPush(updated, uri + "=" + id);
+    }
+    let updated_store = store_set(store, "sub_ids", join_lines(updated));
+    return updated_store;
+}
+
+export fn state_clear(own store: StateStore) -> StateStore {
+    let mut updated = store_set(store, "initialize", "");
+    updated = store_set(updated, "subs", "");
+    updated = store_set(updated, "sub_ids", "");
+    return updated;
+}
+
+fn test_state_store_initialize() -> bool {
+    let store = new_state_store();
+    let msg = unwrap(parseJSON("{\"jsonrpc\":\"2.0\"}"));
+    let updated = state_set_initialize(store, msg);
+    assertEqual(jsonAsString(state_get_initialize(updated)["jsonrpc"]), "2.0");
+    return true;
+}
+
+fn test_state_store_subscriptions() -> bool {
+    let store = new_state_store();
+    let updated = state_add_subscription(store, "file:///a");
+    let updated2 = state_add_subscription(updated, "file:///b");
+    let keys = state_get_subscriptions(updated2);
+    assertEqual(len(keys), 2);
+    let updated3 = state_update_subscription_id(updated2, "file:///a", "1");
+    assertEqual(len(state_get_subscriptions(updated3)), 2);
+    let updated4 = state_remove_subscription(updated3, "file:///b");
+    assertEqual(len(state_get_subscriptions(updated4)), 1);
+    return true;
+}
+
+fn test_state_store_clear() -> bool {
+    let store = new_state_store();
+    let updated = state_add_subscription(store, "file:///a");
+    let cleared = state_clear(updated);
+    assertEqual(len(state_get_subscriptions(cleared)), 0);
+    assertEqual(jsonIsNull(state_get_initialize(cleared)), true);
+    return true;
+}

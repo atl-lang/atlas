@@ -1,0 +1,128 @@
+// Simplified config representation using string-only maps.
+// Keys: command, args (newline), cwd, env_file
+
+type ServerConfig = HashMap<string, string>;
+
+type Registry = HashMap<string, string>;
+
+fn split_lines(value: string) -> string[] {
+    let mut parts: string[] = slice([""], 0, 0);
+    let has_value: bool = value != "";
+    if (has_value) {
+        parts = split(value, "\n");
+    }
+    return parts;
+}
+
+fn join_lines(parts: string[]) -> string {
+    let is_empty: bool = len(parts) == 0;
+    if (is_empty) {
+        return "";
+    }
+    return join(parts, "\n");
+}
+
+export fn default_registry() -> Registry {
+    let mut reg = hashMapNew();
+    reg = hashMapPut(reg, "version", "1.0");
+    return reg;
+}
+
+export fn default_server_config() -> ServerConfig {
+    let mut cfg = hashMapNew();
+    cfg = hashMapPut(cfg, "command", "");
+    cfg = hashMapPut(cfg, "args", "");
+    cfg = hashMapPut(cfg, "cwd", "");
+    cfg = hashMapPut(cfg, "env_file", "");
+    return cfg;
+}
+
+fn cfg_get(borrow cfg: ServerConfig, key: string) -> string {
+    let has_key: bool = hashMapHas(cfg, key);
+    if (has_key) {
+        return unwrap(hashMapGet(cfg, key));
+    }
+    return "";
+}
+
+fn cfg_set(cfg: ServerConfig, key: string, value: string) -> ServerConfig {
+    return hashMapPut(cfg, key, value);
+}
+
+fn cfg_get_args(borrow cfg: ServerConfig) -> string[] {
+    return split_lines(cfg_get(cfg, "args"));
+}
+
+fn cfg_set_args(cfg: ServerConfig, args: string[]) -> ServerConfig {
+    return cfg_set(cfg, "args", join_lines(args));
+}
+
+export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerConfig {
+    let mut out = dst;
+    let cmd = cfg_get(src, "command");
+    let has_cmd: bool = cmd != "";
+    if (has_cmd) {
+        out = cfg_set(out, "command", cmd);
+    }
+    let args: string[] = cfg_get_args(src);
+    let has_args: bool = len(args) > 0;
+    if (has_args) {
+        out = cfg_set_args(out, args);
+    }
+    let cwd = cfg_get(src, "cwd");
+    let has_cwd: bool = cwd != "";
+    if (has_cwd) {
+        out = cfg_set(out, "cwd", cwd);
+    }
+    let env_file = cfg_get(src, "env_file");
+    let has_env: bool = env_file != "";
+    if (has_env) {
+        out = cfg_set(out, "env_file", env_file);
+    }
+    return out;
+}
+
+export fn substitute_env_vars(value: string) -> string {
+    let has_prefix: bool = startsWith(value, "env:");
+    if (has_prefix) {
+        return value;
+    }
+    return value;
+}
+
+export fn apply_env_vars(cfg: ServerConfig) -> ServerConfig {
+    let cmd = substitute_env_vars(cfg_get(cfg, "command"));
+    let cwd = substitute_env_vars(cfg_get(cfg, "cwd"));
+    let env_file = substitute_env_vars(cfg_get(cfg, "env_file"));
+
+    let mut args: string[] = slice([""], 0, 0);
+    let args_in: string[] = cfg_get_args(cfg);
+    for arg in args_in {
+        args = arrayPush(args, substitute_env_vars(arg));
+    }
+
+    let mut out = cfg;
+    out = cfg_set(out, "command", cmd);
+    out = cfg_set(out, "cwd", cwd);
+    out = cfg_set(out, "env_file", env_file);
+    out = cfg_set_args(out, args);
+    return out;
+}
+
+fn test_merge_server_config_command() -> bool {
+    let base = default_server_config();
+    let mut override = default_server_config();
+    override = cfg_set(override, "command", "python");
+    let args: string[] = ["-m", "server"];
+    override = cfg_set_args(override, args);
+    let merged = merge_server_config(base, override);
+    assertEqual(cfg_get(merged, "command"), "python");
+    assertEqual(len(cfg_get_args(merged)), 2);
+    return true;
+}
+
+fn test_substitute_env_vars_simple() -> bool {
+    let v = substitute_env_vars("env:HOME");
+    assertEqual(v, "env:HOME");
+    return true;
+}

@@ -1,0 +1,229 @@
+let PROXY_STOPPED = "stopped";
+let PROXY_RUNNING = "running";
+
+let MSG_OK = 0;
+let MSG_METHOD = 1;
+let MSG_PARAMS = 2;
+
+// Minimal sanitizer (duplicated due to missing imports)
+fn classify_chunk(chunk: string) -> string {
+    let trimmed = trim(chunk);
+    let is_empty: bool = len(trimmed) == 0;
+    if (is_empty) {
+        return "empty";
+    }
+    let valid: bool = isValidJSON(trimmed);
+    if (!valid) {
+        return "pollution";
+    }
+    let is_array: bool = startsWith(trimmed, "[");
+    if (is_array) {
+        return "jsonrpc";
+    }
+    let parsed = unwrap(parseJSON(trimmed));
+    let ver = parsed["jsonrpc"];
+    let has_ver: bool = !jsonIsNull(ver);
+    if (has_ver) {
+        let ver_str = jsonAsString(ver);
+        if (ver_str == "2.0") {
+            return "jsonrpc";
+        }
+    }
+    return "pollution";
+}
+
+// Minimal state store (duplicated due to missing imports)
+type StateStore = HashMap<string, string>;
+
+fn store_get(store: StateStore, key: string) -> string {
+    let has_key: bool = hashMapHas(store, key);
+    if (has_key) {
+        return unwrap(hashMapGet(store, key));
+    }
+    return "";
+}
+
+fn store_set(store: StateStore, key: string, value: string) -> StateStore {
+    return hashMapPut(store, key, value);
+}
+
+fn split_lines(value: string) -> string[] {
+    let mut parts: string[] = slice([""], 0, 0);
+    let has_value: bool = value != "";
+    if (has_value) {
+        parts = split(value, "\n");
+    }
+    return parts;
+}
+
+fn join_lines(parts: string[]) -> string {
+    let is_empty: bool = len(parts) == 0;
+    if (is_empty) {
+        return "";
+    }
+    return join(parts, "\n");
+}
+
+fn state_new() -> StateStore {
+    let mut store = hashMapNew();
+    store = store_set(store, "initialize", "");
+    store = store_set(store, "subs", "");
+    return store;
+}
+
+fn state_add_subscription(store: StateStore, uri: string) -> StateStore {
+    let raw = store_get(store, "subs");
+    let parts = split_lines(raw);
+    let mut exists = false;
+    for p in parts {
+        if (p == uri) {
+            exists = true;
+        }
+    }
+    if (!exists) {
+        let updated = arrayPush(parts, uri);
+        return store_set(store, "subs", join_lines(updated));
+    }
+    return store;
+}
+
+fn state_get_subscriptions(store: StateStore) -> string[] {
+    return split_lines(store_get(store, "subs"));
+}
+
+fn parse_jsonrpc(message: string) -> string[] {
+    let valid: bool = isValidJSON(message);
+    if (!valid) {
+        return ["false", "", ""]; 
+    }
+    let obj = unwrap(parseJSON(message));
+    let method_val = obj["method"];
+    let has_method: bool = !jsonIsNull(method_val);
+    if (!has_method) {
+        return ["false", "", ""]; 
+    }
+    let method = jsonAsString(method_val);
+    let params = obj["params"];
+    let mut params_str = "";
+    if (!jsonIsNull(params)) {
+        params_str = toJSON(params);
+    }
+    return ["true", method, params_str];
+}
+
+fn update_state_store(store: StateStore, msg: string[]) -> StateStore {
+    if (msg[MSG_OK] != "true") {
+        return store;
+    }
+    let method = msg[MSG_METHOD];
+    let params_raw = msg[MSG_PARAMS];
+
+    if (method == "resources/subscribe") {
+        if (params_raw != "") {
+            let params = unwrap(parseJSON(params_raw));
+            let uri = params["uri"];
+            if (!jsonIsNull(uri)) {
+                return state_add_subscription(store, jsonAsString(uri));
+            }
+        }
+    }
+    return store;
+}
+
+// Proxy is a string-only map: state + queue
+export fn proxy_new() -> HashMap<string, string> {
+    let mut p = hashMapNew();
+    p = hashMapPut(p, "state", PROXY_STOPPED);
+    p = hashMapPut(p, "queue", "");
+    return p;
+}
+
+fn proxy_get_state(p: HashMap<string, string>) -> string {
+    let has_key: bool = hashMapHas(p, "state");
+    if (has_key) {
+        return unwrap(hashMapGet(p, "state"));
+    }
+    return PROXY_STOPPED;
+}
+
+fn proxy_set_state(p: HashMap<string, string>, state: string) -> HashMap<string, string> {
+    return hashMapPut(p, "state", state);
+}
+
+fn proxy_get_queue(p: HashMap<string, string>) -> string[] {
+    let mut raw = "";
+    let has_key: bool = hashMapHas(p, "queue");
+    if (has_key) {
+        raw = unwrap(hashMapGet(p, "queue"));
+    }
+    return split_lines(raw);
+}
+
+fn proxy_set_queue(p: HashMap<string, string>, items: string[]) -> HashMap<string, string> {
+    return hashMapPut(p, "queue", join_lines(items));
+}
+
+export fn proxy_start(p: HashMap<string, string>) -> HashMap<string, string> {
+    return proxy_set_state(p, PROXY_RUNNING);
+}
+
+export fn proxy_handle_client(p: HashMap<string, string>, message: string) -> HashMap<string, string> {
+    if (proxy_get_state(p) != PROXY_RUNNING) {
+        let items = proxy_get_queue(p);
+        let updated = arrayPush(items, message);
+        return proxy_set_queue(p, updated);
+    }
+    return p;
+}
+
+export fn proxy_forward_client(p: HashMap<string, string>, message: string) -> string[] {
+    if (proxy_get_state(p) != PROXY_RUNNING) {
+        return slice([""], 0, 0);
+    }
+    return [message];
+}
+
+export fn proxy_handle_child(message: string) -> string[] {
+    let kind = classify_chunk(message);
+    if (kind != "jsonrpc") {
+        let empty: string[] = slice([""], 0, 0);
+        return empty;
+    }
+    return [message];
+}
+
+export fn proxy_drain_queue(p: HashMap<string, string>) -> string[] {
+    return proxy_get_queue(p);
+}
+
+export fn proxy_clear_queue(p: HashMap<string, string>) -> HashMap<string, string> {
+    return proxy_set_queue(p, slice([""], 0, 0));
+}
+
+export fn proxy_queue_size(p: HashMap<string, string>) -> number {
+    return len(proxy_get_queue(p));
+}
+
+fn test_proxy_queues_until_running() -> bool {
+    let p = proxy_new();
+    let updated = proxy_handle_client(p, "{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}");
+    assertEqual(proxy_queue_size(updated), 1);
+    let res = proxy_forward_client(updated, "{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}");
+    assertEqual(len(res), 0);
+    return true;
+}
+
+fn test_proxy_forwards_when_running() -> bool {
+    let p = proxy_start(proxy_new());
+    let res = proxy_forward_client(p, "{\"jsonrpc\":\"2.0\",\"method\":\"ping\"}");
+    assertEqual(len(res), 1);
+    return true;
+}
+
+fn test_proxy_updates_state_store() -> bool {
+    let store = state_new();
+    let parsed = parse_jsonrpc("{\"jsonrpc\":\"2.0\",\"method\":\"resources/subscribe\",\"params\":{\"uri\":\"file:///x\"}}");
+    let updated = update_state_store(store, parsed);
+    assertEqual(len(state_get_subscriptions(updated)), 1);
+    return true;
+}

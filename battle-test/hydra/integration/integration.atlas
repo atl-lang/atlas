@@ -1,0 +1,96 @@
+// Standalone integration demo (no imports supported)
+
+let PROTOCOL_NDJSON = "ndjson";
+let PROTOCOL_LSP = "lsp";
+
+fn detect_protocol(peek: string) -> string {
+    let trimmed: string = trim(peek);
+    let is_lsp: bool = startsWith(trimmed, "Content-Length");
+    if (is_lsp) {
+        return PROTOCOL_LSP;
+    }
+    return PROTOCOL_NDJSON;
+}
+
+fn lsp_frame(payload: string) -> string {
+    let header = "Content-Length: " + str(len(payload)) + "\r\n\r\n";
+    return header + payload;
+}
+
+fn read_lsp(buffer: string) -> string[] {
+    let parts: string[] = split(buffer, "\r\n\r\n");
+    let has_body: bool = len(parts) >= 2;
+    if (!has_body) {
+        return ["false", "", buffer];
+    }
+    let header = parts[0];
+    let body = join(slice(parts, 1, len(parts)), "\r\n\r\n");
+    let has_prefix: bool = startsWith(header, "Content-Length");
+    if (!has_prefix) {
+        return ["false", "", body];
+    }
+    return ["true", body, ""];
+}
+
+// Minimal state store for initialize params
+
+type StateStore = HashMap<string, string>;
+
+fn state_new() -> StateStore {
+    let mut store = hashMapNew();
+    store = hashMapPut(store, "initialize", "");
+    return store;
+}
+
+fn state_set_initialize(store: StateStore, params: json) -> StateStore {
+    return hashMapPut(store, "initialize", toJSON(params));
+}
+
+fn state_get_initialize(borrow store: StateStore) -> json {
+    let raw = unwrap(hashMapGet(store, "initialize"));
+    if (raw == "") {
+        return unwrap(parseJSON("null"));
+    }
+    return unwrap(parseJSON(raw));
+}
+
+fn proxy_new() -> HashMap<string, string> {
+    let mut p = hashMapNew();
+    p = hashMapPut(p, "state", "running");
+    return p;
+}
+
+fn proxy_handle_client(store: StateStore, message: string) -> StateStore {
+    let parsed = unwrap(parseJSON(message));
+    let method_val = parsed["method"];
+    let has_method: bool = !jsonIsNull(method_val);
+    if (has_method) {
+        let method = jsonAsString(method_val);
+        if (method == "initialize") {
+            let params = parsed["params"];
+            let has_params: bool = !jsonIsNull(params);
+            if (has_params) {
+                return state_set_initialize(store, params);
+            }
+        }
+    }
+    return store;
+}
+
+export fn integration_demo() -> bool {
+    let mut store = state_new();
+    let _proxy = proxy_new();
+    let msg = "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"params\":{\"root\":\"/tmp\"}}";
+    store = proxy_handle_client(store, msg);
+    let init = state_get_initialize(store);
+    return jsonAsString(init["root"]) == "/tmp";
+}
+
+fn test_integration_protocol_and_proxy() -> bool {
+    let framed = lsp_frame("hello");
+    assertEqual(detect_protocol("Content-Length: 5"), PROTOCOL_LSP);
+    let res = read_lsp(framed);
+    assertEqual(res[1], "hello");
+    assertEqual(integration_demo(), true);
+    return true;
+}
