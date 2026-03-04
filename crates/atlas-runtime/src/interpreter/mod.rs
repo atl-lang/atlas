@@ -723,10 +723,36 @@ impl Interpreter {
     ) -> Result<(), RuntimeError> {
         match target_expr {
             crate::ast::Expr::Identifier(id) => {
+                self.ensure_binding_mutable(&id.name, span)?;
                 let mut container = self.get_variable(&id.name, span)?;
                 Self::apply_member_mutation(&mut container, field, value, span)?;
                 self.force_set_collection(&id.name, container);
                 Ok(())
+            }
+            crate::ast::Expr::Member(inner) => {
+                if inner.args.is_some() {
+                    return Err(RuntimeError::TypeError {
+                        msg: "Invalid assignment target".to_string(),
+                        span,
+                    });
+                }
+                let mut elem = self.eval_expr(target_expr)?;
+                Self::apply_member_mutation(&mut elem, field, value, span)?;
+                self.assign_at_member(&inner.target, &inner.member, elem, span)
+            }
+            crate::ast::Expr::Index(inner) => {
+                let inner_idx = match &inner.index {
+                    crate::ast::IndexValue::Single(expr) => self.eval_expr(expr)?,
+                    crate::ast::IndexValue::Slice(_) => {
+                        return Err(RuntimeError::TypeError {
+                            msg: "Invalid assignment target".to_string(),
+                            span,
+                        })
+                    }
+                };
+                let mut elem = self.eval_expr(target_expr)?;
+                Self::apply_member_mutation(&mut elem, field, value, span)?;
+                self.assign_at_index(&inner.target, inner_idx, elem, span)
             }
             _ => Err(RuntimeError::TypeError {
                 msg: "Invalid assignment target".to_string(),
@@ -826,6 +852,22 @@ impl Interpreter {
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
+                let existing = map.with(|inner| inner.get(&key).cloned());
+                let existing = existing.ok_or_else(|| RuntimeError::TypeError {
+                    msg: format!("Missing field '{}'", field.name),
+                    span,
+                })?;
+                if existing.type_name() != value.type_name() {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!(
+                            "Type mismatch for field '{}': expected {}, found {}",
+                            field.name,
+                            existing.type_name(),
+                            value.type_name()
+                        ),
+                        span,
+                    });
+                }
                 map.with_mut(|inner| {
                     inner.insert(key, value);
                 });
@@ -840,6 +882,38 @@ impl Interpreter {
                 span,
             }),
         }
+    }
+
+    /// Ensure a binding exists and is mutable.
+    fn ensure_binding_mutable(
+        &self,
+        name: &str,
+        span: crate::span::Span,
+    ) -> Result<(), RuntimeError> {
+        for scope in self.locals.iter().rev() {
+            if let Some((_, mutable)) = scope.get(name) {
+                if !mutable {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!("Cannot assign to immutable variable '{}'", name),
+                        span,
+                    });
+                }
+                return Ok(());
+            }
+        }
+        if let Some((_, mutable)) = self.globals.get(name) {
+            if !mutable {
+                return Err(RuntimeError::TypeError {
+                    msg: format!("Cannot assign to immutable variable '{}'", name),
+                    span,
+                });
+            }
+            return Ok(());
+        }
+        Err(RuntimeError::UndefinedVariable {
+            name: name.to_string(),
+            span,
+        })
     }
 
     /// Push a new scope

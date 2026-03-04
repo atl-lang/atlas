@@ -1,0 +1,1 @@
+Runtime error: TypeError { msg: "Cannot assign to immutable variable 'obj'", span: Span { start: 33, end: 41, file: "<input>" } }

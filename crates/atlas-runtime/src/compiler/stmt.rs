@@ -323,6 +323,7 @@ impl Compiler {
                 // SetField pops: value (top), key, map (bottom)
                 // Stack: [map, key, value]
 
+                self.ensure_member_target_mutable(target, assign.span)?;
                 self.compile_expr(target)?;
                 let key_idx = self.bytecode.add_constant(Value::string(&member.name));
                 self.bytecode.emit(Opcode::Constant, assign.span);
@@ -758,6 +759,7 @@ impl Compiler {
                 //   4. Compile operand, apply op: [map, key, result]
                 //   5. SetField: consumes map, key, result -> pushes mutated map
 
+                self.ensure_member_target_mutable(target, compound.span)?;
                 self.compile_expr(target)?;
                 let key_idx = self.bytecode.add_constant(Value::string(&member.name));
                 self.bytecode.emit(Opcode::Constant, *span);
@@ -889,6 +891,7 @@ impl Compiler {
                 span,
             } => {
                 // Increment record field: obj.field++
+                self.ensure_member_target_mutable(target, inc.span)?;
                 self.compile_expr(target)?;
                 let key_idx = self.bytecode.add_constant(Value::string(&member.name));
                 self.bytecode.emit(Opcode::Constant, *span);
@@ -1015,6 +1018,7 @@ impl Compiler {
                 span,
             } => {
                 // Decrement record field: obj.field--
+                self.ensure_member_target_mutable(target, dec.span)?;
                 self.compile_expr(target)?;
                 let key_idx = self.bytecode.add_constant(Value::string(&member.name));
                 self.bytecode.emit(Opcode::Constant, *span);
@@ -1075,14 +1079,112 @@ impl Compiler {
         target: &Expr,
         span: Span,
     ) -> Result<(), Vec<Diagnostic>> {
-        if let Expr::Identifier(ident) = target {
-            if let Some(local_idx) = self.resolve_local(&ident.name) {
-                self.bytecode.emit(Opcode::SetLocal, span);
-                self.bytecode.emit_u16(local_idx as u16);
-            } else {
-                let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
-                self.bytecode.emit(Opcode::SetGlobal, span);
-                self.bytecode.emit_u16(name_idx);
+        match target {
+            Expr::Identifier(ident) => {
+                if let Some(local_idx) = self.resolve_local(&ident.name) {
+                    self.bytecode.emit(Opcode::SetLocal, span);
+                    self.bytecode.emit_u16(local_idx as u16);
+                } else {
+                    let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
+                    self.bytecode.emit(Opcode::SetGlobal, span);
+                    self.bytecode.emit_u16(name_idx);
+                }
+            }
+            Expr::Member(member) => {
+                if member.args.is_some() {
+                    return Err(vec![Diagnostic::error(
+                        "Invalid assignment target".to_string(),
+                        span,
+                    )]);
+                }
+                // Stack: [value] (mutated inner record)
+                self.compile_expr(&member.target)?;
+                let key_idx = self
+                    .bytecode
+                    .add_constant(Value::string(&member.member.name));
+                self.bytecode.emit(Opcode::Constant, span);
+                self.bytecode.emit_u16(key_idx);
+                // Stack: [value, map, key] -> Rot3 -> [map, key, value]
+                self.bytecode.emit(Opcode::Rot3, span);
+                self.bytecode.emit(Opcode::SetField, span);
+                self.emit_member_cow_write_back(&member.target, span)?;
+            }
+            Expr::Index(index) => {
+                let index_expr = match &index.index {
+                    IndexValue::Single(expr) => expr,
+                    IndexValue::Slice(_) => {
+                        return Err(vec![Diagnostic::error(
+                            "Invalid assignment target".to_string(),
+                            span,
+                        )])
+                    }
+                };
+                // Stack: [value] (mutated record)
+                self.compile_expr(&index.target)?;
+                self.compile_expr(index_expr)?;
+                // Stack: [value, array, index] -> Rot3 -> [array, index, value]
+                self.bytecode.emit(Opcode::Rot3, span);
+                self.bytecode.emit(Opcode::SetIndex, span);
+                self.emit_index_cow_write_back(&index.target, span)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn member_root_ident_no_index(target: &Expr) -> Option<&Identifier> {
+        match target {
+            Expr::Identifier(ident) => Some(ident),
+            Expr::Member(member) => {
+                if member.args.is_some() {
+                    return None;
+                }
+                Self::member_root_ident_no_index(&member.target)
+            }
+            Expr::Index(_) => None,
+            _ => None,
+        }
+    }
+
+    fn ensure_member_target_mutable(
+        &self,
+        target: &Expr,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        let Some(ident) = Self::member_root_ident_no_index(target) else {
+            return Ok(());
+        };
+
+        if let Some((_, mutable)) = self.resolve_local_with_mutability(&ident.name) {
+            if !mutable {
+                return Err(vec![Diagnostic::error(
+                    format!(
+                        "Cannot assign to immutable variable '{}' — declared with 'let'",
+                        ident.name
+                    ),
+                    span,
+                )
+                .with_label("assignment to immutable variable")
+                .with_note(
+                    "Use 'var' instead of 'let' to declare a mutable variable".to_string(),
+                )]);
+            }
+            return Ok(());
+        }
+
+        if let Some(mutable) = self.is_global_mutable(&ident.name) {
+            if !mutable {
+                return Err(vec![Diagnostic::error(
+                    format!(
+                        "Cannot assign to immutable variable '{}' — declared with 'let'",
+                        ident.name
+                    ),
+                    span,
+                )
+                .with_label("assignment to immutable variable")
+                .with_note(
+                    "Use 'var' instead of 'let' to declare a mutable variable".to_string(),
+                )]);
             }
         }
         Ok(())

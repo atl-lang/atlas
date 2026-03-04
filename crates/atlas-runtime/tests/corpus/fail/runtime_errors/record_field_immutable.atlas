@@ -1,0 +1,2 @@
+let obj = record { port: 8080 };
+obj.port = 9000;

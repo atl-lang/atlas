@@ -1,0 +1,1 @@
+Type error: Type '{ port: number }' has no field named 'missing'Type mismatch in assignment: expected ?, found number

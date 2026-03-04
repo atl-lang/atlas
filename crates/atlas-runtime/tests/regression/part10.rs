@@ -48,7 +48,7 @@ fn object_literal_basic() {
 #[test]
 fn object_literal_field_assignment() {
     let code = r#"
-        let obj = record { name: "Bob", count: 1 };
+        let mut obj = record { name: "Bob", count: 1 };
         obj.count = 5;
         unwrap(hashMapGet(obj, "count"))
     "#;
@@ -58,7 +58,7 @@ fn object_literal_field_assignment() {
 #[test]
 fn object_literal_field_compound_assignment() {
     let code = r#"
-        let obj = record { count: 2 };
+        let mut obj = record { count: 2 };
         obj.count += 3;
         unwrap(hashMapGet(obj, "count"))
     "#;

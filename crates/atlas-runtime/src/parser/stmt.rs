@@ -168,7 +168,10 @@ impl Parser {
                     self.error("Invalid assignment target");
                     return Err(());
                 }
-                if !matches!(member.target.as_ref(), Expr::Identifier(_)) {
+                if !matches!(
+                    member.target.as_ref(),
+                    Expr::Identifier(_) | Expr::Member(_) | Expr::Index(_)
+                ) {
                     self.error("Invalid assignment target");
                     return Err(());
                 }

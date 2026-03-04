@@ -1696,9 +1696,29 @@ impl VM {
                     let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
                     let key =
                         crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
+                    let field_name = match &key_val {
+                        Value::String(s) => s.as_ref().to_string(),
+                        other => other.type_name().to_string(),
+                    };
 
                     match &mut map_val {
                         Value::HashMap(map) => {
+                            let existing = map.with(|inner| inner.get(&key).cloned());
+                            let existing = existing.ok_or_else(|| RuntimeError::TypeError {
+                                msg: format!("Missing field '{}'", field_name),
+                                span,
+                            })?;
+                            if existing.type_name() != value.type_name() {
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!(
+                                        "Type mismatch for field '{}': expected {}, found {}",
+                                        field_name,
+                                        existing.type_name(),
+                                        value.type_name()
+                                    ),
+                                    span,
+                                });
+                            }
                             map.with_mut(|inner| {
                                 inner.insert(key, value);
                             });

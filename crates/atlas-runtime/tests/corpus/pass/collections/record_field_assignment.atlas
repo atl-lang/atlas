@@ -1,0 +1,14 @@
+let mut cfg = record {
+  host: "localhost",
+  port: 8080,
+  nested: record { port: 1 }
+};
+
+cfg.port = 9000;
+cfg.host = "0.0.0.0";
+cfg.nested.port = 7000;
+
+print(unwrap(hashMapGet(cfg, "host")));
+print(unwrap(hashMapGet(cfg, "port")));
+let nested = unwrap(hashMapGet(cfg, "nested"));
+print(unwrap(hashMapGet(nested, "port")));

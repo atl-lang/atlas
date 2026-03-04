@@ -1,0 +1,2 @@
+let mut obj = record { port: 8080 };
+obj.port = "string";
