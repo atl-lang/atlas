@@ -225,6 +225,33 @@ atlas-track claim H-001        # claim issue
 3. Look at existing tests for examples
 4. Read error messages carefully - they often tell you exactly what's wrong
 
+## Handling Other Failures
+
+If you encounter test failures or errors UNRELATED to your task:
+1. **If quick to fix** (< 5 min) → Fix them too
+2. **If blocking your task** → Fix them (you can't proceed otherwise)
+3. **If complex and not blocking** → Check if issue exists: `atlas-track issues`
+   - If no issue exists → Create one: `atlas-track add-issue "title" component P1 "problem" "needed"`
+   - Then continue with your task
+
+Fix what's blocking. Log the rest.
+
+## When to Stop and Report
+
+Stop working and create CODEX_VERIFY.md with status "BLOCKED" if:
+1. **Architectural decision needed** - You need guidance on HOW to implement, not just fixing bugs
+2. **Spec unclear** - The specification doesn't define the expected behavior
+3. **Circular dependency** - Fixing A breaks B, fixing B breaks A, after 3+ attempts
+4. **Missing infrastructure** - Needs external dependency, API, or tooling you can't add
+
+Do NOT stop for:
+- Test failures (fix them)
+- Compile errors (fix them)
+- Complex code (figure it out)
+- Multiple files to change (do it)
+
+**For large implementations** (new features, major refactors): Read `.codex/skills/atlas/references/big-implementations.md`
+
 ## DO NOT
 
 - Close issues (Opus does this after verification)
