@@ -389,6 +389,34 @@ arr[i + 1]  // Index can be any number expression
 - Negative indices are out-of-bounds (`AT0006`)
 - `1.0` is valid; fractional values (e.g., `1.5`) are not
 
+### Range Syntax (Array Slicing Only)
+
+Range syntax (`..`) is **only** valid inside array slicing brackets. It is not a general range operator.
+
+```atlas
+arr[0..5]   // ✓ elements 0..4
+arr[..3]    // ✓ from start through index 2
+arr[2..]    // ✓ from index 2 to end
+```
+
+**Not supported:**
+
+```atlas
+for i in 0..10 {          // ✗ range syntax not valid here
+    // ...
+}
+```
+
+Use `while` for numeric iteration:
+
+```atlas
+let i = 0;
+while i < 10 {
+    // ...
+    i = i + 1;
+}
+```
+
 ### JSON Indexing 
 ```atlas
 data["user"]        // String key (object)

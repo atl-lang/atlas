@@ -452,8 +452,10 @@ rt.eval(r#"
 "#).unwrap();
 
 // Fast repeated calls
-for i in 0..1_000_000 {
+let mut i = 0;
+while i < 1_000_000 {
     rt.eval(&format!("process({})", i)).unwrap();
+    i += 1;
 }
 ```
 

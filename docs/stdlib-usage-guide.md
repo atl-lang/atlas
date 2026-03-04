@@ -169,14 +169,18 @@ fn sort_by_key(arr: array, key: string) -> array {
     // Bubble sort by object key
     let sorted = arr;
     let n = len(sorted);
-    for i in 0..n {
-        for j in 0..(n - i - 1) {
+    let i = 0;
+    while i < n {
+        let j = 0;
+        while j < (n - i - 1) {
             if sorted[j][key] > sorted[j + 1][key] {
                 let tmp = sorted[j];
                 sorted[j] = sorted[j + 1];
                 sorted[j + 1] = tmp;
             }
+            j = j + 1;
         }
+        i = i + 1;
     }
     return sorted;
 }
@@ -790,14 +794,18 @@ fn analyze_text(path: string) -> void {
     let entries = hashMapEntries(freq);
     let sorted = entries;
     let n = len(sorted);
-    for i in 0..n {
-        for j in 0..(n - i - 1) {
+    let i = 0;
+    while i < n {
+        let j = 0;
+        while j < (n - i - 1) {
             if sorted[j][1] < sorted[j + 1][1] {
                 let tmp = sorted[j];
                 sorted[j] = sorted[j + 1];
                 sorted[j + 1] = tmp;
             }
+            j = j + 1;
         }
+        i = i + 1;
     }
 
     print("Top 10 words:");

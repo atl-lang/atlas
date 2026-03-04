@@ -155,11 +155,19 @@ If `len`, `split`, or `parseJSON` appear many times in hot loops, consider:
 
 ```atlas
 // Bad: len() called every iteration
-for i in 0..len(arr) { ... }
+let i = 0;
+while i < len(arr) {
+    // ...
+    i = i + 1;
+}
 
 // Better: cache the length
 let n = len(arr);
-for i in 0..n { ... }
+let j = 0;
+while j < n {
+    // ...
+    j = j + 1;
+}
 ```
 
 ---
@@ -172,22 +180,28 @@ for i in 0..n { ... }
 fn bubble_sort(arr: array) -> array {
     let n = len(arr);
     let result = arr;
-    for i in 0..n {
-        for j in 0..(n - i - 1) {
+    let i = 0;
+    while i < n {
+        let j = 0;
+        while j < (n - i - 1) {
             if result[j] > result[j + 1] {
                 let tmp = result[j];
                 result[j] = result[j + 1];
                 result[j + 1] = tmp;
             }
+            j = j + 1;
         }
+        i = i + 1;
     }
     return result;
 }
 
 // Generate test data
 let data = [];
-for i in 0..1000 {
+let k = 0;
+while k < 1000 {
     data = data + [random_int(0, 10000)];
+    k = k + 1;
 }
 
 // Profile the sort

@@ -28,7 +28,7 @@ while condition {
 }
 ```
 
-### Iteration over indices → for-in with range (when available)
+### Iteration over indices → for-in or while
 ```atlas
 // Before
 for (var i = 0; i < len(arr); i++) {
