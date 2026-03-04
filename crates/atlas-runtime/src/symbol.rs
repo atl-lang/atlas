@@ -769,6 +769,14 @@ impl SymbolTable {
             },
         );
         table.define_builtin(
+            "value_to_string",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(Type::String),
+            },
+        );
+        table.define_builtin(
             "toNumber",
             Type::Function {
                 type_params: vec![],

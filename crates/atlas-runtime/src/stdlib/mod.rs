@@ -642,6 +642,9 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             reflect::type_describe_fn(a, s)
         });
         m.insert("reflect_clone", |a, s, _, _| reflect::clone_fn(a, s));
+        m.insert("value_to_string", |a, s, _, _| {
+            reflect::value_to_string_fn(a, s)
+        });
         m.insert("reflect_value_to_string", |a, s, _, _| {
             reflect::value_to_string_fn(a, s)
         });
