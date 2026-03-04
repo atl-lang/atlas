@@ -90,6 +90,10 @@ impl Atlas {
     /// }
     /// ```
     pub fn eval(&self, source: &str) -> RuntimeResult<Value> {
+        self.eval_source(source, "<input>")
+    }
+
+    fn eval_source(&self, source: &str, file: &str) -> RuntimeResult<Value> {
         // For REPL-style usage, if the source doesn't end with a semicolon,
         // treat it as an expression statement by appending one
         let source = source.trim();
@@ -101,7 +105,7 @@ impl Atlas {
             };
 
         // Lex the source code
-        let mut lexer = Lexer::new(&source_with_semi);
+        let mut lexer = Lexer::new(&source_with_semi).with_file(file);
         let (tokens, lex_diagnostics) = lexer.tokenize();
 
         if !lex_diagnostics.is_empty() {
@@ -174,10 +178,10 @@ impl Atlas {
 
         // Get absolute path
         let abs_path = file_path.canonicalize().map_err(|e| {
-            vec![Diagnostic::error(
-                format!("Failed to resolve path: {}", e),
-                Span::dummy(),
-            )]
+            vec![
+                Diagnostic::error(format!("Failed to resolve path: {}", e), Span::dummy())
+                    .with_file(path),
+            ]
         })?;
 
         // Check filesystem read permission
@@ -196,10 +200,10 @@ impl Atlas {
         // Quick check: does the file contain imports?
         // If so, use module executor. If not, use simple eval.
         let source = std::fs::read_to_string(&abs_path).map_err(|e| {
-            vec![Diagnostic::error(
-                format!("Failed to read file: {}", e),
-                Span::dummy(),
-            )]
+            vec![
+                Diagnostic::error(format!("Failed to read file: {}", e), Span::dummy())
+                    .with_file(abs_path.display().to_string()),
+            ]
         })?;
 
         // Check if source contains "import {" or "import *"
@@ -215,7 +219,8 @@ impl Atlas {
             executor.execute_module(&abs_path)
         } else {
             // Simple single-file program - use regular eval
-            self.eval(&source)
+            let file_display = abs_path.display().to_string();
+            self.eval_source(&source, &file_display)
         }
     }
 }

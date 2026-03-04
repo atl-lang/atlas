@@ -13,7 +13,7 @@ pub fn run(file_path: &str) -> Result<()> {
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
 
     // Lex the source code
-    let mut lexer = Lexer::new(&source);
+    let mut lexer = Lexer::new(&source).with_file(file_path);
     let (tokens, lex_diagnostics) = lexer.tokenize();
 
     if !lex_diagnostics.is_empty() {

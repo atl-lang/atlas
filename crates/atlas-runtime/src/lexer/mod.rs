@@ -3,7 +3,7 @@
 //! The lexer converts Atlas source code into a stream of tokens with accurate span information.
 
 use crate::diagnostic::Diagnostic;
-use crate::span::Span;
+use crate::span::{intern_file, FileId, Span};
 use crate::token::{Token, TokenKind};
 use std::collections::VecDeque;
 
@@ -13,6 +13,8 @@ mod literals;
 pub struct Lexer {
     /// Original source code
     pub(super) source: String,
+    /// Source file path (normalized or placeholder)
+    pub(super) file: FileId,
     /// Characters of source code
     pub(super) chars: Vec<char>,
     /// Current position in chars
@@ -48,6 +50,7 @@ impl Lexer {
         let chars: Vec<char> = source.chars().collect();
         Self {
             source,
+            file: intern_file("<input>"),
             chars,
             current: 0,
             line: 1,
@@ -62,6 +65,12 @@ impl Lexer {
             interpolation_stack: Vec::new(),
             last_token_kind: None,
         }
+    }
+
+    /// Set the source file path for spans emitted by this lexer
+    pub fn with_file(mut self, file: impl AsRef<str>) -> Self {
+        self.file = intern_file(file);
+        self
     }
 
     /// Tokenize the source code, returning tokens and any diagnostics
@@ -314,7 +323,7 @@ impl Lexer {
                         if self.emit_comments {
                             let text: String =
                                 self.chars[comment_start..self.current].iter().collect();
-                            let span = Span::new(comment_start, self.current);
+                            let span = Span::new_in(comment_start, self.current, self.file);
                             let kind = if is_doc {
                                 TokenKind::DocComment
                             } else {
@@ -347,7 +356,7 @@ impl Lexer {
                         if self.emit_comments && terminated {
                             let text: String =
                                 self.chars[comment_start..self.current].iter().collect();
-                            let span = Span::new(comment_start, self.current);
+                            let span = Span::new_in(comment_start, self.current, self.file);
                             self.pending_comments.push(Token::new(
                                 TokenKind::BlockComment,
                                 text,
@@ -357,10 +366,7 @@ impl Lexer {
 
                         // Report error if comment was not terminated
                         if !terminated {
-                            let span = Span {
-                                start: self.start_pos,
-                                end: self.current,
-                            };
+                            let span = Span::new_in(self.start_pos, self.current, self.file);
                             let snippet = self.get_line_snippet(comment_start_line);
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
@@ -442,10 +448,7 @@ impl Lexer {
 
     /// Create a token with the given kind and lexeme
     pub(super) fn make_token(&self, kind: TokenKind, lexeme: &str) -> Token {
-        let span = Span {
-            start: self.start_pos,
-            end: self.current,
-        };
+        let span = Span::new_in(self.start_pos, self.current, self.file);
 
         Token {
             kind,
@@ -456,10 +459,11 @@ impl Lexer {
 
     /// Create an error token and record a diagnostic with a specific code
     pub(super) fn error_token_with_code(&mut self, code: &str, message: &str) -> Token {
-        let span = Span {
-            start: self.start_pos,
-            end: self.current.max(self.start_pos + 1),
-        };
+        let span = Span::new_in(
+            self.start_pos,
+            self.current.max(self.start_pos + 1),
+            self.file,
+        );
 
         // Extract snippet from source for this line
         let snippet = self.get_line_snippet(self.start_line);

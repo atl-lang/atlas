@@ -14,7 +14,8 @@ expression: json
             "name": "x",
             "span": {
               "start": 4,
-              "end": 5
+              "end": 5,
+              "file": "<test>"
             }
           },
           "type_ref": {
@@ -22,7 +23,8 @@ expression: json
               "number",
               {
                 "start": 7,
-                "end": 13
+                "end": 13,
+                "file": "<test>"
               }
             ]
           },
@@ -36,7 +38,8 @@ expression: json
                   },
                   {
                     "start": 16,
-                    "end": 17
+                    "end": 17,
+                    "file": "<test>"
                   }
                 ]
               },
@@ -50,7 +53,8 @@ expression: json
                       },
                       {
                         "start": 20,
-                        "end": 21
+                        "end": 21,
+                        "file": "<test>"
                       }
                     ]
                   },
@@ -61,25 +65,29 @@ expression: json
                       },
                       {
                         "start": 24,
-                        "end": 25
+                        "end": 25,
+                        "file": "<test>"
                       }
                     ]
                   },
                   "span": {
                     "start": 20,
-                    "end": 25
+                    "end": 25,
+                    "file": "<test>"
                   }
                 }
               },
               "span": {
                 "start": 16,
-                "end": 25
+                "end": 25,
+                "file": "<test>"
               }
             }
           },
           "span": {
             "start": 0,
-            "end": 26
+            "end": 26,
+            "file": "<test>"
           }
         }
       }

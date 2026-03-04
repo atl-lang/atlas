@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1002
   message: Unterminated string literal
-  file: "<unknown>"
+  file: "<input>"
   line: 2
   column: 61
   length: 24

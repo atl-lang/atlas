@@ -13,20 +13,25 @@ items:
                 span:
                   start: 0
                   end: 3
+                  file: "<input>"
             member:
               name: method
               span:
                 start: 4
                 end: 10
+                file: "<input>"
             args:
               - Identifier:
                   name: x
                   span:
                     start: 11
                     end: 12
+                    file: "<input>"
             span:
               start: 0
               end: 13
+              file: "<input>"
         span:
           start: 0
           end: 14
+          file: "<input>"

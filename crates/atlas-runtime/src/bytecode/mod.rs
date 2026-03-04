@@ -32,7 +32,8 @@ use crate::value::Value;
 /// Version history:
 /// - Version 1: Initial bytecode format (Phase 10)
 /// - Version 2: Added CRC32 checksum, extended value serialization (H-002)
-pub const BYTECODE_VERSION: u16 = 2;
+/// - Version 3: Added source file paths to debug spans (H-044)
+pub const BYTECODE_VERSION: u16 = 3;
 
 /// Debug information for bytecode
 ///

@@ -10,6 +10,7 @@ items:
             - Bool: true
             - start: 3
               end: 7
+              file: "<input>"
         then_block:
           statements:
             - If:
@@ -18,6 +19,7 @@ items:
                     - Bool: false
                     - start: 13
                       end: 18
+                      file: "<input>"
                 then_block:
                   statements:
                     - VarDecl:
@@ -28,28 +30,35 @@ items:
                           span:
                             start: 25
                             end: 26
+                            file: "<input>"
                         type_ref: ~
                         init:
                           Literal:
                             - Number: 1
                             - start: 29
                               end: 30
+                              file: "<input>"
                         span:
                           start: 21
                           end: 31
+                          file: "<input>"
                   tail_expr: ~
                   span:
                     start: 19
                     end: 33
+                    file: "<input>"
                 else_block: ~
                 span:
                   start: 10
                   end: 33
+                  file: "<input>"
           tail_expr: ~
           span:
             start: 8
             end: 35
+            file: "<input>"
         else_block: ~
         span:
           start: 0
           end: 35
+          file: "<input>"

@@ -12,15 +12,18 @@ items:
           span:
             start: 4
             end: 5
+            file: "<input>"
         type_ref: ~
         init:
           Literal:
             - Number: 1
             - start: 8
               end: 9
+              file: "<input>"
         span:
           start: 0
           end: 10
+          file: "<input>"
   - Statement:
       VarDecl:
         mutable: false
@@ -30,15 +33,18 @@ items:
           span:
             start: 15
             end: 16
+            file: "<input>"
         type_ref: ~
         init:
           Literal:
             - Number: 2
             - start: 19
               end: 20
+              file: "<input>"
         span:
           start: 11
           end: 21
+          file: "<input>"
   - Statement:
       VarDecl:
         mutable: false
@@ -48,6 +54,7 @@ items:
           span:
             start: 26
             end: 27
+            file: "<input>"
         type_ref: ~
         init:
           Binary:
@@ -58,15 +65,19 @@ items:
                 span:
                   start: 30
                   end: 31
+                  file: "<input>"
             right:
               Identifier:
                 name: y
                 span:
                   start: 34
                   end: 35
+                  file: "<input>"
             span:
               start: 30
               end: 35
+              file: "<input>"
         span:
           start: 22
           end: 36
+          file: "<input>"

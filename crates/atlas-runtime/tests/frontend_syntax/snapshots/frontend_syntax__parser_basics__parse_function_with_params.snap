@@ -9,6 +9,7 @@ items:
         span:
           start: 3
           end: 6
+          file: "<input>"
       type_params: []
       params:
         - name:
@@ -16,34 +17,41 @@ items:
             span:
               start: 7
               end: 8
+              file: "<input>"
           type_ref:
             Named:
               - number
               - start: 10
                 end: 16
+                file: "<input>"
           ownership: ~
           span:
             start: 7
             end: 16
+            file: "<input>"
         - name:
             name: y
             span:
               start: 18
               end: 19
+              file: "<input>"
           type_ref:
             Named:
               - number
               - start: 21
                 end: 27
+                file: "<input>"
           ownership: ~
           span:
             start: 18
             end: 27
+            file: "<input>"
       return_type:
         Named:
           - number
           - start: 32
             end: 38
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -58,22 +66,28 @@ items:
                       span:
                         start: 48
                         end: 49
+                        file: "<input>"
                   right:
                     Identifier:
                       name: y
                       span:
                         start: 52
                         end: 53
+                        file: "<input>"
                   span:
                     start: 48
                     end: 53
+                    file: "<input>"
               span:
                 start: 41
                 end: 54
+                file: "<input>"
         tail_expr: ~
         span:
           start: 39
           end: 56
+          file: "<input>"
       span:
         start: 0
         end: 56
+        file: "<input>"

@@ -12,6 +12,7 @@ Statement:
             - Number: 10
             - start: 0
               end: 2
+              file: "<input>"
         right:
           Binary:
             op: Div
@@ -20,17 +21,22 @@ Statement:
                 - Number: 6
                 - start: 5
                   end: 6
+                  file: "<input>"
             right:
               Literal:
                 - Number: 2
                 - start: 9
                   end: 10
+                  file: "<input>"
             span:
               start: 5
               end: 10
+              file: "<input>"
         span:
           start: 0
           end: 10
+          file: "<input>"
     span:
       start: 0
       end: 11
+      file: "<input>"

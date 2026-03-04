@@ -14,7 +14,7 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
         .with_context(|| format!("Failed to read source file: {}", file_path))?;
 
     // Lex the source code
-    let mut lexer = Lexer::new(&source);
+    let mut lexer = Lexer::new(&source).with_file(file_path);
     let (tokens, lex_diagnostics) = lexer.tokenize();
 
     if !lex_diagnostics.is_empty() {
@@ -96,10 +96,16 @@ fn format_diagnostic(diag: &atlas_runtime::Diagnostic, _source: &str, file_path:
         DiagnosticLevel::Warning => "warning",
     };
 
+    let file = if diag.file == "<unknown>" || diag.file == "<input>" {
+        file_path
+    } else {
+        diag.file.as_str()
+    };
+
     // Format: filename:line:col: level: message
     format!(
         "{}:{}:{}: {}: {}",
-        file_path, diag.line, diag.column, level_str, diag.message
+        file, diag.line, diag.column, level_str, diag.message
     )
 }
 

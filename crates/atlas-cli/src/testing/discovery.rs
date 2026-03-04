@@ -89,7 +89,7 @@ fn discover_tests_in_file(path: &Path) -> Result<Vec<TestFunction>, String> {
     let source = fs::read_to_string(path)
         .map_err(|e| format!("Failed to read {}: {}", path.display(), e))?;
 
-    let mut lexer = Lexer::new(source);
+    let mut lexer = Lexer::new(source).with_file(path.display().to_string());
     let (tokens, lex_diags) = lexer.tokenize();
 
     // Check for lexer errors

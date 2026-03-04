@@ -149,7 +149,7 @@ impl Parser {
             .expect("string interpolation must have at least one part");
 
         for part in iter {
-            let span = Span::new(combined.span().start, part.span().end);
+            let span = combined.span().merge(part.span());
             combined = Expr::Binary(BinaryExpr {
                 op: BinaryOp::Add,
                 left: Box::new(combined),
@@ -247,7 +247,7 @@ impl Parser {
             enum_name,
             variant_name,
             args,
-            span: crate::span::Span::new(start_span.start, end_span.end),
+            span: start_span.merge(end_span),
         }))
     }
 
@@ -747,7 +747,7 @@ impl Parser {
             self.consume(TokenKind::RightParen, "Expected ')'")?;
             if self.match_token(TokenKind::Arrow) {
                 let return_type = self.parse_type_ref()?;
-                let full_span = Span::new(start_span.start, return_type.span().end);
+                let full_span = start_span.merge(return_type.span());
                 return Ok(TypeRef::Function {
                     params: Vec::new(),
                     return_type: Box::new(return_type),
@@ -769,7 +769,7 @@ impl Parser {
 
         if self.match_token(TokenKind::Arrow) {
             let return_type = self.parse_type_ref()?;
-            let full_span = Span::new(start_span.start, return_type.span().end);
+            let full_span = start_span.merge(return_type.span());
             return Ok(TypeRef::Function {
                 params,
                 return_type: Box::new(return_type),
@@ -808,7 +808,7 @@ impl Parser {
 
         // Consume '>'
         let end_token = self.consume(TokenKind::Greater, "Expected '>' after type arguments")?;
-        let span = Span::new(start.start, end_token.span.end);
+        let span = start.merge(end_token.span);
 
         Ok(TypeRef::Generic {
             name,

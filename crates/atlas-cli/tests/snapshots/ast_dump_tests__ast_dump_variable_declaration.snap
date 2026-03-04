@@ -14,7 +14,8 @@ expression: json
             "name": "x",
             "span": {
               "start": 4,
-              "end": 5
+              "end": 5,
+              "file": "<test>"
             }
           },
           "type_ref": {
@@ -22,7 +23,8 @@ expression: json
               "number",
               {
                 "start": 7,
-                "end": 13
+                "end": 13,
+                "file": "<test>"
               }
             ]
           },
@@ -33,13 +35,15 @@ expression: json
               },
               {
                 "start": 16,
-                "end": 18
+                "end": 18,
+                "file": "<test>"
               }
             ]
           },
           "span": {
             "start": 0,
-            "end": 19
+            "end": 19,
+            "file": "<test>"
           }
         }
       }

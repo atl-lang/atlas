@@ -214,7 +214,7 @@ impl ModuleLoader {
         })?;
 
         // Lex
-        let mut lexer = Lexer::new(&source);
+        let mut lexer = Lexer::new(&source).with_file(path.display().to_string());
         let (tokens, lex_diags) = lexer.tokenize();
         if !lex_diags.is_empty() {
             return Err(lex_diags);

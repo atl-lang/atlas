@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 18
+          file: "<input>"
       type_params: []
       params: []
       return_type:
@@ -16,6 +17,7 @@ items:
           - number
           - start: 24
             end: 30
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -26,6 +28,7 @@ items:
                 span:
                   start: 48
                   end: 54
+                  file: "<input>"
               type_params: []
               params: []
               return_type:
@@ -33,6 +36,7 @@ items:
                   - number
                   - start: 60
                     end: 66
+                    file: "<input>"
               return_ownership: ~
               predicate: ~
               body:
@@ -43,6 +47,7 @@ items:
                         span:
                           start: 88
                           end: 94
+                          file: "<input>"
                       type_params: []
                       params: []
                       return_type:
@@ -50,6 +55,7 @@ items:
                           - number
                           - start: 100
                             end: 106
+                            file: "<input>"
                       return_ownership: ~
                       predicate: ~
                       body:
@@ -60,16 +66,20 @@ items:
                                   - Number: 42
                                   - start: 136
                                     end: 138
+                                    file: "<input>"
                               span:
                                 start: 129
                                 end: 139
+                                file: "<input>"
                         tail_expr: ~
                         span:
                           start: 107
                           end: 157
+                          file: "<input>"
                       span:
                         start: 85
                         end: 157
+                        file: "<input>"
                   - Return:
                       value:
                         Call:
@@ -79,20 +89,25 @@ items:
                               span:
                                 start: 181
                                 end: 187
+                                file: "<input>"
                           args: []
                           span:
                             start: 181
                             end: 189
+                            file: "<input>"
                       span:
                         start: 174
                         end: 190
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 67
                   end: 204
+                  file: "<input>"
               span:
                 start: 45
                 end: 204
+                file: "<input>"
           - Return:
               value:
                 Call:
@@ -102,17 +117,22 @@ items:
                       span:
                         start: 224
                         end: 230
+                        file: "<input>"
                   args: []
                   span:
                     start: 224
                     end: 232
+                    file: "<input>"
               span:
                 start: 217
                 end: 233
+                file: "<input>"
         tail_expr: ~
         span:
           start: 31
           end: 243
+          file: "<input>"
       span:
         start: 9
         end: 243
+        file: "<input>"

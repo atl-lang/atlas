@@ -10,6 +10,7 @@ items:
             - Bool: true
             - start: 6
               end: 10
+              file: "<input>"
         body:
           statements:
             - Expr:
@@ -19,13 +20,17 @@ items:
                     span:
                       start: 13
                       end: 14
+                      file: "<input>"
                 span:
                   start: 13
                   end: 15
+                  file: "<input>"
           tail_expr: ~
           span:
             start: 11
             end: 17
+            file: "<input>"
         span:
           start: 0
           end: 17
+          file: "<input>"

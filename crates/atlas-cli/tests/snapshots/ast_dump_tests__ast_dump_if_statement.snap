@@ -15,7 +15,8 @@ expression: json
               },
               {
                 "start": 5,
-                "end": 9
+                "end": 9,
+                "file": "<test>"
               }
             ]
           },
@@ -29,7 +30,8 @@ expression: json
                     "name": "x",
                     "span": {
                       "start": 21,
-                      "end": 22
+                      "end": 22,
+                      "file": "<test>"
                     }
                   },
                   "type_ref": {
@@ -37,7 +39,8 @@ expression: json
                       "number",
                       {
                         "start": 24,
-                        "end": 30
+                        "end": 30,
+                        "file": "<test>"
                       }
                     ]
                   },
@@ -48,13 +51,15 @@ expression: json
                       },
                       {
                         "start": 33,
-                        "end": 34
+                        "end": 34,
+                        "file": "<test>"
                       }
                     ]
                   },
                   "span": {
                     "start": 17,
-                    "end": 35
+                    "end": 35,
+                    "file": "<test>"
                   }
                 }
               }
@@ -62,13 +67,15 @@ expression: json
             "tail_expr": null,
             "span": {
               "start": 11,
-              "end": 37
+              "end": 37,
+              "file": "<test>"
             }
           },
           "else_block": null,
           "span": {
             "start": 1,
-            "end": 37
+            "end": 37,
+            "file": "<test>"
           }
         }
       }

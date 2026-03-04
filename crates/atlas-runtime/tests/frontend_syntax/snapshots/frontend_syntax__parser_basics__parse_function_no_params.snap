@@ -9,6 +9,7 @@ items:
         span:
           start: 3
           end: 6
+          file: "<input>"
       type_params: []
       params: []
       return_type: ~
@@ -22,13 +23,17 @@ items:
                   - Number: 42
                   - start: 18
                     end: 20
+                    file: "<input>"
               span:
                 start: 11
                 end: 21
+                file: "<input>"
         tail_expr: ~
         span:
           start: 9
           end: 23
+          file: "<input>"
       span:
         start: 0
         end: 23
+        file: "<input>"

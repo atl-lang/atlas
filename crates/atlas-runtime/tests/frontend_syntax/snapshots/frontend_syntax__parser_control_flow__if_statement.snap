@@ -10,6 +10,7 @@ items:
             - Bool: true
             - start: 4
               end: 8
+              file: "<input>"
         then_block:
           statements:
             - Expr:
@@ -19,14 +20,18 @@ items:
                     span:
                       start: 12
                       end: 13
+                      file: "<input>"
                 span:
                   start: 12
                   end: 14
+                  file: "<input>"
           tail_expr: ~
           span:
             start: 10
             end: 16
+            file: "<input>"
         else_block: ~
         span:
           start: 0
           end: 16
+          file: "<input>"

@@ -1,13 +1,12 @@
 ---
 source: crates/atlas-runtime/tests/stdlib/functions/part5.rs
-assertion_line: 91
 expression: diagnostics
 ---
 - diag_version: 1
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'print' in global scope"
-  file: "<unknown>"
+  file: "<input>"
   line: 1
   column: 62
   length: 5
@@ -18,7 +17,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'len' in global scope"
-  file: "<unknown>"
+  file: "<input>"
   line: 1
   column: 85
   length: 3
@@ -29,7 +28,7 @@ expression: diagnostics
   level: error
   code: AT1012
   message: "Cannot shadow prelude builtin 'str' in global scope"
-  file: "<unknown>"
+  file: "<input>"
   line: 1
   column: 103
   length: 3

@@ -1,6 +1,5 @@
 ---
 source: crates/atlas-runtime/tests/interpreter/assignment.rs
-assertion_line: 42
 expression: "program.items[0]"
 ---
 Statement:
@@ -11,6 +10,7 @@ Statement:
         span:
           start: 0
           end: 6
+          file: "<input>"
     value:
       Call:
         callee:
@@ -19,10 +19,13 @@ Statement:
             span:
               start: 9
               end: 12
+              file: "<input>"
         args: []
         span:
           start: 9
           end: 14
+          file: "<input>"
     span:
       start: 0
       end: 15
+      file: "<input>"

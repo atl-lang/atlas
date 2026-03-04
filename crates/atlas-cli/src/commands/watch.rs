@@ -212,9 +212,15 @@ fn format_diagnostic(diag: &atlas_runtime::Diagnostic) -> String {
         DiagnosticLevel::Warning => "warning",
     };
 
+    let file = if diag.file.is_empty() {
+        "<unknown>"
+    } else {
+        diag.file.as_str()
+    };
+
     format!(
-        "{}:{}: {}: {}",
-        diag.line, diag.column, level_str, diag.message
+        "{}:{}:{}: {}: {}",
+        file, diag.line, diag.column, level_str, diag.message
     )
 }
 

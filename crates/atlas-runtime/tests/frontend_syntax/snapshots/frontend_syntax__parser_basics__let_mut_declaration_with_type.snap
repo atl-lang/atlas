@@ -12,16 +12,20 @@ items:
           span:
             start: 8
             end: 9
+            file: "<input>"
         type_ref:
           Named:
             - number
             - start: 11
               end: 17
+              file: "<input>"
         init:
           Literal:
             - Number: 42
             - start: 20
               end: 22
+              file: "<input>"
         span:
           start: 0
           end: 23
+          file: "<input>"

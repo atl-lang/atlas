@@ -10,6 +10,7 @@ items:
           span:
             start: 5
             end: 6
+            file: "<input>"
         iterable:
           ArrayLiteral:
             elements:
@@ -17,25 +18,31 @@ items:
                   - Number: 0
                   - start: 11
                     end: 12
+                    file: "<input>"
               - Literal:
                   - Number: 1
                   - start: 14
                     end: 15
+                    file: "<input>"
               - Literal:
                   - Number: 2
                   - start: 17
                     end: 18
+                    file: "<input>"
               - Literal:
                   - Number: 3
                   - start: 20
                     end: 21
+                    file: "<input>"
               - Literal:
                   - Number: 4
                   - start: 23
                     end: 24
+                    file: "<input>"
             span:
               start: 10
               end: 25
+              file: "<input>"
         body:
           statements:
             - Expr:
@@ -45,13 +52,17 @@ items:
                     span:
                       start: 29
                       end: 30
+                      file: "<input>"
                 span:
                   start: 29
                   end: 31
+                  file: "<input>"
           tail_expr: ~
           span:
             start: 27
             end: 33
+            file: "<input>"
         span:
           start: 0
           end: 33
+          file: "<input>"

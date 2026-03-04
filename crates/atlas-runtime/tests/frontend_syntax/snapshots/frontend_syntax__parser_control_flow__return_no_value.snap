@@ -9,3 +9,4 @@ items:
         span:
           start: 0
           end: 7
+          file: "<input>"

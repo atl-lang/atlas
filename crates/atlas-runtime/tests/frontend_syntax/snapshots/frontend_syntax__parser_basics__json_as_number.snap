@@ -13,15 +13,19 @@ items:
                 span:
                   start: 0
                   end: 4
+                  file: "<input>"
             member:
               name: as_number
               span:
                 start: 5
                 end: 14
+                file: "<input>"
             args: []
             span:
               start: 0
               end: 16
+              file: "<input>"
         span:
           start: 0
           end: 17
+          file: "<input>"

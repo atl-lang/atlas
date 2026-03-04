@@ -10,6 +10,8 @@ items:
             - Bool: false
             - start: 0
               end: 5
+              file: "<input>"
         span:
           start: 0
           end: 6
+          file: "<input>"

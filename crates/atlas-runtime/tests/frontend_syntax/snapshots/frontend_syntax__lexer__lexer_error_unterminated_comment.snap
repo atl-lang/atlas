@@ -6,7 +6,7 @@ expression: diagnostics
   level: error
   code: AT1004
   message: Unterminated multi-line comment
-  file: "<unknown>"
+  file: "<input>"
   line: 3
   column: 61
   length: 43

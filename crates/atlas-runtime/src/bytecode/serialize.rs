@@ -24,7 +24,7 @@
 //! HttpRequest, HttpResponse, Future, TaskHandle, Channel*, AsyncMutex, Watcher,
 //! Closure, SharedValue.
 
-use crate::span::Span;
+use crate::span::{file_path, Span};
 use crate::stdlib::collections::hash::HashKey;
 use crate::stdlib::collections::hashmap::AtlasHashMap;
 use crate::stdlib::collections::hashset::AtlasHashSet;
@@ -550,16 +550,28 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
 pub(super) fn serialize_span(span: &Span, bytes: &mut Vec<u8>) {
     bytes.extend_from_slice(&(span.start as u32).to_be_bytes());
     bytes.extend_from_slice(&(span.end as u32).to_be_bytes());
+    let file = file_path(span.file);
+    bytes.extend_from_slice(&(file.len() as u32).to_be_bytes());
+    bytes.extend_from_slice(file.as_bytes());
 }
 
 /// Deserialize a Span from bytes, returns (Span, bytes_consumed)
 pub(super) fn deserialize_span(bytes: &[u8]) -> Result<(Span, usize), String> {
-    if bytes.len() < 8 {
+    if bytes.len() < 12 {
         return Err("Truncated span data".to_string());
     }
     let start = u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]) as usize;
     let end = u32::from_be_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]) as usize;
-    Ok((Span { start, end }, 8))
+    let file_len = u32::from_be_bytes([bytes[8], bytes[9], bytes[10], bytes[11]]) as usize;
+    if bytes.len() < 12 + file_len {
+        return Err("Truncated span file data".to_string());
+    }
+    let file = std::str::from_utf8(&bytes[12..12 + file_len])
+        .map_err(|_| "Invalid UTF-8 in span file".to_string())?;
+    Ok((
+        Span::new_in(start, end, crate::span::intern_file(file)),
+        12 + file_len,
+    ))
 }
 
 /// Compute CRC32 checksum for bytecode integrity verification

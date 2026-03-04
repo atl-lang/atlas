@@ -14,7 +14,8 @@ expression: json
             "name": "flag",
             "span": {
               "start": 4,
-              "end": 8
+              "end": 8,
+              "file": "<test>"
             }
           },
           "type_ref": {
@@ -22,7 +23,8 @@ expression: json
               "bool",
               {
                 "start": 10,
-                "end": 14
+                "end": 14,
+                "file": "<test>"
               }
             ]
           },
@@ -33,13 +35,15 @@ expression: json
               },
               {
                 "start": 17,
-                "end": 21
+                "end": 21,
+                "file": "<test>"
               }
             ]
           },
           "span": {
             "start": 0,
-            "end": 22
+            "end": 22,
+            "file": "<test>"
           }
         }
       }

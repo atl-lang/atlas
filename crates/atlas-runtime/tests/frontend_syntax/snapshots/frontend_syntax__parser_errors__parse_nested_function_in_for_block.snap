@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 17
+          file: "<input>"
       type_params: []
       params: []
       return_type:
@@ -16,6 +17,7 @@ items:
           - void
           - start: 23
             end: 27
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -26,6 +28,7 @@ items:
                 span:
                   start: 46
                   end: 47
+                  file: "<input>"
               iterable:
                 ArrayLiteral:
                   elements:
@@ -33,25 +36,31 @@ items:
                         - Number: 0
                         - start: 52
                           end: 53
+                          file: "<input>"
                     - Literal:
                         - Number: 1
                         - start: 55
                           end: 56
+                          file: "<input>"
                     - Literal:
                         - Number: 2
                         - start: 58
                           end: 59
+                          file: "<input>"
                     - Literal:
                         - Number: 3
                         - start: 61
                           end: 62
+                          file: "<input>"
                     - Literal:
                         - Number: 4
                         - start: 64
                           end: 65
+                          file: "<input>"
                   span:
                     start: 51
                     end: 66
+                    file: "<input>"
               body:
                 statements:
                   - FunctionDecl:
@@ -60,6 +69,7 @@ items:
                         span:
                           start: 88
                           end: 91
+                          file: "<input>"
                       type_params: []
                       params:
                         - name:
@@ -67,20 +77,24 @@ items:
                             span:
                               start: 92
                               end: 93
+                              file: "<input>"
                           type_ref:
                             Named:
                               - number
                               - start: 95
                                 end: 101
+                                file: "<input>"
                           ownership: ~
                           span:
                             start: 92
                             end: 101
+                            file: "<input>"
                       return_type:
                         Named:
                           - void
                           - start: 106
                             end: 110
+                            file: "<input>"
                       return_ownership: ~
                       predicate: ~
                       body:
@@ -94,6 +108,7 @@ items:
                                       span:
                                         start: 133
                                         end: 138
+                                        file: "<input>"
                                   args:
                                     - Call:
                                         callee:
@@ -102,28 +117,35 @@ items:
                                             span:
                                               start: 139
                                               end: 142
+                                              file: "<input>"
                                         args:
                                           - Identifier:
                                               name: x
                                               span:
                                                 start: 143
                                                 end: 144
+                                                file: "<input>"
                                         span:
                                           start: 139
                                           end: 145
+                                          file: "<input>"
                                   span:
                                     start: 133
                                     end: 146
+                                    file: "<input>"
                               span:
                                 start: 133
                                 end: 147
+                                file: "<input>"
                         tail_expr: ~
                         span:
                           start: 111
                           end: 165
+                          file: "<input>"
                       span:
                         start: 85
                         end: 165
+                        file: "<input>"
                   - Expr:
                       expr:
                         Call:
@@ -133,29 +155,37 @@ items:
                               span:
                                 start: 182
                                 end: 185
+                                file: "<input>"
                           args:
                             - Identifier:
                                 name: i
                                 span:
                                   start: 186
                                   end: 187
+                                  file: "<input>"
                           span:
                             start: 182
                             end: 188
+                            file: "<input>"
                       span:
                         start: 182
                         end: 189
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 67
                   end: 203
+                  file: "<input>"
               span:
                 start: 42
                 end: 203
+                file: "<input>"
         tail_expr: ~
         span:
           start: 28
           end: 213
+          file: "<input>"
       span:
         start: 9
         end: 213
+        file: "<input>"

@@ -12,6 +12,7 @@ items:
           span:
             start: 4
             end: 5
+            file: "<input>"
         type_ref: ~
         init:
           Match:
@@ -21,51 +22,63 @@ items:
                 span:
                   start: 14
                   end: 15
+                  file: "<input>"
             arms:
               - pattern:
                   Literal:
                     - Number: 1
                     - start: 18
                       end: 19
+                      file: "<input>"
                 guard: ~
                 body:
                   Literal:
                     - String: one
                     - start: 23
                       end: 28
+                      file: "<input>"
                 span:
                   start: 18
                   end: 28
+                  file: "<input>"
               - pattern:
                   Literal:
                     - Number: 2
                     - start: 30
                       end: 31
+                      file: "<input>"
                 guard: ~
                 body:
                   Literal:
                     - String: two
                     - start: 35
                       end: 40
+                      file: "<input>"
                 span:
                   start: 30
                   end: 40
+                  file: "<input>"
               - pattern:
                   Wildcard:
                     start: 42
                     end: 43
+                    file: "<input>"
                 guard: ~
                 body:
                   Literal:
                     - String: other
                     - start: 47
                       end: 54
+                      file: "<input>"
                 span:
                   start: 42
                   end: 54
+                  file: "<input>"
             span:
               start: 8
               end: 56
+              file: "<input>"
         span:
           start: 0
           end: 57
+          file: "<input>"

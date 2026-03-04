@@ -17,25 +17,32 @@ Statement:
                     - Number: 10
                     - start: 1
                       end: 3
+                      file: "<input>"
                 right:
                   Literal:
                     - Number: 2
                     - start: 6
                       end: 7
+                      file: "<input>"
                 span:
                   start: 1
                   end: 7
+                  file: "<input>"
             span:
               start: 0
               end: 8
+              file: "<input>"
         right:
           Literal:
             - Number: 4
             - start: 11
               end: 12
+              file: "<input>"
         span:
           start: 0
           end: 12
+          file: "<input>"
     span:
       start: 0
       end: 13
+      file: "<input>"

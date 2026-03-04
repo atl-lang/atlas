@@ -97,7 +97,7 @@ impl Diagnostic {
             level: DiagnosticLevel::Error,
             code: code.into(),
             message: message.into(),
-            file: "<unknown>".to_string(),
+            file: span.file().to_string(),
             line: 1,
             column: span.start + 1,
             length: span.end.saturating_sub(span.start),
@@ -120,7 +120,7 @@ impl Diagnostic {
             level: DiagnosticLevel::Warning,
             code: code.into(),
             message: message.into(),
-            file: "<unknown>".to_string(),
+            file: span.file().to_string(),
             line: 1,
             column: span.start + 1,
             length: span.end.saturating_sub(span.start),
@@ -180,6 +180,13 @@ impl Diagnostic {
 
     /// Add a related location
     pub fn with_related_location(mut self, location: RelatedLocation) -> Self {
+        let mut location = location;
+        if (location.file == "<input>" || location.file == "<unknown>")
+            && self.file != "<unknown>"
+            && self.file != "<input>"
+        {
+            location.file = self.file.clone();
+        }
         self.related.push(location);
         self
     }

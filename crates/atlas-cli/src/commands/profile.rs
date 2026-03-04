@@ -45,7 +45,7 @@ pub fn run(args: ProfileArgs) -> Result<()> {
         .with_context(|| format!("Failed to read file: {}", args.file))?;
 
     // --- Lex ---
-    let mut lexer = Lexer::new(&source);
+    let mut lexer = Lexer::new(&source).with_file(args.file.as_str());
     let (tokens, lex_diags) = lexer.tokenize();
     if !lex_diags.is_empty() {
         return Err(diagnostics_to_error(&args.file, lex_diags));

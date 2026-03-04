@@ -31,7 +31,7 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
                 // Human-readable format
                 eprintln!("Errors occurred while running {}:", file_path);
                 for diag in &diagnostics {
-                    eprintln!("{}", format_diagnostic(diag));
+                    eprintln!("{}", format_diagnostic(diag, file_path));
                 }
             }
             Err(anyhow::anyhow!("Failed to execute program"))
@@ -40,7 +40,7 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
 }
 
 /// Format a diagnostic for display
-fn format_diagnostic(diag: &atlas_runtime::Diagnostic) -> String {
+fn format_diagnostic(diag: &atlas_runtime::Diagnostic, fallback_file: &str) -> String {
     use atlas_runtime::DiagnosticLevel;
 
     let level_str = match diag.level {
@@ -48,10 +48,16 @@ fn format_diagnostic(diag: &atlas_runtime::Diagnostic) -> String {
         DiagnosticLevel::Warning => "warning",
     };
 
-    // Format: line:col: level: message
+    let file = if diag.file == "<unknown>" || diag.file == "<input>" {
+        fallback_file
+    } else {
+        diag.file.as_str()
+    };
+
+    // Format: file:line:col: level: message
     format!(
-        "{}:{}: {}: {}",
-        diag.line, diag.column, level_str, diag.message
+        "{}:{}:{}: {}: {}",
+        file, diag.line, diag.column, level_str, diag.message
     )
 }
 
@@ -91,7 +97,7 @@ mod tests {
     #[test]
     fn test_format_diagnostic() {
         let diag = Diagnostic::error("Test error".to_string(), Span::new(0, 3));
-        let formatted = format_diagnostic(&diag);
+        let formatted = format_diagnostic(&diag, "test.atl");
         assert!(formatted.contains("error"));
         assert!(formatted.contains("Test error"));
     }

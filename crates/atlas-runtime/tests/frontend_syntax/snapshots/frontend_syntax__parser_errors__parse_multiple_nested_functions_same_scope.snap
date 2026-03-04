@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 17
+          file: "<input>"
       type_params: []
       params: []
       return_type:
@@ -16,6 +17,7 @@ items:
           - number
           - start: 23
             end: 29
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -26,6 +28,7 @@ items:
                 span:
                   start: 47
                   end: 50
+                  file: "<input>"
               type_params: []
               params:
                 - name:
@@ -33,34 +36,41 @@ items:
                     span:
                       start: 51
                       end: 52
+                      file: "<input>"
                   type_ref:
                     Named:
                       - number
                       - start: 54
                         end: 60
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 51
                     end: 60
+                    file: "<input>"
                 - name:
                     name: b
                     span:
                       start: 62
                       end: 63
+                      file: "<input>"
                   type_ref:
                     Named:
                       - number
                       - start: 65
                         end: 71
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 62
                     end: 71
+                    file: "<input>"
               return_type:
                 Named:
                   - number
                   - start: 76
                     end: 82
+                    file: "<input>"
               return_ownership: ~
               predicate: ~
               body:
@@ -75,31 +85,38 @@ items:
                               span:
                                 start: 108
                                 end: 109
+                                file: "<input>"
                           right:
                             Identifier:
                               name: b
                               span:
                                 start: 112
                                 end: 113
+                                file: "<input>"
                           span:
                             start: 108
                             end: 113
+                            file: "<input>"
                       span:
                         start: 101
                         end: 114
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 83
                   end: 128
+                  file: "<input>"
               span:
                 start: 44
                 end: 128
+                file: "<input>"
           - FunctionDecl:
               name:
                 name: multiply
                 span:
                   start: 144
                   end: 152
+                  file: "<input>"
               type_params: []
               params:
                 - name:
@@ -107,34 +124,41 @@ items:
                     span:
                       start: 153
                       end: 154
+                      file: "<input>"
                   type_ref:
                     Named:
                       - number
                       - start: 156
                         end: 162
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 153
                     end: 162
+                    file: "<input>"
                 - name:
                     name: b
                     span:
                       start: 164
                       end: 165
+                      file: "<input>"
                   type_ref:
                     Named:
                       - number
                       - start: 167
                         end: 173
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 164
                     end: 173
+                    file: "<input>"
               return_type:
                 Named:
                   - number
                   - start: 178
                     end: 184
+                    file: "<input>"
               return_ownership: ~
               predicate: ~
               body:
@@ -149,25 +173,31 @@ items:
                               span:
                                 start: 210
                                 end: 211
+                                file: "<input>"
                           right:
                             Identifier:
                               name: b
                               span:
                                 start: 214
                                 end: 215
+                                file: "<input>"
                           span:
                             start: 210
                             end: 215
+                            file: "<input>"
                       span:
                         start: 203
                         end: 216
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 185
                   end: 230
+                  file: "<input>"
               span:
                 start: 141
                 end: 230
+                file: "<input>"
           - Return:
               value:
                 Call:
@@ -177,11 +207,13 @@ items:
                       span:
                         start: 250
                         end: 253
+                        file: "<input>"
                   args:
                     - Literal:
                         - Number: 2
                         - start: 254
                           end: 255
+                          file: "<input>"
                     - Call:
                         callee:
                           Identifier:
@@ -189,28 +221,36 @@ items:
                             span:
                               start: 257
                               end: 265
+                              file: "<input>"
                         args:
                           - Literal:
                               - Number: 3
                               - start: 266
                                 end: 267
+                                file: "<input>"
                           - Literal:
                               - Number: 4
                               - start: 269
                                 end: 270
+                                file: "<input>"
                         span:
                           start: 257
                           end: 271
+                          file: "<input>"
                   span:
                     start: 250
                     end: 272
+                    file: "<input>"
               span:
                 start: 243
                 end: 273
+                file: "<input>"
         tail_expr: ~
         span:
           start: 30
           end: 283
+          file: "<input>"
       span:
         start: 9
         end: 283
+        file: "<input>"

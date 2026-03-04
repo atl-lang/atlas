@@ -17,7 +17,10 @@ fn run_typecheck_dump(source: &str) -> String {
         .unwrap();
 
     assert!(output.status.success(), "Command failed: {:?}", output);
-    String::from_utf8(output.stdout).unwrap()
+    let mut stdout = String::from_utf8(output.stdout).unwrap();
+    let path_str = file_path.to_str().unwrap();
+    stdout = stdout.replace(path_str, "<test>");
+    stdout
 }
 
 #[test]

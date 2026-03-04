@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 17
+          file: "<input>"
       type_params: []
       params: []
       return_type:
@@ -16,6 +17,7 @@ items:
           - void
           - start: 23
             end: 27
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -28,19 +30,23 @@ items:
                 span:
                   start: 50
                   end: 51
+                  file: "<input>"
               type_ref:
                 Named:
                   - number
                   - start: 53
                     end: 59
+                    file: "<input>"
               init:
                 Literal:
                   - Number: 0
                   - start: 62
                     end: 63
+                    file: "<input>"
               span:
                 start: 42
                 end: 64
+                file: "<input>"
           - While:
               cond:
                 Binary:
@@ -51,14 +57,17 @@ items:
                       span:
                         start: 84
                         end: 85
+                        file: "<input>"
                   right:
                     Literal:
                       - Number: 5
                       - start: 88
                         end: 89
+                        file: "<input>"
                   span:
                     start: 84
                     end: 89
+                    file: "<input>"
               body:
                 statements:
                   - FunctionDecl:
@@ -67,6 +76,7 @@ items:
                         span:
                           start: 112
                           end: 121
+                          file: "<input>"
                       type_params: []
                       params: []
                       return_type:
@@ -74,6 +84,7 @@ items:
                           - void
                           - start: 127
                             end: 131
+                            file: "<input>"
                       return_ownership: ~
                       predicate: ~
                       body:
@@ -85,22 +96,27 @@ items:
                                   span:
                                     start: 154
                                     end: 155
+                                    file: "<input>"
                               op: AddAssign
                               value:
                                 Literal:
                                   - Number: 1
                                   - start: 159
                                     end: 160
+                                    file: "<input>"
                               span:
                                 start: 154
                                 end: 161
+                                file: "<input>"
                         tail_expr: ~
                         span:
                           start: 132
                           end: 179
+                          file: "<input>"
                       span:
                         start: 109
                         end: 179
+                        file: "<input>"
                   - Expr:
                       expr:
                         Call:
@@ -110,13 +126,16 @@ items:
                               span:
                                 start: 196
                                 end: 205
+                                file: "<input>"
                           args: []
                           span:
                             start: 196
                             end: 207
+                            file: "<input>"
                       span:
                         start: 196
                         end: 208
+                        file: "<input>"
                   - CompoundAssign:
                       target:
                         Name:
@@ -124,26 +143,33 @@ items:
                           span:
                             start: 225
                             end: 226
+                            file: "<input>"
                       op: AddAssign
                       value:
                         Literal:
                           - Number: 1
                           - start: 230
                             end: 231
+                            file: "<input>"
                       span:
                         start: 225
                         end: 232
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 91
                   end: 246
+                  file: "<input>"
               span:
                 start: 77
                 end: 246
+                file: "<input>"
         tail_expr: ~
         span:
           start: 28
           end: 256
+          file: "<input>"
       span:
         start: 9
         end: 256
+        file: "<input>"

@@ -42,7 +42,7 @@ pub fn run(args: DebugArgs) -> Result<()> {
         .map_err(|e| anyhow::anyhow!("Failed to read source file '{}': {}", args.file, e))?;
 
     // Compile to bytecode
-    let (tokens, lexer_diags) = Lexer::new(&source).tokenize();
+    let (tokens, lexer_diags) = Lexer::new(&source).with_file(args.file.as_str()).tokenize();
 
     // Check for lexer errors
     let has_lexer_errors = lexer_diags
@@ -54,7 +54,12 @@ pub fn run(args: DebugArgs) -> Result<()> {
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
         {
-            eprintln!("  {}:{}: {}", diag.line, diag.column, diag.message);
+            let file = if diag.file.is_empty() {
+                args.file.as_str()
+            } else {
+                diag.file.as_str()
+            };
+            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
         }
         anyhow::bail!("Failed to lex source file");
     }
@@ -71,7 +76,12 @@ pub fn run(args: DebugArgs) -> Result<()> {
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
         {
-            eprintln!("  {}:{}: {}", diag.line, diag.column, diag.message);
+            let file = if diag.file.is_empty() {
+                args.file.as_str()
+            } else {
+                diag.file.as_str()
+            };
+            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
         }
         anyhow::bail!("Failed to parse source file");
     }
@@ -80,7 +90,12 @@ pub fn run(args: DebugArgs) -> Result<()> {
     let mut compiler = Compiler::new();
     let bytecode = compiler.compile(&ast).map_err(|diags| {
         for diag in &diags {
-            eprintln!("  {}:{}: {}", diag.line, diag.column, diag.message);
+            let file = if diag.file.is_empty() {
+                args.file.as_str()
+            } else {
+                diag.file.as_str()
+            };
+            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
         }
         anyhow::anyhow!("Failed to compile source file")
     })?;

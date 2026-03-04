@@ -14,6 +14,7 @@ Statement:
                 span:
                   start: 0
                   end: 6
+                  file: "<input>"
             index:
               Single:
                 Identifier:
@@ -21,24 +22,30 @@ Statement:
                   span:
                     start: 7
                     end: 10
+                    file: "<input>"
             span:
               start: 0
               end: 11
+              file: "<input>"
         index:
           Identifier:
             name: col
             span:
               start: 12
               end: 15
+              file: "<input>"
         span:
           start: 0
           end: 16
+          file: "<input>"
     value:
       Identifier:
         name: value
         span:
           start: 19
           end: 24
+          file: "<input>"
     span:
       start: 0
       end: 25
+      file: "<input>"

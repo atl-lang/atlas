@@ -13,6 +13,7 @@ items:
                 span:
                   start: 0
                   end: 5
+                  file: "<input>"
             args:
               - Member:
                   target:
@@ -21,18 +22,23 @@ items:
                       span:
                         start: 6
                         end: 10
+                        file: "<input>"
                   member:
                     name: as_string
                     span:
                       start: 11
                       end: 20
+                      file: "<input>"
                   args: []
                   span:
                     start: 6
                     end: 22
+                    file: "<input>"
             span:
               start: 0
               end: 23
+              file: "<input>"
         span:
           start: 0
           end: 24
+          file: "<input>"

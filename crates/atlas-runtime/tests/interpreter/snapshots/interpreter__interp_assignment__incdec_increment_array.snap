@@ -12,20 +12,25 @@ Statement:
             span:
               start: 0
               end: 3
+              file: "<input>"
         index:
           Literal:
             - Number: 0
             - start: 4
               end: 5
+              file: "<input>"
         span:
           start: 0
           end: 6
+          file: "<input>"
     op: AddAssign
     value:
       Literal:
         - Number: 1
         - start: 10
           end: 11
+          file: "<input>"
     span:
       start: 0
       end: 12
+      file: "<input>"

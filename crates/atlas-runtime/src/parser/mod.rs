@@ -126,7 +126,7 @@ impl Parser {
 
             let type_ref = self.parse_type_ref()?;
 
-            let field_span = crate::span::Span::new(field_name.span.start, type_ref.span().end);
+            let field_span = field_name.span.merge(type_ref.span());
             fields.push(crate::ast::StructField {
                 name: field_name,
                 type_ref,
@@ -145,7 +145,7 @@ impl Parser {
             name,
             type_params,
             fields,
-            span: crate::span::Span::new(struct_start.start, end_span.span.end),
+            span: struct_start.merge(end_span.span),
         })
     }
 
@@ -189,7 +189,7 @@ impl Parser {
                 crate::ast::EnumVariant::Tuple {
                     name: variant_name,
                     fields: tuple_fields,
-                    span: crate::span::Span::new(variant_name_span.start, end.span.end),
+                    span: variant_name_span.merge(end.span),
                 }
             } else if self.check(TokenKind::LeftBrace) {
                 // Struct variant: Variant { field: Type, ... }
@@ -205,8 +205,7 @@ impl Parser {
                     };
                     self.consume(TokenKind::Colon, "Expected ':' after field name")?;
                     let type_ref = self.parse_type_ref()?;
-                    let field_span =
-                        crate::span::Span::new(field_name_span.start, type_ref.span().end);
+                    let field_span = field_name_span.merge(type_ref.span());
                     struct_fields.push(crate::ast::StructField {
                         name: field_name,
                         type_ref,
@@ -221,7 +220,7 @@ impl Parser {
                 crate::ast::EnumVariant::Struct {
                     name: variant_name,
                     fields: struct_fields,
-                    span: crate::span::Span::new(variant_name_span.start, end.span.end),
+                    span: variant_name_span.merge(end.span),
                 }
             } else {
                 // Unit variant: just the name
@@ -245,7 +244,7 @@ impl Parser {
             name,
             type_params,
             variants,
-            span: crate::span::Span::new(enum_start.start, end_span.span.end),
+            span: enum_start.merge(end_span.span),
         })
     }
 

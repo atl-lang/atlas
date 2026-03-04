@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 17
+          file: "<input>"
       type_params:
         - name: T
           bound: ~
@@ -16,12 +17,14 @@ items:
           span:
             start: 18
             end: 19
+            file: "<input>"
       params: []
       return_type:
         Named:
           - void
           - start: 26
             end: 30
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -32,6 +35,7 @@ items:
                 span:
                   start: 48
                   end: 53
+                  file: "<input>"
               type_params:
                 - name: E
                   bound: ~
@@ -39,26 +43,31 @@ items:
                   span:
                     start: 54
                     end: 55
+                    file: "<input>"
               params:
                 - name:
                     name: x
                     span:
                       start: 57
                       end: 58
+                      file: "<input>"
                   type_ref:
                     Named:
                       - E
                       - start: 60
                         end: 61
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 57
                     end: 61
+                    file: "<input>"
               return_type:
                 Named:
                   - E
                   - start: 66
                     end: 67
+                    file: "<input>"
               return_ownership: ~
               predicate: ~
               body:
@@ -70,20 +79,26 @@ items:
                           span:
                             start: 93
                             end: 94
+                            file: "<input>"
                       span:
                         start: 86
                         end: 95
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 68
                   end: 109
+                  file: "<input>"
               span:
                 start: 45
                 end: 109
+                file: "<input>"
         tail_expr: ~
         span:
           start: 31
           end: 119
+          file: "<input>"
       span:
         start: 9
         end: 119
+        file: "<input>"

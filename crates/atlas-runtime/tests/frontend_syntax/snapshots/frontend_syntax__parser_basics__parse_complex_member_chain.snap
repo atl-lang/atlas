@@ -19,42 +19,52 @@ items:
                             span:
                               start: 0
                               end: 4
+                              file: "<input>"
                         index:
                           Single:
                             Literal:
                               - String: data
                               - start: 5
                                 end: 11
+                                file: "<input>"
                         span:
                           start: 0
                           end: 12
+                          file: "<input>"
                     index:
                       Single:
                         Literal:
                           - String: items
                           - start: 13
                             end: 20
+                            file: "<input>"
                     span:
                       start: 0
                       end: 21
+                      file: "<input>"
                 index:
                   Single:
                     Literal:
                       - Number: 0
                       - start: 22
                         end: 23
+                        file: "<input>"
                 span:
                   start: 0
                   end: 24
+                  file: "<input>"
             member:
               name: as_string
               span:
                 start: 25
                 end: 34
+                file: "<input>"
             args: []
             span:
               start: 0
               end: 36
+              file: "<input>"
         span:
           start: 0
           end: 37
+          file: "<input>"

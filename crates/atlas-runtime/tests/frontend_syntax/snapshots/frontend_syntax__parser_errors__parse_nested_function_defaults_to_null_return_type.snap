@@ -9,6 +9,7 @@ items:
         span:
           start: 12
           end: 17
+          file: "<input>"
       type_params: []
       params: []
       return_type:
@@ -16,6 +17,7 @@ items:
           - void
           - start: 23
             end: 27
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -26,6 +28,7 @@ items:
                 span:
                   start: 45
                   end: 51
+                  file: "<input>"
               type_params: []
               params:
                 - name:
@@ -33,15 +36,18 @@ items:
                     span:
                       start: 52
                       end: 53
+                      file: "<input>"
                   type_ref:
                     Named:
                       - number
                       - start: 55
                         end: 61
+                        file: "<input>"
                   ownership: ~
                   span:
                     start: 52
                     end: 61
+                    file: "<input>"
               return_type: ~
               return_ownership: ~
               predicate: ~
@@ -54,20 +60,26 @@ items:
                           span:
                             start: 88
                             end: 89
+                            file: "<input>"
                       span:
                         start: 81
                         end: 90
+                        file: "<input>"
                 tail_expr: ~
                 span:
                   start: 63
                   end: 104
+                  file: "<input>"
               span:
                 start: 42
                 end: 104
+                file: "<input>"
         tail_expr: ~
         span:
           start: 28
           end: 114
+          file: "<input>"
       span:
         start: 9
         end: 114
+        file: "<input>"
