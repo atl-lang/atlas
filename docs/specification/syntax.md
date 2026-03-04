@@ -470,6 +470,54 @@ type Logger = { log: (string) -> void };
 
 ---
 
+## Types
+
+### Type Syntax
+
+```atlas
+// Primitive types
+number
+string
+bool
+void
+null
+json
+
+// Arrays
+number[]
+
+// Function types
+(number, string) -> bool
+
+// Generic types
+Box<number>
+
+// Structural types
+{ id: number, name: string }
+```
+
+**Rules:**
+- Array types use `T[]` syntax
+- Function types use `(param_types...) -> return_type` syntax
+- Generic types use `Name<T, U>` syntax
+- Structural types use `{ field: type, ... }` syntax (at least one member required)
+
+### Type Alias Syntax
+
+```atlas
+type UserId = number;
+type Box<T> = T[];
+type Point = { x: number, y: number };
+export type ApiResponse<T> = { data: T, error: string };
+```
+
+**Rules:**
+- Type aliases are module-level only
+- Generic parameters are optional
+- Use `export type` to expose aliases from a module
+
+---
+
 ## Statements
 
 ### Variable Declaration
