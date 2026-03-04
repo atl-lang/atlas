@@ -5,7 +5,7 @@
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
 use crate::value::{FunctionRef, RuntimeError, Value};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 impl Interpreter {
     /// Execute a statement
@@ -20,17 +20,6 @@ impl Interpreter {
                 // Create scoped name to avoid collisions between nested functions
                 let scoped_name = format!("{}_{}", func.name.name, self.next_func_id);
                 self.next_func_id += 1;
-
-                // Store function body with scoped internal name
-                self.function_bodies.insert(
-                    scoped_name.clone(),
-                    UserFunction {
-                        name: func.name.name.clone(),
-                        params: func.params.clone(),
-                        body: func.body.clone(),
-                        captured: HashMap::new(),
-                    },
-                );
 
                 // Create FunctionRef value
                 let func_value = Value::Function(FunctionRef {
@@ -47,7 +36,7 @@ impl Interpreter {
                 if self.locals.is_empty() {
                     // Global scope (shouldn't happen for nested functions, but handle it)
                     self.globals
-                        .insert(func.name.name.clone(), (func_value, false));
+                        .insert(func.name.name.clone(), (func_value.clone(), false));
                 } else {
                     // Local scope - this is the normal case for nested functions
                     let scope =
@@ -57,8 +46,38 @@ impl Interpreter {
                                 msg: "Missing scope for nested function declaration".to_string(),
                                 span: func.span,
                             })?;
-                    scope.insert(func.name.name.clone(), (func_value, false));
+                    scope.insert(func.name.name.clone(), (func_value.clone(), false));
                 }
+
+                // Snapshot locals for closure capture (named functions can close over outer vars).
+                // This matches VM capture-by-value semantics for nested functions.
+                let param_names: HashSet<&str> =
+                    func.params.iter().map(|p| p.name.name.as_str()).collect();
+                let mut captured: HashMap<String, Value> = HashMap::new();
+                for scope in self.locals.iter().skip(1) {
+                    for (var_name, (value, _mutable)) in scope {
+                        if !param_names.contains(var_name.as_str()) {
+                            captured
+                                .entry(var_name.clone())
+                                .or_insert_with(|| value.clone());
+                        }
+                    }
+                }
+
+                // Store function body with scoped internal name
+                let scoped_name = match &func_value {
+                    Value::Function(func_ref) => func_ref.name.clone(),
+                    _ => unreachable!(),
+                };
+                self.function_bodies.insert(
+                    scoped_name,
+                    UserFunction {
+                        name: func.name.name.clone(),
+                        params: func.params.clone(),
+                        body: func.body.clone(),
+                        captured,
+                    },
+                );
 
                 Ok(Value::Null)
             }
@@ -528,20 +547,30 @@ impl Interpreter {
     pub(super) fn eval_block(&mut self, block: &Block) -> Result<Value, RuntimeError> {
         self.push_scope();
 
+        let last_stmt_index = block.statements.len().saturating_sub(1);
+        let use_last_stmt_value = block.tail_expr.is_none();
+        let mut last_stmt_value: Option<Value> = None;
+
         // Execute all statements
-        for stmt in &block.statements {
-            self.eval_statement(stmt)?;
+        for (idx, stmt) in block.statements.iter().enumerate() {
+            let value = self.eval_statement(stmt)?;
 
             // Check for control flow
             if self.control_flow != ControlFlow::None {
                 self.pop_scope();
                 return Ok(Value::Null);
             }
+
+            if use_last_stmt_value && idx == last_stmt_index {
+                last_stmt_value = Some(value);
+            }
         }
 
         // Evaluate tail expression if present (implicit return)
         let result = if let Some(tail) = &block.tail_expr {
             self.eval_expr(tail)?
+        } else if let Some(value) = last_stmt_value {
+            value
         } else {
             Value::Null
         };

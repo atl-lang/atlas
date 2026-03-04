@@ -446,29 +446,26 @@ impl Compiler {
         if let Some(local_idx) = self.resolve_local(&ident.name) {
             let local = &self.locals[local_idx];
 
-            // Check if this local is from current function's scope or parent scope
-            if local.depth < self.scope_depth {
-                if let Some(name_to_use) = local.scoped_name.as_ref() {
-                    // Nested function in parent scope — accessible via its global scoped name
-                    let name_idx = self.bytecode.add_constant(Value::string(name_to_use));
-                    self.bytecode.emit(Opcode::GetGlobal, ident.span);
-                    self.bytecode.emit_u16(name_idx);
-                } else if !self.upvalue_stack.is_empty() {
-                    // Regular variable from outer function scope — capture as upvalue
-                    let upvalue_idx = self.register_upvalue(&ident.name, local_idx);
-                    self.bytecode.emit(Opcode::GetUpvalue, ident.span);
-                    self.bytecode.emit_u16(upvalue_idx as u16);
-                } else {
-                    // Outer scope but not in a nested function — use GetGlobal fallback
-                    let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
-                    self.bytecode.emit(Opcode::GetGlobal, ident.span);
-                    self.bytecode.emit_u16(name_idx);
-                }
-            } else {
-                // Current function's scope - use GetLocal with function-relative index
+            if local_idx >= self.current_function_base {
+                // Local in current function (including outer block scopes).
                 let function_relative_idx = local_idx - self.current_function_base;
                 self.bytecode.emit(Opcode::GetLocal, ident.span);
                 self.bytecode.emit_u16(function_relative_idx as u16);
+            } else if let Some(name_to_use) = local.scoped_name.as_ref() {
+                // Nested function in parent scope — accessible via its global scoped name
+                let name_idx = self.bytecode.add_constant(Value::string(name_to_use));
+                self.bytecode.emit(Opcode::GetGlobal, ident.span);
+                self.bytecode.emit_u16(name_idx);
+            } else if !self.upvalue_stack.is_empty() {
+                // Regular variable from outer function scope — capture as upvalue
+                let upvalue_idx = self.register_upvalue(&ident.name, local_idx);
+                self.bytecode.emit(Opcode::GetUpvalue, ident.span);
+                self.bytecode.emit_u16(upvalue_idx as u16);
+            } else {
+                // Outer scope but not in a nested function — use GetGlobal fallback
+                let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
+                self.bytecode.emit(Opcode::GetGlobal, ident.span);
+                self.bytecode.emit_u16(name_idx);
             }
         } else {
             // Global variable
@@ -1621,30 +1618,40 @@ impl Compiler {
     }
 
     /// Compile a block expression - creates a new scope and returns tail expression value
-    fn compile_block_expr(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
+    pub(super) fn compile_block_expr(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
         let old_scope = self.scope_depth;
         let local_base = self.locals.len();
         self.scope_depth += 1;
 
-        // Compile all statements in the block
-        for stmt in &block.statements {
-            self.compile_stmt(stmt)?;
-        }
-
-        // Pop locals created in this scope BEFORE evaluating tail expression
-        let locals_to_pop = self.locals.len() - local_base;
-        for _ in 0..locals_to_pop {
-            self.bytecode.emit(Opcode::Pop, block.span);
-        }
-        self.locals.truncate(local_base);
-        self.scope_depth = old_scope;
-
-        // Compile tail expression if present (implicit return), otherwise Null
         if let Some(tail) = &block.tail_expr {
+            for stmt in &block.statements {
+                self.compile_stmt(stmt)?;
+            }
             self.compile_expr(tail)?;
+        } else if let Some((last, rest)) = block.statements.split_last() {
+            for stmt in rest {
+                self.compile_stmt(stmt)?;
+            }
+            self.compile_stmt_as_value(last, block.span)?;
         } else {
             self.bytecode.emit(Opcode::Null, block.span);
         }
+
+        // Pop locals created in this scope AFTER evaluating tail expression,
+        // while preserving the resulting value on the stack.
+        let locals_to_pop = self.locals.len() - local_base;
+        if locals_to_pop > 0 {
+            let result_slot = local_base - self.current_function_base;
+            self.bytecode.emit(Opcode::SetLocal, block.span);
+            self.bytecode.emit_u16(result_slot as u16);
+            self.bytecode.emit(Opcode::Pop, block.span);
+            for _ in 1..locals_to_pop {
+                self.bytecode.emit(Opcode::Pop, block.span);
+            }
+        }
+
+        self.locals.truncate(local_base);
+        self.scope_depth = old_scope;
 
         Ok(())
     }

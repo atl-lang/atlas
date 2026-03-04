@@ -373,6 +373,87 @@ impl Compiler {
         Ok(())
     }
 
+    /// Compile an if statement as a value-producing expression.
+    /// Leaves the selected branch's value on the stack.
+    fn compile_if_expr(&mut self, if_stmt: &IfStmt) -> Result<(), Vec<Diagnostic>> {
+        // Compile condition
+        self.compile_expr(&if_stmt.cond)?;
+
+        // Jump if false to else branch
+        self.bytecode.emit(Opcode::JumpIfFalse, if_stmt.span);
+        let else_jump = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // Then branch value
+        self.compile_block_expr(&if_stmt.then_block)?;
+
+        // Jump over else branch
+        self.bytecode.emit(Opcode::Jump, if_stmt.span);
+        let end_jump = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // Else branch
+        self.bytecode.patch_jump(else_jump);
+        if let Some(else_block) = &if_stmt.else_block {
+            self.compile_block_expr(else_block)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, if_stmt.span);
+        }
+
+        // End
+        self.bytecode.patch_jump(end_jump);
+        Ok(())
+    }
+
+    /// Compile a statement and leave its resulting value on the stack.
+    pub(super) fn compile_stmt_as_value(
+        &mut self,
+        stmt: &Stmt,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        match stmt {
+            Stmt::Expr(expr_stmt) => self.compile_expr(&expr_stmt.expr),
+            Stmt::If(if_stmt) => {
+                if self.if_always_returns(if_stmt) {
+                    self.compile_if(if_stmt)
+                } else {
+                    self.compile_if_expr(if_stmt)
+                }
+            }
+            Stmt::Return(_) | Stmt::Break(_) | Stmt::Continue(_) => self.compile_stmt(stmt),
+            _ => {
+                self.compile_stmt(stmt)?;
+                self.bytecode.emit(Opcode::Null, span);
+                Ok(())
+            }
+        }
+    }
+
+    fn if_always_returns(&self, if_stmt: &IfStmt) -> bool {
+        if let Some(else_block) = &if_stmt.else_block {
+            self.block_always_returns(&if_stmt.then_block) && self.block_always_returns(else_block)
+        } else {
+            false
+        }
+    }
+
+    fn block_always_returns(&self, block: &Block) -> bool {
+        for stmt in &block.statements {
+            if self.stmt_always_returns(stmt) {
+                return true;
+            }
+        }
+        block.tail_expr.is_some()
+    }
+
+    pub(super) fn stmt_always_returns(&self, stmt: &Stmt) -> bool {
+        match stmt {
+            Stmt::Return(_) => true,
+            Stmt::If(if_stmt) => self.if_always_returns(if_stmt),
+            _ => false,
+        }
+    }
+
     /// Compile a while loop
     fn compile_while(&mut self, while_stmt: &WhileStmt) -> Result<(), Vec<Diagnostic>> {
         let loop_start = self.bytecode.current_offset();
@@ -1234,15 +1315,20 @@ impl Compiler {
         block: &Block,
         span: crate::span::Span,
     ) -> Result<(), Vec<Diagnostic>> {
-        // Compile all statements
-        for stmt in &block.statements {
-            self.compile_stmt(stmt)?;
-        }
-        // If block has tail expression, it's the implicit return value
         if let Some(tail) = &block.tail_expr {
+            // Compile all statements
+            for stmt in &block.statements {
+                self.compile_stmt(stmt)?;
+            }
+            // Tail expression is the implicit return value
             self.compile_expr(tail)?;
+        } else if let Some((last, rest)) = block.statements.split_last() {
+            for stmt in rest {
+                self.compile_stmt(stmt)?;
+            }
+            self.compile_stmt_as_value(last, span)?;
         } else {
-            // No tail expression = implicit null return
+            // Empty block = implicit null return
             self.bytecode.emit(Opcode::Null, span);
         }
         self.bytecode.emit(Opcode::Return, span);

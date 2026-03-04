@@ -267,8 +267,28 @@ impl Compiler {
         // Track function base for nested function support
         let prev_function_base = std::mem::replace(&mut self.current_function_base, old_locals_len);
 
-        // Compile function body statements
-        self.compile_block(&func.body)?;
+        if let Some(tail) = &func.body.tail_expr {
+            // Compile function body statements
+            self.compile_block(&func.body)?;
+            self.compile_expr(tail)?;
+        } else if let Some((last, rest)) = func.body.statements.split_last() {
+            for stmt in rest {
+                self.compile_stmt(stmt)?;
+            }
+            if self.stmt_always_returns(last) {
+                self.compile_stmt(last)?;
+                // Emit implicit Null+Return fallback (should be removed by DCE).
+                self.bytecode.emit(Opcode::Null, func.span);
+                self.bytecode.emit(Opcode::Return, func.span);
+            } else {
+                self.compile_stmt_as_value(last, func.span)?;
+                self.bytecode.emit(Opcode::Return, func.span);
+            }
+        } else {
+            // Empty function body
+            self.bytecode.emit(Opcode::Null, func.span);
+            self.bytecode.emit(Opcode::Return, func.span);
+        }
 
         // Restore function base
         self.current_function_base = prev_function_base;
@@ -281,14 +301,6 @@ impl Compiler {
 
         // Restore watermark for the enclosing function (or top level)
         self.locals_watermark = prev_watermark;
-
-        // Handle implicit return: tail expression or null
-        if let Some(tail) = &func.body.tail_expr {
-            self.compile_expr(tail)?;
-        } else {
-            self.bytecode.emit(Opcode::Null, func.span);
-        }
-        self.bytecode.emit(Opcode::Return, func.span);
 
         // Restore scope and locals
         self.scope_depth = old_scope;

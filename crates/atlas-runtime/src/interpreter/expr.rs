@@ -25,29 +25,7 @@ impl Interpreter {
             Expr::AnonFn {
                 params, body, span, ..
             } => self.eval_anon_fn(params, body, *span),
-            Expr::Block(block) => {
-                self.push_scope();
-                // Execute all statements
-                for stmt in &block.statements {
-                    self.eval_statement(stmt)?;
-                    // Handle control flow
-                    if matches!(
-                        self.control_flow,
-                        ControlFlow::Return(_) | ControlFlow::Break | ControlFlow::Continue
-                    ) {
-                        self.pop_scope();
-                        return Ok(Value::Null);
-                    }
-                }
-                // Evaluate tail expression if present (implicit return)
-                let result = if let Some(tail) = &block.tail_expr {
-                    self.eval_expr(tail)?
-                } else {
-                    Value::Null
-                };
-                self.pop_scope();
-                Ok(result)
-            }
+            Expr::Block(block) => self.eval_block(block),
             Expr::ObjectLiteral(obj) => self.eval_object_literal(obj),
             Expr::StructExpr(struct_expr) => self.eval_struct_expr(struct_expr),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
