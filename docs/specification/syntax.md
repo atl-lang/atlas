@@ -104,6 +104,33 @@ All numbers are 64-bit floating-point (IEEE 754)
 "C:\\Users\\name"
 ```
 
+#### String Interpolation
+
+String interpolation allows embedding expressions inside strings using `${...}` syntax:
+
+```atlas
+let name = "Alice";
+let age = 30;
+
+// Simple interpolation
+let greeting = "Hello, ${name}!";      // "Hello, Alice!"
+let message = "I am ${age} years old"; // "I am 30 years old"
+
+// Expression interpolation
+let sum = "2 + 3 = ${2 + 3}";         // "2 + 3 = 5"
+let doubled = "Double ${10}: ${10 * 2}";  // "Double 10: 20"
+
+// Nested function calls
+let upper = "Uppercase: ${toUpperCase(name)}";  // "Uppercase: ALICE"
+```
+
+**Rules:**
+- Expressions inside `${}` are evaluated as normal Atlas code
+- Result is converted to string using `str()` function
+- Can contain any valid expression (function calls, arithmetic, etc.)
+- Escape `$` as `\$` if you need a literal dollar sign
+- Escape `{` as `\{` if you need a literal brace
+
 ### Boolean Literals
 
 ```atlas

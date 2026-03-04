@@ -12,6 +12,7 @@
 3. [Numeric Edge Cases](#numeric-edge-cases)
 4. [Operator Type Rules](#operator-type-rules)
 5. [Top-Level Execution](#top-level-execution)
+6. [HashMap Semantics](#hashmap-semantics)
 
 ---
 
@@ -342,6 +343,71 @@ fn outer() -> number {
 
 ---
 
+## HashMap Semantics
+
+### Purpose
+
+Define mutation and aliasing semantics for HashMaps (key-value dictionaries).
+
+### Core Rules
+
+**Shared Mutation:**
+- HashMaps use shared mutation (`Arc<Mutex<T>>`) for thread-safe in-place updates
+- Unlike arrays (copy-on-write), HashMap mutations ARE visible across all references
+- This enables efficient mutable data structures in concurrent scenarios
+
+**Mutation Visibility:**
+- All references to the same HashMap see mutations immediately
+- Example:
+  ```atlas
+  let map = hashMapNew();
+  let ref = map;
+  hashMapSet(ref, "key", "value");  // Returns updated map
+  // Both map and ref now contain "key": "value"
+  ```
+
+**Mutation Operations:**
+- `hashMapSet(map, key, value)` — Insert/update key-value pair, returns updated map
+- `hashMapDelete(map, key)` — Remove key, returns updated map
+- These operations use write-back semantics (return value must be assigned back)
+
+**Mutability Requirements:**
+- HashMap mutation requires mutable binding (`let mut` or variable reassignment)
+- Immutable bindings (`let`) cannot have mutations written back
+- Example (invalid):
+  ```atlas
+  let map = hashMapNew();
+  hashMapSet(map, "key", "value");  // ERROR: cannot write result back to immutable binding
+  ```
+- Example (valid):
+  ```atlas
+  let mut map = hashMapNew();
+  map = hashMapSet(map, "key", "value");  // OK: result written back
+  ```
+
+**Key & Value Types:**
+- Keys: `string` only (like JavaScript objects)
+- Values: any Atlas type (`number`, `string`, `bool`, `array`, `null`, etc.)
+- Type homogeneity not required
+
+### Comparison with Arrays
+
+| Property | Array | HashMap |
+|----------|-------|---------|
+| Value semantics | Copy-on-write | Shared mutation |
+| Mutation visibility | Not visible across aliases | Visible across aliases |
+| Syntax for mutation | `arr[i] = value` | `map = hashMapSet(map, key, value)` |
+| Nested mutation support | Limited (CoW) | Full (shared mutation) |
+
+### Test Coverage
+
+- **Aliasing:** Create HashMap, assign to variable, mutate via one reference, verify both see change
+- **Function mutation:** Pass HashMap to function, mutate inside, verify caller sees changes
+- **Concurrent updates:** Multiple mutable bindings of same HashMap see updates
+- **Write-back:** Mutations must be explicitly written back to variable
+
+---
+
 ## Quick Reference
 
 **Strings:**
@@ -349,8 +415,13 @@ fn outer() -> number {
 - `+` for concatenation, only `string + string`
 
 **Arrays:**
-- Reference-counted, mutable, shared by reference
+- Reference-counted (CoW), mutable, shared by reference
 - Index assignment allowed on `let`, reassignment needs `var`
+
+**HashMaps:**
+- Shared mutation (`Arc<Mutex<T>>`), immediately visible across all references
+- Mutation via `hashMapSet()` and `hashMapDelete()` which return updated map
+- Require mutable bindings for write-back
 
 **Numbers:**
 - 64-bit float, division by zero is error, NaN/Infinity are errors
