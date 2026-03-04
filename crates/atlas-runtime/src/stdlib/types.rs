@@ -196,45 +196,70 @@ pub fn result_err(res: &Value, span: Span) -> Result<Value, RuntimeError> {
 
 /// Get the type name of a value as a string
 ///
-/// Returns one of: "null", "bool", "number", "string", "array", "function",
-/// "json", "option", "result"
-pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+/// Returns one of: "null", "boolean", "number", "string", "array", "record",
+/// "function", "option"
+fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(stdlib_arity_error("typeOf", 1, args.len(), span));
+        return Err(stdlib_arity_error(name, 1, args.len(), span));
     }
 
-    let type_name = match &args[0] {
-        Value::Null => "null",
-        Value::Bool(_) => "bool",
-        Value::Number(_) => "number",
-        Value::String(_) => "string",
-        Value::Array(_) => "array",
-        Value::Function(_) => "function",
-        Value::Builtin(_) => "builtin",
-        Value::NativeFunction(_) => "function",
-        Value::JsonValue(_) => "json",
-        Value::Option(_) => "option",
-        Value::Result(_) => "result",
-        Value::HashMap(_) => "hashmap",
-        Value::HashSet(_) => "hashset",
-        Value::Queue(_) => "queue",
-        Value::Stack(_) => "stack",
-        Value::Regex(_) => "regex",
-        Value::Future(_) => "future",
-        Value::DateTime(_) => "datetime",
-        Value::HttpRequest(_) => "HttpRequest",
-        Value::HttpResponse(_) => "HttpResponse",
-        Value::TaskHandle(_) => "TaskHandle",
-        Value::ChannelSender(_) => "ChannelSender",
-        Value::ChannelReceiver(_) => "ChannelReceiver",
-        Value::AsyncMutex(_) => "AsyncMutex",
-        Value::Watcher(_) => "Watcher",
-        Value::Closure(_) => "closure",
-        Value::SharedValue(_) => "shared",
-        Value::EnumValue { enum_name, .. } => return Ok(Value::string(enum_name.clone())),
-    };
+    fn json_type_name(value: &JsonValue) -> &'static str {
+        match value {
+            JsonValue::Null => "null",
+            JsonValue::Bool(_) => "boolean",
+            JsonValue::Number(_) => "number",
+            JsonValue::String(_) => "string",
+            JsonValue::Array(_) => "array",
+            JsonValue::Object(_) => "record",
+        }
+    }
+
+    fn value_type_name(value: &Value) -> &'static str {
+        match value {
+            Value::Null => "null",
+            Value::Bool(_) => "boolean",
+            Value::Number(_) => "number",
+            Value::String(_) => "string",
+            Value::Array(_) => "array",
+            Value::Function(_) => "function",
+            Value::Builtin(_) => "function",
+            Value::NativeFunction(_) => "function",
+            Value::Closure(_) => "function",
+            Value::Option(_) => "option",
+            Value::JsonValue(json) => json_type_name(json),
+            Value::HashMap(_) => "record",
+            Value::HashSet(_) => "record",
+            Value::Queue(_) => "record",
+            Value::Stack(_) => "record",
+            Value::Result(_) => "record",
+            Value::Regex(_) => "record",
+            Value::Future(_) => "record",
+            Value::DateTime(_) => "record",
+            Value::HttpRequest(_) => "record",
+            Value::HttpResponse(_) => "record",
+            Value::TaskHandle(_) => "record",
+            Value::ChannelSender(_) => "record",
+            Value::ChannelReceiver(_) => "record",
+            Value::AsyncMutex(_) => "record",
+            Value::Watcher(_) => "record",
+            Value::SharedValue(shared) => shared.with(|inner| value_type_name(inner)),
+            Value::EnumValue { .. } => "record",
+        }
+    }
+
+    let type_name = value_type_name(&args[0]);
 
     Ok(Value::string(type_name))
+}
+
+/// Get the type name of a value as a string (snake_case alias).
+pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    type_of_impl(args, span, "type_of")
+}
+
+/// Get the type name of a value as a string (legacy camelCase alias).
+pub fn typeof_fn(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    type_of_impl(args, span, "typeof")
 }
 
 /// Check if value is a string

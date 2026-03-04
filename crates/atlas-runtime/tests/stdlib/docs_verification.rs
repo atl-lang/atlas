@@ -44,7 +44,7 @@ fn docs_typeof_string() {
 
 #[test]
 fn docs_typeof_bool() {
-    assert_eval_string(r#"typeof(true)"#, "bool");
+    assert_eval_string(r#"typeof(true)"#, "boolean");
 }
 
 #[test]

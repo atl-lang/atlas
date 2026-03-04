@@ -34,13 +34,13 @@ fn eval_expect_error(code: &str) -> bool {
 #[test]
 fn test_http_request_get_creation() {
     let code = r#"typeof(httpRequestGet("https://example.com"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
 fn test_http_request_post_creation() {
     let code = r#"typeof(httpRequestPost("https://example.com", "test body"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn test_http_set_header() {
         let req2 = httpSetHeader(req, "Content-Type", "application/json");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -61,7 +61,7 @@ fn test_http_set_multiple_headers() {
         let req3 = httpSetHeader(req2, "Authorization", "Bearer token123");
         typeof(req3)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -71,7 +71,7 @@ fn test_http_set_body() {
         let req2 = httpSetBody(req, "test body content");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn test_http_set_timeout() {
         let req2 = httpSetTimeout(req, 10);
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -92,7 +92,7 @@ fn test_http_invalid_url_no_protocol() {
 #[test]
 fn test_http_request_with_valid_method() {
     let code = r#"typeof(httpRequest("GET", "https://example.com"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 // ============================================================================
@@ -227,7 +227,7 @@ fn test_http_get_simple() {
 #[ignore = "requires network"]
 fn test_http_get_returns_result_type() {
     let code = r#"typeof(httpGet("https://httpbin.org/get"))"#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -292,7 +292,7 @@ fn test_http_post_json() {
         }
         test()
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -308,7 +308,7 @@ fn test_http_parse_json_response() {
         }
         test()
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -334,7 +334,7 @@ fn test_http_timeout_configuration() {
         let req2 = httpSetTimeout(req, 5);
         typeof(httpSend(req2))
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -431,19 +431,19 @@ fn test_http_json_workflow() {
 #[test]
 fn test_http_request_put_creation() {
     let code = r#"typeof(httpRequestPut("https://httpbin.org/put", "data"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
 fn test_http_request_delete_creation() {
     let code = r#"typeof(httpRequestDelete("https://httpbin.org/delete"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
 fn test_http_request_patch_creation() {
     let code = r#"typeof(httpRequestPatch("https://httpbin.org/patch", "data"))"#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -453,7 +453,7 @@ fn test_http_put_simple() {
         let result = httpPut("https://httpbin.org/put", "test data");
         typeof(result)
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -463,7 +463,7 @@ fn test_http_delete_simple() {
         let result = httpDelete("https://httpbin.org/delete");
         typeof(result)
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -473,7 +473,7 @@ fn test_http_patch_simple() {
         let result = httpPatch("https://httpbin.org/patch", "patch data");
         typeof(result)
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 // ============================================================================
@@ -487,7 +487,7 @@ fn test_http_set_query_single() {
         let req2 = httpSetQuery(req, "foo", "bar");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -498,7 +498,7 @@ fn test_http_set_query_multiple() {
         let req3 = httpSetQuery(req2, "baz", "qux");
         typeof(req3)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -513,7 +513,7 @@ fn test_http_query_url_encoding() {
         }
         test()
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -523,7 +523,7 @@ fn test_http_query_special_characters() {
         let req2 = httpSetQuery(req, "key", "value&special=chars");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 // ============================================================================
@@ -537,7 +537,7 @@ fn test_http_set_follow_redirects() {
         let req2 = httpSetFollowRedirects(req, false);
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -547,7 +547,7 @@ fn test_http_set_max_redirects() {
         let req2 = httpSetMaxRedirects(req, 5);
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -557,7 +557,7 @@ fn test_http_set_user_agent() {
         let req2 = httpSetUserAgent(req, "AtlasBot/1.0");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -567,7 +567,7 @@ fn test_http_set_auth() {
         let req2 = httpSetAuth(req, "user", "pass");
         typeof(req2)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -580,7 +580,7 @@ fn test_http_multiple_configuration() {
         let req5 = httpSetFollowRedirects(req4, false);
         typeof(req5)
     "#;
-    assert_eq!(eval_ok(code), "HttpRequest");
+    assert_eq!(eval_ok(code), "record");
 }
 
 // ============================================================================
@@ -692,7 +692,7 @@ fn test_http_get_json() {
         }
         test()
     "#;
-    assert_eq!(eval_ok(code), "result");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -703,7 +703,7 @@ fn test_http_get_json_success() {
             let result = httpGetJson("https://httpbin.org/json");
             if (is_err(result)) { return false; }
             let json_result = unwrap(result);
-            return typeof(json_result) == "result";
+            return typeof(json_result) == "record";
         }
         test()
     "#;

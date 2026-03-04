@@ -1317,7 +1317,7 @@ fn test_typeof_individual_values() {
         let nullType: string = typeof(null);
         numType + "," + strType + "," + boolType + "," + nullType
     "#;
-    assert_eval_string(code, "number,string,bool,null");
+    assert_eval_string(code, "number,string,boolean,null");
 }
 
 #[test]

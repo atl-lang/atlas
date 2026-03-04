@@ -14,113 +14,113 @@ use super::*;
 #[test]
 fn test_parse_json_null() {
     let code = r#"
-    let result: json = unwrap(parseJSON("null"));
-    typeof(result)
-"#;
-    assert_eval_string(code, "json");
+        let result: json = unwrap(parseJSON("null"));
+        typeof(result)
+    "#;
+    assert_eval_string(code, "null");
 }
 
 #[test]
 fn test_parse_json_boolean_true() {
     // Should return JsonValue, test via typeof
     let code = r#"typeof(unwrap(parseJSON("true")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "boolean");
 }
 
 #[test]
 fn test_parse_json_boolean_false() {
     let code = r#"typeof(unwrap(parseJSON("false")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "boolean");
 }
 
 #[test]
 fn test_parse_json_number() {
     let code = r#"typeof(unwrap(parseJSON("42")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "number");
 }
 
 #[test]
 fn test_parse_json_number_float() {
     let code = r#"typeof(unwrap(parseJSON("3.14")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "number");
 }
 
 #[test]
 fn test_parse_json_number_negative() {
     let code = r#"typeof(unwrap(parseJSON("-123")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "number");
 }
 
 #[test]
 fn test_parse_json_string() {
     let code = r#"typeof(unwrap(parseJSON("\"hello\"")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "string");
 }
 
 #[test]
 fn test_parse_json_empty_string() {
     let code = r#"typeof(unwrap(parseJSON("\"\"")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "string");
 }
 
 #[test]
 fn test_parse_json_array_empty() {
     let code = r#"typeof(unwrap(parseJSON("[]")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "array");
 }
 
 #[test]
 fn test_parse_json_array_numbers() {
     let code = r#"typeof(unwrap(parseJSON("[1,2,3]")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "array");
 }
 
 #[test]
 fn test_parse_json_array_mixed() {
     let code = r#"typeof(unwrap(parseJSON("[1,\"two\",true,null]")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "array");
 }
 
 #[test]
 fn test_parse_json_array_nested() {
     let code = r#"typeof(unwrap(parseJSON("[[1,2],[3,4]]")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "array");
 }
 
 #[test]
 fn test_parse_json_object_empty() {
     let code = r#"typeof(unwrap(parseJSON("{}"  )))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 #[test]
 fn test_parse_json_object_simple() {
     let code = r#"typeof(unwrap(parseJSON("{\"name\":\"Alice\",\"age\":30}")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 #[test]
 fn test_parse_json_object_nested() {
     let code = r#"typeof(unwrap(parseJSON("{\"user\":{\"name\":\"Bob\"}}")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 #[test]
 fn test_parse_json_object_with_array() {
     let code = r#"typeof(unwrap(parseJSON("{\"items\":[1,2,3]}")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 #[test]
 fn test_parse_json_whitespace() {
     let code = r#"typeof(unwrap(parseJSON("  { \"a\" : 1 }  ")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 #[test]
 fn test_parse_json_unicode() {
     let code = r#"typeof(unwrap(parseJSON("{\"emoji\":\"🎉\"}")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "record");
 }
 
 // ============================================================================
@@ -509,7 +509,7 @@ fn test_validate_before_parse() {
     let json_str: string = "{\"valid\":true}";
     let valid: bool = isValidJSON(json_str);
     let parsed: json = unwrap(parseJSON(json_str));
-    valid && typeof(parsed) == "json"
-"#;
+        valid && typeof(parsed) == "record"
+    "#;
     assert_eval_bool(code, true);
 }

@@ -23,13 +23,13 @@ fn test_typeof_null() {
 #[test]
 fn test_typeof_bool_true() {
     let code = r#"typeof(true)"#;
-    assert_eval_string(code, "bool");
+    assert_eval_string(code, "boolean");
 }
 
 #[test]
 fn test_typeof_bool_false() {
     let code = r#"typeof(false)"#;
-    assert_eval_string(code, "bool");
+    assert_eval_string(code, "boolean");
 }
 
 #[test]
@@ -81,7 +81,7 @@ fn test_typeof_array_empty() {
 #[test]
 fn test_typeof_json() {
     let code = r#"typeof(unwrap(parseJSON("null")))"#;
-    assert_eval_string(code, "json");
+    assert_eval_string(code, "null");
 }
 
 #[test]
@@ -93,7 +93,43 @@ fn test_typeof_option() {
 #[test]
 fn test_typeof_result() {
     let code = r#"typeof(Ok(42))"#;
-    assert_eval_string(code, "result");
+    assert_eval_string(code, "record");
+}
+
+#[test]
+fn test_typeof_record() {
+    let code = r#"typeof(record { a: 1 })"#;
+    assert_eval_string(code, "record");
+}
+
+#[test]
+fn test_typeof_function() {
+    let code = r#"
+        fn add(a: number, b: number) -> number { a + b }
+        typeof(add)
+    "#;
+    assert_eval_string(code, "function");
+}
+
+#[test]
+fn test_type_of_boolean() {
+    let code = r#"type_of(true)"#;
+    assert_eval_string(code, "boolean");
+}
+
+#[test]
+fn test_type_of_record() {
+    let code = r#"type_of(record { a: 1 })"#;
+    assert_eval_string(code, "record");
+}
+
+#[test]
+fn test_type_of_function() {
+    let code = r#"
+        fn id(x: number) -> number { x }
+        type_of(id)
+    "#;
+    assert_eval_string(code, "function");
 }
 
 // ============================================================================

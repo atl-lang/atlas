@@ -472,7 +472,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // Type checking functions
         // ====================================================================
-        m.insert("typeof", |a, s, _, _| types::type_of(a, s));
+        m.insert("type_of", |a, s, _, _| types::type_of(a, s));
+        m.insert("typeof", |a, s, _, _| types::typeof_fn(a, s));
         m.insert("isString", |a, s, _, _| types::is_string(a, s));
         m.insert("isNumber", |a, s, _, _| types::is_number(a, s));
         m.insert("isBool", |a, s, _, _| types::is_bool(a, s));

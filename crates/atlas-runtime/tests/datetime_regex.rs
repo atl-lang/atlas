@@ -33,7 +33,7 @@ fn test_date_time_now() {
         let dt = dateTimeNow();
         typeof(dt)
     "#;
-    assert_eq!(eval_ok(code), "datetime");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -362,7 +362,7 @@ fn test_date_time_utc_alias() {
         let dt = dateTimeUtc();
         typeof(dt)
     "#;
-    assert_eq!(eval_ok(code), "datetime");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -755,7 +755,7 @@ fn test_regex_new_valid_pattern() {
         let pattern = regexNew("\\d+");
         typeof(unwrap(pattern))
     "#;
-    assert_eq!(eval_ok(code), "regex");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -773,7 +773,7 @@ fn test_regex_new_empty_pattern() {
         let pattern = regexNew("");
         typeof(unwrap(pattern))
     "#;
-    assert_eq!(eval_ok(code), "regex");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]
@@ -782,7 +782,7 @@ fn test_regex_new_complex_pattern() {
         let pattern = regexNew("(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})");
         typeof(unwrap(pattern))
     "#;
-    assert_eq!(eval_ok(code), "regex");
+    assert_eq!(eval_ok(code), "record");
 }
 
 #[test]

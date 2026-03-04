@@ -103,7 +103,7 @@ fn test_future_display_format() {
 #[test]
 fn test_future_type_name() {
     let result = eval_ok("typeof(futureResolve(42))");
-    assert_eq!(result, Value::string("future"));
+    assert_eq!(result, Value::string("record"));
 }
 
 #[test]

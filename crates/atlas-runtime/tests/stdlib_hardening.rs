@@ -1018,7 +1018,7 @@ fn test_type_of_string() {
 
 #[test]
 fn test_type_of_bool() {
-    assert_eq!(eval_ok("typeof(true);"), Value::string("bool"));
+    assert_eq!(eval_ok("typeof(true);"), Value::string("boolean"));
 }
 
 #[test]
@@ -1033,7 +1033,7 @@ fn test_type_of_option() {
 
 #[test]
 fn test_type_of_result_ok() {
-    assert_eq!(eval_ok("typeof(Ok(42));"), Value::string("result"));
+    assert_eq!(eval_ok("typeof(Ok(42));"), Value::string("record"));
 }
 
 #[test]

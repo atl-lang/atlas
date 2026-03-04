@@ -224,7 +224,7 @@ fn type_from_typeof_value(value: &str) -> Option<Type> {
     match value {
         "string" => Some(Type::String),
         "number" => Some(Type::Number),
-        "bool" => Some(Type::Bool),
+        "boolean" => Some(Type::Bool),
         "null" => Some(Type::Null),
         "array" => Some(Type::Array(Box::new(Type::any_placeholder()))),
         "function" => Some(Type::Function {
@@ -232,8 +232,9 @@ fn type_from_typeof_value(value: &str) -> Option<Type> {
             params: Vec::new(),
             return_type: Box::new(Type::any_placeholder()),
         }),
-        "json" => Some(Type::JsonValue),
-        "object" => Some(Type::JsonValue),
+        "record" => Some(Type::Structural {
+            members: Vec::new(),
+        }),
         _ => None,
     }
 }
