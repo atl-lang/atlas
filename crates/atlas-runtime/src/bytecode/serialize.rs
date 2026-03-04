@@ -21,7 +21,7 @@
 //! - 0x0E: DateTime
 //!
 //! Runtime-only types (panic on serialize): NativeFunction, JsonValue,
-//! HttpRequest, HttpResponse, Future, TaskHandle, Channel*, AsyncMutex,
+//! HttpRequest, HttpResponse, Future, TaskHandle, Channel*, AsyncMutex, Watcher,
 //! Closure, SharedValue.
 
 use crate::span::Span;
@@ -199,6 +199,9 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         }
         Value::AsyncMutex(_) => {
             panic!("Cannot serialize AsyncMutex values in bytecode constants");
+        }
+        Value::Watcher(_) => {
+            panic!("Cannot serialize Watcher values in bytecode constants");
         }
         Value::Closure(_) => {
             panic!("Cannot serialize Closure values in bytecode constants");

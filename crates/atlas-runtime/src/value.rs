@@ -23,7 +23,8 @@
 //!   Only used when the program explicitly annotates a binding as `shared<T>`.
 //!
 //! ### Identity / resource types (compared by reference, not content)
-//! - `NativeFunction`, `Future`, `TaskHandle`, `ChannelSender`, `ChannelReceiver`, `AsyncMutex`
+//! - `NativeFunction`, `Future`, `TaskHandle`, `ChannelSender`, `ChannelReceiver`, `AsyncMutex`,
+//!   `Watcher`
 //! - `JsonValue` — isolated dynamic type for JSON interop
 //!
 //! ## CoW Write-Back (Phase 15–16)
@@ -467,6 +468,8 @@ pub enum Value {
     ChannelReceiver(Arc<Mutex<crate::async_runtime::channel::ChannelReceiver>>),
     /// Async mutex (for async synchronization)
     AsyncMutex(Arc<tokio::sync::Mutex<Value>>),
+    /// Filesystem watcher (for change notifications)
+    Watcher(Arc<Mutex<crate::stdlib::fs::FsWatcher>>),
     /// Closure (function + captured upvalue environment)
     Closure(ClosureRef),
     /// Explicitly shared reference — reference semantics (see Shared<T>).
@@ -552,6 +555,7 @@ impl Value {
             Value::ChannelSender(_) => "ChannelSender",
             Value::ChannelReceiver(_) => "ChannelReceiver",
             Value::AsyncMutex(_) => "AsyncMutex",
+            Value::Watcher(_) => "Watcher",
             Value::Closure(_) => "function",
             Value::SharedValue(_) => "shared",
             Value::EnumValue { enum_name, .. } => enum_name.as_str(),
@@ -589,7 +593,7 @@ impl PartialEq for Value {
     /// **Reference types** (identity equality — only the same allocation is equal):
     /// - NativeFunction: closures have no meaningful content equality
     /// - SharedValue: Shared<T> uses Arc::ptr_eq (reference semantics by design)
-    /// - Future, TaskHandle, ChannelSender, ChannelReceiver, AsyncMutex:
+    /// - Future, TaskHandle, ChannelSender, ChannelReceiver, AsyncMutex, Watcher:
     ///   live runtime objects — identity is the only meaningful equality
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
@@ -621,6 +625,7 @@ impl PartialEq for Value {
             (Value::ChannelSender(a), Value::ChannelSender(b)) => Arc::ptr_eq(a, b),
             (Value::ChannelReceiver(a), Value::ChannelReceiver(b)) => Arc::ptr_eq(a, b),
             (Value::AsyncMutex(a), Value::AsyncMutex(b)) => Arc::ptr_eq(a, b),
+            (Value::Watcher(a), Value::Watcher(b)) => Arc::ptr_eq(a, b),
             // Different variants are never equal
             _ => false,
         }
@@ -672,6 +677,7 @@ impl fmt::Display for Value {
             Value::ChannelSender(_) => write!(f, "<ChannelSender>"),
             Value::ChannelReceiver(_) => write!(f, "<ChannelReceiver>"),
             Value::AsyncMutex(_) => write!(f, "<AsyncMutex>"),
+            Value::Watcher(_) => write!(f, "<Watcher>"),
             Value::Closure(c) => write!(f, "<fn {}>", c.func.name),
             Value::SharedValue(s) => s.with(|v| write!(f, "shared({})", v)),
             Value::EnumValue {
@@ -717,6 +723,7 @@ impl fmt::Debug for Value {
             Value::ChannelSender(_) => write!(f, "ChannelSender"),
             Value::ChannelReceiver(_) => write!(f, "ChannelReceiver"),
             Value::AsyncMutex(_) => write!(f, "AsyncMutex"),
+            Value::Watcher(_) => write!(f, "Watcher"),
             Value::Closure(c) => write!(f, "Closure({:?})", c.func),
             Value::SharedValue(s) => s.with(|v| write!(f, "SharedValue({:?})", v)),
             Value::EnumValue {

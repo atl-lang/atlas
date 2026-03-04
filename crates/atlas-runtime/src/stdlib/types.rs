@@ -228,6 +228,7 @@ pub fn type_of(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::ChannelSender(_) => "ChannelSender",
         Value::ChannelReceiver(_) => "ChannelReceiver",
         Value::AsyncMutex(_) => "AsyncMutex",
+        Value::Watcher(_) => "Watcher",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
         Value::EnumValue { enum_name, .. } => return Ok(Value::string(enum_name.clone())),
@@ -493,6 +494,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
+        Value::Watcher(_) => "[Watcher]".to_string(),
         Value::SharedValue(_) => "[Shared]".to_string(),
         Value::EnumValue {
             enum_name,
@@ -591,6 +593,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::ChannelSender(_)
         | Value::ChannelReceiver(_)
         | Value::AsyncMutex(_)
+        | Value::Watcher(_)
         | Value::Closure(_)
         | Value::SharedValue(_)
         | Value::EnumValue { .. } => true,
@@ -738,6 +741,7 @@ fn type_name(value: &Value) -> &str {
         Value::ChannelSender(_) => "ChannelSender",
         Value::ChannelReceiver(_) => "ChannelReceiver",
         Value::AsyncMutex(_) => "AsyncMutex",
+        Value::Watcher(_) => "Watcher",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
         Value::EnumValue { .. } => "enum",
@@ -778,6 +782,7 @@ fn value_to_display_string(value: &Value) -> String {
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
+        Value::Watcher(_) => "[Watcher]".to_string(),
         Value::SharedValue(_) => "[Shared]".to_string(),
         Value::EnumValue {
             enum_name,

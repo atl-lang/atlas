@@ -115,6 +115,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::ChannelSender(_) => "ChannelSender",
         Value::ChannelReceiver(_) => "ChannelReceiver",
         Value::AsyncMutex(_) => "AsyncMutex",
+        Value::Watcher(_) => "Watcher",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
         Value::EnumValue { .. } => "enum",

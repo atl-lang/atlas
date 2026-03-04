@@ -69,7 +69,7 @@ fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
 // Domain submodules (files live in tests/system/)
 #[path = "system/compression/mod.rs"]
 mod system_compression;
-#[path = "system/filesystem.rs"]
+#[path = "system/filesystem/mod.rs"]
 mod system_filesystem;
 #[path = "system/path.rs"]
 mod system_path;

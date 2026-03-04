@@ -3,10 +3,15 @@
 //! Advanced file system operations including metadata, symlinks, temporary files,
 //! and directory walking. Complements basic I/O operations in io.rs.
 
+use crate::async_runtime::channel::{channel_unbounded, ChannelReceiver, ChannelSender};
+use crate::json_value::JsonValue;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
+use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use std::time::SystemTime;
 
 #[cfg(unix)]
@@ -554,4 +559,127 @@ pub fn resolve_symlink(path: &str, span: Span) -> Result<Value, RuntimeError> {
     })?;
 
     Ok(Value::string(canonical.to_string_lossy().to_string()))
+}
+
+// ============================================================================
+// File Watching
+// ============================================================================
+
+/// File system watcher handle
+pub struct FsWatcher {
+    receiver: ChannelReceiver,
+    _watcher: RecommendedWatcher,
+}
+
+impl FsWatcher {
+    fn next(&self) -> crate::async_runtime::AtlasFuture {
+        self.receiver.receive()
+    }
+}
+
+fn event_kind_label(kind: &EventKind) -> &'static str {
+    match kind {
+        EventKind::Create(_) => "create",
+        EventKind::Modify(_) => "modify",
+        EventKind::Remove(_) => "remove",
+        EventKind::Access(_) => "access",
+        EventKind::Any => "any",
+        _ => "other",
+    }
+}
+
+fn event_to_value(event: &notify::Event) -> Value {
+    let paths = event
+        .paths
+        .iter()
+        .map(|path| JsonValue::String(path.to_string_lossy().to_string()))
+        .collect::<Vec<_>>();
+
+    let mut obj = HashMap::new();
+    obj.insert(
+        "kind".to_string(),
+        JsonValue::String(event_kind_label(&event.kind).to_string()),
+    );
+    obj.insert(
+        "detail".to_string(),
+        JsonValue::String(format!("{:?}", event.kind)),
+    );
+    obj.insert("paths".to_string(), JsonValue::Array(paths));
+
+    Value::JsonValue(Arc::new(JsonValue::Object(obj)))
+}
+
+fn error_to_value(error: &notify::Error) -> Value {
+    let mut obj = HashMap::new();
+    obj.insert("kind".to_string(), JsonValue::String("error".to_string()));
+    obj.insert("message".to_string(), JsonValue::String(error.to_string()));
+    Value::JsonValue(Arc::new(JsonValue::Object(obj)))
+}
+
+/// Watch a file or directory for changes
+///
+/// Atlas signature: `fsWatch(path: string) -> Watcher`
+pub fn watch(path: &str, span: Span) -> Result<Value, RuntimeError> {
+    let watch_path = Path::new(path);
+    if !watch_path.exists() {
+        return Err(RuntimeError::IoError {
+            message: format!("Failed to watch '{}': path does not exist", path),
+            span,
+        });
+    }
+
+    let (sender, receiver) = channel_unbounded();
+    let mut watcher = create_watcher(sender, span)?;
+
+    let mode = if watch_path.is_dir() {
+        RecursiveMode::Recursive
+    } else {
+        RecursiveMode::NonRecursive
+    };
+
+    watcher
+        .watch(watch_path, mode)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to watch '{}': {}", watch_path.display(), e),
+            span,
+        })?;
+
+    Ok(Value::Watcher(Arc::new(Mutex::new(FsWatcher {
+        receiver,
+        _watcher: watcher,
+    }))))
+}
+
+/// Receive the next change event for a watcher
+///
+/// Atlas signature: `fsWatchNext(watcher: Watcher) -> Future<object>`
+pub fn watch_next(watcher: &Value, span: Span) -> Result<Value, RuntimeError> {
+    let watcher = match watcher {
+        Value::Watcher(w) => w.lock().unwrap(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: format!("Expected Watcher, got {}", watcher.type_name()),
+                span,
+            })
+        }
+    };
+
+    let future = watcher.next();
+    Ok(Value::Future(Arc::new(future)))
+}
+
+fn create_watcher(sender: ChannelSender, span: Span) -> Result<RecommendedWatcher, RuntimeError> {
+    let sender_for_errors = sender.clone();
+    notify::recommended_watcher(move |res| match res {
+        Ok(event) => {
+            sender.send(event_to_value(&event));
+        }
+        Err(err) => {
+            sender_for_errors.send(error_to_value(&err));
+        }
+    })
+    .map_err(|e| RuntimeError::IoError {
+        message: format!("Failed to create watcher: {}", e),
+        span,
+    })
 }

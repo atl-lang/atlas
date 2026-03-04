@@ -1405,6 +1405,19 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let path = extract_string(&args[0], "fsResolveSymlink", span)?;
             fs::resolve_symlink(path, span)
         });
+        m.insert("fsWatch", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("fsWatch", 1, args.len(), span));
+            }
+            let path = extract_string(&args[0], "fsWatch", span)?;
+            fs::watch(path, span)
+        });
+        m.insert("fsWatchNext", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("fsWatchNext", 1, args.len(), span));
+            }
+            fs::watch_next(&args[0], span)
+        });
 
         // ====================================================================
         // Compression - gzip

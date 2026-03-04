@@ -497,6 +497,10 @@ fn value_to_json(
             msg: "Cannot serialize AsyncMutex to JSON".to_string(),
             span,
         }),
+        Value::Watcher(_) => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize Watcher to JSON".to_string(),
+            span,
+        }),
         Value::SharedValue(_) => Err(RuntimeError::TypeError {
             msg: "Cannot serialize SharedValue to JSON".to_string(),
             span,
