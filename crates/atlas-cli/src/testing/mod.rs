@@ -7,6 +7,8 @@ pub mod discovery;
 pub mod reporter;
 pub mod runner;
 
+pub const TEST_FILE_SUFFIX: &str = ".test.atl";
+
 pub use discovery::TestSuite;
 pub use reporter::TestReporter;
 pub use runner::TestRunner;

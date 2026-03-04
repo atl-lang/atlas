@@ -1,7 +1,9 @@
 //! Test discovery - find test functions in Atlas source files
 
+use crate::testing::TEST_FILE_SUFFIX;
 use atlas_runtime::ast::Item;
 use atlas_runtime::{DiagnosticLevel, Lexer, Parser};
+use globset::Glob;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -30,6 +32,10 @@ impl TestSuite {
     /// Discover all test functions in a directory tree
     pub fn discover(root: &Path) -> Self {
         let mut suite = TestSuite::default();
+        let pattern = format!("**/*{TEST_FILE_SUFFIX}");
+        let matcher = Glob::new(&pattern)
+            .expect("invalid test file glob")
+            .compile_matcher();
 
         // Walk directory tree finding .test.atl files
         for entry in WalkDir::new(root)
@@ -37,15 +43,17 @@ impl TestSuite {
             .into_iter()
             .filter_map(Result::ok)
         {
+            if !entry.file_type().is_file() {
+                continue;
+            }
+
             let path = entry.path();
 
-            // Only discover test files that match *.test.atl
-            if let Some(file_name) = path.file_name().and_then(|name| name.to_str()) {
-                if file_name.ends_with(".test.atl") {
-                    match discover_tests_in_file(path) {
-                        Ok(tests) => suite.tests.extend(tests),
-                        Err(e) => suite.parse_errors.push((path.to_path_buf(), e)),
-                    }
+            // Only discover test files that match **/*.test.atl
+            if matcher.is_match(path) {
+                match discover_tests_in_file(path) {
+                    Ok(tests) => suite.tests.extend(tests),
+                    Err(e) => suite.parse_errors.push((path.to_path_buf(), e)),
                 }
             }
         }
@@ -287,5 +295,18 @@ fn test_should_be_ignored() {
         let suite = TestSuite::discover(dir.path());
         assert!(suite.is_empty());
         assert!(!suite.parse_errors.is_empty());
+    }
+
+    #[test]
+    fn test_suite_ignores_non_test_parse_errors() {
+        let dir = tempdir().unwrap();
+
+        // Create non-test file with parse error
+        let bad_path = dir.path().join("bad.atlas");
+        fs::write(&bad_path, "fn test_broken( { }").unwrap();
+
+        let suite = TestSuite::discover(dir.path());
+        assert!(suite.is_empty());
+        assert!(suite.parse_errors.is_empty());
     }
 }

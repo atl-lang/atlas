@@ -1,6 +1,7 @@
 //! Test runner - execute discovered tests
 
 use crate::testing::discovery::{TestFunction, TestSuite};
+use crate::testing::TEST_FILE_SUFFIX;
 use atlas_runtime::api::{ExecutionMode, Runtime};
 use atlas_runtime::SecurityContext;
 use rayon::prelude::*;
@@ -176,7 +177,7 @@ impl TestRunner {
 fn is_test_file(path: &Path) -> bool {
     path.file_name()
         .and_then(|name| name.to_str())
-        .is_some_and(|name| name.ends_with(".test.atl"))
+        .is_some_and(|name| name.ends_with(TEST_FILE_SUFFIX))
 }
 
 #[cfg(test)]
