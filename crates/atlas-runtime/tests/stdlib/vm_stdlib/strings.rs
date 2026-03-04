@@ -52,7 +52,7 @@ fn test_split_unicode() {
 
 #[test]
 fn test_join_basic() {
-    let code = r#"join(["a", "b", "c"], ",")"#;
+    let code = r#"join(["a", "b", "c"], ",");"#;
     assert_eval_string(code, "a,b,c");
 }
 
@@ -66,6 +66,15 @@ fn test_join_empty_array() {
 fn test_join_empty_separator() {
     let code = r#"join(["a", "b", "c"], "")"#;
     assert_eval_string(code, "abc");
+}
+
+#[test]
+fn test_join_basic_vm() {
+    let value = eval_vm(r#"join(["a", "b", "c"], ",");"#);
+    match value {
+        Value::String(s) => assert_eq!(s.as_ref(), "a,b,c"),
+        other => panic!("Expected String, got {:?}", other),
+    }
 }
 
 #[test]
@@ -96,6 +105,13 @@ fn test_trim_end() {
 // Search Operations Tests
 // ============================================================================
 
+fn eval_vm(code: &str) -> Value {
+    let bytecode = compile_source(code).expect("compile");
+    run_bytecode(bytecode)
+        .expect("vm run")
+        .unwrap_or(Value::Null)
+}
+
 #[test]
 fn test_index_of_found() {
     let code = r#"indexOf("hello", "ll")"#;
@@ -115,6 +131,18 @@ fn test_index_of_empty_needle() {
 }
 
 #[test]
+fn test_index_of_unicode_offset_vm() {
+    let value = eval_vm(r#"indexOf("éa😊", "😊");"#);
+    match value {
+        Value::Option(Some(val)) => match *val {
+            Value::Number(n) => assert!((n - 2.0).abs() < f64::EPSILON),
+            other => panic!("Expected Option(Some(Number)), got {:?}", other),
+        },
+        other => panic!("Expected Option(Some(Number)), got {:?}", other),
+    }
+}
+
+#[test]
 fn test_last_index_of_found() {
     let code = r#"lastIndexOf("hello", "l")"#;
     assert_eval_option_some_number(code, 3.0);
@@ -124,6 +152,18 @@ fn test_last_index_of_found() {
 fn test_last_index_of_not_found() {
     let code = r#"lastIndexOf("hello", "x")"#;
     assert_eval_option_none(code);
+}
+
+#[test]
+fn test_last_index_of_unicode_offset_vm() {
+    let value = eval_vm(r#"lastIndexOf("éa😊a😊", "😊");"#);
+    match value {
+        Value::Option(Some(val)) => match *val {
+            Value::Number(n) => assert!((n - 4.0).abs() < f64::EPSILON),
+            other => panic!("Expected Option(Some(Number)), got {:?}", other),
+        },
+        other => panic!("Expected Option(Some(Number)), got {:?}", other),
+    }
 }
 
 #[test]

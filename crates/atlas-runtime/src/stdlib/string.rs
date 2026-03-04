@@ -75,7 +75,9 @@ pub fn index_of(haystack: &str, needle: &str) -> Option<f64> {
         return Some(0.0); // Empty string is at index 0
     }
 
-    haystack.find(needle).map(|idx| idx as f64)
+    haystack
+        .find(needle)
+        .map(|idx| haystack[..idx].chars().count() as f64)
 }
 
 /// Find last occurrence index
@@ -83,10 +85,12 @@ pub fn index_of(haystack: &str, needle: &str) -> Option<f64> {
 /// Returns Option: Some(index) if found, None if not found.
 pub fn last_index_of(haystack: &str, needle: &str) -> Option<f64> {
     if needle.is_empty() {
-        return Some(haystack.len() as f64); // Empty string is at the end
+        return Some(haystack.chars().count() as f64); // Empty string is at the end
     }
 
-    haystack.rfind(needle).map(|idx| idx as f64)
+    haystack
+        .rfind(needle)
+        .map(|idx| haystack[..idx].chars().count() as f64)
 }
 
 /// Check if string contains substring

@@ -17,7 +17,7 @@ use common::{
     assert_error_code, assert_eval_bool, assert_eval_null, assert_eval_number,
     assert_eval_option_none, assert_eval_option_some_number, assert_eval_option_some_string,
     assert_eval_result_err, assert_eval_result_ok_number, assert_eval_string, assert_has_error,
-    path_for_atlas, temp_file_path,
+    compile_source, path_for_atlas, run_bytecode, temp_file_path,
 };
 use rstest::rstest;
 use std::fs;

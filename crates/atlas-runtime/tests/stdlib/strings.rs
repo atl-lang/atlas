@@ -112,6 +112,12 @@ fn test_index_of_empty_needle() {
 }
 
 #[test]
+fn test_index_of_unicode_offset() {
+    let code = r#"indexOf("éa😊", "😊")"#;
+    assert_eval_option_some_number(code, 2.0);
+}
+
+#[test]
 fn test_last_index_of_found() {
     let code = r#"lastIndexOf("hello", "l")"#;
     assert_eval_option_some_number(code, 3.0);
@@ -121,6 +127,12 @@ fn test_last_index_of_found() {
 fn test_last_index_of_not_found() {
     let code = r#"lastIndexOf("hello", "x")"#;
     assert_eval_option_none(code);
+}
+
+#[test]
+fn test_last_index_of_unicode_offset() {
+    let code = r#"lastIndexOf("éa😊a😊", "😊")"#;
+    assert_eval_option_some_number(code, 4.0);
 }
 
 #[test]
