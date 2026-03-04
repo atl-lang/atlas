@@ -178,6 +178,51 @@ fn test_spawn_process_kill() {
     }
 }
 
+#[test]
+fn test_process_stdio_handles() {
+    let code = if cfg!(target_os = "windows") {
+        r#"
+        let handle = spawnProcess(["cmd", "/C", "echo", "hello"]);
+        let stdin = processStdin(handle);
+        let stdout = processStdout(handle);
+        let stderr = processStderr(handle);
+        let stdout_again = processStdout(handle);
+        [stdin, stdout, stderr, stdout_again]
+    "#
+    } else {
+        r#"
+        let handle = spawnProcess(["sh", "-c", "echo hello"]);
+        let stdin = processStdin(handle);
+        let stdout = processStdout(handle);
+        let stderr = processStderr(handle);
+        let stdout_again = processStdout(handle);
+        [stdin, stdout, stderr, stdout_again]
+    "#
+    };
+
+    let result = eval_ok(code);
+    let handles = match result {
+        Value::Array(arr) => arr,
+        other => panic!("Expected array result, got {:?}", other),
+    };
+    let handles = handles.as_slice();
+    assert_eq!(handles.len(), 4);
+
+    let stdout_handle = &handles[1];
+    let stdout_again_handle = &handles[3];
+    assert_eq!(stdout_handle, stdout_again_handle);
+
+    for (index, handle) in handles.iter().enumerate() {
+        let Value::Array(arr) = handle else {
+            panic!("Expected handle array at index {}, got {:?}", index, handle);
+        };
+        let arr = arr.as_slice();
+        assert_eq!(arr.len(), 2);
+        assert!(matches!(arr[0], Value::String(_)));
+        assert!(matches!(arr[1], Value::Number(_)));
+    }
+}
+
 // ============================================================================
 // Security Tests
 // ============================================================================

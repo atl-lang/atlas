@@ -1042,6 +1042,15 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("spawnProcess", |a, s, sc, _| {
             process::spawn_process(a, s, sc)
         });
+        m.insert("processStdin", |a, s, sc, _| {
+            process::process_stdin(a, s, sc)
+        });
+        m.insert("processStdout", |a, s, sc, _| {
+            process::process_stdout(a, s, sc)
+        });
+        m.insert("processStderr", |a, s, sc, _| {
+            process::process_stderr(a, s, sc)
+        });
         m.insert("processWait", |a, s, sc, _| process::process_wait(a, s, sc));
         m.insert("processKill", |a, s, sc, _| process::process_kill(a, s, sc));
         m.insert("processIsRunning", |a, s, sc, _| {

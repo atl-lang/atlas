@@ -1248,6 +1248,30 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
+        "processStdin",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
+        },
+    );
+    table.define_builtin(
+        "processStdout",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
+        },
+    );
+    table.define_builtin(
+        "processStderr",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Array(Box::new(Type::any_placeholder()))),
+        },
+    );
+    table.define_builtin(
         "processWait",
         Type::Function {
             type_params: vec![],

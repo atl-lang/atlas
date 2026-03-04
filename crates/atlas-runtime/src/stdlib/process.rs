@@ -30,20 +30,63 @@
 use super::stdlib_arity_error;
 use crate::security::SecurityContext;
 use crate::span::Span;
-use crate::value::{RuntimeError, Value};
+use crate::value::{RuntimeError, Value, ValueArray};
 use std::collections::HashMap;
 use std::env;
 use std::io::Read;
-use std::process::{Child, Command, Output, Stdio};
+use std::process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, Output, Stdio};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
 static PROCESS_REGISTRY: OnceLock<Arc<Mutex<HashMap<u32, Child>>>> = OnceLock::new();
+static PROCESS_IO_REGISTRY: OnceLock<Mutex<HashMap<u32, ProcessIoHandles>>> = OnceLock::new();
+static PROCESS_STDIN_HANDLES: OnceLock<Mutex<HashMap<u64, Arc<Mutex<ChildStdin>>>>> =
+    OnceLock::new();
+static PROCESS_STDOUT_HANDLES: OnceLock<Mutex<HashMap<u64, Arc<Mutex<ChildStdout>>>>> =
+    OnceLock::new();
+static PROCESS_STDERR_HANDLES: OnceLock<Mutex<HashMap<u64, Arc<Mutex<ChildStderr>>>>> =
+    OnceLock::new();
+static NEXT_PROCESS_IO_ID: AtomicU64 = AtomicU64::new(1);
+
+#[derive(Default, Clone, Copy)]
+struct ProcessIoHandles {
+    stdin: Option<u64>,
+    stdout: Option<u64>,
+    stderr: Option<u64>,
+}
 
 fn process_registry() -> Arc<Mutex<HashMap<u32, Child>>> {
     PROCESS_REGISTRY
         .get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
         .clone()
 }
+
+fn process_io_registry() -> &'static Mutex<HashMap<u32, ProcessIoHandles>> {
+    PROCESS_IO_REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn process_stdin_handles() -> &'static Mutex<HashMap<u64, Arc<Mutex<ChildStdin>>>> {
+    PROCESS_STDIN_HANDLES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn process_stdout_handles() -> &'static Mutex<HashMap<u64, Arc<Mutex<ChildStdout>>>> {
+    PROCESS_STDOUT_HANDLES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn process_stderr_handles() -> &'static Mutex<HashMap<u64, Arc<Mutex<ChildStderr>>>> {
+    PROCESS_STDERR_HANDLES.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+fn make_io_handle(tag: &str, id: u64) -> Value {
+    Value::Array(ValueArray::from_vec(vec![
+        Value::string(tag.to_string()),
+        Value::Number(id as f64),
+    ]))
+}
+
+const PROCESS_STDIN_TAG: &str = "__process_stdin__";
+const PROCESS_STDOUT_TAG: &str = "__process_stdout__";
+const PROCESS_STDERR_TAG: &str = "__process_stderr__";
 
 // ============================================================================
 // Command Execution
@@ -488,7 +531,7 @@ pub fn spawn_process(
 
     let mut cmd = Command::new(&program);
     cmd.args(&command_args)
-        .stdin(Stdio::null())
+        .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
@@ -501,6 +544,144 @@ pub fn spawn_process(
     process_registry().lock().unwrap().insert(pid, child);
 
     Ok(Value::Number(pid as f64))
+}
+
+/// Get a writer handle for a process stdin stream
+///
+/// Atlas signature: `processStdin(handle: ProcessHandle) -> Writer`
+pub fn process_stdin(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processStdin", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processStdin", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = registry
+        .get_mut(&pid)
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStdin(): unknown process handle".to_string(),
+            span,
+        })?;
+
+    let mut io_registry = process_io_registry().lock().unwrap();
+    let entry = io_registry.entry(pid).or_default();
+    if let Some(id) = entry.stdin {
+        return Ok(make_io_handle(PROCESS_STDIN_TAG, id));
+    }
+
+    let stdin = child
+        .stdin
+        .take()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStdin(): stdin not available".to_string(),
+            span,
+        })?;
+
+    let id = NEXT_PROCESS_IO_ID.fetch_add(1, Ordering::Relaxed);
+    process_stdin_handles()
+        .lock()
+        .unwrap()
+        .insert(id, Arc::new(Mutex::new(stdin)));
+    entry.stdin = Some(id);
+
+    Ok(make_io_handle(PROCESS_STDIN_TAG, id))
+}
+
+/// Get a reader handle for a process stdout stream
+///
+/// Atlas signature: `processStdout(handle: ProcessHandle) -> Reader`
+pub fn process_stdout(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processStdout", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processStdout", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = registry
+        .get_mut(&pid)
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStdout(): unknown process handle".to_string(),
+            span,
+        })?;
+
+    let mut io_registry = process_io_registry().lock().unwrap();
+    let entry = io_registry.entry(pid).or_default();
+    if let Some(id) = entry.stdout {
+        return Ok(make_io_handle(PROCESS_STDOUT_TAG, id));
+    }
+
+    let stdout = child
+        .stdout
+        .take()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStdout(): stdout not available".to_string(),
+            span,
+        })?;
+
+    let id = NEXT_PROCESS_IO_ID.fetch_add(1, Ordering::Relaxed);
+    process_stdout_handles()
+        .lock()
+        .unwrap()
+        .insert(id, Arc::new(Mutex::new(stdout)));
+    entry.stdout = Some(id);
+
+    Ok(make_io_handle(PROCESS_STDOUT_TAG, id))
+}
+
+/// Get a reader handle for a process stderr stream
+///
+/// Atlas signature: `processStderr(handle: ProcessHandle) -> Reader`
+pub fn process_stderr(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processStderr", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processStderr", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = registry
+        .get_mut(&pid)
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStderr(): unknown process handle".to_string(),
+            span,
+        })?;
+
+    let mut io_registry = process_io_registry().lock().unwrap();
+    let entry = io_registry.entry(pid).or_default();
+    if let Some(id) = entry.stderr {
+        return Ok(make_io_handle(PROCESS_STDERR_TAG, id));
+    }
+
+    let stderr = child
+        .stderr
+        .take()
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processStderr(): stderr not available".to_string(),
+            span,
+        })?;
+
+    let id = NEXT_PROCESS_IO_ID.fetch_add(1, Ordering::Relaxed);
+    process_stderr_handles()
+        .lock()
+        .unwrap()
+        .insert(id, Arc::new(Mutex::new(stderr)));
+    entry.stderr = Some(id);
+
+    Ok(make_io_handle(PROCESS_STDERR_TAG, id))
 }
 
 /// Poll a process handle for completion (non-blocking)
