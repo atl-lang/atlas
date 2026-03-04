@@ -33,8 +33,17 @@ use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::collections::HashMap;
 use std::env;
-use std::process::{Command, Stdio};
-use std::sync::Arc;
+use std::io::Read;
+use std::process::{Child, Command, Output, Stdio};
+use std::sync::{Arc, Mutex, OnceLock};
+
+static PROCESS_REGISTRY: OnceLock<Arc<Mutex<HashMap<u32, Child>>>> = OnceLock::new();
+
+fn process_registry() -> Arc<Mutex<HashMap<u32, Child>>> {
+    PROCESS_REGISTRY
+        .get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+        .clone()
+}
 
 // ============================================================================
 // Command Execution
@@ -453,6 +462,234 @@ pub fn get_pid(
 }
 
 // ============================================================================
+// Async Process Management
+// ============================================================================
+
+/// Spawn a process in the background
+///
+/// Atlas signature: `spawnProcess(command: string[]) -> ProcessHandle`
+pub fn spawn_process(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("spawnProcess", 1, args.len(), span));
+    }
+
+    let (program, command_args) = parse_command_array(&args[0], span, "spawnProcess")?;
+
+    security
+        .check_process(&program)
+        .map_err(|_| RuntimeError::ProcessPermissionDenied {
+            command: program.clone(),
+            span,
+        })?;
+
+    let mut cmd = Command::new(&program);
+    cmd.args(&command_args)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    let child = cmd.spawn().map_err(|e| RuntimeError::IoError {
+        message: format!("Failed to spawn process: {}", e),
+        span,
+    })?;
+
+    let pid = child.id();
+    process_registry().lock().unwrap().insert(pid, child);
+
+    Ok(Value::Number(pid as f64))
+}
+
+/// Poll a process handle for completion (non-blocking)
+///
+/// Atlas signature: `processWait(handle: ProcessHandle) -> Result<number, string>`
+pub fn process_wait(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processWait", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processWait", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = match registry.get_mut(&pid) {
+        Some(child) => child,
+        None => {
+            return Ok(Value::Result(Err(Box::new(Value::string(
+                "Unknown process handle",
+            )))))
+        }
+    };
+
+    match child.try_wait() {
+        Ok(Some(status)) => Ok(Value::Result(Ok(Box::new(Value::Number(
+            exit_status_code(status) as f64,
+        ))))),
+        Ok(None) => Ok(Value::Result(Err(Box::new(Value::string("still running"))))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "Failed to poll process: {}",
+            e
+        )))))),
+    }
+}
+
+/// Send a signal to a process
+///
+/// Atlas signature: `processKill(handle: ProcessHandle, signal: number) -> Result<null, string>`
+pub fn process_kill(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("processKill", 2, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processKill", span)?;
+    let signal = match &args[1] {
+        Value::Number(n) => *n as i32,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "processKill(): expected signal number, got {}",
+                    args[1].type_name()
+                ),
+                span,
+            })
+        }
+    };
+
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = match registry.get_mut(&pid) {
+        Some(child) => child,
+        None => {
+            return Ok(Value::Result(Err(Box::new(Value::string(
+                "Unknown process handle",
+            )))))
+        }
+    };
+
+    if signal != 9 && signal != 15 {
+        return Ok(Value::Result(Err(Box::new(Value::string(
+            "Unsupported signal (use 9 or 15)",
+        )))));
+    }
+
+    let result = if cfg!(unix) {
+        #[cfg(unix)]
+        unsafe {
+            if libc::kill(pid as i32, signal) == 0 {
+                Ok(())
+            } else {
+                Err(std::io::Error::last_os_error().to_string())
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = child;
+            Err("Signals are not supported on this platform".to_string())
+        }
+    } else {
+        let _ = signal;
+        child.kill().map_err(|e| e.to_string())
+    };
+
+    match result {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(message) => Ok(Value::Result(Err(Box::new(Value::string(message))))),
+    }
+}
+
+/// Check if a process is still running
+///
+/// Atlas signature: `processIsRunning(handle: ProcessHandle) -> bool`
+pub fn process_is_running(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processIsRunning", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processIsRunning", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let child = registry
+        .get_mut(&pid)
+        .ok_or_else(|| RuntimeError::InvalidStdlibArgument {
+            msg: "processIsRunning(): unknown process handle".to_string(),
+            span,
+        })?;
+
+    match child.try_wait() {
+        Ok(Some(_)) => Ok(Value::Bool(false)),
+        Ok(None) => Ok(Value::Bool(true)),
+        Err(e) => Err(RuntimeError::IoError {
+            message: format!("Failed to poll process: {}", e),
+            span,
+        }),
+    }
+}
+
+/// Get stdout/stderr output from a finished process
+///
+/// Atlas signature: `processOutput(handle: ProcessHandle) -> Result<string, string>`
+pub fn process_output(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("processOutput", 1, args.len(), span));
+    }
+
+    let pid = extract_process_handle(&args[0], "processOutput", span)?;
+    let registry = process_registry();
+    let mut registry = registry.lock().unwrap();
+    let mut child = match registry.remove(&pid) {
+        Some(child) => child,
+        None => {
+            return Ok(Value::Result(Err(Box::new(Value::string(
+                "Unknown process handle",
+            )))))
+        }
+    };
+
+    let status = match child.try_wait() {
+        Ok(Some(status)) => status,
+        Ok(None) => {
+            registry.insert(pid, child);
+            return Ok(Value::Result(Err(Box::new(Value::string("still running")))));
+        }
+        Err(e) => {
+            registry.insert(pid, child);
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "Failed to poll process: {}",
+                e
+            ))))));
+        }
+    };
+
+    let output = read_child_output(&mut child, status).map_err(|e| RuntimeError::IoError {
+        message: format!("Failed to read process output: {}", e),
+        span,
+    })?;
+
+    let mut combined = String::from_utf8_lossy(&output.stdout).to_string();
+    combined.push_str(&String::from_utf8_lossy(&output.stderr));
+
+    Ok(Value::Result(Ok(Box::new(Value::string(combined)))))
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
@@ -507,6 +744,92 @@ fn parse_command(value: &Value, span: Span) -> Result<(String, Vec<String>), Run
             span,
         }),
     }
+}
+
+fn parse_command_array(
+    value: &Value,
+    span: Span,
+    func_name: &str,
+) -> Result<(String, Vec<String>), RuntimeError> {
+    match value {
+        Value::Array(arr) => {
+            let arr_slice = arr.as_slice();
+            if arr_slice.is_empty() {
+                return Err(RuntimeError::TypeError {
+                    msg: format!("{}(): command array cannot be empty", func_name),
+                    span,
+                });
+            }
+
+            let program = match &arr_slice[0] {
+                Value::String(s) => s.as_ref().clone(),
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!("{}(): command program must be a string", func_name),
+                        span,
+                    })
+                }
+            };
+
+            let mut args = Vec::new();
+            for arg_val in &arr_slice[1..] {
+                match arg_val {
+                    Value::String(s) => args.push(s.as_ref().clone()),
+                    _ => {
+                        return Err(RuntimeError::TypeError {
+                            msg: format!("{}(): command arguments must be strings", func_name),
+                            span,
+                        })
+                    }
+                }
+            }
+
+            Ok((program, args))
+        }
+        _ => Err(RuntimeError::TypeError {
+            msg: format!(
+                "{}(): expected array of strings, got {}",
+                func_name,
+                value.type_name()
+            ),
+            span,
+        }),
+    }
+}
+
+fn extract_process_handle(value: &Value, func_name: &str, span: Span) -> Result<u32, RuntimeError> {
+    match value {
+        Value::Number(n) if *n >= 0.0 => Ok(*n as u32),
+        _ => Err(RuntimeError::TypeError {
+            msg: format!("{}(): expected process handle number", func_name),
+            span,
+        }),
+    }
+}
+
+fn exit_status_code(status: std::process::ExitStatus) -> i32 {
+    status.code().unwrap_or(-1)
+}
+
+fn read_child_output(
+    child: &mut Child,
+    status: std::process::ExitStatus,
+) -> std::io::Result<Output> {
+    let mut stdout = Vec::new();
+    let mut stderr = Vec::new();
+
+    if let Some(mut out) = child.stdout.take() {
+        out.read_to_end(&mut stdout)?;
+    }
+    if let Some(mut err) = child.stderr.take() {
+        err.read_to_end(&mut stderr)?;
+    }
+
+    Ok(Output {
+        status,
+        stdout,
+        stderr,
+    })
 }
 
 /// Options for exec command

@@ -104,6 +104,81 @@ fn test_get_pid() {
 }
 
 // ============================================================================
+// Async Process Management Tests
+// ============================================================================
+
+#[test]
+fn test_spawn_process_output() {
+    let code = if cfg!(target_os = "windows") {
+        r#"
+        let handle = spawnProcess(["cmd", "/C", "echo", "hello"]);
+        let mut status = processWait(handle);
+        while (is_err(status)) {
+            status = processWait(handle);
+        }
+        let output = unwrap(processOutput(handle));
+        trim(output)
+    "#
+    } else {
+        r#"
+        let handle = spawnProcess(["sh", "-c", "echo hello"]);
+        let mut status = processWait(handle);
+        while (is_err(status)) {
+            status = processWait(handle);
+        }
+        let output = unwrap(processOutput(handle));
+        trim(output)
+    "#
+    };
+
+    let result = eval_ok(code);
+    match result {
+        Value::String(s) => assert_eq!(&*s, "hello"),
+        other => panic!("Expected string output, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_spawn_process_kill() {
+    let code = if cfg!(target_os = "windows") {
+        r#"
+        let handle = spawnProcess(["cmd", "/C", "timeout", "/T", "5", "/NOBREAK"]);
+        let was_running = processIsRunning(handle);
+        unwrap(processKill(handle, 9));
+        let mut status = processWait(handle);
+        while (is_err(status)) {
+            status = processWait(handle);
+        }
+        let still_running = processIsRunning(handle);
+        [was_running, still_running]
+    "#
+    } else {
+        r#"
+        let handle = spawnProcess(["sh", "-c", "sleep 5"]);
+        let was_running = processIsRunning(handle);
+        unwrap(processKill(handle, 9));
+        let mut status = processWait(handle);
+        while (is_err(status)) {
+            status = processWait(handle);
+        }
+        let still_running = processIsRunning(handle);
+        [was_running, still_running]
+    "#
+    };
+
+    let result = eval_ok(code);
+    match result {
+        Value::Array(arr) => {
+            let arr = arr.as_slice();
+            assert_eq!(arr.len(), 2);
+            assert_eq!(arr[0], Value::Bool(true));
+            assert_eq!(arr[1], Value::Bool(false));
+        }
+        other => panic!("Expected array result, got {:?}", other),
+    }
+}
+
+// ============================================================================
 // Security Tests
 // ============================================================================
 

@@ -974,6 +974,8 @@ impl SymbolTable {
             },
         );
 
+        register_process_functions(&mut table);
+
         table
     }
 
@@ -1234,4 +1236,56 @@ impl Default for SymbolTable {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn register_process_functions(table: &mut SymbolTable) {
+    table.define_builtin(
+        "spawnProcess",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Array(Box::new(Type::String))],
+            return_type: Box::new(Type::Number),
+        },
+    );
+    table.define_builtin(
+        "processWait",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Number, Type::String],
+            }),
+        },
+    );
+    table.define_builtin(
+        "processKill",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number, Type::Number],
+            return_type: Box::new(Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Null, Type::String],
+            }),
+        },
+    );
+    table.define_builtin(
+        "processIsRunning",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Bool),
+        },
+    );
+    table.define_builtin(
+        "processOutput",
+        Type::Function {
+            type_params: vec![],
+            params: vec![Type::Number],
+            return_type: Box::new(Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::String, Type::String],
+            }),
+        },
+    );
 }

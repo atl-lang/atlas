@@ -34,6 +34,7 @@ flate2 = "1.0"
 tar = "0.4"
 zip = "0.6"
 termcolor = "1.4.1"
+libc = "0.2"
 
 # Bytecode checksum
 crc32fast = "1.4"

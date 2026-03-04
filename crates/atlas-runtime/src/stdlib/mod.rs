@@ -1039,6 +1039,17 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("listEnv", |a, s, sc, _| process::list_env(a, s, sc));
         m.insert("getCwd", |a, s, sc, _| process::get_cwd(a, s, sc));
         m.insert("getPid", |a, s, sc, _| process::get_pid(a, s, sc));
+        m.insert("spawnProcess", |a, s, sc, _| {
+            process::spawn_process(a, s, sc)
+        });
+        m.insert("processWait", |a, s, sc, _| process::process_wait(a, s, sc));
+        m.insert("processKill", |a, s, sc, _| process::process_kill(a, s, sc));
+        m.insert("processIsRunning", |a, s, sc, _| {
+            process::process_is_running(a, s, sc)
+        });
+        m.insert("processOutput", |a, s, sc, _| {
+            process::process_output(a, s, sc)
+        });
 
         // ====================================================================
         // Path manipulation
