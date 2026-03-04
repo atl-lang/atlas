@@ -16,6 +16,11 @@ cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest ru
 git fetch origin && git log origin/main -1 --format="%ci"
 ```
 
+### Keep Branch Current
+```bash
+git rebase origin/main
+```
+
 ---
 
 ## Two-Track Summary

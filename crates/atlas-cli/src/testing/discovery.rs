@@ -2,7 +2,6 @@
 
 use atlas_runtime::ast::Item;
 use atlas_runtime::{DiagnosticLevel, Lexer, Parser};
-use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -32,7 +31,7 @@ impl TestSuite {
     pub fn discover(root: &Path) -> Self {
         let mut suite = TestSuite::default();
 
-        // Walk directory tree finding .at and .atlas files
+        // Walk directory tree finding .test.atl files
         for entry in WalkDir::new(root)
             .follow_links(true)
             .into_iter()
@@ -40,9 +39,9 @@ impl TestSuite {
         {
             let path = entry.path();
 
-            // Check for Atlas file extensions
-            if let Some(ext) = path.extension() {
-                if ext == OsStr::new("at") || ext == OsStr::new("atlas") {
+            // Only discover test files that match *.test.atl
+            if let Some(file_name) = path.file_name().and_then(|name| name.to_str()) {
+                if file_name.ends_with(".test.atl") {
                     match discover_tests_in_file(path) {
                         Ok(tests) => suite.tests.extend(tests),
                         Err(e) => suite.parse_errors.push((path.to_path_buf(), e)),
@@ -240,7 +239,7 @@ fn test_no_param() {{
         let dir = tempdir().unwrap();
 
         // Create test files
-        let test1_path = dir.path().join("math_tests.at");
+        let test1_path = dir.path().join("math.test.atl");
         fs::write(
             &test1_path,
             r#"
@@ -251,12 +250,23 @@ fn test_add() {
         )
         .unwrap();
 
-        let test2_path = dir.path().join("string_tests.at");
+        let test2_path = dir.path().join("string.test.atl");
         fs::write(
             &test2_path,
             r#"
 fn test_concat() {
     assertEqual("a" + "b", "ab");
+}
+"#,
+        )
+        .unwrap();
+
+        let non_test_path = dir.path().join("helper.atl");
+        fs::write(
+            &non_test_path,
+            r#"
+fn test_should_be_ignored() {
+    assert(true, "ignored");
 }
 "#,
         )
@@ -271,7 +281,7 @@ fn test_concat() {
         let dir = tempdir().unwrap();
 
         // Create file with parse error
-        let bad_path = dir.path().join("bad.at");
+        let bad_path = dir.path().join("bad.test.atl");
         fs::write(&bad_path, "fn test_broken( { }").unwrap();
 
         let suite = TestSuite::discover(dir.path());

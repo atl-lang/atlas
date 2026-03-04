@@ -47,7 +47,7 @@ debugging, and managing Atlas projects. Built with `clap`.
 | `templates/library.rs` | Starter template for library crates |
 | `templates/web.rs` | Starter template for web projects |
 | `testing/mod.rs` | Test harness entry point |
-| `testing/discovery.rs` | Test file discovery: finds `*.atlas` test files in project |
+| `testing/discovery.rs` | Test file discovery: finds `*.test.atl` files in project |
 | `testing/runner.rs` | `TestRunner` — executes individual test files, collects results |
 | `testing/reporter.rs` | Formats test output (pass/fail/skip counts, timing) |
 

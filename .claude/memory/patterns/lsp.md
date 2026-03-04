@@ -20,6 +20,15 @@
 
 ---
 
+## P-B03-03: Partial AST on Parse Errors
+
+**Decision:** `document.rs` stores the partial AST even when parse errors occur.
+Previously: returned early with `ast = None` on any parse error.
+Now: stores the AST before returning on parse errors, enabling hover/completion for partial code
+(critical for `impl |` completions).
+
+---
+
 ## Notes
 
 **Testing Pattern:** LSP tests use inline server creation (see testing-patterns.md - lifetime issues prevent helper functions)

@@ -251,7 +251,7 @@ enum Commands {
         #[arg(long, short = 'v')]
         verbose: bool,
         /// Disable colored output
-        #[arg(long, env = "NO_COLOR")]
+        #[arg(long, env = "NO_COLOR", value_parser = clap::builder::BoolishValueParser::new())]
         no_color: bool,
         /// Test directory (defaults to current directory)
         #[arg(long, default_value = ".")]
