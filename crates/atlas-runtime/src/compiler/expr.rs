@@ -1,5 +1,7 @@
 //! Expression compilation
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 use crate::ast::*;
 use crate::bytecode::Opcode;
 use crate::compiler::{Compiler, Local, UpvalueCapture, UpvalueContext};
@@ -114,7 +116,10 @@ impl Compiler {
             self.bytecode.emit_u8(call.args.len() as u8);
             return Ok(());
         }
-        let func_name = func_name_owned.as_deref().unwrap();
+        let func_name = match func_name_owned.as_deref() {
+            Some(name) => name,
+            None => return Ok(()),
+        };
 
         // Load the function from local or global scope
         // Don't hardcode builtins - let GetGlobal handle them so natives can override
@@ -1529,7 +1534,13 @@ impl Compiler {
             }
         }
 
-        let upvalue_ctx = self.upvalue_stack.pop().expect("upvalue context missing");
+        let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
+            vec![Diagnostic::error_with_code(
+                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                "Internal error: missing upvalue context",
+                span,
+            )]
+        })?;
         let upvalues = upvalue_ctx.captures;
 
         self.current_function_base = prev_local_base;

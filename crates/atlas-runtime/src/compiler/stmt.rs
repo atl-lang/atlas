@@ -1,5 +1,7 @@
 //! Statement compilation
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 use crate::ast::*;
 use crate::bytecode::Opcode;
 use crate::compiler::{Compiler, Local, LoopContext, UpvalueCapture, UpvalueContext};
@@ -60,7 +62,13 @@ impl Compiler {
         self.compile_block_with_tail(&func.body, func.span)?;
 
         // Pop upvalue context — now we know all captured outer-scope variables
-        let upvalue_ctx = self.upvalue_stack.pop().expect("upvalue context missing");
+        let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
+            vec![Diagnostic::error_with_code(
+                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                "Internal error: missing upvalue context",
+                func.span,
+            )]
+        })?;
         let upvalues = upvalue_ctx.captures;
 
         self.current_function_base = prev_local_base;
@@ -381,7 +389,13 @@ impl Compiler {
         self.bytecode.patch_jump(exit_jump);
 
         // Patch all break statements
-        let loop_ctx = self.loops.pop().unwrap();
+        let loop_ctx = self.loops.pop().ok_or_else(|| {
+            vec![Diagnostic::error_with_code(
+                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                "Internal error: missing loop context",
+                while_stmt.span,
+            )]
+        })?;
         for break_jump in loop_ctx.break_jumps {
             self.bytecode.patch_jump(break_jump);
         }
@@ -426,7 +440,13 @@ impl Compiler {
         self.bytecode.patch_jump(exit_jump);
 
         // Patch all break statements
-        let loop_ctx = self.loops.pop().unwrap();
+        let loop_ctx = self.loops.pop().ok_or_else(|| {
+            vec![Diagnostic::error_with_code(
+                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                "Internal error: missing loop context",
+                for_stmt.span,
+            )]
+        })?;
         for break_jump in loop_ctx.break_jumps {
             self.bytecode.patch_jump(break_jump);
         }
@@ -560,7 +580,13 @@ impl Compiler {
 
         // ── Cleanup: patch exit_jump and all break_jumps here ─────────────────
         self.bytecode.patch_jump(exit_jump);
-        let loop_ctx = self.loops.pop().unwrap();
+        let loop_ctx = self.loops.pop().ok_or_else(|| {
+            vec![Diagnostic::error_with_code(
+                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                "Internal error: missing loop context",
+                span,
+            )]
+        })?;
         for break_jump in loop_ctx.break_jumps {
             self.bytecode.patch_jump(break_jump);
         }

@@ -306,6 +306,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
                 requested, limit, used
             ),
         ),
+        RuntimeError::InternalError { msg, .. } => ("AT9995", format!("Internal error: {}", msg)),
     };
 
     let help = match error {
@@ -324,6 +325,7 @@ fn runtime_error_to_diagnostic(error: RuntimeError) -> Diagnostic {
         RuntimeError::EnvironmentPermissionDenied { .. } => {
             "enable environment permissions with --allow-env or adjust security settings"
         }
+        RuntimeError::InternalError { .. } => "this is a bug in the runtime; please report it",
         _ => "check the error message for details",
     };
 

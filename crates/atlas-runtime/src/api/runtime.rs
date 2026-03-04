@@ -2,6 +2,8 @@
 //!
 //! Provides the `Runtime` struct for managing Atlas execution with either
 //! Interpreter or VM mode. State persists across evaluations.
+
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
 //!
 //! # Examples
 //!
@@ -584,17 +586,23 @@ impl Runtime {
     pub fn call(&mut self, name: &str, args: Vec<Value>) -> Result<Value, EvalError> {
         // Build a source string that calls the function
         // This is a simple approach that leverages existing eval infrastructure
-        let args_code = args
-            .iter()
-            .map(|v| match v {
+        let mut args_code = Vec::with_capacity(args.len());
+        for value in &args {
+            let rendered = match value {
                 Value::Number(n) => n.to_string(),
                 Value::String(s) => format!("\"{}\"", s.replace('"', "\\\"")),
                 Value::Bool(b) => b.to_string(),
                 Value::Null => "null".to_string(),
-                _ => panic!("Unsupported argument type for call()"),
-            })
-            .collect::<Vec<_>>()
-            .join(", ");
+                _ => {
+                    return Err(EvalError::RuntimeError(RuntimeError::TypeError {
+                        msg: "Unsupported argument type for call()".to_string(),
+                        span: Span::dummy(),
+                    }))
+                }
+            };
+            args_code.push(rendered);
+        }
+        let args_code = args_code.join(", ");
 
         let call_source = format!("{}({})", name, args_code);
         self.eval(&call_source)
@@ -745,11 +753,23 @@ impl Runtime {
     where
         F: Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync + 'static,
     {
-        let native_fn = crate::api::native::NativeFunctionBuilder::new(name)
+        let native_fn = match crate::api::native::NativeFunctionBuilder::new(name)
             .with_arity(arity)
             .with_implementation(implementation)
             .build()
-            .expect("Failed to build native function");
+        {
+            Ok(value) => value,
+            Err(err) => {
+                let msg = format!("Failed to build native function '{}': {}", name, err);
+                let fallback: crate::value::NativeFn = std::sync::Arc::new(move |_args| {
+                    Err(RuntimeError::InternalError {
+                        msg: msg.clone(),
+                        span: Span::dummy(),
+                    })
+                });
+                Value::NativeFunction(fallback)
+            }
+        };
 
         self.native_signatures
             .borrow_mut()
@@ -798,11 +818,23 @@ impl Runtime {
     where
         F: Fn(&[Value]) -> Result<Value, RuntimeError> + Send + Sync + 'static,
     {
-        let native_fn = crate::api::native::NativeFunctionBuilder::new(name)
+        let native_fn = match crate::api::native::NativeFunctionBuilder::new(name)
             .variadic()
             .with_implementation(implementation)
             .build()
-            .expect("Failed to build native function");
+        {
+            Ok(value) => value,
+            Err(err) => {
+                let msg = format!("Failed to build native function '{}': {}", name, err);
+                let fallback: crate::value::NativeFn = std::sync::Arc::new(move |_args| {
+                    Err(RuntimeError::InternalError {
+                        msg: msg.clone(),
+                        span: Span::dummy(),
+                    })
+                });
+                Value::NativeFunction(fallback)
+            }
+        };
 
         self.native_signatures
             .borrow_mut()

@@ -830,6 +830,12 @@ pub enum RuntimeError {
         used: usize,
         limit: usize,
     },
+    /// Internal runtime error
+    #[error("Internal runtime error: {msg}")]
+    InternalError {
+        msg: String,
+        span: crate::span::Span,
+    },
 }
 
 impl RuntimeError {
@@ -855,6 +861,7 @@ impl RuntimeError {
             RuntimeError::Timeout { .. } => crate::span::Span::dummy(),
             RuntimeError::FfiPermissionDenied { .. } => crate::span::Span::dummy(),
             RuntimeError::MemoryLimitExceeded { .. } => crate::span::Span::dummy(),
+            RuntimeError::InternalError { span, .. } => *span,
         }
     }
 }

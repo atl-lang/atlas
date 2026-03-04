@@ -5,6 +5,8 @@
 //! - Variables are stored in locals (stack) or globals (HashMap)
 //! - Control flow uses jumps and loops
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 mod debugger;
 pub mod dispatch;
 mod frame;
@@ -481,7 +483,14 @@ impl VM {
 
         // Sync verified breakpoints from debug_state into the embedded Debugger.
         self.enable_debugging();
-        let dbg = self.debugger.as_mut().unwrap();
+        let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+        let dbg = self
+            .debugger
+            .as_mut()
+            .ok_or_else(|| RuntimeError::InternalError {
+                msg: "Debugger not initialized".to_string(),
+                span,
+            })?;
         dbg.clear_breakpoints();
         for bp in debug_state.breakpoints() {
             if let Some(offset) = bp.instruction_offset {
@@ -496,10 +505,15 @@ impl VM {
             StepMode::Over => StepCondition::OverDepth(debug_state.step_start_frame_depth),
             StepMode::Out => StepCondition::OutDepth(debug_state.step_start_frame_depth),
         };
-        self.debugger
+        let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+        let dbg = self
+            .debugger
             .as_mut()
-            .unwrap()
-            .set_step_condition(step_condition);
+            .ok_or_else(|| RuntimeError::InternalError {
+                msg: "Debugger not initialized".to_string(),
+                span,
+            })?;
+        dbg.set_step_condition(step_condition);
 
         // Clear any leftover pause flag from a previous run.
         self.debug_pause_pending = false;
@@ -673,8 +687,14 @@ impl VM {
                     // Record that the top-of-stack value originated from this local slot.
                     #[cfg(debug_assertions)]
                     {
-                        *self.value_origins.last_mut().unwrap() =
-                            Some(StackValueOrigin::Local(index));
+                        if let Some(origin) = self.value_origins.last_mut() {
+                            *origin = Some(StackValueOrigin::Local(index));
+                        } else {
+                            return Err(RuntimeError::InternalError {
+                                msg: "Missing value origin stack for local read".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
                     }
                 }
                 Opcode::SetLocal => {
@@ -767,8 +787,14 @@ impl VM {
                     // Only track user-defined globals (not builtins, constructors, math constants).
                     #[cfg(debug_assertions)]
                     if self.globals.contains_key(&name) {
-                        *self.value_origins.last_mut().unwrap() =
-                            Some(StackValueOrigin::Global(name));
+                        if let Some(origin) = self.value_origins.last_mut() {
+                            *origin = Some(StackValueOrigin::Global(name));
+                        } else {
+                            return Err(RuntimeError::InternalError {
+                                msg: "Missing value origin stack for global read".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
                     }
                 }
                 Opcode::SetGlobal => {
@@ -841,7 +867,14 @@ impl VM {
                 Opcode::SetUpvalue => {
                     let idx = self.read_u16()? as usize;
                     let value = self.peek(0).clone();
-                    let frame = self.frames.last_mut().expect("no call frame");
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let frame =
+                        self.frames
+                            .last_mut()
+                            .ok_or_else(|| RuntimeError::InternalError {
+                                msg: "Missing call frame for SetUpvalue".to_string(),
+                                span,
+                            })?;
                     let upvalues = std::sync::Arc::make_mut(&mut frame.upvalues);
                     if idx < upvalues.len() {
                         upvalues[idx] = value;
@@ -1073,10 +1106,14 @@ impl VM {
                                 args.reverse();
                                 self.pop(); // Pop function value
 
-                                let security = self
-                                    .current_security
-                                    .as_ref()
-                                    .expect("Security context not set");
+                                let security = self.current_security.as_ref().ok_or_else(|| {
+                                    RuntimeError::InternalError {
+                                        msg: "Security context not set".to_string(),
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    }
+                                })?;
                                 let result = crate::stdlib::call_builtin(
                                     name,
                                     &args,
@@ -3449,10 +3486,13 @@ impl VM {
     ) -> Result<Value, RuntimeError> {
         match func {
             Value::Builtin(name) => {
-                let security = self
-                    .current_security
-                    .as_ref()
-                    .expect("Security context not set");
+                let security =
+                    self.current_security
+                        .as_ref()
+                        .ok_or_else(|| RuntimeError::InternalError {
+                            msg: "Security context not set".to_string(),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        })?;
                 crate::stdlib::call_builtin(name, &args, span, security, &self.output_writer)
             }
             Value::Function(func_ref) => {

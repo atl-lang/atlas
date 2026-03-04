@@ -567,8 +567,8 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
     // === AT9xxx: Internal Errors ===
     ErrorCodeInfo {
         code: "AT9995",
-        description: "Internal compiler error",
-        help: Some("This is a bug in the compiler. Please report it."),
+        description: "Internal error",
+        help: Some("This is a bug in the runtime or compiler. Please report it."),
     },
     ErrorCodeInfo {
         code: "AT9997",

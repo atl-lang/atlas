@@ -1,5 +1,7 @@
 //! Statement execution
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
 use crate::value::{FunctionRef, RuntimeError, Value};
@@ -48,10 +50,14 @@ impl Interpreter {
                         .insert(func.name.name.clone(), (func_value, false));
                 } else {
                     // Local scope - this is the normal case for nested functions
-                    self.locals
-                        .last_mut()
-                        .unwrap()
-                        .insert(func.name.name.clone(), (func_value, false));
+                    let scope =
+                        self.locals
+                            .last_mut()
+                            .ok_or_else(|| RuntimeError::InternalError {
+                                msg: "Missing scope for nested function declaration".to_string(),
+                                span: func.span,
+                            })?;
+                    scope.insert(func.name.name.clone(), (func_value, false));
                 }
 
                 Ok(Value::Null)
@@ -80,7 +86,13 @@ impl Interpreter {
     /// Evaluate a variable declaration
     fn eval_var_decl(&mut self, var: &VarDecl) -> Result<Value, RuntimeError> {
         let value = self.eval_expr(&var.init)?;
-        let scope = self.locals.last_mut().unwrap();
+        let scope = self
+            .locals
+            .last_mut()
+            .ok_or_else(|| RuntimeError::InternalError {
+                msg: "Missing scope for variable declaration".to_string(),
+                span: var.span,
+            })?;
         // Store with mutability flag from the declaration
         scope.insert(var.name.name.clone(), (value, var.mutable));
         Ok(Value::Null)
@@ -133,7 +145,13 @@ impl Interpreter {
             AssignTarget::Name(id) => self.get_variable(&id.name, compound.span)?,
             AssignTarget::Index { .. } => {
                 // Use cached values
-                let (ref arr_val, ref idx_val, span) = cached_index_parts.as_ref().unwrap();
+                let (ref arr_val, ref idx_val, span) =
+                    cached_index_parts
+                        .as_ref()
+                        .ok_or_else(|| RuntimeError::InternalError {
+                            msg: "Missing cached index parts for compound assignment".to_string(),
+                            span: compound.span,
+                        })?;
                 self.get_array_element(arr_val.clone(), idx_val.clone(), *span)?
             }
         };
@@ -189,7 +207,11 @@ impl Interpreter {
             }
             AssignTarget::Index { target, span, .. } => {
                 // Use cached index value (not re-evaluated)
-                let (_, idx_val, _) = cached_index_parts.unwrap();
+                let (_, idx_val, _) =
+                    cached_index_parts.ok_or_else(|| RuntimeError::InternalError {
+                        msg: "Missing cached index parts for compound assignment".to_string(),
+                        span: compound.span,
+                    })?;
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
         }
@@ -413,7 +435,13 @@ impl Interpreter {
         // Iterate over each element
         for element in elements {
             // Bind loop variable to current element (loop variables are mutable)
-            let scope = self.locals.last_mut().unwrap();
+            let scope = self
+                .locals
+                .last_mut()
+                .ok_or_else(|| RuntimeError::InternalError {
+                    msg: "Missing scope for loop variable binding".to_string(),
+                    span: for_in_stmt.span,
+                })?;
             scope.insert(for_in_stmt.variable.name.clone(), (element, true));
 
             // Execute body

@@ -1,5 +1,7 @@
 //! Expression evaluation
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
 use crate::value::{RuntimeError, Value};
@@ -366,10 +368,13 @@ impl Interpreter {
                 }
 
                 // Stdlib builtin dispatch
-                let security = self
-                    .current_security
-                    .as_ref()
-                    .expect("Security context not set");
+                let security =
+                    self.current_security
+                        .as_ref()
+                        .ok_or_else(|| RuntimeError::InternalError {
+                            msg: "Security context not set".to_string(),
+                            span: call.span,
+                        })?;
                 let result = crate::stdlib::call_builtin(
                     name,
                     &args,
@@ -503,10 +508,13 @@ impl Interpreter {
         }
 
         // 4. Call stdlib function
-        let security = self
-            .current_security
-            .as_ref()
-            .expect("Security context not set");
+        let security =
+            self.current_security
+                .as_ref()
+                .ok_or_else(|| RuntimeError::InternalError {
+                    msg: "Security context not set".to_string(),
+                    span: member.span,
+                })?;
         let result = crate::stdlib::call_builtin(
             &func_name,
             &args,
@@ -606,7 +614,13 @@ impl Interpreter {
         // creation are invisible inside, matching VM snapshot semantics.
         // Parameters bound below will shadow any same-named captured value.
         if !func.captured.is_empty() {
-            let scope = self.locals.last_mut().unwrap();
+            let scope = self
+                .locals
+                .last_mut()
+                .ok_or_else(|| RuntimeError::InternalError {
+                    msg: "Missing scope for variable declaration".to_string(),
+                    span: call_span,
+                })?;
             for (var_name, value) in &func.captured {
                 scope.insert(var_name.clone(), (value.clone(), true));
             }
@@ -650,7 +664,13 @@ impl Interpreter {
                     None => {}
                 }
             }
-            let scope = self.locals.last_mut().unwrap();
+            let scope = self
+                .locals
+                .last_mut()
+                .ok_or_else(|| RuntimeError::InternalError {
+                    msg: "Missing scope for assignment".to_string(),
+                    span: call_span,
+                })?;
             scope.insert(param.name.name.clone(), (arg.clone(), true));
         }
 
@@ -823,7 +843,13 @@ impl Interpreter {
 
                 // Bind pattern variables (pattern bindings are immutable - they're destructured values)
                 for (name, value) in &bindings {
-                    let scope = self.locals.last_mut().unwrap();
+                    let scope =
+                        self.locals
+                            .last_mut()
+                            .ok_or_else(|| RuntimeError::InternalError {
+                                msg: "Missing scope for assignment".to_string(),
+                                span: arm.span,
+                            })?;
                     scope.insert(name.clone(), (value.clone(), false));
                 }
 
@@ -2344,10 +2370,13 @@ impl Interpreter {
     ) -> Result<Value, RuntimeError> {
         match func {
             Value::Builtin(name) => {
-                let security = self
-                    .current_security
-                    .as_ref()
-                    .expect("Security context not set");
+                let security =
+                    self.current_security
+                        .as_ref()
+                        .ok_or_else(|| RuntimeError::InternalError {
+                            msg: "Security context not set".to_string(),
+                            span,
+                        })?;
                 crate::stdlib::call_builtin(name, &args, span, security, &self.output_writer)
             }
             Value::Function(func_ref) => {

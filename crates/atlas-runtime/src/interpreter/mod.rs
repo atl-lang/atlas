@@ -7,6 +7,8 @@
 //! - Function calls and stack frames
 //! - Block scoping with shadowing
 
+#![cfg_attr(not(test), deny(clippy::unwrap_used))]
+
 pub mod cache;
 pub mod debugger;
 mod expr;
@@ -779,11 +781,13 @@ impl Interpreter {
             // Bind parameters (parameters are mutable)
             for (i, param) in func.params.iter().enumerate() {
                 if let Some(arg) = args.get(i) {
-                    temp_interp
-                        .locals
-                        .last_mut()
-                        .unwrap()
-                        .insert(param.name.name.clone(), (arg.clone(), true));
+                    let scope = temp_interp.locals.last_mut().ok_or_else(|| {
+                        RuntimeError::InternalError {
+                            msg: "Missing scope for callback argument binding".to_string(),
+                            span: crate::span::Span::dummy(),
+                        }
+                    })?;
+                    scope.insert(param.name.name.clone(), (arg.clone(), true));
                 }
             }
 
