@@ -19,6 +19,9 @@
 //! let result = runtime.eval("x").unwrap();
 //! ```
 
+use crate::ast::{
+    Expr, Identifier, ImportSpecifier, Item, ObjectEntry, ObjectLiteral, Program, Stmt, VarDecl,
+};
 use crate::binder::Binder;
 use crate::compiler::Compiler;
 use crate::diagnostic::Diagnostic;
@@ -27,6 +30,7 @@ use crate::lexer::Lexer;
 use crate::module_executor::ModuleExecutor;
 use crate::module_loader::ModuleLoader;
 use crate::parser::Parser;
+use crate::resolver::ModuleResolver;
 use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::typechecker::TypeChecker;
@@ -512,14 +516,22 @@ impl Runtime {
                 // and defined its globals before B tries to access them.
                 let mut combined_bytecode = crate::bytecode::Bytecode::new();
 
+                let exports_by_path: HashMap<std::path::PathBuf, Vec<String>> = modules
+                    .iter()
+                    .map(|module| (module.path.clone(), module.exports.clone()))
+                    .collect();
+                let mut resolver = ModuleResolver::new(project_root.clone());
+
                 for (i, module) in modules.iter().enumerate() {
                     let is_last = i == modules.len() - 1;
 
                     // Compile this module
                     let mut compiler = Compiler::new();
-                    let mut module_bytecode = compiler
-                        .compile(&module.ast)
-                        .map_err(EvalError::ParseError)?;
+                    let expanded = self
+                        .expand_namespace_imports(module, &exports_by_path, &mut resolver)
+                        .map_err(|diag| EvalError::ParseError(vec![*diag]))?;
+                    let mut module_bytecode =
+                        compiler.compile(&expanded).map_err(EvalError::ParseError)?;
 
                     // Strip trailing Halt from non-final modules
                     // (compiler adds Halt at end of each module, but we need
@@ -555,6 +567,73 @@ impl Runtime {
                 }
             }
         }
+    }
+
+    fn expand_namespace_imports(
+        &self,
+        module: &crate::module_loader::LoadedModule,
+        exports_by_path: &HashMap<std::path::PathBuf, Vec<String>>,
+        resolver: &mut ModuleResolver,
+    ) -> Result<Program, Box<Diagnostic>> {
+        let mut items = Vec::new();
+
+        for item in &module.ast.items {
+            items.push(item.clone());
+
+            let Item::Import(import_decl) = item else {
+                continue;
+            };
+
+            for specifier in &import_decl.specifiers {
+                let ImportSpecifier::Namespace { alias, span } = specifier else {
+                    continue;
+                };
+
+                let import_path = resolver
+                    .resolve_path(&import_decl.source, &module.path, import_decl.span)
+                    .map_err(Box::new)?;
+                let exports = exports_by_path.get(&import_path).ok_or_else(|| {
+                    Box::new(
+                        Diagnostic::error_with_code(
+                            "AT5005",
+                            format!("Cannot find module '{}'", import_decl.source),
+                            import_decl.span,
+                        )
+                        .with_label("namespace import")
+                        .with_help("ensure the module exists and has been loaded before importing"),
+                    )
+                })?;
+
+                let mut entries = Vec::with_capacity(exports.len());
+                for name in exports {
+                    let ident = Identifier {
+                        name: name.clone(),
+                        span: *span,
+                    };
+                    entries.push(ObjectEntry {
+                        key: ident.clone(),
+                        value: Expr::Identifier(ident),
+                        span: *span,
+                    });
+                }
+
+                let obj = ObjectLiteral {
+                    entries,
+                    span: *span,
+                };
+                let var = VarDecl {
+                    mutable: false,
+                    uses_deprecated_var: false,
+                    name: alias.clone(),
+                    type_ref: None,
+                    init: Expr::ObjectLiteral(obj),
+                    span: *span,
+                };
+                items.push(Item::Statement(Stmt::VarDecl(var)));
+            }
+        }
+
+        Ok(Program { items })
     }
 
     /// Call an Atlas function by name with arguments

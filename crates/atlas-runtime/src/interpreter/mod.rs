@@ -679,6 +679,15 @@ impl Interpreter {
             }
         };
 
+        Self::get_member_from_value(container, field, span)
+    }
+
+    /// Get a field value from a container value.
+    pub(super) fn get_member_from_value(
+        container: Value,
+        field: &crate::ast::Identifier,
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
         match container {
             Value::HashMap(map) => {
                 let key =
@@ -1041,11 +1050,19 @@ impl Interpreter {
                     self.globals
                         .insert(name.name.clone(), (value.clone(), false));
                 }
-                ImportSpecifier::Namespace { alias: _, span } => {
-                    return Err(RuntimeError::TypeError {
-                        msg: "Namespace imports (import * as) not yet implemented".to_string(),
-                        span: *span,
-                    });
+                ImportSpecifier::Namespace { alias, span: _ } => {
+                    use crate::stdlib::collections::hash::HashKey;
+                    use crate::value::ValueHashMap;
+
+                    let map = ValueHashMap::new();
+                    for (name, value) in exports.iter() {
+                        let key = HashKey::String(Arc::new(name.clone()));
+                        map.with_mut(|inner| {
+                            inner.insert(key, value.clone());
+                        });
+                    }
+                    self.globals
+                        .insert(alias.name.clone(), (Value::HashMap(map), false));
                 }
             }
         }

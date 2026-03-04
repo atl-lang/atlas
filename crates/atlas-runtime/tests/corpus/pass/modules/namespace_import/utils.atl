@@ -1,0 +1,9 @@
+export fn add(a: number, b: number) -> number {
+    return a + b;
+}
+
+export fn triple(x: number) -> number {
+    return x * 3;
+}
+
+export let PI: number = 3.14159;

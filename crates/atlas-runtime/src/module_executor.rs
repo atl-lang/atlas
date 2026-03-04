@@ -182,12 +182,19 @@ impl<'a> ModuleExecutor<'a> {
                     self.interpreter
                         .define_global(name.name.clone(), value.clone());
                 }
-                ImportSpecifier::Namespace { alias: _, span } => {
-                    // Namespace imports not yet supported in v0.2
-                    return Err(vec![Diagnostic::error(
-                        "Namespace imports (import * as) not yet implemented".to_string(),
-                        *span,
-                    )]);
+                ImportSpecifier::Namespace { alias, span: _ } => {
+                    use crate::stdlib::collections::hash::HashKey;
+                    use crate::value::ValueHashMap;
+
+                    let map = ValueHashMap::new();
+                    for (name, value) in exports {
+                        let key = HashKey::String(std::sync::Arc::new(name.clone()));
+                        map.with_mut(|inner| {
+                            inner.insert(key, value.clone());
+                        });
+                    }
+                    self.interpreter
+                        .define_global(alias.name.clone(), Value::HashMap(map));
                 }
             }
         }

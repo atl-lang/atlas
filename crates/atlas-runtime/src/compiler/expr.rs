@@ -290,6 +290,17 @@ impl Compiler {
     /// The function name is determined from the method name using a standard mapping:
     ///   value.as_string() → jsonAsString(value)
     fn compile_member(&mut self, member: &MemberExpr) -> Result<(), Vec<Diagnostic>> {
+        if member.args.is_none() {
+            self.compile_expr(&member.target)?;
+            let key_idx = self
+                .bytecode
+                .add_constant(Value::string(&member.member.name));
+            self.bytecode.emit(Opcode::Constant, member.span);
+            self.bytecode.emit_u16(key_idx);
+            self.bytecode.emit(Opcode::GetField, member.span);
+            return Ok(());
+        }
+
         // Check for trait dispatch (user-defined impl methods) first.
         // The typechecker annotates `trait_dispatch` when a trait method is resolved.
         if let Some((type_name, trait_name)) = member.trait_dispatch.borrow().clone() {
@@ -325,71 +336,84 @@ impl Compiler {
         // Resolve method via shared dispatch table (type tag set by typechecker).
         // If type_tag is None, the typechecker could not resolve the target type — surface as
         // a diagnostic rather than panicking (fuzzer safety, and graceful error for callers).
-        let type_tag = member.type_tag.get().ok_or_else(|| {
-            vec![crate::diagnostic::Diagnostic::error(
-                format!(
-                    "Cannot determine type for method call '.{}': target type is unknown",
-                    member.member.name
-                ),
-                member.span,
-            )]
-        })?;
-        let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
-            .ok_or_else(|| {
+        if let Some(type_tag) = member.type_tag.get() {
+            let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
+                .ok_or_else(|| {
                 vec![crate::diagnostic::Diagnostic::error(
                     format!("No method '{}' on type {:?}", member.member.name, type_tag),
                     member.span,
                 )]
             })?;
 
-        // Load the stdlib function as a Builtin constant
-        let func_value = crate::value::Value::Builtin(std::sync::Arc::from(func_name.as_str()));
-        let const_idx = self.bytecode.add_constant(func_value);
+            // Load the stdlib function as a Builtin constant
+            let func_value = crate::value::Value::Builtin(std::sync::Arc::from(func_name.as_str()));
+            let const_idx = self.bytecode.add_constant(func_value);
 
-        // Load the function constant
-        self.bytecode.emit(Opcode::Constant, member.span);
-        self.bytecode.emit_u16(const_idx);
+            // Load the function constant
+            self.bytecode.emit(Opcode::Constant, member.span);
+            self.bytecode.emit_u16(const_idx);
 
-        // Compile target (becomes first argument)
-        self.compile_expr(&member.target)?;
+            // Compile target (becomes first argument)
+            self.compile_expr(&member.target)?;
 
-        // Compile method arguments
-        if let Some(args) = &member.args {
-            for arg in args {
-                self.compile_expr(arg)?;
+            // Compile method arguments
+            if let Some(args) = &member.args {
+                for arg in args {
+                    self.compile_expr(arg)?;
+                }
             }
-        }
 
-        // Emit call instruction with total argument count (target + args)
-        let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
-        self.bytecode.emit(Opcode::Call, member.span);
-        self.bytecode.emit_u8(arg_count as u8);
+            // Emit call instruction with total argument count (target + args)
+            let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+            self.bytecode.emit(Opcode::Call, member.span);
+            self.bytecode.emit_u8(arg_count as u8);
 
-        // CoW write-back: for mutating array methods, update the receiver variable.
-        // Only possible when the target is a simple identifier.
-        if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
-            let var_name = id.name.as_str();
-            if crate::method_dispatch::is_array_mutating_collection(&func_name) {
-                // Stack: new_array — peek-set to receiver, value stays on stack
-                self.emit_force_writeback(var_name, member.span);
-            } else if crate::method_dispatch::is_array_mutating_pair(&func_name) {
-                // Stack: [extracted, new_array]
-                // Dup → get index 1 (new_array) → set receiver → pop → get index 0 (extracted)
-                self.bytecode.emit(Opcode::Dup, member.span);
-                let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
-                self.bytecode.emit(Opcode::Constant, member.span);
-                self.bytecode.emit_u16(idx1);
-                self.bytecode.emit(Opcode::GetIndex, member.span);
-                self.emit_force_writeback(var_name, member.span);
-                self.bytecode.emit(Opcode::Pop, member.span);
-                let idx0 = self.bytecode.add_constant(crate::value::Value::Number(0.0));
-                self.bytecode.emit(Opcode::Constant, member.span);
-                self.bytecode.emit_u16(idx0);
-                self.bytecode.emit(Opcode::GetIndex, member.span);
+            // CoW write-back: for mutating array methods, update the receiver variable.
+            // Only possible when the target is a simple identifier.
+            if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
+                let var_name = id.name.as_str();
+                if crate::method_dispatch::is_array_mutating_collection(&func_name) {
+                    // Stack: new_array — peek-set to receiver, value stays on stack
+                    self.emit_force_writeback(var_name, member.span);
+                } else if crate::method_dispatch::is_array_mutating_pair(&func_name) {
+                    // Stack: [extracted, new_array]
+                    // Dup → get index 1 (new_array) → set receiver → pop → get index 0 (extracted)
+                    self.bytecode.emit(Opcode::Dup, member.span);
+                    let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
+                    self.bytecode.emit(Opcode::Constant, member.span);
+                    self.bytecode.emit_u16(idx1);
+                    self.bytecode.emit(Opcode::GetIndex, member.span);
+                    self.emit_force_writeback(var_name, member.span);
+                    self.bytecode.emit(Opcode::Pop, member.span);
+                    let idx0 = self.bytecode.add_constant(crate::value::Value::Number(0.0));
+                    self.bytecode.emit(Opcode::Constant, member.span);
+                    self.bytecode.emit_u16(idx0);
+                    self.bytecode.emit(Opcode::GetIndex, member.span);
+                }
             }
-        }
 
-        Ok(())
+            Ok(())
+        } else {
+            // Structural function call: resolve member then call with args.
+            self.compile_expr(&member.target)?;
+            let key_idx = self
+                .bytecode
+                .add_constant(Value::string(&member.member.name));
+            self.bytecode.emit(Opcode::Constant, member.span);
+            self.bytecode.emit_u16(key_idx);
+            self.bytecode.emit(Opcode::GetField, member.span);
+
+            if let Some(args) = &member.args {
+                for arg in args {
+                    self.compile_expr(arg)?;
+                }
+            }
+
+            let arg_count = member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+            self.bytecode.emit(Opcode::Call, member.span);
+            self.bytecode.emit_u8(arg_count as u8);
+            Ok(())
+        }
     }
 
     /// Compile a literal

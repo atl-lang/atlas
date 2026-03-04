@@ -342,37 +342,44 @@ impl Interpreter {
             args.push(val);
         }
 
-        // Callee must be a function value
+        self.invoke_callee(callee_value, args, call.span, Some(&call.args))
+    }
+
+    fn invoke_callee(
+        &mut self,
+        callee_value: Value,
+        args: Vec<Value>,
+        span: crate::span::Span,
+        arg_exprs: Option<&[Expr]>,
+    ) -> Result<Value, RuntimeError> {
         match callee_value {
             Value::Builtin(ref name) => {
                 // Check for array intrinsics (callback-based functions)
                 match name.as_ref() {
-                    "map" => return self.intrinsic_map(&args, call.span),
-                    "filter" => return self.intrinsic_filter(&args, call.span),
-                    "reduce" => return self.intrinsic_reduce(&args, call.span),
-                    "forEach" => return self.intrinsic_for_each(&args, call.span),
-                    "find" => return self.intrinsic_find(&args, call.span),
-                    "findIndex" => return self.intrinsic_find_index(&args, call.span),
-                    "flatMap" => return self.intrinsic_flat_map(&args, call.span),
-                    "some" => return self.intrinsic_some(&args, call.span),
-                    "every" => return self.intrinsic_every(&args, call.span),
-                    "sort" => return self.intrinsic_sort(&args, call.span),
-                    "sortBy" => return self.intrinsic_sort_by(&args, call.span),
-                    "result_map" => return self.intrinsic_result_map(&args, call.span),
-                    "result_map_err" => return self.intrinsic_result_map_err(&args, call.span),
-                    "result_and_then" => return self.intrinsic_result_and_then(&args, call.span),
-                    "result_or_else" => return self.intrinsic_result_or_else(&args, call.span),
-                    "hashMapForEach" => return self.intrinsic_hashmap_for_each(&args, call.span),
-                    "hashMapMap" => return self.intrinsic_hashmap_map(&args, call.span),
-                    "hashMapFilter" => return self.intrinsic_hashmap_filter(&args, call.span),
-                    "hashSetForEach" => return self.intrinsic_hashset_for_each(&args, call.span),
-                    "hashSetMap" => return self.intrinsic_hashset_map(&args, call.span),
-                    "hashSetFilter" => return self.intrinsic_hashset_filter(&args, call.span),
-                    "regexReplaceWith" => {
-                        return self.intrinsic_regex_replace_with(&args, call.span)
-                    }
+                    "map" => return self.intrinsic_map(&args, span),
+                    "filter" => return self.intrinsic_filter(&args, span),
+                    "reduce" => return self.intrinsic_reduce(&args, span),
+                    "forEach" => return self.intrinsic_for_each(&args, span),
+                    "find" => return self.intrinsic_find(&args, span),
+                    "findIndex" => return self.intrinsic_find_index(&args, span),
+                    "flatMap" => return self.intrinsic_flat_map(&args, span),
+                    "some" => return self.intrinsic_some(&args, span),
+                    "every" => return self.intrinsic_every(&args, span),
+                    "sort" => return self.intrinsic_sort(&args, span),
+                    "sortBy" => return self.intrinsic_sort_by(&args, span),
+                    "result_map" => return self.intrinsic_result_map(&args, span),
+                    "result_map_err" => return self.intrinsic_result_map_err(&args, span),
+                    "result_and_then" => return self.intrinsic_result_and_then(&args, span),
+                    "result_or_else" => return self.intrinsic_result_or_else(&args, span),
+                    "hashMapForEach" => return self.intrinsic_hashmap_for_each(&args, span),
+                    "hashMapMap" => return self.intrinsic_hashmap_map(&args, span),
+                    "hashMapFilter" => return self.intrinsic_hashmap_filter(&args, span),
+                    "hashSetForEach" => return self.intrinsic_hashset_for_each(&args, span),
+                    "hashSetMap" => return self.intrinsic_hashset_map(&args, span),
+                    "hashSetFilter" => return self.intrinsic_hashset_filter(&args, span),
+                    "regexReplaceWith" => return self.intrinsic_regex_replace_with(&args, span),
                     "regexReplaceAllWith" => {
-                        return self.intrinsic_regex_replace_all_with(&args, call.span)
+                        return self.intrinsic_regex_replace_all_with(&args, span)
                     }
                     _ => {}
                 }
@@ -383,18 +390,17 @@ impl Interpreter {
                         .as_ref()
                         .ok_or_else(|| RuntimeError::InternalError {
                             msg: "Security context not set".to_string(),
-                            span: call.span,
+                            span,
                         })?;
-                let result = crate::stdlib::call_builtin(
-                    name,
-                    &args,
-                    call.span,
-                    security,
-                    &self.output_writer,
-                )?;
+                let result =
+                    crate::stdlib::call_builtin(name, &args, span, security, &self.output_writer)?;
                 // CoW write-back: collection mutation builtins return the new collection
                 // but the caller's variable still holds the old value. Write it back.
-                self.apply_cow_writeback(name, result, &call.args, call.span)
+                if let Some(arg_exprs) = arg_exprs {
+                    self.apply_cow_writeback(name, result, arg_exprs, span)
+                } else {
+                    Ok(result)
+                }
             }
             Value::Function(func_ref) => {
                 // Extern function - check if it's an FFI function
@@ -411,7 +417,7 @@ impl Interpreter {
                     // Call the extern function using FFI
                     return unsafe { extern_fn.call(&args) }.map_err(|e| RuntimeError::TypeError {
                         msg: format!("FFI call error: {}", e),
-                        span: call.span,
+                        span,
                     });
                 }
 
@@ -421,19 +427,21 @@ impl Interpreter {
                     // Only applies when the argument is a direct variable reference —
                     // literals and expression results have no binding to consume.
                     #[cfg(debug_assertions)]
-                    for (param, arg_expr) in func.params.iter().zip(call.args.iter()) {
-                        if param.ownership == Some(crate::ast::OwnershipAnnotation::Own) {
-                            if let Expr::Identifier(id) = arg_expr {
-                                self.mark_consumed(&id.name);
+                    if let Some(arg_exprs) = arg_exprs {
+                        for (param, arg_expr) in func.params.iter().zip(arg_exprs.iter()) {
+                            if param.ownership == Some(crate::ast::OwnershipAnnotation::Own) {
+                                if let Expr::Identifier(id) = arg_expr {
+                                    self.mark_consumed(&id.name);
+                                }
                             }
                         }
                     }
-                    return self.call_user_function(&func, args, call.span);
+                    return self.call_user_function(&func, args, span);
                 }
 
                 Err(RuntimeError::UnknownFunction {
                     name: func_ref.name.clone(),
-                    span: call.span,
+                    span,
                 })
             }
             Value::NativeFunction(native_fn) => {
@@ -444,7 +452,7 @@ impl Interpreter {
             Value::Option(None) if args.is_empty() => Ok(Value::Option(None)),
             _ => Err(RuntimeError::TypeError {
                 msg: format!("Cannot call non-function type {}", callee_value.type_name()),
-                span: call.span,
+                span,
             }),
         }
     }
@@ -456,6 +464,10 @@ impl Interpreter {
     pub(super) fn eval_member(&mut self, member: &MemberExpr) -> Result<Value, RuntimeError> {
         // 1. Evaluate target expression
         let target_value = self.eval_expr(&member.target)?;
+
+        if member.args.is_none() {
+            return Self::get_member_from_value(target_value, &member.member, member.span);
+        }
 
         // 1b. Check for trait dispatch (user-defined impl methods).
         // The typechecker annotates `trait_dispatch` when a trait method is resolved.
@@ -496,67 +508,71 @@ impl Interpreter {
             _ => None,
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);
-        let type_tag = type_tag.ok_or_else(|| RuntimeError::TypeError {
-            msg: format!(
-                "Cannot call method '{}' on value of this type",
-                member.member.name
-            ),
-            span: member.span,
-        })?;
-        let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
-            .ok_or_else(|| RuntimeError::TypeError {
+        if let Some(type_tag) = type_tag {
+            let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
+                .ok_or_else(|| RuntimeError::TypeError {
                 msg: format!("No method '{}' on type {:?}", member.member.name, type_tag),
                 span: member.span,
             })?;
 
-        // 3. Build argument list (target + method args)
-        let mut args = vec![target_value];
-        if let Some(method_args) = &member.args {
-            for arg in method_args {
-                args.push(self.eval_expr(arg)?);
-            }
-        }
-
-        // 4. Call stdlib function
-        let security =
-            self.current_security
-                .as_ref()
-                .ok_or_else(|| RuntimeError::InternalError {
-                    msg: "Security context not set".to_string(),
-                    span: member.span,
-                })?;
-        let result = crate::stdlib::call_builtin(
-            &func_name,
-            &args,
-            member.span,
-            security,
-            &self.output_writer,
-        )?;
-
-        // 5. CoW write-back: if the method mutates the receiver, update the receiver variable.
-        //    Only possible when the target is a simple identifier (not a complex expression).
-        if let Expr::Identifier(id) = member.target.as_ref() {
-            if crate::method_dispatch::is_array_mutating_collection(&func_name) {
-                // Push/unshift/reverse: result IS the new array — write it back
-                self.force_set_collection(&id.name, result.clone());
-                return Ok(result);
-            }
-            if crate::method_dispatch::is_array_mutating_pair(&func_name) {
-                // Pop/shift: result is [extracted_value, new_array] — write back new_array, return extracted
-                if let Value::Array(ref arr) = result {
-                    let s = arr.as_slice();
-                    if s.len() == 2 {
-                        let extracted = s[0].clone();
-                        let new_arr = s[1].clone();
-                        self.force_set_collection(&id.name, new_arr);
-                        return Ok(extracted);
-                    }
+            // 3. Build argument list (target + method args)
+            let mut args = vec![target_value];
+            if let Some(method_args) = &member.args {
+                for arg in method_args {
+                    args.push(self.eval_expr(arg)?);
                 }
-                return Ok(result);
             }
-        }
 
-        Ok(result)
+            // 4. Call stdlib function
+            let security =
+                self.current_security
+                    .as_ref()
+                    .ok_or_else(|| RuntimeError::InternalError {
+                        msg: "Security context not set".to_string(),
+                        span: member.span,
+                    })?;
+            let result = crate::stdlib::call_builtin(
+                &func_name,
+                &args,
+                member.span,
+                security,
+                &self.output_writer,
+            )?;
+
+            // 5. CoW write-back: if the method mutates the receiver, update the receiver variable.
+            //    Only possible when the target is a simple identifier (not a complex expression).
+            if let Expr::Identifier(id) = member.target.as_ref() {
+                if crate::method_dispatch::is_array_mutating_collection(&func_name) {
+                    // Push/unshift/reverse: result IS the new array — write it back
+                    self.force_set_collection(&id.name, result.clone());
+                    return Ok(result);
+                }
+                if crate::method_dispatch::is_array_mutating_pair(&func_name) {
+                    // Pop/shift: result is [extracted_value, new_array] — write back new_array, return extracted
+                    if let Value::Array(ref arr) = result {
+                        let s = arr.as_slice();
+                        if s.len() == 2 {
+                            let extracted = s[0].clone();
+                            let new_arr = s[1].clone();
+                            self.force_set_collection(&id.name, new_arr);
+                            return Ok(extracted);
+                        }
+                    }
+                    return Ok(result);
+                }
+            }
+
+            Ok(result)
+        } else {
+            let callee = Self::get_member_from_value(target_value, &member.member, member.span)?;
+            let mut args = Vec::new();
+            if let Some(method_args) = &member.args {
+                for arg in method_args {
+                    args.push(self.eval_expr(arg)?);
+                }
+            }
+            self.invoke_callee(callee, args, member.span, member.args.as_deref())
+        }
     }
 
     /// Evaluate try expression (error propagation operator ?)

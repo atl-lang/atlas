@@ -1039,6 +1039,32 @@ impl<'a> TypeChecker<'a> {
         Some(*return_type.clone())
     }
 
+    fn check_structural_property_access(
+        &mut self,
+        member_name: &str,
+        members: &[StructuralMemberType],
+        member: &MemberExpr,
+    ) -> Option<Type> {
+        let required = members.iter().find(|m| m.name == member_name);
+        let Some(required) = required else {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3010",
+                    format!("Type has no member named '{}'", member_name),
+                    member.member.span,
+                )
+                .with_label("member not found")
+                .with_help(format!(
+                    "check that '{}' exists on this record or namespace",
+                    member_name
+                )),
+            );
+            return Some(Type::Unknown);
+        };
+
+        Some(required.ty.clone())
+    }
+
     fn comparable_operand_type(&mut self, ty: &Type) -> Type {
         if let Type::TypeParameter { name } = ty.normalized() {
             if let Some(bound) = self.lookup_type_param_bound(&name) {
@@ -1070,6 +1096,28 @@ impl<'a> TypeChecker<'a> {
         // Look up the method in the method table and clone the signature to avoid borrow issues
         let method_name = &member.member.name;
         let target_norm = target_type.normalized();
+
+        if member.args.is_none() {
+            if let Type::Structural { members } = &target_norm {
+                if let Some(return_type) =
+                    self.check_structural_property_access(method_name, members, member)
+                {
+                    return return_type;
+                }
+            }
+
+            if let Type::TypeParameter { name } = &target_norm {
+                if let Some(bound) = self.lookup_type_param_bound(name) {
+                    if let Type::Structural { members } = bound.normalized() {
+                        if let Some(return_type) =
+                            self.check_structural_property_access(method_name, &members, member)
+                        {
+                            return return_type;
+                        }
+                    }
+                }
+            }
+        }
 
         if let Type::Union(members) = target_norm {
             let mut return_types = Vec::new();
@@ -1163,14 +1211,26 @@ impl<'a> TypeChecker<'a> {
             return Type::Unknown;
         }
 
+        if member.args.is_some() {
+            if let Type::Structural { ref members } = target_norm {
+                if let Some(return_type) =
+                    self.check_structural_method_call(method_name, members, member)
+                {
+                    return return_type;
+                }
+            }
+        }
+
         if let Type::TypeParameter { name } = &target_norm {
             if let Some(bound) = self.lookup_type_param_bound(name) {
                 let bound_norm = bound.normalized();
                 if let Type::Structural { members } = bound_norm {
-                    if let Some(return_type) =
-                        self.check_structural_method_call(method_name, &members, member)
-                    {
-                        return return_type;
+                    if member.args.is_some() {
+                        if let Some(return_type) =
+                            self.check_structural_method_call(method_name, &members, member)
+                        {
+                            return return_type;
+                        }
                     }
                 }
             }

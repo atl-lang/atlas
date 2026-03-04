@@ -289,31 +289,44 @@ import { add, subtract, MY_PI } from "/math.atl";
 }
 
 #[test]
-fn test_namespace_import_not_supported() {
+fn test_namespace_import_binds_namespace() {
     let mut registry = ModuleRegistry::new();
 
     let module_a = r#"
 export fn add(a: number, b: number) -> number {
     return a + b;
 }
+export let MY_PI = 3.14159;
 "#;
     let (symbol_table_a, _) = bind_module(module_a);
     registry.register(PathBuf::from("/math.atl"), symbol_table_a);
 
-    // Try namespace import
     let module_b = r#"
 import * as math from "/math.atl";
 "#;
 
-    let (_symbol_table, diags) = bind_module_with_registry(module_b, "/test.atl", &registry);
+    let (symbol_table, diags) = bind_module_with_registry(module_b, "/test.atl", &registry);
     assert!(
-        !diags.is_empty(),
-        "Expected diagnostic for unsupported namespace import"
+        diags.is_empty(),
+        "Expected no diagnostics, got: {:?}",
+        diags
     );
-    assert!(
-        diags.iter().any(|d| d.code == "AT5007"),
-        "Expected AT5007 (namespace import not supported) diagnostic"
-    );
+
+    let ns_symbol = symbol_table
+        .lookup("math")
+        .expect("Expected namespace symbol 'math'");
+    match &ns_symbol.ty {
+        atlas_runtime::types::Type::Structural { members } => {
+            assert!(members.iter().any(|m| m.name == "add"));
+            assert!(members.iter().any(|m| m.name == "MY_PI"));
+            let add = members.iter().find(|m| m.name == "add").unwrap();
+            assert!(matches!(
+                add.ty,
+                atlas_runtime::types::Type::Function { .. }
+            ));
+        }
+        other => panic!("Expected structural namespace type, got {:?}", other),
+    }
 }
 
 #[test]

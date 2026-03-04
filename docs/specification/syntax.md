@@ -733,6 +733,18 @@ fn safe_copy<T: Copy>(x: T) -> T {
 
 ---
 
+## Module Imports
+
+```atlas
+import { add, sub } from "./math";
+import * as math from "./math";
+
+let sum = math.add(1, 2);
+let pi = math.PI;
+```
+
+---
+
 ## Grammar (EBNF)
 
 ```ebnf

@@ -556,21 +556,36 @@ impl Binder {
                         }
                     }
                 }
-                ImportSpecifier::Namespace { alias: _, span } => {
+                ImportSpecifier::Namespace { alias, span } => {
                     // Namespace import: `import * as ns from "./module"`
-                    // For now, we'll create a placeholder
-                    // Full namespace support requires type system changes
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT5007",
-                            "Namespace imports not yet supported",
-                            *span,
-                        )
-                        .with_label("namespace import")
-                        .with_help(
-                            "Use named imports instead: import { name } from \"..\"".to_string(),
-                        ),
-                    );
+                    let mut members: Vec<StructuralMemberType> = exports
+                        .iter()
+                        .map(|(name, symbol)| StructuralMemberType {
+                            name: name.clone(),
+                            ty: symbol.ty.clone(),
+                        })
+                        .collect();
+                    members.sort_by(|a, b| a.name.cmp(&b.name));
+
+                    let imported_symbol = Symbol {
+                        name: alias.name.clone(),
+                        ty: Type::Structural { members },
+                        mutable: false,
+                        kind: SymbolKind::Variable,
+                        span: *span,
+                        exported: false,
+                    };
+
+                    if let Err(err) = self.symbol_table.define(imported_symbol) {
+                        let (msg, _) = *err;
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code("AT2003", &msg, *span)
+                                .with_label("namespace import")
+                                .with_help(
+                                    "rename the import or remove the conflicting local declaration",
+                                ),
+                        );
+                    }
                 }
             }
         }
