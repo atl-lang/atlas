@@ -318,6 +318,20 @@ impl Compiler {
                 // compile_stmt emits Pop after compile_assign, so we do NOT Pop here.
                 self.emit_index_cow_write_back(target, assign.span)?;
             }
+            AssignTarget::Member { target, member, .. } => {
+                // For record field assignment: compile target, field key, value
+                // SetField pops: value (top), key, map (bottom)
+                // Stack: [map, key, value]
+
+                self.compile_expr(target)?;
+                let key_idx = self.bytecode.add_constant(Value::string(&member.name));
+                self.bytecode.emit(Opcode::Constant, assign.span);
+                self.bytecode.emit_u16(key_idx);
+                self.compile_expr(&assign.value)?;
+
+                self.bytecode.emit(Opcode::SetField, assign.span);
+                self.emit_member_cow_write_back(target, assign.span)?;
+            }
         }
 
         Ok(())
@@ -730,6 +744,42 @@ impl Compiler {
                 self.emit_index_cow_write_back(target, *span)?;
                 self.bytecode.emit(Opcode::Pop, *span);
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                // Compound assignment on record field: obj.field op= value
+                //
+                // Stack sequence:
+                //   1. Compile target, key once: [map, key]
+                //   2. Dup2: [map, key, map, key]
+                //   3. GetField: [map, key, old_value]
+                //   4. Compile operand, apply op: [map, key, result]
+                //   5. SetField: consumes map, key, result -> pushes mutated map
+
+                self.compile_expr(target)?;
+                let key_idx = self.bytecode.add_constant(Value::string(&member.name));
+                self.bytecode.emit(Opcode::Constant, *span);
+                self.bytecode.emit_u16(key_idx);
+
+                self.bytecode.emit(Opcode::Dup2, *span);
+                self.bytecode.emit(Opcode::GetField, *span);
+
+                self.compile_expr(&compound.value)?;
+                let opcode = match compound.op {
+                    CompoundOp::AddAssign => Opcode::Add,
+                    CompoundOp::SubAssign => Opcode::Sub,
+                    CompoundOp::MulAssign => Opcode::Mul,
+                    CompoundOp::DivAssign => Opcode::Div,
+                    CompoundOp::ModAssign => Opcode::Mod,
+                };
+                self.bytecode.emit(opcode, compound.span);
+
+                self.bytecode.emit(Opcode::SetField, *span);
+                self.emit_member_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
+            }
         }
 
         Ok(())
@@ -831,6 +881,29 @@ impl Compiler {
                 self.bytecode.emit(Opcode::SetIndex, *span);
                 // Write back then pop (increment is a statement — no residual value)
                 self.emit_index_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
+            }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                // Increment record field: obj.field++
+                self.compile_expr(target)?;
+                let key_idx = self.bytecode.add_constant(Value::string(&member.name));
+                self.bytecode.emit(Opcode::Constant, *span);
+                self.bytecode.emit_u16(key_idx);
+
+                self.bytecode.emit(Opcode::Dup2, *span);
+                self.bytecode.emit(Opcode::GetField, *span);
+
+                let one_idx = self.bytecode.add_constant(Value::Number(1.0));
+                self.bytecode.emit(Opcode::Constant, inc.span);
+                self.bytecode.emit_u16(one_idx);
+                self.bytecode.emit(Opcode::Add, inc.span);
+
+                self.bytecode.emit(Opcode::SetField, *span);
+                self.emit_member_cow_write_back(target, *span)?;
                 self.bytecode.emit(Opcode::Pop, *span);
             }
         }
@@ -936,6 +1009,29 @@ impl Compiler {
                 self.emit_index_cow_write_back(target, *span)?;
                 self.bytecode.emit(Opcode::Pop, *span);
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                // Decrement record field: obj.field--
+                self.compile_expr(target)?;
+                let key_idx = self.bytecode.add_constant(Value::string(&member.name));
+                self.bytecode.emit(Opcode::Constant, *span);
+                self.bytecode.emit_u16(key_idx);
+
+                self.bytecode.emit(Opcode::Dup2, *span);
+                self.bytecode.emit(Opcode::GetField, *span);
+
+                let one_idx = self.bytecode.add_constant(Value::Number(1.0));
+                self.bytecode.emit(Opcode::Constant, dec.span);
+                self.bytecode.emit_u16(one_idx);
+                self.bytecode.emit(Opcode::Sub, dec.span);
+
+                self.bytecode.emit(Opcode::SetField, *span);
+                self.emit_member_cow_write_back(target, *span)?;
+                self.bytecode.emit(Opcode::Pop, *span);
+            }
         }
 
         Ok(())
@@ -967,6 +1063,28 @@ impl Compiler {
         // For nested targets (Expr::Index), the mutated inner element cannot be written
         // back without stack rotation support. The value remains on the stack;
         // the caller must Pop it to maintain stack balance.
+        Ok(())
+    }
+
+    /// Write the CoW-mutated record (top of stack) back to the variable binding.
+    ///
+    /// `SetField` pushes the mutated map back after mutating. This helper emits
+    /// `SetLocal` or `SetGlobal` to store it into the variable. It does NOT emit `Pop`.
+    fn emit_member_cow_write_back(
+        &mut self,
+        target: &Expr,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        if let Expr::Identifier(ident) = target {
+            if let Some(local_idx) = self.resolve_local(&ident.name) {
+                self.bytecode.emit(Opcode::SetLocal, span);
+                self.bytecode.emit_u16(local_idx as u16);
+            } else {
+                let name_idx = self.bytecode.add_constant(Value::string(&ident.name));
+                self.bytecode.emit(Opcode::SetGlobal, span);
+                self.bytecode.emit_u16(name_idx);
+            }
+        }
         Ok(())
     }
 

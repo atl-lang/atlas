@@ -335,6 +335,9 @@ impl SymbolIndex {
                 self.index_expr(target, ctx, false);
                 self.index_expr(index, ctx, false);
             }
+            AssignTarget::Member { target, .. } => {
+                self.index_expr(target, ctx, false);
+            }
         }
     }
 

@@ -439,13 +439,18 @@ pub struct Assign {
     pub span: Span,
 }
 
-/// Assignment target (name or indexed expression)
+/// Assignment target (name, indexed expression, or member)
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum AssignTarget {
     Name(Identifier),
     Index {
         target: Box<Expr>,
         index: Box<Expr>,
+        span: Span,
+    },
+    Member {
+        target: Box<Expr>,
+        member: Identifier,
         span: Span,
     },
 }

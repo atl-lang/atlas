@@ -270,6 +270,9 @@ fn find_references_in_assign_target(
             find_references_in_expr(expr, identifier, references);
             find_references_in_expr(index, identifier, references);
         }
+        AssignTarget::Member { target, .. } => {
+            find_references_in_expr(target, identifier, references);
+        }
     }
 }
 

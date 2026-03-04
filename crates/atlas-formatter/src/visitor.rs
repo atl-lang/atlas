@@ -391,6 +391,11 @@ impl FormatVisitor {
                 self.visit_expr(index);
                 self.write("]");
             }
+            AssignTarget::Member { target, member, .. } => {
+                self.visit_expr(target);
+                self.write(".");
+                self.write(&member.name);
+            }
         }
     }
 

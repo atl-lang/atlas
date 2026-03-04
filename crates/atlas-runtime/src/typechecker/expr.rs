@@ -903,7 +903,7 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    fn lookup_type_param_bound(&self, name: &str) -> Option<Type> {
+    pub(super) fn lookup_type_param_bound(&self, name: &str) -> Option<Type> {
         let (func_name, _) = self.current_function_info.as_ref()?;
         let symbol = self.symbol_table.lookup(func_name)?;
         if let Type::Function { type_params, .. } = &symbol.ty {

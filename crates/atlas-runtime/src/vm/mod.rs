@@ -1644,6 +1644,63 @@ impl VM {
                     // back to the variable, then Pop removes it from the expression stack.
                     self.push(array);
                 }
+                Opcode::GetField => {
+                    let key_val = self.pop();
+                    let map_val = self.pop();
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let key =
+                        crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
+
+                    match map_val {
+                        Value::HashMap(map) => match map.inner().get(&key) {
+                            Some(value) => self.push(value.clone()),
+                            None => {
+                                let field = match key_val {
+                                    Value::String(s) => s.as_ref().to_string(),
+                                    other => other.type_name().to_string(),
+                                };
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!("Missing field '{}'", field),
+                                    span,
+                                });
+                            }
+                        },
+                        other => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "Cannot access field on non-record type {}",
+                                    other.type_name()
+                                ),
+                                span,
+                            })
+                        }
+                    }
+                }
+                Opcode::SetField => {
+                    let value = self.pop();
+                    let key_val = self.pop();
+                    let mut map_val = self.pop();
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let key =
+                        crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
+
+                    match &mut map_val {
+                        Value::HashMap(map) => {
+                            map.inner_mut().insert(key, value);
+                        }
+                        other => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "Cannot assign field on non-record type {}",
+                                    other.type_name()
+                                ),
+                                span,
+                            })
+                        }
+                    }
+                    // Push the mutated map back — compiler emits SetLocal/SetGlobal to write it back
+                    self.push(map_val);
+                }
                 Opcode::Slice => {
                     let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
                     let end = match self.pop() {

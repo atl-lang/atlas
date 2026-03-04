@@ -1,9 +1,9 @@
 //! Bytecode instruction set
 //!
-//! Stack-based bytecode with 34 opcodes organized by category.
+//! Stack-based bytecode with 36 opcodes organized by category.
 //! Operands are encoded separately in the instruction stream.
 
-/// Bytecode opcode (34 instructions)
+/// Bytecode opcode (36 instructions)
 ///
 /// Stack-based VM with explicit byte values for serialization.
 /// Operands are encoded inline after the opcode byte.
@@ -94,6 +94,9 @@ pub enum Opcode {
     GetIndex = 0x71,
     /// Pop value, pop index, pop array, array[index] = value
     SetIndex = 0x72,
+    /// Create HashMap [u16 size] from stack (key-value pairs interleaved)
+    /// Stack: [key1, val1, key2, val2, ...] → HashMap
+    HashMap = 0x73,
     /// Pop end, pop start, pop array, push array[start..end]
     Slice = 0x74,
     /// Pop start, pop array, push array[start..]
@@ -102,9 +105,10 @@ pub enum Opcode {
     SliceTo = 0x76,
     /// Pop array, push array[..]
     SliceFull = 0x77,
-    /// Create HashMap [u16 size] from stack (key-value pairs interleaved)
-    /// Stack: [key1, val1, key2, val2, ...] → HashMap
-    HashMap = 0x73,
+    /// Pop key, pop map, push map[key]
+    GetField = 0x78,
+    /// Pop value, pop key, pop map, map[key] = value
+    SetField = 0x79,
 
     // ===== Stack manipulation (0x80-0x8F) =====
     /// Pop and discard top of stack
@@ -192,6 +196,8 @@ impl TryFrom<u8> for Opcode {
             0x75 => Ok(Opcode::SliceFrom),
             0x76 => Ok(Opcode::SliceTo),
             0x77 => Ok(Opcode::SliceFull),
+            0x78 => Ok(Opcode::GetField),
+            0x79 => Ok(Opcode::SetField),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),

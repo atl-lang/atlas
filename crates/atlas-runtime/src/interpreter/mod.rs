@@ -639,6 +639,69 @@ impl Interpreter {
         }
     }
 
+    /// Assign `value` to the member `field` of the container named by `target_expr`,
+    /// using Copy-on-Write semantics with full write-back.
+    pub(super) fn assign_at_member(
+        &mut self,
+        target_expr: &crate::ast::Expr,
+        field: &crate::ast::Identifier,
+        value: Value,
+        span: crate::span::Span,
+    ) -> Result<(), RuntimeError> {
+        match target_expr {
+            crate::ast::Expr::Identifier(id) => {
+                let mut container = self.get_variable(&id.name, span)?;
+                Self::apply_member_mutation(&mut container, field, value, span)?;
+                self.force_set_collection(&id.name, container);
+                Ok(())
+            }
+            _ => Err(RuntimeError::TypeError {
+                msg: "Invalid assignment target".to_string(),
+                span,
+            }),
+        }
+    }
+
+    /// Get a field value from a target expression.
+    pub(super) fn get_member_value(
+        &mut self,
+        target_expr: &crate::ast::Expr,
+        field: &crate::ast::Identifier,
+        span: crate::span::Span,
+    ) -> Result<Value, RuntimeError> {
+        let container = match target_expr {
+            crate::ast::Expr::Identifier(id) => self.get_variable(&id.name, span)?,
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "Invalid assignment target".to_string(),
+                    span,
+                })
+            }
+        };
+
+        match container {
+            Value::HashMap(map) => {
+                let key =
+                    crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
+                match map.inner().get(&key) {
+                    Some(value) => Ok(value.clone()),
+                    None => Err(RuntimeError::TypeError {
+                        msg: format!("Missing field '{}'", field.name),
+                        span,
+                    }),
+                }
+            }
+            other => Err(RuntimeError::TypeError {
+                msg: format!(
+                    "Cannot access field '{}' on type '{}'",
+                    field.name,
+                    other.type_name()
+                ),
+                span,
+            }),
+        }
+    }
+
     /// Apply a single index mutation to a container value (CoW semantics).
     ///
     /// `container` is mutated in-place via the CoW API — if the container's
@@ -664,6 +727,31 @@ impl Interpreter {
             }
             (container, _) => Err(RuntimeError::TypeError {
                 msg: format!("Cannot index-assign to type '{}'", container.type_name()),
+                span,
+            }),
+        }
+    }
+
+    /// Apply a single field mutation to a container value (CoW semantics).
+    fn apply_member_mutation(
+        container: &mut Value,
+        field: &crate::ast::Identifier,
+        value: Value,
+        span: crate::span::Span,
+    ) -> Result<(), RuntimeError> {
+        match container {
+            Value::HashMap(map) => {
+                let key =
+                    crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
+                map.inner_mut().insert(key, value);
+                Ok(())
+            }
+            other => Err(RuntimeError::TypeError {
+                msg: format!(
+                    "Cannot assign field '{}' on type '{}'",
+                    field.name,
+                    other.type_name()
+                ),
                 span,
             }),
         }

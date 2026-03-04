@@ -936,6 +936,9 @@ impl Binder {
                 self.bind_expr(target);
                 self.bind_expr(index);
             }
+            AssignTarget::Member { target, .. } => {
+                self.bind_expr(target);
+            }
         }
     }
 

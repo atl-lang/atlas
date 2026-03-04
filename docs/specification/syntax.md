@@ -154,8 +154,8 @@ let data = record {
 - Use the `record` keyword — bare `{ }` is a block, not a record
 - Keys are identifiers, not quoted strings
 - Values can be any expression
-- Records are values; they are not assignable to or mutated directly
-- To update a record, reconstruct it with new values
+- Records support field assignment: `record.field = value`
+- Field assignment updates the existing record binding
 
 **Common Mistake:**
 ```atlas

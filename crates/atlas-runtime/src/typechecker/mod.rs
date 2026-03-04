@@ -23,7 +23,7 @@ use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
 use crate::symbol::{SymbolKind, SymbolTable};
-use crate::types::{Type, TypeParamDef, ANY_TYPE_PARAM};
+use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
@@ -1755,6 +1755,144 @@ impl<'a> TypeChecker<'a> {
                                 target.span(),
                             )
                             .with_label("not an array"),
+                        );
+                        Type::Unknown
+                    }
+                }
+            }
+            AssignTarget::Member { target, member, .. } => {
+                let target_type = self.check_expr(target);
+                let target_norm = target_type.normalized();
+                let member_name = &member.name;
+
+                let resolve_structural_member = |members: &[StructuralMemberType]| -> Option<Type> {
+                    members
+                        .iter()
+                        .find(|m| m.name == member_name.as_str())
+                        .map(|m| m.ty.clone())
+                };
+
+                match target_norm {
+                    Type::Structural { members } => {
+                        if let Some(field_ty) = resolve_structural_member(&members) {
+                            field_ty
+                        } else {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3010",
+                                    format!(
+                                        "Type '{}' has no field named '{}'",
+                                        target_type.display_name(),
+                                        member_name
+                                    ),
+                                    member.span,
+                                )
+                                .with_label("field not found"),
+                            );
+                            Type::Unknown
+                        }
+                    }
+                    Type::Union(members) => {
+                        let mut field_types = Vec::new();
+                        for member_ty in &members {
+                            match member_ty.normalized() {
+                                Type::Structural { members } => {
+                                    if let Some(field_ty) = resolve_structural_member(&members) {
+                                        field_types.push(field_ty);
+                                    } else {
+                                        self.diagnostics.push(
+                                            Diagnostic::error_with_code(
+                                                "AT3010",
+                                                format!(
+                                                    "Type '{}' has no field named '{}'",
+                                                    member_ty.display_name(),
+                                                    member_name
+                                                ),
+                                                member.span,
+                                            )
+                                            .with_label("field not found")
+                                            .with_help(format!(
+                                                "field '{}' must exist on all union members",
+                                                member_name
+                                            )),
+                                        );
+                                        return Type::Unknown;
+                                    }
+                                }
+                                other => {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3001",
+                                            format!(
+                                                "Cannot assign field '{}' on non-record type {}",
+                                                member_name,
+                                                other.display_name()
+                                            ),
+                                            member.span,
+                                        )
+                                        .with_label("invalid field assignment"),
+                                    );
+                                    return Type::Unknown;
+                                }
+                            }
+                        }
+                        Type::union(field_types)
+                    }
+                    Type::TypeParameter { name } => {
+                        if name == ANY_TYPE_PARAM {
+                            return Type::any_placeholder();
+                        }
+                        if let Some(bound) = self.lookup_type_param_bound(&name) {
+                            if let Type::Structural { members } = bound.normalized() {
+                                if let Some(field_ty) = resolve_structural_member(&members) {
+                                    field_ty
+                                } else {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3010",
+                                            format!(
+                                                "Type '{}' has no field named '{}'",
+                                                target_type.display_name(),
+                                                member_name
+                                            ),
+                                            member.span,
+                                        )
+                                        .with_label("field not found"),
+                                    );
+                                    Type::Unknown
+                                }
+                            } else {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        "AT3001",
+                                        format!(
+                                            "Cannot assign field '{}' on non-record type {}",
+                                            member_name,
+                                            bound.display_name()
+                                        ),
+                                        member.span,
+                                    )
+                                    .with_label("invalid field assignment"),
+                                );
+                                Type::Unknown
+                            }
+                        } else {
+                            Type::Unknown
+                        }
+                    }
+                    Type::Unknown => Type::Unknown,
+                    other => {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3001",
+                                format!(
+                                    "Cannot assign field '{}' on non-record type {}",
+                                    member_name,
+                                    other.display_name()
+                                ),
+                                member.span,
+                            )
+                            .with_label("invalid field assignment"),
                         );
                         Type::Unknown
                     }

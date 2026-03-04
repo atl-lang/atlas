@@ -163,6 +163,21 @@ impl Parser {
                     Err(())
                 }
             },
+            Expr::Member(member) => {
+                if member.args.is_some() {
+                    self.error("Invalid assignment target");
+                    return Err(());
+                }
+                if !matches!(member.target.as_ref(), Expr::Identifier(_)) {
+                    self.error("Invalid assignment target");
+                    return Err(());
+                }
+                Ok(AssignTarget::Member {
+                    target: member.target,
+                    member: member.member,
+                    span: member.span,
+                })
+            }
             _ => {
                 self.error("Invalid assignment target");
                 Err(())

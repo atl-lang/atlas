@@ -191,6 +191,9 @@ fn extract_names_from_assign_target(target: &AssignTarget, names: &mut Vec<Strin
             extract_names_from_expr(expr, names);
             extract_names_from_expr(index, names);
         }
+        AssignTarget::Member { target, .. } => {
+            extract_names_from_expr(target, names);
+        }
     }
 }
 

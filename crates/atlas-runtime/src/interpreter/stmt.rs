@@ -114,6 +114,13 @@ impl Interpreter {
                 let idx_val = self.eval_expr(index)?;
                 self.assign_at_index(target, idx_val, value, *span)?;
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                self.assign_at_member(target, member, value, *span)?;
+            }
         }
 
         Ok(Value::Null)
@@ -154,6 +161,11 @@ impl Interpreter {
                         })?;
                 self.get_array_element(arr_val.clone(), idx_val.clone(), *span)?
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => self.get_member_value(target, member, *span)?,
         };
 
         // Get the value to apply
@@ -214,6 +226,13 @@ impl Interpreter {
                     })?;
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                self.assign_at_member(target, member, result, *span)?;
+            }
         }
 
         Ok(Value::Null)
@@ -233,6 +252,11 @@ impl Interpreter {
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.get_array_element(arr_val, idx_val, *span)?
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => self.get_member_value(target, member, *span)?,
         };
 
         // Increment by 1
@@ -265,6 +289,13 @@ impl Interpreter {
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.assign_at_index(target, idx_val, result, *span)?;
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                self.assign_at_member(target, member, result, *span)?;
+            }
         }
 
         Ok(Value::Null)
@@ -284,6 +315,11 @@ impl Interpreter {
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.get_array_element(arr_val, idx_val, *span)?
             }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => self.get_member_value(target, member, *span)?,
         };
 
         // Decrement by 1
@@ -315,6 +351,13 @@ impl Interpreter {
             } => {
                 let idx_val = self.eval_expr(index.as_ref())?;
                 self.assign_at_index(target, idx_val, result, *span)?;
+            }
+            AssignTarget::Member {
+                target,
+                member,
+                span,
+            } => {
+                self.assign_at_member(target, member, result, *span)?;
             }
         }
 

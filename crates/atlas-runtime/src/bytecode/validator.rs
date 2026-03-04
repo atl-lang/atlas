@@ -289,6 +289,8 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::Array => "Array",
         Opcode::GetIndex => "GetIndex",
         Opcode::SetIndex => "SetIndex",
+        Opcode::GetField => "GetField",
+        Opcode::SetField => "SetField",
         Opcode::Slice => "Slice",
         Opcode::SliceFrom => "SliceFrom",
         Opcode::SliceTo => "SliceTo",
@@ -455,6 +457,7 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::And
         | Opcode::Or
         | Opcode::GetIndex
+        | Opcode::GetField
         | Opcode::SliceFrom
         | Opcode::SliceTo => Some(-1),
 
@@ -462,7 +465,7 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         Opcode::SliceFull => Some(0),
 
         // Pop 3, push 1 (value assigned back)
-        Opcode::SetIndex | Opcode::Slice => Some(-2),
+        Opcode::SetIndex | Opcode::SetField | Opcode::Slice => Some(-2),
 
         // CheckEnumVariant: pop 3 (value, enum_name, variant_name), push 1 (bool)
         Opcode::CheckEnumVariant => Some(-2),
