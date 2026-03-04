@@ -4,6 +4,7 @@
 //! All tests run in both interpreter and VM for parity verification.
 
 use atlas_runtime::diagnostic::Diagnostic;
+use atlas_runtime::json_value::JsonValue;
 use atlas_runtime::runtime::Atlas;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
@@ -171,6 +172,39 @@ fn test_last_index_of_multiple_occurrences() {
 fn test_index_of_parity() {
     let i = eval_ok(r#"indexOf("hello world", "world");"#);
     let v = vm_eval_ok(r#"indexOf("hello world", "world");"#);
+    assert_eq!(i, v);
+}
+
+// strIndexOf / strLastIndexOf / strJoin
+
+#[test]
+fn test_str_index_of_found() {
+    assert_eq!(
+        eval_ok(r#"strIndexOf("hello", "ll");"#),
+        Value::Option(Some(Box::new(Value::Number(2.0))))
+    );
+}
+
+#[test]
+fn test_str_last_index_of_not_found() {
+    assert_eq!(
+        eval_ok(r#"strLastIndexOf("hello", "z");"#),
+        Value::Option(None)
+    );
+}
+
+#[test]
+fn test_str_join_basic() {
+    assert_eq!(
+        eval_ok(r#"strJoin(["a", "b", "c"], "-");"#),
+        Value::string("a-b-c")
+    );
+}
+
+#[test]
+fn test_str_index_of_parity() {
+    let i = eval_ok(r#"strIndexOf("ababa", "ba");"#);
+    let v = vm_eval_ok(r#"strIndexOf("ababa", "ba");"#);
     assert_eq!(i, v);
 }
 
@@ -853,6 +887,74 @@ fn test_json_as_number_correct_type() {
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
+}
+
+#[test]
+fn test_json_get_string_found() {
+    assert_eq!(
+        eval_ok(
+            r#"let j: json = unwrap(parseJSON("{\"name\":\"Atlas\",\"age\":3}")); jsonGetString(j, "name");"#
+        ),
+        Value::Option(Some(Box::new(Value::string("Atlas"))))
+    );
+}
+
+#[test]
+fn test_json_get_number_mismatch_none() {
+    assert_eq!(
+        eval_ok(
+            r#"let j: json = unwrap(parseJSON("{\"name\":\"Atlas\",\"age\":3}")); jsonGetNumber(j, "name");"#
+        ),
+        Value::Option(None)
+    );
+}
+
+#[test]
+fn test_json_get_array_and_object() {
+    let result = eval_ok(
+        r#"let j: json = unwrap(parseJSON("{\"items\":[1,2],\"meta\":{\"ok\":true}}")); [jsonGetArray(j, "items"), jsonGetObject(j, "meta")];"#,
+    );
+    match result {
+        Value::Array(arr) => {
+            let items = &arr.as_slice()[0];
+            let meta = &arr.as_slice()[1];
+            match items {
+                Value::Option(Some(inner)) => match inner.as_ref() {
+                    Value::Array(values) => {
+                        let slice = values.as_slice();
+                        assert_eq!(slice.len(), 2);
+                        assert!(matches!(
+                            &slice[0],
+                            Value::JsonValue(json) if matches!(json.as_ref(), JsonValue::Number(_))
+                        ));
+                    }
+                    _ => panic!("Expected array from jsonGetArray"),
+                },
+                _ => panic!("Expected Some(array) from jsonGetArray"),
+            }
+            match meta {
+                Value::Option(Some(inner)) => match inner.as_ref() {
+                    Value::JsonValue(json) => {
+                        assert!(matches!(json.as_ref(), JsonValue::Object(_)));
+                    }
+                    _ => panic!("Expected json object from jsonGetObject"),
+                },
+                _ => panic!("Expected Some(object) from jsonGetObject"),
+            }
+        }
+        _ => panic!("Expected array result"),
+    }
+}
+
+#[test]
+fn test_json_get_parity() {
+    let i = eval_ok(
+        r#"let j: json = unwrap(parseJSON("{\"active\":true,\"missing\":null}")); jsonGetBool(j, "active");"#,
+    );
+    let v = vm_eval_ok(
+        r#"let j: json = unwrap(parseJSON("{\"active\":true,\"missing\":null}")); jsonGetBool(j, "active");"#,
+    );
+    assert_eq!(i, v);
 }
 
 #[test]

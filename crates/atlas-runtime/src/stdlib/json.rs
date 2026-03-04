@@ -276,6 +276,211 @@ pub fn json_as_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
+// ============================================================================
+// JSON Safe Accessors
+// ============================================================================
+
+/// Safely extract string from JsonValue object field
+///
+/// Returns None if the key is missing or the value is not a string.
+pub fn json_get_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonGetString", 2, args.len(), span));
+    }
+
+    let json = match &args[0] {
+        Value::JsonValue(json) => json,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetString() requires json argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetString() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let value = json
+        .as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|value| match value {
+            JsonValue::String(s) => Some(Value::string(s.clone())),
+            _ => None,
+        });
+
+    Ok(Value::Option(value.map(Box::new)))
+}
+
+/// Safely extract number from JsonValue object field
+///
+/// Returns None if the key is missing or the value is not a number.
+pub fn json_get_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonGetNumber", 2, args.len(), span));
+    }
+
+    let json = match &args[0] {
+        Value::JsonValue(json) => json,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetNumber() requires json argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetNumber() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let value = json
+        .as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|value| match value {
+            JsonValue::Number(n) => Some(Value::Number(*n)),
+            _ => None,
+        });
+
+    Ok(Value::Option(value.map(Box::new)))
+}
+
+/// Safely extract bool from JsonValue object field
+///
+/// Returns None if the key is missing or the value is not a bool.
+pub fn json_get_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonGetBool", 2, args.len(), span));
+    }
+
+    let json = match &args[0] {
+        Value::JsonValue(json) => json,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetBool() requires json argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetBool() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let value = json
+        .as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|value| match value {
+            JsonValue::Bool(b) => Some(Value::Bool(*b)),
+            _ => None,
+        });
+
+    Ok(Value::Option(value.map(Box::new)))
+}
+
+/// Safely extract array from JsonValue object field
+///
+/// Returns None if the key is missing or the value is not an array.
+pub fn json_get_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonGetArray", 2, args.len(), span));
+    }
+
+    let json = match &args[0] {
+        Value::JsonValue(json) => json,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetArray() requires json argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetArray() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let value = json
+        .as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|value| match value {
+            JsonValue::Array(arr) => Some(Value::array(
+                arr.iter()
+                    .map(|item| Value::JsonValue(Arc::new(item.clone())))
+                    .collect(),
+            )),
+            _ => None,
+        });
+
+    Ok(Value::Option(value.map(Box::new)))
+}
+
+/// Safely extract object from JsonValue object field
+///
+/// Returns None if the key is missing or the value is not an object.
+pub fn json_get_object(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("jsonGetObject", 2, args.len(), span));
+    }
+
+    let json = match &args[0] {
+        Value::JsonValue(json) => json,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetObject() requires json argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "jsonGetObject() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let value = json
+        .as_object()
+        .and_then(|obj| obj.get(key))
+        .and_then(|value| match value {
+            JsonValue::Object(obj) => {
+                Some(Value::JsonValue(Arc::new(JsonValue::Object(obj.clone()))))
+            }
+            _ => None,
+        });
+
+    Ok(Value::Option(value.map(Box::new)))
+}
+
 /// Check if JsonValue is null
 ///
 /// Returns true if JsonValue is null, false otherwise.

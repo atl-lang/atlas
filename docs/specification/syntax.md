@@ -379,6 +379,23 @@ data["user"]["name"] // Chained indexing
 - Arrays are mutable; element assignment supported
 - Array equality is reference identity (not deep equality)
 
+### Structural Types
+
+Structural types describe the required fields (and method signatures) a value must support.
+
+```atlas
+// Field-only structural type
+type User = { id: number, name: string };
+
+// Structural type with function member
+type Logger = { log: (string) -> void };
+```
+
+**Rules:**
+- Structural types use `{ field: type }` syntax
+- At least one member is required (empty `{}` is not allowed)
+- Members are named and separated by commas
+
 ---
 
 ## Statements
@@ -403,6 +420,25 @@ let mut b = "hi";  // Mutable, inferred as string
 - Type can be inferred from initializer
 - Initializer required
 - `var` keyword is **not supported** — use `let mut` for mutable variables
+
+### Type Alias Declaration
+
+```atlas
+// Basic alias
+type UserId = number;
+
+// Generic alias
+type Box<T> = T[];
+
+// Exported alias
+export type Point = { x: number, y: number };
+```
+
+**Rules:**
+- `type` declarations are module-level (top-level) only
+- Alias names must be unique in the module
+- Generic parameters are optional: `type Result<T, E> = ...`
+- Use `export type` to expose aliases from a module
 
 ### Assignment
 
@@ -700,10 +736,10 @@ fn safe_copy<T: Copy>(x: T) -> T {
 
 ```ebnf
 program        = { module_item } ;
-module_item    = export_decl | import_decl | decl_or_stmt ;           decl_or_stmt   = fn_decl | stmt ;
+module_item    = export_decl | import_decl | type_alias | decl_or_stmt ;           decl_or_stmt   = fn_decl | stmt ;
 
 (* Module system *)
-export_decl    = "export" ( fn_decl | var_decl ) ;
+export_decl    = "export" ( fn_decl | var_decl | type_alias ) ;
 import_decl    = "import" import_clause "from" string ";" ;
 import_clause  = named_imports | namespace_import ;
 named_imports  = "{" import_specifiers "}" ;
@@ -714,6 +750,7 @@ namespace_import  = "*" "as" ident ;
 fn_decl        = "fn" ident [ type_params ] "(" [ params ] ")" "->" type block ;
 type_params    = "<" type_param_list ">" ;                           type_param_list = ident { "," ident } ;                              params         = param { "," param } ;
 param          = ident ":" type ;
+type_alias     = "type" ident [ type_params ] "=" type ";" ;
 
 stmt           = fn_decl | var_decl | assign_stmt | compound_assign_stmt | increment_stmt
                | decrement_stmt | if_stmt | while_stmt | for_stmt
@@ -770,8 +807,11 @@ constructor_pattern = ident "(" [ pattern_list ] ")" ;
 array_pattern  = "[" [ pattern_list ] "]" ;
 pattern_list   = pattern { "," pattern } ;
 
-type           = primary_type [ "[]" ] | generic_type | function_type ;  primary_type   = "number" | "string" | "bool" | "void" | "null" | "json" ; (*  json *)
+type           = primary_type [ "[]" ] | generic_type | function_type | structural_type ;  primary_type   = "number" | "string" | "bool" | "void" | "null" | "json" ; (*  json *)
 generic_type   = ident "<" type_arg_list ">" ;                       function_type  = "(" [ type_list ] ")" "->" type ;
+structural_type = "{" structural_members "}" ;
+structural_members = structural_member { "," structural_member } ;
+structural_member = ident ":" type ;
 type_list      = type { "," type } ;
 ident          = letter { letter | digit | "_" } ;
 number         = digit { digit } [ "." digit { digit } ] [ ("e" | "E") ["+" | "-"] digit { digit } ] ;

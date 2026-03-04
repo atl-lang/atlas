@@ -130,6 +130,15 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let result = string::join(&arr, sep, span)?;
             Ok(Value::string(result))
         });
+        m.insert("strJoin", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("strJoin", 2, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "strJoin", span)?;
+            let sep = extract_string(&args[1], "strJoin", span)?;
+            let result = string::join(&arr, sep, span)?;
+            Ok(Value::string(result))
+        });
         m.insert("trim", |args, span, _, _| {
             if args.len() != 1 {
                 return Err(stdlib_arity_error("trim", 1, args.len(), span));
@@ -162,12 +171,34 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
                 None => Ok(Value::Option(None)),
             }
         });
+        m.insert("strIndexOf", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("strIndexOf", 2, args.len(), span));
+            }
+            let s = extract_string(&args[0], "strIndexOf", span)?;
+            let search = extract_string(&args[1], "strIndexOf", span)?;
+            match string::index_of(s, search) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
+        });
         m.insert("lastIndexOf", |args, span, _, _| {
             if args.len() != 2 {
                 return Err(stdlib_arity_error("lastIndexOf", 2, args.len(), span));
             }
             let s = extract_string(&args[0], "lastIndexOf", span)?;
             let search = extract_string(&args[1], "lastIndexOf", span)?;
+            match string::last_index_of(s, search) {
+                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
+                None => Ok(Value::Option(None)),
+            }
+        });
+        m.insert("strLastIndexOf", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("strLastIndexOf", 2, args.len(), span));
+            }
+            let s = extract_string(&args[0], "strLastIndexOf", span)?;
+            let search = extract_string(&args[1], "strLastIndexOf", span)?;
             match string::last_index_of(s, search) {
                 Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
                 None => Ok(Value::Option(None)),
@@ -431,6 +462,11 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("jsonAsString", |a, s, _, _| json::json_as_string(a, s));
         m.insert("jsonAsNumber", |a, s, _, _| json::json_as_number(a, s));
         m.insert("jsonAsBool", |a, s, _, _| json::json_as_bool(a, s));
+        m.insert("jsonGetString", |a, s, _, _| json::json_get_string(a, s));
+        m.insert("jsonGetNumber", |a, s, _, _| json::json_get_number(a, s));
+        m.insert("jsonGetBool", |a, s, _, _| json::json_get_bool(a, s));
+        m.insert("jsonGetArray", |a, s, _, _| json::json_get_array(a, s));
+        m.insert("jsonGetObject", |a, s, _, _| json::json_get_object(a, s));
         m.insert("jsonIsNull", |a, s, _, _| json::json_is_null(a, s));
 
         // ====================================================================
