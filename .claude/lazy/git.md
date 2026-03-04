@@ -14,7 +14,7 @@ All CI and review happens locally. Remote pushes are batched.
 ```bash
 cargo fmt --check
 cargo clippy --workspace -- -D warnings
-cargo nextest run -p atlas-runtime  # parallel via num-cpus
+cargo nextest run --workspace
 ```
 
 ### Full Local CI (batched — Haiku agent)
@@ -57,7 +57,7 @@ For Rust source changes (`crates/**/*.rs`, `Cargo.toml` deps):
 ```bash
 # 1. Quick local checks
 cargo fmt --check && cargo clippy --workspace -- -D warnings
-cargo nextest run -p atlas-runtime
+cargo nextest run --workspace
 
 # 2. Commit to main locally
 git add crates/ && git commit -m "fix(vm): resolve side effect issue"

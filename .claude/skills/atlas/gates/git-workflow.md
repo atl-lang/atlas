@@ -8,7 +8,7 @@
 
 ### After Every Fix
 ```bash
-cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run -p atlas-runtime
+cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run --workspace
 ```
 
 ### Batch Push Check (168h policy)

@@ -175,14 +175,14 @@ cargo nextest run -p atlas-runtime --test corpus
 
 ### Before handoff (GATE 6)
 ```bash
-cargo nextest run -p atlas-runtime --test <domain_file>  # Domain file for phase
-cargo clippy -p atlas-runtime -- -D warnings
+cargo nextest run --workspace                            # Full test suite
+cargo clippy --workspace -- -D warnings
 ```
 
 ### Full suite
 ```bash
-cargo nextest run -p atlas-runtime          # ~15-20 seconds, excludes network/slow tests
-cargo nextest run -p atlas-runtime --run-ignored all  # Includes network tests (slow)
+cargo nextest run --workspace               # All crates, parallel execution
+cargo nextest run --workspace --run-ignored all  # Includes network tests (slow)
 ```
 
 ### Benchmarks (performance-sensitive changes only)

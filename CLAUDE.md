@@ -21,7 +21,7 @@
 
 ## Quick Check (every fix)
 ```bash
-cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run -p atlas-runtime
+cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run --workspace
 ```
 Full CI commands and batch tracking: `.claude/lazy/git.md`
 

@@ -8,13 +8,13 @@
 
 ## Action
 
-Run the full test suite for the package you modified:
+Run the full test suite:
 
 ```bash
 cargo build --workspace                          # Full build — MUST be clean
-cargo nextest run -p <package>                   # e.g., atlas-lsp, atlas-runtime, atlas-cli
-cargo clippy -p <package> -- -D warnings         # Zero warnings
-cargo fmt --check -p <package>                   # Perfectly formatted
+cargo nextest run --workspace                    # All crates, full coverage
+cargo clippy --workspace -- -D warnings          # Zero warnings
+cargo fmt --check                                # Perfectly formatted
 ```
 
 **All four must pass. No exceptions.**

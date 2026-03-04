@@ -8,13 +8,13 @@
 
 1. **Run clippy:**
    ```bash
-   cargo clippy -p atlas-runtime -- -D warnings
+   cargo clippy --workspace -- -D warnings
    ```
    **MUST:** Zero warnings
 
 2. **Run formatter:**
    ```bash
-   cargo fmt -p atlas-runtime -- --check
+   cargo fmt --check
    ```
    **MUST:** All files formatted
 

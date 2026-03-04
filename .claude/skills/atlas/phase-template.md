@@ -10,10 +10,10 @@
 ls [critical files]
 
 # Verify functionality
-cargo nextest run -p atlas-runtime --test <domain_file>
+cargo nextest run --workspace --test <domain_file>
 
 # Clean build check
-cargo clean && cargo check -p atlas-runtime
+cargo clean && cargo check --workspace
 ```
 
 **If missing:** [What to do if dependencies missing]
@@ -107,7 +107,7 @@ cargo clean && cargo check -p atlas-runtime
 - ✅ 100% interpreter/VM parity verified
 - ✅ Documentation complete in [location]
 - ✅ No clippy warnings
-- ✅ cargo nextest run -p atlas-runtime passes
+- ✅ cargo nextest run --workspace passes
 - ✅ Decision logs [DR-XXX, DR-YYY] referenced/created
 
 ---

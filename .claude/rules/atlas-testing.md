@@ -93,7 +93,7 @@ Add LSP tests to existing files in `crates/atlas-lsp/tests/`. Creating new LSP t
 ## Run Commands
 
 ```bash
+cargo nextest run --workspace                        # full suite (all crates)
 cargo nextest run -p atlas-runtime --test closures   # one domain file
-cargo nextest run -p atlas-runtime                   # full suite (~15-20s)
 cargo nextest run -p atlas-runtime --test corpus     # corpus only
 ```
