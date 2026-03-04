@@ -329,7 +329,7 @@ fn test_remove_dry_run() {
 // ============================================================================
 
 #[test]
-fn test_install_creates_lockfile() {
+fn test_install_errors_without_registry() {
     let temp = TempDir::new().unwrap();
     create_test_project(temp.path());
 
@@ -337,13 +337,16 @@ fn test_install_creates_lockfile() {
         .args(["install", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
-    assert!(temp.path().join("atlas.lock").exists());
+    assert!(!temp.path().join("atlas.lock").exists());
 }
 
 #[test]
-fn test_install_creates_modules_dir() {
+fn test_install_does_not_create_modules_dir() {
     let temp = TempDir::new().unwrap();
     create_test_project(temp.path());
 
@@ -351,9 +354,12 @@ fn test_install_creates_modules_dir() {
         .args(["install", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
-    assert!(temp.path().join("atlas_modules").exists());
+    assert!(!temp.path().join("atlas_modules").exists());
 }
 
 #[test]
@@ -365,8 +371,10 @@ fn test_install_empty_project() {
         .args(["install"])
         .current_dir(temp.path())
         .assert()
-        .success()
-        .stdout(predicate::str::contains("No dependencies"));
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 }
 
 #[test]
@@ -378,7 +386,10 @@ fn test_install_dry_run() {
         .args(["install", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
     assert!(!temp.path().join("atlas.lock").exists());
     assert!(!temp.path().join("atlas_modules").exists());
@@ -393,7 +404,10 @@ fn test_install_production_flag() {
         .args(["install", "--production", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 }
 
 #[test]
@@ -401,19 +415,25 @@ fn test_install_force_reinstall() {
     let temp = TempDir::new().unwrap();
     create_test_project(temp.path());
 
-    // First install
+    // First install should fail
     atlas()
         .args(["install", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
-    // Force reinstall
+    // Force reinstall should also fail
     atlas()
         .args(["install", "--force", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 }
 
 #[test]
@@ -437,8 +457,11 @@ fn test_install_verbose() {
         .args(["install", "--verbose"])
         .current_dir(temp.path())
         .assert()
-        .success()
-        .stdout(predicate::str::contains("Reading manifest"));
+        .failure()
+        .stdout(predicate::str::contains("Reading manifest"))
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 }
 
 // ============================================================================
@@ -536,8 +559,10 @@ fn test_publish_dry_run() {
         .args(["publish", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .success()
-        .stdout(predicate::str::contains("Dry run"));
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package publishing not yet implemented",
+        ));
 }
 
 #[test]
@@ -549,7 +574,10 @@ fn test_publish_no_verify() {
         .args(["publish", "--no-verify", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package publishing not yet implemented",
+        ));
 }
 
 #[test]
@@ -573,8 +601,10 @@ fn test_publish_validates_manifest() {
         .args(["publish", "--dry-run"])
         .current_dir(temp.path())
         .assert()
-        .success()
-        .stdout(predicate::str::contains("Manifest validation"));
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package publishing not yet implemented",
+        ));
 }
 
 #[test]
@@ -586,7 +616,10 @@ fn test_publish_verbose() {
         .args(["publish", "--dry-run", "--verbose"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package publishing not yet implemented",
+        ));
 }
 
 // ============================================================================
@@ -618,9 +651,12 @@ fn test_init_add_install_workflow() {
         .args(["install", "--quiet"])
         .current_dir(&project_dir)
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
-    assert!(project_dir.join("atlas.lock").exists());
+    assert!(!project_dir.join("atlas.lock").exists());
 }
 
 #[test]
@@ -659,9 +695,12 @@ fn test_install_update_workflow() {
         .args(["install", "--quiet"])
         .current_dir(temp.path())
         .assert()
-        .success();
+        .failure()
+        .stderr(predicate::str::contains(
+            "Package registry not yet implemented",
+        ));
 
-    assert!(temp.path().join("atlas.lock").exists());
+    assert!(!temp.path().join("atlas.lock").exists());
 
     // Update
     atlas()

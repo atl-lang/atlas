@@ -2,12 +2,7 @@
 
 use anyhow::{bail, Context, Result};
 use atlas_package::manifest::PackageManifest;
-use atlas_package::{Lockfile, Resolver};
-use indicatif::{ProgressBar, ProgressStyle};
-use std::collections::HashSet;
-use std::fs;
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 /// Arguments for the install command
 #[derive(Debug, Clone)]
@@ -42,21 +37,9 @@ impl Default for InstallArgs {
     }
 }
 
-/// Installation statistics
-#[derive(Debug, Default)]
-struct InstallStats {
-    resolved: usize,
-    downloaded: usize,
-    cached: usize,
-    failed: usize,
-}
-
 /// Run the install command
 pub fn run(args: InstallArgs) -> Result<()> {
     let manifest_path = find_manifest(&args.project_dir)?;
-    let project_dir = manifest_path.parent().unwrap();
-    let lockfile_path = project_dir.join("atlas.lock");
-    let deps_dir = project_dir.join("atlas_modules");
 
     if args.verbose {
         println!("Reading manifest from {}", manifest_path.display());
@@ -66,199 +49,16 @@ pub fn run(args: InstallArgs) -> Result<()> {
     let manifest =
         PackageManifest::from_file(&manifest_path).context("Failed to read atlas.toml")?;
 
-    // Check if there are any dependencies
-    let has_deps = !manifest.dependencies.is_empty()
-        || (!args.production && !manifest.dev_dependencies.is_empty());
+    let _ = (
+        &args.packages,
+        args.production,
+        args.force,
+        args.dry_run,
+        args.quiet,
+        manifest,
+    );
 
-    if !has_deps && args.packages.is_empty() {
-        if !args.quiet {
-            println!("No dependencies to install.");
-        }
-        return Ok(());
-    }
-
-    // Load or create lockfile
-    let existing_lockfile = if lockfile_path.exists() {
-        if args.verbose {
-            println!("Using existing lockfile");
-        }
-        Some(Lockfile::from_file(&lockfile_path).context("Failed to read atlas.lock")?)
-    } else {
-        None
-    };
-
-    // Create progress indicator
-    let spinner = if !args.quiet {
-        let pb = ProgressBar::new_spinner();
-        pb.set_style(
-            ProgressStyle::default_spinner()
-                .tick_chars("⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏")
-                .template("{spinner:.green} {msg}")
-                .unwrap(),
-        );
-        pb.enable_steady_tick(Duration::from_millis(80));
-        Some(pb)
-    } else {
-        None
-    };
-
-    // Resolve dependencies
-    if let Some(ref pb) = spinner {
-        pb.set_message("Resolving dependencies...");
-    }
-
-    let mut resolver = Resolver::new();
-    let resolution = resolver
-        .resolve_with_lockfile(&manifest, existing_lockfile.as_ref())
-        .context("Failed to resolve dependencies")?;
-
-    let mut stats = InstallStats {
-        resolved: resolution.package_count(),
-        ..Default::default()
-    };
-
-    if args.verbose {
-        println!("Resolved {} packages", stats.resolved);
-    }
-
-    if stats.resolved == 0 {
-        if let Some(ref pb) = spinner {
-            pb.finish_with_message("No packages to install.");
-        }
-        return Ok(());
-    }
-
-    // Create dependencies directory
-    if !args.dry_run {
-        fs::create_dir_all(&deps_dir).context("Failed to create atlas_modules directory")?;
-    }
-
-    // Track installed packages
-    let mut installed_packages: HashSet<String> = HashSet::new();
-
-    // Check existing installed packages
-    if deps_dir.exists() {
-        if let Ok(entries) = fs::read_dir(&deps_dir) {
-            for entry in entries.flatten() {
-                if entry.file_type().map(|t| t.is_dir()).unwrap_or(false) {
-                    if let Some(name) = entry.file_name().to_str() {
-                        installed_packages.insert(name.to_string());
-                    }
-                }
-            }
-        }
-    }
-
-    // Download and install packages
-    if let Some(ref pb) = spinner {
-        pb.set_message(format!("Installing {} packages...", stats.resolved));
-    }
-
-    for (name, package) in &resolution.packages {
-        if args.verbose {
-            println!("  Installing {}@{}", name, package.version);
-        }
-
-        // Check if already installed
-        if !args.force && installed_packages.contains(name) {
-            stats.cached += 1;
-            continue;
-        }
-
-        if args.dry_run {
-            stats.downloaded += 1;
-            continue;
-        }
-
-        // TODO: Actually download from registry in future phase
-        // For now, we simulate the installation
-        let pkg_dir = deps_dir.join(name);
-        fs::create_dir_all(&pkg_dir)?;
-
-        // Create placeholder module file
-        let module_content = format!(
-            "// Auto-installed: {}@{}\n// Package source: registry\n",
-            name, package.version
-        );
-        fs::write(pkg_dir.join("mod.atl"), module_content)?;
-
-        stats.downloaded += 1;
-    }
-
-    // Generate/update lockfile
-    if !args.dry_run {
-        let new_lockfile = resolver.generate_lockfile(&resolution);
-        new_lockfile.write_to_file(&lockfile_path)?;
-
-        if args.verbose {
-            println!("Updated {}", lockfile_path.display());
-        }
-    }
-
-    // Finish progress
-    if let Some(ref pb) = spinner {
-        pb.finish_and_clear();
-    }
-
-    // Print summary
-    if !args.quiet {
-        print_summary(&stats, args.dry_run);
-    }
-
-    Ok(())
-}
-
-/// Print installation summary
-fn print_summary(stats: &InstallStats, dry_run: bool) {
-    if dry_run {
-        println!("\n[Dry run] Would install:");
-    } else {
-        println!();
-    }
-
-    let mut parts = Vec::new();
-
-    if stats.downloaded > 0 {
-        parts.push(format!(
-            "{} {}",
-            stats.downloaded,
-            if stats.downloaded == 1 {
-                "package installed"
-            } else {
-                "packages installed"
-            }
-        ));
-    }
-
-    if stats.cached > 0 {
-        parts.push(format!(
-            "{} {} from cache",
-            stats.cached,
-            if stats.cached == 1 {
-                "package"
-            } else {
-                "packages"
-            }
-        ));
-    }
-
-    if stats.failed > 0 {
-        parts.push(format!(
-            "{} {} failed",
-            stats.failed,
-            if stats.failed == 1 {
-                "package"
-            } else {
-                "packages"
-            }
-        ));
-    }
-
-    if parts.is_empty() {
-        println!("{} Already up to date.", green_check());
-    } else {
-        println!("{} {}", green_check(), parts.join(", "));
-    }
+    bail!("Package registry not yet implemented. Local dependencies via path in atlas.toml are supported.");
 }
 
 /// Find atlas.toml manifest file
@@ -284,14 +84,10 @@ fn find_manifest(start_dir: &Path) -> Result<PathBuf> {
     )
 }
 
-/// Green checkmark
-fn green_check() -> &'static str {
-    "\u{2713}"
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use tempfile::TempDir;
 
     fn create_test_manifest(dir: &Path) -> PathBuf {
@@ -326,7 +122,7 @@ version = "0.1.0"
     }
 
     #[test]
-    fn test_install_creates_lockfile() {
+    fn test_install_errors_when_registry_unimplemented() {
         let temp = TempDir::new().unwrap();
         create_test_manifest(temp.path());
 
@@ -336,29 +132,14 @@ version = "0.1.0"
             ..Default::default()
         };
 
-        run(args).unwrap();
-
-        assert!(temp.path().join("atlas.lock").exists());
+        let err = run(args).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Package registry not yet implemented"));
     }
 
     #[test]
-    fn test_install_creates_modules_dir() {
-        let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
-
-        let args = InstallArgs {
-            project_dir: temp.path().to_path_buf(),
-            quiet: true,
-            ..Default::default()
-        };
-
-        run(args).unwrap();
-
-        assert!(temp.path().join("atlas_modules").exists());
-    }
-
-    #[test]
-    fn test_install_empty_deps() {
+    fn test_install_empty_deps_errors() {
         let temp = TempDir::new().unwrap();
         create_empty_manifest(temp.path());
 
@@ -368,41 +149,10 @@ version = "0.1.0"
             ..Default::default()
         };
 
-        run(args).unwrap();
-    }
-
-    #[test]
-    fn test_install_dry_run() {
-        let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
-
-        let args = InstallArgs {
-            project_dir: temp.path().to_path_buf(),
-            dry_run: true,
-            quiet: true,
-            ..Default::default()
-        };
-
-        run(args).unwrap();
-
-        // Should not create lockfile or modules dir
-        assert!(!temp.path().join("atlas.lock").exists());
-        assert!(!temp.path().join("atlas_modules").exists());
-    }
-
-    #[test]
-    fn test_install_production_only() {
-        let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
-
-        let args = InstallArgs {
-            project_dir: temp.path().to_path_buf(),
-            production: true,
-            quiet: true,
-            ..Default::default()
-        };
-
-        run(args).unwrap();
+        let err = run(args).unwrap_err();
+        assert!(err
+            .to_string()
+            .contains("Package registry not yet implemented"));
     }
 
     #[test]
@@ -415,49 +165,5 @@ version = "0.1.0"
         };
 
         assert!(run(args).is_err());
-    }
-
-    #[test]
-    fn test_install_stats_default() {
-        let stats = InstallStats::default();
-        assert_eq!(stats.resolved, 0);
-        assert_eq!(stats.downloaded, 0);
-        assert_eq!(stats.cached, 0);
-        assert_eq!(stats.failed, 0);
-    }
-
-    #[test]
-    fn test_print_summary_format() {
-        // Just ensure it doesn't panic
-        let stats = InstallStats {
-            resolved: 5,
-            downloaded: 3,
-            cached: 2,
-            failed: 0,
-        };
-        print_summary(&stats, false);
-    }
-
-    #[test]
-    fn test_force_reinstall() {
-        let temp = TempDir::new().unwrap();
-        create_test_manifest(temp.path());
-
-        // First install
-        let args1 = InstallArgs {
-            project_dir: temp.path().to_path_buf(),
-            quiet: true,
-            ..Default::default()
-        };
-        run(args1).unwrap();
-
-        // Force reinstall
-        let args2 = InstallArgs {
-            project_dir: temp.path().to_path_buf(),
-            force: true,
-            quiet: true,
-            ..Default::default()
-        };
-        run(args2).unwrap();
     }
 }
