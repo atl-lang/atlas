@@ -75,6 +75,26 @@ fn test_end_to_end_warning_pipeline() {
     assert!(ok2);
 }
 
+#[test]
+fn test_diagnostic_snippet_populated_from_source() {
+    let source = "let x = 1;\nlet y = z;\n";
+    let mut lexer = Lexer::new(source).with_file("snippet.atlas");
+    let (tokens, diags) = lexer.tokenize();
+    assert!(diags.is_empty());
+
+    let z_token = tokens
+        .iter()
+        .find(|token| token.lexeme == "z")
+        .expect("expected identifier token for z");
+
+    let diag = Diagnostic::error_with_code("AT0002", "Undefined symbol", z_token.span);
+
+    assert_eq!(diag.file, "snippet.atlas");
+    assert_eq!(diag.line, 2);
+    assert_eq!(diag.column, 9);
+    assert_eq!(diag.snippet, "let y = z;");
+}
+
 // ============================================================
 // 30. Formatter Check Mode Integration
 // ============================================================

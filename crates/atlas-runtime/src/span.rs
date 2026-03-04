@@ -144,6 +144,11 @@ struct FileTable {
     paths: Vec<Arc<str>>,
 }
 
+#[derive(Debug)]
+struct SourceTable {
+    sources: HashMap<FileId, Arc<str>>,
+}
+
 fn file_table() -> &'static Mutex<FileTable> {
     static TABLE: OnceLock<Mutex<FileTable>> = OnceLock::new();
     TABLE.get_or_init(|| {
@@ -152,6 +157,15 @@ fn file_table() -> &'static Mutex<FileTable> {
         ids.insert(unknown.clone(), 0);
         let paths = vec![unknown];
         Mutex::new(FileTable { ids, paths })
+    })
+}
+
+fn source_table() -> &'static Mutex<SourceTable> {
+    static TABLE: OnceLock<Mutex<SourceTable>> = OnceLock::new();
+    TABLE.get_or_init(|| {
+        Mutex::new(SourceTable {
+            sources: HashMap::new(),
+        })
     })
 }
 
@@ -192,4 +206,14 @@ pub fn file_path(file: FileId) -> Arc<str> {
         .get(file as usize)
         .cloned()
         .unwrap_or_else(|| table.paths[0].clone())
+}
+
+pub fn register_source(file: FileId, source: impl Into<Arc<str>>) {
+    let mut table = source_table().lock().expect("source table lock poisoned");
+    table.sources.insert(file, source.into());
+}
+
+pub fn source_for_file(file: FileId) -> Option<Arc<str>> {
+    let table = source_table().lock().expect("source table lock poisoned");
+    table.sources.get(&file).cloned()
 }

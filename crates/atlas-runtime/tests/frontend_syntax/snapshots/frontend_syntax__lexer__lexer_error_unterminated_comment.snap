@@ -8,7 +8,7 @@ expression: diagnostics
   message: Unterminated multi-line comment
   file: "<input>"
   line: 3
-  column: 61
+  column: 11
   length: 43
   snippet: /* This comment never closes
   label: comment starts here

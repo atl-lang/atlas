@@ -8,7 +8,7 @@ pub mod formatter;
 pub mod normalizer;
 pub mod warnings;
 
-use crate::span::Span;
+use crate::span::{source_for_file, Span};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -108,16 +108,18 @@ impl Diagnostic {
         message: impl Into<String>,
         span: Span,
     ) -> Self {
+        let (line, column, snippet) =
+            source_context_for_span(span).unwrap_or((1, span.start + 1, String::new()));
         Self {
             diag_version: DIAG_VERSION,
             level: DiagnosticLevel::Error,
             code: code.into(),
             message: message.into(),
             file: span.file().to_string(),
-            line: 1,
-            column: span.start + 1,
+            line,
+            column,
             length: span.end.saturating_sub(span.start),
-            snippet: "".to_string(),
+            snippet,
             label: "".to_string(),
             notes: Vec::new(),
             related: Vec::new(),
@@ -132,16 +134,18 @@ impl Diagnostic {
         message: impl Into<String>,
         span: Span,
     ) -> Self {
+        let (line, column, snippet) =
+            source_context_for_span(span).unwrap_or((1, span.start + 1, String::new()));
         Self {
             diag_version: DIAG_VERSION,
             level: DiagnosticLevel::Warning,
             code: code.into(),
             message: message.into(),
             file: span.file().to_string(),
-            line: 1,
-            column: span.start + 1,
+            line,
+            column,
             length: span.end.saturating_sub(span.start),
-            snippet: String::new(),
+            snippet,
             label: String::new(),
             notes: Vec::new(),
             related: Vec::new(),
@@ -299,6 +303,15 @@ impl Diagnostic {
     pub fn to_json_compact(&self) -> Result<String, serde_json::Error> {
         serde_json::to_string(self)
     }
+}
+
+fn source_context_for_span(span: Span) -> Option<(usize, usize, String)> {
+    let source = source_for_file(span.file)?;
+    let (line, column) =
+        crate::diagnostic::formatter::offset_to_line_col(source.as_ref(), span.start);
+    let snippet =
+        crate::diagnostic::formatter::extract_snippet(source.as_ref(), line).unwrap_or_default();
+    Some((line, column, snippet))
 }
 
 /// Sort diagnostics by level (errors first), then by location

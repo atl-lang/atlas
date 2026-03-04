@@ -3,7 +3,7 @@
 //! The lexer converts Atlas source code into a stream of tokens with accurate span information.
 
 use crate::diagnostic::Diagnostic;
-use crate::span::{intern_file, FileId, Span};
+use crate::span::{intern_file, register_source, FileId, Span};
 use crate::token::{Token, TokenKind};
 use std::collections::VecDeque;
 
@@ -48,9 +48,11 @@ impl Lexer {
     pub fn new(source: impl Into<String>) -> Self {
         let source = source.into();
         let chars: Vec<char> = source.chars().collect();
+        let file = intern_file("<input>");
+        register_source(file, source.clone());
         Self {
             source,
-            file: intern_file("<input>"),
+            file,
             chars,
             current: 0,
             line: 1,
@@ -69,7 +71,9 @@ impl Lexer {
 
     /// Set the source file path for spans emitted by this lexer
     pub fn with_file(mut self, file: impl AsRef<str>) -> Self {
-        self.file = intern_file(file);
+        let file = intern_file(file.as_ref());
+        self.file = file;
+        register_source(file, self.source.clone());
         self
     }
 

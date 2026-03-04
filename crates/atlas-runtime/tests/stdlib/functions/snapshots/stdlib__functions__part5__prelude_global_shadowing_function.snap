@@ -7,9 +7,9 @@ expression: diagnostics
   code: AT1012
   message: "Cannot shadow prelude builtin 'print' in global scope"
   file: "<input>"
-  line: 1
-  column: 69
+  line: 2
+  column: 4
   length: 5
-  snippet: ""
+  snippet: "fn print() -> void {}"
   label: shadows prelude builtin
   help: Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.

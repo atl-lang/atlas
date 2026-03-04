@@ -8,7 +8,7 @@ expression: diagnostics
   message: "Invalid escape sequence '\\p'"
   file: "<input>"
   line: 2
-  column: 54
+  column: 12
   length: 4
   snippet: "let path = \"C:\\path\\to\\file\";"
   label: lexer error

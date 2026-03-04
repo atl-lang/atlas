@@ -8,7 +8,7 @@ expression: diagnostics
   message: "Unexpected character '@'"
   file: "<input>"
   line: 2
-  column: 51
+  column: 11
   length: 1
   snippet: let x = 5 @ 3;
   label: lexer error
@@ -18,7 +18,7 @@ expression: diagnostics
   message: "Unexpected character '$'"
   file: "<input>"
   line: 3
-  column: 64
+  column: 9
   length: 1
   snippet: let y = $100;
   label: lexer error
@@ -28,7 +28,7 @@ expression: diagnostics
   message: "Unexpected character '#'"
   file: "<input>"
   line: 4
-  column: 78
+  column: 9
   length: 1
   snippet: "let z = #tag;"
   label: lexer error
