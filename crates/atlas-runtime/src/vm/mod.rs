@@ -258,6 +258,10 @@ impl VM {
                 let symbol_name = extern_decl.symbol.as_ref().unwrap_or(&extern_decl.name);
 
                 // Look up the function symbol
+                // SAFETY: The library was loaded successfully and remains cached in the loader.
+                // `lookup_symbol` requires the symbol to exist and have the expected type.
+                // Preconditions: `extern_decl.library` is trusted and stays loaded for the
+                // lifetime of the returned symbol pointer.
                 let fn_ptr = unsafe {
                     self.library_loader
                         .lookup_symbol::<*const ()>(&extern_decl.library, symbol_name)
@@ -280,6 +284,10 @@ impl VM {
                 let return_type = convert_extern_type_annotation(&extern_decl.return_type);
 
                 // Create ExternFunction
+                // SAFETY: `fn_ptr` came from a symbol lookup in the loaded library.
+                // We only construct an `ExternFunction` with the exact parameter/return
+                // types declared in the AST, and the library remains loaded while the
+                // VM holds this function.
                 let extern_fn = unsafe { ExternFunction::new(*fn_ptr, param_types, return_type) };
 
                 // Store the extern function
@@ -1091,6 +1099,10 @@ impl VM {
                                 args.reverse();
                                 self.pop(); // Pop function value
 
+                                // SAFETY: `extern_fn` was constructed with a signature derived
+                                // from the AST extern declaration, and `args` is built from the
+                                // VM stack to match that arity. The library remains loaded for
+                                // the duration of the call.
                                 let result = unsafe { extern_fn.call(&args) }.map_err(|e| {
                                     RuntimeError::TypeError {
                                         msg: format!("FFI call error: {}", e),
@@ -1939,14 +1951,17 @@ impl VM {
     fn pop(&mut self) -> Value {
         #[cfg(debug_assertions)]
         self.value_origins.pop();
-        // SAFETY: VM invariants guarantee stack is non-empty when pop is called
+        // SAFETY: VM invariants guarantee the stack is non-empty when pop() is called.
+        // Preconditions: every opcode that calls pop() has already pushed its operands,
+        // and debug builds mirror this via value_origins.
         unsafe { self.stack.pop().unwrap_unchecked() }
     }
 
     #[inline(always)]
     fn peek(&self, distance: usize) -> &Value {
         // SAFETY: The compiler guarantees stack depth matches operand requirements.
-        // Each opcode that calls peek() is emitted only when sufficient values exist.
+        // Preconditions: each opcode that calls peek() is emitted only when sufficient
+        // values exist, and `distance` is within the current stack depth.
         unsafe { self.stack.get_unchecked(self.stack.len() - 1 - distance) }
     }
 
@@ -2067,8 +2082,8 @@ impl VM {
 
     #[inline(always)]
     fn current_frame(&self) -> &CallFrame {
-        // SAFETY: VM execution always pushes a frame before running, and frames
-        // are only popped when returning. The frames vec is never empty during execution.
+        // SAFETY: VM execution always pushes a frame before running, and frames are
+        // only popped when returning. The frames vec is never empty while executing.
         unsafe { self.frames.last().unwrap_unchecked() }
     }
 

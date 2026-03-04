@@ -208,6 +208,9 @@ mod tests {
         assert!(!compiled.code_ptr.is_null());
         assert_eq!(backend.compiled_count(), 1);
 
+        // SAFETY: `compiled` was produced by the backend just above and the
+        // generated code expects no arguments. The code pointer remains valid
+        // for the duration of this test call.
         let result = unsafe { compiled.call_no_args() };
         assert_eq!(result, 42.0);
     }
@@ -240,6 +243,9 @@ mod tests {
         builder.finalize();
 
         let compiled = backend.compile(func).unwrap();
+        // SAFETY: `compiled` was produced by the backend just above and the
+        // generated code expects exactly two f64 arguments. The code pointer
+        // remains valid for the duration of this test call.
         let result = unsafe { compiled.call_2args(10.0, 32.0) };
         assert_eq!(result, 42.0);
     }

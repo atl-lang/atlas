@@ -75,6 +75,9 @@ impl BoundedBuffer {
 
     /// Get the buffer as a slice
     pub fn as_slice(&self) -> &[u8] {
+        // SAFETY: `ptr` was validated non-null in `new`, and the caller guarantees
+        // it points to `len` bytes of initialized memory that remain alive while
+        // this slice is used.
         unsafe { std::slice::from_raw_parts(self.ptr, self.len) }
     }
 

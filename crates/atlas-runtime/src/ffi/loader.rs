@@ -194,6 +194,9 @@ impl LibraryLoader {
         }
 
         // Load library
+        // SAFETY: Loading a dynamic library executes its initialization code.
+        // Preconditions: `path` is a trusted, existing library path resolved by
+        // `resolve_library_path`, and the caller accepts executing its code.
         let library =
             unsafe { Library::new(&path).map_err(|e| LoadError::LoadFailed(e.to_string()))? };
 

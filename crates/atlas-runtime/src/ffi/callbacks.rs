@@ -214,8 +214,9 @@ impl CallbackHandle {
 
 impl Drop for CallbackHandle {
     fn drop(&mut self) {
-        // SAFETY: context was created by Box::into_raw in create_callback.
-        // We must reclaim it to prevent memory leaks.
+        // SAFETY: `context` was created by Box::into_raw in create_callback and
+        // is either null or a valid, uniquely-owned `CallbackClosure`.
+        // Preconditions: the pointer has not been freed elsewhere and is properly aligned.
         if !self.context.is_null() {
             unsafe {
                 let _ = Box::from_raw(self.context as *mut CallbackClosure);
@@ -309,7 +310,8 @@ where
 
         // Unsupported signature - free the context we allocated
         _ => {
-            // SAFETY: We just allocated this above, must free it
+            // SAFETY: `context` was just allocated via Box::into_raw in this function.
+            // Preconditions: the pointer is valid, properly aligned, and not yet freed.
             unsafe {
                 let _ = Box::from_raw(context as *mut CallbackClosure);
             }

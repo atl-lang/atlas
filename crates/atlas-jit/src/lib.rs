@@ -201,6 +201,10 @@ impl JitEngine {
                 }
                 // Copy pointer before releasing borrow
                 let code_ptr = entry.code_ptr;
+                // SAFETY: `code_ptr` was produced by the JIT compiler and cached.
+                // The cache entry stores the expected arity and we check it above.
+                // Preconditions: `args.len()` matches the compiled signature and
+                // `code_ptr` remains valid for the duration of this call.
                 let result = unsafe { call_jit_function(code_ptr, args) };
                 self.jit_executions += 1;
                 return Some(result);
@@ -246,6 +250,9 @@ impl JitEngine {
         let compiled = self.backend.compile(func)?;
 
         // Execute with the correct calling convention
+        // SAFETY: `compiled.code_ptr` is the entry point produced by the JIT backend.
+        // Preconditions: `args.len()` matches the translated signature and the
+        // compiled code remains resident for this call.
         let result = unsafe { call_jit_function(compiled.code_ptr, args) };
 
         // Estimate code size based on bytecode length

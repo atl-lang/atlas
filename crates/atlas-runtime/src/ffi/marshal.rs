@@ -207,6 +207,9 @@ impl MarshalContext {
                     return Err(MarshalError::NullPointer);
                 }
 
+                // SAFETY: `ptr` is non-null and is required by the FFI contract to point to a
+                // valid, NUL-terminated C string for the duration of this call.
+                // Preconditions: the memory is properly aligned, initialized, and readable.
                 unsafe {
                     let c_str = CStr::from_ptr(*ptr);
                     let s = c_str.to_str().map_err(|e| {

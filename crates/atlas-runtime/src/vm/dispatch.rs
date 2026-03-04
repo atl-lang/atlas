@@ -91,6 +91,9 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
 /// Returns None for invalid opcode bytes.
 #[inline(always)]
 pub fn decode_opcode(byte: u8) -> Option<Opcode> {
+    // SAFETY: `byte` is an opcode byte from the bytecode stream.
+    // Preconditions: the compiler emits only valid opcodes and the table
+    // length matches the full opcode range, so the index is in-bounds.
     unsafe { *OPCODE_TABLE.get_unchecked(byte as usize) }
 }
 
