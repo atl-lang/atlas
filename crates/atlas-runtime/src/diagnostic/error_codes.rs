@@ -17,17 +17,23 @@
 // AT0xxx - Type and Runtime Errors
 pub const TYPE_MISMATCH: &str = "AT0001";
 pub const UNDEFINED_SYMBOL: &str = "AT0002";
+pub const INVALID_ARITY: &str = "AT0003";
+pub const INVALID_OPERATION: &str = "AT0004";
 pub const DIVIDE_BY_ZERO: &str = "AT0005";
 pub const ARRAY_OUT_OF_BOUNDS: &str = "AT0006";
 pub const INVALID_NUMERIC_RESULT: &str = "AT0007";
 pub const STDLIB_ARG_ERROR: &str = "AT0102";
 pub const STDLIB_VALUE_ERROR: &str = "AT0103";
+pub const UNHASHABLE_TYPE: &str = "AT0140";
 
 // AT03xx - Permission Errors
 pub const FILESYSTEM_PERMISSION_DENIED: &str = "AT0300";
 pub const NETWORK_PERMISSION_DENIED: &str = "AT0301";
 pub const PROCESS_PERMISSION_DENIED: &str = "AT0302";
 pub const ENVIRONMENT_PERMISSION_DENIED: &str = "AT0303";
+
+// AT04xx - I/O Errors
+pub const IO_ERROR: &str = "AT0400";
 
 // AT1xxx - Syntax Errors
 pub const SYNTAX_ERROR: &str = "AT1000";

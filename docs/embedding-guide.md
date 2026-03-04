@@ -168,8 +168,8 @@ fn extract_string(val: &Value) -> Option<String> {
 fn extract_array(val: &Value) -> Option<Vec<Value>> {
     match val {
         Value::Array(arr) => {
-            let guard = arr.lock().unwrap();
-            Some(guard.clone())
+            // Arrays use copy-on-write value semantics (Arc<Vec<Value>>)
+            Some(arr.as_slice().to_vec())
         }
         _ => None,
     }
@@ -503,14 +503,28 @@ fn load_config(path: &str) -> serde_json::Value {
 
     let result = rt.eval_file(path).unwrap();
 
-    // Convert Atlas object to JSON
+    // Convert Atlas HashMap to JSON
     match result {
-        Value::Object(obj) => {
-            let guard = obj.lock().unwrap();
-            // ... convert to serde_json::Value
-            serde_json::json!({})
+        Value::HashMap(map) => {
+            // Use the HashMap's iteration methods to build JSON
+            let mut obj = serde_json::Map::new();
+            for (key, val) in map.iter() {
+                // Convert each value recursively
+                obj.insert(key.clone(), value_to_json(val));
+            }
+            serde_json::Value::Object(obj)
         }
         _ => serde_json::json!({}),
+    }
+}
+
+fn value_to_json(val: &Value) -> serde_json::Value {
+    match val {
+        Value::Number(n) => serde_json::json!(n),
+        Value::String(s) => serde_json::json!(s.as_ref()),
+        Value::Bool(b) => serde_json::json!(b),
+        Value::Null => serde_json::Value::Null,
+        _ => serde_json::Value::Null,
     }
 }
 ```
