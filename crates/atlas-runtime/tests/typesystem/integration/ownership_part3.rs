@@ -196,6 +196,22 @@ fn test_copy_bound_satisfied_by_bool() {
 }
 
 #[test]
+fn test_copy_bound_rejects_hashmap() {
+    let diags = typecheck_source(
+        "
+        fn safe_copy<T: Copy>(x: T) -> T { return x; }
+        let m: HashMap = hashMapNew();
+        let v = safe_copy(m);
+    ",
+    );
+    let bound_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3037").collect();
+    assert!(
+        !bound_errors.is_empty(),
+        "HashMap does not implement Copy — AT3037 expected: {diags:?}"
+    );
+}
+
+#[test]
 fn test_unbounded_type_param_no_error() {
     // Unbounded type params must still work
     let diags = typecheck_source(

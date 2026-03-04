@@ -2530,8 +2530,9 @@ impl<'a> TypeChecker<'a> {
             let Some(actual) = inferer.get_substitution(&param.name) else {
                 continue;
             };
+            let actual = inferer.apply_substitutions(actual).normalized();
             for trait_name in &param.trait_bounds {
-                if !self.type_satisfies_trait_bound(actual, trait_name) {
+                if !self.type_satisfies_trait_bound(&actual, trait_name) {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             error_codes::TRAIT_BOUND_NOT_SATISFIED,
