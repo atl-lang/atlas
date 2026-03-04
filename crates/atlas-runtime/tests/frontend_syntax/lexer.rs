@@ -109,8 +109,6 @@ fn test_keywords(#[case] keyword: &str, #[case] expected_kind: TokenKind) {
 #[case("*=", TokenKind::StarEqual)]
 #[case("/=", TokenKind::SlashEqual)]
 #[case("%=", TokenKind::PercentEqual)]
-#[case("++", TokenKind::PlusPlus)]
-#[case("--", TokenKind::MinusMinus)]
 fn test_operators(#[case] operator: &str, #[case] expected_kind: TokenKind) {
     let (tokens, diagnostics) = lex(operator);
 

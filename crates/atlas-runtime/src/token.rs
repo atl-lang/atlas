@@ -157,12 +157,6 @@ pub enum TokenKind {
     /// `%=` (modulo and assign)
     PercentEqual,
 
-    // Increment/decrement operators
-    /// `++` (increment)
-    PlusPlus,
-    /// `--` (decrement)
-    MinusMinus,
-
     // Punctuation
     /// `=` (assignment)
     Equal,
@@ -319,8 +313,6 @@ impl TokenKind {
             TokenKind::StarEqual => "*=",
             TokenKind::SlashEqual => "/=",
             TokenKind::PercentEqual => "%=",
-            TokenKind::PlusPlus => "++",
-            TokenKind::MinusMinus => "--",
             TokenKind::Equal => "=",
             TokenKind::LeftParen => "(",
             TokenKind::RightParen => ")",

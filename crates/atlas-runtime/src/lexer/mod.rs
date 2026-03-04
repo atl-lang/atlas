@@ -179,18 +179,14 @@ impl Lexer {
 
             // Operators with potential compound forms
             '+' => {
-                if self.match_char('+') {
-                    self.make_token(TokenKind::PlusPlus, "++")
-                } else if self.match_char('=') {
+                if self.match_char('=') {
                     self.make_token(TokenKind::PlusEqual, "+=")
                 } else {
                     self.make_token(TokenKind::Plus, "+")
                 }
             }
             '-' => {
-                if self.match_char('-') {
-                    self.make_token(TokenKind::MinusMinus, "--")
-                } else if self.match_char('=') {
+                if self.match_char('=') {
                     self.make_token(TokenKind::MinusEqual, "-=")
                 } else if self.match_char('>') {
                     self.make_token(TokenKind::Arrow, "->")

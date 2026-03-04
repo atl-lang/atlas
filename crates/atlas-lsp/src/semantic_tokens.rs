@@ -239,8 +239,6 @@ fn classify_token(
         | TokenKind::StarEqual
         | TokenKind::SlashEqual
         | TokenKind::PercentEqual
-        | TokenKind::PlusPlus
-        | TokenKind::MinusMinus
         | TokenKind::Equal
         | TokenKind::Arrow
         | TokenKind::FatArrow
