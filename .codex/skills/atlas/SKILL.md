@@ -10,6 +10,28 @@ You are working on Atlas, an AI-first programming language compiler written in R
 ## Mission
 Make AI code generation effortless and reliable. Every design decision optimized for LLMs.
 
+## Atlas Vision (NEVER VIOLATE)
+
+**AI-First:** If it's hard for AI to generate, it's wrong. Atlas exists to make AI code generation effortless.
+
+**No Versions, No Deferrals:** There is no "out of scope", no "future version", no "roadmap". If you're given a task, DO IT NOW. The only scope is: does the spec support it?
+
+**NEVER SAY:**
+- "This is outside the scope of v0.X"
+- "This should be deferred to a future version"
+- "This is a v0.4 feature"
+- "The roadmap doesn't include this"
+- "This isn't planned yet"
+
+**ALWAYS DO:**
+- Implement what's asked
+- If spec is unclear, implement sensibly and note it
+- If truly impossible (missing language feature), explain WHY and what would unblock it
+
+**Every component is in scope:** LSP, JIT, package manager, runtime, VM - ALL OF IT. No excuses.
+
+**Spec version notes are informational only.** If spec says "v0.4 feature", that's documentation of when it was designed - NOT permission to defer. If you're asked to implement it, implement it.
+
 ## Codebase Structure
 ```
 crates/
@@ -259,3 +281,6 @@ Do NOT stop for:
 - Skip parity (interpreter must match VM)
 - Ignore test failures
 - Use unimplemented!() or todo!()
+- Say "out of scope" or "future version" or "not in roadmap"
+- Defer work for any reason
+- Refuse to implement because "it's complex"
