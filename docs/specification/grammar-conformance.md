@@ -1,10 +1,12 @@
 # Grammar Conformance Mapping
 
-**Version:** 0.1
+**Version:** 0.3
 **Status:** Complete
-**Date:** 2026-02-12
+**Date:** 2026-03-03
 
-This document maps Atlas EBNF grammar rules from `Atlas-SPEC.md` to their corresponding parser implementation functions in the `crates/atlas-runtime/src/parser/` module.
+This document maps Atlas EBNF grammar rules from v0.3 parser implementation to their corresponding parser implementation functions in the `crates/atlas-runtime/src/parser/` module.
+
+> **Important:** This document reflects v0.3 grammar. See `/docs/specification/syntax.md` for v0.3 syntax changes and migration guide from v0.2.
 
 ---
 
@@ -39,15 +41,18 @@ This document maps Atlas EBNF grammar rules from `Atlas-SPEC.md` to their corres
 
 | Grammar Rule | Parser Function | Status | Notes |
 |-------------|----------------|--------|-------|
-| `VarDecl ::= ("let" \| "var") Identifier (":" TypeRef)? "=" Expr ";"` | `Parser::parse_var_decl()` | ✅ | Complete variable declaration |
+| `VarDecl ::= "let" ["mut"] Identifier (":" TypeRef)? "=" Expr ";"` | `Parser::parse_var_decl()` | ✅ | Variable declaration (v0.3) |
 
 **Test Coverage:**
 - ✅ `let` declaration (immutable)
-- ✅ `var` declaration (mutable)
+- ✅ `let mut` declaration (mutable)
 - ✅ With type annotation
 - ✅ Without type annotation
 - ✅ Error: Missing semicolon
 - ✅ Error: Missing initializer
+
+**Removed (v0.2):**
+- ❌ `var` keyword — use `let mut` instead
 
 ---
 
@@ -73,7 +78,7 @@ This document maps Atlas EBNF grammar rules from `Atlas-SPEC.md` to their corres
 |-------------|----------------|--------|-------|
 | `IfStmt ::= "if" "(" Expr ")" Block ("else" Block)?` | `Parser::parse_if_stmt()` | ✅ | If with optional else |
 | `WhileStmt ::= "while" "(" Expr ")" Block` | `Parser::parse_while_stmt()` | ✅ | While loops |
-| `ForStmt ::= "for" "(" (VarDecl \| Expr)? ";" Expr? ";" Expr? ")" Block` | `Parser::parse_for_stmt()` | ✅ | C-style for loops |
+| `ForInStmt ::= "for" Identifier "in" Expr Block` | `Parser::parse_for_in_stmt()` | ✅ | For-in loops (v0.3) |
 | `ReturnStmt ::= "return" Expr? ";"` | `Parser::parse_return_stmt()` | ✅ | Return with optional value |
 | `BreakStmt ::= "break" ";"` | `Parser::parse_break_stmt()` | ✅ | Loop break |
 | `ContinueStmt ::= "continue" ";"` | `Parser::parse_continue_stmt()` | ✅ | Loop continue |
@@ -82,13 +87,15 @@ This document maps Atlas EBNF grammar rules from `Atlas-SPEC.md` to their corres
 - ✅ If without else
 - ✅ If with else
 - ✅ While loop
-- ✅ For loop with all clauses
-- ✅ For loop with assignment in step (special case)
+- ✅ For-in loops with array iteration
 - ✅ Return with value
 - ✅ Return without value
 - ✅ Break statement
 - ✅ Continue statement
 - ✅ Error: Missing conditionals, parentheses, blocks
+
+**Removed (v0.2):**
+- ❌ C-style `for (init; cond; step)` — use `for-in` loops or `while` instead
 
 ---
 
@@ -210,34 +217,39 @@ Unary operators are **right-to-left associative**:
 
 ## Keywords
 
-### Implemented Keywords
-
-All keywords from Atlas-SPEC are recognized and handled:
+### Implemented Keywords (v0.3)
 
 | Keyword | Usage | Parser Function | Status |
 |---------|-------|----------------|--------|
-| `fn` | Function declaration | `parse_function()` | ✅ |
-| `let` | Immutable variable | `parse_var_decl()` | ✅ |
-| `var` | Mutable variable | `parse_var_decl()` | ✅ |
+| `fn` | Function declaration & anonymous functions | `parse_function()`, `parse_anon_fn()` | ✅ |
+| `let` | Variable declaration | `parse_var_decl()` | ✅ |
+| `mut` | Mutable modifier | `parse_var_decl()` | ✅ |
 | `if` | Conditional | `parse_if_stmt()` | ✅ |
 | `else` | Conditional alternative | `parse_if_stmt()` | ✅ |
 | `while` | Loop | `parse_while_stmt()` | ✅ |
-| `for` | C-style loop | `parse_for_stmt()` | ✅ |
+| `for` | For-in loop | `parse_for_in_stmt()` | ✅ |
+| `in` | Loop iterator keyword | `parse_for_in_stmt()` | ✅ |
 | `return` | Return from function | `parse_return_stmt()` | ✅ |
 | `break` | Exit loop | `parse_break_stmt()` | ✅ |
 | `continue` | Next loop iteration | `parse_continue_stmt()` | ✅ |
+| `match` | Pattern matching | `parse_match_expr()` | ✅ |
+| `import` | Module imports (top-level) | `parse_import()` | ✅ |
+| `export` | Module exports (top-level) | `parse_export()` | ✅ |
+| `struct` | Struct declaration (top-level) | `parse_struct()` | ✅ |
+| `enum` | Enum declaration (top-level) | `parse_enum()` | ✅ |
+| `type` | Type alias (top-level) | `parse_type_alias()` | ✅ |
+| `trait` | Trait declaration (top-level) | `parse_trait()` | ✅ |
+| `impl` | Impl block (top-level) | `parse_impl()` | ✅ |
+| `record` | Record literal | `parse_record_literal()` | ✅ |
 | `true` | Boolean literal | `parse_primary()` | ✅ |
 | `false` | Boolean literal | `parse_primary()` | ✅ |
 | `null` | Null literal | `parse_primary()` | ✅ |
 
-### Previously Reserved Keywords
+### Removed Keywords (v0.2)
 
-These keywords were reserved and are now implemented:
-
-| Keyword | Status | Notes |
-|---------|--------|-------|
-| `import` | ✅ Implemented | Module imports |
-| `match` | ✅ Implemented | Pattern matching |
+| Keyword | Replacement | Reason |
+|---------|------------|--------|
+| `var` | `let mut` | Simplified variable declaration syntax |
 
 ---
 
@@ -308,17 +320,20 @@ Assignments can target:
 - ✅ Error recovery tests
 - ✅ Reserved keyword tests
 
-### Implemented Features
+### Implemented Features (v0.3)
 
 1. **Nested function declarations:** Functions can be declared inside function bodies and blocks ✅
 2. **Generic type parameters:** Functions support `<T>` syntax ✅
 3. **Pattern matching:** `match` expressions with type narrowing ✅
-4. **Module system:** `import`/`export` statements ✅
+4. **Module system:** `import`/`export` statements (top-level) ✅
+5. **Anonymous functions:** Full `fn(...) { ... }` syntax with closure capture ✅
+6. **Type declarations:** `struct`, `enum`, `type`, `trait`, `impl` (top-level) ✅
+7. **Record literals:** `record { key: value }` syntax ✅
+8. **For-in loops:** `for item in array { ... }` syntax ✅
 
-### Current Limitations
+### Current Limitations (v0.3)
 
-1. **No closure capture:** Nested functions cannot capture outer scope variables
-2. **No anonymous functions:** All functions must be named
+None at the core grammar level. All major v0.3 features are implemented.
 
 See `ROADMAP.md` for planned enhancements.
 
@@ -372,5 +387,49 @@ Diagnostic {
 
 ---
 
+## v0.3 Breaking Changes from v0.2
+
+This section documents the major grammar changes from v0.2 to v0.3:
+
+| Feature | v0.2 | v0.3 | Status |
+|---------|------|------|--------|
+| Mutable variables | `var x = 5;` | `let mut x = 5;` | ✅ Implemented |
+| C-style for loops | `for (let i = 0; i < 10; i++)` | ❌ Removed | Use `while` or `for-in` |
+| Increment/decrement | `i++`, `++i`, `i--`, `--i` | ❌ Removed | Use `+=` or `-=` |
+| Anonymous functions | `(x) => x * 2` (arrow) | `fn(x: number) { x * 2 }` (fn only) | ✅ Implemented |
+| Object literals | `{ key: value }` | `record { key: value }` | ✅ Implemented |
+| If statement | `if condition {}` (optional parens) | `if (condition) {}` (required parens) | ✅ Implemented |
+| Match arms | `pattern => expr` (no comma) | `pattern => expr,` (commas required) | ✅ Implemented |
+| Closure capture | ❌ Not supported | ✅ Supported (snapshot semantics) | ✅ Implemented |
+| Type declarations | ❌ Not available | `struct`, `enum`, `type` | ✅ Implemented |
+| Record literals | ❌ N/A | `record { ... }` | ✅ Implemented |
+
+---
+
+## Grammar Compliance Checklist
+
+### v0.3 Requirements
+
+- ✅ Only `for-in` loops (C-style removed)
+- ✅ Only `let` and `let mut` (no `var`)
+- ✅ Anonymous functions with `fn` syntax (no arrow syntax)
+- ✅ `record` keyword for object literals
+- ✅ `if` requires parentheses
+- ✅ `match` arms separated by commas
+- ✅ Top-level type declarations (`struct`, `enum`, `type`)
+- ✅ Trait and impl blocks
+- ✅ Closure capture with snapshot semantics
+
+### Test Coverage (v0.3)
+
+- ✅ 54+ valid parser tests
+- ✅ 37+ error recovery tests
+- ✅ Operator precedence tests
+- ✅ For-in loop tests
+- ✅ Record literal tests
+- ✅ Anonymous function tests with closure capture
+
+---
+
 **Document Approved:** ✅
-**Implementation Status:** Phase 05 Complete
+**Implementation Status:** v0.3 Complete

@@ -1,18 +1,18 @@
 # Atlas Syntax Specification
 
 **Purpose:** Define Atlas grammar, keywords, and syntax rules.
-**Status:** Living document — reflects current v0.2 implementation.
+**Status:** Living document — reflects current v0.3 implementation.
 
-> **v0.3 Breaking Changes:** This document describes v0.2 syntax. Several constructs
-> documented here are being REMOVED in v0.3. Before generating Atlas code, check
-> `/docs/language-design/` for the authoritative grammar decisions:
-> - `var` keyword → REMOVED (use `let mut`)
-> - `++`/`--` operators → REMOVED (use `+= 1`)
-> - C-style `for(;;)` → REMOVED (use `for-in` or `while`)
-> - Arrow functions `() => expr` → REMOVED (use `fn() {}`)
-> - Object literals `{ key: val }` → Changed to `record { key: val }`
->
-> **Rule:** When this spec and `/docs/language-design/` conflict, design docs win.
+> **v0.3 Current Grammar:** This document describes v0.3 syntax. The following changes from
+> v0.2 have been implemented:
+> - `var` keyword REMOVED — use `let` (immutable) or `let mut` (mutable)
+> - `++`/`--` operators REMOVED — use `+= 1` or `-= 1`
+> - C-style `for(init; cond; step)` REMOVED — use `for-in` loops or `while`
+> - Arrow functions `() => expr` REMOVED — use `fn(...) { ... }` syntax
+> - Object literals now require `record` keyword: `record { key: val }`
+> - `if` requires parentheses: `if (condition) { ... }` (no bare `if condition`)
+> - `match` arms require commas between cases
+> - Anonymous functions and closure capture fully implemented
 
 ---
 
@@ -47,9 +47,12 @@
 ## Keywords
 
 ### Keywords
-`let`, `mut`, `var`, `fn`, `if`, `else`, `while`, `for`, `return`, `break`, `continue`, `true`, `false`, `null`, `match`, `import`, `export`, `from`, `as`, `trait`, `impl`
+`let`, `mut`, `fn`, `if`, `else`, `while`, `for`, `in`, `return`, `break`, `continue`, `true`, `false`, `null`, `match`, `import`, `export`, `from`, `as`, `trait`, `impl`, `struct`, `enum`, `type`, `record`
 
 **Note:** Keywords cannot be used as identifiers
+
+**Removed Keywords (v0.2):**
+- `var` — Use `let mut` instead for mutable variables
 
 ---
 
@@ -127,6 +130,41 @@ null
 - All elements must have the same type
 - `[]` not allowed without type context (no implicit empty array)
 - Trailing commas not allowed
+- **Note:** Empty array workaround if type context is unavailable: `slice([""], 0, 0)` creates an empty array
+
+### Record Literals
+
+Record literals represent anonymous objects with named fields.
+
+```atlas
+// Basic record
+let user = record { name: "Alice", age: 30 };
+
+// Empty record
+let empty = record { };
+
+// Nested records
+let data = record {
+    user: record { name: "Bob", id: 1 },
+    status: "active"
+};
+```
+
+**Rules:**
+- Use the `record` keyword — bare `{ }` is a block, not a record
+- Keys are identifiers, not quoted strings
+- Values can be any expression
+- Records are values; they are not assignable to or mutated directly
+- To update a record, reconstruct it with new values
+
+**Common Mistake:**
+```atlas
+// ❌ WRONG: bare braces parse as a block
+let obj = { name: "Alice" };  // Syntax error or unexpected behavior
+
+// ✅ CORRECT: use record keyword
+let obj = record { name: "Alice" };
+```
 
 ---
 
@@ -194,19 +232,25 @@ a || b  // Logical OR (short-circuits)
 
 ### Increment/Decrement
 
-**Note:** These are **statements only**, not expressions
+**Note:** Increment/decrement operators (`++`, `--`) are **not supported** in v0.3.
+
+Use compound assignment instead:
 
 ```atlas
-++var   // Pre-increment (increments, returns new value)
---var   // Pre-decrement (decrements, returns new value)
-var++   // Post-increment (increments, returns old value)
-var--   // Post-decrement (decrements, returns old value)
+// Instead of: i++
+i = i + 1;
+
+// Instead of: ++i
+i = i + 1;
+
+// With compound operators
+i += 1;    // Equivalent to i = i + 1
+j -= 1;    // Equivalent to j = j - 1
 ```
 
 **Rules:**
-- Only valid as standalone statements
-- Cannot be used within expressions
-- Variable must be mutable (`var`, not `let`)
+- Use `+=` and `-=` for increment/decrement
+- Variable must be mutable (`let mut`)
 
 ### Grouping
 
@@ -345,23 +389,20 @@ data["user"]["name"] // Chained indexing
 // Immutable (default)
 let x: number = 42;
 
-// Mutable (Rust-style)
+// Mutable (required for mutations)
 let mut y: number = 10;
 
-// Mutable (legacy syntax, deprecated)
-var z: string = "hello";
-
-// Type inference works with all syntaxes
+// Type inference works with both syntaxes
 let a = 3.14;      // Immutable, inferred as number
 let mut b = "hi";  // Mutable, inferred as string
 ```
 
 **Rules:**
 - `let` declares an immutable variable
-- `let mut` declares a mutable variable (recommended)
-- `var` declares a mutable variable (deprecated, use `let mut` instead)
+- `let mut` declares a mutable variable
 - Type can be inferred from initializer
 - Initializer required
+- `var` keyword is **not supported** — use `let mut` for mutable variables
 
 ### Assignment
 
@@ -373,21 +414,12 @@ name = value;
 arr[i] = value;
 
 // Compound assignment (mutable variables only)
-var += expr;   // Addition
-var -= expr;   // Subtraction
-var *= expr;   // Multiplication
-var /= expr;   // Division
-var %= expr;   // Modulo
-```
-
-### Increment/Decrement Statements
-
-```atlas
-// Mutable variables only
-++var;   // Pre-increment
---var;   // Pre-decrement
-var++;   // Post-increment
-var--;   // Post-decrement
+let mut x = 10;
+x += 5;    // Addition
+x -= 2;    // Subtraction
+x *= 2;    // Multiplication
+x /= 4;    // Division
+x %= 3;    // Modulo
 ```
 
 ### Function Declaration
@@ -438,7 +470,8 @@ if (condition) {
 ```
 
 **Rules:**
-- Condition must be `bool`
+- Condition must be `bool` and **enclosed in parentheses**
+- Parentheses are **required** — `if condition {}` is a syntax error
 - Braces required (no single-statement if)
 
 ### While Loop
@@ -453,26 +486,33 @@ while (condition) {
 - Condition must be `bool`
 - Braces required
 
-### For Loop
+### For Loop (C-style)
+
+**Note:** C-style `for (init; condition; step)` loops are **not supported** in v0.3.
+
+Use `for-in` loops or `while` instead:
 
 ```atlas
-// Classic for loop
-for (let i = 0; i < 10; i = i + 1) {
+// ✅ Use for-in for iteration
+for item in items {
     // loop body
 }
 
-// With increment operator
-for (var i = 0; i < 10; i++) {
+// ✅ Use while for custom control flow
+let mut i = 0;
+while (i < 10) {
     // loop body
-}
-
-// All parts optional
-for (;;) {  // Infinite loop
-    break;
+    i += 1;
 }
 ```
 
-**Syntax:** `for (init; condition; step) { body }`
+**Previous v0.2 syntax (no longer supported):**
+```atlas
+// ❌ This does NOT work in v0.3
+for (let i = 0; i < 10; i++) {
+    // Syntax error
+}
+```
 
 ### For-In Loop
 
@@ -600,10 +640,11 @@ fn classify(n: number) -> string {
 ```
 
 **Rules:**
-- Match arms are evaluated top-to-bottom; first matching arm wins
+- Match arms must be **separated by commas**
 - All arms must return the same type
 - Wildcard `_` matches any value (use as last arm for exhaustiveness)
 - Guards (`if condition`) add extra conditions to patterns
+- When used as a statement, add a trailing semicolon: `match x { ... };`
 
 ---
 
@@ -791,7 +832,7 @@ fn        // Keywords reserved
 
 ## Anonymous Functions
 
-Anonymous functions (closures) are first-class expressions. Two forms are supported.
+Anonymous functions (closures) are first-class expressions. Only the `fn` syntax is supported.
 
 ### fn Expression
 
@@ -805,44 +846,25 @@ Example:
 ```atlas
 let double = fn(x: number) -> number { return x * 2; };
 double(5);  // → 10
-```
 
-### Arrow Expression
-
-```atlas
-( param-list ) => expression
-```
-
-Arrow functions use a single expression as the body (no braces, no `return`):
-
-```atlas
-let double = (x) => x * 2;
-double(5);  // → 10
-
-let add = (x, y) => x + y;
+let add = fn(x: number, y: number) { return x + y; };
 add(3, 4);  // → 7
 ```
 
-### Parameter List
+**Parameter types are required** — type inference on closure parameters is not supported.
 
-```
-param-list:
-    (empty)
-    param
-    param , param-list
+### Arrow Expression
 
-param (fn expression):
-    [ownership] identifier : type
+**Note:** Arrow function syntax `(x) => x * 2` is **not supported** in v0.3.
 
-param (arrow expression):
-    identifier                  -- type inferred
-```
-
-Ownership annotations (`own`, `borrow`, `shared`) are supported on fn expression params:
+Use `fn` syntax instead:
 
 ```atlas
-let f = fn(own x: number) -> number { return x; };
-let g = fn(borrow x: number) -> number { return x; };
+// ✅ Correct (v0.3)
+let double = fn(x: number) { return x * 2; };
+
+// ❌ Not supported (v0.2)
+let double = (x) => x * 2;
 ```
 
 ### Function Type Syntax
@@ -851,19 +873,18 @@ let g = fn(borrow x: number) -> number { return x; };
 ( type-list ) -> type
 ```
 
-Example: `(number, number) -> number` is a function taking two numbers and returning a number.
+Example: `(number, number) -> number` is a function type taking two numbers and returning a number.
 
 ### Closure Capture Semantics
 
 Closures capture outer variables at **creation time** (snapshot semantics):
 
 - `let` bindings (immutable, Copy types): captured by value
-- `var` bindings: snapshotted at closure creation — outer mutations after creation are not visible inside the closure
-- `borrow`-annotated parameters: **cannot** be captured into closures (AT3040 error)
+- `let mut` bindings: snapshotted at closure creation — outer mutations after creation are not visible inside the closure
 
 ```atlas
 fn run() -> number {
-    var x = 5;
+    let mut x = 5;
     let f = fn() -> number { return x; };
     x = 99;         // Mutation after creation
     return f();     // Returns 5, not 99 (snapshot at creation time)
@@ -872,12 +893,12 @@ fn run() -> number {
 
 ### Higher-Order Functions
 
-Anonymous functions and arrow functions work with all stdlib higher-order functions:
+Anonymous functions work with all stdlib higher-order functions:
 
 ```atlas
-let doubled = map([1, 2, 3], (x) => x * 2);        // [2, 4, 6]
-let evens   = filter([1, 2, 3, 4], (x) => x % 2 == 0);  // [2, 4]
-let sum     = reduce([1, 2, 3], (acc, x) => acc + x, 0); // 6
+let doubled = map([1, 2, 3], fn(x: number) { return x * 2; });        // [2, 4, 6]
+let evens   = filter([1, 2, 3, 4], fn(x: number) { return x % 2 == 0; });  // [2, 4]
+let sum     = reduce([1, 2, 3], fn(acc: number, x: number) { return acc + x; }, 0); // 6
 ```
 
 ---
@@ -934,3 +955,57 @@ Add an explicit annotation to resolve: `fn f(x: number) -> number { ... }`.
 - Semicolons required for statements in file mode
 - REPL mode allows semicolon omission for single expressions
 - Unicode identifiers not supported (ASCII only)
+
+---
+
+## v0.3 Breaking Changes Summary
+
+This section summarizes the most common migration issues from v0.2 to v0.3:
+
+### Variable Declaration
+
+| v0.2 | v0.3 | Reason |
+|------|------|--------|
+| `var x = 5;` | `let mut x = 5;` | `var` keyword removed; use `let mut` |
+| `let x = 5;` | `let x = 5;` | No change for immutable |
+
+### Loops
+
+| v0.2 | v0.3 | Reason |
+|------|------|--------|
+| `for (let i = 0; i < 10; i++)` | `let mut i = 0; while (i < 10) { ... i += 1; }` | C-style `for` removed |
+| `for (item in array)` | `for item in array { ... }` | Parentheses removed from for-in |
+
+### Anonymous Functions
+
+| v0.2 | v0.3 | Reason |
+|------|------|--------|
+| `let f = (x) => x * 2;` | `let f = fn(x: number) { return x * 2; };` | Arrow syntax removed; parameter types required |
+
+### Object Literals
+
+| v0.2 | v0.3 | Reason |
+|------|------|--------|
+| `let obj = { name: "Alice" };` | `let obj = record { name: "Alice" };` | `record` keyword required |
+
+### Increment/Decrement
+
+| v0.2 | v0.3 | Reason |
+|------|------|--------|
+| `i++;` | `i += 1;` | `++`/`--` operators removed |
+| `++i;` | `i += 1;` | `++`/`--` operators removed |
+
+### Key Rules
+
+1. **`if` requires parentheses:** `if (x > 5) { ... }` — bare conditions not allowed
+2. **`record` keyword required:** `record { ... }` for object literals, not `{ ... }`
+3. **Match arms need commas:** `match x { 1 => a, 2 => b, _ => c }`
+4. **`let mut` only:** All mutable variables declared with `let mut`, not `var`
+5. **For-in only:** Use `for item in array { ... }` or `while` loops
+6. **Function types required:** Closure parameters need explicit types: `fn(x: number)`
+
+### Important Library Notes
+
+- `hashMapPut(map, key, val)` returns a new map (copy-on-write) — reassign the result: `map = hashMapPut(map, key, val)`
+- Array concatenation with `+` is not supported — use `concat()` or `arrayPush()`
+- Empty array `[]` requires type context — use `slice([""], 0, 0)` as workaround
