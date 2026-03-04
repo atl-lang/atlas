@@ -926,13 +926,18 @@ impl Parser {
         while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
             arms.push(self.parse_match_arm()?);
 
-            // Arms are separated by commas, trailing comma is optional
-            if !self.check(TokenKind::RightBrace) {
-                self.consume(TokenKind::Comma, "Expected ',' after match arm")?;
-                // Allow trailing comma
+            if self.check(TokenKind::RightBrace) {
+                break;
+            }
+
+            // Arms are separated by commas or semicolons; trailing separator optional.
+            if self.match_token(TokenKind::Comma) || self.match_token(TokenKind::Semicolon) {
                 if self.check(TokenKind::RightBrace) {
                     break;
                 }
+            } else {
+                self.error("Expected ',' or ';' after match arm");
+                return Err(());
             }
         }
 

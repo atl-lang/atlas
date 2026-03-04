@@ -1,5 +1,5 @@
 ---
-source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
 expression: program
 ---
 items:
@@ -8,34 +8,34 @@ items:
         variable:
           name: i
           span:
-            start: 5
-            end: 6
+            start: 4
+            end: 5
         iterable:
           ArrayLiteral:
             elements:
               - Literal:
                   - Number: 0
-                  - start: 11
-                    end: 12
+                  - start: 10
+                    end: 11
               - Literal:
                   - Number: 1
-                  - start: 14
-                    end: 15
+                  - start: 13
+                    end: 14
               - Literal:
                   - Number: 2
-                  - start: 17
-                    end: 18
+                  - start: 16
+                    end: 17
               - Literal:
                   - Number: 3
-                  - start: 20
-                    end: 21
+                  - start: 19
+                    end: 20
               - Literal:
                   - Number: 4
-                  - start: 23
-                    end: 24
+                  - start: 22
+                    end: 23
             span:
-              start: 10
-              end: 25
+              start: 9
+              end: 24
         body:
           statements:
             - Expr:
@@ -43,15 +43,15 @@ items:
                   Identifier:
                     name: x
                     span:
-                      start: 29
-                      end: 30
+                      start: 27
+                      end: 28
                 span:
-                  start: 29
-                  end: 31
+                  start: 27
+                  end: 29
           tail_expr: ~
           span:
-            start: 27
-            end: 33
+            start: 25
+            end: 31
         span:
           start: 0
-          end: 33
+          end: 31

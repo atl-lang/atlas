@@ -1,5 +1,5 @@
 ---
-source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
 expression: program
 ---
 items:
@@ -26,22 +26,7 @@ items:
           span:
             start: 10
             end: 16
-        else_block:
-          statements:
-            - Expr:
-                expr:
-                  Identifier:
-                    name: y
-                    span:
-                      start: 24
-                      end: 25
-                span:
-                  start: 24
-                  end: 26
-          tail_expr: ~
-          span:
-            start: 22
-            end: 28
+        else_block: ~
         span:
           start: 0
-          end: 28
+          end: 16

@@ -1,31 +1,32 @@
 ---
-source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
 expression: program
 ---
 items:
   - Statement:
-      While:
+      If:
         cond:
           Literal:
             - Bool: true
-            - start: 6
-              end: 10
-        body:
+            - start: 3
+              end: 7
+        then_block:
           statements:
             - Expr:
                 expr:
                   Identifier:
                     name: x
                     span:
-                      start: 13
-                      end: 14
+                      start: 10
+                      end: 11
                 span:
-                  start: 13
-                  end: 15
+                  start: 10
+                  end: 12
           tail_expr: ~
           span:
-            start: 11
-            end: 17
+            start: 8
+            end: 14
+        else_block: ~
         span:
           start: 0
-          end: 17
+          end: 14

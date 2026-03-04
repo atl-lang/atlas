@@ -1,5 +1,5 @@
 ---
-source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
 expression: program
 ---
 items:
@@ -8,8 +8,8 @@ items:
         cond:
           Literal:
             - Bool: true
-            - start: 3
-              end: 7
+            - start: 4
+              end: 8
         then_block:
           statements:
             - Expr:
@@ -17,15 +17,15 @@ items:
                   Identifier:
                     name: x
                     span:
-                      start: 10
-                      end: 11
+                      start: 12
+                      end: 13
                 span:
-                  start: 10
-                  end: 12
+                  start: 12
+                  end: 14
           tail_expr: ~
           span:
-            start: 8
-            end: 14
+            start: 10
+            end: 16
         else_block:
           statements:
             - Expr:
@@ -33,15 +33,15 @@ items:
                   Identifier:
                     name: y
                     span:
-                      start: 22
-                      end: 23
+                      start: 24
+                      end: 25
                 span:
-                  start: 22
-                  end: 24
+                  start: 24
+                  end: 26
           tail_expr: ~
           span:
-            start: 20
-            end: 26
+            start: 22
+            end: 28
         span:
           start: 0
-          end: 26
+          end: 28

@@ -1,5 +1,5 @@
 ---
-source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
 expression: program
 ---
 items:

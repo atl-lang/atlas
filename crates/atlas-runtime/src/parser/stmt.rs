@@ -282,7 +282,7 @@ impl Parser {
         if has_parens {
             self.consume(
                 TokenKind::RightParen,
-                &format!("Expected ')' after {keyword} condition"),
+                &format!("Expected ')' after {keyword} condition (parentheses are optional)"),
             )?;
         }
         Ok(cond)

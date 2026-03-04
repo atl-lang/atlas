@@ -10,8 +10,8 @@
 > - C-style `for(init; cond; step)` REMOVED — use `for-in` loops or `while`
 > - Arrow functions `() => expr` REMOVED — use `fn(...) { ... }` syntax
 > - Object literals now require `record` keyword: `record { key: val }`
-> - `if` requires parentheses: `if (condition) { ... }` (no bare `if condition`)
-> - `match` arms require commas between cases
+> - `if` allows optional parentheses: `if (condition) { ... }` or `if condition { ... }`
+> - `match` arms are separated by commas or semicolons (trailing separator optional)
 > - Anonymous functions and closure capture fully implemented
 
 ---
@@ -498,7 +498,7 @@ if (condition) {
     // true branch
 }
 
-if (condition) {
+if condition {
     // true branch
 } else {
     // false branch
@@ -506,8 +506,8 @@ if (condition) {
 ```
 
 **Rules:**
-- Condition must be `bool` and **enclosed in parentheses**
-- Parentheses are **required** — `if condition {}` is a syntax error
+- Condition must be `bool`
+- Parentheses are optional (both `if (condition)` and `if condition` are valid)
 - Braces required (no single-statement if)
 
 ### While Loop
@@ -676,7 +676,7 @@ fn classify(n: number) -> string {
 ```
 
 **Rules:**
-- Match arms must be **separated by commas**
+- Match arms must be separated by **commas or semicolons** (trailing separator optional)
 - All arms must return the same type
 - Wildcard `_` matches any value (use as last arm for exhaustiveness)
 - Guards (`if condition`) add extra conditions to patterns
@@ -764,7 +764,8 @@ compound_assign_stmt = ident compound_op expr ";" ;
 compound_op    = "+=" | "-=" | "*=" | "/=" | "%=" ;
 increment_stmt = ( "++" ident | ident "++" ) ";" ;
 decrement_stmt = ( "--" ident | ident "--" ) ";" ;
-if_stmt        = "if" "(" expr ")" block [ "else" block ] ;
+if_stmt        = "if" "(" expr ")" block [ "else" block ]
+               | "if" expr block [ "else" block ] ;
 while_stmt     = "while" "(" expr ")" block ;
 for_stmt       = "for" "(" [ for_init ] ";" [ expr ] ";" [ for_step ] ")" block ;
 for_init       = var_decl_no_semi | assign_expr ;
@@ -796,7 +797,7 @@ primary        = number | string | "true" | "false" | "null" | ident
 
 (* Pattern matching *)
 match_expr     = "match" expr "{" match_arms "}" ;
-match_arms     = match_arm { "," match_arm } [ "," ] ;
+match_arms     = match_arm { ("," | ";") match_arm } [ "," | ";" ] ;
 match_arm      = pattern "=>" expr ;
 pattern        = literal_pattern | wildcard_pattern | variable_pattern
                | constructor_pattern | array_pattern ;
@@ -1037,9 +1038,9 @@ This section summarizes the most common migration issues from v0.2 to v0.3:
 
 ### Key Rules
 
-1. **`if` requires parentheses:** `if (x > 5) { ... }` — bare conditions not allowed
+1. **`if` allows optional parentheses:** `if (x > 5) { ... }` or `if x > 5 { ... }`
 2. **`record` keyword required:** `record { ... }` for object literals, not `{ ... }`
-3. **Match arms need commas:** `match x { 1 => a, 2 => b, _ => c }`
+3. **Match arms need separators:** `match x { 1 => a, 2 => b; _ => c }`
 4. **`let mut` only:** All mutable variables declared with `let mut`, not `var`
 5. **For-in only:** Use `for item in array { ... }` or `while` loops
 6. **Function types required:** Closure parameters need explicit types: `fn(x: number)`

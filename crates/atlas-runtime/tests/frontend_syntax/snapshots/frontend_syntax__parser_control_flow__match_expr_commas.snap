@@ -1,0 +1,71 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs
+expression: program
+---
+items:
+  - Statement:
+      VarDecl:
+        mutable: false
+        uses_deprecated_var: false
+        name:
+          name: r
+          span:
+            start: 4
+            end: 5
+        type_ref: ~
+        init:
+          Match:
+            scrutinee:
+              Identifier:
+                name: x
+                span:
+                  start: 14
+                  end: 15
+            arms:
+              - pattern:
+                  Literal:
+                    - Number: 1
+                    - start: 18
+                      end: 19
+                guard: ~
+                body:
+                  Literal:
+                    - String: one
+                    - start: 23
+                      end: 28
+                span:
+                  start: 18
+                  end: 28
+              - pattern:
+                  Literal:
+                    - Number: 2
+                    - start: 30
+                      end: 31
+                guard: ~
+                body:
+                  Literal:
+                    - String: two
+                    - start: 35
+                      end: 40
+                span:
+                  start: 30
+                  end: 40
+              - pattern:
+                  Wildcard:
+                    start: 42
+                    end: 43
+                guard: ~
+                body:
+                  Literal:
+                    - String: other
+                    - start: 47
+                      end: 54
+                span:
+                  start: 42
+                  end: 54
+            span:
+              start: 8
+              end: 56
+        span:
+          start: 0
+          end: 57
