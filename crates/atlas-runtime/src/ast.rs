@@ -11,7 +11,7 @@ use std::cell::Cell;
 ///
 /// This version number is included in JSON dumps to ensure compatibility.
 /// Increment when making breaking changes to the AST structure.
-pub const AST_VERSION: u32 = 2;
+pub const AST_VERSION: u32 = 3;
 
 /// Top-level program containing all items
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -558,6 +558,13 @@ pub enum Expr {
     ObjectLiteral(ObjectLiteral),
     /// Struct instantiation: `User { name: "Alice", age: 30 }`
     StructExpr(StructExpr),
+    /// Range expression: `1..3`, `1..=3`, `..3`, `1..`
+    Range {
+        start: Option<Box<Expr>>,
+        end: Option<Box<Expr>>,
+        inclusive: bool,
+        span: Span,
+    },
     Group(GroupExpr),
     Match(MatchExpr),
     Try(TryExpr),
@@ -616,15 +623,6 @@ pub struct IndexExpr {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum IndexValue {
     Single(Box<Expr>),
-    Slice(SliceExpr),
-}
-
-/// Array slice expression inside an index
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct SliceExpr {
-    pub start: Option<Box<Expr>>,
-    pub end: Option<Box<Expr>>,
-    pub span: Span,
 }
 
 /// Member access expression (method call or property access)
@@ -898,6 +896,7 @@ impl Expr {
             Expr::ArrayLiteral(a) => a.span,
             Expr::ObjectLiteral(o) => o.span,
             Expr::StructExpr(s) => s.span,
+            Expr::Range { span, .. } => *span,
             Expr::Group(g) => g.span,
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
@@ -913,7 +912,6 @@ impl IndexValue {
     pub fn span(&self) -> Span {
         match self {
             IndexValue::Single(expr) => expr.span(),
-            IndexValue::Slice(slice) => slice.span,
         }
     }
 }

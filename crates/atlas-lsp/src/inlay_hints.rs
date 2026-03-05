@@ -444,30 +444,30 @@ fn extract_expression_hints(
                     end_offset,
                     hints,
                 ),
-                IndexValue::Slice(slice) => {
-                    if let Some(start) = &slice.start {
-                        extract_expression_hints(
-                            text,
-                            start,
-                            symbols,
-                            config,
-                            start_offset,
-                            end_offset,
-                            hints,
-                        );
-                    }
-                    if let Some(end) = &slice.end {
-                        extract_expression_hints(
-                            text,
-                            end,
-                            symbols,
-                            config,
-                            start_offset,
-                            end_offset,
-                            hints,
-                        );
-                    }
-                }
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            if let Some(start) = start {
+                extract_expression_hints(
+                    text,
+                    start,
+                    symbols,
+                    config,
+                    start_offset,
+                    end_offset,
+                    hints,
+                );
+            }
+            if let Some(end) = end {
+                extract_expression_hints(
+                    text,
+                    end,
+                    symbols,
+                    config,
+                    start_offset,
+                    end_offset,
+                    hints,
+                );
             }
         }
         Expr::Group(group) => {
@@ -617,6 +617,7 @@ fn format_type(ty: &Type) -> String {
         Type::Void => "void".to_string(),
         Type::Never => "never".to_string(),
         Type::Array(inner) => format!("{}[]", format_type(inner)),
+        Type::Range => "range".to_string(),
         Type::Function {
             params,
             return_type,

@@ -220,14 +220,6 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
             extract_names_from_expr(&index.target, names);
             match &index.index {
                 IndexValue::Single(expr) => extract_names_from_expr(expr, names),
-                IndexValue::Slice(slice) => {
-                    if let Some(start) = &slice.start {
-                        extract_names_from_expr(start, names);
-                    }
-                    if let Some(end) = &slice.end {
-                        extract_names_from_expr(end, names);
-                    }
-                }
             }
         }
         Expr::Member(member) => {
@@ -246,6 +238,14 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
         Expr::StructExpr(struct_expr) => {
             for field in &struct_expr.fields {
                 extract_names_from_expr(&field.value, names);
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            if let Some(start) = start {
+                extract_names_from_expr(start, names);
+            }
+            if let Some(end) = end {
+                extract_names_from_expr(end, names);
             }
         }
         Expr::Group(group) => {

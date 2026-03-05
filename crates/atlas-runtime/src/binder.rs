@@ -998,17 +998,8 @@ impl Binder {
             }
             Expr::Index(index) => {
                 self.bind_expr(&index.target);
-                match &index.index {
-                    IndexValue::Single(expr) => self.bind_expr(expr),
-                    IndexValue::Slice(slice) => {
-                        if let Some(start) = &slice.start {
-                            self.bind_expr(start);
-                        }
-                        if let Some(end) = &slice.end {
-                            self.bind_expr(end);
-                        }
-                    }
-                }
+                let IndexValue::Single(expr) = &index.index;
+                self.bind_expr(expr);
             }
             Expr::ArrayLiteral(arr) => {
                 for elem in &arr.elements {
@@ -1029,6 +1020,14 @@ impl Binder {
             }
             Expr::Group(group) => {
                 self.bind_expr(&group.expr);
+            }
+            Expr::Range { start, end, .. } => {
+                if let Some(start) = start {
+                    self.bind_expr(start);
+                }
+                if let Some(end) = end {
+                    self.bind_expr(end);
+                }
             }
             Expr::Match(match_expr) => {
                 // Bind scrutinee

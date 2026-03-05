@@ -6,5 +6,6 @@ mod error_codes;
 mod ownership_part1;
 mod ownership_part2;
 mod ownership_part3;
+mod range;
 mod typecheck_dump;
 mod typing_union;

@@ -466,6 +466,12 @@ pub enum Value {
     Queue(ValueQueue),
     /// Stack collection (LIFO)
     Stack(ValueStack),
+    /// Range value (for slicing)
+    Range {
+        start: Option<f64>,
+        end: Option<f64>,
+        inclusive: bool,
+    },
     /// Regular expression pattern
     Regex(Arc<regex::Regex>),
     /// DateTime value (UTC timezone)
@@ -562,6 +568,7 @@ impl Value {
             Value::HashSet(_) => "hashset",
             Value::Queue(_) => "queue",
             Value::Stack(_) => "stack",
+            Value::Range { .. } => "range",
             Value::Regex(_) => "regex",
             Value::DateTime(_) => "datetime",
             Value::HttpRequest(_) => "HttpRequest",
@@ -623,6 +630,18 @@ impl PartialEq for Value {
             (Value::HashSet(a), Value::HashSet(b)) => a == b,
             (Value::Queue(a), Value::Queue(b)) => a == b,
             (Value::Stack(a), Value::Stack(b)) => a == b,
+            (
+                Value::Range {
+                    start: a_start,
+                    end: a_end,
+                    inclusive: a_inc,
+                },
+                Value::Range {
+                    start: b_start,
+                    end: b_end,
+                    inclusive: b_inc,
+                },
+            ) => a_start == b_start && a_end == b_end && a_inc == b_inc,
             (Value::Regex(a), Value::Regex(b)) => a.as_str() == b.as_str(),
             (Value::DateTime(a), Value::DateTime(b)) => a == b,
             (Value::HttpRequest(a), Value::HttpRequest(b)) => a.as_ref() == b.as_ref(),
@@ -687,6 +706,26 @@ impl fmt::Display for Value {
             Value::HashSet(set) => write!(f, "<HashSet size={}>", set.inner().len()),
             Value::Queue(queue) => write!(f, "<Queue size={}>", queue.inner().len()),
             Value::Stack(stack) => write!(f, "<Stack size={}>", stack.inner().len()),
+            Value::Range {
+                start,
+                end,
+                inclusive,
+            } => {
+                let fmt_num = |n: f64| {
+                    if n.fract() == 0.0 && n.is_finite() {
+                        format!("{:.0}", n)
+                    } else {
+                        n.to_string()
+                    }
+                };
+                let start_str = start.map(fmt_num).unwrap_or_default();
+                let end_str = end.map(fmt_num).unwrap_or_default();
+                if *inclusive {
+                    write!(f, "{}..={}", start_str, end_str)
+                } else {
+                    write!(f, "{}..{}", start_str, end_str)
+                }
+            }
             Value::Regex(r) => write!(f, "<Regex /{}/>", r.as_str()),
             Value::DateTime(dt) => write!(f, "{}", dt.to_rfc3339()),
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
@@ -736,6 +775,15 @@ impl fmt::Debug for Value {
             Value::HashSet(set) => write!(f, "HashSet(size={})", set.inner().len()),
             Value::Queue(queue) => write!(f, "Queue(size={})", queue.inner().len()),
             Value::Stack(stack) => write!(f, "Stack(size={})", stack.inner().len()),
+            Value::Range {
+                start,
+                end,
+                inclusive,
+            } => write!(
+                f,
+                "Range(start={:?}, end={:?}, inclusive={})",
+                start, end, inclusive
+            ),
             Value::Regex(r) => write!(f, "Regex(/{}/)", r.as_str()),
             Value::DateTime(dt) => write!(f, "DateTime({})", dt.to_rfc3339()),
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),

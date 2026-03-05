@@ -1,6 +1,6 @@
 //! Bytecode instruction set
 //!
-//! Stack-based bytecode with 30 opcodes organized by category.
+//! Stack-based bytecode with 37 opcodes organized by category.
 //! Operands are encoded separately in the instruction stream.
 
 mod disasm;

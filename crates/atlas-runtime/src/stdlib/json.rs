@@ -566,6 +566,10 @@ fn value_to_json(
                 span,
             })
         }
+        Value::Range { .. } => Err(RuntimeError::TypeError {
+            msg: "Cannot serialize range to JSON".to_string(),
+            span,
+        }),
         Value::Array(arr_ref) => {
             // Check for circular reference using pointer address
             let ptr = Arc::as_ptr(arr_ref.arc()) as usize;

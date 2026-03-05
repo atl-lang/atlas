@@ -1,9 +1,9 @@
 //! Bytecode instruction set
 //!
-//! Stack-based bytecode with 36 opcodes organized by category.
+//! Stack-based bytecode with 37 opcodes organized by category.
 //! Operands are encoded separately in the instruction stream.
 
-/// Bytecode opcode (36 instructions)
+/// Bytecode opcode (37 instructions)
 ///
 /// Stack-based VM with explicit byte values for serialization.
 /// Operands are encoded inline after the opcode byte.
@@ -109,6 +109,8 @@ pub enum Opcode {
     GetField = 0x78,
     /// Pop value, pop key, pop map, map[key] = value
     SetField = 0x79,
+    /// Pop end, pop start, push range value
+    Range = 0x7A,
 
     // ===== Stack manipulation (0x80-0x8F) =====
     /// Pop and discard top of stack
@@ -198,6 +200,7 @@ impl TryFrom<u8> for Opcode {
             0x77 => Ok(Opcode::SliceFull),
             0x78 => Ok(Opcode::GetField),
             0x79 => Ok(Opcode::SetField),
+            0x7A => Ok(Opcode::Range),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),

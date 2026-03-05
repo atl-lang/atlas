@@ -180,10 +180,8 @@ pub enum TokenKind {
     Dot,
     /// `..` (range operator)
     Range,
-    /// `..` (range from)
-    RangeFrom,
-    /// `..` (range to)
-    RangeTo,
+    /// `..=` (inclusive range operator)
+    RangeInclusive,
     /// `:` (colon)
     Colon,
     /// `::` (double colon for enum variant paths)
@@ -324,8 +322,7 @@ impl TokenKind {
             TokenKind::Comma => ",",
             TokenKind::Dot => ".",
             TokenKind::Range => "..",
-            TokenKind::RangeFrom => "..",
-            TokenKind::RangeTo => "..",
+            TokenKind::RangeInclusive => "..=",
             TokenKind::Colon => ":",
             TokenKind::ColonColon => "::",
             TokenKind::Arrow => "->",

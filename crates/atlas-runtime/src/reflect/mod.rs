@@ -62,6 +62,7 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
         Value::String(_) => TypeInfo::from_type(&Type::String),
         Value::Bool(_) => TypeInfo::from_type(&Type::Bool),
         Value::Null => TypeInfo::from_type(&Type::Null),
+        Value::Range { .. } => TypeInfo::from_type(&Type::Range),
 
         Value::Array(_) => {
             // For arrays, we create a generic "array" type

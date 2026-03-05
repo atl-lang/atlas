@@ -674,6 +674,14 @@ impl FormatVisitor {
                 }
                 self.write(" }");
             }
+            Expr::Range {
+                start,
+                end,
+                inclusive,
+                ..
+            } => {
+                self.visit_range(start, end, *inclusive);
+            }
             Expr::EnumVariant(ev) => {
                 self.write(&ev.enum_name.name);
                 self.write("::");
@@ -689,6 +697,20 @@ impl FormatVisitor {
                     self.write(")");
                 }
             }
+        }
+    }
+
+    fn visit_range(&mut self, start: &Option<Box<Expr>>, end: &Option<Box<Expr>>, inclusive: bool) {
+        if let Some(start) = start {
+            self.visit_expr(start);
+        }
+        if inclusive {
+            self.write("..=");
+        } else {
+            self.write("..");
+        }
+        if let Some(end) = end {
+            self.visit_expr(end);
         }
     }
 
@@ -786,15 +808,6 @@ impl FormatVisitor {
         self.write("[");
         match &i.index {
             IndexValue::Single(expr) => self.visit_expr(expr),
-            IndexValue::Slice(slice) => {
-                if let Some(start) = &slice.start {
-                    self.visit_expr(start);
-                }
-                self.write("..");
-                if let Some(end) = &slice.end {
-                    self.visit_expr(end);
-                }
-            }
         }
         self.write("]");
     }

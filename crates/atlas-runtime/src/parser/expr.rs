@@ -38,6 +38,7 @@ impl Parser {
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
+            TokenKind::Range | TokenKind::RangeInclusive => self.parse_range_prefix(),
             _ => {
                 self.error("Expected expression");
                 Err(())
@@ -65,6 +66,7 @@ impl Parser {
             TokenKind::LeftBracket => self.parse_index(left),
             TokenKind::Dot => self.parse_member(left),
             TokenKind::Question => self.parse_try(left),
+            TokenKind::Range | TokenKind::RangeInclusive => self.parse_range_infix(left),
             _ => Ok(left),
         }
     }
@@ -85,6 +87,7 @@ impl Parser {
             | TokenKind::LessEqual
             | TokenKind::Greater
             | TokenKind::GreaterEqual => Precedence::Comparison,
+            TokenKind::Range | TokenKind::RangeInclusive => Precedence::Range,
             TokenKind::Plus | TokenKind::Minus => Precedence::Term,
             TokenKind::Star | TokenKind::Slash | TokenKind::Percent => Precedence::Factor,
             TokenKind::LeftParen
@@ -490,60 +493,103 @@ impl Parser {
     fn parse_index(&mut self, target: Expr) -> Result<Expr, ()> {
         let target_span = target.span();
         self.consume(TokenKind::LeftBracket, "Expected '['")?;
-        let index = if let Some(range_span) = self.consume_range_token() {
-            let end_expr = if self.check(TokenKind::RightBracket) {
-                None
-            } else {
-                Some(self.parse_expression()?)
-            };
-            let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
-            IndexValue::Slice(SliceExpr {
-                start: None,
-                end: end_expr.map(Box::new),
-                span: range_span.merge(end_span),
-            })
-        } else {
-            let start_expr = self.parse_expression()?;
-            if self.consume_range_token().is_some() {
-                let start_span = start_expr.span();
-                let end_expr = if self.check(TokenKind::RightBracket) {
-                    None
-                } else {
-                    Some(self.parse_expression()?)
-                };
-                let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
-                IndexValue::Slice(SliceExpr {
-                    start: Some(Box::new(start_expr)),
-                    end: end_expr.map(Box::new),
-                    span: start_span.merge(end_span),
-                })
-            } else {
-                let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
-                return Ok(Expr::Index(IndexExpr {
-                    target: Box::new(target),
-                    index: IndexValue::Single(Box::new(start_expr)),
-                    span: target_span.merge(end_span),
-                }));
-            }
-        };
-        let end_span = self.tokens[self.current - 1].span;
+        if self.check(TokenKind::RightBracket) {
+            self.error("Expected expression inside '[]'");
+            return Err(());
+        }
+        let index_expr = self.parse_expression()?;
+        let end_span = self.consume(TokenKind::RightBracket, "Expected ']'")?.span;
 
         Ok(Expr::Index(IndexExpr {
             target: Box::new(target),
-            index,
+            index: IndexValue::Single(Box::new(index_expr)),
             span: target_span.merge(end_span),
         }))
     }
 
-    fn consume_range_token(&mut self) -> Option<Span> {
-        if self.check(TokenKind::Range)
-            || self.check(TokenKind::RangeFrom)
-            || self.check(TokenKind::RangeTo)
-        {
-            Some(self.advance().span)
+    fn parse_range_prefix(&mut self) -> Result<Expr, ()> {
+        let (token_span, inclusive) = {
+            let token = self.advance();
+            (token.span, matches!(token.kind, TokenKind::RangeInclusive))
+        };
+
+        let next_kind = self.peek().kind;
+        let end_expr = if Self::can_start_expression(next_kind) {
+            Some(self.parse_precedence(Precedence::Range)?)
         } else {
             None
+        };
+
+        if inclusive && end_expr.is_none() {
+            self.error("Inclusive range requires an end expression");
+            return Err(());
         }
+
+        let end_span = end_expr
+            .as_ref()
+            .map(|expr| expr.span())
+            .unwrap_or(token_span);
+
+        Ok(Expr::Range {
+            start: None,
+            end: end_expr.map(Box::new),
+            inclusive,
+            span: token_span.merge(end_span),
+        })
+    }
+
+    fn parse_range_infix(&mut self, left: Expr) -> Result<Expr, ()> {
+        let left_span = left.span();
+        let (token_span, inclusive) = {
+            let token = self.advance();
+            (token.span, matches!(token.kind, TokenKind::RangeInclusive))
+        };
+
+        let next_kind = self.peek().kind;
+        let end_expr = if Self::can_start_expression(next_kind) {
+            Some(self.parse_precedence(Precedence::Range)?)
+        } else {
+            None
+        };
+
+        if inclusive && end_expr.is_none() {
+            self.error("Inclusive range requires an end expression");
+            return Err(());
+        }
+
+        let end_span = end_expr
+            .as_ref()
+            .map(|expr| expr.span())
+            .unwrap_or(token_span);
+
+        Ok(Expr::Range {
+            start: Some(Box::new(left)),
+            end: end_expr.map(Box::new),
+            inclusive,
+            span: left_span.merge(end_span),
+        })
+    }
+
+    fn can_start_expression(kind: TokenKind) -> bool {
+        matches!(
+            kind,
+            TokenKind::Number
+                | TokenKind::String
+                | TokenKind::True
+                | TokenKind::False
+                | TokenKind::Null
+                | TokenKind::Identifier
+                | TokenKind::LeftParen
+                | TokenKind::LeftBracket
+                | TokenKind::Record
+                | TokenKind::LeftBrace
+                | TokenKind::Minus
+                | TokenKind::Bang
+                | TokenKind::Match
+                | TokenKind::Fn
+                | TokenKind::Range
+                | TokenKind::RangeInclusive
+        )
     }
 
     /// Parse member expression (method call or property access)

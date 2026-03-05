@@ -33,8 +33,39 @@ impl Compiler {
             Expr::Block(block) => self.compile_block_expr(block),
             Expr::ObjectLiteral(obj) => self.compile_object_literal(obj),
             Expr::StructExpr(struct_expr) => self.compile_struct_expr(struct_expr),
+            Expr::Range {
+                start,
+                end,
+                inclusive,
+                span,
+            } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
         }
+    }
+
+    fn compile_range(
+        &mut self,
+        start: &Option<Box<Expr>>,
+        end: &Option<Box<Expr>>,
+        inclusive: bool,
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        if let Some(start) = start {
+            self.compile_expr(start)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, span);
+        }
+
+        if let Some(end) = end {
+            self.compile_expr(end)?;
+        } else {
+            self.bytecode.emit(Opcode::Null, span);
+        }
+
+        self.bytecode.emit(Opcode::Range, span);
+        self.bytecode.emit_u8(if inclusive { 1 } else { 0 });
+
+        Ok(())
     }
 
     /// Compile a struct instantiation expression
@@ -609,24 +640,6 @@ impl Compiler {
                 self.compile_expr(expr)?;
                 self.bytecode.emit(Opcode::GetIndex, index.span);
             }
-            IndexValue::Slice(slice) => match (&slice.start, &slice.end) {
-                (Some(start), Some(end)) => {
-                    self.compile_expr(start)?;
-                    self.compile_expr(end)?;
-                    self.bytecode.emit(Opcode::Slice, index.span);
-                }
-                (Some(start), None) => {
-                    self.compile_expr(start)?;
-                    self.bytecode.emit(Opcode::SliceFrom, index.span);
-                }
-                (None, Some(end)) => {
-                    self.compile_expr(end)?;
-                    self.bytecode.emit(Opcode::SliceTo, index.span);
-                }
-                (None, None) => {
-                    self.bytecode.emit(Opcode::SliceFull, index.span);
-                }
-            },
         }
 
         Ok(())

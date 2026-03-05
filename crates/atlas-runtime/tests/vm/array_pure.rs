@@ -566,3 +566,40 @@ fn test_slice_syntax_full() {
         _ => panic!("Expected array"),
     }
 }
+
+#[test]
+fn test_slice_syntax_inclusive() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3, 4];
+        arr[1..=3];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 3);
+            assert_eq!(borrowed[0], Value::Number(2.0));
+            assert_eq!(borrowed[2], Value::Number(4.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}
+
+#[test]
+fn test_slice_syntax_range_value() {
+    let result = execute_vm_ok(r#"
+        let arr = [1, 2, 3, 4];
+        let r = 1..3;
+        arr[r];
+    "#);
+
+    match result {
+        Value::Array(arr) => {
+            let borrowed = arr.lock().unwrap();
+            assert_eq!(borrowed.len(), 2);
+            assert_eq!(borrowed[0], Value::Number(2.0));
+            assert_eq!(borrowed[1], Value::Number(3.0));
+        }
+        _ => panic!("Expected array"),
+    }
+}

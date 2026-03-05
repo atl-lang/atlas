@@ -1191,15 +1191,13 @@ impl Compiler {
                 self.emit_member_cow_write_back(&member.target, span)?;
             }
             Expr::Index(index) => {
-                let index_expr = match &index.index {
-                    IndexValue::Single(expr) => expr,
-                    IndexValue::Slice(_) => {
-                        return Err(vec![Diagnostic::error(
-                            "Invalid assignment target".to_string(),
-                            span,
-                        )])
-                    }
-                };
+                let IndexValue::Single(index_expr) = &index.index;
+                if matches!(index_expr.as_ref(), Expr::Range { .. }) {
+                    return Err(vec![Diagnostic::error(
+                        "Invalid assignment target".to_string(),
+                        span,
+                    )]);
+                }
                 // Stack: [value] (mutated record)
                 self.compile_expr(&index.target)?;
                 self.compile_expr(index_expr)?;

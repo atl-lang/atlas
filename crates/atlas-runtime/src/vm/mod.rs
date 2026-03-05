@@ -1542,29 +1542,53 @@ impl VM {
                     match target {
                         Value::Array(arr) => {
                             // Array indexing requires number
-                            if let Value::Number(index) = index_val {
-                                if index.fract() != 0.0 || index < 0.0 {
+                            match index_val {
+                                Value::Number(index) => {
+                                    if index.fract() != 0.0 || index < 0.0 {
+                                        return Err(RuntimeError::InvalidIndex {
+                                            span: self
+                                                .current_span()
+                                                .unwrap_or_else(crate::span::Span::dummy),
+                                        });
+                                    }
+                                    let idx = index as usize;
+                                    if idx >= arr.len() {
+                                        return Err(RuntimeError::OutOfBounds {
+                                            span: self
+                                                .current_span()
+                                                .unwrap_or_else(crate::span::Span::dummy),
+                                        });
+                                    }
+                                    self.push(arr[idx].clone());
+                                }
+                                Value::Range {
+                                    start,
+                                    end,
+                                    inclusive,
+                                } => {
+                                    let start = start.unwrap_or(0.0);
+                                    let mut end_val = end.unwrap_or(arr.len() as f64);
+                                    if inclusive && end.is_some() {
+                                        end_val += 1.0;
+                                    }
+                                    let span = self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy);
+                                    let sliced = crate::stdlib::array::slice(
+                                        arr.as_slice(),
+                                        start,
+                                        end_val,
+                                        span,
+                                    )?;
+                                    self.push(sliced);
+                                }
+                                _ => {
                                     return Err(RuntimeError::InvalidIndex {
                                         span: self
                                             .current_span()
                                             .unwrap_or_else(crate::span::Span::dummy),
                                     });
                                 }
-                                let idx = index as usize;
-                                if idx >= arr.len() {
-                                    return Err(RuntimeError::OutOfBounds {
-                                        span: self
-                                            .current_span()
-                                            .unwrap_or_else(crate::span::Span::dummy),
-                                    });
-                                }
-                                self.push(arr[idx].clone());
-                            } else {
-                                return Err(RuntimeError::InvalidIndex {
-                                    span: self
-                                        .current_span()
-                                        .unwrap_or_else(crate::span::Span::dummy),
-                                });
                             }
                         }
                         Value::String(s) => {
@@ -1824,6 +1848,48 @@ impl VM {
                             })
                         }
                     }
+                }
+
+                Opcode::Range => {
+                    let span = self.current_span().unwrap_or_else(crate::span::Span::dummy);
+                    let inclusive = self.read_u8()? != 0;
+                    let end_val = self.pop();
+                    let start_val = self.pop();
+
+                    let start = match start_val {
+                        Value::Null => None,
+                        Value::Number(n) => Some(n),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Range bound must be number".to_string(),
+                                span,
+                            })
+                        }
+                    };
+
+                    let end = match end_val {
+                        Value::Null => None,
+                        Value::Number(n) => Some(n),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Range bound must be number".to_string(),
+                                span,
+                            })
+                        }
+                    };
+
+                    if inclusive && end.is_none() {
+                        return Err(RuntimeError::TypeError {
+                            msg: "Inclusive range requires an end bound".to_string(),
+                            span,
+                        });
+                    }
+
+                    self.push(Value::Range {
+                        start,
+                        end,
+                        inclusive,
+                    });
                 }
 
                 Opcode::HashMap => {

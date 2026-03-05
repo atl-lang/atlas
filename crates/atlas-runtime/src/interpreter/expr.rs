@@ -4,6 +4,7 @@
 
 use crate::ast::*;
 use crate::interpreter::{ControlFlow, Interpreter, UserFunction};
+use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::sync::Arc;
 
@@ -28,8 +29,61 @@ impl Interpreter {
             Expr::Block(block) => self.eval_block(block),
             Expr::ObjectLiteral(obj) => self.eval_object_literal(obj),
             Expr::StructExpr(struct_expr) => self.eval_struct_expr(struct_expr),
+            Expr::Range {
+                start,
+                end,
+                inclusive,
+                span,
+            } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
         }
+    }
+
+    fn eval_range(
+        &mut self,
+        start: &Option<Box<Expr>>,
+        end: &Option<Box<Expr>>,
+        inclusive: bool,
+        span: Span,
+    ) -> Result<Value, RuntimeError> {
+        let start_val = match start {
+            Some(expr) => match self.eval_expr(expr)? {
+                Value::Number(n) => Some(n),
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "Range bound must be number".to_string(),
+                        span,
+                    })
+                }
+            },
+            None => None,
+        };
+
+        let end_val = match end {
+            Some(expr) => match self.eval_expr(expr)? {
+                Value::Number(n) => Some(n),
+                _ => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "Range bound must be number".to_string(),
+                        span,
+                    })
+                }
+            },
+            None => None,
+        };
+
+        if inclusive && end_val.is_none() {
+            return Err(RuntimeError::TypeError {
+                msg: "Inclusive range requires an end bound".to_string(),
+                span,
+            });
+        }
+
+        Ok(Value::Range {
+            start: start_val,
+            end: end_val,
+            inclusive,
+        })
     }
 
     /// Evaluate a struct instantiation expression
@@ -717,8 +771,8 @@ impl Interpreter {
             IndexValue::Single(expr) => {
                 let idx = self.eval_expr(expr)?;
                 match target {
-                    Value::Array(arr) => {
-                        if let Value::Number(n) = idx {
+                    Value::Array(arr) => match idx {
+                        Value::Number(n) => {
                             let index_val = n as i64;
                             if n.fract() != 0.0 || n < 0.0 {
                                 return Err(RuntimeError::InvalidIndex { span: index.span });
@@ -729,10 +783,21 @@ impl Interpreter {
                             } else {
                                 Err(RuntimeError::OutOfBounds { span: index.span })
                             }
-                        } else {
-                            Err(RuntimeError::InvalidIndex { span: index.span })
                         }
-                    }
+                        Value::Range {
+                            start,
+                            end,
+                            inclusive,
+                        } => {
+                            let start = start.unwrap_or(0.0);
+                            let mut end_val = end.unwrap_or(arr.len() as f64);
+                            if inclusive && end.is_some() {
+                                end_val += 1.0;
+                            }
+                            crate::stdlib::array::slice(arr.as_slice(), start, end_val, index.span)
+                        }
+                        _ => Err(RuntimeError::InvalidIndex { span: index.span }),
+                    },
                     Value::String(s) => {
                         if let Value::Number(n) = idx {
                             let index_val = n as i64;
@@ -766,34 +831,6 @@ impl Interpreter {
                     }
                     _ => Err(RuntimeError::TypeError {
                         msg: "Cannot index non-array/string/json".to_string(),
-                        span: index.span,
-                    }),
-                }
-            }
-            IndexValue::Slice(slice) => {
-                let start = match &slice.start {
-                    Some(expr) => match self.eval_expr(expr)? {
-                        Value::Number(n) => Some(n),
-                        _ => return Err(RuntimeError::InvalidIndex { span: index.span }),
-                    },
-                    None => None,
-                };
-                let end = match &slice.end {
-                    Some(expr) => match self.eval_expr(expr)? {
-                        Value::Number(n) => Some(n),
-                        _ => return Err(RuntimeError::InvalidIndex { span: index.span }),
-                    },
-                    None => None,
-                };
-
-                match target {
-                    Value::Array(arr) => {
-                        let start = start.unwrap_or(0.0);
-                        let end = end.unwrap_or(arr.len() as f64);
-                        crate::stdlib::array::slice(arr.as_slice(), start, end, index.span)
-                    }
-                    _ => Err(RuntimeError::TypeError {
-                        msg: "Cannot slice non-array".to_string(),
                         span: index.span,
                     }),
                 }

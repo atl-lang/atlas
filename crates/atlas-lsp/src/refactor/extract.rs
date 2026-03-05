@@ -329,14 +329,6 @@ fn collect_free_vars_expr(
             collect_free_vars_expr(&index.target, scopes, free_vars);
             match &index.index {
                 IndexValue::Single(expr) => collect_free_vars_expr(expr, scopes, free_vars),
-                IndexValue::Slice(slice) => {
-                    if let Some(start) = &slice.start {
-                        collect_free_vars_expr(start, scopes, free_vars);
-                    }
-                    if let Some(end) = &slice.end {
-                        collect_free_vars_expr(end, scopes, free_vars);
-                    }
-                }
             }
         }
         Expr::Member(member) => collect_free_vars_expr(&member.target, scopes, free_vars),
@@ -353,6 +345,14 @@ fn collect_free_vars_expr(
         Expr::StructExpr(struct_expr) => {
             for field in &struct_expr.fields {
                 collect_free_vars_expr(&field.value, scopes, free_vars);
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            if let Some(start) = start {
+                collect_free_vars_expr(start, scopes, free_vars);
+            }
+            if let Some(end) = end {
+                collect_free_vars_expr(end, scopes, free_vars);
             }
         }
         Expr::Group(group) => collect_free_vars_expr(&group.expr, scopes, free_vars),
@@ -457,6 +457,7 @@ fn format_type_for_signature(ty: &Type) -> Option<String> {
         Type::Null => Some("null".to_string()),
         Type::Void => Some("void".to_string()),
         Type::Array(elem) => format_type_for_signature(elem).map(|inner| format!("{}[]", inner)),
+        Type::Range => Some("range".to_string()),
         Type::Function {
             params,
             return_type,

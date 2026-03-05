@@ -153,14 +153,16 @@ impl Parser {
         match expr {
             Expr::Identifier(ident) => Ok(AssignTarget::Name(ident)),
             Expr::Index(idx) => match idx.index {
-                IndexValue::Single(index) => Ok(AssignTarget::Index {
-                    target: idx.target,
-                    index,
-                    span: idx.span,
-                }),
-                IndexValue::Slice(_) => {
-                    self.error("Invalid assignment target");
-                    Err(())
+                IndexValue::Single(index) => {
+                    if matches!(index.as_ref(), Expr::Range { .. }) {
+                        self.error("Invalid assignment target");
+                        return Err(());
+                    }
+                    Ok(AssignTarget::Index {
+                        target: idx.target,
+                        index,
+                        span: idx.span,
+                    })
                 }
             },
             Expr::Member(member) => {

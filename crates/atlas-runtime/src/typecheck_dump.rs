@@ -144,6 +144,7 @@ fn type_to_string(ty: &Type) -> String {
         Type::Void => "void".to_string(),
         Type::Null => "null".to_string(),
         Type::Array(elem) => format!("{}[]", type_to_string(elem)),
+        Type::Range => "range".to_string(),
         Type::Function {
             params,
             return_type,

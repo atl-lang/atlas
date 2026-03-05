@@ -244,7 +244,7 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
             Ok((2, value as i64))
         }
         // 1-byte operand (u8)
-        Opcode::Call => {
+        Opcode::Call | Opcode::Range => {
             if ip >= code.len() {
                 return Err(opcode_name(opcode));
             }
@@ -295,6 +295,7 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::SliceFrom => "SliceFrom",
         Opcode::SliceTo => "SliceTo",
         Opcode::SliceFull => "SliceFull",
+        Opcode::Range => "Range",
         Opcode::HashMap => "HashMap",
         Opcode::Pop => "Pop",
         Opcode::Dup => "Dup",
@@ -458,6 +459,7 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         | Opcode::Or
         | Opcode::GetIndex
         | Opcode::GetField
+        | Opcode::Range
         | Opcode::SliceFrom
         | Opcode::SliceTo => Some(-1),
 

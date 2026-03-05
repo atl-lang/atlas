@@ -135,7 +135,7 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         }
 
         // u8 operand (call arg count, enum variant arg count)
-        Opcode::Call | Opcode::EnumVariant => {
+        Opcode::Call | Opcode::EnumVariant | Opcode::Range => {
             let operand = read_u8(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
@@ -197,6 +197,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::Builtin(name) => format!("<builtin {}>", name),
         Value::NativeFunction(_) => "<native fn>".to_string(),
         Value::Array(_) => "<array>".to_string(),
+        Value::Range { .. } => "<range>".to_string(),
         Value::JsonValue(_) => "<json>".to_string(),
         Value::Option(_) => "<option>".to_string(),
         Value::Result(_) => "<result>".to_string(),

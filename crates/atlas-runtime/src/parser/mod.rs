@@ -30,6 +30,7 @@ pub struct Parser {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum Precedence {
     Lowest,
+    Range,      // .. ..=
     Or,         // ||
     And,        // &&
     Equality,   // == !=

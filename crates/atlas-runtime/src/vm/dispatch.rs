@@ -55,7 +55,7 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x60] = Some(Opcode::Call);
     table[0x61] = Some(Opcode::Return);
 
-    // Arrays (0x70-0x79)
+    // Arrays (0x70-0x7A)
     table[0x70] = Some(Opcode::Array);
     table[0x71] = Some(Opcode::GetIndex);
     table[0x72] = Some(Opcode::SetIndex);
@@ -66,6 +66,7 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x77] = Some(Opcode::SliceFull);
     table[0x78] = Some(Opcode::GetField);
     table[0x79] = Some(Opcode::SetField);
+    table[0x7A] = Some(Opcode::Range);
 
     // Stack manipulation (0x80-0x83)
     table[0x80] = Some(Opcode::Pop);

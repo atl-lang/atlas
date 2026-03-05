@@ -271,15 +271,11 @@ impl Lexer {
             // Dot (member access) or range operator
             '.' => {
                 if self.match_char('.') {
-                    let next_non_ws = self.peek_next_non_whitespace();
-                    let range_kind = if next_non_ws == Some(']') {
-                        TokenKind::RangeFrom
-                    } else if matches!(self.last_token_kind, Some(TokenKind::LeftBracket)) {
-                        TokenKind::RangeTo
+                    if self.match_char('=') {
+                        self.make_token(TokenKind::RangeInclusive, "..=")
                     } else {
-                        TokenKind::Range
-                    };
-                    self.make_token(range_kind, "..")
+                        self.make_token(TokenKind::Range, "..")
+                    }
                 } else {
                     // Check if this is the start of a decimal number (e.g., .5)
                     // NOTE: Atlas doesn't support .5 syntax, only 0.5
@@ -393,18 +389,6 @@ impl Lexer {
                 _ => return,
             }
         }
-    }
-
-    fn peek_next_non_whitespace(&self) -> Option<char> {
-        let mut idx = self.current;
-        while idx < self.chars.len() {
-            let c = self.chars[idx];
-            if !matches!(c, ' ' | '\r' | '\t' | '\n') {
-                return Some(c);
-            }
-            idx += 1;
-        }
-        None
     }
 
     /// Scan a string literal

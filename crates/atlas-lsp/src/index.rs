@@ -451,14 +451,6 @@ impl SymbolIndex {
                 self.index_expr(&index.target, ctx, false);
                 match &index.index {
                     IndexValue::Single(expr) => self.index_expr(expr, ctx, false),
-                    IndexValue::Slice(slice) => {
-                        if let Some(start) = &slice.start {
-                            self.index_expr(start, ctx, false);
-                        }
-                        if let Some(end) = &slice.end {
-                            self.index_expr(end, ctx, false);
-                        }
-                    }
                 }
             }
             Expr::Member(member) => {
@@ -478,6 +470,14 @@ impl SymbolIndex {
             Expr::StructExpr(struct_expr) => {
                 for field in &struct_expr.fields {
                     self.index_expr(&field.value, ctx, false);
+                }
+            }
+            Expr::Range { start, end, .. } => {
+                if let Some(start) = start {
+                    self.index_expr(start, ctx, false);
+                }
+                if let Some(end) = end {
+                    self.index_expr(end, ctx, false);
                 }
             }
             Expr::Group(group) => {

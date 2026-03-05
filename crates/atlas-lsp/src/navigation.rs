@@ -320,14 +320,6 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
                 IndexValue::Single(expr) => {
                     find_references_in_expr(expr, identifier, references);
                 }
-                IndexValue::Slice(slice) => {
-                    if let Some(start) = &slice.start {
-                        find_references_in_expr(start, identifier, references);
-                    }
-                    if let Some(end) = &slice.end {
-                        find_references_in_expr(end, identifier, references);
-                    }
-                }
             }
         }
         Expr::Member(member) => {
@@ -337,6 +329,14 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
         Expr::ArrayLiteral(array) => {
             for elem in &array.elements {
                 find_references_in_expr(elem, identifier, references);
+            }
+        }
+        Expr::Range { start, end, .. } => {
+            if let Some(start) = start {
+                find_references_in_expr(start, identifier, references);
+            }
+            if let Some(end) = end {
+                find_references_in_expr(end, identifier, references);
             }
         }
         Expr::ObjectLiteral(obj) => {

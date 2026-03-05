@@ -231,6 +231,7 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::HashSet(_) => "record",
             Value::Queue(_) => "record",
             Value::Stack(_) => "record",
+            Value::Range { .. } => "range",
             Value::Result(_) => "record",
             Value::Regex(_) => "record",
             Value::Future(_) => "record",
@@ -511,6 +512,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::HashSet(_) => "[HashSet]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
+        Value::Range { .. } => value_to_display_string(&args[0]),
         Value::Regex(r) => format!("[Regex /{}/ ]", r.as_str()),
         Value::DateTime(dt) => dt.to_rfc3339(),
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
@@ -610,6 +612,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::HashSet(_)
         | Value::Queue(_)
         | Value::Stack(_)
+        | Value::Range { .. }
         | Value::Regex(_)
         | Value::DateTime(_)
         | Value::HttpRequest(_)
@@ -758,6 +761,7 @@ fn type_name(value: &Value) -> &str {
         Value::HashSet(_) => "hashset",
         Value::Queue(_) => "queue",
         Value::Stack(_) => "stack",
+        Value::Range { .. } => "range",
         Value::Regex(_) => "regex",
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
@@ -799,6 +803,7 @@ fn value_to_display_string(value: &Value) -> String {
         Value::HashSet(_) => "[HashSet]".to_string(),
         Value::Queue(_) => "[Queue]".to_string(),
         Value::Stack(_) => "[Stack]".to_string(),
+        Value::Range { .. } => "[Range]".to_string(),
         Value::Regex(r) => format!("[Regex /{}/ ]", r.as_str()),
         Value::DateTime(dt) => format!("[DateTime {}]", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("[HttpRequest {} {}]", req.method(), req.url()),

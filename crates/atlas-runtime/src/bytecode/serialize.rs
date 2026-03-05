@@ -49,6 +49,7 @@ mod tags {
     pub const STACK: u8 = 0x0C;
     pub const REGEX: u8 = 0x0D;
     pub const DATETIME: u8 = 0x0E;
+    pub const RANGE: u8 = 0x0F;
 }
 
 /// Serialize a Value to bytes
@@ -160,6 +161,30 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
             bytes.extend_from_slice(&(elements.len() as u32).to_be_bytes());
             for elem in elements {
                 serialize_value(&elem, bytes);
+            }
+        }
+        Value::Range {
+            start,
+            end,
+            inclusive,
+        } => {
+            bytes.push(tags::RANGE);
+            let mut mask = 0u8;
+            if start.is_some() {
+                mask |= 0b0000_0001;
+            }
+            if end.is_some() {
+                mask |= 0b0000_0010;
+            }
+            if *inclusive {
+                mask |= 0b0000_0100;
+            }
+            bytes.push(mask);
+            if let Some(start) = start {
+                bytes.extend_from_slice(&start.to_be_bytes());
+            }
+            if let Some(end) = end {
+                bytes.extend_from_slice(&end.to_be_bytes());
             }
         }
         Value::Regex(re) => {
@@ -331,6 +356,43 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
             }
             let num_bytes: [u8; 8] = rest[0..8].try_into().unwrap();
             Ok((Value::Number(f64::from_be_bytes(num_bytes)), 9))
+        }
+
+        tags::RANGE => {
+            if rest.is_empty() {
+                return Err("Truncated range value".to_string());
+            }
+            let mask = rest[0];
+            let mut cursor = 1;
+            let start = if (mask & 0b0000_0001) != 0 {
+                if rest.len() < cursor + 8 {
+                    return Err("Truncated range start".to_string());
+                }
+                let bytes: [u8; 8] = rest[cursor..cursor + 8].try_into().unwrap();
+                cursor += 8;
+                Some(f64::from_be_bytes(bytes))
+            } else {
+                None
+            };
+            let end = if (mask & 0b0000_0010) != 0 {
+                if rest.len() < cursor + 8 {
+                    return Err("Truncated range end".to_string());
+                }
+                let bytes: [u8; 8] = rest[cursor..cursor + 8].try_into().unwrap();
+                cursor += 8;
+                Some(f64::from_be_bytes(bytes))
+            } else {
+                None
+            };
+            let inclusive = (mask & 0b0000_0100) != 0;
+            Ok((
+                Value::Range {
+                    start,
+                    end,
+                    inclusive,
+                },
+                1 + cursor,
+            ))
         }
 
         tags::STRING => {

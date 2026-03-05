@@ -24,6 +24,8 @@ pub enum TypeKind {
     Never,
     /// Array type (has element_type)
     Array,
+    /// Range type
+    Range,
     /// Function type (has parameters and return_type)
     Function,
     /// JSON dynamic type
@@ -177,6 +179,17 @@ impl TypeInfo {
                     alias_target: None,
                 }
             }
+
+            Type::Range => TypeInfo {
+                name: "range".to_string(),
+                kind: TypeKind::Range,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: vec![],
+                alias_target: None,
+            },
 
             Type::Function {
                 params,
@@ -367,6 +380,7 @@ impl TypeInfo {
             TypeKind::Null => "null type".to_string(),
             TypeKind::Void => "void type (no value)".to_string(),
             TypeKind::Never => "never type (no values)".to_string(),
+            TypeKind::Range => "range type".to_string(),
 
             TypeKind::Array => {
                 if let Some(elem) = &self.element_type {

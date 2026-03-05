@@ -41,6 +41,8 @@ pub enum Type {
     Void,
     /// Array type
     Array(Box<Type>),
+    /// Range type (for slicing)
+    Range,
     /// Function type
     Function {
         /// Type parameters (empty for non-generic functions)
@@ -310,6 +312,7 @@ impl Type {
             Type::Null => "null".to_string(),
             Type::Void => "void".to_string(),
             Type::Array(inner) => format!("{}[]", inner.display_name()),
+            Type::Range => "range".to_string(),
             Type::Function {
                 params,
                 return_type,
@@ -397,6 +400,7 @@ impl Type {
         match self {
             Type::Alias { target, .. } => target.normalized(),
             Type::Array(inner) => Type::Array(Box::new(inner.normalized())),
+            Type::Range => Type::Range,
             Type::Function {
                 type_params,
                 params,

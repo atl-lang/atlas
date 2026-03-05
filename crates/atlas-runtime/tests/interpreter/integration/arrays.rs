@@ -118,6 +118,28 @@ fn test_array_slice_full() {
     assert_eval_number(code, 7.0);
 }
 
+#[test]
+fn test_array_slice_inclusive() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3, 4];
+        let part: number[] = arr[1..=3];
+        part[0] + part[2] + len(part)
+    "#;
+    // elements: [2,3,4], sum = 2 + 4 + 3(len) = 9
+    assert_eval_number(code, 9.0);
+}
+
+#[test]
+fn test_array_slice_range_value() {
+    let code = r#"
+        let arr: number[] = [1, 2, 3, 4];
+        let r = 1..3;
+        let part: number[] = arr[r];
+        part[0] + part[1] + len(part)
+    "#;
+    assert_eval_number(code, 7.0);
+}
+
 #[rstest]
 #[case("let arr: number[] = [1, 2, 3]; arr[5]", "AT0006")]
 #[case("let arr: number[] = [1, 2, 3]; arr[10] = 99; arr[0]", "AT0006")]

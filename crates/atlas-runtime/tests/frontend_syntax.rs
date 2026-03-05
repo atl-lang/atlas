@@ -174,6 +174,9 @@ mod lexer;
 #[path = "frontend_syntax/parser_basics.rs"]
 mod parser_basics;
 
+#[path = "frontend_syntax/parser_ranges.rs"]
+mod parser_ranges;
+
 #[path = "frontend_syntax/parser_control_flow.rs"]
 mod parser_control_flow;
 
