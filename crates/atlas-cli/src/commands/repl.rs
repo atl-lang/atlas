@@ -89,9 +89,11 @@ pub fn run(use_tui: bool, no_history: bool, config: &crate::config::Config) -> R
 
                         let type_result = repl.type_of_expression(expr);
                         if !type_result.diagnostics.is_empty() {
-                            for diag in &type_result.diagnostics {
-                                println!("{}", format_diagnostic(diag, expr));
-                            }
+                            crate::diagnostics::emit_diagnostics_stdout(
+                                &type_result.diagnostics,
+                                Some(expr),
+                                Some("<input>"),
+                            );
                         } else if let Some(ty) = type_result.ty {
                             println!("type: {}", format_type(&ty, config.no_color));
                         } else {
@@ -143,9 +145,11 @@ pub fn run(use_tui: bool, no_history: bool, config: &crate::config::Config) -> R
 
                         // Display diagnostics
                         if !result.diagnostics.is_empty() {
-                            for diag in &result.diagnostics {
-                                println!("{}", format_diagnostic(diag, &input));
-                            }
+                            crate::diagnostics::emit_diagnostics_stdout(
+                                &result.diagnostics,
+                                Some(&input),
+                                Some("<input>"),
+                            );
                         }
 
                         // Display value (if expression with non-null result)
@@ -240,9 +244,12 @@ fn handle_load(repl: &mut ReplCore, path_str: &str, config: &crate::config::Conf
     match repl.load_file(path) {
         Ok(result) => {
             if !result.diagnostics.is_empty() {
-                for diag in &result.diagnostics {
-                    println!("{}", format_diagnostic(diag, ""));
-                }
+                let source = std::fs::read_to_string(path).ok();
+                crate::diagnostics::emit_diagnostics_stdout(
+                    &result.diagnostics,
+                    source.as_deref(),
+                    path.to_str(),
+                );
             } else {
                 println!("Loaded '{}'", path.display());
                 // Show any bindings created
@@ -284,18 +291,6 @@ fn print_help() {
     println!("  >> let x = 42;");
     println!("  >> fn double(n: number) -> number {{ return n * 2; }}");
     println!("  >> double(x);");
-}
-
-/// Format a diagnostic for display
-fn format_diagnostic(diag: &atlas_runtime::Diagnostic, _source: &str) -> String {
-    use atlas_runtime::DiagnosticLevel;
-
-    let level_str = match diag.level {
-        DiagnosticLevel::Error => "error",
-        DiagnosticLevel::Warning => "warning",
-    };
-
-    format!("{}: {}", level_str, diag.message)
 }
 
 fn format_type(ty: &Type, no_color: bool) -> String {
@@ -348,11 +343,11 @@ mod tests {
     use atlas_runtime::is_input_complete;
 
     #[test]
-    fn test_format_diagnostic() {
+    fn test_format_diagnostic_plain() {
         use atlas_runtime::{Diagnostic, Span};
 
         let diag = Diagnostic::error("Test error".to_string(), Span::dummy());
-        let formatted = format_diagnostic(&diag, "test code");
+        let formatted = crate::diagnostics::format_diagnostic_plain(&diag, Some("test code"), None);
         assert!(formatted.contains("error"));
         assert!(formatted.contains("Test error"));
     }

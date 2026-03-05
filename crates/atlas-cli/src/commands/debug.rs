@@ -50,17 +50,12 @@ pub fn run(args: DebugArgs) -> Result<()> {
         .any(|d| d.level == DiagnosticLevel::Error);
     if has_lexer_errors {
         eprintln!("\x1b[31mLexer errors:\x1b[0m");
-        for diag in lexer_diags
+        let errors: Vec<_> = lexer_diags
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
-        {
-            let file = if diag.file.is_empty() {
-                args.file.as_str()
-            } else {
-                diag.file.as_str()
-            };
-            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
-        }
+            .cloned()
+            .collect();
+        crate::diagnostics::emit_diagnostics_stderr(&errors, Some(&source), Some(&args.file));
         anyhow::bail!("Failed to lex source file");
     }
 
@@ -72,31 +67,19 @@ pub fn run(args: DebugArgs) -> Result<()> {
         .any(|d| d.level == DiagnosticLevel::Error);
     if has_parser_errors {
         eprintln!("\x1b[31mParser errors:\x1b[0m");
-        for diag in parser_diags
+        let errors: Vec<_> = parser_diags
             .iter()
             .filter(|d| d.level == DiagnosticLevel::Error)
-        {
-            let file = if diag.file.is_empty() {
-                args.file.as_str()
-            } else {
-                diag.file.as_str()
-            };
-            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
-        }
+            .cloned()
+            .collect();
+        crate::diagnostics::emit_diagnostics_stderr(&errors, Some(&source), Some(&args.file));
         anyhow::bail!("Failed to parse source file");
     }
 
     // Compile to bytecode
     let mut compiler = Compiler::new();
     let bytecode = compiler.compile(&ast).map_err(|diags| {
-        for diag in &diags {
-            let file = if diag.file.is_empty() {
-                args.file.as_str()
-            } else {
-                diag.file.as_str()
-            };
-            eprintln!("  {}:{}:{}: {}", file, diag.line, diag.column, diag.message);
-        }
+        crate::diagnostics::emit_diagnostics_stderr(&diags, Some(&source), Some(&args.file));
         anyhow::anyhow!("Failed to compile source file")
     })?;
 

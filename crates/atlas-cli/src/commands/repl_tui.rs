@@ -116,7 +116,9 @@ impl App {
             result
                 .diagnostics
                 .iter()
-                .map(|d| format!("{}: {}", d.level, d.message))
+                .map(|d| {
+                    crate::diagnostics::format_diagnostic_plain(d, Some(&input), Some("<input>"))
+                })
                 .collect::<Vec<_>>()
                 .join("\n")
         } else if let Some(value) = result.value {

@@ -48,21 +48,21 @@ pub fn run(args: ProfileArgs) -> Result<()> {
     let mut lexer = Lexer::new(&source).with_file(args.file.as_str());
     let (tokens, lex_diags) = lexer.tokenize();
     if !lex_diags.is_empty() {
-        return Err(diagnostics_to_error(&args.file, lex_diags));
+        return Err(diagnostics_to_error(&args.file, &source, lex_diags));
     }
 
     // --- Parse ---
     let mut parser = Parser::new(tokens);
     let (ast, parse_diags) = parser.parse();
     if !parse_diags.is_empty() {
-        return Err(diagnostics_to_error(&args.file, parse_diags));
+        return Err(diagnostics_to_error(&args.file, &source, parse_diags));
     }
 
     // --- Bind ---
     let mut binder = Binder::new();
     let (mut symbol_table, bind_diags) = binder.bind(&ast);
     if !bind_diags.is_empty() {
-        return Err(diagnostics_to_error(&args.file, bind_diags));
+        return Err(diagnostics_to_error(&args.file, &source, bind_diags));
     }
 
     // --- Typecheck ---
@@ -71,20 +71,23 @@ pub fn run(args: ProfileArgs) -> Result<()> {
     // Only fail on errors, not warnings
     let has_errors = type_diags.iter().any(|d| d.is_error());
     if has_errors {
-        return Err(diagnostics_to_error(&args.file, type_diags));
+        return Err(diagnostics_to_error(&args.file, &source, type_diags));
     }
     // Print warnings to stderr (they don't block execution)
-    for diag in &type_diags {
-        if diag.is_warning() {
-            eprintln!("{}", diag.to_human_string());
-        }
+    let warnings: Vec<_> = type_diags
+        .iter()
+        .filter(|d| d.is_warning())
+        .cloned()
+        .collect();
+    if !warnings.is_empty() {
+        crate::diagnostics::emit_diagnostics_stderr(&warnings, Some(&source), Some(&args.file));
     }
 
     // --- Compile ---
     let mut compiler = Compiler::with_optimization();
     let bytecode = compiler
         .compile(&ast)
-        .map_err(|diags| diagnostics_to_error(&args.file, diags))?;
+        .map_err(|diags| diagnostics_to_error(&args.file, &source, diags))?;
 
     // --- Run with profiling ---
     let security = SecurityContext::allow_all();
@@ -132,12 +135,13 @@ pub fn run(args: ProfileArgs) -> Result<()> {
 // Internal helpers
 // ---------------------------------------------------------------------------
 
-fn diagnostics_to_error(file: &str, diags: Vec<atlas_runtime::Diagnostic>) -> anyhow::Error {
-    let messages: Vec<String> = diags
-        .iter()
-        .map(|d| format!("{}:{}:{}: {}", file, d.line, d.column, d.message))
-        .collect();
-    anyhow::anyhow!("Compilation failed:\n{}", messages.join("\n"))
+fn diagnostics_to_error(
+    file: &str,
+    source: &str,
+    diags: Vec<atlas_runtime::Diagnostic>,
+) -> anyhow::Error {
+    crate::diagnostics::emit_diagnostics_stderr(&diags, Some(source), Some(file));
+    anyhow::anyhow!("Compilation failed")
 }
 
 #[cfg(test)]

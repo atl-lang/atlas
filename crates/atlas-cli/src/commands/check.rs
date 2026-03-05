@@ -57,9 +57,8 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
         .filter(|d| d.is_warning())
         .collect();
     if !warnings.is_empty() {
-        for diag in warnings {
-            eprintln!("{}", diag.to_human_string());
-        }
+        let warning_diags: Vec<_> = warnings.into_iter().cloned().collect();
+        crate::diagnostics::emit_diagnostics_stderr(&warning_diags, Some(&source), Some(file_path));
     }
 
     // Success!
@@ -70,7 +69,7 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
 /// Print diagnostics to stderr (or stdout for JSON)
 fn print_diagnostics(
     diagnostics: &[atlas_runtime::Diagnostic],
-    _source: &str,
+    source: &str,
     file_path: &str,
     json_output: bool,
 ) {
@@ -81,32 +80,8 @@ fn print_diagnostics(
         }
     } else {
         // Human-readable format to stderr
-        for diag in diagnostics {
-            eprintln!("{}", format_diagnostic(diag, _source, file_path));
-        }
+        crate::diagnostics::emit_diagnostics_stderr(diagnostics, Some(source), Some(file_path));
     }
-}
-
-/// Format a diagnostic for display
-fn format_diagnostic(diag: &atlas_runtime::Diagnostic, _source: &str, file_path: &str) -> String {
-    use atlas_runtime::DiagnosticLevel;
-
-    let level_str = match diag.level {
-        DiagnosticLevel::Error => "error",
-        DiagnosticLevel::Warning => "warning",
-    };
-
-    let file = if diag.file == "<unknown>" || diag.file == "<input>" {
-        file_path
-    } else {
-        diag.file.as_str()
-    };
-
-    // Format: filename:line:col: level: message
-    format!(
-        "{}:{}:{}: {}: {}",
-        file, diag.line, diag.column, level_str, diag.message
-    )
 }
 
 #[cfg(test)]

@@ -30,51 +30,16 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
             } else {
                 // Human-readable format
                 eprintln!("Errors occurred while running {}:", file_path);
-                for diag in &diagnostics {
-                    eprintln!("{}", format_diagnostic(diag, file_path));
-                }
+                let source = std::fs::read_to_string(file_path).ok();
+                crate::diagnostics::emit_diagnostics_stderr(
+                    &diagnostics,
+                    source.as_deref(),
+                    Some(file_path),
+                );
             }
             Err(anyhow::anyhow!("Failed to execute program"))
         }
     }
-}
-
-/// Format a diagnostic for display
-fn format_diagnostic(diag: &atlas_runtime::Diagnostic, fallback_file: &str) -> String {
-    use atlas_runtime::DiagnosticLevel;
-
-    let level_str = match diag.level {
-        DiagnosticLevel::Error => "error",
-        DiagnosticLevel::Warning => "warning",
-    };
-
-    let file = if diag.file == "<unknown>" || diag.file == "<input>" {
-        fallback_file
-    } else {
-        diag.file.as_str()
-    };
-
-    // Format: file:line:col: level: message
-    let mut output = format!(
-        "{}:{}:{}: {}: {}",
-        file, diag.line, diag.column, level_str, diag.message
-    );
-
-    if !diag.stack_trace.is_empty() {
-        for frame in &diag.stack_trace {
-            let frame_file = if frame.file == "<unknown>" || frame.file == "<input>" {
-                fallback_file
-            } else {
-                frame.file.as_str()
-            };
-            output.push_str(&format!(
-                "\n  at {} ({}:{}:{})",
-                frame.function, frame_file, frame.line, frame.column
-            ));
-        }
-    }
-
-    output
 }
 
 #[cfg(test)]
@@ -111,9 +76,9 @@ mod tests {
     }
 
     #[test]
-    fn test_format_diagnostic() {
+    fn test_format_diagnostic_plain() {
         let diag = Diagnostic::error("Test error".to_string(), Span::new(0, 3));
-        let formatted = format_diagnostic(&diag, "test.atl");
+        let formatted = crate::diagnostics::format_diagnostic_plain(&diag, None, Some("test.atl"));
         assert!(formatted.contains("error"));
         assert!(formatted.contains("Test error"));
     }

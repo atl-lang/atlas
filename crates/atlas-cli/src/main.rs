@@ -6,6 +6,7 @@ use std::io;
 mod commands;
 mod config;
 mod debugger;
+mod diagnostics;
 mod templates;
 mod testing;
 

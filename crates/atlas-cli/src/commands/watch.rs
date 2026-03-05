@@ -175,9 +175,12 @@ fn run_once(path: &Path, config: &WatchConfig) {
                 }
             } else {
                 eprintln!("Errors:");
-                for diag in &diagnostics {
-                    eprintln!("{}", format_diagnostic(diag));
-                }
+                let source = std::fs::read_to_string(path).ok();
+                crate::diagnostics::emit_diagnostics_stderr(
+                    &diagnostics,
+                    source.as_deref(),
+                    path.to_str(),
+                );
             }
 
             if config.verbose {
@@ -201,27 +204,6 @@ fn clear_terminal() {
     // Flush to ensure it takes effect
     use std::io::Write;
     let _ = std::io::stdout().flush();
-}
-
-/// Format a diagnostic for display
-fn format_diagnostic(diag: &atlas_runtime::Diagnostic) -> String {
-    use atlas_runtime::DiagnosticLevel;
-
-    let level_str = match diag.level {
-        DiagnosticLevel::Error => "error",
-        DiagnosticLevel::Warning => "warning",
-    };
-
-    let file = if diag.file.is_empty() {
-        "<unknown>"
-    } else {
-        diag.file.as_str()
-    };
-
-    format!(
-        "{}:{}:{}: {}: {}",
-        file, diag.line, diag.column, level_str, diag.message
-    )
 }
 
 #[cfg(test)]
@@ -268,10 +250,10 @@ mod tests {
     }
 
     #[test]
-    fn test_format_diagnostic_error() {
+    fn test_format_diagnostic_plain() {
         use atlas_runtime::{Diagnostic, Span};
         let diag = Diagnostic::error("test error".to_string(), Span::new(0, 5));
-        let formatted = format_diagnostic(&diag);
+        let formatted = crate::diagnostics::format_diagnostic_plain(&diag, None, None);
         assert!(formatted.contains("error"));
         assert!(formatted.contains("test error"));
     }
