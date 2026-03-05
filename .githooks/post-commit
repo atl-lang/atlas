@@ -1,0 +1,113 @@
+#!/bin/bash
+# ══════════════════════════════════════════════════════════════════════════════
+# ATLAS DOC DRIFT DETECTOR v1.0
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# Runs after every successful commit. Checks if the committed changes
+# affect areas that have documentation, and warns if docs may be stale.
+#
+# This is NOT a blocker. It prints warnings only.
+# The goal: AI agents see the warning and update docs in the same session.
+#
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Colors
+YELLOW='\033[0;33m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RESET='\033[0m'
+BOLD='\033[1m'
+
+# Get files changed in the last commit
+CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null)
+if [ -z "$CHANGED_FILES" ]; then
+    exit 0
+fi
+
+WARNINGS=()
+
+# ── Domain mapping: source changes → doc files that may need updating ──
+
+# Parser changes → language docs
+if echo "$CHANGED_FILES" | grep -q "parser/"; then
+    # Check if language docs mention things the parser now handles differently
+    WARNINGS+=("parser changed → check docs/language/grammar.md, docs/language/functions.md")
+fi
+
+# Typechecker changes → type docs, known-issues
+if echo "$CHANGED_FILES" | grep -q "typechecker/"; then
+    WARNINGS+=("typechecker changed → check docs/language/types.md, docs/known-issues.md")
+fi
+
+# Interpreter or compiler changes → known-issues, parity
+if echo "$CHANGED_FILES" | grep -q -E "(interpreter/|compiler/)"; then
+    WARNINGS+=("interpreter/compiler changed → check docs/known-issues.md (parity-sensitive)")
+fi
+
+# Stdlib changes → stdlib docs
+if echo "$CHANGED_FILES" | grep -q "stdlib/"; then
+    # Try to identify which stdlib module changed
+    STDLIB_MODS=$(echo "$CHANGED_FILES" | grep "stdlib/" | sed 's|.*/stdlib/||' | sed 's|\.rs||' | sort -u)
+    for mod in $STDLIB_MODS; do
+        if [ -f "docs/stdlib/${mod}.md" ]; then
+            WARNINGS+=("stdlib/${mod}.rs changed → update docs/stdlib/${mod}.md")
+        fi
+    done
+fi
+
+# AST changes → multiple docs
+if echo "$CHANGED_FILES" | grep -q "ast\.rs"; then
+    WARNINGS+=("ast.rs changed → check docs/language/*.md, CLAUDE.md quick reference")
+fi
+
+# CLI changes → tooling docs
+if echo "$CHANGED_FILES" | grep -q "atlas-cli/"; then
+    WARNINGS+=("CLI changed → check docs/tooling/cli.md")
+fi
+
+# Value type changes → everything
+if echo "$CHANGED_FILES" | grep -q "value\.rs"; then
+    WARNINGS+=("value.rs changed → HIGH IMPACT: check docs/language/types.md, CLAUDE.md, embedding docs")
+fi
+
+# Known issues file itself changed — verify it matches tracker
+if echo "$CHANGED_FILES" | grep -q "known-issues.md"; then
+    # Silently ok — someone is updating docs
+    :
+fi
+
+# If docs/ changed but no source changed — someone is doing a doc update, skip
+DOCS_ONLY=true
+if echo "$CHANGED_FILES" | grep -q -v -E "^(docs/|CLAUDE\.md|\.claude/)"; then
+    DOCS_ONLY=false
+fi
+if [ "$DOCS_ONLY" = true ]; then
+    exit 0
+fi
+
+# ── Issue tracker sync check ──
+# If atlas-track is available, check for recently closed issues not in known-issues.md
+if command -v atlas-track &>/dev/null; then
+    # Quick check: any issue was closed in this session but known-issues.md wasn't updated?
+    if echo "$CHANGED_FILES" | grep -q -E "crates/.*\.rs$" && ! echo "$CHANGED_FILES" | grep -q "known-issues.md"; then
+        WARNINGS+=("source files changed but docs/known-issues.md was NOT updated — verify it's current")
+    fi
+fi
+
+# ── Output ──
+
+if [ ${#WARNINGS[@]} -gt 0 ]; then
+    echo ""
+    echo -e "${BOLD}${CYAN}╭──────────────────────────────────────────╮${RESET}"
+    echo -e "${BOLD}${CYAN}│     📋 DOC DRIFT DETECTOR v1.0           │${RESET}"
+    echo -e "${BOLD}${CYAN}╰──────────────────────────────────────────╯${RESET}"
+    echo ""
+    for warning in "${WARNINGS[@]}"; do
+        echo -e "  ${YELLOW}⚠${RESET}  ${warning}"
+    done
+    echo ""
+    echo -e "  ${GREEN}Action:${RESET} Update affected docs in this session, or run doc auditor."
+    echo ""
+fi
+
+exit 0

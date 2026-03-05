@@ -16,10 +16,9 @@ docs/
 ├── language/           # Language syntax and semantics
 │   ├── grammar.md      # Actual syntax (from parser)
 │   ├── types.md        # Type system
-│   ├── structs.md      # Structs and enums
-│   ├── functions.md    # Functions and closures
-│   ├── control-flow.md # If, while, for, match
-│   └── modules.md      # Import/export
+│   ├── structs-enums.md # Structs and enums
+│   ├── functions.md     # Functions and closures
+│   └── control-flow.md  # If, while, for, match
 │
 ├── stdlib/             # Standard library (actual functions)
 │   ├── index.md        # Overview and categories
@@ -37,8 +36,7 @@ docs/
 │   └── process.md      # Process spawning
 │
 ├── tooling/            # CLI and tools
-│   ├── cli.md          # atlas check, atlas run
-│   └── errors.md       # Error codes and messages
+│   └── cli.md          # atlas check, atlas run
 │
 └── known-issues.md     # Current limitations (honest)
 ```

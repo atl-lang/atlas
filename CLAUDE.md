@@ -87,7 +87,21 @@ print(p.x);  // Works as of H-066 fix
 // Functions
 fn add(a: number, b: number) -> number { a + b }
 
-// Stdlib (camelCase, global)
+// Entry point (optional — top-level code also runs)
+fn main() {
+    print("Hello from main!");
+}
+
+// Traits
+trait Greetable {
+    fn greet(self: Greetable) -> string;
+}
+impl Greetable for Point {
+    fn greet(self: Point) -> string { return "I am a point"; }
+}
+let greeting = p.greet();  // Trait method dispatch works
+
+// Stdlib (camelCase, global — method syntax coming in H-065)
 let arr2 = arrayPush(arr, 4);     // NOT push()
 let length = len(arr);             // NOT arr.length()
 let m: HashMap<string, number> = hashMapNew();
@@ -96,13 +110,13 @@ hashMapPut(m, "key", 42);          // NOT m.put()
 // Template strings
 let msg = `Hello {name}!`;         // {x} not ${x}
 
-// File extension
-// Use .atlas for execution and tests; .atl may parse but runtime support is unreliable
+// File extension — both .atlas and .atl work
 ```
 
 ## Known Issues (check docs/known-issues.md)
-- H-063: Multi-file imports broken
 - H-069: Closure global mutations (in progress)
+- H-070: Trait system incomplete (self inference, default methods, trait objects)
+- H-065: Stdlib needs method syntax (arr.push() vs arrayPush())
 
 ## Cross-Platform Testing
 - Use `std::path::Path` APIs, not string manipulation for paths.

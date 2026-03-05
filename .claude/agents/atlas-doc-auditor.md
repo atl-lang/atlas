@@ -1,7 +1,7 @@
 ---
 name: atlas-doc-auditor
 description: "Use this agent after completing a block or significant structural change to audit all CLAUDE.md files, .claude/memory, rules files, STATUS.md, and spec docs for staleness. Verifies every documented claim against the actual codebase. Run automatically as part of the block AC check phase (GATE 7)."
-model: sonnet
+model: haiku
 color: green
 ---
 
