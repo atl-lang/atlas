@@ -28,6 +28,25 @@ Currently paused for battle-testing and hardening.
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
 - **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?" Don't build nice-to-haves when the language is broken.
 
+## See Something, File Something (MANDATORY)
+**Never defer. Never assume "out of scope." File it.**
+
+If you notice Atlas is missing something that Go/Rust/TypeScript had in v1.0:
+1. **Do NOT defer** to a future version
+2. **Do NOT assume** previous AI agents scoped it out correctly
+3. **File an issue immediately:** `atlas-track add "Missing: X" P1 "reason"`
+4. **Flag to user:** "I noticed Atlas lacks X. Most languages have this. Filed as issue."
+
+**Examples of "should already exist":**
+- Basic type system features (generics, traits, interfaces)
+- Standard control flow
+- Module/import system that works
+- Error handling patterns
+
+**The rule:** If AI has to work around something that should be built-in, that's a bug, not a feature request. File it.
+
+Previous AI agents deferred too much. That stops now.
+
 ## Git Process (Local-First v2)
 - **Local CI first.** All validation via `cargo fmt/clippy/nextest` + `coderabbit` CLI locally.
 - **Batch pushes.** Commits accumulate on local main. Push every 168 hours.
