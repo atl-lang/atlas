@@ -80,13 +80,28 @@ START:
   atlas-track go opus             # THE command: init + full sitrep
   atlas-track sitrep              # Status only (no session start)
 
-ISSUES:
+ISSUES - CRUD:
   atlas-track add "Title" P0|P1|P2 "problem"  # Create issue
+  atlas-track update H-001 priority P0        # Update field (priority|component|title|problem)
   atlas-track claim H-001         # Mark in_progress
   atlas-track fix H-001 "cause" "fix"         # Close issue
+  atlas-track fix-batch H-001,H-002 "cause" "fix"  # Close multiple
   atlas-track abandon H-001       # Release back to open
   atlas-track reopen H-001        # Reopen closed issue
+
+ISSUES - QUERY:
+  atlas-track search "keyword"    # Find issues by keyword (max 10)
   atlas-track my-issues           # Your work this session
+  atlas-track components          # List valid components + counts
+
+ISSUES - LINKING:
+  atlas-track link H-001 blocks H-002      # H-001 blocks H-002
+  atlas-track link H-001 blocked-by H-002  # H-001 is blocked by H-002
+  atlas-track link H-001 related H-002     # Related issues
+  atlas-track links H-001                  # Show all relationships
+
+ISSUES - HISTORY:
+  atlas-track history H-001       # Show change history for issue
 
 INDEX (IDs only, max 5):
   atlas-track issues              # Open issues

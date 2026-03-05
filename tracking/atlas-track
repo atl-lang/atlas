@@ -38,10 +38,17 @@ START (pick one):
 
 ISSUES:
   add "Title" P0|P1|P2 "problem"   # Create issue, returns H-XXX
+  update H-001 field value         # Update: priority|component|title|problem
   claim H-001                      # Mark in_progress
   fix H-001 "cause" "fix"          # Close (auto-captures commit+files)
+  fix-batch H-001,H-002 "c" "f"    # Close multiple issues at once
+  search "keyword"                 # Find issues by keyword (max 10)
+  link H-001 blocks H-002          # Link issues (blocks|blocked-by|related)
+  links H-001                      # Show issue relationships
+  history H-001                    # Show issue change history
   my-issues                        # Your work this session
   reopen H-001                     # Reopen closed issue
+  components                       # List valid components + counts
 
 END:
   done S-001 success "Sum" "Next"  # End (BLOCKED if unclosed)
@@ -82,8 +89,15 @@ case "${1:-}" in
 
     # Issues
     add)        cmd_add_issue "${2:?'Title required'}" "${3:?'Priority (P0/P1/P2) required'}" "${4:?'Problem description required'}" ;;
+    update)     cmd_update_issue "${2:?'Issue ID required'}" "${3:?'Field required'}" "${4:?'Value required'}" ;;
     abandon)    cmd_abandon "${2:?'Issue ID required'}" "${3:-}" ;;
     reopen)     cmd_reopen "${2:?'Issue ID required'}" ;;
+    search)     cmd_search_issues "${2:?'Keyword required'}" ;;
+    fix-batch)  cmd_fix_batch "${2:?'Issue IDs required (comma-separated)'}" "${3:?'Root cause required'}" "${4:?'Fix required'}" ;;
+    link)       cmd_link_issues "${2:?'Source issue required'}" "${3:?'Relation required'}" "${4:?'Target issue required'}" ;;
+    links)      cmd_issue_links "${2:?'Issue ID required'}" ;;
+    history)    cmd_history "${2:?'Issue ID required'}" ;;
+    components) cmd_components ;;
     open-issue) cmd_open_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" "${6:?}" "${7:?}" ;;
 
     # Decisions
