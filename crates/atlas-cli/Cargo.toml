@@ -34,6 +34,7 @@ rayon = "1.10"  # Parallel test execution
 colored = "3.1"  # Colorized test output
 tokio = { version = "1", features = ["full"] }  # Async runtime for LSP server
 tower-lsp = "0.20"  # LSP framework for TCP server
+termcolor = "1.4.1"
 
 [dev-dependencies]
 tempfile = "3.8"
