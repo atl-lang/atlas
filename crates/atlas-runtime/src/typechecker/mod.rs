@@ -267,6 +267,12 @@ pub struct TypeChecker<'a> {
     pub impl_registry: ImplRegistry,
     /// Active type parameters in scope (including outer function params).
     active_type_params: Vec<crate::ast::TypeParam>,
+    /// Struct declarations available in this module scope.
+    struct_decls: HashMap<String, StructDecl>,
+    /// Cached resolved struct types.
+    struct_type_cache: HashMap<String, Type>,
+    /// Stack used to detect recursive struct definitions during resolution.
+    struct_resolution_stack: Vec<String>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -309,6 +315,9 @@ impl<'a> TypeChecker<'a> {
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
             active_type_params: Vec::new(),
+            struct_decls: HashMap::new(),
+            struct_type_cache: HashMap::new(),
+            struct_resolution_stack: Vec::new(),
         }
     }
 
@@ -321,6 +330,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Type check a program
     pub fn check(&mut self, program: &Program) -> Vec<Diagnostic> {
+        self.collect_struct_decls(program);
         self.collect_type_guards(program);
         self.validate_type_aliases(program);
         for item in &program.items {
@@ -375,6 +385,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         // Type check all items (imports already validated during binding)
+        self.collect_struct_decls(program);
         self.collect_type_guards(program);
         self.validate_type_aliases(program);
         for item in &program.items {
@@ -415,14 +426,87 @@ impl<'a> TypeChecker<'a> {
             Item::Trait(trait_decl) => self.check_trait_decl(trait_decl),
             Item::Impl(impl_block) => self.check_impl_block(impl_block),
             Item::Struct(_struct_decl) => {
-                // TODO: Validate struct field types and check for cycles
-                // For now, just skip - struct type validation coming in later phase
+                if let Item::Struct(struct_decl) = item {
+                    self.validate_struct_decl(struct_decl);
+                }
             }
             Item::Enum(_enum_decl) => {
                 // TODO: Validate enum variant types and check for cycles
                 // For now, just skip - enum type validation coming in later phase
             }
         }
+    }
+
+    fn collect_struct_decls(&mut self, program: &Program) {
+        self.struct_decls.clear();
+        self.struct_type_cache.clear();
+        self.struct_resolution_stack.clear();
+        for item in &program.items {
+            if let Item::Struct(struct_decl) = item {
+                self.struct_decls
+                    .entry(struct_decl.name.name.clone())
+                    .or_insert_with(|| struct_decl.clone());
+            }
+        }
+    }
+
+    fn validate_struct_decl(&mut self, struct_decl: &StructDecl) {
+        let mut seen = HashSet::new();
+        for field in &struct_decl.fields {
+            if !seen.insert(field.name.name.clone()) {
+                self.diagnostics.push(
+                    Diagnostic::error_with_code(
+                        "AT3001",
+                        format!(
+                            "Duplicate field '{}' in struct '{}'",
+                            field.name.name, struct_decl.name.name
+                        ),
+                        field.span,
+                    )
+                    .with_label("duplicate field name")
+                    .with_help("each struct field name must be unique"),
+                );
+            }
+            let _ = self.resolve_type_ref_with_context(&field.type_ref, None);
+        }
+    }
+
+    fn resolve_struct_type(&mut self, name: &str, span: Span) -> Option<Type> {
+        if let Some(cached) = self.struct_type_cache.get(name) {
+            return Some(cached.clone());
+        }
+        let struct_decl = self.struct_decls.get(name)?.clone();
+        if self
+            .struct_resolution_stack
+            .iter()
+            .any(|entry| entry == name)
+        {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    "AT3001",
+                    format!("Recursive struct type '{}' is not supported", name),
+                    span,
+                )
+                .with_label("recursive struct definition")
+                .with_help("remove the recursive field or refactor with indirection"),
+            );
+            return Some(Type::Unknown);
+        }
+
+        self.struct_resolution_stack.push(name.to_string());
+        let members = struct_decl
+            .fields
+            .iter()
+            .map(|field| StructuralMemberType {
+                name: field.name.name.clone(),
+                ty: self.resolve_type_ref_with_context(&field.type_ref, None),
+            })
+            .collect::<Vec<_>>();
+        self.struct_resolution_stack.pop();
+
+        let ty = Type::Structural { members };
+        self.struct_type_cache.insert(name.to_string(), ty.clone());
+        Some(ty)
     }
 
     /// Check a function declaration
@@ -2140,6 +2224,10 @@ impl<'a> TypeChecker<'a> {
                             )),
                         );
                         return Type::Unknown;
+                    }
+
+                    if let Some(struct_ty) = self.resolve_struct_type(name, *span) {
+                        return struct_ty;
                     }
 
                     Type::Unknown

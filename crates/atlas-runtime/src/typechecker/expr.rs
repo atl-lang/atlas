@@ -7,6 +7,7 @@ use crate::span::Span;
 use crate::typechecker::suggestions;
 use crate::typechecker::TypeChecker;
 use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
+use std::collections::{HashMap, HashSet};
 
 impl<'a> TypeChecker<'a> {
     /// Check an expression and return its type
@@ -80,13 +81,121 @@ impl<'a> TypeChecker<'a> {
                 Type::Structural { members }
             }
             Expr::StructExpr(struct_expr) => {
-                // Type check all field value expressions
-                for field in &struct_expr.fields {
-                    self.check_expr(&field.value);
+                let struct_name = struct_expr.name.name.as_str();
+                let struct_type = self.resolve_struct_type(struct_name, struct_expr.name.span);
+
+                if let Some(struct_type) = struct_type {
+                    let members = match struct_type.normalized() {
+                        Type::Structural { members } => members,
+                        _ => Vec::new(),
+                    };
+
+                    let mut member_types: HashMap<String, Type> = HashMap::new();
+                    for member in members {
+                        member_types.insert(member.name.clone(), member.ty.clone());
+                    }
+
+                    let mut seen_fields: HashSet<String> = HashSet::new();
+                    for field in &struct_expr.fields {
+                        let value_type = self.check_expr(&field.value);
+                        if let Some(expected_type) = member_types.get(&field.name.name) {
+                            if !seen_fields.insert(field.name.name.clone()) {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        "AT3001",
+                                        format!(
+                                            "Duplicate field '{}' in struct '{}'",
+                                            field.name.name, struct_expr.name.name
+                                        ),
+                                        field.span,
+                                    )
+                                    .with_label("duplicate field initializer")
+                                    .with_help("each struct field can only be initialized once"),
+                                );
+                            }
+                            if !value_type.is_assignable_to(expected_type) {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        "AT3001",
+                                        format!(
+                                            "Type mismatch: expected {}, found {}",
+                                            expected_type.display_name(),
+                                            value_type.display_name()
+                                        ),
+                                        field.span,
+                                    )
+                                    .with_label(format!(
+                                        "expected {}, found {}",
+                                        expected_type.display_name(),
+                                        value_type.display_name()
+                                    ))
+                                    .with_help(format!(
+                                        "field '{}' must be of type {}",
+                                        field.name.name,
+                                        expected_type.display_name()
+                                    )),
+                                );
+                            }
+                        } else {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3010",
+                                    format!(
+                                        "Struct '{}' has no field named '{}'",
+                                        struct_expr.name.name, field.name.name
+                                    ),
+                                    field.span,
+                                )
+                                .with_label("unknown field")
+                                .with_help("check the struct declaration for valid fields"),
+                            );
+                        }
+                    }
+
+                    for (field_name, _) in member_types {
+                        if !seen_fields.contains(&field_name) {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3001",
+                                    format!(
+                                        "Missing field '{}' in struct '{}'",
+                                        field_name, struct_expr.name.name
+                                    ),
+                                    struct_expr.span,
+                                )
+                                .with_label("missing field")
+                                .with_help(format!("provide a value for field '{}'", field_name)),
+                            );
+                        }
+                    }
+
+                    struct_type
+                } else {
+                    let mut members = Vec::with_capacity(struct_expr.fields.len());
+                    let mut seen = HashSet::new();
+                    for field in &struct_expr.fields {
+                        if !seen.insert(field.name.name.clone()) {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3001",
+                                    format!(
+                                        "Duplicate field '{}' in struct '{}'",
+                                        field.name.name, struct_expr.name.name
+                                    ),
+                                    field.span,
+                                )
+                                .with_label("duplicate field initializer")
+                                .with_help("each struct field can only be initialized once"),
+                            );
+                        }
+                        let value_type = self.check_expr(&field.value);
+                        members.push(StructuralMemberType {
+                            name: field.name.name.clone(),
+                            ty: value_type,
+                        });
+                    }
+                    Type::Structural { members }
                 }
-                // TODO: Look up struct definition and verify fields match
-                // For now, return Unknown (struct type tracking coming in later phase)
-                Type::Unknown
             }
             Expr::Range {
                 start,
