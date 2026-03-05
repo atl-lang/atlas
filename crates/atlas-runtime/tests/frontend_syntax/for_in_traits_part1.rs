@@ -300,18 +300,20 @@ fn test_trait_method_requires_semicolon() {
 }
 
 #[test]
-fn test_trait_method_with_body_is_error() {
-    // Trait method sigs have no body — `{` after return type is unexpected
+fn test_trait_method_with_body_parses() {
     let src = "trait Foo { fn bar() -> number { return 1; } }";
-    let (_, diags) = parse_source(src);
-    let errors: Vec<_> = diags
-        .iter()
-        .filter(|d| d.level == DiagnosticLevel::Error)
-        .collect();
-    assert!(
-        !errors.is_empty(),
-        "Method body in trait declaration should fail"
-    );
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 1);
+    if let Item::Trait(trait_decl) = &prog.items[0] {
+        assert_eq!(trait_decl.methods.len(), 1);
+        assert!(
+            trait_decl.methods[0].body.is_some(),
+            "default body should be captured in AST"
+        );
+    } else {
+        panic!("expected trait declaration");
+    }
 }
 
 #[test]

@@ -936,6 +936,25 @@ fn test_vm_trait_compiles_without_bytecode() {
     assert_eq!(result.unwrap(), "Number(42)");
 }
 
+#[test]
+fn test_vm_trait_default_method_inherited() {
+    let result = run_vm(
+        "
+        trait Greetable {
+            fn greet(self: Greetable) -> string {
+                return \"Hello!\";
+            }
+        }
+        struct Robot { name: string }
+        impl Greetable for Robot { }
+        let r = Robot { name: \"Atlas\" };
+        let msg: string = r.greet();
+        msg
+    ",
+    );
+    assert_eq!(result.unwrap(), r#"String("Hello!")"#);
+}
+
 // ============================================================
 // Phase 13 — Interpreter: Trait Method Dispatch (Parity Tests)
 // ============================================================
@@ -1021,6 +1040,37 @@ fn test_interp_vm_trait_dispatch_parity() {
     let atlas = Atlas::new();
     let interp_result = atlas.eval(source).expect("Interpreter should succeed");
     assert_eq!(interp_result, Value::string("n:7"));
+}
+
+#[test]
+fn test_interp_vm_trait_default_override_parity() {
+    let source = "
+        trait Greetable {
+            fn greet(self: Greetable) -> string {
+                return \"Hello!\";
+            }
+        }
+        struct Robot { name: string }
+        struct Human { name: string, age: number }
+        impl Greetable for Robot { }
+        impl Greetable for Human {
+            fn greet(self: Human) -> string { return \"Hi, I'm \" + self.name; }
+        }
+        fn main() -> string {
+            let r = Robot { name: \"Atlas\" };
+            let h = Human { name: \"Ada\", age: 36 };
+            let a: string = r.greet();
+            let b: string = h.greet();
+            return a + \"|\" + b;
+        }
+    ";
+
+    let vm_result = run_vm(source).expect("VM should succeed");
+    assert_eq!(vm_result, r#"String("Hello!|Hi, I'm Ada")"#);
+
+    let atlas = Atlas::new();
+    let interp_result = atlas.eval(source).expect("Interpreter should succeed");
+    assert_eq!(interp_result, Value::string("Hello!|Hi, I'm Ada"));
 }
 
 // ─── Block-03 Phase 17: Parity Hardening — 10 Extended VM Scenarios ──────────

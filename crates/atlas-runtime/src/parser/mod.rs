@@ -641,7 +641,7 @@ impl Parser {
     /// Parse a method signature inside a trait body.
     ///
     /// Syntax: `fn method_name<T>(param: Type, ...) -> ReturnType;`
-    /// Note: NO block body — terminated by `;`
+    /// Or with a default body: `fn method_name(...) -> ReturnType { ... }`
     fn parse_trait_method_sig(&mut self) -> Result<TraitMethodSig, ()> {
         let start_span = self
             .consume(TokenKind::Fn, "Expected 'fn' in trait body")?
@@ -665,18 +665,26 @@ impl Parser {
         self.consume(TokenKind::Arrow, "Expected '->' after method parameters")?;
         let return_type = self.parse_type_ref()?;
 
-        let end_span = self
-            .consume(
-                TokenKind::Semicolon,
-                "Expected ';' after trait method signature",
-            )?
-            .span;
+        let (body, end_span) = if self.check(TokenKind::LeftBrace) {
+            let body = self.parse_block()?;
+            let end_span = body.span;
+            (Some(body), end_span)
+        } else {
+            let end_span = self
+                .consume(
+                    TokenKind::Semicolon,
+                    "Expected ';' after trait method signature",
+                )?
+                .span;
+            (None, end_span)
+        };
 
         Ok(TraitMethodSig {
             name,
             type_params,
             params,
             return_type,
+            body,
             span: start_span.merge(end_span),
         })
     }

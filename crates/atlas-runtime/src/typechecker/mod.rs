@@ -71,6 +71,8 @@ pub struct TraitRegistry {
     pub traits: HashMap<String, Vec<TraitMethodEntry>>,
     /// Set of built-in trait names (not user-definable)
     pub built_in: HashSet<String>,
+    /// Maps (trait_name, method_name) -> default method signature (with body)
+    pub default_methods: HashMap<(String, String), TraitMethodSig>,
     /// Maps (type_name, trait_name) -> whether type implements the trait.
     /// For built-in types, pre-populated. For user types, populated during impl checking.
     pub implementations: HashMap<(String, String), bool>,
@@ -136,8 +138,17 @@ impl TraitRegistry {
         self.built_in.insert(name.to_string());
     }
 
-    pub fn register_user_trait(&mut self, name: &str, methods: Vec<TraitMethodEntry>) {
+    pub fn register_user_trait(
+        &mut self,
+        name: &str,
+        methods: Vec<TraitMethodEntry>,
+        default_methods: Vec<TraitMethodSig>,
+    ) {
         self.traits.insert(name.to_string(), methods);
+        for method in default_methods {
+            self.default_methods
+                .insert((name.to_string(), method.name.name.clone()), method);
+        }
     }
 
     pub fn mark_implements(&mut self, type_name: &str, trait_name: &str) {
@@ -158,6 +169,15 @@ impl TraitRegistry {
 
     pub fn get_methods(&self, trait_name: &str) -> Option<&Vec<TraitMethodEntry>> {
         self.traits.get(trait_name)
+    }
+
+    pub fn get_default_method(
+        &self,
+        trait_name: &str,
+        method_name: &str,
+    ) -> Option<&TraitMethodSig> {
+        self.default_methods
+            .get(&(trait_name.to_string(), method_name.to_string()))
     }
 
     /// Returns the name of the first trait that declares a method with the given name.
@@ -810,6 +830,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         // Resolve method signatures and register
+        let mut default_methods = Vec::new();
         let method_entries: Vec<TraitMethodEntry> = trait_decl
             .methods
             .iter()
@@ -826,6 +847,9 @@ impl<'a> TypeChecker<'a> {
                     })
                     .collect();
                 let return_type = self.resolve_type_ref(&method_sig.return_type);
+                if method_sig.body.is_some() {
+                    default_methods.push(method_sig.clone());
+                }
                 TraitMethodEntry {
                     name: method_sig.name.name.clone(),
                     type_params: method_sig
@@ -848,7 +872,7 @@ impl<'a> TypeChecker<'a> {
             .collect();
 
         self.trait_registry
-            .register_user_trait(&trait_name, method_entries);
+            .register_user_trait(&trait_name, method_entries, default_methods);
     }
 
     /// Check an impl block: verify the trait exists, check method conformance, register.
@@ -894,18 +918,46 @@ impl<'a> TypeChecker<'a> {
 
         // 5. Check all required methods are provided with matching signatures
         let mut all_ok = true;
+        let mut default_methods_to_add: Vec<ImplMethod> = Vec::new();
         for required in &required_methods {
             match provided.get(&required.name) {
                 None => {
-                    self.diagnostics.push(Diagnostic::error_with_code(
-                        error_codes::IMPL_METHOD_MISSING,
-                        format!(
-                            "Impl of '{}' for '{}' is missing required method '{}'",
-                            trait_name, type_name, required.name
-                        ),
-                        impl_block.span,
-                    ));
-                    all_ok = false;
+                    if let Some(default_sig) = self
+                        .trait_registry
+                        .get_default_method(&trait_name, &required.name)
+                    {
+                        if let Some(body) = default_sig.body.clone() {
+                            let params = default_sig
+                                .params
+                                .iter()
+                                .map(|p| {
+                                    let mut param = p.clone();
+                                    if param.name.name == "self" {
+                                        param.type_ref = None;
+                                    }
+                                    param
+                                })
+                                .collect();
+                            default_methods_to_add.push(ImplMethod {
+                                name: default_sig.name.clone(),
+                                type_params: default_sig.type_params.clone(),
+                                params,
+                                return_type: default_sig.return_type.clone(),
+                                body,
+                                span: default_sig.span,
+                            });
+                        }
+                    } else {
+                        self.diagnostics.push(Diagnostic::error_with_code(
+                            error_codes::IMPL_METHOD_MISSING,
+                            format!(
+                                "Impl of '{}' for '{}' is missing required method '{}'",
+                                trait_name, type_name, required.name
+                            ),
+                            impl_block.span,
+                        ));
+                        all_ok = false;
+                    }
                 }
                 Some(impl_method) => {
                     // Skip `self` parameter on both sides: trait declares `self: TraitName`
@@ -954,14 +1006,22 @@ impl<'a> TypeChecker<'a> {
         for impl_method in &impl_block.methods {
             self.check_impl_method_body(impl_method, Some(&impl_self_type));
         }
+        for default_method in &default_methods_to_add {
+            self.check_impl_method_body(default_method, Some(&impl_self_type));
+        }
 
         // 7. Register impl if conformance passed
         if all_ok {
-            let method_map: HashMap<String, ImplMethod> = impl_block
+            let mut method_map: HashMap<String, ImplMethod> = impl_block
                 .methods
                 .iter()
                 .map(|m| (m.name.name.clone(), m.clone()))
                 .collect();
+            for default_method in default_methods_to_add {
+                method_map
+                    .entry(default_method.name.name.clone())
+                    .or_insert(default_method);
+            }
             self.impl_registry
                 .register(&type_name, &trait_name, method_map);
             self.trait_registry.mark_implements(&type_name, &trait_name);

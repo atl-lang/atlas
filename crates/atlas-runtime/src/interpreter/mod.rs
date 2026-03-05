@@ -64,6 +64,8 @@ pub struct Interpreter {
     pub(super) consumed_locals: Vec<HashSet<String>>,
     /// User-defined function bodies (accessed via Value::Function references)
     pub(super) function_bodies: HashMap<String, UserFunction>,
+    /// Trait default method signatures with bodies (trait_name, method_name)
+    pub(super) trait_default_methods: HashMap<(String, String), crate::ast::TraitMethodSig>,
     /// Current control flow state
     pub(super) control_flow: ControlFlow,
     /// Monomorphizer for generic functions (tracks type substitutions)
@@ -102,6 +104,7 @@ impl Interpreter {
             locals: vec![HashMap::new()],
             consumed_locals: vec![HashSet::new()],
             function_bodies: HashMap::new(),
+            trait_default_methods: HashMap::new(),
             control_flow: ControlFlow::None,
             monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
             current_security: None,
@@ -407,13 +410,21 @@ impl Interpreter {
                 Item::TypeAlias(_) => {
                     // Type aliases are compile-time only
                 }
-                Item::Trait(_) => {
-                    // Trait declarations are type-info only — no runtime action needed.
+                Item::Trait(trait_decl) => {
+                    for method in &trait_decl.methods {
+                        if method.body.is_some() {
+                            self.trait_default_methods.insert(
+                                (trait_decl.name.name.clone(), method.name.name.clone()),
+                                method.clone(),
+                            );
+                        }
+                    }
                 }
                 Item::Impl(impl_block) => {
                     // Register each impl method under its mangled name for static dispatch.
                     let type_name = &impl_block.type_name.name;
                     let trait_name = &impl_block.trait_name.name;
+                    let mut provided = HashSet::new();
                     for method in &impl_block.methods {
                         let mangled_name = format!(
                             "__impl__{}__{}__{}",
@@ -428,6 +439,28 @@ impl Interpreter {
                                 captured: HashMap::new(),
                             },
                         );
+                        provided.insert(method.name.name.clone());
+                    }
+                    for ((default_trait, method_name), method_sig) in
+                        self.trait_default_methods.iter()
+                    {
+                        if default_trait == trait_name && !provided.contains(method_name) {
+                            if let Some(body) = method_sig.body.clone() {
+                                let mangled_name = format!(
+                                    "__impl__{}__{}__{}",
+                                    type_name, trait_name, method_name
+                                );
+                                self.function_bodies.insert(
+                                    mangled_name.clone(),
+                                    UserFunction {
+                                        name: mangled_name,
+                                        params: method_sig.params.clone(),
+                                        body,
+                                        captured: HashMap::new(),
+                                    },
+                                );
+                            }
+                        }
                     }
                 }
                 Item::Struct(_) | Item::Enum(_) => {
@@ -1004,6 +1037,7 @@ impl Interpreter {
         // Get function for closure
         let fn_name = function_name.to_string();
         let function_bodies = self.function_bodies.clone();
+        let trait_default_methods = self.trait_default_methods.clone();
         let globals = self.globals.clone();
         let output_writer = self.output_writer.clone();
 
@@ -1017,6 +1051,7 @@ impl Interpreter {
                 locals: vec![HashMap::new()],
                 consumed_locals: vec![HashSet::new()],
                 function_bodies: function_bodies.clone(),
+                trait_default_methods: trait_default_methods.clone(),
                 control_flow: ControlFlow::None,
                 monomorphizer: crate::typechecker::generics::Monomorphizer::new(),
                 current_security: None,

@@ -207,6 +207,32 @@ fn test_impl_extra_methods_beyond_trait_allowed() {
 }
 
 #[test]
+fn test_impl_inherits_trait_default_method() {
+    let diags = typecheck_source(
+        "
+        trait Greetable {
+            fn greet(self: Greetable) -> string { return \"Hello!\"; }
+        }
+        struct Robot { name: string }
+        impl Greetable for Robot { }
+        let r = Robot { name: \"Atlas\" };
+        let s: string = r.greet();
+        s
+    ",
+    );
+    let missing_method: Vec<_> = diags.iter().filter(|d| d.code == "AT3034").collect();
+    let not_impl: Vec<_> = diags.iter().filter(|d| d.code == "AT3035").collect();
+    assert!(
+        missing_method.is_empty(),
+        "default method should satisfy impl requirements: {diags:?}"
+    );
+    assert!(
+        not_impl.is_empty(),
+        "default method should resolve trait dispatch: {diags:?}"
+    );
+}
+
+#[test]
 fn test_impl_multi_method_trait_all_provided() {
     let diags = typecheck_source(
         "

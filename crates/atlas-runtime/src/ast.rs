@@ -197,13 +197,14 @@ pub struct TraitBound {
 }
 
 /// A method signature in a trait declaration.
-/// Has no body — the body lives in the `ImplBlock`.
+/// May include a default body; implementations can override it.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TraitMethodSig {
     pub name: Identifier,
     pub type_params: Vec<TypeParam>,
     pub params: Vec<Param>,
     pub return_type: TypeRef,
+    pub body: Option<Block>,
     pub span: Span,
 }
 
@@ -211,8 +212,8 @@ pub struct TraitMethodSig {
 ///
 /// Syntax: `trait Foo { fn method(self: Foo, arg: T) -> R; }`
 ///
-/// Trait bodies contain only method signatures (no implementations).
-/// Implementations live in `ImplBlock`.
+/// Trait bodies contain method signatures and optional default implementations.
+/// Implementations live in `ImplBlock`, but may inherit defaults.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TraitDecl {
     pub name: Identifier,

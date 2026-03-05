@@ -88,6 +88,9 @@ pub struct Compiler {
     /// Stack of upvalue contexts, one entry per active nested function compilation.
     /// Empty when not inside any nested function.
     pub(super) upvalue_stack: Vec<UpvalueContext>,
+    /// Trait default methods with bodies (trait_name, method_name)
+    pub(super) trait_default_methods:
+        std::collections::HashMap<(String, String), crate::ast::TraitMethodSig>,
 }
 
 impl Compiler {
@@ -105,6 +108,7 @@ impl Compiler {
             global_mutability: std::collections::HashMap::new(),
             locals_watermark: 0,
             upvalue_stack: Vec::new(),
+            trait_default_methods: std::collections::HashMap::new(),
         }
     }
 
@@ -129,6 +133,7 @@ impl Compiler {
             global_mutability: std::collections::HashMap::new(),
             locals_watermark: 0,
             upvalue_stack: Vec::new(),
+            trait_default_methods: std::collections::HashMap::new(),
         }
     }
 
@@ -145,6 +150,20 @@ impl Compiler {
                 Item::Function(f) if f.name.name == "main" && f.params.is_empty()
             )
         });
+
+        self.trait_default_methods.clear();
+        for item in &program.items {
+            if let Item::Trait(trait_decl) = item {
+                for method in &trait_decl.methods {
+                    if method.body.is_some() {
+                        self.trait_default_methods.insert(
+                            (trait_decl.name.name.clone(), method.name.name.clone()),
+                            method.clone(),
+                        );
+                    }
+                }
+            }
+        }
 
         // Compile all top-level items
         for item in &program.items {
@@ -353,12 +372,40 @@ impl Compiler {
         let type_name = &impl_block.type_name.name;
         let trait_name = &impl_block.trait_name.name;
 
+        let mut provided = std::collections::HashSet::new();
         for method in &impl_block.methods {
             let mangled_name = format!(
                 "__impl__{}__{}__{}",
                 type_name, trait_name, method.name.name
             );
             self.compile_impl_method(method, &mangled_name, impl_block.span)?;
+            provided.insert(method.name.name.clone());
+        }
+
+        let default_methods: Vec<crate::ast::TraitMethodSig> = self
+            .trait_default_methods
+            .iter()
+            .filter(|((default_trait, _), _)| default_trait == trait_name)
+            .filter(|((_, method_name), _)| !provided.contains(method_name))
+            .map(|(_, method_sig)| method_sig.clone())
+            .collect();
+
+        for method_sig in default_methods {
+            if let Some(body) = method_sig.body.clone() {
+                let mangled_name = format!(
+                    "__impl__{}__{}__{}",
+                    type_name, trait_name, method_sig.name.name
+                );
+                let default_method = crate::ast::ImplMethod {
+                    name: method_sig.name.clone(),
+                    type_params: method_sig.type_params.clone(),
+                    params: method_sig.params.clone(),
+                    return_type: method_sig.return_type.clone(),
+                    body,
+                    span: method_sig.span,
+                };
+                self.compile_impl_method(&default_method, &mangled_name, impl_block.span)?;
+            }
         }
         Ok(())
     }
