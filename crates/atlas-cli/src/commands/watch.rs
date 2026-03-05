@@ -133,7 +133,7 @@ fn is_relevant_change(changed_path: &Path, watched_path: &Path) -> bool {
 
     // Check if it's an Atlas file in the same directory
     if let Some(ext) = changed_path.extension() {
-        if ext == "at" || ext == "atlas" {
+        if ext == "at" || ext == "atl" || ext == "atlas" {
             return true;
         }
     }

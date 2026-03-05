@@ -237,7 +237,7 @@ fn collect_files(paths: &[String]) -> Result<Vec<PathBuf>> {
             collect_files_recursive(path, &mut files)?;
         } else if path
             .extension()
-            .is_some_and(|ext| ext == "at" || ext == "atlas")
+            .is_some_and(|ext| ext == "at" || ext == "atl" || ext == "atlas")
         {
             files.push(path.to_path_buf());
         } else {
@@ -258,7 +258,7 @@ fn collect_files_recursive(dir: &Path, files: &mut Vec<PathBuf>) -> Result<()> {
             collect_files_recursive(&path, files)?;
         } else if path
             .extension()
-            .is_some_and(|ext| ext == "at" || ext == "atlas")
+            .is_some_and(|ext| ext == "at" || ext == "atl" || ext == "atlas")
         {
             files.push(path);
         }
