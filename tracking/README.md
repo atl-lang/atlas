@@ -20,8 +20,7 @@
 
 ```bash
 # Every session starts with:
-atlas-track status
-atlas-track start-session opus  # Returns your session ID
+atlas-track go opus              # THE command: init + full sitrep
 
 # Check what needs work:
 atlas-track issues P0
@@ -29,12 +28,29 @@ atlas-track issues P0
 # Get details on one issue:
 atlas-track issue H-001
 
+# File a new issue:
+atlas-track add "Title" P1 "Problem description"
+
 # When you fix something:
-atlas-track close-issue H-001 S-002 "Root cause" "Fix applied"
+atlas-track claim H-001          # Mark in_progress
+atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
 
 # Before handoff:
-atlas-track end-session S-002 success "What was done" "Next steps"
+atlas-track done S-002 success "What was done" "Next steps"
 ```
+
+## Bulk Operations
+
+For bulk issue imports (e.g., after audits), use SQLite directly:
+```bash
+sqlite3 tracking/atlas.db << 'SQL'
+INSERT INTO issues (id, title, status, priority, severity, component, version, source, problem)
+VALUES
+  ('H-071', 'Issue 1', 'open', 'P1', 'high', 'parser', '0.3.0', 'audit', 'Description'),
+  ('H-072', 'Issue 2', 'open', 'P2', 'medium', 'runtime', '0.3.0', 'audit', 'Description');
+SQL
+```
+Use CLI for single issues (better UX). Use SQL for 5+ issues (efficiency).
 
 ## Components (Compiler Domains)
 
@@ -60,8 +76,17 @@ atlas-track end-session S-002 success "What was done" "Next steps"
 ## CLI Commands
 
 ```
-STARTUP:
-  atlas-track status              # 3-line status (mode, P0s, last session)
+START:
+  atlas-track go opus             # THE command: init + full sitrep
+  atlas-track sitrep              # Status only (no session start)
+
+ISSUES:
+  atlas-track add "Title" P0|P1|P2 "problem"  # Create issue
+  atlas-track claim H-001         # Mark in_progress
+  atlas-track fix H-001 "cause" "fix"         # Close issue
+  atlas-track abandon H-001       # Release back to open
+  atlas-track reopen H-001        # Reopen closed issue
+  atlas-track my-issues           # Your work this session
 
 INDEX (IDs only, max 5):
   atlas-track issues              # Open issues
@@ -69,21 +94,24 @@ INDEX (IDs only, max 5):
   atlas-track issues runtime      # By component
   atlas-track decisions           # Active decisions
   atlas-track blocks              # Block progress
-  atlas-track sessions            # Recent sessions
 
 DETAIL (single item):
   atlas-track issue H-001         # Full issue details
   atlas-track decision D-001      # Full decision details
-  atlas-track session S-001       # Full session details
-  atlas-track block 7             # Full block details
 
-MUTATIONS:
-  atlas-track start-session opus              # Start session
-  atlas-track end-session ID outcome "summary" "next"
-  atlas-track close-issue ID session "cause" "fix"
-  atlas-track open-issue "title" P1 high comp "problem" "fix"
-  atlas-track unblock                         # Allow block work
-  atlas-track block-work                      # Enter hardening mode
+END:
+  atlas-track done S-001 success "summary" "next"  # End session
+
+DECISIONS:
+  atlas-track add-decision "Title" component "Rule" "Rationale"
+
+MODE:
+  atlas-track unblock             # Allow block work
+  atlas-track block-work          # Enter hardening mode
+
+MAINTENANCE:
+  atlas-track gc                  # Clean up stale sessions
+  atlas-track health              # Quick status check
 ```
 
 ## Database Schema

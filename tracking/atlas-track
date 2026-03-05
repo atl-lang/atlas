@@ -37,9 +37,11 @@ START (pick one):
   sitrep                           # Status only (no session start)
 
 ISSUES:
+  add "Title" P0|P1|P2 "problem"   # Create issue, returns H-XXX
   claim H-001                      # Mark in_progress
   fix H-001 "cause" "fix"          # Close (auto-captures commit+files)
   my-issues                        # Your work this session
+  reopen H-001                     # Reopen closed issue
 
 END:
   done S-001 success "Sum" "Next"  # End (BLOCKED if unclosed)
@@ -79,6 +81,7 @@ case "${1:-}" in
     done)       cmd_done "${2:?'Session ID required'}" "${3:?'Outcome required'}" "${4:?'Summary required'}" "${5:-}" ;;
 
     # Issues
+    add)        cmd_add_issue "${2:?'Title required'}" "${3:?'Priority (P0/P1/P2) required'}" "${4:?'Problem description required'}" ;;
     abandon)    cmd_abandon "${2:?'Issue ID required'}" "${3:-}" ;;
     reopen)     cmd_reopen "${2:?'Issue ID required'}" ;;
     open-issue) cmd_open_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" "${6:?}" "${7:?}" ;;

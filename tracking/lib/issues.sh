@@ -115,7 +115,39 @@ cmd_reopen() {
     echo "✓ Reopened: $issue_id"
 }
 
+cmd_add_issue() {
+    # Simple interface: add "Title" P0|P1|P2 "problem description"
+    local title="$1"
+    local priority="$2"
+    local problem="$3"
+
+    # Validate priority
+    if [[ ! "$priority" =~ ^P[0-2]$ ]]; then
+        echo "ERROR: Priority must be P0, P1, or P2"
+        exit 1
+    fi
+
+    # Derive severity from priority
+    local severity
+    case "$priority" in
+        P0) severity="critical" ;;
+        P1) severity="high" ;;
+        P2) severity="medium" ;;
+    esac
+
+    local next_id=$(sqlite3 "$DB" "SELECT 'H-' || printf('%03d', COALESCE(MAX(CAST(substr(id, 3) AS INTEGER)), 0) + 1) FROM issues")
+    local session=$(get_session)
+
+    sqlite3 "$DB" "INSERT INTO issues (id, title, status, priority, severity, component, version, source, problem, fix_required, found_by, tags) VALUES ('$next_id', '$(sql_escape "$title")', 'open', '$priority', '$severity', 'unknown', '0.3.0', 'agent', '$(sql_escape "$problem")', 'TBD', '$session', '')"
+
+    echo "✓ Created: $next_id"
+    echo "  Title: $title"
+    echo "  Priority: $priority ($severity)"
+    echo "  Next: atlas-track claim $next_id"
+}
+
 cmd_open_issue() {
+    # Verbose interface for full control (6 params)
     local title="$1"
     local priority="$2"
     local severity="$3"
