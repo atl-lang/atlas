@@ -1,0 +1,168 @@
+# Atlas Grammar (Parser-Accurate)
+
+This document describes the **actual grammar implemented by the parser** in `crates/atlas-runtime/src/parser/` and the AST in `crates/atlas-runtime/src/ast.rs`.
+
+**Notes:**
+- Only syntax that is parsed today is listed here.
+- Examples are tested (see `docs/tooling/cli.md` for how the checks were run).
+
+**Top-Level Items**
+```
+program        := item*
+item           := import_decl
+               | export_decl
+               | extern_decl
+               | function_decl
+               | type_alias_decl
+               | trait_decl
+               | impl_block
+               | struct_decl
+               | enum_decl
+               | statement
+```
+
+**Statements**
+```
+statement      := var_decl
+               | function_decl
+               | assign_stmt
+               | compound_assign_stmt
+               | if_stmt
+               | while_stmt
+               | for_in_stmt
+               | return_stmt
+               | break_stmt
+               | continue_stmt
+               | expr_stmt
+               | block_stmt
+
+var_decl       := "let" ("mut")? IDENT (":" type_ref)? "=" expr ";"
+assign_stmt    := assign_target "=" expr ";"
+compound_assign_stmt := assign_target ("+="|"-="|"*="|"/="|"%=") expr ";"
+assign_target  := IDENT
+               | expr "[" expr "]"
+               | expr "." IDENT
+
+if_stmt        := "if" condition block ("else" (if_stmt | block))?
+while_stmt     := "while" condition block
+for_in_stmt    := "for" ("(")? IDENT "in" expr (")")? block
+return_stmt    := "return" expr? ";"
+break_stmt     := "break" ";"
+continue_stmt  := "continue" ";"
+expr_stmt      := expr ";"
+block_stmt     := block
+
+condition      := ("(")? expr (")")?
+block          := "{" statement* tail_expr? "}"
+tail_expr      := expr  // only when no trailing semicolon
+```
+
+**Expressions**
+```
+expr           := literal
+               | template_string
+               | IDENT
+               | unary_expr
+               | binary_expr
+               | call_expr
+               | index_expr
+               | member_expr
+               | array_literal
+               | record_literal
+               | anon_struct_literal
+               | struct_expr
+               | enum_variant_expr
+               | range_expr
+               | group_expr
+               | match_expr
+               | try_expr
+               | anon_fn
+               | block
+
+literal        := NUMBER | STRING | "true" | "false" | "null"
+
+array_literal  := "[" (expr ("," expr)*)? "]"
+record_literal := "record" "{" (IDENT ":" expr ("," IDENT ":" expr)*)? (",")? "}"
+
+anon_struct_literal := "{" (IDENT (":" expr)? ("," IDENT (":" expr)? )*) "}"
+struct_expr    := TypeName "{" (IDENT ":" expr ("," IDENT ":" expr)*)? (",")? "}"
+
+enum_variant_expr := EnumName "::" VariantName ("(" (expr ("," expr)*)? ")")?
+
+range_expr     := expr? (".."|"..=") expr?
+
+unary_expr     := ("-" | "!") expr
+binary_expr    := expr bin_op expr
+bin_op         := "+" | "-" | "*" | "/" | "%"
+               | "==" | "!=" | "<" | "<=" | ">" | ">="
+               | "&&" | "||"
+
+call_expr      := expr "(" (expr ("," expr)*)? ")"
+index_expr     := expr "[" expr "]"
+member_expr    := expr "." IDENT ("(" (expr ("," expr)*)? ")")?
+try_expr       := expr "?"
+
+group_expr     := "(" expr ")"
+
+match_expr     := "match" expr "{" match_arm ( (","|";") match_arm )* (","|";")? "}"
+match_arm      := pattern ("if" expr)? "=>" expr
+
+anon_fn        := "fn" "(" anon_params? ")" ("->" type_ref)? block
+anon_params    := anon_param ("," anon_param)* (",")?
+anon_param     := ownership? IDENT (":" type_ref)?
+```
+
+**Patterns (match)**
+```
+pattern        := literal
+               | "_"
+               | IDENT
+               | IDENT "(" pattern_list? ")"     // constructor pattern
+               | EnumName "::" VariantName ("(" pattern_list? ")")?
+               | "[" pattern_list? "]"
+               | pattern "|" pattern
+
+pattern_list   := pattern ("," pattern)*
+```
+
+**Types**
+```
+type_ref       := union_type
+union_type     := intersection_type ("|" intersection_type)*
+intersection_type := type_primary ("&" type_primary)*
+
+type_primary   := named_type
+               | generic_type
+               | array_type
+               | function_type
+               | structural_type
+               | "(" type_ref ("," type_ref)* ")"
+
+named_type     := IDENT | "null"
+array_type     := type_primary "[]"  // suffix, repeatable
+function_type  := "(" type_ref ("," type_ref)* ")" "->" type_ref
+structural_type := "{" IDENT ":" type_ref ("," IDENT ":" type_ref)* "}"
+
+generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
+```
+
+**Operators and Precedence** (highest to lowest)
+1. Call, member, index, try: `()` `.` `[]` `?`
+2. Unary: `!` `-`
+3. Multiplicative: `*` `/` `%`
+4. Additive: `+` `-`
+5. Comparison: `<` `<=` `>` `>=`
+6. Equality: `==` `!=`
+7. Logical AND: `&&`
+8. Logical OR: `||`
+9. Range: `..` `..=`
+
+**Template Strings**
+- Backtick-delimited: `` `hello {name}` ``
+- Interpolation uses `{ ... }` inside backticks.
+- Double-quoted strings support `${ ... }` interpolation and are desugared into concatenations.
+
+**Known Issues (See `docs/known-issues.md`)**
+- `import` parses, but multi-file module resolution does not work at runtime yet (H-063).
+- `.atl` extension does not execute reliably; use `.atlas` (H-067).
+

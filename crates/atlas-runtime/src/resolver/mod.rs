@@ -52,7 +52,7 @@ impl ModuleResolver {
             return Ok(cached.clone());
         }
 
-        let resolved = if source.starts_with('/') {
+        let base_path = if source.starts_with('/') {
             // Absolute path: resolve from root
             self.resolve_absolute(source)?
         } else if source.starts_with("./") || source.starts_with("../") {
@@ -67,14 +67,31 @@ impl ModuleResolver {
             .with_help("Use './file' for same directory, '../file' for parent, or '/src/file' for absolute paths".to_string()));
         };
 
+        let candidates = self.build_candidates(&base_path, source);
+        let resolved = candidates
+            .iter()
+            .find(|path| path.exists())
+            .cloned()
+            .unwrap_or_else(|| candidates[0].clone());
+
         // Verify file exists
         if !resolved.exists() {
+            let label = if candidates.len() == 1 {
+                format!("resolved to: {}", resolved.display())
+            } else {
+                let tried = candidates
+                    .iter()
+                    .map(|path| path.display().to_string())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("tried: {}", tried)
+            };
             return Err(Diagnostic::error_with_code(
                 "AT5002",
                 format!("Module not found: '{}'", source),
                 span,
             )
-            .with_label(format!("resolved to: {}", resolved.display()))
+            .with_label(label)
             .with_help("Check that the file exists and the path is correct".to_string()));
         }
 
@@ -98,31 +115,31 @@ impl ModuleResolver {
     fn resolve_absolute(&self, source: &str) -> Result<PathBuf, Diagnostic> {
         // Remove leading '/'
         let relative = &source[1..];
-
-        // Append .atl if no extension
-        let with_ext = if relative.ends_with(".atl") {
-            relative.to_string()
-        } else {
-            format!("{}.atl", relative)
-        };
-
-        Ok(self.root.join(with_ext))
+        Ok(self.root.join(relative))
     }
 
     /// Resolve a relative path (starts with './' or '../')
     fn resolve_relative(&self, source: &str, importing_file: &Path) -> Result<PathBuf, Diagnostic> {
         // Get directory of importing file
         let importing_dir = importing_file.parent().unwrap_or(Path::new("."));
-
-        // Append .atl if no extension
-        let with_ext = if source.ends_with(".atl") {
-            source.to_string()
-        } else {
-            format!("{}.atl", source)
-        };
-
         // Resolve relative to importing directory (canonicalized later in resolve_path)
-        Ok(importing_dir.join(with_ext))
+        Ok(importing_dir.join(source))
+    }
+
+    fn build_candidates(&self, base_path: &Path, source: &str) -> Vec<PathBuf> {
+        let has_extension = Path::new(source)
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .is_some();
+
+        if has_extension {
+            vec![base_path.to_path_buf()]
+        } else {
+            vec![
+                base_path.with_extension("atlas"),
+                base_path.with_extension("atl"),
+            ]
+        }
     }
 
     /// Add a module dependency to the graph
