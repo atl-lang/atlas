@@ -41,6 +41,16 @@ pub(super) enum Precedence {
     Call,       // () []
 }
 
+/// Parameter parsing mode.
+#[derive(Clone, Debug)]
+enum ParamParseMode {
+    /// All params must include `: Type`.
+    TypedOnly,
+    /// Allow a bare `self` parameter (no type annotation).
+    /// If `self_type` is provided, it will be used for the implicit type.
+    ImplicitSelf { self_type: Option<TypeRef> },
+}
+
 impl Parser {
     /// Create a new parser for the given tokens
     pub fn new(tokens: Vec<Token>) -> Self {
@@ -263,7 +273,7 @@ impl Parser {
         let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::LeftParen, "Expected '(' after function name")?;
-        let params = self.parse_params()?;
+        let params = self.parse_params(ParamParseMode::TypedOnly)?;
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
         // Parse optional return type annotation: `-> [own|borrow] Type`
@@ -512,7 +522,7 @@ impl Parser {
 
     /// Parse a comma-separated parameter list (without surrounding parens).
     /// Caller is responsible for consuming `(` before and `)` after.
-    fn parse_params(&mut self) -> Result<Vec<Param>, ()> {
+    fn parse_params(&mut self, mode: ParamParseMode) -> Result<Vec<Param>, ()> {
         let mut params = Vec::new();
         if self.check(TokenKind::RightParen) {
             return Ok(params);
@@ -554,16 +564,28 @@ impl Parser {
             let param_name = param_name_tok.lexeme.clone();
             let param_name_span = param_name_tok.span;
 
-            self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
-            let type_ref = self.parse_type_ref()?;
-            let param_span_end = type_ref.span();
+            let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
+                let type_ref = self.parse_type_ref()?;
+                let end = type_ref.span();
+                (Some(type_ref), end)
+            } else {
+                match &mode {
+                    ParamParseMode::ImplicitSelf { self_type } if param_name == "self" => {
+                        (self_type.clone(), param_name_span)
+                    }
+                    _ => {
+                        self.error("Expected ':' after parameter name");
+                        return Err(());
+                    }
+                }
+            };
 
             params.push(Param {
                 name: Identifier {
                     name: param_name,
                     span: param_name_span,
                 },
-                type_ref: Some(type_ref),
+                type_ref,
                 ownership,
                 span: param_span_start.merge(param_span_end),
             });
@@ -634,7 +656,7 @@ impl Parser {
         let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::LeftParen, "Expected '(' after method name")?;
-        let params = self.parse_params()?;
+        let params = self.parse_params(ParamParseMode::ImplicitSelf { self_type: None })?;
         self.consume(
             TokenKind::RightParen,
             "Expected ')' after method parameters",
@@ -698,9 +720,11 @@ impl Parser {
             "Expected '{' after type name in impl block",
         )?;
 
+        let self_type = TypeRef::Named(type_name.name.clone(), type_name.span);
+
         let mut methods = Vec::new();
         while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
-            methods.push(self.parse_impl_method()?);
+            methods.push(self.parse_impl_method(&self_type)?);
         }
 
         let end_span = self
@@ -720,7 +744,7 @@ impl Parser {
     ///
     /// Syntax: `fn method_name<T>(param: Type) -> ReturnType { body }`
     /// Impl methods REQUIRE a body (unlike trait method signatures).
-    fn parse_impl_method(&mut self) -> Result<ImplMethod, ()> {
+    fn parse_impl_method(&mut self, self_type: &TypeRef) -> Result<ImplMethod, ()> {
         let start_span = self
             .consume(TokenKind::Fn, "Expected 'fn' in impl body")?
             .span;
@@ -734,7 +758,9 @@ impl Parser {
         let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::LeftParen, "Expected '(' after method name")?;
-        let params = self.parse_params()?;
+        let params = self.parse_params(ParamParseMode::ImplicitSelf {
+            self_type: Some(self_type.clone()),
+        })?;
         self.consume(
             TokenKind::RightParen,
             "Expected ')' after method parameters",

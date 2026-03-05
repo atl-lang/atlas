@@ -855,6 +855,8 @@ impl<'a> TypeChecker<'a> {
     fn check_impl_block(&mut self, impl_block: &ImplBlock) {
         let trait_name = impl_block.trait_name.name.clone();
         let type_name = impl_block.type_name.name.clone();
+        let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
+        let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
 
         // 1. Verify trait exists
         if !self.trait_registry.trait_exists(&trait_name) {
@@ -950,7 +952,7 @@ impl<'a> TypeChecker<'a> {
 
         // 6. Typecheck method bodies
         for impl_method in &impl_block.methods {
-            self.check_impl_method_body(impl_method);
+            self.check_impl_method_body(impl_method, Some(&impl_self_type));
         }
 
         // 7. Register impl if conformance passed
@@ -967,7 +969,7 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Typecheck an impl method body, using the same pattern as `check_function`.
-    fn check_impl_method_body(&mut self, method: &ImplMethod) {
+    fn check_impl_method_body(&mut self, method: &ImplMethod, impl_self_type: Option<&Type>) {
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
@@ -980,10 +982,14 @@ impl<'a> TypeChecker<'a> {
         self.enter_scope();
 
         for param in &method.params {
-            let ty = param
-                .type_ref
-                .as_ref()
-                .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t));
+            let ty = if param.name.name == "self" && param.type_ref.is_none() {
+                impl_self_type.cloned().unwrap_or(Type::any_placeholder())
+            } else {
+                param
+                    .type_ref
+                    .as_ref()
+                    .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
+            };
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
