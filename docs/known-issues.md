@@ -2,6 +2,10 @@
 
 Current limitations in Atlas. This is the honest truth.
 
+**Source of truth:** `atlas-track issues` — this file is a quick reference.
+**Full details:** `atlas-track issue H-XXX`
+**Search:** `atlas-track search "keyword"`
+
 ## P0 - Critical Blockers
 
 ### H-069: Closure Global Mutations
@@ -28,13 +32,6 @@ Current limitations in Atlas. This is the honest truth.
 **Now:** Unified - both are interchangeable.
 
 ## P1 - Painful But Workable
-
-### H-070: Trait System Incomplete
-**Status:** Open (See Something, File Something)
-**Problem:** AST has `TraitDecl` and `ImplBlock` nodes but parser doesn't support trait syntax.
-**Impact:** Can't use polymorphic patterns. AI commonly generates trait-based code.
-**Evidence:** `trait Foo { fn bar(self); }` fails with syntax error.
-**Note:** Most languages have traits/interfaces in v1.0. This shouldn't be deferred.
 
 ### H-067: File Extension
 `.atl` files don't execute properly. Use `.atlas` extension.
