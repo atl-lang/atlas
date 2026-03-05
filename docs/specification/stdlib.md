@@ -5,6 +5,42 @@
 
 This document describes the Atlas standard library, organized by category.
 
+---
+
+## ⚠️ Current Reality vs Future Direction
+
+**This spec describes the ASPIRATIONAL API.** The current implementation differs:
+
+### What Works Today (v0.3)
+
+```atlas
+// Arrays - use prefixed global functions
+let arr = [1, 2, 3];
+let arr2 = arrayPush(arr, 4);      // NOT push(arr, 4)
+let n = len(arr);                   // NOT length(arr) or arr.length()
+
+// HashMaps - use prefixed global functions
+let m = hashMapNew();
+hashMapPut(m, "key", value);        // NOT m.put("key", value)
+let v = hashMapGet(m, "key");       // NOT m.get("key")
+
+// JSON
+let obj = parseJSON(str);           // NOT JSON.parse(str)
+let s = stringifyJSON(obj);         // NOT JSON.stringify(obj)
+```
+
+### Future Direction (H-065)
+
+Atlas will adopt professional language patterns:
+
+1. **Method syntax:** `arr.push(x)`, `map.get(key)`, `str.trim()`
+2. **Namespaced imports:** `import { HashMap } from "std/collections"`
+3. **Clean function names:** No type prefixes
+
+**Timeline:** Targeted for v0.4+. See tracking issue H-065.
+
+---
+
 For a detailed guide to the testing system, see [Testing System](testing.md).
 
 ---
