@@ -4,17 +4,16 @@ Current limitations in Atlas. This is the honest truth.
 
 ## P0 - Critical Blockers
 
-### H-063: Module Resolution
-**Status:** Open
-**Problem:** `import` statements compile but don't resolve at runtime for multi-file projects.
-**Workaround:** Single-file programs only, or inline all code.
-
 ### H-069: Closure Global Mutations
 **Status:** In Progress
 **Problem:** Closures passed as function parameters don't persist mutations to global mutable arrays/state.
 **Workaround:** Avoid callback-based patterns. Use imperative style instead of `describe(fn() { ... })`.
 
 ## Recently Fixed
+
+### H-063: Module Resolution (FIXED 2026-03-05)
+**Was:** `import` statements compiled but didn't resolve at runtime.
+**Now:** Module resolution works for multi-file projects.
 
 ### H-066: Struct Field Access (FIXED 2026-03-05)
 **Was:** Struct field access returned `?` instead of declared type.
@@ -29,6 +28,13 @@ Current limitations in Atlas. This is the honest truth.
 **Now:** Unified - both are interchangeable.
 
 ## P1 - Painful But Workable
+
+### H-070: Trait System Incomplete
+**Status:** Open (See Something, File Something)
+**Problem:** AST has `TraitDecl` and `ImplBlock` nodes but parser doesn't support trait syntax.
+**Impact:** Can't use polymorphic patterns. AI commonly generates trait-based code.
+**Evidence:** `trait Foo { fn bar(self); }` fails with syntax error.
+**Note:** Most languages have traits/interfaces in v1.0. This shouldn't be deferred.
 
 ### H-067: File Extension
 `.atl` files don't execute properly. Use `.atlas` extension.
