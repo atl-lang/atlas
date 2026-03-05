@@ -368,5 +368,4 @@ atlas new my-app --template=binary
 ```
 
 **Known Issues (See `docs/known-issues.md`)**
-- `import` parses, but multi-file module resolution does not work at runtime yet (H-063).
-- `.atl` extension does not execute reliably; use `.atlas` (H-067).
+- Closures passed as callbacks do not persist global mutations (H-069).

@@ -68,5 +68,4 @@ fn choose(flag: bool) -> number {
 ```
 
 **Known Issues (See `docs/known-issues.md`)**
-- `fn main()` is not executed automatically; use top-level statements (H-068).
 - Closures passed as callbacks do not persist global mutations (H-069).
