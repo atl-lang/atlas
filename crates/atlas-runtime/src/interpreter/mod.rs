@@ -259,6 +259,7 @@ impl Interpreter {
         self.current_security = Some(std::sync::Arc::new(security.clone()));
 
         let mut last_value = Value::Null;
+        let mut top_level_returned = false;
 
         for item in &program.items {
             match item {
@@ -295,6 +296,7 @@ impl Interpreter {
                     if let ControlFlow::Return(val) = &self.control_flow {
                         last_value = val.clone();
                         self.control_flow = ControlFlow::None;
+                        top_level_returned = true;
                         break;
                     }
                 }
@@ -431,6 +433,19 @@ impl Interpreter {
                 Item::Struct(_) | Item::Enum(_) => {
                     // Struct/enum declarations are type-info only — no runtime action needed.
                     // The type system handles struct/enum definitions.
+                }
+            }
+        }
+
+        // H-068: Auto-call fn main() if defined and top-level didn't return early.
+        if !top_level_returned {
+            if let Some(main_func) = self.function_bodies.get("main").cloned() {
+                if main_func.params.is_empty() {
+                    last_value = self.call_user_function(
+                        &main_func,
+                        Vec::new(),
+                        crate::span::Span::dummy(),
+                    )?;
                 }
             }
         }

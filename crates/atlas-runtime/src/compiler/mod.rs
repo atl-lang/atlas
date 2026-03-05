@@ -139,9 +139,27 @@ impl Compiler {
 
     /// Compile an AST to bytecode
     pub fn compile(&mut self, program: &Program) -> Result<Bytecode, Vec<Diagnostic>> {
+        // Check if program defines a zero-arg fn main()
+        let has_main = program.items.iter().any(|item| {
+            matches!(item,
+                Item::Function(f) if f.name.name == "main" && f.params.is_empty()
+            )
+        });
+
         // Compile all top-level items
         for item in &program.items {
             self.compile_item(item)?;
+        }
+
+        // H-068: Auto-call fn main() if defined (zero-arg)
+        if has_main {
+            let name_idx = self
+                .bytecode
+                .add_constant(crate::value::Value::string("main"));
+            self.bytecode.emit(Opcode::GetGlobal, Span::dummy());
+            self.bytecode.emit_u16(name_idx);
+            self.bytecode.emit(Opcode::Call, Span::dummy());
+            self.bytecode.emit_u8(0);
         }
 
         // Emit halt at the end

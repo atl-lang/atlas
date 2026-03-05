@@ -677,7 +677,7 @@ impl Interpreter {
     }
 
     /// Call a user-defined function
-    fn call_user_function(
+    pub(super) fn call_user_function(
         &mut self,
         func: &UserFunction,
         args: Vec<Value>,
