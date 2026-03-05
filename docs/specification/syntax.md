@@ -120,31 +120,35 @@ line 3";
 - Newlines are part of the string value
 - All normal escape sequences still apply
 
-#### String Interpolation
+#### Template Strings (String Interpolation)
 
-String interpolation allows embedding expressions inside strings using `${...}` syntax:
+Template strings use backticks and allow embedding expressions using `{...}` syntax:
 
 ```atlas
 let name = "Alice";
 let age = 30;
 
 // Simple interpolation
-let greeting = "Hello, ${name}!";      // "Hello, Alice!"
-let message = "I am ${age} years old"; // "I am 30 years old"
+let greeting = `Hello {name}!`;        // "Hello Alice!"
+let message = `I am {age} years old`;  // "I am 30 years old"
 
 // Expression interpolation
-let sum = "2 + 3 = ${2 + 3}";         // "2 + 3 = 5"
-let doubled = "Double ${10}: ${10 * 2}";  // "Double 10: 20"
+let sum = `2 + 3 = {2 + 3}`;           // "2 + 3 = 5"
+let doubled = `Double: {10 * 2}`;      // "Double: 20"
 
-// Nested function calls
-let upper = "Uppercase: ${toUpperCase(name)}";  // "Uppercase: ALICE"
+// Nested expressions with control flow
+let result = `Status: {if age > 18 { "adult" } else { "minor" }}`;
+
+// Empty and plain strings
+let empty = ``;                        // ""
+let plain = `no interpolation`;        // "no interpolation"
 ```
 
 **Rules:**
-- Expressions inside `${}` are evaluated as normal Atlas code
-- Result is converted to string using `str()` function
-- Can contain any valid expression (function calls, arithmetic, etc.)
-- Escape `$` as `\$` if you need a literal dollar sign
+- Use backticks (\`) as delimiters, NOT double quotes
+- Expressions inside `{}` are evaluated as normal Atlas code
+- Result is converted to string automatically
+- Can contain any valid expression (function calls, arithmetic, control flow)
 - Escape `{` as `\{` if you need a literal brace
 
 ### Boolean Literals

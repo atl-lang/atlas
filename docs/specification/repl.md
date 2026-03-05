@@ -48,7 +48,7 @@ Statements still require semicolons:
 
 ```atlas
 >>> let x = 42;
->>> var y = 10;
+>>> let mut y = 10;
 >>> y = y + 1;
 ```
 
@@ -238,7 +238,7 @@ error[AT3003]: Cannot reassign to immutable variable 'x'
 `var` creates mutable binding:
 
 ```atlas
->>> var count = 0;
+>>> let mut count = 0;
 >>> count = count + 1;
 >>> count
 1

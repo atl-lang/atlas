@@ -76,8 +76,8 @@ This document maps Atlas EBNF grammar rules from v0.3 parser implementation to t
 
 | Grammar Rule | Parser Function | Status | Notes |
 |-------------|----------------|--------|-------|
-| `IfStmt ::= "if" "(" Expr ")" Block ("else" Block)?` | `Parser::parse_if_stmt()` | ✅ | If with optional else |
-| `WhileStmt ::= "while" "(" Expr ")" Block` | `Parser::parse_while_stmt()` | ✅ | While loops |
+| `IfStmt ::= "if" ["("] Expr [")"] Block ("else" Block)?` | `Parser::parse_if_stmt()` | ✅ | If with optional else |
+| `WhileStmt ::= "while" ["("] Expr [")"] Block` | `Parser::parse_while_stmt()` | ✅ | While loops |
 | `ForInStmt ::= "for" Identifier "in" Expr Block` | `Parser::parse_for_in_stmt()` | ✅ | For-in loops (v0.3) |
 | `ReturnStmt ::= "return" Expr? ";"` | `Parser::parse_return_stmt()` | ✅ | Return with optional value |
 | `BreakStmt ::= "break" ";"` | `Parser::parse_break_stmt()` | ✅ | Loop break |

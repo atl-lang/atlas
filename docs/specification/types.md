@@ -99,9 +99,7 @@ Atlas supports two forms of anonymous functions (closures):
 ```atlas
 // fn expression form
 let double = fn(x: number) -> number { return x * 2; };
-
-// Arrow expression form (single expression body)
-let triple = (x) => x * 3;
+let triple = fn(x: number) -> number { return x * 3; };
 ```
 
 See `syntax.md` for full details on parameter syntax and capture semantics.
@@ -109,7 +107,7 @@ See `syntax.md` for full details on parameter syntax and capture semantics.
 ### Closure Behavior Notes
 - **Let-bound variables at top-level scope** are accessible from any named function — works in
   both interpreter and VM.
-- **Var-bound variables at top-level scope** are readable and mutable from any named function —
+- **let mut-bound variables at top-level scope** are readable and mutable from any named function —
   works in both engines.
 - **Inner functions referencing outer function locals:** Both engines support this via upvalue
   capture. The VM captures outer locals **by value at closure definition time**. The interpreter
