@@ -97,7 +97,7 @@ Complete extraction and documentation of all standard library functions in Atlas
 
 ### ✓ Testing Functions (test.rs)
 - Functions: 14
-- Includes: assert, assertEqual, assertNotEqual, assertTrue, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
+- Includes: assert, assertEqual, assertNotEqual, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
 - Status: Fully documented
 
 ## Additional Modules in Implementation

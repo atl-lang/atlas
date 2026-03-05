@@ -40,62 +40,73 @@ Sends GET request.
 ### httpPost
 
 ```atlas
-fn httpPost(url: string) -> HttpRequest
+fn httpPost(url: string, body: string) -> Result<HttpResponse, string>
 ```
 
-Sends POST request. Returns request builder.
+Sends POST request.
 
 **Parameters:**
 - `url` - Request URL
+- `body` - Request body
 
-**Returns:** `HttpRequest` - Builder for method chaining
+**Returns:**
+- `Ok(HttpResponse)` on success
+- `Err(string)` on failure
 
-**Alias:** `httpRequestPost`
+**Builder:** `httpRequestPost`
 
 ### httpPut
 
 ```atlas
-fn httpPut(url: string) -> HttpRequest
+fn httpPut(url: string, body: string) -> Result<HttpResponse, string>
 ```
 
-Sends PUT request. Returns request builder.
+Sends PUT request.
 
 **Parameters:**
 - `url` - Request URL
+- `body` - Request body
 
-**Returns:** `HttpRequest` - Builder for method chaining
+**Returns:**
+- `Ok(HttpResponse)` on success
+- `Err(string)` on failure
 
-**Alias:** `httpRequestPut`
+**Builder:** `httpRequestPut`
 
 ### httpPatch
 
 ```atlas
-fn httpPatch(url: string) -> HttpRequest
+fn httpPatch(url: string, body: string) -> Result<HttpResponse, string>
 ```
 
-Sends PATCH request. Returns request builder.
+Sends PATCH request.
 
 **Parameters:**
 - `url` - Request URL
+- `body` - Request body
 
-**Returns:** `HttpRequest` - Builder for method chaining
+**Returns:**
+- `Ok(HttpResponse)` on success
+- `Err(string)` on failure
 
-**Alias:** `httpRequestPatch`
+**Builder:** `httpRequestPatch`
 
 ### httpDelete
 
 ```atlas
-fn httpDelete(url: string) -> HttpRequest
+fn httpDelete(url: string) -> Result<HttpResponse, string>
 ```
 
-Sends DELETE request. Returns request builder.
+Sends DELETE request.
 
 **Parameters:**
 - `url` - Request URL
 
-**Returns:** `HttpRequest` - Builder for method chaining
+**Returns:**
+- `Ok(HttpResponse)` on success
+- `Err(string)` on failure
 
-**Alias:** `httpRequestDelete`
+**Builder:** `httpRequestDelete`
 
 ## Request Configuration
 
@@ -249,7 +260,7 @@ Sends HTTP request asynchronously.
 ### httpGetJson
 
 ```atlas
-fn httpGetJson(url: string) -> Result<any, string>
+fn httpGetJson(url: string) -> Result<json, string>
 ```
 
 GET request expecting JSON response. Parses automatically.
@@ -258,35 +269,38 @@ GET request expecting JSON response. Parses automatically.
 - `url` - Request URL
 
 **Returns:**
-- `Ok(any)` - Parsed JSON
+- `Ok(json)` - Parsed JSON
 - `Err(string)` on failure or parse error
 
 ### httpPostJson
 
 ```atlas
-fn httpPostJson(url: string, data: any) -> Result<any, string>
+fn httpPostJson(url: string, data: json) -> Result<HttpResponse, string>
 ```
 
-POST request with JSON body. Parses response.
+POST request with JSON body.
 
 **Parameters:**
 - `url` - Request URL
-- `data` - Data to send as JSON
+- `data` - JSON value to send
 
 **Returns:**
-- `Ok(any)` - Parsed JSON response
+- `Ok(HttpResponse)` on success
 - `Err(string)` on failure
+
+**Note:** Use `httpParseJson(response)` to parse the response body.
 
 ### httpPostAsync
 
 ```atlas
-fn httpPostAsync(url: string) -> Future<Result<HttpResponse, string>>
+fn httpPostAsync(url: string, body: string) -> Future<Result<HttpResponse, string>>
 ```
 
-POST request asynchronously. Returns request builder for chaining.
+POST request asynchronously.
 
 **Parameters:**
 - `url` - Request URL
+- `body` - Request body
 
 **Returns:** `Future`
 
@@ -319,13 +333,14 @@ DELETE request asynchronously.
 ### httpPutAsync
 
 ```atlas
-fn httpPutAsync(url: string) -> Future<Result<HttpResponse, string>>
+fn httpPutAsync(url: string, body: string) -> Future<Result<HttpResponse, string>>
 ```
 
 PUT request asynchronously.
 
 **Parameters:**
 - `url` - Request URL
+- `body` - Request body
 
 **Returns:** `Future`
 
@@ -373,7 +388,7 @@ Gets response body as string.
 ### httpContentType
 
 ```atlas
-fn httpContentType(response: HttpResponse) -> string?
+fn httpContentType(response: HttpResponse) -> Option<string>
 ```
 
 Gets Content-Type header value.
@@ -381,12 +396,12 @@ Gets Content-Type header value.
 **Parameters:**
 - `response` - HTTP response
 
-**Returns:** `string?` - Content-Type or None
+**Returns:** `Option<string>` - Content-Type or None
 
 ### httpContentLength
 
 ```atlas
-fn httpContentLength(response: HttpResponse) -> number?
+fn httpContentLength(response: HttpResponse) -> Option<number>
 ```
 
 Gets Content-Length header value.
@@ -394,12 +409,12 @@ Gets Content-Length header value.
 **Parameters:**
 - `response` - HTTP response
 
-**Returns:** `number?` - Content length or None
+**Returns:** `Option<number>` - Content length or None
 
 ### httpHeader
 
 ```atlas
-fn httpHeader(response: HttpResponse, key: string) -> string?
+fn httpHeader(response: HttpResponse, key: string) -> Option<string>
 ```
 
 Gets header value by name.
@@ -408,15 +423,15 @@ Gets header value by name.
 - `response` - HTTP response
 - `key` - Header name
 
-**Returns:** `string?` - Header value or None
+**Returns:** `Option<string>` - Header value or None
 
 ### httpHeaders
 
 ```atlas
-fn httpHeaders(response: HttpResponse) -> object
+fn httpHeaders(response: HttpResponse) -> HashMap<string, string>
 ```
 
-Gets all headers as object.
+Gets all headers as a HashMap.
 
 **Parameters:**
 - `response` - HTTP response

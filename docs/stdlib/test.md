@@ -53,21 +53,6 @@ Asserts two values are not equal.
 
 ## Boolean Assertions
 
-### assertTrue
-
-```atlas
-fn assertTrue(condition: bool) -> Result<Null, string>
-```
-
-Asserts condition is true (alias for assert).
-
-**Parameters:**
-- `condition` - Boolean expression
-
-**Returns:**
-- `Ok(Null)` if true
-- `Err(string)` if false
-
 ### assertFalse
 
 ```atlas
@@ -235,7 +220,7 @@ assertEqual(2 + 2, 4)?;
 assertNotEqual(5, 10)?;
 
 // Boolean
-assertTrue(x > 0)?;
+assert(x > 0)?;
 assertFalse(x < 0)?;
 
 // Collections

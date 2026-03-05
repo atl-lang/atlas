@@ -155,13 +155,13 @@ Gets file metadata.
 ### pathJoin
 
 ```atlas
-fn pathJoin(paths: string[]) -> string
+fn pathJoin(...paths: string) -> string
 ```
 
 Joins path components into a single path.
 
 **Parameters:**
-- `paths` - Array of path segments
+- `paths` - One or more path segments
 
 **Returns:** `string` - Joined path
 

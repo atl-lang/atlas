@@ -310,16 +310,16 @@ Compares two datetimes.
 ### dateTimeDiff
 
 ```atlas
-fn dateTimeDiff(dt1: DateTime, dt2: DateTime) -> Duration
+fn dateTimeDiff(dt1: DateTime, dt2: DateTime) -> number
 ```
 
-Gets difference between two datetimes.
+Gets difference between two datetimes in seconds.
 
 **Parameters:**
 - `dt1` - First datetime
 - `dt2` - Second datetime
 
-**Returns:** `Duration` - Time difference
+**Returns:** `number` - Time difference in seconds (dt1 - dt2)
 
 ## Conversion
 
@@ -507,7 +507,7 @@ Creates datetime in specific timezone.
 ### durationFromSeconds
 
 ```atlas
-fn durationFromSeconds(seconds: number) -> Duration
+fn durationFromSeconds(seconds: number) -> HashMap<string, number>
 ```
 
 Creates duration from seconds.
@@ -515,12 +515,12 @@ Creates duration from seconds.
 **Parameters:**
 - `seconds` - Number of seconds
 
-**Returns:** `Duration`
+**Returns:** `HashMap<string, number>` - `{days, hours, minutes, seconds}`
 
 ### durationFromMinutes
 
 ```atlas
-fn durationFromMinutes(minutes: number) -> Duration
+fn durationFromMinutes(minutes: number) -> HashMap<string, number>
 ```
 
 Creates duration from minutes.
@@ -528,12 +528,12 @@ Creates duration from minutes.
 **Parameters:**
 - `minutes` - Number of minutes
 
-**Returns:** `Duration`
+**Returns:** `HashMap<string, number>` - `{days, hours, minutes, seconds}`
 
 ### durationFromHours
 
 ```atlas
-fn durationFromHours(hours: number) -> Duration
+fn durationFromHours(hours: number) -> HashMap<string, number>
 ```
 
 Creates duration from hours.
@@ -541,12 +541,12 @@ Creates duration from hours.
 **Parameters:**
 - `hours` - Number of hours
 
-**Returns:** `Duration`
+**Returns:** `HashMap<string, number>` - `{days, hours, minutes, seconds}`
 
 ### durationFromDays
 
 ```atlas
-fn durationFromDays(days: number) -> Duration
+fn durationFromDays(days: number) -> HashMap<string, number>
 ```
 
 Creates duration from days.
@@ -554,17 +554,17 @@ Creates duration from days.
 **Parameters:**
 - `days` - Number of days
 
-**Returns:** `Duration`
+**Returns:** `HashMap<string, number>` - `{days, hours, minutes, seconds}`
 
 ### durationFormat
 
 ```atlas
-fn durationFormat(duration: Duration) -> string
+fn durationFormat(duration: HashMap<string, number>) -> string
 ```
 
 Formats duration as string.
 
 **Parameters:**
-- `duration` - Duration value
+- `duration` - HashMap with `days`, `hours`, `minutes`, `seconds`
 
 **Returns:** `string` - Formatted (e.g., "1h 30m 45s")

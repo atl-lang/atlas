@@ -186,8 +186,8 @@ let result: Result<string, string> = Ok("success");
 
 // Collections (thread-safe)
 let arr = [1, 2, 3];
-let map = hashmap_new();
-let set = hashset_new();
+let map = hashMapNew();
+let set = hashSetNew();
 ```
 
 ### Functions
@@ -280,11 +280,11 @@ graph TD
 | **math** | 20+ | `abs`, `sqrt`, `pow`, `sin`, `cos`, `floor`, `ceil`, `round`, `min`, `max` |
 | **string** | 25+ | `len`, `substr`, `split`, `join`, `trim`, `upper`, `lower`, `replace`, `contains` |
 | **array** | 20+ | `push`, `pop`, `slice`, `map`, `filter`, `reduce`, `sort`, `reverse`, `find` |
-| **json** | 10+ | `json_parse`, `json_stringify`, `json_get`, `json_set` |
-| **regex** | 8+ | `regex_new`, `regex_match`, `regex_find_all`, `regex_replace` |
-| **datetime** | 15+ | `now`, `format_datetime`, `parse_datetime`, `add_days` |
-| **http** | 5+ | `http_get`, `http_post`, `http_request` |
-| **fs** | 15+ | `read_file`, `write_file`, `file_exists`, `list_dir`, `mkdir` |
+| **json** | 10+ | `parseJSON`, `toJSON`, `jsonGetString`, `jsonGetNumber` |
+| **regex** | 8+ | `regexNew`, `regexIsMatch`, `regexFindAll`, `regexReplace` |
+| **datetime** | 15+ | `dateTimeNow`, `dateTimeFormat`, `dateTimeParse`, `dateTimeAddDays` |
+| **http** | 5+ | `httpGet`, `httpPost`, `httpRequest` |
+| **fs** | 15+ | `readFile`, `writeFile`, `fileExists`, `readDir`, `createDir` |
 
 ---
 
@@ -340,7 +340,7 @@ Atlas is designed for AI agent workflows:
 
 **1. JSON Diagnostics**
 ```bash
-atlas check program.atl --format json
+atlas check program.atl --json
 ```
 ```json
 {
@@ -359,12 +359,12 @@ atlas check program.atl --format json
 
 **2. AST Dumps**
 ```bash
-atlas dump-ast program.atl --format json
+atlas ast program.atl
 ```
 
 **3. Type Information**
 ```bash
-atlas dump-types program.atl --format json
+atlas typecheck program.atl
 ```
 
 ### Why Atlas for AI Code Generation?
@@ -387,7 +387,7 @@ atlas dump-types program.atl --format json
 | **Stdlib Functions** | 300+ |
 | **Stdlib Modules** | 25 |
 | **LSP Features** | 16 |
-| **CLI Commands** | 15 |
+| **CLI Commands** | 19 |
 | **Fuzz Targets** | 7 |
 | **Benchmarks** | 117 |
 | **MSRV** | Rust 1.70 |
@@ -405,7 +405,7 @@ atlas dump-types program.atl --format json
 | Standard Library (300+ functions) | ✅ Complete |
 | Type System (generics, inference) | ✅ Complete |
 | Module System | ✅ Complete |
-| CLI & REPL (15 commands) | ✅ Complete |
+| CLI & REPL (19 commands) | ✅ Complete |
 | LSP (16 features) | ✅ Complete |
 | Package Manager | ✅ Complete |
 | Fuzzing Infrastructure | ✅ Complete |

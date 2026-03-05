@@ -134,7 +134,7 @@ Flattens array by one level. Returns new array.
 ## arrayIndexOf
 
 ```atlas
-fn arrayIndexOf(arr: T[], search: T) -> number?
+fn arrayIndexOf(arr: T[], search: T) -> Option<number>
 ```
 
 Finds first index of element. Returns None if not found.
@@ -143,12 +143,12 @@ Finds first index of element. Returns None if not found.
 - `arr` - Array to search
 - `search` - Element to find
 
-**Returns:** `number?` - Index of first match or None
+**Returns:** `Option<number>` - Index of first match or None
 
 ## arrayLastIndexOf
 
 ```atlas
-fn arrayLastIndexOf(arr: T[], search: T) -> number?
+fn arrayLastIndexOf(arr: T[], search: T) -> Option<number>
 ```
 
 Finds last index of element. Returns None if not found.
@@ -157,7 +157,7 @@ Finds last index of element. Returns None if not found.
 - `arr` - Array to search
 - `search` - Element to find
 
-**Returns:** `number?` - Index of last match or None
+**Returns:** `Option<number>` - Index of last match or None
 
 ## arrayIncludes
 

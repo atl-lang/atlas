@@ -211,7 +211,7 @@ Generates random AES-GCM encryption key.
 ### aesGcmEncrypt
 
 ```atlas
-fn aesGcmEncrypt(plaintext: string, key: string, nonce: string) -> Result<string, string>
+fn aesGcmEncrypt(plaintext: string, key: string) -> Result<string, string>
 ```
 
 Encrypts with AES-256-GCM.
@@ -219,26 +219,24 @@ Encrypts with AES-256-GCM.
 **Parameters:**
 - `plaintext` - Data to encrypt
 - `key` - Hex encoded 256-bit key
-- `nonce` - Hex encoded 96-bit nonce
 
 **Returns:**
-- `Ok(string)` - Hex encoded ciphertext with auth tag
+- `Ok(string)` - Hex encoded nonce + ciphertext with auth tag
 - `Err(string)` on error
 
-**Note:** Use `cryptoGenerateNonce()` to generate nonce
+**Note:** Nonce is generated internally and prefixed to the ciphertext.
 
 ### aesGcmDecrypt
 
 ```atlas
-fn aesGcmDecrypt(ciphertext: string, key: string, nonce: string) -> Result<string, string>
+fn aesGcmDecrypt(ciphertext: string, key: string) -> Result<string, string>
 ```
 
 Decrypts AES-256-GCM encrypted data.
 
 **Parameters:**
-- `ciphertext` - Hex encoded encrypted data with auth tag
+- `ciphertext` - Hex encoded nonce + ciphertext with auth tag
 - `key` - Hex encoded 256-bit key (must match encryption key)
-- `nonce` - Hex encoded 96-bit nonce (must match encryption nonce)
 
 **Returns:**
 - `Ok(string)` - Decrypted plaintext

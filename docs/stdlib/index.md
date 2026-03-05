@@ -74,7 +74,7 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
   - Comparison: dateTimeCompare, dateTimeDiff
   - Conversion: dateTimeToTimestamp, dateTimeToIso, dateTimeToRfc3339, dateTimeToRfc2822, dateTimeFormat, dateTimeToCustom
   - Timezone: dateTimeUtc, dateTimeToUtc, dateTimeToLocal, dateTimeToTimezone, dateTimeGetTimezone, dateTimeGetOffset, dateTimeInTimezone
-  - Duration: durationFromSeconds, durationFromMinutes, durationFromHours, durationFromDays, durationFormat
+  - Duration (HashMap): durationFromSeconds, durationFromMinutes, durationFromHours, durationFromDays, durationFormat
 - **Total:** 45+ functions
 - **Purpose:** Date/time creation, parsing, arithmetic, and formatting
 
@@ -124,7 +124,7 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Testing Functions
 - **File:** `test.md`
-- **Functions:** assert, assertEqual, assertNotEqual, assertTrue, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
+- **Functions:** assert, assertEqual, assertNotEqual, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
 - **Count:** 14 functions
 - **Purpose:** Unit testing assertions and verification
 

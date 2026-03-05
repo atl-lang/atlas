@@ -95,6 +95,7 @@ enum Status {
 **Option<T> and Result<T, E>**
 - Built-in generic types with standard constructors and helpers.
 - Constructors are functions: `Some(value)`, `None()`, `Ok(value)`, `Err(value)`.
+- Optional type suffix (`T?`) is not supported. Use `Option<T>`.
 
 Example (tested):
 ```atlas
@@ -105,4 +106,3 @@ let failure: Result<number, string> = Err("nope");
 **Known Issues (See `docs/known-issues.md`)**
 - `import` parses, but multi-file module resolution does not work at runtime yet (H-063).
 - `.atl` extension does not execute reliably; use `.atlas` (H-067).
-

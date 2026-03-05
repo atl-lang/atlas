@@ -60,7 +60,7 @@ Creates a shallow copy of HashMap.
 ### hashMapGet
 
 ```atlas
-fn hashMapGet(map: HashMap<K, V>, key: K) -> V?
+fn hashMapGet(map: HashMap<K, V>, key: K) -> Option<V>
 ```
 
 Gets value for key. Returns None if not found.
@@ -69,7 +69,7 @@ Gets value for key. Returns None if not found.
 - `map` - HashMap
 - `key` - Key to lookup
 
-**Returns:** `V?` - Value or None
+**Returns:** `Option<V>` - Value or None
 
 ### hashMapRemove
 
@@ -409,7 +409,7 @@ Adds element to back of queue.
 ### queueDequeue
 
 ```atlas
-fn queueDequeue(queue: Queue<T>) -> T?
+fn queueDequeue(queue: Queue<T>) -> Option<T>
 ```
 
 Removes and returns element from front of queue.
@@ -417,12 +417,12 @@ Removes and returns element from front of queue.
 **Parameters:**
 - `queue` - Queue
 
-**Returns:** `T?` - Front element or None if empty
+**Returns:** `Option<T>` - Front element or None if empty
 
 ### queuePeek
 
 ```atlas
-fn queuePeek(queue: Queue<T>) -> T?
+fn queuePeek(queue: Queue<T>) -> Option<T>
 ```
 
 Returns front element without removing.
@@ -430,7 +430,7 @@ Returns front element without removing.
 **Parameters:**
 - `queue` - Queue
 
-**Returns:** `T?` - Front element or None if empty
+**Returns:** `Option<T>` - Front element or None if empty
 
 ### queueSize
 
@@ -513,7 +513,7 @@ Adds element to top of stack.
 ### stackPop
 
 ```atlas
-fn stackPop(stack: Stack<T>) -> T?
+fn stackPop(stack: Stack<T>) -> Option<T>
 ```
 
 Removes and returns element from top of stack.
@@ -521,12 +521,12 @@ Removes and returns element from top of stack.
 **Parameters:**
 - `stack` - Stack
 
-**Returns:** `T?` - Top element or None if empty
+**Returns:** `Option<T>` - Top element or None if empty
 
 ### stackPeek
 
 ```atlas
-fn stackPeek(stack: Stack<T>) -> T?
+fn stackPeek(stack: Stack<T>) -> Option<T>
 ```
 
 Returns top element without removing.
@@ -534,7 +534,7 @@ Returns top element without removing.
 **Parameters:**
 - `stack` - Stack
 
-**Returns:** `T?` - Top element or None if empty
+**Returns:** `Option<T>` - Top element or None if empty
 
 ### stackSize
 

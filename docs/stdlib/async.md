@@ -207,7 +207,7 @@ Sends value through channel.
 ### channelReceive
 
 ```atlas
-fn channelReceive(receiver: Receiver<T>) -> Result<T?, string>
+fn channelReceive(receiver: Receiver<T>) -> Result<Option<T>, string>
 ```
 
 Receives value from channel.
@@ -216,7 +216,7 @@ Receives value from channel.
 - `receiver` - Channel receiver
 
 **Returns:**
-- `Ok(T?)` - Received value or None if channel empty/closed
+- `Ok(Option<T>)` - Received value or None if channel empty/closed
 - `Err(string)` on error
 
 ### channelIsClosed

@@ -5,25 +5,25 @@ JSON parsing, serialization, validation, and manipulation.
 ## parseJSON
 
 ```atlas
-fn parseJSON(str: string) -> Result<JsonValue, string>
+fn parseJSON(str: string) -> Result<json, string>
 ```
 
-Parses JSON string into JsonValue.
+Parses JSON string into `json`.
 
 **Parameters:**
 - `str` - JSON text
 
 **Returns:**
-- `Ok(JsonValue)` on success
+- `Ok(json)` on success
 - `Err(string)` if JSON is malformed
 
 **Type Mapping:**
-- JSON null → `JsonValue::Null`
-- JSON boolean → `JsonValue::Bool`
-- JSON number → `JsonValue::Number`
-- JSON string → `JsonValue::String`
-- JSON array → `JsonValue::Array`
-- JSON object → `JsonValue::Object`
+- JSON null → `null`
+- JSON boolean → `bool`
+- JSON number → `number`
+- JSON string → `string`
+- JSON array → `json[]`
+- JSON object → `record` (JSON object)
 
 ## toJSON
 
@@ -87,121 +87,121 @@ Removes all whitespace from JSON string.
 ## jsonAsString
 
 ```atlas
-fn jsonAsString(json: JsonValue) -> string?
+fn jsonAsString(json: json) -> Option<string>
 ```
 
-Extracts string value from JsonValue.
+Extracts string value from `json`.
 
 **Parameters:**
-- `json` - JsonValue
+- `json` - JSON value
 
-**Returns:** `string?` - String value or None if not a string
+**Returns:** `Option<string>` - String value or None if not a string
 
 ## jsonAsNumber
 
 ```atlas
-fn jsonAsNumber(json: JsonValue) -> number?
+fn jsonAsNumber(json: json) -> Option<number>
 ```
 
-Extracts number value from JsonValue.
+Extracts number value from `json`.
 
 **Parameters:**
-- `json` - JsonValue
+- `json` - JSON value
 
-**Returns:** `number?` - Number value or None if not a number
+**Returns:** `Option<number>` - Number value or None if not a number
 
 ## jsonAsBool
 
 ```atlas
-fn jsonAsBool(json: JsonValue) -> bool?
+fn jsonAsBool(json: json) -> Option<bool>
 ```
 
-Extracts boolean value from JsonValue.
+Extracts boolean value from `json`.
 
 **Parameters:**
-- `json` - JsonValue
+- `json` - JSON value
 
-**Returns:** `bool?` - Boolean value or None if not a boolean
+**Returns:** `Option<bool>` - Boolean value or None if not a boolean
 
 ## jsonGetString
 
 ```atlas
-fn jsonGetString(json: JsonValue, key: string) -> string?
+fn jsonGetString(json: json, key: string) -> Option<string>
 ```
 
 Gets string value from JSON object by key.
 
 **Parameters:**
-- `json` - JsonValue (must be object)
+- `json` - JSON value (must be object)
 - `key` - Object key
 
-**Returns:** `string?` - String value or None if key missing or wrong type
+**Returns:** `Option<string>` - String value or None if key missing or wrong type
 
 ## jsonGetNumber
 
 ```atlas
-fn jsonGetNumber(json: JsonValue, key: string) -> number?
+fn jsonGetNumber(json: json, key: string) -> Option<number>
 ```
 
 Gets number value from JSON object by key.
 
 **Parameters:**
-- `json` - JsonValue (must be object)
+- `json` - JSON value (must be object)
 - `key` - Object key
 
-**Returns:** `number?` - Number value or None if key missing or wrong type
+**Returns:** `Option<number>` - Number value or None if key missing or wrong type
 
 ## jsonGetBool
 
 ```atlas
-fn jsonGetBool(json: JsonValue, key: string) -> bool?
+fn jsonGetBool(json: json, key: string) -> Option<bool>
 ```
 
 Gets boolean value from JSON object by key.
 
 **Parameters:**
-- `json` - JsonValue (must be object)
+- `json` - JSON value (must be object)
 - `key` - Object key
 
-**Returns:** `bool?` - Boolean value or None if key missing or wrong type
+**Returns:** `Option<bool>` - Boolean value or None if key missing or wrong type
 
 ## jsonGetArray
 
 ```atlas
-fn jsonGetArray(json: JsonValue, key: string) -> JsonValue?
+fn jsonGetArray(json: json, key: string) -> Option<json>
 ```
 
 Gets array value from JSON object by key.
 
 **Parameters:**
-- `json` - JsonValue (must be object)
+- `json` - JSON value (must be object)
 - `key` - Object key
 
-**Returns:** `JsonValue?` - Array value or None if key missing or wrong type
+**Returns:** `Option<json>` - Array value or None if key missing or wrong type
 
 ## jsonGetObject
 
 ```atlas
-fn jsonGetObject(json: JsonValue, key: string) -> JsonValue?
+fn jsonGetObject(json: json, key: string) -> Option<json>
 ```
 
 Gets object value from JSON object by key.
 
 **Parameters:**
-- `json` - JsonValue (must be object)
+- `json` - JSON value (must be object)
 - `key` - Object key
 
-**Returns:** `JsonValue?` - Object value or None if key missing or wrong type
+**Returns:** `Option<json>` - Object value or None if key missing or wrong type
 
 ## jsonIsNull
 
 ```atlas
-fn jsonIsNull(json: JsonValue) -> bool
+fn jsonIsNull(json: json) -> bool
 ```
 
-Checks if JsonValue is null.
+Checks if JSON value is null.
 
 **Parameters:**
-- `json` - JsonValue
+- `json` - JSON value
 
 **Returns:** `bool` - True if null, false otherwise

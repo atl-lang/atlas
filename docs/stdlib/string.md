@@ -72,7 +72,7 @@ Removes trailing whitespace (Unicode-aware).
 ## indexOf
 
 ```atlas
-fn indexOf(str: string, search: string) -> number?
+fn indexOf(str: string, search: string) -> Option<number>
 ```
 
 Finds first occurrence of search string. Returns None if not found. Alias: `strIndexOf`.
@@ -81,12 +81,12 @@ Finds first occurrence of search string. Returns None if not found. Alias: `strI
 - `str` - String to search in
 - `search` - String to find
 
-**Returns:** `number?` - Index of first match or None
+**Returns:** `Option<number>` - Index of first match or None
 
 ## lastIndexOf
 
 ```atlas
-fn lastIndexOf(str: string, search: string) -> number?
+fn lastIndexOf(str: string, search: string) -> Option<number>
 ```
 
 Finds last occurrence of search string. Returns None if not found. Alias: `strLastIndexOf`.
@@ -95,7 +95,7 @@ Finds last occurrence of search string. Returns None if not found. Alias: `strLa
 - `str` - String to search in
 - `search` - String to find
 
-**Returns:** `number?` - Index of last match or None
+**Returns:** `Option<number>` - Index of last match or None
 
 ## includes
 
@@ -161,7 +161,7 @@ Extracts substring from start (inclusive) to end (exclusive). Validates UTF-8 bo
 ## charAt
 
 ```atlas
-fn charAt(str: string, index: number) -> string?
+fn charAt(str: string, index: number) -> Option<string>
 ```
 
 Gets character at index (returns grapheme cluster, not byte).
@@ -170,7 +170,7 @@ Gets character at index (returns grapheme cluster, not byte).
 - `str` - String to access
 - `index` - Character index (integer)
 
-**Returns:** `string?` - Character or None if out of bounds
+**Returns:** `Option<string>` - Character or None if out of bounds
 
 ## repeat
 

@@ -68,7 +68,7 @@ hashMapPut(m, "key", 42);          // NOT m.put()
 let msg = `Hello {name}!`;         // {x} not ${x}
 
 // File extension
-// Use .atlas (not .atl)
+// Use .atlas for execution and tests; .atl may parse but runtime support is unreliable
 ```
 
 ## Known Issues (check docs/known-issues.md)

@@ -160,9 +160,8 @@ generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
 **Template Strings**
 - Backtick-delimited: `` `hello {name}` ``
 - Interpolation uses `{ ... }` inside backticks.
-- Double-quoted strings support `${ ... }` interpolation and are desugared into concatenations.
+- Double-quoted strings support `{ ... }` interpolation and are desugared into concatenations.
 
 **Known Issues (See `docs/known-issues.md`)**
 - `import` parses, but multi-file module resolution does not work at runtime yet (H-063).
 - `.atl` extension does not execute reliably; use `.atlas` (H-067).
-

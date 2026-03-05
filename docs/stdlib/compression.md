@@ -7,333 +7,304 @@ Gzip, Tar, and Zip compression/decompression.
 ### gzipCompress
 
 ```atlas
-fn gzipCompress(data: string) -> Result<string, string>
+fn gzipCompress(data: string | number[], level?: number) -> number[]
 ```
 
 Compresses data with Gzip.
 
 **Parameters:**
-- `data` - String to compress
+- `data` - String or byte array (0-255) to compress
+- `level` - Compression level 0-9 (default 6)
 
-**Returns:**
-- `Ok(string)` - Gzip compressed data (hex encoded)
-- `Err(string)` on error
+**Returns:** `number[]` - Gzip-compressed bytes
 
 ### gzipDecompress
 
 ```atlas
-fn gzipDecompress(compressed: string) -> Result<string, string>
+fn gzipDecompress(compressed: number[]) -> number[]
 ```
 
-Decompresses Gzip data.
+Decompresses Gzip data to bytes.
 
 **Parameters:**
-- `compressed` - Gzip compressed data (hex encoded)
+- `compressed` - Gzip-compressed bytes
 
-**Returns:**
-- `Ok(string)` - Decompressed data
-- `Err(string)` if invalid or corrupted
+**Returns:** `number[]` - Decompressed bytes
 
 ### gzipDecompressString
 
 ```atlas
-fn gzipDecompressString(compressed: string) -> Result<string, string>
+fn gzipDecompressString(compressed: number[]) -> string
 ```
 
-Decompresses Gzip data to string.
+Decompresses Gzip data to UTF-8 string.
 
 **Parameters:**
-- `compressed` - Gzip compressed data
+- `compressed` - Gzip-compressed bytes
 
-**Returns:**
-- `Ok(string)` - Decompressed string
-- `Err(string)` on error
+**Returns:** `string` - Decompressed string
 
 ### gzipIsGzip
 
 ```atlas
-fn gzipIsGzip(data: string) -> bool
+fn gzipIsGzip(data: number[]) -> bool
 ```
 
 Checks if data is valid Gzip format.
 
 **Parameters:**
-- `data` - Data to check (hex encoded)
+- `data` - Data to check (byte array)
 
 **Returns:** `bool` - True if valid Gzip magic bytes
 
 ### gzipCompressionRatio
 
 ```atlas
-fn gzipCompressionRatio(original: string, compressed: string) -> number
+fn gzipCompressionRatio(original: number, compressed: number) -> number
 ```
 
 Calculates compression ratio.
 
 **Parameters:**
-- `original` - Original data size
-- `compressed` - Compressed data size
+- `original` - Original data size in bytes
+- `compressed` - Compressed data size in bytes
 
-**Returns:** `number` - Ratio (compressed / original) as percentage
+**Returns:** `number` - Ratio (original / compressed)
 
 ## Tar Functions
 
 ### tarCreate
 
 ```atlas
-fn tarCreate(files: object) -> Result<string, string>
+fn tarCreate(sources: string[], output: string) -> Null
 ```
 
-Creates Tar archive from files.
+Creates Tar archive from files and directories.
 
 **Parameters:**
-- `files` - Object mapping filenames to contents
+- `sources` - Array of file or directory paths to include
+- `output` - Output `.tar` file path
 
-**Returns:**
-- `Ok(string)` - Tar data (hex encoded)
-- `Err(string)` on error
+**Returns:** `Null`
 
 **Example:**
 ```atlas
-let archive = tarCreate({
-  "file1.txt": "content1",
-  "file2.txt": "content2"
-})?;
+tarCreate(["/tmp/file1.txt", "/tmp/file2.txt"], "/tmp/archive.tar");
 ```
 
 ### tarCreateGz
 
 ```atlas
-fn tarCreateGz(files: object) -> Result<string, string>
+fn tarCreateGz(sources: string[], output: string, level?: number) -> Null
 ```
 
 Creates Tar.Gz (compressed Tar) archive.
 
 **Parameters:**
-- `files` - Object mapping filenames to contents
+- `sources` - Array of file or directory paths to include
+- `output` - Output `.tar.gz` file path
+- `level` - Compression level 0-9 (default 6)
 
-**Returns:**
-- `Ok(string)` - Tar.Gz data (hex encoded)
-- `Err(string)` on error
+**Returns:** `Null`
 
 ### tarExtract
 
 ```atlas
-fn tarExtract(data: string) -> Result<object, string>
+fn tarExtract(tarPath: string, outputDir: string) -> string[]
 ```
 
 Extracts files from Tar archive.
 
 **Parameters:**
-- `data` - Tar data (hex encoded)
+- `tarPath` - Path to `.tar` file
+- `outputDir` - Directory to extract into
 
-**Returns:**
-- `Ok(object)` - Object mapping filenames to contents
-- `Err(string)` if invalid or corrupted
+**Returns:** `string[]` - Extracted file paths
 
 ### tarExtractGz
 
 ```atlas
-fn tarExtractGz(data: string) -> Result<object, string>
+fn tarExtractGz(tarGzPath: string, outputDir: string) -> string[]
 ```
 
 Extracts files from Tar.Gz archive.
 
 **Parameters:**
-- `data` - Tar.Gz data (hex encoded)
+- `tarGzPath` - Path to `.tar.gz` file
+- `outputDir` - Directory to extract into
 
-**Returns:**
-- `Ok(object)` - Object mapping filenames to contents
-- `Err(string)` on error
+**Returns:** `string[]` - Extracted file paths
 
 ### tarList
 
 ```atlas
-fn tarList(data: string) -> Result<string[], string>
+fn tarList(tarPath: string) -> object[]
 ```
 
 Lists files in Tar archive without extracting.
 
 **Parameters:**
-- `data` - Tar data (hex encoded)
+- `tarPath` - Path to `.tar` file
 
-**Returns:**
-- `Ok(string[])` - Array of filenames
-- `Err(string)` on error
+**Returns:** `object[]` - Entries with `path`, `size`, and `type`
 
 ### tarContains
 
 ```atlas
-fn tarContains(data: string, filename: string) -> Result<bool, string>
+fn tarContains(tarPath: string, filePath: string) -> bool
 ```
 
 Checks if file exists in Tar archive.
 
 **Parameters:**
-- `data` - Tar data (hex encoded)
-- `filename` - Filename to check
+- `tarPath` - Path to `.tar` file
+- `filePath` - Path inside the archive to check
 
-**Returns:**
-- `Ok(bool)` - True if file exists
-- `Err(string)` on error
+**Returns:** `bool` - True if file exists
 
 ## Zip Functions
 
 ### zipCreate
 
 ```atlas
-fn zipCreate(files: object) -> Result<string, string>
+fn zipCreate(sources: string[], output: string, level?: number) -> Null
 ```
 
-Creates Zip archive from files.
+Creates Zip archive from files and directories.
 
 **Parameters:**
-- `files` - Object mapping filenames to contents
+- `sources` - Array of file or directory paths to include
+- `output` - Output `.zip` file path
+- `level` - Compression level 0-9 (default 6; 0 = store)
 
-**Returns:**
-- `Ok(string)` - Zip data (hex encoded)
-- `Err(string)` on error
+**Returns:** `Null`
 
 ### zipCreateWithComment
 
 ```atlas
-fn zipCreateWithComment(files: object, comment: string) -> Result<string, string>
+fn zipCreateWithComment(sources: string[], output: string, comment: string, level?: number) -> Null
 ```
 
 Creates Zip archive with comment.
 
 **Parameters:**
-- `files` - Object mapping filenames to contents
+- `sources` - Array of file or directory paths to include
+- `output` - Output `.zip` file path
 - `comment` - Archive comment string
+- `level` - Compression level 0-9 (default 6; 0 = store)
 
-**Returns:**
-- `Ok(string)` - Zip data (hex encoded)
-- `Err(string)` on error
+**Returns:** `Null`
 
 ### zipExtract
 
 ```atlas
-fn zipExtract(data: string) -> Result<object, string>
+fn zipExtract(zipPath: string, outputDir: string) -> string[]
 ```
 
 Extracts all files from Zip archive.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
+- `zipPath` - Path to `.zip` file
+- `outputDir` - Directory to extract into
 
-**Returns:**
-- `Ok(object)` - Object mapping filenames to contents
-- `Err(string)` if invalid or corrupted
+**Returns:** `string[]` - Extracted file paths
 
 ### zipExtractFiles
 
 ```atlas
-fn zipExtractFiles(data: string, filenames: string[]) -> Result<object, string>
+fn zipExtractFiles(zipPath: string, outputDir: string, files: string[]) -> string[]
 ```
 
 Extracts specific files from Zip archive.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
-- `filenames` - Array of files to extract
+- `zipPath` - Path to `.zip` file
+- `outputDir` - Directory to extract into
+- `files` - Array of entry names to extract
 
-**Returns:**
-- `Ok(object)` - Object with extracted files
-- `Err(string)` on error
+**Returns:** `string[]` - Extracted file paths
 
 ### zipList
 
 ```atlas
-fn zipList(data: string) -> Result<string[], string>
+fn zipList(zipPath: string) -> object[]
 ```
 
 Lists files in Zip archive without extracting.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
+- `zipPath` - Path to `.zip` file
 
-**Returns:**
-- `Ok(string[])` - Array of filenames
-- `Err(string)` on error
+**Returns:** `object[]` - Entries with `name`, `size`, `compressedSize`, `isDir`, `method`
 
 ### zipContains
 
 ```atlas
-fn zipContains(data: string, filename: string) -> Result<bool, string>
+fn zipContains(zipPath: string, entryName: string) -> bool
 ```
 
-Checks if file exists in Zip archive.
+Checks if entry exists in Zip archive.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
-- `filename` - Filename to check
+- `zipPath` - Path to `.zip` file
+- `entryName` - Entry name to check
 
-**Returns:**
-- `Ok(bool)` - True if file exists
-- `Err(string)` on error
+**Returns:** `bool` - True if entry exists
 
 ### zipComment
 
 ```atlas
-fn zipComment(data: string) -> Result<string?, string>
+fn zipComment(zipPath: string) -> string
 ```
 
 Gets comment from Zip archive.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
+- `zipPath` - Path to `.zip` file
 
-**Returns:**
-- `Ok(string?)` - Comment or None if no comment
-- `Err(string)` on error
+**Returns:** `string` - Comment (empty if none)
 
 ### zipValidate
 
 ```atlas
-fn zipValidate(data: string) -> Result<bool, string>
+fn zipValidate(zipPath: string) -> bool
 ```
 
 Validates Zip archive integrity.
 
 **Parameters:**
-- `data` - Zip data (hex encoded)
+- `zipPath` - Path to `.zip` file
 
-**Returns:**
-- `Ok(bool)` - True if valid
-- `Err(string)` if invalid or corrupted
+**Returns:** `bool` - True if valid
 
 ### zipCompressionRatio
 
 ```atlas
-fn zipCompressionRatio(original: number, compressed: number) -> number
+fn zipCompressionRatio(zipPath: string) -> number
 ```
 
 Calculates compression ratio.
 
 **Parameters:**
-- `original` - Original data size
-- `compressed` - Compressed data size
+- `zipPath` - Path to `.zip` file
 
-**Returns:** `number` - Ratio as percentage
+**Returns:** `number` - Ratio (compressed / original)
 
 ## Example Usage
 
 ```atlas
 // Gzip
-let compressed = gzipCompress("Hello World")?;
-let decompressed = gzipDecompress(compressed)?;
+let compressed = gzipCompress("Hello World");
+let decompressed = gzipDecompressString(compressed);
 print(decompressed); // "Hello World"
 
 // Tar
-let files = {
-  "readme.txt": "Hello",
-  "data.json": "{}"
-};
-let archive = tarCreate(files)?;
-let extracted = tarExtract(archive)?;
+let sources = ["/tmp/readme.txt", "/tmp/data.json"];
+tarCreate(sources, "/tmp/archive.tar");
+let extracted = tarExtract("/tmp/archive.tar", "/tmp/extracted");
 
 // Zip
-let archive = zipCreate(files)?;
-let list = zipList(archive)?;
-print(list); // ["readme.txt", "data.json"]
+zipCreate(sources, "/tmp/archive.zip");
+let list = zipList("/tmp/archive.zip");
+print(list); // [{name: "...", size: 123, compressedSize: 45, isDir: false, method: "deflated"}, ...]
 ```

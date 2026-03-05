@@ -146,7 +146,7 @@ Checks if process is still running.
 ### getEnv
 
 ```atlas
-fn getEnv(name: string) -> string?
+fn getEnv(name: string) -> Option<string>
 ```
 
 Gets environment variable value.
@@ -154,7 +154,7 @@ Gets environment variable value.
 **Parameters:**
 - `name` - Variable name
 
-**Returns:** `string?` - Variable value or None if not set
+**Returns:** `Option<string>` - Variable value or None if not set
 
 ### setEnv
 

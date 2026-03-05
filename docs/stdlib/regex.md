@@ -80,7 +80,7 @@ Tests if pattern matches (simpler version of isMatch).
 ### regexFind
 
 ```atlas
-fn regexFind(regex: Regex, text: string) -> Result<string?, string>
+fn regexFind(regex: Regex, text: string) -> Result<Option<string>, string>
 ```
 
 Finds first match in text.
@@ -90,7 +90,7 @@ Finds first match in text.
 - `text` - Text to search
 
 **Returns:**
-- `Ok(string?)` - First match or None
+- `Ok(Option<string>)` - First match or None
 - `Err(string)` on error
 
 ### regexFindAll
@@ -130,7 +130,7 @@ Gets capture groups from first match.
 ### regexCapturesNamed
 
 ```atlas
-fn regexCapturesNamed(regex: Regex, text: string) -> Result<object?, string>
+fn regexCapturesNamed(regex: Regex, text: string) -> Result<Option<object>, string>
 ```
 
 Gets named capture groups from first match.
@@ -140,7 +140,7 @@ Gets named capture groups from first match.
 - `text` - Text to search
 
 **Returns:**
-- `Ok(object?)` - Object with group names as keys, or None
+- `Ok(Option<object>)` - Object with group names as keys, or None
 - `Err(string)` on error
 
 ### regexMatchIndices
