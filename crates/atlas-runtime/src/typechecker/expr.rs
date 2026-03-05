@@ -232,6 +232,9 @@ impl<'a> TypeChecker<'a> {
                 self.check_expr(arg)
             };
             if let Some(expected_type) = params.get(i) {
+                if self.is_hashmap_new_call(arg) && self.is_typed_hashmap(expected_type) {
+                    continue;
+                }
                 if expected_type.normalized() == Type::Unknown {
                     continue;
                 }
@@ -701,6 +704,215 @@ impl<'a> TypeChecker<'a> {
                     return Type::Generic {
                         name: "Result".to_string(),
                         type_args: vec![Type::any_placeholder(), arg_type],
+                    };
+                }
+                "hashMapNew" => {
+                    if !call.args.is_empty() {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3005",
+                                format!(
+                                    "hashMapNew expects 0 arguments, found {}",
+                                    call.args.len()
+                                ),
+                                call.span,
+                            )
+                            .with_label("argument count mismatch")
+                            .with_help("hashMapNew() takes no arguments"),
+                        );
+                        return Type::Unknown;
+                    }
+                    return Type::Generic {
+                        name: "HashMap".to_string(),
+                        type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
+                    };
+                }
+                "hashMapPut" => {
+                    if call.args.len() != 3 {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3005",
+                                format!(
+                                    "hashMapPut expects 3 arguments, found {}",
+                                    call.args.len()
+                                ),
+                                call.span,
+                            )
+                            .with_label("argument count mismatch")
+                            .with_help("hashMapPut(map, key, value) requires exactly 3 arguments"),
+                        );
+                        return Type::Unknown;
+                    }
+
+                    let map_type = self.check_expr(&call.args[0]);
+                    let key_type = self.check_expr(&call.args[1]);
+                    let value_type = self.check_expr(&call.args[2]);
+
+                    let Some((expected_key, expected_value)) = self.hashmap_type_args(&map_type)
+                    else {
+                        let map_norm = map_type.normalized();
+                        let map_is_any_or_unknown = matches!(map_norm, Type::Unknown)
+                            || matches!(
+                                map_norm,
+                                Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                            );
+                        let map_is_structural = matches!(map_norm, Type::Structural { .. });
+                        if map_is_any_or_unknown || map_is_structural {
+                            return map_type;
+                        }
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3001",
+                                format!(
+                                    "hashMapPut expects HashMap for argument 1, found {}",
+                                    map_type.display_name()
+                                ),
+                                call.args[0].span(),
+                            )
+                            .with_label("type mismatch")
+                            .with_help("argument 1 must be a HashMap"),
+                        );
+                        return Type::Unknown;
+                    };
+
+                    if !self.is_untyped_hashmap(&map_type) {
+                        if !key_type.is_assignable_to(&expected_key) {
+                            let help = suggestions::suggest_type_mismatch(&expected_key, &key_type)
+                                .unwrap_or_else(|| {
+                                    format!(
+                                        "expected {}, found {}",
+                                        expected_key.display_name(),
+                                        key_type.display_name()
+                                    )
+                                });
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3001",
+                                    format!(
+                                        "hashMapPut key type mismatch: expected {}, found {}",
+                                        expected_key.display_name(),
+                                        key_type.display_name()
+                                    ),
+                                    call.args[1].span(),
+                                )
+                                .with_label("type mismatch")
+                                .with_help(help),
+                            );
+                        }
+                        if !value_type.is_assignable_to(&expected_value) {
+                            let help =
+                                suggestions::suggest_type_mismatch(&expected_value, &value_type)
+                                    .unwrap_or_else(|| {
+                                        format!(
+                                            "expected {}, found {}",
+                                            expected_value.display_name(),
+                                            value_type.display_name()
+                                        )
+                                    });
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT3001",
+                                    format!(
+                                        "hashMapPut value type mismatch: expected {}, found {}",
+                                        expected_value.display_name(),
+                                        value_type.display_name()
+                                    ),
+                                    call.args[2].span(),
+                                )
+                                .with_label("type mismatch")
+                                .with_help(help),
+                            );
+                        }
+                    }
+
+                    return map_type;
+                }
+                "hashMapGet" => {
+                    if call.args.len() != 2 {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3005",
+                                format!(
+                                    "hashMapGet expects 2 arguments, found {}",
+                                    call.args.len()
+                                ),
+                                call.span,
+                            )
+                            .with_label("argument count mismatch")
+                            .with_help("hashMapGet(map, key) requires exactly 2 arguments"),
+                        );
+                        return Type::Unknown;
+                    }
+
+                    let map_type = self.check_expr(&call.args[0]);
+                    let key_type = self.check_expr(&call.args[1]);
+
+                    let Some((expected_key, expected_value)) = self.hashmap_type_args(&map_type)
+                    else {
+                        let map_norm = map_type.normalized();
+                        let map_is_any_or_unknown = matches!(map_norm, Type::Unknown)
+                            || matches!(
+                                map_norm,
+                                Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
+                            );
+                        let map_is_structural = matches!(map_norm, Type::Structural { .. });
+                        if map_is_any_or_unknown || map_is_structural {
+                            return Type::Generic {
+                                name: "Option".to_string(),
+                                type_args: vec![Type::any_placeholder()],
+                            };
+                        }
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3001",
+                                format!(
+                                    "hashMapGet expects HashMap for argument 1, found {}",
+                                    map_type.display_name()
+                                ),
+                                call.args[0].span(),
+                            )
+                            .with_label("type mismatch")
+                            .with_help("argument 1 must be a HashMap"),
+                        );
+                        return Type::Unknown;
+                    };
+
+                    if !self.is_untyped_hashmap(&map_type)
+                        && !key_type.is_assignable_to(&expected_key)
+                    {
+                        let help = suggestions::suggest_type_mismatch(&expected_key, &key_type)
+                            .unwrap_or_else(|| {
+                                format!(
+                                    "expected {}, found {}",
+                                    expected_key.display_name(),
+                                    key_type.display_name()
+                                )
+                            });
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3001",
+                                format!(
+                                    "hashMapGet key type mismatch: expected {}, found {}",
+                                    expected_key.display_name(),
+                                    key_type.display_name()
+                                ),
+                                call.args[1].span(),
+                            )
+                            .with_label("type mismatch")
+                            .with_help(help),
+                        );
+                    }
+
+                    if self.is_untyped_hashmap(&map_type) {
+                        return Type::Generic {
+                            name: "Option".to_string(),
+                            type_args: vec![Type::any_placeholder()],
+                        };
+                    }
+
+                    return Type::Generic {
+                        name: "Option".to_string(),
+                        type_args: vec![expected_value],
                     };
                 }
                 _ => {}

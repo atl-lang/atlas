@@ -4,6 +4,7 @@
 
 mod array_alias;
 mod error_codes;
+mod hashmap_generics;
 mod ownership_part1;
 mod ownership_part2;
 mod ownership_part3;

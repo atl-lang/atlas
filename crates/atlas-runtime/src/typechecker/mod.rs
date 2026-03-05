@@ -1230,9 +1230,11 @@ impl<'a> TypeChecker<'a> {
                             declared_type.normalized(),
                             Type::Generic { name, type_args } if name == "Array" && type_args.len() == 1
                         );
+                    let allows_hashmap_new = self.is_hashmap_new_call(&var.init)
+                        && self.is_typed_hashmap(&declared_type);
                     if is_empty_array_literal && declared_is_array {
                         // Empty array literals must be typed by annotation.
-                    } else if !init_type.is_assignable_to(&declared_type) {
+                    } else if !allows_hashmap_new && !init_type.is_assignable_to(&declared_type) {
                         let help = suggestions::suggest_type_mismatch(&declared_type, &init_type)
                             .unwrap_or_else(|| {
                                 format!(
@@ -1303,7 +1305,9 @@ impl<'a> TypeChecker<'a> {
                 let value_type = self.check_expr(&assign.value);
                 let target_type = self.check_assign_target(&assign.target);
 
-                if !value_type.is_assignable_to(&target_type) {
+                let allows_hashmap_new =
+                    self.is_hashmap_new_call(&assign.value) && self.is_typed_hashmap(&target_type);
+                if !allows_hashmap_new && !value_type.is_assignable_to(&target_type) {
                     let help = suggestions::suggest_type_mismatch(&target_type, &value_type)
                         .unwrap_or_else(|| {
                             format!(
@@ -1586,7 +1590,13 @@ impl<'a> TypeChecker<'a> {
                     return;
                 }
 
-                if !return_type.is_assignable_to(expected) {
+                let allows_hashmap_new = ret
+                    .value
+                    .as_ref()
+                    .map(|value| self.is_hashmap_new_call(value))
+                    .unwrap_or(false)
+                    && self.is_typed_hashmap(expected);
+                if !allows_hashmap_new && !return_type.is_assignable_to(expected) {
                     let mut diag = Diagnostic::error_with_code(
                         "AT3001",
                         format!(
@@ -1945,6 +1955,46 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    fn hashmap_type_args(&self, ty: &Type) -> Option<(Type, Type)> {
+        match ty.normalized() {
+            Type::Generic { name, type_args } if name == "HashMap" && type_args.len() == 2 => {
+                Some((type_args[0].clone(), type_args[1].clone()))
+            }
+            _ => None,
+        }
+    }
+
+    fn is_untyped_hashmap(&self, ty: &Type) -> bool {
+        let Some((key_ty, value_ty)) = self.hashmap_type_args(ty) else {
+            return false;
+        };
+        let is_any_or_unknown = |arg: &Type| {
+            matches!(arg.normalized(), Type::Unknown)
+                || matches!(
+                    arg.normalized(),
+                    Type::TypeParameter { name } if name == ANY_TYPE_PARAM
+                )
+        };
+        is_any_or_unknown(&key_ty) || is_any_or_unknown(&value_ty)
+    }
+
+    fn is_typed_hashmap(&self, ty: &Type) -> bool {
+        self.hashmap_type_args(ty).is_some() && !self.is_untyped_hashmap(ty)
+    }
+
+    fn is_hashmap_new_call(&self, expr: &Expr) -> bool {
+        let Expr::Call(call) = expr else {
+            return false;
+        };
+        if !call.args.is_empty() {
+            return false;
+        }
+        let Expr::Identifier(id) = call.callee.as_ref() else {
+            return false;
+        };
+        id.name == "hashMapNew"
+    }
+
     /// Returns `true` if the given type implements `Copy` (value semantics).
     /// Built-in value types are always Copy. User types are Copy only if they have
     /// an explicit `impl Copy for T { }` registered in the trait registry.
@@ -2037,6 +2087,14 @@ impl<'a> TypeChecker<'a> {
                 "any" => Type::any_placeholder(),
                 "json" => Type::JsonValue,
                 "array" => Type::Array(Box::new(Type::any_placeholder())),
+                "HashMap" => Type::Generic {
+                    name: "HashMap".to_string(),
+                    type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
+                },
+                "HashSet" => Type::Generic {
+                    name: "HashSet".to_string(),
+                    type_args: vec![Type::any_placeholder()],
+                },
                 "Comparable" | "Numeric" => Type::Number,
                 "Iterable" => Type::Array(Box::new(Type::any_placeholder())),
                 "Equatable" => {

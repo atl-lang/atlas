@@ -180,6 +180,26 @@ impl Type {
         let self_norm = self.normalized();
         let other_norm = other.normalized();
 
+        if let (
+            Type::Generic {
+                name: n1,
+                type_args: a1,
+            },
+            Type::Generic {
+                name: n2,
+                type_args: a2,
+            },
+        ) = (&self_norm, &other_norm)
+        {
+            if n1 == "HashMap" && n2 == "HashMap" {
+                return a1.len() == a2.len()
+                    && a1
+                        .iter()
+                        .zip(a2.iter())
+                        .all(|(left, right)| left.normalized() == right.normalized());
+            }
+        }
+
         if Self::is_any_placeholder(&self_norm) || Self::is_any_placeholder(&other_norm) {
             return true;
         }
