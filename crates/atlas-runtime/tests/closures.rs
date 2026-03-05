@@ -376,6 +376,102 @@ sum;
     );
 }
 
+// ============================================================================
+// Category C2: Closure callbacks mutate global collections (parity)
+// ============================================================================
+
+#[test]
+fn test_callback_closure_mutates_global_array() {
+    assert_parity_number(
+        r#"
+let mut tests = [];
+
+fn describe(block: () -> void) -> void {
+    block();
+}
+
+fn it_adds() -> void {
+    tests = arrayPush(tests, 1);
+}
+
+describe(fn() -> void {
+    it_adds();
+});
+
+len(tests);
+"#,
+        1.0,
+    );
+}
+
+#[test]
+fn test_callback_closure_mutates_global_hashmap() {
+    assert_parity_number(
+        r#"
+let mut m = hashMapNew();
+
+fn with_callback(block: () -> void) -> void {
+    block();
+}
+
+with_callback(fn() -> void {
+    hashMapPut(m, "a", 1);
+});
+
+hashMapSize(m);
+"#,
+        1.0,
+    );
+}
+
+#[test]
+fn test_nested_closures_mutate_global_array() {
+    assert_parity_number(
+        r#"
+let mut values = [];
+
+fn outer(block: () -> void) -> void {
+    block();
+}
+
+fn inner(block: () -> void) -> void {
+    block();
+}
+
+outer(fn() -> void {
+    inner(fn() -> void {
+        values = arrayPush(values, 7);
+    });
+});
+
+len(values);
+"#,
+        1.0,
+    );
+}
+
+#[test]
+fn test_closure_param_mutates_global_collection() {
+    assert_parity_number(
+        r#"
+let mut items = [];
+
+fn apply(block: () -> void) -> void {
+    block();
+}
+
+fn push_one() -> void {
+    items = arrayPush(items, 42);
+}
+
+apply(push_one);
+
+len(items);
+"#,
+        1.0,
+    );
+}
+
 #[test]
 fn test_mutually_referencing_fns_via_global() {
     // Two fns that communicate through a top-level var

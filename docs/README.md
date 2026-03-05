@@ -1,46 +1,63 @@
 # Atlas Documentation
 
-Documentation for the Atlas programming language.
+**Source of Truth:** The codebase. These docs are generated from codebase analysis.
 
----
+## Documentation Principles
+
+1. **Code is truth** - If docs disagree with code, docs are wrong
+2. **Tested examples** - All code examples verified against actual compiler
+3. **AI-friendly** - Small files, one concept each, max ~300 lines
+4. **No aspirations** - Only document what works TODAY
 
 ## Structure
 
-### [`specification/`](specification/) — Language Specification
-Core language definition:
-- `syntax.md` — Grammar, keywords, operators, EBNF
-- `types.md` — Type system, generics, patterns
-- `language-semantics.md` — Evaluation rules, edge cases
-- `runtime.md` — Execution model, memory, scoping
-- `bytecode.md` — VM, compilation, instructions
-- `modules.md` — Import/export, resolution
-- `diagnostic-system.md` — Error codes, warnings, diagnostic format
-- `grammar-conformance.md` — Parser conformance requirements
-- `json-formats.md` — AST/typecheck dump formats
-- `repl.md` — Interactive mode behavior
-- `stdlib.md` — Standard library API reference
+```
+docs/
+├── language/           # Language syntax and semantics
+│   ├── grammar.md      # Actual syntax (from parser)
+│   ├── types.md        # Type system
+│   ├── structs.md      # Structs and enums
+│   ├── functions.md    # Functions and closures
+│   ├── control-flow.md # If, while, for, match
+│   └── modules.md      # Import/export
+│
+├── stdlib/             # Standard library (actual functions)
+│   ├── index.md        # Overview and categories
+│   ├── core.md         # print, len, str, typeof
+│   ├── array.md        # Array operations
+│   ├── hashmap.md      # HashMap operations
+│   ├── string.md       # String operations
+│   ├── math.md         # Math functions
+│   ├── datetime.md     # DateTime operations
+│   ├── file.md         # File I/O
+│   ├── http.md         # HTTP client
+│   ├── json.md         # JSON parsing
+│   ├── regex.md        # Regular expressions
+│   ├── async.md        # Async/await
+│   └── process.md      # Process spawning
+│
+├── tooling/            # CLI and tools
+│   ├── cli.md          # atlas check, atlas run
+│   └── errors.md       # Error codes and messages
+│
+└── known-issues.md     # Current limitations (honest)
+```
 
-### Feature Documentation (root level)
-Phase-generated docs for implemented features:
-- `build-system.md` — Build system architecture
-- `configuration.md` — Configuration system
-- `dependency-resolution.md` — Package resolver internals
-- `embedding-guide.md` — Runtime embedding API
-- `frontend-status.md` — Frontend phase completion report
-- `jit.md` — JIT compilation foundation
-- `package-manifest.md` — Package manifest format
-- `reflection.md` — Reflection API
-- `repl.md` — REPL architecture
-- `security-model.md` — Security and permissions
-- `source-maps.md` — Source Map v3 generation
-- `vm-architecture.md` — VM design and optimization
+## How These Docs Were Generated
 
----
+1. Agents audited the actual codebase
+2. Extracted real function signatures from `crates/atlas-runtime/src/stdlib/`
+3. Tested examples against `atlas check` and `atlas run`
+4. Documented only what actually works
 
-## For AI Agents
+## Archived Documentation
 
-- **Start with:** `STATUS.md` (project root) for current phase
-- **Language spec:** `specification/` directory
-- **Memory system:** `/memory/` (patterns, decisions, gates)
-- **Atlas skill:** `/.claude/skills/atlas/` (gates, workflows)
-- **Phase files:** `phases/` directory
+Old docs (potentially inaccurate) are in `/docs-archive/` for historical reference only.
+
+## Contributing
+
+To update these docs:
+1. Verify against codebase first
+2. Test all code examples
+3. Keep files under 300 lines
+4. One concept per file

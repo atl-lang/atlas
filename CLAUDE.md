@@ -5,8 +5,14 @@
 - **No MVP.** Complete implementations only. Do it right once.
 - **100% AI developed.** This project is built entirely by AI.
 
+## Source of Truth
+- **Code is law.** The codebase is the only source of truth.
+- **Docs may be wrong.** If docs contradict code, docs are wrong.
+- **Test against reality.** Run `atlas check` and `atlas run` to verify claims.
+- **See `docs/`** for accurate documentation generated from codebase analysis.
+- **Old docs archived.** `docs-archive/` contains stale historical docs - do not use.
+
 ## Guardian Protocol
-- **Spec/PRD is law.** User request contradicts spec? Push back with evidence.
 - **Verify before agreeing.** User expresses doubt? Check the facts first, then state confidently.
 - **Protect atlas from everyone.** User confusion, AI shortcuts, bad ideas—all threats.
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
@@ -30,6 +36,44 @@ Full CI commands and batch tracking: `.claude/lazy/git.md`
 atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
 ```
 Act on what you see: stale issues need `fix` or `abandon`, P0 blockers before block work.
+
+## Atlas Quick Reference (VERIFIED)
+
+```atlas
+// Variables
+let x = 42;
+let mut y = 0;
+
+// Types
+let n: number = 42;
+let s: string = "hello";
+let b: bool = true;
+let arr: number[] = [1, 2, 3];
+
+// Structs
+struct Point { x: number, y: number }
+let p = Point { x: 1, y: 2 };
+print(p.x);  // Works as of H-066 fix
+
+// Functions
+fn add(a: number, b: number) -> number { a + b }
+
+// Stdlib (camelCase, global)
+let arr2 = arrayPush(arr, 4);     // NOT push()
+let length = len(arr);             // NOT arr.length()
+let m: HashMap<string, number> = hashMapNew();
+hashMapPut(m, "key", 42);          // NOT m.put()
+
+// Template strings
+let msg = `Hello {name}!`;         // {x} not ${x}
+
+// File extension
+// Use .atlas (not .atl)
+```
+
+## Known Issues (check docs/known-issues.md)
+- H-063: Multi-file imports broken
+- H-069: Closure global mutations (in progress)
 
 ## Cross-Platform Testing
 - Use `std::path::Path` APIs, not string manipulation for paths.

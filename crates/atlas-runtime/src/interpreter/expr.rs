@@ -2620,13 +2620,14 @@ impl Interpreter {
             },
         };
 
-        // Snapshot all local-scope variables at closure creation time.
+        // Snapshot non-global local-scope variables at closure creation time.
         // This aligns the interpreter with VM capture-by-value semantics:
         // outer `var` mutations after closure creation are not visible inside.
+        // Global bindings must remain live so mutations inside closures persist.
         let param_names: std::collections::HashSet<&str> =
             params.iter().map(|p| p.name.name.as_str()).collect();
         let mut captured: HashMap<String, Value> = HashMap::new();
-        for scope in &self.locals {
+        for scope in self.locals.iter().skip(1) {
             for (var_name, (value, _mutable)) in scope {
                 if !param_names.contains(var_name.as_str()) {
                     captured
