@@ -7,7 +7,7 @@
 
 ## AI-Friendly Syntax Analysis
 - **Intuitive:** `fn` declarations, `match` with comma-separated arms, `Some/None` patterns, `HashMap` ops.
-- ⏳︎ **Confusing:** structural type annotations (`{ field: type }`) appear in spec, but the current toolchain rejects many uses in function signatures.
+- ✅ **Confusing:** structural type annotations (`{ field: type }`) appear in spec, but the current toolchain rejects many uses in function signatures.
 - **Error messaging:** parser errors often point to column offsets on line 1, making it hard to locate actual issues in multi-line files.
 
 ### Syntax Element Ratings (1–10)

@@ -417,10 +417,16 @@ impl Type {
                 params: params.iter().map(|p| p.normalized()).collect(),
                 return_type: Box::new(return_type.normalized()),
             },
-            Type::Generic { name, type_args } => Type::Generic {
-                name: name.clone(),
-                type_args: type_args.iter().map(|t| t.normalized()).collect(),
-            },
+            Type::Generic { name, type_args } => {
+                if name == "Array" && type_args.len() == 1 {
+                    Type::Array(Box::new(type_args[0].normalized()))
+                } else {
+                    Type::Generic {
+                        name: name.clone(),
+                        type_args: type_args.iter().map(|t| t.normalized()).collect(),
+                    }
+                }
+            }
             Type::Union(members) => Type::union(members.clone()),
             Type::Intersection(members) => Type::intersection(members.clone()),
             Type::Structural { members } => Type::Structural {

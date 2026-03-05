@@ -2,6 +2,7 @@
 // All tests were originally in integration.rs (1702 lines, 56KB)
 // Split to stay under 12KB file size limit per atlas-testing.md
 
+mod array_alias;
 mod error_codes;
 mod ownership_part1;
 mod ownership_part2;

@@ -642,6 +642,14 @@ impl<'a> TypeChecker<'a> {
                         );
                         return Type::Unknown;
                     }
+                    if name == "Array" {
+                        return Type::Array(Box::new(
+                            resolved_args
+                                .first()
+                                .cloned()
+                                .unwrap_or_else(Type::any_placeholder),
+                        ));
+                    }
                 } else {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
@@ -2174,6 +2182,14 @@ impl<'a> TypeChecker<'a> {
                             .with_label("incorrect number of type arguments"),
                         );
                         return Type::Unknown;
+                    }
+                    if name == "Array" {
+                        return Type::Array(Box::new(
+                            resolved_args
+                                .first()
+                                .cloned()
+                                .unwrap_or_else(Type::any_placeholder),
+                        ));
                     }
                 } else {
                     // Unknown generic type
