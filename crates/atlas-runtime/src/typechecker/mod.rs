@@ -292,6 +292,37 @@ pub(crate) fn type_to_impl_key(ty: &Type) -> Option<String> {
     }
 }
 
+/// Like `type_to_impl_key` but also resolves `Type::Structural` back to the
+/// nominal struct name by reverse-looking up `struct_type_cache`.
+fn type_to_impl_key_with_structs(
+    ty: &Type,
+    struct_type_cache: &HashMap<String, Type>,
+) -> Option<String> {
+    // Try the simple path first
+    if let Some(key) = type_to_impl_key(ty) {
+        return Some(key);
+    }
+    // For structural types, reverse-lookup the struct name
+    if let Type::Structural { members } = ty.normalized() {
+        for (name, cached_ty) in struct_type_cache {
+            if let Type::Structural {
+                members: cached_members,
+            } = cached_ty
+            {
+                if members.len() == cached_members.len()
+                    && members
+                        .iter()
+                        .zip(cached_members.iter())
+                        .all(|(a, b)| a.name == b.name)
+                {
+                    return Some(name.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
 impl<'a> TypeChecker<'a> {
     /// Create a new type checker
     pub fn new(symbol_table: &'a mut SymbolTable) -> Self {
@@ -2121,7 +2152,7 @@ impl<'a> TypeChecker<'a> {
         receiver_type: &Type,
         method_name: &str,
     ) -> Option<(Type, String, String)> {
-        let type_name = type_to_impl_key(receiver_type)?;
+        let type_name = type_to_impl_key_with_structs(receiver_type, &self.struct_type_cache)?;
         // Search all impls for this type — return method + the trait that provides it
         let matching: Option<(ImplMethod, String)> = self
             .impl_registry
@@ -2142,6 +2173,17 @@ impl<'a> TypeChecker<'a> {
         } else {
             None
         }
+    }
+
+    /// Return the nominal name for a type if it's a known struct, otherwise display_name().
+    /// Used in diagnostics so errors say "Person" instead of "{ name: string }".
+    pub(super) fn nominal_display_name(&self, ty: &Type) -> String {
+        if let Some(name) = type_to_impl_key_with_structs(ty, &self.struct_type_cache) {
+            if name != ty.display_name() {
+                return name;
+            }
+        }
+        ty.display_name()
     }
 
     /// Resolve a type reference to a Type
@@ -2731,7 +2773,8 @@ impl<'a> TypeChecker<'a> {
             "Move" => self.is_move_type(ty),
             _ => {
                 // Built-in or user-defined trait — check impl registry
-                if let Some(type_name) = type_to_impl_key(ty) {
+                if let Some(type_name) = type_to_impl_key_with_structs(ty, &self.struct_type_cache)
+                {
                     self.trait_registry.implements(&type_name, trait_name)
                 } else {
                     false

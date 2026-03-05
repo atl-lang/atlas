@@ -1685,24 +1685,20 @@ impl<'a> TypeChecker<'a> {
                 .map(|s| s.to_owned());
 
             if let Some(trait_name) = trait_name_with_method {
+                let type_display = self.nominal_display_name(&target_type);
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT,
                         format!(
                             "Type '{}' does not implement trait '{}' required for method '{}'",
-                            target_type.display_name(),
-                            trait_name,
-                            method_name
+                            type_display, trait_name, method_name
                         ),
                         member.member.span,
                     )
                     .with_label(format!("trait '{}' not implemented", trait_name))
                     .with_help(format!(
                         "implement '{}' for '{}' with: impl {} for {} {{ ... }}",
-                        trait_name,
-                        target_type.display_name(),
-                        trait_name,
-                        target_type.display_name()
+                        trait_name, type_display, trait_name, type_display
                     )),
                 );
             } else {
