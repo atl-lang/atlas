@@ -160,6 +160,7 @@ impl LetPolymorphism {
         match expr {
             // Syntactic values that can be safely generalized
             Expr::Literal(_, _) => BindingKind::SyntacticValue,
+            Expr::TemplateString { .. } => BindingKind::SyntacticValue,
             Expr::ArrayLiteral(_) => BindingKind::SyntacticValue,
             // Anonymous functions (fn(params) { body } / (x) => x) are syntactic values
             Expr::AnonFn { .. } => BindingKind::SyntacticValue,
@@ -359,6 +360,7 @@ impl InferenceHeuristics {
             Expr::Literal(Literal::String(_), _) => Some(Type::String),
             Expr::Literal(Literal::Bool(_), _) => Some(Type::Bool),
             Expr::Literal(Literal::Null, _) => Some(Type::Null),
+            Expr::TemplateString { .. } => Some(Type::String),
             Expr::Group(g) => Self::infer_literal_type(&g.expr),
             _ => None,
         }
@@ -501,6 +503,7 @@ pub fn infer_expr_type(expr: &Expr) -> Type {
             Literal::Bool(_) => Type::Bool,
             Literal::Null => Type::Null,
         },
+        Expr::TemplateString { .. } => Type::String,
         Expr::Binary(binary) => infer_binary_type(&binary.op),
         Expr::Unary(unary) => match unary.op {
             UnaryOp::Negate => Type::Number,

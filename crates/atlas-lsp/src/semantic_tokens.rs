@@ -209,9 +209,10 @@ fn classify_token(
 
         // Literals
         TokenKind::Number => (token_type_idx::NUMBER, 0),
-        TokenKind::String | TokenKind::InterpolationStart | TokenKind::InterpolationEnd => {
-            (token_type_idx::STRING, 0)
-        }
+        TokenKind::String
+        | TokenKind::TemplateString
+        | TokenKind::InterpolationStart
+        | TokenKind::InterpolationEnd => (token_type_idx::STRING, 0),
 
         // Comments
         TokenKind::LineComment | TokenKind::BlockComment => (token_type_idx::COMMENT, 0),

@@ -10,6 +10,18 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 mod literals;
 
+#[derive(Debug, Clone, Copy)]
+pub(super) enum InterpolationKind {
+    DoubleQuote,
+    Template,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub(super) struct InterpolationContext {
+    pub depth: usize,
+    pub kind: InterpolationKind,
+}
+
 /// Counter for generating unique lexer IDs (prevents source cache collisions in tests)
 static LEXER_COUNTER: AtomicUsize = AtomicUsize::new(0);
 
@@ -42,7 +54,7 @@ pub struct Lexer {
     /// Pending tokens for interpolation sequences
     pending_tokens: VecDeque<Token>,
     /// Stack of interpolation brace depths (one per active interpolation)
-    interpolation_stack: Vec<usize>,
+    interpolation_stack: Vec<InterpolationContext>,
     /// Last emitted token kind (for context-sensitive lexing)
     last_token_kind: Option<TokenKind>,
 }
@@ -147,20 +159,25 @@ impl Lexer {
             '(' => self.make_token(TokenKind::LeftParen, "("),
             ')' => self.make_token(TokenKind::RightParen, ")"),
             '{' => {
-                if let Some(depth) = self.interpolation_stack.last_mut() {
-                    *depth += 1;
+                if let Some(context) = self.interpolation_stack.last_mut() {
+                    context.depth += 1;
                 }
                 self.make_token(TokenKind::LeftBrace, "{")
             }
             '}' => {
-                if let Some(depth) = self.interpolation_stack.last_mut() {
-                    if *depth == 1 {
-                        self.interpolation_stack.pop();
+                if let Some(mut context) = self.interpolation_stack.pop() {
+                    if context.depth == 1 {
                         let token = self.make_token(TokenKind::InterpolationEnd, "}");
-                        self.queue_string_continuation();
+                        match context.kind {
+                            InterpolationKind::DoubleQuote => self.queue_string_continuation(),
+                            InterpolationKind::Template => {
+                                self.queue_template_string_continuation()
+                            }
+                        }
                         return token;
                     }
-                    *depth -= 1;
+                    context.depth -= 1;
+                    self.interpolation_stack.push(context);
                 }
                 self.make_token(TokenKind::RightBrace, "}")
             }
@@ -264,6 +281,7 @@ impl Lexer {
 
             // String literals
             '"' => self.string(),
+            '`' => self.template_string(),
 
             // Numbers
             c if c.is_ascii_digit() => self.number(),

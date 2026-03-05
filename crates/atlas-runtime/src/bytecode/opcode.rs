@@ -1,9 +1,9 @@
 //! Bytecode instruction set
 //!
-//! Stack-based bytecode with 37 opcodes organized by category.
+//! Stack-based bytecode with 38 opcodes organized by category.
 //! Operands are encoded separately in the instruction stream.
 
-/// Bytecode opcode (37 instructions)
+/// Bytecode opcode (38 instructions)
 ///
 /// Stack-based VM with explicit byte values for serialization.
 /// Operands are encoded inline after the opcode byte.
@@ -121,6 +121,8 @@ pub enum Opcode {
     Dup2 = 0x82,
     /// Rotate top 3 stack values: [a, b, c] -> [b, c, a]
     Rot3 = 0x83,
+    /// Convert top of stack to string using toString semantics
+    ToString = 0x84,
 
     // ===== Pattern matching (0x90-0x9F) =====
     /// Pop value, push true if Option::Some, false otherwise
@@ -205,6 +207,7 @@ impl TryFrom<u8> for Opcode {
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),
             0x83 => Ok(Opcode::Rot3),
+            0x84 => Ok(Opcode::ToString),
             0x90 => Ok(Opcode::IsOptionSome),
             0x91 => Ok(Opcode::IsOptionNone),
             0x92 => Ok(Opcode::IsResultOk),

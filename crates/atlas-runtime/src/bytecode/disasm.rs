@@ -96,6 +96,7 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::Dup
         | Opcode::Dup2
         | Opcode::Rot3
+        | Opcode::ToString
         | Opcode::IsOptionSome
         | Opcode::IsOptionNone
         | Opcode::IsResultOk

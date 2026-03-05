@@ -73,6 +73,7 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x81] = Some(Opcode::Dup);
     table[0x82] = Some(Opcode::Dup2);
     table[0x83] = Some(Opcode::Rot3);
+    table[0x84] = Some(Opcode::ToString);
 
     // Pattern matching (0x90-0x97)
     table[0x90] = Some(Opcode::IsOptionSome);

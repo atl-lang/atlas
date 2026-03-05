@@ -240,6 +240,13 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
                 extract_names_from_expr(&field.value, names);
             }
         }
+        Expr::TemplateString { parts, .. } => {
+            for part in parts {
+                if let TemplatePart::Expression(expr) = part {
+                    extract_names_from_expr(expr, names);
+                }
+            }
+        }
         Expr::Range { start, end, .. } => {
             if let Some(start) = start {
                 extract_names_from_expr(start, names);

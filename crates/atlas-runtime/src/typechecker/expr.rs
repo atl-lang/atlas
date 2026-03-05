@@ -18,6 +18,14 @@ impl<'a> TypeChecker<'a> {
                 Literal::Bool(_) => Type::Bool,
                 Literal::Null => Type::Null,
             },
+            Expr::TemplateString { parts, .. } => {
+                for part in parts {
+                    if let TemplatePart::Expression(expr) = part {
+                        self.check_expr(expr);
+                    }
+                }
+                Type::String
+            }
             Expr::Identifier(id) => {
                 // Track that this symbol was used
                 self.used_symbols.insert(id.name.clone());
@@ -2603,6 +2611,13 @@ impl<'a> TypeChecker<'a> {
                 self.check_capture_semantics(&c.callee, closure_span);
                 for arg in &c.args {
                     self.check_capture_semantics(arg, closure_span);
+                }
+            }
+            Expr::TemplateString { parts, .. } => {
+                for part in parts {
+                    if let TemplatePart::Expression(expr) = part {
+                        self.check_capture_semantics(expr, closure_span);
+                    }
                 }
             }
             Expr::Group(g) => self.check_capture_semantics(&g.expr, closure_span),

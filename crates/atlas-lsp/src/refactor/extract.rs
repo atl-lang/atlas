@@ -347,6 +347,13 @@ fn collect_free_vars_expr(
                 collect_free_vars_expr(&field.value, scopes, free_vars);
             }
         }
+        Expr::TemplateString { parts, .. } => {
+            for part in parts {
+                if let TemplatePart::Expression(expr) = part {
+                    collect_free_vars_expr(expr, scopes, free_vars);
+                }
+            }
+        }
         Expr::Range { start, end, .. } => {
             if let Some(start) = start {
                 collect_free_vars_expr(start, scopes, free_vars);

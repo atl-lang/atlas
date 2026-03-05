@@ -14,6 +14,7 @@ impl Compiler {
     pub(super) fn compile_expr(&mut self, expr: &Expr) -> Result<(), Vec<Diagnostic>> {
         match expr {
             Expr::Literal(lit, span) => self.compile_literal(lit, *span),
+            Expr::TemplateString { parts, span } => self.compile_template_string(parts, *span),
             Expr::Identifier(ident) => self.compile_identifier(ident),
             Expr::Binary(bin) => self.compile_binary(bin),
             Expr::Unary(un) => self.compile_unary(un),
@@ -41,6 +42,42 @@ impl Compiler {
             } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
         }
+    }
+
+    fn compile_template_string(
+        &mut self,
+        parts: &[TemplatePart],
+        span: Span,
+    ) -> Result<(), Vec<Diagnostic>> {
+        if parts.is_empty() {
+            let idx = self.bytecode.add_constant(Value::string(""));
+            self.bytecode.emit(Opcode::Constant, span);
+            self.bytecode.emit_u16(idx);
+            return Ok(());
+        }
+
+        let mut first = true;
+        for part in parts {
+            match part {
+                TemplatePart::Literal(text) => {
+                    let idx = self.bytecode.add_constant(Value::string(text));
+                    self.bytecode.emit(Opcode::Constant, span);
+                    self.bytecode.emit_u16(idx);
+                }
+                TemplatePart::Expression(expr) => {
+                    self.compile_expr(expr)?;
+                    self.bytecode.emit(Opcode::ToString, span);
+                }
+            }
+
+            if first {
+                first = false;
+            } else {
+                self.bytecode.emit(Opcode::Add, span);
+            }
+        }
+
+        Ok(())
     }
 
     fn compile_range(

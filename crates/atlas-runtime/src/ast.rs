@@ -11,7 +11,7 @@ use std::cell::Cell;
 ///
 /// This version number is included in JSON dumps to ensure compatibility.
 /// Increment when making breaking changes to the AST structure.
-pub const AST_VERSION: u32 = 3;
+pub const AST_VERSION: u32 = 4;
 
 /// Top-level program containing all items
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -547,6 +547,10 @@ pub struct ExprStmt {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Expr {
     Literal(Literal, Span),
+    TemplateString {
+        parts: Vec<TemplatePart>,
+        span: Span,
+    },
     Identifier(Identifier),
     Unary(UnaryExpr),
     Binary(BinaryExpr),
@@ -804,6 +808,13 @@ pub enum Literal {
     Null,
 }
 
+/// Template string part
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub enum TemplatePart {
+    Literal(String),
+    Expression(Box<Expr>),
+}
+
 /// Identifier
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Identifier {
@@ -887,6 +898,7 @@ impl Expr {
     pub fn span(&self) -> Span {
         match self {
             Expr::Literal(_, span) => *span,
+            Expr::TemplateString { span, .. } => *span,
             Expr::Identifier(id) => id.span,
             Expr::Unary(u) => u.span,
             Expr::Binary(b) => b.span,

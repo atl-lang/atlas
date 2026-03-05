@@ -28,6 +28,7 @@ impl Parser {
         match self.peek().kind {
             TokenKind::Number => self.parse_number(),
             TokenKind::String => self.parse_string(),
+            TokenKind::TemplateString => self.parse_template_string(),
             TokenKind::True | TokenKind::False => self.parse_bool(),
             TokenKind::Null => self.parse_null(),
             TokenKind::Identifier => self.parse_identifier(),
@@ -36,6 +37,7 @@ impl Parser {
             TokenKind::Record => self.parse_record_literal(),
             TokenKind::LeftBrace => self.parse_block_expr(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
+            TokenKind::If => self.parse_if_expr(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
             TokenKind::Range | TokenKind::RangeInclusive => self.parse_range_prefix(),
@@ -162,6 +164,45 @@ impl Parser {
         }
 
         Ok(combined)
+    }
+
+    fn parse_template_string(&mut self) -> Result<Expr, ()> {
+        let token = self.advance();
+        let mut parts = Vec::new();
+        let mut span = token.span;
+        parts.push(TemplatePart::Literal(token.lexeme.clone()));
+
+        while self.check(TokenKind::InterpolationStart) {
+            self.advance(); // consume {
+            let expr = self.parse_expression()?;
+            let expr_span = expr.span();
+            self.consume(
+                TokenKind::InterpolationEnd,
+                "Expected '}' to close string interpolation",
+            )?;
+            let next = self.consume(
+                TokenKind::TemplateString,
+                "Expected string segment after interpolation",
+            )?;
+            span = span.merge(expr_span).merge(next.span);
+            parts.push(TemplatePart::Expression(Box::new(expr)));
+            parts.push(TemplatePart::Literal(next.lexeme.clone()));
+        }
+
+        Ok(Expr::TemplateString { parts, span })
+    }
+
+    fn parse_if_expr(&mut self) -> Result<Expr, ()> {
+        let stmt = self.parse_if_stmt()?;
+        let Stmt::If(if_stmt) = stmt else {
+            return Err(());
+        };
+        let span = if_stmt.span;
+        Ok(Expr::Block(Block {
+            statements: vec![Stmt::If(if_stmt)],
+            tail_expr: None,
+            span,
+        }))
     }
 
     /// Parse boolean literal

@@ -331,6 +331,13 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
                 find_references_in_expr(elem, identifier, references);
             }
         }
+        Expr::TemplateString { parts, .. } => {
+            for part in parts {
+                if let TemplatePart::Expression(expr) = part {
+                    find_references_in_expr(expr, identifier, references);
+                }
+            }
+        }
         Expr::Range { start, end, .. } => {
             if let Some(start) = start {
                 find_references_in_expr(start, identifier, references);

@@ -472,6 +472,13 @@ impl SymbolIndex {
                     self.index_expr(&field.value, ctx, false);
                 }
             }
+            Expr::TemplateString { parts, .. } => {
+                for part in parts {
+                    if let TemplatePart::Expression(expr) = part {
+                        self.index_expr(expr, ctx, false);
+                    }
+                }
+            }
             Expr::Range { start, end, .. } => {
                 if let Some(start) = start {
                     self.index_expr(start, ctx, false);

@@ -140,6 +140,47 @@ fn assert_ownership_parity_err(source: &str, expected_fragment: &str) {
     );
 }
 
+#[test]
+fn template_strings_basic() {
+    let source = r#"
+        let name = "Atlas";
+        `Hello {name}`;
+    "#;
+    assert_eval_string(source, "Hello Atlas");
+    assert_parity(source);
+}
+
+#[test]
+fn template_strings_multiple_and_nested() {
+    let source = r#"
+        let a = 1;
+        let b = 2;
+        let x = 1;
+        `{a} + {b} = {a + b} | Result: {if x > 0 { "positive" } else { "negative" }}`;
+    "#;
+    assert_eval_string(source, "1 + 2 = 3 | Result: positive");
+    assert_parity(source);
+}
+
+#[test]
+fn template_strings_types_and_empty() {
+    let source = r#"
+        let count = 42;
+        let flag = true;
+        `Count: {count}, Flag: {flag}`;
+    "#;
+    assert_eval_string(source, "Count: 42, Flag: true");
+    assert_parity(source);
+
+    let empty = r#"``;"#;
+    assert_eval_string(empty, "");
+    assert_parity(empty);
+
+    let plain = r#"`plain string`;"#;
+    assert_eval_string(plain, "plain string");
+    assert_parity(plain);
+}
+
 /// Run source through interpreter, return Ok(debug_string) or Err(debug_string).
 fn run_interpreter(source: &str) -> Result<String, String> {
     let mut lexer = Lexer::new(source);

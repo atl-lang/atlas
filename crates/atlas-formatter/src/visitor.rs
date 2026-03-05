@@ -628,6 +628,22 @@ impl FormatVisitor {
     fn visit_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Literal(lit, _) => self.visit_literal(lit),
+            Expr::TemplateString { parts, .. } => {
+                self.write("`");
+                for part in parts {
+                    match part {
+                        TemplatePart::Literal(text) => {
+                            self.write(&escape_template_string(text));
+                        }
+                        TemplatePart::Expression(expr) => {
+                            self.write("{");
+                            self.visit_expr(expr);
+                            self.write("}");
+                        }
+                    }
+                }
+                self.write("`");
+            }
             Expr::Identifier(id) => self.write(&id.name),
             Expr::Unary(u) => self.visit_unary(u),
             Expr::Binary(b) => self.visit_binary(b),
@@ -1153,6 +1169,23 @@ fn escape_string(s: &str) -> String {
         match c {
             '\\' => result.push_str("\\\\"),
             '"' => result.push_str("\\\""),
+            '\n' => result.push_str("\\n"),
+            '\t' => result.push_str("\\t"),
+            '\r' => result.push_str("\\r"),
+            c => result.push(c),
+        }
+    }
+    result
+}
+
+fn escape_template_string(s: &str) -> String {
+    let mut result = String::with_capacity(s.len());
+    for c in s.chars() {
+        match c {
+            '\\' => result.push_str("\\\\"),
+            '`' => result.push_str("\\`"),
+            '{' => result.push_str("\\{"),
+            '}' => result.push_str("\\}"),
             '\n' => result.push_str("\\n"),
             '\t' => result.push_str("\\t"),
             '\r' => result.push_str("\\r"),

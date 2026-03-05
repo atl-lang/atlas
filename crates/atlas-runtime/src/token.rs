@@ -35,6 +35,8 @@ pub enum TokenKind {
     Number,
     /// String literal ("hello")
     String,
+    /// Template string literal segment (`hello ${name}`)
+    TemplateString,
     /// `true` keyword
     True,
     /// `false` keyword
@@ -194,7 +196,7 @@ pub enum TokenKind {
     Underscore,
     /// `?` (error propagation operator)
     Question,
-    /// `${` start of string interpolation
+    /// Start of string interpolation
     InterpolationStart,
     /// `}` end of string interpolation (only in interpolated strings)
     InterpolationEnd,
@@ -258,6 +260,7 @@ impl TokenKind {
         match self {
             TokenKind::Number => "number",
             TokenKind::String => "string",
+            TokenKind::TemplateString => "template string",
             TokenKind::True => "true",
             TokenKind::False => "false",
             TokenKind::Null => "null",

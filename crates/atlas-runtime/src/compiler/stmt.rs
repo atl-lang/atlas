@@ -413,13 +413,7 @@ impl Compiler {
     ) -> Result<(), Vec<Diagnostic>> {
         match stmt {
             Stmt::Expr(expr_stmt) => self.compile_expr(&expr_stmt.expr),
-            Stmt::If(if_stmt) => {
-                if self.if_always_returns(if_stmt) {
-                    self.compile_if(if_stmt)
-                } else {
-                    self.compile_if_expr(if_stmt)
-                }
-            }
+            Stmt::If(if_stmt) => self.compile_if_expr(if_stmt),
             Stmt::Return(_) | Stmt::Break(_) | Stmt::Continue(_) => self.compile_stmt(stmt),
             _ => {
                 self.compile_stmt(stmt)?;

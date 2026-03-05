@@ -963,6 +963,13 @@ impl Binder {
             Expr::Literal(_, _) => {
                 // Literals don't need binding
             }
+            Expr::TemplateString { parts, .. } => {
+                for part in parts {
+                    if let TemplatePart::Expression(expr) = part {
+                        self.bind_expr(expr);
+                    }
+                }
+            }
             Expr::Identifier(id) => {
                 // Check if identifier is defined (in symbol table, as builtin, or as intrinsic)
                 if self.symbol_table.lookup(&id.name).is_none()

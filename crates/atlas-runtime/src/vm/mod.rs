@@ -1957,6 +1957,12 @@ impl VM {
                     self.push(c);
                     self.push(a);
                 }
+                Opcode::ToString => {
+                    let value = self.pop();
+                    let span = self.current_span().unwrap_or_else(Span::dummy);
+                    let string_value = crate::stdlib::types::to_string(&[value], span)?;
+                    self.push(string_value);
+                }
 
                 // ===== Pattern Matching =====
                 Opcode::IsOptionSome => {

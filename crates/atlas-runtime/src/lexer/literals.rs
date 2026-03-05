@@ -1,6 +1,7 @@
 //! Literal parsing for the lexer
 
 use crate::lexer::Lexer;
+use crate::lexer::{InterpolationContext, InterpolationKind};
 use crate::span::Span;
 use crate::token::{Token, TokenKind};
 
@@ -22,7 +23,10 @@ impl Lexer {
                     "${",
                     interp_span,
                 ));
-                self.interpolation_stack.push(1);
+                self.interpolation_stack.push(InterpolationContext {
+                    depth: 1,
+                    kind: InterpolationKind::DoubleQuote,
+                });
                 part
             }
             StringScan::Error(token) => token,
@@ -47,7 +51,60 @@ impl Lexer {
                     "${",
                     interp_span,
                 ));
-                self.interpolation_stack.push(1);
+                self.interpolation_stack.push(InterpolationContext {
+                    depth: 1,
+                    kind: InterpolationKind::DoubleQuote,
+                });
+                return;
+            }
+            StringScan::Error(token) => token,
+        };
+
+        self.pending_tokens.push_back(next);
+    }
+
+    pub(super) fn template_string(&mut self) -> Token {
+        let part_start_pos = self.start_pos;
+        match self.scan_template_string_part(part_start_pos) {
+            StringScan::Complete(token) => token,
+            StringScan::Interpolation { part, interp_span } => {
+                self.pending_tokens.push_back(Token::new(
+                    TokenKind::InterpolationStart,
+                    "{",
+                    interp_span,
+                ));
+                self.interpolation_stack.push(InterpolationContext {
+                    depth: 1,
+                    kind: InterpolationKind::Template,
+                });
+                part
+            }
+            StringScan::Error(token) => token,
+        }
+    }
+
+    pub(super) fn queue_template_string_continuation(&mut self) {
+        let part_start_pos = self.current;
+        self.start_pos = part_start_pos;
+        self.start_line = self.line;
+        self.start_column = self.column;
+
+        let next = match self.scan_template_string_part(part_start_pos) {
+            StringScan::Complete(token) => {
+                self.pending_tokens.push_back(token);
+                return;
+            }
+            StringScan::Interpolation { part, interp_span } => {
+                self.pending_tokens.push_back(part);
+                self.pending_tokens.push_back(Token::new(
+                    TokenKind::InterpolationStart,
+                    "{",
+                    interp_span,
+                ));
+                self.interpolation_stack.push(InterpolationContext {
+                    depth: 1,
+                    kind: InterpolationKind::Template,
+                });
                 return;
             }
             StringScan::Error(token) => token,
@@ -103,6 +160,75 @@ impl Lexer {
                     't' => '\t',
                     '\\' => '\\',
                     '"' => '"',
+                    _ => {
+                        if !has_error {
+                            error_token = Some(self.error_invalid_escape(escape_char));
+                            has_error = true;
+                        }
+                        self.advance(); // consume invalid char
+                        continue;
+                    }
+                };
+
+                self.advance(); // consume escaped character
+                value.push(escaped);
+            } else {
+                value.push(self.advance());
+            }
+        }
+
+        StringScan::Error(self.error_unterminated_string())
+    }
+
+    fn scan_template_string_part(&mut self, part_start_pos: usize) -> StringScan {
+        let mut value = String::new();
+        let mut has_error = false;
+        let mut error_token = None;
+
+        while !self.is_at_end() {
+            let current_char = self.peek();
+
+            if current_char == '`' {
+                self.advance(); // Closing `
+                let span = Span::new_in(part_start_pos, self.current, self.file);
+                let token = Token::new(TokenKind::TemplateString, value, span);
+                return if let Some(err) = error_token {
+                    StringScan::Error(err)
+                } else {
+                    StringScan::Complete(token)
+                };
+            }
+
+            if !has_error && current_char == '{' {
+                let span = Span::new_in(part_start_pos, self.current, self.file);
+                let part = Token::new(TokenKind::TemplateString, value, span);
+                let interp_start = self.current;
+                self.advance(); // {
+                let interp_span = Span::new_in(interp_start, self.current, self.file);
+                return StringScan::Interpolation { part, interp_span };
+            }
+
+            if current_char == '\n' {
+                self.line += 1;
+                self.column = 1;
+            }
+
+            if current_char == '\\' {
+                self.advance(); // consume backslash
+                if self.is_at_end() {
+                    return StringScan::Error(self.error_unterminated_string());
+                }
+
+                let escape_char = self.peek();
+                let escaped = match escape_char {
+                    'n' => '\n',
+                    'r' => '\r',
+                    't' => '\t',
+                    '\\' => '\\',
+                    '"' => '"',
+                    '`' => '`',
+                    '{' => '{',
+                    '}' => '}',
                     _ => {
                         if !has_error {
                             error_token = Some(self.error_invalid_escape(escape_char));

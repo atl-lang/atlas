@@ -13,6 +13,7 @@ impl Interpreter {
     pub(super) fn eval_expr(&mut self, expr: &Expr) -> Result<Value, RuntimeError> {
         match expr {
             Expr::Literal(lit, _) => Ok(self.eval_literal(lit)),
+            Expr::TemplateString { parts, span } => self.eval_template_string(parts, *span),
             Expr::Identifier(id) => self.get_variable(&id.name, id.span),
             Expr::Binary(binary) => self.eval_binary(binary),
             Expr::Unary(unary) => self.eval_unary(unary),
@@ -143,6 +144,35 @@ impl Interpreter {
             Literal::Bool(b) => Value::Bool(*b),
             Literal::Null => Value::Null,
         }
+    }
+
+    fn eval_template_string(
+        &mut self,
+        parts: &[TemplatePart],
+        span: Span,
+    ) -> Result<Value, RuntimeError> {
+        let mut result = String::new();
+
+        for part in parts {
+            match part {
+                TemplatePart::Literal(text) => {
+                    result.push_str(text);
+                }
+                TemplatePart::Expression(expr) => {
+                    let value = self.eval_expr(expr)?;
+                    if self.control_flow != ControlFlow::None {
+                        return Ok(value);
+                    }
+                    let string_value = crate::stdlib::types::to_string(&[value], span)?;
+                    if let Value::String(s) = string_value {
+                        result.push_str(s.as_ref());
+                    }
+                }
+            }
+        }
+
+        self.track_memory(Self::estimate_string_size(&result))?;
+        Ok(Value::string(result))
     }
 
     /// Evaluate a binary expression
