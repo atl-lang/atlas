@@ -198,5 +198,4 @@ generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
 - Interpolation uses `{ ... }` inside backticks.
 - Double-quoted strings support `{ ... }` interpolation and are desugared into concatenations.
 
-**Known Issues (See `docs/known-issues.md`)**
-- Closures passed as callbacks do not persist global mutations (H-069).
+**Current limitations:** See `docs/known-issues.md`

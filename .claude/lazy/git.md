@@ -112,6 +112,21 @@ gh pr merge --auto --squash
 
 ---
 
+## Local CI State Tracking
+
+After each full local CI run, record the result inline here or in a scratch note:
+
+```
+Last Full Check: <timestamp>
+Agent: <opus|sonnet|haiku>
+Result: pass|fail
+Commits since: <N>
+```
+
+**Check if batch push due:** `git fetch origin && git log origin/main -1 --format="%ci"` — push if 168+ hours ago.
+
+---
+
 ## Banned
 
 - PRs for individual fixes — batch push instead

@@ -12,7 +12,7 @@
 | `domain-prereqs.md` | Before writing ANY code touching AST/Type/Value |
 | `patterns.md` | Implementing features (collections, stdlib, trait dispatch, frontend API) |
 | `testing-patterns.md` | Full detail beyond what rule file covers |
-| `patterns/{domain}.md` | Implementation patterns (P-XXX format) |
+| `patterns.md` | All implementation patterns by domain (P-XXX format) — CLI, Language, LSP, Runtime, Stdlib, Types, VM |
 
 ## Decisions
 **Source of truth:** `atlas-track decisions` (D-XXX format)
@@ -34,7 +34,7 @@ All rules use `paths:` frontmatter — load only when touching matching files:
 - **VM:** `.claude/rules/atlas-vm.md` — vm/**, compiler/**, bytecode/**
 
 ## Local-First CI
-**Canonical:** `.claude/lazy/git.md` | **Tracking:** `.claude/memory/local-ci.md`
+**Canonical:** `.claude/lazy/git.md` | **State tracking:** recorded inline in git.md (Local CI State Tracking section)
 
 ## Doc Auditor
 Run `atlas-doc-auditor` after every block (GATE 7). Audits all CLAUDE.md, rules, memory, decisions. 224 lines — approved exception.

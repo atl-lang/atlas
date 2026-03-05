@@ -67,5 +67,4 @@ fn choose(flag: bool) -> number {
 }
 ```
 
-**Known Issues (See `docs/known-issues.md`)**
-- Closures passed as callbacks do not persist global mutations (H-069).
+**Current limitations:** See `docs/known-issues.md`

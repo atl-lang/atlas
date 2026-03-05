@@ -24,7 +24,7 @@ docs/
 │   ├── index.md        # Overview and categories
 │   ├── core.md         # print, len, str, typeof
 │   ├── array.md        # Array operations
-│   ├── hashmap.md      # HashMap operations
+│   ├── collections.md  # HashMap, HashSet, Queue, Stack operations
 │   ├── string.md       # String operations
 │   ├── math.md         # Math functions
 │   ├── datetime.md     # DateTime operations

@@ -96,6 +96,5 @@ let out: number = match result {
 };
 ```
 
-**Known Issues (See `docs/known-issues.md`)**
-- `import` parses, but multi-file module resolution does not work at runtime yet (H-063).
+**Current limitations:** See `docs/known-issues.md`
 
