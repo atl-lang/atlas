@@ -180,6 +180,9 @@ mod parser_ranges;
 #[path = "frontend_syntax/parser_control_flow.rs"]
 mod parser_control_flow;
 
+#[path = "frontend_syntax/parser_anonymous_structs.rs"]
+mod parser_anonymous_structs;
+
 #[path = "frontend_syntax/parser_errors.rs"]
 mod parser_errors;
 

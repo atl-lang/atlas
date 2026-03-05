@@ -559,6 +559,7 @@ pub enum Expr {
     Member(MemberExpr),
     ArrayLiteral(ArrayLiteral),
     /// Object literal expression: `record { key: value, key2: value2 }`
+    /// or anonymous struct literal `{ key: value, key }`.
     ObjectLiteral(ObjectLiteral),
     /// Struct instantiation: `User { name: "Alice", age: 30 }`
     StructExpr(StructExpr),

@@ -961,11 +961,28 @@ impl Parser {
         )
     }
 
-    fn is_comment_token(kind: TokenKind) -> bool {
+    pub(super) fn is_comment_token(kind: TokenKind) -> bool {
         matches!(
             kind,
             TokenKind::LineComment | TokenKind::BlockComment | TokenKind::DocComment
         )
+    }
+
+    /// Peek at the nth non-trivia token from the current position (0 = current).
+    pub(super) fn peek_nth_nontrivia(&self, offset: usize) -> Option<&Token> {
+        let mut idx = self.current;
+        let mut seen = 0usize;
+        while idx < self.tokens.len() {
+            let tok = &self.tokens[idx];
+            if !Self::is_comment_token(tok.kind) {
+                if seen == offset {
+                    return Some(tok);
+                }
+                seen += 1;
+            }
+            idx += 1;
+        }
+        None
     }
 
     fn skip_trivia(&mut self) {

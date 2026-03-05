@@ -119,6 +119,18 @@ fn test_opt_debug_function_semantics_preserved() {
 }
 
 #[test]
+fn test_vm_anonymous_struct_literal() {
+    let result = vm_number(
+        r#"
+        let x = 10;
+        let p = { x };
+        p.x;
+        "#,
+    );
+    assert_eq!(result, 10.0);
+}
+
+#[test]
 fn test_opt_debug_nested_function_optimized() {
     let source = r#"
 fn outer(x: number) -> number {

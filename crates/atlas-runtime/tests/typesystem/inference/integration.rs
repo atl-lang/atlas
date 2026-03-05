@@ -205,6 +205,31 @@ fn test_integration_structural_type_inference() {
 }
 
 #[test]
+fn test_integration_anonymous_struct_literal_inference() {
+    let diags = typecheck_source(
+        r#"
+        let x = 1;
+        let y = "hi";
+        let _point: { x: number, y: string } = { x, y };
+        "#,
+    );
+    assert!(!has_error(&diags), "Errors: {:?}", diags);
+}
+
+#[test]
+fn test_integration_anonymous_struct_literal_return_type() {
+    let diags = typecheck_source(
+        r#"
+        fn get() -> { id: number } {
+            return { id: 42 };
+        }
+        let _value = get();
+        "#,
+    );
+    assert!(!has_error(&diags), "Errors: {:?}", diags);
+}
+
+#[test]
 fn test_integration_deeply_nested_generics() {
     let diags = typecheck_source(
         r#"

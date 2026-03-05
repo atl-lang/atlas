@@ -90,6 +90,20 @@ fn parity_local_chained_inference() {
     assert_parity_num("let x = 1; let y = x + 1; y;", 2.0);
 }
 
+// --- Anonymous struct literal parity ---
+
+#[test]
+fn parity_anonymous_struct_literal_fields() {
+    assert_parity_num(
+        r#"
+        let x = 5;
+        let p = { x, y: 2 };
+        p.x + p.y;
+        "#,
+        7.0,
+    );
+}
+
 // --- Generic call-site inference parity (4 tests) ---
 
 #[test]

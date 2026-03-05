@@ -2,6 +2,8 @@
 
 use super::E_BAD_NUMBER;
 use crate::ast::*;
+use crate::diagnostic::error_codes;
+use crate::diagnostic::Diagnostic;
 use crate::parser::{Parser, Precedence};
 use crate::span::Span;
 use crate::token::TokenKind;
@@ -35,7 +37,7 @@ impl Parser {
             TokenKind::LeftParen => self.parse_group(),
             TokenKind::LeftBracket => self.parse_array_literal(),
             TokenKind::Record => self.parse_record_literal(),
-            TokenKind::LeftBrace => self.parse_block_expr(),
+            TokenKind::LeftBrace => self.parse_block_or_anon_struct(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
             TokenKind::If => self.parse_if_expr(),
             TokenKind::Match => self.parse_match_expr(),
@@ -994,6 +996,107 @@ impl Parser {
     fn parse_block_expr(&mut self) -> Result<Expr, ()> {
         let block = self.parse_block()?;
         Ok(Expr::Block(block))
+    }
+
+    /// Parse either an anonymous struct literal or a block expression.
+    ///
+    /// Disambiguation rule:
+    /// - If `{` is followed by IDENTIFIER and then `:` or `,` or `}`, parse as anonymous struct.
+    /// - Otherwise, parse as block expression.
+    fn parse_block_or_anon_struct(&mut self) -> Result<Expr, ()> {
+        if self.is_anonymous_struct_start() {
+            self.parse_anonymous_struct_literal()
+        } else {
+            self.parse_block_expr()
+        }
+    }
+
+    fn is_anonymous_struct_start(&self) -> bool {
+        let next = self.peek_nth_nontrivia(1);
+        let after = self.peek_nth_nontrivia(2);
+        matches!(
+            (next, after),
+            (Some(next), Some(after))
+                if next.kind == TokenKind::Identifier
+                    && matches!(
+                        after.kind,
+                        TokenKind::Colon | TokenKind::Comma | TokenKind::RightBrace
+                    )
+        )
+    }
+
+    /// Parse an anonymous struct literal: `{ field: value, field }`
+    fn parse_anonymous_struct_literal(&mut self) -> Result<Expr, ()> {
+        let start_span = self.consume(TokenKind::LeftBrace, "Expected '{'")?.span;
+
+        if self.check(TokenKind::RightBrace) {
+            self.error("Anonymous struct literal requires at least one field");
+            self.consume(
+                TokenKind::RightBrace,
+                "Expected '}' after anonymous struct literal",
+            )?;
+            return Err(());
+        }
+
+        let mut entries = Vec::new();
+
+        loop {
+            let field_start = self.peek().span;
+            let field_token = self.consume_identifier("a struct field name")?;
+            let field_name = Identifier {
+                name: field_token.lexeme.clone(),
+                span: field_token.span,
+            };
+
+            let value = if self.match_token(TokenKind::Colon) {
+                let expr = self.parse_expression()?;
+                if let Expr::Identifier(id) = &expr {
+                    if id.name == field_name.name {
+                        self.diagnostics.push(
+                            Diagnostic::warning_with_code(
+                                error_codes::GENERIC_WARNING,
+                                format!(
+                                    "Redundant field value for '{}'; shorthand is available",
+                                    field_name.name
+                                ),
+                                field_name.span,
+                            )
+                            .with_label("shorthand available")
+                            .with_help(format!("use `{{ {} }}` instead", field_name.name)),
+                        );
+                    }
+                }
+                expr
+            } else {
+                Expr::Identifier(field_name.clone())
+            };
+
+            let field_end = value.span();
+            entries.push(ObjectEntry {
+                key: field_name,
+                value,
+                span: field_start.merge(field_end),
+            });
+
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+            if self.check(TokenKind::RightBrace) {
+                break;
+            }
+        }
+
+        let end_span = self
+            .consume(
+                TokenKind::RightBrace,
+                "Expected '}' after anonymous struct literal",
+            )?
+            .span;
+
+        Ok(Expr::ObjectLiteral(ObjectLiteral {
+            entries,
+            span: start_span.merge(end_span),
+        }))
     }
 
     /// Parse match expression

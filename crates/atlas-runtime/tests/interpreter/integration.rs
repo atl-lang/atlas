@@ -141,6 +141,19 @@ fn assert_ownership_parity_err(source: &str, expected_fragment: &str) {
 }
 
 #[test]
+fn test_interpreter_anonymous_struct_literal() {
+    assert_eval_number(
+        r#"
+        let x = 1;
+        let y = 2;
+        let p = { x, y: y + 1 };
+        p.x + p.y;
+        "#,
+        4.0,
+    );
+}
+
+#[test]
 fn template_strings_basic() {
     let source = r#"
         let name = "Atlas";
