@@ -7,7 +7,7 @@ This document provides development guidelines for working on Atlas.
 ## Development Setup
 
 ### Prerequisites
-- Rust 1.70 or later
+- Rust 1.88 or later
 - Cargo (comes with Rust)
 
 ### Getting Started

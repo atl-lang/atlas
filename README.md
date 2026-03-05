@@ -9,7 +9,7 @@
 [![CI](https://github.com/proxikal/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/proxikal/atlas/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
-[![Status](https://img.shields.io/badge/Status-v0.2%20Active-blue.svg)](STATUS.md)
+[![Status](https://img.shields.io/badge/Status-v0.2%20Active-blue.svg)](docs/known-issues.md)
 
 </div>
 
@@ -156,7 +156,7 @@ cd atlas && cargo build --release
 ./target/release/atlas
 
 # Run a program
-./target/release/atlas run examples/vm/fibonacci.atlas
+./target/release/atlas run your_program.atlas
 ```
 
 **REPL session:**
@@ -383,7 +383,7 @@ atlas dump-types program.atl --format json
 
 | Metric | Value |
 |--------|-------|
-| **Tests** | 7,165 (0 failures) |
+| **Tests** | 8,460+ (0 failures) |
 | **Stdlib Functions** | 300+ |
 | **Stdlib Modules** | 25 |
 | **LSP Features** | 16 |
@@ -392,7 +392,7 @@ atlas dump-types program.atl --format json
 | **Benchmarks** | 117 |
 | **MSRV** | Rust 1.70 |
 
-*Full metrics in [`V02_DEVELOPMENT_REPORT.md`](V02_DEVELOPMENT_REPORT.md)*
+*Full metrics in [`V02_DEVELOPMENT_REPORT.md`](docs-archive/internal/V02_DEVELOPMENT_REPORT.md)*
 
 ### Project Status
 
@@ -411,7 +411,7 @@ atlas dump-types program.atl --format json
 | Fuzzing Infrastructure | ✅ Complete |
 | Documentation | ✅ Complete |
 
-*Detailed progress in [`STATUS.md`](STATUS.md) | v0.3 plan in [`docs/internal/V03_PLAN.md`](docs/internal/V03_PLAN.md)*
+*Detailed progress in [Project Status](docs/known-issues.md) | v0.3 plan in [`docs/internal/V03_PLAN.md`](docs/internal/V03_PLAN.md)*
 
 ---
 
@@ -419,11 +419,11 @@ atlas dump-types program.atl --format json
 
 | Resource | Description |
 |----------|-------------|
-| [`docs/specification/`](docs/specification/) | Language specification |
-| [`docs/specification/syntax.md`](docs/specification/syntax.md) | Grammar and syntax |
-| [`docs/specification/types.md`](docs/specification/types.md) | Type system |
-| [`docs/specification/runtime.md`](docs/specification/runtime.md) | Execution model |
-| [`STATUS.md`](STATUS.md) | Implementation progress |
+| [`docs/stdlib/`](docs/stdlib/) | Language specification |
+| [`docs/stdlib/index.md`](docs/stdlib/index.md) | Grammar and syntax |
+| [`docs/stdlib/types.md`](docs/stdlib/types.md) | Type system |
+| [`docs/known-issues.md`](docs/known-issues.md) | Execution model |
+| [Project Status](docs/known-issues.md) | Implementation progress |
 | [`PRD.md`](PRD.md) | Product requirements |
 
 ---
