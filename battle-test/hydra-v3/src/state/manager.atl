@@ -1,0 +1,61 @@
+import { now_iso } from "../common/time";
+import { ends_with } from "../common/strings";
+
+export fn state_save(
+    state_dir: string,
+    server_name: string,
+    pid: number,
+    metrics_snapshot: json
+) -> Result<null, string> {
+    let _mkdir = createDir(state_dir);
+    let payload = record {
+        server_name: server_name,
+        pid: pid,
+        start_time: now_iso(),
+        last_updated: now_iso(),
+        metrics: metrics_snapshot
+    };
+    let json_payload = toJSON(payload);
+    let text = unwrap(stringifyJson(json_payload));
+    let path = pathJoin([state_dir, server_name + ".json"]);
+    return writeFile(path, text);
+}
+
+export fn state_load(state_dir: string, server_name: string) -> Result<json, string> {
+    let path = pathJoin([state_dir, server_name + ".json"]);
+    let contents = readFile(path);
+    match contents {
+        Ok(text) => { return parseJson(text); },
+        Err(err) => { return Err(err); }
+    };
+}
+
+export fn state_delete(state_dir: string, server_name: string) -> Result<null, string> {
+    let path = pathJoin([state_dir, server_name + ".json"]);
+    if (!fileExists(path)) {
+        return Ok(null);
+    }
+    return removeFile(path);
+}
+
+export fn state_list_all(state_dir: string) -> Result<json[], string> {
+    let _mkdir = createDir(state_dir);
+    let entries_result = readDir(state_dir);
+    match entries_result {
+        Ok(entries) => {
+            let mut states: json[] = [];
+            for entry in entries {
+                if (ends_with(entry, ".json")) {
+                    let name = slice(entry, 0, len(entry) - 5);
+                    let state = state_load(state_dir, name);
+                    match state {
+                        Ok(value) => { states = states + [value]; },
+                        Err(_) => {}
+                    };
+                }
+            }
+            return Ok(states);
+        },
+        Err(err) => { return Err(err); }
+    };
+}

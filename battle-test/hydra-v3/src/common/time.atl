@@ -1,0 +1,15 @@
+// Time helpers for Hydra.
+
+export fn now_seconds() -> number {
+    return dateTimeToTimestamp(dateTimeNow());
+}
+
+export fn now_iso() -> string {
+    let dt: DateTime = dateTimeNow();
+    let iso: string = dateTimeToIso(dt);
+    return iso;
+}
+
+export fn seconds_since(start_seconds: number) -> number {
+    return now_seconds() - start_seconds;
+}

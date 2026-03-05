@@ -1,0 +1,90 @@
+import { now_iso } from "../common/time";
+
+enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error
+}
+
+struct LogEntry {
+    level: LogLevel,
+    message: string,
+    timestamp: string
+}
+
+struct ConsoleLogger {
+    min_level: LogLevel,
+    history: LogEntry[]
+}
+
+trait LoggerTrait {
+    fn log(self: LoggerTrait, level: LogLevel, message: string, context: HashMap<string, string>) -> LoggerTrait;
+}
+
+fn level_rank(level: LogLevel) -> number {
+    return match level {
+        LogLevel::Debug => 10,
+        LogLevel::Info => 20,
+        LogLevel::Warn => 30,
+        LogLevel::Error => 40
+    };
+}
+
+fn level_label(level: LogLevel) -> string {
+    return match level {
+        LogLevel::Debug => "DEBUG",
+        LogLevel::Info => "INFO",
+        LogLevel::Warn => "WARN",
+        LogLevel::Error => "ERROR"
+    };
+}
+
+impl LoggerTrait for ConsoleLogger {
+    fn log(self: ConsoleLogger, level: LogLevel, message: string, context: HashMap<string, string>) -> ConsoleLogger {
+        if (level_rank(level) < level_rank(self.min_level)) {
+            return self;
+        }
+        let entry = LogEntry { level: level, message: message, timestamp: now_iso() };
+        let mut updated_history: LogEntry[] = self.history + [entry];
+        let mut ctx_items: string[] = [];
+        for key in hashMapKeys(context) {
+            let value = unwrap(hashMapGet(context, key));
+            ctx_items = ctx_items + [key + "=" + value];
+        }
+        let ctx = join(ctx_items, " ");
+        if (ctx == "") {
+            print(level_label(level) + " " + message);
+        } else {
+            print(level_label(level) + " " + message + " " + ctx);
+        }
+        return ConsoleLogger { min_level: self.min_level, history: updated_history };
+    }
+}
+
+export fn new_logger(min_level: string) -> { min_level: string, history: string[] } {
+    let mut history: string[] = [];
+    return record { min_level: min_level, history: history };
+}
+
+export fn logger_log(
+    logger: { min_level: string, history: string[] },
+    level: string,
+    message: string,
+    context: HashMap<string, string>
+) -> { min_level: string, history: string[] } {
+    let entry = now_iso() + " " + level + " " + message;
+    let mut history = logger.history + [entry];
+    let mut ctx_items: string[] = [];
+    for key in hashMapKeys(context) {
+        let value = unwrap(hashMapGet(context, key));
+        ctx_items = ctx_items + [key + "=" + value];
+    }
+    let ctx = join(ctx_items, " ");
+    if (ctx == "") {
+        print(level + " " + message);
+    } else {
+        print(level + " " + message + " " + ctx);
+    }
+    return record { min_level: logger.min_level, history: history };
+}

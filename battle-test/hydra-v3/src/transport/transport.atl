@@ -1,0 +1,79 @@
+enum Protocol {
+    Unknown,
+    Ndjson,
+    Lsp
+}
+
+struct InMemoryTransport {
+    protocol: Protocol,
+    read_buffer: string[],
+    write_buffer: string[],
+    closed: bool
+}
+
+export fn new_in_memory_transport(payloads: string[]) -> InMemoryTransport {
+    return InMemoryTransport { protocol: Protocol::Unknown, read_buffer: payloads, write_buffer: [], closed: false };
+}
+
+export fn detect_protocol(t: InMemoryTransport) -> Protocol {
+    if (len(t.read_buffer) == 0) {
+        return t.protocol;
+    }
+    let sample = t.read_buffer[0];
+    if (startsWith(sample, "Content-Length:")) {
+        return Protocol::Lsp;
+    }
+    let trimmed = trim(sample);
+    if (startsWith(trimmed, "{") || startsWith(trimmed, "[")) {
+        return Protocol::Ndjson;
+    }
+    return Protocol::Unknown;
+}
+
+export fn transport_read(t: InMemoryTransport) -> Result<{ payload: string, transport: InMemoryTransport }, string> {
+    if (t.closed) {
+        return Err("transport closed");
+    }
+    if (len(t.read_buffer) == 0) {
+        return Err("eof");
+    }
+    let payload = t.read_buffer[0];
+    let updated = InMemoryTransport {
+        protocol: t.protocol,
+        read_buffer: slice(t.read_buffer, 1, len(t.read_buffer)),
+        write_buffer: t.write_buffer,
+        closed: t.closed
+    };
+    return Ok(record { payload: payload, transport: updated });
+}
+
+export fn transport_write(t: InMemoryTransport, payload: string) -> InMemoryTransport {
+    if (t.closed) {
+        return t;
+    }
+    let protocol = t.protocol;
+    let mut framed = payload;
+    match protocol {
+        Protocol::Lsp => {
+            let len = len(payload);
+            framed = "Content-Length: " + str(len) + "\r\n\r\n" + payload;
+        },
+        Protocol::Ndjson => {
+            framed = payload + "\n";
+        },
+        Protocol::Unknown => {
+            framed = payload;
+        }
+    };
+    let mut updated_buffer = t.write_buffer + [framed];
+    return InMemoryTransport {
+        protocol: protocol,
+        read_buffer: t.read_buffer,
+        write_buffer: updated_buffer,
+        closed: t.closed
+    };
+}
+
+export fn transport_close(t: InMemoryTransport) -> InMemoryTransport {
+    return InMemoryTransport { protocol: t.protocol, read_buffer: t.read_buffer, write_buffer: t.write_buffer, closed: true };
+}

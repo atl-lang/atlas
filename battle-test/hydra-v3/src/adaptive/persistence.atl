@@ -1,0 +1,34 @@
+import { now_iso } from "../common/time";
+
+export fn save_learning(
+    base_dir: string,
+    server_name: string,
+    observations: json[]
+) -> Result<null, string> {
+    let learning_dir = pathJoin([base_dir, "learning"]);
+    let _mkdir = createDir(learning_dir);
+    let payload = record {
+        server_name: server_name,
+        observations: observations,
+        last_analyzed: now_iso()
+    };
+    let json_payload = toJSON(payload);
+    let text = unwrap(stringifyJson(json_payload));
+    let file_path = pathJoin([learning_dir, server_name + ".json"]);
+    return writeFile(file_path, text);
+}
+
+export fn load_learning(
+    base_dir: string,
+    server_name: string
+) -> Result<json, string> {
+    let file_path = pathJoin([base_dir, "learning", server_name + ".json"]);
+    if (!fileExists(file_path)) {
+        return Ok(null);
+    }
+    let contents = readFile(file_path);
+    match contents {
+        Ok(text) => { return parseJson(text); },
+        Err(err) => { return Err(err); }
+    };
+}

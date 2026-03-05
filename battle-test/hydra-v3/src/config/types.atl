@@ -1,0 +1,76 @@
+// Config data structures (module-private). Exported functions use structural types.
+
+struct Defaults {
+    debounce_ms: number,
+    graceful_shutdown_ms: number,
+    max_output_size_kb: number,
+    log_rate_limit_per_second: number,
+    restart_queue_max_messages: number,
+    restart_queue_ttl_seconds: number,
+    restart_timeout_seconds: number
+}
+
+struct WatchConfig {
+    enabled: bool,
+    paths: string[],
+    extensions: string[],
+    ignore_files: string[],
+    ignore: string[]
+}
+
+struct BehaviorConfig {
+    debounce_ms: number,
+    restart_delay_ms: number,
+    max_restarts: number,
+    graceful_shutdown_ms: number,
+    restart_window_seconds: number,
+    pre_restart_command: string
+}
+
+struct InjectableToolsConfig {
+    enabled: bool,
+    tools: json[],
+    on_collision: string
+}
+
+struct RecorderConfig {
+    enabled: bool,
+    buffer_size: number,
+    include_request_bodies: bool,
+    include_response_bodies: bool,
+    export_on_crash: bool,
+    export_path: string
+}
+
+struct SecurityConfig {
+    redact_patterns: string[],
+    redact_replacement: string
+}
+
+struct ServerConfig {
+    command: string,
+    args: string[],
+    cwd: string,
+    env_file: string,
+    environment: HashMap<string, string>,
+    watch: WatchConfig,
+    behavior: BehaviorConfig,
+    injectable_tools: InjectableToolsConfig,
+    recorder: RecorderConfig,
+    security: SecurityConfig
+}
+
+struct Registry {
+    version: string,
+    defaults: Defaults,
+    servers: HashMap<string, ServerConfig>
+}
+
+// Internal helpers to build HashMaps.
+fn empty_env() -> HashMap<string, string> {
+    return hashMapNew();
+}
+
+fn empty_servers() -> HashMap<string, ServerConfig> {
+    return hashMapNew();
+}

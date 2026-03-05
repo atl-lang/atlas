@@ -1,0 +1,35 @@
+// JSON-RPC helpers.
+
+export fn parse_jsonrpc(text: string) -> Result<json, string> {
+    let parsed = parseJson(text);
+    return match parsed {
+        Ok(value) => Ok(value),
+        Err(err) => Err(err)
+    };
+}
+
+export fn is_jsonrpc_request(msg: json) -> bool {
+    return jsonHas(msg, "method");
+}
+
+export fn is_jsonrpc_response(msg: json) -> bool {
+    return jsonHas(msg, "result") || jsonHas(msg, "error");
+}
+
+export fn build_error_response(id: json, code: number, message: string) -> json {
+    let payload = record {
+        jsonrpc: "2.0",
+        id: id,
+        error: record { code: code, message: message }
+    };
+    return toJSON(payload);
+}
+
+export fn build_log_message(level: string, message: string) -> json {
+    let payload = record {
+        jsonrpc: "2.0",
+        method: "$/log",
+        params: record { level: level, message: message }
+    };
+    return toJSON(payload);
+}

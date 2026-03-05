@@ -1,0 +1,14 @@
+import { execute } from "./cli/cli";
+import { proxy_new, proxy_start, proxy_status } from "./proxy/proxy";
+
+export fn hydra_version() -> string {
+    return "hydra-v3-atlas";
+}
+
+export fn run_cli(args: string[], registry_path: string, state_dir: string) -> Result<string, string> {
+    return execute(args, registry_path, state_dir);
+}
+
+export fn demo_status() -> { state: string, queue_size: number, last_restart_reason: string, last_error: string, uptime_seconds: number, restarts_in_window: number, can_recover: bool } {
+    return proxy_status(proxy_start(proxy_new(100, 30)));
+}

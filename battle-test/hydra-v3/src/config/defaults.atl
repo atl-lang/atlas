@@ -1,0 +1,187 @@
+import { split_lines } from "../common/strings";
+
+type Defaults = {
+    debounce_ms: number,
+    graceful_shutdown_ms: number,
+    max_output_size_kb: number,
+    log_rate_limit_per_second: number,
+    restart_queue_max_messages: number,
+    restart_queue_ttl_seconds: number,
+    restart_timeout_seconds: number
+};
+
+type WatchConfig = {
+    enabled: bool,
+    paths: string[],
+    extensions: string[],
+    ignore_files: string[],
+    ignore: string[]
+};
+
+type BehaviorConfig = {
+    debounce_ms: number,
+    restart_delay_ms: number,
+    max_restarts: number,
+    graceful_shutdown_ms: number,
+    restart_window_seconds: number,
+    pre_restart_command: string
+};
+
+type InjectableToolsConfig = {
+    enabled: bool,
+    tools: string[],
+    on_collision: string
+};
+
+type RecorderConfig = {
+    enabled: bool,
+    buffer_size: number,
+    include_request_bodies: bool,
+    include_response_bodies: bool,
+    export_on_crash: bool,
+    export_path: string
+};
+
+type SecurityConfig = {
+    redact_patterns: string[],
+    redact_replacement: string
+};
+
+type ServerConfig = {
+    command: string,
+    args: string[],
+    cwd: string,
+    env_file: string,
+    environment: HashMap<string, string>,
+    watch: WatchConfig,
+    behavior: BehaviorConfig,
+    injectable_tools: InjectableToolsConfig,
+    recorder: RecorderConfig,
+    security: SecurityConfig
+};
+
+type Registry = {
+    version: string,
+    defaults: Defaults,
+    servers: HashMap<string, ServerConfig>
+};
+
+// Build defaults as records for internal use.
+fn default_defaults_struct() -> Defaults {
+    return record {
+        debounce_ms: 500,
+        graceful_shutdown_ms: 2000,
+        max_output_size_kb: 50,
+        log_rate_limit_per_second: 10,
+        restart_queue_max_messages: 100,
+        restart_queue_ttl_seconds: 30,
+        restart_timeout_seconds: 10
+    };
+}
+
+fn default_watch_struct() -> WatchConfig {
+    return record {
+        enabled: false,
+        paths: ["."],
+        extensions: [".py", ".js", ".ts", ".go"],
+        ignore_files: [".gitignore"],
+        ignore: [".git", "node_modules", "__pycache__", ".hydra"]
+    };
+}
+
+fn default_behavior_struct() -> BehaviorConfig {
+    return record {
+        debounce_ms: 500,
+        restart_delay_ms: 0,
+        max_restarts: 10,
+        graceful_shutdown_ms: 2000,
+        restart_window_seconds: 60,
+        pre_restart_command: ""
+    };
+}
+
+fn default_injectable_struct() -> InjectableToolsConfig {
+    return record {
+        enabled: true,
+        tools: ["hydra_restart", "hydra_logs", "hydra_status", "hydra_force_restart"],
+        on_collision: "error"
+    };
+}
+
+fn default_recorder_struct() -> RecorderConfig {
+    return record {
+        enabled: false,
+        buffer_size: 50,
+        include_request_bodies: false,
+        include_response_bodies: false,
+        export_on_crash: true,
+        export_path: "/tmp/hydra-traffic-{timestamp}.json"
+    };
+}
+
+fn default_security_struct() -> SecurityConfig {
+    return record {
+        redact_patterns: [
+            "sk-",
+            "API_KEY",
+            "password",
+            "Bearer ",
+            "ghp_",
+            "xox"
+        ],
+        redact_replacement: "[REDACTED by Hydra]"
+    };
+}
+
+fn default_server_struct() -> ServerConfig {
+    return record {
+        command: "",
+        args: [],
+        cwd: "",
+        env_file: "",
+        environment: hashMapNew(),
+        watch: default_watch_struct(),
+        behavior: default_behavior_struct(),
+        injectable_tools: default_injectable_struct(),
+        recorder: default_recorder_struct(),
+        security: default_security_struct()
+    };
+}
+
+fn default_registry_struct() -> Registry {
+    return record {
+        version: "1.0",
+        defaults: default_defaults_struct(),
+        servers: hashMapNew()
+    };
+}
+
+export fn default_registry_json() -> json {
+    return toJSON(default_registry_struct());
+}
+
+export fn default_registry_text() -> string {
+    let payload = default_registry_json();
+    let text = unwrap(stringifyJson(payload));
+    return text;
+}
+
+export fn default_server_config_json() -> json {
+    return toJSON(default_server_struct());
+}
+
+export fn default_server_command_args(command_line: string) -> string[] {
+    let trimmed = trim(command_line);
+    if (trimmed == "") {
+        return [];
+    }
+    // Split by space as a simple baseline for CLI-style input.
+    let parts = split(trimmed, " ");
+    // Remove empty segments caused by consecutive spaces.
+    let filtered = filter(parts, fn(p: string) -> bool { return p != ""; });
+    return filtered;
+}
+
+export fn default_ignore_lines() -> string[] {
+    return split_lines(".git\nnode_modules\n__pycache__\n.hydra");
+}

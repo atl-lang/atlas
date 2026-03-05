@@ -1,0 +1,60 @@
+import { now_seconds } from "../common/time";
+import { drop_first } from "../common/strings";
+
+struct QueueEntry {
+    payload: string,
+    timestamp: number
+}
+
+struct MessageQueue {
+    max_size: number,
+    ttl_seconds: number,
+    entries: QueueEntry[]
+}
+
+export fn queue_new(max_size: number, ttl_seconds: number) -> MessageQueue {
+    let mut size = max_size;
+    if (size <= 0) {
+        size = 100;
+    }
+    let mut ttl = ttl_seconds;
+    if (ttl <= 0) {
+        ttl = 30;
+    }
+    return MessageQueue { max_size: size, ttl_seconds: ttl, entries: [] };
+}
+
+fn purge_expired(queue: MessageQueue) -> MessageQueue {
+    let cutoff = now_seconds() - queue.ttl_seconds;
+    let mut filtered: QueueEntry[] = [];
+    for entry in queue.entries {
+        if (entry.timestamp >= cutoff) {
+            filtered = filtered + [entry];
+        }
+    }
+    return MessageQueue { max_size: queue.max_size, ttl_seconds: queue.ttl_seconds, entries: filtered };
+}
+
+export fn queue_size(queue: MessageQueue) -> number {
+    return len(queue.entries);
+}
+
+export fn queue_push(queue: MessageQueue, payload: string) -> MessageQueue {
+    let mut updated = purge_expired(queue);
+    if (len(updated.entries) >= updated.max_size) {
+        updated = MessageQueue { max_size: updated.max_size, ttl_seconds: updated.ttl_seconds, entries: drop_first(updated.entries) };
+    }
+    let entry = QueueEntry { payload: payload, timestamp: now_seconds() };
+    let new_entries = updated.entries + [entry];
+    return MessageQueue { max_size: updated.max_size, ttl_seconds: updated.ttl_seconds, entries: new_entries };
+}
+
+export fn queue_pop(queue: MessageQueue) -> { item: Option<string>, queue: MessageQueue } {
+    let updated = purge_expired(queue);
+    if (len(updated.entries) == 0) {
+        return record { item: None(), queue: updated };
+    }
+    let entry = updated.entries[0];
+    let remaining = MessageQueue { max_size: updated.max_size, ttl_seconds: updated.ttl_seconds, entries: slice(updated.entries, 1, len(updated.entries)) };
+    return record { item: Some(entry.payload), queue: remaining };
+}

@@ -1,0 +1,13 @@
+// Basic redactor (substring-based; Atlas lacks regex).
+
+export fn redact(text: string, patterns: string[], replacement: string) -> string {
+    let mut result: string = text;
+    for pattern in patterns {
+        if (pattern != "") {
+            // Naive substring replacement by splitting.
+            let parts = split(result, pattern);
+            result = join(parts, replacement);
+        }
+    }
+    return result;
+}

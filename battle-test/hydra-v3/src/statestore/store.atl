@@ -1,0 +1,45 @@
+struct StateStore {
+    initialize_params: json,
+    subscriptions: HashMap<string, string>
+}
+
+export fn statestore_new() -> StateStore {
+    return StateStore { initialize_params: null, subscriptions: hashMapNew() };
+}
+
+export fn statestore_set_initialize(store: StateStore, params: json) -> StateStore {
+    return StateStore { initialize_params: params, subscriptions: store.subscriptions };
+}
+
+export fn statestore_get_initialize(store: StateStore) -> json {
+    return store.initialize_params;
+}
+
+export fn statestore_add_subscription(store: StateStore, uri: string) -> StateStore {
+    if (hashMapGet(store.subscriptions, uri) != None()) {
+        return store;
+    }
+    let subs = hashMapSet(store.subscriptions, uri, "");
+    return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
+}
+
+export fn statestore_remove_subscription(store: StateStore, uri: string) -> StateStore {
+    let subs = hashMapDelete(store.subscriptions, uri);
+    return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
+}
+
+export fn statestore_get_subscriptions(store: StateStore) -> string[] {
+    return hashMapKeys(store.subscriptions);
+}
+
+export fn statestore_update_subscription_id(store: StateStore, uri: string, id: string) -> StateStore {
+    if (hashMapGet(store.subscriptions, uri) == None()) {
+        return store;
+    }
+    let subs = hashMapSet(store.subscriptions, uri, id);
+    return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
+}
+
+export fn statestore_clear(store: StateStore) -> StateStore {
+    return StateStore { initialize_params: null, subscriptions: hashMapNew() };
+}

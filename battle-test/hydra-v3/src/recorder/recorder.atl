@@ -1,0 +1,144 @@
+import { now_iso } from "../common/time";
+import { redact } from "../security/redactor";
+import { drop_first } from "../common/strings";
+
+struct RecorderEntry {
+    direction: string,
+    kind: string,
+    message: json,
+    timestamp: string
+}
+
+struct RecorderState {
+    enabled: bool,
+    include_request_bodies: bool,
+    include_response_bodies: bool,
+    redact_patterns: string[],
+    redact_replacement: string,
+    buffer: RecorderEntry[],
+    max_size: number
+}
+
+export fn recorder_new(
+    enabled: bool,
+    buffer_size: number,
+    include_request_bodies: bool,
+    include_response_bodies: bool,
+    redact_patterns: string[],
+    redact_replacement: string
+) -> RecorderState {
+    let mut size = buffer_size;
+    if (size <= 0) {
+        size = 50;
+    }
+    return RecorderState {
+        enabled: enabled,
+        include_request_bodies: include_request_bodies,
+        include_response_bodies: include_response_bodies,
+        redact_patterns: redact_patterns,
+        redact_replacement: redact_replacement,
+        buffer: [],
+        max_size: size
+    };
+}
+
+fn push_entry(state: RecorderState, entry: RecorderEntry) -> RecorderState {
+    let mut buffer = state.buffer;
+    if (len(buffer) >= state.max_size) {
+        buffer = drop_first(buffer);
+    }
+    buffer = buffer + [entry];
+    return RecorderState {
+        enabled: state.enabled,
+        include_request_bodies: state.include_request_bodies,
+        include_response_bodies: state.include_response_bodies,
+        redact_patterns: state.redact_patterns,
+        redact_replacement: state.redact_replacement,
+        buffer: buffer,
+        max_size: state.max_size
+    };
+}
+
+fn scrub_message(state: RecorderState, kind: string, msg: json) -> json {
+    if (kind == "request" && !state.include_request_bodies) {
+        if (jsonHas(msg, "params")) {
+            msg["params"] = null;
+        }
+    }
+    if (kind == "response" && !state.include_response_bodies) {
+        if (jsonHas(msg, "result")) {
+            msg["result"] = null;
+        }
+        if (jsonHas(msg, "error")) {
+            msg["error"]["data"] = null;
+        }
+    }
+    return msg;
+}
+
+fn redact_message(state: RecorderState, msg: json) -> json {
+    if (len(state.redact_patterns) == 0) {
+        return msg;
+    }
+    if (jsonHas(msg, "params")) {
+        let params = msg["params"];
+        let params_str = unwrap(stringifyJson(params));
+        let redacted = redact(params_str, state.redact_patterns, state.redact_replacement);
+        let parsed = parseJson(redacted);
+        match parsed { Ok(val) => { msg["params"] = val; }, Err(_) => {} };
+    }
+    if (jsonHas(msg, "result")) {
+        let result = msg["result"];
+        let result_str = unwrap(stringifyJson(result));
+        let redacted = redact(result_str, state.redact_patterns, state.redact_replacement);
+        let parsed = parseJson(redacted);
+        match parsed { Ok(val) => { msg["result"] = val; }, Err(_) => {} };
+    }
+    if (jsonHas(msg, "error")) {
+        let err = msg["error"];
+        if (jsonHas(err, "message")) {
+            let msg_text = str(err["message"]);
+            err["message"] = redact(msg_text, state.redact_patterns, state.redact_replacement);
+        }
+        msg["error"] = err;
+    }
+    return msg;
+}
+
+export fn recorder_record_request(state: RecorderState, direction: string, msg: json) -> RecorderState {
+    if (!state.enabled) {
+        return state;
+    }
+    let clean = scrub_message(state, "request", msg);
+    let entry = RecorderEntry { direction: direction, kind: "request", message: clean, timestamp: now_iso() };
+    return push_entry(state, entry);
+}
+
+export fn recorder_record_response(state: RecorderState, direction: string, msg: json) -> RecorderState {
+    if (!state.enabled) {
+        return state;
+    }
+    let clean = scrub_message(state, "response", msg);
+    let entry = RecorderEntry { direction: direction, kind: "response", message: clean, timestamp: now_iso() };
+    return push_entry(state, entry);
+}
+
+export fn recorder_export(state: RecorderState, path: string) -> Result<null, string> {
+    if (!state.enabled) {
+        return Err("recorder disabled");
+    }
+    let mut export_entries: json[] = [];
+    for entry in state.buffer {
+        let mut msg = redact_message(state, entry.message);
+        let exported = record {
+            direction: entry.direction,
+            kind: entry.kind,
+            timestamp: entry.timestamp,
+            message: msg
+        };
+        export_entries = export_entries + [toJSON(exported)];
+    }
+    let payload = toJSON(export_entries);
+    let text = unwrap(stringifyJson(payload));
+    return writeFile(path, text);
+}

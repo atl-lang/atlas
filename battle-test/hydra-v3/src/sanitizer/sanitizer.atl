@@ -1,0 +1,42 @@
+enum ChunkType {
+    Empty,
+    JsonRpc,
+    Pollution
+}
+
+fn classify_enum(chunk: string) -> ChunkType {
+    if (trim(chunk) == "") {
+        return ChunkType::Empty;
+    }
+    let parsed = parseJson(chunk);
+    return match parsed {
+        Ok(value) => {
+            // If it has jsonrpc=2.0 or is an array, consider JSON-RPC.
+            if (jsonHas(value, "jsonrpc")) {
+                let version = jsonGet(value, "jsonrpc");
+                if (str(version) == "2.0") {
+                    return ChunkType::JsonRpc;
+                }
+            }
+            if (isArray(value)) {
+                return ChunkType::JsonRpc;
+            }
+            return ChunkType::Pollution;
+        },
+        Err(_) => ChunkType::Pollution
+    };
+}
+
+export fn classify_chunk(chunk: string) -> string {
+    let res = classify_enum(chunk);
+    return match res {
+        ChunkType::Empty => "empty",
+        ChunkType::JsonRpc => "jsonrpc",
+        ChunkType::Pollution => "pollution"
+    };
+}
+
+export fn validate_utf8(data: string) -> string {
+    // Atlas strings are UTF-8 by definition; return as-is.
+    return data;
+}

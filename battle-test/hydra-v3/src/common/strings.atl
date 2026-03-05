@@ -1,0 +1,38 @@
+// String helpers.
+
+export fn split_lines(value: string) -> string[] {
+    if (value == "") {
+        return [];
+    }
+    return split(value, "\n");
+}
+
+export fn join_lines(parts: string[]) -> string {
+    if (len(parts) == 0) {
+        return "";
+    }
+    return join(parts, "\n");
+}
+
+export fn truncate(value: string, max_len: number) -> string {
+    if (len(value) <= max_len) {
+        return value;
+    }
+    return substring(value, 0, max_len);
+}
+
+export fn drop_first<T>(items: T[]) -> T[] {
+    if (len(items) == 0) {
+        return items;
+    }
+    return slice(items, 1, len(items));
+}
+
+export fn ends_with(value: string, suffix: string) -> bool {
+    let pos = lastIndexOf(value, suffix);
+    if (pos == None()) {
+        return false;
+    }
+    let idx = unwrap(pos);
+    return idx + len(suffix) == len(value);
+}
