@@ -9,7 +9,7 @@
 
 - Architecture decisions and design review
 - Reviewing sub-agent output and accepting/rejecting findings
-- Updating .claude/memory (`patterns/*.md`, `MEMORY.md`)
+- Updating .claude/memory (`patterns.md`, `MEMORY.md`)
 - Directing the next agent or task
 - Small targeted edits (1–2 files, ≤ 15KB each, no git ops)
 

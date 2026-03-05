@@ -14,7 +14,7 @@ Master list of all audits conducted on Atlas.
 ### 2026-03-05: Documentation Audit (Gemini + Codex)
 - **Scope:** Doc accuracy and coverage vs codebase
 - **Findings:** 109+ issues in original docs, all fixed
-- **Output:** `docs/stdlib/*.md` updated, `docs/AST_STATUS.md` created
+- **Output:** `docs/stdlib/*.md` updated (AST_STATUS.md since removed as stale)
 
 ### Pending Battle Tests
 Projects in `~/dev/projects/atlas-battle/` ready for audit:

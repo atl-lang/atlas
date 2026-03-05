@@ -25,7 +25,7 @@ If yes → log it. The bar is low. Log it anyway.
    ls .claude/lazy/architecture.md .claude/rules/atlas-testing.md \
       .claude/rules/atlas-parity.md 2>&1 | grep "No such file"
    # decisions/workflow.md must exist
-   ls .claude/memory/patterns/workflow.md 2>&1 | grep "No such file"
+   ls .claude/memory/patterns.md 2>&1 | grep "No such file"
    # MEMORY.md within limit
    wc -l .claude/memory/MEMORY.md
    ```
@@ -75,7 +75,7 @@ If yes → log it. The bar is low. Log it anyway.
 
 **Before committing, run this check:**
 ```bash
-wc -l .claude/memory/*.md .claude/memory/patterns/*.md 2>/dev/null | grep -v total
+wc -l .claude/memory/*.md 2>/dev/null | grep -v total
 ```
 
 | File | Max | If Exceeded → MUST DO |
@@ -83,7 +83,7 @@ wc -l .claude/memory/*.md .claude/memory/patterns/*.md 2>/dev/null | grep -v tot
 | MEMORY.md | 55 | Split content to topic files |
 | patterns.md | 150 | Archive old → `archive/YYYY-MM-patterns.md` |
 | testing-patterns.md | 300 | Archive old → `archive/YYYY-MM-testing-patterns.md` |
-| patterns/{x}.md | 100 | Split into sub-files |
+| domain-prereqs.md | 100 | Archive old content |
 
 **BLOCKING:** If ANY file exceeds limit, you MUST split/archive BEFORE committing.
 **NO EXCEPTIONS.** This is not optional. Bloated memory = wasted tokens every message.
@@ -95,15 +95,9 @@ wc -l .claude/memory/*.md .claude/memory/patterns/*.md 2>/dev/null | grep -v tot
 ```
 memory/
 ├── MEMORY.md           # Index ONLY (pointers, not content)
-├── patterns.md         # Active patterns
-├── patterns/           # Split by domain
-│   ├── language.md
-│   ├── runtime.md
-│   ├── stdlib.md
-│   ├── cli.md
-│   ├── typechecker.md
-│   ├── vm.md
-│   └── {new-domain}.md # Add as needed
+├── patterns.md         # All implementation patterns (consolidated)
+├── domain-prereqs.md   # Domain verification checklist
+├── testing-patterns.md # Test patterns and conventions
 └── archive/            # Old stuff goes here
 
 # Decisions go to atlas-track (D-XXX), NOT memory files
@@ -130,7 +124,7 @@ When `patterns.md` exceeds 150 lines:
 - **Verify before writing.** Confirm against codebase.
 - **Archive, don't delete.** Move to `archive/YYYY-MM-{file}.md`.
 - **Decisions → atlas-track.** Run `atlas-track add-decision`, NOT memory files.
-- **Patterns → memory.** New domain = new file in `patterns/`.
+- **Patterns → memory.** New domain patterns go in `patterns.md`.
 
 ---
 

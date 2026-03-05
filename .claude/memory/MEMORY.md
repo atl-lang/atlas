@@ -10,15 +10,14 @@
 | `.claude/lazy/comms.md` | Writing PRs, commits, docs, changelogs |
 | `.claude/lazy/tracking-db.md` | SQL queries, issue management, session tracking schema |
 | `domain-prereqs.md` | Before writing ANY code touching AST/Type/Value |
-| `patterns.md` | Implementing features (collections, stdlib, trait dispatch, frontend API) |
-| `testing-patterns.md` | Full detail beyond what rule file covers |
 | `patterns.md` | All implementation patterns by domain (P-XXX format) — CLI, Language, LSP, Runtime, Stdlib, Types, VM |
+| `testing-patterns.md` | Full detail beyond what rule file covers |
 
 ## Decisions
 **Source of truth:** `atlas-track decisions` (D-XXX format)
 - Run `atlas-track decisions` to see all decisions
 - Extended rationale: `docs/language-design/rationale/`
-- Implementation patterns: `.claude/memory/patterns/`
+- Implementation patterns: `.claude/memory/patterns.md`
 
 **Guardian enforcement:** If adding a decision with syntax rules, you MUST also add pattern to `~/.claude/hooks/atlas/decision-patterns.json`. Pre-write hook blocks violations automatically.
 

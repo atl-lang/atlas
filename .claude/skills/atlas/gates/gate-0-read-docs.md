@@ -44,7 +44,7 @@ cargo clean
 **Canonical sources:**
 - Code patterns: `.claude/memory/patterns.md`
 - Domain verification: `.claude/memory/domain-prereqs.md`
-- Architectural decisions: `.claude/memory/patterns/*.md`
+- Architectural decisions: `.claude/memory/patterns.md`
 - Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
 
 ---
