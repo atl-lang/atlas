@@ -1,3 +1,0 @@
-// Index expression formatting
-let first = arr[0];
-let last = arr[len(arr) - 1];
