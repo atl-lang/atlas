@@ -10,28 +10,32 @@ This directory contains accurate, comprehensive documentation of the Atlas stand
 
 ## What's Here
 
-Complete reference documentation for **460+ standard library functions** organized into 12 focused modules:
+Complete reference documentation for **500+ standard library functions** organized into 20 focused modules:
 
 | Module | File | Functions | Purpose |
 |--------|------|-----------|---------|
 | Core | `core.md` | print, len, str | Basic operations |
 | Strings | `string.md` | 20 functions | Unicode string operations |
-| Arrays | `array.md` | 12 functions | Pure functional array ops |
+| Arrays | `array.md` | 23 functions | Pure functional array ops |
 | Math | `math.md` | 18 functions | IEEE 754 math, trig, utils |
 | JSON | `json.md` | 14 functions | Parse, validate, manipulate JSON |
-| Types | `types.md` | 30+ functions | Type checking, conversion |
-| Collections | `collections.md` | 44 functions | HashMap, HashSet, Queue, Stack |
+| Types | `types.md` | 34+ functions | Type checking, conversion |
+| Collections | `collections.md` | 50 functions | HashMap, HashSet, Queue, Stack |
 | File I/O | `file.md` | 30+ functions | Files, directories, metadata |
-| Regex | `regex.md` | 14 functions | Pattern matching, replacement |
+| Regex | `regex.md` | 16 functions | Pattern matching, replacement |
 | DateTime | `datetime.md` | 45+ functions | Creation, parsing, arithmetic, timezone |
 | HTTP | `http.md` | 35+ functions | Client requests, response handling |
 | Process | `process.md` | 15 functions | Spawn processes, env vars |
+| Reflection | `reflect.md` | 13 functions | Runtime inspection helpers |
+| Network | `net.md` | 24 functions | TCP, UDP, TLS primitives |
 | Encoding | `encoding.md` | 18 functions | Base64, hex, URL, hashing, crypto |
 | Compression | `compression.md` | 19 functions | Gzip, tar, zip |
 | Async | `async.md` | 30+ functions | Futures, channels, timers, tasks |
+| Sync | `sync.md` | 16 functions | RwLock, semaphore, atomics |
+| WebSocket | `websocket.md` | 6 functions | WebSocket client ops |
 | Testing | `test.md` | 14 functions | Unit test assertions |
 
-**Total:** 460+ functions across 30 stdlib modules in the implementation
+**Total:** 500+ functions across 30 stdlib modules in the implementation
 
 ## Quick Start
 
@@ -137,14 +141,14 @@ These docs are accurate because:
 - Unicode support throughout
 - Examples: split, trim, indexOf, toUpperCase, charAt, repeat, padStart
 
-### array.md (12 functions)
+### array.md (23 functions)
 - Pure functional (CoW semantics)
 - Search operations: indexOf, includes, lastIndexOf
 - Transformations: sort, reverse, flatten, concat, slice
 
-### collections.md (44 functions)
-- **HashMap:** 13 functions (new, get, put, remove, keys, values, entries, etc.)
-- **HashSet:** 15 functions (union, intersection, difference, isSubset, etc.)
+### collections.md (50 functions)
+- **HashMap:** 16 functions (new, get, put, remove, keys, values, entries, etc.)
+- **HashSet:** 18 functions (union, intersection, difference, isSubset, etc.)
 - **Queue:** 8 functions (FIFO - enqueue, dequeue, peek, etc.)
 - **Stack:** 8 functions (LIFO - push, pop, peek, etc.)
 
@@ -194,20 +198,24 @@ These docs were generated from a complete audit of `crates/atlas-runtime/src/std
 Strings:       20 functions
 Math:          18 functions
 JSON:          14 functions
-Regex:         14 functions
+Regex:         16 functions
 Testing:       14 functions
-Collections:   44 functions (HashMap 13, HashSet 15, Queue 8, Stack 8)
+Collections:   50 functions (HashMap 16, HashSet 18, Queue 8, Stack 8)
 DateTime:      45+ functions
 File I/O:      30+ functions
 HTTP:          35+ functions
 Async:         30+ functions
 Process:       15 functions
+Reflection:    13 functions
+Network:       24 functions
+Sync:          16 functions
+WebSocket:     6 functions
 Encoding:      18 functions
 Compression:   19 functions
-Types:         30+ functions
+Types:         34+ functions
 ```
 
-**TOTAL: 460+ documented functions**
+**TOTAL: 500+ documented functions**
 
 ---
 

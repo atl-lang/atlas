@@ -199,6 +199,60 @@ Replaces all matches with replacement string.
 
 **Note:** Supports backreferences: $0 = full match, $1/$2 = groups
 
+### regexReplaceWith
+
+```atlas
+fn regexReplaceWith(regex: Regex, text: string, callback: fn(object) -> string) -> string
+```
+
+Replaces the first match using a callback.
+
+**Parameters:**
+- `regex` - Compiled regex
+- `text` - Text to search
+- `callback` - Function receiving match data
+
+**Returns:** `string` - Updated text
+
+**Example:**
+```atlas
+let re = regexNew(\"foo\").unwrap();
+let out = regexReplaceWith(re, \"foo bar\", fn(match) { return \"baz\"; });
+```
+
+**Match data:**
+- `text` - Matched substring
+- `start` - Start index
+- `end` - End index
+- `groups` - Array of capture groups (index 0 is full match)
+
+### regexReplaceAllWith
+
+```atlas
+fn regexReplaceAllWith(regex: Regex, text: string, callback: fn(object) -> string) -> string
+```
+
+Replaces all matches using a callback.
+
+**Parameters:**
+- `regex` - Compiled regex
+- `text` - Text to search
+- `callback` - Function receiving match data
+
+**Returns:** `string` - Updated text
+
+**Example:**
+```atlas
+let re = regexNew(\"foo\").unwrap();
+let out = regexReplaceAllWith(re, \"foo foo\", fn(match) { return \"bar\"; });
+```
+
+**Match data:**
+- `text` - Matched substring
+- `start` - Start index
+- `end` - End index
+- `groups` - Array of capture groups (index 0 is full match)
+
 ## Splitting
 
 ### regexSplit

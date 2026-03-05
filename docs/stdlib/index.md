@@ -20,8 +20,8 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Array Functions
 - **File:** `array.md`
-- **Functions:** arrayPush, arrayPop, arrayShift, arrayUnshift, arrayReverse, arraySort, concat, flatten, arrayIndexOf, arrayLastIndexOf, arrayIncludes, slice
-- **Count:** 12 functions
+- **Functions:** arrayPush, arrayPop, arrayShift, arrayUnshift, arrayReverse, arraySort, concat, flatten, arrayIndexOf, arrayLastIndexOf, arrayIncludes, slice, map, filter, reduce, forEach, find, findIndex, flatMap, some, every, sort, sortBy
+- **Count:** 23 functions
 - **Purpose:** Pure array operations (Copy-on-Write semantics)
 
 ### Math Functions
@@ -38,19 +38,25 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Type System Functions
 - **File:** `types.md`
-- **Functions:** typeof, isString, isNumber, isBool, isNull, isArray, isFunction, isObject, isType, hasField, hasMethod, hasTag, toString, toNumber, toBool, parseInt, parseFloat, Some, None, Ok, Err, is_some, is_none, is_ok, is_err, unwrap, unwrap_or
-- **Count:** 30+ functions
+- **Functions:** typeof, isString, isNumber, isBool, isNull, isArray, isFunction, isObject, isType, hasField, hasMethod, hasTag, toString, toNumber, toBool, parseInt, parseFloat, Some, None, Ok, Err, is_some, is_none, is_ok, is_err, result_map, result_map_err, result_and_then, result_or_else, unwrap, unwrap_or
+- **Count:** 34+ functions
 - **Purpose:** Type checking, conversion, Option/Result constructors
 
 ### Collections Functions
 - **File:** `collections.md`
 - **Categories:**
-  - HashMap: new, fromEntries, put, copy, get, remove, has, size, isEmpty, clear, keys, values, entries (13 functions)
-  - HashSet: new, fromArray, add, remove, has, size, isEmpty, clear, union, intersection, difference, symmetricDifference, isSubset, isSuperset, toArray (15 functions)
+  - HashMap: new, fromEntries, put, copy, get, remove, has, size, isEmpty, clear, keys, values, entries, forEach, map, filter (16 functions)
+  - HashSet: new, fromArray, add, remove, has, size, isEmpty, clear, union, intersection, difference, symmetricDifference, isSubset, isSuperset, toArray, forEach, map, filter (18 functions)
   - Queue: new, enqueue, dequeue, peek, size, isEmpty, clear, toArray (8 functions)
   - Stack: new, push, pop, peek, size, isEmpty, clear, toArray (8 functions)
-- **Total:** 44 functions
+- **Total:** 50 functions
 - **Purpose:** Data structures with shared/copy-on-write semantics
+
+### Reflection Functions
+- **File:** `reflect.md`
+- **Functions:** reflect_typeof, reflect_is_callable, reflect_is_primitive, reflect_same_type, reflect_get_length, reflect_is_empty, reflect_type_describe, reflect_clone, reflect_value_to_string, value_to_string, reflect_deep_equals, reflect_get_function_name, reflect_get_function_arity
+- **Count:** 13 functions
+- **Purpose:** Runtime inspection and introspection helpers
 
 ### File System Functions
 - **File:** `file.md`
@@ -60,8 +66,8 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Regular Expression Functions
 - **File:** `regex.md`
-- **Functions:** regexNew, regexNewWithFlags, regexIsMatch, regexTest, regexFind, regexFindAll, regexCaptures, regexCapturesNamed, regexMatchIndices, regexReplace, regexReplaceAll, regexSplit, regexSplitN, regexEscape
-- **Count:** 14 functions
+- **Functions:** regexNew, regexNewWithFlags, regexIsMatch, regexTest, regexFind, regexFindAll, regexCaptures, regexCapturesNamed, regexMatchIndices, regexReplace, regexReplaceAll, regexReplaceWith, regexReplaceAllWith, regexSplit, regexSplitN, regexEscape
+- **Count:** 16 functions
 - **Purpose:** Pattern matching and text manipulation
 
 ### DateTime Functions
@@ -89,6 +95,12 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 - **Functions:** spawn, shell, processStdout, processStderr, processStdin, processOutput, processWait, processKill, processIsRunning, getEnv, setEnv, unsetEnv, listEnv, getPid, getCwd
 - **Count:** 15 functions
 - **Purpose:** Process spawning, execution, and environment access
+
+### Network Functions
+- **File:** `net.md`
+- **Functions:** tcpConnect, tcpWrite, tcpRead, tcpReadBytes, tcpClose, tcpSetTimeout, tcpSetNodelay, tcpLocalAddr, tcpRemoteAddr, tcpListen, tcpAccept, tcpListenerAddr, tcpListenerClose, udpBind, udpSend, udpReceive, udpSetTimeout, udpClose, udpLocalAddr, tlsConnect, tlsWrite, tlsRead, tlsClose
+- **Count:** 24 functions
+- **Purpose:** TCP, UDP, and TLS networking
 
 ### Encoding Functions
 - **File:** `encoding.md`
@@ -122,6 +134,18 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 - **Total:** 30+ functions
 - **Purpose:** Async/await, futures, channels, and concurrent programming
 
+### Sync Primitives
+- **File:** `sync.md`
+- **Functions:** rwLockNew, rwLockRead, rwLockWrite, rwLockTryRead, rwLockTryWrite, semaphoreNew, semaphoreAcquire, semaphoreTryAcquire, semaphoreRelease, semaphoreAvailable, atomicNew, atomicLoad, atomicStore, atomicAdd, atomicSub, atomicCompareExchange
+- **Count:** 16 functions
+- **Purpose:** RwLock, semaphore, and atomic counters
+
+### WebSocket Functions
+- **File:** `websocket.md`
+- **Functions:** wsConnect, wsSend, wsSendBinary, wsReceive, wsPing, wsClose
+- **Count:** 6 functions
+- **Purpose:** WebSocket client operations
+
 ### Testing Functions
 - **File:** `test.md`
 - **Functions:** assert, assertEqual, assertNotEqual, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
@@ -130,9 +154,9 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ## Statistics
 
-- **Total Modules Documented:** 13
-- **Total Functions:** 460+ functions
-- **Documentation Files:** 12 markdown files
+- **Total Modules Documented:** 20
+- **Total Functions:** 500+ functions
+- **Documentation Files:** 16+ markdown files
 - **Code Modules:** 30 (in crates/atlas-runtime/src/stdlib/)
 
 ## Implementation Details

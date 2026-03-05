@@ -21,12 +21,30 @@ item           := import_decl
                | statement
 ```
 
+**Trait Declarations**
+```
+trait_decl     := "trait" IDENT type_params? "{" trait_method_sig* "}"
+trait_method_sig := "fn" IDENT type_params? "(" params? ")" "->" type_ref ";"
+```
+
+Traits declare method signatures without implementations. Implementations live in `impl` blocks.
+
+**Impl Blocks**
+```
+impl_block     := "impl" trait_ref "for" type_name "{" impl_method* "}"
+impl_method    := "fn" IDENT type_params? "(" params? ")" ("->" type_ref)? block
+```
+
+`trait_ref` may include type arguments (e.g., `Functor<number>`).
+
 **Statements**
 ```
 statement      := var_decl
                | function_decl
                | assign_stmt
                | compound_assign_stmt
+               | increment_stmt
+               | decrement_stmt
                | if_stmt
                | while_stmt
                | for_in_stmt
@@ -39,6 +57,8 @@ statement      := var_decl
 var_decl       := "let" ("mut")? IDENT (":" type_ref)? "=" expr ";"
 assign_stmt    := assign_target "=" expr ";"
 compound_assign_stmt := assign_target ("+="|"-="|"*="|"/="|"%=") expr ";"
+increment_stmt := assign_target "++" ";"
+decrement_stmt := assign_target "--" ";"
 assign_target  := IDENT
                | expr "[" expr "]"
                | expr "." IDENT
@@ -145,6 +165,28 @@ structural_type := "{" IDENT ":" type_ref ("," IDENT ":" type_ref)* "}"
 
 generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
 ```
+
+**Compound Assignment**
+- `+=`, `-=`, `*=`, `/=`, `%=` operate on assignment targets.
+- Example: `total += value;`
+
+**Increment/Decrement**
+- Postfix `++` and `--` apply to assignment targets.
+- Example: `counter++;`
+
+**Range Expressions**
+- `1..10` (exclusive end), `1..=10` (inclusive end)
+- `..10` (open start), `1..` (open end)
+
+**Try Operator**
+- `expr?` unwraps `Result` or `Option`, returning early on `Err`/`None`.
+
+**Structural Types**
+- `{ field: type }` declares a structural shape type.
+- Structural types can include multiple members: `{ x: number, y: number }`.
+
+**Intersection Types**
+- `A & B` combines multiple type constraints.
 
 **Operators and Precedence** (highest to lowest)
 1. Call, member, index, try: `()` `.` `[]` `?`

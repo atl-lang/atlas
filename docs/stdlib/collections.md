@@ -177,6 +177,63 @@ Gets all entries as array of [key, value] tuples.
 
 **Returns:** `[K, V][]` - Array of entries
 
+### hashMapForEach
+
+```atlas
+fn hashMapForEach(map: HashMap<K, V>, callback: fn(V, K) -> any) -> null
+```
+
+Invokes a callback for each key/value pair.
+
+**Parameters:**
+- `map` - HashMap
+- `callback` - Function invoked as `(value, key)`
+
+**Returns:** `null`
+
+**Example:**
+```atlas
+hashMapForEach(map, fn(value, key) { print(key); });
+```
+
+### hashMapMap
+
+```atlas
+fn hashMapMap(map: HashMap<K, V>, callback: fn(V, K) -> U) -> HashMap<K, U>
+```
+
+Transforms values using a callback and returns a new map.
+
+**Parameters:**
+- `map` - HashMap
+- `callback` - Function invoked as `(value, key)`
+
+**Returns:** `HashMap<K, U>` - New map with transformed values
+
+**Example:**
+```atlas
+let doubled = hashMapMap(map, fn(value, key) { return value * 2; });
+```
+
+### hashMapFilter
+
+```atlas
+fn hashMapFilter(map: HashMap<K, V>, predicate: fn(V, K) -> bool) -> HashMap<K, V>
+```
+
+Filters entries using a predicate and returns a new map.
+
+**Parameters:**
+- `map` - HashMap
+- `predicate` - Function invoked as `(value, key)`
+
+**Returns:** `HashMap<K, V>` - Filtered map
+
+**Example:**
+```atlas
+let filtered = hashMapFilter(map, fn(value, key) { return value > 10; });
+```
+
 ## HashSet Functions
 
 ### hashSetNew
@@ -379,6 +436,63 @@ Converts set to array.
 - `set` - HashSet
 
 **Returns:** `T[]` - Array of elements
+
+### hashSetForEach
+
+```atlas
+fn hashSetForEach(set: HashSet<T>, callback: fn(T) -> any) -> null
+```
+
+Invokes a callback for each element in the set.
+
+**Parameters:**
+- `set` - HashSet
+- `callback` - Function invoked for each element
+
+**Returns:** `null`
+
+**Example:**
+```atlas
+hashSetForEach(set, fn(value) { print(value); });
+```
+
+### hashSetMap
+
+```atlas
+fn hashSetMap(set: HashSet<T>, callback: fn(T) -> U) -> U[]
+```
+
+Maps set elements to an array of results.
+
+**Parameters:**
+- `set` - HashSet
+- `callback` - Function invoked for each element
+
+**Returns:** `U[]` - Array of mapped values
+
+**Example:**
+```atlas
+let values = hashSetMap(set, fn(value) { return value * 2; });
+```
+
+### hashSetFilter
+
+```atlas
+fn hashSetFilter(set: HashSet<T>, predicate: fn(T) -> bool) -> HashSet<T>
+```
+
+Filters set elements using a predicate.
+
+**Parameters:**
+- `set` - HashSet
+- `predicate` - Function invoked for each element
+
+**Returns:** `HashSet<T>` - Filtered set
+
+**Example:**
+```atlas
+let filtered = hashSetFilter(set, fn(value) { return value > 0; });
+```
 
 ## Queue Functions
 

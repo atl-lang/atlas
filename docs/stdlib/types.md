@@ -339,6 +339,82 @@ Checks if Result is Err.
 
 **Returns:** `bool`
 
+### result_map
+
+```atlas
+fn result_map(res: Result<T, E>, transform: fn(T) -> U) -> Result<U, E>
+```
+
+Transforms the Ok value using a callback.
+
+**Parameters:**
+- `res` - Result to transform
+- `transform` - Function applied to Ok value
+
+**Returns:** `Result<U, E>`
+
+**Example:**
+```atlas
+let out = result_map(Ok(2), fn(x) { return x * 3; });
+```
+
+### result_map_err
+
+```atlas
+fn result_map_err(res: Result<T, E>, transform: fn(E) -> F) -> Result<T, F>
+```
+
+Transforms the Err value using a callback.
+
+**Parameters:**
+- `res` - Result to transform
+- `transform` - Function applied to Err value
+
+**Returns:** `Result<T, F>`
+
+**Example:**
+```atlas
+let out = result_map_err(Err(\"oops\"), fn(e) { return \"error: \" + e; });
+```
+
+### result_and_then
+
+```atlas
+fn result_and_then(res: Result<T, E>, next: fn(T) -> Result<U, E>) -> Result<U, E>
+```
+
+Chains a Result-returning callback on Ok values.
+
+**Parameters:**
+- `res` - Result to chain
+- `next` - Function returning a Result
+
+**Returns:** `Result<U, E>`
+
+**Example:**
+```atlas
+let out = result_and_then(Ok(2), fn(x) { return Ok(x + 1); });
+```
+
+### result_or_else
+
+```atlas
+fn result_or_else(res: Result<T, E>, recover: fn(E) -> Result<T, F>) -> Result<T, F>
+```
+
+Recovers from Err values using a callback.
+
+**Parameters:**
+- `res` - Result to recover
+- `recover` - Function returning a Result
+
+**Returns:** `Result<T, F>`
+
+**Example:**
+```atlas
+let out = result_or_else(Err(\"x\"), fn(e) { return Ok(0); });
+```
+
 ## Unwrapping
 
 ### unwrap
