@@ -42,9 +42,9 @@ cargo clean
 ### Implementation Patterns (As Needed)
 
 **Canonical sources:**
-- Code patterns: `.claude/memory/patterns.md`
-- Domain verification: `.claude/memory/domain-prereqs.md`
-- Architectural decisions: `.claude/memory/patterns.md`
+- Code patterns: `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/patterns.md`
+- Domain verification: `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/domain-prereqs.md`
+- Architectural decisions: `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/patterns.md`
 - Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
 
 ---
@@ -76,7 +76,7 @@ cargo clean
 2. Does it match spec? (compare to `docs/specification/`)
 3. Is it complete? (run `atlas-track blocks`, run tests)
 
-**Before implementing anything:** Search for similar existing code. Follow established patterns. Check .claude/memory `patterns/*.md` for constraints.
+**Before implementing anything:** Search for similar existing code. Follow established patterns. Check auto-memory `patterns.md` for constraints.
 
 **Status per dependency:**
 - ✅ Exists, complete, spec-compliant → Proceed
@@ -93,12 +93,12 @@ cargo clean
 
 **Purpose:** Prevent hallucinated syntax by verifying actual codebase patterns before writing code.
 
-**Registry:** .claude/memory `domain-prereqs.md` (Claude .claude/memory)
+**Registry:** auto-memory `domain-prereqs.md` (Claude .claude/memory)
 
 ### Process
 
 1. **Identify domains** touched by phase (AST, stdlib, VM, type system, etc.)
-2. **For EACH domain**, consult .claude/memory `domain-prereqs.md`
+2. **For EACH domain**, consult auto-memory `domain-prereqs.md`
 3. **Run verification queries** listed for that domain
 4. **Note 3-5 patterns** you will use (mentally or in scratch)
 5. **If uncertain**, read more — NEVER guess structure

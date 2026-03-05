@@ -25,9 +25,9 @@ If yes → log it. The bar is low. Log it anyway.
    ls .claude/lazy/architecture.md .claude/rules/atlas-testing.md \
       .claude/rules/atlas-parity.md 2>&1 | grep "No such file"
    # decisions/workflow.md must exist
-   ls .claude/memory/patterns.md 2>&1 | grep "No such file"
+   ls /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/patterns.md 2>&1 | grep "No such file"
    # MEMORY.md within limit
-   wc -l .claude/memory/MEMORY.md
+   wc -l /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
    ```
    Any missing file → create it before committing. MEMORY.md > 55 → split before committing.
 7. **Staleness greps:**
@@ -75,7 +75,7 @@ If yes → log it. The bar is low. Log it anyway.
 
 **Before committing, run this check:**
 ```bash
-wc -l .claude/memory/*.md 2>/dev/null | grep -v total
+wc -l /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/*.md 2>/dev/null | grep -v total
 ```
 
 | File | Max | If Exceeded → MUST DO |

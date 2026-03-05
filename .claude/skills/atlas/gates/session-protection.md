@@ -9,7 +9,7 @@
 
 - Architecture decisions and design review
 - Reviewing sub-agent output and accepting/rejecting findings
-- Updating .claude/memory (`patterns.md`, `MEMORY.md`)
+- Updating auto-memory (`/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/`)
 - Directing the next agent or task
 - Small targeted edits (1–2 files, ≤ 15KB each, no git ops)
 

@@ -49,7 +49,7 @@ cargo clean && cargo check --workspace
 
 **Key patterns to analyze:**
 - Examine [similar feature] implementation in [file path]
-- Follow [pattern name] from .claude/memory `patterns.md`
+- Follow [pattern name] from auto-memory `patterns.md`
 - Reference [DR-XXX] decision for [context]
 
 **Critical requirements:**

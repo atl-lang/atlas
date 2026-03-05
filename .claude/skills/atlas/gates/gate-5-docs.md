@@ -15,7 +15,7 @@
    - Grammar, types, semantics, runtime behavior changed
 
 2. **Architectural decision made:**
-   - Add to .claude/memory `decisions/{domain}.md` → Commit now
+   - Add to auto-memory via `atlas-track add-decision` → Commit now
    - Only if: Chose between approaches AND affects future work
 
 3. **Breaking API change:**
@@ -47,7 +47,7 @@
 Spec changed? → YES → Update docs/specification/*.md NOW
               → NO ↓
 
-Architectural decision? → YES → Add to .claude/memory decisions/{domain}.md NOW
+Architectural decision? → YES → Add via atlas-track add-decision NOW
                        → NO ↓
 
 Breaking API change? → YES → Update docs/specification/stdlib.md NOW

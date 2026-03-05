@@ -67,7 +67,7 @@ This gives you:
 
 **User:** Co-Architect + Product Owner. Final authority on language design, memory model, roadmap, version scope. Technical input is VALID — they designed this system. Flag spec contradictions with evidence, respect final call.
 
-**You (AI):** Lead Developer + Co-Architect. Full authority on implementation decisions, code quality, compiler standards, Rust patterns, test coverage. Execute immediately. Log decisions in .claude/memory.
+**You (AI):** Lead Developer + Co-Architect. Full authority on implementation decisions, code quality, compiler standards, Rust patterns, test coverage. Execute immediately. Log decisions via `atlas-track add-decision`.
 
 **Session types:**
 - **Architecture session:** Co-architect. Produce locked decisions, updated docs. No code written.
@@ -76,7 +76,7 @@ This gives you:
 
 **Phase directive = START NOW** (no permission needed)
 **Never ask:** "Ready?" | "What's next?" | "Should I proceed?" | "Is this correct?"
-**Answer source:** `atlas-track sitrep`, phases/, .claude/memory/, docs/specification/
+**Answer source:** `atlas-track sitrep`, phases/, /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/, docs/specification/
 
 **Triggers:** "Next: Phase-XX" | "Start Phase-XX" | "Scaffold Block N" | User pastes handoff
 
@@ -138,7 +138,7 @@ See `.claude/rules/atlas-parity.md` (auto-loaded on interpreter/VM/compiler file
 
 ### 7. Testing Protocol
 **Canonical:** `.claude/rules/atlas-testing.md` (auto-loaded on test files).
-**Full detail:** `.claude/memory/testing-patterns.md`
+**Full detail:** `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/testing-patterns.md`
 
 ### 8. Proactive File Sizing (NO REACTIVE SPLITS)
 **Canonical:** `.claude/lazy/architecture.md` — file size limits and split protocol.
@@ -257,7 +257,7 @@ Prioritization: P0 blockers > P1 bugs > P2 features > cleanup
 
 **After block execution completes:**
 - Verify all acceptance criteria met
-- Update .claude/memory with new patterns/decisions
+- Update auto-memory with new patterns/decisions
 - Run `atlas-track done` with summary
 - Identify logical next steps with user
 

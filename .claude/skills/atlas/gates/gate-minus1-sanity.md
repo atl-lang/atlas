@@ -144,7 +144,7 @@ Runs every session. Catches drift, broken references, and missing files before t
 
 ```bash
 # 1. MEMORY.md line count — must stay ≤ 55
-wc -l .claude/memory/MEMORY.md
+wc -l /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/MEMORY.md
 
 # 2. All lazy-load and pattern-triggered rule files must exist on disk
 ls .claude/lazy/git.md .claude/lazy/comms.md .claude/lazy/architecture.md \

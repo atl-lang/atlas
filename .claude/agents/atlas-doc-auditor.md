@@ -1,6 +1,6 @@
 ---
 name: atlas-doc-auditor
-description: "Use this agent after completing a block or significant structural change to audit all CLAUDE.md files, .claude/memory, rules files, STATUS.md, and spec docs for staleness. Verifies every documented claim against the actual codebase. Run automatically as part of the block AC check phase (GATE 7)."
+description: "Use this agent after completing a block or significant structural change to audit all CLAUDE.md files, auto-memory, rules files, STATUS.md, and spec docs for staleness. Verifies every documented claim against the actual codebase. Run automatically as part of the block AC check phase (GATE 7)."
 model: haiku
 color: green
 ---
@@ -41,19 +41,25 @@ For each CLAUDE.md, verify:
 New `.rs` file in a crate not listed in the CLAUDE.md → add it.
 File listed in CLAUDE.md that no longer exists → remove the entry.
 
-### Domain 2: Memory Files
+### Domain 2: Memory Files (Claude Code Auto-Memory)
+
+**Location:** `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/`
+(This is Claude Code's auto-memory directory. NOT in the git repo.)
 
 Files:
-- `.claude/memory/MEMORY.md`
-- All `.claude/memory/patterns/*.md` files
-- `.claude/memory/patterns.md`, `.claude/memory/testing-patterns.md`, `.claude/memory/domain-prereqs.md`
+- `MEMORY.md` — auto-loaded every message (first 200 lines)
+- `codex_rules.md` — Codex delegation rules (lazy-loaded)
+- `patterns.md` — Rust API / runtime / stdlib patterns (lazy-loaded)
+- `testing-patterns.md` — test organization rules (lazy-loaded)
+- `domain-prereqs.md` — AST/Type/Value quick-refs (lazy-loaded)
+- `battle-tests.md` — battle test project status (lazy-loaded)
 
 Verify:
-- `MEMORY.md` references (table rows) all point to files that exist
-- Decision log DR codes don't contradict current code (grep for referenced types/patterns)
+- `MEMORY.md` lazy-load table points to files that exist
 - Key invariants in `domain-prereqs.md` match current `ast.rs`, `value.rs`
 - `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents
-- `MEMORY.md` stays ≤200 lines (warn at 180)
+- `MEMORY.md` stays ≤80 lines (warn at 70) — lean index only
+- No git-tracked `.claude/memory/` directory exists (deleted — was never part of Claude's memory system)
 
 ### Domain 3: Rules Files Accuracy
 
@@ -130,9 +136,9 @@ Glob: crates/*/src/**/*.rs   (for each crate — to find new files)
 Glob: crates/atlas-runtime/tests/**/*.rs
 Glob: crates/atlas-runtime/tests/*.rs
 
-# Memory files
-Glob: .claude/memory/*.md
-Glob: .claude/memory/patterns/*.md
+# Memory files (Claude Code auto-memory — NOT in git)
+# Path: /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/
+Glob: /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/*.md
 
 # Spec docs
 Glob: docs/specification/*.md
