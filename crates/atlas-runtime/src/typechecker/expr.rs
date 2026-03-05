@@ -113,7 +113,7 @@ impl<'a> TypeChecker<'a> {
                                     .with_help("each struct field can only be initialized once"),
                                 );
                             }
-                            if !value_type.is_assignable_to(expected_type) {
+                            if !self.is_assignable_with_traits(&value_type, expected_type) {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
                                         "AT3001",
@@ -347,7 +347,7 @@ impl<'a> TypeChecker<'a> {
                 if expected_type.normalized() == Type::Unknown {
                     continue;
                 }
-                if !arg_type.is_assignable_to(expected_type) {
+                if !self.is_assignable_with_traits(&arg_type, expected_type) {
                     let help = suggestions::suggest_type_mismatch(expected_type, &arg_type)
                         .unwrap_or_else(|| {
                             format!(
@@ -885,7 +885,7 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     if !self.is_untyped_hashmap(&map_type) {
-                        if !key_type.is_assignable_to(&expected_key) {
+                        if !self.is_assignable_with_traits(&key_type, &expected_key) {
                             let help = suggestions::suggest_type_mismatch(&expected_key, &key_type)
                                 .unwrap_or_else(|| {
                                     format!(
@@ -908,7 +908,7 @@ impl<'a> TypeChecker<'a> {
                                 .with_help(help),
                             );
                         }
-                        if !value_type.is_assignable_to(&expected_value) {
+                        if !self.is_assignable_with_traits(&value_type, &expected_value) {
                             let help =
                                 suggestions::suggest_type_mismatch(&expected_value, &value_type)
                                     .unwrap_or_else(|| {
@@ -987,7 +987,7 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     if !self.is_untyped_hashmap(&map_type)
-                        && !key_type.is_assignable_to(&expected_key)
+                        && !self.is_assignable_with_traits(&key_type, &expected_key)
                     {
                         let help = suggestions::suggest_type_mismatch(&expected_key, &key_type)
                             .unwrap_or_else(|| {
@@ -1224,9 +1224,9 @@ impl<'a> TypeChecker<'a> {
         let left_elem = self.array_elem_type_if_all_arrays(left)?;
         let right_elem = self.array_elem_type_if_all_arrays(right)?;
 
-        if left_elem.is_assignable_to(&right_elem) {
+        if self.is_assignable_with_traits(&left_elem, &right_elem) {
             Some(Type::Array(Box::new(right_elem)))
-        } else if right_elem.is_assignable_to(&left_elem) {
+        } else if self.is_assignable_with_traits(&right_elem, &left_elem) {
             Some(Type::Array(Box::new(left_elem)))
         } else {
             None
@@ -1293,7 +1293,7 @@ impl<'a> TypeChecker<'a> {
                 if l.normalized() == Type::Unknown || r.normalized() == Type::Unknown {
                     return false;
                 }
-                if l.is_assignable_to(r) || r.is_assignable_to(l) {
+                if self.is_assignable_with_traits(l, r) || self.is_assignable_with_traits(r, l) {
                     return true;
                 }
             }
@@ -1380,7 +1380,7 @@ impl<'a> TypeChecker<'a> {
             for (i, arg) in args.iter().enumerate() {
                 let arg_type = self.check_expr(arg);
                 if let Some(expected_type) = params.get(i) {
-                    if !arg_type.is_assignable_to(expected_type) {
+                    if !self.is_assignable_with_traits(&arg_type, expected_type) {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
                                 "AT3001",
@@ -1545,7 +1545,7 @@ impl<'a> TypeChecker<'a> {
                         let arg_type = self.check_expr(arg);
                         for sig in &signatures {
                             if let Some(expected_type) = sig.arg_types.get(i) {
-                                if !arg_type.is_assignable_to(expected_type) {
+                                if !self.is_assignable_with_traits(&arg_type, expected_type) {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3001",
@@ -1604,6 +1604,83 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
+        if let Type::TraitObject { name: trait_name } = &target_norm {
+            if let Some(methods) = self.trait_registry.get_methods(trait_name) {
+                if let Some(method_sig) = methods.iter().find(|m| m.name == *method_name).cloned() {
+                    let param_types = method_sig.param_types.clone();
+                    let return_type = method_sig.return_type.clone();
+                    let expected_args = param_types.len();
+                    let provided_args = member.args.as_ref().map(|args| args.len()).unwrap_or(0);
+                    if provided_args != expected_args {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                "AT3005",
+                                format!(
+                                    "Method '{}' expects {} arguments, found {}",
+                                    method_name, expected_args, provided_args
+                                ),
+                                member.span,
+                            )
+                            .with_label("argument count mismatch")
+                            .with_help(format!(
+                                "method '{}' requires exactly {} argument{}",
+                                method_name,
+                                expected_args,
+                                if expected_args == 1 { "" } else { "s" }
+                            )),
+                        );
+                    }
+
+                    if let Some(args) = &member.args {
+                        for (i, arg) in args.iter().enumerate() {
+                            let arg_type = self.check_expr(arg);
+                            if let Some(expected_type) = param_types.get(i) {
+                                if !self.is_assignable_with_traits(&arg_type, expected_type) {
+                                    self.diagnostics.push(
+                                        Diagnostic::error_with_code(
+                                            "AT3001",
+                                            format!(
+                                                "Argument {} has wrong type: expected {}, found {}",
+                                                i + 1,
+                                                expected_type.display_name(),
+                                                arg_type.display_name()
+                                            ),
+                                            arg.span(),
+                                        )
+                                        .with_label("type mismatch")
+                                        .with_help(
+                                            format!(
+                                                "argument {} must be of type {}",
+                                                i + 1,
+                                                expected_type.display_name()
+                                            ),
+                                        ),
+                                    );
+                                    return Type::Unknown;
+                                }
+                            }
+                        }
+                    }
+
+                    *member.trait_dispatch.borrow_mut() = Some((String::new(), trait_name.clone()));
+                    return return_type;
+                } else if member.args.is_some() {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3010",
+                            format!(
+                                "Trait '{}' has no method named '{}'",
+                                trait_name, method_name
+                            ),
+                            member.member.span,
+                        )
+                        .with_label("method not found"),
+                    );
+                    return Type::Unknown;
+                }
+            }
+        }
+
         let method_sig = self.method_table.lookup(&target_type, method_name);
 
         if let Some(method_sig) = method_sig {
@@ -1636,7 +1713,7 @@ impl<'a> TypeChecker<'a> {
                 for (i, arg) in args.iter().enumerate() {
                     let arg_type = self.check_expr(arg);
                     if let Some(expected_type) = method_sig.arg_types.get(i) {
-                        if !arg_type.is_assignable_to(expected_type) {
+                        if !self.is_assignable_with_traits(&arg_type, expected_type) {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3001",
@@ -1954,7 +2031,7 @@ impl<'a> TypeChecker<'a> {
         // Check that all elements have the same type
         for (i, elem) in arr.elements.iter().enumerate().skip(1) {
             let elem_type = self.check_expr(elem);
-            if !elem_type.is_assignable_to(&first_type) {
+            if !self.is_assignable_with_traits(&elem_type, &first_type) {
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3001",
@@ -2287,7 +2364,7 @@ impl<'a> TypeChecker<'a> {
                     };
                     if !members
                         .iter()
-                        .any(|member| lit_type.is_assignable_to(member))
+                        .any(|member| self.is_assignable_with_traits(&lit_type, member))
                     {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -2388,7 +2465,7 @@ impl<'a> TypeChecker<'a> {
                     Literal::Null => Type::Null,
                 };
 
-                if !lit_type.is_assignable_to(&expected_norm) {
+                if !self.is_assignable_with_traits(&lit_type, &expected_norm) {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3022",
@@ -2866,7 +2943,7 @@ impl<'a> TypeChecker<'a> {
 
         let return_type = match declared_return {
             Some(declared) => {
-                if !body_type.is_assignable_to(&declared) {
+                if !self.is_assignable_with_traits(&body_type, &declared) {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3001",

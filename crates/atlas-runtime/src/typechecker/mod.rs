@@ -1415,7 +1415,9 @@ impl<'a> TypeChecker<'a> {
                         && self.is_typed_hashmap(&declared_type);
                     if is_empty_array_literal && declared_is_array {
                         // Empty array literals must be typed by annotation.
-                    } else if !allows_hashmap_new && !init_type.is_assignable_to(&declared_type) {
+                    } else if !allows_hashmap_new
+                        && !self.is_assignable_with_traits(&init_type, &declared_type)
+                    {
                         let help = suggestions::suggest_type_mismatch(&declared_type, &init_type)
                             .unwrap_or_else(|| {
                                 format!(
@@ -1488,7 +1490,8 @@ impl<'a> TypeChecker<'a> {
 
                 let allows_hashmap_new =
                     self.is_hashmap_new_call(&assign.value) && self.is_typed_hashmap(&target_type);
-                if !allows_hashmap_new && !value_type.is_assignable_to(&target_type) {
+                if !allows_hashmap_new && !self.is_assignable_with_traits(&value_type, &target_type)
+                {
                     let help = suggestions::suggest_type_mismatch(&target_type, &value_type)
                         .unwrap_or_else(|| {
                             format!(
@@ -1777,7 +1780,7 @@ impl<'a> TypeChecker<'a> {
                     .map(|value| self.is_hashmap_new_call(value))
                     .unwrap_or(false)
                     && self.is_typed_hashmap(expected);
-                if !allows_hashmap_new && !return_type.is_assignable_to(expected) {
+                if !allows_hashmap_new && !self.is_assignable_with_traits(&return_type, expected) {
                     let mut diag = Diagnostic::error_with_code(
                         "AT3001",
                         format!(
@@ -2338,6 +2341,10 @@ impl<'a> TypeChecker<'a> {
                         return struct_ty;
                     }
 
+                    if self.trait_registry.trait_exists(name) {
+                        return Type::TraitObject { name: name.clone() };
+                    }
+
                     Type::Unknown
                 }
             },
@@ -2834,18 +2841,54 @@ impl<'a> TypeChecker<'a> {
 
     /// Determine if a resolved type satisfies a trait bound by name.
     fn type_satisfies_trait_bound(&self, ty: &Type, trait_name: &str) -> bool {
+        let ty_norm = ty.normalized();
         match trait_name {
-            "Copy" => self.is_copy_type(ty),
-            "Move" => self.is_move_type(ty),
-            _ => {
-                // Built-in or user-defined trait — check impl registry
-                if let Some(type_name) = type_to_impl_key_with_structs(ty, &self.struct_type_cache)
-                {
-                    self.trait_registry.implements(&type_name, trait_name)
+            "Copy" => self.is_copy_type(&ty_norm),
+            "Move" => self.is_move_type(&ty_norm),
+            _ => match ty_norm {
+                Type::TraitObject { name } => name == trait_name,
+                Type::Union(members) => members
+                    .iter()
+                    .all(|member| self.type_satisfies_trait_bound(member, trait_name)),
+                Type::Intersection(members) => members
+                    .iter()
+                    .all(|member| self.type_satisfies_trait_bound(member, trait_name)),
+                _ => {
+                    // Built-in or user-defined trait — check impl registry
+                    if let Some(type_name) =
+                        type_to_impl_key_with_structs(&ty_norm, &self.struct_type_cache)
+                    {
+                        self.trait_registry.implements(&type_name, trait_name)
+                    } else {
+                        false
+                    }
+                }
+            },
+        }
+    }
+
+    /// Assignability check that enforces trait object compatibility.
+    pub(super) fn is_assignable_with_traits(&self, actual: &Type, expected: &Type) -> bool {
+        let expected_norm = expected.normalized();
+        match expected_norm {
+            Type::TraitObject { name } => self.type_satisfies_trait_bound(actual, &name),
+            Type::Union(members) => {
+                if let Type::Union(actual_members) = actual.normalized() {
+                    actual_members.iter().all(|actual_member| {
+                        members
+                            .iter()
+                            .any(|member| self.is_assignable_with_traits(actual_member, member))
+                    })
                 } else {
-                    false
+                    members
+                        .iter()
+                        .any(|member| self.is_assignable_with_traits(actual, member))
                 }
             }
+            Type::Intersection(members) => members
+                .iter()
+                .all(|member| self.is_assignable_with_traits(actual, member)),
+            _ => actual.is_assignable_to(expected),
         }
     }
 

@@ -62,6 +62,8 @@ pub enum Type {
     },
     /// Type parameter (unresolved variable, e.g., T in Result<T, E>)
     TypeParameter { name: String },
+    /// Trait object type (e.g., Describable)
+    TraitObject { name: String },
     /// Unknown type (for error recovery)
     Unknown,
     /// Extern type for FFI (Foreign Function Interface)
@@ -179,6 +181,13 @@ impl Type {
     pub fn is_assignable_to(&self, other: &Type) -> bool {
         let self_norm = self.normalized();
         let other_norm = other.normalized();
+
+        if let Type::TraitObject { name: trait_name } = &other_norm {
+            return match &self_norm {
+                Type::TraitObject { name } => name == trait_name,
+                _ => true,
+            };
+        }
 
         if let (
             Type::Generic {
@@ -392,6 +401,7 @@ impl Type {
                     name.clone()
                 }
             }
+            Type::TraitObject { name } => name.clone(),
             Type::Unknown => "?".to_string(),
             Type::Extern(extern_type) => extern_type.display_name().to_string(),
             Type::Union(members) => members
@@ -550,19 +560,41 @@ fn match_type_params(
             if a_members.len() != b_members.len() {
                 return false;
             }
-            a_members
-                .iter()
-                .zip(b_members.iter())
-                .all(|(a, b)| match_type_params(a, b, substitutions))
+            let mut matched = vec![false; b_members.len()];
+            for a in a_members {
+                let mut found = false;
+                for (idx, b) in b_members.iter().enumerate() {
+                    if !matched[idx] && match_type_params(a, b, substitutions) {
+                        matched[idx] = true;
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return false;
+                }
+            }
+            true
         }
         (Type::Intersection(a_members), Type::Intersection(b_members)) => {
             if a_members.len() != b_members.len() {
                 return false;
             }
-            a_members
-                .iter()
-                .zip(b_members.iter())
-                .all(|(a, b)| match_type_params(a, b, substitutions))
+            let mut matched = vec![false; b_members.len()];
+            for a in a_members {
+                let mut found = false;
+                for (idx, b) in b_members.iter().enumerate() {
+                    if !matched[idx] && match_type_params(a, b, substitutions) {
+                        matched[idx] = true;
+                        found = true;
+                        break;
+                    }
+                }
+                if !found {
+                    return false;
+                }
+            }
+            true
         }
         (a, b) => a == b,
     }

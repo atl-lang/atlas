@@ -107,9 +107,6 @@ impl Compiler {
 
     /// Compile a struct instantiation expression
     fn compile_struct_expr(&mut self, struct_expr: &StructExpr) -> Result<(), Vec<Diagnostic>> {
-        // For now, struct expressions compile like object literals (HashMap-based)
-        // A future optimization could use a more efficient struct representation
-
         // Push field values onto stack (interleaved with keys)
         for field in &struct_expr.fields {
             // Push field name as string constant
@@ -123,8 +120,12 @@ impl Compiler {
             self.compile_expr(&field.value)?;
         }
 
-        // Emit HashMap opcode with count
-        self.bytecode.emit(Opcode::HashMap, struct_expr.span);
+        // Emit Struct opcode with name + count
+        let name_idx = self
+            .bytecode
+            .add_constant(Value::string(struct_expr.name.name.clone()));
+        self.bytecode.emit(Opcode::Struct, struct_expr.span);
+        self.bytecode.emit_u16(name_idx);
         self.bytecode.emit_u16(struct_expr.fields.len() as u16);
 
         Ok(())
@@ -372,31 +373,57 @@ impl Compiler {
         // Check for trait dispatch (user-defined impl methods) first.
         // The typechecker annotates `trait_dispatch` when a trait method is resolved.
         if let Some((type_name, trait_name)) = member.trait_dispatch.borrow().clone() {
-            let mangled_name = format!(
-                "__impl__{}__{}__{}",
-                type_name, trait_name, member.member.name
-            );
+            if type_name.is_empty() {
+                // Dynamic trait dispatch: resolve impl at runtime
+                let trait_idx = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(&trait_name));
+                let method_idx = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(&member.member.name));
 
-            // Push the mangled function by name from globals
-            let name_idx = self
-                .bytecode
-                .add_constant(crate::value::Value::string(&mangled_name));
-            self.bytecode.emit(Opcode::GetGlobal, member.span);
-            self.bytecode.emit_u16(name_idx);
+                // Compile target (becomes `self` — first argument)
+                self.compile_expr(&member.target)?;
 
-            // Compile target (becomes `self` — first argument)
-            self.compile_expr(&member.target)?;
-
-            // Compile method arguments
-            if let Some(args) = &member.args {
-                for arg in args {
-                    self.compile_expr(arg)?;
+                // Compile method arguments
+                if let Some(args) = &member.args {
+                    for arg in args {
+                        self.compile_expr(arg)?;
+                    }
                 }
-            }
 
-            let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
-            self.bytecode.emit(Opcode::Call, member.span);
-            self.bytecode.emit_u8(arg_count as u8);
+                let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+                self.bytecode.emit(Opcode::TraitDispatch, member.span);
+                self.bytecode.emit_u16(trait_idx);
+                self.bytecode.emit_u16(method_idx);
+                self.bytecode.emit_u8(arg_count as u8);
+            } else {
+                let mangled_name = format!(
+                    "__impl__{}__{}__{}",
+                    type_name, trait_name, member.member.name
+                );
+
+                // Push the mangled function by name from globals
+                let name_idx = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(&mangled_name));
+                self.bytecode.emit(Opcode::GetGlobal, member.span);
+                self.bytecode.emit_u16(name_idx);
+
+                // Compile target (becomes `self` — first argument)
+                self.compile_expr(&member.target)?;
+
+                // Compile method arguments
+                if let Some(args) = &member.args {
+                    for arg in args {
+                        self.compile_expr(arg)?;
+                    }
+                }
+
+                let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+                self.bytecode.emit(Opcode::Call, member.span);
+                self.bytecode.emit_u8(arg_count as u8);
+            }
 
             return Ok(());
         }

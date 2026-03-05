@@ -84,6 +84,8 @@ pub struct VM {
     extern_functions: HashMap<String, ExternFunction>,
     /// Reusable string buffer for temporary string operations (reduces allocations)
     string_buffer: String,
+    /// Nominal struct names for HashMap-backed struct values (keyed by map identity).
+    struct_type_names: HashMap<usize, String>,
     /// Parallel to `stack`: tracks where each value originated (debug builds only).
     /// `None` for computed/literal values; `Some(StackValueOrigin::Local(slot))` for values
     /// loaded via `GetLocal`; `Some(StackValueOrigin::Global(name))` for `GetGlobal`.
@@ -134,6 +136,7 @@ impl VM {
             library_loader: LibraryLoader::new(),
             extern_functions: HashMap::new(),
             string_buffer: String::with_capacity(256),
+            struct_type_names: HashMap::new(),
             #[cfg(debug_assertions)]
             value_origins: Vec::with_capacity(1024),
             #[cfg(debug_assertions)]
@@ -181,6 +184,21 @@ impl VM {
             limits.track_allocation(bytes)
         } else {
             Ok(())
+        }
+    }
+
+    fn register_struct_type(&mut self, map: &ValueHashMap, name: &str) {
+        let key = Arc::as_ptr(map.arc()) as usize;
+        self.struct_type_names.insert(key, name.to_string());
+    }
+
+    fn struct_name_for_value(&self, value: &Value) -> Option<&str> {
+        match value {
+            Value::HashMap(map) => {
+                let key = Arc::as_ptr(map.arc()) as usize;
+                self.struct_type_names.get(&key).map(|name| name.as_str())
+            }
+            _ => None,
         }
     }
 
@@ -1088,402 +1106,69 @@ impl VM {
                 }
 
                 // ===== Functions =====
-                Opcode::Call => {
+                Opcode::TraitDispatch => {
+                    let trait_idx = self.read_u16()? as usize;
+                    let method_idx = self.read_u16()? as usize;
                     let arg_count = self.read_u8()? as usize;
 
-                    // Get the function value from stack (it's below the arguments)
-                    let function = self.peek(arg_count).clone();
-
-                    match function {
-                        Value::Builtin(ref name) => {
-                            // Check array intrinsics first (callback-based)
-                            if self.is_array_intrinsic(name) {
-                                let mut args = Vec::with_capacity(arg_count);
-                                for _ in 0..arg_count {
-                                    args.push(self.pop());
-                                }
-                                args.reverse();
-                                self.pop(); // Pop function value
-
-                                let result = self.call_array_intrinsic(name, &args)?;
-                                self.push(result);
-                            } else {
-                                // Stdlib builtin - call directly
-                                let mut args = Vec::with_capacity(arg_count);
-                                for _ in 0..arg_count {
-                                    args.push(self.pop());
-                                }
-                                args.reverse();
-                                self.pop(); // Pop function value
-
-                                let security = self.current_security.as_ref().ok_or_else(|| {
-                                    RuntimeError::InternalError {
-                                        msg: "Security context not set".to_string(),
-                                        span: self
-                                            .current_span()
-                                            .unwrap_or_else(crate::span::Span::dummy),
-                                    }
-                                })?;
-                                let result = crate::stdlib::call_builtin(
-                                    name,
-                                    &args,
-                                    self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                                    security,
-                                    &self.output_writer,
-                                )?;
-
-                                self.push(result);
-                            }
-                        }
-                        Value::Function(func) => {
-                            // Check for extern functions
-                            if let Some(extern_fn) = self.extern_functions.get(&func.name).cloned()
-                            {
-                                let mut args = Vec::with_capacity(arg_count);
-                                for _ in 0..arg_count {
-                                    args.push(self.pop());
-                                }
-                                args.reverse();
-                                self.pop(); // Pop function value
-
-                                // SAFETY: `extern_fn` was constructed with a signature derived
-                                // from the AST extern declaration, and `args` is built from the
-                                // VM stack to match that arity. The library remains loaded for
-                                // the duration of the call.
-                                let result = unsafe { extern_fn.call(&args) }.map_err(|e| {
-                                    RuntimeError::TypeError {
-                                        msg: format!("FFI call error: {}", e),
-                                        span: self
-                                            .current_span()
-                                            .unwrap_or_else(crate::span::Span::dummy),
-                                    }
-                                })?;
-
-                                self.push(result);
-                            } else {
-                                // User-defined function
-                                // Safety check: compiled functions always have bytecode_offset > 0
-                                // because the compiler emits setup code (Constant, SetGlobal, Pop, Jump)
-                                // before the function body. bytecode_offset == 0 indicates an
-                                // interpreter-created function that has no bytecode.
-                                if func.bytecode_offset == 0 {
-                                    return Err(RuntimeError::TypeError {
-                                        msg: format!(
-                                            "Cannot call function '{}' from VM: function was created \
-                                             by interpreter and has no compiled bytecode. This typically \
-                                             happens when importing functions across execution modes.",
-                                            func.name
-                                        ),
-                                        span: self
-                                            .current_span()
-                                            .unwrap_or_else(crate::span::Span::dummy),
-                                    });
-                                }
-
-                                // Try JIT execution for hot numeric functions
-                                if self.jit.is_some() {
-                                    // Gather info before borrowing jit mutably
-                                    let args_base = self.stack.len() - arg_count;
-                                    let mut numeric_args: Vec<f64> = Vec::with_capacity(arg_count);
-                                    let mut all_numeric = true;
-
-                                    for i in 0..arg_count {
-                                        match &self.stack[args_base + i] {
-                                            Value::Number(n) => numeric_args.push(*n),
-                                            _ => {
-                                                all_numeric = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    if all_numeric {
-                                        let function_end =
-                                            self.find_function_end(func.bytecode_offset);
-                                        let bytecode_offset = func.bytecode_offset;
-
-                                        // Now borrow jit mutably for the call
-                                        if let Some(ref mut jit) = self.jit {
-                                            if let Some(result) = jit.try_execute(
-                                                &self.bytecode,
-                                                bytecode_offset,
-                                                function_end,
-                                                &numeric_args,
-                                            ) {
-                                                // JIT succeeded — pop args and function, push result
-                                                for _ in 0..arg_count {
-                                                    self.pop();
-                                                }
-                                                self.pop(); // Pop function value
-                                                self.push(Value::Number(result));
-                                                continue; // Skip to next instruction
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Create a new call frame
-                                let frame = CallFrame {
-                                    function_name: func.name.clone(),
-                                    return_ip: self.ip,
-                                    stack_base: self.stack.len() - arg_count, // Points to first argument
-                                    local_count: func.local_count, // Use total locals, not just arity
-                                    upvalues: std::sync::Arc::new(Vec::new()),
-                                };
-
-                                // Verify argument count matches
-                                if arg_count != func.arity {
-                                    return Err(RuntimeError::TypeError {
-                                        msg: format!(
-                                            "Function {} expects {} arguments, got {}",
-                                            func.name, func.arity, arg_count
-                                        ),
-                                        span: self
-                                            .current_span()
-                                            .unwrap_or_else(crate::span::Span::dummy),
-                                    });
-                                }
-
-                                // Debug mode: for each `own` parameter, mark the caller's
-                                // local slot or global name as consumed so subsequent reads
-                                // produce a runtime error.
-                                #[cfg(debug_assertions)]
-                                {
-                                    let caller_frame_idx = self.frames.len() - 1;
-                                    let args_base = self.stack.len() - arg_count;
-                                    for (i, ownership) in func.param_ownership.iter().enumerate() {
-                                        if *ownership == Some(crate::ast::OwnershipAnnotation::Own)
-                                        {
-                                            if let Some(Some(origin)) =
-                                                self.value_origins.get(args_base + i).cloned()
-                                            {
-                                                match origin {
-                                                    StackValueOrigin::Local(slot) => {
-                                                        if let Some(consumed) = self
-                                                            .consumed_slots
-                                                            .get_mut(caller_frame_idx)
-                                                            .and_then(|v| v.get_mut(slot))
-                                                        {
-                                                            *consumed = true;
-                                                        }
-                                                    }
-                                                    StackValueOrigin::Global(name) => {
-                                                        self.consumed_globals.insert(name);
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Debug mode: enforce `shared` parameter ownership contracts.
-                                #[cfg(debug_assertions)]
-                                {
-                                    let args_base = self.stack.len() - arg_count;
-                                    for (i, ownership) in func.param_ownership.iter().enumerate() {
-                                        let arg = &self.stack[args_base + i];
-                                        match ownership {
-                                            Some(crate::ast::OwnershipAnnotation::Shared) => {
-                                                if !matches!(arg, Value::SharedValue(_)) {
-                                                    return Err(RuntimeError::TypeError {
-                                                        msg: format!(
-                                                            "ownership violation: parameter '{}' expects shared<T> but received {}",
-                                                            func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?"),
-                                                            arg.type_name()
-                                                        ),
-                                                        span: self
-                                                            .current_span()
-                                                            .unwrap_or_else(crate::span::Span::dummy),
-                                                    });
-                                                }
-                                            }
-                                            Some(crate::ast::OwnershipAnnotation::Own)
-                                            | Some(crate::ast::OwnershipAnnotation::Borrow) => {
-                                                if matches!(arg, Value::SharedValue(_)) {
-                                                    let ann_str = match ownership {
-                                                        Some(
-                                                            crate::ast::OwnershipAnnotation::Own,
-                                                        ) => "own",
-                                                        Some(
-                                                            crate::ast::OwnershipAnnotation::Borrow,
-                                                        ) => "borrow",
-                                                        _ => unreachable!(),
-                                                    };
-                                                    eprintln!(
-                                                        "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
-                                                        ann_str,
-                                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
-                                                    );
-                                                }
-                                            }
-                                            None => {}
-                                        }
-                                    }
-                                }
-
-                                // Push the frame (and its consumed-slot tracking vector)
-                                self.frames.push(frame);
-                                #[cfg(debug_assertions)]
-                                self.consumed_slots.push(vec![false; func.local_count]);
-                                // Record function call in profiler
-                                if let Some(ref mut profiler) = self.profiler {
-                                    if profiler.is_enabled() {
-                                        profiler.record_function_call(&func.name);
-                                    }
-                                }
-
-                                // Jump to function bytecode
-                                self.ip = func.bytecode_offset;
-                            }
-                        }
-                        Value::Closure(closure) => {
-                            // Closure call: same as Function but passes upvalues to the frame
-                            let func = closure.func.clone();
-                            let upvalues = closure.upvalues.clone();
-
-                            if func.bytecode_offset == 0 {
-                                return Err(RuntimeError::TypeError {
-                                    msg: format!(
-                                        "Cannot call closure '{}' from VM: no compiled bytecode.",
-                                        func.name
-                                    ),
-                                    span: self
-                                        .current_span()
-                                        .unwrap_or_else(crate::span::Span::dummy),
-                                });
-                            }
-
-                            if arg_count != func.arity {
-                                return Err(RuntimeError::TypeError {
-                                    msg: format!(
-                                        "Function {} expects {} arguments, got {}",
-                                        func.name, func.arity, arg_count
-                                    ),
-                                    span: self
-                                        .current_span()
-                                        .unwrap_or_else(crate::span::Span::dummy),
-                                });
-                            }
-
-                            // Debug mode: mark own-parameter locals/globals consumed in caller.
-                            #[cfg(debug_assertions)]
-                            {
-                                let caller_frame_idx = self.frames.len() - 1;
-                                let args_base = self.stack.len() - arg_count;
-                                for (i, ownership) in func.param_ownership.iter().enumerate() {
-                                    if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
-                                        if let Some(Some(origin)) =
-                                            self.value_origins.get(args_base + i).cloned()
-                                        {
-                                            match origin {
-                                                StackValueOrigin::Local(slot) => {
-                                                    if let Some(consumed) = self
-                                                        .consumed_slots
-                                                        .get_mut(caller_frame_idx)
-                                                        .and_then(|v| v.get_mut(slot))
-                                                    {
-                                                        *consumed = true;
-                                                    }
-                                                }
-                                                StackValueOrigin::Global(name) => {
-                                                    self.consumed_globals.insert(name);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Debug mode: enforce `shared` parameter ownership contracts.
-                            #[cfg(debug_assertions)]
-                            {
-                                let args_base = self.stack.len() - arg_count;
-                                for (i, ownership) in func.param_ownership.iter().enumerate() {
-                                    let arg = &self.stack[args_base + i];
-                                    match ownership {
-                                        Some(crate::ast::OwnershipAnnotation::Shared) => {
-                                            if !matches!(arg, Value::SharedValue(_)) {
-                                                return Err(RuntimeError::TypeError {
-                                                    msg: format!(
-                                                        "ownership violation: parameter '{}' expects shared<T> but received {}",
-                                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?"),
-                                                        arg.type_name()
-                                                    ),
-                                                    span: self
-                                                        .current_span()
-                                                        .unwrap_or_else(crate::span::Span::dummy),
-                                                });
-                                            }
-                                        }
-                                        Some(crate::ast::OwnershipAnnotation::Own)
-                                        | Some(crate::ast::OwnershipAnnotation::Borrow) => {
-                                            if matches!(arg, Value::SharedValue(_)) {
-                                                let ann_str = match ownership {
-                                                    Some(crate::ast::OwnershipAnnotation::Own) => {
-                                                        "own"
-                                                    }
-                                                    Some(
-                                                        crate::ast::OwnershipAnnotation::Borrow,
-                                                    ) => "borrow",
-                                                    _ => unreachable!(),
-                                                };
-                                                eprintln!(
-                                                    "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
-                                                    ann_str,
-                                                    func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
-                                                );
-                                            }
-                                        }
-                                        None => {}
-                                    }
-                                }
-                            }
-
-                            let frame = CallFrame {
-                                function_name: func.name.clone(),
-                                return_ip: self.ip,
-                                stack_base: self.stack.len() - arg_count,
-                                local_count: func.local_count,
-                                upvalues,
-                            };
-
-                            self.frames.push(frame);
-                            #[cfg(debug_assertions)]
-                            self.consumed_slots.push(vec![false; func.local_count]);
-                            if let Some(ref mut profiler) = self.profiler {
-                                if profiler.is_enabled() {
-                                    profiler.record_function_call(&func.name);
-                                }
-                            }
-                            self.ip = func.bytecode_offset;
-                        }
-                        Value::NativeFunction(native_fn) => {
-                            // Call the native Rust closure
-                            let mut args = Vec::with_capacity(arg_count);
-                            for _ in 0..arg_count {
-                                args.push(self.pop());
-                            }
-                            args.reverse(); // Arguments were pushed in reverse order
-
-                            // Pop the function value from stack
-                            self.pop();
-
-                            let result = native_fn(&args)?;
-                            self.push(result);
-                        }
-                        // None() is a valid zero-arg constructor call
-                        Value::Option(None) if arg_count == 0 => {
-                            self.pop(); // Pop the Option(None) function value
-                            self.push(Value::Option(None));
-                        }
+                    let trait_name = match self.bytecode.constants.get(trait_idx) {
+                        Some(Value::String(s)) => s.as_ref().clone(),
                         _ => {
                             return Err(RuntimeError::TypeError {
-                                msg: "Cannot call non-function value".to_string(),
+                                msg: "Expected string constant for trait name".to_string(),
                                 span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                            });
+                            })
                         }
+                    };
+                    let method_name = match self.bytecode.constants.get(method_idx) {
+                        Some(Value::String(s)) => s.as_ref().clone(),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Expected string constant for method name".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            })
+                        }
+                    };
+
+                    let mut args = Vec::with_capacity(arg_count);
+                    for _ in 0..arg_count {
+                        args.push(self.pop());
                     }
+                    args.reverse();
+
+                    let receiver =
+                        args.first()
+                            .cloned()
+                            .ok_or_else(|| RuntimeError::TypeError {
+                                msg: "Trait dispatch requires a receiver".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            })?;
+                    let dispatch_type = self
+                        .struct_name_for_value(&receiver)
+                        .unwrap_or_else(|| receiver.type_name());
+                    let mangled_name =
+                        format!("__impl__{}__{}__{}", dispatch_type, trait_name, method_name);
+                    let function = self.globals.get(&mangled_name).cloned().ok_or_else(|| {
+                        RuntimeError::TypeError {
+                            msg: format!(
+                                "Trait method '{}' not found (impl not registered for this type)",
+                                method_name
+                            ),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        }
+                    })?;
+
+                    self.push(function);
+                    for arg in args {
+                        self.push(arg);
+                    }
+                    self.execute_call(arg_count)?;
                 }
+                Opcode::Call => {
+                    let arg_count = self.read_u8()? as usize;
+                    self.execute_call(arg_count)?;
+                }
+
                 Opcode::Return => {
                     // Pop the return value from stack (if any)
                     let return_value = if self.stack.is_empty() {
@@ -1923,6 +1608,44 @@ impl VM {
 
                     self.push(Value::HashMap(map));
                 }
+                Opcode::Struct => {
+                    use crate::stdlib::collections::hash::HashKey;
+                    use crate::value::ValueHashMap;
+
+                    let name_idx = self.read_u16()? as usize;
+                    let field_count = self.read_u16()? as usize;
+                    let struct_name = match self.bytecode.constants.get(name_idx) {
+                        Some(Value::String(s)) => s.as_ref().clone(),
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "Expected string constant for struct name".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    };
+
+                    let map = ValueHashMap::new();
+                    let mut entries = Vec::with_capacity(field_count);
+                    for _ in 0..field_count {
+                        let value = self.pop();
+                        let key_val = self.pop();
+                        entries.push((key_val, value));
+                    }
+                    entries.reverse();
+
+                    for (key_val, value) in entries {
+                        let key = HashKey::from_value(
+                            &key_val,
+                            self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        )?;
+                        map.with_mut(|inner| {
+                            inner.insert(key, value);
+                        });
+                    }
+
+                    self.register_struct_type(&map, &struct_name);
+                    self.push(Value::HashMap(map));
+                }
 
                 // ===== Stack Manipulation =====
                 Opcode::Pop => {
@@ -2207,8 +1930,10 @@ impl VM {
                     | Opcode::Loop
                     | Opcode::Array
                     | Opcode::HashMap => ip += 2,
+                    Opcode::Struct => ip += 4,
                     Opcode::MakeClosure => ip += 4,
                     Opcode::Call => ip += 1,
+                    Opcode::TraitDispatch => ip += 5,
                     _ => {}
                 }
             } else {
@@ -2312,6 +2037,386 @@ impl VM {
             ));
         }
         frames
+    }
+
+    fn execute_call(&mut self, arg_count: usize) -> Result<(), RuntimeError> {
+        let function = self.peek(arg_count).clone();
+
+        match function {
+            Value::Builtin(ref name) => {
+                // Check array intrinsics first (callback-based)
+                if self.is_array_intrinsic(name) {
+                    let mut args = Vec::with_capacity(arg_count);
+                    for _ in 0..arg_count {
+                        args.push(self.pop());
+                    }
+                    args.reverse();
+                    self.pop(); // Pop function value
+
+                    let result = self.call_array_intrinsic(name, &args)?;
+                    self.push(result);
+                } else {
+                    // Stdlib builtin - call directly
+                    let mut args = Vec::with_capacity(arg_count);
+                    for _ in 0..arg_count {
+                        args.push(self.pop());
+                    }
+                    args.reverse();
+                    self.pop(); // Pop function value
+
+                    let security = self.current_security.as_ref().ok_or_else(|| {
+                        RuntimeError::InternalError {
+                            msg: "Security context not set".to_string(),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        }
+                    })?;
+                    let result = crate::stdlib::call_builtin(
+                        name,
+                        &args,
+                        self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        security,
+                        &self.output_writer,
+                    )?;
+
+                    self.push(result);
+                }
+            }
+            Value::Function(func) => {
+                // Check for extern functions
+                if let Some(extern_fn) = self.extern_functions.get(&func.name).cloned() {
+                    let mut args = Vec::with_capacity(arg_count);
+                    for _ in 0..arg_count {
+                        args.push(self.pop());
+                    }
+                    args.reverse();
+                    self.pop(); // Pop function value
+
+                    // SAFETY: `extern_fn` was constructed with a signature derived
+                    // from the AST extern declaration, and `args` is built from the
+                    // VM stack to match that arity. The library remains loaded for
+                    // the duration of the call.
+                    let result =
+                        unsafe { extern_fn.call(&args) }.map_err(|e| RuntimeError::TypeError {
+                            msg: format!("FFI call error: {}", e),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        })?;
+
+                    self.push(result);
+                } else {
+                    // User-defined function
+                    // Safety check: compiled functions always have bytecode_offset > 0
+                    // because the compiler emits setup code (Constant, SetGlobal, Pop, Jump)
+                    // before the function body. bytecode_offset == 0 indicates an
+                    // interpreter-created function that has no bytecode.
+                    if func.bytecode_offset == 0 {
+                        return Err(RuntimeError::TypeError {
+                            msg: format!(
+                                "Cannot call function '{}' from VM: function was created \
+                                 by interpreter and has no compiled bytecode. This typically \
+                                 happens when importing functions across execution modes.",
+                                func.name
+                            ),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        });
+                    }
+
+                    // Try JIT execution for hot numeric functions
+                    if self.jit.is_some() {
+                        // Gather info before borrowing jit mutably
+                        let args_base = self.stack.len() - arg_count;
+                        let mut numeric_args: Vec<f64> = Vec::with_capacity(arg_count);
+                        let mut all_numeric = true;
+
+                        for i in 0..arg_count {
+                            match &self.stack[args_base + i] {
+                                Value::Number(n) => numeric_args.push(*n),
+                                _ => {
+                                    all_numeric = false;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if all_numeric {
+                            let function_end = self.find_function_end(func.bytecode_offset);
+                            let bytecode_offset = func.bytecode_offset;
+
+                            // Now borrow jit mutably for the call
+                            if let Some(ref mut jit) = self.jit {
+                                if let Some(result) = jit.try_execute(
+                                    &self.bytecode,
+                                    bytecode_offset,
+                                    function_end,
+                                    &numeric_args,
+                                ) {
+                                    // JIT succeeded — pop args and function, push result
+                                    for _ in 0..arg_count {
+                                        self.pop();
+                                    }
+                                    self.pop(); // Pop function value
+                                    self.push(Value::Number(result));
+                                    return Ok(());
+                                }
+                            }
+                        }
+                    }
+
+                    // Create a new call frame
+                    let frame = CallFrame {
+                        function_name: func.name.clone(),
+                        return_ip: self.ip,
+                        stack_base: self.stack.len() - arg_count, // Points to first argument
+                        local_count: func.local_count, // Use total locals, not just arity
+                        upvalues: std::sync::Arc::new(Vec::new()),
+                    };
+
+                    // Verify argument count matches
+                    if arg_count != func.arity {
+                        return Err(RuntimeError::TypeError {
+                            msg: format!(
+                                "Function {} expects {} arguments, got {}",
+                                func.name, func.arity, arg_count
+                            ),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        });
+                    }
+
+                    // Debug mode: for each `own` parameter, mark the caller's
+                    // local slot or global name as consumed so subsequent reads
+                    // produce a runtime error.
+                    #[cfg(debug_assertions)]
+                    {
+                        let caller_frame_idx = self.frames.len() - 1;
+                        let args_base = self.stack.len() - arg_count;
+                        for (i, ownership) in func.param_ownership.iter().enumerate() {
+                            if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
+                                if let Some(Some(origin)) =
+                                    self.value_origins.get(args_base + i).cloned()
+                                {
+                                    match origin {
+                                        StackValueOrigin::Local(slot) => {
+                                            if let Some(consumed) = self
+                                                .consumed_slots
+                                                .get_mut(caller_frame_idx)
+                                                .and_then(|v| v.get_mut(slot))
+                                            {
+                                                *consumed = true;
+                                            }
+                                        }
+                                        StackValueOrigin::Global(name) => {
+                                            self.consumed_globals.insert(name);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Debug mode: enforce `shared` parameter ownership contracts.
+                    #[cfg(debug_assertions)]
+                    {
+                        let args_base = self.stack.len() - arg_count;
+                        for (i, ownership) in func.param_ownership.iter().enumerate() {
+                            let arg = &self.stack[args_base + i];
+                            match ownership {
+                                Some(crate::ast::OwnershipAnnotation::Shared) => {
+                                    if !matches!(arg, Value::SharedValue(_)) {
+                                        return Err(RuntimeError::TypeError {
+                                            msg: format!(
+                                                "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                                func.param_names
+                                                    .get(i)
+                                                    .map(|s| s.as_str())
+                                                    .unwrap_or("?"),
+                                                arg.type_name()
+                                            ),
+                                            span: self
+                                                .current_span()
+                                                .unwrap_or_else(crate::span::Span::dummy),
+                                        });
+                                    }
+                                }
+                                Some(crate::ast::OwnershipAnnotation::Own)
+                                | Some(crate::ast::OwnershipAnnotation::Borrow) => {
+                                    if matches!(arg, Value::SharedValue(_)) {
+                                        let ann_str = match ownership {
+                                            Some(crate::ast::OwnershipAnnotation::Own) => "own",
+                                            Some(crate::ast::OwnershipAnnotation::Borrow) => {
+                                                "borrow"
+                                            }
+                                            _ => unreachable!(),
+                                        };
+                                        eprintln!(
+                                            "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                            ann_str,
+                                            func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                        );
+                                    }
+                                }
+                                None => {}
+                            }
+                        }
+                    }
+
+                    // Push the frame (and its consumed-slot tracking vector)
+                    self.frames.push(frame);
+                    #[cfg(debug_assertions)]
+                    self.consumed_slots.push(vec![false; func.local_count]);
+                    // Record function call in profiler
+                    if let Some(ref mut profiler) = self.profiler {
+                        if profiler.is_enabled() {
+                            profiler.record_function_call(&func.name);
+                        }
+                    }
+
+                    // Jump to function bytecode
+                    self.ip = func.bytecode_offset;
+                }
+            }
+            Value::Closure(closure) => {
+                // Closure call: same as Function but passes upvalues to the frame
+                let func = closure.func.clone();
+                let upvalues = closure.upvalues.clone();
+
+                if func.bytecode_offset == 0 {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!(
+                            "Cannot call closure '{}' from VM: no compiled bytecode.",
+                            func.name
+                        ),
+                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                    });
+                }
+
+                if arg_count != func.arity {
+                    return Err(RuntimeError::TypeError {
+                        msg: format!(
+                            "Function {} expects {} arguments, got {}",
+                            func.name, func.arity, arg_count
+                        ),
+                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                    });
+                }
+
+                // Debug mode: mark own-parameter locals/globals consumed in caller.
+                #[cfg(debug_assertions)]
+                {
+                    let caller_frame_idx = self.frames.len() - 1;
+                    let args_base = self.stack.len() - arg_count;
+                    for (i, ownership) in func.param_ownership.iter().enumerate() {
+                        if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
+                            if let Some(Some(origin)) =
+                                self.value_origins.get(args_base + i).cloned()
+                            {
+                                match origin {
+                                    StackValueOrigin::Local(slot) => {
+                                        if let Some(consumed) = self
+                                            .consumed_slots
+                                            .get_mut(caller_frame_idx)
+                                            .and_then(|v| v.get_mut(slot))
+                                        {
+                                            *consumed = true;
+                                        }
+                                    }
+                                    StackValueOrigin::Global(name) => {
+                                        self.consumed_globals.insert(name);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Debug mode: enforce `shared` parameter ownership contracts.
+                #[cfg(debug_assertions)]
+                {
+                    let args_base = self.stack.len() - arg_count;
+                    for (i, ownership) in func.param_ownership.iter().enumerate() {
+                        let arg = &self.stack[args_base + i];
+                        match ownership {
+                            Some(crate::ast::OwnershipAnnotation::Shared) => {
+                                if !matches!(arg, Value::SharedValue(_)) {
+                                    return Err(RuntimeError::TypeError {
+                                        msg: format!(
+                                            "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                            func.param_names
+                                                .get(i)
+                                                .map(|s| s.as_str())
+                                                .unwrap_or("?"),
+                                            arg.type_name()
+                                        ),
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                                }
+                            }
+                            Some(crate::ast::OwnershipAnnotation::Own)
+                            | Some(crate::ast::OwnershipAnnotation::Borrow) => {
+                                if matches!(arg, Value::SharedValue(_)) {
+                                    let ann_str = match ownership {
+                                        Some(crate::ast::OwnershipAnnotation::Own) => "own",
+                                        Some(crate::ast::OwnershipAnnotation::Borrow) => "borrow",
+                                        _ => unreachable!(),
+                                    };
+                                    eprintln!(
+                                        "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                        ann_str,
+                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                    );
+                                }
+                            }
+                            None => {}
+                        }
+                    }
+                }
+
+                // Create a new call frame with upvalues
+                let frame = CallFrame {
+                    function_name: func.name.clone(),
+                    return_ip: self.ip,
+                    stack_base: self.stack.len() - arg_count,
+                    local_count: func.local_count,
+                    upvalues,
+                };
+
+                // Push the frame (and its consumed-slot tracking vector)
+                self.frames.push(frame);
+                #[cfg(debug_assertions)]
+                self.consumed_slots.push(vec![false; func.local_count]);
+                if let Some(ref mut profiler) = self.profiler {
+                    if profiler.is_enabled() {
+                        profiler.record_function_call(&func.name);
+                    }
+                }
+
+                // Jump to function bytecode
+                self.ip = func.bytecode_offset;
+            }
+            Value::NativeFunction(native_fn) => {
+                let mut args = Vec::with_capacity(arg_count);
+                for _ in 0..arg_count {
+                    args.push(self.pop());
+                }
+                args.reverse();
+                self.pop(); // Pop function value
+                let result = native_fn(&args)?;
+                self.push(result);
+            }
+            Value::Option(None) if arg_count == 0 => {
+                // None() is a valid call that returns Option::None (zero-arg constructor)
+                self.pop(); // Pop function value
+                self.push(Value::Option(None));
+            }
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!("Cannot call non-function type {}", function.type_name()),
+                    span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                });
+            }
+        }
+
+        Ok(())
     }
 
     // ========================================================================

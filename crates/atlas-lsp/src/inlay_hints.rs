@@ -656,6 +656,7 @@ fn format_type(ty: &Type) -> String {
                 .collect();
             format!("{{ {} }}", field_strs.join(", "))
         }
+        Type::TraitObject { name } => name.clone(),
         Type::Unknown | Type::Extern(_) => "?".to_string(),
     }
 }

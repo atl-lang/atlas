@@ -413,3 +413,50 @@ fn test_parity_trait_method_self_arg_is_receiver() {
         .expect("Should succeed");
     std::assert_eq!(result, Value::Number(99.0));
 }
+
+#[test]
+fn test_parity_trait_type_param_dispatch() {
+    let atlas = Atlas::new();
+    let result = atlas
+        .eval(
+            "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        struct Dog { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+        }
+        impl Describable for Dog {
+            fn describe(self: Dog) -> string { return \"Dog: \" + self.name; }
+        }
+        fn show(item: Describable) -> string { return item.describe(); }
+        let c = Cat { name: \"Whiskers\" };
+        let d = Dog { name: \"Rex\" };
+        let a = show(c);
+        let b = show(d);
+        a + \"|\" + b
+    ",
+        )
+        .expect("Should succeed");
+    std::assert_eq!(result, Value::string("Cat: Whiskers|Dog: Rex"));
+}
+
+#[test]
+fn test_parity_trait_type_return_dispatch() {
+    let atlas = Atlas::new();
+    let result = atlas
+        .eval(
+            "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+        }
+        fn make_describable() -> Describable { return Cat { name: \"Default\" }; }
+        let d = make_describable();
+        d.describe()
+    ",
+        )
+        .expect("Should succeed");
+    std::assert_eq!(result, Value::string("Cat: Default"));
+}

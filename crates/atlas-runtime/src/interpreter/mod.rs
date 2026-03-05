@@ -94,6 +94,8 @@ pub struct Interpreter {
     lookup_cache: cache::InterpreterCache,
     /// Call stack for runtime error reporting
     call_stack: Vec<RuntimeCallFrame>,
+    /// Nominal struct names for HashMap-backed struct values (keyed by map identity).
+    struct_type_names: HashMap<usize, String>,
 }
 
 impl Interpreter {
@@ -121,6 +123,7 @@ impl Interpreter {
                 function_name: "<main>".to_string(),
                 call_span: None,
             }],
+            struct_type_names: HashMap::new(),
         };
 
         // Register builtin functions in globals
@@ -968,6 +971,21 @@ impl Interpreter {
         })
     }
 
+    fn register_struct_type(&mut self, map: &crate::value::ValueHashMap, name: &str) {
+        let key = Arc::as_ptr(map.arc()) as usize;
+        self.struct_type_names.insert(key, name.to_string());
+    }
+
+    fn struct_name_for_value(&self, value: &Value) -> Option<&str> {
+        match value {
+            Value::HashMap(map) => {
+                let key = Arc::as_ptr(map.arc()) as usize;
+                self.struct_type_names.get(&key).map(|name| name.as_str())
+            }
+            _ => None,
+        }
+    }
+
     /// Push a new scope
     pub(super) fn push_scope(&mut self) {
         self.locals.push(HashMap::new());
@@ -1040,6 +1058,7 @@ impl Interpreter {
         let trait_default_methods = self.trait_default_methods.clone();
         let globals = self.globals.clone();
         let output_writer = self.output_writer.clone();
+        let struct_type_names = self.struct_type_names.clone();
 
         // Create callback that calls interpreter
         let callback_fn = move |args: &[Value]| -> Result<Value, RuntimeError> {
@@ -1068,6 +1087,7 @@ impl Interpreter {
                     function_name: "<main>".to_string(),
                     call_span: None,
                 }],
+                struct_type_names: struct_type_names.clone(),
             };
 
             // Get function body

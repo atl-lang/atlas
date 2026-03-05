@@ -299,3 +299,44 @@ fn test_multiple_bounds_one_missing_is_error() {
         "Missing Printable impl — AT3037 expected: {diags:?}"
     );
 }
+
+#[test]
+fn test_trait_type_as_param_is_allowed() {
+    let diags = typecheck_source(
+        "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return self.name; }
+        }
+        fn show(own item: Describable) -> string { return item.describe(); }
+        let c = Cat { name: \"Whiskers\" };
+        let s: string = show(c);
+    ",
+    );
+    assert!(
+        diags.is_empty(),
+        "Trait type as parameter should typecheck: {diags:?}"
+    );
+}
+
+#[test]
+fn test_trait_type_as_return_is_allowed() {
+    let diags = typecheck_source(
+        "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return self.name; }
+        }
+        fn make_describable() -> Describable {
+            return Cat { name: \"Default\" };
+        }
+        let d: Describable = make_describable();
+    ",
+    );
+    assert!(
+        diags.is_empty(),
+        "Trait type as return should typecheck: {diags:?}"
+    );
+}

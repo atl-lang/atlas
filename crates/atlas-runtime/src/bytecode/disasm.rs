@@ -125,6 +125,16 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
 
+        // Struct: two u16 operands (name_idx, field_count)
+        Opcode::Struct => {
+            let name_idx = read_u16(bytecode, offset);
+            let field_count = read_u16(bytecode, offset);
+            format!(
+                "{:04}  Struct name={} fields={}",
+                start_offset, name_idx, field_count
+            )
+        }
+
         // MakeClosure: two u16 operands (func_const_idx, n_upvalues)
         Opcode::MakeClosure => {
             let func_idx = read_u16(bytecode, offset);
@@ -139,6 +149,17 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         Opcode::Call | Opcode::EnumVariant | Opcode::Range => {
             let operand = read_u8(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
+        }
+
+        // TraitDispatch: two u16 operands + u8 arg count
+        Opcode::TraitDispatch => {
+            let trait_idx = read_u16(bytecode, offset);
+            let method_idx = read_u16(bytecode, offset);
+            let arg_count = read_u8(bytecode, offset);
+            format!(
+                "{:04}  TraitDispatch trait={} method={} args={}",
+                start_offset, trait_idx, method_idx, arg_count
+            )
         }
 
         // i16 operands (jumps)

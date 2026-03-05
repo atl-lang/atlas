@@ -1,0 +1,12 @@
+struct Point { x: number, y: number }
+trait Describe {
+    fn describe(self) -> string;
+}
+impl Describe for Point {
+    fn describe(self) -> string {
+        return `Point({self.x}, {self.y})`;
+    }
+}
+let p = Point { x: 3, y: 4 };
+let desc: string = p.describe();
+print(desc);

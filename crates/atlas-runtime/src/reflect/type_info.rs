@@ -36,6 +36,8 @@ pub enum TypeKind {
     Alias,
     /// Type parameter (unresolved)
     TypeParameter,
+    /// Trait object type
+    TraitObject,
     /// Unknown type (error recovery)
     Unknown,
     /// Extern type (FFI)
@@ -254,6 +256,16 @@ impl TypeInfo {
                 type_args: vec![],
                 alias_target: None,
             },
+            Type::TraitObject { name } => TypeInfo {
+                name: name.clone(),
+                kind: TypeKind::TraitObject,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: vec![],
+                alias_target: None,
+            },
 
             Type::Unknown => TypeInfo {
                 name: "unknown".to_string(),
@@ -422,6 +434,7 @@ impl TypeInfo {
             TypeKind::TypeParameter => {
                 format!("type parameter {}", self.name)
             }
+            TypeKind::TraitObject => format!("trait object {}", self.name),
 
             TypeKind::Unknown => "unknown type (error recovery)".to_string(),
             TypeKind::Extern => format!("extern type {}", self.name),

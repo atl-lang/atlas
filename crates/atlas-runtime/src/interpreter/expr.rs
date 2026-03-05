@@ -89,7 +89,7 @@ impl Interpreter {
 
     /// Evaluate a struct instantiation expression
     ///
-    /// For now, struct expressions evaluate to a HashMap (same representation as object literals)
+    /// For now, struct expressions evaluate to a HashMap value
     fn eval_struct_expr(
         &mut self,
         struct_expr: &crate::ast::StructExpr,
@@ -109,6 +109,7 @@ impl Interpreter {
             });
         }
 
+        self.register_struct_type(&map, &struct_expr.name.name);
         Ok(Value::HashMap(map))
     }
 
@@ -536,9 +537,16 @@ impl Interpreter {
         // 1b. Check for trait dispatch (user-defined impl methods).
         // The typechecker annotates `trait_dispatch` when a trait method is resolved.
         if let Some((type_name, trait_name)) = member.trait_dispatch.borrow().clone() {
+            let dispatch_type = if type_name.is_empty() {
+                self.struct_name_for_value(&target_value)
+                    .unwrap_or_else(|| target_value.type_name())
+                    .to_string()
+            } else {
+                type_name
+            };
             let mangled_name = format!(
                 "__impl__{}__{}__{}",
-                type_name, trait_name, member.member.name
+                dispatch_type, trait_name, member.member.name
             );
             // Build argument list: receiver first (self), then method args
             let mut args = vec![target_value];

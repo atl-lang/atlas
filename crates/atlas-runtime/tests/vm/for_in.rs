@@ -922,6 +922,47 @@ fn test_vm_impl_method_return_bool() {
 }
 
 #[test]
+fn test_vm_trait_type_param_dispatch() {
+    let result = run_vm(
+        "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        struct Dog { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+        }
+        impl Describable for Dog {
+            fn describe(self: Dog) -> string { return \"Dog: \" + self.name; }
+        }
+        fn show(item: Describable) -> string { return item.describe(); }
+        let c = Cat { name: \"Whiskers\" };
+        let d = Dog { name: \"Rex\" };
+        let a = show(c);
+        let b = show(d);
+        a + \"|\" + b;
+    ",
+    );
+    assert_eq!(result.unwrap(), r#"String("Cat: Whiskers|Dog: Rex")"#);
+}
+
+#[test]
+fn test_vm_trait_type_return_dispatch() {
+    let result = run_vm(
+        "
+        trait Describable { fn describe(self: Describable) -> string; }
+        struct Cat { name: string }
+        impl Describable for Cat {
+            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+        }
+        fn make_describable() -> Describable { return Cat { name: \"Default\" }; }
+        let d = make_describable();
+        d.describe();
+    ",
+    );
+    assert_eq!(result.unwrap(), r#"String("Cat: Default")"#);
+}
+
+#[test]
 fn test_vm_trait_compiles_without_bytecode() {
     // Trait declarations alone should compile cleanly with no runtime effect
     // The program just declares a trait and evaluates a number — no error expected

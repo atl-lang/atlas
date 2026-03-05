@@ -86,6 +86,8 @@ pub enum Opcode {
     Call = 0x60,
     /// Return from function
     Return = 0x61,
+    /// Dynamic trait dispatch [u16 trait_name_idx, u16 method_name_idx, u8 arg_count]
+    TraitDispatch = 0x62,
 
     // ===== Arrays (0x70-0x7F) =====
     /// Create array [u16 size] from stack
@@ -111,6 +113,8 @@ pub enum Opcode {
     SetField = 0x79,
     /// Pop end, pop start, push range value
     Range = 0x7A,
+    /// Create Struct [u16 name_idx, u16 field_count] from stack (key-value pairs interleaved)
+    Struct = 0x7B,
 
     // ===== Stack manipulation (0x80-0x8F) =====
     /// Pop and discard top of stack
@@ -192,6 +196,7 @@ impl TryFrom<u8> for Opcode {
             0x52 => Ok(Opcode::Loop),
             0x60 => Ok(Opcode::Call),
             0x61 => Ok(Opcode::Return),
+            0x62 => Ok(Opcode::TraitDispatch),
             0x70 => Ok(Opcode::Array),
             0x71 => Ok(Opcode::GetIndex),
             0x72 => Ok(Opcode::SetIndex),
@@ -203,6 +208,7 @@ impl TryFrom<u8> for Opcode {
             0x78 => Ok(Opcode::GetField),
             0x79 => Ok(Opcode::SetField),
             0x7A => Ok(Opcode::Range),
+            0x7B => Ok(Opcode::Struct),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),

@@ -51,9 +51,10 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x51] = Some(Opcode::JumpIfFalse);
     table[0x52] = Some(Opcode::Loop);
 
-    // Functions (0x60-0x61)
+    // Functions (0x60-0x6F)
     table[0x60] = Some(Opcode::Call);
     table[0x61] = Some(Opcode::Return);
+    table[0x62] = Some(Opcode::TraitDispatch);
 
     // Arrays (0x70-0x7A)
     table[0x70] = Some(Opcode::Array);
@@ -67,6 +68,7 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x78] = Some(Opcode::GetField);
     table[0x79] = Some(Opcode::SetField);
     table[0x7A] = Some(Opcode::Range);
+    table[0x7B] = Some(Opcode::Struct);
 
     // Stack manipulation (0x80-0x83)
     table[0x80] = Some(Opcode::Pop);
@@ -119,8 +121,12 @@ pub fn operand_size(opcode: Opcode) -> usize {
         Opcode::MakeClosure => 4,
         // i16 operand
         Opcode::Jump | Opcode::JumpIfFalse | Opcode::Loop => 2,
+        // u16 + u16 + u8 operand
+        Opcode::TraitDispatch => 5,
         // u8 operand
         Opcode::Call => 1,
+        // u16 + u16 operand
+        Opcode::Struct => 4,
         // No operand
         _ => 0,
     }

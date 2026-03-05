@@ -224,6 +224,15 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
             let lo = code[ip + 1] as u16;
             Ok((2, ((hi << 8) | lo) as i64))
         }
+        // Struct: 4 bytes (name_idx, field_count)
+        Opcode::Struct => {
+            if ip + 3 >= code.len() {
+                return Err(opcode_name(opcode));
+            }
+            let hi = code[ip] as u16;
+            let lo = code[ip + 1] as u16;
+            Ok((4, ((hi << 8) | lo) as i64))
+        }
         // MakeClosure: 4 bytes (two u16: func_const_idx, n_upvalues)
         Opcode::MakeClosure => {
             if ip + 3 >= code.len() {
@@ -249,6 +258,15 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
                 return Err(opcode_name(opcode));
             }
             Ok((1, code[ip] as i64))
+        }
+        // TraitDispatch: 5 bytes (trait_idx, method_idx, arg_count)
+        Opcode::TraitDispatch => {
+            if ip + 4 >= code.len() {
+                return Err(opcode_name(opcode));
+            }
+            let hi = code[ip] as u16;
+            let lo = code[ip + 1] as u16;
+            Ok((5, ((hi << 8) | lo) as i64))
         }
         // No operand
         _ => Ok((0, 0)),
@@ -286,6 +304,7 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::Loop => "Loop",
         Opcode::Call => "Call",
         Opcode::Return => "Return",
+        Opcode::TraitDispatch => "TraitDispatch",
         Opcode::Array => "Array",
         Opcode::GetIndex => "GetIndex",
         Opcode::SetIndex => "SetIndex",
@@ -297,6 +316,7 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::SliceFull => "SliceFull",
         Opcode::Range => "Range",
         Opcode::HashMap => "HashMap",
+        Opcode::Struct => "Struct",
         Opcode::Pop => "Pop",
         Opcode::Dup => "Dup",
         Opcode::Dup2 => "Dup2",
@@ -382,7 +402,11 @@ fn check_constant_refs(
     for instr in decoded {
         let needs_pool = matches!(
             instr.opcode,
-            Some(Opcode::Constant) | Some(Opcode::GetGlobal) | Some(Opcode::SetGlobal)
+            Some(Opcode::Constant)
+                | Some(Opcode::GetGlobal)
+                | Some(Opcode::SetGlobal)
+                | Some(Opcode::TraitDispatch)
+                | Some(Opcode::Struct)
         );
         if !needs_pool {
             continue;
@@ -476,7 +500,13 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
 
         // Variable-arity — skip (MakeClosure pops n_upvalues, push 1; net depends on operand)
         // EnumVariant pops enum_name, variant_name, and args; pushes 1
-        Opcode::Call | Opcode::Array | Opcode::HashMap | Opcode::MakeClosure | Opcode::EnumVariant => None,
+        Opcode::Call
+        | Opcode::TraitDispatch
+        | Opcode::Array
+        | Opcode::HashMap
+        | Opcode::Struct
+        | Opcode::MakeClosure
+        | Opcode::EnumVariant => None,
 
         // Return drains the frame — stop tracking
         Opcode::Return => None,

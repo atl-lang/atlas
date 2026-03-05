@@ -19,6 +19,7 @@
 //! - 0x0C: Stack
 //! - 0x0D: Regex
 //! - 0x0E: DateTime
+//! - 0x0F: Range
 //!
 //! Runtime-only types (panic on serialize): NativeFunction, JsonValue,
 //! HttpRequest, HttpResponse, Future, TaskHandle, Channel*, AsyncMutex, Watcher,
@@ -543,7 +544,6 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
             }
             Ok((Value::HashMap(ValueHashMap::from_atlas(map)), 1 + cursor))
         }
-
         tags::HASHSET => {
             if rest.len() < 4 {
                 return Err("Truncated hashset length".to_string());

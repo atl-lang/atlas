@@ -526,6 +526,7 @@ fn format_type_for_signature(ty: &Type) -> Option<String> {
             }
             Some(format!("{{ {} }}", parts.join(", ")))
         }
+        Type::TraitObject { name } => Some(name.clone()),
     }
 }
 

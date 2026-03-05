@@ -347,53 +347,88 @@ impl Bytecode {
             self.instructions.push(opcode_byte);
             i += 1;
 
-            // Check if this opcode uses a constant index (u16 operand)
-            let uses_constant = matches!(
-                opcode_byte,
-                x if x == Opcode::Constant as u8
-                    || x == Opcode::GetGlobal as u8
-                    || x == Opcode::SetGlobal as u8
-            );
-
-            if uses_constant && i + 1 < other.instructions.len() {
-                // Read the u16 constant index
+            if opcode_byte == Opcode::TraitDispatch as u8 && i + 4 < other.instructions.len() {
+                // TraitDispatch has two constant indices: trait + method
+                let high1 = other.instructions[i] as u16;
+                let low1 = other.instructions[i + 1] as u16;
+                let high2 = other.instructions[i + 2] as u16;
+                let low2 = other.instructions[i + 3] as u16;
+                let trait_idx = (high1 << 8) | low1;
+                let method_idx = (high2 << 8) | low2;
+                let new_trait_idx = trait_idx + constant_offset;
+                let new_method_idx = method_idx + constant_offset;
+                self.instructions.push((new_trait_idx >> 8) as u8);
+                self.instructions.push((new_trait_idx & 0xFF) as u8);
+                self.instructions.push((new_method_idx >> 8) as u8);
+                self.instructions.push((new_method_idx & 0xFF) as u8);
+                i += 4;
+                // Copy arg_count (u8)
+                self.instructions.push(other.instructions[i]);
+                i += 1;
+            } else if opcode_byte == Opcode::Struct as u8 && i + 3 < other.instructions.len() {
+                // Struct has one constant index + field count
                 let high = other.instructions[i] as u16;
                 let low = other.instructions[i + 1] as u16;
                 let old_index = (high << 8) | low;
-
-                // Adjust by constant_offset
                 let new_index = old_index + constant_offset;
-
-                // Write adjusted index
                 self.instructions.push((new_index >> 8) as u8);
                 self.instructions.push((new_index & 0xFF) as u8);
                 i += 2;
-            } else if uses_constant {
-                // Malformed bytecode, but continue
-                while i < other.instructions.len() && i < 2 {
-                    self.instructions.push(other.instructions[i]);
-                    i += 1;
-                }
+                // Copy field count
+                self.instructions.push(other.instructions[i]);
+                self.instructions.push(other.instructions[i + 1]);
+                i += 2;
             } else {
-                // Check opcode operand size and copy remaining bytes
-                // Most opcodes have known operand sizes
-                let operand_size = match opcode_byte {
-                    x if x == Opcode::Jump as u8
-                        || x == Opcode::JumpIfFalse as u8
-                        || x == Opcode::GetLocal as u8
-                        || x == Opcode::SetLocal as u8
-                        || x == Opcode::Array as u8 =>
-                    {
-                        2 // u16 operand
-                    }
-                    x if x == Opcode::Call as u8 => 1, // u8 operand
-                    _ => 0,                            // No operand
-                };
+                // Check if this opcode uses a constant index (u16 operand)
+                let uses_constant = matches!(
+                    opcode_byte,
+                    x if x == Opcode::Constant as u8
+                        || x == Opcode::GetGlobal as u8
+                        || x == Opcode::SetGlobal as u8
+                );
 
-                for _ in 0..operand_size {
-                    if i < other.instructions.len() {
+                if uses_constant && i + 1 < other.instructions.len() {
+                    // Read the u16 constant index
+                    let high = other.instructions[i] as u16;
+                    let low = other.instructions[i + 1] as u16;
+                    let old_index = (high << 8) | low;
+
+                    // Adjust by constant_offset
+                    let new_index = old_index + constant_offset;
+
+                    // Write adjusted index
+                    self.instructions.push((new_index >> 8) as u8);
+                    self.instructions.push((new_index & 0xFF) as u8);
+                    i += 2;
+                } else if uses_constant {
+                    // Malformed bytecode, but continue
+                    while i < other.instructions.len() && i < 2 {
                         self.instructions.push(other.instructions[i]);
                         i += 1;
+                    }
+                } else {
+                    // Check opcode operand size and copy remaining bytes
+                    // Most opcodes have known operand sizes
+                    let operand_size = match opcode_byte {
+                        x if x == Opcode::Jump as u8
+                            || x == Opcode::JumpIfFalse as u8
+                            || x == Opcode::GetLocal as u8
+                            || x == Opcode::SetLocal as u8
+                            || x == Opcode::Array as u8 =>
+                        {
+                            2 // u16 operand
+                        }
+                        x if x == Opcode::Call as u8 => 1, // u8 operand
+                        x if x == Opcode::TraitDispatch as u8 => 5, // u16 + u16 + u8 operand
+                        x if x == Opcode::Struct as u8 => 4, // u16 + u16 operand
+                        _ => 0,                            // No operand
+                    };
+
+                    for _ in 0..operand_size {
+                        if i < other.instructions.len() {
+                            self.instructions.push(other.instructions[i]);
+                            i += 1;
+                        }
                     }
                 }
             }
