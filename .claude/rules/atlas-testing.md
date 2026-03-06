@@ -93,7 +93,13 @@ Add LSP tests to existing files in `crates/atlas-lsp/tests/`. Creating new LSP t
 ## Run Commands
 
 ```bash
-cargo nextest run --workspace                        # full suite (all crates)
-cargo nextest run -p atlas-runtime --test closures   # one domain file
-cargo nextest run -p atlas-runtime --test corpus     # corpus only
+# DURING DEVELOPMENT — targeted tests only:
+cargo nextest run -E 'test(test_name)'               # single test
+cargo nextest run -p atlas-runtime --test closures    # one domain file
+cargo nextest run -p atlas-runtime --test corpus      # corpus only
+cargo nextest run -E 'test(parity)'                   # parity sweep
+
+# NEVER run `cargo nextest run --workspace` manually.
+# The pre-commit Guardian hook runs the full suite on every `git commit`.
+# Never kill a running cargo process — it leaves lock files that block all future runs.
 ```

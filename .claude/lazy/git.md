@@ -12,9 +12,10 @@ All CI and review happens locally. Remote pushes are batched.
 
 ### Quick Checks (after every fix)
 ```bash
-cargo fmt --check
-cargo clippy --workspace -- -D warnings
-cargo nextest run --workspace
+cargo fmt --check && cargo clippy --workspace -- -D warnings
+# DO NOT run full test suite here — the pre-commit Guardian hook does it on commit.
+# During development, use targeted tests only:
+#   cargo nextest run -E 'test(test_name)'
 ```
 
 ### Full Local CI (batched — Haiku agent)
@@ -57,9 +58,8 @@ For Rust source changes (`crates/**/*.rs`, `Cargo.toml` deps):
 ```bash
 # 1. Quick local checks
 cargo fmt --check && cargo clippy --workspace -- -D warnings
-cargo nextest run --workspace
 
-# 2. Commit to main locally
+# 2. Commit to main locally (Guardian hook runs full test suite)
 git add crates/ && git commit -m "fix(vm): resolve side effect issue"
 
 # 3. DO NOT PUSH YET — accumulate commits

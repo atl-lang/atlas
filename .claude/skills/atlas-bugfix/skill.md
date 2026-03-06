@@ -39,13 +39,12 @@ Fix only what's broken. Don't refactor surrounding code.
 cargo nextest run -p atlas-runtime -- test_issue_h_xxx
 ```
 
-### Step 6: Full Suite + Parity
+### Step 6: Commit (Guardian runs full suite automatically)
 ```bash
-cargo nextest run --workspace                              # No regressions
-cargo nextest run -p atlas-runtime -E 'test(parity)'       # Parity intact
-cargo fmt --check && cargo clippy --workspace -- -D warnings
-coderabbit review                                          # Quality check
+cargo fmt --check && cargo clippy --workspace -- -D warnings  # Quick static checks
+git add <files> && git commit -m "fix(...): description"      # Guardian hook runs full suite + parity
 ```
+**DO NOT run `cargo nextest run --workspace` manually.** The pre-commit Guardian hook does this.
 
 ---
 
@@ -83,21 +82,17 @@ If debugging exceeds 30 minutes on a single failure:
 ## Quality Gates (after fix)
 
 ```bash
-cargo fmt --check
-cargo clippy --workspace -- -D warnings
-cargo nextest run --workspace
-cargo nextest run -p atlas-runtime -E 'test(parity)'    # Parity sweep (ALWAYS)
-coderabbit review
+cargo fmt --check && cargo clippy --workspace -- -D warnings  # Static checks
+git commit  # Guardian hook runs: full test suite + parity + battle tests
 ```
 
-**If fix touches runtime/stdlib/VM/compiler** — also run battle tests:
-```bash
-for f in battle-test/hydra-v2/**/*.atlas; do
-    atlas run "$f" 2>&1 || echo "BATTLE TEST FAILED: $f"
-done
-```
+**The pre-commit Guardian hook handles ALL of this automatically:**
+- Full test suite (`cargo nextest run -p atlas-runtime`)
+- Parity tests (when interpreter/VM/compiler touched)
+- fmt + clippy
+- Doc drift detection
 
-All must pass. Commit only after green.
+**NEVER run full suite manually.** It wastes 2-4 minutes per invocation and the hook does it anyway.
 
 ---
 

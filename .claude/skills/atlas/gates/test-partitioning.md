@@ -40,14 +40,15 @@ cargo nextest run -p atlas-runtime -p atlas-cli
 
 **Rule:** Crate-scoped, not workspace-scoped. Full workspace is GATE 6 only.
 
-### During Final Testing (GATE 6) — FULL SUITE
+### During Final Testing (GATE 6) — COMMIT
 
+**DO NOT run full suite manually.** The pre-commit Guardian hook runs it automatically:
 ```bash
-cargo nextest run --workspace                    # Everything
-cargo nextest run -p atlas-runtime -E 'test(parity)'  # Parity sweep
+git commit  # Guardian runs: fmt + clippy + full suite + parity
 ```
 
-**This is the ONLY gate where full workspace runs.**
+**Never run `cargo nextest run --workspace` or `cargo nextest run -p atlas-runtime` manually.**
+The Guardian hook is the ONLY place the full suite should run.
 
 ---
 

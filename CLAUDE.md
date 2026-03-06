@@ -42,9 +42,15 @@ If AI has to work around something that should be built-in, that's a bug, not a 
 - **Single workspace:** `~/dev/projects/atlas/`
 - **See `.claude/lazy/git.md`** for full workflow.
 
-## Quick Check (every fix)
+## Testing Strategy (CRITICAL)
 ```bash
-cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run --workspace
+# DURING DEVELOPMENT — targeted tests only:
+cargo nextest run -E 'test(test_name)'            # single test
+cargo nextest run -p atlas-runtime --test strings  # domain file
+
+# NEVER run `cargo nextest run --workspace` manually.
+# The pre-commit Guardian hook (.githooks/pre-commit) runs full suite + parity on every commit.
+# Killing cargo mid-run leaves lock files that block all future runs — never do it.
 ```
 
 ## Session Start (MANDATORY)

@@ -61,17 +61,21 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 ### Interpreter/VM Parity (100%)
 Both engines MUST produce identical output. See `.claude/rules/atlas-parity.md`.
 
-### Quick Check (every fix)
+### Testing (CRITICAL — read this)
 ```bash
-cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run --workspace
+# DURING DEVELOPMENT — targeted tests ONLY:
+cargo nextest run -E 'test(test_name)'           # single test
+cargo nextest run -p atlas-runtime --test strings  # domain file
+
+# NEVER run full suite manually. The pre-commit Guardian hook runs it on commit.
+# Killing cargo mid-run leaves lock files that block all future runs.
 ```
 
-### Quality Floor (ALL session types — blocks, bugfix, freestyle, brainstorm)
-These apply even when no workflow skill is active:
-1. **If you touched runtime/stdlib/VM/compiler** → Run parity tests: `cargo nextest run -p atlas-runtime -E 'test(parity)'`
-2. **If the change was significant (>50 lines or behavioral)** → Run battle tests: `for f in battle-test/hydra-v2/**/*.atlas; do atlas run "$f" 2>&1 || echo "FAILED: $f"; done`
-3. **Before any code change** → Read `compiler-quality/ai-compiler.md` from auto-memory (Anthropic C compiler lessons: test oracle pattern, regression prevention, parity-first)
-4. **Dual engine always** → Never test just one engine. Both interpreter AND VM must work.
+### Quality Floor (ALL session types)
+1. **During development** → Targeted tests only. The pre-commit hook handles the full suite.
+2. **If you touched runtime/stdlib/VM/compiler** → Run parity: `cargo nextest run -E 'test(parity)'`
+3. **Before any code change** → Read `compiler-quality/ai-compiler.md` from auto-memory
+4. **Dual engine always** → Both interpreter AND VM must work.
 
 ---
 

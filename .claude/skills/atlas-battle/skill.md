@@ -55,30 +55,20 @@ cargo nextest run -p atlas-runtime -E 'test(parity)'
 
 ## Full Validation Suite (GATE 6 equivalent)
 
-Run this as the complete validation:
+**The pre-commit Guardian hook runs full tests + parity + fmt + clippy automatically on commit.**
+You only need to run battle tests manually (Guardian doesn't run these):
 
 ```bash
-# 1. Build
-cargo build --workspace
-
-# 2. Full test suite
-cargo nextest run --workspace
-
-# 3. Parity sweep
-cargo nextest run -p atlas-runtime -E 'test(parity)'
-
-# 4. Quality
-cargo clippy --workspace -- -D warnings
-cargo fmt --check
-coderabbit review
-
-# 5. Battle tests
+# Battle tests (manual — not in Guardian hook)
 for f in battle-test/hydra-v2/**/*.atlas; do
     atlas run "$f" 2>&1 || echo "FAILED: $f"
 done
+
+# Then commit — Guardian handles the rest
+git commit
 ```
 
-**All must pass. No exceptions.**
+**NEVER run `cargo nextest run --workspace` manually.** The Guardian does it.
 
 ---
 
