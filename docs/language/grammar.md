@@ -82,9 +82,9 @@ assign_target  := IDENT
                | expr "[" expr "]"
                | expr "." IDENT
 
-if_stmt        := "if" condition block ("else" (if_stmt | block))?
-while_stmt     := "while" condition block
-for_in_stmt    := "for" ("(")? IDENT "in" expr (")")? block
+if_stmt        := "if" expr block ("else" (if_stmt | block))?
+while_stmt     := "while" expr block
+for_in_stmt    := "for" IDENT "in" expr block
 return_stmt    := "return" expr? ";"
 break_stmt     := "break" ";"
 continue_stmt  := "continue" ";"

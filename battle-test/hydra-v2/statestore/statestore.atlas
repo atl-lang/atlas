@@ -8,7 +8,7 @@ type StateStore = HashMap<string, string>;
 
 fn store_get(borrow store: StateStore, key: string) -> string {
     let has_key: bool = hashMapHas(store, key);
-    if (has_key) {
+    if has_key {
         return unwrap(hashMapGet(store, key));
     }
     return "";
@@ -21,7 +21,7 @@ fn store_set(store: StateStore, key: string, value: string) -> StateStore {
 fn split_lines(value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     let has_value: bool = value != "";
-    if (has_value) {
+    if has_value {
         parts = split(value, "\n");
     }
     return parts;
@@ -29,7 +29,7 @@ fn split_lines(value: string) -> string[] {
 
 fn join_lines(parts: string[]) -> string {
     let is_empty: bool = len(parts) == 0;
-    if (is_empty) {
+    if is_empty {
         return "";
     }
     return join(parts, "\n");
@@ -51,7 +51,7 @@ export fn state_set_initialize(own store: StateStore, params: json) -> StateStor
 export fn state_get_initialize(borrow store: StateStore) -> json {
     let raw = store_get(store, "initialize");
     let has_value: bool = raw != "";
-    if (!has_value) {
+    if !has_value {
         return unwrap(parseJSON("null"));
     }
     return unwrap(parseJSON(raw));
@@ -62,11 +62,11 @@ export fn state_add_subscription(own store: StateStore, uri: string) -> StateSto
     let parts: string[] = split_lines(raw);
     let mut exists = false;
     for p in parts {
-        if (p == uri) {
+        if p == uri {
             exists = true;
         }
     }
-    if (!exists) {
+    if !exists {
         let updated = arrayPush(parts, uri);
         let updated_store = store_set(store, "subs", join_lines(updated));
         return updated_store;
@@ -79,7 +79,7 @@ export fn state_remove_subscription(own store: StateStore, uri: string) -> State
     let parts: string[] = split_lines(raw);
     let mut filtered: string[] = slice([""], 0, 0);
     for p in parts {
-        if (p != uri) {
+        if p != uri {
             filtered = arrayPush(filtered, p);
         }
     }
@@ -99,14 +99,14 @@ export fn state_update_subscription_id(own store: StateStore, uri: string, id: s
     let mut found = false;
     for p in parts {
         let matches_uri: bool = startsWith(p, uri + "=");
-        if (matches_uri) {
+        if matches_uri {
             updated = arrayPush(updated, uri + "=" + id);
             found = true;
         } else {
             updated = arrayPush(updated, p);
         }
     }
-    if (!found) {
+    if !found {
         updated = arrayPush(updated, uri + "=" + id);
     }
     let updated_store = store_set(store, "sub_ids", join_lines(updated));

@@ -181,7 +181,7 @@ fn test_parse_for_in_with_method_call() {
 fn test_parse_for_in_with_complex_body() {
     let source = r#"
         for item in items {
-            if (item > 5) {
+            if item > 5 {
                 print("Large: " + toString(item));
             } else {
                 print("Small: " + toString(item));

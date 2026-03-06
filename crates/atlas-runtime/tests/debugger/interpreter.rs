@@ -303,7 +303,7 @@ fn interp_e2e_breakpoint_ids_sequential() {
 
 #[test]
 fn interp_e2e_conditional_code() {
-    let source = "let x = 5;\nif (x > 3) {\n  let y = x * 2;\n}";
+    let source = "let x = 5;\nif x > 3 {\n  let y = x * 2;\n}";
     let mut session = interp_session(source);
     session.process_request(DebugRequest::StepInto);
     let resp = session.run_until_pause(&security());

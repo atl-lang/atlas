@@ -1,6 +1,7 @@
 //! Statement parsing
 
 use crate::ast::*;
+use crate::diagnostic::Diagnostic;
 use crate::parser::Parser;
 use crate::token::TokenKind;
 
@@ -250,7 +251,17 @@ impl Parser {
     /// Syntax: `for item in array { body }`
     pub(super) fn parse_for_in_stmt(&mut self) -> Result<Stmt, ()> {
         let for_span = self.consume(TokenKind::For, "Expected 'for'")?.span;
+        let paren_span = self.peek().span;
         let has_parens = self.match_token(TokenKind::LeftParen);
+        if has_parens {
+            self.diagnostics.push(
+                Diagnostic::warning(
+                    "Unnecessary parentheses around `for` clause. Atlas uses Rust-style syntax: `for x in iter { }`",
+                    paren_span,
+                )
+                .with_help("Remove the parentheses: `for <var> in <iter> { }`"),
+            );
+        }
 
         // Parse variable name
         let name_token = self.consume_identifier("variable name after 'for'")?;
@@ -282,12 +293,22 @@ impl Parser {
     }
 
     fn parse_condition(&mut self, keyword: &str) -> Result<Expr, ()> {
+        let paren_span = self.peek().span;
         let has_parens = self.match_token(TokenKind::LeftParen);
+        if has_parens {
+            self.diagnostics.push(
+                Diagnostic::warning(
+                    format!("Unnecessary parentheses around `{keyword}` condition. Atlas uses Rust-style syntax: `{keyword} expr {{ }}`"),
+                    paren_span,
+                )
+                .with_help(format!("Remove the parentheses: `{keyword} <condition> {{ }}`")),
+            );
+        }
         let cond = self.parse_expression()?;
         if has_parens {
             self.consume(
                 TokenKind::RightParen,
-                &format!("Expected ')' after {keyword} condition (parentheses are optional)"),
+                &format!("Expected ')' after {keyword} condition"),
             )?;
         }
         Ok(cond)

@@ -35,6 +35,10 @@ Stdlib uses global functions (`arrayPush(arr, x)`) not method syntax (`arr.push(
 
 ## Recently Fixed
 
+### H-080: Enforce No-Parens Condition Syntax (FIXED 2026-03-05)
+**Was:** `if (cond)`, `while (cond)`, `for (x in iter)` all accepted silently — inconsistent style.
+**Now:** Rust-style enforced: `if cond { }`, `while cond { }`, `for x in iter { }`. Parens emit a deprecation warning.
+
 ### H-075: Trait Objects as Parameter Types (FIXED 2026-03-05)
 **Was:** `fn process(x: SomeTrait)` didn't work — couldn't use trait names as parameter types.
 **Now:** Trait objects work as bounded polymorphism on parameters.

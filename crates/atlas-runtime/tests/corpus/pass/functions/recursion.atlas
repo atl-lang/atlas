@@ -1,12 +1,12 @@
 fn sum_to(n: number) -> number {
-    if (n <= 0) {
+    if n <= 0 {
         return 0;
     }
     return n + sum_to(n - 1);
 }
 
 fn power(base: number, exp: number) -> number {
-    if (exp == 0) {
+    if exp == 0 {
         return 1;
     }
     return base * power(base, exp - 1);

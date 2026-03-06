@@ -223,8 +223,9 @@ impl ModuleLoader {
         // Parse
         let mut parser = Parser::new(tokens);
         let (ast, parse_diags) = parser.parse();
-        if !parse_diags.is_empty() {
-            return Err(parse_diags);
+        let parse_errors: Vec<_> = parse_diags.into_iter().filter(|d| d.is_error()).collect();
+        if !parse_errors.is_empty() {
+            return Err(parse_errors);
         }
 
         // Extract exports and imports

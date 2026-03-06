@@ -257,25 +257,25 @@ fn test_pipeline_valid_function() {
 
 #[test]
 fn test_pipeline_valid_if_else() {
-    let source = "if (true) { let x = 1; } else { let y = 2; }";
+    let source = "if true { let x = 1; } else { let y = 2; }";
     let (ok, diags) = parse_source(source);
     assert!(ok);
     assert!(diags.is_empty());
 
     let formatted = fmt(source);
-    assert!(formatted.contains("if (true)"));
+    assert!(formatted.contains("if true"));
     assert!(formatted.contains("else"));
 }
 
 #[test]
 fn test_pipeline_valid_while_loop() {
-    let source = "while (true) { break; }";
+    let source = "while true { break; }";
     let (ok, diags) = parse_source(source);
     assert!(ok);
     assert!(diags.is_empty());
 
     let formatted = fmt(source);
-    assert!(formatted.contains("while (true)"));
+    assert!(formatted.contains("while true"));
 }
 
 #[test]

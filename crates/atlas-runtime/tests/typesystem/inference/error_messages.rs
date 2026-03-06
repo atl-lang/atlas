@@ -13,7 +13,7 @@ fn test_at3050_includes_function_name() {
     let diags = errors(
         r#"
 fn confused(x: number) {
-    if (x > 0) { return 1; } else { return "bad"; }
+    if x > 0 { return 1; } else { return "bad"; }
 }
 "#,
     );
@@ -82,7 +82,7 @@ fn test_at3050_not_fired_for_consistent_returns() {
     let diags = errors(
         r#"
 fn consistent(x: number) {
-    if (x > 0) { return 1; } else { return 2; }
+    if x > 0 { return 1; } else { return 2; }
 }
 "#,
     );

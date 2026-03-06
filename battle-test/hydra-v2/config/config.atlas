@@ -8,7 +8,7 @@ type Registry = HashMap<string, string>;
 fn split_lines(value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     let has_value: bool = value != "";
-    if (has_value) {
+    if has_value {
         parts = split(value, "\n");
     }
     return parts;
@@ -16,7 +16,7 @@ fn split_lines(value: string) -> string[] {
 
 fn join_lines(parts: string[]) -> string {
     let is_empty: bool = len(parts) == 0;
-    if (is_empty) {
+    if is_empty {
         return "";
     }
     return join(parts, "\n");
@@ -39,7 +39,7 @@ export fn default_server_config() -> ServerConfig {
 
 fn cfg_get(borrow cfg: ServerConfig, key: string) -> string {
     let has_key: bool = hashMapHas(cfg, key);
-    if (has_key) {
+    if has_key {
         return unwrap(hashMapGet(cfg, key));
     }
     return "";
@@ -61,22 +61,22 @@ export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerCon
     let mut out = dst;
     let cmd = cfg_get(src, "command");
     let has_cmd: bool = cmd != "";
-    if (has_cmd) {
+    if has_cmd {
         out = cfg_set(out, "command", cmd);
     }
     let args: string[] = cfg_get_args(src);
     let has_args: bool = len(args) > 0;
-    if (has_args) {
+    if has_args {
         out = cfg_set_args(out, args);
     }
     let cwd = cfg_get(src, "cwd");
     let has_cwd: bool = cwd != "";
-    if (has_cwd) {
+    if has_cwd {
         out = cfg_set(out, "cwd", cwd);
     }
     let env_file = cfg_get(src, "env_file");
     let has_env: bool = env_file != "";
-    if (has_env) {
+    if has_env {
         out = cfg_set(out, "env_file", env_file);
     }
     return out;
@@ -84,7 +84,7 @@ export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerCon
 
 export fn substitute_env_vars(value: string) -> string {
     let has_prefix: bool = startsWith(value, "env:");
-    if (has_prefix) {
+    if has_prefix {
         return value;
     }
     return value;

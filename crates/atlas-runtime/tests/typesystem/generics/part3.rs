@@ -34,7 +34,7 @@ fn test_error_has_span_info() {
 
 #[test]
 fn test_if_condition_number_suggests_comparison() {
-    let diags = errors("if (42) { }");
+    let diags = errors("if 42 { }");
     assert!(!diags.is_empty());
     assert!(
         diags[0].help.as_ref().is_some_and(|h| h.contains("!=")),
@@ -45,7 +45,7 @@ fn test_if_condition_number_suggests_comparison() {
 
 #[test]
 fn test_while_condition_string_suggests_comparison() {
-    let diags = errors(r#"while ("hello") { }"#);
+    let diags = errors(r#"while "hello" { }"#);
     assert!(!diags.is_empty());
     assert!(
         diags[0].help.as_ref().is_some_and(|h| h.contains("len")),

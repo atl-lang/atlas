@@ -43,8 +43,8 @@ fn try_fmt(source: &str) -> FormatResult {
 #[case("let n = null;")]
 #[case("fn foo() { let x = 1; }")]
 #[case("fn add(a: number, b: number) -> number { return a + b; }")]
-#[case("if (true) { let a = 1; } else { let b = 2; }")]
-#[case("while (true) { break; }")]
+#[case("if true { let a = 1; } else { let b = 2; }")]
+#[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("let x = 1 + 2 * 3;")]
 #[case("let neg = -5;")]
@@ -244,8 +244,8 @@ fn test_parse_error_messages_are_descriptive() {
 #[rstest]
 #[case("let x = 42;")]
 #[case("fn foo() -> number { return 1; }")]
-#[case("if (true) { let a = 1; } else { let b = 2; }")]
-#[case("while (true) { break; }")]
+#[case("if true { let a = 1; } else { let b = 2; }")]
+#[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("// comment\nlet x = 1;")]
 #[case("let a = 1;\nlet b = 2;\nlet c = a + b;")]
@@ -273,13 +273,13 @@ fn test_idempotent_formatting(#[case] source: &str) {
 
 #[test]
 fn test_nested_blocks() {
-    let source = "fn foo() { if (true) { while (false) { let x = 1; } } }";
+    let source = "fn foo() { if true { while false { let x = 1; } } }";
     let formatted = fmt(source);
 
     // Should have proper nesting
     assert!(formatted.contains("fn foo()"));
-    assert!(formatted.contains("if (true)"));
-    assert!(formatted.contains("while (false)"));
+    assert!(formatted.contains("if true"));
+    assert!(formatted.contains("while false"));
     assert!(formatted.contains("let x = 1;"));
 
     // Verify re-parses

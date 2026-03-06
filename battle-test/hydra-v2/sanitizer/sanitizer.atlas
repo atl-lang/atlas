@@ -5,23 +5,23 @@ let CHUNK_POLLUTION = "pollution";
 export fn classify_chunk(chunk: string) -> string {
     let trimmed: string = trim(chunk);
     let is_empty: bool = len(trimmed) == 0;
-    if (is_empty) {
+    if is_empty {
         return CHUNK_EMPTY;
     }
     let valid: bool = isValidJSON(trimmed);
-    if (!valid) {
+    if !valid {
         return CHUNK_POLLUTION;
     }
     let is_array: bool = startsWith(trimmed, "[");
-    if (is_array) {
+    if is_array {
         return CHUNK_JSONRPC;
     }
     let parsed = unwrap(parseJSON(trimmed));
     let ver = parsed["jsonrpc"];
     let has_ver: bool = !jsonIsNull(ver);
-    if (has_ver) {
+    if has_ver {
         let ver_str = jsonAsString(ver);
-        if (ver_str == "2.0") {
+        if ver_str == "2.0" {
             return CHUNK_JSONRPC;
         }
     }

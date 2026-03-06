@@ -5,7 +5,7 @@ print(message);
 
 let mut count: number = 3;
 let mut i: number = 1;
-while (i <= count) {
+while i <= count {
     print(str(i));
     i = i + 1;
 }

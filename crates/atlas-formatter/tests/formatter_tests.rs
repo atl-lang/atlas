@@ -93,16 +93,16 @@ fn test_compound_assignment_mod() {
 #[test]
 fn test_break_statement() {
     assert_eq!(
-        fmt("while (true) { break; }"),
-        "while (true) {\n    break;\n}\n"
+        fmt("while true { break; }"),
+        "while true {\n    break;\n}\n"
     );
 }
 
 #[test]
 fn test_continue_statement() {
     assert_eq!(
-        fmt("while (true) { continue; }"),
-        "while (true) {\n    continue;\n}\n"
+        fmt("while true { continue; }"),
+        "while true {\n    continue;\n}\n"
     );
 }
 
@@ -163,24 +163,24 @@ fn test_empty_function() {
 #[test]
 fn test_if_simple() {
     assert_eq!(
-        fmt("if (x > 0) { print(x); }"),
-        "if (x > 0) {\n    print(x);\n}\n"
+        fmt("if x > 0 { print(x); }"),
+        "if x > 0 {\n    print(x);\n}\n"
     );
 }
 
 #[test]
 fn test_if_else() {
     assert_eq!(
-        fmt("if (x > 0) { print(\"pos\"); } else { print(\"neg\"); }"),
-        "if (x > 0) {\n    print(\"pos\");\n} else {\n    print(\"neg\");\n}\n"
+        fmt("if x > 0 { print(\"pos\"); } else { print(\"neg\"); }"),
+        "if x > 0 {\n    print(\"pos\");\n} else {\n    print(\"neg\");\n}\n"
     );
 }
 
 #[test]
 fn test_nested_if() {
     assert_eq!(
-        fmt("if (a) { if (b) { print(1); } }"),
-        "if (a) {\n    if (b) {\n        print(1);\n    }\n}\n"
+        fmt("if a { if b { print(1); } }"),
+        "if a {\n    if b {\n        print(1);\n    }\n}\n"
     );
 }
 
@@ -189,8 +189,8 @@ fn test_nested_if() {
 #[test]
 fn test_while_loop() {
     assert_eq!(
-        fmt("while (x > 0) { x -= 1; }"),
-        "while (x > 0) {\n    x -= 1;\n}\n"
+        fmt("while x > 0 { x -= 1; }"),
+        "while x > 0 {\n    x -= 1;\n}\n"
     );
 }
 
@@ -318,8 +318,8 @@ fn test_match_constructor_patterns() {
 fn test_indent_2_spaces() {
     let config = FormatConfig::default().with_indent_size(2);
     assert_eq!(
-        fmt_with("if (true) { print(1); }", &config),
-        "if (true) {\n  print(1);\n}\n"
+        fmt_with("if true { print(1); }", &config),
+        "if true {\n  print(1);\n}\n"
     );
 }
 
@@ -327,8 +327,8 @@ fn test_indent_2_spaces() {
 fn test_indent_8_spaces() {
     let config = FormatConfig::default().with_indent_size(8);
     assert_eq!(
-        fmt_with("if (true) { print(1); }", &config),
-        "if (true) {\n        print(1);\n}\n"
+        fmt_with("if true { print(1); }", &config),
+        "if true {\n        print(1);\n}\n"
     );
 }
 
@@ -442,8 +442,8 @@ fn test_check_formatted_needs_formatting() {
 #[rstest]
 #[case("let x = 5;")]
 #[case("fn foo(a: number, b: string) -> number { return a; }")]
-#[case("if (true) { print(1); } else { print(2); }")]
-#[case("while (x > 0) { x -= 1; }")]
+#[case("if true { print(1); } else { print(2); }")]
+#[case("while x > 0 { x -= 1; }")]
 // C-style for loop case removed (H-034)
 #[case("for item in items { print(item); }")]
 #[case("let a = [1, 2, 3];")]
@@ -464,7 +464,7 @@ fn test_idempotency_complex_program() {
     let source = r#"import { math } from "./math";
 
 fn fibonacci(n: number) -> number {
-    if (n <= 1) {
+    if n <= 1 {
         return n;
     }
     return fibonacci(n - 1) + fibonacci(n - 2);
@@ -499,18 +499,18 @@ fn test_styles_converge(#[case] input: &str, #[case] expected: &str) {
 #[test]
 fn test_deep_nesting() {
     assert_eq!(
-        fmt("if (a) { if (b) { if (c) { print(1); } } }"),
-        "if (a) {\n    if (b) {\n        if (c) {\n            print(1);\n        }\n    }\n}\n"
+        fmt("if a { if b { if c { print(1); } } }"),
+        "if a {\n    if b {\n        if c {\n            print(1);\n        }\n    }\n}\n"
     );
 }
 
 #[test]
 fn test_function_with_loops_and_conditions() {
     let result =
-        fmt("fn process(items: string) { for item in items { if (item > 0) { print(item); } } }");
+        fmt("fn process(items: string) { for item in items { if item > 0 { print(item); } } }");
     assert!(result.contains("fn process"));
     assert!(result.contains("    for item in items"));
-    assert!(result.contains("        if (item > 0)"));
+    assert!(result.contains("        if item > 0"));
     assert!(result.contains("            print(item)"));
 }
 
@@ -538,7 +538,7 @@ fn test_expr_statement() {
 #[rstest]
 #[case("let x = 5;")]
 #[case("fn foo(a: number) -> number { return a + 1; }")]
-#[case("if (true) { print(1); } else { print(2); }")]
+#[case("if true { print(1); } else { print(2); }")]
 // C-style for loop case removed (H-034)
 #[case("for item in [1, 2, 3] { print(item); }")]
 #[case("let r = match x { 1 => true, _ => false, };")]
@@ -599,14 +599,14 @@ fn test_all_comparison_ops() {
 
 #[test]
 fn test_empty_while_body() {
-    assert_eq!(fmt("while (true) {}"), "while (true) {}\n");
+    assert_eq!(fmt("while true {}"), "while true {}\n");
 }
 
 #[test]
 fn test_while_with_break() {
-    let result = fmt("while (true) { if (done) { break; } }");
-    assert!(result.contains("while (true)"));
-    assert!(result.contains("if (done)"));
+    let result = fmt("while true { if done { break; } }");
+    assert!(result.contains("while true"));
+    assert!(result.contains("if done"));
     assert!(result.contains("break;"));
 }
 

@@ -119,13 +119,13 @@ fn test_bind_mutual_recursion_same_scope() {
     let source = r#"
         fn outer() -> number {
             fn isEven(n: number) -> bool {
-                if (n == 0) {
+                if n == 0 {
                     return true;
                 }
                 return isOdd(n - 1);
             }
             fn isOdd(n: number) -> bool {
-                if (n == 0) {
+                if n == 0 {
                     return false;
                 }
                 return isEven(n - 1);
@@ -240,7 +240,7 @@ fn test_bind_redeclaration_same_scope() {
 fn test_bind_nested_function_in_if_block() {
     let source = r#"
         fn outer() -> number {
-            if (true) {
+            if true {
                 fn helper() -> number {
                     return 42;
                 }
@@ -573,7 +573,7 @@ fn test_interp_nested_function_conditional() {
 fn test_interp_nested_function_in_if_block() {
     let source = r#"
         fn outer() -> number {
-            if (true) {
+            if true {
                 fn helper() -> number {
                     return 42;
                 }

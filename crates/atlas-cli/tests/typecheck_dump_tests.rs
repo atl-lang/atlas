@@ -84,7 +84,7 @@ fn test_typecheck_dump_function_with_loop() {
 fn sum(n: number) -> number {
     let mut total: number = 0;
     let mut i: number = 0;
-    while (i < n) {
+    while i < n {
         total = total + i;
         i = i + 1;
     }

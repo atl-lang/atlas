@@ -9,23 +9,23 @@ let MSG_PARAMS = 2;
 fn classify_chunk(chunk: string) -> string {
     let trimmed = trim(chunk);
     let is_empty: bool = len(trimmed) == 0;
-    if (is_empty) {
+    if is_empty {
         return "empty";
     }
     let valid: bool = isValidJSON(trimmed);
-    if (!valid) {
+    if !valid {
         return "pollution";
     }
     let is_array: bool = startsWith(trimmed, "[");
-    if (is_array) {
+    if is_array {
         return "jsonrpc";
     }
     let parsed = unwrap(parseJSON(trimmed));
     let ver = parsed["jsonrpc"];
     let has_ver: bool = !jsonIsNull(ver);
-    if (has_ver) {
+    if has_ver {
         let ver_str = jsonAsString(ver);
-        if (ver_str == "2.0") {
+        if ver_str == "2.0" {
             return "jsonrpc";
         }
     }
@@ -37,7 +37,7 @@ type StateStore = HashMap<string, string>;
 
 fn store_get(store: StateStore, key: string) -> string {
     let has_key: bool = hashMapHas(store, key);
-    if (has_key) {
+    if has_key {
         return unwrap(hashMapGet(store, key));
     }
     return "";
@@ -50,7 +50,7 @@ fn store_set(store: StateStore, key: string, value: string) -> StateStore {
 fn split_lines(value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     let has_value: bool = value != "";
-    if (has_value) {
+    if has_value {
         parts = split(value, "\n");
     }
     return parts;
@@ -58,7 +58,7 @@ fn split_lines(value: string) -> string[] {
 
 fn join_lines(parts: string[]) -> string {
     let is_empty: bool = len(parts) == 0;
-    if (is_empty) {
+    if is_empty {
         return "";
     }
     return join(parts, "\n");
@@ -76,11 +76,11 @@ fn state_add_subscription(store: StateStore, uri: string) -> StateStore {
     let parts = split_lines(raw);
     let mut exists = false;
     for p in parts {
-        if (p == uri) {
+        if p == uri {
             exists = true;
         }
     }
-    if (!exists) {
+    if !exists {
         let updated = arrayPush(parts, uri);
         return store_set(store, "subs", join_lines(updated));
     }
@@ -93,36 +93,36 @@ fn state_get_subscriptions(store: StateStore) -> string[] {
 
 fn parse_jsonrpc(message: string) -> string[] {
     let valid: bool = isValidJSON(message);
-    if (!valid) {
-        return ["false", "", ""]; 
+    if !valid {
+        return ["false", "", ""];
     }
     let obj = unwrap(parseJSON(message));
     let method_val = obj["method"];
     let has_method: bool = !jsonIsNull(method_val);
-    if (!has_method) {
-        return ["false", "", ""]; 
+    if !has_method {
+        return ["false", "", ""];
     }
     let method = jsonAsString(method_val);
     let params = obj["params"];
     let mut params_str = "";
-    if (!jsonIsNull(params)) {
+    if !jsonIsNull(params) {
         params_str = toJSON(params);
     }
     return ["true", method, params_str];
 }
 
 fn update_state_store(store: StateStore, msg: string[]) -> StateStore {
-    if (msg[MSG_OK] != "true") {
+    if msg[MSG_OK] != "true" {
         return store;
     }
     let method = msg[MSG_METHOD];
     let params_raw = msg[MSG_PARAMS];
 
-    if (method == "resources/subscribe") {
-        if (params_raw != "") {
+    if method == "resources/subscribe" {
+        if params_raw != "" {
             let params = unwrap(parseJSON(params_raw));
             let uri = params["uri"];
-            if (!jsonIsNull(uri)) {
+            if !jsonIsNull(uri) {
                 return state_add_subscription(store, jsonAsString(uri));
             }
         }
@@ -140,7 +140,7 @@ export fn proxy_new() -> HashMap<string, string> {
 
 fn proxy_get_state(p: HashMap<string, string>) -> string {
     let has_key: bool = hashMapHas(p, "state");
-    if (has_key) {
+    if has_key {
         return unwrap(hashMapGet(p, "state"));
     }
     return PROXY_STOPPED;
@@ -153,7 +153,7 @@ fn proxy_set_state(p: HashMap<string, string>, state: string) -> HashMap<string,
 fn proxy_get_queue(p: HashMap<string, string>) -> string[] {
     let mut raw = "";
     let has_key: bool = hashMapHas(p, "queue");
-    if (has_key) {
+    if has_key {
         raw = unwrap(hashMapGet(p, "queue"));
     }
     return split_lines(raw);
@@ -168,7 +168,7 @@ export fn proxy_start(p: HashMap<string, string>) -> HashMap<string, string> {
 }
 
 export fn proxy_handle_client(p: HashMap<string, string>, message: string) -> HashMap<string, string> {
-    if (proxy_get_state(p) != PROXY_RUNNING) {
+    if proxy_get_state(p) != PROXY_RUNNING {
         let items = proxy_get_queue(p);
         let updated = arrayPush(items, message);
         return proxy_set_queue(p, updated);
@@ -177,7 +177,7 @@ export fn proxy_handle_client(p: HashMap<string, string>, message: string) -> Ha
 }
 
 export fn proxy_forward_client(p: HashMap<string, string>, message: string) -> string[] {
-    if (proxy_get_state(p) != PROXY_RUNNING) {
+    if proxy_get_state(p) != PROXY_RUNNING {
         return slice([""], 0, 0);
     }
     return [message];
@@ -185,7 +185,7 @@ export fn proxy_forward_client(p: HashMap<string, string>, message: string) -> s
 
 export fn proxy_handle_child(message: string) -> string[] {
     let kind = classify_chunk(message);
-    if (kind != "jsonrpc") {
+    if kind != "jsonrpc" {
         let empty: string[] = slice([""], 0, 0);
         return empty;
     }

@@ -122,7 +122,7 @@ impl ReplCore {
 
         let mut parser = Parser::new(tokens);
         let (ast, parse_diags) = parser.parse();
-        diagnostics.extend(parse_diags);
+        diagnostics.extend(parse_diags.into_iter().filter(|d| d.is_error()));
 
         if !diagnostics.is_empty() {
             return TypeQueryResult {
@@ -207,7 +207,7 @@ impl ReplCore {
         // Phase 2: Parse
         let mut parser = Parser::new(tokens);
         let (ast, parse_diags) = parser.parse();
-        diagnostics.extend(parse_diags);
+        diagnostics.extend(parse_diags.into_iter().filter(|d| d.is_error()));
 
         if !diagnostics.is_empty() {
             return ReplResult {

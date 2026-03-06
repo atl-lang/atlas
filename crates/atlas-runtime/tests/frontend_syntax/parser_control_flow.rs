@@ -16,17 +16,26 @@ fn parse_source_with_comments(
 // ============================================================================
 
 #[rstest]
-#[case::if_stmt("if (true) { x; }", "if_statement")]
-#[case::if_stmt_no_parens("if true { x; }", "if_statement_no_parens")]
-#[case::if_else("if (true) { x; } else { y; }", "if_else_statement")]
-#[case::if_else_no_parens("if true { x; } else { y; }", "if_else_statement_no_parens")]
-#[case::while_loop("while (true) { x; }", "while_loop")]
-#[case::while_loop_no_parens("while true { x; }", "while_loop_no_parens")]
-#[case::for_loop("for i in [0, 1, 2, 3, 4] { x; }", "for_loop")]
-#[case::for_loop_parens("for (i in [0, 1, 2, 3, 4]) { x; }", "for_loop_parens")]
-fn test_parse_control_flow(#[case] source: &str, #[case] snapshot_name: &str) {
+#[case::if_stmt("if (true) { x; }", "if_statement", 1)]
+#[case::if_stmt_no_parens("if true { x; }", "if_statement_no_parens", 0)]
+#[case::if_else("if (true) { x; } else { y; }", "if_else_statement", 1)]
+#[case::if_else_no_parens("if true { x; } else { y; }", "if_else_statement_no_parens", 0)]
+#[case::while_loop("while (true) { x; }", "while_loop", 1)]
+#[case::while_loop_no_parens("while true { x; }", "while_loop_no_parens", 0)]
+#[case::for_loop("for i in [0, 1, 2, 3, 4] { x; }", "for_loop", 0)]
+#[case::for_loop_parens("for (i in [0, 1, 2, 3, 4]) { x; }", "for_loop_parens", 1)]
+fn test_parse_control_flow(
+    #[case] source: &str,
+    #[case] snapshot_name: &str,
+    #[case] expected_diags: usize,
+) {
     let (program, diagnostics) = parse_source(source);
-    assert_eq!(diagnostics.len(), 0);
+    assert_eq!(
+        diagnostics.len(),
+        expected_diags,
+        "Unexpected diagnostics: {:?}",
+        diagnostics
+    );
     insta::assert_yaml_snapshot!(snapshot_name, program);
 }
 
@@ -36,8 +45,9 @@ fn test_if_parentheses_optional() {
         parse_source("if (x < y) { let z = x; } else { let z = y; }");
     assert_eq!(
         diagnostics_parens.len(),
-        0,
-        "Expected no errors for if with parentheses"
+        1,
+        "Expected exactly 1 warning for if with parentheses, got: {:?}",
+        diagnostics_parens
     );
     let (program_no_parens, diagnostics_no_parens) =
         parse_source("if x < y { let z = x; } else { let z = y; }");

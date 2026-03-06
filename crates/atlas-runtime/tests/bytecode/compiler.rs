@@ -95,7 +95,7 @@ fn test_user_function_recursion() {
     let result = execute_source(
         r#"
         fn factorial(n: number) -> number {
-            if (n <= 1) { return 1; }
+            if n <= 1 { return 1; }
             return n * factorial(n - 1);
         }
         factorial(5);
@@ -209,7 +209,7 @@ fn test_loop_with_compound_assignment() {
         r#"
         let mut sum = 0;
         let mut i = 0;
-        while (i < 5) {
+        while i < 5 {
             sum += i;
             i += 1;
         }

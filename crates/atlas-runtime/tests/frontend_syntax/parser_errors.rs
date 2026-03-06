@@ -50,7 +50,7 @@ fn test_parse_nested_function_in_function() {
 fn test_parse_nested_function_in_if_block() {
     let source = r#"
         fn outer() -> void {
-            if (true) {
+            if true {
                 fn helper() -> void {
                     print("hello");
                 }
@@ -68,7 +68,7 @@ fn test_parse_nested_function_in_while_block() {
     let source = r#"
         fn outer() -> void {
             let mut i: number = 0;
-            while (i < 5) {
+            while i < 5 {
                 fn increment() -> void {
                     i += 1;
                 }

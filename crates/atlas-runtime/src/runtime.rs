@@ -116,8 +116,12 @@ impl Atlas {
         let mut parser = Parser::new(tokens);
         let (ast, parse_diagnostics) = parser.parse();
 
-        if !parse_diagnostics.is_empty() {
-            return Err(parse_diagnostics);
+        let parse_errors: Vec<_> = parse_diagnostics
+            .into_iter()
+            .filter(|d| d.is_error())
+            .collect();
+        if !parse_errors.is_empty() {
+            return Err(parse_errors);
         }
 
         // Bind symbols

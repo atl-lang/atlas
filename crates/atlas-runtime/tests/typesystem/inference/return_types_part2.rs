@@ -206,7 +206,7 @@ fn test_at3050_on_inconsistent_return_types() {
     let diags = errors(
         r#"
 fn confused(x: number) {
-    if (x > 0) {
+    if x > 0 {
         return 1;
     } else {
         return "negative";

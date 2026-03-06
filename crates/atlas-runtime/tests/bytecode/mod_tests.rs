@@ -105,7 +105,7 @@ fn test_bytecode_roundtrip_array_literal() {
 fn test_bytecode_roundtrip_complex_program() {
     let source = r#"
         fn factorial(n: number) -> number {
-            if (n <= 1) {
+            if n <= 1 {
                 return 1;
             } else {
                 return n * factorial(n - 1);

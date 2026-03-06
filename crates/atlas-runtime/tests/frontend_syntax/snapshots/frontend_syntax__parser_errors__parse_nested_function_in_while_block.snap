@@ -55,18 +55,18 @@ items:
                     Identifier:
                       name: i
                       span:
-                        start: 84
-                        end: 85
+                        start: 83
+                        end: 84
                         file: "<input>"
                   right:
                     Literal:
                       - Number: 5
-                      - start: 88
-                        end: 89
+                      - start: 87
+                        end: 88
                         file: "<input>"
                   span:
-                    start: 84
-                    end: 89
+                    start: 83
+                    end: 88
                     file: "<input>"
               body:
                 statements:
@@ -74,16 +74,16 @@ items:
                       name:
                         name: increment
                         span:
-                          start: 112
-                          end: 121
+                          start: 110
+                          end: 119
                           file: "<input>"
                       type_params: []
                       params: []
                       return_type:
                         Named:
                           - void
-                          - start: 127
-                            end: 131
+                          - start: 125
+                            end: 129
                             file: "<input>"
                       return_ownership: ~
                       predicate: ~
@@ -94,28 +94,28 @@ items:
                                 Name:
                                   name: i
                                   span:
-                                    start: 154
-                                    end: 155
+                                    start: 152
+                                    end: 153
                                     file: "<input>"
                               op: AddAssign
                               value:
                                 Literal:
                                   - Number: 1
-                                  - start: 159
-                                    end: 160
+                                  - start: 157
+                                    end: 158
                                     file: "<input>"
                               span:
-                                start: 154
-                                end: 161
+                                start: 152
+                                end: 159
                                 file: "<input>"
                         tail_expr: ~
                         span:
-                          start: 132
-                          end: 179
+                          start: 130
+                          end: 177
                           file: "<input>"
                       span:
-                        start: 109
-                        end: 179
+                        start: 107
+                        end: 177
                         file: "<input>"
                   - Expr:
                       expr:
@@ -124,52 +124,52 @@ items:
                             Identifier:
                               name: increment
                               span:
-                                start: 196
-                                end: 205
+                                start: 194
+                                end: 203
                                 file: "<input>"
                           args: []
                           span:
-                            start: 196
-                            end: 207
+                            start: 194
+                            end: 205
                             file: "<input>"
                       span:
-                        start: 196
-                        end: 208
+                        start: 194
+                        end: 206
                         file: "<input>"
                   - CompoundAssign:
                       target:
                         Name:
                           name: i
                           span:
-                            start: 225
-                            end: 226
+                            start: 223
+                            end: 224
                             file: "<input>"
                       op: AddAssign
                       value:
                         Literal:
                           - Number: 1
-                          - start: 230
-                            end: 231
+                          - start: 228
+                            end: 229
                             file: "<input>"
                       span:
-                        start: 225
-                        end: 232
+                        start: 223
+                        end: 230
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 91
-                  end: 246
+                  start: 89
+                  end: 244
                   file: "<input>"
               span:
                 start: 77
-                end: 246
+                end: 244
                 file: "<input>"
         tail_expr: ~
         span:
           start: 28
-          end: 256
+          end: 254
           file: "<input>"
       span:
         start: 9
-        end: 256
+        end: 254
         file: "<input>"

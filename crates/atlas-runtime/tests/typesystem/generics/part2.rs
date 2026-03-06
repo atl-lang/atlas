@@ -112,7 +112,7 @@ fn test_generic_with_if_statement() {
     let diagnostics = typecheck_source(
         r#"
         fn choose<T>(condition: bool, a: T, b: T) -> T {
-            if (condition) {
+            if condition {
                 return a;
             } else {
                 return b;
@@ -130,7 +130,7 @@ fn test_generic_with_while_loop() {
         r#"
         fn identity<T>(x: T) -> T {
             let mut result = x;
-            while (false) {
+            while false {
                 result = x;
             }
             return result;

@@ -161,13 +161,13 @@ fn test_predicate_syntax_valid(#[case] source: &str) {
 #[case(
     r#"
     fn isStr(x: number) -> bool is x: number { return false; }
-    fn test(x: number | string) -> number { if (isStr(x)) { return 1; } return 2; }
+    fn test(x: number | string) -> number { if isStr(x) { return 1; } return 2; }
     "#
 )]
 #[case(
     r#"
     fn isStr(x: number) -> bool is x: number { return true; }
-    fn test(x: number) -> number { if (isStr(x)) { let _y: string = x; } return 1; }
+    fn test(x: number) -> number { if isStr(x) { let _y: string = x; } return 1; }
     "#
 )]
 fn test_predicate_syntax_errors(#[case] source: &str) {

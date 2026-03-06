@@ -350,7 +350,7 @@ fn test_build_with_disasm_flag() {
 fn test_build_complex_program() {
     let source = r#"
 fn factorial(n: number) -> number {
-    if (n <= 1) {
+    if n <= 1 {
         return 1;
     }
     return n * factorial(n - 1);

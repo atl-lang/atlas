@@ -6,7 +6,7 @@ fn test_bind_nested_function_in_while_block() {
     let source = r#"
         fn outer() -> number {
             let mut i: number = 0;
-            while (i < 1) {
+            while i < 1 {
                 fn helper() -> number {
                     return 42;
                 }

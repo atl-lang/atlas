@@ -9,7 +9,7 @@ let RESULT_ERROR = 3;
 
 fn make_result(ok: bool, message: string, rest: string, error: string) -> string[] {
     let mut flag = "false";
-    if (ok) {
+    if ok {
         flag = "true";
     }
     return [flag, message, rest, error];
@@ -18,11 +18,11 @@ fn make_result(ok: bool, message: string, rest: string, error: string) -> string
 export fn detect_protocol(peek: string) -> string {
     let trimmed: string = trim(peek);
     let is_empty: bool = len(trimmed) == 0;
-    if (is_empty) {
+    if is_empty {
         return PROTOCOL_UNKNOWN;
     }
     let is_lsp: bool = startsWith(trimmed, "Content-Length");
-    if (is_lsp) {
+    if is_lsp {
         return PROTOCOL_LSP;
     }
     return PROTOCOL_NDJSON;
@@ -30,11 +30,11 @@ export fn detect_protocol(peek: string) -> string {
 
 export fn ndjson_frame(payload: string) -> string {
     let is_empty: bool = len(payload) == 0;
-    if (is_empty) {
+    if is_empty {
         return "\n";
     }
     let has_newline: bool = endsWith(payload, "\n");
-    if (has_newline) {
+    if has_newline {
         return payload;
     }
     return payload + "\n";
@@ -47,7 +47,7 @@ export fn lsp_frame(payload: string) -> string {
 
 fn parse_content_length(header_line: string) -> number {
     let has_prefix: bool = startsWith(header_line, "Content-Length:");
-    if (!has_prefix) {
+    if !has_prefix {
         return 0;
     }
     let value = trim(substring(header_line, len("Content-Length:"), len(header_line)));
@@ -57,13 +57,13 @@ fn parse_content_length(header_line: string) -> number {
 export fn read_ndjson(buffer: string) -> string[] {
     let parts: string[] = split(buffer, "\n");
     let empty_parts: bool = len(parts) == 0;
-    if (empty_parts) {
+    if empty_parts {
         return make_result(false, "", "", "empty");
     }
     let message = trim(parts[0]);
     let mut rest = "";
     let has_rest: bool = len(parts) > 1;
-    if (has_rest) {
+    if has_rest {
         rest = join(slice(parts, 1, len(parts)), "\n");
     }
     let has_message: bool = len(message) > 0;
@@ -73,7 +73,7 @@ export fn read_ndjson(buffer: string) -> string[] {
 export fn read_lsp(buffer: string) -> string[] {
     let parts: string[] = split(buffer, "\r\n\r\n");
     let has_header: bool = len(parts) >= 2;
-    if (!has_header) {
+    if !has_header {
         return make_result(false, "", buffer, "missing header");
     }
     let header = parts[0];
@@ -83,18 +83,18 @@ export fn read_lsp(buffer: string) -> string[] {
     let mut content_length: number = 0;
     for line in header_lines {
         let candidate = parse_content_length(line);
-        if (candidate > 0) {
+        if candidate > 0 {
             content_length = candidate;
         }
     }
 
     let missing_length: bool = content_length == 0;
-    if (missing_length) {
+    if missing_length {
         return make_result(false, "", body, "missing content-length");
     }
 
     let incomplete: bool = len(body) < content_length;
-    if (incomplete) {
+    if incomplete {
         return make_result(false, "", body, "incomplete body");
     }
 

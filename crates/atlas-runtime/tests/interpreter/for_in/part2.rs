@@ -135,7 +135,7 @@ fn test_for_in_with_break() {
         fn test() -> void {
             let arr = [1, 2, 3];
             for item in arr {
-                if (item > 2) {
+                if item > 2 {
                     break;
                 }
             }
@@ -152,7 +152,7 @@ fn test_for_in_with_continue() {
         fn test() -> void {
             let arr = [1, 2, 3];
             for item in arr {
-                if (item == 2) {
+                if item == 2 {
                     continue;
                 }
                 print(item);

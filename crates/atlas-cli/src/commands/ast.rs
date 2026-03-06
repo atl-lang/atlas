@@ -28,10 +28,23 @@ pub fn run(file_path: &str) -> Result<()> {
     let mut parser = Parser::new(tokens);
     let (ast, parse_diagnostics) = parser.parse();
 
-    if !parse_diagnostics.is_empty() {
-        // Print diagnostics as JSON
-        for diag in &parse_diagnostics {
-            eprintln!("{}", diag.to_json_string().unwrap());
+    let parse_errors: Vec<_> = parse_diagnostics.iter().filter(|d| d.is_error()).collect();
+    let parse_warnings: Vec<_> = parse_diagnostics
+        .iter()
+        .filter(|d| d.is_warning())
+        .collect();
+
+    for diag in &parse_warnings {
+        if let Ok(json) = diag.to_json_string() {
+            eprintln!("{}", json);
+        }
+    }
+
+    if !parse_errors.is_empty() {
+        for diag in &parse_errors {
+            if let Ok(json) = diag.to_json_string() {
+                eprintln!("{}", json);
+            }
         }
         return Err(anyhow::anyhow!("Parse errors"));
     }

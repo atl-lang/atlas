@@ -172,7 +172,7 @@ fn test_parse_function_with_params() {
 fn test_parse_function_with_complex_body() {
     let source = r#"
 fn factorial(n: number) -> number {
-    if (n <= 1) {
+    if n <= 1 {
         return 1;
     } else {
         return n * factorial(n - 1);

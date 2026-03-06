@@ -108,7 +108,7 @@ fn test_ast_dump_deterministic_simple() {
 fn test_ast_dump_deterministic_complex() {
     let source = r#"
 fn factorial(n: number) -> number {
-    if (n <= 1) {
+    if n <= 1 {
         return 1;
     }
     return n * factorial(n - 1);
@@ -171,7 +171,7 @@ let nested: number[][] = [[1, 2], [3, 4]];
 fn test_ast_dump_deterministic_with_loops() {
     let source = r#"
 let i: number = 0;
-while (i < 10) {
+while i < 10 {
     i = i + 1;
 }
 "#;
@@ -196,7 +196,7 @@ fn test_typecheck_dump_deterministic_simple() {
 fn test_typecheck_dump_deterministic_complex() {
     let source = r#"
 fn factorial(n: number) -> number {
-    if (n <= 1) {
+    if n <= 1 {
         return 1;
     }
     return n * factorial(n - 1);
@@ -253,7 +253,7 @@ fn helper(b: number) -> number {
 
 fn outer(a: number) -> number {
     let x: number = helper(5);
-    if (a > 0) {
+    if a > 0 {
         let y: number = a + x;
         return y;
     }

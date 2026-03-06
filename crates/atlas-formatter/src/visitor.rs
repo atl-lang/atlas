@@ -401,18 +401,18 @@ impl FormatVisitor {
 
     fn visit_if(&mut self, i: &IfStmt) {
         self.write_indent();
-        self.write("if (");
+        self.write("if ");
         self.visit_expr(&i.cond);
-        self.write(") ");
+        self.write(" ");
         self.visit_block(&i.then_block);
         if let Some(ref else_block) = i.else_block {
             self.write(" else ");
             // Check if else block is a single if statement (else-if chain)
             if else_block.statements.len() == 1 {
                 if let Stmt::If(nested_if) = &else_block.statements[0] {
-                    self.write("if (");
+                    self.write("if ");
                     self.visit_expr(&nested_if.cond);
-                    self.write(") ");
+                    self.write(" ");
                     self.visit_block(&nested_if.then_block);
                     if let Some(ref nested_else) = nested_if.else_block {
                         self.write(" else ");
@@ -429,9 +429,9 @@ impl FormatVisitor {
 
     fn visit_while(&mut self, w: &WhileStmt) {
         self.write_indent();
-        self.write("while (");
+        self.write("while ");
         self.visit_expr(&w.cond);
-        self.write(") ");
+        self.write(" ");
         self.visit_block(&w.body);
         self.writeln();
     }

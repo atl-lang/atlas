@@ -13,7 +13,7 @@ fn serialize_cmd(cmd: string[]) -> string {
 }
 
 fn deserialize_cmd(raw: string) -> string[] {
-    if (raw == "") {
+    if raw == "" {
         return slice([""], 0, 0);
     }
     return split(raw, "\n");
@@ -22,10 +22,10 @@ fn deserialize_cmd(raw: string) -> string[] {
 fn get_num(store: HashMap<string, string>, key: string) -> number {
     let mut raw = "";
     let has_key: bool = hashMapHas(store, key);
-    if (has_key) {
+    if has_key {
         raw = unwrap(hashMapGet(store, key));
     }
-    if (raw == "") {
+    if raw == "" {
         return 0;
     }
     return unwrap(parseFloat(raw));
@@ -37,7 +37,7 @@ fn set_num(store: HashMap<string, string>, key: string, value: number) -> HashMa
 
 fn get_str(store: HashMap<string, string>, key: string) -> string {
     let has_key: bool = hashMapHas(store, key);
-    if (has_key) {
+    if has_key {
         return unwrap(hashMapGet(store, key));
     }
     return "";
@@ -49,14 +49,14 @@ fn set_str(store: HashMap<string, string>, key: string, value: string) -> HashMa
 
 fn split_lines(value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
-    if (value != "") {
+    if value != "" {
         parts = split(value, "\n");
     }
     return parts;
 }
 
 fn join_lines(parts: string[]) -> string {
-    if (len(parts) == 0) {
+    if len(parts) == 0 {
         return "";
     }
     return join(parts, "\n");
@@ -76,13 +76,13 @@ export fn new_supervisor(cmd: string[], max_restarts: number, restart_window_sec
 }
 
 export fn supervisor_start(s: HashMap<string, string>) -> HashMap<string, string> {
-    if (get_str(s, "state") == STATE_RUNNING || get_str(s, "state") == STATE_STARTING) {
+    if get_str(s, "state") == STATE_RUNNING || get_str(s, "state") == STATE_STARTING {
         return s;
     }
 
     let cmd_raw = get_str(s, "cmd");
     let cmd = deserialize_cmd(cmd_raw);
-    if (len(cmd) == 0) {
+    if len(cmd) == 0 {
         let mut failed = set_str(s, "state", STATE_FAILED);
         failed = set_str(failed, "last_error", "empty command");
         return failed;
@@ -99,7 +99,7 @@ export fn supervisor_start(s: HashMap<string, string>) -> HashMap<string, string
 
 export fn supervisor_stop(s: HashMap<string, string>) -> HashMap<string, string> {
     let pid = get_num(s, "pid");
-    if (pid == 0) {
+    if pid == 0 {
         return set_str(s, "state", STATE_STOPPED);
     }
     let _ignored = processKill(pid, 15);
@@ -110,7 +110,7 @@ export fn supervisor_stop(s: HashMap<string, string>) -> HashMap<string, string>
 
 export fn supervisor_poll(s: HashMap<string, string>) -> HashMap<string, string> {
     let pid = get_num(s, "pid");
-    if (pid == 0) {
+    if pid == 0 {
         return s;
     }
     let res = processWait(pid);
@@ -122,7 +122,7 @@ export fn supervisor_poll(s: HashMap<string, string>) -> HashMap<string, string>
             return updated;
         },
         Err(msg) => {
-            if (msg != "still running") {
+            if msg != "still running" {
                 let mut updated = set_str(s, "last_error", msg);
                 updated = set_str(updated, "state", STATE_FAILED);
                 return updated;
@@ -139,14 +139,14 @@ export fn supervisor_record_restart(s: HashMap<string, string>) -> HashMap<strin
     let mut recent: string[] = slice([""], 0, 0);
     for t in times {
         let ts = unwrap(parseFloat(t));
-        if ((now - ts) <= get_num(s, "restart_window")) {
+        if now - ts <= get_num(s, "restart_window") {
             recent = arrayPush(recent, t);
         }
     }
     recent = arrayPush(recent, str(now));
     let mut updated = set_str(s, "restart_times", join_lines(recent));
 
-    if (len(recent) > get_num(s, "max_restarts")) {
+    if len(recent) > get_num(s, "max_restarts") {
         updated = set_str(updated, "state", STATE_FAILED);
         updated = set_str(updated, "last_error", "crash loop detected");
     }
@@ -155,7 +155,7 @@ export fn supervisor_record_restart(s: HashMap<string, string>) -> HashMap<strin
 
 export fn supervisor_restart(s: HashMap<string, string>) -> HashMap<string, string> {
     let s2 = supervisor_record_restart(s);
-    if (get_str(s2, "state") == STATE_FAILED) {
+    if get_str(s2, "state") == STATE_FAILED {
         return s2;
     }
     let stopped = supervisor_stop(s2);
@@ -163,7 +163,7 @@ export fn supervisor_restart(s: HashMap<string, string>) -> HashMap<string, stri
 }
 
 export fn supervisor_uptime(s: HashMap<string, string>) -> number {
-    if (get_str(s, "state") != STATE_RUNNING) {
+    if get_str(s, "state") != STATE_RUNNING {
         return 0;
     }
     return now_seconds() - get_num(s, "start_time");

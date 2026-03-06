@@ -201,13 +201,13 @@ fn test_comment_between_functions() {
 
 #[test]
 fn test_comment_before_if() {
-    let result = fmt("// check condition\nif (x > 0) { print(x); }");
+    let result = fmt("// check condition\nif x > 0 { print(x); }");
     assert!(result.contains("// check condition"));
 }
 
 #[test]
 fn test_comment_before_loop() {
-    let result = fmt("// iterate\nwhile (true) { break; }");
+    let result = fmt("// iterate\nwhile true { break; }");
     assert!(result.contains("// iterate"));
 }
 
