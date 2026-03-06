@@ -1,6 +1,60 @@
 use super::common::*;
 
 // ============================================================================
+// H-088: Loop variable reassignment must not collapse type to never
+// ============================================================================
+
+#[test]
+fn test_h088_while_loop_mutable_var_not_never() {
+    // Previously: `bb != 0` narrowed bb to Never inside the loop body
+    // (exclude_from(Number, Number) = Never), breaking arithmetic.
+    let code = r#"
+        fn gcd(a: number, b: number) -> number {
+            let mut aa = a;
+            let mut bb = b;
+            while bb != 0 {
+                let temp = bb;
+                bb = aa % bb;
+                aa = temp;
+            }
+            return aa;
+        }
+        gcd(48, 18)
+    "#;
+    assert_eval_number(code, 6.0);
+}
+
+#[test]
+fn test_h088_while_loop_counter() {
+    // Simple counter — reassigning a loop variable must not produce Never
+    let code = r#"
+        let mut i = 0;
+        let mut sum = 0;
+        while i != 5 {
+            sum = sum + i;
+            i = i + 1;
+        }
+        sum
+    "#;
+    assert_eval_number(code, 10.0);
+}
+
+#[test]
+fn test_h088_while_string_condition_not_narrowed() {
+    // String variable used in != condition must stay string inside loop
+    let code = r#"
+        let mut s = "hello";
+        let mut count = 0;
+        while s != "" {
+            count = count + 1;
+            s = ""
+        }
+        count
+    "#;
+    assert_eval_number(code, 1.0);
+}
+
+// ============================================================================
 // Struct Expressions (compile to HashMap at runtime)
 // ============================================================================
 

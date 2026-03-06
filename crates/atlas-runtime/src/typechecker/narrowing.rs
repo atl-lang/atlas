@@ -185,8 +185,16 @@ impl<'a> TypeChecker<'a> {
             let excluded = exclude_from(&original, target);
             false_map.insert(name.to_string(), excluded);
         } else {
-            let narrowed = exclude_from(&original, target);
-            true_map.insert(name.to_string(), narrowed);
+            // For `x != literal` narrowing: only narrow when it's meaningful.
+            // Excluding a concrete type from itself (e.g. Number from Number for `x != 0`)
+            // produces `Never`, which is wrong — knowing `b != 0` doesn't change `b: number`.
+            // Only null-exclusion narrowing is semantically meaningful (union narrowing is
+            // handled by the Union branch in exclude_from). Skip otherwise.
+            let excluded = exclude_from(&original, target);
+            if excluded != Type::Never {
+                true_map.insert(name.to_string(), excluded);
+            }
+            // false branch (x == literal): narrow to the literal's type
             let included = narrow_to(&original, target);
             false_map.insert(name.to_string(), included);
         }
