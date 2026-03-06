@@ -34,6 +34,13 @@ cmd_go() {
     # Size check only - no auto-abandonment (user may legitimately be away)
     check_db_size
 
+    # Clear stale incremental cache slots (prevents 8.7GB bloat from killed cargo processes)
+    # sccache handles dep caching, so this only affects atlas crates (~10-15s first build)
+    local incremental_dir="$(git rev-parse --show-toplevel 2>/dev/null)/target/debug/incremental"
+    if [[ -d "$incremental_dir" ]]; then
+        rm -rf "$incremental_dir"
+    fi
+
     # Start session
     local sid=$(cmd_start_session "$agent" "$model")
 
