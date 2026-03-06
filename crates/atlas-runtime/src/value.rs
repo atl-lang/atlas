@@ -477,8 +477,10 @@ pub enum Value {
     /// DateTime value (UTC timezone)
     DateTime(Arc<chrono::DateTime<chrono::Utc>>),
     /// HTTP Request configuration
+    #[cfg(feature = "http")]
     HttpRequest(Arc<crate::stdlib::http::HttpRequest>),
     /// HTTP Response data
+    #[cfg(feature = "http")]
     HttpResponse(Arc<crate::stdlib::http::HttpResponse>),
     /// Future value (async computation)
     Future(Arc<crate::async_runtime::AtlasFuture>),
@@ -571,7 +573,9 @@ impl Value {
             Value::Range { .. } => "range",
             Value::Regex(_) => "regex",
             Value::DateTime(_) => "datetime",
+            #[cfg(feature = "http")]
             Value::HttpRequest(_) => "HttpRequest",
+            #[cfg(feature = "http")]
             Value::HttpResponse(_) => "HttpResponse",
             Value::Future(_) => "future",
             Value::TaskHandle(_) => "TaskHandle",
@@ -644,7 +648,9 @@ impl PartialEq for Value {
             ) => a_start == b_start && a_end == b_end && a_inc == b_inc,
             (Value::Regex(a), Value::Regex(b)) => a.as_str() == b.as_str(),
             (Value::DateTime(a), Value::DateTime(b)) => a == b,
+            #[cfg(feature = "http")]
             (Value::HttpRequest(a), Value::HttpRequest(b)) => a.as_ref() == b.as_ref(),
+            #[cfg(feature = "http")]
             (Value::HttpResponse(a), Value::HttpResponse(b)) => a.as_ref() == b.as_ref(),
             (Value::JsonValue(a), Value::JsonValue(b)) => a == b,
             (Value::Option(a), Value::Option(b)) => a == b,
@@ -728,7 +734,9 @@ impl fmt::Display for Value {
             }
             Value::Regex(r) => write!(f, "<Regex /{}/>", r.as_str()),
             Value::DateTime(dt) => write!(f, "{}", dt.to_rfc3339()),
+            #[cfg(feature = "http")]
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
+            #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "<HttpResponse {}>", res.status()),
             Value::Future(future) => write!(f, "{}", future.as_ref()),
             Value::TaskHandle(handle) => write!(f, "<TaskHandle #{}>", handle.lock().unwrap().id()),
@@ -786,7 +794,9 @@ impl fmt::Debug for Value {
             ),
             Value::Regex(r) => write!(f, "Regex(/{}/)", r.as_str()),
             Value::DateTime(dt) => write!(f, "DateTime({})", dt.to_rfc3339()),
+            #[cfg(feature = "http")]
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),
+            #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "HttpResponse({})", res.status()),
             Value::Future(future) => write!(f, "{:?}", future.as_ref()),
             Value::TaskHandle(handle) => write!(f, "TaskHandle(#{})", handle.lock().unwrap().id()),

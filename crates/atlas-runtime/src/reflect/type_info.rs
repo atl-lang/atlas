@@ -278,6 +278,7 @@ impl TypeInfo {
                 alias_target: None,
             },
 
+            #[cfg(feature = "ffi")]
             Type::Extern(extern_type) => TypeInfo {
                 name: format!("extern:{}", extern_type.display_name()),
                 kind: TypeKind::Extern,

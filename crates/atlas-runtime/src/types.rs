@@ -1,5 +1,6 @@
 //! Type system representation
 
+#[cfg(feature = "ffi")]
 use crate::ffi::ExternType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -67,6 +68,7 @@ pub enum Type {
     /// Unknown type (for error recovery)
     Unknown,
     /// Extern type for FFI (Foreign Function Interface)
+    #[cfg(feature = "ffi")]
     Extern(ExternType),
     /// Union type (A | B)
     Union(Vec<Type>),
@@ -312,6 +314,7 @@ impl Type {
             (Type::JsonValue, Type::JsonValue) => true,
 
             // Extern types are assignable if they match
+            #[cfg(feature = "ffi")]
             (Type::Extern(a), Type::Extern(b)) => a == b,
 
             (Type::Structural { members: a }, Type::Structural { members: b }) => {
@@ -403,6 +406,7 @@ impl Type {
             }
             Type::TraitObject { name } => name.clone(),
             Type::Unknown => "?".to_string(),
+            #[cfg(feature = "ffi")]
             Type::Extern(extern_type) => extern_type.display_name().to_string(),
             Type::Union(members) => members
                 .iter()

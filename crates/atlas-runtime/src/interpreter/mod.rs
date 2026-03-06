@@ -16,6 +16,7 @@ mod stmt;
 
 use crate::ast::{Block, ImportDecl, ImportSpecifier, Item, Param, Program};
 use crate::diagnostic::StackTraceFrame;
+#[cfg(feature = "ffi")]
 use crate::ffi::{CallbackHandle, ExternFunction, LibraryLoader};
 use crate::module_loader::ModuleLoader;
 use crate::resolver::ModuleResolver;

@@ -118,9 +118,10 @@ pub fn hex_decode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         })
 }
 
-// ── URL Encoding ─────────────────────────────────────────────────────
+// ── URL Encoding (feature = "http") ──────────────────────────────────
 
 /// urlEncode(data: string) -> string (percent-encoded)
+#[cfg(feature = "http")]
 pub fn url_encode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(super::stdlib_arity_error("urlEncode", 1, args.len(), span));
@@ -130,6 +131,7 @@ pub fn url_encode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 }
 
 /// urlDecode(encoded: string) -> string
+#[cfg(feature = "http")]
 pub fn url_decode(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(super::stdlib_arity_error("urlDecode", 1, args.len(), span));

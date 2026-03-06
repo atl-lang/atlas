@@ -18,6 +18,7 @@ pub mod bytecode;
 pub mod compiler;
 pub mod debugger;
 pub mod diagnostic;
+#[cfg(feature = "ffi")]
 pub mod ffi;
 pub mod interpreter;
 pub mod jit_trait;

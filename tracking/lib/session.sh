@@ -34,11 +34,16 @@ cmd_go() {
     # Size check only - no auto-abandonment (user may legitimately be away)
     check_db_size
 
-    # Clear stale incremental cache slots (prevents 8.7GB bloat from killed cargo processes)
-    # sccache handles dep caching, so this only affects atlas crates (~10-15s first build)
+    # Clear incremental cache ONLY if oversized (killed cargo leaves corrupt slots)
+    # Threshold: 2GB — normal incremental cache is 200-500MB
+    # Do NOT clear unconditionally: that forces full Rust recompile every session (~60s)
     local incremental_dir="$(git rev-parse --show-toplevel 2>/dev/null)/target/debug/incremental"
     if [[ -d "$incremental_dir" ]]; then
-        rm -rf "$incremental_dir"
+        local size_mb
+        size_mb=$(du -sm "$incremental_dir" 2>/dev/null | cut -f1)
+        if [[ "${size_mb:-0}" -gt 2000 ]]; then
+            rm -rf "$incremental_dir"
+        fi
     fi
 
     # Start session

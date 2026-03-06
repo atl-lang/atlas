@@ -4,6 +4,17 @@ version.workspace = true
 edition.workspace = true
 license = "MIT OR Apache-2.0"
 
+# Feature flags:
+#   http  — HTTP client, WebSocket, TLS (pulls reqwest + rustls + aws-lc-sys — C build, slow)
+#   ffi   — Foreign function interface (pulls libffi + libloading — C build, slow)
+#
+# Default: both enabled for production builds (atlas-cli).
+# Omit for dev `cargo check` to avoid the C compile chain.
+[features]
+default = ["http", "ffi"]
+http = ["dep:reqwest", "dep:rustls", "dep:webpki-roots", "dep:tungstenite", "dep:urlencoding"]
+ffi  = ["dep:libloading", "dep:libffi"]
+
 [dependencies]
 thiserror = "2.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -15,16 +26,10 @@ ordered-float = "4.5"
 regex = "1"
 chrono = "0.4"
 chrono-tz = "0.8"
-reqwest = { version = "0.13", features = ["blocking", "json"] }
-urlencoding = "2.1"
 base64 = "0.22"
 tokio = { version = "1.49", features = ["rt", "sync", "time", "fs", "io-util", "macros"] }
 futures-util = "0.3"
 notify = "8.2"
-
-# FFI support (phase-10b/10c)
-libloading = "0.8"
-libffi = "5.1"
 
 # Path manipulation (phase-13a)
 pathdiff = "0.2"
@@ -40,17 +45,23 @@ libc = "0.2"
 # Bytecode checksum
 crc32fast = "1.4"
 
-# Crypto (systems-level stdlib)
+# Crypto (systems-level stdlib — pure Rust, fast)
 sha2 = "0.10"
 hmac = "0.12"
 aes-gcm = "0.10"
 blake3 = "1"
 hex = "0.4"
 
-# Networking (systems-level stdlib)
-rustls = "0.23"
-webpki-roots = "0.26"
-tungstenite = "0.26"
+# HTTP / networking (C build chain — feature-gated)
+reqwest        = { version = "0.13", features = ["blocking", "json"], optional = true }
+urlencoding    = { version = "2.1", optional = true }
+rustls         = { version = "0.23", optional = true }
+webpki-roots   = { version = "0.26", optional = true }
+tungstenite    = { version = "0.26", optional = true }
+
+# FFI (C build chain — feature-gated)
+libloading = { version = "0.8", optional = true }
+libffi     = { version = "5.1", optional = true }
 
 [dev-dependencies]
 insta.workspace = true

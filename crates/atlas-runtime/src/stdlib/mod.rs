@@ -1,6 +1,7 @@
 //! Standard library functions
 
 pub mod array;
+#[cfg(feature = "http")]
 pub mod async_io;
 pub mod async_primitives;
 pub mod collections;
@@ -8,6 +9,7 @@ pub mod compression;
 pub mod datetime;
 pub mod fs;
 pub mod future;
+#[cfg(feature = "http")]
 pub mod http;
 pub mod io;
 pub mod json;
@@ -23,8 +25,10 @@ pub mod types;
 // Systems-level stdlib modules
 pub mod crypto;
 pub mod encoding;
+#[cfg(feature = "http")]
 pub mod net;
 pub mod sync;
+#[cfg(feature = "http")]
 pub mod websocket;
 
 use crate::security::SecurityContext;
@@ -937,68 +941,71 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // HTTP functions
+        // HTTP functions (feature = "http") — gated: pulls reqwest + aws-lc-sys
         // ====================================================================
-        m.insert("httpRequest", |a, s, _, _| http::http_request(a, s));
-        m.insert("httpRequestGet", |a, s, _, _| http::http_request_get(a, s));
-        m.insert("httpRequestPost", |a, s, _, _| {
-            http::http_request_post(a, s)
-        });
-        m.insert("httpRequestPut", |a, s, _, _| http::http_request_put(a, s));
-        m.insert("httpRequestDelete", |a, s, _, _| {
-            http::http_request_delete(a, s)
-        });
-        m.insert("httpRequestPatch", |a, s, _, _| {
-            http::http_request_patch(a, s)
-        });
-        m.insert("httpSetHeader", |a, s, _, _| http::http_set_header(a, s));
-        m.insert("httpSetBody", |a, s, _, _| http::http_set_body(a, s));
-        m.insert("httpSetTimeout", |a, s, _, _| http::http_set_timeout(a, s));
-        m.insert("httpSetQuery", |a, s, _, _| http::http_set_query(a, s));
-        m.insert("httpSetFollowRedirects", |a, s, _, _| {
-            http::http_set_follow_redirects(a, s)
-        });
-        m.insert("httpSetMaxRedirects", |a, s, _, _| {
-            http::http_set_max_redirects(a, s)
-        });
-        m.insert("httpSetUserAgent", |a, s, _, _| {
-            http::http_set_user_agent(a, s)
-        });
-        m.insert("httpSetAuth", |a, s, _, _| http::http_set_auth(a, s));
-        m.insert("httpStatus", |a, s, _, _| http::http_status(a, s));
-        m.insert("httpBody", |a, s, _, _| http::http_body(a, s));
-        m.insert("httpHeader", |a, s, _, _| http::http_header(a, s));
-        m.insert("httpHeaders", |a, s, _, _| http::http_headers(a, s));
-        m.insert("httpUrl", |a, s, _, _| http::http_url(a, s));
-        m.insert("httpIsSuccess", |a, s, _, _| http::http_is_success(a, s));
-        m.insert("httpStatusText", |a, s, _, _| http::http_status_text(a, s));
-        m.insert("httpContentType", |a, s, _, _| {
-            http::http_content_type(a, s)
-        });
-        m.insert("httpContentLength", |a, s, _, _| {
-            http::http_content_length(a, s)
-        });
-        m.insert("httpIsRedirect", |a, s, _, _| http::http_is_redirect(a, s));
-        m.insert("httpIsClientError", |a, s, _, _| {
-            http::http_is_client_error(a, s)
-        });
-        m.insert("httpIsServerError", |a, s, _, _| {
-            http::http_is_server_error(a, s)
-        });
-        m.insert("httpSend", |a, s, sec, _| http::http_send(a, s, sec));
-        m.insert("httpGet", |a, s, sec, _| http::http_get(a, s, sec));
-        m.insert("httpPost", |a, s, sec, _| http::http_post(a, s, sec));
-        m.insert("httpPut", |a, s, sec, _| http::http_put(a, s, sec));
-        m.insert("httpDelete", |a, s, sec, _| http::http_delete(a, s, sec));
-        m.insert("httpPatch", |a, s, sec, _| http::http_patch(a, s, sec));
-        m.insert("httpPostJson", |a, s, sec, _| {
-            http::http_post_json(a, s, sec)
-        });
-        m.insert("httpParseJson", |a, s, _, _| http::http_parse_json(a, s));
-        m.insert("httpGetJson", |a, s, sec, _| http::http_get_json(a, s, sec));
-        m.insert("httpCheckPermission", |a, s, sec, _| {
-            http::http_check_permission(a, s, sec)
-        });
+        #[cfg(feature = "http")]
+        {
+            m.insert("httpRequest", |a, s, _, _| http::http_request(a, s));
+            m.insert("httpRequestGet", |a, s, _, _| http::http_request_get(a, s));
+            m.insert("httpRequestPost", |a, s, _, _| {
+                http::http_request_post(a, s)
+            });
+            m.insert("httpRequestPut", |a, s, _, _| http::http_request_put(a, s));
+            m.insert("httpRequestDelete", |a, s, _, _| {
+                http::http_request_delete(a, s)
+            });
+            m.insert("httpRequestPatch", |a, s, _, _| {
+                http::http_request_patch(a, s)
+            });
+            m.insert("httpSetHeader", |a, s, _, _| http::http_set_header(a, s));
+            m.insert("httpSetBody", |a, s, _, _| http::http_set_body(a, s));
+            m.insert("httpSetTimeout", |a, s, _, _| http::http_set_timeout(a, s));
+            m.insert("httpSetQuery", |a, s, _, _| http::http_set_query(a, s));
+            m.insert("httpSetFollowRedirects", |a, s, _, _| {
+                http::http_set_follow_redirects(a, s)
+            });
+            m.insert("httpSetMaxRedirects", |a, s, _, _| {
+                http::http_set_max_redirects(a, s)
+            });
+            m.insert("httpSetUserAgent", |a, s, _, _| {
+                http::http_set_user_agent(a, s)
+            });
+            m.insert("httpSetAuth", |a, s, _, _| http::http_set_auth(a, s));
+            m.insert("httpStatus", |a, s, _, _| http::http_status(a, s));
+            m.insert("httpBody", |a, s, _, _| http::http_body(a, s));
+            m.insert("httpHeader", |a, s, _, _| http::http_header(a, s));
+            m.insert("httpHeaders", |a, s, _, _| http::http_headers(a, s));
+            m.insert("httpUrl", |a, s, _, _| http::http_url(a, s));
+            m.insert("httpIsSuccess", |a, s, _, _| http::http_is_success(a, s));
+            m.insert("httpStatusText", |a, s, _, _| http::http_status_text(a, s));
+            m.insert("httpContentType", |a, s, _, _| {
+                http::http_content_type(a, s)
+            });
+            m.insert("httpContentLength", |a, s, _, _| {
+                http::http_content_length(a, s)
+            });
+            m.insert("httpIsRedirect", |a, s, _, _| http::http_is_redirect(a, s));
+            m.insert("httpIsClientError", |a, s, _, _| {
+                http::http_is_client_error(a, s)
+            });
+            m.insert("httpIsServerError", |a, s, _, _| {
+                http::http_is_server_error(a, s)
+            });
+            m.insert("httpSend", |a, s, sec, _| http::http_send(a, s, sec));
+            m.insert("httpGet", |a, s, sec, _| http::http_get(a, s, sec));
+            m.insert("httpPost", |a, s, sec, _| http::http_post(a, s, sec));
+            m.insert("httpPut", |a, s, sec, _| http::http_put(a, s, sec));
+            m.insert("httpDelete", |a, s, sec, _| http::http_delete(a, s, sec));
+            m.insert("httpPatch", |a, s, sec, _| http::http_patch(a, s, sec));
+            m.insert("httpPostJson", |a, s, sec, _| {
+                http::http_post_json(a, s, sec)
+            });
+            m.insert("httpParseJson", |a, s, _, _| http::http_parse_json(a, s));
+            m.insert("httpGetJson", |a, s, sec, _| http::http_get_json(a, s, sec));
+            m.insert("httpCheckPermission", |a, s, sec, _| {
+                http::http_check_permission(a, s, sec)
+            });
+        }
 
         // ====================================================================
         // Future/async functions
@@ -1021,29 +1028,32 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("futureRace", |a, s, _, _| future::future_race_fn(a, s));
 
         // ====================================================================
-        // Async I/O functions
+        // Async I/O functions (feature = "http") — HTTP async ops need reqwest
         // ====================================================================
-        m.insert("readFileAsync", |a, s, sc, _| {
-            async_io::read_file_async(a, s, sc)
-        });
-        m.insert("writeFileAsync", |a, s, sc, _| {
-            async_io::write_file_async(a, s, sc)
-        });
-        m.insert("appendFileAsync", |a, s, sc, _| {
-            async_io::append_file_async(a, s, sc)
-        });
-        m.insert("httpSendAsync", |a, s, _, _| {
-            async_io::http_send_async(a, s)
-        });
-        m.insert("httpGetAsync", |a, s, _, _| async_io::http_get_async(a, s));
-        m.insert("httpPostAsync", |a, s, _, _| {
-            async_io::http_post_async(a, s)
-        });
-        m.insert("httpPutAsync", |a, s, _, _| async_io::http_put_async(a, s));
-        m.insert("httpDeleteAsync", |a, s, _, _| {
-            async_io::http_delete_async(a, s)
-        });
-        m.insert("await", |a, s, _, _| async_io::await_future(a, s));
+        #[cfg(feature = "http")]
+        {
+            m.insert("readFileAsync", |a, s, sc, _| {
+                async_io::read_file_async(a, s, sc)
+            });
+            m.insert("writeFileAsync", |a, s, sc, _| {
+                async_io::write_file_async(a, s, sc)
+            });
+            m.insert("appendFileAsync", |a, s, sc, _| {
+                async_io::append_file_async(a, s, sc)
+            });
+            m.insert("httpSendAsync", |a, s, _, _| {
+                async_io::http_send_async(a, s)
+            });
+            m.insert("httpGetAsync", |a, s, _, _| async_io::http_get_async(a, s));
+            m.insert("httpPostAsync", |a, s, _, _| {
+                async_io::http_post_async(a, s)
+            });
+            m.insert("httpPutAsync", |a, s, _, _| async_io::http_put_async(a, s));
+            m.insert("httpDeleteAsync", |a, s, _, _| {
+                async_io::http_delete_async(a, s)
+            });
+            m.insert("await", |a, s, _, _| async_io::await_future(a, s));
+        }
 
         // ====================================================================
         // Async primitives - tasks
@@ -1696,37 +1706,42 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
         m.insert("hexEncode", |a, s, _, _| encoding::hex_encode(a, s));
         m.insert("hexDecode", |a, s, _, _| encoding::hex_decode(a, s));
+        #[cfg(feature = "http")]
         m.insert("urlEncode", |a, s, _, _| encoding::url_encode(a, s));
+        #[cfg(feature = "http")]
         m.insert("urlDecode", |a, s, _, _| encoding::url_decode(a, s));
 
         // ====================================================================
-        // Networking (TCP/UDP/TLS)
+        // Networking TCP/UDP/TLS (feature = "http") — TLS needs rustls/aws-lc-sys
         // ====================================================================
-        m.insert("tcpConnect", |a, s, sec, _| net::tcp_connect(a, s, sec));
-        m.insert("tcpWrite", |a, s, _, _| net::tcp_write(a, s));
-        m.insert("tcpRead", |a, s, _, _| net::tcp_read(a, s));
-        m.insert("tcpReadBytes", |a, s, _, _| net::tcp_read_bytes(a, s));
-        m.insert("tcpClose", |a, s, _, _| net::tcp_close(a, s));
-        m.insert("tcpSetTimeout", |a, s, _, _| net::tcp_set_timeout(a, s));
-        m.insert("tcpSetNodelay", |a, s, _, _| net::tcp_set_nodelay(a, s));
-        m.insert("tcpLocalAddr", |a, s, _, _| net::tcp_local_addr(a, s));
-        m.insert("tcpRemoteAddr", |a, s, _, _| net::tcp_remote_addr(a, s));
-        m.insert("tcpListen", |a, s, sec, _| net::tcp_listen(a, s, sec));
-        m.insert("tcpAccept", |a, s, _, _| net::tcp_accept(a, s));
-        m.insert("tcpListenerAddr", |a, s, _, _| net::tcp_listener_addr(a, s));
-        m.insert("tcpListenerClose", |a, s, _, _| {
-            net::tcp_listener_close(a, s)
-        });
-        m.insert("udpBind", |a, s, sec, _| net::udp_bind(a, s, sec));
-        m.insert("udpSend", |a, s, _, _| net::udp_send(a, s));
-        m.insert("udpReceive", |a, s, _, _| net::udp_receive(a, s));
-        m.insert("udpSetTimeout", |a, s, _, _| net::udp_set_timeout(a, s));
-        m.insert("udpClose", |a, s, _, _| net::udp_close(a, s));
-        m.insert("udpLocalAddr", |a, s, _, _| net::udp_local_addr(a, s));
-        m.insert("tlsConnect", |a, s, sec, _| net::tls_connect(a, s, sec));
-        m.insert("tlsWrite", |a, s, _, _| net::tls_write(a, s));
-        m.insert("tlsRead", |a, s, _, _| net::tls_read(a, s));
-        m.insert("tlsClose", |a, s, _, _| net::tls_close(a, s));
+        #[cfg(feature = "http")]
+        {
+            m.insert("tcpConnect", |a, s, sec, _| net::tcp_connect(a, s, sec));
+            m.insert("tcpWrite", |a, s, _, _| net::tcp_write(a, s));
+            m.insert("tcpRead", |a, s, _, _| net::tcp_read(a, s));
+            m.insert("tcpReadBytes", |a, s, _, _| net::tcp_read_bytes(a, s));
+            m.insert("tcpClose", |a, s, _, _| net::tcp_close(a, s));
+            m.insert("tcpSetTimeout", |a, s, _, _| net::tcp_set_timeout(a, s));
+            m.insert("tcpSetNodelay", |a, s, _, _| net::tcp_set_nodelay(a, s));
+            m.insert("tcpLocalAddr", |a, s, _, _| net::tcp_local_addr(a, s));
+            m.insert("tcpRemoteAddr", |a, s, _, _| net::tcp_remote_addr(a, s));
+            m.insert("tcpListen", |a, s, sec, _| net::tcp_listen(a, s, sec));
+            m.insert("tcpAccept", |a, s, _, _| net::tcp_accept(a, s));
+            m.insert("tcpListenerAddr", |a, s, _, _| net::tcp_listener_addr(a, s));
+            m.insert("tcpListenerClose", |a, s, _, _| {
+                net::tcp_listener_close(a, s)
+            });
+            m.insert("udpBind", |a, s, sec, _| net::udp_bind(a, s, sec));
+            m.insert("udpSend", |a, s, _, _| net::udp_send(a, s));
+            m.insert("udpReceive", |a, s, _, _| net::udp_receive(a, s));
+            m.insert("udpSetTimeout", |a, s, _, _| net::udp_set_timeout(a, s));
+            m.insert("udpClose", |a, s, _, _| net::udp_close(a, s));
+            m.insert("udpLocalAddr", |a, s, _, _| net::udp_local_addr(a, s));
+            m.insert("tlsConnect", |a, s, sec, _| net::tls_connect(a, s, sec));
+            m.insert("tlsWrite", |a, s, _, _| net::tls_write(a, s));
+            m.insert("tlsRead", |a, s, _, _| net::tls_read(a, s));
+            m.insert("tlsClose", |a, s, _, _| net::tls_close(a, s));
+        }
 
         // ====================================================================
         // Synchronization primitives
@@ -1759,14 +1774,17 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // WebSocket
+        // WebSocket (feature = "http") — needs tungstenite + TLS
         // ====================================================================
-        m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
-        m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
-        m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
-        m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
-        m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
-        m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
+        #[cfg(feature = "http")]
+        {
+            m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
+            m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
+            m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
+            m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
+            m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
+            m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
+        }
 
         // ====================================================================
         // snake_case aliases (H-082: canonical names)

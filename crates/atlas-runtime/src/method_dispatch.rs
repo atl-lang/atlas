@@ -87,7 +87,7 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         "reverse" => "arrayReverse",
         // Non-mutating — return new value, receiver unchanged
         "sort" => "arraySort",
-        "len" => "len",
+        "len" | "length" => "len",
         "includes" => "arrayIncludes",
         "indexOf" => "arrayIndexOf",
         "lastIndexOf" => "arrayLastIndexOf",

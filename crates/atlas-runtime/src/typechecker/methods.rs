@@ -183,7 +183,7 @@ impl MethodTable {
             // Mutating pair methods — return extracted element
             "pop" | "shift" => (vec![], elem_norm.clone()),
             // Non-mutating methods — return new value
-            "len" => (vec![], Type::Number),
+            "len" | "length" => (vec![], Type::Number),
             "includes" => (vec![elem_norm.clone()], Type::Bool),
             "indexOf" | "lastIndexOf" => (vec![elem_norm.clone()], Type::Number),
             "slice" => (vec![Type::Number, Type::Number], array_of_elem.clone()),
