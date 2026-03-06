@@ -1,10 +1,10 @@
 import { default_registry_json } from "./defaults";
 
 export fn load_registry(path: string) -> Result<json, string> {
-    if (!fileExists(path)) {
+    if (!file_exists(path)) {
         return Ok(default_registry_json());
     }
-    let contents_result = readFile(path);
+    let contents_result = read_file(path);
     match contents_result {
         Ok(contents) => {
             if (trim(contents) == "") {
@@ -23,7 +23,7 @@ export fn load_registry(path: string) -> Result<json, string> {
 export fn save_registry(path: string, payload: json) -> Result<null, string> {
     let text_result = stringifyJson(payload);
     match text_result {
-        Ok(text) => { return writeFile(path, text); },
+        Ok(text) => { return write_file(path, text); },
         Err(err) => { return Err(err); }
     };
 }

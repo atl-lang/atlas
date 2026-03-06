@@ -16,7 +16,7 @@ pub(super) fn eval(code: &str) -> Value {
 #[rstest]
 #[case(
     r#"
-    fn isStr(x: number | string) -> bool is x: string { return isString(x); }
+    fn isStr(x: number | string) -> bool is x: string { return is_string(x); }
     fn test(x: number | string) -> number {
         if (isStr(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
@@ -25,7 +25,7 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isNum(x: number | string) -> bool is x: number { return isNumber(x); }
+    fn isNum(x: number | string) -> bool is x: number { return is_number(x); }
     fn test(x: number | string) -> number {
         if (isNum(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -34,9 +34,9 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isBoolish(x: bool | null) -> bool is x: bool { return isBool(x); }
+    fn is_boolish(x: bool | null) -> bool is x: bool { return is_bool(x); }
     fn test(x: bool | null) -> bool {
-        if (isBoolish(x)) { let _y: bool = x; return _y; }
+        if (is_boolish(x)) { let _y: bool = x; return _y; }
         else { return false; }
     }
     "#
@@ -45,7 +45,7 @@ pub(super) fn eval(code: &str) -> Value {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn hasName(x: WithName | WithId) -> bool is x: WithName { return hasField(x, "name"); }
+    fn hasName(x: WithName | WithId) -> bool is x: WithName { return has_field(x, "name"); }
     fn test(x: WithName | WithId) -> number {
         if (hasName(x)) { let _y: WithName = x; return 1; }
         else { let _y: WithId = x; return 2; }
@@ -56,7 +56,7 @@ pub(super) fn eval(code: &str) -> Value {
     r#"
     type WithLen = { len: () -> number };
     type WithId = { id: number };
-    fn hasLen(x: WithLen | WithId) -> bool is x: WithLen { return hasMethod(x, "len"); }
+    fn hasLen(x: WithLen | WithId) -> bool is x: WithLen { return has_method(x, "len"); }
     fn test(x: WithLen | WithId) -> number {
         if (hasLen(x)) { let _y: WithLen = x; return 1; }
         else { let _y: WithId = x; return 2; }
@@ -67,7 +67,7 @@ pub(super) fn eval(code: &str) -> Value {
     r#"
     type Ok = { tag: string, value: number };
     type Err = { tag: number, message: string };
-    fn isOk(x: Ok | Err) -> bool is x: Ok { return hasTag(x, "ok"); }
+    fn isOk(x: Ok | Err) -> bool is x: Ok { return has_tag(x, "ok"); }
     fn test(x: Ok | Err) -> number {
         if (isOk(x)) { let _y: Ok = x; return 1; }
         else { let _y: Err = x; return 2; }
@@ -76,16 +76,16 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isNullish(x: null | string) -> bool is x: null { return isNull(x); }
+    fn is_nullish(x: null | string) -> bool is x: null { return is_null(x); }
     fn test(x: null | string) -> number {
-        if (isNullish(x)) { let _y: null = x; return 1; }
+        if (is_nullish(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
 )]
 #[case(
     r#"
-    fn isObj(x: json | string) -> bool is x: json { return isObject(x); }
+    fn isObj(x: json | string) -> bool is x: json { return is_object(x); }
     fn test(x: json | string) -> number {
         if (isObj(x)) { let _y: json = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -94,7 +94,7 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isArr(x: number[] | string) -> bool is x: number[] { return isArray(x); }
+    fn isArr(x: number[] | string) -> bool is x: number[] { return is_array(x); }
     fn test(x: number[] | string) -> number {
         if (isArr(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -103,7 +103,7 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isFunc(x: ((number) -> number) | string) -> bool is x: (number) -> number { return isFunction(x); }
+    fn isFunc(x: ((number) -> number) | string) -> bool is x: (number) -> number { return is_function(x); }
     fn test(x: ((number) -> number) | string) -> number {
         if (isFunc(x)) { let _y: (number) -> number = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -183,7 +183,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (isString(x)) { let _y: string = x; return 1; }
+        if (is_string(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
     }
     "#
@@ -191,7 +191,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (isNumber(x)) { let _y: number = x; return 1; }
+        if (is_number(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -199,7 +199,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: bool | null) -> number {
-        if (isBool(x)) { let _y: bool = x; return 1; }
+        if (is_bool(x)) { let _y: bool = x; return 1; }
         else { let _y: null = x; return 2; }
     }
     "#
@@ -207,7 +207,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: null | string) -> number {
-        if (isNull(x)) { let _y: null = x; return 1; }
+        if (is_null(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -215,7 +215,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number[] | string) -> number {
-        if (isArray(x)) { let _y: number[] = x; return 1; }
+        if (is_array(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -224,7 +224,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
     r#"
     fn f(x: number) -> number { return x; }
     fn test(x: ((number) -> number) | string) -> number {
-        if (isFunction(x)) { let _y: (number) -> number = x; return 1; }
+        if (is_function(x)) { let _y: (number) -> number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -232,7 +232,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: json | string) -> number {
-        if (isObject(x)) { let _y: json = x; return 1; }
+        if (is_object(x)) { let _y: json = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -240,7 +240,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (!isString(x)) { let _y: number = x; return 1; }
+        if (!is_string(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -248,7 +248,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (isString(x) || isNumber(x)) { let _y: number | string = x; return 1; }
+        if (is_string(x) || is_number(x)) { let _y: number | string = x; return 1; }
         return 2;
     }
     "#
@@ -256,7 +256,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (isString(x) && isType(x, "string")) { let _y: string = x; return 1; }
+        if (is_string(x) && is_type(x, "string")) { let _y: string = x; return 1; }
         return 2;
     }
     "#
@@ -264,7 +264,7 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 #[case(
     r#"
     fn test(x: number | string) -> number {
-        if (isType(x, "number")) { let _y: number = x; return 1; }
+        if (is_type(x, "number")) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -281,7 +281,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 #[rstest]
 #[case(
     r#"
-    fn isText(x: number | string) -> bool is x: string { return isString(x); }
+    fn isText(x: number | string) -> bool is x: string { return is_string(x); }
     fn test(x: number | string) -> number {
         if (isText(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
@@ -292,7 +292,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn isNamed(x: WithName | WithId) -> bool is x: WithName { return hasField(x, "name"); }
+    fn isNamed(x: WithName | WithId) -> bool is x: WithName { return has_field(x, "name"); }
     fn test(x: WithName | WithId) -> number {
         if (isNamed(x)) { let _y: WithName = x; return 1; }
         else { let _y: WithId = x; return 2; }
@@ -303,7 +303,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
     r#"
     type WithLen = { len: () -> number };
     type WithId = { id: number };
-    fn isLen(x: WithLen | WithId) -> bool is x: WithLen { return hasMethod(x, "len"); }
+    fn isLen(x: WithLen | WithId) -> bool is x: WithLen { return has_method(x, "len"); }
     fn test(x: WithLen | WithId) -> number {
         if (isLen(x)) { let _y: WithLen = x; return 1; }
         else { let _y: WithId = x; return 2; }
@@ -312,7 +312,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isNum(x: number | string) -> bool is x: number { return isNumber(x); }
+    fn isNum(x: number | string) -> bool is x: number { return is_number(x); }
     fn test(x: number | string) -> number {
         if (isNum(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -321,7 +321,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isArr(x: number[] | string) -> bool is x: number[] { return isArray(x); }
+    fn isArr(x: number[] | string) -> bool is x: number[] { return is_array(x); }
     fn test(x: number[] | string) -> number {
         if (isArr(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -330,9 +330,9 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isNullish(x: null | string) -> bool is x: null { return isNull(x); }
+    fn is_nullish(x: null | string) -> bool is x: null { return is_null(x); }
     fn test(x: null | string) -> number {
-        if (isNullish(x)) { let _y: null = x; return 1; }
+        if (is_nullish(x)) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -341,7 +341,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
     r#"
     type Ok = { tag: string, value: number };
     type Err = { tag: number, message: string };
-    fn isOk(x: Ok | Err) -> bool is x: Ok { return hasTag(x, "ok"); }
+    fn isOk(x: Ok | Err) -> bool is x: Ok { return has_tag(x, "ok"); }
     fn test(x: Ok | Err) -> number {
         if (isOk(x)) { let _y: Ok = x; return 1; }
         else { let _y: Err = x; return 2; }
@@ -350,7 +350,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isObj(x: json | string) -> bool is x: json { return isObject(x); }
+    fn isObj(x: json | string) -> bool is x: json { return is_object(x); }
     fn test(x: json | string) -> number {
         if (isObj(x)) { let _y: json = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -359,7 +359,7 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isFunc(x: ((number) -> number) | string) -> bool is x: (number) -> number { return isFunction(x); }
+    fn isFunc(x: ((number) -> number) | string) -> bool is x: (number) -> number { return is_function(x); }
     fn test(x: ((number) -> number) | string) -> number {
         if (isFunc(x)) { let _y: (number) -> number = x; return 1; }
         else { let _y: string = x; return 2; }
@@ -368,9 +368,9 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isTypeString(x: number | string) -> bool is x: string { return isType(x, "string"); }
+    fn is_typeString(x: number | string) -> bool is x: string { return is_type(x, "string"); }
     fn test(x: number | string) -> number {
-        if (isTypeString(x)) { let _y: string = x; return 1; }
+        if (is_typeString(x)) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
     }
     "#

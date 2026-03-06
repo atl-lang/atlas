@@ -4,7 +4,7 @@ use std::fs;
 use tempfile::TempDir;
 
 // ============================================================================
-// VM - Additional writeFile tests
+// VM - Additional write_file tests
 // ============================================================================
 
 #[test]
@@ -12,7 +12,7 @@ fn vm_test_write_file_empty() {
     let temp_dir = TempDir::new().unwrap();
     let test_file = temp_dir.path().join("empty_write.txt");
 
-    let code = format!(r#"writeFile("{}", "");"#, path_for_atlas(&test_file));
+    let code = format!(r#"write_file("{}", "");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -27,7 +27,7 @@ fn vm_test_write_file_unicode() {
     let content = "Hello 世界 🌍";
 
     let code = format!(
-        r#"writeFile("{}", "{}");"#,
+        r#"write_file("{}", "{}");"#,
         path_for_atlas(&test_file),
         content
     );
@@ -44,7 +44,7 @@ fn vm_test_write_file_newlines() {
     let test_file = temp_dir.path().join("newlines.txt");
 
     let code = format!(
-        r#"writeFile("{}", "line1\nline2\n");"#,
+        r#"write_file("{}", "line1\nline2\n");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -60,7 +60,10 @@ fn vm_test_write_file_creates_file() {
     let test_file = temp_dir.path().join("new_file.txt");
     assert!(!test_file.exists());
 
-    let code = format!(r#"writeFile("{}", "content");"#, path_for_atlas(&test_file));
+    let code = format!(
+        r#"write_file("{}", "content");"#,
+        path_for_atlas(&test_file)
+    );
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -68,7 +71,7 @@ fn vm_test_write_file_creates_file() {
 }
 
 // ============================================================================
-// VM - Additional appendFile tests
+// VM - Additional append_file tests
 // ============================================================================
 
 #[test]
@@ -78,7 +81,7 @@ fn vm_test_append_file_multiple() {
     fs::write(&test_file, "start\n").unwrap();
 
     let code = format!(
-        r#"appendFile("{}", "line1\n"); appendFile("{}", "line2\n");"#,
+        r#"append_file("{}", "line1\n"); append_file("{}", "line2\n");"#,
         path_for_atlas(&test_file),
         path_for_atlas(&test_file)
     );
@@ -95,7 +98,7 @@ fn vm_test_append_file_empty_content() {
     let test_file = temp_dir.path().join("append_empty.txt");
     fs::write(&test_file, "base").unwrap();
 
-    let code = format!(r#"appendFile("{}", "");"#, path_for_atlas(&test_file));
+    let code = format!(r#"append_file("{}", "");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -111,7 +114,7 @@ fn vm_test_append_file_permission_denied() {
     let test_file = temp_dir.path().join("append_denied.txt");
 
     let code = format!(
-        r#"appendFile("{}", "content");"#,
+        r#"append_file("{}", "content");"#,
         path_for_atlas(&test_file)
     );
 
@@ -134,7 +137,7 @@ fn vm_test_append_file_permission_denied() {
 }
 
 // ============================================================================
-// VM - Additional fileExists tests
+// VM - Additional file_exists tests
 // ============================================================================
 
 #[test]
@@ -144,7 +147,7 @@ fn vm_test_file_exists_directory() {
     fs::create_dir(&test_dir).unwrap();
 
     let code = format!(
-        r#"let result = fileExists("{}"); result;"#,
+        r#"let result = file_exists("{}"); result;"#,
         path_for_atlas(&test_dir)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -162,7 +165,7 @@ fn vm_test_file_exists_no_permission_check() {
     fs::write(&test_file, "").unwrap();
 
     let code = format!(
-        r#"let x = fileExists("{}"); x;"#,
+        r#"let x = file_exists("{}"); x;"#,
         path_for_atlas(&test_file)
     );
 
@@ -189,7 +192,7 @@ fn vm_test_file_exists_no_permission_check() {
 }
 
 // ============================================================================
-// VM - Additional readDir tests
+// VM - Additional read_dir tests
 // ============================================================================
 
 #[test]
@@ -198,7 +201,7 @@ fn vm_test_read_dir_empty() {
     let empty_dir = temp_dir.path().join("empty");
     fs::create_dir(&empty_dir).unwrap();
 
-    let code = format!(r#"let x = readDir("{}"); x;"#, path_for_atlas(&empty_dir));
+    let code = format!(r#"let x = read_dir("{}"); x;"#, path_for_atlas(&empty_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -216,7 +219,7 @@ fn vm_test_read_dir_mixed_contents() {
     fs::create_dir(temp_dir.path().join("subdir")).unwrap();
 
     let code = format!(
-        r#"let x = readDir("{}"); x;"#,
+        r#"let x = read_dir("{}"); x;"#,
         path_for_atlas(temp_dir.path())
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -237,7 +240,7 @@ fn vm_test_read_dir_permission_denied() {
     let test_dir = temp_dir.path().join("dir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"readDir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"read_dir("{}");"#, path_for_atlas(&test_dir));
 
     let mut lexer = Lexer::new(code);
     let (tokens, _) = lexer.tokenize();
@@ -258,7 +261,7 @@ fn vm_test_read_dir_permission_denied() {
 }
 
 // ============================================================================
-// VM - Additional createDir tests
+// VM - Additional create_dir tests
 // ============================================================================
 
 #[test]
@@ -267,7 +270,7 @@ fn vm_test_create_dir_already_exists() {
     let test_dir = temp_dir.path().join("already_exists");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"createDir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -280,7 +283,7 @@ fn vm_test_create_dir_permission_denied() {
     let temp_dir = TempDir::new().unwrap();
     let new_dir = temp_dir.path().join("denied");
 
-    let code = format!(r#"createDir("{}");"#, path_for_atlas(&new_dir));
+    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&new_dir));
 
     let mut lexer = Lexer::new(code);
     let (tokens, _) = lexer.tokenize();
@@ -301,7 +304,7 @@ fn vm_test_create_dir_permission_denied() {
 }
 
 // ============================================================================
-// VM - Additional removeFile tests
+// VM - Additional remove_file tests
 // ============================================================================
 
 #[test]
@@ -310,7 +313,7 @@ fn vm_test_remove_file_is_directory() {
     let test_dir = temp_dir.path().join("is_dir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"removeFile("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -324,7 +327,7 @@ fn vm_test_remove_file_permission_denied() {
     let test_file = temp_dir.path().join("remove_denied.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"removeFile("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&test_file));
 
     let mut lexer = Lexer::new(code);
     let (tokens, _) = lexer.tokenize();
@@ -345,7 +348,7 @@ fn vm_test_remove_file_permission_denied() {
 }
 
 // ============================================================================
-// VM - Additional removeDir tests
+// VM - Additional remove_dir tests
 // ============================================================================
 
 #[test]
@@ -353,7 +356,7 @@ fn vm_test_remove_dir_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("not_found");
 
-    let code = format!(r#"removeDir("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -365,7 +368,7 @@ fn vm_test_remove_dir_is_file() {
     let test_file = temp_dir.path().join("is_file.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"removeDir("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -379,7 +382,7 @@ fn vm_test_remove_dir_permission_denied() {
     let test_dir = temp_dir.path().join("remove_denied");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"removeDir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_dir));
 
     let mut lexer = Lexer::new(code);
     let (tokens, _) = lexer.tokenize();
@@ -400,7 +403,7 @@ fn vm_test_remove_dir_permission_denied() {
 }
 
 // ============================================================================
-// VM - Additional fileInfo tests
+// VM - Additional file_info tests
 // ============================================================================
 
 #[test]
@@ -409,7 +412,7 @@ fn vm_test_file_info_size_check() {
     let test_file = temp_dir.path().join("info_fields.txt");
     fs::write(&test_file, "12345").unwrap();
 
-    let code = format!(r#"let x = fileInfo("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = file_info("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -424,7 +427,7 @@ fn vm_test_file_info_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("not_found.txt");
 
-    let code = format!(r#"fileInfo("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file_info("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -438,7 +441,7 @@ fn vm_test_file_info_permission_denied() {
     let test_file = temp_dir.path().join("info_denied.txt");
     fs::write(&test_file, "test").unwrap();
 
-    let code = format!(r#"fileInfo("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_info("{}");"#, path_for_atlas(&test_file));
 
     let mut lexer = Lexer::new(code);
     let (tokens, _) = lexer.tokenize();
@@ -465,7 +468,7 @@ fn vm_test_file_info_permission_denied() {
 #[test]
 fn vm_test_path_join_many_parts() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let x = pathJoin("a", "b", "c", "d", "e"); x;"#;
+    let code = r#"let x = path_join("a", "b", "c", "d", "e"); x;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -480,7 +483,7 @@ fn vm_test_path_join_many_parts() {
 #[test]
 fn vm_test_path_join_empty_parts() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let x = pathJoin("", "a", ""); x;"#;
+    let code = r#"let x = path_join("", "a", ""); x;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -489,7 +492,7 @@ fn vm_test_path_join_empty_parts() {
 #[test]
 fn vm_test_path_join_absolute_path() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let x = pathJoin("/absolute", "path"); x;"#;
+    let code = r#"let x = path_join("/absolute", "path"); x;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());

@@ -1,11 +1,11 @@
-let hm = hashMapNew();
-hashMapPut(hm, "name", "Alice");
-hashMapPut(hm, "age", "30");
-hashMapPut(hm, "city", "Paris");
+let hm = hash_map_new();
+hash_map_put(hm, "name", "Alice");
+hash_map_put(hm, "age", "30");
+hash_map_put(hm, "city", "Paris");
 
-print(hashMapSize(hm));
-print(hashMapHas(hm, "name"));
-print(hashMapHas(hm, "missing"));
+print(hash_map_size(hm));
+print(hash_map_has(hm, "name"));
+print(hash_map_has(hm, "missing"));
 
-let val: string = unwrap(hashMapGet(hm, "name"));
+let val: string = unwrap(hash_map_get(hm, "name"));
 print(val);

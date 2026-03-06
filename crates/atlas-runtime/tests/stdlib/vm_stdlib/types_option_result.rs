@@ -8,7 +8,7 @@ use super::*;
 fn test_typeof_guards_match() {
     let code = r#"
     let val: string = "hello";
-    typeof(val) == "string" && isString(val)
+    typeof(val) == "string" && is_string(val)
 "#;
     assert_eval_bool(code, true);
 }
@@ -18,7 +18,7 @@ fn test_type_conversion_chain() {
     let code = r#"
     let num: number = 42;
     let numStr: string = toString(num);
-    unwrap(toNumber(numStr))
+    unwrap(to_number(numStr))
 "#;
     assert_eval_number(code, 42.0);
 }
@@ -26,7 +26,7 @@ fn test_type_conversion_chain() {
 #[test]
 fn test_parse_int_then_to_string() {
     let code = r#"
-    let parsed: number = unwrap(parseInt("FF", 16));
+    let parsed: number = unwrap(parse_int("FF", 16));
     toString(parsed)
 "#;
     assert_eval_string(code, "255");
@@ -36,14 +36,14 @@ fn test_parse_int_then_to_string() {
 fn test_type_guards_all_false_for_null() {
     let code = r#"
     let val = null;
-    !isString(val) && !isNumber(val) && !isBool(val) && !isArray(val) && !isFunction(val)
+    !is_string(val) && !is_number(val) && !is_bool(val) && !is_array(val) && !is_function(val)
 "#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_type_guards_only_null_true() {
-    let code = r#"isNull(null)"#;
+    let code = r#"is_null(null)"#;
     assert_eval_bool(code, true);
 }
 

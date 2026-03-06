@@ -1,7 +1,7 @@
 //! Interpreter tests for array intrinsics (callback-based)
 //!
-//! Tests: map, filter, reduce, forEach, find, findIndex,  
-//!        flatMap, some, every, sort, sortBy
+//! Tests: map, filter, reduce, for_each, find, find_index,  
+//!        flat_map, some, every, sort, sort_by
 
 use crate::stdlib::{eval_err, eval_ok};
 use atlas_runtime::value::Value;
@@ -282,7 +282,7 @@ fn test_map_then_reduce() {
 }
 
 // ============================================================================
-// find() / findIndex() tests
+// find() / find_index() tests
 // ============================================================================
 
 #[test]
@@ -360,7 +360,7 @@ fn test_find_index() {
             return x > 10;
         }
         let arr = [1, 5, 15, 20];
-        findIndex(arr, isLarge);
+        find_index(arr, isLarge);
     "#);
     assert_eq!(result, Value::Number(2.0));
 }
@@ -372,7 +372,7 @@ fn test_find_index_empty() {
             return x == x;
         }
         let arr: number[] = [];
-        findIndex(arr, alwaysTrue);
+        find_index(arr, alwaysTrue);
     "#);
     assert_eq!(result, Value::Number(-1.0));
 }
@@ -384,13 +384,13 @@ fn test_find_index_not_found() {
             return x < 0;
         }
         let arr = [1, 2, 3];
-        findIndex(arr, isNegative);
+        find_index(arr, isNegative);
     "#);
     assert_eq!(result, Value::Number(-1.0));
 }
 
 // ============================================================================
-// flatMap() tests
+// flat_map() tests
 // ============================================================================
 
 #[test]
@@ -400,7 +400,7 @@ fn test_flat_map() {
             return [x, x];
         }
         let arr = [1, 2, 3];
-        flatMap(arr, duplicate);
+        flat_map(arr, duplicate);
     "#);
     
     match result {
@@ -421,7 +421,7 @@ fn test_flat_map_empty() {
             return [x, x];
         }
         let arr: number[] = [];
-        flatMap(arr, duplicate);
+        flat_map(arr, duplicate);
     "#);
     
     match result {
@@ -446,7 +446,7 @@ fn test_flat_map_empty_results() {
             }
         }
         let arr = [1, 2, 3];
-        flatMap(arr, makeEmpty);
+        flat_map(arr, makeEmpty);
     "#);
     
     match result {
@@ -594,7 +594,7 @@ fn test_every_short_circuit() {
 }
 
 // ============================================================================
-// sort() / sortBy() tests
+// sort() / sort_by() tests
 // ============================================================================
 
 #[test]
@@ -730,7 +730,7 @@ fn test_sort_by_numeric_key() {
             }
         }
         let arr = [3, -5, 2, -1];
-        sortBy(arr, getAbs);
+        sort_by(arr, getAbs);
     "#);
     
     match result {
@@ -751,7 +751,7 @@ fn test_sort_by_empty() {
             return x;
         }
         let arr: number[] = [];
-        sortBy(arr, identity);
+        sort_by(arr, identity);
     "#);
     
     match result {
@@ -769,7 +769,7 @@ fn test_sort_by_single() {
             return x;
         }
         let arr = [99];
-        sortBy(arr, identity);
+        sort_by(arr, identity);
     "#);
     
     match result {

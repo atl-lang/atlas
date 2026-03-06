@@ -1320,4 +1320,67 @@ fn register_process_functions(table: &mut SymbolTable) {
             }),
         },
     );
+
+    // H-082: Register snake_case aliases for all camelCase builtins
+    let aliases: &[(&str, &str)] = &[
+        ("forEach", "for_each"),
+        ("findIndex", "find_index"),
+        ("flatMap", "flat_map"),
+        ("sortBy", "sort_by"),
+        ("indexOf", "index_of"),
+        ("lastIndexOf", "last_index_of"),
+        ("toUpperCase", "to_upper_case"),
+        ("toLowerCase", "to_lower_case"),
+        ("charAt", "char_at"),
+        ("padStart", "pad_start"),
+        ("padEnd", "pad_end"),
+        ("startsWith", "starts_with"),
+        ("endsWith", "ends_with"),
+        ("trimStart", "trim_start"),
+        ("trimEnd", "trim_end"),
+        ("arrayIndexOf", "array_index_of"),
+        ("arrayLastIndexOf", "array_last_index_of"),
+        ("arrayIncludes", "array_includes"),
+        ("parseJSON", "parse_json"),
+        ("toJSON", "to_json"),
+        ("isValidJSON", "is_valid_json"),
+        ("prettifyJSON", "prettify_json"),
+        ("minifyJSON", "minify_json"),
+        ("jsonIsNull", "json_is_null"),
+        ("isString", "is_string"),
+        ("isNumber", "is_number"),
+        ("isBool", "is_bool"),
+        ("isNull", "is_null"),
+        ("isArray", "is_array"),
+        ("isFunction", "is_function"),
+        ("isObject", "is_object"),
+        ("isType", "is_type"),
+        ("hasField", "has_field"),
+        ("hasMethod", "has_method"),
+        ("hasTag", "has_tag"),
+        ("toString", "to_string_conv"),
+        ("toNumber", "to_number"),
+        ("toBool", "to_bool"),
+        ("parseInt", "parse_int"),
+        ("parseFloat", "parse_float"),
+        ("spawnProcess", "spawn_process"),
+        ("processStdin", "process_stdin"),
+        ("processStdout", "process_stdout"),
+        ("processStderr", "process_stderr"),
+        ("processWait", "process_wait"),
+        ("processKill", "process_kill"),
+        ("processIsRunning", "process_is_running"),
+        ("processOutput", "process_output"),
+    ];
+    for &(camel, snake) in aliases {
+        if let Some(symbol) = table.functions.get(camel).cloned() {
+            table.functions.insert(
+                snake.to_string(),
+                Symbol {
+                    name: snake.to_string(),
+                    ..symbol
+                },
+            );
+        }
+    }
 }

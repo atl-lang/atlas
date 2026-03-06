@@ -251,12 +251,12 @@ fn test_function_array_element() {
 // and through the stdlib API directly.
 //
 // Test categories:
-// - Basic assertions (assert, assertFalse)
-// - Equality assertions (assertEqual, assertNotEqual)
-// - Result assertions (assertOk, assertErr)
-// - Option assertions (assertSome, assertNone)
-// - Collection assertions (assertContains, assertEmpty, assertLength)
-// - Error assertions (assertThrows, assertNoThrow via NativeFunction)
+// - Basic assertions (assert, assert_false)
+// - Equality assertions (assert_equal, assert_not_equal)
+// - Result assertions (assert_ok, assert_err)
+// - Option assertions (assert_some, assert_none)
+// - Collection assertions (assert_contains, assert_empty, assert_length)
+// - Error assertions (assert_throws, assert_no_throw via NativeFunction)
 // - Stdlib registration (is_builtin, call_builtin)
 // - Interpreter/VM parity
 

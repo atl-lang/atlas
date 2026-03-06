@@ -12,7 +12,7 @@ fn test_log_extract_ip_addresses() {
             return parts[0];
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let line1: string = lines[0];
         extractIP(line1)
@@ -35,10 +35,10 @@ fn test_log_group_by_category() {
     let code = format!(
         r#"
         fn isDatabase(line: string) -> bool {{
-            return startsWith(line, "DB:");
+            return starts_with(line, "DB:");
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let dbLogs: string[] = filter(dataLines, isDatabase);
@@ -61,12 +61,12 @@ fn test_log_parse_structured() {
 
     let code = format!(
         r#"
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let line: string = lines[0];
         let parts: string[] = split(line, " ");
         let levelPart: string = parts[0];
-        startsWith(levelPart, "level=error")
+        starts_with(levelPart, "level=error")
     "#,
         path_for_atlas(&log_path)
     );
@@ -88,7 +88,7 @@ fn test_log_count_warnings() {
             return total;
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         reduce(dataLines, countWarnings, 0.0)
@@ -114,7 +114,7 @@ fn test_log_find_first_error() {
             return includes(line, "ERROR");
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let firstError: string = unwrap(find(dataLines, isError));
@@ -133,7 +133,7 @@ fn test_log_reverse_chronological() {
 
     let code = format!(
         r#"
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let reversed: string[] = reverse(dataLines);
@@ -160,7 +160,7 @@ fn test_log_summary_report() {
         fn isWarn(line: string) -> bool {{ return includes(line, "WARN"); }}
         fn isInfo(line: string) -> bool {{ return includes(line, "INFO"); }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
 
@@ -188,7 +188,7 @@ fn test_log_filter_time_range() {
             return time == "08" || time == "09";
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let morning: string[] = filter(dataLines, isMorning);
@@ -211,7 +211,7 @@ fn test_log_extract_http_codes() {
             return includes(line, "404");
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let notFound: string[] = filter(dataLines, is404);
@@ -234,10 +234,10 @@ fn test_log_parse_json_lines() {
 
     let code = format!(
         r#"
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let line1: string = lines[0];
-        let json: json = parseJSON(line1)?;
+        let json: json = parse_json(line1)?;
         let level: string = json["level"].as_string();
         level
     "#,
@@ -256,11 +256,11 @@ fn test_log_aggregate_metrics() {
         r#"
         fn sumLatency(total: number, line: string) -> number {{
             let parts: string[] = split(line, ":");
-            let value: number = unwrap(parseFloat(parts[1]));
+            let value: number = unwrap(parse_float(parts[1]));
             return total + value;
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let total: number = reduce(dataLines, sumLatency, 0.0);
@@ -284,7 +284,7 @@ fn test_log_detect_anomalies() {
             return line == "ANOMALY";
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let anomalies: string[] = filter(dataLines, isAnomaly);
@@ -303,7 +303,7 @@ fn test_log_combine_multiline() {
 
     let code = format!(
         r#"
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let combined: string = lines[0] + " " + lines[1] + " " + lines[2];
         includes(combined, "Start") && includes(combined, "Continue") && includes(combined, "End")
@@ -330,14 +330,14 @@ fn test_log_write_filtered() {
             return includes(line, "ERROR");
         }}
 
-        let logs: string = readFile("{}");
+        let logs: string = read_file("{}");
         let lines: string[] = split(logs, "\n");
         let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
         let errors: string[] = filter(dataLines, isError);
         let output: string = join(errors, "\n") + "\n";
-        writeFile("{}", output);
+        write_file("{}", output);
 
-        let result: string = readFile("{}");
+        let result: string = read_file("{}");
         let resultLines: string[] = split(result, "\n");
         len(resultLines) - 1.0
     "#,

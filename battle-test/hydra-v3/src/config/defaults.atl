@@ -139,7 +139,7 @@ fn default_server_struct() -> ServerConfig {
         args: [],
         cwd: "",
         env_file: "",
-        environment: hashMapNew(),
+        environment: hash_map_new(),
         watch: default_watch_struct(),
         behavior: default_behavior_struct(),
         injectable_tools: default_injectable_struct(),
@@ -152,12 +152,12 @@ fn default_registry_struct() -> Registry {
     return record {
         version: "1.0",
         defaults: default_defaults_struct(),
-        servers: hashMapNew()
+        servers: hash_map_new()
     };
 }
 
 export fn default_registry_json() -> json {
-    return toJSON(default_registry_struct());
+    return to_json(default_registry_struct());
 }
 
 export fn default_registry_text() -> string {
@@ -167,7 +167,7 @@ export fn default_registry_text() -> string {
 }
 
 export fn default_server_config_json() -> json {
-    return toJSON(default_server_struct());
+    return to_json(default_server_struct());
 }
 
 export fn default_server_command_args(command_line: string) -> string[] {

@@ -13,12 +13,12 @@ fn test_csv_multi_column_filter() {
         r#"
         fn isHighValueInStock(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let price: number = unwrap(parseFloat(fields[1]));
-            let stock: number = unwrap(parseFloat(fields[2]));
+            let price: number = unwrap(parse_float(fields[1]));
+            let stock: number = unwrap(parse_float(fields[2]));
             return price >= 1.0 && stock >= 100.0;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -45,14 +45,14 @@ fn test_csv_column_sum_with_condition() {
         fn sumNorth(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
             let region: string = fields[0];
-            let amount: number = unwrap(parseFloat(fields[1]));
+            let amount: number = unwrap(parse_float(fields[1]));
             if (region == "North") {{
                 return total + amount;
             }}
             return total;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -80,7 +80,7 @@ fn test_csv_row_count_by_group() {
             return fields[0] == "ERROR";
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -105,7 +105,7 @@ fn test_csv_transform_and_join() {
             return fields[0] + " " + fields[1];
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -127,12 +127,12 @@ fn test_csv_percentage_calculation() {
         r#"
         fn calcPercentage(row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let sold: number = unwrap(parseFloat(fields[1]));
-            let total: number = unwrap(parseFloat(fields[2]));
+            let sold: number = unwrap(parse_float(fields[1]));
+            let total: number = unwrap(parse_float(fields[2]));
             return (sold / total) * 100.0;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
@@ -158,7 +158,7 @@ fn test_csv_trim_whitespace() {
             return name + "," + value;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
@@ -183,11 +183,11 @@ fn test_csv_case_insensitive_filter() {
         r#"
         fn isFruit(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let kind: string = toLowerCase(fields[1]);
+            let kind: string = to_lower_case(fields[1]);
             return kind == "fruit";
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -215,7 +215,7 @@ fn test_csv_contains_filter() {
             return includes(row, "Error");
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -238,12 +238,12 @@ fn test_csv_numeric_sort_data() {
         fn compareById(a: string, b: string) -> number {{
             let fieldsA: string[] = split(a, ",");
             let fieldsB: string[] = split(b, ",");
-            let idA: number = unwrap(parseFloat(fieldsA[0]));
-            let idB: number = unwrap(parseFloat(fieldsB[0]));
+            let idA: number = unwrap(parse_float(fieldsA[0]));
+            let idB: number = unwrap(parse_float(fieldsB[0]));
             return idA - idB;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -265,12 +265,12 @@ fn test_csv_append_row() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let newRow: string = "Bob,90";
         let updated: string = csv + newRow + "\n";
-        writeFile("{}", updated);
+        write_file("{}", updated);
 
-        let result: string = readFile("{}");
+        let result: string = read_file("{}");
         let lines: string[] = split(result, "\n");
         len(lines) - 1.0
     "#,
@@ -294,7 +294,7 @@ fn test_csv_validate_column_count() {
             return len(fields) == 3.0;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -323,15 +323,15 @@ fn test_csv_extract_unique_values() {
             return fields[1];
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
         let categories: string[] = map(dataLines, getCategory);
         // Count unique by checking first occurrence
-        let hasFruit: bool = arrayIncludes(categories, "fruit");
-        let hasVeggie: bool = arrayIncludes(categories, "veggie");
-        let hasMeat: bool = arrayIncludes(categories, "meat");
+        let hasFruit: bool = array_includes(categories, "fruit");
+        let hasVeggie: bool = array_includes(categories, "veggie");
+        let hasMeat: bool = array_includes(categories, "meat");
 
         str(hasFruit) + "," + str(hasVeggie) + "," + str(hasMeat)
     "#,
@@ -350,7 +350,7 @@ fn test_csv_conditional_transformation() {
         r#"
         fn addGrade(row: string) -> string {{
             let fields: string[] = split(row, ",");
-            let score: number = unwrap(parseFloat(fields[1]));
+            let score: number = unwrap(parse_float(fields[1]));
             let mut grade: string = "F";
             if (score >= 90.0) {{
                 grade = "A";
@@ -364,7 +364,7 @@ fn test_csv_conditional_transformation() {
             return fields[0] + "," + fields[1] + "," + grade;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
@@ -385,14 +385,14 @@ fn test_csv_min_value() {
         r#"
         fn findMin(current: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let temp: number = unwrap(parseFloat(fields[1]));
+            let temp: number = unwrap(parse_float(fields[1]));
             if (current == 0.0) {{
                 return temp;
             }}
             return min(current, temp);
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -411,7 +411,7 @@ fn test_csv_concatenate_fields() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
         let fields: string[] = split(row1, ",");

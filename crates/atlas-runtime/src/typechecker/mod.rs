@@ -2176,7 +2176,7 @@ impl<'a> TypeChecker<'a> {
         let Expr::Identifier(id) = call.callee.as_ref() else {
             return false;
         };
-        id.name == "hashMapNew"
+        id.name == "hashMapNew" || id.name == "hash_map_new"
     }
 
     /// Returns `true` if the given type implements `Copy` (value semantics).

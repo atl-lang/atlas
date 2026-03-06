@@ -18,7 +18,7 @@ fn classify_enum(chunk: string) -> ChunkType {
                     return ChunkType::JsonRpc;
                 }
             }
-            if (isArray(value)) {
+            if (is_array(value)) {
                 return ChunkType::JsonRpc;
             }
             return ChunkType::Pollution;

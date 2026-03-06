@@ -39,13 +39,13 @@ fn test_router_pattern_matching() -> void {
 
     let req = hydra.requestNew(hydra.methodGet(), "/users/42", "");
     let res1 = hydra.routerHandle(router2, req).response;
-    assertEqual(res1.body, "user-42");
+    assert_equal(res1.body, "user-42");
 
     let req2 = hydra.requestNew(hydra.methodGet(), "/assets/js/app.js", "");
     let res2 = hydra.routerHandle(router2, req2).response;
-    assertEqual(res2.body, "asset:js/app.js");
+    assert_equal(res2.body, "asset:js/app.js");
 
-    assertEqual(hydra.routerRouteCount(router2), 2);
+    assert_equal(hydra.routerRouteCount(router2), 2);
 }
 
 // ============================================================================
@@ -81,7 +81,7 @@ fn test_middleware_order() -> void {
     let res = hydra.routerHandle(router4, req).response;
 
     // mw1 wraps mw2 wraps handler => A + (B + handler)
-    assertEqual(res.body, "ABhandler");
+    assert_equal(res.body, "ABhandler");
 }
 
 // ============================================================================
@@ -97,19 +97,19 @@ fn test_request_response_basics() -> void {
         _ => ""
     };
 
-    assertEqual(query, "3");
+    assert_equal(query, "3");
 
     let res = hydra.responseJson(hydra.statusCreated(), record { ok: true, count: 3 });
-    let header_opt = hashMapGet(res.headers, "Content-Type");
-    let header = assertSome(header_opt);
-    assertContains([header], "application/json; charset=utf-8");
+    let header_opt = hash_map_get(res.headers, "Content-Type");
+    let header = assert_some(header_opt);
+    assert_contains([header], "application/json; charset=utf-8");
 
     let status_line = hydra.renderStatusLine(res.status);
-    assertEqual(status_line, "HTTP/1.1 201 Created");
+    assert_equal(status_line, "HTTP/1.1 201 Created");
 
     // Generic + trait bound rendering
-    assertEqual(hydra.renderAll(["A", "B"]), "AB");
-    assertEqual(hydra.renderAll([1, 2, 3]), "123");
+    assert_equal(hydra.renderAll(["A", "B"]), "AB");
+    assert_equal(hydra.renderAll([1, 2, 3]), "123");
 }
 
 // ============================================================================
@@ -118,11 +118,11 @@ fn test_request_response_basics() -> void {
 
 fn test_static_file_serving() -> void {
     let temp_dir = fsTmpDir();
-    let static_root = pathJoin(temp_dir, "hydra_static");
+    let static_root = path_join(temp_dir, "hydra_static");
     fsMkdirp(static_root);
 
-    let file_path = pathJoin(static_root, "hello.txt");
-    writeFile(file_path, "Hello Hydra");
+    let file_path = path_join(static_root, "hello.txt");
+    write_file(file_path, "Hello Hydra");
 
     let router = hydra.routerNew();
     let router2 = hydra.routerAdd(
@@ -135,8 +135,8 @@ fn test_static_file_serving() -> void {
     let req = hydra.requestNew(hydra.methodGet(), "/static/hello.txt", "");
     let res = hydra.routerHandle(router2, req).response;
 
-    assertEqual(res.body, "Hello Hydra");
-    assertEqual(hydra.statusCode(res.status), 200);
+    assert_equal(res.body, "Hello Hydra");
+    assert_equal(hydra.statusCode(res.status), 200);
 }
 
 // ============================================================================
@@ -146,20 +146,20 @@ fn test_static_file_serving() -> void {
 fn test_template_rendering() -> void {
     let template = "Hello {{name}}
 Welcome to {{site}}";
-    let data = hashMapNew();
-    hashMapPut(data, "name", "Ada");
-    hashMapPut(data, "site", "Hydra");
+    let data = hash_map_new();
+    hash_map_put(data, "name", "Ada");
+    hash_map_put(data, "site", "Hydra");
 
     let rendered = hydra.renderTemplateString(template, data);
-    assertContains([rendered], "Hello Ada");
-    assertContains([rendered], "Welcome to Hydra");
+    assert_contains([rendered], "Hello Ada");
+    assert_contains([rendered], "Welcome to Hydra");
 
     let temp_dir = fsTmpDir();
-    let file_path = pathJoin(temp_dir, "template.txt");
-    writeFile(file_path, "Hi {{name}}");
+    let file_path = path_join(temp_dir, "template.txt");
+    write_file(file_path, "Hi {{name}}");
 
     let rendered_file = hydra.renderTemplateFile(file_path, data);
-    assertEqual(rendered_file, "Hi Ada");
+    assert_equal(rendered_file, "Hi Ada");
 }
 
 // ============================================================================
@@ -174,14 +174,14 @@ fn test_sessions_persist() -> void {
         hydra.methodGet(),
         "/visit",
         fn(req: hydra.Request) -> hydra.Response {
-            let count_opt = hashMapGet(req.session, "count");
+            let count_opt = hash_map_get(req.session, "count");
             let mut count = match count_opt {
                 Some(value) => value,
                 None => 0,
                 _ => 0
             };
             count += 1;
-            hashMapPut(req.session, "count", count);
+            hash_map_put(req.session, "count", count);
             return hydra.responseText(hydra.statusOk(), str(count));
         }
     );
@@ -191,11 +191,11 @@ fn test_sessions_persist() -> void {
     let res1 = hydra.routerHandle(router2, req1);
     let response1 = res1.response;
 
-    assertEqual(response1.body, "1");
+    assert_equal(response1.body, "1");
 
-    let cookie_opt = hashMapGet(response1.headers, "Set-Cookie");
-    let cookie = assertSome(cookie_opt);
-    assertContains([cookie], "sid=");
+    let cookie_opt = hash_map_get(response1.headers, "Set-Cookie");
+    let cookie = assert_some(cookie_opt);
+    assert_contains([cookie], "sid=");
 
     // Second request with same session id
     let session_id = substring(cookie, 4, len(cookie));
@@ -207,7 +207,7 @@ fn test_sessions_persist() -> void {
 
     let res2 = hydra.routerHandle(res1.router, req2);
     let response2 = res2.response;
-    assertEqual(response2.body, "2");
+    assert_equal(response2.body, "2");
 }
 
 // ============================================================================
@@ -216,29 +216,29 @@ fn test_sessions_persist() -> void {
 
 fn test_assertion_coverage() -> void {
     assert(true, "basic assert");
-    assertFalse(false, "basic assertFalse");
+    assert_false(false, "basic assert_false");
 
-    assertEqual(2 + 2, 4);
-    assertNotEqual("hydra", "python");
+    assert_equal(2 + 2, 4);
+    assert_not_equal("hydra", "python");
 
     let ok_res: Result<number, string> = Ok(5);
     let err_res: Result<number, string> = Err("bad");
-    assertEqual(assertOk(ok_res), 5);
-    assertEqual(assertErr(err_res), "bad");
+    assert_equal(assert_ok(ok_res), 5);
+    assert_equal(assert_err(err_res), "bad");
 
     let some_opt: Option<string> = Some("present");
     let none_opt: Option<string> = None();
-    assertEqual(assertSome(some_opt), "present");
-    assertNone(none_opt);
+    assert_equal(assert_some(some_opt), "present");
+    assert_none(none_opt);
 
-    assertContains(["a", "b", "c"], "b");
+    assert_contains(["a", "b", "c"], "b");
     let empty_list: string[] = [];
-    assertEmpty(empty_list);
-    assertLength([1, 2, 3], 3);
+    assert_empty(empty_list);
+    assert_length([1, 2, 3], 3);
 
     // Error assertions accept Atlas callables and stdlib/native functions.
-    assertThrows(dateTimeFromTimestamp);
-    assertNoThrow(dateTimeNow);
+    assert_throws(dateTimeFromTimestamp);
+    assert_no_throw(dateTimeNow);
 }
 
 // ============================================================================
@@ -251,5 +251,5 @@ fn will_throw() -> void {
 }
 
 fn test_exception_handling() -> void {
-    assertThrows(will_throw);
+    assert_throws(will_throw);
 }

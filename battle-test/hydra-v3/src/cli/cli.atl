@@ -31,7 +31,7 @@ export fn execute(args: string[], registry_path: string, state_dir: string) -> R
         "discover" => {
             let discoveries = scan_all();
             let resolved = resolve_conflicts(discoveries);
-            return Ok(unwrap(stringifyJson(toJSON(resolved))));
+            return Ok(unwrap(stringifyJson(to_json(resolved))));
         },
         "list" => {
             let reg = load_registry(registry_path);
@@ -51,14 +51,14 @@ export fn execute(args: string[], registry_path: string, state_dir: string) -> R
                 Ok(registry) => {
                     let mut servers = registry["servers"];
                     if (servers == null) {
-                        servers = toJSON(record {});
+                        servers = to_json(record {});
                     }
                     if (jsonHas(servers, name)) {
                         return Err("server already exists");
                     }
                     let mut server = default_server_config_json();
                     server["command"] = command;
-                    server["args"] = toJSON(default_server_command_args(command));
+                    server["args"] = to_json(default_server_command_args(command));
                     servers[name] = server;
                     registry["servers"] = servers;
                     let _ignored = save_registry(registry_path, registry);

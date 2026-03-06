@@ -33,10 +33,10 @@ use pretty_assertions::assert_eq;
 #[case::concat_empty("\"\" + \"test\"", "test")]
 #[case::substring("substring(\"hello\", 1, 4)", "ell")]
 #[case::substring_full("substring(\"hello\", 0, 5)", "hello")]
-#[case::charat("charAt(\"hello\", 1)", "Some(e)")]
-#[case::charat_first("charAt(\"hello\", 0)", "Some(h)")]
-#[case::indexof("indexOf(\"hello\", \"l\")", "Some(2)")]
-#[case::indexof_not_found("indexOf(\"hello\", \"x\")", "None")]
+#[case::charat("char_at(\"hello\", 1)", "Some(e)")]
+#[case::charat_first("char_at(\"hello\", 0)", "Some(h)")]
+#[case::indexof("index_of(\"hello\", \"l\")", "Some(2)")]
+#[case::indexof_not_found("index_of(\"hello\", \"x\")", "None")]
 #[case::split("join(split(\"a,b,c\", \",\"), \"|\")", "a|b|c")]
 #[case::split_empty("len(split(\"\", \",\"))", "1")] // Empty string splits to [""]
 #[case::join("join([\"a\", \"b\", \"c\"], \",\")", "a,b,c")]
@@ -45,24 +45,24 @@ use pretty_assertions::assert_eq;
 #[case::replace_first("replace(\"aaa\", \"a\", \"b\")", "baa")] // replace() only replaces first occurrence
 #[case::trim("trim(\"  hello  \")", "hello")]
 #[case::trim_no_space("trim(\"hello\")", "hello")]
-#[case::to_upper("toUpperCase(\"hello\")", "HELLO")]
-#[case::to_upper_mixed("toUpperCase(\"HeLLo\")", "HELLO")]
-#[case::to_lower("toLowerCase(\"HELLO\")", "hello")]
-#[case::to_lower_mixed("toLowerCase(\"HeLLo\")", "hello")]
-#[case::startswith("startsWith(\"hello\", \"he\")", "true")]
-#[case::startswith_false("startsWith(\"hello\", \"wo\")", "false")]
-#[case::endswith("endsWith(\"hello\", \"lo\")", "true")]
-#[case::endswith_false("endsWith(\"hello\", \"he\")", "false")]
+#[case::to_upper("to_upper_case(\"hello\")", "HELLO")]
+#[case::to_upper_mixed("to_upper_case(\"HeLLo\")", "HELLO")]
+#[case::to_lower("to_lower_case(\"HELLO\")", "hello")]
+#[case::to_lower_mixed("to_lower_case(\"HeLLo\")", "hello")]
+#[case::startswith("starts_with(\"hello\", \"he\")", "true")]
+#[case::startswith_false("starts_with(\"hello\", \"wo\")", "false")]
+#[case::endswith("ends_with(\"hello\", \"lo\")", "true")]
+#[case::endswith_false("ends_with(\"hello\", \"he\")", "false")]
 #[case::includes("includes(\"hello world\", \"wo\")", "true")]
 #[case::includes_false("includes(\"hello world\", \"xyz\")", "false")]
 #[case::repeat("repeat(\"ab\", 3)", "ababab")]
 #[case::repeat_zero("repeat(\"x\", 0)", "")]
-#[case::padstart("padStart(\"5\", 3, \"0\")", "005")]
-#[case::padend("padEnd(\"5\", 3, \"0\")", "500")]
-#[case::lastindexof("lastIndexOf(\"hello\", \"l\")", "Some(3)")]
-#[case::lastindexof_not_found("lastIndexOf(\"hello\", \"x\")", "None")]
-#[case::trimstart("trimStart(\"  hello\")", "hello")]
-#[case::trimend("trimEnd(\"hello  \")", "hello")]
+#[case::padstart("pad_start(\"5\", 3, \"0\")", "005")]
+#[case::padend("pad_end(\"5\", 3, \"0\")", "500")]
+#[case::lastindexof("last_index_of(\"hello\", \"l\")", "Some(3)")]
+#[case::lastindexof_not_found("last_index_of(\"hello\", \"x\")", "None")]
+#[case::trimstart("trim_start(\"  hello\")", "hello")]
+#[case::trimend("trim_end(\"hello  \")", "hello")]
 fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
     // Run in interpreter
     let runtime_interp = Atlas::new();
@@ -112,18 +112,18 @@ fn test_string_parity(#[case] code: &str, #[case] expected: &str) {
 // Note: sort() not yet implemented - removing test cases
 // #[case::sort_nums("sort([3, 1, 2])[0]", "1")]
 // #[case::sort_strings("join(sort([\"c\", \"a\", \"b\"]), \",\")", "a,b,c")]
-#[case::indexof_arr("arrayIndexOf([1, 2, 3], 2)", "Some(1)")]
-#[case::indexof_not_found_arr("arrayIndexOf([1, 2, 3], 5)", "None")]
-#[case::includes_arr("arrayIncludes([1, 2, 3], 2)", "true")]
-#[case::includes_false_arr("arrayIncludes([1, 2, 3], 5)", "false")]
+#[case::indexof_arr("array_index_of([1, 2, 3], 2)", "Some(1)")]
+#[case::indexof_not_found_arr("array_index_of([1, 2, 3], 5)", "None")]
+#[case::includes_arr("array_includes([1, 2, 3], 2)", "true")]
+#[case::includes_false_arr("array_includes([1, 2, 3], 5)", "false")]
 #[case::first_elem("[1, 2, 3][0]", "1")]
 #[case::last_elem("[1, 2, 3][2]", "3")]
 #[case::slice_rest("slice([1, 2, 3], 1, 3)[0]", "2")]
 #[case::slice_rest_len("len(slice([1], 1, 1))", "0")]
 #[case::flatten("len(flatten([[1, 2], [3, 4]]))", "4")]
 #[case::flatten_empty("len(flatten(slice([[1]], 1, 1)))", "0")]
-#[case::arraylastindexof("arrayLastIndexOf([1, 2, 3, 2], 2)", "Some(3)")]
-#[case::arraylastindexof_not_found("arrayLastIndexOf([1, 2, 3], 5)", "None")]
+#[case::arraylastindexof("array_last_index_of([1, 2, 3, 2], 2)", "Some(3)")]
+#[case::arraylastindexof_not_found("array_last_index_of([1, 2, 3], 5)", "None")]
 fn test_array_basic_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code).unwrap();
@@ -272,42 +272,42 @@ fn test_math_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::parse_object(
-    "let j = parseJSON(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].as_string()",
+    "let j = parse_json(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].as_string()",
     "value"
 )]
-#[case::parse_array("let j = parseJSON(\"[1, 2, 3]\"); j?[0].as_number()", "1")]
-#[case::parse_number("let j = parseJSON(\"42\"); j?.as_number()", "42")]
-#[case::parse_string("let j = parseJSON(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
-#[case::parse_bool("let j = parseJSON(\"true\"); j?.as_bool()", "true")]
-#[case::parse_null("let j = parseJSON(\"null\"); j?.is_null()", "true")]
-#[case::stringify_object("toJSON(parseJSON(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
-#[case::stringify_array("toJSON(parseJSON(\"[1,2,3]\")?)", "[1,2,3]")]
-#[case::as_string("parseJSON(\"\\\"test\\\"\")?.as_string()", "test")]
-#[case::as_number("parseJSON(\"123\")?.as_number()", "123")]
-#[case::as_bool("parseJSON(\"true\")?.as_bool()", "true")]
-#[case::is_null_true("parseJSON(\"null\")?.is_null()", "true")]
-#[case::is_null_false("parseJSON(\"123\")?.is_null()", "false")]
+#[case::parse_array("let j = parse_json(\"[1, 2, 3]\"); j?[0].as_number()", "1")]
+#[case::parse_number("let j = parse_json(\"42\"); j?.as_number()", "42")]
+#[case::parse_string("let j = parse_json(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
+#[case::parse_bool("let j = parse_json(\"true\"); j?.as_bool()", "true")]
+#[case::parse_null("let j = parse_json(\"null\"); j?.is_null()", "true")]
+#[case::stringify_object("to_json(parse_json(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
+#[case::stringify_array("to_json(parse_json(\"[1,2,3]\")?)", "[1,2,3]")]
+#[case::as_string("parse_json(\"\\\"test\\\"\")?.as_string()", "test")]
+#[case::as_number("parse_json(\"123\")?.as_number()", "123")]
+#[case::as_bool("parse_json(\"true\")?.as_bool()", "true")]
+#[case::is_null_true("parse_json(\"null\")?.is_null()", "true")]
+#[case::is_null_false("parse_json(\"123\")?.is_null()", "false")]
 // Note: JSON type checking methods not yet implemented
-// #[case::is_array_true("parseJSON(\"[1,2]\")?.is_array()", "true")]
-// #[case::is_array_false("parseJSON(\"123\")?.is_array()", "false")]
-// #[case::is_object_true("parseJSON(\"{\\\"a\\\": 1}\")?.is_object()", "true")]
-// #[case::is_object_false("parseJSON(\"123\")?.is_object()", "false")]
-// #[case::array_length("parseJSON(\"[1,2,3]\")?.array_length()", "3")]
+// #[case::is_array_true("parse_json(\"[1,2]\")?.is_array()", "true")]
+// #[case::is_array_false("parse_json(\"123\")?.is_array()", "false")]
+// #[case::is_object_true("parse_json(\"{\\\"a\\\": 1}\")?.is_object()", "true")]
+// #[case::is_object_false("parse_json(\"123\")?.is_object()", "false")]
+// #[case::array_length("parse_json(\"[1,2,3]\")?.array_length()", "3")]
 #[case::nested_access(
-    "let j = parseJSON(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].as_number()",
+    "let j = parse_json(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].as_number()",
     "42"
 )]
-#[case::json_array_index("let j = parseJSON(\"[10, 20, 30]\"); j?[1].as_number()", "20")]
+#[case::json_array_index("let j = parse_json(\"[10, 20, 30]\"); j?[1].as_number()", "20")]
 #[case::json_string_value(
-    "let j = parseJSON(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].as_string()",
+    "let j = parse_json(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].as_string()",
     "Alice"
 )]
 #[case::json_bool_value(
-    "let j = parseJSON(\"{\\\"active\\\": false}\"); j?[\"active\"].as_bool()",
+    "let j = parse_json(\"{\\\"active\\\": false}\"); j?[\"active\"].as_bool()",
     "false"
 )]
-#[case::isvalidjson_true("isValidJSON(\"{\\\"key\\\": \\\"value\\\"}\")", "true")]
-#[case::isvalidjson_false("isValidJSON(\"invalid json\")", "false")]
+#[case::isvalidjson_true("is_valid_json(\"{\\\"key\\\": \\\"value\\\"}\")", "true")]
+#[case::isvalidjson_false("is_valid_json(\"invalid json\")", "false")]
 fn test_json_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code).unwrap();
@@ -342,8 +342,8 @@ fn test_file_read_write_parity() {
     // Write and read back
     let code = format!(
         r#"
-        writeFile("{}", "test content");
-        readFile("{}")
+        write_file("{}", "test content");
+        read_file("{}")
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path)
@@ -377,8 +377,8 @@ fn test_file_exists_parity() {
     let non_existing = temp_dir.path().join("nonexistent.txt");
     std::fs::write(&existing, "content").unwrap();
 
-    let code_exists = format!(r#"fileExists("{}")"#, path_for_atlas(&existing));
-    let code_not_exists = format!(r#"fileExists("{}")"#, path_for_atlas(&non_existing));
+    let code_exists = format!(r#"file_exists("{}")"#, path_for_atlas(&existing));
+    let code_not_exists = format!(r#"file_exists("{}")"#, path_for_atlas(&non_existing));
 
     // Test existing file
     let mut security1 = SecurityContext::new();
@@ -416,9 +416,9 @@ fn test_file_delete_parity() {
 
     let code = format!(
         r#"
-        writeFile("{}", "content");
-        removeFile("{}");
-        fileExists("{}")
+        write_file("{}", "content");
+        remove_file("{}");
+        file_exists("{}")
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path),
@@ -450,9 +450,9 @@ fn test_file_append_parity() {
 
     let code = format!(
         r#"
-        writeFile("{}", "first");
-        appendFile("{}", "second");
-        readFile("{}")
+        write_file("{}", "first");
+        append_file("{}", "second");
+        read_file("{}")
     "#,
         path_for_atlas(&file_path),
         path_for_atlas(&file_path),
@@ -486,7 +486,7 @@ fn test_file_list_directory_parity() {
     std::fs::write(temp_dir.path().join("file1.txt"), "content1").unwrap();
     std::fs::write(temp_dir.path().join("file2.txt"), "content2").unwrap();
 
-    let code = format!(r#"len(readDir("{}"))"#, path_for_atlas(temp_dir.path()));
+    let code = format!(r#"len(read_dir("{}"))"#, path_for_atlas(temp_dir.path()));
 
     // Interpreter
     let mut security_interp = SecurityContext::new();
@@ -511,10 +511,10 @@ fn test_file_create_remove_directory_parity() {
 
     let code = format!(
         r#"
-        createDir("{}");
-        let exists1 = fileExists("{}");
-        removeDir("{}");
-        let exists2 = fileExists("{}");
+        create_dir("{}");
+        let exists1 = file_exists("{}");
+        remove_dir("{}");
+        let exists2 = file_exists("{}");
         exists1 && !exists2
     "#,
         path_for_atlas(&dir_path),
@@ -546,18 +546,18 @@ fn test_file_create_remove_directory_parity() {
 // ============================================================================
 
 #[rstest]
-#[case::is_string_true("isString(\"hello\")", "true")]
-#[case::is_string_false("isString(123)", "false")]
-#[case::is_number_true("isNumber(123)", "true")]
-#[case::is_number_false("isNumber(\"123\")", "false")]
-#[case::is_bool_true("isBool(true)", "true")]
-#[case::is_bool_false("isBool(1)", "false")]
-#[case::is_null_true("isNull(null)", "true")]
-#[case::is_null_false("isNull(0)", "false")]
-#[case::is_array_true("isArray([1, 2, 3])", "true")]
-#[case::is_array_false("isArray(\"[1,2,3]\")", "false")]
-#[case::is_function_true("fn test() {} isFunction(test)", "true")]
-#[case::is_function_false("isFunction(123)", "false")]
+#[case::is_string_true("is_string(\"hello\")", "true")]
+#[case::is_string_false("is_string(123)", "false")]
+#[case::is_number_true("is_number(123)", "true")]
+#[case::is_number_false("is_number(\"123\")", "false")]
+#[case::is_bool_true("is_bool(true)", "true")]
+#[case::is_bool_false("is_bool(1)", "false")]
+#[case::is_null_true("is_null(null)", "true")]
+#[case::is_null_false("is_null(0)", "false")]
+#[case::is_array_true("is_array([1, 2, 3])", "true")]
+#[case::is_array_false("is_array(\"[1,2,3]\")", "false")]
+#[case::is_function_true("fn test() {} is_function(test)", "true")]
+#[case::is_function_false("is_function(123)", "false")]
 fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code).unwrap();
@@ -587,7 +587,7 @@ fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::empty_array_operations("len(reverse([]))", "0")]
 #[case::divide_by_zero("1 / 0 > 999999999999999", "true")] // inf
 #[case::negative_sqrt("sqrt(-1)", "NaN")] // NaN as string
-#[case::parse_invalid_json_safety("let j = parseJSON(\"invalid\"); j.is_null()", "false")] // Returns error, not crash
+#[case::parse_invalid_json_safety("let j = parse_json(\"invalid\"); j.is_null()", "false")] // Returns error, not crash
 fn test_edge_cases_parity(#[case] code: &str, #[case] _expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code);

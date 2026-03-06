@@ -16,5 +16,5 @@ export fn build_status_response(
         queue_size: snapshot.queue_size,
         can_recover: snapshot.can_recover
     };
-    return toJSON(payload);
+    return to_json(payload);
 }

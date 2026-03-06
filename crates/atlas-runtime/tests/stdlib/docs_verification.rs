@@ -59,17 +59,17 @@ fn docs_typeof_array() {
 
 #[test]
 fn docs_to_number_string() {
-    assert_eval_result_ok_number(r#"toNumber("42")"#, 42.0);
+    assert_eval_result_ok_number(r#"to_number("42")"#, 42.0);
 }
 
 #[test]
 fn docs_to_bool_zero() {
-    assert_eval_bool(r#"toBool(0)"#, false);
+    assert_eval_bool(r#"to_bool(0)"#, false);
 }
 
 #[test]
 fn docs_to_bool_nonzero() {
-    assert_eval_bool(r#"toBool(1)"#, true);
+    assert_eval_bool(r#"to_bool(1)"#, true);
 }
 
 // --- String functions ---
@@ -97,37 +97,37 @@ fn docs_trim() {
 
 #[test]
 fn docs_trim_start() {
-    assert_eval_string(r#"trimStart("  hello  ")"#, "hello  ");
+    assert_eval_string(r#"trim_start("  hello  ")"#, "hello  ");
 }
 
 #[test]
 fn docs_trim_end() {
-    assert_eval_string(r#"trimEnd("  hello  ")"#, "  hello");
+    assert_eval_string(r#"trim_end("  hello  ")"#, "  hello");
 }
 
 #[test]
 fn docs_to_upper_case() {
-    assert_eval_string(r#"toUpperCase("hello")"#, "HELLO");
+    assert_eval_string(r#"to_upper_case("hello")"#, "HELLO");
 }
 
 #[test]
 fn docs_to_lower_case() {
-    assert_eval_string(r#"toLowerCase("WORLD")"#, "world");
+    assert_eval_string(r#"to_lower_case("WORLD")"#, "world");
 }
 
 #[test]
 fn docs_starts_with_true() {
-    assert_eval_bool(r#"startsWith("hello world", "hello")"#, true);
+    assert_eval_bool(r#"starts_with("hello world", "hello")"#, true);
 }
 
 #[test]
 fn docs_starts_with_false() {
-    assert_eval_bool(r#"startsWith("hello world", "world")"#, false);
+    assert_eval_bool(r#"starts_with("hello world", "world")"#, false);
 }
 
 #[test]
 fn docs_ends_with_true() {
-    assert_eval_bool(r#"endsWith("hello world", "world")"#, true);
+    assert_eval_bool(r#"ends_with("hello world", "world")"#, true);
 }
 
 #[test]
@@ -142,12 +142,12 @@ fn docs_includes_false() {
 
 #[test]
 fn docs_index_of_found() {
-    assert_eval_option_some_number(r#"indexOf("hello", "ll")"#, 2.0);
+    assert_eval_option_some_number(r#"index_of("hello", "ll")"#, 2.0);
 }
 
 #[test]
 fn docs_index_of_not_found() {
-    assert_eval_option_none(r#"indexOf("hello", "xyz")"#);
+    assert_eval_option_none(r#"index_of("hello", "xyz")"#);
 }
 
 #[test]
@@ -172,17 +172,17 @@ fn docs_substring() {
 
 #[test]
 fn docs_char_at() {
-    assert_eval_option_some_string(r#"charAt("hello", 0)"#, "h");
+    assert_eval_option_some_string(r#"char_at("hello", 0)"#, "h");
 }
 
 #[test]
 fn docs_pad_start() {
-    assert_eval_string(r#"padStart("42", 5, "0")"#, "00042");
+    assert_eval_string(r#"pad_start("42", 5, "0")"#, "00042");
 }
 
 #[test]
 fn docs_pad_end() {
-    assert_eval_string(r#"padEnd("hi", 5, ".")"#, "hi...");
+    assert_eval_string(r#"pad_end("hi", 5, ".")"#, "hi...");
 }
 
 // --- Array functions ---
@@ -222,17 +222,17 @@ fn docs_slice() {
 
 #[test]
 fn docs_array_includes_true() {
-    assert_eval_bool(r#"arrayIncludes([1, 2, 3], 2)"#, true);
+    assert_eval_bool(r#"array_includes([1, 2, 3], 2)"#, true);
 }
 
 #[test]
 fn docs_array_includes_false() {
-    assert_eval_bool(r#"arrayIncludes(["a", "b"], "c")"#, false);
+    assert_eval_bool(r#"array_includes(["a", "b"], "c")"#, false);
 }
 
 #[test]
 fn docs_array_index_of() {
-    assert_eval_option_some_number(r#"arrayIndexOf([10, 20, 30], 20)"#, 1.0);
+    assert_eval_option_some_number(r#"array_index_of([10, 20, 30], 20)"#, 1.0);
 }
 
 // --- Math functions ---
@@ -306,38 +306,38 @@ fn docs_sign_positive() {
 
 #[test]
 fn docs_is_string_true() {
-    assert_eval_bool(r#"isString("hello")"#, true);
+    assert_eval_bool(r#"is_string("hello")"#, true);
 }
 
 #[test]
 fn docs_is_string_false() {
-    assert_eval_bool(r#"isString(42)"#, false);
+    assert_eval_bool(r#"is_string(42)"#, false);
 }
 
 #[test]
 fn docs_is_number_true() {
-    assert_eval_bool(r#"isNumber(3.14)"#, true);
+    assert_eval_bool(r#"is_number(3.14)"#, true);
 }
 
 #[test]
 fn docs_is_bool() {
-    assert_eval_bool(r#"isBool(true)"#, true);
+    assert_eval_bool(r#"is_bool(true)"#, true);
 }
 
 #[test]
 fn docs_is_null() {
-    assert_eval_bool(r#"isNull(null)"#, true);
+    assert_eval_bool(r#"is_null(null)"#, true);
 }
 
 #[test]
 fn docs_is_array() {
-    assert_eval_bool(r#"isArray([1, 2])"#, true);
+    assert_eval_bool(r#"is_array([1, 2])"#, true);
 }
 
 #[test]
 fn docs_is_object() {
-    // isObject returns false for non-objects
-    assert_eval_bool(r#"isObject([1, 2])"#, false);
+    // is_object returns false for non-objects
+    assert_eval_bool(r#"is_object([1, 2])"#, false);
 }
 
 // --- JSON functions ---
@@ -347,8 +347,8 @@ fn docs_parse_json_object() {
     assert_eval_bool(
         r#"
         let json_str = "[1, 2, 3]";
-        let arr: json = parseJSON(json_str)?;
-        jsonAsNumber(arr[0]) == 1
+        let arr: json = parse_json(json_str)?;
+        json_as_number(arr[0]) == 1
         "#,
         true,
     );
@@ -356,27 +356,27 @@ fn docs_parse_json_object() {
 
 #[test]
 fn docs_to_json() {
-    assert_eval_bool(r#"isString(toJSON([1, 2, 3]))"#, true);
+    assert_eval_bool(r#"is_string(to_json([1, 2, 3]))"#, true);
 }
 
 #[test]
 fn docs_is_valid_json_true() {
-    assert_eval_bool(r#"isValidJSON("{\"key\": \"value\"}")"#, true);
+    assert_eval_bool(r#"is_valid_json("{\"key\": \"value\"}")"#, true);
 }
 
 #[test]
 fn docs_is_valid_json_false() {
-    assert_eval_bool(r#"isValidJSON("not json")"#, false);
+    assert_eval_bool(r#"is_valid_json("not json")"#, false);
 }
 
 #[test]
 fn docs_json_as_number() {
-    assert_eval_number(r#"jsonAsNumber(parseJSON("42")?)"#, 42.0);
+    assert_eval_number(r#"json_as_number(parse_json("42")?)"#, 42.0);
 }
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"jsonIsNull(parseJSON("null")?)"#, true);
+    assert_eval_bool(r#"json_is_null(parse_json("null")?)"#, true);
 }
 
 // --- Result / Option functions ---
@@ -479,9 +479,9 @@ fn docs_reflect_is_empty_nonempty() {
 fn docs_hashmap_basic_ops() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "name", "Alice");
-        hashMapHas(hmap, "name") && !hashMapHas(hmap, "email")
+        let hmap = hash_map_new();
+        hash_map_put(hmap, "name", "Alice");
+        hash_map_has(hmap, "name") && !hash_map_has(hmap, "email")
         "#,
         true,
     );
@@ -491,9 +491,9 @@ fn docs_hashmap_basic_ops() {
 fn docs_hashmap_get_returns_some() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "x", 42);
-        is_some(hashMapGet(hmap, "x"))
+        let hmap = hash_map_new();
+        hash_map_put(hmap, "x", 42);
+        is_some(hash_map_get(hmap, "x"))
         "#,
         true,
     );
@@ -503,8 +503,8 @@ fn docs_hashmap_get_returns_some() {
 fn docs_hashmap_get_returns_none() {
     assert_eval_bool(
         r#"
-        let hmap = hashMapNew();
-        is_none(hashMapGet(hmap, "missing"))
+        let hmap = hash_map_new();
+        is_none(hash_map_get(hmap, "missing"))
         "#,
         true,
     );
@@ -514,10 +514,10 @@ fn docs_hashmap_get_returns_none() {
 fn docs_hashmap_size() {
     assert_eval_number(
         r#"
-        let hmap = hashMapNew();
-        hashMapPut(hmap, "a", 1);
-        hashMapPut(hmap, "b", 2);
-        hashMapSize(hmap)
+        let hmap = hash_map_new();
+        hash_map_put(hmap, "a", 1);
+        hash_map_put(hmap, "b", 2);
+        hash_map_size(hmap)
         "#,
         2.0,
     );
@@ -529,8 +529,8 @@ fn docs_hashmap_size() {
 fn docs_hashset_deduplication() {
     assert_eval_number(
         r#"
-        let set = hashSetFromArray([1, 2, 2, 3, 3, 3]);
-        hashSetSize(set)
+        let set = hash_set_from_array([1, 2, 2, 3, 3, 3]);
+        hash_set_size(set)
         "#,
         3.0,
     );
@@ -540,9 +540,9 @@ fn docs_hashset_deduplication() {
 fn docs_hashset_union() {
     assert_eval_number(
         r#"
-        let a = hashSetFromArray([1, 2, 3]);
-        let b = hashSetFromArray([3, 4, 5]);
-        hashSetSize(hashSetUnion(a, b))
+        let a = hash_set_from_array([1, 2, 3]);
+        let b = hash_set_from_array([3, 4, 5]);
+        hash_set_size(hash_set_union(a, b))
         "#,
         5.0,
     );
@@ -552,9 +552,9 @@ fn docs_hashset_union() {
 fn docs_hashset_intersection() {
     assert_eval_number(
         r#"
-        let a = hashSetFromArray([1, 2, 3]);
-        let b = hashSetFromArray([2, 3, 4]);
-        hashSetSize(hashSetIntersection(a, b))
+        let a = hash_set_from_array([1, 2, 3]);
+        let b = hash_set_from_array([2, 3, 4]);
+        hash_set_size(hash_set_intersection(a, b))
         "#,
         2.0,
     );

@@ -7,7 +7,7 @@ export fn state_save(
     pid: number,
     metrics_snapshot: json
 ) -> Result<null, string> {
-    let _mkdir = createDir(state_dir);
+    let _mkdir = create_dir(state_dir);
     let payload = record {
         server_name: server_name,
         pid: pid,
@@ -15,15 +15,15 @@ export fn state_save(
         last_updated: now_iso(),
         metrics: metrics_snapshot
     };
-    let json_payload = toJSON(payload);
+    let json_payload = to_json(payload);
     let text = unwrap(stringifyJson(json_payload));
-    let path = pathJoin([state_dir, server_name + ".json"]);
-    return writeFile(path, text);
+    let path = path_join([state_dir, server_name + ".json"]);
+    return write_file(path, text);
 }
 
 export fn state_load(state_dir: string, server_name: string) -> Result<json, string> {
-    let path = pathJoin([state_dir, server_name + ".json"]);
-    let contents = readFile(path);
+    let path = path_join([state_dir, server_name + ".json"]);
+    let contents = read_file(path);
     match contents {
         Ok(text) => { return parseJson(text); },
         Err(err) => { return Err(err); }
@@ -31,16 +31,16 @@ export fn state_load(state_dir: string, server_name: string) -> Result<json, str
 }
 
 export fn state_delete(state_dir: string, server_name: string) -> Result<null, string> {
-    let path = pathJoin([state_dir, server_name + ".json"]);
-    if (!fileExists(path)) {
+    let path = path_join([state_dir, server_name + ".json"]);
+    if (!file_exists(path)) {
         return Ok(null);
     }
-    return removeFile(path);
+    return remove_file(path);
 }
 
 export fn state_list_all(state_dir: string) -> Result<json[], string> {
-    let _mkdir = createDir(state_dir);
-    let entries_result = readDir(state_dir);
+    let _mkdir = create_dir(state_dir);
+    let entries_result = read_dir(state_dir);
     match entries_result {
         Ok(entries) => {
             let mut states: json[] = [];

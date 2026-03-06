@@ -422,30 +422,48 @@ impl Interpreter {
                     "map" => return self.intrinsic_map(&args, span),
                     "filter" => return self.intrinsic_filter(&args, span),
                     "reduce" => return self.intrinsic_reduce(&args, span),
-                    "forEach" => return self.intrinsic_for_each(&args, span),
+                    "forEach" | "for_each" => return self.intrinsic_for_each(&args, span),
                     "find" => return self.intrinsic_find(&args, span),
-                    "findIndex" => return self.intrinsic_find_index(&args, span),
-                    "flatMap" => return self.intrinsic_flat_map(&args, span),
+                    "findIndex" | "find_index" => return self.intrinsic_find_index(&args, span),
+                    "flatMap" | "flat_map" => return self.intrinsic_flat_map(&args, span),
                     "some" => return self.intrinsic_some(&args, span),
                     "every" => return self.intrinsic_every(&args, span),
                     "sort" => return self.intrinsic_sort(&args, span),
-                    "sortBy" => return self.intrinsic_sort_by(&args, span),
+                    "sortBy" | "sort_by" => return self.intrinsic_sort_by(&args, span),
                     "result_map" => return self.intrinsic_result_map(&args, span),
                     "result_map_err" => return self.intrinsic_result_map_err(&args, span),
                     "result_and_then" => return self.intrinsic_result_and_then(&args, span),
                     "result_or_else" => return self.intrinsic_result_or_else(&args, span),
-                    "hashMapForEach" => return self.intrinsic_hashmap_for_each(&args, span),
-                    "hashMapMap" => return self.intrinsic_hashmap_map(&args, span),
-                    "hashMapFilter" => return self.intrinsic_hashmap_filter(&args, span),
-                    "hashSetForEach" => return self.intrinsic_hashset_for_each(&args, span),
-                    "hashSetMap" => return self.intrinsic_hashset_map(&args, span),
-                    "hashSetFilter" => return self.intrinsic_hashset_filter(&args, span),
-                    "regexReplaceWith" => return self.intrinsic_regex_replace_with(&args, span),
-                    "regexReplaceAllWith" => {
+                    "hashMapForEach" | "hash_map_for_each" => {
+                        return self.intrinsic_hashmap_for_each(&args, span)
+                    }
+                    "hashMapMap" | "hash_map_map" => {
+                        return self.intrinsic_hashmap_map(&args, span)
+                    }
+                    "hashMapFilter" | "hash_map_filter" => {
+                        return self.intrinsic_hashmap_filter(&args, span)
+                    }
+                    "hashSetForEach" | "hash_set_for_each" => {
+                        return self.intrinsic_hashset_for_each(&args, span)
+                    }
+                    "hashSetMap" | "hash_set_map" => {
+                        return self.intrinsic_hashset_map(&args, span)
+                    }
+                    "hashSetFilter" | "hash_set_filter" => {
+                        return self.intrinsic_hashset_filter(&args, span)
+                    }
+                    "regexReplaceWith" | "regex_replace_with" => {
+                        return self.intrinsic_regex_replace_with(&args, span)
+                    }
+                    "regexReplaceAllWith" | "regex_replace_all_with" => {
                         return self.intrinsic_regex_replace_all_with(&args, span)
                     }
-                    "assertThrows" => return self.intrinsic_assert_throws(&args, span),
-                    "assertNoThrow" => return self.intrinsic_assert_no_throw(&args, span),
+                    "assertThrows" | "assert_throws" => {
+                        return self.intrinsic_assert_throws(&args, span)
+                    }
+                    "assertNoThrow" | "assert_no_throw" => {
+                        return self.intrinsic_assert_no_throw(&args, span)
+                    }
                     _ => {}
                 }
 
@@ -2530,16 +2548,24 @@ impl Interpreter {
         const RETURNS_COLLECTION: &[&str] = &[
             // HashMap
             "hashMapPut",
+            "hash_map_put",
             "hashMapClear",
+            "hash_map_clear",
             // HashSet
             "hashSetAdd",
+            "hash_set_add",
             "hashSetClear",
+            "hash_set_clear",
             // Queue
             "queueEnqueue",
+            "queue_enqueue",
             "queueClear",
+            "queue_clear",
             // Stack
             "stackPush",
+            "stack_push",
             "stackClear",
+            "stack_clear",
             // Array (free-function variants)
             "unshift",
             "reverse",
@@ -2550,9 +2576,13 @@ impl Interpreter {
         const RETURNS_PAIR: &[&str] = &[
             // HashMap / HashSet / Queue / Stack
             "hashMapRemove",
+            "hash_map_remove",
             "hashSetRemove",
+            "hash_set_remove",
             "queueDequeue",
+            "queue_dequeue",
             "stackPop",
+            "stack_pop",
             // Array (free-function variants)
             "pop",
             "shift",

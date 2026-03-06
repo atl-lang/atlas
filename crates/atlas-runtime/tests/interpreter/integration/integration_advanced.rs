@@ -218,12 +218,12 @@ fn test_integration_stdlib_includes() {
 
 #[test]
 fn test_integration_stdlib_starts_with() {
-    assert_eval_bool(r#"startsWith("hello world", "hello");"#, true);
+    assert_eval_bool(r#"starts_with("hello world", "hello");"#, true);
 }
 
 #[test]
 fn test_integration_stdlib_ends_with() {
-    assert_eval_bool(r#"endsWith("hello world", "world");"#, true);
+    assert_eval_bool(r#"ends_with("hello world", "world");"#, true);
 }
 
 #[test]

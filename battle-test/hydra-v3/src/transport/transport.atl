@@ -20,11 +20,11 @@ export fn detect_protocol(t: InMemoryTransport) -> Protocol {
         return t.protocol;
     }
     let sample = t.read_buffer[0];
-    if (startsWith(sample, "Content-Length:")) {
+    if (starts_with(sample, "Content-Length:")) {
         return Protocol::Lsp;
     }
     let trimmed = trim(sample);
-    if (startsWith(trimmed, "{") || startsWith(trimmed, "[")) {
+    if (starts_with(trimmed, "{") || starts_with(trimmed, "[")) {
         return Protocol::Ndjson;
     }
     return Protocol::Unknown;

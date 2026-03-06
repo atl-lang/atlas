@@ -347,7 +347,7 @@ pub fn path_for_atlas(path: &Path) -> String {
 /// # Example
 /// ```
 /// let (temp, path) = temp_file_path("test.json");
-/// let code = format!(r#"writeFile("{}", "content")"#, path);
+/// let code = format!(r#"write_file("{}", "content")"#, path);
 /// ```
 pub fn temp_file_path(filename: &str) -> (tempfile::TempDir, String) {
     let temp_dir = tempfile::TempDir::new().expect("Failed to create temp dir");

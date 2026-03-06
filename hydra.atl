@@ -127,9 +127,9 @@ export fn statusRedirect() -> Status { return REDIRECT(); }
 
 export fn requestNew(method: Method, url: string, body: string) -> Request {
     let parsed = splitPathAndQuery(url);
-    let headers = hashMapNew();
-    let params = hashMapNew();
-    let session = hashMapNew();
+    let headers = hash_map_new();
+    let params = hash_map_new();
+    let session = hash_map_new();
 
     return Request {
         method: method,
@@ -145,7 +145,7 @@ export fn requestNew(method: Method, url: string, body: string) -> Request {
 
 export fn requestWithHeader(request: Request, name: string, value: string) -> Request {
     let headers = request.headers;
-    hashMapPut(headers, name, value);
+    hash_map_put(headers, name, value);
     return Request {
         method: request.method,
         path: request.path,
@@ -159,20 +159,20 @@ export fn requestWithHeader(request: Request, name: string, value: string) -> Re
 }
 
 export fn responseText(status: Status, body: string) -> Response {
-    let headers = hashMapNew();
-    hashMapPut(headers, "Content-Type", "text/plain; charset=utf-8");
+    let headers = hash_map_new();
+    hash_map_put(headers, "Content-Type", "text/plain; charset=utf-8");
     return Response { status: status, headers: headers, body: body };
 }
 
 export fn responseJson(status: Status, payload: JsonValue) -> Response {
-    let headers = hashMapNew();
-    hashMapPut(headers, "Content-Type", "application/json; charset=utf-8");
-    return Response { status: status, headers: headers, body: toJSON(payload) };
+    let headers = hash_map_new();
+    hash_map_put(headers, "Content-Type", "application/json; charset=utf-8");
+    return Response { status: status, headers: headers, body: to_json(payload) };
 }
 
 export fn responseSetHeader(response: Response, name: string, value: string) -> Response {
     let headers = response.headers;
-    hashMapPut(headers, name, value);
+    hash_map_put(headers, name, value);
     return Response { status: response.status, headers: headers, body: response.body };
 }
 
@@ -221,7 +221,7 @@ export fn statusReason(status: Status) -> string {
 export fn routerNew() -> Router {
     let routes: Route[] = [];
     let middleware: Middleware[] = [];
-    let sessions = hashMapNew();
+    let sessions = hash_map_new();
     return Router {
         routes: routes,
         middleware: middleware,
@@ -232,7 +232,7 @@ export fn routerNew() -> Router {
 
 export fn routerAdd(router: Router, method: Method, pattern: string, handler: Handler) -> Router {
     let route = Route { method: method, pattern: pattern, handler: handler };
-    let routes = arrayPush(router.routes, route);
+    let routes = array_push(router.routes, route);
     return Router {
         routes: routes,
         middleware: router.middleware,
@@ -242,7 +242,7 @@ export fn routerAdd(router: Router, method: Method, pattern: string, handler: Ha
 }
 
 export fn routerUse(router: Router, mw: Middleware) -> Router {
-    let mws = arrayPush(router.middleware, mw);
+    let mws = array_push(router.middleware, mw);
     return Router {
         routes: router.routes,
         middleware: mws,
@@ -338,13 +338,13 @@ fn applyMiddleware(handler: Handler, middleware: Middleware[]) -> Handler {
 
 fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
     if pattern == "*" {
-        return Some(hashMapNew());
+        return Some(hash_map_new());
     }
 
     let pattern_parts = pathSegments(pattern);
     let path_parts = pathSegments(path);
 
-    let params = hashMapNew();
+    let params = hash_map_new();
     let mut p_idx = 0;
     let mut s_idx = 0;
 
@@ -354,7 +354,7 @@ fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
         if part == "*" {
             let remaining = slice(path_parts, s_idx, len(path_parts));
             let joined = join(remaining, "/");
-            hashMapPut(params, "wildcard", joined);
+            hash_map_put(params, "wildcard", joined);
             return Some(params);
         }
 
@@ -362,9 +362,9 @@ fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
             return None();
         }
 
-        if startsWith(part, ":") {
+        if starts_with(part, ":") {
             let key = substring(part, 1, len(part));
-            hashMapPut(params, key, path_parts[s_idx]);
+            hash_map_put(params, key, path_parts[s_idx]);
         } else {
             if part != path_parts[s_idx] {
                 return None();
@@ -387,7 +387,7 @@ fn pathSegments(path: string) -> string[] {
     let mut clean: string[] = [];
     for part in parts {
         if part != "" {
-            clean = arrayPush(clean, part);
+            clean = array_push(clean, part);
         }
     }
     return clean;
@@ -400,7 +400,7 @@ fn pathSegments(path: string) -> string[] {
 fn splitPathAndQuery(url: string) -> ParsedUrl {
     let parts = split(url, "?");
     if len(parts) == 1 {
-        return record { path: url, query: hashMapNew() };
+        return record { path: url, query: hash_map_new() };
     }
 
     let path = parts[0];
@@ -409,7 +409,7 @@ fn splitPathAndQuery(url: string) -> ParsedUrl {
 }
 
 fn parseQueryString(query: string) -> HashMap {
-    let result = hashMapNew();
+    let result = hash_map_new();
     if query == "" {
         return result;
     }
@@ -419,9 +419,9 @@ fn parseQueryString(query: string) -> HashMap {
         if pair == "" { continue; }
         let kv = split(pair, "=");
         if len(kv) == 1 {
-            hashMapPut(result, kv[0], "");
+            hash_map_put(result, kv[0], "");
         } else {
-            hashMapPut(result, kv[0], kv[1]);
+            hash_map_put(result, kv[0], kv[1]);
         }
     }
     return result;
@@ -432,11 +432,11 @@ fn parseQueryString(query: string) -> HashMap {
 // ============================================================================
 
 export fn renderTemplateString(template: string, data: HashMap) -> string {
-    let keys = hashMapKeys(data);
+    let keys = hash_map_keys(data);
     let mut rendered = template;
 
     for key in keys {
-        let value_opt = hashMapGet(data, key);
+        let value_opt = hash_map_get(data, key);
         let value = match value_opt {
             Some(v) => str(v),
             None => "",
@@ -449,7 +449,7 @@ export fn renderTemplateString(template: string, data: HashMap) -> string {
 }
 
 export fn renderTemplateFile(path: string, data: HashMap) -> string {
-    let template = readFile(path);
+    let template = read_file(path);
     return renderTemplateString(template, data);
 }
 
@@ -459,7 +459,7 @@ export fn renderTemplateFile(path: string, data: HashMap) -> string {
 
 export fn staticFileHandler(root: string) -> Handler {
     return fn(req: Request) -> Response {
-        let wildcard_opt = hashMapGet(req.params, "wildcard");
+        let wildcard_opt = hash_map_get(req.params, "wildcard");
         let file_rel = match wildcard_opt {
             Some(v) => v,
             None => "",
@@ -467,13 +467,13 @@ export fn staticFileHandler(root: string) -> Handler {
         };
 
         let actual = if file_rel == "" {
-            pathJoin(root, "index.html")
+            path_join(root, "index.html")
         } else {
-            pathJoin(root, file_rel)
+            path_join(root, file_rel)
         };
 
-        if fileExists(actual) {
-            let body = readFile(actual);
+        if file_exists(actual) {
+            let body = read_file(actual);
             return responseText(OK(), body);
         }
 
@@ -490,11 +490,11 @@ fn attachSession(router: Router, request: Request) -> SessionInfo {
 
     let info = match existing {
         Some(session_id) => {
-            let data_opt = hashMapGet(router.sessions, session_id);
+            let data_opt = hash_map_get(router.sessions, session_id);
             let session = match data_opt {
                 Some(value) => value,
-                None => hashMapNew(),
-                _ => hashMapNew()
+                None => hash_map_new(),
+                _ => hash_map_new()
             };
             let req = Request {
                 method: request.method,
@@ -529,14 +529,14 @@ fn attachSession(router: Router, request: Request) -> SessionInfo {
 }
 
 fn createSession(router: Router) -> { router: Router, sessionId: string, session: HashMap } {
-    let session = hashMapNew();
+    let session = hash_map_new();
 
     let mut id_num = router.nextSessionId;
     id_num += 1; // += operator (v0.3)
     let session_id = "sid-" + str(id_num - 1);
 
     let sessions = router.sessions;
-    hashMapPut(sessions, session_id, session);
+    hash_map_put(sessions, session_id, session);
 
     let updated = Router {
         routes: router.routes,
@@ -553,7 +553,7 @@ fn persistSession(router: Router, request: Request) -> Router {
         return router;
     }
     let sessions = router.sessions;
-    hashMapPut(sessions, request.sessionId, request.session);
+    hash_map_put(sessions, request.sessionId, request.session);
     return Router {
         routes: router.routes,
         middleware: router.middleware,
@@ -563,12 +563,12 @@ fn persistSession(router: Router, request: Request) -> Router {
 }
 
 fn sessionIdFromRequest(request: Request) -> Option<string> {
-    let id_opt = hashMapGet(request.headers, "X-Session-Id");
+    let id_opt = hash_map_get(request.headers, "X-Session-Id");
     if id_opt != None() {
         return id_opt;
     }
 
-    let cookie_opt = hashMapGet(request.headers, "Cookie");
+    let cookie_opt = hash_map_get(request.headers, "Cookie");
     let cookie = match cookie_opt {
         Some(value) => value,
         None => "",
@@ -582,7 +582,7 @@ fn sessionIdFromRequest(request: Request) -> Option<string> {
     let parts = split(cookie, ";");
     for part in parts {
         let trimmed = trim(part);
-        if startsWith(trimmed, "sid=") {
+        if starts_with(trimmed, "sid=") {
             let value = substring(trimmed, 4, len(trimmed));
             return Some(value);
         }
@@ -596,12 +596,12 @@ fn sessionIdFromRequest(request: Request) -> Option<string> {
 // ============================================================================
 
 export fn parseQueryNumber(request: Request, key: string) -> Result<number, string> {
-    let opt = hashMapGet(request.query, key);
+    let opt = hash_map_get(request.query, key);
     return match opt {
         Some(value) => {
             let text = str(value);
             if text == "" { return Err("empty query value"); }
-            return Ok(parseFloat(text));
+            return Ok(parse_float(text));
         },
         None => Err("missing query key"),
         _ => Err("missing query key")
@@ -609,11 +609,11 @@ export fn parseQueryNumber(request: Request, key: string) -> Result<number, stri
 }
 
 export fn requestParam(request: Request, key: string) -> Option<string> {
-    return hashMapGet(request.params, key);
+    return hash_map_get(request.params, key);
 }
 
 export fn requestQuery(request: Request, key: string) -> Option<string> {
-    return hashMapGet(request.query, key);
+    return hash_map_get(request.query, key);
 }
 
 export fn renderStatusLine(status: Status) -> string {
@@ -636,5 +636,5 @@ export fn watchTemplateDir(path: string) -> Watcher {
 }
 
 export fn spawnCommand(command: string[]) -> ProcessHandle {
-    return spawnProcess(command);
+    return spawn_process(command);
 }

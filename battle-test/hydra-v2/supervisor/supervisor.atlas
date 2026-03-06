@@ -21,30 +21,30 @@ fn deserialize_cmd(raw: string) -> string[] {
 
 fn get_num(store: HashMap<string, string>, key: string) -> number {
     let mut raw = "";
-    let has_key: bool = hashMapHas(store, key);
+    let has_key: bool = hash_map_has(store, key);
     if has_key {
-        raw = unwrap(hashMapGet(store, key));
+        raw = unwrap(hash_map_get(store, key));
     }
     if raw == "" {
         return 0;
     }
-    return unwrap(parseFloat(raw));
+    return unwrap(parse_float(raw));
 }
 
 fn set_num(store: HashMap<string, string>, key: string, value: number) -> HashMap<string, string> {
-    return hashMapPut(store, key, str(value));
+    return hash_map_put(store, key, str(value));
 }
 
 fn get_str(store: HashMap<string, string>, key: string) -> string {
-    let has_key: bool = hashMapHas(store, key);
+    let has_key: bool = hash_map_has(store, key);
     if has_key {
-        return unwrap(hashMapGet(store, key));
+        return unwrap(hash_map_get(store, key));
     }
     return "";
 }
 
 fn set_str(store: HashMap<string, string>, key: string, value: string) -> HashMap<string, string> {
-    return hashMapPut(store, key, value);
+    return hash_map_put(store, key, value);
 }
 
 fn split_lines(value: string) -> string[] {
@@ -63,7 +63,7 @@ fn join_lines(parts: string[]) -> string {
 }
 
 export fn new_supervisor(cmd: string[], max_restarts: number, restart_window_seconds: number) -> HashMap<string, string> {
-    let mut s = hashMapNew();
+    let mut s = hash_map_new();
     s = set_str(s, "cmd", serialize_cmd(cmd));
     s = set_num(s, "max_restarts", max_restarts);
     s = set_num(s, "restart_window", restart_window_seconds);
@@ -89,7 +89,7 @@ export fn supervisor_start(s: HashMap<string, string>) -> HashMap<string, string
     }
 
     let mut updated = set_str(s, "state", STATE_STARTING);
-    let pid = spawnProcess(cmd);
+    let pid = spawn_process(cmd);
     updated = set_str(updated, "pid", str(pid));
     updated = set_num(updated, "start_time", now_seconds());
     updated = set_str(updated, "state", STATE_RUNNING);
@@ -102,7 +102,7 @@ export fn supervisor_stop(s: HashMap<string, string>) -> HashMap<string, string>
     if pid == 0 {
         return set_str(s, "state", STATE_STOPPED);
     }
-    let _ignored = processKill(pid, 15);
+    let _ignored = process_kill(pid, 15);
     let mut updated = set_str(s, "pid", "0");
     updated = set_str(updated, "state", STATE_STOPPED);
     return updated;
@@ -113,7 +113,7 @@ export fn supervisor_poll(s: HashMap<string, string>) -> HashMap<string, string>
     if pid == 0 {
         return s;
     }
-    let res = processWait(pid);
+    let res = process_wait(pid);
     match res {
         Ok(value) => {
             let _ignored = value;
@@ -138,12 +138,12 @@ export fn supervisor_record_restart(s: HashMap<string, string>) -> HashMap<strin
     let times = split_lines(raw);
     let mut recent: string[] = slice([""], 0, 0);
     for t in times {
-        let ts = unwrap(parseFloat(t));
+        let ts = unwrap(parse_float(t));
         if now - ts <= get_num(s, "restart_window") {
-            recent = arrayPush(recent, t);
+            recent = array_push(recent, t);
         }
     }
-    recent = arrayPush(recent, str(now));
+    recent = array_push(recent, str(now));
     let mut updated = set_str(s, "restart_times", join_lines(recent));
 
     if len(recent) > get_num(s, "max_restarts") {
@@ -178,8 +178,8 @@ fn supervisor_fake_running(s: HashMap<string, string>) -> HashMap<string, string
 fn test_supervisor_start_and_uptime() -> bool {
     let sup = new_supervisor(["/bin/echo", "hi"], 3, 60);
     let started = supervisor_fake_running(sup);
-    assertEqual(get_str(started, "state"), STATE_RUNNING);
-    assertEqual(supervisor_uptime(started) >= 0, true);
+    assert_equal(get_str(started, "state"), STATE_RUNNING);
+    assert_equal(supervisor_uptime(started) >= 0, true);
     let _ignored = supervisor_stop(started);
     return true;
 }
@@ -188,6 +188,6 @@ fn test_supervisor_crash_loop() -> bool {
     let sup = new_supervisor(["/bin/echo", "hi"], 1, 60);
     let s1 = supervisor_record_restart(sup);
     let s2 = supervisor_record_restart(s1);
-    assertEqual(get_str(s2, "state"), STATE_FAILED);
+    assert_equal(get_str(s2, "state"), STATE_FAILED);
     return true;
 }

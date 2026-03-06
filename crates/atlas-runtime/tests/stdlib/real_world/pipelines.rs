@@ -20,7 +20,7 @@ fn test_pipeline_map_filter_reduce() {
 fn test_pipeline_filter_map_join() {
     let code = r#"
         fn isLong(s: string) -> bool { return len(s) > 3.0; }
-        fn toUpper(s: string) -> string { return toUpperCase(s); }
+        fn toUpper(s: string) -> string { return to_upper_case(s); }
 
         let words: string[] = ["hi", "hello", "bye", "world"];
         let long: string[] = filter(words, isLong);
@@ -48,7 +48,7 @@ fn test_pipeline_string_processing() {
     let code = r#"
         fn trimAndLower(s: string) -> string {
             let t: string = trim(s);
-            return toLowerCase(t);
+            return to_lower_case(t);
         }
 
         let input: string[] = ["  HELLO  ", "  WORLD  ", "  TEST  "];
@@ -94,7 +94,7 @@ fn test_pipeline_flatmap_strings() {
         }
 
         let sentences: string[] = ["hello world", "foo bar"];
-        let words: string[] = flatMap(sentences, splitWords);
+        let words: string[] = flat_map(sentences, splitWords);
         len(words)
     "#;
     assert_eval_number_with_io(code, 4.0);
@@ -198,7 +198,7 @@ fn test_pipeline_sortby_number() {
         fn negate(x: number) -> number { return x * -1.0; }
 
         let numbers: number[] = [3.0, 1.0, 4.0, 1.0, 5.0];
-        let sorted: number[] = sortBy(numbers, negate);
+        let sorted: number[] = sort_by(numbers, negate);
         sorted[0]
     "#;
     assert_eval_number_with_io(code, 5.0); // sorted descending
@@ -232,7 +232,7 @@ fn test_pipeline_findindex_and_slice() {
         fn isLarge(x: number) -> bool { return x > 50.0; }
 
         let numbers: number[] = [10.0, 20.0, 60.0, 80.0];
-        let idx: number = unwrap(findIndex(numbers, isLarge));
+        let idx: number = unwrap(find_index(numbers, isLarge));
         let fromLarge: number[] = slice(numbers, idx, len(numbers));
         len(fromLarge)
     "#;
@@ -257,7 +257,7 @@ fn test_pipeline_complex_aggregation() {
 fn test_pipeline_string_filter_map() {
     let code = r#"
         fn notEmpty(s: string) -> bool { return len(s) > 0.0; }
-        fn firstChar(s: string) -> string { return unwrap(charAt(s, 0.0)); }
+        fn firstChar(s: string) -> string { return unwrap(char_at(s, 0.0)); }
 
         let words: string[] = ["apple", "", "banana", "", "cherry"];
         let nonEmpty: string[] = filter(words, notEmpty);
@@ -329,7 +329,7 @@ fn test_pipeline_replace_map() {
 fn test_pipeline_padstart_map() {
     let code = r#"
         fn pad(s: string) -> string {
-            return padStart(s, 5.0, "0");
+            return pad_start(s, 5.0, "0");
         }
 
         let numbers: string[] = ["1", "22", "333"];
@@ -392,8 +392,8 @@ fn test_pipeline_foreach_side_effects() {
         fn noop(_x: number) -> void { return; }
 
         let numbers: number[] = [1.0, 2.0, 3.0];
-        forEach(numbers, noop);
-        // forEach returns null, verify it doesn't crash
+        for_each(numbers, noop);
+        // for_each returns null, verify it doesn't crash
         true
     "#;
     assert_eval_bool_with_io(code, true);

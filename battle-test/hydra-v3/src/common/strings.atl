@@ -29,7 +29,7 @@ export fn drop_first<T>(items: T[]) -> T[] {
 }
 
 export fn ends_with(value: string, suffix: string) -> bool {
-    let pos = lastIndexOf(value, suffix);
+    let pos = last_index_of(value, suffix);
     if (pos == None()) {
         return false;
     }

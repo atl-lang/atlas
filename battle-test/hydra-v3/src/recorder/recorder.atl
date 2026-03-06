@@ -136,9 +136,9 @@ export fn recorder_export(state: RecorderState, path: string) -> Result<null, st
             timestamp: entry.timestamp,
             message: msg
         };
-        export_entries = export_entries + [toJSON(exported)];
+        export_entries = export_entries + [to_json(exported)];
     }
-    let payload = toJSON(export_entries);
+    let payload = to_json(export_entries);
     let text = unwrap(stringifyJson(payload));
-    return writeFile(path, text);
+    return write_file(path, text);
 }

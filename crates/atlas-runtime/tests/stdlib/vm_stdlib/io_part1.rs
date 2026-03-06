@@ -18,7 +18,7 @@ fn vm_test_read_file_basic() {
     let test_file = temp_dir.path().join("test.txt");
     fs::write(&test_file, "Hello, VM!").unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -31,7 +31,7 @@ fn vm_test_write_file_basic() {
     let test_file = temp_dir.path().join("output.txt");
 
     let code = format!(
-        r#"writeFile("{}", "VM content");"#,
+        r#"write_file("{}", "VM content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -48,7 +48,7 @@ fn vm_test_append_file_basic() {
     fs::write(&test_file, "line1\n").unwrap();
 
     let code = format!(
-        r#"appendFile("{}", "line2\n");"#,
+        r#"append_file("{}", "line2\n");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -65,7 +65,7 @@ fn vm_test_file_exists_true() {
     fs::write(&test_file, "").unwrap();
 
     let code = format!(
-        r#"let result = fileExists("{}"); result;"#,
+        r#"let result = file_exists("{}"); result;"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -81,7 +81,7 @@ fn vm_test_file_exists_false() {
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
     let code = format!(
-        r#"let result = fileExists("{}"); result;"#,
+        r#"let result = file_exists("{}"); result;"#,
         path_for_atlas(&nonexistent)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -97,7 +97,7 @@ fn vm_test_read_dir_basic() {
     fs::write(temp_dir.path().join("file2.txt"), "").unwrap();
 
     let code = format!(
-        r#"let result = readDir("{}"); result;"#,
+        r#"let result = read_dir("{}"); result;"#,
         path_for_atlas(temp_dir.path())
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -111,7 +111,7 @@ fn vm_test_create_dir_basic() {
     let temp_dir = TempDir::new().unwrap();
     let new_dir = temp_dir.path().join("newdir");
 
-    let code = format!(r#"createDir("{}");"#, path_for_atlas(&new_dir));
+    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&new_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -124,7 +124,7 @@ fn vm_test_create_dir_nested() {
     let temp_dir = TempDir::new().unwrap();
     let nested_dir = temp_dir.path().join("a/b/c");
 
-    let code = format!(r#"createDir("{}");"#, path_for_atlas(&nested_dir));
+    let code = format!(r#"create_dir("{}");"#, path_for_atlas(&nested_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -137,7 +137,7 @@ fn vm_test_remove_file_basic() {
     let test_file = temp_dir.path().join("remove.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"removeFile("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -150,7 +150,7 @@ fn vm_test_remove_dir_basic() {
     let test_dir = temp_dir.path().join("rmdir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"removeDir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -164,7 +164,7 @@ fn vm_test_file_info_file() {
     fs::write(&test_file, "test content").unwrap();
 
     let code = format!(
-        r#"let result = fileInfo("{}"); result;"#,
+        r#"let result = file_info("{}"); result;"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -179,7 +179,7 @@ fn vm_test_file_info_file() {
 #[test]
 fn vm_test_path_join_basic() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let result = pathJoin("a", "b", "c"); result;"#;
+    let code = r#"let result = path_join("a", "b", "c"); result;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -196,7 +196,7 @@ fn vm_test_read_file_utf8() {
     let test_file = temp_dir.path().join("utf8.txt");
     fs::write(&test_file, "Hello 你好 🎉").unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -207,7 +207,7 @@ fn vm_test_read_file_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"readFile("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"read_file("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -222,7 +222,7 @@ fn vm_test_read_file_permission_denied() {
 
     // Execute without granting permissions
     let mut lexer =
-        atlas_runtime::Lexer::new(format!(r#"readFile("{}");"#, path_for_atlas(&test_file)));
+        atlas_runtime::Lexer::new(format!(r#"read_file("{}");"#, path_for_atlas(&test_file)));
     let (tokens, _) = lexer.tokenize();
     let mut parser = atlas_runtime::Parser::new(tokens);
     let (ast, _) = parser.parse();
@@ -247,7 +247,7 @@ fn vm_test_write_file_overwrite() {
     fs::write(&test_file, "original").unwrap();
 
     let code = format!(
-        r#"writeFile("{}", "new content");"#,
+        r#"write_file("{}", "new content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -264,7 +264,7 @@ fn vm_test_write_file_permission_denied() {
 
     // Execute without granting permissions
     let mut lexer = atlas_runtime::Lexer::new(format!(
-        r#"writeFile("{}", "content");"#,
+        r#"write_file("{}", "content");"#,
         path_for_atlas(&test_file)
     ));
     let (tokens, _) = lexer.tokenize();
@@ -290,7 +290,7 @@ fn vm_test_append_file_create_if_not_exists() {
     let test_file = temp_dir.path().join("new.txt");
 
     let code = format!(
-        r#"appendFile("{}", "content");"#,
+        r#"append_file("{}", "content");"#,
         path_for_atlas(&test_file)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -305,7 +305,7 @@ fn vm_test_read_dir_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("nonexistent_dir");
 
-    let code = format!(r#"readDir("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"read_dir("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -316,7 +316,7 @@ fn vm_test_remove_file_not_found() {
     let temp_dir = TempDir::new().unwrap();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"removeFile("{}");"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"remove_file("{}");"#, path_for_atlas(&nonexistent));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -329,7 +329,7 @@ fn vm_test_remove_dir_not_empty() {
     fs::create_dir(&test_dir).unwrap();
     fs::write(test_dir.join("file.txt"), "").unwrap();
 
-    let code = format!(r#"removeDir("{}");"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}");"#, path_for_atlas(&test_dir));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -343,7 +343,7 @@ fn vm_test_file_info_directory() {
     fs::create_dir(&test_dir).unwrap();
 
     let code = format!(
-        r#"let result = fileInfo("{}"); result;"#,
+        r#"let result = file_info("{}"); result;"#,
         path_for_atlas(&test_dir)
     );
     let result = execute_with_io(&code, &temp_dir);
@@ -354,7 +354,7 @@ fn vm_test_file_info_directory() {
 #[test]
 fn vm_test_path_join_single() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"let result = pathJoin("single"); result;"#;
+    let code = r#"let result = path_join("single"); result;"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_ok());
@@ -363,14 +363,14 @@ fn vm_test_path_join_single() {
 #[test]
 fn vm_test_path_join_no_args() {
     let temp_dir = TempDir::new().unwrap();
-    let code = r#"pathJoin();"#;
+    let code = r#"path_join();"#;
     let result = execute_with_io(code, &temp_dir);
 
     assert!(result.is_err());
 }
 
 // ============================================================================
-// VM - Additional readFile tests
+// VM - Additional read_file tests
 // ============================================================================
 
 #[test]
@@ -379,7 +379,7 @@ fn vm_test_read_file_empty() {
     let test_file = temp_dir.path().join("empty.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -396,7 +396,7 @@ fn vm_test_read_file_invalid_utf8() {
     let test_file = temp_dir.path().join("binary.bin");
     fs::write(&test_file, [0xFF, 0xFE, 0xFD]).unwrap();
 
-    let code = format!(r#"readFile("{}");"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}");"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_err());
@@ -409,7 +409,7 @@ fn vm_test_read_file_multiline() {
     let content = "line1\nline2\nline3\n";
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -427,7 +427,7 @@ fn vm_test_read_file_large() {
     let content = "x".repeat(10000);
     fs::write(&test_file, &content).unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
@@ -446,12 +446,12 @@ fn vm_test_read_file_with_bom() {
     content.extend_from_slice(b"Hello");
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"let x = readFile("{}"); x;"#, path_for_atlas(&test_file));
+    let code = format!(r#"let x = read_file("{}"); x;"#, path_for_atlas(&test_file));
     let result = execute_with_io(&code, &temp_dir);
 
     assert!(result.is_ok());
 }
 
 // ============================================================================
-// VM - Additional writeFile tests (continued in io_part2.rs)
+// VM - Additional write_file tests (continued in io_part2.rs)
 // ============================================================================

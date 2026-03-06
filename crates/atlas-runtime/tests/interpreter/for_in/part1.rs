@@ -213,12 +213,12 @@ fn test_for_in_with_function_calls() {
 #[test]
 fn test_for_in_with_hashmap_keys() {
     let source = r#"
-        let hmap: HashMap = hashMapNew();
-        hashMapPut(hmap, "a", 1);
-        hashMapPut(hmap, "b", 2);
-        hashMapPut(hmap, "c", 3);
+        let hmap: HashMap = hash_map_new();
+        hash_map_put(hmap, "a", 1);
+        hash_map_put(hmap, "b", 2);
+        hash_map_put(hmap, "c", 3);
 
-        let keys: array = hashMapKeys(hmap);
+        let keys: array = hash_map_keys(hmap);
         let mut count: number = 0;
 
         for key in keys {
@@ -237,12 +237,12 @@ fn test_for_in_with_hashmap_keys() {
 #[test]
 fn test_for_in_with_hashset() {
     let source = r#"
-        let set: HashSet = hashSetNew();
-        hashSetAdd(set, 10);
-        hashSetAdd(set, 20);
-        hashSetAdd(set, 30);
+        let set: HashSet = hash_set_new();
+        hash_set_add(set, 10);
+        hash_set_add(set, 20);
+        hash_set_add(set, 30);
 
-        let arr: array = hashSetToArray(set);
+        let arr: array = hash_set_to_array(set);
         let mut sum: number = 0;
 
         for item in arr {

@@ -8,19 +8,19 @@ export fn classify_chunk(chunk: string) -> string {
     if is_empty {
         return CHUNK_EMPTY;
     }
-    let valid: bool = isValidJSON(trimmed);
+    let valid: bool = is_valid_json(trimmed);
     if !valid {
         return CHUNK_POLLUTION;
     }
-    let is_array: bool = startsWith(trimmed, "[");
+    let is_array: bool = starts_with(trimmed, "[");
     if is_array {
         return CHUNK_JSONRPC;
     }
-    let parsed = unwrap(parseJSON(trimmed));
+    let parsed = unwrap(parse_json(trimmed));
     let ver = parsed["jsonrpc"];
-    let has_ver: bool = !jsonIsNull(ver);
+    let has_ver: bool = !json_is_null(ver);
     if has_ver {
-        let ver_str = jsonAsString(ver);
+        let ver_str = json_as_string(ver);
         if ver_str == "2.0" {
             return CHUNK_JSONRPC;
         }
@@ -35,30 +35,30 @@ export fn validate_utf8(data: string) -> string {
 }
 
 fn test_classify_empty() -> bool {
-    assertEqual(classify_chunk(""), CHUNK_EMPTY);
-    assertEqual(classify_chunk("   \n"), CHUNK_EMPTY);
+    assert_equal(classify_chunk(""), CHUNK_EMPTY);
+    assert_equal(classify_chunk("   \n"), CHUNK_EMPTY);
     return true;
 }
 
 fn test_classify_invalid_json() -> bool {
-    assertEqual(classify_chunk("{not json}"), CHUNK_POLLUTION);
+    assert_equal(classify_chunk("{not json}"), CHUNK_POLLUTION);
     return true;
 }
 
 fn test_classify_jsonrpc_object() -> bool {
     let msg = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}";
-    assertEqual(classify_chunk(msg), CHUNK_JSONRPC);
+    assert_equal(classify_chunk(msg), CHUNK_JSONRPC);
     return true;
 }
 
 fn test_classify_jsonrpc_array() -> bool {
     let msg = "[{\"jsonrpc\":\"2.0\"}]";
-    assertEqual(classify_chunk(msg), CHUNK_JSONRPC);
+    assert_equal(classify_chunk(msg), CHUNK_JSONRPC);
     return true;
 }
 
 fn test_classify_valid_json_non_rpc() -> bool {
     let msg = "{\"foo\":\"bar\"}";
-    assertEqual(classify_chunk(msg), CHUNK_POLLUTION);
+    assert_equal(classify_chunk(msg), CHUNK_POLLUTION);
     return true;
 }

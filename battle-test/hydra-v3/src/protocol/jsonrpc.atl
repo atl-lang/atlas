@@ -22,7 +22,7 @@ export fn build_error_response(id: json, code: number, message: string) -> json 
         id: id,
         error: record { code: code, message: message }
     };
-    return toJSON(payload);
+    return to_json(payload);
 }
 
 export fn build_log_message(level: string, message: string) -> json {
@@ -31,5 +31,5 @@ export fn build_log_message(level: string, message: string) -> json {
         method: "$/log",
         params: record { level: level, message: message }
     };
-    return toJSON(payload);
+    return to_json(payload);
 }

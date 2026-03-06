@@ -1,8 +1,8 @@
-let data: json = unwrap(parseJSON("{\"name\":\"Alice\",\"age\":30}"));
+let data: json = unwrap(parse_json("{\"name\":\"Alice\",\"age\":30}"));
 let name: string = data["name"].as_string();
 let age: number = data["age"].as_number();
 print(name);
 print(age);
 
-let json_str: string = toJSON(42);
+let json_str: string = to_json(42);
 print(json_str);

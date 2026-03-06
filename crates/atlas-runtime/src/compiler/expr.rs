@@ -260,16 +260,24 @@ impl Compiler {
         const RETURNS_COLLECTION: &[&str] = &[
             // HashMap
             "hashMapPut",
+            "hash_map_put",
             "hashMapClear",
+            "hash_map_clear",
             // HashSet
             "hashSetAdd",
+            "hash_set_add",
             "hashSetClear",
+            "hash_set_clear",
             // Queue
             "queueEnqueue",
+            "queue_enqueue",
             "queueClear",
+            "queue_clear",
             // Stack
             "stackPush",
+            "stack_push",
             "stackClear",
+            "stack_clear",
             // Array (free-function variants)
             "unshift",
             "reverse",
@@ -278,9 +286,13 @@ impl Compiler {
         const RETURNS_PAIR: &[&str] = &[
             // HashMap / HashSet / Queue / Stack
             "hashMapRemove",
+            "hash_map_remove",
             "hashSetRemove",
+            "hash_set_remove",
             "queueDequeue",
+            "queue_dequeue",
             "stackPop",
+            "stack_pop",
             // Array (free-function variants)
             "pop",
             "shift",

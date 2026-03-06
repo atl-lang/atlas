@@ -69,7 +69,7 @@ export fn supervisor_start(s: SupervisorState) -> SupervisorState {
             start_time: 0
         };
     }
-    let handle = spawnProcess(s.cmd);
+    let handle = spawn_process(s.cmd);
     let pid = 0;
     return SupervisorState {
         cmd: s.cmd,
@@ -88,7 +88,7 @@ export fn supervisor_start(s: SupervisorState) -> SupervisorState {
 export fn supervisor_stop(s: SupervisorState) -> SupervisorState {
     return match s.handle {
         Some(handle) => {
-            let _ignored = processKill(handle, 15);
+            let _ignored = process_kill(handle, 15);
             SupervisorState {
                 cmd: s.cmd,
                 cwd: s.cwd,
@@ -168,10 +168,10 @@ export fn supervisor_poll(s: SupervisorState) -> SupervisorState {
         return s;
     }
     let handle = unwrap(s.handle);
-    if (processIsRunning(handle)) {
+    if (process_is_running(handle)) {
         return s;
     }
-    let wait_result = processWait(handle);
+    let wait_result = process_wait(handle);
     return match wait_result {
         Ok(code) => {
             let _ignored = code;

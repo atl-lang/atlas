@@ -6,9 +6,9 @@ type Discovery = { client: string, config_path: string, confidence: number, serv
 export fn resolve_conflicts(
     discoveries: Discovery[]
 ) -> Discovery[] {
-    let mut map: HashMap<string, Discovery> = hashMapNew();
+    let mut map: HashMap<string, Discovery> = hash_map_new();
     for d in discoveries {
-        let existing = hashMapGet(map, d.client);
+        let existing = hash_map_get(map, d.client);
         match existing {
             Some(current) => {
                 if (d.confidence > current.confidence) {
@@ -19,8 +19,8 @@ export fn resolve_conflicts(
         };
     }
     let mut result: Discovery[] = [];
-    for key in hashMapKeys(map) {
-        result = result + [unwrap(hashMapGet(map, key))];
+    for key in hash_map_keys(map) {
+        result = result + [unwrap(hash_map_get(map, key))];
     }
     return result;
 }
@@ -35,7 +35,7 @@ export fn merge_into_registry(
             let mut updated = registry;
             let mut servers = registry["servers"];
             if (servers == null) {
-                servers = toJSON(record {});
+                servers = to_json(record {});
             }
             let mut added = 0;
             for d in discoveries {

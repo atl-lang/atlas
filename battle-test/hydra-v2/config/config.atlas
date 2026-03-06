@@ -23,30 +23,30 @@ fn join_lines(parts: string[]) -> string {
 }
 
 export fn default_registry() -> Registry {
-    let mut reg = hashMapNew();
-    reg = hashMapPut(reg, "version", "1.0");
+    let mut reg = hash_map_new();
+    reg = hash_map_put(reg, "version", "1.0");
     return reg;
 }
 
 export fn default_server_config() -> ServerConfig {
-    let mut cfg = hashMapNew();
-    cfg = hashMapPut(cfg, "command", "");
-    cfg = hashMapPut(cfg, "args", "");
-    cfg = hashMapPut(cfg, "cwd", "");
-    cfg = hashMapPut(cfg, "env_file", "");
+    let mut cfg = hash_map_new();
+    cfg = hash_map_put(cfg, "command", "");
+    cfg = hash_map_put(cfg, "args", "");
+    cfg = hash_map_put(cfg, "cwd", "");
+    cfg = hash_map_put(cfg, "env_file", "");
     return cfg;
 }
 
 fn cfg_get(borrow cfg: ServerConfig, key: string) -> string {
-    let has_key: bool = hashMapHas(cfg, key);
+    let has_key: bool = hash_map_has(cfg, key);
     if has_key {
-        return unwrap(hashMapGet(cfg, key));
+        return unwrap(hash_map_get(cfg, key));
     }
     return "";
 }
 
 fn cfg_set(cfg: ServerConfig, key: string, value: string) -> ServerConfig {
-    return hashMapPut(cfg, key, value);
+    return hash_map_put(cfg, key, value);
 }
 
 fn cfg_get_args(borrow cfg: ServerConfig) -> string[] {
@@ -83,7 +83,7 @@ export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerCon
 }
 
 export fn substitute_env_vars(value: string) -> string {
-    let has_prefix: bool = startsWith(value, "env:");
+    let has_prefix: bool = starts_with(value, "env:");
     if has_prefix {
         return value;
     }
@@ -98,7 +98,7 @@ export fn apply_env_vars(cfg: ServerConfig) -> ServerConfig {
     let mut args: string[] = slice([""], 0, 0);
     let args_in: string[] = cfg_get_args(cfg);
     for arg in args_in {
-        args = arrayPush(args, substitute_env_vars(arg));
+        args = array_push(args, substitute_env_vars(arg));
     }
 
     let mut out = cfg;
@@ -116,13 +116,13 @@ fn test_merge_server_config_command() -> bool {
     let args: string[] = ["-m", "server"];
     override = cfg_set_args(override, args);
     let merged = merge_server_config(base, override);
-    assertEqual(cfg_get(merged, "command"), "python");
-    assertEqual(len(cfg_get_args(merged)), 2);
+    assert_equal(cfg_get(merged, "command"), "python");
+    assert_equal(len(cfg_get_args(merged)), 2);
     return true;
 }
 
 fn test_substitute_env_vars_simple() -> bool {
     let v = substitute_env_vars("env:HOME");
-    assertEqual(v, "env:HOME");
+    assert_equal(v, "env:HOME");
     return true;
 }

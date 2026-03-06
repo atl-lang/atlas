@@ -490,7 +490,7 @@ fn test_allow_io_false_network_true_blocks_filesystem() {
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
 
     // Filesystem access should be blocked
-    let result = runtime.eval(r#"readFile("/etc/passwd")"#);
+    let result = runtime.eval(r#"read_file("/etc/passwd")"#);
 
     // Should fail with security/permission error
     assert!(
@@ -530,7 +530,7 @@ fn test_neither_permission_blocks_both() {
     let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
 
     // Filesystem should be blocked
-    let fs_result = runtime.eval(r#"readFile("/etc/passwd")"#);
+    let fs_result = runtime.eval(r#"read_file("/etc/passwd")"#);
     assert!(fs_result.is_err(), "Filesystem should be blocked");
 
     // HTTP should also be blocked

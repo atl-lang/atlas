@@ -79,13 +79,13 @@ fn test_trim_unicode_whitespace() {
 
 #[test]
 fn test_trim_start() {
-    let code = r#"trimStart("  hello")"#;
+    let code = r#"trim_start("  hello")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_trim_end() {
-    let code = r#"trimEnd("hello  ")"#;
+    let code = r#"trim_end("hello  ")"#;
     assert_eval_string(code, "hello");
 }
 
@@ -95,43 +95,43 @@ fn test_trim_end() {
 
 #[test]
 fn test_index_of_found() {
-    let code = r#"indexOf("hello", "ll")"#;
+    let code = r#"index_of("hello", "ll")"#;
     assert_eval_option_some_number(code, 2.0);
 }
 
 #[test]
 fn test_index_of_not_found() {
-    let code = r#"indexOf("hello", "x")"#;
+    let code = r#"index_of("hello", "x")"#;
     assert_eval_option_none(code);
 }
 
 #[test]
 fn test_index_of_empty_needle() {
-    let code = r#"indexOf("hello", "")"#;
+    let code = r#"index_of("hello", "")"#;
     assert_eval_option_some_number(code, 0.0);
 }
 
 #[test]
 fn test_index_of_unicode_offset() {
-    let code = r#"indexOf("éa😊", "😊")"#;
+    let code = r#"index_of("éa😊", "😊")"#;
     assert_eval_option_some_number(code, 2.0);
 }
 
 #[test]
 fn test_last_index_of_found() {
-    let code = r#"lastIndexOf("hello", "l")"#;
+    let code = r#"last_index_of("hello", "l")"#;
     assert_eval_option_some_number(code, 3.0);
 }
 
 #[test]
 fn test_last_index_of_not_found() {
-    let code = r#"lastIndexOf("hello", "x")"#;
+    let code = r#"last_index_of("hello", "x")"#;
     assert_eval_option_none(code);
 }
 
 #[test]
 fn test_last_index_of_unicode_offset() {
-    let code = r#"lastIndexOf("éa😊a😊", "😊")"#;
+    let code = r#"last_index_of("éa😊a😊", "😊")"#;
     assert_eval_option_some_number(code, 4.0);
 }
 
@@ -153,25 +153,25 @@ fn test_includes_not_found() {
 
 #[test]
 fn test_to_upper_case() {
-    let code = r#"toUpperCase("hello")"#;
+    let code = r#"to_upper_case("hello")"#;
     assert_eval_string(code, "HELLO");
 }
 
 #[test]
 fn test_to_upper_case_unicode() {
-    let code = r#"toUpperCase("café")"#;
+    let code = r#"to_upper_case("café")"#;
     assert_eval_string(code, "CAFÉ");
 }
 
 #[test]
 fn test_to_lower_case() {
-    let code = r#"toLowerCase("HELLO")"#;
+    let code = r#"to_lower_case("HELLO")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_to_lower_case_unicode() {
-    let code = r#"toLowerCase("CAFÉ")"#;
+    let code = r#"to_lower_case("CAFÉ")"#;
     assert_eval_string(code, "café");
 }
 
@@ -195,19 +195,19 @@ fn test_substring_out_of_bounds() {
 
 #[test]
 fn test_char_at_basic() {
-    let code = r#"charAt("hello", 0)"#;
+    let code = r#"char_at("hello", 0)"#;
     assert_eval_option_some_string(code, "h");
 }
 
 #[test]
 fn test_char_at_unicode() {
-    let code = r#"charAt("🎉🔥✨", 1)"#;
+    let code = r#"char_at("🎉🔥✨", 1)"#;
     assert_eval_option_some_string(code, "🔥");
 }
 
 #[test]
 fn test_char_at_out_of_bounds() {
-    let code = r#"charAt("hello", 10)"#;
+    let code = r#"char_at("hello", 10)"#;
     assert_eval_option_none(code);
 }
 
@@ -253,67 +253,67 @@ fn test_replace_empty_search() {
 
 #[test]
 fn test_pad_start_basic() {
-    let code = r#"padStart("5", 3, "0")"#;
+    let code = r#"pad_start("5", 3, "0")"#;
     assert_eval_string(code, "005");
 }
 
 #[test]
 fn test_pad_start_already_long() {
-    let code = r#"padStart("hello", 3, "0")"#;
+    let code = r#"pad_start("hello", 3, "0")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_pad_start_multichar_fill() {
-    let code = r#"padStart("x", 5, "ab")"#;
+    let code = r#"pad_start("x", 5, "ab")"#;
     assert_eval_string(code, "ababx");
 }
 
 #[test]
 fn test_pad_end_basic() {
-    let code = r#"padEnd("5", 3, "0")"#;
+    let code = r#"pad_end("5", 3, "0")"#;
     assert_eval_string(code, "500");
 }
 
 #[test]
 fn test_pad_end_already_long() {
-    let code = r#"padEnd("hello", 3, "0")"#;
+    let code = r#"pad_end("hello", 3, "0")"#;
     assert_eval_string(code, "hello");
 }
 
 #[test]
 fn test_starts_with_true() {
-    let code = r#"startsWith("hello", "he")"#;
+    let code = r#"starts_with("hello", "he")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_starts_with_false() {
-    let code = r#"startsWith("hello", "x")"#;
+    let code = r#"starts_with("hello", "x")"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_starts_with_empty() {
-    let code = r#"startsWith("hello", "")"#;
+    let code = r#"starts_with("hello", "")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_ends_with_true() {
-    let code = r#"endsWith("hello", "lo")"#;
+    let code = r#"ends_with("hello", "lo")"#;
     assert_eval_bool(code, true);
 }
 
 #[test]
 fn test_ends_with_false() {
-    let code = r#"endsWith("hello", "x")"#;
+    let code = r#"ends_with("hello", "x")"#;
     assert_eval_bool(code, false);
 }
 
 #[test]
 fn test_ends_with_empty() {
-    let code = r#"endsWith("hello", "")"#;
+    let code = r#"ends_with("hello", "")"#;
     assert_eval_bool(code, true);
 }
 

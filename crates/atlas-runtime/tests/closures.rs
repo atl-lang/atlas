@@ -391,7 +391,7 @@ fn describe(block: () -> void) -> void {
 }
 
 fn it_adds() -> void {
-    tests = arrayPush(tests, 1);
+    tests = array_push(tests, 1);
 }
 
 describe(fn() -> void {
@@ -408,17 +408,17 @@ len(tests);
 fn test_callback_closure_mutates_global_hashmap() {
     assert_parity_number(
         r#"
-let mut m = hashMapNew();
+let mut m = hash_map_new();
 
 fn with_callback(block: () -> void) -> void {
     block();
 }
 
 with_callback(fn() -> void {
-    hashMapPut(m, "a", 1);
+    hash_map_put(m, "a", 1);
 });
 
-hashMapSize(m);
+hash_map_size(m);
 "#,
         1.0,
     );
@@ -440,7 +440,7 @@ fn inner(block: () -> void) -> void {
 
 outer(fn() -> void {
     inner(fn() -> void {
-        values = arrayPush(values, 7);
+        values = array_push(values, 7);
     });
 });
 
@@ -461,7 +461,7 @@ fn apply(block: () -> void) -> void {
 }
 
 fn push_one() -> void {
-    items = arrayPush(items, 42);
+    items = array_push(items, 42);
 }
 
 apply(push_one);
@@ -1692,15 +1692,15 @@ reduce(arr, fn(acc, x) { acc + x }, 0);
     );
 }
 
-// --- forEach ---
+// --- for_each ---
 
 #[test]
 fn test_hof_for_each_fn_expr_executes() {
-    // forEach returns null; verify it runs without error via side-effect-free path
+    // for_each returns null; verify it runs without error via side-effect-free path
     let result = vm_eval(
         r#"
 let arr = [1, 2, 3];
-forEach(arr, fn(x: number) { });
+for_each(arr, fn(x: number) { });
 42;
 "#,
     );
@@ -1712,7 +1712,7 @@ fn test_hof_for_each_arrow_executes() {
     let result = vm_eval(
         r#"
 let arr = [1, 2, 3];
-forEach(arr, fn(x) { x });
+for_each(arr, fn(x) { x });
 99;
 "#,
     );
@@ -1817,14 +1817,14 @@ result[2];
     );
 }
 
-// --- flatMap ---
+// --- flat_map ---
 
 #[test]
 fn test_hof_flat_map_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2];
-let result = flatMap(arr, fn(x: number) -> any { return [x, x * 10]; });
+let result = flat_map(arr, fn(x: number) -> any { return [x, x * 10]; });
 len(result);
 "#,
         4.0,
@@ -1836,7 +1836,7 @@ fn test_hof_flat_map_arrow() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3];
-let result = flatMap(arr, fn(x) { [x, x] });
+let result = flat_map(arr, fn(x) { [x, x] });
 result[0];
 "#,
         1.0,

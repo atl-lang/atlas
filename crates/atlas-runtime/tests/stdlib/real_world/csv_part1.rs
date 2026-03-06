@@ -14,7 +14,7 @@ fn test_csv_read_and_parse_basic() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let header: string = lines[0];
         header
@@ -32,7 +32,7 @@ fn test_csv_parse_rows() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let header: string = lines[0];
         let dataLines: string[] = slice(lines, 1, len(lines));
@@ -56,7 +56,7 @@ fn test_csv_count_rows() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         // Count data rows (excluding header and empty last line)
         let allRows: number = len(lines);
@@ -81,11 +81,11 @@ fn test_csv_filter_by_criteria() {
         r#"
         fn isExpensive(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let price: number = unwrap(parseFloat(fields[1]));
+            let price: number = unwrap(parse_float(fields[1]));
             return price >= 2.0;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1.0, len(lines) - 1.0);
 
@@ -115,7 +115,7 @@ fn test_csv_extract_column() {
             return fields[0];
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -137,11 +137,11 @@ fn test_csv_sum_column() {
         r#"
         fn sumAmounts(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let amount: number = unwrap(parseFloat(fields[1]));
+            let amount: number = unwrap(parse_float(fields[1]));
             return total + amount;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -160,7 +160,7 @@ fn test_csv_empty_file() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         len(csv)
     "#,
         path_for_atlas(&csv_path)
@@ -176,7 +176,7 @@ fn test_csv_single_row() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
         len(dataLines)
@@ -194,7 +194,7 @@ fn test_csv_handle_empty_fields() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
         let fields: string[] = split(row1, ",");
@@ -218,22 +218,22 @@ fn test_csv_write_transformed() {
         fn transform(row: string) -> string {{
             let fields: string[] = split(row, ",");
             let name: string = fields[0];
-            let value: number = unwrap(parseFloat(fields[1]));
+            let value: number = unwrap(parse_float(fields[1]));
             let doubled: number = value * 2.0;
             return name + "," + str(doubled);
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let header: string = lines[0];
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
         let transformed: string[] = map(dataLines, transform);
         let output: string = header + "\n" + join(transformed, "\n") + "\n";
-        writeFile("{}", output);
+        write_file("{}", output);
 
         // Verify output
-        let result: string = readFile("{}");
+        let result: string = read_file("{}");
         result
     "#,
         path_for_atlas(&input_path),
@@ -253,11 +253,11 @@ fn test_csv_calculate_average() {
         r#"
         fn sumScores(total: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let score: number = unwrap(parseFloat(fields[1]));
+            let score: number = unwrap(parse_float(fields[1]));
             return total + score;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -280,11 +280,11 @@ fn test_csv_filter_and_count() {
         r#"
         fn isAdult(row: string) -> bool {{
             let fields: string[] = split(row, ",");
-            let age: number = unwrap(parseFloat(fields[1]));
+            let age: number = unwrap(parse_float(fields[1]));
             return age >= 30.0;
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -306,11 +306,11 @@ fn test_csv_max_value() {
         r#"
         fn findMax(current: number, row: string) -> number {{
             let fields: string[] = split(row, ",");
-            let value: number = unwrap(parseFloat(fields[1]));
+            let value: number = unwrap(parse_float(fields[1]));
             return max(current, value);
         }}
 
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
@@ -329,7 +329,7 @@ fn test_csv_header_extraction() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let header: string = lines[0];
         let columns: string[] = split(header, ",");
@@ -348,7 +348,7 @@ fn test_csv_quoted_fields() {
 
     let code = format!(
         r#"
-        let csv: string = readFile("{}");
+        let csv: string = read_file("{}");
         let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
         let fields: string[] = split(row1, ",");

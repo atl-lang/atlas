@@ -217,7 +217,7 @@ fn test_parity_reduce_invalid_callback() {
 
 #[test]
 fn test_parity_foreach_invalid_callback() {
-    assert_error_parity(r#"forEach([1,2,3], "not a function");"#);
+    assert_error_parity(r#"for_each([1,2,3], "not a function");"#);
 }
 
 #[test]
@@ -227,12 +227,12 @@ fn test_parity_find_invalid_callback() {
 
 #[test]
 fn test_parity_find_index_invalid_callback() {
-    assert_error_parity(r#"findIndex([1,2,3], "not a function");"#);
+    assert_error_parity(r#"find_index([1,2,3], "not a function");"#);
 }
 
 #[test]
 fn test_parity_flat_map_invalid_callback() {
-    assert_error_parity(r#"flatMap([1,2,3], "not a function");"#);
+    assert_error_parity(r#"flat_map([1,2,3], "not a function");"#);
 }
 
 #[test]
@@ -252,7 +252,7 @@ fn test_parity_sort_invalid_callback() {
 
 #[test]
 fn test_parity_sort_by_invalid_callback() {
-    assert_error_parity(r#"sortBy([1,2,3], "not a function");"#);
+    assert_error_parity(r#"sort_by([1,2,3], "not a function");"#);
 }
 
 #[test]

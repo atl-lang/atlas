@@ -815,7 +815,7 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![Type::any_placeholder(), arg_type],
                     };
                 }
-                "hashMapNew" => {
+                "hashMapNew" | "hash_map_new" => {
                     if !call.args.is_empty() {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -836,7 +836,7 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![Type::any_placeholder(), Type::any_placeholder()],
                     };
                 }
-                "hashMapPut" => {
+                "hashMapPut" | "hash_map_put" => {
                     if call.args.len() != 3 {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -936,7 +936,7 @@ impl<'a> TypeChecker<'a> {
 
                     return map_type;
                 }
-                "hashMapGet" => {
+                "hashMapGet" | "hash_map_get" => {
                     if call.args.len() != 2 {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(

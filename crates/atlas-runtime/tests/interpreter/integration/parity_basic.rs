@@ -89,8 +89,8 @@ fn test_parity_arrays(#[case] code: &str) {
 #[case(r#""hello";"#)]
 #[case(r#""foo" + "bar";"#)]
 #[case(r#"let s = "test"; len(s);"#)]
-#[case(r#"toUpperCase("hello");"#)]
-#[case(r#"toLowerCase("WORLD");"#)]
+#[case(r#"to_upper_case("hello");"#)]
+#[case(r#"to_lower_case("WORLD");"#)]
 fn test_parity_strings(#[case] code: &str) {
     assert_parity(code);
 }
@@ -168,29 +168,33 @@ fn test_parity_array_map_filter_both_error(#[case] code: &str) {
 
 // Map (HashMap): get
 #[rstest]
-#[case("let m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); unwrap(hashMapGet(m, \"a\"));")]
-#[case("let m: HashMap = hashMapNew(); hashMapPut(m, \"x\", 42); unwrap(hashMapGet(m, \"x\"));")]
+#[case(
+    "let m: HashMap = hash_map_new(); hash_map_put(m, \"a\", 1); unwrap(hash_map_get(m, \"a\"));"
+)]
+#[case(
+    "let m: HashMap = hash_map_new(); hash_map_put(m, \"x\", 42); unwrap(hash_map_get(m, \"x\"));"
+)]
 fn test_parity_hashmap_get(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Map (HashMap): set with shared mutation — aliases see updates
 #[rstest]
-#[case("let mut m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); let mut n: HashMap = m; hashMapPut(n, \"b\", 2); hashMapSize(m);")]
+#[case("let mut m: HashMap = hash_map_new(); hash_map_put(m, \"a\", 1); let mut n: HashMap = m; hash_map_put(n, \"b\", 2); hash_map_size(m);")]
 fn test_parity_hashmap_set_shared(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Map (HashMap): keys count
 #[rstest]
-#[case("let m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); hashMapPut(m, \"b\", 2); hashMapSize(m);")]
+#[case("let m: HashMap = hash_map_new(); hash_map_put(m, \"a\", 1); hash_map_put(m, \"b\", 2); hash_map_size(m);")]
 fn test_parity_hashmap_keys(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Map (HashMap): remove (delete a key)
 #[rstest]
-#[case("let m: HashMap = hashMapNew(); hashMapPut(m, \"a\", 1); hashMapPut(m, \"b\", 2); hashMapRemove(m, \"a\"); hashMapSize(m);")]
+#[case("let m: HashMap = hash_map_new(); hash_map_put(m, \"a\", 1); hash_map_put(m, \"b\", 2); hash_map_remove(m, \"a\"); hash_map_size(m);")]
 fn test_parity_hashmap_remove(#[case] code: &str) {
     assert_parity(code);
 }

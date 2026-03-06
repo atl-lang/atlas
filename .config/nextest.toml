@@ -4,4 +4,11 @@
 [profile.default]
 test-threads = "num-cpus"
 failure-output = "immediate"
-slow-timeout = { period = "60s", terminate-after = 3 }
+# Kill runaway tests fast — AI-generated VM/interpreter code can introduce
+# infinite loops that consume all CPU/memory. 30s is generous for any unit test.
+slow-timeout = { period = "15s", terminate-after = 2 }
+
+# fs_watch test legitimately needs time for filesystem events
+[[profile.default.overrides]]
+filter = "test(fs_watch)"
+slow-timeout = { period = "30s", terminate-after = 2 }

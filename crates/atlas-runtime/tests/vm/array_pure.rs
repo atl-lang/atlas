@@ -1,7 +1,7 @@
 //! VM tests for pure array functions
 //!
 //! Tests: pop, shift, unshift, reverse, concat, flatten,
-//!        arrayIndexOf, arrayLastIndexOf, arrayIncludes, slice
+//!        array_index_of, array_last_index_of, array_includes, slice
 
 use crate::vm::{execute_vm_err, execute_vm_ok};
 use atlas_runtime::value::Value;
@@ -192,7 +192,7 @@ fn test_reverse_preserves_original() {
     let result = execute_vm_ok(r#"
         let original = [1, 2, 3];
         let reversed = reverse(original);
-        arrayIndexOf(original, 1);
+        array_index_of(original, 1);
     "#);
     assert_eq!(result, Value::Number(0.0));
 }
@@ -333,14 +333,14 @@ fn test_flatten_single_nested() {
 }
 
 // ============================================================================
-// arrayIndexOf() / arrayLastIndexOf() tests
+// array_index_of() / array_last_index_of() tests
 // ============================================================================
 
 #[test]
 fn test_array_index_of_found() {
     let result = execute_vm_ok(r#"
         let arr = [10, 20, 30];
-        arrayIndexOf(arr, 20);
+        array_index_of(arr, 20);
     "#);
     assert_eq!(result, Value::Number(1.0));
 }
@@ -349,7 +349,7 @@ fn test_array_index_of_found() {
 fn test_array_index_of_not_found() {
     let result = execute_vm_ok(r#"
         let arr = [10, 20];
-        arrayIndexOf(arr, 99);
+        array_index_of(arr, 99);
     "#);
     assert_eq!(result, Value::Number(-1.0));
 }
@@ -358,7 +358,7 @@ fn test_array_index_of_not_found() {
 fn test_array_index_of_duplicates() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3, 2, 4];
-        arrayIndexOf(arr, 2);
+        array_index_of(arr, 2);
     "#);
     assert_eq!(result, Value::Number(1.0)); // First occurrence
 }
@@ -367,7 +367,7 @@ fn test_array_index_of_duplicates() {
 fn test_array_last_index_of_duplicates() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3, 2, 4];
-        arrayLastIndexOf(arr, 2);
+        array_last_index_of(arr, 2);
     "#);
     assert_eq!(result, Value::Number(3.0)); // Last occurrence
 }
@@ -376,20 +376,20 @@ fn test_array_last_index_of_duplicates() {
 fn test_array_last_index_of_not_found() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3];
-        arrayLastIndexOf(arr, 99);
+        array_last_index_of(arr, 99);
     "#);
     assert_eq!(result, Value::Number(-1.0));
 }
 
 // ============================================================================
-// arrayIncludes() tests
+// array_includes() tests
 // ============================================================================
 
 #[test]
 fn test_array_includes_true() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3];
-        arrayIncludes(arr, 2);
+        array_includes(arr, 2);
     "#);
     assert_eq!(result, Value::Bool(true));
 }
@@ -398,7 +398,7 @@ fn test_array_includes_true() {
 fn test_array_includes_false() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3];
-        arrayIncludes(arr, 99);
+        array_includes(arr, 99);
     "#);
     assert_eq!(result, Value::Bool(false));
 }
@@ -407,8 +407,8 @@ fn test_array_includes_false() {
 fn test_array_includes_boundary() {
     let result = execute_vm_ok(r#"
         let arr = [1, 2, 3];
-        let first = arrayIncludes(arr, 1);
-        let last = arrayIncludes(arr, 3);
+        let first = array_includes(arr, 1);
+        let last = array_includes(arr, 3);
         if (first) {
             if (last) {
                 return true;

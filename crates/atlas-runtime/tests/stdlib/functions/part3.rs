@@ -11,7 +11,7 @@ fn test_assert_passes_in_atlas_code() {
 
 #[test]
 fn test_assert_false_passes_in_atlas_code() {
-    eval_ok("assertFalse(false, \"should pass\");");
+    eval_ok("assert_false(false, \"should pass\");");
 }
 
 #[test]
@@ -25,7 +25,7 @@ fn test_assert_failure_produces_error() {
 #[test]
 fn test_assert_false_failure_produces_error() {
     eval_err_contains(
-        "assertFalse(true, \"was unexpectedly true\");",
+        "assert_false(true, \"was unexpectedly true\");",
         "was unexpectedly true",
     );
 }
@@ -36,7 +36,7 @@ fn test_assert_in_function_body() {
         r#"
         fn test_basic() -> void {
             assert(true, "should pass");
-            assertFalse(false, "should also pass");
+            assert_false(false, "should also pass");
         }
         test_basic();
     "#,
@@ -49,23 +49,23 @@ fn test_assert_in_function_body() {
 
 #[test]
 fn test_assert_equal_numbers_in_atlas_code() {
-    eval_ok("assertEqual(5, 5);");
+    eval_ok("assert_equal(5, 5);");
 }
 
 #[test]
 fn test_assert_equal_strings_in_atlas_code() {
-    eval_ok(r#"assertEqual("hello", "hello");"#);
+    eval_ok(r#"assert_equal("hello", "hello");"#);
 }
 
 #[test]
 fn test_assert_equal_bools_in_atlas_code() {
-    eval_ok("assertEqual(true, true);");
+    eval_ok("assert_equal(true, true);");
 }
 
 #[test]
 fn test_assert_equal_failure_shows_diff() {
     let runtime = Atlas::new();
-    match runtime.eval("assertEqual(5, 10);") {
+    match runtime.eval("assert_equal(5, 10);") {
         Err(diags) => {
             let combined = diags
                 .iter()
@@ -89,12 +89,12 @@ fn test_assert_equal_failure_shows_diff() {
 
 #[test]
 fn test_assert_not_equal_in_atlas_code() {
-    eval_ok("assertNotEqual(1, 2);");
+    eval_ok("assert_not_equal(1, 2);");
 }
 
 #[test]
 fn test_assert_not_equal_failure() {
-    eval_err_contains("assertNotEqual(5, 5);", "equal");
+    eval_err_contains("assert_not_equal(5, 5);", "equal");
 }
 
 // ============================================================================
@@ -111,8 +111,8 @@ fn test_assert_ok_in_atlas_code() {
         }
 
         let result = divide(10, 2);
-        let value = assertOk(result);
-        assertEqual(value, 5);
+        let value = assert_ok(result);
+        assert_equal(value, 5);
     "#,
     );
 }
@@ -122,7 +122,7 @@ fn test_assert_ok_failure_on_err_value() {
     eval_err_contains(
         r#"
         let result = Err("something broke");
-        assertOk(result);
+        assert_ok(result);
     "#,
         "Err",
     );
@@ -133,8 +133,8 @@ fn test_assert_err_in_atlas_code() {
     eval_ok(
         r#"
         let result = Err("expected failure");
-        let err_value = assertErr(result);
-        assertEqual(err_value, "expected failure");
+        let err_value = assert_err(result);
+        assert_equal(err_value, "expected failure");
     "#,
     );
 }
@@ -144,7 +144,7 @@ fn test_assert_err_failure_on_ok_value() {
     eval_err_contains(
         r#"
         let result = Ok(42);
-        assertErr(result);
+        assert_err(result);
     "#,
         "Ok",
     );
@@ -159,8 +159,8 @@ fn test_assert_some_in_atlas_code() {
     eval_ok(
         r#"
         let opt = Some(42);
-        let value = assertSome(opt);
-        assertEqual(value, 42);
+        let value = assert_some(opt);
+        assert_equal(value, 42);
     "#,
     );
 }
@@ -170,7 +170,7 @@ fn test_assert_some_failure_on_none() {
     eval_err_contains(
         r#"
         let opt = None();
-        assertSome(opt);
+        assert_some(opt);
     "#,
         "None",
     );
@@ -181,7 +181,7 @@ fn test_assert_none_in_atlas_code() {
     eval_ok(
         r#"
         let opt = None();
-        assertNone(opt);
+        assert_none(opt);
     "#,
     );
 }
@@ -191,7 +191,7 @@ fn test_assert_none_failure_on_some() {
     eval_err_contains(
         r#"
         let opt = Some(99);
-        assertNone(opt);
+        assert_none(opt);
     "#,
         "Some",
     );
@@ -206,7 +206,7 @@ fn test_assert_contains_in_atlas_code() {
     eval_ok(
         r#"
         let arr = [1, 2, 3];
-        assertContains(arr, 2);
+        assert_contains(arr, 2);
     "#,
     );
 }
@@ -216,7 +216,7 @@ fn test_assert_contains_failure() {
     eval_err_contains(
         r#"
         let arr = [1, 2, 3];
-        assertContains(arr, 99);
+        assert_contains(arr, 99);
     "#,
         "does not contain",
     );
@@ -227,7 +227,7 @@ fn test_assert_empty_in_atlas_code() {
     eval_ok(
         r#"
         let arr: number[] = [];
-        assertEmpty(arr);
+        assert_empty(arr);
     "#,
     );
 }
@@ -237,7 +237,7 @@ fn test_assert_empty_failure() {
     eval_err_contains(
         r#"
         let arr = [1];
-        assertEmpty(arr);
+        assert_empty(arr);
     "#,
         "length",
     );
@@ -248,7 +248,7 @@ fn test_assert_length_in_atlas_code() {
     eval_ok(
         r#"
         let arr = [10, 20, 30];
-        assertLength(arr, 3);
+        assert_length(arr, 3);
     "#,
     );
 }
@@ -258,7 +258,7 @@ fn test_assert_length_failure() {
     eval_err_contains(
         r#"
         let arr = [1, 2];
-        assertLength(arr, 5);
+        assert_length(arr, 5);
     "#,
         "length",
     );

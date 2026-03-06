@@ -34,8 +34,8 @@ fn test_shell_command() {
 #[test]
 fn test_set_get_env() {
     let code = r#"
-        setEnv("TEST_VAR_ATLAS", "test_value");
-        getEnv("TEST_VAR_ATLAS")
+        set_env("TEST_VAR_ATLAS", "test_value");
+        get_env("TEST_VAR_ATLAS")
     "#;
     let result = eval_ok(code);
     match result {
@@ -52,7 +52,7 @@ fn test_set_get_env() {
 
 #[test]
 fn test_get_env_nonexistent() {
-    let code = r#"getEnv("NONEXISTENT_VAR_ATLAS_12345")"#;
+    let code = r#"get_env("NONEXISTENT_VAR_ATLAS_12345")"#;
     let result = eval_ok(code);
     assert!(matches!(result, Value::Option(None)));
 }
@@ -60,9 +60,9 @@ fn test_get_env_nonexistent() {
 #[test]
 fn test_unset_env() {
     let code = r#"
-        setEnv("TEST_VAR_UNSET", "value");
-        unsetEnv("TEST_VAR_UNSET");
-        getEnv("TEST_VAR_UNSET")
+        set_env("TEST_VAR_UNSET", "value");
+        unset_env("TEST_VAR_UNSET");
+        get_env("TEST_VAR_UNSET")
     "#;
     let result = eval_ok(code);
     assert!(matches!(result, Value::Option(None)));
@@ -70,7 +70,7 @@ fn test_unset_env() {
 
 #[test]
 fn test_list_env() {
-    let code = r#"listEnv()"#;
+    let code = r#"list_env()"#;
     let result = eval_ok(code);
     // Should return an object (JsonValue)
     assert!(matches!(result, Value::JsonValue(_)));
@@ -82,7 +82,7 @@ fn test_list_env() {
 
 #[test]
 fn test_get_cwd() {
-    let code = r#"getCwd()"#;
+    let code = r#"get_cwd()"#;
     let result = eval_ok(code);
     // Should return a string
     assert!(matches!(result, Value::String(_)));
@@ -94,7 +94,7 @@ fn test_get_cwd() {
 
 #[test]
 fn test_get_pid() {
-    let code = r#"getPid()"#;
+    let code = r#"get_pid()"#;
     let result = eval_ok(code);
     // Should return a number
     match result {
@@ -111,22 +111,22 @@ fn test_get_pid() {
 fn test_spawn_process_output() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawnProcess(["cmd", "/C", "echo", "hello"]);
-        let mut status = processWait(handle);
+        let handle = spawn_process(["cmd", "/C", "echo", "hello"]);
+        let mut status = process_wait(handle);
         while (is_err(status)) {
-            status = processWait(handle);
+            status = process_wait(handle);
         }
-        let output = unwrap(processOutput(handle));
+        let output = unwrap(process_output(handle));
         trim(output)
     "#
     } else {
         r#"
-        let handle = spawnProcess(["sh", "-c", "echo hello"]);
-        let mut status = processWait(handle);
+        let handle = spawn_process(["sh", "-c", "echo hello"]);
+        let mut status = process_wait(handle);
         while (is_err(status)) {
-            status = processWait(handle);
+            status = process_wait(handle);
         }
-        let output = unwrap(processOutput(handle));
+        let output = unwrap(process_output(handle));
         trim(output)
     "#
     };
@@ -142,26 +142,26 @@ fn test_spawn_process_output() {
 fn test_spawn_process_kill() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawnProcess(["cmd", "/C", "timeout", "/T", "5", "/NOBREAK"]);
-        let was_running = processIsRunning(handle);
-        unwrap(processKill(handle, 9));
-        let mut status = processWait(handle);
+        let handle = spawn_process(["cmd", "/C", "timeout", "/T", "5", "/NOBREAK"]);
+        let was_running = process_is_running(handle);
+        unwrap(process_kill(handle, 9));
+        let mut status = process_wait(handle);
         while (is_err(status)) {
-            status = processWait(handle);
+            status = process_wait(handle);
         }
-        let still_running = processIsRunning(handle);
+        let still_running = process_is_running(handle);
         [was_running, still_running]
     "#
     } else {
         r#"
-        let handle = spawnProcess(["sh", "-c", "sleep 5"]);
-        let was_running = processIsRunning(handle);
-        unwrap(processKill(handle, 9));
-        let mut status = processWait(handle);
+        let handle = spawn_process(["sh", "-c", "sleep 5"]);
+        let was_running = process_is_running(handle);
+        unwrap(process_kill(handle, 9));
+        let mut status = process_wait(handle);
         while (is_err(status)) {
-            status = processWait(handle);
+            status = process_wait(handle);
         }
-        let still_running = processIsRunning(handle);
+        let still_running = process_is_running(handle);
         [was_running, still_running]
     "#
     };
@@ -182,20 +182,20 @@ fn test_spawn_process_kill() {
 fn test_process_stdio_handles() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawnProcess(["cmd", "/C", "echo", "hello"]);
-        let stdin = processStdin(handle);
-        let stdout = processStdout(handle);
-        let stderr = processStderr(handle);
-        let stdout_again = processStdout(handle);
+        let handle = spawn_process(["cmd", "/C", "echo", "hello"]);
+        let stdin = process_stdin(handle);
+        let stdout = process_stdout(handle);
+        let stderr = process_stderr(handle);
+        let stdout_again = process_stdout(handle);
         [stdin, stdout, stderr, stdout_again]
     "#
     } else {
         r#"
-        let handle = spawnProcess(["sh", "-c", "echo hello"]);
-        let stdin = processStdin(handle);
-        let stdout = processStdout(handle);
-        let stderr = processStderr(handle);
-        let stdout_again = processStdout(handle);
+        let handle = spawn_process(["sh", "-c", "echo hello"]);
+        let stdin = process_stdin(handle);
+        let stdout = process_stdout(handle);
+        let stderr = process_stderr(handle);
+        let stdout_again = process_stdout(handle);
         [stdin, stdout, stderr, stdout_again]
     "#
     };
@@ -240,7 +240,7 @@ fn test_exec_requires_permission() {
 
 #[test]
 fn test_env_requires_permission() {
-    let code = r#"getEnv("PATH")"#;
+    let code = r#"get_env("PATH")"#;
     // Default context denies all
     let security = SecurityContext::new();
     let runtime = Atlas::new_with_security(security);

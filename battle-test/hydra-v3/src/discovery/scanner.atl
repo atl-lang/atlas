@@ -21,9 +21,9 @@ export fn scan_client(client: string) -> Result<Discovery, string> {
         Ok(path) => {
             let mut confidence = 0;
             let mut servers = 0;
-            if (fileExists(path)) {
+            if (file_exists(path)) {
                 confidence = 0.5;
-                let contents = readFile(path);
+                let contents = read_file(path);
                 match contents {
                     Ok(text) => {
                         let parsed = parseJson(text);

@@ -2434,33 +2434,41 @@ impl VM {
             "map" => self.vm_intrinsic_map(args, span),
             "filter" => self.vm_intrinsic_filter(args, span),
             "reduce" => self.vm_intrinsic_reduce(args, span),
-            "forEach" => self.vm_intrinsic_for_each(args, span),
+            "forEach" | "for_each" => self.vm_intrinsic_for_each(args, span),
             "find" => self.vm_intrinsic_find(args, span),
-            "findIndex" => self.vm_intrinsic_find_index(args, span),
-            "flatMap" => self.vm_intrinsic_flat_map(args, span),
+            "findIndex" | "find_index" => self.vm_intrinsic_find_index(args, span),
+            "flatMap" | "flat_map" => self.vm_intrinsic_flat_map(args, span),
             "some" => self.vm_intrinsic_some(args, span),
             "every" => self.vm_intrinsic_every(args, span),
             "sort" => self.vm_intrinsic_sort(args, span),
-            "sortBy" => self.vm_intrinsic_sort_by(args, span),
+            "sortBy" | "sort_by" => self.vm_intrinsic_sort_by(args, span),
             // Result intrinsics (callback-based)
             "result_map" => self.vm_intrinsic_result_map(args, span),
             "result_map_err" => self.vm_intrinsic_result_map_err(args, span),
             "result_and_then" => self.vm_intrinsic_result_and_then(args, span),
             "result_or_else" => self.vm_intrinsic_result_or_else(args, span),
             // HashMap intrinsics (callback-based)
-            "hashMapForEach" => self.vm_intrinsic_hashmap_for_each(args, span),
-            "hashMapMap" => self.vm_intrinsic_hashmap_map(args, span),
-            "hashMapFilter" => self.vm_intrinsic_hashmap_filter(args, span),
+            "hashMapForEach" | "hash_map_for_each" => {
+                self.vm_intrinsic_hashmap_for_each(args, span)
+            }
+            "hashMapMap" | "hash_map_map" => self.vm_intrinsic_hashmap_map(args, span),
+            "hashMapFilter" | "hash_map_filter" => self.vm_intrinsic_hashmap_filter(args, span),
             // HashSet intrinsics (callback-based)
-            "hashSetForEach" => self.vm_intrinsic_hashset_for_each(args, span),
-            "hashSetMap" => self.vm_intrinsic_hashset_map(args, span),
-            "hashSetFilter" => self.vm_intrinsic_hashset_filter(args, span),
+            "hashSetForEach" | "hash_set_for_each" => {
+                self.vm_intrinsic_hashset_for_each(args, span)
+            }
+            "hashSetMap" | "hash_set_map" => self.vm_intrinsic_hashset_map(args, span),
+            "hashSetFilter" | "hash_set_filter" => self.vm_intrinsic_hashset_filter(args, span),
             // Regex intrinsics (callback-based)
-            "regexReplaceWith" => self.vm_intrinsic_regex_replace_with(args, span),
-            "regexReplaceAllWith" => self.vm_intrinsic_regex_replace_all_with(args, span),
+            "regexReplaceWith" | "regex_replace_with" => {
+                self.vm_intrinsic_regex_replace_with(args, span)
+            }
+            "regexReplaceAllWith" | "regex_replace_all_with" => {
+                self.vm_intrinsic_regex_replace_all_with(args, span)
+            }
             // Test intrinsics (callable assertions)
-            "assertThrows" => self.vm_intrinsic_assert_throws(args, span),
-            "assertNoThrow" => self.vm_intrinsic_assert_no_throw(args, span),
+            "assertThrows" | "assert_throws" => self.vm_intrinsic_assert_throws(args, span),
+            "assertNoThrow" | "assert_no_throw" => self.vm_intrinsic_assert_no_throw(args, span),
             _ => Err(RuntimeError::UnknownFunction {
                 name: name.to_string(),
                 span,

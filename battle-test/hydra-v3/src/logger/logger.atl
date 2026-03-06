@@ -48,8 +48,8 @@ impl LoggerTrait for ConsoleLogger {
         let entry = LogEntry { level: level, message: message, timestamp: now_iso() };
         let mut updated_history: LogEntry[] = self.history + [entry];
         let mut ctx_items: string[] = [];
-        for key in hashMapKeys(context) {
-            let value = unwrap(hashMapGet(context, key));
+        for key in hash_map_keys(context) {
+            let value = unwrap(hash_map_get(context, key));
             ctx_items = ctx_items + [key + "=" + value];
         }
         let ctx = join(ctx_items, " ");
@@ -76,8 +76,8 @@ export fn logger_log(
     let entry = now_iso() + " " + level + " " + message;
     let mut history = logger.history + [entry];
     let mut ctx_items: string[] = [];
-    for key in hashMapKeys(context) {
-        let value = unwrap(hashMapGet(context, key));
+    for key in hash_map_keys(context) {
+        let value = unwrap(hash_map_get(context, key));
         ctx_items = ctx_items + [key + "=" + value];
     }
     let ctx = join(ctx_items, " ");

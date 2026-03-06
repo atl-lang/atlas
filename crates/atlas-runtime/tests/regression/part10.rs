@@ -9,7 +9,7 @@ fn struct_expr_basic() {
     // Struct expressions are syntactic sugar for creating HashMap objects
     let code = r#"
         let user = User { name: "Alice", age: 30 };
-        unwrap(hashMapGet(user, "name"))
+        unwrap(hash_map_get(user, "name"))
     "#;
     assert_eval_string(code, "Alice");
 }
@@ -18,7 +18,7 @@ fn struct_expr_basic() {
 fn struct_expr_access_field() {
     let code = r#"
         let point = Point { x: 10, y: 20 };
-        unwrap(hashMapGet(point, "y"))
+        unwrap(hash_map_get(point, "y"))
     "#;
     assert_eval_number(code, 20.0);
 }
@@ -27,7 +27,7 @@ fn struct_expr_access_field() {
 fn struct_expr_empty() {
     let code = r#"
         let empty = Empty {};
-        hashMapSize(empty)
+        hash_map_size(empty)
     "#;
     assert_eval_number(code, 0.0);
 }
@@ -40,7 +40,7 @@ fn struct_expr_empty() {
 fn object_literal_basic() {
     let code = r#"
         let obj = record { name: "Bob", count: 42 };
-        unwrap(hashMapGet(obj, "name"))
+        unwrap(hash_map_get(obj, "name"))
     "#;
     assert_eval_string(code, "Bob");
 }
@@ -50,7 +50,7 @@ fn object_literal_field_assignment() {
     let code = r#"
         let mut obj = record { name: "Bob", count: 1 };
         obj.count = 5;
-        unwrap(hashMapGet(obj, "count"))
+        unwrap(hash_map_get(obj, "count"))
     "#;
     assert_eval_number(code, 5.0);
 }
@@ -60,7 +60,7 @@ fn object_literal_field_compound_assignment() {
     let code = r#"
         let mut obj = record { count: 2 };
         obj.count += 3;
-        unwrap(hashMapGet(obj, "count"))
+        unwrap(hash_map_get(obj, "count"))
     "#;
     assert_eval_number(code, 5.0);
 }
@@ -69,7 +69,7 @@ fn object_literal_field_compound_assignment() {
 fn object_literal_number_value() {
     let code = r#"
         let obj = record { x: 10, y: 20 };
-        unwrap(hashMapGet(obj, "x"))
+        unwrap(hash_map_get(obj, "x"))
     "#;
     assert_eval_number(code, 10.0);
 }
@@ -78,7 +78,7 @@ fn object_literal_number_value() {
 fn object_literal_trailing_comma() {
     let code = r#"
         let obj = record { a: 1, b: 2, };
-        hashMapSize(obj)
+        hash_map_size(obj)
     "#;
     assert_eval_number(code, 2.0);
 }
@@ -87,21 +87,21 @@ fn object_literal_trailing_comma() {
 fn object_literal_empty() {
     let code = r#"
         let obj = record {};
-        hashMapSize(obj)
+        hash_map_size(obj)
     "#;
     assert_eval_number(code, 0.0);
 }
 
 // ============================================================================
-// HashMap JSON Serialization (toJSON)
+// HashMap JSON Serialization (to_json)
 // ============================================================================
 
 #[test]
 fn hashmap_tojson_basic() {
-    // Test that toJSON works with object literals (which create HashMaps)
+    // Test that to_json works with object literals (which create HashMaps)
     let code = r#"
         let obj = record { name: "test" };
-        let json = toJSON(obj);
+        let json = to_json(obj);
         len(json) > 0
     "#;
     assert_eval_bool(code, true);
@@ -111,7 +111,7 @@ fn hashmap_tojson_basic() {
 fn hashmap_tojson_multiple_fields() {
     let code = r#"
         let obj = record { a: 1, b: 2 };
-        let json = toJSON(obj);
+        let json = to_json(obj);
         // JSON should contain both keys - check length
         len(json) > 10
     "#;
@@ -123,7 +123,7 @@ fn hashmap_tojson_nested() {
     // Object literals with nested arrays should serialize
     let code = r#"
         let obj = record { items: [1, 2, 3] };
-        let json = toJSON(obj);
+        let json = to_json(obj);
         // Should contain "items" and array
         len(json) > 15
     "#;
@@ -132,10 +132,10 @@ fn hashmap_tojson_nested() {
 
 #[test]
 fn struct_expr_tojson() {
-    // Struct expressions should also serialize via toJSON
+    // Struct expressions should also serialize via to_json
     let code = r#"
         let user = User { name: "Alice", active: true };
-        let json = toJSON(user);
+        let json = to_json(user);
         // Should contain the data
         len(json) > 20
     "#;

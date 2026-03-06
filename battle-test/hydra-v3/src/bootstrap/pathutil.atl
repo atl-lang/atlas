@@ -1,19 +1,19 @@
 fn home_dir() -> string {
-    let home = unwrapOr(getEnv("HOME"), "");
+    let home = unwrapOr(get_env("HOME"), "");
     if (home != "") {
         return home;
     }
-    let user = unwrapOr(getEnv("USERPROFILE"), "");
+    let user = unwrapOr(get_env("USERPROFILE"), "");
     return user;
 }
 
 fn is_windows() -> bool {
-    let os = toLowerCase(unwrapOr(getEnv("OS"), ""));
+    let os = to_lower_case(unwrapOr(get_env("OS"), ""));
     return includes(os, "windows");
 }
 
 fn is_darwin() -> bool {
-    let os = toLowerCase(unwrapOr(getEnv("OSTYPE"), ""));
+    let os = to_lower_case(unwrapOr(get_env("OSTYPE"), ""));
     return includes(os, "darwin") || includes(os, "mac");
 }
 
@@ -32,51 +32,51 @@ export fn detect_client_config_path(client: string) -> Result<string, string> {
 fn detect_claude_path() -> string {
     let home = home_dir();
     if (is_windows()) {
-        return pathJoin([home, "AppData/Roaming/Claude/claude_desktop_config.json"]);
+        return path_join([home, "AppData/Roaming/Claude/claude_desktop_config.json"]);
     }
     if (is_darwin()) {
-        return pathJoin([home, "Library/Application Support/Claude/claude_desktop_config.json"]);
+        return path_join([home, "Library/Application Support/Claude/claude_desktop_config.json"]);
     }
-    return pathJoin([home, ".config/Claude/claude_desktop_config.json"]);
+    return path_join([home, ".config/Claude/claude_desktop_config.json"]);
 }
 
 fn detect_cline_path() -> string {
     let home = home_dir();
-    let vscode_dir = pathJoin([home, ".vscode/extensions"]);
-    if (fileExists(vscode_dir)) {
-        return pathJoin([home, ".vscode/mcp_settings.json"]);
+    let vscode_dir = path_join([home, ".vscode/extensions"]);
+    if (file_exists(vscode_dir)) {
+        return path_join([home, ".vscode/mcp_settings.json"]);
     }
-    return pathJoin([home, ".vscodium/mcp_settings.json"]);
+    return path_join([home, ".vscodium/mcp_settings.json"]);
 }
 
 fn detect_cursor_path() -> string {
     let home = home_dir();
     if (is_windows()) {
-        return pathJoin([home, "AppData/Roaming/Cursor/User/globalStorage/mcp_settings.json"]);
+        return path_join([home, "AppData/Roaming/Cursor/User/globalStorage/mcp_settings.json"]);
     }
     if (is_darwin()) {
-        return pathJoin([home, "Library/Application Support/Cursor/User/globalStorage/mcp_settings.json"]);
+        return path_join([home, "Library/Application Support/Cursor/User/globalStorage/mcp_settings.json"]);
     }
-    return pathJoin([home, ".config/Cursor/User/globalStorage/mcp_settings.json"]);
+    return path_join([home, ".config/Cursor/User/globalStorage/mcp_settings.json"]);
 }
 
 fn detect_claude_cli_path() -> string {
     let home = home_dir();
-    return pathJoin([home, ".config/claude-cli/mcp_config.json"]);
+    return path_join([home, ".config/claude-cli/mcp_config.json"]);
 }
 
 fn detect_continue_path() -> string {
     let home = home_dir();
-    return pathJoin([home, ".continue/config.json"]);
+    return path_join([home, ".continue/config.json"]);
 }
 
 fn detect_cursor_composer_path() -> string {
     let home = home_dir();
     if (is_windows()) {
-        return pathJoin([home, "AppData/Roaming/Cursor/mcp_config.json"]);
+        return path_join([home, "AppData/Roaming/Cursor/mcp_config.json"]);
     }
     if (is_darwin()) {
-        return pathJoin([home, "Library/Application Support/Cursor/mcp_config.json"]);
+        return path_join([home, "Library/Application Support/Cursor/mcp_config.json"]);
     }
-    return pathJoin([home, ".config/Cursor/mcp_config.json"]);
+    return path_join([home, ".config/Cursor/mcp_config.json"]);
 }

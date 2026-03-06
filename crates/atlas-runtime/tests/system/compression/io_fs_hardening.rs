@@ -25,11 +25,11 @@ fn eval_err_io(code: &str) -> bool {
     with_io().eval(code).is_err()
 }
 
-// --- readFile edge cases ---
+// --- read_file edge cases ---
 
 #[test]
 fn test_read_file_nonexistent_returns_error() {
-    assert!(eval_err_io(r#"readFile("/does/not/exist/file_xyz.txt")"#));
+    assert!(eval_err_io(r#"read_file("/does/not/exist/file_xyz.txt")"#));
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn test_read_file_empty_file_returns_empty_string() {
     let path = temp.path().join("empty.txt");
     std_fs::write(&path, "").unwrap();
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"readFile("{p}")"#);
+    let code = format!(r#"read_file("{p}")"#);
     assert_eq!(eval_str_io(&code), "");
 }
 
@@ -47,7 +47,7 @@ fn test_write_file_creates_new_file() {
     let temp = TempDir::new().unwrap();
     let path = temp.path().join("created.txt");
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"writeFile("{p}", "hello"); readFile("{p}")"#);
+    let code = format!(r#"write_file("{p}", "hello"); read_file("{p}")"#);
     assert_eq!(eval_str_io(&code), "hello");
 }
 
@@ -57,7 +57,7 @@ fn test_write_file_overwrites_existing() {
     let path = temp.path().join("overwrite.txt");
     std_fs::write(&path, "old content").unwrap();
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"writeFile("{p}", "new content"); readFile("{p}")"#);
+    let code = format!(r#"write_file("{p}", "new content"); read_file("{p}")"#);
     assert_eq!(eval_str_io(&code), "new content");
 }
 
@@ -66,7 +66,7 @@ fn test_append_file_creates_if_not_exists() {
     let temp = TempDir::new().unwrap();
     let path = temp.path().join("appended.txt");
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"appendFile("{p}", "first"); readFile("{p}")"#);
+    let code = format!(r#"append_file("{p}", "first"); read_file("{p}")"#);
     assert_eq!(eval_str_io(&code), "first");
 }
 
@@ -76,7 +76,7 @@ fn test_append_file_appends_to_existing() {
     let path = temp.path().join("append_existing.txt");
     std_fs::write(&path, "A").unwrap();
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"appendFile("{p}", "B"); readFile("{p}")"#);
+    let code = format!(r#"append_file("{p}", "B"); read_file("{p}")"#);
     assert_eq!(eval_str_io(&code), "AB");
 }
 
@@ -86,14 +86,14 @@ fn test_file_exists_true_for_existing_file() {
     let path = temp.path().join("exists.txt");
     std_fs::write(&path, "x").unwrap();
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"fileExists("{p}")"#);
+    let code = format!(r#"file_exists("{p}")"#);
     assert_eq!(eval_str_io(&code), "true");
 }
 
 #[test]
 fn test_file_exists_false_for_nonexistent() {
     assert_eq!(
-        eval_str_io(r#"fileExists("/does/not/exist/nope_xyz.txt")"#),
+        eval_str_io(r#"file_exists("/does/not/exist/nope_xyz.txt")"#),
         "false"
     );
 }
@@ -102,7 +102,7 @@ fn test_file_exists_false_for_nonexistent() {
 fn test_file_exists_true_for_directory() {
     let temp = TempDir::new().unwrap();
     let p = temp.path().to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"fileExists("{p}")"#);
+    let code = format!(r#"file_exists("{p}")"#);
     assert_eq!(eval_str_io(&code), "true");
 }
 
@@ -110,18 +110,20 @@ fn test_file_exists_true_for_directory() {
 fn test_read_dir_empty_directory_returns_empty_array() {
     let temp = TempDir::new().unwrap();
     let p = temp.path().to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"len(readDir("{p}"))"#);
+    let code = format!(r#"len(read_dir("{p}"))"#);
     assert_eq!(eval_str_io(&code), "0");
 }
 
 #[test]
 fn test_read_dir_nonexistent_returns_error() {
-    assert!(eval_err_io(r#"readDir("/does/not/exist/dir_xyz")"#));
+    assert!(eval_err_io(r#"read_dir("/does/not/exist/dir_xyz")"#));
 }
 
 #[test]
 fn test_remove_file_nonexistent_returns_error() {
-    assert!(eval_err_io(r#"removeFile("/does/not/exist/file_xyz.txt")"#));
+    assert!(eval_err_io(
+        r#"remove_file("/does/not/exist/file_xyz.txt")"#
+    ));
 }
 
 #[test]
@@ -130,13 +132,13 @@ fn test_remove_file_success() {
     let path = temp.path().join("to_remove.txt");
     std_fs::write(&path, "bye").unwrap();
     let p = path.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"removeFile("{p}"); fileExists("{p}")"#);
+    let code = format!(r#"remove_file("{p}"); file_exists("{p}")"#);
     assert_eq!(eval_str_io(&code), "false");
 }
 
 #[test]
 fn test_remove_dir_nonexistent_returns_error() {
-    assert!(eval_err_io(r#"removeDir("/does/not/exist/dir_xyz")"#));
+    assert!(eval_err_io(r#"remove_dir("/does/not/exist/dir_xyz")"#));
 }
 
 #[test]
@@ -145,7 +147,7 @@ fn test_remove_dir_success() {
     let sub = temp.path().join("subdir");
     std_fs::create_dir(&sub).unwrap();
     let p = sub.to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"removeDir("{p}"); fileExists("{p}")"#);
+    let code = format!(r#"remove_dir("{p}"); file_exists("{p}")"#);
     assert_eq!(eval_str_io(&code), "false");
 }
 
@@ -153,8 +155,8 @@ fn test_remove_dir_success() {
 fn test_create_dir_succeeds_when_already_exists() {
     let temp = TempDir::new().unwrap();
     let p = temp.path().to_str().unwrap().replace('\\', "/");
-    // createDir on existing dir should not error (idempotent via createDir or error — check behavior)
-    let result = with_io().eval(&format!(r#"createDir("{p}")"#));
+    // create_dir on existing dir should not error (idempotent via create_dir or error — check behavior)
+    let result = with_io().eval(&format!(r#"create_dir("{p}")"#));
     // Either succeeds or returns a meaningful error — should not panic/crash
     let _ = result;
 }
@@ -166,7 +168,7 @@ fn test_read_dir_returns_entry_count() {
     std_fs::write(temp.path().join("b.txt"), "").unwrap();
     std_fs::write(temp.path().join("c.txt"), "").unwrap();
     let p = temp.path().to_str().unwrap().replace('\\', "/");
-    let code = format!(r#"len(readDir("{p}"))"#);
+    let code = format!(r#"len(read_dir("{p}"))"#);
     assert_eq!(eval_str_io(&code), "3");
 }
 

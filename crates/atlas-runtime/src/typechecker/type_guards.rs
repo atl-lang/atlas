@@ -28,20 +28,28 @@ impl TypeGuardRegistry {
 
     fn register_builtins(&mut self) {
         self.insert_builtin("isString", 0, Type::String);
+        self.insert_builtin("is_string", 0, Type::String);
         self.insert_builtin("isNumber", 0, Type::Number);
+        self.insert_builtin("is_number", 0, Type::Number);
         self.insert_builtin("isBool", 0, Type::Bool);
+        self.insert_builtin("is_bool", 0, Type::Bool);
         self.insert_builtin("isNull", 0, Type::Null);
+        self.insert_builtin("is_null", 0, Type::Null);
         self.insert_builtin("isArray", 0, Type::Array(Box::new(Type::any_placeholder())));
         self.insert_builtin(
-            "isFunction",
+            "is_array",
             0,
-            Type::Function {
-                type_params: Vec::new(),
-                params: Vec::new(),
-                return_type: Box::new(Type::any_placeholder()),
-            },
+            Type::Array(Box::new(Type::any_placeholder())),
         );
+        let fn_type = Type::Function {
+            type_params: Vec::new(),
+            params: Vec::new(),
+            return_type: Box::new(Type::any_placeholder()),
+        };
+        self.insert_builtin("isFunction", 0, fn_type.clone());
+        self.insert_builtin("is_function", 0, fn_type);
         self.insert_builtin("isObject", 0, Type::JsonValue);
+        self.insert_builtin("is_object", 0, Type::JsonValue);
     }
 
     fn insert_builtin(&mut self, name: &str, param_index: usize, target: Type) {

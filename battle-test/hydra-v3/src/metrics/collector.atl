@@ -21,7 +21,7 @@ export fn new_collector() -> MetricsState {
         queue_waits_total: 0,
         latencies_ms: [],
         queue_waits_ms: [],
-        restart_reasons: hashMapNew(),
+        restart_reasons: hash_map_new(),
         start_time: now_seconds()
     };
 }
@@ -107,7 +107,7 @@ export fn metrics_record_restart(
     reason: string
 ) -> MetricsState {
     let mut reasons = state.restart_reasons;
-    let existing = hashMapGet(reasons, reason);
+    let existing = hash_map_get(reasons, reason);
     match existing {
         Some(value) => { reasons = hashMapSet(reasons, reason, value + 1); },
         None() => { reasons = hashMapSet(reasons, reason, 1); }

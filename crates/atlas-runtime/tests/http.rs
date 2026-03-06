@@ -286,7 +286,7 @@ fn test_http_post_json() {
     let code = r#"
         fn test() -> string {
             let json_str = "{\"name\": \"Atlas\", \"version\": 0.2}";
-            let json = parseJSON(json_str);
+            let json = parse_json(json_str);
             let result = httpPostJson("https://httpbin.org/post", json);
             return typeof(result);
         }
@@ -400,7 +400,7 @@ fn test_http_json_workflow() {
     let code = r#"
         fn test() -> bool {
             let json_str = "{\"user\": \"atlas\", \"action\": \"test\"}";
-            let json = parseJSON(json_str);
+            let json = parse_json(json_str);
             let result = httpPostJson("https://httpbin.org/post", json);
 
             if (is_err(result)) { return false; }

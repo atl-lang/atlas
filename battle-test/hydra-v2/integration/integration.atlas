@@ -5,7 +5,7 @@ let PROTOCOL_LSP = "lsp";
 
 fn detect_protocol(peek: string) -> string {
     let trimmed: string = trim(peek);
-    let is_lsp: bool = startsWith(trimmed, "Content-Length");
+    let is_lsp: bool = starts_with(trimmed, "Content-Length");
     if is_lsp {
         return PROTOCOL_LSP;
     }
@@ -25,7 +25,7 @@ fn read_lsp(buffer: string) -> string[] {
     }
     let header = parts[0];
     let body = join(slice(parts, 1, len(parts)), "\r\n\r\n");
-    let has_prefix: bool = startsWith(header, "Content-Length");
+    let has_prefix: bool = starts_with(header, "Content-Length");
     if !has_prefix {
         return ["false", "", body];
     }
@@ -37,38 +37,38 @@ fn read_lsp(buffer: string) -> string[] {
 type StateStore = HashMap<string, string>;
 
 fn state_new() -> StateStore {
-    let mut store = hashMapNew();
-    store = hashMapPut(store, "initialize", "");
+    let mut store = hash_map_new();
+    store = hash_map_put(store, "initialize", "");
     return store;
 }
 
 fn state_set_initialize(store: StateStore, params: json) -> StateStore {
-    return hashMapPut(store, "initialize", toJSON(params));
+    return hash_map_put(store, "initialize", to_json(params));
 }
 
 fn state_get_initialize(borrow store: StateStore) -> json {
-    let raw = unwrap(hashMapGet(store, "initialize"));
+    let raw = unwrap(hash_map_get(store, "initialize"));
     if raw == "" {
-        return unwrap(parseJSON("null"));
+        return unwrap(parse_json("null"));
     }
-    return unwrap(parseJSON(raw));
+    return unwrap(parse_json(raw));
 }
 
 fn proxy_new() -> HashMap<string, string> {
-    let mut p = hashMapNew();
-    p = hashMapPut(p, "state", "running");
+    let mut p = hash_map_new();
+    p = hash_map_put(p, "state", "running");
     return p;
 }
 
 fn proxy_handle_client(store: StateStore, message: string) -> StateStore {
-    let parsed = unwrap(parseJSON(message));
+    let parsed = unwrap(parse_json(message));
     let method_val = parsed["method"];
-    let has_method: bool = !jsonIsNull(method_val);
+    let has_method: bool = !json_is_null(method_val);
     if has_method {
-        let method = jsonAsString(method_val);
+        let method = json_as_string(method_val);
         if method == "initialize" {
             let params = parsed["params"];
-            let has_params: bool = !jsonIsNull(params);
+            let has_params: bool = !json_is_null(params);
             if has_params {
                 return state_set_initialize(store, params);
             }
@@ -83,14 +83,14 @@ export fn integration_demo() -> bool {
     let msg = "{\"jsonrpc\":\"2.0\",\"method\":\"initialize\",\"params\":{\"root\":\"/tmp\"}}";
     store = proxy_handle_client(store, msg);
     let init = state_get_initialize(store);
-    return jsonAsString(init["root"]) == "/tmp";
+    return json_as_string(init["root"]) == "/tmp";
 }
 
 fn test_integration_protocol_and_proxy() -> bool {
     let framed = lsp_frame("hello");
-    assertEqual(detect_protocol("Content-Length: 5"), PROTOCOL_LSP);
+    assert_equal(detect_protocol("Content-Length: 5"), PROTOCOL_LSP);
     let res = read_lsp(framed);
-    assertEqual(res[1], "hello");
-    assertEqual(integration_demo(), true);
+    assert_equal(res[1], "hello");
+    assert_equal(integration_demo(), true);
     return true;
 }

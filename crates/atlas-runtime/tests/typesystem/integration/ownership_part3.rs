@@ -200,7 +200,7 @@ fn test_copy_bound_rejects_hashmap() {
     let diags = typecheck_source(
         "
         fn safe_copy<T: Copy>(x: T) -> T { return x; }
-        let m: HashMap = hashMapNew();
+        let m: HashMap = hash_map_new();
         let v = safe_copy(m);
     ",
     );

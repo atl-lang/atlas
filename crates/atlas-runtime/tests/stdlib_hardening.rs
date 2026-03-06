@@ -117,12 +117,12 @@ fn test_trim_all_whitespace() {
 
 #[test]
 fn test_trim_start_all_whitespace() {
-    assert_eq!(eval_ok(r#"trimStart("   ");"#), Value::string(""));
+    assert_eq!(eval_ok(r#"trim_start("   ");"#), Value::string(""));
 }
 
 #[test]
 fn test_trim_end_all_whitespace() {
-    assert_eq!(eval_ok(r#"trimEnd("   ");"#), Value::string(""));
+    assert_eq!(eval_ok(r#"trim_end("   ");"#), Value::string(""));
 }
 
 #[test]
@@ -141,13 +141,13 @@ fn test_trim_parity() {
 
 #[test]
 fn test_index_of_empty_haystack() {
-    assert_eq!(eval_ok(r#"indexOf("", "x");"#), Value::Option(None));
+    assert_eq!(eval_ok(r#"index_of("", "x");"#), Value::Option(None));
 }
 
 #[test]
 fn test_index_of_empty_needle_on_empty() {
     assert_eq!(
-        eval_ok(r#"indexOf("", "");"#),
+        eval_ok(r#"index_of("", "");"#),
         Value::Option(Some(Box::new(Value::Number(0.0))))
     );
 }
@@ -155,7 +155,7 @@ fn test_index_of_empty_needle_on_empty() {
 #[test]
 fn test_last_index_of_not_found() {
     assert_eq!(
-        eval_ok(r#"lastIndexOf("hello", "x");"#),
+        eval_ok(r#"last_index_of("hello", "x");"#),
         Value::Option(None)
     );
 }
@@ -163,24 +163,24 @@ fn test_last_index_of_not_found() {
 #[test]
 fn test_last_index_of_multiple_occurrences() {
     assert_eq!(
-        eval_ok(r#"lastIndexOf("abcabc", "b");"#),
+        eval_ok(r#"last_index_of("abcabc", "b");"#),
         Value::Option(Some(Box::new(Value::Number(4.0))))
     );
 }
 
 #[test]
 fn test_index_of_parity() {
-    let i = eval_ok(r#"indexOf("hello world", "world");"#);
-    let v = vm_eval_ok(r#"indexOf("hello world", "world");"#);
+    let i = eval_ok(r#"index_of("hello world", "world");"#);
+    let v = vm_eval_ok(r#"index_of("hello world", "world");"#);
     assert_eq!(i, v);
 }
 
-// strIndexOf / strLastIndexOf / strJoin
+// str_index_of / str_last_index_of / str_join
 
 #[test]
 fn test_str_index_of_found() {
     assert_eq!(
-        eval_ok(r#"strIndexOf("hello", "ll");"#),
+        eval_ok(r#"str_index_of("hello", "ll");"#),
         Value::Option(Some(Box::new(Value::Number(2.0))))
     );
 }
@@ -188,7 +188,7 @@ fn test_str_index_of_found() {
 #[test]
 fn test_str_last_index_of_not_found() {
     assert_eq!(
-        eval_ok(r#"strLastIndexOf("hello", "z");"#),
+        eval_ok(r#"str_last_index_of("hello", "z");"#),
         Value::Option(None)
     );
 }
@@ -196,15 +196,15 @@ fn test_str_last_index_of_not_found() {
 #[test]
 fn test_str_join_basic() {
     assert_eq!(
-        eval_ok(r#"strJoin(["a", "b", "c"], "-");"#),
+        eval_ok(r#"str_join(["a", "b", "c"], "-");"#),
         Value::string("a-b-c")
     );
 }
 
 #[test]
 fn test_str_index_of_parity() {
-    let i = eval_ok(r#"strIndexOf("ababa", "ba");"#);
-    let v = vm_eval_ok(r#"strIndexOf("ababa", "ba");"#);
+    let i = eval_ok(r#"str_index_of("ababa", "ba");"#);
+    let v = vm_eval_ok(r#"str_index_of("ababa", "ba");"#);
     assert_eq!(i, v);
 }
 
@@ -246,18 +246,18 @@ fn test_substring_parity() {
 
 #[test]
 fn test_char_at_out_of_bounds_error() {
-    assert_eq!(eval_ok(r#"charAt("hello", 10);"#), Value::Option(None));
+    assert_eq!(eval_ok(r#"char_at("hello", 10);"#), Value::Option(None));
 }
 
 #[test]
 fn test_char_at_empty_string_error() {
-    assert_eq!(eval_ok(r#"charAt("", 0);"#), Value::Option(None));
+    assert_eq!(eval_ok(r#"char_at("", 0);"#), Value::Option(None));
 }
 
 #[test]
 fn test_char_at_parity() {
-    let i = eval_ok(r#"charAt("abcde", 3);"#);
-    let v = vm_eval_ok(r#"charAt("abcde", 3);"#);
+    let i = eval_ok(r#"char_at("abcde", 3);"#);
+    let v = vm_eval_ok(r#"char_at("abcde", 3);"#);
     assert_eq!(i, v);
 }
 
@@ -316,7 +316,7 @@ fn test_replace_parity() {
 #[test]
 fn test_pad_start_already_long_enough() {
     assert_eq!(
-        eval_ok(r#"padStart("hello", 3, "0");"#),
+        eval_ok(r#"pad_start("hello", 3, "0");"#),
         Value::string("hello")
     );
 }
@@ -324,7 +324,7 @@ fn test_pad_start_already_long_enough() {
 #[test]
 fn test_pad_start_multi_char_fill() {
     assert_eq!(
-        eval_ok(r#"padStart("1", 5, "ab");"#),
+        eval_ok(r#"pad_start("1", 5, "ab");"#),
         Value::string("abab1")
     );
 }
@@ -332,20 +332,20 @@ fn test_pad_start_multi_char_fill() {
 #[test]
 fn test_pad_end_already_long_enough() {
     assert_eq!(
-        eval_ok(r#"padEnd("hello", 3, "0");"#),
+        eval_ok(r#"pad_end("hello", 3, "0");"#),
         Value::string("hello")
     );
 }
 
 #[test]
 fn test_pad_end_multi_char_fill() {
-    assert_eq!(eval_ok(r#"padEnd("1", 5, "ab");"#), Value::string("1abab"));
+    assert_eq!(eval_ok(r#"pad_end("1", 5, "ab");"#), Value::string("1abab"));
 }
 
 #[test]
 fn test_pad_start_parity() {
-    let i = eval_ok(r#"padStart("5", 4, "0");"#);
-    let v = vm_eval_ok(r#"padStart("5", 4, "0");"#);
+    let i = eval_ok(r#"pad_start("5", 4, "0");"#);
+    let v = vm_eval_ok(r#"pad_start("5", 4, "0");"#);
     assert_eq!(i, v);
 }
 
@@ -353,23 +353,26 @@ fn test_pad_start_parity() {
 
 #[test]
 fn test_starts_with_empty_needle() {
-    assert_eq!(eval_ok(r#"startsWith("hello", "");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"starts_with("hello", "");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_ends_with_empty_needle() {
-    assert_eq!(eval_ok(r#"endsWith("hello", "");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"ends_with("hello", "");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_starts_with_longer_needle() {
-    assert_eq!(eval_ok(r#"startsWith("hi", "hello");"#), Value::Bool(false));
+    assert_eq!(
+        eval_ok(r#"starts_with("hi", "hello");"#),
+        Value::Bool(false)
+    );
 }
 
 #[test]
 fn test_starts_with_parity() {
-    let i = eval_ok(r#"startsWith("hello world", "hello");"#);
-    let v = vm_eval_ok(r#"startsWith("hello world", "hello");"#);
+    let i = eval_ok(r#"starts_with("hello world", "hello");"#);
+    let v = vm_eval_ok(r#"starts_with("hello world", "hello");"#);
     assert_eq!(i, v);
 }
 
@@ -377,23 +380,29 @@ fn test_starts_with_parity() {
 
 #[test]
 fn test_to_upper_already_upper() {
-    assert_eq!(eval_ok(r#"toUpperCase("HELLO");"#), Value::string("HELLO"));
+    assert_eq!(
+        eval_ok(r#"to_upper_case("HELLO");"#),
+        Value::string("HELLO")
+    );
 }
 
 #[test]
 fn test_to_lower_already_lower() {
-    assert_eq!(eval_ok(r#"toLowerCase("hello");"#), Value::string("hello"));
+    assert_eq!(
+        eval_ok(r#"to_lower_case("hello");"#),
+        Value::string("hello")
+    );
 }
 
 #[test]
 fn test_to_upper_empty() {
-    assert_eq!(eval_ok(r#"toUpperCase("");"#), Value::string(""));
+    assert_eq!(eval_ok(r#"to_upper_case("");"#), Value::string(""));
 }
 
 #[test]
 fn test_case_parity() {
-    let i = eval_ok(r#"toUpperCase("hello");"#);
-    let v = vm_eval_ok(r#"toUpperCase("hello");"#);
+    let i = eval_ok(r#"to_upper_case("hello");"#);
+    let v = vm_eval_ok(r#"to_upper_case("hello");"#);
     assert_eq!(i, v);
 }
 
@@ -514,13 +523,13 @@ fn test_flatten_parity() {
 
 #[test]
 fn test_array_index_of_empty_array() {
-    assert_eq!(eval_ok("arrayIndexOf([], 1);"), Value::Option(None));
+    assert_eq!(eval_ok("array_index_of([], 1);"), Value::Option(None));
 }
 
 #[test]
 fn test_array_index_of_first_occurrence() {
     assert_eq!(
-        eval_ok("arrayIndexOf([1, 2, 1, 3], 1);"),
+        eval_ok("array_index_of([1, 2, 1, 3], 1);"),
         Value::Option(Some(Box::new(Value::Number(0.0))))
     );
 }
@@ -528,20 +537,20 @@ fn test_array_index_of_first_occurrence() {
 #[test]
 fn test_array_last_index_of_last_occurrence() {
     assert_eq!(
-        eval_ok("arrayLastIndexOf([1, 2, 1, 3], 1);"),
+        eval_ok("array_last_index_of([1, 2, 1, 3], 1);"),
         Value::Option(Some(Box::new(Value::Number(2.0))))
     );
 }
 
 #[test]
 fn test_array_includes_empty() {
-    assert_eq!(eval_ok("arrayIncludes([], 1);"), Value::Bool(false));
+    assert_eq!(eval_ok("array_includes([], 1);"), Value::Bool(false));
 }
 
 #[test]
 fn test_array_index_of_parity() {
-    let i = eval_ok("arrayIndexOf([10, 20, 30, 20], 20);");
-    let v = vm_eval_ok("arrayIndexOf([10, 20, 30, 20], 20);");
+    let i = eval_ok("array_index_of([10, 20, 30, 20], 20);");
+    let v = vm_eval_ok("array_index_of([10, 20, 30, 20], 20);");
     assert_eq!(i, v);
 }
 
@@ -790,7 +799,7 @@ fn test_cos_parity() {
 
 #[test]
 fn test_parse_json_just_null() {
-    let result = eval_ok(r#"parseJSON("null");"#);
+    let result = eval_ok(r#"parse_json("null");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -798,19 +807,19 @@ fn test_parse_json_just_null() {
 
 #[test]
 fn test_parse_json_empty_string_error() {
-    let result = eval_ok(r#"parseJSON("");"#);
+    let result = eval_ok(r#"parse_json("");"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_malformed_error() {
-    let result = eval_ok(r#"parseJSON("{bad}");"#);
+    let result = eval_ok(r#"parse_json("{bad}");"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_empty_array() {
-    let result = eval_ok(r#"parseJSON("[]");"#);
+    let result = eval_ok(r#"parse_json("[]");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -818,7 +827,7 @@ fn test_parse_json_empty_array() {
 
 #[test]
 fn test_parse_json_empty_object() {
-    let result = eval_ok(r#"parseJSON("{}");"#);
+    let result = eval_ok(r#"parse_json("{}");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -826,55 +835,55 @@ fn test_parse_json_empty_object() {
 
 #[test]
 fn test_parse_json_parity() {
-    let i = eval_ok(r#"parseJSON("{\"x\":1}");"#);
-    let v = vm_eval_ok(r#"parseJSON("{\"x\":1}");"#);
+    let i = eval_ok(r#"parse_json("{\"x\":1}");"#);
+    let v = vm_eval_ok(r#"parse_json("{\"x\":1}");"#);
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_to_json_null_value() {
-    assert_eq!(eval_ok("toJSON(null);"), Value::string("null"));
+    assert_eq!(eval_ok("to_json(null);"), Value::string("null"));
 }
 
 #[test]
 fn test_to_json_empty_array() {
-    assert_eq!(eval_ok("toJSON([]);"), Value::string("[]"));
+    assert_eq!(eval_ok("to_json([]);"), Value::string("[]"));
 }
 
 #[test]
 fn test_to_json_nested_array() {
     assert_eq!(
-        eval_ok("toJSON([[1, 2], [3, 4]]);"),
+        eval_ok("to_json([[1, 2], [3, 4]]);"),
         Value::string("[[1,2],[3,4]]")
     );
 }
 
 #[test]
 fn test_to_json_parity() {
-    let i = eval_ok("toJSON(42);");
-    let v = vm_eval_ok("toJSON(42);");
+    let i = eval_ok("to_json(42);");
+    let v = vm_eval_ok("to_json(42);");
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_is_valid_json_empty_false() {
-    assert_eq!(eval_ok(r#"isValidJSON("");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"is_valid_json("");"#), Value::Bool(false));
 }
 
 #[test]
 fn test_is_valid_json_null_true() {
-    assert_eq!(eval_ok(r#"isValidJSON("null");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"is_valid_json("null");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_is_valid_json_array_true() {
-    assert_eq!(eval_ok(r#"isValidJSON("[1,2,3]");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"is_valid_json("[1,2,3]");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_json_as_string_correct_type() {
-    // parseJSON now returns Result(Ok(JsonValue)); unwrap then call as_string on a known JsonValue
-    let result = eval_ok(r#"parseJSON("\"hello\"");"#);
+    // parse_json now returns Result(Ok(JsonValue)); unwrap then call as_string on a known JsonValue
+    let result = eval_ok(r#"parse_json("\"hello\"");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -882,8 +891,8 @@ fn test_json_as_string_correct_type() {
 
 #[test]
 fn test_json_as_number_correct_type() {
-    // parseJSON now returns Result(Ok(JsonValue)); check the inner JsonValue holds number
-    let result = eval_ok(r#"parseJSON("42");"#);
+    // parse_json now returns Result(Ok(JsonValue)); check the inner JsonValue holds number
+    let result = eval_ok(r#"parse_json("42");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -893,7 +902,7 @@ fn test_json_as_number_correct_type() {
 fn test_json_get_string_found() {
     assert_eq!(
         eval_ok(
-            r#"let j: json = unwrap(parseJSON("{\"name\":\"Atlas\",\"age\":3}")); jsonGetString(j, "name");"#
+            r#"let j: json = unwrap(parse_json("{\"name\":\"Atlas\",\"age\":3}")); json_get_string(j, "name");"#
         ),
         Value::Option(Some(Box::new(Value::string("Atlas"))))
     );
@@ -903,7 +912,7 @@ fn test_json_get_string_found() {
 fn test_json_get_number_mismatch_none() {
     assert_eq!(
         eval_ok(
-            r#"let j: json = unwrap(parseJSON("{\"name\":\"Atlas\",\"age\":3}")); jsonGetNumber(j, "name");"#
+            r#"let j: json = unwrap(parse_json("{\"name\":\"Atlas\",\"age\":3}")); json_get_number(j, "name");"#
         ),
         Value::Option(None)
     );
@@ -912,7 +921,7 @@ fn test_json_get_number_mismatch_none() {
 #[test]
 fn test_json_get_array_and_object() {
     let result = eval_ok(
-        r#"let j: json = unwrap(parseJSON("{\"items\":[1,2],\"meta\":{\"ok\":true}}")); [jsonGetArray(j, "items"), jsonGetObject(j, "meta")];"#,
+        r#"let j: json = unwrap(parse_json("{\"items\":[1,2],\"meta\":{\"ok\":true}}")); [json_get_array(j, "items"), json_get_object(j, "meta")];"#,
     );
     match result {
         Value::Array(arr) => {
@@ -928,18 +937,18 @@ fn test_json_get_array_and_object() {
                             Value::JsonValue(json) if matches!(json.as_ref(), JsonValue::Number(_))
                         ));
                     }
-                    _ => panic!("Expected array from jsonGetArray"),
+                    _ => panic!("Expected array from json_get_array"),
                 },
-                _ => panic!("Expected Some(array) from jsonGetArray"),
+                _ => panic!("Expected Some(array) from json_get_array"),
             }
             match meta {
                 Value::Option(Some(inner)) => match inner.as_ref() {
                     Value::JsonValue(json) => {
                         assert!(matches!(json.as_ref(), JsonValue::Object(_)));
                     }
-                    _ => panic!("Expected json object from jsonGetObject"),
+                    _ => panic!("Expected json object from json_get_object"),
                 },
-                _ => panic!("Expected Some(object) from jsonGetObject"),
+                _ => panic!("Expected Some(object) from json_get_object"),
             }
         }
         _ => panic!("Expected array result"),
@@ -949,18 +958,18 @@ fn test_json_get_array_and_object() {
 #[test]
 fn test_json_get_parity() {
     let i = eval_ok(
-        r#"let j: json = unwrap(parseJSON("{\"active\":true,\"missing\":null}")); jsonGetBool(j, "active");"#,
+        r#"let j: json = unwrap(parse_json("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
     );
     let v = vm_eval_ok(
-        r#"let j: json = unwrap(parseJSON("{\"active\":true,\"missing\":null}")); jsonGetBool(j, "active");"#,
+        r#"let j: json = unwrap(parse_json("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
     );
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_json_is_null_on_null() {
-    // parseJSON("null") → Result(Ok(JsonValue(null))); verify it's Ok
-    let result = eval_ok(r#"parseJSON("null");"#);
+    // parse_json("null") → Result(Ok(JsonValue(null))); verify it's Ok
+    let result = eval_ok(r#"parse_json("null");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -968,8 +977,8 @@ fn test_json_is_null_on_null() {
 
 #[test]
 fn test_json_is_null_on_non_null() {
-    // parseJSON("42") → Result(Ok(JsonValue(42))); also JsonValue, not null
-    let result = eval_ok(r#"parseJSON("42");"#);
+    // parse_json("42") → Result(Ok(JsonValue(42))); also JsonValue, not null
+    let result = eval_ok(r#"parse_json("42");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -978,20 +987,20 @@ fn test_json_is_null_on_non_null() {
 #[test]
 fn test_json_as_string_wrong_type_error() {
     // Valid parse succeeds; wrong method call errors at runtime
-    let err = eval_err(r#"let j = parseJSON("42"); j.as_string();"#);
+    let err = eval_err(r#"let j = parse_json("42"); j.as_string();"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_json_as_number_wrong_type_error() {
-    let err = eval_err(r#"let j = parseJSON("\"hello\""); j.as_number();"#);
+    let err = eval_err(r#"let j = parse_json("\"hello\""); j.as_number();"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_json_extraction_parity() {
-    let i = eval_ok(r#"parseJSON("{\"x\":10}");"#);
-    let v = vm_eval_ok(r#"parseJSON("{\"x\":10}");"#);
+    let i = eval_ok(r#"parse_json("{\"x\":10}");"#);
+    let v = vm_eval_ok(r#"parse_json("{\"x\":10}");"#);
     assert_eq!(i, v);
 }
 
@@ -1047,28 +1056,28 @@ fn test_type_of_parity() {
 
 #[test]
 fn test_is_number_false_for_string() {
-    assert_eq!(eval_ok(r#"isNumber("42");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"is_number("42");"#), Value::Bool(false));
 }
 
 #[test]
 fn test_is_string_false_for_number() {
-    assert_eq!(eval_ok("isString(42);"), Value::Bool(false));
+    assert_eq!(eval_ok("is_string(42);"), Value::Bool(false));
 }
 
 #[test]
 fn test_is_bool_false_for_number() {
-    assert_eq!(eval_ok("isBool(1);"), Value::Bool(false));
+    assert_eq!(eval_ok("is_bool(1);"), Value::Bool(false));
 }
 
 #[test]
 fn test_is_null_false_for_zero() {
-    assert_eq!(eval_ok("isNull(0);"), Value::Bool(false));
+    assert_eq!(eval_ok("is_null(0);"), Value::Bool(false));
 }
 
 #[test]
 fn test_is_array_parity() {
-    let i = eval_ok("isArray([1, 2, 3]);");
-    let v = vm_eval_ok("isArray([1, 2, 3]);");
+    let i = eval_ok("is_array([1, 2, 3]);");
+    let v = vm_eval_ok("is_array([1, 2, 3]);");
     assert_eq!(i, v);
 }
 
@@ -1091,12 +1100,12 @@ fn test_to_string_parity() {
     assert_eq!(i, v);
 }
 
-// toNumber
+// to_number
 
 #[test]
 fn test_to_number_from_bool_true() {
     assert_eq!(
-        eval_ok("toNumber(true);"),
+        eval_ok("to_number(true);"),
         Value::Result(Ok(Box::new(Value::Number(1.0))))
     );
 }
@@ -1104,58 +1113,58 @@ fn test_to_number_from_bool_true() {
 #[test]
 fn test_to_number_from_bool_false() {
     assert_eq!(
-        eval_ok("toNumber(false);"),
+        eval_ok("to_number(false);"),
         Value::Result(Ok(Box::new(Value::Number(0.0))))
     );
 }
 
 #[test]
 fn test_to_number_from_non_numeric_string_error() {
-    let result = eval_ok(r#"toNumber("abc");"#);
+    let result = eval_ok(r#"to_number("abc");"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_to_number_from_null_error() {
-    let result = eval_ok("toNumber(null);");
+    let result = eval_ok("to_number(null);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
-// toBool
+// to_bool
 
 #[test]
 fn test_to_bool_zero_is_false() {
-    assert_eq!(eval_ok("toBool(0);"), Value::Bool(false));
+    assert_eq!(eval_ok("to_bool(0);"), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_empty_string_is_false() {
-    assert_eq!(eval_ok(r#"toBool("");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"to_bool("");"#), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_null_is_false() {
-    assert_eq!(eval_ok("toBool(null);"), Value::Bool(false));
+    assert_eq!(eval_ok("to_bool(null);"), Value::Bool(false));
 }
 
 #[test]
 fn test_to_bool_array_is_true() {
-    assert_eq!(eval_ok("toBool([]);"), Value::Bool(true));
+    assert_eq!(eval_ok("to_bool([]);"), Value::Bool(true));
 }
 
 #[test]
 fn test_to_bool_parity() {
-    let i = eval_ok("toBool(0);");
-    let v = vm_eval_ok("toBool(0);");
+    let i = eval_ok("to_bool(0);");
+    let v = vm_eval_ok("to_bool(0);");
     assert_eq!(i, v);
 }
 
-// parseInt / parseFloat
+// parse_int / parse_float
 
 #[test]
 fn test_parse_int_hex() {
     assert_eq!(
-        eval_ok("parseInt(\"ff\", 16);"),
+        eval_ok("parse_int(\"ff\", 16);"),
         Value::Result(Ok(Box::new(Value::Number(255.0))))
     );
 }
@@ -1163,34 +1172,34 @@ fn test_parse_int_hex() {
 #[test]
 fn test_parse_int_binary() {
     assert_eq!(
-        eval_ok("parseInt(\"1010\", 2);"),
+        eval_ok("parse_int(\"1010\", 2);"),
         Value::Result(Ok(Box::new(Value::Number(10.0))))
     );
 }
 
 #[test]
 fn test_parse_int_invalid_error() {
-    let result = eval_ok("parseInt(\"xyz\", 10);");
+    let result = eval_ok("parse_int(\"xyz\", 10);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_float_scientific() {
     assert_eq!(
-        eval_ok("parseFloat(\"1.5e3\");"),
+        eval_ok("parse_float(\"1.5e3\");"),
         Value::Result(Ok(Box::new(Value::Number(1500.0))))
     );
 }
 
 #[test]
 fn test_parse_float_invalid_error() {
-    let result = eval_ok("parseFloat(\"abc\");");
+    let result = eval_ok("parse_float(\"abc\");");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_int_parity() {
-    let i = eval_ok("parseInt(\"ff\", 16);");
-    let v = vm_eval_ok("parseInt(\"ff\", 16);");
+    let i = eval_ok("parse_int(\"ff\", 16);");
+    let v = vm_eval_ok("parse_int(\"ff\", 16);");
     assert_eq!(i, v);
 }

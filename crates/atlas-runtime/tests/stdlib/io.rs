@@ -19,7 +19,7 @@ fn test_runtime_with_io() -> (Atlas, TempDir) {
 }
 
 // ============================================================================
-// readFile tests
+// read_file tests
 // ============================================================================
 
 #[test]
@@ -28,7 +28,7 @@ fn test_read_file_basic() {
     let test_file = temp_dir.path().join("test.txt");
     fs::write(&test_file, "Hello, World!").unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -42,7 +42,7 @@ fn test_read_file_utf8() {
     let test_file = temp_dir.path().join("utf8.txt");
     fs::write(&test_file, "Hello 你好 🎉").unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -53,7 +53,7 @@ fn test_read_file_not_found() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -69,7 +69,7 @@ fn test_read_file_permission_denied() {
 
     // Runtime with no permissions
     let runtime = Atlas::new();
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -79,7 +79,7 @@ fn test_read_file_permission_denied() {
 }
 
 // ============================================================================
-// writeFile tests
+// write_file tests
 // ============================================================================
 
 #[test]
@@ -88,7 +88,7 @@ fn test_write_file_basic() {
     let test_file = temp_dir.path().join("output.txt");
 
     let code = format!(
-        r#"writeFile("{}", "test content")"#,
+        r#"write_file("{}", "test content")"#,
         path_for_atlas(&test_file)
     );
     let result = runtime.eval(&code);
@@ -105,7 +105,7 @@ fn test_write_file_overwrite() {
     fs::write(&test_file, "original").unwrap();
 
     let code = format!(
-        r#"writeFile("{}", "new content")"#,
+        r#"write_file("{}", "new content")"#,
         path_for_atlas(&test_file)
     );
     let result = runtime.eval(&code);
@@ -121,7 +121,7 @@ fn test_write_file_permission_denied() {
     let test_file = temp_dir.path().join("output.txt");
 
     let runtime = Atlas::new();
-    let code = format!(r#"writeFile("{}", "content")"#, path_for_atlas(&test_file));
+    let code = format!(r#"write_file("{}", "content")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -130,7 +130,7 @@ fn test_write_file_permission_denied() {
 }
 
 // ============================================================================
-// appendFile tests
+// append_file tests
 // ============================================================================
 
 #[test]
@@ -139,7 +139,10 @@ fn test_append_file_basic() {
     let test_file = temp_dir.path().join("append.txt");
     fs::write(&test_file, "line1\n").unwrap();
 
-    let code = format!(r#"appendFile("{}", "line2\n")"#, path_for_atlas(&test_file));
+    let code = format!(
+        r#"append_file("{}", "line2\n")"#,
+        path_for_atlas(&test_file)
+    );
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -152,7 +155,10 @@ fn test_append_file_create_if_not_exists() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let test_file = temp_dir.path().join("new.txt");
 
-    let code = format!(r#"appendFile("{}", "content")"#, path_for_atlas(&test_file));
+    let code = format!(
+        r#"append_file("{}", "content")"#,
+        path_for_atlas(&test_file)
+    );
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -161,7 +167,7 @@ fn test_append_file_create_if_not_exists() {
 }
 
 // ============================================================================
-// fileExists tests
+// file_exists tests
 // ============================================================================
 
 #[test]
@@ -170,7 +176,7 @@ fn test_file_exists_true() {
     let test_file = temp_dir.path().join("exists.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"fileExists("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_exists("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -182,7 +188,7 @@ fn test_file_exists_false() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"fileExists("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file_exists("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -190,7 +196,7 @@ fn test_file_exists_false() {
 }
 
 // ============================================================================
-// readDir tests
+// read_dir tests
 // ============================================================================
 
 #[test]
@@ -199,7 +205,7 @@ fn test_read_dir_basic() {
     fs::write(temp_dir.path().join("file1.txt"), "").unwrap();
     fs::write(temp_dir.path().join("file2.txt"), "").unwrap();
 
-    let code = format!(r#"readDir("{}")"#, path_for_atlas(temp_dir.path()));
+    let code = format!(r#"read_dir("{}")"#, path_for_atlas(temp_dir.path()));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -211,14 +217,14 @@ fn test_read_dir_not_found() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("nonexistent_dir");
 
-    let code = format!(r#"readDir("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"read_dir("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
 }
 
 // ============================================================================
-// createDir tests
+// create_dir tests
 // ============================================================================
 
 #[test]
@@ -226,7 +232,7 @@ fn test_create_dir_basic() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let new_dir = temp_dir.path().join("newdir");
 
-    let code = format!(r#"createDir("{}")"#, path_for_atlas(&new_dir));
+    let code = format!(r#"create_dir("{}")"#, path_for_atlas(&new_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -239,7 +245,7 @@ fn test_create_dir_nested() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nested_dir = temp_dir.path().join("a/b/c");
 
-    let code = format!(r#"createDir("{}")"#, path_for_atlas(&nested_dir));
+    let code = format!(r#"create_dir("{}")"#, path_for_atlas(&nested_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -248,7 +254,7 @@ fn test_create_dir_nested() {
 }
 
 // ============================================================================
-// removeFile tests
+// remove_file tests
 // ============================================================================
 
 #[test]
@@ -257,7 +263,7 @@ fn test_remove_file_basic() {
     let test_file = temp_dir.path().join("remove.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"removeFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -269,14 +275,14 @@ fn test_remove_file_not_found() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("does_not_exist.txt");
 
-    let code = format!(r#"removeFile("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"remove_file("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
 }
 
 // ============================================================================
-// removeDir tests
+// remove_dir tests
 // ============================================================================
 
 #[test]
@@ -285,7 +291,7 @@ fn test_remove_dir_basic() {
     let test_dir = temp_dir.path().join("rmdir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"removeDir("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -299,7 +305,7 @@ fn test_remove_dir_not_empty() {
     fs::create_dir(&test_dir).unwrap();
     fs::write(test_dir.join("file.txt"), "").unwrap();
 
-    let code = format!(r#"removeDir("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -310,7 +316,7 @@ fn test_remove_dir_not_empty() {
 }
 
 // ============================================================================
-// fileInfo tests
+// file_info tests
 // ============================================================================
 
 #[test]
@@ -319,7 +325,7 @@ fn test_file_info_file() {
     let test_file = temp_dir.path().join("info.txt");
     fs::write(&test_file, "test content").unwrap();
 
-    let code = format!(r#"fileInfo("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_info("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -336,7 +342,7 @@ fn test_file_info_directory() {
     let test_dir = temp_dir.path().join("infodir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"fileInfo("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"file_info("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -349,7 +355,7 @@ fn test_file_info_directory() {
 #[test]
 fn test_path_join_basic() {
     let runtime = Atlas::new(); // No permissions needed
-    let result = runtime.eval(r#"pathJoin("a", "b", "c")"#);
+    let result = runtime.eval(r#"path_join("a", "b", "c")"#);
 
     assert!(result.is_ok());
     assert!(matches!(result.unwrap(), atlas_runtime::Value::String(_)));
@@ -358,7 +364,7 @@ fn test_path_join_basic() {
 #[test]
 fn test_path_join_single() {
     let runtime = Atlas::new();
-    let result = runtime.eval(r#"pathJoin("single")"#);
+    let result = runtime.eval(r#"path_join("single")"#);
 
     assert!(result.is_ok());
 }
@@ -366,13 +372,13 @@ fn test_path_join_single() {
 #[test]
 fn test_path_join_no_args() {
     let runtime = Atlas::new();
-    let result = runtime.eval(r#"pathJoin()"#);
+    let result = runtime.eval(r#"path_join()"#);
 
     assert!(result.is_err());
 }
 
 // ============================================================================
-// readFile - Additional UTF-8 and edge case tests
+// read_file - Additional UTF-8 and edge case tests
 // ============================================================================
 
 #[test]
@@ -381,7 +387,7 @@ fn test_read_file_empty() {
     let test_file = temp_dir.path().join("empty.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -399,7 +405,7 @@ fn test_read_file_invalid_utf8() {
     // Invalid UTF-8 sequence
     fs::write(&test_file, [0xFF, 0xFE, 0xFD]).unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -414,7 +420,7 @@ fn test_read_file_multiline() {
     let content = "line1\nline2\nline3\n";
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -432,7 +438,7 @@ fn test_read_file_large() {
     let content = "x".repeat(10000);
     fs::write(&test_file, &content).unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -452,14 +458,14 @@ fn test_read_file_with_bom() {
     content.extend_from_slice(b"Hello");
     fs::write(&test_file, content).unwrap();
 
-    let code = format!(r#"readFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"read_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
 }
 
 // ============================================================================
-// writeFile - Additional edge case tests
+// write_file - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -467,7 +473,7 @@ fn test_write_file_empty() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let test_file = temp_dir.path().join("empty_write.txt");
 
-    let code = format!(r#"writeFile("{}", "")"#, path_for_atlas(&test_file));
+    let code = format!(r#"write_file("{}", "")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -482,7 +488,7 @@ fn test_write_file_unicode() {
     let content = "Hello 世界 🌍";
 
     let code = format!(
-        r#"writeFile("{}", "{}")"#,
+        r#"write_file("{}", "{}")"#,
         path_for_atlas(&test_file),
         content
     );
@@ -499,7 +505,7 @@ fn test_write_file_newlines() {
     let test_file = temp_dir.path().join("newlines.txt");
 
     let code = format!(
-        r#"writeFile("{}", "line1\nline2\n")"#,
+        r#"write_file("{}", "line1\nline2\n")"#,
         path_for_atlas(&test_file)
     );
     let result = runtime.eval(&code);
@@ -515,7 +521,7 @@ fn test_write_file_creates_file() {
     let test_file = temp_dir.path().join("new_file.txt");
     assert!(!test_file.exists());
 
-    let code = format!(r#"writeFile("{}", "content")"#, path_for_atlas(&test_file));
+    let code = format!(r#"write_file("{}", "content")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -523,7 +529,7 @@ fn test_write_file_creates_file() {
 }
 
 // ============================================================================
-// appendFile - Additional edge case tests
+// append_file - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -532,8 +538,14 @@ fn test_append_file_multiple() {
     let test_file = temp_dir.path().join("multi_append.txt");
     fs::write(&test_file, "start\n").unwrap();
 
-    let code1 = format!(r#"appendFile("{}", "line1\n")"#, path_for_atlas(&test_file));
-    let code2 = format!(r#"appendFile("{}", "line2\n")"#, path_for_atlas(&test_file));
+    let code1 = format!(
+        r#"append_file("{}", "line1\n")"#,
+        path_for_atlas(&test_file)
+    );
+    let code2 = format!(
+        r#"append_file("{}", "line2\n")"#,
+        path_for_atlas(&test_file)
+    );
 
     runtime.eval(&code1).unwrap();
     runtime.eval(&code2).unwrap();
@@ -548,7 +560,7 @@ fn test_append_file_empty_content() {
     let test_file = temp_dir.path().join("append_empty.txt");
     fs::write(&test_file, "base").unwrap();
 
-    let code = format!(r#"appendFile("{}", "")"#, path_for_atlas(&test_file));
+    let code = format!(r#"append_file("{}", "")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -562,7 +574,10 @@ fn test_append_file_permission_denied() {
     let test_file = temp_dir.path().join("append_denied.txt");
 
     let runtime = Atlas::new();
-    let code = format!(r#"appendFile("{}", "content")"#, path_for_atlas(&test_file));
+    let code = format!(
+        r#"append_file("{}", "content")"#,
+        path_for_atlas(&test_file)
+    );
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -571,7 +586,7 @@ fn test_append_file_permission_denied() {
 }
 
 // ============================================================================
-// fileExists - Additional edge case tests
+// file_exists - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -580,7 +595,7 @@ fn test_file_exists_directory() {
     let test_dir = temp_dir.path().join("exists_dir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"fileExists("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"file_exists("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -589,13 +604,13 @@ fn test_file_exists_directory() {
 
 #[test]
 fn test_file_exists_no_permission_check() {
-    // fileExists doesn't require read permissions - it just checks existence
+    // file_exists doesn't require read permissions - it just checks existence
     let temp_dir = TempDir::new().unwrap();
     let test_file = temp_dir.path().join("exists_test.txt");
     fs::write(&test_file, "").unwrap();
 
     let runtime = Atlas::new();
-    let code = format!(r#"fileExists("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_exists("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     // Should succeed without permissions since it only checks existence
@@ -604,7 +619,7 @@ fn test_file_exists_no_permission_check() {
 }
 
 // ============================================================================
-// readDir - Additional edge case tests
+// read_dir - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -613,7 +628,7 @@ fn test_read_dir_empty() {
     let empty_dir = temp_dir.path().join("empty");
     fs::create_dir(&empty_dir).unwrap();
 
-    let code = format!(r#"readDir("{}")"#, path_for_atlas(&empty_dir));
+    let code = format!(r#"read_dir("{}")"#, path_for_atlas(&empty_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -630,7 +645,7 @@ fn test_read_dir_mixed_contents() {
     fs::write(temp_dir.path().join("file.txt"), "").unwrap();
     fs::create_dir(temp_dir.path().join("subdir")).unwrap();
 
-    let code = format!(r#"readDir("{}")"#, path_for_atlas(temp_dir.path()));
+    let code = format!(r#"read_dir("{}")"#, path_for_atlas(temp_dir.path()));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -648,7 +663,7 @@ fn test_read_dir_permission_denied() {
     fs::create_dir(&test_dir).unwrap();
 
     let runtime = Atlas::new();
-    let code = format!(r#"readDir("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"read_dir("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -657,7 +672,7 @@ fn test_read_dir_permission_denied() {
 }
 
 // ============================================================================
-// createDir - Additional edge case tests
+// create_dir - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -666,7 +681,7 @@ fn test_create_dir_already_exists() {
     let test_dir = temp_dir.path().join("already_exists");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"createDir("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"create_dir("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     // Should succeed (mkdir -p behavior)
@@ -679,7 +694,7 @@ fn test_create_dir_permission_denied() {
     let new_dir = temp_dir.path().join("denied");
 
     let runtime = Atlas::new();
-    let code = format!(r#"createDir("{}")"#, path_for_atlas(&new_dir));
+    let code = format!(r#"create_dir("{}")"#, path_for_atlas(&new_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -688,7 +703,7 @@ fn test_create_dir_permission_denied() {
 }
 
 // ============================================================================
-// removeFile - Additional edge case tests
+// remove_file - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -697,7 +712,7 @@ fn test_remove_file_is_directory() {
     let test_dir = temp_dir.path().join("is_dir");
     fs::create_dir(&test_dir).unwrap();
 
-    let code = format!(r#"removeFile("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_file("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -710,7 +725,7 @@ fn test_remove_file_permission_denied() {
     fs::write(&test_file, "").unwrap();
 
     let runtime = Atlas::new();
-    let code = format!(r#"removeFile("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_file("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -719,7 +734,7 @@ fn test_remove_file_permission_denied() {
 }
 
 // ============================================================================
-// removeDir - Additional edge case tests
+// remove_dir - Additional edge case tests
 // ============================================================================
 
 #[test]
@@ -727,7 +742,7 @@ fn test_remove_dir_not_found() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("not_found");
 
-    let code = format!(r#"removeDir("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"remove_dir("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -739,7 +754,7 @@ fn test_remove_dir_is_file() {
     let test_file = temp_dir.path().join("is_file.txt");
     fs::write(&test_file, "").unwrap();
 
-    let code = format!(r#"removeDir("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"remove_dir("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -752,7 +767,7 @@ fn test_remove_dir_permission_denied() {
     fs::create_dir(&test_dir).unwrap();
 
     let runtime = Atlas::new();
-    let code = format!(r#"removeDir("{}")"#, path_for_atlas(&test_dir));
+    let code = format!(r#"remove_dir("{}")"#, path_for_atlas(&test_dir));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -761,7 +776,7 @@ fn test_remove_dir_permission_denied() {
 }
 
 // ============================================================================
-// fileInfo - Additional validation tests
+// file_info - Additional validation tests
 // ============================================================================
 
 #[test]
@@ -770,7 +785,7 @@ fn test_file_info_size_check() {
     let test_file = temp_dir.path().join("info_fields.txt");
     fs::write(&test_file, "12345").unwrap();
 
-    let code = format!(r#"fileInfo("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_info("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_ok());
@@ -786,7 +801,7 @@ fn test_file_info_not_found() {
     let (runtime, temp_dir) = test_runtime_with_io();
     let nonexistent = temp_dir.path().join("not_found.txt");
 
-    let code = format!(r#"fileInfo("{}")"#, path_for_atlas(&nonexistent));
+    let code = format!(r#"file_info("{}")"#, path_for_atlas(&nonexistent));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -799,7 +814,7 @@ fn test_file_info_permission_denied() {
     fs::write(&test_file, "test").unwrap();
 
     let runtime = Atlas::new();
-    let code = format!(r#"fileInfo("{}")"#, path_for_atlas(&test_file));
+    let code = format!(r#"file_info("{}")"#, path_for_atlas(&test_file));
     let result = runtime.eval(&code);
 
     assert!(result.is_err());
@@ -814,7 +829,7 @@ fn test_file_info_permission_denied() {
 #[test]
 fn test_path_join_many_parts() {
     let runtime = Atlas::new();
-    let result = runtime.eval(r#"pathJoin("a", "b", "c", "d", "e")"#);
+    let result = runtime.eval(r#"path_join("a", "b", "c", "d", "e")"#);
 
     assert!(result.is_ok());
     if let atlas_runtime::Value::String(path) = result.unwrap() {
@@ -828,7 +843,7 @@ fn test_path_join_many_parts() {
 #[test]
 fn test_path_join_empty_parts() {
     let runtime = Atlas::new();
-    let result = runtime.eval(r#"pathJoin("", "a", "")"#);
+    let result = runtime.eval(r#"path_join("", "a", "")"#);
 
     assert!(result.is_ok());
 }
@@ -836,7 +851,7 @@ fn test_path_join_empty_parts() {
 #[test]
 fn test_path_join_absolute_path() {
     let runtime = Atlas::new();
-    let result = runtime.eval(r#"pathJoin("/absolute", "path")"#);
+    let result = runtime.eval(r#"path_join("/absolute", "path")"#);
 
     assert!(result.is_ok());
     if let atlas_runtime::Value::String(path) = result.unwrap() {

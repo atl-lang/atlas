@@ -68,9 +68,9 @@ struct Registry {
 
 // Internal helpers to build HashMaps.
 fn empty_env() -> HashMap<string, string> {
-    return hashMapNew();
+    return hash_map_new();
 }
 
 fn empty_servers() -> HashMap<string, ServerConfig> {
-    return hashMapNew();
+    return hash_map_new();
 }

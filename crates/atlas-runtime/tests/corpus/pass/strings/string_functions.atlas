@@ -1,7 +1,7 @@
 let s: string = "Hello, World!";
-print(toUpperCase(s));
-print(toLowerCase(s));
+print(to_upper_case(s));
+print(to_lower_case(s));
 print(trim("  hello  "));
 print(includes(s, "World"));
-print(startsWith(s, "Hello"));
-print(endsWith(s, "World!"));
+print(starts_with(s, "Hello"));
+print(ends_with(s, "World!"));

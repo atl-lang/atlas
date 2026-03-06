@@ -40,7 +40,7 @@ fn test_text_average_word_length() {
 #[test]
 fn test_text_uppercase_words() {
     let code = r#"
-        fn toUpper(s: string) -> string { return toUpperCase(s); }
+        fn toUpper(s: string) -> string { return to_upper_case(s); }
 
         let text: string = "hello world";
         let words: string[] = split(text, " ");
@@ -54,10 +54,10 @@ fn test_text_uppercase_words() {
 fn test_text_titlecase() {
     let code = r#"
         fn titleCase(word: string) -> string {
-            let first: string = unwrap(charAt(word, 0.0));
+            let first: string = unwrap(char_at(word, 0.0));
             let rest: string = substring(word, 1.0, len(word));
-            let firstUpper: string = toUpperCase(first);
-            let restLower: string = toLowerCase(rest);
+            let firstUpper: string = to_upper_case(first);
+            let restLower: string = to_lower_case(rest);
             return firstUpper + restLower;
         }
 
@@ -144,7 +144,7 @@ fn test_text_reverse_words() {
 fn test_text_acronym() {
     let code = r#"
         fn firstChar(s: string) -> string {
-            return unwrap(charAt(s, 0.0));
+            return unwrap(char_at(s, 0.0));
         }
 
         let text: string = "Portable Network Graphics";
@@ -171,12 +171,12 @@ fn test_text_trim_lines() {
 #[test]
 fn test_text_starts_with_filter() {
     let code = r#"
-        fn startsWithA(word: string) -> bool {
-            return startsWith(word, "a");
+        fn starts_withA(word: string) -> bool {
+            return starts_with(word, "a");
         }
 
         let words: string[] = ["apple", "banana", "apricot", "cherry"];
-        let aWords: string[] = filter(words, startsWithA);
+        let aWords: string[] = filter(words, starts_withA);
         len(aWords)
     "#;
     assert_eval_number_with_io(code, 2.0);
@@ -185,12 +185,12 @@ fn test_text_starts_with_filter() {
 #[test]
 fn test_text_ends_with_filter() {
     let code = r#"
-        fn endsWithE(word: string) -> bool {
-            return endsWith(word, "e");
+        fn ends_withE(word: string) -> bool {
+            return ends_with(word, "e");
         }
 
         let words: string[] = ["apple", "banana", "grape", "cherry"];
-        let eWords: string[] = filter(words, endsWithE);
+        let eWords: string[] = filter(words, ends_withE);
         len(eWords)
     "#;
     assert_eval_number_with_io(code, 2.0); // apple, grape
@@ -200,7 +200,7 @@ fn test_text_ends_with_filter() {
 fn test_text_pad_lines() {
     let code = r#"
         fn pad(line: string) -> string {
-            return padEnd(line, 10.0, ".");
+            return pad_end(line, 10.0, ".");
         }
 
         let lines: string[] = ["short", "medium", "long"];
@@ -236,8 +236,8 @@ fn test_text_extract_numbers() {
     let code = r#"
         let text: string = "Price: 100 Quantity: 50";
         let words: string[] = split(text, " ");
-        let num1: number = unwrap(parseFloat(words[1]));
-        let num2: number = unwrap(parseFloat(words[3]));
+        let num1: number = unwrap(parse_float(words[1]));
+        let num2: number = unwrap(parse_float(words[3]));
         num1 + num2
     "#;
     assert_eval_number_with_io(code, 150.0);
