@@ -42,23 +42,47 @@ If AI has to work around something that should be built-in, that's a bug, not a 
 - **Single workspace:** `~/dev/projects/atlas/`
 - **See `.claude/lazy/git.md`** for full workflow.
 
-## Testing Strategy (CRITICAL)
+## Testing — The Two-Tier System
+
+### Tier 1: Pre-commit (automatic on git commit, < 15 seconds)
+- `cargo fmt --check`
+- `cargo clippy --workspace -- -D warnings`
+- NO nextest — this is by design
+
+### Tier 2: Nightly CI (2am via launchd, or on-demand: `atlas-track run-ci`)
+- Full corpus, full test suite, parity sweep, battle tests
+- Results in `tracking/ci-status.json`
+- `atlas-track go` shows CI status at session start
+- CI failures = P0 blocker — fix before new work
+
+### What AI agents do:
 ```bash
-# DURING DEVELOPMENT — two commands only:
-cargo check -p atlas-runtime                                        # verify compile, ~0.5s
-cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'      # ONE test by exact name
-
-# BANNED — these compile ALL test binaries and cause 5-20 min hangs:
-# cargo nextest run -p atlas-runtime -E 'test(interpreter)'   ❌
-# cargo nextest run -p atlas-runtime -E 'test(stdlib)'        ❌
-# cargo nextest run -p atlas-runtime --test <any_domain>      ❌
-# cargo nextest run -p atlas-runtime                          ❌
-# cargo nextest run --workspace                               ❌
-
-# NEVER run full suite manually.
-# The pre-commit Guardian hook (.githooks/pre-commit) runs full suite + parity on every commit.
-# Killing cargo mid-run leaves lock files that block all future runs — never do it.
+cargo check -p atlas-runtime   # verify compile (~0.5s)
+# write code
+cargo check -p atlas-runtime   # verify still compiles
+cargo fmt
+git commit                      # fmt+clippy run automatically
+atlas-track go                  # check CI status
 ```
+
+### NEVER run nextest manually:
+```bash
+# ALL of these are BANNED:
+cargo nextest run -p atlas-runtime -E 'test(anything)'  # ❌
+cargo nextest run --workspace                           # ❌
+cargo nextest run -p atlas-runtime --test <domain>      # ❌
+```
+
+### ONE exception: TDD (bugfix skill only)
+```bash
+# Step 2 (RED): verify new test fails before fixing
+cargo nextest run -p atlas-runtime -E 'test(my_new_exact_test_name)'
+# Step 5 (GREEN): verify new test passes after fixing
+cargo nextest run -p atlas-runtime -E 'test(my_new_exact_test_name)'
+# Then: cargo fmt && git commit — done. CI handles the rest.
+```
+
+Killing cargo mid-run leaves lock files that block all future runs — never do it.
 
 ## Session Start (MANDATORY)
 ```bash

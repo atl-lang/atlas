@@ -9,32 +9,29 @@ description: Atlas bug fix workflow with TDD. Use for fixing bugs, resolving iss
 
 ---
 
-## ⚠️ CRITICAL: Test Commands (READ BEFORE TOUCHING NEXTEST)
+## Testing — Two-Tier System (CRITICAL)
 
-### BANNED — these compile ALL test binaries and take 5-10 minutes each:
+### Tier 1: Pre-commit (automatic, < 15s)
+- `cargo fmt --check` + `cargo clippy` only — NO nextest, by design
+
+### Tier 2: Nightly CI (2am via launchd, or `atlas-track run-ci`)
+- Full suite, parity, battle tests → results in `tracking/ci-status.json`
+
+### BANNED — all nextest except ONE exact TDD test:
 ```bash
-# NEVER USE THESE:
-cargo nextest run -p atlas-runtime -E 'test(interpreter)'    # BANNED
-cargo nextest run -p atlas-runtime -E 'test(regression)'     # BANNED
-cargo nextest run -p atlas-runtime -E 'test(stdlib)'         # BANNED
-cargo nextest run -p atlas-runtime -E 'test(corpus)'         # BANNED
-cargo nextest run -p atlas-runtime -E 'test(frontend)'       # BANNED
-cargo nextest run -p atlas-runtime                           # BANNED (full suite)
-cargo nextest run --workspace                                 # BANNED
+cargo nextest run -p atlas-runtime -E 'test(interpreter)'    # ❌ BANNED
+cargo nextest run -p atlas-runtime -E 'test(regression)'     # ❌ BANNED
+cargo nextest run -p atlas-runtime -E 'test(stdlib)'         # ❌ BANNED
+cargo nextest run -p atlas-runtime -E 'test(corpus)'         # ❌ BANNED
+cargo nextest run -p atlas-runtime                           # ❌ BANNED (full suite)
+cargo nextest run --workspace                                 # ❌ BANNED
 ```
 
-### ALLOWED — target ONE test by exact name:
+### ALLOWED — cargo check + ONE exact TDD test only:
 ```bash
-# GREEN: these compile only what's needed
-cargo check -p atlas-runtime                                  # Type check only, ~0.5s
-cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # Single test
+cargo check -p atlas-runtime                                           # ✅ ~0.5s always fine
+cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'      # ✅ TDD only, exact name
 ```
-
-**If Guardian fails and you can't see which test failed** → add `--no-fail-fast` flag:
-```bash
-cargo nextest run -p atlas-runtime -E 'test(regression) + test(interpreter)' --no-fail-fast 2>&1 | grep "^        FAIL"
-```
-This is a ONE-TIME diagnostic command to find failing test names, not part of normal TDD flow.
 
 ---
 
@@ -105,14 +102,12 @@ atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
 
 ## When Guardian Commit Fails
 
-1. **Read the Guardian output** — it shows which phase failed (fmt/clippy/tests/parity)
-2. **For test failures:** the output may be truncated. Run this ONE-TIME to find what failed:
-   ```bash
-   cargo nextest run -p atlas-runtime -E '<same filter Guardian used>' --no-fail-fast 2>&1 | grep "^        FAIL"
-   ```
-3. **Fix the specific failing test(s)** — update test fixtures if they used wrong syntax
+1. **Read the Guardian output** — it shows which phase failed (fmt or clippy)
+2. **For fmt failures:** run `cargo fmt` then commit again
+3. **For clippy failures:** fix the warnings shown, then commit again
 4. `cargo fmt && git add -A && git commit ...` — try again
-5. **Never run broad test filters** trying to verify the whole suite. Guardian does that.
+5. **Test failures appear in nightly CI, not pre-commit.** Run `atlas-track ci-status` to see CI results.
+6. If CI is failing: `atlas-track run-ci` to get details, fix the specific failing tests.
 
 ---
 

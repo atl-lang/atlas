@@ -1,19 +1,19 @@
 #!/bin/bash
 # ══════════════════════════════════════════════════════════════════════════════
-# ATLAS PRE-COMMIT GUARDIAN v3.2
+# ATLAS PRE-COMMIT GUARDIAN v4.0 — Static Analysis Only
 # ══════════════════════════════════════════════════════════════════════════════
 #
-# This is not a linter. This is a GUARDIAN.
+# Tier 1: Fast pre-commit gate (< 15 seconds)
+# - cargo fmt --check
+# - cargo clippy --workspace -- -D warnings
+# - Dead code detection (no #[allow(dead_code)] additions)
+# - Doc drift detector
+# - Skill file protection
 #
-# Atlas is a production-grade, AI-first programming language.
-# NOT a research project. NOT "good enough". WORLD CLASS.
-#
-# Phase 1: Source file detection (Haiku only for real code)
-# Phase 2: Dead code/file detection
-# Phase 3: Static checks (fmt, clippy)
-# Phase 4: Targeted tests + parity
-# Phase 5: Haiku semantic review (with full context)
-# Phase 6: Issue seeding (Haiku findings → atlas-track)
+# Tier 2: Full validation runs nightly via launchd at 2am
+# - Full corpus, nextest workspace, parity sweep, battle tests
+# - Results in tracking/ci-status.json
+# - atlas-track go shows CI status
 #
 # Activated by: git config core.hooksPath .githooks
 # ══════════════════════════════════════════════════════════════════════════════
@@ -44,128 +44,47 @@ fi
 
 # Categorize files
 SOURCE_FILES=$(echo "$STAGED" | grep -E '^crates/.*\.rs$' || true)
-TEST_FILES=$(echo "$STAGED" | grep -E '/tests/.*\.rs$' || true)
-ATLAS_FILES=$(echo "$STAGED" | grep -E '\.atlas$' || true)
-DOC_FILES=$(echo "$STAGED" | grep -E '\.md$' || true)
-CONFIG_FILES=$(echo "$STAGED" | grep -E '\.(toml|yaml|yml|json)$' || true)
 SKILL_FILES=$(echo "$STAGED" | grep -E '^\.claude/' || true)
 
-# Count source files (excluding tests for Haiku trigger)
-PRODUCTION_SOURCE=$(echo "$SOURCE_FILES" | grep -vE '/tests/' || true)
-
 # ══════════════════════════════════════════════════════════════════════════════
-# PHASE 1: Determine verification level
+# SKILL FILE PROTECTION
 # ══════════════════════════════════════════════════════════════════════════════
 
-NEEDS_HAIKU=false
-NEEDS_STATIC=false
-NEEDS_TESTS=false
-
-# Only trigger Haiku for PRODUCTION source files (not tests, not docs, not config)
-if [ -n "$PRODUCTION_SOURCE" ]; then
-  NEEDS_HAIKU=true
-  NEEDS_STATIC=true
-  NEEDS_TESTS=true
+if [ -n "$SKILL_FILES" ]; then
+  if [ ! -f "/tmp/atlas-skill-unlock" ]; then
+    echo ""
+    echo -e "${RED}${BOLD}BLOCKED: Skill files require explicit unlock${NC}"
+    echo ""
+    echo -e "Staged skill files:"
+    echo "$SKILL_FILES" | while read f; do echo "  - $f"; done
+    echo ""
+    echo -e "To unlock: ${CYAN}touch /tmp/atlas-skill-unlock${NC}"
+    echo -e "After commit: ${CYAN}rm /tmp/atlas-skill-unlock${NC}"
+    echo ""
+    exit 1
+  else
+    echo -e "${YELLOW}Skill file unlock active — proceeding${NC}"
+  fi
 fi
 
-# Static checks for any Rust files (including tests)
-if [ -n "$SOURCE_FILES" ]; then
-  NEEDS_STATIC=true
-  NEEDS_TESTS=true
-fi
-
-# If only docs/config/skills changed, fast exit
-if [ "$NEEDS_HAIKU" = false ] && [ "$NEEDS_STATIC" = false ]; then
-  echo -e "${CYAN}pre-commit:${NC} No production source files staged. Skipping verification."
+# If only docs/config/skills staged (no Rust source), fast exit after skill check
+if [ -z "$SOURCE_FILES" ]; then
+  echo -e "${CYAN}pre-commit:${NC} No Rust source files staged. Static checks skipped."
   exit 0
 fi
 
 echo ""
 echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
-echo -e "${BOLD}            ATLAS PRE-COMMIT GUARDIAN v3.2${NC}"
+echo -e "${BOLD}            ATLAS PRE-COMMIT GUARDIAN v4.0${NC}"
 echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
-echo -e "${MAGENTA}    \"World-class quality. AI-first. Production-grade.\"${NC}"
+echo -e "${MAGENTA}    \"Fast gates. Nightly CI handles the rest.\"${NC}"
 echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PHASE 2: Domain Detection + Context
+# PHASE 1: Dead Code Detection
 # ══════════════════════════════════════════════════════════════════════════════
 
-echo -e "${BLUE}[PHASE 1]${NC} Domain Detection"
-
-TOUCHES_RUNTIME=false
-TOUCHES_VM=false
-TOUCHES_INTERPRETER=false
-TOUCHES_COMPILER=false
-TOUCHES_LSP=false
-TOUCHES_CLI=false
-TOUCHES_JIT=false
-TOUCHES_FRONTEND=false
-TOUCHES_BUILD=false
-TOUCHES_PARSER=false
-TOUCHES_BINDER=false
-TOUCHES_TYPECHECKER=false
-TOUCHES_SECURITY=false
-TOUCHES_FFI=false
-TOUCHES_UNSAFE=false
-
-# Primary component for issue tracking
-PRIMARY_COMPONENT="runtime"
-
-for file in $SOURCE_FILES; do
-  case "$file" in
-    crates/atlas-runtime/src/vm/*) TOUCHES_VM=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="vm" ;;
-    crates/atlas-runtime/src/interpreter/*) TOUCHES_INTERPRETER=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="interpreter" ;;
-    crates/atlas-runtime/src/compiler/*) TOUCHES_COMPILER=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="codegen" ;;
-    crates/atlas-runtime/src/parser/*) TOUCHES_PARSER=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="parser" ;;
-    crates/atlas-runtime/src/binder/*) TOUCHES_BINDER=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="binder" ;;
-    crates/atlas-runtime/src/typechecker/*) TOUCHES_TYPECHECKER=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="typechecker" ;;
-    crates/atlas-runtime/src/security/*) TOUCHES_SECURITY=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="runtime" ;;
-    crates/atlas-runtime/src/ffi/*) TOUCHES_FFI=true; TOUCHES_RUNTIME=true; PRIMARY_COMPONENT="runtime" ;;
-    crates/atlas-runtime/src/*) TOUCHES_RUNTIME=true ;;
-    crates/atlas-lsp/*) TOUCHES_LSP=true; PRIMARY_COMPONENT="lsp" ;;
-    crates/atlas-cli/*) TOUCHES_CLI=true; PRIMARY_COMPONENT="cli" ;;
-    crates/atlas-jit/*) TOUCHES_JIT=true; PRIMARY_COMPONENT="jit" ;;
-    crates/atlas-build/*) TOUCHES_BUILD=true; PRIMARY_COMPONENT="infra" ;;
-    crates/atlas-core/*|crates/atlas-frontend/*) TOUCHES_FRONTEND=true; PRIMARY_COMPONENT="parser" ;;
-  esac
-done
-
-# Check if any touched files contain unsafe code
-for file in $SOURCE_FILES; do
-  if [ -f "$PROJECT_ROOT/$file" ] && grep -q "unsafe" "$PROJECT_ROOT/$file" 2>/dev/null; then
-    TOUCHES_UNSAFE=true
-    break
-  fi
-done
-
-NEEDS_PARITY=false
-if [ "$TOUCHES_VM" = true ] || [ "$TOUCHES_INTERPRETER" = true ] || [ "$TOUCHES_COMPILER" = true ]; then
-  NEEDS_PARITY=true
-fi
-
-# Build domain list
-DOMAINS=""
-[ "$TOUCHES_RUNTIME" = true ] && DOMAINS="${DOMAINS}runtime "
-[ "$TOUCHES_VM" = true ] && DOMAINS="${DOMAINS}vm "
-[ "$TOUCHES_INTERPRETER" = true ] && DOMAINS="${DOMAINS}interpreter "
-[ "$TOUCHES_COMPILER" = true ] && DOMAINS="${DOMAINS}compiler "
-[ "$TOUCHES_LSP" = true ] && DOMAINS="${DOMAINS}lsp "
-[ "$TOUCHES_CLI" = true ] && DOMAINS="${DOMAINS}cli "
-[ "$TOUCHES_JIT" = true ] && DOMAINS="${DOMAINS}jit "
-[ "$TOUCHES_BUILD" = true ] && DOMAINS="${DOMAINS}build "
-
-echo -e "   Domains: ${CYAN}${DOMAINS:-none}${NC}"
-echo -e "   Primary component: ${CYAN}${PRIMARY_COMPONENT}${NC}"
-echo -e "   Parity required: ${NEEDS_PARITY}"
-echo -e "   Production files: $(echo "$PRODUCTION_SOURCE" | grep -c . || echo 0)"
-echo ""
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PHASE 3: Dead Code / Dead File Detection
-# ══════════════════════════════════════════════════════════════════════════════
-
-echo -e "${BLUE}[PHASE 2]${NC} Dead Code Detection"
+echo -e "${BLUE}[PHASE 1]${NC} Dead Code Detection"
 
 DEAD_CODE_ISSUES=""
 
@@ -195,7 +114,6 @@ NEW_FILES=$(git diff --cached --name-only --diff-filter=A | grep -E '\.rs$' || t
 if [ -n "$NEW_FILES" ]; then
   for f in $NEW_FILES; do
     BASENAME=$(basename "$f" .rs)
-    # Check if similar file already exists (potential overlap)
     SIMILAR=$(find "$PROJECT_ROOT/crates" -name "*${BASENAME}*" -type f -name "*.rs" 2>/dev/null | grep -v "$f" | head -3 || true)
     if [ -n "$SIMILAR" ]; then
       DEAD_CODE_ISSUES="${DEAD_CODE_ISSUES}\n   - New file '$f' may overlap with existing: $(echo $SIMILAR | tr '\n' ' ')"
@@ -213,480 +131,60 @@ fi
 echo ""
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PHASE 4: Static Checks (No AI)
+# PHASE 2: Static Checks (fmt + clippy — the ONLY gates)
 # ══════════════════════════════════════════════════════════════════════════════
 
-if [ "$NEEDS_STATIC" = true ]; then
-  echo -e "${BLUE}[PHASE 3]${NC} Static Checks"
+echo -e "${BLUE}[PHASE 2]${NC} Static Checks"
 
-  echo -n "   cargo fmt --check... "
-  if cargo fmt --check --quiet 2>/dev/null; then
-    echo -e "${GREEN}PASS${NC}"
-  else
-    echo -e "${RED}FAIL${NC}"
-    echo ""
-    echo -e "${RED}ERROR: Code is not formatted. Run 'cargo fmt' first.${NC}"
-    exit 1
-  fi
-
-  echo -n "   cargo clippy... "
-  CLIPPY_OUTPUT=$(cargo clippy --workspace --quiet -- -D warnings 2>&1) || {
-    echo -e "${RED}FAIL${NC}"
-    echo ""
-    echo -e "${RED}ERROR: Clippy warnings found:${NC}"
-    echo "$CLIPPY_OUTPUT" | head -30
-    exit 1
-  }
+echo -n "   cargo fmt --check... "
+if cargo fmt --check --quiet 2>/dev/null; then
   echo -e "${GREEN}PASS${NC}"
+else
+  echo -e "${RED}FAIL${NC}"
+  echo ""
+  echo -e "${RED}ERROR: Code is not formatted. Run 'cargo fmt' first.${NC}"
+  exit 1
+fi
+
+echo -n "   cargo clippy... "
+CLIPPY_OUTPUT=$(cargo clippy --workspace --quiet -- -D warnings 2>&1) || {
+  echo -e "${RED}FAIL${NC}"
+  echo ""
+  echo -e "${RED}ERROR: Clippy warnings found:${NC}"
+  echo "$CLIPPY_OUTPUT" | head -30
+  exit 1
+}
+echo -e "${GREEN}PASS${NC}"
+echo ""
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PHASE 3: Doc Drift Warning (non-blocking)
+# ══════════════════════════════════════════════════════════════════════════════
+
+DOC_FILES=$(echo "$STAGED" | grep -E '\.md$' || true)
+CHANGED_DOMAINS=""
+
+for file in $SOURCE_FILES; do
+  case "$file" in
+    crates/atlas-runtime/src/stdlib/*) CHANGED_DOMAINS="${CHANGED_DOMAINS}stdlib " ;;
+    crates/atlas-runtime/src/vm/*) CHANGED_DOMAINS="${CHANGED_DOMAINS}vm " ;;
+    crates/atlas-runtime/src/interpreter/*) CHANGED_DOMAINS="${CHANGED_DOMAINS}interpreter " ;;
+    crates/atlas-runtime/src/typechecker/*) CHANGED_DOMAINS="${CHANGED_DOMAINS}typechecker " ;;
+    crates/atlas-runtime/src/parser/*) CHANGED_DOMAINS="${CHANGED_DOMAINS}parser " ;;
+  esac
+done
+
+if [ -n "$CHANGED_DOMAINS" ] && [ -z "$DOC_FILES" ]; then
+  echo -e "${YELLOW}[INFO]${NC} Source changed in: ${CHANGED_DOMAINS}"
+  echo -e "${YELLOW}       If behavior changed, update docs/ accordingly.${NC}"
   echo ""
 fi
 
 # ══════════════════════════════════════════════════════════════════════════════
-# PHASE 5: Targeted Tests + Parity
+# DONE
 # ══════════════════════════════════════════════════════════════════════════════
 
-if [ "$NEEDS_TESTS" = true ]; then
-  echo -e "${BLUE}[PHASE 4]${NC} Targeted Tests"
-
-  TEST_FAILED=false
-
-  if [ "$TOUCHES_RUNTIME" = true ]; then
-    # Build a targeted filter from staged files — never run the full suite
-    TEST_FILTER=""
-
-    for file in $SOURCE_FILES $TEST_FILES; do
-      case "$file" in
-        */stdlib/*|*/tests/stdlib*) TEST_FILTER="${TEST_FILTER} test(stdlib)" ;;
-        */interpreter/*|*/tests/interpreter*) TEST_FILTER="${TEST_FILTER} test(interpreter)" ;;
-        */vm/*|*/tests/vm*) TEST_FILTER="${TEST_FILTER} test(vm)" ;;
-        */compiler/*) TEST_FILTER="${TEST_FILTER} test(compiler)" ;;
-        */typechecker/*|*/tests/typesystem*) TEST_FILTER="${TEST_FILTER} test(type)" ;;
-        */parser/*) TEST_FILTER="${TEST_FILTER} test(parser)" ;;
-        */tests/regression*) TEST_FILTER="${TEST_FILTER} test(regression)" ;;
-        */tests/closures*) TEST_FILTER="${TEST_FILTER} test(closure)" ;;
-        */tests/collections*) TEST_FILTER="${TEST_FILTER} test(collection)" ;;
-        */tests/stdlib_hardening*) TEST_FILTER="${TEST_FILTER} test(hardening)" ;;
-        */tests/system*) TEST_FILTER="${TEST_FILTER} test(system)" ;;
-      esac
-    done
-
-    # Deduplicate and build nextest -E expression
-    if [ -n "$TEST_FILTER" ]; then
-      # Build OR expression from unique terms
-      NEXTEST_EXPR=$(echo "$TEST_FILTER" | tr ' ' '\n' | sort -u | grep -v '^$' | paste -sd'+' - | sed 's/+/ + /g')
-      echo -n "   atlas-runtime (targeted: $NEXTEST_EXPR)... "
-      NEXTEST_OUT=$(cargo nextest run -p atlas-runtime -E "$NEXTEST_EXPR" --no-fail-fast 2>&1)
-      if echo "$NEXTEST_OUT" | grep -q "test run failed\|FAILED"; then
-        echo -e "${RED}FAIL${NC}"
-        echo ""
-        echo "$NEXTEST_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
-        TEST_FAILED=true
-      else
-        echo -e "${GREEN}PASS${NC}"
-      fi
-    else
-      # Fallback: only run hardening + regression (fast, broad coverage)
-      echo -n "   atlas-runtime (hardening+regression)... "
-      NEXTEST_OUT=$(cargo nextest run -p atlas-runtime -E 'test(hardening) + test(regression)' --no-fail-fast 2>&1)
-      if echo "$NEXTEST_OUT" | grep -q "test run failed\|FAILED"; then
-        echo -e "${RED}FAIL${NC}"
-        echo ""
-        echo "$NEXTEST_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
-        TEST_FAILED=true
-      else
-        echo -e "${GREEN}PASS${NC}"
-      fi
-    fi
-  fi
-
-  if [ "$TOUCHES_LSP" = true ]; then
-    echo -n "   atlas-lsp... "
-    if cargo nextest run -p atlas-lsp --no-fail-fast 2>/dev/null; then
-      echo -e "${GREEN}PASS${NC}"
-    else
-      echo -e "${RED}FAIL${NC}"
-      TEST_FAILED=true
-    fi
-  fi
-
-  if [ "$TOUCHES_CLI" = true ]; then
-    echo -n "   atlas-cli... "
-    if cargo nextest run -p atlas-cli --no-fail-fast 2>/dev/null; then
-      echo -e "${GREEN}PASS${NC}"
-    else
-      echo -e "${RED}FAIL${NC}"
-      TEST_FAILED=true
-    fi
-  fi
-
-  if [ "$TOUCHES_BUILD" = true ]; then
-    echo -n "   atlas-build... "
-    if cargo nextest run -p atlas-build --no-fail-fast 2>/dev/null; then
-      echo -e "${GREEN}PASS${NC}"
-    else
-      echo -e "${RED}FAIL${NC}"
-      TEST_FAILED=true
-    fi
-  fi
-
-  if [ "$TEST_FAILED" = true ]; then
-    echo ""
-    echo -e "${RED}ERROR: Tests failed. Fix them before committing.${NC}"
-    exit 1
-  fi
-
-  # Parity tests
-  if [ "$NEEDS_PARITY" = true ]; then
-    echo -n "   parity tests... "
-    PARITY_OUT=$(cargo nextest run -p atlas-runtime -E 'test(parity)' --no-fail-fast 2>&1)
-    if echo "$PARITY_OUT" | grep -q "test run failed\|FAILED"; then
-      echo -e "${RED}FAIL${NC}"
-      echo ""
-      echo "$PARITY_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
-      echo -e "${RED}ERROR: Parity broken. Interpreter and VM must match.${NC}"
-      exit 1
-    else
-      echo -e "${GREEN}PASS${NC}"
-    fi
-  fi
-
-  # Battle tests (real Atlas programs — catches regressions unit tests miss)
-  if [ "$TOUCHES_RUNTIME" = true ]; then
-    BATTLE_FAILED=false
-    BATTLE_FILES=$(find "$PROJECT_ROOT/battle-test/hydra-v2" -name "*.atlas" 2>/dev/null)
-    if [ -n "$BATTLE_FILES" ]; then
-      echo -n "   battle tests (hydra-v2)... "
-      for f in $BATTLE_FILES; do
-        if ! atlas run "$f" >/dev/null 2>&1; then
-          BATTLE_FAILED=true
-          echo ""
-          echo -e "   ${RED}FAILED:${NC} $f"
-        fi
-      done
-      if [ "$BATTLE_FAILED" = true ]; then
-        echo ""
-        echo -e "${RED}ERROR: Battle tests failed. Real Atlas programs are broken.${NC}"
-        exit 1
-      else
-        echo -e "${GREEN}PASS${NC}"
-      fi
-    fi
-  fi
-
-  echo ""
-fi
-
-# ══════════════════════════════════════════════════════════════════════════════
-# PHASE 6: Haiku Semantic Review (DISABLED - too slow for interactive use)
-# ══════════════════════════════════════════════════════════════════════════════
-# To re-enable: uncomment the Haiku block below and comment out the pass block
-
-if [ "$NEEDS_HAIKU" = true ]; then
-  echo -e "${GREEN}${BOLD}✓ ALL CHECKS PASSED${NC}"
-  echo ""
-  exit 0
-fi
-
-# --- HAIKU REVIEW DISABLED ---
-# Uncomment this block to re-enable Haiku semantic review
-: <<'HAIKU_DISABLED'
-if [ "$NEEDS_HAIKU_DISABLED" = true ]; then
-  echo -e "${BLUE}[PHASE 5]${NC} Haiku 4.5 Semantic Review"
-  echo ""
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # Issue Hunting Cooldown (every 8 hours, not every commit)
-  # ════════════════════════════════════════════════════════════════════════════
-  HUNT_FILE="$PROJECT_ROOT/.git/last-issue-hunt"
-  HUNT_INTERVAL=$((8 * 60 * 60))  # 8 hours in seconds
-  SHOULD_HUNT=false
-
-  NOW=$(date +%s)
-  if [ -f "$HUNT_FILE" ]; then
-    LAST_HUNT=$(cat "$HUNT_FILE" 2>/dev/null || echo "0")
-    if [ $((NOW - LAST_HUNT)) -gt $HUNT_INTERVAL ]; then
-      SHOULD_HUNT=true
-    fi
-  else
-    SHOULD_HUNT=true  # First time ever
-  fi
-
-  # Force hunt with env var: ATLAS_FORCE_HUNT=1 git commit
-  if [ "${ATLAS_FORCE_HUNT:-}" = "1" ]; then
-    SHOULD_HUNT=true
-  fi
-
-  if [ "$SHOULD_HUNT" = true ]; then
-    echo -e "   ${MAGENTA}Issue hunting: ACTIVE${NC} (cooldown reset)"
-  else
-    NEXT_HUNT=$(( (LAST_HUNT + HUNT_INTERVAL - NOW) / 60 ))
-    echo -e "   ${CYAN}Issue hunting: SKIPPED${NC} (next in ~${NEXT_HUNT}m)"
-  fi
-
-  # Get current project state
-  P0_COUNT=$(sqlite3 "$PROJECT_ROOT/tracking/atlas.db" "SELECT COUNT(*) FROM issues WHERE severity='critical' AND status='open'" 2>/dev/null || echo "?")
-
-  # Only fetch issue IDs if hunting (saves a query on normal commits)
-  HUNTING_INSTRUCTIONS=""
-  ISSUES_FORMAT=""
-  if [ "$SHOULD_HUNT" = true ]; then
-    EXISTING_ISSUE_IDS=$(sqlite3 "$PROJECT_ROOT/tracking/atlas.db" "SELECT group_concat(id, ', ') FROM issues WHERE status IN ('open', 'in_progress')" 2>/dev/null || echo "none")
-    HUNTING_INSTRUCTIONS="
-## Hunt Mode ACTIVE
-Scan surrounding code for pre-existing issues. Report as ISSUES (not BLOCKERS).
-Already tracked: ${EXISTING_ISSUE_IDS}"
-    ISSUES_FORMAT="ISSUES: (if found) P0-3|sev|component|title|problem|fix"
-  fi
-
-  # Build diff context
-  STAGED_FILES_LIST=$(git diff --cached --name-only | head -40)
-  STAGED_DIFF_STAT=$(git diff --cached --stat)
-  STAGED_CONTENT=$(git diff --cached -U5 | head -1000)
-  LINES_ADDED=$(git diff --cached --numstat | awk '{sum+=$1} END {print sum+0}')
-  LINES_DELETED=$(git diff --cached --numstat | awk '{sum+=$2} END {print sum+0}')
-
-  echo -e "   Lines: ${GREEN}+${LINES_ADDED}${NC} / ${RED}-${LINES_DELETED}${NC}"
-  echo -e "   Open P0 issues: ${YELLOW}${P0_COUNT}${NC}"
-  echo ""
-
-  # Build domain-specific context
-  DOMAIN_CONTEXT=""
-
-  if [ "$NEEDS_PARITY" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### PARITY DOMAIN (CRITICAL)
-This commit touches interpreter/VM/compiler code.
-- BOTH engines must be updated together for any behavioral change
-- If you see changes to only one engine: FLAG IT
-- Parity tests passed, but check for semantic divergence
-"
-  fi
-
-  if [ "$TOUCHES_LSP" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### LSP DOMAIN
-- H-005, H-016, H-017 are open LSP issues (navigation stubbed, indexing TODO)
-- Check for 'position info not available' patterns
-- No new TODOs in navigation/completion code
-"
-  fi
-
-  if [ "$TOUCHES_JIT" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### JIT DOMAIN
-- H-003 (JIT not wired) was a critical issue
-- JIT code must integrate with VM, not be dead code
-- Check for orphaned JIT code that nothing calls
-"
-  fi
-
-  if [ "$TOUCHES_SECURITY" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### SECURITY DOMAIN (CRITICAL)
-- Permission checks MUST happen before operations
-- Sandbox boundaries must be enforced
-- No permission bypasses or escalation paths
-- Policy.check_permission() must be called for IO/network/process
-"
-  fi
-
-  if [ "$TOUCHES_FFI" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### FFI DOMAIN (CRITICAL)
-- All unsafe blocks MUST have // SAFETY: comments
-- Memory ownership must be explicit (who frees?)
-- Null pointer checks before derefs
-- No UB from invalid pointers or aliasing
-"
-  fi
-
-  if [ "$TOUCHES_UNSAFE" = true ]; then
-    DOMAIN_CONTEXT="${DOMAIN_CONTEXT}
-### UNSAFE CODE DETECTED
-- Every unsafe block MUST have // SAFETY: comment explaining invariants
-- Verify preconditions are actually checked
-- Check for pointer aliasing violations
-- Ensure no undefined behavior paths
-"
-  fi
-
-  # Load shared intel rules
-  INTEL_RULES=$(cat "$PROJECT_ROOT/.githooks/prompts/intel-rules.md" 2>/dev/null || echo "")
-
-  # Build prompt for Haiku (diff review mode)
-  VERIFY_PROMPT=$(cat <<PROMPT_END
-# Atlas Pre-Commit Intel
-
-Mode: HARDENING. ${P0_COUNT} P0s open. Component: ${PRIMARY_COMPONENT}.
-Scope: DIFF REVIEW (not full codebase)
-${DOMAIN_CONTEXT}
-${INTEL_RULES}
-
-## Context
-
-Tracked issues (do not duplicate): ${EXISTING_ISSUE_IDS:-none}
-${HUNTING_INSTRUCTIONS}
-## Files Changed
-
-${STAGED_FILES_LIST}
-
-## Diff to Review
-
-\`\`\`diff
-${STAGED_CONTENT}
-\`\`\`
-${DEAD_CODE_ISSUES:+
-Static warnings: ${DEAD_CODE_ISSUES}}
-PROMPT_END
-)
-
-  echo -e "   ${YELLOW}Spawning Haiku 4.5 Guardian...${NC}"
-  echo ""
-
-  # Run Haiku (unset CLAUDECODE to allow nested invocation)
-  HAIKU_LOG="$PROJECT_ROOT/.git/haiku-last-response.log"
-  RESULT=$(unset CLAUDECODE; claude -p "$VERIFY_PROMPT" --model claude-haiku-4-5 --max-turns 1 2>&1) || {
-    echo -e "${RED}ERROR: Haiku verification failed to execute${NC}"
-    echo "$RESULT"
-    exit 1
-  }
-
-  # Log raw response for debugging
-  echo "$RESULT" > "$HAIKU_LOG"
-  echo -e "   ${CYAN}(Raw response logged to .git/haiku-last-response.log)${NC}"
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # Parse Haiku's response
-  # ════════════════════════════════════════════════════════════════════════════
-
-  # Extract verdict
-  VERDICT=$(echo "$RESULT" | grep -E "^VERDICT:" | head -1 || echo "")
-  SUMMARY=$(echo "$RESULT" | grep -E "^SUMMARY:" | head -1 | sed 's/^SUMMARY: //' || echo "")
-
-  # Extract blockers (for FAIL case)
-  BLOCKERS=$(echo "$RESULT" | sed -n '/^BLOCKERS:/,/^[A-Z]/p' | grep -E '^\-' || true)
-
-  # Extract feedback for agent
-  FEEDBACK=$(echo "$RESULT" | sed -n '/^FEEDBACK:/,/^[A-Z]/p' | grep -E '^\-' || true)
-
-  # Extract issues to seed (pre-existing/tangential)
-  ISSUES_SECTION=$(echo "$RESULT" | sed -n '/^ISSUES:/,/^[A-Z]/p' | grep -E '^\- P[0-3]\|' || true)
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # Display Results
-  # ════════════════════════════════════════════════════════════════════════════
-
-  echo -e "${BOLD}┌──────────────────────────────────────────────────────────────────┐${NC}"
-  echo -e "${BOLD}│                    HAIKU 4.5 GUARDIAN REPORT                     │${NC}"
-  echo -e "${BOLD}└──────────────────────────────────────────────────────────────────┘${NC}"
-  echo ""
-
-  # Check if we got a parseable response
-  if [ -z "$VERDICT" ]; then
-    echo -e "  ${YELLOW}${BOLD}WARNING: Could not parse Haiku response${NC}"
-    echo -e "  ${YELLOW}Raw response:${NC}"
-    echo ""
-    echo "$RESULT" | head -50
-    echo ""
-    echo -e "  ${YELLOW}Defaulting to PASS (parsing failure should not block)${NC}"
-    VERDICT="VERDICT: PASS"
-  fi
-
-  # Show verdict
-  if echo "$VERDICT" | grep -q "PASS"; then
-    echo -e "  ${GREEN}${BOLD}VERDICT: PASS${NC}"
-  else
-    echo -e "  ${RED}${BOLD}VERDICT: FAIL${NC}"
-  fi
-  echo -e "  ${SUMMARY}"
-  echo ""
-
-  # Show blockers if any (problems in the commit itself)
-  if [ -n "$BLOCKERS" ]; then
-    echo -e "  ${RED}${BOLD}BLOCKERS (fix before committing):${NC}"
-    echo "$BLOCKERS" | while read -r line; do
-      echo -e "    ${RED}•${NC} ${line#- }"
-    done
-    echo ""
-  fi
-
-  # Show feedback for agent
-  if [ -n "$FEEDBACK" ]; then
-    echo -e "  ${CYAN}${BOLD}FEEDBACK (for your information):${NC}"
-    echo "$FEEDBACK" | while read -r line; do
-      echo -e "    ${CYAN}→${NC} ${line#- }"
-    done
-    echo ""
-  fi
-
-  # ════════════════════════════════════════════════════════════════════════════
-  # PHASE 6: Issue Seeding (only when hunting)
-  # ════════════════════════════════════════════════════════════════════════════
-
-  if [ "$SHOULD_HUNT" = true ] && [ -n "$ISSUES_SECTION" ]; then
-    # Update hunt timestamp
-    echo "$NOW" > "$HUNT_FILE"
-    echo -e "  ${MAGENTA}${BOLD}ISSUES FOUND (seeding to tracker):${NC}"
-    echo ""
-
-    ISSUES_SEEDED=0
-    SEEDED_IDS=""
-    while IFS= read -r line; do
-      # Parse: - P2|medium|lsp|title|problem|fix
-      line=$(echo "$line" | sed 's/^- //')
-      IFS='|' read -r priority severity component title problem fix <<< "$line"
-
-      if [ -n "$priority" ] && [ -n "$title" ]; then
-        # Seed via atlas-track
-        ISSUE_ID=$(atlas-track open-issue "$title" "$priority" "$severity" "$component" "$problem" "$fix" 2>/dev/null || echo "")
-        if [ -n "$ISSUE_ID" ]; then
-          echo -e "    ${GREEN}✓${NC} ${CYAN}${ISSUE_ID}${NC} [${priority}] $title"
-          ISSUES_SEEDED=$((ISSUES_SEEDED + 1))
-          SEEDED_IDS="${SEEDED_IDS}${ISSUE_ID} "
-        else
-          echo -e "    ${YELLOW}⚠${NC} Failed to seed: $title"
-        fi
-      fi
-    done <<< "$ISSUES_SECTION"
-
-    echo ""
-    if [ $ISSUES_SEEDED -gt 0 ]; then
-      echo -e "    ${GREEN}${ISSUES_SEEDED} issue(s) seeded:${NC} ${SEEDED_IDS}"
-      echo -e "    ${CYAN}These are PRE-EXISTING issues, not problems with your commit.${NC}"
-    fi
-    echo ""
-  fi
-
-  echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"
-
-  # Final verdict
-  if echo "$VERDICT" | grep -q "PASS"; then
-    echo -e "${GREEN}${BOLD}✓ GUARDIAN APPROVED${NC} - Commit allowed"
-
-    # Remind agent of seeded issues if any
-    if [ -n "$SEEDED_IDS" ]; then
-      echo ""
-      echo -e "${CYAN}Note: Haiku found pre-existing issues while reviewing.${NC}"
-      echo -e "${CYAN}Check tracker: ${SEEDED_IDS}${NC}"
-    fi
-
-    echo ""
-    exit 0
-  else
-    echo -e "${RED}${BOLD}✗ GUARDIAN REJECTED${NC} - Commit blocked"
-    echo ""
-    echo -e "${YELLOW}The agent must fix the BLOCKERS above before committing.${NC}"
-    echo ""
-    echo -e "After fixing, run: ${CYAN}git add <files> && git commit${NC}"
-    echo -e "Emergency bypass: ${YELLOW}git commit --no-verify${NC}"
-    echo -e "${RED}(Bypass requires justification to the architect)${NC}"
-    echo ""
-    exit 1
-  fi
-fi
-HAIKU_DISABLED
-
-# Static checks passed, no Haiku review
 echo -e "${GREEN}${BOLD}✓ STATIC CHECKS PASSED${NC}"
+echo -e "${CYAN}   Full validation: 'atlas-track run-ci' or nightly CI at 2am${NC}"
 echo ""
 exit 0

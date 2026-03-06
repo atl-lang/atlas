@@ -68,6 +68,10 @@ OTHER:
   supersede D-001 D-002
   unblock / block-work
 
+CI:
+  run-ci                           # Run full validation suite (~10-20 min)
+  ci-status                        # Show last CI run results
+
 MAINTENANCE (auto-runs on go):
   health                           # Quick status check
   gc                               # Close stale sessions + release orphans
@@ -119,6 +123,20 @@ case "${1:-}" in
     # Mode
     unblock)    cmd_unblock ;;
     block-work) cmd_block_work ;;
+
+    # CI
+    run-ci)
+        echo "Running full CI suite (this takes 10-20 minutes)..."
+        "$(dirname "$0")/ci-runner.sh"
+        ;;
+    ci-status)
+        local ci_file="$(dirname "$0")/ci-status.json"
+        if [[ -f "$ci_file" ]]; then
+            jq '.' "$ci_file"
+        else
+            echo "No CI run recorded yet. Run: atlas-track run-ci"
+        fi
+        ;;
 
     # Maintenance
     gc)         cmd_gc "${2:---normal}" ;;

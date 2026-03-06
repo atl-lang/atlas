@@ -4,48 +4,58 @@
 
 ---
 
-## The Rule (Single Source of Truth)
+## The Two-Tier System (Single Source of Truth)
 
 **See `testing-workflow.md` in auto-memory for the full rule set. This file is a quick reference.**
 
-**`cargo check` is the development tool. `git commit` triggers Guardian for real validation.**
+**Tier 1: Pre-commit (automatic, < 15s)** — fmt + clippy only
+**Tier 2: Nightly CI (2am or `atlas-track run-ci`)** — full suite, parity, battle tests
 
 ---
 
-## What To Run (and When)
-
-### During TDD (write code → verify)
+## What Agents Do During Development
 
 ```bash
 # Step 1: Does it compile? (~0.5s)
 cargo check -p atlas-runtime
 
-# Step 2: Does my specific test pass?
-cargo nextest run -p atlas-runtime -E 'test(exact_test_function_name)'
-# Use the EXACT function name — not a domain keyword
-```
+# Step 2: Write code
 
-### Before commit
+# Step 3: Does it still compile?
+cargo check -p atlas-runtime
 
-```bash
-cargo fmt    # Run formatter — NOT --check, just fix it
+# Step 4: Format + commit
+cargo fmt
 git add <files>
-git commit   # Guardian runs: fmt + clippy + targeted suite + parity + battle tests
-```
+git commit   # Guardian runs: fmt + clippy (< 15s)
 
-### If commit fails (Guardian shows which test failed)
-
-```bash
-# Fix the specific failing test, then:
-cargo fmt && git add -A && git commit
-# Do NOT run broad tests to "verify" — Guardian does that on next commit
+# Step 5: Check CI status
+atlas-track go   # shows nightly CI result
 ```
 
 ---
 
-## BANNED Commands (cause 5-20 minute hangs)
+## TDD Exception (bugfix sessions only)
 
-These force cargo to compile ALL test binaries before running any:
+During TDD RED/GREEN cycles for a SINGLE exact test:
+
+```bash
+# RED: verify new test fails before fixing
+cargo nextest run -p atlas-runtime -E 'test(exact_test_function_name)'
+
+# GREEN: verify new test passes after fixing
+cargo nextest run -p atlas-runtime -E 'test(exact_test_function_name)'
+
+# Then commit — done. CI handles the rest.
+```
+
+Use the EXACT function name — not a domain keyword.
+
+---
+
+## BANNED Commands
+
+These are BANNED for all agents except the TDD exception above:
 
 ```bash
 # ❌ NEVER:
@@ -63,15 +73,16 @@ cargo nextest run -p atlas-runtime --test <any_domain_file>
 
 ---
 
-## One-Time Diagnostic (if Guardian output is unclear)
+## CI Failure Triage
 
-If a commit fails and you can't tell which test from the Guardian output:
+If `atlas-track go` shows CI is red:
 
 ```bash
-# Run ONCE to find the failing test name:
-cargo nextest run -p atlas-runtime -E 'test(regression) + test(interpreter)' --no-fail-fast 2>&1 | grep "^        FAIL"
-# Then fix THAT specific test, then commit again
+atlas-track ci-status    # see what failed
+atlas-track run-ci       # re-run full suite to get fresh results
 ```
+
+Fix the specific failing tests, then commit. CI re-runs nightly.
 
 ---
 
@@ -82,5 +93,6 @@ cargo nextest run -p atlas-runtime -E 'test(regression) + test(interpreter)' --n
 | Verify compile | `cargo check -p atlas-runtime` |
 | TDD: run one test | `cargo nextest run -p atlas-runtime -E 'test(my_exact_test)'` |
 | Pre-commit format | `cargo fmt` |
-| Full validation | `git commit` (Guardian runs everything) |
-| Parity sweep only | `cargo nextest run -p atlas-runtime -E 'test(parity)'` |
+| Static validation | `git commit` (Guardian: fmt + clippy) |
+| Full validation | nightly at 2am, or `atlas-track run-ci` |
+| View CI results | `atlas-track ci-status` |

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.atlas.nightly-ci</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/proxikal/dev/projects/atlas/tracking/ci-runner.sh</string>
+    </array>
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+    <key>StandardOutPath</key>
+    <string>/Users/proxikal/dev/projects/atlas/tracking/ci-runner.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/proxikal/dev/projects/atlas/tracking/ci-runner.log</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/proxikal/dev/projects/atlas</string>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:/Users/proxikal/.cargo/bin</string>
+        <key>HOME</key>
+        <string>/Users/proxikal</string>
+    </dict>
+</dict>
+</plist>

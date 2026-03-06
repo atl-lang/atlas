@@ -87,6 +87,25 @@ cmd_go() {
     git log --oneline -3 2>/dev/null | sed 's/^/  /' || echo "  (no commits)"
     echo ""
 
+    # Nightly CI status
+    local ci_file="$(git rev-parse --show-toplevel 2>/dev/null)/tracking/ci-status.json"
+    if [[ -f "$ci_file" ]]; then
+        local ci_status ci_run_at ci_failed
+        ci_status=$(jq -r '.status' "$ci_file")
+        ci_run_at=$(jq -r '.run_at' "$ci_file")
+        ci_failed=$(jq -r '.checks | to_entries[] | select(.value.status == "fail") | .key' "$ci_file" 2>/dev/null | paste -sd',' - || echo "")
+        echo "── Nightly CI ──"
+        if [[ "$ci_status" == "pass" ]]; then
+            echo "✓ PASS ($ci_run_at)"
+        elif [[ "$ci_status" == "unknown" ]]; then
+            echo "? UNKNOWN — run 'atlas-track run-ci' or wait for 2am nightly"
+        else
+            echo "✗ FAIL ($ci_run_at) — Failed: ${ci_failed:-unknown}"
+            echo "ACTION: Fix CI failures before new work (P0)"
+        fi
+        echo ""
+    fi
+
     # Blocks summary (compact)
     echo "── Blocks ──"
     sqlite3 -json "$DB" "SELECT block_num, status, phases_done, phases_total FROM blocks WHERE version='0.3.0'" | \

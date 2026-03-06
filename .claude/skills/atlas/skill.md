@@ -61,28 +61,31 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 ### Interpreter/VM Parity (100%)
 Both engines MUST produce identical output. See `.claude/rules/atlas-parity.md`.
 
-### Testing (CRITICAL — read this)
+### Testing — Two-Tier System
+
+**Tier 1: Pre-commit (automatic, < 15s)** — fmt + clippy only, NO nextest
+
+**Tier 2: Nightly CI (2am or `atlas-track run-ci`)** — full suite, results in `tracking/ci-status.json`
+
 ```bash
-# DURING DEVELOPMENT — two commands only:
-cargo check -p atlas-runtime                                    # verify compile (~0.5s)
-cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'  # ONE test, exact name
+# What agents do during development:
+cargo check -p atlas-runtime   # verify compile (~0.5s)
+cargo fmt
+git commit                      # fmt+clippy auto-run
 
-# BANNED — cause 5-20 minute hangs (compile ALL test binaries):
-# cargo nextest run -p atlas-runtime -E 'test(interpreter)'  ❌
-# cargo nextest run -p atlas-runtime -E 'test(stdlib)'       ❌
-# cargo nextest run -p atlas-runtime --test <any_domain>     ❌
-# cargo nextest run -p atlas-runtime                         ❌
-# cargo nextest run --workspace                              ❌
+# BANNED — all nextest invocations except ONE exact TDD test:
+cargo nextest run -p atlas-runtime -E 'test(anything)'  # ❌
+cargo nextest run --workspace                           # ❌
+cargo nextest run -p atlas-runtime --test <domain>      # ❌
 
-# NEVER run full suite manually. The pre-commit Guardian hook runs it on commit.
-# Killing cargo mid-run leaves lock files that block all future runs.
+# ONE exception (bugfix TDD only — exact test name):
+cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # ✅
 ```
 
 ### Quality Floor (ALL session types)
-1. **During development** → Targeted tests only. The pre-commit hook handles the full suite.
-2. **If you touched runtime/stdlib/VM/compiler** → Run parity: `cargo nextest run -E 'test(parity)'`
-3. **Before any code change** → Read `compiler-quality/ai-compiler.md` from auto-memory
-4. **Dual engine always** → Both interpreter AND VM must work.
+1. **During development** → `cargo check` only. The nightly CI handles the full suite.
+2. **Before any code change** → Read `compiler-quality/ai-compiler.md` from auto-memory
+3. **Dual engine always** → Both interpreter AND VM must work.
 
 ---
 

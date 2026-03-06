@@ -55,3 +55,7 @@ atlas-dev
 .claude/settings.local.json
 CODEX_VERIFY.md
 !.codex/skills/
+
+# Nightly CI (local state — never commit)
+tracking/ci-status.json
+tracking/ci-runner.log
