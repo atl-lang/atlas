@@ -21,10 +21,20 @@ item           := import_decl
                | statement
 ```
 
+**Function Declarations**
+```
+function_decl  := "fn" IDENT type_params? "(" params? ")" "->" type_ref block
+params         := param ("," param)* (",")?
+param          := ownership? IDENT ":" type_ref
+ownership      := "own" | "borrow" | "shared"
+```
+Return type is **required** on named functions. Use `-> void` for functions that return nothing.
+Closures (`anon_fn`) may omit param types and return type (inferred from context).
+
 **Trait Declarations**
 ```
 trait_decl     := "trait" IDENT type_params? "{" trait_method_sig* "}"
-trait_method_sig := "fn" IDENT type_params? "(" params? ")" ("->" type_ref)? (";" | block)
+trait_method_sig := "fn" IDENT type_params? "(" params? ")" "->" type_ref (";" | block)
 ```
 
 Traits declare method signatures. Methods may have default bodies (using `block` instead of `;`).
