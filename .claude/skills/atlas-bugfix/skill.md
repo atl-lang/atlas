@@ -31,7 +31,20 @@ cargo nextest run --workspace                                 # ❌ BANNED
 ```bash
 cargo check -p atlas-runtime                                           # ✅ ~0.5s always fine
 cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'      # ✅ TDD only, exact name
+atlas run /tmp/test.atlas                                              # ✅ FASTEST — use this first
 ```
+
+### ⛔ STOP — CLI confirmation supersedes nextest
+
+**If you already confirmed correctness with `atlas run file.atlas` → DO NOT run nextest.**
+
+Nextest compiles every test binary in the crate before running one (~1-5 min due to aws-lc-sys).
+Running it after a CLI-confirmed fix wastes the entire time for zero additional information.
+
+**Decision tree:**
+1. Can I verify with `atlas run /tmp/test.atlas`? → Yes → do that, skip nextest, commit
+2. Is this a Rust unit test with no CLI equivalent? → Then use nextest with exact name only
+3. Never run nextest "just to be sure" after CLI already confirmed it
 
 ---
 
@@ -61,11 +74,18 @@ If the test passes → you misunderstand the bug. Re-investigate.
 ### Step 4: Minimal Fix
 Fix only what's broken. Don't refactor surrounding code.
 
-### Step 5: Verify Test Passes (GREEN)
+### Step 5: Verify Fix Works (GREEN)
+
+**Prefer CLI verification — it's instant:**
+```bash
+atlas run /tmp/repro.atlas   # ✅ If output is correct → done, skip nextest
+```
+
+**Only use nextest if there's no CLI equivalent (pure Rust unit test):**
 ```bash
 cargo nextest run -p atlas-runtime -E 'test(test_issue_h_xxx_description)'
 ```
-**Same exact test name. Nothing broader.**
+**Same exact test name. Nothing broader. And ONLY if CLI can't confirm it.**
 
 ### Step 6: Pre-commit checks then commit
 ```bash
