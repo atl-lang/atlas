@@ -35,6 +35,10 @@ Stdlib uses global functions (`arrayPush(arr, x)`) not method syntax (`arr.push(
 
 ## Recently Fixed
 
+### H-086: Deprecate Anonymous Struct Syntax (FIXED 2026-03-05)
+**Was:** `{ x: 1, y: 2 }` accepted as anonymous struct literal — requires fragile 2-token lookahead, ambiguous with blocks.
+**Now:** Emits deprecation warning. Use `record { x: 1, y: 2 }` (explicit keyword) or `StructName { x: 1 }` (named instantiation).
+
 ### H-080: Enforce No-Parens Condition Syntax (FIXED 2026-03-05)
 **Was:** `if (cond)`, `while (cond)`, `for (x in iter)` all accepted silently — inconsistent style.
 **Now:** Rust-style enforced: `if cond { }`, `while cond { }`, `for x in iter { }`. Parens emit a deprecation warning.

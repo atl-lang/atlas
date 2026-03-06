@@ -1029,6 +1029,15 @@ impl Parser {
     fn parse_anonymous_struct_literal(&mut self) -> Result<Expr, ()> {
         let start_span = self.consume(TokenKind::LeftBrace, "Expected '{'")?.span;
 
+        // H-086: Deprecate anonymous struct syntax — use `record { }` instead
+        self.diagnostics.push(
+            Diagnostic::warning(
+                "Anonymous struct syntax `{ ... }` is deprecated. Use `record { ... }` instead.",
+                start_span,
+            )
+            .with_help("Add the `record` keyword: `record { field: value, ... }`"),
+        );
+
         if self.check(TokenKind::RightBrace) {
             self.error("Anonymous struct literal requires at least one field");
             self.consume(
