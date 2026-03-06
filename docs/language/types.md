@@ -103,4 +103,38 @@ let maybe_id: Option<number> = Some(1);
 let failure: Result<number, string> = Err("nope");
 ```
 
+**Type Aliases**
+```
+type Name = Type;
+type<T> Name = GenericType<T>;
+```
+- Creates a named alias for any type expression.
+- Exportable: `export type Name = Type;`
+
+Example (tested):
+```atlas
+type ID = number | string;
+type StateStore = HashMap<string, string>;
+type Callback = (string) -> void;
+```
+
+**Mutation Semantics (CRITICAL for correct code generation)**
+
+Atlas uses two mutation models depending on the collection type:
+
+*Copy-on-Write (Arrays, Queue, Stack):*
+Mutation functions return a NEW collection. You MUST rebind:
+```atlas
+let mut arr: number[] = [1, 2, 3];
+arr = arrayPush(arr, 4);       // CORRECT: rebind result
+// arrayPush(arr, 4);          // WRONG: result is discarded, arr unchanged
+```
+
+*Shared Mutation (HashMap, HashSet):*
+These use `Arc<Mutex<...>>` internally. Mutations are visible through all references:
+```atlas
+let map: HashMap<string, number> = hashMapNew();
+map = hashMapPut(map, "key", 42);  // Rebind pattern still works
+```
+
 **Current limitations:** See `docs/known-issues.md`

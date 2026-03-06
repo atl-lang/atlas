@@ -18,9 +18,15 @@
    ```
    **MUST:** All files formatted
 
+3. **Run CodeRabbit review (local CLI):**
+   ```bash
+   coderabbit review
+   ```
+   Reviews staged/changed code against `.coderabbit.yaml` rules (parity enforcement, no stubs, no bare TODOs, diagnostic code validation). Fix any issues flagged before proceeding.
+
 ---
 
-**Note:** Full test suite runs at GATE 6 (handoff), not here. See auto-memory `testing-patterns.md` for the complete testing protocol.
+**Note:** Run crate-scoped tests here, not full workspace. See `gates/test-partitioning.md` for scope rules. Full suite is GATE 6 only.
 
 ---
 

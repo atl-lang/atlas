@@ -49,13 +49,16 @@ File listed in CLAUDE.md that no longer exists → remove the entry.
 Files:
 - `MEMORY.md` — auto-loaded every message (first 200 lines)
 - `codex_rules.md` — Codex delegation rules (lazy-loaded)
-- `patterns.md` — Rust API / runtime / stdlib patterns (lazy-loaded)
+- `patterns.md` — Index file pointing to `patterns/*.md` topic files (lazy-loaded)
+- `patterns/*.md` — Split topic files: runtime, collections, traits, stdlib, typesystem, vm, lsp, cli, language
 - `testing-patterns.md` — test organization rules (lazy-loaded)
 - `domain-prereqs.md` — AST/Type/Value quick-refs (lazy-loaded)
 - `battle-tests.md` — battle test project status (lazy-loaded)
 
 Verify:
 - `MEMORY.md` lazy-load table points to files that exist
+- `patterns.md` index table lists all files in `patterns/` — no missing, no extra
+- Each `patterns/*.md` file exists and is non-empty
 - Key invariants in `domain-prereqs.md` match current `ast.rs`, `value.rs`
 - `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents
 - `MEMORY.md` stays ≤80 lines (warn at 70) — lean index only
@@ -82,20 +85,25 @@ Verify:
 ### Domain 4: Spec Docs vs. Code
 
 Files:
-- `docs/specification/language-semantics.md`
-- `docs/specification/memory-model.md`
-- `docs/specification/types.md`
-- `docs/interpreter-status.md`
-- `docs/embedding-guide.md`
+- `docs/language/types.md`
+- `docs/language/grammar.md`
+- `docs/language/functions.md`
+- `docs/language/control-flow.md`
+- `docs/language/structs-enums.md`
+- `docs/language/traits.md`
+- `docs/language/modules.md`
+- `docs/stdlib/index.md`
+- `docs/stdlib/path.md`
+- `docs/known-issues.md`
 - `crates/atlas-jit/JIT_STATUS.md`
 
 Verify:
 - No `Arc<Mutex<Vec<Value>>>` or `Arc<Mutex<HashMap<...>>>` references remain
   (these were replaced by CoW types in Block 1)
-- Trait error codes in `types.md` match actual codes in `diagnostic/error_codes.rs`
+- Trait error codes in `docs/language/types.md` match actual codes in `diagnostic/error_codes.rs`
   (AT3030–AT3037 for trait errors, NOT AT3001–AT3009)
-- `embedding-guide.md` `Value` examples use current enum variants (grep `value.rs`)
-- `interpreter-status.md` value representation section is current
+- `docs/language/` files reference syntax that matches actual parser behavior
+- `docs/stdlib/` function signatures match actual `stdlib/` implementations
 
 ### Domain 5: STATUS.md Accuracy
 
@@ -108,16 +116,22 @@ Verify:
 - Test count in completed block rows: spot-check by running `cargo nextest run -p atlas-runtime 2>&1 | grep "tests run"` mentally (do not actually run — just check if reported count is plausible vs. last known)
 - No "pending" or "TODO" notes for blocks that are now complete
 
-### Domain 6: Skill + Gate Files
+### Domain 6: Skill, Gate + Lazy-Load Files
 
 Files:
 - `.claude/skills/atlas/skill.md`
 - `.claude/skills/atlas/gates/*.md`
+- `.claude/lazy/git.md`
+- `.claude/lazy/architecture.md`
+- `.claude/lazy/comms.md`
+- `.claude/lazy/tracking-db.md`
 
 Verify:
 - Gate file references to `.claude/rules/*.md` — all referenced files exist
 - Gate phase lists reference existing `phases/v0.3/` files
 - No broken file path references in gate commands
+- Lazy-load files referenced in CLAUDE.md actually exist in `.claude/lazy/`
+- New files in `.claude/lazy/` are referenced somewhere (CLAUDE.md or memory)
 
 ---
 
@@ -139,9 +153,14 @@ Glob: crates/atlas-runtime/tests/*.rs
 # Memory files (Claude Code auto-memory — NOT in git)
 # Path: /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/
 Glob: /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/*.md
+Glob: /Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/patterns/*.md
+
+# Lazy-load docs
+Glob: .claude/lazy/*.md
 
 # Spec docs
-Glob: docs/specification/*.md
+Glob: docs/language/*.md
+Glob: docs/stdlib/*.md
 Glob: docs/**/*.md
 
 # CI
@@ -160,7 +179,7 @@ Run all Domain 1–6 verifications. Batch greps within each domain.
 Key greps:
 ```
 Grep: "Arc<Mutex" in docs/ and crates/atlas-jit/
-Grep: "AT30[0-2][0-9]" in docs/specification/types.md  (looking for old trait code range)
+Grep: "AT30[0-2][0-9]" in docs/language/types.md  (looking for old trait code range)
 Grep: "pub struct|pub enum" in crates/*/src/*.rs  (for struct name verification)
 ```
 

@@ -146,6 +146,12 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 - **Count:** 6 functions
 - **Purpose:** WebSocket client operations
 
+### Path Functions
+- **File:** `path.md`
+- **Functions:** pathJoin, pathJoinArray, pathParse, pathNormalize, pathAbsolute, pathRelative, pathParent, pathBasename, pathDirname, pathExtension, pathIsAbsolute, pathIsRelative, pathExists, pathCanonical, pathEquals, pathHomedir, pathCwd, pathTempdir, pathSeparator, pathDelimiter, pathExtSeparator, pathDrive, pathToPlatform, pathToPosix, pathToWindows
+- **Count:** 24 functions
+- **Purpose:** Cross-platform path manipulation, resolution, and system paths
+
 ### Testing Functions
 - **File:** `test.md`
 - **Functions:** assert, assertEqual, assertNotEqual, assertFalse, assertEmpty, assertLength, assertContains, assertSome, assertNone, assertOk, assertErr, assertThrows, assertNoThrow
