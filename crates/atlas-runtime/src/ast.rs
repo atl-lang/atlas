@@ -385,6 +385,8 @@ pub struct Param {
     pub type_ref: Option<TypeRef>,
     /// Ownership annotation (`own`, `borrow`, `shared`), or `None` if unannotated
     pub ownership: Option<OwnershipAnnotation>,
+    /// `mut` keyword present — parameter can be reassigned inside the function body.
+    pub mutable: bool,
     pub span: Span,
 }
 

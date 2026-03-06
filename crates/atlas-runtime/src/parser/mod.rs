@@ -540,6 +540,9 @@ impl Parser {
         loop {
             let param_span_start = self.peek().span;
 
+            // Optional mutability keyword: `mut`
+            let mutable = self.match_token(TokenKind::Mut);
+
             // Optional ownership annotation: own | borrow | shared
             let ownership = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
@@ -597,6 +600,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                mutable,
                 span: param_span_start.merge(param_span_end),
             });
 

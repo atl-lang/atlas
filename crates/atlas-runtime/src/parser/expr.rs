@@ -980,6 +980,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                mutable: false,
                 span: param_span_start.merge(param_span_end),
             });
 

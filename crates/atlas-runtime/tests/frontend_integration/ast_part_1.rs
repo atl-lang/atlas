@@ -25,6 +25,7 @@ fn test_complete_program_construction() {
                         },
                         type_ref: Some(TypeRef::Named("number".to_string(), Span::new(12, 18))),
                         ownership: None,
+                        mutable: false,
                         span: Span::new(9, 18),
                     },
                     Param {
@@ -34,6 +35,7 @@ fn test_complete_program_construction() {
                         },
                         type_ref: Some(TypeRef::Named("number".to_string(), Span::new(23, 29))),
                         ownership: None,
+                        mutable: false,
                         span: Span::new(20, 29),
                     },
                 ],

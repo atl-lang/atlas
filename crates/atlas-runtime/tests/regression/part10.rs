@@ -271,3 +271,50 @@ fn h078_result_is_err() {
     "#;
     assert_eval_bool(code, true);
 }
+
+// ============================================================================
+// H-089: mut function parameters — params declared `mut` can be reassigned
+// ============================================================================
+
+#[test]
+fn test_h089_mut_param_gcd() {
+    // Natural GCD algorithm — Haiku writes params as mutable, not via let copies
+    let code = r#"
+        fn gcd(mut a: number, mut b: number) -> number {
+            while b != 0 {
+                let tmp = b;
+                b = a % b;
+                a = tmp;
+            }
+            return a;
+        }
+        gcd(48, 18)
+    "#;
+    assert_eval_number(code, 6.0);
+}
+
+#[test]
+fn test_h089_immutable_param_still_rejected() {
+    // Without mut, params must remain immutable
+    let code = r#"
+        fn bad(a: number) -> number {
+            a = 5;
+            return a;
+        }
+        bad(3)
+    "#;
+    assert_error_code(code, "AT3003");
+}
+
+#[test]
+fn test_h089_mut_param_single() {
+    // Single mut param — simple mutation
+    let code = r#"
+        fn double_it(mut x: number) -> number {
+            x = x * 2;
+            return x;
+        }
+        double_it(7)
+    "#;
+    assert_eval_number(code, 14.0);
+}

@@ -1053,7 +1053,7 @@ impl<'a> TypeChecker<'a> {
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
-                mutable: false,
+                mutable: param.mutable,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
@@ -1156,7 +1156,7 @@ impl<'a> TypeChecker<'a> {
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
-                mutable: false,
+                mutable: param.mutable,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
