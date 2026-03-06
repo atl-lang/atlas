@@ -44,11 +44,18 @@ If AI has to work around something that should be built-in, that's a bug, not a 
 
 ## Testing Strategy (CRITICAL)
 ```bash
-# DURING DEVELOPMENT — targeted tests only:
-cargo nextest run -E 'test(test_name)'            # single test
-cargo nextest run -p atlas-runtime --test strings  # domain file
+# DURING DEVELOPMENT — two commands only:
+cargo check -p atlas-runtime                                        # verify compile, ~0.5s
+cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'      # ONE test by exact name
 
-# NEVER run `cargo nextest run --workspace` manually.
+# BANNED — these compile ALL test binaries and cause 5-20 min hangs:
+# cargo nextest run -p atlas-runtime -E 'test(interpreter)'   ❌
+# cargo nextest run -p atlas-runtime -E 'test(stdlib)'        ❌
+# cargo nextest run -p atlas-runtime --test <any_domain>      ❌
+# cargo nextest run -p atlas-runtime                          ❌
+# cargo nextest run --workspace                               ❌
+
+# NEVER run full suite manually.
 # The pre-commit Guardian hook (.githooks/pre-commit) runs full suite + parity on every commit.
 # Killing cargo mid-run leaves lock files that block all future runs — never do it.
 ```

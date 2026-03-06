@@ -63,9 +63,16 @@ Both engines MUST produce identical output. See `.claude/rules/atlas-parity.md`.
 
 ### Testing (CRITICAL — read this)
 ```bash
-# DURING DEVELOPMENT — targeted tests ONLY:
-cargo nextest run -E 'test(test_name)'           # single test
-cargo nextest run -p atlas-runtime --test strings  # domain file
+# DURING DEVELOPMENT — two commands only:
+cargo check -p atlas-runtime                                    # verify compile (~0.5s)
+cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'  # ONE test, exact name
+
+# BANNED — cause 5-20 minute hangs (compile ALL test binaries):
+# cargo nextest run -p atlas-runtime -E 'test(interpreter)'  ❌
+# cargo nextest run -p atlas-runtime -E 'test(stdlib)'       ❌
+# cargo nextest run -p atlas-runtime --test <any_domain>     ❌
+# cargo nextest run -p atlas-runtime                         ❌
+# cargo nextest run --workspace                              ❌
 
 # NEVER run full suite manually. The pre-commit Guardian hook runs it on commit.
 # Killing cargo mid-run leaves lock files that block all future runs.

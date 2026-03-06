@@ -1,78 +1,86 @@
 # Test Partitioning — Fast Feedback During Development (Lazy-Loaded)
 
-**Load when:** Running tests during GATE 2 implementation or GATE 4 quality checks.
+**Load when:** Deciding what tests to run during development.
 
 ---
 
-## Problem
+## The Rule (Single Source of Truth)
 
-Atlas has 7000+ tests. Running `cargo nextest run --workspace` takes minutes.
-During development, you need fast feedback — not full suite.
+**See `testing-workflow.md` in auto-memory for the full rule set. This file is a quick reference.**
 
----
-
-## Strategy: Progressive Test Scope
-
-### During Implementation (GATE 2) — TARGETED ONLY
-
-```bash
-# Single test
-cargo nextest run -p atlas-runtime -E 'test(exact_test_name)'
-
-# Domain file (e.g., all string tests)
-cargo nextest run -p atlas-runtime --test strings
-
-# Related parity tests only
-cargo nextest run -p atlas-runtime -E 'test(parity)' --test bytecode_parity
-```
-
-**Rule:** Never run full workspace during GATE 2. Test only what you're touching.
-
-### During Quality Check (GATE 4) — PARTITIONED
-
-```bash
-# Run tests for ONLY the crate you modified
-cargo nextest run -p <modified-crate>
-
-# If touching multiple crates, run each
-cargo nextest run -p atlas-runtime -p atlas-cli
-```
-
-**Rule:** Crate-scoped, not workspace-scoped. Full workspace is GATE 6 only.
-
-### During Final Testing (GATE 6) — COMMIT
-
-**DO NOT run full suite manually.** The pre-commit Guardian hook runs it automatically:
-```bash
-git commit  # Guardian runs: fmt + clippy + full suite + parity
-```
-
-**Never run `cargo nextest run --workspace` or `cargo nextest run -p atlas-runtime` manually.**
-The Guardian hook is the ONLY place the full suite should run.
+**`cargo check` is the development tool. `git commit` triggers Guardian for real validation.**
 
 ---
 
-## Partitioning for Parallel Agents
+## What To Run (and When)
 
-If multiple agents work on the same codebase (future):
+### During TDD (write code → verify)
 
 ```bash
-# Agent 1: first half of tests
-cargo nextest run --workspace --partition count:1/2
+# Step 1: Does it compile? (~0.5s)
+cargo check -p atlas-runtime
 
-# Agent 2: second half
-cargo nextest run --workspace --partition count:2/2
+# Step 2: Does my specific test pass?
+cargo nextest run -p atlas-runtime -E 'test(exact_test_function_name)'
+# Use the EXACT function name — not a domain keyword
 ```
 
-Deterministic partitioning — each agent covers different tests, full coverage across all agents.
+### Before commit
+
+```bash
+cargo fmt    # Run formatter — NOT --check, just fix it
+git add <files>
+git commit   # Guardian runs: fmt + clippy + targeted suite + parity + battle tests
+```
+
+### If commit fails (Guardian shows which test failed)
+
+```bash
+# Fix the specific failing test, then:
+cargo fmt && git add -A && git commit
+# Do NOT run broad tests to "verify" — Guardian does that on next commit
+```
+
+---
+
+## BANNED Commands (cause 5-20 minute hangs)
+
+These force cargo to compile ALL test binaries before running any:
+
+```bash
+# ❌ NEVER:
+cargo nextest run -p atlas-runtime -E 'test(interpreter)'
+cargo nextest run -p atlas-runtime -E 'test(regression)'
+cargo nextest run -p atlas-runtime -E 'test(stdlib)'
+cargo nextest run -p atlas-runtime -E 'test(corpus)'
+cargo nextest run -p atlas-runtime -E 'test(frontend)'
+cargo nextest run -p atlas-runtime -E 'test(type)'
+cargo nextest run -p atlas-runtime -E 'test(vm)'
+cargo nextest run -p atlas-runtime              # entire crate
+cargo nextest run --workspace                   # entire workspace
+cargo nextest run -p atlas-runtime --test <any_domain_file>
+```
+
+---
+
+## One-Time Diagnostic (if Guardian output is unclear)
+
+If a commit fails and you can't tell which test from the Guardian output:
+
+```bash
+# Run ONCE to find the failing test name:
+cargo nextest run -p atlas-runtime -E 'test(regression) + test(interpreter)' --no-fail-fast 2>&1 | grep "^        FAIL"
+# Then fix THAT specific test, then commit again
+```
 
 ---
 
 ## Quick Reference
 
-| Gate | Scope | Command pattern |
-|------|-------|----------------|
-| GATE 2 | Single test / domain file | `-E 'test(name)'` or `--test file` |
-| GATE 4 | Modified crate(s) | `-p <crate>` |
-| GATE 6 | Full workspace | `--workspace` |
-| Parallel | Partition | `--partition count:N/M` |
+| Situation | Command |
+|-----------|---------|
+| Verify compile | `cargo check -p atlas-runtime` |
+| TDD: run one test | `cargo nextest run -p atlas-runtime -E 'test(my_exact_test)'` |
+| Pre-commit format | `cargo fmt` |
+| Full validation | `git commit` (Guardian runs everything) |
+| Parity sweep only | `cargo nextest run -p atlas-runtime -E 'test(parity)'` |
