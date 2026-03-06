@@ -1464,14 +1464,23 @@ impl<'a> TypeChecker<'a> {
                 };
 
                 // Update the symbol's type in the symbol table.
-                // The binder already defined the symbol but may have set Unknown type
-                // if there was no type annotation. We now have the inferred/declared type.
-                if let Some(symbol) = self.symbol_table.lookup_mut(&var.name.name) {
-                    symbol.ty = final_type;
+                // IMPORTANT: Only update the symbol if it exists in the CURRENT scope.
+                // If lookup finds it in an outer scope (e.g. a global `let x` shadowed
+                // by a local `let mut x`), we must define a new symbol in the current
+                // scope rather than overwriting the outer one — that would cause the
+                // outer symbol's mutability to be ignored (H-092).
+                if self
+                    .symbol_table
+                    .is_defined_in_current_scope(&var.name.name)
+                {
+                    if let Some(symbol) = self.symbol_table.lookup_current_scope_mut(&var.name.name)
+                    {
+                        symbol.ty = final_type;
+                        symbol.mutable = var.mutable;
+                    }
                 } else {
-                    // Symbol doesn't exist - this can happen for variables declared in
-                    // inner scopes (the binder exited those scopes, removing the symbols).
-                    // Define the symbol in the current scope.
+                    // Symbol is in an outer scope or not yet defined — define a fresh
+                    // symbol in the current scope with the correct mutability.
                     let symbol = crate::symbol::Symbol {
                         name: var.name.name.clone(),
                         ty: final_type,

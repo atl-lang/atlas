@@ -318,3 +318,39 @@ fn test_h089_mut_param_single() {
     "#;
     assert_eval_number(code, 14.0);
 }
+
+// ============================================================================
+// H-092: Local let mut must not collide with outer let of same name
+// ============================================================================
+
+#[test]
+fn test_h092_local_mut_shadows_outer_immutable() {
+    // A local `let mut x` inside a function must shadow an outer `let x`
+    // and be independently mutable. Previously typechecker resolved lookup
+    // to the outer symbol and rejected assignment as AT3003.
+    let code = r#"
+        let primes = 0;
+        fn compute(n: number) -> number {
+            let mut primes = n;
+            primes = primes * 2;
+            return primes;
+        }
+        compute(5)
+    "#;
+    assert_eval_number(code, 10.0);
+}
+
+#[test]
+fn test_h092_outer_binding_unchanged() {
+    // The outer binding must remain unchanged after the function runs
+    let code = r#"
+        let x = 99;
+        fn f() -> number {
+            let mut x = 1;
+            x = x + 1;
+            return x;
+        }
+        f() + x
+    "#;
+    assert_eval_number(code, 101.0);
+}

@@ -1118,6 +1118,17 @@ impl SymbolTable {
         self.functions.get_mut(name)
     }
 
+    /// Look up a symbol mutably in the current (innermost) scope only.
+    /// Returns `None` if the symbol exists only in an outer scope or not at all.
+    pub fn lookup_current_scope_mut(&mut self, name: &str) -> Option<&mut Symbol> {
+        self.scopes.last_mut()?.get_mut(name)
+    }
+
+    /// Returns true if the symbol is defined in the current (innermost) scope.
+    pub fn is_defined_in_current_scope(&self, name: &str) -> bool {
+        self.scopes.last().is_some_and(|s| s.contains_key(name))
+    }
+
     /// Define a builtin function
     fn define_builtin(&mut self, name: &str, ty: Type) {
         self.functions.insert(
