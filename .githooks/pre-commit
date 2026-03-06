@@ -309,6 +309,29 @@ if [ "$NEEDS_TESTS" = true ]; then
     fi
   fi
 
+  # Battle tests (real Atlas programs — catches regressions unit tests miss)
+  if [ "$TOUCHES_RUNTIME" = true ]; then
+    BATTLE_FAILED=false
+    BATTLE_FILES=$(find "$PROJECT_ROOT/battle-test/hydra-v2" -name "*.atlas" 2>/dev/null)
+    if [ -n "$BATTLE_FILES" ]; then
+      echo -n "   battle tests (hydra-v2)... "
+      for f in $BATTLE_FILES; do
+        if ! atlas run "$f" >/dev/null 2>&1; then
+          BATTLE_FAILED=true
+          echo ""
+          echo -e "   ${RED}FAILED:${NC} $f"
+        fi
+      done
+      if [ "$BATTLE_FAILED" = true ]; then
+        echo ""
+        echo -e "${RED}ERROR: Battle tests failed. Real Atlas programs are broken.${NC}"
+        exit 1
+      else
+        echo -e "${GREEN}PASS${NC}"
+      fi
+    fi
+  fi
+
   echo ""
 fi
 
