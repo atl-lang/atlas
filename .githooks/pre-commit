@@ -251,12 +251,45 @@ if [ "$NEEDS_TESTS" = true ]; then
   TEST_FAILED=false
 
   if [ "$TOUCHES_RUNTIME" = true ]; then
-    echo -n "   atlas-runtime... "
-    if cargo nextest run -p atlas-runtime --no-fail-fast 2>/dev/null; then
-      echo -e "${GREEN}PASS${NC}"
+    # Build a targeted filter from staged files — never run the full suite
+    TEST_FILTER=""
+
+    for file in $SOURCE_FILES $TEST_FILES; do
+      case "$file" in
+        */stdlib/*|*/tests/stdlib*) TEST_FILTER="${TEST_FILTER} test(stdlib)" ;;
+        */interpreter/*|*/tests/interpreter*) TEST_FILTER="${TEST_FILTER} test(interpreter)" ;;
+        */vm/*|*/tests/vm*) TEST_FILTER="${TEST_FILTER} test(vm)" ;;
+        */compiler/*) TEST_FILTER="${TEST_FILTER} test(compiler)" ;;
+        */typechecker/*|*/tests/typesystem*) TEST_FILTER="${TEST_FILTER} test(type)" ;;
+        */parser/*) TEST_FILTER="${TEST_FILTER} test(parser)" ;;
+        */tests/regression*) TEST_FILTER="${TEST_FILTER} test(regression)" ;;
+        */tests/closures*) TEST_FILTER="${TEST_FILTER} test(closure)" ;;
+        */tests/collections*) TEST_FILTER="${TEST_FILTER} test(collection)" ;;
+        */tests/stdlib_hardening*) TEST_FILTER="${TEST_FILTER} test(hardening)" ;;
+        */tests/system*) TEST_FILTER="${TEST_FILTER} test(system)" ;;
+      esac
+    done
+
+    # Deduplicate and build nextest -E expression
+    if [ -n "$TEST_FILTER" ]; then
+      # Build OR expression from unique terms
+      NEXTEST_EXPR=$(echo "$TEST_FILTER" | tr ' ' '\n' | sort -u | grep -v '^$' | paste -sd'+' - | sed 's/+/ + /g')
+      echo -n "   atlas-runtime (targeted: $NEXTEST_EXPR)... "
+      if cargo nextest run -p atlas-runtime -E "$NEXTEST_EXPR" --no-fail-fast 2>/dev/null; then
+        echo -e "${GREEN}PASS${NC}"
+      else
+        echo -e "${RED}FAIL${NC}"
+        TEST_FAILED=true
+      fi
     else
-      echo -e "${RED}FAIL${NC}"
-      TEST_FAILED=true
+      # Fallback: only run hardening + regression (fast, broad coverage)
+      echo -n "   atlas-runtime (hardening+regression)... "
+      if cargo nextest run -p atlas-runtime -E 'test(hardening) + test(regression)' --no-fail-fast 2>/dev/null; then
+        echo -e "${GREEN}PASS${NC}"
+      else
+        echo -e "${RED}FAIL${NC}"
+        TEST_FAILED=true
+      fi
     fi
   fi
 

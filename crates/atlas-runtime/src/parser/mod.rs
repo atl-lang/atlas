@@ -24,6 +24,9 @@ pub struct Parser {
     pub(super) tokens: Vec<Token>,
     pub(super) current: usize,
     pub(super) diagnostics: Vec<Diagnostic>,
+    /// When true, `Identifier {` is NOT parsed as a struct literal.
+    /// Set during condition parsing (if/while) to avoid ambiguity with blocks.
+    pub(super) no_struct_literal: bool,
 }
 
 /// Operator precedence levels for Pratt parsing
@@ -62,6 +65,7 @@ impl Parser {
             tokens,
             current: 0,
             diagnostics: Vec::new(),
+            no_struct_literal: false,
         }
     }
 

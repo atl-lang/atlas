@@ -304,7 +304,13 @@ impl Parser {
                 .with_help(format!("Remove the parentheses: `{keyword} <condition> {{ }}`")),
             );
         }
-        let cond = self.parse_expression()?;
+        // Prevent `Identifier {` from being parsed as a struct literal inside conditions.
+        // e.g. `if FOO { ... }` — FOO is a variable, `{` is the then-block, not a struct.
+        let prev = self.no_struct_literal;
+        self.no_struct_literal = true;
+        let cond = self.parse_expression();
+        self.no_struct_literal = prev;
+        let cond = cond?;
         if has_parens {
             self.consume(
                 TokenKind::RightParen,

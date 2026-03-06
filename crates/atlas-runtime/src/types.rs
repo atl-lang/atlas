@@ -205,7 +205,7 @@ impl Type {
                     && a1
                         .iter()
                         .zip(a2.iter())
-                        .all(|(left, right)| left.normalized() == right.normalized());
+                        .all(|(left, right)| left.is_assignable_to(right));
             }
         }
 

@@ -130,15 +130,6 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let result = string::join(&arr, sep, span)?;
             Ok(Value::string(result))
         });
-        m.insert("strJoin", |args, span, _, _| {
-            if args.len() != 2 {
-                return Err(stdlib_arity_error("strJoin", 2, args.len(), span));
-            }
-            let arr = extract_array(&args[0], "strJoin", span)?;
-            let sep = extract_string(&args[1], "strJoin", span)?;
-            let result = string::join(&arr, sep, span)?;
-            Ok(Value::string(result))
-        });
         m.insert("trim", |args, span, _, _| {
             if args.len() != 1 {
                 return Err(stdlib_arity_error("trim", 1, args.len(), span));
@@ -171,34 +162,12 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
                 None => Ok(Value::Option(None)),
             }
         });
-        m.insert("strIndexOf", |args, span, _, _| {
-            if args.len() != 2 {
-                return Err(stdlib_arity_error("strIndexOf", 2, args.len(), span));
-            }
-            let s = extract_string(&args[0], "strIndexOf", span)?;
-            let search = extract_string(&args[1], "strIndexOf", span)?;
-            match string::index_of(s, search) {
-                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
-                None => Ok(Value::Option(None)),
-            }
-        });
         m.insert("lastIndexOf", |args, span, _, _| {
             if args.len() != 2 {
                 return Err(stdlib_arity_error("lastIndexOf", 2, args.len(), span));
             }
             let s = extract_string(&args[0], "lastIndexOf", span)?;
             let search = extract_string(&args[1], "lastIndexOf", span)?;
-            match string::last_index_of(s, search) {
-                Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
-                None => Ok(Value::Option(None)),
-            }
-        });
-        m.insert("strLastIndexOf", |args, span, _, _| {
-            if args.len() != 2 {
-                return Err(stdlib_arity_error("strLastIndexOf", 2, args.len(), span));
-            }
-            let s = extract_string(&args[0], "strLastIndexOf", span)?;
-            let search = extract_string(&args[1], "strLastIndexOf", span)?;
             match string::last_index_of(s, search) {
                 Some(idx) => Ok(Value::Option(Some(Box::new(Value::Number(idx))))),
                 None => Ok(Value::Option(None)),
@@ -1744,13 +1713,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         let snake_case_aliases: &[(&str, &str)] = &[
             // String functions
-            ("strJoin", "str_join"),
+            ("join", "str_join"),
             ("trimStart", "trim_start"),
             ("trimEnd", "trim_end"),
             ("indexOf", "index_of"),
-            ("strIndexOf", "str_index_of"),
+            ("indexOf", "str_index_of"),
+            ("includes", "str_includes"),
             ("lastIndexOf", "last_index_of"),
-            ("strLastIndexOf", "str_last_index_of"),
+            ("lastIndexOf", "str_last_index_of"),
             ("toUpperCase", "to_upper_case"),
             ("toLowerCase", "to_lower_case"),
             ("charAt", "char_at"),

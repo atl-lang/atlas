@@ -1203,3 +1203,49 @@ fn test_parse_int_parity() {
     let v = vm_eval_ok("parse_int(\"ff\", 16);");
     assert_eq!(i, v);
 }
+
+// H-083: Duplicate stdlib functions removed
+// strJoin/strIndexOf/strLastIndexOf are duplicates of join/indexOf/lastIndexOf.
+// After removal, only the canonical names (and snake_case aliases) should work.
+
+#[test]
+fn test_h083_str_join_removed() {
+    // strJoin is a duplicate of join — should be undefined after removal
+    let errs = eval_err(r#"strJoin(["a", "b"], "-");"#);
+    assert!(!errs.is_empty(), "strJoin should not exist");
+}
+
+#[test]
+fn test_h083_str_index_of_removed() {
+    let errs = eval_err(r#"strIndexOf("hello", "ll");"#);
+    assert!(!errs.is_empty(), "strIndexOf should not exist");
+}
+
+#[test]
+fn test_h083_str_last_index_of_removed() {
+    let errs = eval_err(r#"strLastIndexOf("hello", "l");"#);
+    assert!(!errs.is_empty(), "strLastIndexOf should not exist");
+}
+
+#[test]
+fn test_h083_canonical_join_still_works() {
+    // join and str_join (snake alias) must still work
+    let r1 = eval_ok(r#"join(["a", "b", "c"], "-");"#);
+    let r2 = eval_ok(r#"str_join(["a", "b", "c"], "-");"#);
+    assert_eq!(r1, r2);
+}
+
+#[test]
+fn test_h083_canonical_index_of_still_works() {
+    let r1 = eval_ok(r#"indexOf("hello", "ll");"#);
+    let r2 = eval_ok(r#"index_of("hello", "ll");"#);
+    assert_eq!(r1, r2);
+}
+
+#[test]
+fn test_h083_str_includes_alias_works() {
+    // str_includes should be a snake_case alias for includes (string)
+    let r1 = eval_ok(r#"includes("hello world", "world");"#);
+    let r2 = eval_ok(r#"str_includes("hello world", "world");"#);
+    assert_eq!(r1, r2);
+}

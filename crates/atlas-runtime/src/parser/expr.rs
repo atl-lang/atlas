@@ -236,8 +236,10 @@ impl Parser {
         }
 
         // Check for struct expression: `TypeName { field: value, ... }`
-        // This requires the identifier to start with an uppercase letter (type name convention)
-        if self.check(TokenKind::LeftBrace)
+        // This requires the identifier to start with an uppercase letter (type name convention).
+        // Disabled inside conditions (if/while) to avoid ambiguity with the then/body block.
+        if !self.no_struct_literal
+            && self.check(TokenKind::LeftBrace)
             && ident.name.chars().next().is_some_and(|c| c.is_uppercase())
         {
             return self.parse_struct_expr(ident);
