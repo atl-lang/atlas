@@ -556,7 +556,7 @@ fn test_file_create_remove_directory_parity() {
 #[case::is_null_false("is_null(0)", "false")]
 #[case::is_array_true("is_array([1, 2, 3])", "true")]
 #[case::is_array_false("is_array(\"[1,2,3]\")", "false")]
-#[case::is_function_true("fn test() {} is_function(test)", "true")]
+#[case::is_function_true("fn test() -> void {} is_function(test)", "true")]
 #[case::is_function_false("is_function(123)", "false")]
 fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();

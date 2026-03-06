@@ -1452,6 +1452,15 @@ impl<'a> TypeChecker<'a> {
             Type::JsonValue => Some(crate::method_dispatch::TypeTag::JsonValue),
             Type::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Type::String => Some(crate::method_dispatch::TypeTag::String),
+            Type::Generic { ref name, .. } if name == "HashMap" => {
+                Some(crate::method_dispatch::TypeTag::HashMap)
+            }
+            Type::Generic { ref name, .. } if name == "Option" => {
+                Some(crate::method_dispatch::TypeTag::Option)
+            }
+            Type::Generic { ref name, .. } if name == "Result" => {
+                Some(crate::method_dispatch::TypeTag::Result)
+            }
             _ => None,
         };
         member.type_tag.set(type_tag);

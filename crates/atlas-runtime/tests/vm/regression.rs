@@ -275,7 +275,7 @@ outer();
 
 #[test]
 fn test_edge_function_no_return() {
-    let source = "fn noop() { let x = 1; } noop();";
+    let source = "fn noop() -> void { let x = 1; } noop();";
     let result = vm_eval(source);
     // Should return null/none
     assert!(result.is_none() || result == Some(Value::Null));

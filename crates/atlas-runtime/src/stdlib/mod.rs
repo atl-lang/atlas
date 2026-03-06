@@ -549,6 +549,67 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
                 }),
             }
         });
+        m.insert("unwrapOr", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("unwrapOr", 2, args.len(), span));
+            }
+            match &args[0] {
+                Value::Option(_) => types::unwrap_or_option(&args[0], args[1].clone(), span),
+                Value::Result(_) => types::unwrap_or_result(&args[0], args[1].clone(), span),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "unwrapOr() requires Option or Result value".to_string(),
+                    span,
+                }),
+            }
+        });
+        m.insert("isSome", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("isSome", 1, args.len(), span));
+            }
+            match &args[0] {
+                Value::Option(opt) => Ok(Value::Bool(opt.is_some())),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "isSome() requires Option value".to_string(),
+                    span,
+                }),
+            }
+        });
+        m.insert("isNone", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("isNone", 1, args.len(), span));
+            }
+            match &args[0] {
+                Value::Option(opt) => Ok(Value::Bool(opt.is_none())),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "isNone() requires Option value".to_string(),
+                    span,
+                }),
+            }
+        });
+        m.insert("isOk", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("isOk", 1, args.len(), span));
+            }
+            match &args[0] {
+                Value::Result(res) => Ok(Value::Bool(res.is_ok())),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "isOk() requires Result value".to_string(),
+                    span,
+                }),
+            }
+        });
+        m.insert("isErr", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("isErr", 1, args.len(), span));
+            }
+            match &args[0] {
+                Value::Result(res) => Ok(Value::Bool(res.is_err())),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "isErr() requires Result value".to_string(),
+                    span,
+                }),
+            }
+        });
         m.insert("expect", |args, span, _, _| {
             if args.len() != 2 {
                 return Err(stdlib_arity_error("expect", 2, args.len(), span));

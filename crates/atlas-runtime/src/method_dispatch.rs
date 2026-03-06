@@ -13,8 +13,9 @@ pub enum TypeTag {
     Array,
     HttpResponse,
     String,
-    // Future types added here as stdlib phases add method support:
-    // HashMap, HashSet, DateTime, Regex, ...
+    HashMap,
+    Option,
+    Result,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -25,6 +26,9 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::Array => resolve_array_method(method_name),
         TypeTag::HttpResponse => resolve_http_response_method(method_name),
         TypeTag::String => resolve_string_method(method_name),
+        TypeTag::HashMap => resolve_hashmap_method(method_name),
+        TypeTag::Option => resolve_option_method(method_name),
+        TypeTag::Result => resolve_result_method(method_name),
     }
 }
 
@@ -91,6 +95,54 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         "concat" => "concat",
         "flatten" => "flatten",
         "join" => "join",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a HashMap method call to its stdlib function name.
+/// HashMap mutates in-place via Arc<Mutex> — no CoW write-back needed.
+fn resolve_hashmap_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        // Read methods
+        "get" => "hashMapGet",
+        "has" | "containsKey" => "hashMapHas",
+        "size" | "len" => "hashMapSize",
+        "isEmpty" => "hashMapIsEmpty",
+        "keys" => "hashMapKeys",
+        "values" => "hashMapValues",
+        "entries" => "hashMapEntries",
+        // Mutating methods (in-place via Arc<Mutex> — no write-back needed)
+        "set" | "put" => "hashMapPut",
+        "remove" | "delete" => "hashMapRemove",
+        "clear" => "hashMapClear",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve an Option<T> method call to its stdlib function name.
+fn resolve_option_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "unwrap" => "unwrap",
+        "unwrapOr" => "unwrapOr",
+        "isSome" => "isSome",
+        "isNone" => "isNone",
+        "map" => "optionMap",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a Result<T,E> method call to its stdlib function name.
+fn resolve_result_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "unwrap" => "unwrap",
+        "unwrapOr" => "unwrapOr",
+        "isOk" => "isOk",
+        "isErr" => "isErr",
+        "map" => "resultMap",
+        "mapErr" => "resultMapErr",
         _ => return None,
     };
     Some(func_name.to_string())

@@ -141,3 +141,79 @@ fn struct_expr_tojson() {
     "#;
     assert_eval_bool(code, true);
 }
+
+// ============================================================================
+// H-078: Option/Result method dispatch (unwrap returns T, not any)
+// ============================================================================
+
+#[test]
+fn h078_option_unwrap_returns_value() {
+    let code = r#"
+        let opt: Option<number> = Some(42);
+        opt.unwrap()
+    "#;
+    assert_eval_number(code, 42.0);
+}
+
+#[test]
+fn h078_option_unwrap_or_returns_inner() {
+    let code = r#"
+        let opt: Option<number> = Some(10);
+        opt.unwrapOr(0)
+    "#;
+    assert_eval_number(code, 10.0);
+}
+
+#[test]
+fn h078_option_unwrap_or_returns_default_on_none() {
+    let code = r#"
+        let opt: Option<number> = None;
+        opt.unwrapOr(99)
+    "#;
+    assert_eval_number(code, 99.0);
+}
+
+#[test]
+fn h078_option_is_some() {
+    let code = r#"
+        let opt: Option<number> = Some(1);
+        opt.isSome()
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn h078_option_is_none() {
+    let code = r#"
+        let opt: Option<number> = None;
+        opt.isNone()
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn h078_result_unwrap_ok() {
+    let code = r#"
+        let r: Result<number, string> = Ok(7);
+        r.unwrap()
+    "#;
+    assert_eval_number(code, 7.0);
+}
+
+#[test]
+fn h078_result_is_ok() {
+    let code = r#"
+        let r: Result<number, string> = Ok(7);
+        r.isOk()
+    "#;
+    assert_eval_bool(code, true);
+}
+
+#[test]
+fn h078_result_is_err() {
+    let code = r#"
+        let r: Result<number, string> = Err("oops");
+        r.isErr()
+    "#;
+    assert_eval_bool(code, true);
+}

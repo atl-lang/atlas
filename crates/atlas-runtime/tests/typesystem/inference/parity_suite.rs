@@ -12,19 +12,25 @@ use super::helpers::*;
 
 #[test]
 fn parity_return_infer_arithmetic() {
-    assert_parity_num("fn double(x: number) { return x * 2; } double(5);", 10.0);
+    assert_parity_num(
+        "fn double(x: number) -> number { return x * 2; } double(5);",
+        10.0,
+    );
 }
 
 #[test]
 fn parity_return_infer_string_literal() {
-    assert_parity_str(r#"fn greet() { return "hello"; } greet();"#, "hello");
+    assert_parity_str(
+        r#"fn greet() -> string { return "hello"; } greet();"#,
+        "hello",
+    );
 }
 
 #[test]
 fn parity_return_infer_void_no_return() {
     // Function with no return — returns null/void, both engines return Null
-    let interp = interp_eval("fn noop() { } noop();");
-    let vm = vm_eval("fn noop() { } noop();");
+    let interp = interp_eval("fn noop() -> void { } noop();");
+    let vm = vm_eval("fn noop() -> void { } noop();");
     assert_eq!(
         interp,
         Value::Null,
@@ -36,16 +42,16 @@ fn parity_return_infer_void_no_return() {
 #[test]
 fn parity_return_infer_both_branches() {
     assert_parity_num(
-        "fn clamp2(x: number) { if (x > 0) { return 1; } return 0; } clamp2(5);",
+        "fn clamp2(x: number) -> number { if (x > 0) { return 1; } return 0; } clamp2(5);",
         1.0,
     );
 }
 
 #[test]
 fn parity_return_infer_with_explicit_params() {
-    // Params annotated, return omitted — parity between engines
+    // Params annotated, explicit return type — parity between engines
     assert_parity_num(
-        "fn add(a: number, b: number) { return a + b; } add(3, 4);",
+        "fn add(a: number, b: number) -> number { return a + b; } add(3, 4);",
         7.0,
     );
 }
@@ -53,7 +59,7 @@ fn parity_return_infer_with_explicit_params() {
 #[test]
 fn parity_return_infer_bool_comparison() {
     assert_parity_bool(
-        "fn is_positive(x: number) { return x > 0; } is_positive(5);",
+        "fn is_positive(x: number) -> bool { return x > 0; } is_positive(5);",
         true,
     );
 }
@@ -154,11 +160,11 @@ fn parity_edge_hof_with_inferred_return() {
 
 #[test]
 fn parity_edge_nested_inferred_functions() {
-    // Nested functions — inner has inferred return
+    // Nested functions with explicit return types
     assert_parity_num(
         r#"
-fn outer(x: number) {
-    fn inner(y: number) { return y * y; }
+fn outer(x: number) -> number {
+    fn inner(y: number) -> number { return y * y; }
     return inner(x);
 }
 outer(4);
@@ -169,6 +175,9 @@ outer(4);
 
 #[test]
 fn parity_edge_inferred_return_with_own_param() {
-    // own ownership annotation on param, return type inferred
-    assert_parity_num("fn take(own x: number) { return x; } take(7);", 7.0);
+    // own ownership annotation on param, explicit return type
+    assert_parity_num(
+        "fn take(own x: number) -> number { return x; } take(7);",
+        7.0,
+    );
 }

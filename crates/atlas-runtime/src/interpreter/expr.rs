@@ -595,6 +595,8 @@ impl Interpreter {
             Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
             Value::String(_) => Some(crate::method_dispatch::TypeTag::String),
+            Value::Option(_) => Some(crate::method_dispatch::TypeTag::Option),
+            Value::Result(_) => Some(crate::method_dispatch::TypeTag::Result),
             _ => None,
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);

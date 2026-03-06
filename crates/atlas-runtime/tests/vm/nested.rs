@@ -88,13 +88,13 @@ fn test_vm_nested_function_string() {
 #[test]
 fn test_vm_runtime_error_stack_trace() {
     let mut temp_file = NamedTempFile::new().unwrap();
-    let source = r#"fn level1() {
+    let source = r#"fn level1() -> void {
     level2();
 }
-fn level2() {
+fn level2() -> void {
     level3();
 }
-fn level3() {
+fn level3() -> void {
     let arr = [1, 2];
     arr[5];
 }
