@@ -275,20 +275,26 @@ if [ "$NEEDS_TESTS" = true ]; then
       # Build OR expression from unique terms
       NEXTEST_EXPR=$(echo "$TEST_FILTER" | tr ' ' '\n' | sort -u | grep -v '^$' | paste -sd'+' - | sed 's/+/ + /g')
       echo -n "   atlas-runtime (targeted: $NEXTEST_EXPR)... "
-      if cargo nextest run -p atlas-runtime -E "$NEXTEST_EXPR" --no-fail-fast 2>/dev/null; then
-        echo -e "${GREEN}PASS${NC}"
-      else
+      NEXTEST_OUT=$(cargo nextest run -p atlas-runtime -E "$NEXTEST_EXPR" --no-fail-fast 2>&1)
+      if echo "$NEXTEST_OUT" | grep -q "test run failed\|FAILED"; then
         echo -e "${RED}FAIL${NC}"
+        echo ""
+        echo "$NEXTEST_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
         TEST_FAILED=true
+      else
+        echo -e "${GREEN}PASS${NC}"
       fi
     else
       # Fallback: only run hardening + regression (fast, broad coverage)
       echo -n "   atlas-runtime (hardening+regression)... "
-      if cargo nextest run -p atlas-runtime -E 'test(hardening) + test(regression)' --no-fail-fast 2>/dev/null; then
-        echo -e "${GREEN}PASS${NC}"
-      else
+      NEXTEST_OUT=$(cargo nextest run -p atlas-runtime -E 'test(hardening) + test(regression)' --no-fail-fast 2>&1)
+      if echo "$NEXTEST_OUT" | grep -q "test run failed\|FAILED"; then
         echo -e "${RED}FAIL${NC}"
+        echo ""
+        echo "$NEXTEST_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
         TEST_FAILED=true
+      else
+        echo -e "${GREEN}PASS${NC}"
       fi
     fi
   fi
@@ -332,13 +338,15 @@ if [ "$NEEDS_TESTS" = true ]; then
   # Parity tests
   if [ "$NEEDS_PARITY" = true ]; then
     echo -n "   parity tests... "
-    if cargo nextest run -p atlas-runtime -E 'test(parity)' --no-fail-fast 2>/dev/null; then
-      echo -e "${GREEN}PASS${NC}"
-    else
+    PARITY_OUT=$(cargo nextest run -p atlas-runtime -E 'test(parity)' --no-fail-fast 2>&1)
+    if echo "$PARITY_OUT" | grep -q "test run failed\|FAILED"; then
       echo -e "${RED}FAIL${NC}"
       echo ""
+      echo "$PARITY_OUT" | grep -E "FAIL|panicked|thread '.*' panicked" | head -20
       echo -e "${RED}ERROR: Parity broken. Interpreter and VM must match.${NC}"
       exit 1
+    else
+      echo -e "${GREEN}PASS${NC}"
     fi
   fi
 
