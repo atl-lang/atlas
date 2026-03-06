@@ -24,10 +24,12 @@ item           := import_decl
 **Trait Declarations**
 ```
 trait_decl     := "trait" IDENT type_params? "{" trait_method_sig* "}"
-trait_method_sig := "fn" IDENT type_params? "(" params? ")" "->" type_ref ";"
+trait_method_sig := "fn" IDENT type_params? "(" params? ")" ("->" type_ref)? (";" | block)
 ```
 
-Traits declare method signatures without implementations. Implementations live in `impl` blocks.
+Traits declare method signatures. Methods may have default bodies (using `block` instead of `;`).
+`self` parameter type is inferred from the impl block — write `self` not `self: Type`.
+Implementations live in `impl` blocks.
 
 **Impl Blocks**
 ```
@@ -37,14 +39,33 @@ impl_method    := "fn" IDENT type_params? "(" params? ")" ("->" type_ref)? block
 
 `trait_ref` may include type arguments (e.g., `Functor<number>`).
 
+**Import / Export / Extern**
+```
+import_decl    := "import" "{" IDENT ("," IDENT)* "}" "from" STRING ";"
+               | "import" "*" "as" IDENT "from" STRING ";"
+
+export_decl    := "export" (function_decl | var_decl | type_alias_decl | struct_decl | enum_decl)
+
+extern_decl    := "extern" STRING "fn" IDENT ("as" STRING)? "(" extern_params? ")" ("->" type_ref)? ";"
+
+type_alias_decl := "type" type_params? IDENT "=" type_ref ";"
+```
+
+Examples:
+```atlas
+import { split, join } from "./utils";
+import * as utils from "./helpers";
+export fn greet(name: string) -> string { return `Hello {name}`; }
+export type ID = number | string;
+extern "libname" fn compress(data: string) -> string;
+```
+
 **Statements**
 ```
 statement      := var_decl
                | function_decl
                | assign_stmt
                | compound_assign_stmt
-               | increment_stmt
-               | decrement_stmt
                | if_stmt
                | while_stmt
                | for_in_stmt

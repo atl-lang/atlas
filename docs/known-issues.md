@@ -16,10 +16,10 @@ Current limitations in Atlas. This is the honest truth.
 ## P1 - Open Issues
 
 ### H-070: Trait System Incomplete
-**Status:** Open (parent issue)
-Trait parsing and basic dispatch work. Missing: implicit self inference (H-073), default methods (H-074), trait objects as parameter types (H-075), method syntax for stdlib (H-065).
-**What works now:** `trait X { fn foo(self: X) -> T; }` + `impl X for MyStruct { ... }` + `instance.foo()`.
-**What doesn't:** `fn foo(self)` (must write `self: Type`), `fn process(x: SomeTrait)`, default method bodies.
+**Status:** Open (parent issue — most sub-issues now fixed)
+Trait parsing, dispatch, default methods, implicit self, and trait objects all work.
+**What works now:** `trait X { fn foo(self) -> T; }` (implicit self), default method bodies, `fn process(x: SomeTrait)` trait objects as parameter types, `impl X for MyStruct { ... }` + `instance.foo()`.
+**What remains:** method syntax for stdlib (H-065), trait inheritance (H-076), generic traits (H-077).
 
 ### H-065: Stdlib Method Syntax
 **Status:** Open
@@ -34,6 +34,18 @@ Stdlib uses global functions (`arrayPush(arr, x)`) not method syntax (`arr.push(
 - **H-077:** Generic traits (typechecker)
 
 ## Recently Fixed
+
+### H-075: Trait Objects as Parameter Types (FIXED 2026-03-05)
+**Was:** `fn process(x: SomeTrait)` didn't work — couldn't use trait names as parameter types.
+**Now:** Trait objects work as bounded polymorphism on parameters.
+
+### H-074: Default Method Implementations (FIXED 2026-03-05)
+**Was:** Trait methods required `;` — no default bodies.
+**Now:** Traits can have default method bodies: `fn foo(self) -> T { default_impl }`.
+
+### H-073: Implicit Self Type Inference (FIXED 2026-03-05)
+**Was:** Had to write `fn foo(self: MyType)` — explicit type required on self.
+**Now:** Write `fn foo(self)` — type is inferred from the impl block.
 
 ### H-072: Struct Trait Dispatch (FIXED 2026-03-05)
 **Was:** `impl Greetable for Person` registered but `p.greet()` failed — typechecker couldn't map struct types.

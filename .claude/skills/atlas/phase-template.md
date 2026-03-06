@@ -115,5 +115,5 @@ cargo clean && cargo check --workspace
 ## References
 
 **Decision Logs:** DR-XXX ([decision topic])
-**Specifications:** docs/specification/[relevant-spec].md
+**Specifications:** docs/language/ or docs/stdlib/ (relevant spec file)
 **Related phases:** [Previous phase], [Next phase]

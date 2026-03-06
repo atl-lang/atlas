@@ -19,117 +19,44 @@ Currently paused for battle-testing and hardening.
 - **Code is law.** The codebase is the only source of truth.
 - **Docs may be wrong.** If docs contradict code, docs are wrong.
 - **Test against reality.** Run `atlas check` and `atlas run` to verify claims.
-- **See `docs/`** for accurate documentation generated from codebase analysis.
-- **Old docs archived.** `docs-archive/` contains stale historical docs - do not use.
+- **See `docs/`** for documentation. **Old docs archived** in `docs-archive/`.
 
 ## Guardian Protocol
 - **Verify before agreeing.** User expresses doubt? Check the facts first, then state confidently.
 - **Protect atlas from everyone.** User confusion, AI shortcuts, bad ideas—all threats.
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
-- **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?" Don't build nice-to-haves when the language is broken.
+- **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?"
 
 ## See Something, File Something (MANDATORY)
-**Never defer. Never assume "out of scope." File it.**
-
 If you notice Atlas is missing something that Go/Rust/TypeScript had in v1.0:
-1. **Do NOT defer** to a future version
-2. **Do NOT assume** previous AI agents scoped it out correctly
-3. **File an issue immediately:** `atlas-track add "Missing: X" P1 "reason"`
-4. **Flag to user:** "I noticed Atlas lacks X. Most languages have this. Filed as issue."
+1. **File an issue immediately:** `atlas-track add "Missing: X" P1 "reason"`
+2. **Flag to user:** "I noticed Atlas lacks X. Most languages have this. Filed as issue."
 
-**Examples of "should already exist":**
-- Basic type system features (generics, traits, interfaces)
-- Standard control flow
-- Module/import system that works
-- Error handling patterns
+If AI has to work around something that should be built-in, that's a bug, not a feature request.
 
-**The rule:** If AI has to work around something that should be built-in, that's a bug, not a feature request. File it.
-
-Previous AI agents deferred too much. That stops now.
+- **New doc/rule/skill/agent file?** Update `.claude/agents/atlas-doc-auditor.md` to include it in the correct audit domain. The hook will remind you, but do it.
 
 ## Git Process (Local-First v2)
-- **Local CI first.** All validation via `cargo fmt/clippy/nextest` + `coderabbit` CLI locally.
-- **Batch pushes.** Commits accumulate on local main. Push every 168 hours.
-- **No PRs for fixes.** Direct push to main after local CI passes. PRs only for major blocks.
-- **Single workspace:** `~/dev/projects/atlas/` — no other worktrees.
-- **See `.claude/lazy/git.md`** for full local-first workflow.
+- **Local CI first.** All validation via `cargo fmt/clippy/nextest`.
+- **Batch pushes.** Commits accumulate on local main.
+- **Single workspace:** `~/dev/projects/atlas/`
+- **See `.claude/lazy/git.md`** for full workflow.
 
 ## Quick Check (every fix)
 ```bash
 cargo fmt --check && cargo clippy --workspace -- -D warnings && cargo nextest run --workspace
 ```
-Full CI commands and batch tracking: `.claude/lazy/git.md`
 
 ## Session Start (MANDATORY)
 ```bash
 atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
 ```
-Act on what you see: stale issues need `fix` or `abandon`, P0 blockers before block work.
 
-## Atlas Quick Reference (VERIFIED)
-
-```atlas
-// Variables
-let x = 42;
-let mut y = 0;
-
-// Types
-let n: number = 42;
-let s: string = "hello";
-let b: bool = true;
-let arr: number[] = [1, 2, 3];
-
-// Structs
-struct Point { x: number, y: number }
-let p = Point { x: 1, y: 2 };
-print(p.x);  // Works as of H-066 fix
-
-// Functions
-fn add(a: number, b: number) -> number { a + b }
-
-// Entry point (optional — top-level code also runs)
-fn main() {
-    print("Hello from main!");
-}
-
-// Traits
-trait Greetable {
-    fn greet(self: Greetable) -> string;
-}
-impl Greetable for Point {
-    fn greet(self: Point) -> string { return "I am a point"; }
-}
-let greeting = p.greet();  // Trait method dispatch works
-
-// Stdlib (camelCase, global — method syntax coming in H-065)
-let arr2 = arrayPush(arr, 4);     // NOT push()
-let length = len(arr);             // NOT arr.length()
-let m: HashMap<string, number> = hashMapNew();
-hashMapPut(m, "key", 42);          // NOT m.put()
-
-// Template strings
-let msg = `Hello {name}!`;         // {x} not ${x}
-
-// File extension — both .atlas and .atl work
-```
-
-## Known Issues (check docs/known-issues.md)
-- H-069: Closure global mutations (in progress)
-- H-070: Trait system incomplete (self inference, default methods, trait objects)
-- H-065: Stdlib needs method syntax (arr.push() vs arrayPush())
-
-## Context Guard Protocol (MANDATORY)
-When you see `[CTX N%]` warnings from the PostToolUse hook, you MUST follow this:
-- **79-86%**: Mentally identify what remains. No new large tasks inline.
-- **87-92%**: Stop new implementation. Finish current edit cleanly, then delegate remaining work to a Sonnet agent with a structured handoff: what's done, what's left, which files, acceptance criteria.
-- **93%+**: Immediately stop. Write a handoff to `/tmp/atlas-handoff-{session_id}.md` with: progress summary, remaining tasks, key decisions made, files touched. Delegate to Sonnet agent with that file as context. Do NOT continue inline work.
-
-**Handoff must include:** (1) what was accomplished (2) what remains with file paths (3) decisions/context the delegate needs (4) how to verify the work.
-
-**Sub-agents ignore this hook.** Only the orchestrator session receives warnings.
-
-## Cross-Platform Testing
-- Use `std::path::Path` APIs, not string manipulation for paths.
-- Use `Path::is_absolute()`, not `starts_with('/')`.
-- Normalize separators in test assertions: `path.replace('\\', "/")`.
-- Platform-specific test paths: use `#[cfg(unix)]` / `#[cfg(windows)]` helpers.
+## Auto-Loaded Rules (no need to read manually)
+These load automatically based on which files you're editing:
+- `atlas-language-ref.md` — Atlas syntax quick reference (on `.atlas`/`.atl` files)
+- `atlas-context-guard.md` — Context window management protocol (on `.rs` files)
+- `atlas-cross-platform.md` — Cross-platform testing rules (on test/source files)
+- `atlas-parity.md` — Interpreter/VM parity contract (on interpreter/VM/compiler files)
+- `atlas-testing.md` — Test organization rules (on test files)
+- `atlas-ast.md`, `atlas-typechecker.md`, `atlas-interpreter.md`, `atlas-vm.md`, `atlas-syntax.md`

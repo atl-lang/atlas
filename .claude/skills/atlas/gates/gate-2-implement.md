@@ -41,14 +41,14 @@
 
 **Source of truth:** auto-memory `testing-patterns.md`
 
-**GATE 2 rule:** Run targeted tests ONLY. Full suite is GATE 6.
+**GATE 2 rule:** Run targeted tests ONLY. Full suite is GATE 6. See `gates/test-partitioning.md` for progressive scope strategy.
 
 ```bash
 cargo nextest run -p atlas-runtime -E 'test(name)'      # Single test
 cargo nextest run -p atlas-runtime --test <domain_file> # Domain file
 ```
 
-See testing-patterns.md for: domain file list, corpus workflow, parity helpers, `#[ignore]` rules.
+**Oracle verification:** For new features, verify against Rust/TypeScript equivalents. See `gates/oracle-testing.md`.
 
 ---
 

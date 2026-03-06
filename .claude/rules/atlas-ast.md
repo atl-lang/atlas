@@ -13,7 +13,39 @@ paths:
 
 ---
 
-## Stmt Enum (ast.rs:305)
+## Top-Level Items (ast.rs — parsed before Stmt)
+
+```rust
+// These are top-level declarations, NOT Stmt variants:
+Item::Trait(TraitDecl)    // trait Foo { fn method(...) -> T; }
+Item::Impl(ImplBlock)     // impl TraitName for TypeName { ... }
+Item::Import(ImportDecl)  // import { x } from "module";
+Item::Export(ExportDecl)  // export fn foo() { }
+Item::Extern(ExternDecl)  // extern declarations
+Item::TypeAlias(TypeAliasDecl)  // type Alias = OriginalType;
+```
+
+## TraitDecl + ImplBlock (ast.rs)
+
+```rust
+pub struct TraitDecl {
+    pub name: Identifier,
+    pub type_params: Vec<TypeParam>,
+    pub super_traits: Vec<TraitBound>,
+    pub methods: Vec<TraitMethod>,  // NOT FunctionDecl
+    pub span: Span,
+}
+
+pub struct ImplBlock {
+    pub trait_name: Identifier,
+    pub type_params: Vec<TypeParam>,
+    pub target_type: TypeRef,
+    pub methods: Vec<FunctionDecl>,
+    pub span: Span,
+}
+```
+
+## Stmt Enum (ast.rs:405)
 
 ```rust
 pub enum Stmt {
@@ -32,6 +64,7 @@ pub enum Stmt {
     Continue(Span),
     Expr(ExprStmt),
 }
+// NOTE: Trait/Impl are NOT Stmt variants — they are top-level Items
 ```
 
 ## Expr Enum (ast.rs:441)

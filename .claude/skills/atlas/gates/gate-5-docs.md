@@ -11,7 +11,7 @@
 **Update immediately if ANY of these:**
 
 1. **Spec changed:**
-   - Updated any file in `docs/specification/` → Commit now
+   - Updated any file in `docs/language/ or docs/stdlib/` → Commit now
    - Grammar, types, semantics, runtime behavior changed
 
 2. **Architectural decision made:**
@@ -19,7 +19,7 @@
    - Only if: Chose between approaches AND affects future work
 
 3. **Breaking API change:**
-   - Update `docs/specification/stdlib.md` → Commit now
+   - Update `docs/language/ or docs/stdlib/stdlib.md` → Commit now
    - Changed function signature, removed function, changed behavior
 
 ---
@@ -44,13 +44,13 @@
 ## Decision Tree
 
 ```
-Spec changed? → YES → Update docs/specification/*.md NOW
+Spec changed? → YES → Update docs/language/ or docs/stdlib/*.md NOW
               → NO ↓
 
 Architectural decision? → YES → Add via atlas-track add-decision NOW
                        → NO ↓
 
-Breaking API change? → YES → Update docs/specification/stdlib.md NOW
+Breaking API change? → YES → Update docs/language/ or docs/stdlib/stdlib.md NOW
                     → NO ↓
 
 New feature with docs? → YES → Create/update feature doc in docs/
