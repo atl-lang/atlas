@@ -26,6 +26,8 @@ fn is_string(value: string) -> bool is value: string {
 **Parameters and Ownership**
 - Ownership annotations are optional and appear before the parameter name: `own name: Type`.
 - Valid annotations: `own`, `borrow`, `shared`.
+- `mut` keyword before a parameter name allows reassigning it inside the function body: `fn f(mut a: number) { a = 5; }`
+- Parameters without `mut` are immutable — assignment produces AT3003.
 
 Example (tested):
 ```atlas
