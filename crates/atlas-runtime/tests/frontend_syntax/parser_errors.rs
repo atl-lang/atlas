@@ -165,7 +165,7 @@ fn test_parse_nested_function_no_params() {
 }
 
 #[test]
-fn test_parse_nested_function_defaults_to_null_return_type() {
+fn test_parse_nested_function_requires_return_type() {
     let source = r#"
         fn outer() -> void {
             fn helper(x: number) {
@@ -173,10 +173,19 @@ fn test_parse_nested_function_defaults_to_null_return_type() {
             }
         }
     "#;
-    let (program, diagnostics) = parse_source(source);
-    // Parser allows omitting return type arrow - defaults to null type
-    assert_eq!(diagnostics.len(), 0, "Expected no parser errors");
-    insta::assert_yaml_snapshot!(program);
+    let (_program, diagnostics) = parse_source(source);
+    // H-084: named functions (including nested) require explicit return type
+    assert!(
+        !diagnostics.is_empty(),
+        "Expected parser error for missing return type on nested function"
+    );
+    assert!(
+        diagnostics
+            .iter()
+            .any(|d| d.message.contains("Return type annotation required")),
+        "Expected 'Return type annotation required' error, got: {:?}",
+        diagnostics.iter().map(|d| &d.message).collect::<Vec<_>>()
+    );
 }
 
 #[test]
@@ -265,8 +274,8 @@ fn test_var_declaration_errors(#[case] source: &str, #[case] expected: &str) {
 #[rstest]
 #[case("fn () { }", "function name")]
 #[case("fn foo { }", "'('")]
-#[case("fn foo()", "'{'")]
-#[case("fn foo() { let x = 1;", "'}'")]
+#[case("fn foo()", "return type")]
+#[case("fn foo() { let x = 1;", "return type")]
 #[case("fn foo(x) { }", "':'")]
 #[case("fn foo(: number) { }", "parameter name")]
 fn test_function_declaration_errors(#[case] source: &str, #[case] expected: &str) {

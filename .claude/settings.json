@@ -103,7 +103,7 @@
           {
             "type": "command",
             "command": "/Users/proxikal/.claude/hooks/atlas/test-gate.sh",
-            "timeout": 120
+            "timeout": 5
           },
           {
             "type": "command",
@@ -112,7 +112,8 @@
           },
           {
             "type": "command",
-            "command": "/Users/proxikal/.claude/hooks/atlas-git-stop-check.sh"
+            "command": "/Users/proxikal/.claude/hooks/atlas-git-stop-check.sh",
+            "timeout": 5
           }
         ]
       }

@@ -155,7 +155,7 @@ fn test_parse_assignments(#[case] source: &str, #[case] snapshot_name: &str) {
 
 #[test]
 fn test_parse_function_no_params() {
-    let (program, diagnostics) = parse_source("fn foo() { return 42; }");
+    let (program, diagnostics) = parse_source("fn foo() -> number { return 42; }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }

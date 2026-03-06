@@ -12,7 +12,12 @@ items:
           file: "<input>"
       type_params: []
       params: []
-      return_type: ~
+      return_type:
+        Named:
+          - number
+          - start: 12
+            end: 18
+            file: "<input>"
       return_ownership: ~
       predicate: ~
       body:
@@ -21,19 +26,19 @@ items:
               value:
                 Literal:
                   - Number: 42
-                  - start: 18
-                    end: 20
+                  - start: 28
+                    end: 30
                     file: "<input>"
               span:
-                start: 11
-                end: 21
+                start: 21
+                end: 31
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 9
-          end: 23
+          start: 19
+          end: 33
           file: "<input>"
       span:
         start: 0
-        end: 23
+        end: 33
         file: "<input>"

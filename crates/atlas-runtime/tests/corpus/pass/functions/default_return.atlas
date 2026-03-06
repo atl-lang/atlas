@@ -1,8 +1,8 @@
-fn log_message(msg: string) {
+fn log_message(msg: string) -> void {
     print("LOG: " + msg);
 }
 
-fn no_op() {
+fn no_op() -> void {
 }
 
 log_message("hello");

@@ -280,7 +280,8 @@ impl Parser {
         let params = self.parse_params(ParamParseMode::TypedOnly)?;
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
-        // Parse optional return type annotation: `-> [own|borrow] Type`
+        // Return type annotation is REQUIRED for named functions (H-084).
+        // Use `-> void` for functions that return nothing.
         let (return_type, return_ownership) = if self.match_token(TokenKind::Arrow) {
             // Peek for ownership annotation: `own` or `borrow` are valid; `shared` is an error
             let ownership = if self.match_token(TokenKind::Own) {
@@ -301,8 +302,13 @@ impl Parser {
             };
             (Some(self.parse_type_ref()?), ownership)
         } else {
-            // No `->` annotation — return type will be inferred
-            (None, None)
+            // Named functions require an explicit return type (H-084).
+            // Closures (anonymous functions) may omit type annotations.
+            self.error(
+                "Return type annotation required on named functions. \
+                 Use `-> void` for functions that return nothing.",
+            );
+            return Err(());
         };
 
         // Optional type predicate: `-> bool is param: Type`

@@ -1,5 +1,5 @@
 // Tests that reassignment to a let variable fails
-fn test() {
+fn test() -> void {
     let x: number = 1;
     x = 2; // Should fail: cannot assign to immutable variable
 }

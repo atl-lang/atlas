@@ -1,5 +1,5 @@
 // Tests that let mut variables can be reassigned
-fn test() {
+fn test() -> void {
     let mut x: number = 1;
     x = 2;
     print(x);

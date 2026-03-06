@@ -8,7 +8,7 @@ fn name<T>(param: Type, ...) -> [own|borrow] ReturnType { ... }
 ```
 - Type parameters (`<T, U>`) are optional.
 - Parameters in declarations **require type annotations**.
-- Return type annotation is optional. If omitted, the typechecker infers it.
+- Return type annotation is **required**. Use `-> void` for functions that return nothing.
 - `own` and `borrow` are valid ownership annotations on return types. `shared` is **not** allowed on return types.
 - Type predicates are supported: `-> bool is param: Type`.
 
@@ -43,7 +43,7 @@ fn(param, ...) -> ReturnType { block }
 ```
 - Parameters in anonymous functions **may omit** type annotations.
 - Ownership annotations are allowed: `fn(own x, borrow y: number) { ... }`.
-- Return type annotation is optional.
+- Return type annotation is optional for closures (inferred from context), **required** for named functions.
 
 Example (tested):
 ```atlas
