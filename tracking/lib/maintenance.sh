@@ -25,15 +25,19 @@ auto_close_stale_sessions() {
 
 # Release orphaned issues from abandoned sessions
 release_orphaned_issues() {
-    local released=$(sqlite3 "$DB" "
-        UPDATE issues
-        SET status='open', fixed_by=NULL
-        WHERE status='in_progress'
-        AND fixed_by IN (SELECT id FROM sessions WHERE outcome='abandoned')
-        RETURNING id")
+    # Find orphaned issues first (RETURNING not supported in SQLite)
+    local orphaned=$(sqlite3 "$DB" \
+        "SELECT id FROM issues
+         WHERE status='in_progress'
+         AND fixed_by IN (SELECT id FROM sessions WHERE outcome='abandoned')")
 
-    if [[ -n "$released" ]]; then
-        local count=$(echo "$released" | wc -l | tr -d ' ')
+    if [[ -n "$orphaned" ]]; then
+        sqlite3 "$DB" \
+            "UPDATE issues
+             SET status='open', fixed_by=NULL
+             WHERE status='in_progress'
+             AND fixed_by IN (SELECT id FROM sessions WHERE outcome='abandoned')"
+        local count=$(echo "$orphaned" | wc -l | tr -d ' ')
         echo "⚠ Released $count orphaned issues back to open"
     fi
     return 0

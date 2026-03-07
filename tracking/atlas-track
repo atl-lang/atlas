@@ -30,61 +30,73 @@ fi
 
 usage() {
     cat << 'EOF'
-atlas-track — Token-safe CLI (use jq)
+atlas-track — Token-safe CLI for AI agent continuity
 
-START (pick one):
-  go opus                          # THE command: init + full sitrep
+ORIENTATION (no session required):
+  context                          # Ultra-compact dashboard: issues, CI, block, last session
+  in-progress                      # What's being worked on right now (check before claiming)
+
+SESSION:
+  go opus                          # THE command: init session + full sitrep
   sitrep                           # Status only (no session start)
+  done S-001 success "Sum" "Next"  # End session (BLOCKED if unclosed issues)
 
 ISSUES:
+  issues [P0|P1|P2|component]      # List open+in_progress issues with titles (max 5)
+  issue H-001                      # Full detail (no truncation)
   add "Title" P0|P1|P2 "problem"   # Create issue, returns H-XXX
   update H-001 field value         # Update: priority|component|title|problem
-  claim H-001                      # Mark in_progress
-  fix H-001 "cause" "fix"          # Close (auto-captures commit+files)
-  fix-batch H-001,H-002 "c" "f"    # Close multiple issues at once
-  search "keyword"                 # Find issues by keyword (max 10)
+  claim H-001                      # Mark in_progress (do this before starting work)
+  fix H-001 "cause" "fix"          # Close + capture root cause (min 10 chars each)
+  fix-batch H-001,H-002 "c" "f"    # Close multiple with same cause/fix
+  search "keyword"                 # Find by keyword (title+problem) — shows component+status
   link H-001 blocks H-002          # Link issues (blocks|blocked-by|related)
-  links H-001                      # Show issue relationships
-  history H-001                    # Show issue change history
+  links H-001                      # Show relationships
+  history H-001                    # Change history
   my-issues                        # Your work this session
   reopen H-001                     # Reopen closed issue
+  abandon H-001 "reason"           # Release in_progress back to open
   components                       # List valid components + counts
 
-END:
-  done S-001 success "Sum" "Next"  # End (BLOCKED if unclosed)
+DECISIONS (source of truth — not MEMORY.md):
+  decisions [component|all]        # List active decisions (all = no cap, show everything)
+  decision D-001                   # Full detail (no truncation)
+  add-decision "Title" comp "Rule" "Rationale"  # Log new decision
+  update-decision D-001 rule "new rule text"    # Amend rule or rationale text
+  supersede D-001 D-002            # Mark D-001 superseded by D-002
+  deprecate D-001 "reason"         # Mark deprecated
+
+BLOCKS:
+  blocks                           # Block progress with names
+  block 8                          # Block detail + AC (also accepts: block B8)
 
 WHAT TO WORK ON:
-  next                             # Recommended work order — grouped by root cause, chains, triage flags
-
-INDEX (max 5, jq formatted):
-  issues [P0|component]
-  decisions [component|all]
-  blocks
-
-DETAIL:
-  issue H-001
-  decision D-001
-
-OTHER:
-  abandon H-001 "reason"
-  add-decision "Title" comp "Rule" "Rationale"
-  supersede D-001 D-002
-  unblock / block-work
+  next                             # Smart triage: groups by root cause, chains, delete-first flags
 
 CI:
-  run-ci                           # Run full validation suite (~10-20 min)
-  ci-status                        # Show last CI run results
+  ci-status                        # Last CI run results + failed tests
+  run-ci                           # Trigger full suite (~10-20 min)
+
+MISC:
+  sessions                         # Recent sessions
+  session S-001                    # Session detail
+  status                           # One-line mode/block/P0 status
+  unblock / block-work             # Toggle development mode
 
 MAINTENANCE (auto-runs on go):
-  health                           # Quick status check
+  health                           # Quick DB health check
   gc                               # Close stale sessions + release orphans
-  gc --aggressive                  # + archive old, vacuum DB
+  gc --aggressive                  # + archive old issues, vacuum DB
 EOF
     exit 0
 }
 
 # Main dispatch
 case "${1:-}" in
+    # Orientation (no session needed)
+    context)    cmd_context ;;
+    in-progress) cmd_in_progress ;;
+
     # Session lifecycle
     go)         cmd_go "${2:-opus}" "${3:-}" ;;
     init)       cmd_init "${2:-opus}" "${3:-}" ;;
@@ -108,9 +120,10 @@ case "${1:-}" in
     open-issue) cmd_open_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" "${6:?}" "${7:?}" ;;
 
     # Decisions
-    add-decision) cmd_add_decision "${2:?}" "${3:?}" "${4:?}" "${5:-}" ;;
-    supersede)    cmd_supersede "${2:?}" "${3:?}" ;;
-    deprecate)    cmd_deprecate "${2:?}" "${3:-}" ;;
+    add-decision)    cmd_add_decision "${2:?}" "${3:?}" "${4:?}" "${5:-}" ;;
+    update-decision) cmd_update_decision "${2:?'Decision ID required'}" "${3:?'Field required (rule|rationale|title|component)'}" "${4:?'New value required'}" ;;
+    supersede)       cmd_supersede "${2:?}" "${3:?}" ;;
+    deprecate)       cmd_deprecate "${2:?}" "${3:-}" ;;
 
     # Queries
     next)       cmd_next ;;
@@ -122,35 +135,26 @@ case "${1:-}" in
     issue)      cmd_issue_detail "${2:?'Issue ID required'}" ;;
     decision)   cmd_decision_detail "${2:?'Decision ID required'}" ;;
     session)    cmd_session_detail "${2:?'Session ID required'}" ;;
-    block)      cmd_block_detail "${2:?'Block number required'}" ;;
+    block)      cmd_block_detail "${2:?'Block number required (e.g. 8 or B8)'}" ;;
 
     # Mode
     unblock)    cmd_unblock ;;
     block-work) cmd_block_work ;;
 
     # CI
-    run-ci)
-        echo "Running full CI suite (this takes 10-20 minutes)..."
-        "$(dirname "$0")/ci-runner.sh"
-        ;;
-    ci-status)
-        local ci_file="$(dirname "$0")/ci-status.json"
-        if [[ -f "$ci_file" ]]; then
-            jq '.' "$ci_file"
-        else
-            echo "No CI run recorded yet. Run: atlas-track run-ci"
-        fi
-        ;;
+    run-ci)     echo "Running full CI suite (this takes 10-20 minutes)..."
+                "$SCRIPT_DIR/ci-runner.sh" ;;
+    ci-status)  cmd_ci_status ;;
 
     # Maintenance
     gc)         cmd_gc "${2:---normal}" ;;
     health)     cmd_health ;;
 
-    # Legacy
+    # Legacy aliases
     start-session) cmd_start_session "${2:-opus}" "${3:-}" ;;
     end-session)   cmd_end_session "${2:?}" "${3:?}" "${4:?}" "${5:-}" ;;
     close-issue)   cmd_close_issue "${2:?}" "${3:?}" "${4:?}" "${5:?}" ;;
 
     -h|--help|help|"") usage ;;
-    *)          echo "Unknown: $1"; usage ;;
+    *)          echo "Unknown command: $1"; usage ;;
 esac

@@ -1,118 +1,181 @@
-# Atlas Tracking Database
+# Atlas Tracking — CLI Reference
 
-**Location:** `tracking/atlas.db` (SQLite)
-**CLI:** `atlas-track` — see `tracking/README.md` for commands
+**CLI:** `atlas-track <command>` — all agent workflow goes through this tool.
+**DB:** `tracking/atlas.db` (SQLite). Use the CLI, not raw SQL.
 
 ---
 
-## Quick Queries
+## Orientation (no session needed)
 
 ```bash
-# List open issues by priority
-sqlite3 tracking/atlas.db "SELECT id, title, priority FROM issues WHERE status = 'open' ORDER BY priority, id"
-
-# Get issue details
-sqlite3 tracking/atlas.db "SELECT * FROM issues WHERE id = 'H-001'"
-
-# List sessions
-sqlite3 tracking/atlas.db "SELECT id, agent, started_at, outcome FROM sessions ORDER BY started_at DESC LIMIT 10"
-
-# Check current mode
-sqlite3 tracking/atlas.db "SELECT mode, block_work_allowed FROM state WHERE id = 1"
+atlas-track context        # Ultra-compact dashboard: issues/CI/block/last session
+atlas-track in-progress    # What's being worked on right now — check BEFORE claiming
 ```
 
 ---
 
-## Tables
+## Session Lifecycle
+
+```bash
+atlas-track go opus                              # START: init session + full sitrep
+atlas-track done S-001 success "Summary" "Next" # END: required for handoff
+atlas-track sitrep                               # Status only, no session created
+```
+
+**`go` returns:** session ID, mode, P0 blockers, stale issues, CI status, block progress, handoff from last agent.
+
+---
+
+## Issues
+
+```bash
+atlas-track issues [P0|P1|P2|component]          # List open+in_progress with titles (max 5)
+atlas-track issue H-001                          # Full detail — no truncation
+atlas-track add "Title" P0|P1|P2 "problem"       # Create, returns H-XXX
+atlas-track claim H-001                          # Mark in_progress (do this first)
+atlas-track fix H-001 "root cause" "fix applied" # Close (min 10 chars each field)
+atlas-track fix-batch H-001,H-002 "c" "f"        # Close multiple, same cause/fix
+atlas-track search "keyword"                     # Search title+problem — shows priority/component/status
+atlas-track update H-001 field value             # Update: priority|component|title|problem
+atlas-track abandon H-001 "reason"               # Release in_progress → open
+atlas-track reopen H-001                         # Reopen resolved issue
+atlas-track link H-001 blocks H-002              # Link: blocks|blocked-by|related
+atlas-track links H-001                          # Show relationships
+atlas-track history H-001                        # Change history (last 10)
+atlas-track my-issues                            # Your work this session
+atlas-track components                           # Valid components + counts
+```
+
+**Issue status flow:** `open` → `in_progress` → `resolved`
+**Priorities:** P0=blocker, P1=critical, P2=important, P3=nice-to-have
+**Components:** parser, vm, interpreter, lsp, cli, runtime, stdlib, jit, docs, infra, formatter, typechecker
+
+---
+
+## Decisions (source of truth — NOT MEMORY.md)
+
+```bash
+atlas-track decisions [component|all]            # List decisions (all = no cap, shows everything)
+atlas-track decision D-001                       # Full detail — no truncation
+atlas-track add-decision "Title" comp "Rule" "Rationale"   # Log new decision
+atlas-track update-decision D-001 rule "new text"          # Amend rule or rationale
+atlas-track update-decision D-001 rationale "new text"
+atlas-track supersede D-001 D-002                # D-001 superseded by D-002
+atlas-track deprecate D-001 "reason"             # Mark deprecated
+```
+
+**Key rule:** `decisions all` bypasses the 5-result cap — use it when you need the full picture.
+**Never duplicate decisions in MEMORY.md.** Decisions live in the DB.
+
+---
+
+## Blocks
+
+```bash
+atlas-track blocks          # All blocks with name + progress
+atlas-track block 8         # Block detail + acceptance criteria (also: block B8)
+```
+
+---
+
+## What To Work On
+
+```bash
+atlas-track next            # Smart triage: groups by root cause, chains, delete-first flags
+```
+
+Always run `next` before picking up issues manually.
+
+---
+
+## CI
+
+```bash
+atlas-track ci-status       # Last CI run: status, failed checks, failed tests (first 20)
+atlas-track run-ci          # Trigger full suite (~10-20 min)
+```
+
+CI failures = P0 blockers. Fix before new feature work.
+
+---
+
+## Maintenance
+
+```bash
+atlas-track health          # Quick DB health check
+atlas-track gc              # Close stale sessions, release orphaned in_progress issues
+atlas-track gc --aggressive # + archive old issues, vacuum DB
+```
+
+---
+
+## Workflow Quick Reference
+
+### Start of session
+```bash
+atlas-track go sonnet
+atlas-track context         # Quick orientation if already in a session
+atlas-track in-progress     # Check what's in flight before claiming work
+```
+
+### Bug fix
+```bash
+atlas-track claim H-001
+# ... TDD cycle ...
+atlas-track fix H-001 "root cause" "fix applied"
+```
+
+### Architecture decision
+```bash
+atlas-track decisions all   # Check all existing decisions first
+atlas-track decision D-001  # Read specific decision in full
+atlas-track add-decision "Title" component "Rule" "Rationale"
+```
+
+### End of session
+```bash
+atlas-track done S-001 success "What was done" "What comes next"
+```
+
+---
+
+## Database Tables (quick reference)
 
 ### issues
-| Column | Type | Notes |
-|--------|------|-------|
-| id | TEXT PK | H-001, P0-001 (H=hardening) |
-| title | TEXT | Short description |
-| status | TEXT | open, in_progress, blocked, resolved, wontfix, archived |
-| priority | TEXT | P0=blocker, P1=critical, P2=important, P3=nice-to-have |
-| severity | TEXT | critical, high, medium, low |
-| component | TEXT | parser, vm, interpreter, lsp, cli, runtime, stdlib, jit, docs, infra |
-| version | TEXT | v0.2, v0.3 |
-| source | TEXT | battle-test, ci, audit, user, agent, fuzz |
-| problem | TEXT | Detailed description |
-| fix_required | TEXT | What needs to happen |
-| fix_applied | TEXT | What was done (after fix) |
-| root_cause | TEXT | Why it happened |
-| files | TEXT | Comma-separated paths |
-| tags | TEXT | Comma-separated: async, parity, security |
-
-### sessions
-| Column | Type | Notes |
-|--------|------|-------|
-| id | TEXT PK | S-001, S-002 |
-| agent | TEXT | opus, sonnet, haiku, human |
-| started_at | TEXT | datetime |
-| ended_at | TEXT | datetime |
-| mode | TEXT | development, hardening, release, research |
-| outcome | TEXT | success, partial, blocked, failed, abandoned |
-| summary | TEXT | What was accomplished |
-| next_steps | TEXT | Handoff to next agent |
-| issues_opened | TEXT | Comma-separated IDs |
-| issues_closed | TEXT | Comma-separated IDs |
-
-### state
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | Always 1 (singleton) |
-| mode | TEXT | development, hardening, release |
-| block_work_allowed | INTEGER | 0=fix P0s first, 1=can do blocks |
-| current_block | INTEGER | Active block number |
-| last_session_id | TEXT | FK to sessions |
-
-### blocks
-| Column | Type | Notes |
-|--------|------|-------|
-| version | TEXT | v0.3 |
-| block_num | INTEGER | 1, 2, 3... |
-| name | TEXT | Block name |
-| status | TEXT | pending, scaffolded, in_progress, complete, blocked |
-| phases_total | INTEGER | Total phases |
-| phases_done | INTEGER | Completed phases |
+| Column | Notes |
+|--------|-------|
+| id | H-001 format |
+| status | open, in_progress, blocked, resolved, wontfix, archived |
+| priority | P0=blocker, P1=critical, P2=important, P3=nice-to-have |
+| component | parser, vm, interpreter, lsp, cli, runtime, stdlib, jit, docs, infra, formatter, typechecker |
+| problem | Detailed description |
+| fix_required | What needs to happen |
+| root_cause | Why it happened (populated on close) |
+| fix_applied | What was done (populated on close) |
+| fixed_by | Session ID that closed it |
 
 ### decisions
-| Column | Type | Notes |
-|--------|------|-------|
-| id | TEXT PK | D-001, D-002 |
-| title | TEXT | Decision title |
-| status | TEXT | active, superseded, deprecated, proposed |
-| component | TEXT | Domain |
-| rule | TEXT | The actual decision |
-| rationale | TEXT | Why |
+| Column | Notes |
+|--------|-------|
+| id | D-001 format |
+| status | active, superseded, deprecated |
+| rule | The decision itself |
+| rationale | Why |
 
----
+### sessions
+| Column | Notes |
+|--------|-------|
+| id | S-001 format |
+| agent | opus, sonnet, haiku, human |
+| outcome | success, partial, blocked, failed, abandoned |
+| summary | What was accomplished |
+| next_steps | Handoff to next agent |
 
-## Insert Examples
-
-```sql
--- New issue
-INSERT INTO issues (id, title, status, priority, severity, component, version, source, problem, fix_required, files, tags)
-VALUES ('H-018', 'Title here', 'open', 'P1', 'medium', 'vm', 'v0.2', 'audit', 'Problem description', 'Fix description', 'path/to/file.rs', 'tag1,tag2');
-
--- Update issue status
-UPDATE issues SET status = 'resolved', fix_applied = 'What was done' WHERE id = 'H-001';
-
--- Close session
-UPDATE sessions SET ended_at = datetime('now'), outcome = 'success', summary = 'What was done', next_steps = 'What is next' WHERE id = 'S-008';
-```
-
----
-
-## CLI Commands (preferred)
-
-```bash
-atlas-track go opus          # Start session, get sitrep
-atlas-track sitrep           # Status without starting session
-atlas-track issues P0        # List P0 issues
-atlas-track issue H-001      # Show issue details
-atlas-track claim H-001      # Mark working on issue
-atlas-track fix H-001 "root cause" "fix applied"  # Close issue
-atlas-track done S-008 success "summary" "next steps"  # End session
-atlas-track blocks           # Show block progress
-```
+### blocks
+| Column | Notes |
+|--------|-------|
+| block_num | 1, 2, 3… (B1, B2 in shorthand) |
+| name | Block name |
+| status | pending, scaffolded, in_progress, complete, blocked |
+| phases_done / phases_total | Progress |
+| acceptance_criteria | JSON array of AC items |

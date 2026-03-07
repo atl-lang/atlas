@@ -49,6 +49,29 @@ cmd_supersede() {
     echo "✓ $old_id superseded by $new_id"
 }
 
+cmd_update_decision() {
+    local id="$1"
+    local field="$2"
+    local value="$3"
+
+    local current=$(sqlite3 "$DB" "SELECT status FROM decisions WHERE id='$id'")
+    if [[ -z "$current" ]]; then
+        echo "ERROR: Decision $id not found"
+        exit 1
+    fi
+
+    case "$field" in
+        rule|rationale|title|component)
+            sqlite3 "$DB" "UPDATE decisions SET ${field}='$(sql_escape "$value")' WHERE id='$id'"
+            echo "✓ Updated $id.$field"
+            ;;
+        *)
+            echo "ERROR: Invalid field '$field'. Valid: rule, rationale, title, component"
+            exit 1
+            ;;
+    esac
+}
+
 cmd_deprecate() {
     local id="$1"
     local reason="${2:-}"

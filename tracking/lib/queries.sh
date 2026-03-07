@@ -9,73 +9,191 @@ cmd_status() {
         jq -r '.[0] | "P0: \(.p0 // "none")"'
 }
 
-# Issues list - compact JSON to text
-cmd_issues() {
-    local filter="${1:-}"
-    local where="status='open'"
-    [[ "$filter" =~ ^P[0-3]$ ]] && where="$where AND priority='$filter'"
-    [[ -n "$filter" && ! "$filter" =~ ^P[0-3]$ ]] && where="$where AND component='$filter'"
+# Ultra-compact dashboard — no session needed, single-call orientation
+cmd_context() {
+    local p0=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P0'")
+    local p1=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P1'")
+    local p2=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P2'")
+    local inprog=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE status='in_progress'")
+    local decisions=$(sqlite3 "$DB" "SELECT COUNT(*) FROM decisions WHERE status='active'")
+    local session_count=$(sqlite3 "$DB" "SELECT COUNT(*) FROM sessions")
+    local last_session=$(sqlite3 -json "$DB" "SELECT id, agent, outcome FROM sessions ORDER BY started_at DESC LIMIT 1" | jq -r '.[0] | "\(.id) \(.agent)/\(.outcome // "active")"')
+    local block_info=$(sqlite3 -json "$DB" "SELECT b.block_num, b.name, b.status, b.phases_done, b.phases_total FROM blocks b JOIN state s ON b.block_num = s.current_block AND b.version = '0.3.0' LIMIT 1" | jq -r '.[0] | "B\(.block_num) \(.status) (\(.phases_done)/\(.phases_total)) \(.name)"')
+    local ci_file="$(dirname "$DB")/ci-status.json"
+    local ci_status="no run"
+    if [[ -f "$ci_file" ]]; then
+        ci_status=$(jq -r '"\(if .status == "pass" then "✓ PASS" else "✗ FAIL" end) \(.run_at[:16])"' "$ci_file")
+    fi
 
-    sqlite3 -json "$DB" "SELECT id, priority, component FROM issues WHERE $where ORDER BY priority, component LIMIT $MAX_ROWS" | \
-        jq -r '.[] | "\(.id) \(.priority) \(.component)"'
-
-    local total=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE $where")
-    [[ $total -gt $MAX_ROWS ]] && echo "(+$((total - MAX_ROWS)) more)"
+    echo "Issues: ${p0} P0, ${p1} P1, ${p2} P2 | ${inprog} in_progress"
+    echo "Decisions: ${decisions} active | Sessions: ${session_count} (last: ${last_session})"
+    echo "Block: ${block_info:-none}"
+    echo "CI: ${ci_status}"
 }
 
-# Decisions list
+# Issues list — compact with titles and status
+cmd_issues() {
+    local filter="${1:-}"
+    local where="status IN ('open','in_progress')"
+    [[ "$filter" =~ ^P[0-3]$ ]] && where="status IN ('open','in_progress') AND priority='$filter'"
+    [[ -n "$filter" && ! "$filter" =~ ^P[0-3]$ && "$filter" != "all" ]] && where="status IN ('open','in_progress') AND component='$filter'"
+    [[ "$filter" == "all" ]] && where="status IN ('open','in_progress')"
+
+    local limit="LIMIT $MAX_ROWS"
+    local total=$(sqlite3 "$DB" "SELECT COUNT(*) FROM issues WHERE $where")
+
+    sqlite3 -json "$DB" "SELECT id, priority, component, status, substr(title,1,55) as title FROM issues WHERE $where ORDER BY priority, component $limit" | \
+        jq -r 'if length == 0 then "No issues found." else .[] | "\(.id) \(.priority) \(.component) [\(.status)] \(.title)" end'
+
+    if [[ $total -gt $MAX_ROWS ]]; then echo "(+$((total - MAX_ROWS)) more — use 'issues all' or 'search <keyword>')"; fi
+}
+
+# What's in flight right now — continuity check before claiming new work
+cmd_in_progress() {
+    local results=$(sqlite3 -json "$DB" \
+        "SELECT i.id, i.priority, i.component, i.title, i.fixed_by,
+                s.agent
+         FROM issues i
+         LEFT JOIN sessions s ON i.fixed_by = s.id
+         WHERE i.status = 'in_progress'
+         ORDER BY i.priority, i.id")
+
+    local count=$(echo "$results" | jq 'length')
+    if [[ "$count" == "0" || -z "$results" || "$results" == "[]" ]]; then
+        echo "Nothing in progress."
+        return 0
+    fi
+
+    echo "── IN PROGRESS ($count) ──"
+    echo "$results" | jq -r '.[] | "\(.id) [\(.priority)/\(.component)] \(.agent // "?")/\(.fixed_by // "?") — \(.title)"'
+}
+
+# Decisions list — no cap when "all" is requested
 cmd_decisions() {
     local filter="${1:-}"
     local where="status='active'"
-    [[ -n "$filter" && "$filter" != "all" ]] && where="$where AND component='$filter'"
-    [[ "$filter" == "all" ]] && where="1=1"
+    local limit="LIMIT $MAX_ROWS"
 
-    sqlite3 -json "$DB" "SELECT id, status, component, substr(title,1,35) as title FROM decisions WHERE $where ORDER BY id LIMIT $MAX_ROWS" | \
+    if [[ "$filter" == "all" ]]; then
+        where="1=1"
+        limit=""  # No cap — this is the source of truth, agents need it all
+    elif [[ -n "$filter" ]]; then
+        where="status='active' AND component='$filter'"
+    fi
+
+    sqlite3 -json "$DB" "SELECT id, status, component, substr(title,1,55) as title FROM decisions WHERE $where ORDER BY id $limit" | \
         jq -r '.[] | "\(.id) \(.status) \(.component) \(.title)"'
+
+    if [[ -z "$filter" ]]; then
+        local total=$(sqlite3 "$DB" "SELECT COUNT(*) FROM decisions WHERE status='active'")
+        if [[ $total -gt $MAX_ROWS ]]; then echo "(+$((total - MAX_ROWS)) more — use 'decisions all' to see everything)"; fi
+    fi
 }
 
-# Blocks list
+# Blocks list — with name
 cmd_blocks() {
-    sqlite3 -json "$DB" "SELECT block_num, status, phases_done, phases_total FROM blocks WHERE version='0.3.0' ORDER BY block_num" | \
-        jq -r '.[] | "B\(.block_num) \(.status) \(.phases_done)/\(.phases_total)"'
+    sqlite3 -json "$DB" "SELECT block_num, status, phases_done, phases_total, name FROM blocks WHERE version='0.3.0' ORDER BY block_num" | \
+        jq -r '.[] | "B\(.block_num) \(.status) \(.phases_done)/\(.phases_total) \(.name)"'
 }
 
 # Sessions list
 cmd_sessions() {
-    sqlite3 -json "$DB" "SELECT id, agent, outcome FROM sessions ORDER BY started_at DESC LIMIT $MAX_ROWS" | \
-        jq -r '.[] | "\(.id) \(.agent) \(.outcome // "active")"'
+    sqlite3 -json "$DB" "SELECT id, agent, outcome, substr(summary,1,60) as summary FROM sessions ORDER BY started_at DESC LIMIT $MAX_ROWS" | \
+        jq -r '.[] | "\(.id) \(.agent) \(.outcome // "active") \(.summary // "")"'
 }
 
-# Issue detail - structured output
+# Issue detail — full text, no truncation
 cmd_issue_detail() {
     local id="$1"
     sqlite3 -json "$DB" "SELECT id, title, status, priority, severity, component, problem, fix_required, root_cause, fix_applied, files, fixed_by FROM issues WHERE id='$id'" | \
-        jq -r '.[0] | if .status == "resolved" then
-            "[\(.id)] \(.title)\nStatus: \(.status) | \(.priority) | \(.component)\nProblem: \(.problem[:150] // "none")\n─ Resolution ─\nCause: \(.root_cause[:150] // "none")\nFix: \(.fix_applied[:150] // "none")\nFiles: \(.files // "none")\nBy: \(.fixed_by // "none")"
+        jq -r '.[0] | if . == null then "Issue not found: '"$id"'"
+        elif .status == "resolved" then
+            "[\(.id)] \(.title)\nStatus: \(.status) | \(.priority) | \(.component)\nProblem: \(.problem // "none")\n─ Resolution ─\nCause: \(.root_cause // "none")\nFix: \(.fix_applied // "none")\nFiles: \(.files // "none")\nBy: \(.fixed_by // "none")"
         else
-            "[\(.id)] \(.title)\nStatus: \(.status) | \(.priority) | \(.component)\nProblem: \(.problem[:200] // "none")\nNeeded: \(.fix_required[:200] // "none")"
+            "[\(.id)] \(.title)\nStatus: \(.status) | \(.priority) | \(.component)\nProblem: \(.problem // "none")\nNeeded: \(.fix_required // "none")"
         end'
 }
 
-# Decision detail
+# Decision detail — full text, no truncation
 cmd_decision_detail() {
     local id="$1"
     sqlite3 -json "$DB" "SELECT id, title, status, component, rule, rationale FROM decisions WHERE id='$id'" | \
-        jq -r '.[0] | "[\(.id)] \(.title)\nStatus: \(.status) | \(.component)\nRule: \(.rule[:200] // "none")\nRationale: \(.rationale[:150] // "none")"'
+        jq -r '.[0] | if . == null then "Decision not found: '"$id"'"
+        else
+            "[\(.id)] \(.title)\nStatus: \(.status) | \(.component)\nRule: \(.rule // "none")\nRationale: \(.rationale // "none")"
+        end'
 }
 
 # Session detail
 cmd_session_detail() {
     local id="$1"
     sqlite3 -json "$DB" "SELECT id, agent, model_id, outcome, summary, next_steps, git_commits, issues_closed FROM sessions WHERE id='$id'" | \
-        jq -r '.[0] | "[\(.id)] \(.agent) (\(.model_id // "?"))\nOutcome: \(.outcome // "active")\nSummary: \(.summary[:200] // "none")\nNext: \(.next_steps[:150] // "none")\nCommits: \(.git_commits // "none")\nClosed: \(.issues_closed // "none")"'
+        jq -r '.[0] | "[\(.id)] \(.agent) (\(.model_id // "?"))\nOutcome: \(.outcome // "active")\nSummary: \(.summary // "none")\nNext: \(.next_steps // "none")\nCommits: \(.git_commits // "none")\nClosed: \(.issues_closed // "none")"'
 }
 
-# Block detail
+# Block detail — accept both "8" and "B8", include acceptance criteria
 cmd_block_detail() {
-    local num="$1"
-    sqlite3 -json "$DB" "SELECT block_num, name, status, phases_done, phases_total, tests_at_start, tests_at_end, blockers FROM blocks WHERE version='0.3.0' AND block_num=$num" | \
-        jq -r '.[0] | "Block \(.block_num): \(.name)\nStatus: \(.status) | Phases: \(.phases_done)/\(.phases_total)\nTests: \(.tests_at_start // "?") → \(.tests_at_end // "?")\nBlockers: \(.blockers // "none")"'
+    local num="${1#[Bb]}"  # Strip leading B or b
+    sqlite3 -json "$DB" "SELECT block_num, name, status, phases_done, phases_total, tests_at_start, tests_at_end, blockers, acceptance_criteria FROM blocks WHERE version='0.3.0' AND block_num=$num" | \
+        jq -r '.[0] | if . == null then "Block not found: '"$1"'"
+        else
+            "Block \(.block_num): \(.name)\nStatus: \(.status) | Phases: \(.phases_done)/\(.phases_total)\nTests: \(.tests_at_start // "?") → \(.tests_at_end // "?")\nBlockers: \(.blockers // "none")\nAC: \(.acceptance_criteria // "none")"
+        end'
+}
+
+# CI status — proper function (was broken inline `local` in case block)
+cmd_ci_status() {
+    local ci_file
+    ci_file="$(cd "$(dirname "$DB")" && pwd)/ci-status.json"
+    if [[ ! -f "$ci_file" ]]; then
+        echo "No CI run recorded yet. Run: atlas-track run-ci"
+        return 0
+    fi
+
+    local status run_at duration
+    status=$(jq -r '.status' "$ci_file")
+    run_at=$(jq -r '.run_at' "$ci_file")
+    duration=$(jq -r '.duration_seconds' "$ci_file")
+
+    if [[ "$status" == "pass" ]]; then
+        echo "✓ CI PASS — ${run_at} (${duration}s)"
+    else
+        echo "✗ CI FAIL — ${run_at} (${duration}s)"
+        echo ""
+        echo "Failed checks:"
+        jq -r '.checks | to_entries[] | select(.value.status == "fail") | "  ✗ \(.key)"' "$ci_file"
+        local failed_tests
+        failed_tests=$(jq -r '.checks.tests.failed // [] | .[]' "$ci_file" 2>/dev/null | head -20)
+        if [[ -n "$failed_tests" ]]; then
+            echo ""
+            echo "Failed tests (first 20):"
+            echo "$failed_tests" | sed 's/^/  /'
+        fi
+        local p0
+        p0=$(jq -r '.checks | to_entries[] | select(.value.status == "fail") | .value.p0_issue // empty' "$ci_file" 2>/dev/null)
+        local p0_created
+        p0_created=$(jq -r '.p0_created // empty' "$ci_file" 2>/dev/null)
+        [[ -n "$p0_created" ]] && echo "" && echo "P0 filed: $p0_created"
+    fi
+}
+
+# Search issues — with component, status, priority
+cmd_search_issues() {
+    local keyword="$1"
+    local escaped=$(sql_escape "$keyword")
+
+    echo "Issues matching '${keyword}':"
+    sqlite3 -json "$DB" \
+        "SELECT id, priority, component, status, substr(title,1,55) as title
+         FROM issues
+         WHERE title LIKE '%${escaped}%' OR problem LIKE '%${escaped}%' OR fix_required LIKE '%${escaped}%'
+         ORDER BY priority, id
+         LIMIT 10" | \
+        jq -r '.[] | "\(.id) \(.priority) \(.component) [\(.status)] \(.title)"'
+
+    local total=$(sqlite3 "$DB" \
+        "SELECT COUNT(*) FROM issues WHERE title LIKE '%${escaped}%' OR problem LIKE '%${escaped}%' OR fix_required LIKE '%${escaped}%'")
+    if [[ $total -gt 10 ]]; then echo "(+$((total - 10)) more — refine your search keyword)"; fi
 }
 
 # next — Recommended work order for AI agents
@@ -86,10 +204,22 @@ cmd_next() {
     # Count open P0s
     local p0_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P0'")
     local p1_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P1'")
+    local inprog_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM issues WHERE status='in_progress'")
 
     echo "── RECOMMENDED NEXT ACTIONS ──"
-    echo "Open: ${p0_count} P0 blockers, ${p1_count} P1 issues"
+    echo "Open: ${p0_count} P0 blockers, ${p1_count} P1 issues | ${inprog_count} in_progress"
     echo ""
+
+    # Show in-progress if any (don't duplicate work)
+    if [[ $inprog_count -gt 0 ]]; then
+        echo "⚡ IN PROGRESS (check before claiming new work):"
+        sqlite3 -json "$db" \
+            "SELECT i.id, i.priority, i.component, i.title, s.agent
+             FROM issues i LEFT JOIN sessions s ON i.fixed_by = s.id
+             WHERE i.status = 'in_progress' ORDER BY i.priority, i.id" | \
+            jq -r '.[] | "   \(.id) [\(.priority)/\(.component)] \(.agent // "?") — \(.title)"'
+        echo ""
+    fi
 
     # Step 1: Show any P0s that are DELETES (wrong test, not bugs)
     local deletes=$(sqlite3 -json "$db" \
