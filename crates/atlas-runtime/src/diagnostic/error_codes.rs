@@ -9,6 +9,7 @@
 //! - AT1xxx: Syntax/lexer errors
 //! - AT2xxx: Warnings (unused, unreachable, etc.)
 //! - AT3xxx: Semantic/type checking errors
+//! - AT4xxx: Async/await errors
 //! - AT5xxx: Module system errors
 //! - AT9xxx: Internal errors
 
@@ -136,6 +137,18 @@ pub const COPY_TYPE_REQUIRED: &str = "AT3036";
 /// Fired when a generic type argument does not satisfy a trait bound.
 /// For example, `fn f<T: Display>(x: T)` requires `T` to implement `Display`.
 pub const TRAIT_BOUND_NOT_SATISFIED: &str = "AT3037";
+
+// AT4xxx - Async/Await Errors
+pub const AWAIT_OUTSIDE_ASYNC: &str = "AT4001";
+pub const AWAIT_NON_FUTURE: &str = "AT4002";
+pub const ASYNC_RETURN_TYPE_MISMATCH: &str = "AT4003";
+pub const ASYNC_FN_AS_SYNC_ARG: &str = "AT4004";
+pub const FUTURE_USED_WITHOUT_AWAIT: &str = "AT4005";
+pub const ASYNC_MAIN_FORBIDDEN: &str = "AT4006";
+pub const SPAWN_IN_SYNC_CONTEXT: &str = "AT4007";
+pub const FUTURE_TYPE_MISMATCH: &str = "AT4008";
+pub const ASYNC_CLOSURE_UNSUPPORTED: &str = "AT4009";
+pub const AWAIT_IN_SYNC_LOOP: &str = "AT4010";
 
 // AT5xxx - Module System Errors
 pub const INVALID_MODULE_PATH: &str = "AT5001";
@@ -528,6 +541,57 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3052",
         description: "Inferred type incompatible with usage",
         help: Some("The type inferred for this expression is incompatible with how it is used at this site. Add an explicit type annotation or change the usage."),
+    },
+    // === AT4xxx: Async/Await Errors ===
+    ErrorCodeInfo {
+        code: "AT4001",
+        description: "`await` used outside of an async function or top-level scope",
+        help: Some("Move this `await` into an `async fn`, or restructure so the `await` appears at the top level of the script."),
+    },
+    ErrorCodeInfo {
+        code: "AT4002",
+        description: "`await` applied to a non-Future value",
+        help: Some("Only values of type `Future<T>` can be awaited. Check that the expression returns a Future."),
+    },
+    ErrorCodeInfo {
+        code: "AT4003",
+        description: "async fn body return type incompatible with declared return type",
+        help: Some("The value returned from the async fn body does not match the declared return type. Add an explicit annotation or fix the returned value."),
+    },
+    ErrorCodeInfo {
+        code: "AT4004",
+        description: "async fn passed where a sync fn parameter is expected",
+        help: Some("An `async fn` returns `Future<T>`, not `T` directly. Wrap it or change the parameter type to accept `Future<T>`."),
+    },
+    ErrorCodeInfo {
+        code: "AT4005",
+        description: "Future value used as its resolved inner type without `await`",
+        help: Some("This `Future<T>` value is being used as `T`. Did you forget to `await` it?"),
+    },
+    ErrorCodeInfo {
+        code: "AT4006",
+        description: "`main` function cannot be declared `async`",
+        help: Some("Use top-level `await` instead — the Atlas runtime wraps the entire script in `block_on` automatically."),
+    },
+    ErrorCodeInfo {
+        code: "AT4007",
+        description: "`spawn` called in a sync context with no active runtime",
+        help: Some("Call `spawn` inside an `async fn` or at the top level where the Tokio runtime is active."),
+    },
+    ErrorCodeInfo {
+        code: "AT4008",
+        description: "Future type parameter mismatch",
+        help: Some("`Future<T>` is not compatible with `Future<U>` when `T ≠ U`. Check that the future resolves to the expected type."),
+    },
+    ErrorCodeInfo {
+        code: "AT4009",
+        description: "async anonymous functions (async closures) are not yet supported",
+        help: Some("Use a named `async fn` declaration instead of an async closure for now."),
+    },
+    ErrorCodeInfo {
+        code: "AT4010",
+        description: "`await` inside a sync for-loop body — ambiguous evaluation order",
+        help: Some("Move the loop into an `async fn` or restructure to avoid awaiting inside a sync loop."),
     },
     // === AT5xxx: Module System Errors ===
     ErrorCodeInfo {
