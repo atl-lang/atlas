@@ -39,6 +39,7 @@ impl Parser {
             TokenKind::Record => self.parse_record_literal(),
             TokenKind::LeftBrace => self.parse_block_or_anon_struct(),
             TokenKind::Minus | TokenKind::Bang => self.parse_unary(),
+            TokenKind::Await => self.parse_await(),
             TokenKind::If => self.parse_if_expr(),
             TokenKind::Match => self.parse_match_expr(),
             TokenKind::Fn => self.parse_anon_fn(),
@@ -440,6 +441,27 @@ impl Parser {
             entries,
             span: start_span.merge(end_span),
         }))
+    }
+
+    /// Parse await expression: `await <expr>`
+    fn parse_await(&mut self) -> Result<Expr, ()> {
+        let await_span = self.advance().span; // consume `await`
+
+        // `await` must be followed by an expression
+        if self.is_at_end() || self.check(TokenKind::Semicolon) {
+            self.diagnostics.push(Diagnostic::error(
+                "expected expression after `await`",
+                await_span,
+            ));
+            return Err(());
+        }
+
+        let expr = self.parse_precedence(Precedence::Unary)?;
+        let end_span = expr.span();
+        Ok(Expr::Await {
+            expr: Box::new(expr),
+            span: await_span.merge(end_span),
+        })
     }
 
     /// Parse unary expression
@@ -900,6 +922,14 @@ impl Parser {
         // Consume '>'
         let end_token = self.consume(TokenKind::Greater, "Expected '>' after type arguments")?;
         let span = start.merge(end_token.span);
+
+        // Future<T> is a first-class type — produce TypeRef::Future directly
+        if name == "Future" && type_args.len() == 1 {
+            return Ok(TypeRef::Future {
+                inner: Box::new(type_args.remove(0)),
+                span,
+            });
+        }
 
         Ok(TypeRef::Generic {
             name,
