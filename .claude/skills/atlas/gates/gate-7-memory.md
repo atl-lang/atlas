@@ -1,6 +1,6 @@
 # GATE 7: Memory Check (After Every Phase)
 
-**Condition:** Phase complete, `atlas-track done` run, ready to commit
+**Condition:** Phase complete, ready to commit and close session
 
 ---
 
@@ -13,6 +13,7 @@
 3. **Crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
 4. **Added/renamed AST node, Type variant, opcode, function, error code?** → Run `atlas-doc-auditor`
 5. **Block completion phase?** → **Always run `atlas-doc-auditor`** (full sweep)
+6. **ALWAYS — Write `.atlas-handoff.md` before `atlas-track done`** (see core `atlas` skill for template)
 
 ---
 

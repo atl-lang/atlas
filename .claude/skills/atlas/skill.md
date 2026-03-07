@@ -27,10 +27,17 @@ atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale 
 atlas-track in-progress              # Check what's already claimed — avoid duplicate work
 ```
 
-This gives you: session ID, mode, handoff, P0 blockers, git state, block progress.
+**If sitrep shows `📄 .atlas-handoff.md` → READ IT NOW. Not optional.**
+```bash
+# Read the handoff file — it has in-flight work, next action, critical context
+# that cannot fit in the 300-char DB summary. It is written by every agent at close.
+```
+
+This gives you: session ID, mode, handoff, P0 blockers, git state, block progress, active plans.
 
 **If `Work: BLOCKED`** → Fix P0 issues first. No new features.
 **If stale issues shown** → Check if fixed, then `fix` or `abandon`.
+**Active plans:** `atlas-track plans` — shows open PL-XXX plans (brainstorm outcomes).
 **Quick orientation mid-session:** `atlas-track context` (no session overhead).
 
 ---
@@ -136,6 +143,34 @@ git commit -m "fix(...): description"
 ```
 
 **Session close** — required at end of every session, even if interrupted:
+
+**Step 1 — Write `.atlas-handoff.md` (MANDATORY before atlas-track done):**
+```markdown
+# Atlas Handoff — <session-id>
+
+**Updated:** <ISO timestamp> | **Commit:** <git sha> | **Agent:** <model>
+
+## What Was Done This Session
+<one sentence per issue/phase — specific: IDs, files, decisions. No bullet dumps.>
+
+## Current State
+<P0/P1/P2 counts, CI status, active block, any in-progress claims>
+
+## In-Flight Work
+<NONE — or: what was started but not finished, exact state, what the next concrete step is>
+
+## Next Action
+<specific enough for a cold-start agent: issue ID + what to do + relevant file/function path>
+
+## Open Questions (Needs Architect Input)
+<NONE — or: decisions that need the architect, not implementation choices>
+
+## Critical Context (Don't Lose This)
+<anything a future agent would discover the hard way: patterns, pitfalls, non-obvious state>
+```
+Then: `git add .atlas-handoff.md` and include in the final commit (or its own `chore: update handoff` commit).
+
+**Step 2 — Close session:**
 ```bash
 atlas-track done S-XXX success \
   "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \

@@ -19,6 +19,7 @@ source "$SCRIPT_DIR/lib/queries.sh"
 source "$SCRIPT_DIR/lib/session.sh"
 source "$SCRIPT_DIR/lib/issues.sh"
 source "$SCRIPT_DIR/lib/decisions.sh"
+source "$SCRIPT_DIR/lib/plans.sh"
 source "$SCRIPT_DIR/lib/mode.sh"
 source "$SCRIPT_DIR/lib/maintenance.sh"
 
@@ -65,6 +66,14 @@ DECISIONS (source of truth — not MEMORY.md):
   update-decision D-001 rule "new rule text"    # Amend rule or rationale text
   supersede D-001 D-002            # Mark D-001 superseded by D-002
   deprecate D-001 "reason"         # Mark deprecated
+
+PLANS (brainstorm outcomes, approach docs, timestamped):
+  plans                                         # List open+active plans
+  plan PL-001                                   # Full detail
+  plan add "Title" "approach" [H-XXX] [D-XXX]  # Create plan (git snapshot auto-captured)
+  plan done PL-001 "outcome"                    # Mark done
+  plan abandon PL-001 "reason"                  # Mark abandoned
+  plan link PL-001 H-076                        # Link issue or decision (H-XXX or D-XXX)
 
 BLOCKS:
   blocks                           # Block progress with names
@@ -127,6 +136,22 @@ case "${1:-}" in
     update-decision) cmd_update_decision "${2:?'Decision ID required'}" "${3:?'Field required (rule|rationale|title|component)'}" "${4:?'New value required'}" ;;
     supersede)       cmd_supersede "${2:?}" "${3:?}" ;;
     deprecate)       cmd_deprecate "${2:?}" "${3:-}" ;;
+
+    # Plans
+    plans)      cmd_plan_list "${2:-}" ;;
+    plan)
+        case "${2:-}" in
+            add)     cmd_plan_add "${3:?'Title required'}" "${4:?'Approach required'}" "${5:-}" "${6:-}" ;;
+            done)    cmd_plan_done "${3:?'Plan ID required'}" "${4:?'Outcome required'}" ;;
+            abandon) cmd_plan_abandon "${3:?'Plan ID required'}" "${4:-}" ;;
+            link)    cmd_plan_link "${3:?'Plan ID required'}" "${4:?'Target required (H-XXX or D-XXX)'}" ;;
+            PL-*)    cmd_plan_detail "${2}" ;;
+            *)       if [[ "${2:-}" =~ ^PL-[0-9]+ ]]; then
+                         cmd_plan_detail "${2}"
+                     else
+                         echo "Usage: atlas-track plan <add|done|abandon|link|PL-XXX>"
+                     fi ;;
+        esac ;;
 
     # Queries
     next)       cmd_next ;;

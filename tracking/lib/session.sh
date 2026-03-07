@@ -63,14 +63,28 @@ cmd_go() {
     echo "── Handoff ──"
     local last_handoff
     last_handoff=$(sqlite3 -json "$DB" "SELECT id, agent, outcome, summary, next_steps, git_commits, issues_closed FROM sessions WHERE id != '$sid' ORDER BY started_at DESC LIMIT 1" | \
-        jq -r 'if length > 0 then .[0] | "From: \(.agent) (\(.id)) → \(.outcome // "?")\nDid: \((.summary // "-") | .[0:80])\nNext: \((.next_steps // "-") | .[0:80])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" else "First session" end')
+        jq -r 'if length > 0 then .[0] | "From: \(.agent) (\(.id)) → \(.outcome // "?")\nDid: \((.summary // "-") | .[0:300])\nNext: \((.next_steps // "-") | .[0:300])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" else "First session" end')
     echo "$last_handoff"
     # Warn if handoff is blank (context ran out, session auto-closed by gc)
     if echo "$last_handoff" | grep -q "Did: -\|Did: none\|Next: -\|Next: none"; then
         echo "  ⚠ BLANK HANDOFF: previous session closed without summary."
-        echo "    Check git log for what was committed. Reconstruct next steps manually."
+        echo "    Check .atlas-handoff.md and git log for what was committed."
     fi
     echo ""
+
+    # Handoff file — rich persistent context written by every agent at session close
+    local repo_root
+    repo_root=$(git rev-parse --show-toplevel 2>/dev/null || echo ".")
+    local handoff_file="$repo_root/.atlas-handoff.md"
+    if [[ -f "$handoff_file" ]]; then
+        local handoff_updated
+        handoff_updated=$(grep "^\*\*Updated:" "$handoff_file" 2>/dev/null | head -1 | sed 's/\*\*Updated:\*\* //' | sed 's/ |.*//' | tr -d '\n')
+        echo "── Handoff File ──"
+        echo "📄 .atlas-handoff.md (last written: ${handoff_updated:-unknown})"
+        echo "   MANDATORY: Read .atlas-handoff.md before starting any work."
+        echo "   It contains: in-flight work, next action, critical context."
+        echo ""
+    fi
 
     # Stale issues (in_progress from previous sessions)
     local stale_json=$(sqlite3 -json "$DB" "SELECT id, component, title FROM issues WHERE status='in_progress' LIMIT 5")
@@ -191,7 +205,7 @@ cmd_sitrep() {
     echo ""
 
     echo "── Handoff ──"
-    echo "$last_session" | jq -r 'if . == {} then "No previous session" else "From: \(.agent // "?") (\(.id // "?")) → \(.outcome // "?")\nDid: \((.summary // "none") | .[0:80])\nNext: \((.next_steps // "none") | .[0:80])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" end'
+    echo "$last_session" | jq -r 'if . == {} then "No previous session" else "From: \(.agent // "?") (\(.id // "?")) → \(.outcome // "?")\nDid: \((.summary // "none") | .[0:300])\nNext: \((.next_steps // "none") | .[0:300])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" end'
     echo ""
 
     local p0_count=$(echo "$p0_issues" | jq 'length')

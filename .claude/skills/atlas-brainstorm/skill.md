@@ -69,7 +69,16 @@ atlas-track add "Feature/bug title" P0|P1|P2 "what it is, why it matters, approa
 atlas-track add "Open question: X" P2 "what we explored, what's still unclear, what info is needed to decide"
 ```
 
+**If an approach/plan was decided (not just a decision — a concrete implementation direction):**
+```bash
+atlas-track plan add "Title of plan" "Approach: what will be built, how, key tradeoffs. Enough for a cold-start agent to understand the direction without re-exploring." "H-XXX" "D-XXX"
+```
+Plans (PL-XXX) capture implementation intent — timestamped with a git commit snapshot. They survive context drain and connect brainstorm outcomes to future work.
+
 No brainstorm session ends with "let's think about this more" as the only output. That's lost.
+
+**After brainstorm — also update `.atlas-handoff.md`:**
+If the brainstorm produced a concrete next action or changed what the next agent should do, update the handoff file. Include: what was decided, what PL-XXX was created, what the next concrete step is.
 
 ---
 

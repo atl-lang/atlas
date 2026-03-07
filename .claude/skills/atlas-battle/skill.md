@@ -36,6 +36,9 @@ atlas-track phase-done B<N>
 atlas-track complete-block B<N> "47/47 pass, bugs filed H-XXX"  # final phase only
 ```
 
+**Session close — write `.atlas-handoff.md` FIRST (MANDATORY):**
+Write: battle test results (pass rate, domains), bugs filed (H-XXX with file path), any patterns in failures, next action. See core `atlas` skill for the full template. Commit it, then run `atlas-track done`.
+
 ---
 
 ## Battle Test Suite

@@ -32,6 +32,9 @@ atlas-track phase-done B<N>
 atlas-track complete-block B<N> "tests added, coverage areas"  # final phase only
 ```
 
+**Session close — write `.atlas-handoff.md` FIRST (MANDATORY):**
+Write: what tests were added/fixed, coverage gaps found (file them if not already), next action. See core `atlas` skill for the full template. Commit it, then run `atlas-track done`.
+
 ---
 
 ## Two-Tier System (NEVER VIOLATE)

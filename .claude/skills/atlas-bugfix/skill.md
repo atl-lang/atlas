@@ -142,6 +142,11 @@ git commit -m "fix(...): description"
 ```
 
 **Session close** — required at end of every session:
+**Step 1 — Write `.atlas-handoff.md` (MANDATORY before atlas-track done):**
+Write the handoff file with: what was fixed (issue IDs + root cause), in-flight work if interrupted, next action (specific issue ID + file path), critical context (patterns found, pitfalls). See core `atlas` skill for the exact template.
+Then: `git add .atlas-handoff.md` and include in the final commit or its own `chore: update handoff` commit.
+
+**Step 2 — Close session:**
 ```bash
 atlas-track done S-XXX success \
   "Fixed H-001 (missing increment in VM loop → added i += 1). Fixed H-002 (wrong token in parser → swapped Async for AsyncFn)." \

@@ -83,7 +83,11 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    ```
 5. Memory checked (GATE 7)
 6. **Commit only** — local-first workflow
-7. Close session with informative summary (for AI continuity):
+7. Write `.atlas-handoff.md` and close session (for AI continuity):
+
+**Write `.atlas-handoff.md` FIRST — mandatory before atlas-track done:**
+Write: what phase completed + what was wired, bugs filed this phase, next phase name + scope + key files to touch. See core `atlas` skill for the full template. Commit it with the phase commit or as `chore: update handoff (Phase-XX)`.
+
 ```bash
 atlas-track done <session-id> success \
   "Phase-XX complete: [what was wired up]. Fixed H-XXX (cause → fix). Filed H-YYY (bug discovered)." \
