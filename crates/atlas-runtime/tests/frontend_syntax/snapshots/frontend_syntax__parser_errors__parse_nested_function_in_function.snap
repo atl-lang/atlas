@@ -1,5 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+assertion_line: 46
 expression: program
 ---
 items:
@@ -44,6 +45,7 @@ items:
                         end: 63
                         file: "<input>"
                   ownership: ~
+                  mutable: false
                   span:
                     start: 54
                     end: 63
