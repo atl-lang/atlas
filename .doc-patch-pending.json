@@ -13,7 +13,6 @@
     "stdlib"
   ],
   "relevant_docs": [
-    "docs/known-issues.md",
     "docs/stdlib/index.md"
   ],
   "status": "done",

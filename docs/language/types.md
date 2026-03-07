@@ -137,4 +137,3 @@ let map: HashMap<string, number> = hashMapNew();
 map = hashMapPut(map, "key", 42);  // Rebind pattern still works
 ```
 
-**Current limitations:** See `docs/known-issues.md`

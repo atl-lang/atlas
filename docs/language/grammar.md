@@ -229,4 +229,3 @@ generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
 - Interpolation uses `{ ... }` inside backticks.
 - Double-quoted strings support `{ ... }` interpolation and are desugared into concatenations.
 
-**Current limitations:** See `docs/known-issues.md`

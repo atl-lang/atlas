@@ -94,7 +94,6 @@ Files:
 - `docs/language/modules.md`
 - `docs/stdlib/index.md`
 - `docs/stdlib/path.md`
-- `docs/known-issues.md`
 - `crates/atlas-jit/JIT_STATUS.md`
 
 Verify:

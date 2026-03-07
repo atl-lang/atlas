@@ -367,4 +367,3 @@ Example:
 atlas new my-app --template=binary
 ```
 
-**Current limitations:** See `docs/known-issues.md`

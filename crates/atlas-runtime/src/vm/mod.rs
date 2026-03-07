@@ -1321,6 +1321,19 @@ impl VM {
                             };
                             self.push(Value::JsonValue(Arc::new(result)));
                         }
+                        // H-116: range as for-in target — index i yields start + i
+                        Value::Range { start, .. } => {
+                            if let Value::Number(idx) = index_val {
+                                let s = start.unwrap_or(0.0);
+                                self.push(Value::Number(s + idx));
+                            } else {
+                                return Err(RuntimeError::InvalidIndex {
+                                    span: self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy),
+                                });
+                            }
+                        }
                         _ => {
                             return Err(RuntimeError::TypeError {
                                 msg: "Cannot index non-array/string/json".to_string(),
@@ -1741,6 +1754,24 @@ impl VM {
                         Value::Array(arr) => {
                             let len = arr.len();
                             self.push(Value::Number(len as f64));
+                        }
+                        // H-116: range in for-in — compute length and push only length
+                        Value::Range {
+                            start,
+                            end,
+                            inclusive,
+                        } => {
+                            let s = start.unwrap_or(0.0) as i64;
+                            let e = end.ok_or_else(|| RuntimeError::TypeError {
+                                msg: "for-in range requires an end bound".to_string(),
+                                span: Span::dummy(),
+                            })? as i64;
+                            let len = if inclusive {
+                                (e - s + 1).max(0) as f64
+                            } else {
+                                (e - s).max(0) as f64
+                            };
+                            self.push(Value::Number(len));
                         }
                         _ => {
                             return Err(RuntimeError::TypeError {

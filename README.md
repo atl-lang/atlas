@@ -9,7 +9,7 @@
 [![CI](https://github.com/proxikal/atlas/actions/workflows/ci.yml/badge.svg)](https://github.com/proxikal/atlas/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/License-MIT%2FApache--2.0-blue.svg)](LICENSE)
 [![Rust](https://img.shields.io/badge/Rust-1.70%2B-orange.svg)](https://www.rust-lang.org/)
-[![Status](https://img.shields.io/badge/Status-v0.2%20Active-blue.svg)](docs/known-issues.md)
+[\![Status](https://img.shields.io/badge/Status-v0.3%20Active-blue.svg)](docs/README.md)
 
 </div>
 
@@ -411,7 +411,7 @@ atlas typecheck program.atl
 | Fuzzing Infrastructure | ✅ Complete |
 | Documentation | ✅ Complete |
 
-*Detailed progress in [Project Status](docs/known-issues.md) | v0.3 plan in [`docs/internal/V03_PLAN.md`](docs/internal/V03_PLAN.md)*
+*v0.3 plan in [`docs/internal/V03_PLAN.md`](docs/internal/V03_PLAN.md)*
 
 ---
 
@@ -422,8 +422,6 @@ atlas typecheck program.atl
 | [`docs/stdlib/`](docs/stdlib/) | Language specification |
 | [`docs/stdlib/index.md`](docs/stdlib/index.md) | Grammar and syntax |
 | [`docs/stdlib/types.md`](docs/stdlib/types.md) | Type system |
-| [`docs/known-issues.md`](docs/known-issues.md) | Execution model |
-| [Project Status](docs/known-issues.md) | Implementation progress |
 | [`PRD.md`](PRD.md) | Product requirements |
 
 ---

@@ -96,5 +96,4 @@ let out: number = match result {
 };
 ```
 
-**Current limitations:** See `docs/known-issues.md`
 

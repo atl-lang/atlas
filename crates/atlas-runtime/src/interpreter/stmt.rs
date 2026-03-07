@@ -479,9 +479,26 @@ impl Interpreter {
         // Evaluate the iterable expression to get the array
         let iterable = self.eval_expr(&for_in_stmt.iterable)?;
 
-        // Extract array elements
+        // Extract array elements (H-116: also accept ranges)
         let elements = match &iterable {
             Value::Array(arr) => arr.iter().cloned().collect::<Vec<_>>(),
+            Value::Range {
+                start,
+                end,
+                inclusive,
+            } => {
+                let start_n = start.unwrap_or(0.0) as i64;
+                let end_n = end.ok_or_else(|| RuntimeError::TypeError {
+                    msg: "for-in range requires an end bound".to_string(),
+                    span: for_in_stmt.iterable.span(),
+                })? as i64;
+                let iter: Box<dyn Iterator<Item = i64>> = if *inclusive {
+                    Box::new(start_n..=end_n)
+                } else {
+                    Box::new(start_n..end_n)
+                };
+                iter.map(|i| Value::Number(i as f64)).collect()
+            }
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: format!("for-in requires an array, found {}", iterable.type_name()),

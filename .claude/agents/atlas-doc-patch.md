@@ -38,7 +38,6 @@ Understand WHAT changed: new features, bug fixes, behavior changes, removed item
 Read ONLY the docs listed in `relevant_docs`. Do not read anything else.
 
 Priority order:
-1. `docs/known-issues.md` — always if typechecker/interpreter/compiler/vm changed
 2. Domain-specific docs (types.md, grammar.md, stdlib/index.md) — only if in relevant_docs
 3. `crates/atlas-runtime/src/CLAUDE.md` — only if ast.rs or value.rs changed
 
@@ -48,7 +47,6 @@ For each doc, check:
 
 | Change type | Doc action needed |
 |-------------|------------------|
-| Bug fixed that was in known-issues.md | Remove or mark resolved |
 | New behavior/feature added | Add note if it affects documented behavior |
 | Stdlib function semantics changed | Update docs/stdlib/index.md description |
 | New AST node or Value variant | Add to CLAUDE.md table if missing |
@@ -67,7 +65,6 @@ Use `Edit` tool. One file at a time. Match existing style exactly.
 - Expand docs beyond what's needed
 - Touch files not in relevant_docs
 
-For `docs/known-issues.md` specifically:
 - If a bug listed there was fixed in this commit → add `[Fixed: <commit>]` inline or remove the entry
 - If a new known limitation was introduced → add a concise entry
 
@@ -93,7 +90,6 @@ Output a brief summary for the main agent to act on:
 Domains: <domains>
 
 ### Files edited
-- docs/known-issues.md
 - (or "none — docs were already accurate")
 
 ### What changed
@@ -108,7 +104,6 @@ ACTION FOR MAIN AGENT: stage and commit the above files.
 ## Critical Rules
 
 - **Read the diff first.** Never assume what changed — read it.
-- **Docs list bugs, not features.** known-issues.md tracks limitations, not every change.
 - **"None" is a valid output.** If docs are accurate, say so and clear the pending file.
 - **No source changes.** Touch ONLY `.md` files and the pending JSON.
 - **No git ops. Ever.** No `git add`, no `git commit`, no `git push`. The main agent owns all git operations — Haiku touching git risks conflicts with active sessions.

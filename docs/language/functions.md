@@ -69,4 +69,3 @@ fn choose(flag: bool) -> number {
 }
 ```
 
-**Current limitations:** See `docs/known-issues.md`

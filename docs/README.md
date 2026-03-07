@@ -38,7 +38,6 @@ docs/
 ├── tooling/            # CLI and tools
 │   └── cli.md          # atlas check, atlas run
 │
-└── known-issues.md     # Current limitations (honest)
 ```
 
 ## How These Docs Were Generated

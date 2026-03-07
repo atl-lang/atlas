@@ -13,7 +13,6 @@ Currently paused for battle-testing and hardening.
 - **Fix correctly, not temporarily.** Hacks create conversion debt. Correct fixes align with systems-level.
 - **Partial implementations are intentional.** Some AST nodes exist but aren't wired up yet - this is scaffolding, not dead code.
 - **Before deleting "incomplete" code:** Check git history + `atlas-track decisions`. Ask user if uncertain.
-- **See `docs/known-issues.md`** for current bugs and limitations.
 
 ## Source of Truth
 - **Code is law.** The codebase is the only source of truth.

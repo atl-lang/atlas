@@ -86,4 +86,3 @@ fn first_positive(values: number[]) -> Option<number> {
 }
 ```
 
-**Current limitations:** See `docs/known-issues.md`

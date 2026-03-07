@@ -1988,9 +1988,9 @@ impl<'a> TypeChecker<'a> {
                     Type::TypeParameter { ref name } if name == ANY_TYPE_PARAM
                 );
 
-                // Validate iterable is an array (or any-placeholder for dynamic cases)
+                // Validate iterable is an array or range (or any-placeholder for dynamic cases)
                 match iterable_norm {
-                    Type::Array(_) => {}
+                    Type::Array(_) | Type::Range => {}
                     _ if iterable_is_any => {}
                     _ => {
                         self.diagnostics.push(
@@ -2011,9 +2011,10 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
 
-                // Infer loop variable type from array element type (or any-placeholder)
+                // Infer loop variable type from array element type, range → number, or any
                 let inferred = match &iterable_norm {
                     Type::Array(element_type) => (**element_type).clone(),
+                    Type::Range => Type::Number, // H-116: range iteration yields numbers
                     _ if iterable_is_any => Type::any_placeholder(),
                     _ => Type::Unknown,
                 };

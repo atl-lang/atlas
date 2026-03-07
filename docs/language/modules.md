@@ -60,4 +60,3 @@ extern "libz" fn compress as "zlib_compress"(data: string) -> string;
 - Top-level statements always run first, regardless of `main()` position.
 - If no `main()` exists, only top-level statements execute.
 
-**Current limitations:** See `docs/known-issues.md`

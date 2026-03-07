@@ -79,4 +79,3 @@ fn process<T: Display + Copy>(value: T) -> string { ... }
 **Current limitations:**
 - Trait inheritance (`trait A: B`) — not yet implemented (H-076)
 - Generic traits (`trait Container<T>`) — not yet implemented (H-077)
-- See `docs/known-issues.md`
