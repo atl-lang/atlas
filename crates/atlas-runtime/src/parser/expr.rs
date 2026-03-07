@@ -1205,7 +1205,30 @@ impl Parser {
 
         self.consume(TokenKind::FatArrow, "Expected '=>' after pattern")?;
 
-        let body = self.parse_expression()?;
+        // H-114: allow `return expr` as a match arm body by wrapping it in a Block expression
+        let body = if self.check(TokenKind::Return) {
+            let ret_start = self.peek().span;
+            self.advance(); // consume `return`
+            let value = if !self.check(TokenKind::Comma) && !self.check(TokenKind::RightBrace) {
+                Some(self.parse_expression()?)
+            } else {
+                None
+            };
+            let ret_span = value
+                .as_ref()
+                .map(|e: &Expr| ret_start.merge(e.span()))
+                .unwrap_or(ret_start);
+            Expr::Block(Block {
+                statements: vec![Stmt::Return(ReturnStmt {
+                    value,
+                    span: ret_span,
+                })],
+                tail_expr: None,
+                span: ret_span,
+            })
+        } else {
+            self.parse_expression()?
+        };
         let body_span = body.span();
 
         Ok(MatchArm {

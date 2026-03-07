@@ -139,3 +139,23 @@ fn test_parse_comments_inside_blocks() {
         "Expected no errors for block comments"
     );
 }
+
+// H-114: return inside match arm body should parse without error
+#[test]
+fn return_in_match_arm_parses() {
+    let src = r#"
+enum Status { Active, Inactive }
+fn get_label(s: Status) -> string {
+    match s {
+        Status::Active => return "active",
+        Status::Inactive => return "inactive",
+    }
+}
+"#;
+    let (_, diagnostics) = parse_source(src);
+    assert!(
+        diagnostics.is_empty(),
+        "Expected no parse errors for return in match arm, got: {:?}",
+        diagnostics
+    );
+}
