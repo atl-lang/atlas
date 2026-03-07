@@ -118,6 +118,8 @@ fn assert_has_error(diagnostics: &[Diagnostic], code: &str) {
 // ============================================================================
 
 // Domain submodules (files live in tests/typesystem/)
+#[path = "typesystem/async_types.rs"]
+mod async_types;
 #[path = "typesystem/bindings/mod.rs"]
 mod bindings;
 #[path = "typesystem/constraints/mod.rs"]

@@ -260,6 +260,9 @@ pub struct TypeChecker<'a> {
     current_function_info: Option<(String, Span)>,
     /// Whether we're inside a loop (for break/continue checking)
     in_loop: bool,
+    /// Whether we're inside an async context (async fn body or top-level script).
+    /// Top-level is always async — the runtime wraps scripts in block_on.
+    in_async_context: bool,
     /// Declared symbols in current function (name -> (span, kind))
     pub(super) declared_symbols: HashMap<String, (Span, SymbolKind)>,
     /// Used symbols in current function
@@ -354,6 +357,7 @@ impl<'a> TypeChecker<'a> {
             current_function_return_type: None,
             current_function_info: None,
             in_loop: false,
+            in_async_context: true, // top-level is always async (runtime wraps in block_on)
             declared_symbols: HashMap::new(),
             used_symbols: HashSet::new(),
             method_table: methods::MethodTable::new(),
@@ -579,12 +583,24 @@ impl<'a> TypeChecker<'a> {
             .collect();
 
         // Resolve return type (None = omitted, will be inferred later)
-        let return_type = func
+        let inner_return_type = func
             .return_type
             .as_ref()
             .map_or(Type::any_placeholder(), |t| {
                 self.resolve_type_ref_with_params(t, &combined_type_params)
             });
+        // For async fn, the call-site type is Future<T>, not T
+        let return_type = if func.is_async {
+            match &inner_return_type {
+                Type::Generic { name, .. } if name == "Future" => inner_return_type.clone(),
+                _ => Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_return_type.clone()],
+                },
+            }
+        } else {
+            inner_return_type
+        };
 
         let type_params = func
             .type_params
@@ -1089,6 +1105,20 @@ impl<'a> TypeChecker<'a> {
 
     fn check_function(&mut self, func: &FunctionDecl) {
         self.validate_type_param_bounds(&func.type_params);
+
+        // AT4006: async fn main() is forbidden
+        if func.is_async && func.name.name == "main" {
+            self.diagnostics.push(
+                Diagnostic::error_with_code(
+                    error_codes::ASYNC_MAIN_FORBIDDEN,
+                    "`main` function cannot be declared `async`".to_string(),
+                    func.name.span,
+                )
+                .with_label("`async` on `main` is forbidden")
+                .with_help("use top-level `await` instead — the Atlas runtime wraps the script in block_on automatically"),
+            );
+        }
+
         // Save previous function context (for nested functions)
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
@@ -1096,6 +1126,9 @@ impl<'a> TypeChecker<'a> {
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
         let prev_type_params = std::mem::take(&mut self.active_type_params);
+        let prev_in_async = self.in_async_context;
+        // Entering a sync fn clears the async context; entering an async fn sets it
+        self.in_async_context = func.is_async;
 
         let mut combined_type_params = prev_type_params.clone();
         combined_type_params.extend(func.type_params.clone());
@@ -1137,15 +1170,33 @@ impl<'a> TypeChecker<'a> {
                 }
             }
         };
+        // For async fn: the declared return type T is the inner type;
+        // the call-site type is Future<T>. Wrap it here so symbol table is correct.
+        let effective_return_type = if func.is_async {
+            // If already declared as Future<T>, don't double-wrap
+            match &return_type {
+                Type::Generic { name, .. } if name == "Future" => return_type.clone(),
+                _ => Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![return_type.clone()],
+                },
+            }
+        } else {
+            return_type.clone()
+        };
+        // The body is checked against the inner return type (T), not Future<T>
+        let body_return_type = return_type.clone();
+
         if let Some(symbol) = self.symbol_table.lookup_mut(&func.name.name) {
             if let Type::Function {
                 return_type: ret, ..
             } = &mut symbol.ty
             {
-                **ret = return_type.clone();
+                **ret = effective_return_type.clone();
             }
         }
-        self.current_function_return_type = Some(return_type.clone());
+        // Body checking uses the unwrapped inner type for return statement validation
+        self.current_function_return_type = Some(body_return_type);
         self.current_function_info = Some((func.name.name.clone(), func.name.span));
 
         // Clear tracking for this function
@@ -1290,6 +1341,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.in_async_context = prev_in_async;
     }
 
     /// Emit warnings for unused symbols
