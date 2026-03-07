@@ -40,6 +40,17 @@ This gives you: session ID, mode, handoff, P0 blockers, git state, block progres
 **Active plans:** `atlas-track plans` — shows open PL-XXX plans (brainstorm outcomes).
 **Quick orientation mid-session:** `atlas-track context` (no session overhead).
 
+**After orienting — invoke the right skill BEFORE doing anything else:**
+| Situation | Action |
+|-----------|--------|
+| Task is a bug fix / issue fix | Invoke `atlas-bugfix` skill via Skill tool |
+| Task is a new block / feature phase | Invoke `atlas-blocks` skill via Skill tool |
+| Task is "what should we build?" / B10 direction / design question | Invoke `atlas-brainstorm` skill via Skill tool |
+| Task is adding/fixing tests | Invoke `atlas-test` skill via Skill tool |
+| Task is battle testing / validation | Invoke `atlas-battle` skill via Skill tool |
+
+**Do not answer the user before invoking the matching skill.** The skill loads the protocol that governs how you execute the task. Answering first = skipping the protocol.
+
 ---
 
 ## Roles
@@ -192,15 +203,18 @@ P0 blockers > P1 bugs > P2 features > cleanup
 
 ---
 
-## Workflow Skills (load when needed)
+## Workflow Skills (MANDATORY — use Skill tool, not just awareness)
 
 | Skill | Trigger | What it adds |
 |-------|---------|-------------|
-| `atlas-blocks` | "Scaffold Block N", "Next: Phase-XX", "Start Phase-XX" | Full gate sequence, scaffolding, phase handoff |
+| `atlas-brainstorm` | Design questions, "what to build", B-selection, tradeoff evaluation | Context-first exploration, plan capture |
+| `atlas-blocks` | "Scaffold Block N", "Next Phase", feature implementation | Full gate sequence, scaffolding, phase handoff |
 | `atlas-bugfix` | Bug fixes, issue fixes, TDD work | TDD protocol, focused quality gates |
 | `atlas-battle` | Battle testing, validation, regression testing | Battle test suite, parity sweep, full GATE 6 |
+| `atlas-test` | Writing tests, coverage gaps, test failures | Test domain rules, parity protocol |
 
-**If your task matches a workflow skill, invoke it.** The core skill handles everything else: architecture, brainstorming, refactoring, enhancements, debugging, general development.
+**These are not reference docs — they are execution protocols. Use the Skill tool to invoke them.**
+The core skill handles only what no other skill covers: refactoring, doc updates, infra, ad-hoc tasks.
 
 ---
 
