@@ -984,6 +984,160 @@ impl SymbolTable {
 
         register_process_functions(&mut table);
 
+        // ── Async / Future stdlib (Phase 11) ──────────────────────────────
+        // These functions return Value::Future at runtime, so the typechecker
+        // must know their return type is Future<T> for `await` to be valid.
+        let future_any = Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::any_placeholder()],
+        };
+        let future_null = Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::Null],
+        };
+        let future_string = Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::String],
+        };
+        let future_array = Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::Array(Box::new(Type::any_placeholder()))],
+        };
+
+        // Timers
+        table.define_builtin(
+            "sleep",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(future_null.clone()),
+            },
+        );
+        table.define_builtin(
+            "interval",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Number],
+                return_type: Box::new(future_null.clone()),
+            },
+        );
+        table.define_builtin(
+            "timeout",
+            Type::Function {
+                type_params: vec![],
+                params: vec![future_any.clone(), Type::Number],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+
+        // Task spawning
+        table.define_builtin(
+            "spawn",
+            Type::Function {
+                type_params: vec![],
+                params: vec![future_any.clone(), Type::any_placeholder()],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+        table.define_builtin(
+            "taskJoin",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+
+        // Future combinators
+        table.define_builtin(
+            "futureAll",
+            Type::Function {
+                type_params: vec![],
+                // Accept any[] so empty array literals [] pass type-checking
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(future_array),
+            },
+        );
+        table.define_builtin(
+            "futureRace",
+            Type::Function {
+                type_params: vec![],
+                // Accept any[] so mixed/empty arrays pass type-checking
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+
+        // Future constructors
+        table.define_builtin(
+            "futureResolve",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+        table.define_builtin(
+            "futureReject",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::any_placeholder()],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+        table.define_builtin(
+            "futureNew",
+            Type::Function {
+                type_params: vec![],
+                params: vec![],
+                return_type: Box::new(future_any.clone()),
+            },
+        );
+
+        // Future introspection
+        table.define_builtin(
+            "futureIsResolved",
+            Type::Function {
+                type_params: vec![],
+                params: vec![future_any.clone()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "futureIsRejected",
+            Type::Function {
+                type_params: vec![],
+                params: vec![future_any.clone()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
+            "futureIsPending",
+            Type::Function {
+                type_params: vec![],
+                params: vec![future_any.clone()],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+
+        // Async I/O
+        table.define_builtin(
+            "readFileAsync",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::String],
+                return_type: Box::new(future_string),
+            },
+        );
+        table.define_builtin(
+            "writeFileAsync",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::String, Type::String],
+                return_type: Box::new(future_null),
+            },
+        );
+
         table
     }
 

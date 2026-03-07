@@ -18,6 +18,8 @@ mod async_runtime_loops;
 mod compiler;
 #[path = "async_runtime/interpreter.rs"]
 mod interpreter;
+#[path = "async_runtime/stdlib_wiring.rs"]
+mod stdlib_wiring;
 #[path = "async_runtime/value_future.rs"]
 mod value_future;
 
@@ -1861,7 +1863,6 @@ fn test_channel_send_receive_types() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_sleep_for_duration() {
     let code = r#"
         await sleep(10);
@@ -1872,7 +1873,6 @@ fn test_sleep_for_duration() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_sleep_zero_duration() {
     let code = r#"
         await sleep(0);
@@ -1883,7 +1883,6 @@ fn test_sleep_zero_duration() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_sleep_short_duration() {
     let code = r#"
         await sleep(5);
@@ -1912,7 +1911,6 @@ fn test_sleep_in_task() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_sleep_sequence() {
     let code = r#"
         await sleep(5);
