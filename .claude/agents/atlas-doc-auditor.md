@@ -131,6 +131,10 @@ Verify:
 - `.claude/lazy/comms.md`
 - `.claude/lazy/tracking-db.md`
 
+**All agents** (verify each exists):
+- `.claude/agents/atlas-doc-auditor.md` (this file)
+- `.claude/agents/atlas-doc-patch.md` (scoped Haiku doc fixer, triggered post-commit)
+
 Verify:
 - All 5 skill files exist and contain "AI Continuity — Non-Negotiable" section
 - Any new skill added to `.claude/skills/` is listed here — if not, add it and flag it

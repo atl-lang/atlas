@@ -62,8 +62,24 @@ cargo check -p atlas-runtime   # verify compile (~0.5s)
 cargo check -p atlas-runtime   # verify still compiles
 cargo fmt
 git commit                      # fmt+clippy run automatically
+# If Stop hook shows DOC DRIFT ALERT → fire atlas-doc-patch immediately (see below)
 atlas-track go                  # check CI status
 ```
+
+### Doc Drift Protocol (MANDATORY — automatic but AI must act)
+
+After every `git commit` that touches source files:
+1. `doc-patch-trigger.sh` hook writes `.doc-patch-pending.json` automatically
+2. The **Stop hook shows a DOC DRIFT ALERT** at end of turn if pending file exists
+3. **Next action: invoke `atlas-doc-patch` agent** (Haiku, scoped, ~1-2 min)
+
+```
+# When you see DOC DRIFT ALERT in the Stop hook output:
+# Use the Agent tool with atlas-doc-patch — it reads the pending file and fixes only what's needed
+```
+
+The pending file persists across sessions. `atlas-track go` will show it if unfixed.
+**Never leave a DOC DRIFT ALERT unresolved across sessions** — it means real drift is accumulating.
 
 ### NEVER run nextest manually:
 ```bash

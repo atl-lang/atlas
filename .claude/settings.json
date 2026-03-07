@@ -72,6 +72,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/proxikal/.claude/hooks/atlas/doc-patch-trigger.sh",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
@@ -113,6 +123,11 @@
           {
             "type": "command",
             "command": "/Users/proxikal/.claude/hooks/atlas-git-stop-check.sh",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "/Users/proxikal/.claude/hooks/atlas/doc-patch-stop-check.sh",
             "timeout": 5
           }
         ]
