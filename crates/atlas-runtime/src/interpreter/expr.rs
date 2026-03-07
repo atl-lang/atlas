@@ -37,6 +37,11 @@ impl Interpreter {
                 span,
             } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
+            // B8: Await — implemented in Phase 09 (interpreter)
+            Expr::Await { span, .. } => Err(RuntimeError::TypeError {
+                msg: "async/await not yet implemented in interpreter".to_string(),
+                span: *span,
+            }),
         }
     }
 

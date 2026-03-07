@@ -802,6 +802,15 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            // B8 Phase 07 implements full Future<T> type resolution
+            TypeRef::Future { inner, .. } => {
+                let inner_ty =
+                    self.resolve_type_ref_with_params_and_context(inner, type_params, None);
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_ty],
+                }
+            }
         }
     }
 
@@ -2479,6 +2488,14 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            // B8 Phase 07 implements full Future<T> type resolution
+            TypeRef::Future { inner, .. } => {
+                let inner_ty = self.resolve_type_ref_with_context(inner, None);
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_ty],
+                }
+            }
         }
     }
 
@@ -2664,6 +2681,14 @@ impl<'a> TypeChecker<'a> {
                 Type::Generic {
                     name: name.clone(),
                     type_args: resolved_args,
+                }
+            }
+            // B8 Phase 07 implements full Future<T> type resolution
+            TypeRef::Future { inner, .. } => {
+                let inner_ty = self.resolve_type_ref_with_substitutions(inner, substitutions);
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_ty],
                 }
             }
         }

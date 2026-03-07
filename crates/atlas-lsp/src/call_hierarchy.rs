@@ -272,6 +272,7 @@ fn format_type(type_ref: &TypeRef) -> String {
             format!("{}<{}>", name, arg_types.join(", "))
         }
         TypeRef::Structural { .. } => "{ ... }".to_string(),
+        TypeRef::Future { inner, .. } => format!("Future<{}>", format_type(inner)),
     }
 }
 

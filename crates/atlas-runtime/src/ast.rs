@@ -11,7 +11,7 @@ use std::cell::Cell;
 ///
 /// This version number is included in JSON dumps to ensure compatibility.
 /// Increment when making breaking changes to the AST structure.
-pub const AST_VERSION: u32 = 4;
+pub const AST_VERSION: u32 = 5;
 
 /// Top-level program containing all items
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -163,6 +163,8 @@ pub enum ExternTypeAnnotation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FunctionDecl {
     pub name: Identifier,
+    /// Whether this function is declared with the `async` keyword
+    pub is_async: bool,
     /// Type parameters (e.g., <T, E> in fn foo<T, E>(...))
     pub type_params: Vec<TypeParam>,
     pub params: Vec<Param>,
@@ -592,6 +594,11 @@ pub enum Expr {
     Block(Block),
     /// Enum variant expression: `EnumName::VariantName` or `EnumName::VariantName(args)`
     EnumVariant(EnumVariantExpr),
+    /// `await expr` — suspends until the Future resolves (B8)
+    Await {
+        expr: Box<Expr>,
+        span: Span,
+    },
 }
 
 /// Unary expression
@@ -857,6 +864,11 @@ pub enum TypeRef {
         members: Vec<TypeRef>,
         span: Span,
     },
+    /// `Future<T>` — first-class async return type (B8)
+    Future {
+        inner: Box<TypeRef>,
+        span: Span,
+    },
 }
 
 /// Structural type member
@@ -919,6 +931,7 @@ impl Expr {
             Expr::AnonFn { span, .. } => *span,
             Expr::Block(block) => block.span,
             Expr::EnumVariant(e) => e.span,
+            Expr::Await { span, .. } => *span,
         }
     }
 }
@@ -964,6 +977,7 @@ impl TypeRef {
             TypeRef::Generic { span, .. } => *span,
             TypeRef::Union { span, .. } => *span,
             TypeRef::Intersection { span, .. } => *span,
+            TypeRef::Future { span, .. } => *span,
         }
     }
 }

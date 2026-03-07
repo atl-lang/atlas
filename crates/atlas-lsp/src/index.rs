@@ -516,6 +516,9 @@ impl SymbolIndex {
                     }
                 }
             }
+            Expr::Await { expr, .. } => {
+                self.index_expr(expr, ctx, false);
+            }
         }
     }
 

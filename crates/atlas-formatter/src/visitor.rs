@@ -713,6 +713,11 @@ impl FormatVisitor {
                     self.write(")");
                 }
             }
+            // B8: await expression — "await <expr>"
+            Expr::Await { expr, .. } => {
+                self.write("await ");
+                self.visit_expr(expr);
+            }
         }
     }
 
@@ -1036,6 +1041,10 @@ impl FormatVisitor {
                     .collect::<Vec<_>>()
                     .join(", ");
                 format!("{{ {} }}", parts)
+            }
+            // B8: Future<T> — format as "Future<inner>"
+            TypeRef::Future { inner, .. } => {
+                format!("Future<{}>", self.type_ref_to_string(inner))
             }
         }
     }

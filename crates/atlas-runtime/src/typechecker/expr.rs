@@ -210,8 +210,12 @@ impl<'a> TypeChecker<'a> {
                         self.check_expr(arg);
                     }
                 }
-                // TODO: Look up enum definition and verify variant exists with correct arity
-                // For now, return Unknown (enum type tracking coming in later phase)
+                // Enum type tracking is B8+ work — return Unknown for now
+                Type::Unknown
+            }
+            // B8 Phase 07 implements full await type checking (AT4001/AT4002)
+            Expr::Await { expr, .. } => {
+                self.check_expr(expr);
                 Type::Unknown
             }
         }

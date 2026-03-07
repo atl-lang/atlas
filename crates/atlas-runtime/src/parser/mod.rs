@@ -339,6 +339,7 @@ impl Parser {
 
         Ok(FunctionDecl {
             name,
+            is_async: false,
             type_params,
             params,
             return_type,

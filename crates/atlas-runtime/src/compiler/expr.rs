@@ -41,6 +41,11 @@ impl Compiler {
                 span,
             } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
+            // B8: Await — implemented in Phase 08 (compiler)
+            Expr::Await { span, .. } => Err(vec![Diagnostic::error(
+                "async/await not yet implemented in bytecode compiler",
+                *span,
+            )]),
         }
     }
 
