@@ -89,13 +89,13 @@ rebinding. See `.claude/memory/patterns/runtime.md`.
 `type_name()`, `Display`, `PartialEq`, equality semantics, bytecode serialization,
 interpreter eval, VM execution, all stdlib functions that pattern-match on Value.
 
-## Key Invariants (verified 2026-02-21)
+## Key Invariants (verified 2026-03-06)
 
 - `ValueArray` = `Arc<Vec<Value>>` — CoW via `Arc::make_mut`
 - `ValueHashMap` = `Arc<Mutex<AtlasHashMap>>` — shared mutation via locking
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
 - `FunctionRef` at `value.rs:464` — holds arity, bytecode_offset, local_count
-- `Param` at `ast.rs:187` — name, type_ref, ownership, span (ownership added Block 2)
+- `Param` at `ast.rs:382` — name, type_ref, ownership, mutable, span (mutable added H-089, ownership added Block 2)
 - `FunctionDecl.return_type: Option<TypeRef>` — `None` means inferred (Block 5); `infer_return_type()` in `typechecker/inference.rs`
 - AT3050 (inconsistent returns), AT3051 (uninferrable type param), AT3052 (inferred type incompatible) — registered in `diagnostic/error_codes.rs`
 - Expression statements require semicolons — `f(x)` without `;` fails to parse
