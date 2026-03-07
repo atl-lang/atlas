@@ -1849,21 +1849,62 @@ impl VM {
                 }
 
                 // ===== Async (Phase 10) =====
-                // AsyncCall, Await, WrapFuture, SpawnTask are implemented in Phase 10.
-                // Reaching these in the VM before Phase 10 is a hard error.
+                //
+                // Encoding:
+                //   AsyncCall / SpawnTask: u8 arg_count  (same layout as Call)
+                //   Await / WrapFuture:    no operands
+                //
+                // The compiler emits WrapFuture *inside* async fn bodies so that the
+                // return value is always a Value::Future.  AsyncCall therefore only needs
+                // to dispatch the call normally — the callee's WrapFuture handles wrapping.
+                //
+                // SpawnTask mirrors AsyncCall at this stage (eager execution, same as the
+                // interpreter).  True tokio::spawn concurrency requires an independent VM
+                // instance per task and is deferred to Phase 11 (stdlib async I/O).
                 Opcode::AsyncCall | Opcode::SpawnTask => {
-                    let _fn_const_idx = self.read_u16()?;
-                    let _arg_count = self.read_u8()?;
-                    return Err(RuntimeError::TypeError {
-                        msg: "async fn calls require Phase 10 VM integration".to_string(),
-                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                    });
+                    let arg_count = self.read_u8()? as usize;
+                    self.execute_call(arg_count)?;
+                    // Result is already Value::Future — the callee's WrapFuture emitted it.
                 }
-                Opcode::Await | Opcode::WrapFuture => {
-                    return Err(RuntimeError::TypeError {
-                        msg: "await/wrap-future require Phase 10 VM integration".to_string(),
-                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
-                    });
+                Opcode::Await => {
+                    let val = self.pop();
+                    match val {
+                        Value::Future(future) => match future.get_state() {
+                            crate::async_runtime::FutureState::Resolved(v) => {
+                                self.push(v);
+                            }
+                            crate::async_runtime::FutureState::Rejected(e) => {
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!("Awaited future was rejected: {}", e),
+                                    span: self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy),
+                                });
+                            }
+                            crate::async_runtime::FutureState::Pending => {
+                                return Err(RuntimeError::TypeError {
+                                        msg: "Cannot await a pending future in the VM synchronous execute loop".to_string(),
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                            }
+                        },
+                        other => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "AT4002: await operand must be Future, got {}",
+                                    other.type_name()
+                                ),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    }
+                }
+                Opcode::WrapFuture => {
+                    let val = self.pop();
+                    let future = crate::async_runtime::AtlasFuture::resolved(val);
+                    self.push(Value::Future(Arc::new(future)));
                 }
 
                 // ===== Special =====

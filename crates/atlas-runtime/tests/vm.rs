@@ -198,6 +198,8 @@ fn run_vm(source: &str) -> Result<String, String> {
 }
 
 // Domain submodules (files live in tests/vm/)
+#[path = "vm/async_vm.rs"]
+mod vm_async;
 #[path = "vm/complex_programs.rs"]
 mod vm_complex_programs;
 #[path = "vm/error_handling.rs"]

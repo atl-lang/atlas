@@ -2,6 +2,7 @@
 
 pub mod array_intrinsics;
 pub mod array_pure;
+pub mod async_vm;
 pub mod math_basic;
 pub mod math_trig;
 pub mod math_utils_constants;

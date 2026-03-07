@@ -422,7 +422,7 @@ impl Bytecode {
                         x if x == Opcode::TraitDispatch as u8 => 5, // u16 + u16 + u8 operand
                         x if x == Opcode::Struct as u8 => 4, // u16 + u16 operand
                         x if x == Opcode::AsyncCall as u8 || x == Opcode::SpawnTask as u8 => {
-                            3 // u16 fn_const_idx + u8 arg_count
+                            1 // u8 arg_count (same layout as Call)
                         }
                         _ => 0, // No operand (Await, WrapFuture, etc.)
                     };

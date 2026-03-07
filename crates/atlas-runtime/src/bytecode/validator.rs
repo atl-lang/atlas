@@ -259,14 +259,12 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
             }
             Ok((1, code[ip] as i64))
         }
-        // AsyncCall/SpawnTask: 3 bytes (u16 fn_const_idx + u8 arg_count)
+        // AsyncCall/SpawnTask: 1 byte (u8 arg_count) — same layout as Call
         Opcode::AsyncCall | Opcode::SpawnTask => {
-            if ip + 2 >= code.len() {
+            if ip >= code.len() {
                 return Err(opcode_name(opcode));
             }
-            let hi = code[ip] as u16;
-            let lo = code[ip + 1] as u16;
-            Ok((3, ((hi << 8) | lo) as i64))
+            Ok((1, code[ip] as i64))
         }
         // TraitDispatch: 5 bytes (trait_idx, method_idx, arg_count)
         Opcode::TraitDispatch => {
