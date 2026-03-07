@@ -4,7 +4,7 @@ trait Describe {
 }
 impl Describe for Point {
     fn describe(self) -> string {
-        return `Point({self.x}, {self.y})`;
+        return `Point(${self.x}, ${self.y})`;
     }
 }
 let p = Point { x: 3, y: 4 };

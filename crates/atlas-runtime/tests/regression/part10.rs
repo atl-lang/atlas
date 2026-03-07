@@ -47,7 +47,7 @@ fn test_h088_while_string_condition_not_narrowed() {
         let mut count = 0;
         while s != "" {
             count = count + 1;
-            s = ""
+            s = "";
         }
         count
     "#;
