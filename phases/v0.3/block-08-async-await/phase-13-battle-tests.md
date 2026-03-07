@@ -2,128 +2,114 @@
 
 ## Dependencies
 
-**Required:** Phase 12 (parity sweep complete)
+**Required:** Phase 12 complete (parity sweep passed — zero known divergences)
 
 **Verification:**
 ```bash
 ls battle-tests/async-*/
-atlas-track issues | grep battle
+atlas run battle-tests/async-basic/01_simple_async.atl
 ```
+
+**If missing:** Parity must be confirmed before battle tests — a parity bug discovered during battle testing is a Phase 12 failure, not a Phase 13 issue.
 
 ---
 
 ## Objective
 
-Validate async/await against real-world Atlas programs: concurrent HTTP, file I/O pipelines, producer/consumer patterns, error recovery, and stress tests. Catch what unit tests miss.
+Validate async/await against real-world Atlas programs that unit tests do not cover: concurrent pipelines, producer/consumer patterns, error recovery under async, and stress patterns. Catch what isolated unit tests miss.
 
 ---
 
 ## Files
 
-**Create:** `battle-tests/async-basic/` — simple async programs
-**Create:** `battle-tests/async-concurrency/` — concurrent task patterns
-**Create:** `battle-tests/async-error-recovery/` — error handling under async
-**Create:** `battle-tests/async-stdlib/` — full stdlib async integration
+**Create:** `battle-tests/async-basic/` (~4 Atlas programs)
+**Create:** `battle-tests/async-concurrency/` (~4 Atlas programs)
+**Create:** `battle-tests/async-error-recovery/` (~3 Atlas programs)
+**Create:** `battle-tests/async-stdlib/` (~3 Atlas programs)
+**Update:** `crates/atlas-runtime/tests/` — test harness to run battle test files (~40 lines Rust)
 
-**Total new code:** ~500 lines Atlas test programs, ~80 lines Rust test harness
+**Total new code:** ~500 lines Atlas programs, ~40 lines Rust harness
+**Total tests:** 14 Atlas programs (each counts as a battle test)
 
 ---
 
-## Battle Test Programs
+## Dependencies (Components)
 
-### async-basic/
-```atlas
-// 01_simple_fetch.atl — await a simulated fetch
-async fn fetch_data(url: string) -> string {
-    await sleep(10)
-    return "data from " + url
-}
-let result = await fetch_data("https://api.example.com")
-print(result)
-// Expected: "data from https://api.example.com"
-```
+- Both engines — interpreter and VM (Phases 09, 10)
+- Stdlib async (Phase 11)
+- Parity baseline (Phase 12)
+- `atlas run` CLI (existing)
 
-```atlas
-// 02_sequential_awaits.atl — multiple sequential awaits
-async fn step1() -> number { await sleep(0); return 1 }
-async fn step2(n: number) -> number { await sleep(0); return n + 1 }
-async fn step3(n: number) -> number { await sleep(0); return n * 2 }
+---
 
-let a = await step1()
-let b = await step2(a)
-let c = await step3(b)
-print(c)
-// Expected: 4
-```
+## Implementation Notes
 
-### async-concurrency/
-```atlas
-// 01_parallel_tasks.atl — spawn multiple concurrent tasks
-async fn compute(n: number) -> number {
-    await sleep(0)
-    return n * n
-}
+**Key patterns to analyze:**
+- Review `compiler-quality/battle-testing.md` in auto-memory for the battle test structure and harness used in earlier blocks
+- Check existing `battle-tests/` directory structure to match the naming and layout convention
 
-let f1 = spawn(compute(3))
-let f2 = spawn(compute(4))
-let f3 = spawn(compute(5))
+**Battle test program requirements:**
+- Each program must be self-contained and runnable via `atlas run`
+- Each program has a documented expected output
+- Programs must exercise features that unit tests do not: multi-step async pipelines, concurrent task collections, real file I/O, error chains
 
-let results = await all([f1, f2, f3])
-print(results)
-// Expected: [9, 16, 25]
-```
+**async-basic programs** (4 programs):
+- A simple fetch simulation: async fn that sleeps briefly then returns a constructed string
+- Sequential pipeline: three async fns chained with await, each transforming the previous result
+- Async fn inside a loop: awaiting results collected into an array
+- Async fn with struct method calls
 
-```atlas
-// 02_race.atl — first future wins
-async fn slow() -> string { await sleep(1000); return "slow" }
-async fn fast() -> string { await sleep(1);    return "fast" }
+**async-concurrency programs** (4 programs):
+- Parallel tasks: spawn three tasks simultaneously, collect all results with `all`
+- Race pattern: two tasks with different simulated delays, race to get the first result
+- Producer/consumer: one async fn produces values into a channel, another consumes
+- Fan-out/fan-in: one input spawns N tasks, results aggregated
 
-let winner = await race([slow(), fast()])
-print(winner)
-// Expected: "fast"
-```
+**async-error-recovery programs** (3 programs):
+- Retry logic: async fn that fails on first attempt, retries with exponential backoff using timeout
+- Fallback: race two futures, use fallback value if both fail
+- Partial failure: `all` with one failing future — correct error surfacing
 
-### async-error-recovery/
-```atlas
-// 01_error_propagation.atl
-async fn might_fail(n: number) -> Result<number, string> {
-    if n < 0 { return Err("negative input") }
-    return Ok(n * 2)
-}
+**async-stdlib programs** (3 programs):
+- File pipeline: read a file async, transform contents, write to a new file async
+- Concurrent file reads: read multiple files in parallel using spawn + all
+- HTTP simulation: fetch a URL (local mock), parse the response, print a field
 
-let result = await might_fail(-1)
-match result {
-    Ok(v) => print(v),
-    Err(e) => print("Error: " + e)
-}
-// Expected: "Error: negative input"
-```
+**Error handling:**
+- All programs must handle errors gracefully — no panics, no unhandled RuntimeError leaks
 
-### async-stdlib/
-```atlas
-// 01_file_pipeline.atl — read → transform → write
-let content = await read_file_async("input.txt")
-let transformed = content.to_upper()
-await write_file_async("output.txt", transformed)
-print("done")
-// Expected: "done"
-```
+**Integration points:**
+- Uses: all async features from Phases 01–12
+- Run via `atlas run` CLI and via Rust test harness
+
+---
+
+## Tests (TDD Approach)
+
+Each Atlas battle test program is one test. The Rust harness:
+1. Runs the program through the interpreter
+2. Runs the program through the VM
+3. Asserts the output matches the documented expected output
+4. Asserts interpreter output equals VM output
+
+**Minimum test count:** 14 battle programs (28 engine runs total)
 
 ---
 
 ## Acceptance Criteria
 
-- ✅ 10+ battle test programs authored
-- ✅ All programs run correctly in interpreter and VM (parity)
-- ✅ Concurrent programs complete without deadlock
-- ✅ Error recovery programs produce correct error output
-- ✅ File I/O battle test passes
-- ✅ `atlas run` executes all battle test files without crash
+- ✅ 14 battle test Atlas programs authored across four categories
+- ✅ All programs produce correct expected output in interpreter
+- ✅ All programs produce correct expected output in VM
+- ✅ Interpreter and VM output identical for all programs
+- ✅ No panics or unhandled errors in any program
+- ✅ `atlas run` executes all programs without crash
+- ✅ `cargo check -p atlas-runtime` clean
 
 ---
 
 ## References
 
-**Decision Logs:** D-030 (multi-thread — concurrent battle tests validate this)
-**Auto-memory:** `compiler-quality/battle-testing.md`
-**Related phases:** Phase 12 (parity baseline), Phase 14 (LSP), Phase 15 (AC verification)
+**Decision Logs:** D-030 (concurrent battle tests validate multi-thread runtime)
+**Specifications:** auto-memory `compiler-quality/battle-testing.md`
+**Related phases:** Phase 12 (parity baseline), Phase 14 (LSP), Phase 15 (final AC gate)

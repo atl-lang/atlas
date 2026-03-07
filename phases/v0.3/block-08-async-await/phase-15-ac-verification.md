@@ -2,95 +2,135 @@
 
 ## Dependencies
 
-**Required:** All phases 01–14 complete
+**Required:** Phase 14 complete (all phases 01–14 done)
 
 **Verification:**
 ```bash
 atlas-track block B8
 cargo check --workspace
+cargo fmt --check
+cargo clippy --workspace -- -D warnings
 atlas-track ci-status
 ```
+
+**If missing:** All prior phases must be complete and committed before this gate runs.
 
 ---
 
 ## Objective
 
-Final acceptance criteria gate: verify all B8 deliverables are complete, CI is green, spec is accurate, and block is closed.
+Final acceptance criteria gate: verify all B8 deliverables are complete, all tests pass, spec is accurate, and the block is closed in atlas-track.
 
 ---
 
-## Acceptance Criteria Checklist
+## Files
 
-### Language Features
-- ✅ `async fn` syntax parses and executes in interpreter and VM
-- ✅ `await` expression syntax parses and executes in both engines
-- ✅ `Future<T>` as first-class type
-- ✅ Top-level `await` works without async wrapper
-- ✅ `async fn` return type implicitly `Future<T>` (or explicit `-> Future<T>`)
-- ✅ `await` only valid inside async fn or at top-level (AT4001 enforced)
-- ✅ `await` on non-Future emits AT4002
+No new code. This phase is a verification and close sequence only.
 
-### Runtime
-- ✅ Multi-threaded tokio runtime active (D-030 — `new_multi_thread()`)
-- ✅ `Value: Send` compile-time assertion present
-- ✅ No deadlock risk in block_on usage
-- ✅ `spawn()`, `all()`, `race()`, `sleep()`, `timeout()` work with await
+**Total new code:** 0
+**Total tests:** 0
 
-### Parity
-- ✅ 100% interpreter/VM parity — zero known divergences
-- ✅ Error messages identical in both engines
-- ✅ All parity tests pass
+---
 
-### Quality
-- ✅ AT4001–AT4010 registered and tested
-- ✅ `docs/language/async.md` complete and accurate
-- ✅ 0 clippy warnings (`cargo clippy --workspace -- -D warnings`)
-- ✅ `cargo fmt --check` passes
-- ✅ CI green (or CI run scheduled with known-passing suite)
+## Dependencies (Components)
 
-### Test Coverage
-- ✅ 25+ typechecker tests
-- ✅ 30+ interpreter async tests
-- ✅ 20+ VM async tests
-- ✅ 20+ stdlib async tests
-- ✅ 25+ parity tests
-- ✅ 10+ battle test programs
-- ✅ 7+ LSP tests
-- ✅ **Total: 137+ new test cases**
+- All phases 01–14
+- `atlas-track` CLI
+- `cargo check`, `cargo fmt`, `cargo clippy`
 
-### Tracking
-- ✅ `atlas-track block B8` shows `complete 15/15`
-- ✅ D-030 decision recorded (multi-thread runtime)
-- ✅ Session closed: `atlas-track done S-XXX success "..." "..."`
-- ✅ MEMORY.md updated if new patterns discovered
+---
+
+## Implementation Notes
+
+**Key patterns to analyze:**
+- Review the AC verification pattern from a completed block (e.g., B6 or B7) in `phases/v0.3/` to match the close sequence
+
+**AC checklist to verify:**
+
+Language features:
+- `async fn` syntax parses and executes in both interpreter and VM
+- `await` expression syntax parses and executes in both engines
+- `Future<T>` is a first-class type
+- Top-level `await` works without an async fn wrapper
+- Implicit `Future<T>` wrapping on async fn return type
+- AT4001 enforced: await only valid inside async fn or at top-level
+- AT4002 enforced: await only valid on Future values
+
+Runtime:
+- Multi-threaded tokio runtime active — `new_multi_thread()` (D-030)
+- `Value: Send` compile-time assertion present
+- No known deadlock paths in block_on usage
+- `spawn`, `all`, `race`, `sleep`, `timeout` work with `await`
+
+Parity:
+- 100% interpreter/VM parity — zero known divergences
+- Error messages identical in both engines
+- All parity tests pass
+
+Quality:
+- AT4001–AT4010 registered, all tested
+- `docs/language/async.md` complete and accurate against the implementation
+- Zero clippy warnings
+- `cargo fmt --check` passes
+- CI run triggered or scheduled
+
+Test coverage:
+- 25+ typechecker tests
+- 30+ interpreter async tests
+- 20+ VM async tests
+- 20+ stdlib async tests
+- 25+ parity tests
+- 14+ battle test programs
+- 7+ LSP tests
+- Total: 141+ new test cases
+
+**Error handling:**
+- Any failed AC item is a blocker — do not close the block with open failures
+
+**Integration points:**
+- Uses: atlas-track for block status update and session close
+
+---
+
+## Tests (TDD Approach)
+
+No new test cases. Run existing suite:
+```bash
+cargo nextest run -p atlas-runtime -E 'test(async)'
+cargo nextest run -p atlas-runtime -E 'test(parity)'
+cargo nextest run -p atlas-lsp -E 'test(async)'
+```
+
+**Minimum test count:** 0 new (all prior phases supply the tests)
 
 ---
 
 ## Close Sequence
 
-```bash
-# 1. Verify block
-atlas-track block B8
+1. Run full verification checklist above
+2. Confirm `atlas-track block B8` shows `15/15` phases done
+3. Run `cargo check --workspace`, `cargo fmt --check`, `cargo clippy --workspace -- -D warnings`
+4. Commit with message: `feat(async): complete B8 — async/await, Future<T>, multi-thread VM, 141+ tests`
+5. Close session: `atlas-track done S-XXX success "summary" "next steps"`
+6. Update MEMORY.md if new patterns were discovered during B8
 
-# 2. Final build check
-cargo check --workspace
-cargo fmt --check
-cargo clippy --workspace -- -D warnings
+---
 
-# 3. Commit
-git add -A
-git commit -m "feat(async): complete B8 — async/await syntax, Value::Future, multi-thread VM, parity"
+## Acceptance Criteria
 
-# 4. Close session
-atlas-track done S-XXX success \
-  "B8 Async/Await complete: async fn, await expr, Future<T> type, multi-thread tokio (D-030), 137+ tests, 100% interpreter/VM parity" \
-  "B9 Quick Wins is complete. Consider starting B10 or next planned block."
-```
+- ✅ All language features from spec implemented and verified
+- ✅ D-030 satisfied: multi-thread runtime, Value: Send confirmed
+- ✅ 100% parity: zero known interpreter/VM divergences
+- ✅ 141+ new test cases across all test files
+- ✅ Zero clippy warnings, fmt clean
+- ✅ `atlas-track block B8` shows `complete 15/15`
+- ✅ Session closed via `atlas-track done`
+- ✅ MEMORY.md updated if new patterns found
 
 ---
 
 ## References
 
 **Decision Logs:** D-030 (multi-thread async runtime)
-**Spec:** docs/language/async.md
-**All B8 phases:** Phase 01–14
+**Specifications:** docs/language/async.md
+**Related phases:** All B8 phases (01–14)

@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-**Required:** Phase 07 (typechecker), Phase 04 (parser)
+**Required:** Phase 13 complete (all runtime async features verified and battle-tested)
 
 **Verification:**
 ```bash
@@ -10,52 +10,78 @@ grep "async\|Await\|Future" crates/atlas-lsp/src/
 cargo check -p atlas-lsp
 ```
 
+**If missing:** LSP reads type information produced by the typechecker (Phase 07) and AST from the parser (Phase 04) — both must be stable. Placing this phase after battle tests ensures the underlying implementation is solid before the editor layer is built on top.
+
 ---
 
 ## Objective
 
-Full LSP support for async/await: hover shows `async fn` and `Future<T>` types, completion suggests `await` in async context, diagnostics surface AT4001/AT4002 in-editor.
+Full LSP support for async/await: hover shows correct types for async fns and awaited expressions, completion offers `await` in async contexts, and inline diagnostics surface AT4001/AT4002.
 
 ---
 
 ## Files
 
-**Update:** `crates/atlas-lsp/src/hover.rs` (or equivalent)
-  - async fn hover: show `async fn name(...) -> Future<T>`
-  - Future<T> variable hover: show resolved inner type
-  - `await expr` hover: show T (the resolved type)
-**Update:** `crates/atlas-lsp/src/completion.rs` (or equivalent)
-  - Suggest `await` keyword when in async context
-  - Complete `Future<T>` in type position
-**Update:** `crates/atlas-lsp/src/diagnostics.rs` (or equivalent)
-  - Surface AT4001, AT4002, AT4003 as LSP diagnostics with ranges
+**Update:** `crates/atlas-lsp/src/hover.rs` (or equivalent hover handler) (~30 lines)
+**Update:** `crates/atlas-lsp/src/completion.rs` (or equivalent completion handler) (~20 lines)
+**Update:** `crates/atlas-lsp/src/diagnostics.rs` (or equivalent diagnostic publisher) (~15 lines)
+**Tests:** `crates/atlas-lsp/tests/` or `crates/atlas-lsp/src/` inline tests (~7 test cases)
 
-**Total new code:** ~80 lines LSP
+**Total new code:** ~80 lines LSP, ~30 lines tests
+**Total tests:** ~7 test cases
+
+---
+
+## Dependencies (Components)
+
+- `atlas-lsp` crate — hover, completion, diagnostics handlers (existing)
+- Typechecker type annotations — async fn return types, await resolved types (Phase 07)
+- AST nodes — `FunctionDecl.is_async`, `Expr::Await` (Phase 03)
 
 ---
 
 ## Implementation Notes
 
-**Hover for async fn:** When hovering the function name of an `async fn`, display: `async fn name(params...) -> Future<ReturnType>`. When hovering a call to an async fn, show the `Future<T>` return type.
+**Key patterns to analyze:**
+- Examine how the LSP currently handles hover for regular functions — async fn hover follows the same path but prepends `async` and shows `Future<T>` as the return type
+- Find how the LSP publishes diagnostics from typechecker results — AT4001/AT4002 are already in the typechecker output and just need to flow through
+- Check the completion handler for keyword suggestions — `await` needs to appear when the cursor is inside an async fn body or at top-level
 
-**Hover for `await`:** Show the resolved type `T` — the user wants to know what type they get after awaiting, not that it's a Future.
+**Critical requirements:**
 
-**Completion:** In async fn body, `await` should appear in keyword completions. In type position, `Future<` triggers generic type completion.
+Hover on an async fn name: display `async fn name(params) -> Future<ReturnType>` — not the implicit `T`, but the actual return type of calling the function.
 
-**Diagnostics:** AT4001 (await outside async) and AT4002 (await non-Future) should appear as LSP error squiggles inline.
+Hover on an `await` expression: display the resolved type `T` — the user cares what they get after awaiting, not that it was a Future.
+
+Hover on a variable holding a `Future<T>`: display `Future<T>` with the inner type shown.
+
+Completion: when the cursor is inside an `async fn` body or at top-level, `await` should appear in the keyword completion list. In type annotation position, `Future<` should trigger generic type completion.
+
+Diagnostics: AT4001 (await outside async) and AT4002 (await non-Future) must appear as error squiggles with the correct source range and message text. These should already be in the typechecker output — the work here is ensuring they flow to the LSP diagnostic publisher.
+
+**Error handling:**
+- LSP must not crash on malformed async programs — graceful degradation if type information is unavailable
+
+**Integration points:**
+- Uses: typechecker type annotations (Phase 07), AST async nodes (Phase 03)
+- Consumed by: VS Code extension or any LSP client
 
 ---
 
-## Tests
+## Tests (TDD Approach)
 
-LSP tests use the existing LSP test harness:
-1. Hover on async fn name → shows `async fn ... -> Future<T>`
-2. Hover on `await expr` → shows resolved type T
-3. Hover on Future<T> variable → shows `Future<number>` etc.
-4. Completion in async fn body includes `await`
-5. AT4001 appears as LSP diagnostic
-6. AT4002 appears as LSP diagnostic
-7. Non-async fn unaffected by async hover
+**Hover** (3 tests)
+1. Hovering the name of an `async fn` shows the signature with `async` and `Future<T>` return type
+2. Hovering an `await expr` shows the resolved inner type `T`, not `Future<T>`
+3. Hovering a `Future<number>` variable shows `Future<number>`
+
+**Completion** (2 tests)
+1. Inside an async fn body, `await` appears in keyword completions
+2. In type annotation position, `Future` appears and triggers generic argument completion
+
+**Diagnostics** (2 tests)
+1. AT4001 (await outside async fn) appears as an LSP error diagnostic with the correct range
+2. AT4002 (await on non-Future value) appears as an LSP error diagnostic with the correct range
 
 **Minimum test count:** 7 tests
 
@@ -63,10 +89,10 @@ LSP tests use the existing LSP test harness:
 
 ## Acceptance Criteria
 
-- ✅ async fn hover correct
-- ✅ await expr hover shows resolved type
-- ✅ AT4001/AT4002 surface as LSP diagnostics
-- ✅ `await` completion in async context
+- ✅ Async fn hover correct — shows `async fn ... -> Future<T>`
+- ✅ `await` expression hover shows resolved type `T`
+- ✅ AT4001 and AT4002 surface as LSP error diagnostics
+- ✅ `await` keyword offered in completions inside async context
 - ✅ 7+ LSP tests pass
 - ✅ `cargo check -p atlas-lsp` clean
 
@@ -75,5 +101,5 @@ LSP tests use the existing LSP test harness:
 ## References
 
 **Decision Logs:** D-030
-**Spec:** docs/language/async.md
-**Related phases:** Phase 07 (typechecker provides type info), Phase 15 (AC check)
+**Specifications:** docs/language/async.md
+**Related phases:** Phase 07 (typechecker provides type info), Phase 15 (final AC gate)

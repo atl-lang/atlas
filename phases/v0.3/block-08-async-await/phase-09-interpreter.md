@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-**Required:** Phase 05 (Value::Future), Phase 07 (typechecker), Phase 04 (parser)
+**Required:** Phase 08 complete (compiler stable; all AST, typechecker, Value::Future, and opcodes in place)
 
 **Verification:**
 ```bash
@@ -10,99 +10,103 @@ grep "Expr::Await\|is_async\|Value::Future" crates/atlas-runtime/src/interpreter
 cargo check -p atlas-runtime
 ```
 
+**If missing:** All prior phases must be complete — the interpreter handles Expr::Await and is_async from the AST, and produces Value::Future from value.rs.
+
 ---
 
 ## Objective
 
-Implement async/await execution in the tree-walking interpreter. The interpreter handles `async fn` by wrapping execution in `AtlasFuture`, and `await` by blocking on the future using the multi-threaded tokio runtime.
+Implement async/await execution in the tree-walking interpreter. Async functions wrap their body in an AtlasFuture. Await expressions resolve futures via the runtime. The multi-threaded tokio runtime (D-030) is activated here.
 
 ---
 
 ## Files
 
-**Update:** `crates/atlas-runtime/src/interpreter/expr.rs`
-  - `Expr::Await`: evaluate inner expr, expect Value::Future, call runtime block_on
-  - `Expr::Call` on async fn: wrap execution in AtlasFuture via spawn_local
-**Update:** `crates/atlas-runtime/src/interpreter/mod.rs`
-  - Track async context (for top-level await handling)
-  - `eval_function`: detect `is_async`, wrap body evaluation in future
-**Tests:** `crates/atlas-runtime/tests/async_runtime.rs` (+30 test cases)
+**Update:** `crates/atlas-runtime/src/async_runtime/mod.rs` (~5 lines — switch to new_multi_thread, add Value: Send assertion)
+**Update:** `crates/atlas-runtime/src/interpreter/expr.rs` (~40 lines)
+**Update:** `crates/atlas-runtime/src/interpreter/mod.rs` (~30 lines)
+**Tests:** `crates/atlas-runtime/tests/async_runtime.rs` (~30 test cases)
 
 **Total new code:** ~100 lines interpreter, ~120 lines tests
 **Total tests:** ~30 test cases
 
 ---
 
-## Implementation Notes
+## Dependencies (Components)
 
-**Multi-threaded runtime (D-030):** Switch `async_runtime/mod.rs` from `new_current_thread()` to `new_multi_thread()`. Audit all `spawn_local` calls — `spawn_local` is `!Send`, must switch to `tokio::spawn` where `Value: Send`. Verify `Value: Send` holds (no Rc, no RefCell in value.rs — confirmed in Phase 05 prerequisites).
-
-**`!Send` exception:** The AST (used by interpreter) contains `Cell<Option<TypeTag>>` and `RefCell` — the AST is NOT Send. The interpreter keeps AST on a single thread. Async fn bodies evaluated by the interpreter must use `spawn_local` (thread-local), not `tokio::spawn`. The multi-threaded runtime still powers I/O — but interpreter AST evaluation stays thread-local.
-
-**This is the critical parity point:** The VM (Phase 10) will execute bytecode (no AST, all Send-safe). The interpreter uses AST (not Send). Solution: interpreter async uses `LocalSet + spawn_local`; VM async uses `tokio::spawn`. Observable behavior identical.
-
-**`Expr::Await` in interpreter:**
-```rust
-Expr::Await { expr, .. } => {
-    let val = self.eval_expr(expr)?;
-    match val {
-        Value::Future(f) => async_runtime::block_on(f.resolve()),
-        _ => Err(RuntimeError::new(ErrorCode::AT4002, "await on non-Future")),
-    }
-}
-```
-
-**Async fn call:**
-```rust
-if func.is_async {
-    let future = AtlasFuture::new(async move { self.eval_body(body, args) });
-    Ok(Value::Future(ValueFuture::new(future)))
-} else {
-    self.eval_body(body, args)
-}
-```
+- `interpreter/expr.rs` — Expr evaluation (existing)
+- `interpreter/mod.rs` — function call execution (existing)
+- `async_runtime/mod.rs` — tokio runtime init (existing, needs upgrade)
+- `AtlasFuture` from `async_runtime/future.rs` (existing)
+- `Value::Future` / `ValueFuture` (Phase 05)
 
 ---
 
-## Tests (tests/async_runtime.rs)
+## Implementation Notes
 
-**Basic async/await:** (10 tests)
-1. `async fn` returns `Value::Future`
-2. `await` on resolved future returns value
-3. `async fn` returning number — await yields number
-4. `async fn` returning string — await yields string
-5. Nested async: `await outer()` where outer calls `await inner()`
-6. Multiple awaits in sequence
-7. async fn with parameters
-8. async fn with if/else branch
-9. Top-level await works
-10. async fn returning void
+**Key patterns to analyze:**
+- Find how the interpreter currently evaluates `Expr::Call` — the async fn path branches off from here
+- Find how function body execution works (`eval_body` or equivalent) — async fn wraps this in a future
+- Examine `async_runtime/mod.rs` to understand the current `new_current_thread` setup and what must change for D-030
 
-**Concurrency:** (8 tests)
-1. Two concurrent tasks — both complete
-2. Task order: later-resolving task doesn't block earlier
-3. `future_all([f1, f2])` — all complete
-4. `future_race([f1, f2])` — first wins
-5. Async sleep (stdlib) — resolves after delay
-6. spawn + await pattern
-7. Error in async fn — propagates through await
-8. Panic in async task — contained, returns error
+**Critical requirements:**
+- Multi-thread runtime upgrade (D-030): change `new_current_thread()` to `new_multi_thread()` in `async_runtime/mod.rs`
+- Add a compile-time `Value: Send` assertion in `async_runtime/mod.rs` — this documents and enforces the threading contract
+- The AST contains `RefCell` (in type annotation caches on certain nodes) making the full AST `!Send` — the interpreter must keep AST evaluation on a single thread. Use `spawn_local` with a `LocalSet` for interpreter async execution; the multi-thread runtime still powers I/O concurrency
+- `Expr::Await` evaluation: evaluate the inner expression, match on `Value::Future`, call `block_on` to resolve it, push the result
+- Async fn call: detect `is_async` on the function, wrap body evaluation in `AtlasFuture::new`, return `Value::Future`
+- Top-level await must work: the top-level scope treats await as a blocking call via `block_on`
+- Every future must have a guaranteed resolution path — verify no async fn body can loop forever without a termination condition (infinite loop risk)
 
-**Error cases:** (7 tests)
-1. AT4001: await outside async context (interpreter enforces)
-2. AT4002: await on non-Future value
-3. Async fn that errors — await propagates the error
-4. Timeout on future (stdlib async_primitives)
-5. Cancelled future
-6. Nested error propagation with ?
-7. async fn recursive call
+**Error handling:**
+- AT4002 at runtime if `Expr::Await` operand resolves to a non-Future value
 
-**Parity guards:** (5 tests — shared with VM Phase 10)
-1. Same Atlas program produces same output in interpreter and VM
-2. Async timing: both engines complete in same logical order
-3. Future value type_name identical
-4. Error messages identical
-5. Return value types identical
+**Integration points:**
+- Uses: all Phase 01–08 artifacts
+- Updates: `async_runtime/mod.rs` (runtime upgrade affects both engines)
+- Consumed by: Phase 12 (parity sweep compares interpreter output against VM output)
+
+---
+
+## Tests (TDD Approach)
+
+**Basic async/await** (10 tests in `tests/async_runtime.rs`)
+1. `async fn` returns `Value::Future` when called (not the resolved value)
+2. `await` on a resolved Future returns the inner value
+3. Async fn returning a number — await yields the number
+4. Async fn returning a string — await yields the string
+5. Nested async: outer async fn calls await inner async fn
+6. Multiple sequential awaits in one function body
+7. Async fn with parameters
+8. Async fn with if/else branch — both paths resolve correctly
+9. Top-level await works at program entry
+10. Async fn returning void
+
+**Concurrency** (8 tests)
+1. Two concurrent futures both complete
+2. Spawning a task and awaiting its result
+3. `future_all` with two futures — both results collected
+4. `future_race` — first-resolving future wins
+5. Async sleep via stdlib resolves after the expected delay
+6. Error in an async fn propagates correctly through await
+7. Multiple spawned tasks complete independently
+8. Async fn with a closure captures values correctly
+
+**Error cases** (7 tests)
+1. AT4002 raised at runtime: `await` on a non-Future value
+2. Async fn that returns an error value — await propagates it
+3. Nested error propagation with `?` inside async fn
+4. Future that resolves to `Result::Err` — handled via match
+5. Timeout primitive with a slow future
+6. Awaiting a future that was already resolved
+7. Async fn recursive call terminates correctly
+
+**Parity baseline** (5 tests — same programs, recorded for comparison in Phase 12)
+1. Simple async fn: output string matches expected
+2. Nested async: final computed value matches expected
+3. Concurrent tasks: result array matches expected
+4. Error propagation: error message matches expected
+5. Return type: `type_name()` of awaited result matches expected
 
 **Minimum test count:** 30 tests
 
@@ -110,18 +114,19 @@ if func.is_async {
 
 ## Acceptance Criteria
 
-- ✅ `new_multi_thread()` runtime in async_runtime/mod.rs
+- ✅ `new_multi_thread()` runtime active in `async_runtime/mod.rs` (D-030)
+- ✅ `Value: Send` compile-time assertion present
 - ✅ `Expr::Await` evaluates correctly in interpreter
-- ✅ async fn calls return `Value::Future`
-- ✅ `block_on` bridges async → sync correctly
+- ✅ Async fn calls return `Value::Future`
+- ✅ Top-level await works
 - ✅ 30+ interpreter async tests pass
+- ✅ No infinite loop risk — all futures have guaranteed resolution paths
 - ✅ `cargo check -p atlas-runtime` clean
-- ✅ No infinite loop risk (all futures have guaranteed resolution paths)
 
 ---
 
 ## References
 
-**Decision Logs:** D-030 (multi-thread), D-029 (CoW — futures hold Values, not shared refs)
-**Spec:** docs/language/async.md (semantics section)
-**Related phases:** Phase 10 (VM must match this behavior exactly — parity)
+**Decision Logs:** D-029 (CoW — confirms futures hold owned Values), D-030 (multi-thread mandate)
+**Specifications:** docs/language/async.md (semantics section)
+**Related phases:** Phase 08 (compiler), Phase 10 (VM must match this behavior exactly for parity)

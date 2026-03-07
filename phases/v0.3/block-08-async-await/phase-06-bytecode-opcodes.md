@@ -2,89 +2,97 @@
 
 ## Dependencies
 
-**Required:** Phase 05 (Value::Future exists)
+**Required:** Phase 05 complete (Value::Future exists and compiles cleanly)
 
 **Verification:**
 ```bash
-grep "AsyncCall\|Await\|WrapFuture\|SpawnTask" crates/atlas-runtime/src/bytecode/
+grep "AsyncCall\|WrapFuture\|SpawnTask" crates/atlas-runtime/src/bytecode/
 cargo check -p atlas-runtime
 ```
+
+**If missing:** Value::Future must exist before opcodes that push it onto the stack can be defined.
 
 ---
 
 ## Objective
 
-Define and implement the bytecode opcodes for async execution: `AsyncCall`, `Await`, `WrapFuture`, `SpawnTask`. Include serialization, deserialization, and disassembly.
+Define the four async bytecode opcodes (`AsyncCall`, `Await`, `WrapFuture`, `SpawnTask`), implement their serialization and deserialization, and add disassembler support.
 
 ---
 
 ## Files
 
-**Update:** `crates/atlas-runtime/src/bytecode/mod.rs` (or opcode definition file) — add 4 opcodes
-**Update:** `crates/atlas-runtime/src/bytecode/serialize.rs` — encode/decode new opcodes
-**Update:** `crates/atlas-runtime/src/bytecode/disasm.rs` — human-readable disassembly
+**Update:** `crates/atlas-runtime/src/bytecode/mod.rs` (or opcode definitions file) (~20 lines)
+**Update:** `crates/atlas-runtime/src/bytecode/serialize.rs` (~15 lines)
+**Update:** `crates/atlas-runtime/src/bytecode/disasm.rs` (~10 lines)
 
 **Total new code:** ~60 lines
+**Total tests:** ~15 lines (5 test cases)
 
 ---
 
-## Opcodes
+## Dependencies (Components)
 
-| Opcode | Operands | Stack effect | Semantics |
-|--------|----------|-------------|-----------|
-| `AsyncCall` | fn_offset: u32, arg_count: u8 | pops args + fn, pushes Future | Call async fn, wrap result in Future<T> |
-| `Await` | — | pops Future, pushes T | Block until future resolves, push result |
-| `WrapFuture` | — | pops Value, pushes Future<Value> | Wrap a plain value in a resolved Future |
-| `SpawnTask` | fn_offset: u32, arg_count: u8 | pops args + fn, pushes Future | Spawn concurrent task, return Future handle |
+- `bytecode/mod.rs` — opcode enum (existing)
+- `bytecode/serialize.rs` — encode/decode logic (existing)
+- `bytecode/disasm.rs` — human-readable disassembly (existing)
+- `Value::Future` / `ValueFuture` (Phase 05)
 
 ---
 
 ## Implementation Notes
 
-**`AsyncCall` vs `Call`:** The existing `Call` opcode is synchronous — VM calls function and gets value. `AsyncCall` instead:
-1. Calls the async fn body
-2. Wraps execution in an `AtlasFuture` via `spawn_local`
-3. Pushes `Value::Future(handle)` onto stack
+**Key patterns to analyze:**
+- Examine how an existing opcode with operands (e.g., `Call` with fn_offset and arg_count) is defined, serialized, and disassembled — follow that exact pattern for the four new opcodes
+- Check the opcode discriminant assignment scheme to pick non-colliding values for the four new opcodes
 
-**`Await` opcode:**
-1. Pops `Value::Future(f)` from stack
-2. Calls `block_on(f.resolve())` — blocks current thread until resolved
-3. Pushes the resolved `Value::T`
-4. Error if top of stack is not Future → AT4002
+**Critical requirements — four opcodes and their semantics:**
 
-**`WrapFuture` opcode:** Used to normalize: when an async fn returns a plain value, `WrapFuture` boxes it into a `Future<T>` that immediately resolves. Keeps the return type contract: async fns always push a Future onto the stack.
+`AsyncCall` (fn_offset, arg_count): Calls an async function. Pops arg_count arguments and the function reference off the stack, wraps the invocation in a Future, and pushes a `Value::Future` result. The future is not yet resolved — execution is deferred.
 
-**`SpawnTask` opcode:** For `spawn()` stdlib call. Spawns on the multi-threaded runtime (D-030) via `tokio::spawn`, returns Future handle. Requires `Value: Send` (verified in Phase 10).
+`Await` (no operands): Pops a `Value::Future` off the stack and blocks until it resolves, then pushes the resolved inner value. If the top of stack is not a Future, this is a runtime error (AT4002).
 
-**Serialization format:** Each opcode gets a unique u8/u16 discriminant. Maintain a version-stable encoding.
+`WrapFuture` (no operands): Pops any value off the stack and pushes it back wrapped in an immediately-resolved `Value::Future`. Used when an async fn returns a plain value — the return contract requires a Future on the stack.
+
+`SpawnTask` (fn_offset, arg_count): Like AsyncCall but spawns the task on the multi-thread runtime for true concurrent execution. Pushes a `Value::Future` handle that the caller can await later.
+
+**Error handling:**
+- AT4002 is a runtime error path in the VM for `Await` when the top of stack is not a Future — the opcode definition itself does not emit diagnostics, only the VM execution does (Phase 10)
+
+**Integration points:**
+- Uses: Value::Future (Phase 05)
+- Creates: four new opcode variants
+- Consumed by: compiler (Phase 08), interpreter (Phase 09), VM (Phase 10)
 
 ---
 
-## Tests
+## Tests (TDD Approach)
 
-Opcode serialization round-trip tests (in bytecode tests or integration):
-1. `AsyncCall` encodes/decodes correctly
-2. `Await` encodes/decodes correctly
-3. `WrapFuture` encodes/decodes correctly
-4. `SpawnTask` encodes/decodes correctly
-5. Disassembler renders all 4 opcodes as human-readable strings
+**Opcode serialization round-trips** (5 tests)
+1. `AsyncCall { fn_offset: 0, arg_count: 2 }` encodes and decodes to the same value
+2. `Await` encodes and decodes correctly (no operands)
+3. `WrapFuture` encodes and decodes correctly (no operands)
+4. `SpawnTask { fn_offset: 5, arg_count: 0 }` encodes and decodes to the same value
+5. Disassembler renders all four opcodes as non-empty human-readable strings
 
 **Minimum test count:** 5 tests
+
+**Parity requirement:** N/A — bytecode is shared infrastructure, not engine-specific.
 
 ---
 
 ## Acceptance Criteria
 
-- ✅ 4 async opcodes defined: AsyncCall, Await, WrapFuture, SpawnTask
-- ✅ All serialize/deserialize correctly
-- ✅ Disassembler covers all 4
-- ✅ 5+ tests pass
+- ✅ Four async opcodes defined: AsyncCall, Await, WrapFuture, SpawnTask
+- ✅ All four serialize and deserialize correctly (round-trip)
+- ✅ Disassembler covers all four with human-readable output
+- ✅ 5+ serialization tests pass
 - ✅ `cargo check -p atlas-runtime` clean
 
 ---
 
 ## References
 
-**Decision Logs:** D-030 (multi-thread, Value: Send needed for SpawnTask)
-**Spec:** docs/language/async.md
-**Related phases:** Phase 08 (compiler emits these), Phase 09 (interpreter handles semantics), Phase 10 (VM executes these)
+**Decision Logs:** D-030 (SpawnTask requires multi-thread runtime and Value: Send)
+**Specifications:** docs/language/async.md
+**Related phases:** Phase 05 (Value::Future), Phase 08 (compiler emits these), Phase 09 (interpreter handles semantics without bytecode), Phase 10 (VM executes these opcodes)
