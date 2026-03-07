@@ -324,6 +324,7 @@ impl VM {
                     param_ownership: vec![],
                     param_names: vec![],
                     return_ownership: None,
+                    is_async: false,
                 });
                 self.globals.insert(extern_decl.name.clone(), func_value);
             }

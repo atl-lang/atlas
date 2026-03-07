@@ -36,6 +36,7 @@ fn function_call_bytecode() -> Bytecode {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     };
     let func_idx = bc.add_constant(Value::Function(func_ref));
     let val_idx = bc.add_constant(Value::Number(42.0));

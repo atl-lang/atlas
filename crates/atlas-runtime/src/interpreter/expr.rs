@@ -2697,6 +2697,7 @@ impl Interpreter {
             param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: None,
+            is_async: false,
         }))
     }
 }

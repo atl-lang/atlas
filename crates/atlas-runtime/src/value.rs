@@ -564,6 +564,8 @@ pub struct FunctionRef {
     pub param_names: Vec<String>,
     /// Ownership annotation on the return type, if any.
     pub return_ownership: Option<crate::ast::OwnershipAnnotation>,
+    /// Whether this function was declared with `async fn`.
+    pub is_async: bool,
 }
 
 /// Closure reference — a function with a captured upvalue environment

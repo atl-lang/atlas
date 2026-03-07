@@ -41,11 +41,11 @@ impl Compiler {
                 span,
             } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
-            // B8: Await — implemented in Phase 08 (compiler)
-            Expr::Await { span, .. } => Err(vec![Diagnostic::error(
-                "async/await not yet implemented in bytecode compiler",
-                *span,
-            )]),
+            Expr::Await { expr, span } => {
+                self.compile_expr(expr)?;
+                self.bytecode.emit(Opcode::Await, *span);
+                Ok(())
+            }
         }
     }
 
@@ -245,8 +245,13 @@ impl Compiler {
             self.compile_expr(arg)?;
         }
 
-        // Emit call instruction with argument count
-        self.bytecode.emit(Opcode::Call, call.span);
+        // Emit call instruction with argument count.
+        // Use AsyncCall for known async functions so the VM wraps the result in a Future.
+        if self.async_fn_names.contains(func_name) {
+            self.bytecode.emit(Opcode::AsyncCall, call.span);
+        } else {
+            self.bytecode.emit(Opcode::Call, call.span);
+        }
         self.bytecode.emit_u8(call.args.len() as u8);
 
         // CoW write-back: collection mutation builtins return the new collection.
@@ -1679,6 +1684,7 @@ impl Compiler {
             param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: None,
+            is_async: false,
         };
         let const_idx = self
             .bytecode

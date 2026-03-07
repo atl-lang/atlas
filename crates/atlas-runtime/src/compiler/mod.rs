@@ -91,6 +91,10 @@ pub struct Compiler {
     /// Trait default methods with bodies (trait_name, method_name)
     pub(super) trait_default_methods:
         std::collections::HashMap<(String, String), crate::ast::TraitMethodSig>,
+    /// Names of functions declared with `async fn` (for AsyncCall dispatch at call sites).
+    pub(super) async_fn_names: std::collections::HashSet<String>,
+    /// True while compiling the body of an `async fn` (for WrapFuture insertion).
+    pub(super) in_async_fn: bool,
 }
 
 impl Compiler {
@@ -109,6 +113,8 @@ impl Compiler {
             locals_watermark: 0,
             upvalue_stack: Vec::new(),
             trait_default_methods: std::collections::HashMap::new(),
+            async_fn_names: std::collections::HashSet::new(),
+            in_async_fn: false,
         }
     }
 
@@ -134,6 +140,8 @@ impl Compiler {
             locals_watermark: 0,
             upvalue_stack: Vec::new(),
             trait_default_methods: std::collections::HashMap::new(),
+            async_fn_names: std::collections::HashSet::new(),
+            in_async_fn: false,
         }
     }
 
@@ -244,6 +252,11 @@ impl Compiler {
     fn compile_function(&mut self, func: &FunctionDecl) -> Result<(), Vec<Diagnostic>> {
         // We'll update the function ref after compiling the body to get accurate local_count
         // For now, create a placeholder with bytecode_offset = 0 (will be updated)
+        // Register as async fn so call sites emit AsyncCall instead of Call.
+        if func.is_async {
+            self.async_fn_names.insert(func.name.name.clone());
+        }
+
         let placeholder_ref = crate::value::FunctionRef {
             name: func.name.name.clone(),
             arity: func.params.len(),
@@ -252,6 +265,7 @@ impl Compiler {
             param_ownership: vec![],
             param_names: vec![],
             return_ownership: None,
+            is_async: func.is_async,
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
 
@@ -304,9 +318,15 @@ impl Compiler {
         // Track function base for nested function support
         let prev_function_base = std::mem::replace(&mut self.current_function_base, old_locals_len);
 
+        // Set async context so Stmt::Return and implicit Returns emit WrapFuture first.
+        let prev_in_async = std::mem::replace(&mut self.in_async_fn, func.is_async);
+
         if let Some(tail) = &func.body.tail_expr {
             // Compile function body statements
             self.compile_block(&func.body)?;
+            if func.is_async {
+                self.bytecode.emit(Opcode::WrapFuture, func.span);
+            }
             self.compile_expr(tail)?;
         } else if let Some((last, rest)) = func.body.statements.split_last() {
             for stmt in rest {
@@ -315,17 +335,29 @@ impl Compiler {
             if self.stmt_always_returns(last) {
                 self.compile_stmt(last)?;
                 // Emit implicit Null+Return fallback (should be removed by DCE).
+                if func.is_async {
+                    self.bytecode.emit(Opcode::WrapFuture, func.span);
+                }
                 self.bytecode.emit(Opcode::Null, func.span);
                 self.bytecode.emit(Opcode::Return, func.span);
             } else {
                 self.compile_stmt_as_value(last, func.span)?;
+                if func.is_async {
+                    self.bytecode.emit(Opcode::WrapFuture, func.span);
+                }
                 self.bytecode.emit(Opcode::Return, func.span);
             }
         } else {
             // Empty function body
             self.bytecode.emit(Opcode::Null, func.span);
+            if func.is_async {
+                self.bytecode.emit(Opcode::WrapFuture, func.span);
+            }
             self.bytecode.emit(Opcode::Return, func.span);
         }
+
+        // Restore async context
+        self.in_async_fn = prev_in_async;
 
         // Restore function base
         self.current_function_base = prev_function_base;
@@ -352,6 +384,7 @@ impl Compiler {
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: func.params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: func.return_ownership.clone(),
+            is_async: func.is_async,
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
 
@@ -425,6 +458,7 @@ impl Compiler {
             param_ownership: vec![],
             param_names: method.params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: None,
+            is_async: false,
         };
         let placeholder_value = crate::value::Value::Function(placeholder_ref);
 
@@ -488,6 +522,7 @@ impl Compiler {
             param_ownership: method.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: method.params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: None,
+            is_async: false,
         };
         self.bytecode.constants[const_idx as usize] = crate::value::Value::Function(updated_ref);
 

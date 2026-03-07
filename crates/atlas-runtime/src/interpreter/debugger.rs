@@ -343,6 +343,7 @@ impl InterpreterDebuggerSession {
                         param_ownership: vec![],
                         param_names: vec![],
                         return_ownership: None,
+                        is_async: func.is_async,
                     });
                     self.interpreter
                         .globals

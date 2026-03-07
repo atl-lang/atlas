@@ -1911,6 +1911,7 @@ fn test_type_names() {
             param_ownership: vec![],
             param_names: vec![],
             return_ownership: None,
+            is_async: false,
         })
         .type_name(),
         "function"
@@ -1976,6 +1977,7 @@ fn test_to_string_function() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     assert_eq!(func.to_string(), "<fn test>");
 }
@@ -2059,6 +2061,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     let func2 = Value::Function(FunctionRef {
         name: "test".to_string(),
@@ -2068,6 +2071,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     let func3 = Value::Function(FunctionRef {
         name: "other".to_string(),
@@ -2077,6 +2081,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     assert_eq!(func1, func2); // same name
     assert_ne!(func1, func3); // different name

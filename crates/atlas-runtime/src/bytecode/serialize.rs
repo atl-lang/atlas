@@ -469,6 +469,7 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                     param_ownership,
                     param_names,
                     return_ownership,
+                    is_async: false,
                 }),
                 1 + cursor,
             ))
