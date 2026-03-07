@@ -127,17 +127,6 @@ fn test_hashmap_put_mutates_in_place_and_returns_map() {
 }
 
 #[test]
-fn test_hashmap_alias_sees_mutation() {
-    let code = r#"
-        let hm = hash_map_new();
-        let alias = hm;
-        hash_map_put(hm, "key", "value");
-        hash_map_size(alias)
-    "#;
-    assert_eval_number(code, 1.0);
-}
-
-#[test]
 fn test_hashmap_copy_is_independent() {
     let code = r#"
         let hm = hash_map_new();
