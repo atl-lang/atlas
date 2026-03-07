@@ -61,8 +61,15 @@ cmd_go() {
 
     # Handoff from last session
     echo "── Handoff ──"
-    sqlite3 -json "$DB" "SELECT id, agent, outcome, summary, next_steps, git_commits, issues_closed FROM sessions WHERE id != '$sid' ORDER BY started_at DESC LIMIT 1" | \
-        jq -r 'if length > 0 then .[0] | "From: \(.agent) (\(.id)) → \(.outcome // "?")\nDid: \((.summary // "-") | .[0:80])\nNext: \((.next_steps // "-") | .[0:80])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" else "First session" end'
+    local last_handoff
+    last_handoff=$(sqlite3 -json "$DB" "SELECT id, agent, outcome, summary, next_steps, git_commits, issues_closed FROM sessions WHERE id != '$sid' ORDER BY started_at DESC LIMIT 1" | \
+        jq -r 'if length > 0 then .[0] | "From: \(.agent) (\(.id)) → \(.outcome // "?")\nDid: \((.summary // "-") | .[0:80])\nNext: \((.next_steps // "-") | .[0:80])\nCommits: \(.git_commits // "none") | Closed: \(.issues_closed // "none")" else "First session" end')
+    echo "$last_handoff"
+    # Warn if handoff is blank (context ran out, session auto-closed by gc)
+    if echo "$last_handoff" | grep -q "Did: -\|Did: none\|Next: -\|Next: none"; then
+        echo "  ⚠ BLANK HANDOFF: previous session closed without summary."
+        echo "    Check git log for what was committed. Reconstruct next steps manually."
+    fi
     echo ""
 
     # Stale issues (in_progress from previous sessions)

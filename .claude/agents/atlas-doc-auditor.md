@@ -118,8 +118,12 @@ Verify:
 
 ### Domain 6: Skill, Gate + Lazy-Load Files
 
-Files:
+**All skills** (verify each exists and has the AI Continuity section):
 - `.claude/skills/atlas/skill.md`
+- `.claude/skills/atlas-blocks/skill.md`
+- `.claude/skills/atlas-bugfix/skill.md`
+- `.claude/skills/atlas-battle/skill.md`
+- `.claude/skills/atlas-test/skill.md`
 - `.claude/skills/atlas/gates/*.md`
 - `.claude/lazy/git.md`
 - `.claude/lazy/architecture.md`
@@ -127,11 +131,14 @@ Files:
 - `.claude/lazy/tracking-db.md`
 
 Verify:
+- All 5 skill files exist and contain "AI Continuity — Non-Negotiable" section
+- Any new skill added to `.claude/skills/` is listed here — if not, add it and flag it
 - Gate file references to `.claude/rules/*.md` — all referenced files exist
 - Gate phase lists reference existing `phases/v0.3/` files
 - No broken file path references in gate commands
 - Lazy-load files referenced in CLAUDE.md actually exist in `.claude/lazy/`
 - New files in `.claude/lazy/` are referenced somewhere (CLAUDE.md or memory)
+- `atlas-track blocks` output matches actual block status in DB — flag if stale
 
 ---
 

@@ -153,6 +153,7 @@ cmd_phase_done() {
     status=$(echo "$row" | jq -r '.status')
     name=$(echo "$row" | jq -r '.name')
     if [[ "$status" == "complete" ]]; then echo "Block B$num already complete — use complete-block to reopen or verify."; return 0; fi
+    if [[ $done -ge $total ]]; then echo "Block B$num phases already at max ($done/$total). Run: atlas-track complete-block B$num \"notes\""; return 0; fi
     local new_done=$((done + 1))
     sqlite3 "$DB" "UPDATE blocks SET phases_done=$new_done, status='in_progress' WHERE version='0.3.0' AND block_num=$num"
     echo "✓ B$num phase $new_done/$total done: $name"
@@ -176,8 +177,15 @@ cmd_complete_block() {
     today=$(date +%Y-%m-%d)
     local escaped_notes="${notes//\'/\'\'}"
     sqlite3 "$DB" "UPDATE blocks SET status='complete', completed_date='$today', completed_by='${session_id:-manual}', notes='$escaped_notes' WHERE version='0.3.0' AND block_num=$num"
+    # Auto-advance state.current_block if this is newer
+    local cur_block
+    cur_block=$(sqlite3 "$DB" "SELECT current_block FROM state WHERE id=1")
+    if [[ $num -gt ${cur_block:-0} ]]; then
+        sqlite3 "$DB" "UPDATE state SET current_block=$num, next_block=$((num+1)), updated_at=datetime('now') WHERE id=1"
+    fi
     echo "✓ B$num complete ($phases_done/$phases_total phases): $name"
-    if [[ -n "$notes" ]]; then echo "  Notes: $notes"; fi
+    [[ -n "$notes" ]] && echo "  Notes: $notes"
+    echo "  → state.current_block updated to B$num"
 }
 
 # CI status — proper function (was broken inline `local` in case block)
