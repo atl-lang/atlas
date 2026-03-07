@@ -1,0 +1,54 @@
+// 03_bool_logic.atlas
+// Tests: &&, ||, !, comparison operators, short-circuit.
+// FRICTION: if-as-expression not supported — must use let mut + assignment.
+
+let t: bool = true;
+let f: bool = false;
+
+let and_tt: bool = t && t;
+let and_tf: bool = t && f;
+let or_tf: bool = t || f;
+let or_ff: bool = f || f;
+let not_t: bool = !t;
+let not_f: bool = !f;
+
+print("true && true: " + str(and_tt));
+print("true && false: " + str(and_tf));
+print("true || false: " + str(or_tf));
+print("false || false: " + str(or_ff));
+print("!true: " + str(not_t));
+print("!false: " + str(not_f));
+
+let x: number = 10;
+let y: number = 20;
+
+let eq: bool = x == y;
+let neq: bool = x != y;
+let lt: bool = x < y;
+let gt: bool = x > y;
+let lte: bool = x <= 10;
+let gte: bool = y >= 20;
+
+print("10 == 20: " + str(eq));
+print("10 != 20: " + str(neq));
+print("10 < 20: " + str(lt));
+print("10 > 20: " + str(gt));
+print("10 <= 10: " + str(lte));
+print("20 >= 20: " + str(gte));
+
+let in_range: bool = x > 5 && x < 15;
+let out_range: bool = x < 5 || x > 15;
+print("10 in (5,15): " + str(in_range));
+print("10 out of (5,15): " + str(out_range));
+
+let always_true: bool = true || false;
+print("short-circuit ||: " + str(always_true));
+
+// WORKAROUND: Atlas doesn't support if-as-expression (returns '?' type).
+// Natural: let result = if cond { "a" } else { "b" };  <- fails AT3001
+// Required pattern in Atlas:
+let mut result: string = "other";
+if in_range && !eq {
+    result = "in range and not equal";
+}
+print(result);

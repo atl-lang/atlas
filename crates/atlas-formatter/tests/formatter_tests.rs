@@ -108,7 +108,10 @@ fn test_continue_statement() {
 
 #[test]
 fn test_return_void() {
-    assert_eq!(fmt("fn foo() { return; }"), "fn foo() {\n    return;\n}\n");
+    assert_eq!(
+        fmt("fn foo() -> void { return; }"),
+        "fn foo() -> void {\n    return;\n}\n"
+    );
 }
 
 #[test]
@@ -124,8 +127,8 @@ fn test_return_value() {
 #[test]
 fn test_simple_function() {
     assert_eq!(
-        fmt("fn hello() { print(\"hi\"); }"),
-        "fn hello() {\n    print(\"hi\");\n}\n"
+        fmt("fn hello() -> void { print(\"hi\"); }"),
+        "fn hello() -> void {\n    print(\"hi\");\n}\n"
     );
 }
 
@@ -140,8 +143,8 @@ fn test_function_with_params() {
 #[test]
 fn test_function_no_return_type() {
     assert_eq!(
-        fmt("fn greet(name: string) { print(name); }"),
-        "fn greet(name: string) {\n    print(name);\n}\n"
+        fmt("fn greet(name: string) -> void { print(name); }"),
+        "fn greet(name: string) -> void {\n    print(name);\n}\n"
     );
 }
 
@@ -155,7 +158,7 @@ fn test_function_with_type_params() {
 
 #[test]
 fn test_empty_function() {
-    assert_eq!(fmt("fn noop() {}"), "fn noop() {}\n");
+    assert_eq!(fmt("fn noop() -> void {}"), "fn noop() -> void {}\n");
 }
 
 // === If Statements ===
@@ -269,8 +272,8 @@ fn test_method_chain() {
 #[test]
 fn test_try_expression() {
     assert_eq!(
-        fmt("fn foo() { let x = bar()?; }"),
-        "fn foo() {\n    let x = bar()?;\n}\n"
+        fmt("fn foo() -> void { let x = bar()?; }"),
+        "fn foo() -> void {\n    let x = bar()?;\n}\n"
     );
 }
 
@@ -347,7 +350,7 @@ fn test_no_trailing_commas() {
 fn test_long_function_params_break() {
     let config = FormatConfig::default().with_max_width(40);
     let result = fmt_with(
-        "fn long_function_name(first_parameter: string, second_parameter: number) {}",
+        "fn long_function_name(first_parameter: string, second_parameter: number) -> void {}",
         &config,
     );
     assert!(result.contains('\n'));
@@ -357,7 +360,10 @@ fn test_long_function_params_break() {
 
 #[test]
 fn test_short_params_no_break() {
-    assert_eq!(fmt("fn f(a: number) {}"), "fn f(a: number) {}\n");
+    assert_eq!(
+        fmt("fn f(a: number) -> void {}"),
+        "fn f(a: number) -> void {}\n"
+    );
 }
 
 // === Import/Export ===
@@ -395,7 +401,7 @@ fn test_export_variable() {
 
 #[test]
 fn test_blank_line_between_functions() {
-    let result = fmt("fn a() {}\nfn b() {}");
+    let result = fmt("fn a() -> void {}\nfn b() -> void {}");
     assert!(
         result.contains("}\n\nfn b"),
         "Should have blank line between functions, got:\n{}",
@@ -470,7 +476,7 @@ fn fibonacci(n: number) -> number {
     return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-fn main() {
+fn main() -> void {
     let result = fibonacci(10);
     print(result);
 }"#;
@@ -506,8 +512,9 @@ fn test_deep_nesting() {
 
 #[test]
 fn test_function_with_loops_and_conditions() {
-    let result =
-        fmt("fn process(items: string) { for item in items { if item > 0 { print(item); } } }");
+    let result = fmt(
+        "fn process(items: string) -> void { for item in items { if item > 0 { print(item); } } }",
+    );
     assert!(result.contains("fn process"));
     assert!(result.contains("    for item in items"));
     assert!(result.contains("        if item > 0"));

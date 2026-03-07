@@ -33,7 +33,7 @@ Creates HashMap from array of [key, value] pairs.
 fn hashMapPut(map: HashMap<K, V>, key: K, value: V) -> HashMap<K, V>
 ```
 
-Adds or updates key-value pair. Returns new map with shared mutation semantics.
+Adds or updates key-value pair. Returns new map (CoW — always rebind the result).
 
 **Parameters:**
 - `map` - HashMap
@@ -42,7 +42,7 @@ Adds or updates key-value pair. Returns new map with shared mutation semantics.
 
 **Returns:** `HashMap<K, V>` - Modified map
 
-**Note:** Uses shared mutation via Arc<Mutex<...>>
+**Note:** Uses Copy-on-Write semantics (Arc::make_mut internally). Always rebind: `map = hashMapPut(map, k, v)`
 
 ### hashMapCopy
 
@@ -265,7 +265,7 @@ Creates HashSet from array.
 fn hashSetAdd(set: HashSet<T>, value: T) -> HashSet<T>
 ```
 
-Adds element to set. Returns new set with shared mutation.
+Adds element to set. Returns new set (CoW — always rebind the result).
 
 **Parameters:**
 - `set` - HashSet

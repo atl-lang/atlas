@@ -127,6 +127,14 @@ cmd_add_issue() {
         exit 1
     fi
 
+    # Enforce meaningful problem description (min 30 chars)
+    if [[ ${#problem} -lt 30 ]]; then
+        echo "❌ ERROR: problem description too short (${#problem} chars, min 30)"
+        echo "   Include: what breaks, where it occurs, workaround if known."
+        echo "   Example: 'hashMapHas() typechecks to any not bool. Breaks if hashMapHas(m,k). Workaround: str(hashMapHas(m,k)) == \"true\"'"
+        exit 1
+    fi
+
     # Derive severity from priority
     local severity
     case "$priority" in

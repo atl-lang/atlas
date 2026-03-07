@@ -234,7 +234,7 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::Range { .. } => "range",
             Value::Result(_) => "record",
             Value::Regex(_) => "record",
-            Value::Future(_) => "record",
+            Value::Future(_) => "Future",
             Value::DateTime(_) => "record",
             Value::HttpRequest(_) => "record",
             Value::HttpResponse(_) => "record",
@@ -382,8 +382,7 @@ pub fn has_field(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         )),
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
-            let exists = map.with(|inner| inner.contains_key(&key));
-            Ok(Value::Bool(exists))
+            Ok(Value::Bool(map.contains_key(&key)))
         }
         _ => Ok(Value::Bool(false)),
     }
@@ -413,8 +412,7 @@ pub fn has_method(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         )),
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string(field), span)?;
-            let exists = map.with(|inner| inner.contains_key(&key));
-            Ok(Value::Bool(exists))
+            Ok(Value::Bool(map.contains_key(&key)))
         }
         _ => Ok(Value::Bool(false)),
     }
@@ -447,8 +445,7 @@ pub fn has_tag(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
         Value::HashMap(map) => {
             let key = HashKey::from_value(&Value::string("tag"), span)?;
-            let value = map.with(|inner| inner.get(&key).cloned());
-            if let Some(Value::String(value)) = value {
+            if let Some(Value::String(value)) = map.get(&key).cloned() {
                 return Ok(Value::Bool(value.as_ref() == tag_value));
             }
             Ok(Value::Bool(false))
@@ -766,7 +763,7 @@ fn type_name(value: &Value) -> &str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
-        Value::Future(_) => "future",
+        Value::Future(_) => "Future",
         Value::TaskHandle(_) => "TaskHandle",
         Value::ChannelSender(_) => "ChannelSender",
         Value::ChannelReceiver(_) => "ChannelReceiver",

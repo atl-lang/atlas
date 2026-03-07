@@ -1107,13 +1107,11 @@ pub fn duration_format(args: &[Value], span: Span) -> Result<Value, RuntimeError
     }
 
     let duration_map = expect_hashmap(&args[0], "duration", span)?;
-    let (days, hours, minutes, seconds) = duration_map.with(|map| {
-        let days = get_number_from_map(map, "days", span)?;
-        let hours = get_number_from_map(map, "hours", span)?;
-        let minutes = get_number_from_map(map, "minutes", span)?;
-        let seconds = get_number_from_map(map, "seconds", span)?;
-        Ok::<_, RuntimeError>((days, hours, minutes, seconds))
-    })?;
+    let inner = duration_map.as_inner();
+    let days = get_number_from_map(inner, "days", span)?;
+    let hours = get_number_from_map(inner, "hours", span)?;
+    let minutes = get_number_from_map(inner, "minutes", span)?;
+    let seconds = get_number_from_map(inner, "seconds", span)?;
 
     let mut parts = Vec::new();
     if days != 0 {

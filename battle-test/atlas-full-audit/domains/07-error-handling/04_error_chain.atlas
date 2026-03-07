@@ -1,0 +1,50 @@
+// 04_error_chain.atlas
+// Tests: user-defined error enums, Result chaining, error context building.
+// BUG: match on user-defined enum inside function body → typechecker returns '?'.
+// BUG: matching the same user enum variable twice at top level → second match result is '?'.
+// Workaround: ONE match per user enum variable that produces the final string.
+
+enum AppError { NotFound(string), InvalidInput(string), IoError(string) }
+
+fn lookup(id: number) -> Result<string, AppError> {
+    if id == 0 { return Err(AppError::InvalidInput("id must not be zero")); }
+    if id == 1 { return Ok("data-alpha"); }
+    if id == 2 { return Ok("data-beta"); }
+    return Err(AppError::NotFound("no entry for id " + str(id)));
+}
+
+fn process(id: number) -> Result<string, AppError> {
+    let lookup_r: Result<string, AppError> = lookup(id);
+    let succeeded = match lookup_r { Ok(_) => true, Err(_) => false };
+    if !succeeded {
+        let err = match lookup_r { Ok(_) => AppError::IoError(""), Err(e) => e };
+        return Err(err);
+    }
+    let found_val = match lookup_r { Ok(v) => v, Err(_) => "" };
+    if found_val == "" { return Err(AppError::IoError("empty entry")); }
+    return Ok("processed: " + found_val);
+}
+
+// id=1 — expect Ok
+let r1: Result<string, AppError> = process(1);
+let r1_ok = match r1 { Ok(_) => true, Err(_) => false };
+let r1_val = match r1 { Ok(v) => v, Err(_) => "" };
+let r1_err = match r1 { Ok(_) => AppError::IoError(""), Err(e) => e };
+let r1_desc = match r1_err { AppError::NotFound(m) => "NOT FOUND: " + m, AppError::InvalidInput(m) => "INVALID: " + m, AppError::IoError(m) => "IO ERROR: " + m };
+if r1_ok { print(r1_val); } else { print(r1_desc); }
+
+// id=0 — expect InvalidInput error
+let r2: Result<string, AppError> = process(0);
+let r2_ok = match r2 { Ok(_) => true, Err(_) => false };
+let r2_val = match r2 { Ok(v) => v, Err(_) => "" };
+let r2_err = match r2 { Ok(_) => AppError::IoError(""), Err(e) => e };
+let r2_desc = match r2_err { AppError::NotFound(m) => "NOT FOUND: " + m, AppError::InvalidInput(m) => "INVALID: " + m, AppError::IoError(m) => "IO ERROR: " + m };
+if r2_ok { print(r2_val); } else { print(r2_desc); }
+
+// id=99 — expect NotFound error
+let r3: Result<string, AppError> = process(99);
+let r3_ok = match r3 { Ok(_) => true, Err(_) => false };
+let r3_val = match r3 { Ok(v) => v, Err(_) => "" };
+let r3_err = match r3 { Ok(_) => AppError::IoError(""), Err(e) => e };
+let r3_desc = match r3_err { AppError::NotFound(m) => "NOT FOUND: " + m, AppError::InvalidInput(m) => "INVALID: " + m, AppError::IoError(m) => "IO ERROR: " + m };
+if r3_ok { print(r3_val); } else { print(r3_desc); }

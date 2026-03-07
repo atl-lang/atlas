@@ -30,6 +30,7 @@ impl Interpreter {
                     param_ownership: vec![],
                     param_names: vec![],
                     return_ownership: None,
+                    is_async: func.is_async,
                 });
 
                 // Store in current scope (functions are immutable bindings)

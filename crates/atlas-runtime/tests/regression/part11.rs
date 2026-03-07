@@ -102,13 +102,13 @@ fn test_b9_implicit_return_string() {
 fn test_b9_implicit_return_explicit_still_works() {
     // explicit return must still work alongside implicit
     let code = r#"
-        fn abs(x: number) -> number {
+        fn my_abs(x: number) -> number {
             if x < 0 {
                 return x * -1;
             }
             x
         }
-        abs(-3) + abs(4)
+        my_abs(-3) + my_abs(4)
     "#;
     assert_eval_number(code, 7.0);
 }

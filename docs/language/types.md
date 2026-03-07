@@ -130,8 +130,8 @@ arr = arrayPush(arr, 4);       // CORRECT: rebind result
 // arrayPush(arr, 4);          // WRONG: result is discarded, arr unchanged
 ```
 
-*Shared Mutation (HashMap, HashSet):*
-These use `Arc<Mutex<...>>` internally. Mutations are visible through all references:
+*HashMap, HashSet — CoW value semantics:*
+These use Copy-on-Write (`Arc<AtlasHashMap>` + `Arc::make_mut`) internally — same pattern as arrays. Aliases do NOT share mutable state. Always rebind:
 ```atlas
 let map: HashMap<string, number> = hashMapNew();
 map = hashMapPut(map, "key", 42);  // Rebind pattern still works

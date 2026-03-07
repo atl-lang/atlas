@@ -1,0 +1,42 @@
+// 02_enums.atlas
+// Tests: enum with unit/tuple variants, construction, match dispatch.
+// BUG: match on user-defined enum inside function body → typechecker returns '?'.
+//      All enum dispatch must happen at TOP LEVEL (works there), not in fn bodies.
+
+enum Status { Active, Inactive, Suspended(string) }
+enum Shape { Circle(number), Rectangle(number, number), Triangle(number, number, number) }
+
+let s1: Status = Status::Active;
+let s2: Status = Status::Inactive;
+let s3: Status = Status::Suspended("spam violation");
+
+// Status labels — top-level match dispatch (works here)
+let label1 = match s1 { Status::Active => "active", Status::Inactive => "inactive", Status::Suspended(_) => "suspended" };
+let label2 = match s2 { Status::Active => "active", Status::Inactive => "inactive", Status::Suspended(_) => "suspended" };
+let sus_reason = match s3 { Status::Suspended(r) => r, _ => "" };
+let label3 = "suspended: " + sus_reason;
+print("s1: " + label1);
+print("s2: " + label2);
+print("s3: " + label3);
+
+// Shape computation — each shape uses targeted match with _ default
+let circle: Shape = Shape::Circle(5);
+let rect: Shape = Shape::Rectangle(4, 6);
+let tri: Shape = Shape::Triangle(3, 4, 5);
+
+let c_r = match circle { Shape::Circle(r) => r, _ => 0 };
+let circle_area = 3 * c_r * c_r;
+
+let rect_w = match rect { Shape::Rectangle(w, _) => w, _ => 0 };
+let rect_h = match rect { Shape::Rectangle(_, h) => h, _ => 0 };
+let rect_area = rect_w * rect_h;
+
+let tri_a = match tri { Shape::Triangle(a, _, _) => a, _ => 0 };
+let tri_b = match tri { Shape::Triangle(_, b, _) => b, _ => 0 };
+let tri_c = match tri { Shape::Triangle(_, _, c) => c, _ => 0 };
+let tri_peri = tri_a + tri_b + tri_c;
+
+print("circle area~: " + str(circle_area));
+print("rect area: " + str(rect_area));
+print("tri perimeter: " + str(tri_peri));
+print("total: " + str(circle_area + rect_area + tri_peri));

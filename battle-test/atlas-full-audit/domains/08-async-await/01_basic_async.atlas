@@ -1,0 +1,38 @@
+// 01_basic_async.atlas
+// Tests: basic async fn definition, await call, async fn returning each primitive type
+
+async fn double_async(n: number) -> number {
+    return n * 2;
+}
+
+async fn greet_async(name: string) -> string {
+    return "hello, " + name;
+}
+
+async fn negate_async(b: bool) -> bool {
+    return !b;
+}
+
+async fn get_null() -> null {
+    return null;
+}
+
+// Await number result
+let result: number = await double_async(21);
+print(result);
+
+// Await string result
+let greeting: string = await greet_async("atlas");
+print(greeting);
+
+// Await bool result
+let negated: bool = await negate_async(false);
+print(negated);
+
+// Await null result
+let n: null = await get_null();
+print(n);
+
+// Calling async fn without await returns Future
+let raw_future = double_async(5);
+print(typeof(raw_future));

@@ -324,6 +324,7 @@ impl VM {
                     param_ownership: vec![],
                     param_names: vec![],
                     return_ownership: None,
+                    is_async: false,
                 });
                 self.globals.insert(extern_decl.name.clone(), func_value);
             }
@@ -1371,22 +1372,19 @@ impl VM {
                         crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
 
                     match map_val {
-                        Value::HashMap(map) => {
-                            let found = map.with(|inner| inner.get(&key).cloned());
-                            match found {
-                                Some(value) => self.push(value),
-                                None => {
-                                    let field = match key_val {
-                                        Value::String(s) => s.as_ref().to_string(),
-                                        other => other.type_name().to_string(),
-                                    };
-                                    return Err(RuntimeError::TypeError {
-                                        msg: format!("Missing field '{}'", field),
-                                        span,
-                                    });
-                                }
+                        Value::HashMap(map) => match map.get(&key).cloned() {
+                            Some(value) => self.push(value),
+                            None => {
+                                let field = match key_val {
+                                    Value::String(s) => s.as_ref().to_string(),
+                                    other => other.type_name().to_string(),
+                                };
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!("Missing field '{}'", field),
+                                    span,
+                                });
                             }
-                        }
+                        },
                         other => {
                             return Err(RuntimeError::TypeError {
                                 msg: format!(
@@ -1412,11 +1410,13 @@ impl VM {
 
                     match &mut map_val {
                         Value::HashMap(map) => {
-                            let existing = map.with(|inner| inner.get(&key).cloned());
-                            let existing = existing.ok_or_else(|| RuntimeError::TypeError {
-                                msg: format!("Missing field '{}'", field_name),
-                                span,
-                            })?;
+                            let existing =
+                                map.get(&key)
+                                    .cloned()
+                                    .ok_or_else(|| RuntimeError::TypeError {
+                                        msg: format!("Missing field '{}'", field_name),
+                                        span,
+                                    })?;
                             if existing.type_name() != value.type_name() {
                                 return Err(RuntimeError::TypeError {
                                     msg: format!(
@@ -1428,9 +1428,7 @@ impl VM {
                                     span,
                                 });
                             }
-                            map.with_mut(|inner| {
-                                inner.insert(key, value);
-                            });
+                            map.insert(key, value);
                         }
                         other => {
                             return Err(RuntimeError::TypeError {
@@ -1579,10 +1577,10 @@ impl VM {
 
                 Opcode::HashMap => {
                     use crate::stdlib::collections::hash::HashKey;
+                    use crate::stdlib::collections::hashmap::AtlasHashMap;
                     use crate::value::ValueHashMap;
 
                     let entry_count = self.read_u16()? as usize;
-                    let map = ValueHashMap::new();
 
                     // Stack has [key1, val1, key2, val2, ...] in order
                     // Pop them in reverse (LIFO) and insert
@@ -1595,21 +1593,21 @@ impl VM {
                     // Reverse to get original order
                     entries.reverse();
 
+                    let mut atlas_map = AtlasHashMap::with_capacity(entry_count);
                     for (key_val, value) in entries {
                         // Convert Value to HashKey (keys must be hashable)
                         let key = HashKey::from_value(
                             &key_val,
                             self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         )?;
-                        map.with_mut(|inner| {
-                            inner.insert(key, value);
-                        });
+                        atlas_map.insert(key, value);
                     }
 
-                    self.push(Value::HashMap(map));
+                    self.push(Value::HashMap(ValueHashMap::from_atlas(atlas_map)));
                 }
                 Opcode::Struct => {
                     use crate::stdlib::collections::hash::HashKey;
+                    use crate::stdlib::collections::hashmap::AtlasHashMap;
                     use crate::value::ValueHashMap;
 
                     let name_idx = self.read_u16()? as usize;
@@ -1624,7 +1622,6 @@ impl VM {
                         }
                     };
 
-                    let map = ValueHashMap::new();
                     let mut entries = Vec::with_capacity(field_count);
                     for _ in 0..field_count {
                         let value = self.pop();
@@ -1633,16 +1630,16 @@ impl VM {
                     }
                     entries.reverse();
 
+                    let mut atlas_map = AtlasHashMap::with_capacity(field_count);
                     for (key_val, value) in entries {
                         let key = HashKey::from_value(
                             &key_val,
                             self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         )?;
-                        map.with_mut(|inner| {
-                            inner.insert(key, value);
-                        });
+                        atlas_map.insert(key, value);
                     }
 
+                    let map = ValueHashMap::from_atlas(atlas_map);
                     self.register_struct_type(&map, &struct_name);
                     self.push(Value::HashMap(map));
                 }
@@ -1849,6 +1846,65 @@ impl VM {
                             });
                         }
                     }
+                }
+
+                // ===== Async (Phase 10) =====
+                //
+                // Encoding:
+                //   AsyncCall / SpawnTask: u8 arg_count  (same layout as Call)
+                //   Await / WrapFuture:    no operands
+                //
+                // The compiler emits WrapFuture *inside* async fn bodies so that the
+                // return value is always a Value::Future.  AsyncCall therefore only needs
+                // to dispatch the call normally — the callee's WrapFuture handles wrapping.
+                //
+                // SpawnTask mirrors AsyncCall at this stage (eager execution, same as the
+                // interpreter).  True tokio::spawn concurrency requires an independent VM
+                // instance per task and is deferred to Phase 11 (stdlib async I/O).
+                Opcode::AsyncCall | Opcode::SpawnTask => {
+                    let arg_count = self.read_u8()? as usize;
+                    self.execute_call(arg_count)?;
+                    // Result is already Value::Future — the callee's WrapFuture emitted it.
+                }
+                Opcode::Await => {
+                    let val = self.pop();
+                    match val {
+                        Value::Future(future) => match future.get_state() {
+                            crate::async_runtime::FutureState::Resolved(v) => {
+                                self.push(v);
+                            }
+                            crate::async_runtime::FutureState::Rejected(e) => {
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!("Awaited future was rejected: {}", e),
+                                    span: self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy),
+                                });
+                            }
+                            crate::async_runtime::FutureState::Pending => {
+                                return Err(RuntimeError::TypeError {
+                                        msg: "Cannot await a pending future in the VM synchronous execute loop".to_string(),
+                                        span: self
+                                            .current_span()
+                                            .unwrap_or_else(crate::span::Span::dummy),
+                                    });
+                            }
+                        },
+                        other => {
+                            return Err(RuntimeError::TypeError {
+                                msg: format!(
+                                    "AT4002: await operand must be Future, got {}",
+                                    other.type_name()
+                                ),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    }
+                }
+                Opcode::WrapFuture => {
+                    let val = self.pop();
+                    let future = crate::async_runtime::AtlasFuture::resolved(val);
+                    self.push(Value::Future(Arc::new(future)));
                 }
 
                 // ===== Special =====
@@ -3234,7 +3290,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -3276,7 +3332,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -3321,7 +3377,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),

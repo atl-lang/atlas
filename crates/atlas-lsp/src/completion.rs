@@ -532,6 +532,7 @@ fn format_type_ref_str(type_ref: &TypeRef) -> String {
             .map(format_type_ref_str)
             .collect::<Vec<_>>()
             .join(" & "),
+        TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref_str(inner)),
     }
 }
 

@@ -107,6 +107,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::GetArrayLen
         | Opcode::CheckEnumVariant
         | Opcode::ExtractEnumData
+        | Opcode::Await
+        | Opcode::WrapFuture
         | Opcode::Halt => {
             format!("{:04}  {:?}", start_offset, opcode)
         }
@@ -149,6 +151,16 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         Opcode::Call | Opcode::EnumVariant | Opcode::Range => {
             let operand = read_u8(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
+        }
+
+        // AsyncCall/SpawnTask: u16 fn_const_idx + u8 arg_count
+        Opcode::AsyncCall | Opcode::SpawnTask => {
+            let fn_const_idx = read_u16(bytecode, offset);
+            let arg_count = read_u8(bytecode, offset);
+            format!(
+                "{:04}  {:?} fn={} args={}",
+                start_offset, opcode, fn_const_idx, arg_count
+            )
         }
 
         // TraitDispatch: two u16 operands + u8 arg count

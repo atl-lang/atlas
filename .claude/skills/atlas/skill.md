@@ -24,12 +24,14 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 
 ```bash
 atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+atlas-track in-progress              # Check what's already claimed — avoid duplicate work
 ```
 
 This gives you: session ID, mode, handoff, P0 blockers, git state, block progress.
 
 **If `Work: BLOCKED`** → Fix P0 issues first. No new features.
 **If stale issues shown** → Check if fixed, then `fix` or `abandon`.
+**Quick orientation mid-session:** `atlas-track context` (no session overhead).
 
 ---
 
@@ -50,8 +52,9 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 
 ### Intelligent Decisions (When Spec Silent)
 1. Grep codebase — verify actual patterns before deciding
-2. Check `atlas-track decisions` — decision may already be made
+2. Check `atlas-track decisions all` — shows ALL decisions (no cap). Decision may already be made.
 3. Decide intelligently, log: `atlas-track add-decision "Title" component "Rule" "Rationale"`
+   - To amend an existing decision: `atlas-track update-decision D-XXX rule "new text"`
 4. **If enforceable by regex** → Add to `~/.claude/hooks/atlas/decision-patterns.json`
 
 ### World-Class Quality
@@ -89,12 +92,56 @@ cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # ✅
 
 ---
 
-## Issue Lifecycle
+## AI Continuity — Non-Negotiable (100% AI-maintained project)
+
+The user is architect only. You own all implementation, tracking, and continuity.
+
+**Never narrate — act or file. These are the only two options:**
+- ❌ "The next agent will need to look out for X" → `atlas-track add` it. NOW.
+- ❌ "We should probably Y" → Do it now, or `atlas-track add "Y" P2 "why"`.
+- ❌ Anything said to the user that isn't architecture = gone forever after the session ends.
+
+**Proactive filing:** Discover a bug, workaround, inconsistency, or gap mid-task? File it before moving on. 30 seconds now saves hours of re-discovery later. Include: battle test reference if applicable, workaround used, fix risk.
+
+**Before touching any component — run the decision gate (mandatory, not aspirational):**
 ```bash
-atlas-track claim H-001              # Mark you're working on it
-atlas-track fix H-001 "Root cause" "Fix applied"
-atlas-track done S-004 success "What was done" "Next steps"
+atlas-track decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+# Returns 3-8 lines. Takes 2 seconds. Skipping it risks violating a standing decision.
 ```
+Map your task to a component, run it, read it. If a decision covers your change — follow it.
+If your change contradicts a decision — stop and discuss with the architect before proceeding.
+If no decision exists for your design choice — make the call, then log it:
+```bash
+atlas-track add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
+```
+
+**Block tracking — mandatory after every phase commit:**
+```bash
+atlas-track phase-done B<N>                              # Every phase, no exceptions
+atlas-track complete-block B<N> "what shipped, bugs filed"  # Final phase only
+```
+
+---
+
+## Issue Lifecycle — CLOSE IMMEDIATELY, NOT AT END
+
+**Rule:** Fix → verify → close issue → commit → THEN move to the next issue. Never batch closures at session end.
+
+```bash
+atlas-track claim H-001                                       # Before starting
+# ... implement, verify ...
+atlas-track fix H-001 "Root cause (specific: what was wrong)" "Fix (specific: what changed)"
+git commit -m "fix(...): description"
+# NOW move to next issue
+```
+
+**Session close** — required at end of every session, even if interrupted:
+```bash
+atlas-track done S-XXX success \
+  "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \
+  "Next: Phase-05 — Value::Future in runtime, interpreter dispatch"
+```
+Format: one sentence per issue/phase closed. Root cause + fix. Next: 1–2 sentences. No bullet dumps.
 
 ## Work Selection
 P0 blockers > P1 bugs > P2 features > cleanup
@@ -145,5 +192,7 @@ Load `gates/ai-grammar-principles.md` when making syntax/grammar decisions.
 - `crates/atlas-jit/src/` — JIT (see `crates/atlas-jit/src/CLAUDE.md`)
 - `docs/language/` — Language spec (types, grammar, functions, control flow, structs)
 - `docs/stdlib/` — Stdlib API docs
-- `atlas-track decisions` — All locked decisions (D-XXX format)
-- `atlas-track issues` — Current bugs and tasks
+- `atlas-track decisions all` — All decisions, no cap (D-001 through D-029+)
+- `atlas-track issues [P0|component]` — Open issues with titles and status
+- `atlas-track ci-status` — Last CI run + failed test list
+- `atlas-track blocks` — Block progress with names

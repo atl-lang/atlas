@@ -252,3 +252,59 @@ fn test_diagnostic_stability() {
 }
 
 // ============================================================================
+// B8: Async/Await Keyword Tests
+// ============================================================================
+
+#[test]
+fn test_async_keyword_tokenizes() {
+    let (tokens, diagnostics) = lex("async");
+    assert_eq!(diagnostics.len(), 0);
+    assert_eq!(tokens[0].kind, TokenKind::Async);
+    assert_eq!(tokens[0].lexeme, "async");
+}
+
+#[test]
+fn test_await_keyword_tokenizes() {
+    let (tokens, diagnostics) = lex("await");
+    assert_eq!(diagnostics.len(), 0);
+    assert_eq!(tokens[0].kind, TokenKind::Await);
+    assert_eq!(tokens[0].lexeme, "await");
+}
+
+#[test]
+fn test_async_underscore_is_identifier() {
+    let (tokens, diagnostics) = lex("async_fn");
+    assert_eq!(diagnostics.len(), 0);
+    assert_eq!(tokens[0].kind, TokenKind::Identifier);
+    assert_eq!(tokens[0].lexeme, "async_fn");
+}
+
+#[test]
+fn test_awaiting_is_identifier() {
+    let (tokens, diagnostics) = lex("awaiting");
+    assert_eq!(diagnostics.len(), 0);
+    assert_eq!(tokens[0].kind, TokenKind::Identifier);
+    assert_eq!(tokens[0].lexeme, "awaiting");
+}
+
+#[test]
+fn test_async_is_keyword() {
+    assert_eq!(TokenKind::is_keyword("async"), Some(TokenKind::Async));
+}
+
+#[test]
+fn test_await_is_keyword() {
+    assert_eq!(TokenKind::is_keyword("await"), Some(TokenKind::Await));
+}
+
+#[test]
+fn test_async_as_str() {
+    assert_eq!(TokenKind::Async.as_str(), "async");
+}
+
+#[test]
+fn test_await_as_str() {
+    assert_eq!(TokenKind::Await.as_str(), "await");
+}
+
+// ============================================================================

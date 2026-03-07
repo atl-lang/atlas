@@ -363,7 +363,7 @@ fn test_recursive_fn_with_global_counter() {
     assert_parity_number(
         r#"
 let mut sum = 0;
-fn accumulate(n: number) {
+fn accumulate(n: number) -> void {
     if (n > 0) {
         sum = sum + n;
         accumulate(n - 1);
@@ -384,7 +384,7 @@ sum;
 fn test_callback_closure_mutates_global_array() {
     assert_parity_number(
         r#"
-let mut tests = [];
+let mut tests: number[] = [];
 
 fn describe(block: () -> void) -> void {
     block();
@@ -415,7 +415,7 @@ fn with_callback(block: () -> void) -> void {
 }
 
 with_callback(fn() -> void {
-    hash_map_put(m, "a", 1);
+    m = hash_map_put(m, "a", 1);
 });
 
 hash_map_size(m);
@@ -428,7 +428,7 @@ hash_map_size(m);
 fn test_nested_closures_mutate_global_array() {
     assert_parity_number(
         r#"
-let mut values = [];
+let mut values: number[] = [];
 
 fn outer(block: () -> void) -> void {
     block();
@@ -454,7 +454,7 @@ len(values);
 fn test_closure_param_mutates_global_collection() {
     assert_parity_number(
         r#"
-let mut items = [];
+let mut items: number[] = [];
 
 fn apply(block: () -> void) -> void {
     block();
@@ -478,8 +478,8 @@ fn test_mutually_referencing_fns_via_global() {
     assert_parity_number(
         r#"
 let mut state = 0;
-fn step_a() { state = state + 1; }
-fn step_b() { state = state * 2; }
+fn step_a() -> void { state = state + 1; }
+fn step_b() -> void { state = state * 2; }
 step_a();
 step_b();
 step_a();

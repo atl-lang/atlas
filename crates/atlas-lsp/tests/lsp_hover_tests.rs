@@ -188,7 +188,7 @@ fn test_hover_on_keyword_let() {
 
 #[test]
 fn test_hover_on_keyword_fn() {
-    let text = "fn foo() {}";
+    let text = "fn foo() -> void {}";
     let pos = Position {
         line: 0,
         character: 1,
@@ -230,7 +230,7 @@ fn test_hover_on_keyword_while() {
 
 #[test]
 fn test_hover_on_keyword_return() {
-    let text = "fn f() { return 1; }";
+    let text = "fn f() -> number { return ; }";
     let pos = Position {
         line: 0,
         character: 10,
@@ -878,8 +878,8 @@ fn test_hover_unannotated_variable_no_unknown() {
 
 #[test]
 fn test_hover_function_inferred_return_type() {
-    // `fn double(x: number) { return x * 2; }` → hover shows `-> number`
-    let source = "fn double(x: number) { return x * 2; }";
+    // `fn double(x: number) -> number { return x * 2; }` → hover shows `-> number`
+    let source = "fn double(x: number) -> number { return x * 2; }";
     let (ast, symbols) = parse_source(source);
     let pos = Position {
         line: 0,

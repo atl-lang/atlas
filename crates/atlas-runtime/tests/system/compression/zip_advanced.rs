@@ -212,8 +212,6 @@ fn test_zip_list_metadata_fields() {
             use atlas_runtime::stdlib::collections::hash::HashKey;
             use std::sync::Arc;
 
-            let map_guard = map.with(|inner| inner.clone());
-
             // Must have all required fields
             let name_key = HashKey::String(Arc::new("name".to_string()));
             let size_key = HashKey::String(Arc::new("size".to_string()));
@@ -221,20 +219,17 @@ fn test_zip_list_metadata_fields() {
             let isdir_key = HashKey::String(Arc::new("isDir".to_string()));
             let method_key = HashKey::String(Arc::new("method".to_string()));
 
-            assert!(map_guard.get(&name_key).is_some(), "missing 'name' field");
-            assert!(map_guard.get(&size_key).is_some(), "missing 'size' field");
+            assert!(map.get(&name_key).is_some(), "missing 'name' field");
+            assert!(map.get(&size_key).is_some(), "missing 'size' field");
             assert!(
-                map_guard.get(&csize_key).is_some(),
+                map.get(&csize_key).is_some(),
                 "missing 'compressedSize' field"
             );
-            assert!(map_guard.get(&isdir_key).is_some(), "missing 'isDir' field");
-            assert!(
-                map_guard.get(&method_key).is_some(),
-                "missing 'method' field"
-            );
+            assert!(map.get(&isdir_key).is_some(), "missing 'isDir' field");
+            assert!(map.get(&method_key).is_some(), "missing 'method' field");
 
             // File should not be a directory
-            assert_eq!(map_guard.get(&isdir_key), Some(&Value::Bool(false)));
+            assert_eq!(map.get(&isdir_key), Some(&Value::Bool(false)));
         } else {
             panic!("list entry should be a HashMap");
         }

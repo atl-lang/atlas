@@ -77,7 +77,7 @@ rustc /tmp/test.rs -o /tmp/test_rs && /tmp/test_rs
 |----------|-------|---------|-----|
 | Number type | Unified `number` (f64) | i32/f64 separate | AI simplicity — one numeric type |
 | Array mutation | CoW (rebind required) | In-place (Rust Vec) | Safety + parity |
-| HashMap mutation | Shared (Arc<Mutex>) | In-place | Concurrent safety |
+| HashMap mutation | CoW (rebind required, value semantics) | In-place | Pure value semantics — aliases never share mutable state (D-029) |
 | String interpolation | `` `Hello {name}` `` | `format!("{name}")` | Cleaner syntax |
 | Error propagation | `?` on Result/Option | Same in Rust | Identical |
 | No exceptions | Result/Option only | try/catch (TS) | Explicit error handling |

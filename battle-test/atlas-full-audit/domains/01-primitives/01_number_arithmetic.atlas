@@ -1,0 +1,48 @@
+// 01_number_arithmetic.atlas
+// Tests: integer math, float math, negative numbers, large numbers, operator precedence
+
+let a: number = 42;
+let b: number = 8;
+
+let sum: number = a + b;
+let diff: number = a - b;
+let product: number = a * b;
+let quotient: number = a / b;
+let remainder: number = a % b;
+
+// Operator precedence: * before +
+let precedence: number = 2 + 3 * 4;
+
+// Negative numbers
+let neg: number = -15;
+let neg_sum: number = neg + 5;
+
+// Large numbers
+let large: number = 1000000 * 999;
+
+// Float math
+let f1: number = 3.14;
+let f2: number = 2.0;
+let float_product: number = f1 * f2;
+
+// Division of integers produces float
+let int_div: number = 7 / 2;
+
+// Mixed expression
+let mixed: number = (a + b) * 2 - remainder;
+
+print("sum: " + str(sum));
+print("diff: " + str(diff));
+print("product: " + str(product));
+print("quotient: " + str(quotient));
+print("remainder: " + str(remainder));
+print("precedence (2+3*4=14): " + str(precedence));
+print("neg_sum: " + str(neg_sum));
+print("large: " + str(large));
+print("float_product: " + str(float_product));
+print("int_div (7/2): " + str(int_div));
+print("mixed: " + str(mixed));
+
+// Final result: sum of all basic ops
+let result: number = sum + diff + product + remainder;
+print(result);

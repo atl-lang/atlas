@@ -309,7 +309,7 @@ fn test_format_idempotent(#[case] source: &str) {
 #[test]
 fn test_format_with_indent_2() {
     let config = FormatConfig::default().with_indent_size(2);
-    let source = "fn foo() { let x = 1; }";
+    let source = "fn foo() -> void { let x = 1; }";
     let formatted = match format_source_with_config(source, &config) {
         FormatResult::Ok(s) => s,
         FormatResult::ParseError(e) => panic!("Parse error: {:?}", e),
@@ -320,7 +320,7 @@ fn test_format_with_indent_2() {
 #[test]
 fn test_format_with_indent_4() {
     let config = FormatConfig::default().with_indent_size(4);
-    let source = "fn foo() { let x = 1; }";
+    let source = "fn foo() -> void { let x = 1; }";
     let formatted = match format_source_with_config(source, &config) {
         FormatResult::Ok(s) => s,
         FormatResult::ParseError(e) => panic!("Parse error: {:?}", e),

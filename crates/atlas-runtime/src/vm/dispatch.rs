@@ -87,6 +87,12 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x96] = Some(Opcode::IsArray);
     table[0x97] = Some(Opcode::GetArrayLen);
 
+    // Async (0xA0-0xA3)
+    table[0xA0] = Some(Opcode::AsyncCall);
+    table[0xA1] = Some(Opcode::Await);
+    table[0xA2] = Some(Opcode::WrapFuture);
+    table[0xA3] = Some(Opcode::SpawnTask);
+
     // Special
     table[0xFF] = Some(Opcode::Halt);
 

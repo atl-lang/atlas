@@ -263,7 +263,7 @@ fn test_run_value_result_printed() {
 
 #[test]
 fn test_run_function_definition_no_output() {
-    let file = temp_atlas_file("fn greet() { print(\"hi\"); }");
+    let file = temp_atlas_file("fn greet() -> void { print(\"hi\"); }");
     atlas()
         .args(["run", file.path().to_str().unwrap()])
         .assert()

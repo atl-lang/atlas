@@ -127,17 +127,6 @@ fn test_hashmap_put_mutates_in_place_and_returns_map() {
 }
 
 #[test]
-fn test_hashmap_alias_sees_mutation() {
-    let code = r#"
-        let hm = hash_map_new();
-        let alias = hm;
-        hash_map_put(hm, "key", "value");
-        hash_map_size(alias)
-    "#;
-    assert_eval_number(code, 1.0);
-}
-
-#[test]
 fn test_hashmap_copy_is_independent() {
     let code = r#"
         let hm = hash_map_new();
@@ -1922,6 +1911,7 @@ fn test_type_names() {
             param_ownership: vec![],
             param_names: vec![],
             return_ownership: None,
+            is_async: false,
         })
         .type_name(),
         "function"
@@ -1987,6 +1977,7 @@ fn test_to_string_function() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     assert_eq!(func.to_string(), "<fn test>");
 }
@@ -2070,6 +2061,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     let func2 = Value::Function(FunctionRef {
         name: "test".to_string(),
@@ -2079,6 +2071,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     let func3 = Value::Function(FunctionRef {
         name: "other".to_string(),
@@ -2088,6 +2081,7 @@ fn test_function_equality() {
         param_ownership: vec![],
         param_names: vec![],
         return_ownership: None,
+        is_async: false,
     });
     assert_eq!(func1, func2); // same name
     assert_ne!(func1, func3); // different name
@@ -2169,41 +2163,33 @@ fn value_map_cow_insert_does_not_affect_clone() {
 }
 
 #[test]
-fn value_hashmap_shared_insert_affects_clone() {
-    let a = ValueHashMap::new();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("x".to_string())),
-            Value::Number(1.0),
-        );
-    });
-    let b = a.clone();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("y".to_string())),
-            Value::Number(2.0),
-        );
-    });
-    let len = b.with(|inner| inner.len());
-    assert_eq!(len, 2);
+fn value_hashmap_cow_insert_does_not_affect_clone() {
+    let mut a = ValueHashMap::new();
+    a.insert(
+        HashKey::String(Arc::new("x".to_string())),
+        Value::Number(1.0),
+    );
+    let b = a.clone(); // cheap Arc refcount bump
+    a.insert(
+        HashKey::String(Arc::new("y".to_string())),
+        Value::Number(2.0),
+    ); // CoW — clones inner, b is unaffected
+    assert_eq!(a.len(), 2);
+    assert_eq!(b.len(), 1, "CoW: clone must not see mutations to original");
 }
 
 #[test]
 fn value_collection_equality_by_content() {
-    let a = ValueHashMap::new();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("k".to_string())),
-            Value::Number(1.0),
-        );
-    });
-    let b = ValueHashMap::new();
-    b.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("k".to_string())),
-            Value::Number(1.0),
-        );
-    });
+    let mut a = ValueHashMap::new();
+    a.insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
+    let mut b = ValueHashMap::new();
+    b.insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
     assert_eq!(a, b);
 }
 

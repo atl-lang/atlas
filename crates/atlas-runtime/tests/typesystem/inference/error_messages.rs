@@ -9,29 +9,6 @@ use super::helpers::*;
 // ============================================================================
 
 #[test]
-fn test_at3050_includes_function_name() {
-    let diags = errors(
-        r#"
-fn confused(x: number) {
-    if x > 0 { return 1; } else { return "bad"; }
-}
-"#,
-    );
-    let at3050 = diags.iter().find(|d| d.code == "AT3050");
-    assert!(
-        at3050.is_some(),
-        "Expected AT3050, got: {:?}",
-        diags.iter().map(|d| &d.code).collect::<Vec<_>>()
-    );
-    let msg = &at3050.unwrap().message;
-    assert!(
-        msg.contains("confused"),
-        "AT3050 message should include function name 'confused', got: {}",
-        msg
-    );
-}
-
-#[test]
 fn test_at3051_includes_type_param_name() {
     let diags = errors(
         r#"

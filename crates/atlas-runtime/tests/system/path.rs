@@ -63,7 +63,7 @@ fn test_path_parse_basic() {
 
     match result {
         Value::HashMap(map) => {
-            let len = map.with(|inner| inner.len());
+            let len = map.len();
             // Check that keys exist (cross-platform checking would be complex)
             assert!(len == 5); // root, dir, base, ext, name
         }
@@ -540,7 +540,7 @@ fn test_path_parsing_workflow() {
     // Should have all components
     match parsed {
         Value::HashMap(map) => {
-            let len = map.with(|inner| inner.len());
+            let len = map.len();
             assert_eq!(len, 5);
         }
         _ => panic!("Expected HashMap"),

@@ -1122,6 +1122,9 @@ impl Binder {
                     }
                 }
             }
+            Expr::Await { expr, .. } => {
+                self.bind_expr(expr);
+            }
         }
     }
 
@@ -1333,6 +1336,13 @@ impl Binder {
                 let resolved = members.iter().map(|m| self.resolve_type_ref(m)).collect();
                 Type::intersection(resolved)
             }
+            TypeRef::Future { inner, .. } => {
+                let inner_ty = self.resolve_type_ref(inner);
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_ty],
+                }
+            }
         }
     }
 
@@ -1467,6 +1477,13 @@ impl Binder {
 
                 // Fall back to normal resolution (includes built-in generic validation)
                 self.resolve_type_ref(type_ref)
+            }
+            TypeRef::Future { inner, .. } => {
+                let inner_ty = self.resolve_type_ref_with_alias_params(inner, substitutions);
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![inner_ty],
+                }
             }
         }
     }

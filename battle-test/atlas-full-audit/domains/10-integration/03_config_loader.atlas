@@ -1,0 +1,66 @@
+// 03_config_loader.atlas
+// Integration: structs + Result + HashMap + match + validation.
+// FRICTION: Cannot pass HashMap as mutable out of closure (H-069 — closure mutation).
+//           Used parallel arrays for key-value storage as workaround.
+// BUG: Multi-line struct array literals fail — kept single-line.
+
+struct Config { host: string, port: number, debug: bool, max_conn: number }
+
+fn default_config() -> Config {
+    return Config { host: "localhost", port: 8080, debug: false, max_conn: 100 };
+}
+
+fn validate_config(c: Config) -> Result<Config, string> {
+    if len(c.host) == 0 {
+        return Err("host cannot be empty");
+    }
+    if c.port < 1 || c.port > 65535 {
+        return Err("port out of range: " + str(c.port));
+    }
+    if c.max_conn < 1 {
+        return Err("max_conn must be positive");
+    }
+    return Ok(c);
+}
+
+fn config_to_string(c: Config) -> string {
+    let mut dbg: string = "false";
+    if c.debug { dbg = "true"; }
+    return "host=" + c.host + " port=" + str(c.port) + " debug=" + dbg + " max_conn=" + str(c.max_conn);
+}
+
+// Load defaults then override
+let defaults: Config = default_config();
+
+// Simulate "loaded" overrides
+let cfg: Config = Config {
+    host: "prod.example.com",
+    port: 443,
+    debug: false,
+    max_conn: 500,
+};
+
+let validated: Result<Config, string> = validate_config(cfg);
+let ok_cfg = match validated {
+    Ok(c) => true,
+    Err(_) => false
+};
+
+if ok_cfg {
+    let final_cfg = match validated { Ok(c) => c, Err(_) => defaults };
+    print("config: " + config_to_string(final_cfg));
+} else {
+    let err_msg = match validated { Ok(_) => "", Err(e) => e };
+    print("invalid config: " + err_msg);
+}
+
+// Test validation failure
+let bad_cfg: Config = Config { host: "", port: 9999, debug: true, max_conn: 50 };
+let bad_result: Result<Config, string> = validate_config(bad_cfg);
+let bad_ok = match bad_result { Ok(_) => true, Err(_) => false };
+if !bad_ok {
+    let err = match bad_result { Ok(_) => "", Err(e) => e };
+    print("validation failed: " + err);
+}
+
+print("done");

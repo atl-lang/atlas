@@ -113,7 +113,7 @@ fn test_fmt_quiet_output() {
 
 #[test]
 fn test_fmt_indent_size_flag() {
-    let file = temp_atlas_file("fn test() {\nlet x = 1;\n}");
+    let file = temp_atlas_file("fn test() -> void {\nlet x = 1;\n}");
     atlas()
         .args(["fmt", "--indent-size", "2", file.path().to_str().unwrap()])
         .assert()

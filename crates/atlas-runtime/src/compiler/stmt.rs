@@ -50,6 +50,11 @@ impl Compiler {
 
         let prev_local_base = std::mem::replace(&mut self.current_function_base, local_base);
 
+        // Register as async fn so call sites emit AsyncCall.
+        if func.is_async {
+            self.async_fn_names.insert(func.name.name.clone());
+        }
+
         // Push upvalue tracking context for this nested function.
         // `parent_base` = prev_local_base = the immediate parent function's local base.
         // Any abs_local_idx >= parent_base is a direct parent local; anything below is
@@ -59,7 +64,9 @@ impl Compiler {
             captures: Vec::new(),
         });
 
+        let prev_in_async = std::mem::replace(&mut self.in_async_fn, func.is_async);
         self.compile_block_with_tail(&func.body, func.span)?;
+        self.in_async_fn = prev_in_async;
 
         // Pop upvalue context — now we know all captured outer-scope variables
         let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
@@ -93,6 +100,7 @@ impl Compiler {
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: func.params.iter().map(|p| p.name.name.clone()).collect(),
             return_ownership: func.return_ownership.clone(),
+            is_async: func.is_async,
         };
         let const_idx = self
             .bytecode
@@ -178,6 +186,9 @@ impl Compiler {
                     self.compile_expr(expr)?;
                 } else {
                     self.bytecode.emit(Opcode::Null, ret.span);
+                }
+                if self.in_async_fn {
+                    self.bytecode.emit(Opcode::WrapFuture, ret.span);
                 }
                 self.bytecode.emit(Opcode::Return, ret.span);
                 Ok(())
@@ -1322,6 +1333,9 @@ impl Compiler {
         } else {
             // Empty block = implicit null return
             self.bytecode.emit(Opcode::Null, span);
+        }
+        if self.in_async_fn {
+            self.bytecode.emit(Opcode::WrapFuture, span);
         }
         self.bytecode.emit(Opcode::Return, span);
         Ok(())

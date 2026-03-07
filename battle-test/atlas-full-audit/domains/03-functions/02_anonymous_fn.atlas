@@ -1,0 +1,53 @@
+// 02_anonymous_fn.atlas
+// Tests: anonymous fn stored in let, passed to map/filter,
+//        fn type annotation, filter + map pipeline.
+
+let double: (number) -> number = fn(x: number) -> number {
+    return x * 2;
+};
+
+let square: (number) -> number = fn(x: number) -> number {
+    return x * x;
+};
+
+let is_even: (number) -> bool = fn(x: number) -> bool {
+    return x % 2 == 0;
+};
+
+let add_ten: (number) -> number = fn(x: number) -> number {
+    return x + 10;
+};
+
+let nums: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// map with stored anonymous fn
+let doubled: number[] = map(nums, double);
+print("doubled: " + str(len(doubled)) + " items");
+
+// filter with stored anonymous fn
+let evens: number[] = filter(nums, is_even);
+print("evens count: " + str(len(evens)));
+
+// inline anonymous fn in map
+let squared: number[] = map(nums, fn(x: number) -> number {
+    return x * x;
+});
+print("squared[0..2]: " + str(squared[0]) + ", " + str(squared[1]));
+
+// pipeline: filter evens, then double them
+let even_doubled: number[] = map(filter(nums, is_even), double);
+print("even_doubled: " + str(len(even_doubled)) + " items");
+
+// reduce with inline anonymous fn
+let total: number = reduce(nums, fn(acc: number, x: number) -> number {
+    return acc + x;
+}, 0);
+print("sum(1..10): " + str(total));
+
+// Final result: sum of (filter evens -> add_ten -> map)
+let result: number = reduce(
+    map(filter(nums, is_even), add_ten),
+    fn(acc: number, x: number) -> number { return acc + x; },
+    0
+);
+print(result);

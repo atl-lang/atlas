@@ -247,3 +247,202 @@ fn test_diagnostic_builder_all_fields() {
 }
 
 // ============================================================================
+// B8 Phase 04: Parser — async fn, await expr, Future<T> type
+// ============================================================================
+
+fn parse_program(source: &str) -> (atlas_runtime::ast::Program, Vec<Diagnostic>) {
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    parser.parse()
+}
+
+fn first_fn_decl(source: &str) -> atlas_runtime::ast::FunctionDecl {
+    let (program, diags) = parse_program(source);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "parse errors: {errors:?}");
+    match program
+        .items
+        .into_iter()
+        .next()
+        .expect("expected at least one item")
+    {
+        atlas_runtime::ast::Item::Function(f) => f,
+        other => panic!("expected Item::Function, got {other:?}"),
+    }
+}
+
+// === async fn declarations ===
+
+#[test]
+fn test_async_fn_sets_is_async_true() {
+    let f = first_fn_decl("async fn foo() -> void { return; }");
+    assert!(f.is_async);
+    assert_eq!(f.name.name, "foo");
+}
+
+#[test]
+fn test_async_fn_with_params_and_return() {
+    let f = first_fn_decl("async fn fetch(url: string) -> string { return url; }");
+    assert!(f.is_async);
+    assert_eq!(f.params.len(), 1);
+}
+
+#[test]
+fn test_async_fn_with_generics() {
+    let f = first_fn_decl("async fn wrap<T>(val: T) -> T { return val; }");
+    assert!(f.is_async);
+    assert_eq!(f.type_params.len(), 1);
+}
+
+#[test]
+fn test_non_async_fn_is_async_false() {
+    let f = first_fn_decl("fn add(a: number) -> number { return a; }");
+    assert!(!f.is_async);
+}
+
+#[test]
+fn test_async_not_followed_by_fn_is_error() {
+    let (_, diags) = parse_program("async 42;");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(!errors.is_empty(), "expected a parse error");
+    assert!(errors[0].message.contains("fn") || errors[0].message.contains("async"));
+}
+
+#[test]
+fn test_async_async_fn_is_error() {
+    let (_, diags) = parse_program("async async fn foo() -> void { return; }");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(!errors.is_empty(), "expected a parse error");
+}
+
+// === await expressions ===
+
+fn parse_first_expr_stmt(source: &str) -> atlas_runtime::ast::Expr {
+    let (program, diags) = parse_program(source);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "parse errors: {errors:?}");
+    match program.items.into_iter().next().expect("expected an item") {
+        atlas_runtime::ast::Item::Statement(atlas_runtime::ast::Stmt::Expr(e)) => e.expr,
+        other => panic!("expected ExprStmt, got {other:?}"),
+    }
+}
+
+#[test]
+fn test_await_produces_expr_await() {
+    let expr = parse_first_expr_stmt("await foo();");
+    assert!(matches!(expr, atlas_runtime::ast::Expr::Await { .. }));
+}
+
+#[test]
+fn test_await_in_let_binding() {
+    let (program, diags) = parse_program("let x = await bar();");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "parse errors: {errors:?}");
+    match &program.items[0] {
+        atlas_runtime::ast::Item::Statement(atlas_runtime::ast::Stmt::VarDecl(v)) => {
+            assert!(matches!(v.init, atlas_runtime::ast::Expr::Await { .. }));
+        }
+        other => panic!("expected VarDecl, got {other:?}"),
+    }
+}
+
+#[test]
+fn test_nested_await() {
+    let expr = parse_first_expr_stmt("await await foo();");
+    match expr {
+        atlas_runtime::ast::Expr::Await { expr, .. } => {
+            assert!(matches!(*expr, atlas_runtime::ast::Expr::Await { .. }));
+        }
+        other => panic!("expected Await, got {other:?}"),
+    }
+}
+
+#[test]
+fn test_await_no_expression_is_error() {
+    let (_, diags) = parse_program("await;");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(!errors.is_empty(), "expected a parse error");
+}
+
+#[test]
+fn test_async_fn_main_parses_ok() {
+    // Typechecker emits AT4006, not the parser
+    let f = first_fn_decl("async fn main() -> void { return; }");
+    assert!(f.is_async);
+    assert_eq!(f.name.name, "main");
+}
+
+// === Future<T> type ===
+
+fn parse_type_of_let(source: &str) -> atlas_runtime::ast::TypeRef {
+    let (program, diags) = parse_program(source);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "parse errors: {errors:?}");
+    match program.items.into_iter().next().expect("expected an item") {
+        atlas_runtime::ast::Item::Statement(atlas_runtime::ast::Stmt::VarDecl(v)) => {
+            v.type_ref.expect("expected type annotation")
+        }
+        other => panic!("expected VarDecl, got {other:?}"),
+    }
+}
+
+#[test]
+fn test_future_number_parses_to_typeref_future() {
+    let ty = parse_type_of_let("let f: Future<number> = foo();");
+    assert!(
+        matches!(ty, atlas_runtime::ast::TypeRef::Future { .. }),
+        "expected TypeRef::Future, got {ty:?}"
+    );
+}
+
+#[test]
+fn test_future_string_inner_type() {
+    let ty = parse_type_of_let("let f: Future<string> = foo();");
+    match ty {
+        atlas_runtime::ast::TypeRef::Future { inner, .. } => {
+            assert!(
+                matches!(*inner, atlas_runtime::ast::TypeRef::Named(ref n, _) if n == "string")
+            );
+        }
+        other => panic!("expected TypeRef::Future, got {other:?}"),
+    }
+}
+
+#[test]
+fn test_future_nested_generic() {
+    let ty = parse_type_of_let("let f: Future<Result<number, string>> = foo();");
+    assert!(matches!(ty, atlas_runtime::ast::TypeRef::Future { .. }));
+}
+
+#[test]
+fn test_future_without_angle_brackets_is_named() {
+    let ty = parse_type_of_let("let f: Future = foo();");
+    assert!(
+        matches!(ty, atlas_runtime::ast::TypeRef::Named(ref n, _) if n == "Future"),
+        "expected TypeRef::Named(Future), got {ty:?}"
+    );
+}
+
+// ============================================================================

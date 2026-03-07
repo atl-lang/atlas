@@ -1,0 +1,36 @@
+// 04_array_functions.atlas
+// Tests: map, filter, reduce, arrayReverse, arraySort (all intrinsics)
+// Pipeline: [1..10] -> filter evens -> double each -> sum
+
+let numbers: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+// filter: keep only even numbers
+let evens: number[] = filter(numbers, fn(x: number) -> bool {
+    return x % 2 == 0;
+});
+print("evens len: " + str(len(evens)));
+
+// map: double each element
+let doubled: number[] = map(evens, fn(x: number) -> number {
+    return x * 2;
+});
+print("doubled[0]: " + str(doubled[0]));
+
+// reduce: sum all elements
+let total: number = reduce(doubled, fn(acc: number, x: number) -> number {
+    return acc + x;
+}, 0);
+print("sum of doubled evens: " + str(total));
+
+// arrayReverse
+let rev: number[] = arrayReverse(numbers);
+print("reversed[0]: " + str(rev[0]));
+print("reversed[9]: " + str(rev[9]));
+
+// arraySort on unsorted input
+let unsorted: number[] = [5, 1, 4, 2, 8, 3];
+let sorted: number[] = arraySort(unsorted);
+print("sorted[0]: " + str(sorted[0]));
+print("sorted[5]: " + str(sorted[5]));
+
+print(total);

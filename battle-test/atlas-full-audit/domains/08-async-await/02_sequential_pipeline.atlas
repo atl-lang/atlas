@@ -1,0 +1,39 @@
+// 02_sequential_pipeline.atlas
+// Tests: chained async fns, each transforming the previous result, 3+ steps
+
+async fn step1(x: number) -> number {
+    return x + 10;
+}
+
+async fn step2(x: number) -> string {
+    return "val_" + str(x);
+}
+
+async fn step3(s: string) -> string {
+    return toUpperCase(s);
+}
+
+async fn step4(s: string) -> string {
+    return s + "!";
+}
+
+// Sequential 3-step pipeline
+let a: number = await step1(5);
+let b: string = await step2(a);
+let c: string = await step3(b);
+print(c);
+
+// Extended 4-step pipeline
+let p1: number = await step1(0);
+let p2: string = await step2(p1);
+let p3: string = await step3(p2);
+let p4: string = await step4(p3);
+print(p4);
+
+// Pipeline with intermediate values visible
+let base: number = await step1(100);
+print(base);
+let mid: string = await step2(base);
+print(mid);
+let final_val: string = await step3(mid);
+print(final_val);

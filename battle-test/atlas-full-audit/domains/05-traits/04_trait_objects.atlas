@@ -1,0 +1,38 @@
+// 04_trait_objects.atlas
+// Tests: trait object as function parameter (bounded polymorphism / dynamic dispatch)
+
+trait Describable {
+    fn describe(self) -> string;
+}
+
+struct Book {
+    title: string,
+    pages: number,
+}
+
+struct Movie {
+    title: string,
+    duration: number,
+}
+
+impl Describable for Book {
+    fn describe(self) -> string {
+        return "Book: " + self.title + " (" + str(self.pages) + " pages)";
+    }
+}
+
+impl Describable for Movie {
+    fn describe(self) -> string {
+        return "Movie: " + self.title + " (" + str(self.duration) + " min)";
+    }
+}
+
+fn describe(item: Describable) -> string {
+    return item.describe();
+}
+
+let b = Book { title: "Dune", pages: 412 };
+let m = Movie { title: "Blade Runner", duration: 117 };
+
+print(describe(b));
+print(describe(m));

@@ -343,6 +343,7 @@ impl InterpreterDebuggerSession {
                         param_ownership: vec![],
                         param_names: vec![],
                         return_ownership: None,
+                        is_async: func.is_async,
                     });
                     self.interpreter
                         .globals
@@ -524,10 +525,7 @@ fn format_value(value: &Value) -> String {
         Value::Null => "null".to_string(),
         Value::String(s) => format!("\"{}\"", s.as_ref()),
         Value::Array(arr) => format!("[{} items]", arr.len()),
-        Value::HashMap(m) => {
-            let len = m.with(|inner| inner.len());
-            format!("{{HashMap, {} entries}}", len)
-        }
+        Value::HashMap(m) => format!("{{HashMap, {} entries}}", m.len()),
         Value::HashSet(s) => format!("{{HashSet, {} items}}", s.inner().len()),
         Value::Queue(q) => format!("[Queue, {} items]", q.inner().len()),
         Value::Stack(s) => format!("[Stack, {} items]", s.inner().len()),

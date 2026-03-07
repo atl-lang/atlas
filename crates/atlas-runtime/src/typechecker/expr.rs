@@ -210,9 +210,55 @@ impl<'a> TypeChecker<'a> {
                         self.check_expr(arg);
                     }
                 }
-                // TODO: Look up enum definition and verify variant exists with correct arity
-                // For now, return Unknown (enum type tracking coming in later phase)
+                // Enum type tracking is B8+ work — return Unknown for now
                 Type::Unknown
+            }
+            Expr::Await { expr, span } => {
+                // AT4001: await outside async context
+                if !self.in_async_context {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            error_codes::AWAIT_OUTSIDE_ASYNC,
+                            "`await` used outside of an async function or top-level scope"
+                                .to_string(),
+                            *span,
+                        )
+                        .with_label("not inside an async fn or top-level")
+                        .with_help(
+                            "move this into an `async fn`, or restructure so the `await` appears at the top level of the script",
+                        ),
+                    );
+                    self.check_expr(expr);
+                    return Type::Unknown;
+                }
+                let operand_ty = self.check_expr(expr);
+                let operand_norm = operand_ty.normalized();
+                // AT4002: await applied to non-Future value
+                match operand_norm {
+                    Type::Generic {
+                        ref name,
+                        ref type_args,
+                    } if name == "Future" => type_args.first().cloned().unwrap_or(Type::Unknown),
+                    Type::Unknown => Type::Unknown, // upstream error already reported
+                    _ => {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                error_codes::AWAIT_NON_FUTURE,
+                                format!(
+                                    "`await` applied to a non-Future value of type `{}`",
+                                    operand_norm.display_name()
+                                ),
+                                *span,
+                            )
+                            .with_label(format!(
+                                "type `{}` is not `Future<_>`",
+                                operand_norm.display_name()
+                            ))
+                            .with_help("only values of type `Future<T>` can be awaited"),
+                        );
+                        Type::Unknown
+                    }
+                }
             }
         }
     }

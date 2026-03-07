@@ -157,7 +157,7 @@ fn test_interpreter_anonymous_struct_literal() {
 fn template_strings_basic() {
     let source = r#"
         let name = "Atlas";
-        `Hello {name}`;
+        `Hello ${name}`;
     "#;
     assert_eval_string(source, "Hello Atlas");
     assert_parity(source);
@@ -169,7 +169,7 @@ fn template_strings_multiple_and_nested() {
         let a = 1;
         let b = 2;
         let x = 1;
-        `{a} + {b} = {a + b} | Result: {if x > 0 { "positive" } else { "negative" }}`;
+        `${a} + ${b} = ${a + b} | Result: ${if x > 0 { "positive" } else { "negative" }}`;
     "#;
     assert_eval_string(source, "1 + 2 = 3 | Result: positive");
     assert_parity(source);
@@ -180,7 +180,7 @@ fn template_strings_types_and_empty() {
     let source = r#"
         let count = 42;
         let flag = true;
-        `Count: {count}, Flag: {flag}`;
+        `Count: ${count}, Flag: ${flag}`;
     "#;
     assert_eval_string(source, "Count: 42, Flag: true");
     assert_parity(source);

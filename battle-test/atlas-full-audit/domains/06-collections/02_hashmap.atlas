@@ -1,0 +1,33 @@
+// 02_hashmap.atlas
+// Tests: hashMapNew, hashMapPut, hashMapGet, hashMapHas, hashMapRemove, hashMapSize.
+// NOTE: hashMapHas returns 'any' from typechecker — cannot use in if directly.
+//       Workaround: str(hashMapHas(m, k)) == "true"
+// NOTE: hashMapGet returns Option<T> — must use unwrap() or match.
+// NOTE: hashMapRemove mutates map directly, returns removed Option<value> (not new map).
+//       Do NOT rebind map from hashMapRemove result.
+
+let text: string = "hello world hello atlas world hello";
+let words: string[] = split(text, " ");
+
+let mut freq = hashMapNew();
+for w in words {
+    if str(hashMapHas(freq, w)) == "true" {
+        let cur = unwrap(hashMapGet(freq, w));
+        freq = hashMapPut(freq, w, cur + 1);
+    } else {
+        freq = hashMapPut(freq, w, 1);
+    }
+}
+
+print("unique words: " + str(hashMapSize(freq)));
+print("hello count: " + str(unwrap(hashMapGet(freq, "hello"))));
+print("world count: " + str(unwrap(hashMapGet(freq, "world"))));
+print("atlas count: " + str(unwrap(hashMapGet(freq, "atlas"))));
+print("has hello: " + str(hashMapHas(freq, "hello")));
+print("has missing: " + str(hashMapHas(freq, "missing")));
+
+// hashMapRemove — mutates map in-place, returns removed value (Option)
+let removed_opt = hashMapRemove(freq, "atlas");
+print("removed atlas: " + str(unwrap(removed_opt)));
+print("size after remove: " + str(hashMapSize(freq)));
+print("has atlas after: " + str(hashMapHas(freq, "atlas")));

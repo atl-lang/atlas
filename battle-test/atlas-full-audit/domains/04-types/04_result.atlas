@@ -1,0 +1,83 @@
+// 04_result.atlas
+// Tests: Result<T, E>, Ok/Err construction, match on Result,
+//        function returning Result — safe_div.
+
+fn safe_div(a: number, b: number) -> Result<number, string> {
+    if b == 0 {
+        return Err("division by zero");
+    }
+    return Ok(a / b);
+}
+
+fn safe_sqrt(x: number) -> Result<number, string> {
+    if x < 0 {
+        return Err("cannot take sqrt of negative: " + str(x));
+    }
+    let mut i: number = 0;
+    while i * i <= x {
+        i = i + 1;
+    }
+    return Ok(i - 1);
+}
+
+fn result_to_string(r: Result<number, string>) -> string {
+    return match r {
+        Ok(v) => "Ok(" + str(v) + ")",
+        Err(e) => "Err(" + e + ")",
+    };
+}
+
+fn result_or(r: Result<number, string>, default: number) -> number {
+    return match r {
+        Ok(v) => v,
+        Err(_) => default,
+    };
+}
+
+fn chain_ops(x: number, divisor: number) -> Result<number, string> {
+    let sqrt_r: Result<number, string> = safe_sqrt(x);
+    return match sqrt_r {
+        Err(e) => Err(e),
+        Ok(v) => safe_div(v, divisor),
+    };
+}
+
+// Basic Ok/Err
+let ok_val: Result<number, string> = Ok(99);
+let err_val: Result<number, string> = Err("something went wrong");
+
+print("ok_val: " + result_to_string(ok_val));
+print("err_val: " + result_to_string(err_val));
+
+// safe_div
+let d1: Result<number, string> = safe_div(100, 4);
+let d2: Result<number, string> = safe_div(100, 0);
+let d3: Result<number, string> = safe_div(7, 2);
+
+print("safe_div(100, 4): " + result_to_string(d1));
+print("safe_div(100, 0): " + result_to_string(d2));
+print("safe_div(7, 2): " + result_to_string(d3));
+
+// safe_sqrt
+let s1: Result<number, string> = safe_sqrt(16);
+let s2: Result<number, string> = safe_sqrt(-9);
+
+print("safe_sqrt(16): " + result_to_string(s1));
+print("safe_sqrt(-9): " + result_to_string(s2));
+
+// result_or
+print("result_or(Ok(25), 0): " + str(result_or(d1, 0)));
+print("result_or(Err, -1): " + str(result_or(d2, -1)));
+
+// Chain
+let c1: Result<number, string> = chain_ops(16, 2);
+let c2: Result<number, string> = chain_ops(-4, 2);
+let c3: Result<number, string> = chain_ops(16, 0);
+
+print("chain(16, 2): " + result_to_string(c1));
+print("chain(-4, 2): " + result_to_string(c2));
+print("chain(16, 0): " + result_to_string(c3));
+
+// Final result: success value
+let result: number = result_or(c1, -1);
+print(result);

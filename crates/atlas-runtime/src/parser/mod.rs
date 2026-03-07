@@ -97,6 +97,14 @@ impl Parser {
             Ok(Item::Export(self.parse_export()?))
         } else if self.check(TokenKind::Extern) {
             Ok(Item::Extern(self.parse_extern()?))
+        } else if self.check(TokenKind::Async) {
+            let async_span = self.advance().span;
+            if !self.check(TokenKind::Fn) {
+                self.diagnostics
+                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                return Err(());
+            }
+            Ok(Item::Function(self.parse_function_with_async(true)?))
         } else if self.check(TokenKind::Fn) {
             Ok(Item::Function(self.parse_function()?))
         } else if self.check(TokenKind::Type) {
@@ -265,6 +273,10 @@ impl Parser {
 
     /// Parse a function declaration
     fn parse_function(&mut self) -> Result<FunctionDecl, ()> {
+        self.parse_function_with_async(false)
+    }
+
+    fn parse_function_with_async(&mut self, is_async: bool) -> Result<FunctionDecl, ()> {
         let fn_span = self.consume(TokenKind::Fn, "Expected 'fn'")?.span;
 
         let name_token = self.consume_identifier("a function name")?;
@@ -339,6 +351,7 @@ impl Parser {
 
         Ok(FunctionDecl {
             name,
+            is_async,
             type_params,
             params,
             return_type,
@@ -421,7 +434,15 @@ impl Parser {
     fn parse_export(&mut self) -> Result<ExportDecl, ()> {
         let export_span = self.consume(TokenKind::Export, "Expected 'export'")?.span;
 
-        let item = if self.check(TokenKind::Fn) {
+        let item = if self.check(TokenKind::Async) {
+            let async_span = self.advance().span;
+            if !self.check(TokenKind::Fn) {
+                self.diagnostics
+                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                return Err(());
+            }
+            ExportItem::Function(self.parse_function_with_async(true)?)
+        } else if self.check(TokenKind::Fn) {
             ExportItem::Function(self.parse_function()?)
         } else if self.check(TokenKind::Let) {
             // Parse variable declaration

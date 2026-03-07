@@ -53,8 +53,8 @@ pub enum Value {
     HashSet(ValueHashSet),    // Arc<AtlasHashSet>
     Queue(ValueQueue),        // Arc<VecDeque<Value>>
     Stack(ValueStack),        // Arc<Vec<Value>>
-    // Explicit shared reference (Arc<Mutex<Value>>)
-    SharedValue(Arc<Mutex<Value>>),
+    // Explicit shared reference — use Shared<T> = Arc<Mutex<T>> only for intentional ref semantics
+    // SharedValue variant removed — collections now use CoW (Arc::make_mut), not Arc<Mutex>
     // Functions
     Function(FunctionRef),
     Closure(ClosureRef),

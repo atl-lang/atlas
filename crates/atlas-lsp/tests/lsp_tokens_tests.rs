@@ -114,7 +114,7 @@ fn test_tokenize_variable_declaration() {
 
 #[test]
 fn test_tokenize_function_declaration() {
-    let source = "fn greet() { return 1; }";
+    let source = "fn greet() -> number { return ; }";
     let (ast, symbols) = parse_source(source);
 
     let result = generate_semantic_tokens(source, ast.as_ref(), symbols.as_ref());

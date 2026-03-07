@@ -194,3 +194,86 @@ fn test_bytecode_rejects_bad_magic() {
     assert!(result.is_err());
     assert!(result.unwrap_err().contains("bad magic"));
 }
+
+// ============================================================================
+// Phase 06: Async opcode round-trip tests
+// ============================================================================
+
+/// 1. AsyncCall encodes/decodes to the same bytes (u16 fn_const_idx + u8 arg_count)
+#[test]
+fn test_async_call_opcode_roundtrip() {
+    let mut bc = Bytecode::new();
+    bc.emit(Opcode::AsyncCall, Span::dummy());
+    bc.emit_u16(0x0000); // fn_const_idx = 0
+    bc.emit_u8(2); // arg_count = 2
+    assert_eq!(bc.instructions[0], Opcode::AsyncCall as u8);
+    assert_eq!(bc.instructions[1], 0x00);
+    assert_eq!(bc.instructions[2], 0x00);
+    assert_eq!(bc.instructions[3], 2);
+}
+
+/// 2. Await encodes correctly (no operands)
+#[test]
+fn test_await_opcode_roundtrip() {
+    let mut bc = Bytecode::new();
+    bc.emit(Opcode::Await, Span::dummy());
+    assert_eq!(bc.instructions.len(), 1);
+    assert_eq!(bc.instructions[0], Opcode::Await as u8);
+}
+
+/// 3. WrapFuture encodes correctly (no operands)
+#[test]
+fn test_wrap_future_opcode_roundtrip() {
+    let mut bc = Bytecode::new();
+    bc.emit(Opcode::WrapFuture, Span::dummy());
+    assert_eq!(bc.instructions.len(), 1);
+    assert_eq!(bc.instructions[0], Opcode::WrapFuture as u8);
+}
+
+/// 4. SpawnTask encodes/decodes to the same bytes (u16 fn_const_idx + u8 arg_count)
+#[test]
+fn test_spawn_task_opcode_roundtrip() {
+    let mut bc = Bytecode::new();
+    bc.emit(Opcode::SpawnTask, Span::dummy());
+    bc.emit_u16(5); // fn_const_idx = 5
+    bc.emit_u8(0); // arg_count = 0
+    assert_eq!(bc.instructions[0], Opcode::SpawnTask as u8);
+    assert_eq!(bc.instructions[1], 0x00);
+    assert_eq!(bc.instructions[2], 0x05);
+    assert_eq!(bc.instructions[3], 0);
+}
+
+/// 5. Disassembler renders all four async opcodes as non-empty human-readable strings
+#[test]
+fn test_async_opcodes_disassembly() {
+    use atlas_runtime::bytecode::disassemble;
+
+    let mut bc = Bytecode::new();
+    bc.emit(Opcode::AsyncCall, Span::dummy());
+    bc.emit_u16(0);
+    bc.emit_u8(1);
+    bc.emit(Opcode::Await, Span::dummy());
+    bc.emit(Opcode::WrapFuture, Span::dummy());
+    bc.emit(Opcode::SpawnTask, Span::dummy());
+    bc.emit_u16(3);
+    bc.emit_u8(2);
+    bc.emit(Opcode::Halt, Span::dummy());
+
+    let output = disassemble(&bc);
+    assert!(
+        output.contains("AsyncCall"),
+        "missing AsyncCall in disasm: {output}"
+    );
+    assert!(
+        output.contains("Await"),
+        "missing Await in disasm: {output}"
+    );
+    assert!(
+        output.contains("WrapFuture"),
+        "missing WrapFuture in disasm: {output}"
+    );
+    assert!(
+        output.contains("SpawnTask"),
+        "missing SpawnTask in disasm: {output}"
+    );
+}
