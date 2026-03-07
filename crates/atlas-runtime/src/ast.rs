@@ -383,8 +383,9 @@ pub enum OwnershipAnnotation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Param {
     pub name: Identifier,
-    /// Type annotation. `None` for untyped arrow-fn params — typechecker infers.
-    pub type_ref: Option<TypeRef>,
+    /// Type annotation. Always present. Use `TypeRef::SelfType` for bare `self`
+    /// params whose concrete type is resolved later from the impl context.
+    pub type_ref: TypeRef,
     /// Ownership annotation (`own`, `borrow`, `shared`), or `None` if unannotated
     pub ownership: Option<OwnershipAnnotation>,
     /// `mut` keyword present — parameter can be reassigned inside the function body.
@@ -869,6 +870,9 @@ pub enum TypeRef {
         inner: Box<TypeRef>,
         span: Span,
     },
+    /// Placeholder for a bare `self` parameter whose type is inferred from the
+    /// enclosing `impl` block. Never appears in user-written type positions.
+    SelfType(Span),
 }
 
 /// Structural type member
@@ -978,6 +982,7 @@ impl TypeRef {
             TypeRef::Union { span, .. } => *span,
             TypeRef::Intersection { span, .. } => *span,
             TypeRef::Future { span, .. } => *span,
+            TypeRef::SelfType(span) => *span,
         }
     }
 }

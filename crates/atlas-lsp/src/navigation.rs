@@ -96,7 +96,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         .params
         .iter()
         .map(|p| {
-            let t = p.type_ref.as_ref().map_or("_".to_string(), format_type_ref);
+            let t = format_type_ref(&p.type_ref);
             format!("{}: {}", p.name.name, t)
         })
         .collect();

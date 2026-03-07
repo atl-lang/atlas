@@ -994,14 +994,10 @@ impl Parser {
             let param_name = param_name_tok.lexeme.clone();
             let param_name_span = param_name_tok.span;
 
-            // Optional type annotation: `: type`
-            let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
-                let t = self.parse_type_ref()?;
-                let end = t.span();
-                (Some(t), end)
-            } else {
-                (None, param_name_span)
-            };
+            // Type annotation is required: `param: Type`
+            self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
+            let type_ref = self.parse_type_ref()?;
+            let param_span_end = type_ref.span();
 
             params.push(Param {
                 name: Identifier {

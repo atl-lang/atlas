@@ -2986,11 +2986,7 @@ impl<'a> TypeChecker<'a> {
         // Resolve param types — None type_ref → any (inferred later in Block 5)
         let param_types: Vec<Type> = params
             .iter()
-            .map(|p| {
-                p.type_ref
-                    .as_ref()
-                    .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
-            })
+            .map(|p| self.resolve_type_ref(&p.type_ref))
             .collect();
 
         // Resolve declared return type (if present)

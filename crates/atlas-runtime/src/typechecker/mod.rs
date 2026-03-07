@@ -619,11 +619,7 @@ impl<'a> TypeChecker<'a> {
         let param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| {
-                p.type_ref.as_ref().map_or(Type::any_placeholder(), |t| {
-                    self.resolve_type_ref_with_params(t, &combined_type_params)
-                })
-            })
+            .map(|p| self.resolve_type_ref_with_params(&p.type_ref, &combined_type_params))
             .collect();
 
         // Resolve return type (None = omitted, will be inferred later)
@@ -871,6 +867,7 @@ impl<'a> TypeChecker<'a> {
                     type_args: vec![inner_ty],
                 }
             }
+            TypeRef::SelfType(_) => Type::any_placeholder(),
         }
     }
 
@@ -909,11 +906,7 @@ impl<'a> TypeChecker<'a> {
                     .params
                     .iter()
                     .filter(|p| p.name.name != "self")
-                    .map(|p| {
-                        p.type_ref
-                            .as_ref()
-                            .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
-                    })
+                    .map(|p| self.resolve_type_ref(&p.type_ref))
                     .collect();
                 let return_type = self.resolve_type_ref(&method_sig.return_type);
                 if method_sig.body.is_some() {
@@ -1002,7 +995,7 @@ impl<'a> TypeChecker<'a> {
                                 .map(|p| {
                                     let mut param = p.clone();
                                     if param.name.name == "self" {
-                                        param.type_ref = None;
+                                        param.type_ref = TypeRef::SelfType(param.span);
                                     }
                                     param
                                 })
@@ -1036,11 +1029,7 @@ impl<'a> TypeChecker<'a> {
                         .params
                         .iter()
                         .filter(|p| p.name.name != "self")
-                        .map(|p| {
-                            p.type_ref
-                                .as_ref()
-                                .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
-                        })
+                        .map(|p| self.resolve_type_ref(&p.type_ref))
                         .collect();
 
                     if impl_param_types != required.param_types {
@@ -1111,13 +1100,11 @@ impl<'a> TypeChecker<'a> {
         self.enter_scope();
 
         for param in &method.params {
-            let ty = if param.name.name == "self" && param.type_ref.is_none() {
+            let ty = if param.name.name == "self" && matches!(param.type_ref, TypeRef::SelfType(_))
+            {
                 impl_self_type.cloned().unwrap_or(Type::any_placeholder())
             } else {
-                param
-                    .type_ref
-                    .as_ref()
-                    .map_or(Type::any_placeholder(), |t| self.resolve_type_ref(t))
+                self.resolve_type_ref(&param.type_ref)
             };
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
@@ -1235,11 +1222,7 @@ impl<'a> TypeChecker<'a> {
         let resolved_param_types: Vec<Type> = func
             .params
             .iter()
-            .map(|p| {
-                p.type_ref.as_ref().map_or(Type::any_placeholder(), |t| {
-                    self.resolve_type_ref_with_params(t, &all_type_params)
-                })
-            })
+            .map(|p| self.resolve_type_ref_with_params(&p.type_ref, &all_type_params))
             .collect();
 
         if let Some(symbol) = self.symbol_table.lookup_mut(&func.name.name) {
@@ -1267,12 +1250,7 @@ impl<'a> TypeChecker<'a> {
         self.enter_scope();
 
         for param in &func.params {
-            let ty = param
-                .type_ref
-                .as_ref()
-                .map_or(Type::any_placeholder(), |t| {
-                    self.resolve_type_ref_with_params(t, &all_type_params)
-                });
+            let ty = self.resolve_type_ref_with_params(&param.type_ref, &all_type_params);
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
                 ty,
@@ -1295,12 +1273,7 @@ impl<'a> TypeChecker<'a> {
         let mut param_ownerships: Vec<Option<OwnershipAnnotation>> =
             Vec::with_capacity(func.params.len());
         for param in &func.params {
-            let ty = param
-                .type_ref
-                .as_ref()
-                .map_or(Type::any_placeholder(), |t| {
-                    self.resolve_type_ref_with_params(t, &all_type_params)
-                });
+            let ty = self.resolve_type_ref_with_params(&param.type_ref, &all_type_params);
             if let Some(ann) = &param.ownership {
                 match ann {
                     OwnershipAnnotation::Own => {
@@ -2622,6 +2595,7 @@ impl<'a> TypeChecker<'a> {
                     type_args: vec![inner_ty],
                 }
             }
+            TypeRef::SelfType(_) => Type::any_placeholder(),
         }
     }
 
@@ -2817,6 +2791,7 @@ impl<'a> TypeChecker<'a> {
                     type_args: vec![inner_ty],
                 }
             }
+            TypeRef::SelfType(_) => Type::any_placeholder(),
         }
     }
 

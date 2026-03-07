@@ -298,7 +298,7 @@ pub fn symbol_completions(program: &Program, _symbols: &SymbolTable) -> Vec<Comp
                         "{}{}: {:?}",
                         format_ownership(&p.ownership),
                         p.name.name,
-                        p.type_ref.as_ref()
+                        &p.type_ref
                     )
                 })
                 .collect();
@@ -464,9 +464,7 @@ pub fn impl_method_stub_completions(trait_name: &str, program: &Program) -> Vec<
                                     "${{{}:{}: {}}}",
                                     i + 1,
                                     p.name.name,
-                                    p.type_ref
-                                        .as_ref()
-                                        .map_or("_".to_string(), format_type_ref_str)
+                                    format_type_ref_str(&p.type_ref)
                                 )
                             })
                             .collect();
@@ -533,6 +531,7 @@ fn format_type_ref_str(type_ref: &TypeRef) -> String {
             .collect::<Vec<_>>()
             .join(" & "),
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref_str(inner)),
+        TypeRef::SelfType(_) => "self".to_string(),
     }
 }
 

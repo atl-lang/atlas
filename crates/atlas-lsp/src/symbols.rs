@@ -710,12 +710,7 @@ fn extract_function_children(text: &str, func: &FunctionDecl) -> Vec<DocumentSym
         #[allow(deprecated)]
         children.push(DocumentSymbol {
             name: param.name.name.clone(),
-            detail: Some(
-                param
-                    .type_ref
-                    .as_ref()
-                    .map_or("_".to_string(), format_type_ref),
-            ),
+            detail: Some(format_type_ref(&param.type_ref)),
             kind: SymbolKind::VARIABLE,
             range,
             selection_range: range,
@@ -891,7 +886,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         .params
         .iter()
         .map(|p| {
-            let ty = p.type_ref.as_ref().map_or("_".to_string(), format_type_ref);
+            let ty = format_type_ref(&p.type_ref);
             format!("{}: {}", p.name.name, ty)
         })
         .collect();
@@ -942,6 +937,7 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
             formatted.join(" & ")
         }
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref(inner)),
+        TypeRef::SelfType(_) => "self".to_string(),
     }
 }
 

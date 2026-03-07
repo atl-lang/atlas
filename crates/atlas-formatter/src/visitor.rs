@@ -567,10 +567,7 @@ impl FormatVisitor {
     fn format_params(&self, params: &[Param]) -> String {
         params
             .iter()
-            .map(|p| match &p.type_ref {
-                Some(t) => format!("{}: {}", p.name.name, self.type_ref_to_string(t)),
-                None => p.name.name.clone(),
-            })
+            .map(|p| format!("{}: {}", p.name.name, self.type_ref_to_string(&p.type_ref)))
             .collect::<Vec<_>>()
             .join(", ")
     }
@@ -581,11 +578,9 @@ impl FormatVisitor {
         for (i, p) in params.iter().enumerate() {
             self.write_indent();
             self.write(&p.name.name);
-            if let Some(t) = &p.type_ref {
-                let type_name = self.type_ref_to_string(t);
-                self.write(": ");
-                self.write(&type_name);
-            }
+            let type_name = self.type_ref_to_string(&p.type_ref);
+            self.write(": ");
+            self.write(&type_name);
             if i < params.len() - 1 || self.config.trailing_commas {
                 self.write(",");
             }
@@ -1046,6 +1041,7 @@ impl FormatVisitor {
             TypeRef::Future { inner, .. } => {
                 format!("Future<{}>", self.type_ref_to_string(inner))
             }
+            TypeRef::SelfType(_) => "self".to_string(),
         }
     }
 

@@ -275,13 +275,7 @@ fn format_var_decl_hover(var_decl: &VarDecl, symbols: Option<&SymbolTable>) -> S
 fn format_anon_fn_type(params: &[Param], return_type: Option<&TypeRef>) -> String {
     let param_strs: Vec<String> = params
         .iter()
-        .map(|p| {
-            if let Some(tr) = &p.type_ref {
-                format_type_ref(tr)
-            } else {
-                "any".to_string()
-            }
-        })
+        .map(|p| format_type_ref(&p.type_ref))
         .collect();
     let ret = return_type
         .map(format_type_ref)
@@ -322,10 +316,7 @@ fn find_parameter_hover(program: &Program, identifier: &str) -> Option<String> {
                         "{}{}: {}",
                         label,
                         param.name.name,
-                        param
-                            .type_ref
-                            .as_ref()
-                            .map_or("_".to_string(), format_type_ref)
+                        format_type_ref(&param.type_ref)
                     ));
                     hover.push_str("\n```");
                     return Some(hover);
@@ -395,7 +386,7 @@ fn format_trait_method_sig(method: &TraitMethodSig) -> String {
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
+                format_type_ref(&p.type_ref)
             )
         })
         .collect();
@@ -417,7 +408,7 @@ fn format_impl_method_sig(method: &ImplMethod) -> String {
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
+                format_type_ref(&p.type_ref)
             )
         })
         .collect();
@@ -834,7 +825,7 @@ fn format_function_signature(func: &FunctionDecl, symbols: Option<&SymbolTable>)
                 "{}{}: {}",
                 ownership_prefix(&p.ownership),
                 p.name.name,
-                p.type_ref.as_ref().map_or("_".to_string(), format_type_ref)
+                format_type_ref(&p.type_ref)
             )
         })
         .collect();
@@ -925,6 +916,7 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
             formatted.join(" & ")
         }
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref(inner)),
+        TypeRef::SelfType(_) => "self".to_string(),
     }
 }
 

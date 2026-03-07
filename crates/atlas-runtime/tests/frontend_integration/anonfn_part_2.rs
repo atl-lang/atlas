@@ -92,7 +92,10 @@ fn test_fn_style_anon_fn_with_typed_params() {
         } = &decl.init
         {
             assert_eq!(params.len(), 1);
-            assert!(params[0].type_ref.is_some(), "expected typed param");
+            assert!(
+                !matches!(params[0].type_ref, TypeRef::SelfType(_)),
+                "expected typed param"
+            );
             assert!(return_type.is_some(), "expected return type");
         } else {
             panic!("expected AnonFn");

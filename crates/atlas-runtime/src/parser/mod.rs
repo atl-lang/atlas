@@ -601,11 +601,15 @@ impl Parser {
             let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
                 let type_ref = self.parse_type_ref()?;
                 let end = type_ref.span();
-                (Some(type_ref), end)
+                (type_ref, end)
             } else {
                 match &mode {
                     ParamParseMode::ImplicitSelf { self_type } if param_name == "self" => {
-                        (self_type.clone(), param_name_span)
+                        // Bare `self` — use provided impl type or SelfType placeholder
+                        let tr = self_type
+                            .clone()
+                            .unwrap_or(TypeRef::SelfType(param_name_span));
+                        (tr, param_name_span)
                     }
                     _ => {
                         self.error("Expected ':' after parameter name");

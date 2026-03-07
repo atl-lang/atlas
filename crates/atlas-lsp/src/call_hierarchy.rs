@@ -222,7 +222,7 @@ fn format_function_signature(func: &FunctionDecl) -> String {
         .params
         .iter()
         .map(|p| {
-            let ty = p.type_ref.as_ref().map_or("_".to_string(), format_type);
+            let ty = format_type(&p.type_ref);
             format!("{}: {}", p.name.name, ty)
         })
         .collect();
@@ -273,6 +273,7 @@ fn format_type(type_ref: &TypeRef) -> String {
         }
         TypeRef::Structural { .. } => "{ ... }".to_string(),
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type(inner)),
+        TypeRef::SelfType(_) => "self".to_string(),
     }
 }
 
