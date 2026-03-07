@@ -161,6 +161,13 @@ pub const NAMESPACE_IMPORT_UNSUPPORTED: &str = "AT5007";
 pub const DUPLICATE_EXPORT: &str = "AT5008";
 
 // AT9xxx - Internal Errors
+
+/// Warning: a deprecated stdlib global name was called (e.g. `arrayPush`, `hashMapGet`, `readFile`).
+/// These names continue to work but will be removed in a future version.
+/// Use the method syntax or namespace form instead: `arr.push(x)`, `map.get(k)`, `File.read(path)`.
+/// See docs/stdlib/METHOD-CONVENTIONS.md for the full mapping.
+pub const DEPRECATED_STDLIB_GLOBAL: &str = "AT9000";
+
 pub const INTERNAL_ERROR: &str = "AT9995";
 pub const STACK_UNDERFLOW: &str = "AT9997";
 pub const UNKNOWN_OPCODE: &str = "AT9998";
@@ -635,6 +642,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         help: Some("Each symbol can only be exported once per module."),
     },
     // === AT9xxx: Internal Errors ===
+    ErrorCodeInfo {
+        code: "AT9000",
+        description: "Deprecated stdlib global name",
+        help: Some("Use method syntax or static namespace instead. See docs/stdlib/METHOD-CONVENTIONS.md for the full mapping. Example: `arrayPush(arr, x)` → `arr.push(x)`, `readFile(path)` → `File.read(path)`."),
+    },
     ErrorCodeInfo {
         code: "AT9995",
         description: "Internal error",
