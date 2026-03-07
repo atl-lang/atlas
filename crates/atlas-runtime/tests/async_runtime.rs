@@ -16,6 +16,8 @@ use tempfile::TempDir;
 mod async_runtime_loops;
 #[path = "async_runtime/compiler.rs"]
 mod compiler;
+#[path = "async_runtime/interpreter.rs"]
+mod interpreter;
 #[path = "async_runtime/value_future.rs"]
 mod value_future;
 

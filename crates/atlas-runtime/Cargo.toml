@@ -27,7 +27,7 @@ regex = "1"
 chrono = "0.4"
 chrono-tz = "0.8"
 base64 = "0.22"
-tokio = { version = "1.49", features = ["rt", "sync", "time", "fs", "io-util", "macros"] }
+tokio = { version = "1.49", features = ["rt", "rt-multi-thread", "sync", "time", "fs", "io-util", "macros"] }
 futures-util = "0.3"
 notify = "8.2"
 

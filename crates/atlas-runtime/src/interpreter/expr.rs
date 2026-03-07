@@ -37,11 +37,38 @@ impl Interpreter {
                 span,
             } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
-            // B8: Await — implemented in Phase 09 (interpreter)
-            Expr::Await { span, .. } => Err(RuntimeError::TypeError {
-                msg: "async/await not yet implemented in interpreter".to_string(),
-                span: *span,
-            }),
+            Expr::Await { expr, span } => {
+                let val = self.eval_expr(expr)?;
+                match val {
+                    Value::Future(future) => {
+                        match future.get_state() {
+                            crate::async_runtime::FutureState::Resolved(v) => Ok(v),
+                            crate::async_runtime::FutureState::Rejected(e) => {
+                                Err(RuntimeError::TypeError {
+                                    msg: format!("Awaited future was rejected: {}", e),
+                                    span: *span,
+                                })
+                            }
+                            crate::async_runtime::FutureState::Pending => {
+                                // Pending futures from stdlib async I/O: block until resolved.
+                                // For interpreter-level async fn bodies this state won't occur
+                                // because bodies are evaluated eagerly.
+                                Err(RuntimeError::TypeError {
+                                    msg: "Cannot await a pending future in the interpreter — use the VM for full async concurrency".to_string(),
+                                    span: *span,
+                                })
+                            }
+                        }
+                    }
+                    other => Err(RuntimeError::TypeError {
+                        msg: format!(
+                            "AT4002: await operand must be Future, got {}",
+                            other.type_name()
+                        ),
+                        span: *span,
+                    }),
+                }
+            }
         }
     }
 
@@ -524,7 +551,15 @@ impl Interpreter {
                             }
                         }
                     }
-                    return self.call_user_function(&func, args, span);
+                    let result = self.call_user_function(&func, args, span)?;
+                    // Async fn: wrap the result in an immediately-resolved Future.
+                    // The interpreter evaluates async bodies eagerly; the Future wrapper
+                    // preserves the Value::Future contract so `await` can unwrap it.
+                    if func_ref.is_async {
+                        let future = crate::async_runtime::AtlasFuture::resolved(result);
+                        return Ok(Value::Future(Arc::new(future)));
+                    }
+                    return Ok(result);
                 }
 
                 Err(RuntimeError::UnknownFunction {

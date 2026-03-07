@@ -26,6 +26,16 @@ use std::sync::OnceLock;
 use tokio::runtime::Runtime;
 use tokio::task::LocalSet;
 
+// D-030: Value must be Send so it can cross thread boundaries in the multi-thread runtime.
+// This assertion documents and enforces the threading contract at compile time.
+const _: () = {
+    fn assert_send<T: Send>() {}
+    fn check() {
+        assert_send::<crate::value::Value>();
+    }
+    let _ = check;
+};
+
 /// Global tokio runtime for async operations
 static TOKIO_RUNTIME: OnceLock<Runtime> = OnceLock::new();
 
@@ -43,7 +53,7 @@ thread_local! {
 /// Panics if the runtime fails to initialize
 pub fn init_runtime() {
     TOKIO_RUNTIME.get_or_init(|| {
-        tokio::runtime::Builder::new_current_thread()
+        tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .expect("Failed to initialize tokio runtime")
@@ -55,7 +65,7 @@ pub fn init_runtime() {
 /// Initializes the runtime if it hasn't been initialized yet.
 pub fn runtime() -> &'static Runtime {
     TOKIO_RUNTIME.get_or_init(|| {
-        tokio::runtime::Builder::new_current_thread()
+        tokio::runtime::Builder::new_multi_thread()
             .enable_all()
             .build()
             .expect("Failed to initialize tokio runtime")
