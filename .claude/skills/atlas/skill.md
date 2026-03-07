@@ -6,7 +6,7 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 # Atlas — Core AI Workflow
 
 **Type:** Rust compiler | **Spec:** docs/language/ + docs/stdlib/ | **Gates:** skill `gates/` directory
-**Tracking:** `atlas-track` CLI — issues, decisions, sessions, blocks (see `tracking/README.md`)
+**Tracking:** `pt` CLI — issues, decisions, sessions, blocks (see `tracking/README.md`)
 
 ---
 
@@ -23,11 +23,11 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 ## On Skill Activation (EVERY SESSION — DO THIS FIRST)
 
 ```bash
-atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
-atlas-track in-progress              # Check what's already claimed — avoid duplicate work
+pt go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+pt in-progress              # Check what's already claimed — avoid duplicate work
 ```
 
-**If sitrep shows `📄 .atlas-handoff.md` → READ IT NOW. Not optional.**
+**If sitrep shows `📄 ~/.project-tracker/handoffs/atlas-handoff.md` → READ IT NOW. Not optional.**
 ```bash
 # Read the handoff file — it has in-flight work, next action, critical context
 # that cannot fit in the 300-char DB summary. It is written by every agent at close.
@@ -37,8 +37,8 @@ This gives you: session ID, mode, handoff, P0 blockers, git state, block progres
 
 **If `Work: BLOCKED`** → Fix P0 issues first. No new features.
 **If stale issues shown** → Check if fixed, then `fix` or `abandon`.
-**Active plans:** `atlas-track plans` — shows open PL-XXX plans (brainstorm outcomes).
-**Quick orientation mid-session:** `atlas-track context` (no session overhead).
+**Active plans:** `pt plans` — shows open PL-XXX plans (brainstorm outcomes).
+**Quick orientation mid-session:** `pt context` (no session overhead).
 
 **After orienting — invoke the right skill BEFORE doing anything else:**
 | Situation | Action |
@@ -56,10 +56,10 @@ This gives you: session ID, mode, handoff, P0 blockers, git state, block progres
 ## Roles
 
 **User:** Co-Architect + Product Owner. Final authority on language design. Technical input is VALID.
-**You (AI):** Lead Developer + Co-Architect. Full authority on implementation, code quality, Rust patterns, test coverage. Execute immediately. Log decisions via `atlas-track add-decision`.
+**You (AI):** Lead Developer + Co-Architect. Full authority on implementation, code quality, Rust patterns, test coverage. Execute immediately. Log decisions via `pt add-decision`.
 
 **Never ask:** "Ready?" | "What's next?" | "Should I proceed?"
-**Answer source:** `atlas-track sitrep`, docs/language/, docs/stdlib/, auto-memory
+**Answer source:** `pt sitrep`, docs/language/, docs/stdlib/, auto-memory
 
 ---
 
@@ -70,9 +70,9 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 
 ### Intelligent Decisions (When Spec Silent)
 1. Grep codebase — verify actual patterns before deciding
-2. Check `atlas-track decisions all` — shows ALL decisions (no cap). Decision may already be made.
-3. Decide intelligently, log: `atlas-track add-decision "Title" component "Rule" "Rationale"`
-   - To amend an existing decision: `atlas-track update-decision D-XXX rule "new text"`
+2. Check `pt decisions all` — shows ALL decisions (no cap). Decision may already be made.
+3. Decide intelligently, log: `pt add-decision "Title" component "Rule" "Rationale"`
+   - To amend an existing decision: `pt update-decision D-XXX rule "new text"`
 4. **If enforceable by regex** → Add to `~/.claude/hooks/atlas/decision-patterns.json`
 
 ### World-Class Quality
@@ -86,7 +86,7 @@ Both engines MUST produce identical output. See `.claude/rules/atlas-parity.md`.
 
 **Tier 1: Pre-commit (automatic, < 15s)** — fmt + clippy only, NO nextest
 
-**Tier 2: Nightly CI (2am or `atlas-track run-ci`)** — full suite, results in `tracking/ci-status.json`
+**Tier 2: Nightly CI (2am or `pt run-ci`)** — full suite, results in `tracking/ci-status.json`
 
 ```bash
 # What agents do during development:
@@ -115,28 +115,28 @@ cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # ✅
 The user is architect only. You own all implementation, tracking, and continuity.
 
 **Never narrate — act or file. These are the only two options:**
-- ❌ "The next agent will need to look out for X" → `atlas-track add` it. NOW.
-- ❌ "We should probably Y" → Do it now, or `atlas-track add "Y" P2 "why"`.
+- ❌ "The next agent will need to look out for X" → `pt add` it. NOW.
+- ❌ "We should probably Y" → Do it now, or `pt add "Y" P2 "why"`.
 - ❌ Anything said to the user that isn't architecture = gone forever after the session ends.
 
 **Proactive filing:** Discover a bug, workaround, inconsistency, or gap mid-task? File it before moving on. 30 seconds now saves hours of re-discovery later. Include: battle test reference if applicable, workaround used, fix risk.
 
 **Before touching any component — run the decision gate (mandatory, not aspirational):**
 ```bash
-atlas-track decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+pt decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
 # Returns 3-8 lines. Takes 2 seconds. Skipping it risks violating a standing decision.
 ```
 Map your task to a component, run it, read it. If a decision covers your change — follow it.
 If your change contradicts a decision — stop and discuss with the architect before proceeding.
 If no decision exists for your design choice — make the call, then log it:
 ```bash
-atlas-track add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
+pt add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
 ```
 
 **Block tracking — mandatory after every phase commit:**
 ```bash
-atlas-track phase-done B<N>                              # Every phase, no exceptions
-atlas-track complete-block B<N> "what shipped, bugs filed"  # Final phase only
+pt phase-done B<N>                              # Every phase, no exceptions
+pt complete-block B<N> "what shipped, bugs filed"  # Final phase only
 ```
 
 ---
@@ -146,16 +146,16 @@ atlas-track complete-block B<N> "what shipped, bugs filed"  # Final phase only
 **Rule:** Fix → verify → close issue → commit → THEN move to the next issue. Never batch closures at session end.
 
 ```bash
-atlas-track claim H-001                                       # Before starting
+pt claim H-001                                       # Before starting
 # ... implement, verify ...
-atlas-track fix H-001 "Root cause (specific: what was wrong)" "Fix (specific: what changed)"
+pt fix H-001 "Root cause (specific: what was wrong)" "Fix (specific: what changed)"
 git commit -m "fix(...): description"
 # NOW move to next issue
 ```
 
 **Session close** — required at end of every session, even if interrupted:
 
-**Step 1 — Overwrite `.atlas-handoff.md` with this session's state (MANDATORY before atlas-track done):**
+**Step 1 — Overwrite `~/.project-tracker/handoffs/atlas-handoff.md` with this session's state (MANDATORY before pt done):**
 **REPLACE the entire file — do NOT append.** One file, one session's snapshot. Previous content is now in git history.
 ```markdown
 # Atlas Handoff — <session-id>
@@ -180,11 +180,11 @@ git commit -m "fix(...): description"
 ## Critical Context (Don't Lose This)
 <anything a future agent would discover the hard way: patterns, pitfalls, non-obvious state>
 ```
-Then: `git add .atlas-handoff.md` and include in the final commit (or its own `chore: update handoff` commit).
+Then: `git add ~/.project-tracker/handoffs/atlas-handoff.md` and include in the final commit (or its own `chore: update handoff` commit).
 
 **Step 2 — Close session:**
 ```bash
-atlas-track done S-XXX success \
+pt done S-XXX success \
   "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \
   "Next: Phase-05 — Value::Future in runtime, interpreter dispatch"
 ```
@@ -242,7 +242,7 @@ Load `gates/ai-grammar-principles.md` when making syntax/grammar decisions.
 - `crates/atlas-jit/src/` — JIT (see `crates/atlas-jit/src/CLAUDE.md`)
 - `docs/language/` — Language spec (types, grammar, functions, control flow, structs)
 - `docs/stdlib/` — Stdlib API docs
-- `atlas-track decisions all` — All decisions, no cap (D-001 through D-029+)
-- `atlas-track issues [P0|component]` — Open issues with titles and status
-- `atlas-track ci-status` — Last CI run + failed test list
-- `atlas-track blocks` — Block progress with names
+- `pt decisions all` — All decisions, no cap (D-001 through D-029+)
+- `pt issues [P0|component]` — Open issues with titles and status
+- `pt ci-status` — Last CI run + failed test list
+- `pt blocks` — Block progress with names

@@ -13,9 +13,9 @@ Every brainstorm session loads state first, then thinks. Never the other way aro
 ## Step 0: Load Context Before Thinking (MANDATORY — takes 30 seconds, saves hours)
 
 ```bash
-atlas-track context                    # Current state: blocks, P0s, CI
-atlas-track decisions all              # ALL standing decisions — D-001 through D-030+
-atlas-track issues [component]         # Open issues relevant to what we're discussing
+pt context                    # Current state: blocks, P0s, CI
+pt decisions all              # ALL standing decisions — D-001 through D-030+
+pt issues [component]         # Open issues relevant to what we're discussing
 ```
 
 Read the decisions output completely. Every sentence. If you're about to brainstorm something
@@ -56,28 +56,28 @@ Every brainstorm ends with one of these actions — never just ends:
 
 **If a decision was reached:**
 ```bash
-atlas-track add-decision "Title" <component> "Rule: what was decided" "Rationale: why this over alternatives"
+pt add-decision "Title" <component> "Rule: what was decided" "Rationale: why this over alternatives"
 ```
 
 **If work was identified:**
 ```bash
-atlas-track add "Feature/bug title" P0|P1|P2 "what it is, why it matters, approach discussed"
+pt add "Feature/bug title" P0|P1|P2 "what it is, why it matters, approach discussed"
 ```
 
 **If the question is still open:**
 ```bash
-atlas-track add "Open question: X" P2 "what we explored, what's still unclear, what info is needed to decide"
+pt add "Open question: X" P2 "what we explored, what's still unclear, what info is needed to decide"
 ```
 
 **If an approach/plan was decided (not just a decision — a concrete implementation direction):**
 ```bash
-atlas-track plan add "Title of plan" "Approach: what will be built, how, key tradeoffs. Enough for a cold-start agent to understand the direction without re-exploring." "H-XXX" "D-XXX"
+pt plan add "Title of plan" "Approach: what will be built, how, key tradeoffs. Enough for a cold-start agent to understand the direction without re-exploring." "H-XXX" "D-XXX"
 ```
 Plans (PL-XXX) capture implementation intent — timestamped with a git commit snapshot. They survive context drain and connect brainstorm outcomes to future work.
 
 No brainstorm session ends with "let's think about this more" as the only output. That's lost.
 
-**After brainstorm — also update `.atlas-handoff.md`:**
+**After brainstorm — also update `~/.project-tracker/handoffs/atlas-handoff.md`:**
 If the brainstorm produced a concrete next action or changed what the next agent should do, update the handoff file. Include: what was decided, what PL-XXX was created, what the next concrete step is.
 
 ---
@@ -92,21 +92,21 @@ If the brainstorm produced a concrete next action or changed what the next agent
 | Async model | `runtime` | D-030 |
 | Stdlib API design, method vs fn | `stdlib` | D-021 |
 | Ownership, borrow semantics | `runtime` | D-020, D-022 |
-| Any language-level design | `all` | `atlas-track decisions all` |
+| Any language-level design | `all` | `pt decisions all` |
 
 ---
 
 ## AI Continuity — Non-Negotiable
 
 **Never narrate outcomes — capture them:**
-- ❌ "We should think about X" → `atlas-track add "Open question: X" P2 "context"`
+- ❌ "We should think about X" → `pt add "Open question: X" P2 "context"`
 - ❌ "That's interesting to consider" → file it or drop it
 - ✅ Every idea worth keeping gets filed. Everything else is noise.
 
 **Block tracking (if brainstorm leads to a new block being scoped):**
 ```bash
 # After architect approves a new feature block:
-atlas-track add-decision "Block N: <name>" infra "Scope: <what it covers>" "Approved in S-XXX brainstorm"
+pt add-decision "Block N: <name>" infra "Scope: <what it covers>" "Approved in S-XXX brainstorm"
 # Then scaffold: trigger atlas-blocks skill
 ```
 

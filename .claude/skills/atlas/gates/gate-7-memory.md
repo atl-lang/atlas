@@ -9,11 +9,11 @@
 **Objective trigger:** "Could a future agent, with no session context, make a different choice here?" If yes → log it.
 
 1. **API surprise?** → Update `.claude/rules/atlas-*.md` AND `patterns.md`
-2. **Future agent might choose differently?** → `atlas-track add-decision`
+2. **Future agent might choose differently?** → `pt add-decision`
 3. **Crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
 4. **Added/renamed AST node, Type variant, opcode, function, error code?** → Run `atlas-doc-auditor`
 5. **Block completion phase?** → **Always run `atlas-doc-auditor`** (full sweep)
-6. **ALWAYS — Write `.atlas-handoff.md` before `atlas-track done`** (see core `atlas` skill for template)
+6. **ALWAYS — Write `~/.project-tracker/handoffs/atlas-handoff.md` before `pt done`** (see core `atlas` skill for template)
 
 ---
 
@@ -41,7 +41,7 @@ Any missing file → create before committing. MEMORY.md > 55 → split before c
 | New constraint or rule | Implementation details |
 | Ambiguity resolved in spec | Temporary workarounds |
 
-**Decisions → `atlas-track add-decision`**, NOT memory files.
+**Decisions → `pt add-decision`**, NOT memory files.
 **Patterns → `patterns.md`** (index → `patterns/*.md` topic files).
 
 ---
@@ -64,7 +64,7 @@ MEMORY.md ≤ 55 | patterns.md ≤ 30 (index only) | topic files ≤ 80 each
 ```markdown
 ### Memory
 - Updated: `patterns.md` (added X)
-- Decision: `atlas-track add-decision` → D-XXX (reason)
+- Decision: `pt add-decision` → D-XXX (reason)
 ```
 OR: `- No updates needed`
 

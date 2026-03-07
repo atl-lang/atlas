@@ -142,7 +142,7 @@ Verify:
 - No broken file path references in gate commands
 - Lazy-load files referenced in CLAUDE.md actually exist in `.claude/lazy/`
 - New files in `.claude/lazy/` are referenced somewhere (CLAUDE.md or memory)
-- `atlas-track blocks` output matches actual block status in DB — flag if stale
+- `pt blocks` output matches actual block status in DB — flag if stale
 
 ---
 

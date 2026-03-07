@@ -66,7 +66,7 @@ rustc /tmp/test.rs -o /tmp/test_rs && /tmp/test_rs
 
 1. **Check if it's a deliberate Atlas difference** (e.g., CoW arrays, unified `number` type)
 2. **Check the spec** (`docs/language/`) — spec is authority
-3. **If spec is silent:** Atlas should match the oracle's behavior. Log decision via `atlas-track add-decision`.
+3. **If spec is silent:** Atlas should match the oracle's behavior. Log decision via `pt add-decision`.
 4. **If Atlas is wrong:** File bug, fix it
 
 ---

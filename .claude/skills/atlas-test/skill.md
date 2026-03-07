@@ -15,25 +15,25 @@ The user is architect only. You own all implementation, tracking, and continuity
 
 **Never narrate — act or file. These are the only two options:**
 - ❌ "The next agent should add tests for X"
-- ✅ `atlas-track add "Missing test coverage: X" P2 "what's untested, why it matters"` then move on.
+- ✅ `pt add "Missing test coverage: X" P2 "what's untested, why it matters"` then move on.
 
 **Proactive filing:** Find a gap in coverage? Missing corpus test? File it before moving on.
 
 **Before restructuring test domains or changing test strategy — run the decision gate:**
 ```bash
-atlas-track decisions infra   # test organization decisions live here
+pt decisions infra   # test organization decisions live here
 # 2 seconds. Prevents re-litigating already-decided test structure.
 ```
-New test strategy decision not covered — log it: `atlas-track add-decision "Title" infra "Rule" "Rationale"`.
+New test strategy decision not covered — log it: `pt add-decision "Title" infra "Rule" "Rationale"`.
 
 **Block tracking (if testing is part of a phase):**
 ```bash
-atlas-track phase-done B<N>
-atlas-track complete-block B<N> "tests added, coverage areas"  # final phase only
+pt phase-done B<N>
+pt complete-block B<N> "tests added, coverage areas"  # final phase only
 ```
 
-**Session close — write `.atlas-handoff.md` FIRST (MANDATORY):**
-Write: what tests were added/fixed, coverage gaps found (file them if not already), next action. See core `atlas` skill for the full template. Commit it, then run `atlas-track done`.
+**Session close — write `~/.project-tracker/handoffs/atlas-handoff.md` FIRST (MANDATORY):**
+Write: what tests were added/fixed, coverage gaps found (file them if not already), next action. See core `atlas` skill for the full template. Commit it, then run `pt done`.
 
 ---
 
@@ -42,7 +42,7 @@ Write: what tests were added/fixed, coverage gaps found (file them if not alread
 | Tier | When | What | Time |
 |------|------|------|------|
 | **1: Pre-commit** | Every commit (automatic) | `cargo fmt` + `cargo clippy` only | <15s |
-| **2: Nightly CI** | 2am or `atlas-track run-ci` | Full nextest suite | ~20min |
+| **2: Nightly CI** | 2am or `pt run-ci` | Full nextest suite | ~20min |
 
 **Banned during development — all nextest except one:**
 ```bash

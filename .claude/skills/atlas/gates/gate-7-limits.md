@@ -27,7 +27,7 @@ memory/
 └── archive/               # Old stuff goes here
 ```
 
-Decisions go to `atlas-track` (D-XXX), NOT memory files.
+Decisions go to `pt` (D-XXX), NOT memory files.
 
 ---
 

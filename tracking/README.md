@@ -1,15 +1,15 @@
 # Atlas Tracking System
 
-**CLI:** `atlas-track` — the ONLY approved interface
+**CLI:** `pt` — the ONLY approved interface
 **Direct SQL is BANNED** — protects against token-burning unbounded queries
 
 ## Token Safety (Enforced)
 
 | Query Type | Max Output | Example |
 |------------|------------|---------|
-| Status | 3 lines | `atlas-track status` |
-| Index | 5 rows, IDs only | `atlas-track issues` |
-| Detail | 1 item, ~6 lines | `atlas-track issue H-001` |
+| Status | 3 lines | `pt status` |
+| Index | 5 rows, IDs only | `pt issues` |
+| Detail | 1 item, ~6 lines | `pt issue H-001` |
 
 **Never possible:**
 - Dump all issues with full text
@@ -20,23 +20,23 @@
 
 ```bash
 # Every session starts with:
-atlas-track go opus              # THE command: init + full sitrep
+pt go opus              # THE command: init + full sitrep
 
 # Check what needs work:
-atlas-track issues P0
+pt issues P0
 
 # Get details on one issue:
-atlas-track issue H-001
+pt issue H-001
 
 # File a new issue:
-atlas-track add "Title" P1 "Problem description"
+pt add "Title" P1 "Problem description"
 
 # When you fix something:
-atlas-track claim H-001          # Mark in_progress
-atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
+pt claim H-001          # Mark in_progress
+pt fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
 
 # Before handoff:
-atlas-track done S-002 success "What was done" "Next steps"
+pt done S-002 success "What was done" "Next steps"
 ```
 
 ## Bulk Operations
@@ -77,56 +77,56 @@ Use CLI for single issues (better UX). Use SQL for 5+ issues (efficiency).
 
 ```
 START:
-  atlas-track go opus             # THE command: init + full sitrep
-  atlas-track sitrep              # Status only (no session start)
+  pt go opus             # THE command: init + full sitrep
+  pt sitrep              # Status only (no session start)
 
 ISSUES - CRUD:
-  atlas-track add "Title" P0|P1|P2 "problem"  # Create issue
-  atlas-track update H-001 priority P0        # Update field (priority|component|title|problem)
-  atlas-track claim H-001         # Mark in_progress
-  atlas-track fix H-001 "cause" "fix"         # Close issue
-  atlas-track fix-batch H-001,H-002 "cause" "fix"  # Close multiple
-  atlas-track abandon H-001       # Release back to open
-  atlas-track reopen H-001        # Reopen closed issue
+  pt add "Title" P0|P1|P2 "problem"  # Create issue
+  pt update H-001 priority P0        # Update field (priority|component|title|problem)
+  pt claim H-001         # Mark in_progress
+  pt fix H-001 "cause" "fix"         # Close issue
+  pt fix-batch H-001,H-002 "cause" "fix"  # Close multiple
+  pt abandon H-001       # Release back to open
+  pt reopen H-001        # Reopen closed issue
 
 ISSUES - QUERY:
-  atlas-track search "keyword"    # Find issues by keyword (max 10)
-  atlas-track my-issues           # Your work this session
-  atlas-track components          # List valid components + counts
+  pt search "keyword"    # Find issues by keyword (max 10)
+  pt my-issues           # Your work this session
+  pt components          # List valid components + counts
 
 ISSUES - LINKING:
-  atlas-track link H-001 blocks H-002      # H-001 blocks H-002
-  atlas-track link H-001 blocked-by H-002  # H-001 is blocked by H-002
-  atlas-track link H-001 related H-002     # Related issues
-  atlas-track links H-001                  # Show all relationships
+  pt link H-001 blocks H-002      # H-001 blocks H-002
+  pt link H-001 blocked-by H-002  # H-001 is blocked by H-002
+  pt link H-001 related H-002     # Related issues
+  pt links H-001                  # Show all relationships
 
 ISSUES - HISTORY:
-  atlas-track history H-001       # Show change history for issue
+  pt history H-001       # Show change history for issue
 
 INDEX (IDs only, max 5):
-  atlas-track issues              # Open issues
-  atlas-track issues P0           # P0 only
-  atlas-track issues runtime      # By component
-  atlas-track decisions           # Active decisions
-  atlas-track blocks              # Block progress
+  pt issues              # Open issues
+  pt issues P0           # P0 only
+  pt issues runtime      # By component
+  pt decisions           # Active decisions
+  pt blocks              # Block progress
 
 DETAIL (single item):
-  atlas-track issue H-001         # Full issue details
-  atlas-track decision D-001      # Full decision details
+  pt issue H-001         # Full issue details
+  pt decision D-001      # Full decision details
 
 END:
-  atlas-track done S-001 success "summary" "next"  # End session
+  pt done S-001 success "summary" "next"  # End session
 
 DECISIONS:
-  atlas-track add-decision "Title" component "Rule" "Rationale"
+  pt add-decision "Title" component "Rule" "Rationale"
 
 MODE:
-  atlas-track unblock             # Allow block work
-  atlas-track block-work          # Enter hardening mode
+  pt unblock             # Allow block work
+  pt block-work          # Enter hardening mode
 
 MAINTENANCE:
-  atlas-track gc                  # Clean up stale sessions
-  atlas-track health              # Quick status check
+  pt gc                  # Clean up stale sessions
+  pt health              # Quick status check
 ```
 
 ## Database Schema
