@@ -1204,12 +1204,28 @@ impl<'a> TypeChecker<'a> {
         // The body is checked against the inner return type (T), not Future<T>
         let body_return_type = return_type.clone();
 
+        // Resolve param types with typechecker (binder uses Unknown for user-defined structs, H-117)
+        let resolved_param_types: Vec<Type> = func
+            .params
+            .iter()
+            .map(|p| {
+                p.type_ref.as_ref().map_or(Type::any_placeholder(), |t| {
+                    self.resolve_type_ref_with_params(t, &all_type_params)
+                })
+            })
+            .collect();
+
         if let Some(symbol) = self.symbol_table.lookup_mut(&func.name.name) {
             if let Type::Function {
-                return_type: ret, ..
+                return_type: ret,
+                params,
+                ..
             } = &mut symbol.ty
             {
                 **ret = effective_return_type.clone();
+                // Update param types: binder uses Unknown for user-defined types (e.g. Point[]).
+                // Always use the typechecker-resolved types which have full struct resolution (H-117).
+                *params = resolved_param_types.clone();
             }
         }
         // Body checking uses the unwrapped inner type for return statement validation

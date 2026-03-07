@@ -75,3 +75,24 @@ fn test_struct_field_access_in_closure() {
     );
     assert!(!has_error(&diagnostics), "Errors: {:?}", diagnostics);
 }
+
+// H-117: struct T[] as fn parameter — binder stores ?[], typechecker must update to struct type
+#[test]
+fn struct_array_fn_param_resolves_correctly() {
+    let src = r#"
+struct Point { x: number, y: number }
+
+fn sum_x(pts: Point[]) -> number {
+    let mut total: number = 0;
+    for p in pts {
+        total = total + p.x;
+    }
+    return total;
+}
+
+let arr: Point[] = [Point { x: 1, y: 2 }];
+let result: number = sum_x(arr);
+"#;
+    let diagnostics = typecheck_source(src);
+    assert_no_errors(&diagnostics);
+}
