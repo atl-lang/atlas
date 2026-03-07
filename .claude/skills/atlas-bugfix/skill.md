@@ -99,12 +99,48 @@ git commit -m "fix(...): description"                        # Guardian hook run
 
 ---
 
-## Issue Lifecycle
+## AI Continuity — Non-Negotiable (100% AI-maintained project)
+
+The user is architect only. You own all implementation, tracking, and continuity.
+
+**Never narrate — act or file. These are the only two options:**
+- ❌ "The next agent will need to watch out for X when fixing Y"
+- ❌ "Worth noting that this workaround exists"
+- ✅ `atlas-track add "Title" P1 "context, file ref, fix risk"` then move on.
+Anything said to the user that isn't architecture = gone after session ends.
+
+**Proactive filing mid-fix:** Discover a second bug, edge case, or missing feature? File it before continuing. 30 seconds now saves hours of re-discovery. Include: what file demonstrates it, workaround used, fix risk for the next agent.
+
+**Before any design decision:** `atlas-track decisions all` — may already be decided. Follow it. If new, log: `atlas-track add-decision "Title" component "Rule" "Rationale"`.
+
+**Block tracking (if this fix closes out a phase):**
+```bash
+atlas-track phase-done B<N>
+atlas-track complete-block B<N> "what shipped, bugs filed"  # final phase only
+```
+
+---
+
+## Issue Lifecycle — CLOSE IMMEDIATELY AFTER VERIFICATION
+
+**Rule:** Verify fix works → `atlas-track fix` → commit → THEN move to next issue. Never batch at end.
+
 ```bash
 atlas-track claim H-001              # Before starting
 # ... TDD fix cycle ...
-atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
+# Fix verified (CLI or nextest) — close NOW:
+atlas-track fix H-001 "Root cause (specific: what was wrong in the code)" "Fix (specific: what you changed)"
+git commit -m "fix(...): description"
+# NOW move to next issue
 ```
+
+**Session close** — required at end of every session:
+```bash
+atlas-track done S-XXX success \
+  "Fixed H-001 (missing increment in VM loop → added i += 1). Fixed H-002 (wrong token in parser → swapped Async for AsyncFn)." \
+  "Next: H-003 — Value::Future missing from runtime enum, needed for async eval"
+```
+Format: one clause per issue, root cause + fix. Next: specific issue + one sentence on scope.
 
 ---
 
