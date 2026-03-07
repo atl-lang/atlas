@@ -24,12 +24,14 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 
 ```bash
 atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+atlas-track in-progress              # Check what's already claimed — avoid duplicate work
 ```
 
 This gives you: session ID, mode, handoff, P0 blockers, git state, block progress.
 
 **If `Work: BLOCKED`** → Fix P0 issues first. No new features.
 **If stale issues shown** → Check if fixed, then `fix` or `abandon`.
+**Quick orientation mid-session:** `atlas-track context` (no session overhead).
 
 ---
 
@@ -50,8 +52,9 @@ Spec defines it → implement EXACTLY. No shortcuts, no partial implementations.
 
 ### Intelligent Decisions (When Spec Silent)
 1. Grep codebase — verify actual patterns before deciding
-2. Check `atlas-track decisions` — decision may already be made
+2. Check `atlas-track decisions all` — shows ALL decisions (no cap). Decision may already be made.
 3. Decide intelligently, log: `atlas-track add-decision "Title" component "Rule" "Rationale"`
+   - To amend an existing decision: `atlas-track update-decision D-XXX rule "new text"`
 4. **If enforceable by regex** → Add to `~/.claude/hooks/atlas/decision-patterns.json`
 
 ### World-Class Quality
@@ -145,5 +148,7 @@ Load `gates/ai-grammar-principles.md` when making syntax/grammar decisions.
 - `crates/atlas-jit/src/` — JIT (see `crates/atlas-jit/src/CLAUDE.md`)
 - `docs/language/` — Language spec (types, grammar, functions, control flow, structs)
 - `docs/stdlib/` — Stdlib API docs
-- `atlas-track decisions` — All locked decisions (D-XXX format)
-- `atlas-track issues` — Current bugs and tasks
+- `atlas-track decisions all` — All decisions, no cap (D-001 through D-029+)
+- `atlas-track issues [P0|component]` — Open issues with titles and status
+- `atlas-track ci-status` — Last CI run + failed test list
+- `atlas-track blocks` — Block progress with names

@@ -135,7 +135,7 @@ atlas-track fix H-001 "Root cause (10+ chars)" "Fix applied (10+ chars)"
 
 If debugging exceeds 30 minutes on a single failure:
 1. Identify root cause precisely
-2. Run `atlas-track open-issue` to document the blocker
+2. Document the blocker: `atlas-track add "Title" P0 "what's blocking and why"`
 3. Commit partial work with clear message
 4. Next session picks it up via `atlas-track go`
 

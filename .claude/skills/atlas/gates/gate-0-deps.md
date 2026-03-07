@@ -7,7 +7,7 @@
 ## For EACH dependency in phase file:
 1. Does it exist in codebase? (grep for implementation)
 2. Does it match spec? (compare to `docs/language/` or `docs/stdlib/`)
-3. Is it complete? (run `atlas-track blocks`, run tests)
+3. Is it complete? (`atlas-track block B<N>` shows block AC; grep tests for coverage)
 
 **Before implementing anything:** Search for similar existing code. Follow established patterns. Check auto-memory `patterns.md` for constraints.
 
@@ -17,5 +17,5 @@
 - 🚫 Doesn't exist → BLOCKING. Do NOT ask the user. Resolve autonomously:
   - Missing spec definition: check `docs/language/` or `docs/stdlib/` — spec is authority
   - Missing implementation that should exist: implement as prerequisite phase (commit, then continue)
-  - Dependency outside v0.3 scope: run `atlas-track open-issue` to document gap, skip phase noting why
+  - Dependency outside v0.3 scope: `atlas-track add "Gap: X" P1 "reason"` to document, skip phase noting why
   - User is never the answer to a missing dependency
