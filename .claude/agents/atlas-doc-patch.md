@@ -71,9 +71,11 @@ For `docs/known-issues.md` specifically:
 - If a bug listed there was fixed in this commit → add `[Fixed: <commit>]` inline or remove the entry
 - If a new known limitation was introduced → add a concise entry
 
-### Step 6 — Clear the pending file
+### Step 6 — Clear the pending file (NO git ops)
 
-Write status "done" to mark it resolved:
+Mark the pending file done — that's all. The main agent handles staging and committing.
+
+Always mark the pending file done:
 
 ```bash
 jq '.status = "done" | .patched_at = "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"' \
@@ -83,21 +85,22 @@ jq '.status = "done" | .patched_at = "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"' \
 
 ### Step 7 — Report
 
-Output a brief summary:
+Output a brief summary for the main agent to act on:
 
 ```
 ## Doc Patch Complete — commit <sha>
 
 Domains: <domains>
 
-### Changes made
-- docs/known-issues.md: removed H-116 entry (fixed), updated H-113 entry
+### Files edited
+- docs/known-issues.md
 - (or "none — docs were already accurate")
 
-### Skipped
-- docs/language/types.md — no drift detected
+### What changed
+- Removed H-116 entry (fixed)
+- Updated H-113 semantics note
 
-Done. Pending file marked resolved.
+ACTION FOR MAIN AGENT: stage and commit the above files.
 ```
 
 ---
@@ -108,5 +111,5 @@ Done. Pending file marked resolved.
 - **Docs list bugs, not features.** known-issues.md tracks limitations, not every change.
 - **"None" is a valid output.** If docs are accurate, say so and clear the pending file.
 - **No source changes.** Touch ONLY `.md` files and the pending JSON.
-- **No commits.** Report results. The main agent commits doc fixes if needed.
+- **No git ops. Ever.** No `git add`, no `git commit`, no `git push`. The main agent owns all git operations — Haiku touching git risks conflicts with active sessions.
 - **Scope is sacred.** Only check files in `relevant_docs`. Not the full codebase.
