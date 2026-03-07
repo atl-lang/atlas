@@ -299,6 +299,9 @@ pub struct TypeChecker<'a> {
     /// Names of all user-defined enum types declared in this module.
     /// Used by resolve_type_ref to return a proper named type instead of Unknown.
     enum_names: HashSet<String>,
+    /// Full enum declarations keyed by enum name.
+    /// Used by check_pattern to look up tuple-variant field types (H-120).
+    enum_decls: HashMap<String, EnumDecl>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -377,6 +380,7 @@ impl<'a> TypeChecker<'a> {
             struct_type_cache: HashMap::new(),
             struct_resolution_stack: Vec::new(),
             enum_names: HashSet::new(),
+            enum_decls: HashMap::new(),
         }
     }
 
@@ -502,11 +506,34 @@ impl<'a> TypeChecker<'a> {
 
     fn collect_enum_names(&mut self, program: &Program) {
         self.enum_names.clear();
+        self.enum_decls.clear();
         for item in &program.items {
             if let Item::Enum(enum_decl) = item {
                 self.enum_names.insert(enum_decl.name.name.clone());
+                self.enum_decls
+                    .insert(enum_decl.name.name.clone(), enum_decl.clone());
             }
         }
+    }
+
+    /// Look up field types for an enum tuple variant (H-120).
+    /// Returns the field types for `EnumName::VariantName(...)` or empty vec if not found.
+    pub(super) fn enum_variant_field_types(
+        &self,
+        enum_name: &str,
+        variant_name: &str,
+    ) -> Vec<TypeRef> {
+        let Some(decl) = self.enum_decls.get(enum_name) else {
+            return Vec::new();
+        };
+        for variant in &decl.variants {
+            if variant.name().name == variant_name {
+                if let EnumVariant::Tuple { fields, .. } = variant {
+                    return fields.clone();
+                }
+            }
+        }
+        Vec::new()
     }
 
     fn collect_struct_decls(&mut self, program: &Program) {

@@ -74,6 +74,18 @@ fn test_h111_double_match_same_enum_var() {
     );
 }
 
-// NOTE: Enum tuple-variant binding types (Shape::Circle(r) => r has type number)
-// require a full variant-field registry in the typechecker.
-// That is tracked as H-119 and is out of scope for H-110/H-111.
+// H-120: enum tuple-variant bindings must resolve to declared field types, not Unknown
+#[test]
+fn test_h120_enum_tuple_variant_bindings_typed() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Shape { Circle(number), Rect(number, number) }
+let s = Shape::Circle(5.0);
+let area: number = match s {
+    Shape::Circle(r) => r * r * 3.14,
+    Shape::Rect(w, h) => w * h,
+};
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}

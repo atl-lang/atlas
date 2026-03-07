@@ -2538,10 +2538,21 @@ impl<'a> TypeChecker<'a> {
                     }
                     return bindings;
                 }
-                Pattern::EnumVariant { args, .. } => {
-                    // For enum variants in a union, check nested patterns recursively
-                    for arg in args {
-                        bindings.extend(self.check_pattern(arg, &Type::Unknown));
+                Pattern::EnumVariant {
+                    enum_name,
+                    variant_name,
+                    args,
+                    ..
+                } => {
+                    // H-120: look up variant field types so bindings get proper types
+                    let field_types =
+                        self.enum_variant_field_types(&enum_name.name, &variant_name.name);
+                    for (i, arg) in args.iter().enumerate() {
+                        let field_ty = field_types
+                            .get(i)
+                            .map(|tr| self.resolve_type_ref(tr))
+                            .unwrap_or(Type::Unknown);
+                        bindings.extend(self.check_pattern(arg, &field_ty));
                     }
                     return bindings;
                 }
@@ -2607,10 +2618,21 @@ impl<'a> TypeChecker<'a> {
                 }
             }
 
-            Pattern::EnumVariant { args, .. } => {
-                // For enum variant patterns, check nested patterns recursively
-                for arg in args {
-                    bindings.extend(self.check_pattern(arg, &Type::Unknown));
+            Pattern::EnumVariant {
+                enum_name,
+                variant_name,
+                args,
+                ..
+            } => {
+                // H-120: look up variant field types so bindings get proper types
+                let field_types =
+                    self.enum_variant_field_types(&enum_name.name, &variant_name.name);
+                for (i, arg) in args.iter().enumerate() {
+                    let field_ty = field_types
+                        .get(i)
+                        .map(|tr| self.resolve_type_ref(tr))
+                        .unwrap_or(Type::Unknown);
+                    bindings.extend(self.check_pattern(arg, &field_ty));
                 }
             }
         }
