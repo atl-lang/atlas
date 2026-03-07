@@ -34,14 +34,14 @@ if echo "$CHANGED_FILES" | grep -q "parser/"; then
     WARNINGS+=("parser changed → check docs/language/grammar.md, docs/language/functions.md")
 fi
 
-# Typechecker changes → type docs, known-issues
+# Typechecker changes → type docs
 if echo "$CHANGED_FILES" | grep -q "typechecker/"; then
-    WARNINGS+=("typechecker changed → check docs/language/types.md, docs/known-issues.md")
+    WARNINGS+=("typechecker changed → check docs/language/types.md")
 fi
 
-# Interpreter or compiler changes → known-issues, parity
+# Interpreter or compiler changes → parity
 if echo "$CHANGED_FILES" | grep -q -E "(interpreter/|compiler/)"; then
-    WARNINGS+=("interpreter/compiler changed → check docs/known-issues.md (parity-sensitive)")
+    WARNINGS+=("interpreter/compiler changed → verify interpreter/VM parity (parity-sensitive)")
 fi
 
 # Stdlib changes → stdlib docs
@@ -71,10 +71,6 @@ if echo "$CHANGED_FILES" | grep -q "value\.rs"; then
 fi
 
 # Known issues file itself changed — verify it matches tracker
-if echo "$CHANGED_FILES" | grep -q "known-issues.md"; then
-    # Silently ok — someone is updating docs
-    :
-fi
 
 # If docs/ changed but no source changed — someone is doing a doc update, skip
 DOCS_ONLY=true
@@ -85,13 +81,6 @@ if [ "$DOCS_ONLY" = true ]; then
     exit 0
 fi
 
-# ── Issue tracker sync check ──
-# If atlas-track is available, check for recently closed issues not in known-issues.md
-if command -v atlas-track &>/dev/null; then
-    # Quick check: any issue was closed in this session but known-issues.md wasn't updated?
-    if echo "$CHANGED_FILES" | grep -q -E "crates/.*\.rs$" && ! echo "$CHANGED_FILES" | grep -q "known-issues.md"; then
-        WARNINGS+=("source files changed but docs/known-issues.md was NOT updated — verify it's current")
-    fi
 fi
 
 # ── Output ──
