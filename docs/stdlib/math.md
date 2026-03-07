@@ -88,6 +88,11 @@ fn sqrt(x: number) -> Result<number, string>
 
 Returns square root of x.
 
+> **⚠️ AI Generation Note:** `sqrt` returns `Result<number, string>`, **not** `number`.
+> Writing `let x = sqrt(16)` fails — the typechecker sees `Result`, not a `number`.
+> **Correct pattern:** `let x = unwrap(sqrt(16));`
+> Use `match` for safe unwrapping when input may be negative.
+
 **Returns:**
 - `Ok(sqrt)` for non-negative x
 - `Err(string)` for negative x

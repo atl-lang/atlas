@@ -1,5 +1,7 @@
 # Atlas Standard Library Documentation
 
+> **⚠️ AI Generation:** Read [`AI-GENERATION-NOTES.md`](./AI-GENERATION-NOTES.md) first — it lists all stdlib functions whose return types differ from naive expectation (`sqrt`, `parseJSON`, `indexOf`, etc.).
+
 Complete reference for all built-in functions in Atlas. This documentation is generated from the actual implementation in `crates/atlas-runtime/src/stdlib/`.
 
 **Last Updated:** 2026-03-05

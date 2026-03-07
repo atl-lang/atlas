@@ -77,6 +77,13 @@ fn indexOf(str: string, search: string) -> Option<number>
 
 Finds first occurrence of search string. Returns None if not found. Alias: `strIndexOf`.
 
+> **⚠️ AI Generation Note:** `indexOf` returns `Option<number>`, **not** `number`.
+> Writing `let i: number = indexOf(str, "x")` fails — type is `Option<number>`.
+> **Correct pattern:**
+> ```atlas
+> let i = match indexOf(str, "x") { Some(n) => n, None => -1 };
+> ```
+
 **Parameters:**
 - `str` - String to search in
 - `search` - String to find

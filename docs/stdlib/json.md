@@ -10,6 +10,11 @@ fn parseJSON(str: string) -> Result<json, string>
 
 Parses JSON string into `json`.
 
+> **⚠️ AI Generation Note:** `parseJSON` returns `Result<json, string>`, **not** `json`.
+> Writing `let data: json = parseJSON(raw)` fails — typechecker sees `Result`, not `json`.
+> **Correct pattern:** `let data = unwrap(parseJSON(raw));`
+> Use `match` when the input may be invalid JSON.
+
 **Parameters:**
 - `str` - JSON text
 
