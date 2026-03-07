@@ -12,6 +12,8 @@ use rstest::*;
 use std::fs;
 use tempfile::TempDir;
 
+#[path = "async_runtime/async_parity.rs"]
+mod async_parity;
 #[path = "async_runtime/async_runtime_loops.rs"]
 mod async_runtime_loops;
 #[path = "async_runtime/compiler.rs"]
