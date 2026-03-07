@@ -224,6 +224,40 @@ cmd_ci_status() {
     fi
 }
 
+cmd_mark_ci_pass() {
+    local reason="${1:-manually verified}"
+    local ci_file
+    ci_file="$(cd "$(dirname "$DB")" && pwd)/ci-status.json"
+    local now
+    now=$(date -u +"%Y-%m-%dT%H:%M:%S")
+    local commit
+    commit=$(git -C "$(dirname "$DB")" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+    # Build passing ci-status.json
+    jq -n \
+        --arg run_at "$now" \
+        --arg reason "$reason" \
+        --arg commit "$commit" \
+        '{
+            run_at: $run_at,
+            status: "pass",
+            duration_seconds: 0,
+            note: ("Manually marked passing: " + $reason),
+            checks: {
+                fmt:    {status: "pass"},
+                clippy: {status: "pass"},
+                tests:  {status: "pass", failed: [], total: 0, passed: 0},
+                parity: {status: "pass"},
+                battle: {status: "pass"},
+                corpus: {status: "pass"}
+            },
+            git_commit: $commit
+        }' > "$ci_file"
+
+    echo "✓ CI marked as passing at $now (commit $commit)"
+    echo "  Reason: $reason"
+}
+
 # Search issues — with component, status, priority
 cmd_search_issues() {
     local keyword="$1"

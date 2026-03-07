@@ -1078,6 +1078,10 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![expected_value],
                     };
                 }
+                // H-112: hashMapHas / hashSetHas return bool
+                "hashMapHas" | "hash_map_has" | "hashSetHas" | "hash_set_has" => {
+                    return Type::Bool;
+                }
                 _ => {}
             }
         }

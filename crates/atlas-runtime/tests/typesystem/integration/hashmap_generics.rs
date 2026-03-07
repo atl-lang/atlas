@@ -33,3 +33,26 @@ let v: string = hash_map_get(m, "age");
     let diagnostics = typecheck_source(src);
     assert!(has_error_code(&diagnostics, "AT3001"));
 }
+
+// H-112: hashMapHas / hashSetHas must typecheck to bool so they can be used in if-conditions
+#[test]
+fn hashmap_has_returns_bool() {
+    let src = r#"
+let m: HashMap<string, number> = hashMapNew();
+let has: bool = hashMapHas(m, "key");
+"#;
+    let diagnostics = typecheck_source(src);
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn hashmap_has_usable_in_if_condition() {
+    let src = r#"
+let m: HashMap<string, number> = hashMapNew();
+if hashMapHas(m, "key") {
+    let x: number = 1;
+}
+"#;
+    let diagnostics = typecheck_source(src);
+    assert_no_errors(&diagnostics);
+}
