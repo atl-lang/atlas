@@ -14,6 +14,8 @@ use tempfile::TempDir;
 
 #[path = "async_runtime/async_runtime_loops.rs"]
 mod async_runtime_loops;
+#[path = "async_runtime/value_future.rs"]
+mod value_future;
 
 // --- Future/Promise type and async foundation ---
 
@@ -51,7 +53,7 @@ fn eval_vm(code: &str) -> Result<Value, Box<dyn std::error::Error>> {
 #[test]
 fn test_future_resolve_creates_resolved_future() {
     let result = eval_ok("futureResolve(42)");
-    assert_eq!(result.type_name(), "future");
+    assert_eq!(result.type_name(), "Future");
 
     // Check it's resolved
     let is_resolved = eval_ok("futureIsResolved(futureResolve(42))");
@@ -61,7 +63,7 @@ fn test_future_resolve_creates_resolved_future() {
 #[test]
 fn test_future_reject_creates_rejected_future() {
     let result = eval_ok("futureReject(\"error\")");
-    assert_eq!(result.type_name(), "future");
+    assert_eq!(result.type_name(), "Future");
 
     // Check it's rejected
     let is_rejected = eval_ok("futureIsRejected(futureReject(\"error\"))");
@@ -71,7 +73,7 @@ fn test_future_reject_creates_rejected_future() {
 #[test]
 fn test_future_new_creates_pending_future() {
     let result = eval_ok("futureNew()");
-    assert_eq!(result.type_name(), "future");
+    assert_eq!(result.type_name(), "Future");
 
     // Check it's pending
     let is_pending = eval_ok("futureIsPending(futureNew())");
@@ -103,7 +105,7 @@ fn test_future_display_format() {
 #[test]
 fn test_future_type_name() {
     let result = eval_ok("typeof(futureResolve(42))");
-    assert_eq!(result, Value::string("record"));
+    assert_eq!(result, Value::string("Future"));
 }
 
 #[test]
@@ -113,7 +115,7 @@ fn test_future_in_array() {
         Value::Array(arr) => {
             assert_eq!(arr.len(), 3);
             for val in arr.as_slice().iter() {
-                assert_eq!(val.type_name(), "future");
+                assert_eq!(val.type_name(), "Future");
             }
         }
         _ => panic!("Expected array"),

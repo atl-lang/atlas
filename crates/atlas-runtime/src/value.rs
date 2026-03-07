@@ -611,7 +611,7 @@ impl Value {
             Value::HttpRequest(_) => "HttpRequest",
             #[cfg(feature = "http")]
             Value::HttpResponse(_) => "HttpResponse",
-            Value::Future(_) => "future",
+            Value::Future(_) => "Future",
             Value::TaskHandle(_) => "TaskHandle",
             Value::ChannelSender(_) => "ChannelSender",
             Value::ChannelReceiver(_) => "ChannelReceiver",
@@ -695,7 +695,7 @@ impl PartialEq for Value {
             // --- Reference types: identity equality ---
             (Value::NativeFunction(a), Value::NativeFunction(b)) => Arc::ptr_eq(a, b),
             (Value::SharedValue(a), Value::SharedValue(b)) => a == b,
-            (Value::Future(a), Value::Future(b)) => Arc::ptr_eq(a, b),
+            (Value::Future(_), Value::Future(_)) => false,
             (Value::TaskHandle(a), Value::TaskHandle(b)) => Arc::ptr_eq(a, b),
             (Value::ChannelSender(a), Value::ChannelSender(b)) => Arc::ptr_eq(a, b),
             (Value::ChannelReceiver(a), Value::ChannelReceiver(b)) => Arc::ptr_eq(a, b),
@@ -769,7 +769,7 @@ impl fmt::Display for Value {
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "<HttpResponse {}>", res.status()),
-            Value::Future(future) => write!(f, "{}", future.as_ref()),
+            Value::Future(_) => write!(f, "<Future>"),
             Value::TaskHandle(handle) => write!(f, "<TaskHandle #{}>", handle.lock().unwrap().id()),
             Value::ChannelSender(_) => write!(f, "<ChannelSender>"),
             Value::ChannelReceiver(_) => write!(f, "<ChannelReceiver>"),
@@ -826,7 +826,7 @@ impl fmt::Debug for Value {
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "HttpResponse({})", res.status()),
-            Value::Future(future) => write!(f, "{:?}", future.as_ref()),
+            Value::Future(_) => write!(f, "Future"),
             Value::TaskHandle(handle) => write!(f, "TaskHandle(#{})", handle.lock().unwrap().id()),
             Value::ChannelSender(_) => write!(f, "ChannelSender"),
             Value::ChannelReceiver(_) => write!(f, "ChannelReceiver"),
