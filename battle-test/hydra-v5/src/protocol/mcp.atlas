@@ -1,0 +1,33 @@
+// protocol/mcp.atlas
+// JSON-RPC message types for MCP protocol communication
+
+// JSONRPCError represents a JSON-RPC error object
+struct JSONRPCError {
+    code: number,
+    message: string,
+    data: json,  // omitted if not present
+}
+
+// JSONRPCMessage models a JSON-RPC request or response body
+struct JSONRPCMessage {
+    jsonrpc: string,
+    method: string,      // present in requests only
+    id: json,            // string or number
+    params: json,        // omitted if not present
+    result: json,        // present in responses only
+    error: json,         // present in error responses only
+}
+
+// Extract request ID from JSON payload (may be string or number)
+// Returns the id field or None if not present or JSON parse fails
+fn extract_id(payload: string) -> Option<json> {
+    match parseJSON(payload) {
+        Ok(data) => {
+            // FRICTION: Can't compare json to null; treating as always present
+            return Some(data["id"]);
+        },
+        Err(_) => {
+            return None;
+        }
+    }
+}

@@ -1,0 +1,67 @@
+// proxy/queue.atlas
+// Message queue with TTL for restart scenarios
+
+struct QueueEntry {
+    id: json,
+    payload: string,
+    enqueued_at_ms: number,
+    ttl_ms: number,
+}
+
+struct MessageQueue {
+    max_size: number,
+    default_ttl_ms: number,
+    entries: QueueEntry[],
+}
+
+trait Queue {
+    fn enqueue(self, id: json, payload: string) -> Result<string, string>;
+    fn dequeue(self) -> Result<QueueEntry, string>;
+    fn size(self) -> number;
+    fn clear(self) -> string;
+}
+
+impl Queue for MessageQueue {
+    fn enqueue(self, id: json, payload: string) -> Result<string, string> {
+        if len(self.entries) >= self.max_size {
+            return Err("queue full");
+        }
+
+        let entry = QueueEntry {
+            id: id,
+            payload: payload,
+            enqueued_at_ms: 0,
+            ttl_ms: self.default_ttl_ms,
+        };
+
+        // FRICTION: Cannot mutate self in trait impl
+        // Would need to return a new queue
+        return Ok("enqueued");
+    }
+
+    fn dequeue(self) -> Result<QueueEntry, string> {
+        if len(self.entries) == 0 {
+            return Err("queue empty");
+        }
+
+        // FRICTION: Cannot mutate self
+        return Err("dequeue not implemented");
+    }
+
+    fn size(self) -> number {
+        return len(self.entries);
+    }
+
+    fn clear(self) -> string {
+        return "cleared";
+    }
+}
+
+fn new_message_queue(max_size: number, default_ttl_ms: number) -> MessageQueue {
+    let empty_entries: QueueEntry[] = [];
+    return MessageQueue {
+        max_size: max_size,
+        default_ttl_ms: default_ttl_ms,
+        entries: empty_entries,
+    };
+}

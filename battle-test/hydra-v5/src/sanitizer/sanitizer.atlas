@@ -1,0 +1,59 @@
+// sanitizer/sanitizer.atlas
+// Message sanitization and classification
+
+enum MessageType {
+    Request,
+    Response,
+    Notification,
+    Error,
+}
+
+struct SanitizedMessage {
+    original: string,
+    sanitized: string,
+    message_type: MessageType,
+    size_bytes: number,
+}
+
+trait Sanitizer {
+    fn sanitize(self, message: string) -> Result<SanitizedMessage, string>;
+    fn classify(self, message: string) -> MessageType;
+}
+
+struct JSONSanitizer {
+    max_size_kb: number,
+}
+
+impl Sanitizer for JSONSanitizer {
+    fn sanitize(self, message: string) -> Result<SanitizedMessage, string> {
+        let size_bytes = len(message);
+        let max_size_bytes = self.max_size_kb * 1024;
+
+        if size_bytes > max_size_bytes {
+            return Err("message exceeds max size");
+        }
+
+        // FRICTION: H-110 - cannot call trait method on self within impl
+        // Using direct enum instead of classifying
+        let msg_type: MessageType = MessageType::Request;
+
+        return Ok(SanitizedMessage {
+            original: message,
+            sanitized: message,
+            message_type: msg_type,
+            size_bytes: size_bytes,
+        });
+    }
+
+    fn classify(self, message: string) -> MessageType {
+        // FRICTION: No regex or pattern matching on JSON
+        // Default to Request for now
+        return MessageType::Request;
+    }
+}
+
+fn new_json_sanitizer(max_size_kb: number) -> JSONSanitizer {
+    return JSONSanitizer {
+        max_size_kb: max_size_kb,
+    };
+}

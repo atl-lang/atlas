@@ -1,0 +1,63 @@
+// metrics/collector.atlas
+// Metrics collection for monitoring
+
+struct MetricsSnapshot {
+    start_time_ms: number,
+    uptime_ms: number,
+    messages_routed: number,
+    messages_queued: number,
+    restarts_total: number,
+    restarts_in_window: number,
+    last_error: string,
+}
+
+trait MetricsCollector {
+    fn snapshot(self) -> MetricsSnapshot;
+    fn record_message(self, direction: string) -> string;
+    fn record_restart(self, reason: string) -> string;
+    fn record_error(self, error: string) -> string;
+}
+
+struct DefaultMetricsCollector {
+    start_time_ms: number,
+    messages_routed: number,
+    messages_queued: number,
+    restarts_total: number,
+    last_error: string,
+}
+
+impl MetricsCollector for DefaultMetricsCollector {
+    fn snapshot(self) -> MetricsSnapshot {
+        return MetricsSnapshot {
+            start_time_ms: self.start_time_ms,
+            uptime_ms: 0,
+            messages_routed: self.messages_routed,
+            messages_queued: self.messages_queued,
+            restarts_total: self.restarts_total,
+            restarts_in_window: 0,
+            last_error: self.last_error,
+        };
+    }
+
+    fn record_message(self, direction: string) -> string {
+        return "recorded";
+    }
+
+    fn record_restart(self, reason: string) -> string {
+        return "restart recorded";
+    }
+
+    fn record_error(self, error: string) -> string {
+        return "error recorded";
+    }
+}
+
+fn new_metrics_collector() -> DefaultMetricsCollector {
+    return DefaultMetricsCollector {
+        start_time_ms: 0,
+        messages_routed: 0,
+        messages_queued: 0,
+        restarts_total: 0,
+        last_error: "",
+    };
+}

@@ -1,0 +1,34 @@
+// proxy/statemachine.atlas
+// State machine for proxy orchestration
+
+// StateTransition represents a change between states
+struct StateTransition {
+    from_state: ProxyState,
+    to_state: ProxyState,
+    reason: string,
+    timestamp_ms: number,
+}
+
+// FRICTION: Cannot implement proper state machine without mutable state
+// Atlas values are immutable; mutations require rebinding
+
+// FRICTION: H-110 + H-111 (P0 bugs)
+// Cannot use match on enums inside function body - returns ?
+// Cannot use == on enum values in conditions - returns ?
+// Tuple pattern matching not supported
+// State machine validation cannot be properly implemented
+
+fn is_valid_transition(_old_state: ProxyState, _new_state: ProxyState) -> bool {
+    // BLOCKED by H-110, H-111: cannot implement enum-based logic in functions
+    // Placeholder returns false
+    return false;
+}
+
+// Top-level match example (this works):
+let example_match = match ProxyState::Stopped {
+    ProxyState::Stopped => "can transition to Starting",
+    ProxyState::Starting => "can transition to Running",
+    ProxyState::Running => "can transition to Restarting",
+    ProxyState::Restarting => "can transition to Running or Failed",
+    ProxyState::Failed => "can transition to Stopped",
+};

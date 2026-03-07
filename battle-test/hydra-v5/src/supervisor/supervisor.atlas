@@ -1,0 +1,101 @@
+// supervisor/supervisor.atlas
+// Supervisor trait and implementation for process lifecycle management
+
+// FRICTION: Import not shown - assumes supervisor/types.atlas is loaded
+
+// Supervisor manages the lifecycle of a child process
+trait Supervisor {
+    // Start spawns the child process
+    fn start(self) -> Result<string, string>;
+
+    // Stop terminates the child process gracefully
+    fn stop(self) -> Result<string, string>;
+
+    // Restart stops and restarts the child process
+    fn restart(self) -> Result<string, string>;
+
+    // State returns the current server state
+    fn state(self) -> ServerState;
+
+    // PID returns the process ID (0 if not running)
+    fn pid(self) -> number;
+
+    // Uptime returns milliseconds since process started
+    fn uptime_ms(self) -> number;
+
+    // LastError returns the last error that occurred
+    fn last_error(self) -> string;
+
+    // ResetRestartCounter resets the restart counter
+    fn reset_restart_counter(self) -> Result<string, string>;
+}
+
+// ProcessSupervisor implements Supervisor interface
+struct ProcessSupervisor {
+    command: string,
+    args: string[],
+    cwd: string,
+    state: ServerState,
+    pid: number,
+    started_at_ms: number,
+    last_error: string,
+    restart_count: number,
+}
+
+impl Supervisor for ProcessSupervisor {
+    fn start(self) -> Result<string, string> {
+        // FRICTION: No process spawning API in Atlas
+        return Err("process spawn not implemented");
+    }
+
+    fn stop(self) -> Result<string, string> {
+        if self.pid == 0 {
+            return Err("no process running");
+        }
+        // FRICTION: No process kill API in Atlas
+        return Err("process kill not implemented");
+    }
+
+    fn restart(self) -> Result<string, string> {
+        // Composed from stop + start
+        return Err("restart not implemented");
+    }
+
+    fn state(self) -> ServerState {
+        return self.state;
+    }
+
+    fn pid(self) -> number {
+        return self.pid;
+    }
+
+    fn uptime_ms(self) -> number {
+        if self.started_at_ms == 0 {
+            return 0;
+        }
+        // FRICTION: No time/clock API in Atlas
+        return 0;
+    }
+
+    fn last_error(self) -> string {
+        return self.last_error;
+    }
+
+    fn reset_restart_counter(self) -> Result<string, string> {
+        return Ok("counter reset");
+    }
+}
+
+// Create a new process supervisor
+fn new_process_supervisor(command: string, args: string[]) -> ProcessSupervisor {
+    return ProcessSupervisor {
+        command: command,
+        args: args,
+        cwd: "",
+        state: ServerState::Stopped,
+        pid: 0,
+        started_at_ms: 0,
+        last_error: "",
+        restart_count: 0,
+    };
+}

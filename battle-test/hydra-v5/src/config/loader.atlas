@@ -1,0 +1,52 @@
+// config/loader.atlas
+// Two-tier configuration loading (global registry + local override)
+
+// ConfigLoader loads and merges configuration from multiple sources
+trait ConfigLoader {
+    fn load_registry(self, path: string) -> Result<Registry, string>;
+    fn load_local_override(self, path: string) -> Result<ServerConfig, string>;
+    fn merge(self, registry: Registry, local: ServerConfig) -> ServerConfig;
+}
+
+struct FileConfigLoader {
+    home_dir: string,
+    cwd: string,
+}
+
+impl ConfigLoader for FileConfigLoader {
+    fn load_registry(self, path: string) -> Result<Registry, string> {
+        // FRICTION: No file I/O API in Atlas
+        return Err("file read not implemented");
+    }
+
+    fn load_local_override(self, path: string) -> Result<ServerConfig, string> {
+        // FRICTION: No file I/O API in Atlas
+        return Err("file read not implemented");
+    }
+
+    fn merge(self, registry: Registry, local: ServerConfig) -> ServerConfig {
+        // Simple merge: local overrides registry
+        let merged = local;
+        return merged;
+    }
+}
+
+fn new_file_config_loader(home_dir: string, cwd: string) -> FileConfigLoader {
+    return FileConfigLoader {
+        home_dir: home_dir,
+        cwd: cwd,
+    };
+}
+
+// Load global Hydra configuration from ~/.hydra/config.json
+fn load_hydra_config() -> Result<Registry, string> {
+    // FRICTION: No home directory expansion in Atlas
+    // Would need to use environment variable
+    return Err("home directory not accessible");
+}
+
+// Load local project configuration from ./hydra.json
+fn load_local_config() -> Result<ServerConfig, string> {
+    // FRICTION: No file I/O API in Atlas
+    return Err("file read not implemented");
+}

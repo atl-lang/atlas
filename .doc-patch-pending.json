@@ -1,20 +1,27 @@
 {
-  "committed_at": "2026-03-07T20:57:11Z",
-  "commit": "35d6d4b",
+  "committed_at": "2026-03-07T23:30:00Z",
+  "commit": "4d15be8",
   "changed_files": [
-    "crates/atlas-runtime/src/compiler/expr.rs",
-    "crates/atlas-runtime/src/interpreter/expr.rs",
-    "crates/atlas-runtime/src/stdlib/collections/hashset.rs",
-    "crates/atlas-runtime/tests/collections.rs"
+    "crates/atlas-runtime/src/ast.rs",
+    "crates/atlas-runtime/src/parser/mod.rs",
+    "crates/atlas-runtime/src/parser/expr.rs",
+    "crates/atlas-runtime/src/typechecker/mod.rs",
+    "crates/atlas-runtime/src/typechecker/expr.rs",
+    "crates/atlas-runtime/src/typechecker/type_guards.rs",
+    "crates/atlas-runtime/src/binder.rs",
+    "crates/atlas-formatter/src/visitor.rs",
+    "crates/atlas-lsp/src/call_hierarchy.rs",
+    "crates/atlas-lsp/src/completion.rs",
+    "crates/atlas-lsp/src/hover.rs",
+    "crates/atlas-lsp/src/navigation.rs",
+    "crates/atlas-lsp/src/symbols.rs"
   ],
-  "domains": [
-    "compiler",
-    "interpreter",
-    "stdlib"
-  ],
+  "domains": ["ast", "parser", "typechecker"],
   "relevant_docs": [
-    "docs/stdlib/index.md"
+    "docs/language/grammar.md",
+    "docs/language/functions.md",
+    "docs/language/types.md",
+    "crates/atlas-runtime/src/CLAUDE.md"
   ],
-  "status": "done",
-  "patched_at": "2026-03-07T21:00:00Z"
+  "status": "pending"
 }

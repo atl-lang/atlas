@@ -1,0 +1,49 @@
+// proxy/proxy.atlas
+// Main proxy orchestration
+
+trait Proxy {
+    fn run(self) -> Result<string, string>;
+    fn shutdown(self) -> Result<string, string>;
+    fn status(self) -> ProxyStatus;
+}
+
+// ProxyImpl orchestrates routing between client and child
+struct ProxyImpl {
+    name: string,
+    status_snapshot: ProxyStatus,
+    options: Options,
+}
+
+impl Proxy for ProxyImpl {
+    fn run(self) -> Result<string, string> {
+        // FRICTION: No event loop, no async/await, no time API
+        // Cannot implement main proxy loop
+        return Err("proxy run not implemented");
+    }
+
+    fn shutdown(self) -> Result<string, string> {
+        return Ok("proxy shutdown");
+    }
+
+    fn status(self) -> ProxyStatus {
+        return self.status_snapshot;
+    }
+}
+
+fn new_proxy(name: string, options: Options) -> ProxyImpl {
+    let status = ProxyStatus {
+        state: ProxyState::Stopped,
+        pid: 0,
+        uptime_ms: 0,
+        restarts_in_window: 0,
+        queue_size: 0,
+        can_recover: false,
+        last_restart_reason: "",
+        last_error: "",
+    };
+    return ProxyImpl {
+        name: name,
+        status_snapshot: status,
+        options: options,
+    };
+}

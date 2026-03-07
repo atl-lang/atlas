@@ -1,0 +1,73 @@
+// proxy/types.atlas
+// Proxy orchestration types and configuration
+
+// ProxyState mirrors ServerState from supervisor module
+enum ProxyState {
+    Stopped,
+    Starting,
+    Running,
+    Restarting,
+    Failed,
+}
+
+// ProxyStatus exposes current proxy metrics and state
+struct ProxyStatus {
+    state: ProxyState,              // current state
+    pid: number,                    // child process ID (0 if not running)
+    uptime_ms: number,              // milliseconds since started
+    restarts_in_window: number,     // restart count in current window
+    queue_size: number,             // pending messages in queue
+    can_recover: bool,              // true if crash loop detector allows recovery
+    last_restart_reason: string,    // reason for last restart
+    last_error: string,             // last error message
+}
+
+// Default ProxyStatus
+fn default_proxy_status() -> ProxyStatus {
+    return ProxyStatus {
+        state: ProxyState::Stopped,
+        pid: 0,
+        uptime_ms: 0,
+        restarts_in_window: 0,
+        queue_size: 0,
+        can_recover: false,
+        last_restart_reason: "",
+        last_error: "",
+    };
+}
+
+// Options configure proxy behavior
+struct Options {
+    queue_size: number,             // max pending messages (e.g., 100)
+    queue_ttl_ms: number,           // message TTL in queue (e.g., 30000)
+    collision_policy: string,       // "ignore" or "merge" for tool injection
+    hydra_tools: string[],          // list of tool names to inject
+    crash_export_path: string,      // path to write crash export (e.g., /tmp/hydra-export)
+    crash_export_enabled: bool,     // whether to export on crash
+}
+
+// Default Options
+fn default_options() -> Options {
+    // FRICTION: Empty array literal [] cannot be inferred to string[]
+    // Must cast or create non-empty array. Using cast workaround.
+    let empty_tools: string[] = [];
+    return Options {
+        queue_size: 100,
+        queue_ttl_ms: 30000,
+        collision_policy: "ignore",
+        hydra_tools: empty_tools,
+        crash_export_path: "",
+        crash_export_enabled: false,
+    };
+}
+
+// Convert ProxyState to string for logging
+fn proxy_state_to_string(state: ProxyState) -> string {
+    return match state {
+        ProxyState::Stopped => "stopped",
+        ProxyState::Starting => "starting",
+        ProxyState::Running => "running",
+        ProxyState::Restarting => "restarting",
+        ProxyState::Failed => "failed",
+    };
+}

@@ -1,0 +1,58 @@
+// adaptive/learner.atlas
+// Crash-loop detection and adaptive backoff learning
+
+struct RestartBackoff {
+    base_ms: number,
+    max_ms: number,
+    current_ms: number,
+    multiplier: number,
+}
+
+trait CrashLearner {
+    fn observe_crash(self, reason: string) -> RestartBackoff;
+    fn can_recover(self) -> bool;
+    fn reset(self) -> string;
+}
+
+struct AdaptiveLearner {
+    max_consecutive_crashes: number,
+    crash_window_ms: number,
+    consecutive_crashes: number,
+    last_crash_ms: number,
+    backoff: RestartBackoff,
+}
+
+impl CrashLearner for AdaptiveLearner {
+    fn observe_crash(self, reason: string) -> RestartBackoff {
+        // FRICTION: No time API, cannot implement proper crash window
+        return RestartBackoff {
+            base_ms: 100,
+            max_ms: 30000,
+            current_ms: 100,
+            multiplier: 2,
+        };
+    }
+
+    fn can_recover(self) -> bool {
+        return self.consecutive_crashes < self.max_consecutive_crashes;
+    }
+
+    fn reset(self) -> string {
+        return "reset";
+    }
+}
+
+fn new_adaptive_learner() -> AdaptiveLearner {
+    return AdaptiveLearner {
+        max_consecutive_crashes: 5,
+        crash_window_ms: 60000,
+        consecutive_crashes: 0,
+        last_crash_ms: 0,
+        backoff: RestartBackoff {
+            base_ms: 100,
+            max_ms: 30000,
+            current_ms: 100,
+            multiplier: 2,
+        },
+    };
+}
