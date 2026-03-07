@@ -1,6 +1,6 @@
 # Atlas Tracking — CLI Reference
 
-**CLI:** `atlas-track <command>` — all agent workflow goes through this tool.
+**CLI:** `pt <command>` — all agent workflow goes through this tool.
 **DB:** `tracking/atlas.db` (SQLite). Use the CLI, not raw SQL.
 
 ---
@@ -8,8 +8,8 @@
 ## Orientation (no session needed)
 
 ```bash
-atlas-track context        # Ultra-compact dashboard: issues/CI/block/last session
-atlas-track in-progress    # What's being worked on right now — check BEFORE claiming
+pt context        # Ultra-compact dashboard: issues/CI/block/last session
+pt in-progress    # What's being worked on right now — check BEFORE claiming
 ```
 
 ---
@@ -17,9 +17,9 @@ atlas-track in-progress    # What's being worked on right now — check BEFORE c
 ## Session Lifecycle
 
 ```bash
-atlas-track go opus                              # START: init session + full sitrep
-atlas-track done S-001 success "Summary" "Next" # END: required for handoff
-atlas-track sitrep                               # Status only, no session created
+pt go opus                              # START: init session + full sitrep
+pt done S-001 success "Summary" "Next" # END: required for handoff
+pt sitrep                               # Status only, no session created
 ```
 
 **`go` returns:** session ID, mode, P0 blockers, stale issues, CI status, block progress, handoff from last agent.
@@ -29,21 +29,21 @@ atlas-track sitrep                               # Status only, no session creat
 ## Issues
 
 ```bash
-atlas-track issues [P0|P1|P2|component]          # List open+in_progress with titles (max 5)
-atlas-track issue H-001                          # Full detail — no truncation
-atlas-track add "Title" P0|P1|P2 "problem"       # Create, returns H-XXX
-atlas-track claim H-001                          # Mark in_progress (do this first)
-atlas-track fix H-001 "root cause" "fix applied" # Close (min 10 chars each field)
-atlas-track fix-batch H-001,H-002 "c" "f"        # Close multiple, same cause/fix
-atlas-track search "keyword"                     # Search title+problem — shows priority/component/status
-atlas-track update H-001 field value             # Update: priority|component|title|problem
-atlas-track abandon H-001 "reason"               # Release in_progress → open
-atlas-track reopen H-001                         # Reopen resolved issue
-atlas-track link H-001 blocks H-002              # Link: blocks|blocked-by|related
-atlas-track links H-001                          # Show relationships
-atlas-track history H-001                        # Change history (last 10)
-atlas-track my-issues                            # Your work this session
-atlas-track components                           # Valid components + counts
+pt issues [P0|P1|P2|component]          # List open+in_progress with titles (max 5)
+pt issue H-001                          # Full detail — no truncation
+pt add "Title" P0|P1|P2 "problem"       # Create, returns H-XXX
+pt claim H-001                          # Mark in_progress (do this first)
+pt fix H-001 "root cause" "fix applied" # Close (min 10 chars each field)
+pt fix-batch H-001,H-002 "c" "f"        # Close multiple, same cause/fix
+pt search "keyword"                     # Search title+problem — shows priority/component/status
+pt update H-001 field value             # Update: priority|component|title|problem
+pt abandon H-001 "reason"               # Release in_progress → open
+pt reopen H-001                         # Reopen resolved issue
+pt link H-001 blocks H-002              # Link: blocks|blocked-by|related
+pt links H-001                          # Show relationships
+pt history H-001                        # Change history (last 10)
+pt my-issues                            # Your work this session
+pt components                           # Valid components + counts
 ```
 
 **Issue status flow:** `open` → `in_progress` → `resolved`
@@ -55,13 +55,13 @@ atlas-track components                           # Valid components + counts
 ## Decisions (source of truth — NOT MEMORY.md)
 
 ```bash
-atlas-track decisions [component|all]            # List decisions (all = no cap, shows everything)
-atlas-track decision D-001                       # Full detail — no truncation
-atlas-track add-decision "Title" comp "Rule" "Rationale"   # Log new decision
-atlas-track update-decision D-001 rule "new text"          # Amend rule or rationale
-atlas-track update-decision D-001 rationale "new text"
-atlas-track supersede D-001 D-002                # D-001 superseded by D-002
-atlas-track deprecate D-001 "reason"             # Mark deprecated
+pt decisions [component|all]            # List decisions (all = no cap, shows everything)
+pt decision D-001                       # Full detail — no truncation
+pt add-decision "Title" comp "Rule" "Rationale"   # Log new decision
+pt update-decision D-001 rule "new text"          # Amend rule or rationale
+pt update-decision D-001 rationale "new text"
+pt supersede D-001 D-002                # D-001 superseded by D-002
+pt deprecate D-001 "reason"             # Mark deprecated
 ```
 
 **Key rule:** `decisions all` bypasses the 5-result cap — use it when you need the full picture.
@@ -72,8 +72,8 @@ atlas-track deprecate D-001 "reason"             # Mark deprecated
 ## Blocks
 
 ```bash
-atlas-track blocks          # All blocks with name + progress
-atlas-track block 8         # Block detail + acceptance criteria (also: block B8)
+pt blocks          # All blocks with name + progress
+pt block 8         # Block detail + acceptance criteria (also: block B8)
 ```
 
 ---
@@ -81,7 +81,7 @@ atlas-track block 8         # Block detail + acceptance criteria (also: block B8
 ## What To Work On
 
 ```bash
-atlas-track next            # Smart triage: groups by root cause, chains, delete-first flags
+pt next            # Smart triage: groups by root cause, chains, delete-first flags
 ```
 
 Always run `next` before picking up issues manually.
@@ -91,8 +91,8 @@ Always run `next` before picking up issues manually.
 ## CI
 
 ```bash
-atlas-track ci-status       # Last CI run: status, failed checks, failed tests (first 20)
-atlas-track run-ci          # Trigger full suite (~10-20 min)
+pt ci-status       # Last CI run: status, failed checks, failed tests (first 20)
+pt run-ci          # Trigger full suite (~10-20 min)
 ```
 
 CI failures = P0 blockers. Fix before new feature work.
@@ -102,9 +102,9 @@ CI failures = P0 blockers. Fix before new feature work.
 ## Maintenance
 
 ```bash
-atlas-track health          # Quick DB health check
-atlas-track gc              # Close stale sessions, release orphaned in_progress issues
-atlas-track gc --aggressive # + archive old issues, vacuum DB
+pt health          # Quick DB health check
+pt gc              # Close stale sessions, release orphaned in_progress issues
+pt gc --aggressive # + archive old issues, vacuum DB
 ```
 
 ---
@@ -113,28 +113,28 @@ atlas-track gc --aggressive # + archive old issues, vacuum DB
 
 ### Start of session
 ```bash
-atlas-track go sonnet
-atlas-track context         # Quick orientation if already in a session
-atlas-track in-progress     # Check what's in flight before claiming work
+pt go sonnet
+pt context         # Quick orientation if already in a session
+pt in-progress     # Check what's in flight before claiming work
 ```
 
 ### Bug fix
 ```bash
-atlas-track claim H-001
+pt claim H-001
 # ... TDD cycle ...
-atlas-track fix H-001 "root cause" "fix applied"
+pt fix H-001 "root cause" "fix applied"
 ```
 
 ### Architecture decision
 ```bash
-atlas-track decisions all   # Check all existing decisions first
-atlas-track decision D-001  # Read specific decision in full
-atlas-track add-decision "Title" component "Rule" "Rationale"
+pt decisions all   # Check all existing decisions first
+pt decision D-001  # Read specific decision in full
+pt add-decision "Title" component "Rule" "Rationale"
 ```
 
 ### End of session
 ```bash
-atlas-track done S-001 success "What was done" "What comes next"
+pt done S-001 success "What was done" "What comes next"
 ```
 
 ---

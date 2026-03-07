@@ -12,7 +12,7 @@ Currently paused for battle-testing and hardening.
 **Non-negotiables:**
 - **Fix correctly, not temporarily.** Hacks create conversion debt. Correct fixes align with systems-level.
 - **Partial implementations are intentional.** Some AST nodes exist but aren't wired up yet - this is scaffolding, not dead code.
-- **Before deleting "incomplete" code:** Check git history + `atlas-track decisions`. Ask user if uncertain.
+- **Before deleting "incomplete" code:** Check git history + `pt decisions`. Ask user if uncertain.
 
 ## Source of Truth
 - **Code is law.** The codebase is the only source of truth.
@@ -28,7 +28,7 @@ Currently paused for battle-testing and hardening.
 
 ## See Something, File Something (MANDATORY)
 If you notice Atlas is missing something that Go/Rust/TypeScript had in v1.0:
-1. **File an issue immediately:** `atlas-track add "Missing: X" P1 "reason"`
+1. **File an issue immediately:** `pt add "Missing: X" P1 "reason"`
 2. **Flag to user:** "I noticed Atlas lacks X. Most languages have this. Filed as issue."
 
 If AI has to work around something that should be built-in, that's a bug, not a feature request.
@@ -48,10 +48,10 @@ If AI has to work around something that should be built-in, that's a bug, not a 
 - `cargo clippy --workspace -- -D warnings`
 - NO nextest — this is by design
 
-### Tier 2: Nightly CI (2am via launchd, or on-demand: `atlas-track run-ci`)
+### Tier 2: Nightly CI (2am via launchd, or on-demand: `pt run-ci`)
 - Full corpus, full test suite, parity sweep, battle tests
 - Results in `tracking/ci-status.json`
-- `atlas-track go` shows CI status at session start
+- `pt go` shows CI status at session start
 - CI failures = P0 blocker — fix before new work
 
 ### What AI agents do:
@@ -62,7 +62,7 @@ cargo check -p atlas-runtime   # verify still compiles
 cargo fmt
 git commit                      # fmt+clippy run automatically
 # If Stop hook shows DOC DRIFT ALERT → fire atlas-doc-patch immediately (see below)
-atlas-track go                  # check CI status
+pt go                  # check CI status
 ```
 
 ### Doc Drift Protocol (MANDATORY — automatic but AI must act)
@@ -77,7 +77,7 @@ After every `git commit` that touches source files:
 # Use the Agent tool with atlas-doc-patch — it reads the pending file and fixes only what's needed
 ```
 
-The pending file persists across sessions. `atlas-track go` will show it if unfixed.
+The pending file persists across sessions. `pt go` will show it if unfixed.
 **Never leave a DOC DRIFT ALERT unresolved across sessions** — it means real drift is accumulating.
 
 ### NEVER run nextest manually:
@@ -101,7 +101,7 @@ Killing cargo mid-run leaves lock files that block all future runs — never do 
 
 ## Session Start (MANDATORY)
 ```bash
-atlas-track go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+pt go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
 ```
 
 ## Auto-Loaded Rules (no need to read manually)

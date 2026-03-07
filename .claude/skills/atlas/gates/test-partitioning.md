@@ -9,7 +9,7 @@
 **See `testing-workflow.md` in auto-memory for the full rule set. This file is a quick reference.**
 
 **Tier 1: Pre-commit (automatic, < 15s)** — fmt + clippy only
-**Tier 2: Nightly CI (2am or `atlas-track run-ci`)** — full suite, parity, battle tests
+**Tier 2: Nightly CI (2am or `pt run-ci`)** — full suite, parity, battle tests
 
 ---
 
@@ -30,7 +30,7 @@ git add <files>
 git commit   # Guardian runs: fmt + clippy (< 15s)
 
 # Step 5: Check CI status
-atlas-track go   # shows nightly CI result
+pt go   # shows nightly CI result
 ```
 
 ---
@@ -75,11 +75,11 @@ cargo nextest run -p atlas-runtime --test <any_domain_file>
 
 ## CI Failure Triage
 
-If `atlas-track go` shows CI is red:
+If `pt go` shows CI is red:
 
 ```bash
-atlas-track ci-status    # see what failed
-atlas-track run-ci       # re-run full suite to get fresh results
+pt ci-status    # see what failed
+pt run-ci       # re-run full suite to get fresh results
 ```
 
 Fix the specific failing tests, then commit. CI re-runs nightly.
@@ -94,5 +94,5 @@ Fix the specific failing tests, then commit. CI re-runs nightly.
 | TDD: run one test | `cargo nextest run -p atlas-runtime -E 'test(my_exact_test)'` |
 | Pre-commit format | `cargo fmt` |
 | Static validation | `git commit` (Guardian: fmt + clippy) |
-| Full validation | nightly at 2am, or `atlas-track run-ci` |
-| View CI results | `atlas-track ci-status` |
+| Full validation | nightly at 2am, or `pt run-ci` |
+| View CI results | `pt ci-status` |

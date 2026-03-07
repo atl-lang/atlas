@@ -15,7 +15,7 @@ cargo clean
 
 ## Step 2: Read Docs (Selective Reading)
 
-1. **ALWAYS:** Run `atlas-track sitrep`
+1. **ALWAYS:** Run `pt sitrep`
 2. **IF scaffolding session:** Also read `ROADMAP.md` and `docs/internal/V03_PLAN.md`
 3. **IF structured development:** Read complete development plan (phase file)
 4. **SELECTIVE:** Read ONLY the spec files your task needs (routing below)
@@ -40,7 +40,7 @@ cargo clean
 
 - Code patterns: auto-memory `patterns.md` (index → load specific `patterns/*.md`)
 - Domain verification: auto-memory `domain-prereqs.md`
-- Decisions: `atlas-track decisions`
+- Decisions: `pt decisions`
 - Testing: `.claude/rules/atlas-testing.md` (auto-loaded)
 
 ---
