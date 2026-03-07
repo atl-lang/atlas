@@ -199,10 +199,11 @@ impl Lexer {
                 };
             }
 
-            if !has_error && current_char == '{' {
+            if !has_error && current_char == '$' && self.peek_next() == Some('{') {
                 let span = Span::new_in(part_start_pos, self.current, self.file);
                 let part = Token::new(TokenKind::TemplateString, value, span);
                 let interp_start = self.current;
+                self.advance(); // $
                 self.advance(); // {
                 let interp_span = Span::new_in(interp_start, self.current, self.file);
                 return StringScan::Interpolation { part, interp_span };

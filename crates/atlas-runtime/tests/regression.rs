@@ -21,6 +21,8 @@ mod common;
 mod part1;
 #[path = "regression/part10.rs"]
 mod part10;
+#[path = "regression/part11.rs"]
+mod part11;
 #[path = "regression/part2.rs"]
 mod part2;
 #[path = "regression/part3.rs"]

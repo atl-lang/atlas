@@ -1339,6 +1339,10 @@ impl<'a> TypeChecker<'a> {
                 found_return = true;
             }
         }
+        // Tail expression (implicit return) — check it so identifiers are tracked as used
+        if let Some(tail) = &block.tail_expr {
+            self.check_expr(tail);
+        }
     }
 
     /// Check if a block always returns (explicit return or tail expression)
