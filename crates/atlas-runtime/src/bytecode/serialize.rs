@@ -133,7 +133,7 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         }
         Value::HashMap(map) => {
             bytes.push(tags::HASHMAP);
-            let entries = map.with(|inner| inner.entries());
+            let entries = map.entries();
             bytes.extend_from_slice(&(entries.len() as u32).to_be_bytes());
             for (k, v) in entries {
                 serialize_hashkey(&k, bytes);
@@ -768,13 +768,11 @@ mod tests {
         let (result, consumed) = deserialize_value(&bytes).unwrap();
         assert_eq!(consumed, bytes.len());
         if let Value::HashMap(result_map) = result {
-            let len = result_map.with(|inner| inner.len());
+            let len = result_map.len();
             assert_eq!(len, 2);
-            let found = result_map.with(|inner| {
-                inner
-                    .get(&HashKey::String(std::sync::Arc::new("a".to_string())))
-                    .cloned()
-            });
+            let found = result_map
+                .get(&HashKey::String(std::sync::Arc::new("a".to_string())))
+                .cloned();
             assert_eq!(found, Some(Value::Number(1.0)));
         } else {
             panic!("Expected HashMap");

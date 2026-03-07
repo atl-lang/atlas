@@ -371,10 +371,7 @@ fn format_value(value: &Value) -> String {
         Value::Array(arr) => {
             format!("[{} items]", arr.len())
         }
-        Value::HashMap(m) => {
-            let len = m.with(|inner| inner.len());
-            format!("{{HashMap, {} entries}}", len)
-        }
+        Value::HashMap(m) => format!("{{HashMap, {} entries}}", m.len()),
         Value::HashSet(s) => {
             format!("{{HashSet, {} items}}", s.inner().len())
         }

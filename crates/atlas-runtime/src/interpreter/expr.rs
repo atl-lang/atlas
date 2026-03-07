@@ -95,20 +95,20 @@ impl Interpreter {
         struct_expr: &crate::ast::StructExpr,
     ) -> Result<Value, RuntimeError> {
         use crate::stdlib::collections::hash::HashKey;
+        use crate::stdlib::collections::hashmap::AtlasHashMap;
         use crate::value::ValueHashMap;
 
-        let map = ValueHashMap::new();
+        let mut atlas_map = AtlasHashMap::new();
 
         for field in &struct_expr.fields {
             // Field name is always a string (from identifier)
             let key = HashKey::String(Arc::new(field.name.name.clone()));
             // Evaluate the field value expression
             let value = self.eval_expr(&field.value)?;
-            map.with_mut(|inner| {
-                inner.insert(key, value);
-            });
+            atlas_map.insert(key, value);
         }
 
+        let map = ValueHashMap::from_atlas(atlas_map);
         self.register_struct_type(&map, &struct_expr.name.name);
         Ok(Value::HashMap(map))
     }
@@ -918,21 +918,20 @@ impl Interpreter {
         obj: &crate::ast::ObjectLiteral,
     ) -> Result<Value, RuntimeError> {
         use crate::stdlib::collections::hash::HashKey;
+        use crate::stdlib::collections::hashmap::AtlasHashMap;
         use crate::value::ValueHashMap;
 
-        let map = ValueHashMap::new();
+        let mut atlas_map = AtlasHashMap::new();
 
         for entry in &obj.entries {
             // Key is always a string (from identifier)
             let key = HashKey::String(Arc::new(entry.key.name.clone()));
             // Evaluate the value expression
             let value = self.eval_expr(&entry.value)?;
-            map.with_mut(|inner| {
-                inner.insert(key, value);
-            });
+            atlas_map.insert(key, value);
         }
 
-        Ok(Value::HashMap(map))
+        Ok(Value::HashMap(ValueHashMap::from_atlas(atlas_map)))
     }
 
     /// Evaluate match expression
@@ -1926,7 +1925,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -1970,7 +1969,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -1992,16 +1991,16 @@ impl Interpreter {
             }
         };
 
-        let result_map = crate::value::ValueHashMap::new();
+        let mut result = crate::stdlib::collections::hashmap::AtlasHashMap::new();
         for (key, value) in map {
             // Call callback with (value, key) arguments
             let new_value = self.call_value(callback, vec![value, key.clone().to_value()], span)?;
-            result_map.with_mut(|inner| {
-                inner.insert(key, new_value);
-            });
+            result.insert(key, new_value);
         }
 
-        Ok(Value::HashMap(result_map))
+        Ok(Value::HashMap(crate::value::ValueHashMap::from_atlas(
+            result,
+        )))
     }
 
     /// hashMapFilter(map, predicate) - Filter entries, return new map
@@ -2018,7 +2017,7 @@ impl Interpreter {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),
@@ -2040,16 +2039,14 @@ impl Interpreter {
             }
         };
 
-        let result_map = crate::value::ValueHashMap::new();
+        let mut result = crate::stdlib::collections::hashmap::AtlasHashMap::new();
         for (key, value) in map {
             // Call predicate with (value, key) arguments
             let pred_result =
                 self.call_value(predicate, vec![value.clone(), key.clone().to_value()], span)?;
             match pred_result {
                 Value::Bool(true) => {
-                    result_map.with_mut(|inner| {
-                        inner.insert(key, value);
-                    });
+                    result.insert(key, value);
                 }
                 Value::Bool(false) => {}
                 _ => {
@@ -2061,7 +2058,9 @@ impl Interpreter {
             }
         }
 
-        Ok(Value::HashMap(result_map))
+        Ok(Value::HashMap(crate::value::ValueHashMap::from_atlas(
+            result,
+        )))
     }
 
     /// hashSetForEach(set, callback) - Iterate over set elements with side effects

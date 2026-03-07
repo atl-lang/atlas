@@ -2169,41 +2169,33 @@ fn value_map_cow_insert_does_not_affect_clone() {
 }
 
 #[test]
-fn value_hashmap_shared_insert_affects_clone() {
-    let a = ValueHashMap::new();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("x".to_string())),
-            Value::Number(1.0),
-        );
-    });
-    let b = a.clone();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("y".to_string())),
-            Value::Number(2.0),
-        );
-    });
-    let len = b.with(|inner| inner.len());
-    assert_eq!(len, 2);
+fn value_hashmap_cow_insert_does_not_affect_clone() {
+    let mut a = ValueHashMap::new();
+    a.insert(
+        HashKey::String(Arc::new("x".to_string())),
+        Value::Number(1.0),
+    );
+    let b = a.clone(); // cheap Arc refcount bump
+    a.insert(
+        HashKey::String(Arc::new("y".to_string())),
+        Value::Number(2.0),
+    ); // CoW — clones inner, b is unaffected
+    assert_eq!(a.len(), 2);
+    assert_eq!(b.len(), 1, "CoW: clone must not see mutations to original");
 }
 
 #[test]
 fn value_collection_equality_by_content() {
-    let a = ValueHashMap::new();
-    a.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("k".to_string())),
-            Value::Number(1.0),
-        );
-    });
-    let b = ValueHashMap::new();
-    b.with_mut(|inner| {
-        inner.insert(
-            HashKey::String(Arc::new("k".to_string())),
-            Value::Number(1.0),
-        );
-    });
+    let mut a = ValueHashMap::new();
+    a.insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
+    let mut b = ValueHashMap::new();
+    b.insert(
+        HashKey::String(Arc::new("k".to_string())),
+        Value::Number(1.0),
+    );
     assert_eq!(a, b);
 }
 

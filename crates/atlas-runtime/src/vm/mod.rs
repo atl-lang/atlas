@@ -1371,22 +1371,19 @@ impl VM {
                         crate::stdlib::collections::hash::HashKey::from_value(&key_val, span)?;
 
                     match map_val {
-                        Value::HashMap(map) => {
-                            let found = map.with(|inner| inner.get(&key).cloned());
-                            match found {
-                                Some(value) => self.push(value),
-                                None => {
-                                    let field = match key_val {
-                                        Value::String(s) => s.as_ref().to_string(),
-                                        other => other.type_name().to_string(),
-                                    };
-                                    return Err(RuntimeError::TypeError {
-                                        msg: format!("Missing field '{}'", field),
-                                        span,
-                                    });
-                                }
+                        Value::HashMap(map) => match map.get(&key).cloned() {
+                            Some(value) => self.push(value),
+                            None => {
+                                let field = match key_val {
+                                    Value::String(s) => s.as_ref().to_string(),
+                                    other => other.type_name().to_string(),
+                                };
+                                return Err(RuntimeError::TypeError {
+                                    msg: format!("Missing field '{}'", field),
+                                    span,
+                                });
                             }
-                        }
+                        },
                         other => {
                             return Err(RuntimeError::TypeError {
                                 msg: format!(
@@ -1412,11 +1409,13 @@ impl VM {
 
                     match &mut map_val {
                         Value::HashMap(map) => {
-                            let existing = map.with(|inner| inner.get(&key).cloned());
-                            let existing = existing.ok_or_else(|| RuntimeError::TypeError {
-                                msg: format!("Missing field '{}'", field_name),
-                                span,
-                            })?;
+                            let existing =
+                                map.get(&key)
+                                    .cloned()
+                                    .ok_or_else(|| RuntimeError::TypeError {
+                                        msg: format!("Missing field '{}'", field_name),
+                                        span,
+                                    })?;
                             if existing.type_name() != value.type_name() {
                                 return Err(RuntimeError::TypeError {
                                     msg: format!(
@@ -1428,9 +1427,7 @@ impl VM {
                                     span,
                                 });
                             }
-                            map.with_mut(|inner| {
-                                inner.insert(key, value);
-                            });
+                            map.insert(key, value);
                         }
                         other => {
                             return Err(RuntimeError::TypeError {
@@ -1579,10 +1576,10 @@ impl VM {
 
                 Opcode::HashMap => {
                     use crate::stdlib::collections::hash::HashKey;
+                    use crate::stdlib::collections::hashmap::AtlasHashMap;
                     use crate::value::ValueHashMap;
 
                     let entry_count = self.read_u16()? as usize;
-                    let map = ValueHashMap::new();
 
                     // Stack has [key1, val1, key2, val2, ...] in order
                     // Pop them in reverse (LIFO) and insert
@@ -1595,21 +1592,21 @@ impl VM {
                     // Reverse to get original order
                     entries.reverse();
 
+                    let mut atlas_map = AtlasHashMap::with_capacity(entry_count);
                     for (key_val, value) in entries {
                         // Convert Value to HashKey (keys must be hashable)
                         let key = HashKey::from_value(
                             &key_val,
                             self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         )?;
-                        map.with_mut(|inner| {
-                            inner.insert(key, value);
-                        });
+                        atlas_map.insert(key, value);
                     }
 
-                    self.push(Value::HashMap(map));
+                    self.push(Value::HashMap(ValueHashMap::from_atlas(atlas_map)));
                 }
                 Opcode::Struct => {
                     use crate::stdlib::collections::hash::HashKey;
+                    use crate::stdlib::collections::hashmap::AtlasHashMap;
                     use crate::value::ValueHashMap;
 
                     let name_idx = self.read_u16()? as usize;
@@ -1624,7 +1621,6 @@ impl VM {
                         }
                     };
 
-                    let map = ValueHashMap::new();
                     let mut entries = Vec::with_capacity(field_count);
                     for _ in 0..field_count {
                         let value = self.pop();
@@ -1633,16 +1629,16 @@ impl VM {
                     }
                     entries.reverse();
 
+                    let mut atlas_map = AtlasHashMap::with_capacity(field_count);
                     for (key_val, value) in entries {
                         let key = HashKey::from_value(
                             &key_val,
                             self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         )?;
-                        map.with_mut(|inner| {
-                            inner.insert(key, value);
-                        });
+                        atlas_map.insert(key, value);
                     }
 
+                    let map = ValueHashMap::from_atlas(atlas_map);
                     self.register_struct_type(&map, &struct_name);
                     self.push(Value::HashMap(map));
                 }
@@ -3234,7 +3230,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapForEach() first argument must be HashMap".to_string(),
@@ -3276,7 +3272,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapMap() first argument must be HashMap".to_string(),
@@ -3321,7 +3317,7 @@ impl VM {
         }
 
         let map = match &args[0] {
-            Value::HashMap(m) => m.with(|inner| inner.entries()),
+            Value::HashMap(m) => m.entries(),
             _ => {
                 return Err(RuntimeError::TypeError {
                     msg: "hashMapFilter() first argument must be HashMap".to_string(),

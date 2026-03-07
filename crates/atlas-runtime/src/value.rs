@@ -18,8 +18,8 @@
 //! - `Queue(ValueQueue)` — `Arc<VecDeque<Value>>` with CoW
 //! - `Stack(ValueStack)` — `Arc<Vec<Value>>` with CoW
 //!
-//! ### Shared mutable collections (reference semantics)
-//! - `HashMap(ValueHashMap)` — `Arc<Mutex<AtlasHashMap>>` (mutations visible to aliases)
+//! ### Copy-on-write (continued)
+//! - `HashMap(ValueHashMap)` — `Arc<AtlasHashMap>` with `Arc::make_mut` CoW
 //!
 //! ### Explicit reference semantics (opt-in only)
 //! - `SharedValue(Arc<Mutex<Value>>)` — mutations visible to all aliases.
@@ -225,56 +225,90 @@ impl From<HashMap<String, Value>> for ValueMap {
     }
 }
 
-/// Shared-mutation wrapper for AtlasHashMap.
+/// Copy-on-write wrapper for AtlasHashMap. Cheap to clone (refcount bump).
+/// Mutations clone the inner map if the Arc is shared (`Arc::make_mut`).
+/// Semantics match `ValueArray` — mutations never affect existing clones.
 #[derive(Clone, Debug, Default)]
-pub struct ValueHashMap(Arc<Mutex<crate::stdlib::collections::hashmap::AtlasHashMap>>);
+pub struct ValueHashMap(Arc<crate::stdlib::collections::hashmap::AtlasHashMap>);
 
 impl ValueHashMap {
     pub fn new() -> Self {
-        ValueHashMap(Arc::new(Mutex::new(
+        ValueHashMap(Arc::new(
             crate::stdlib::collections::hashmap::AtlasHashMap::new(),
-        )))
+        ))
     }
 
-    pub fn with<R>(
-        &self,
-        f: impl FnOnce(&crate::stdlib::collections::hashmap::AtlasHashMap) -> R,
-    ) -> R {
-        let guard = self.0.lock().expect("ValueHashMap lock poisoned");
-        f(&guard)
+    /// Wrap an existing `AtlasHashMap` in a CoW wrapper.
+    pub fn from_atlas(m: crate::stdlib::collections::hashmap::AtlasHashMap) -> Self {
+        ValueHashMap(Arc::new(m))
     }
 
-    pub fn with_mut<R>(
-        &self,
-        f: impl FnOnce(&mut crate::stdlib::collections::hashmap::AtlasHashMap) -> R,
-    ) -> R {
-        let mut guard = self.0.lock().expect("ValueHashMap lock poisoned");
-        f(&mut guard)
+    // ── Read access (no clone, no lock) ────────────────────────────────────
+
+    pub fn get(&self, key: &crate::stdlib::collections::hash::HashKey) -> Option<&Value> {
+        self.0.get(key)
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn contains_key(&self, key: &crate::stdlib::collections::hash::HashKey) -> bool {
+        self.0.contains_key(key)
+    }
+
+    pub fn keys(&self) -> Vec<crate::stdlib::collections::hash::HashKey> {
+        self.0.keys()
+    }
+
+    pub fn values(&self) -> Vec<Value> {
+        self.0.values()
+    }
+
+    pub fn entries(&self) -> Vec<(crate::stdlib::collections::hash::HashKey, Value)> {
+        self.0.entries()
+    }
+
+    /// Direct reference to the inner map (for iteration and reads).
+    pub fn as_inner(&self) -> &crate::stdlib::collections::hashmap::AtlasHashMap {
+        &self.0
+    }
+
+    // ── Write access — CoW (clones inner if Arc is shared) ─────────────────
+
+    pub fn insert(
+        &mut self,
+        key: crate::stdlib::collections::hash::HashKey,
+        value: Value,
+    ) -> Option<Value> {
+        Arc::make_mut(&mut self.0).insert(key, value)
+    }
+
+    pub fn remove(&mut self, key: &crate::stdlib::collections::hash::HashKey) -> Option<Value> {
+        Arc::make_mut(&mut self.0).remove(key)
+    }
+
+    pub fn clear(&mut self) {
+        Arc::make_mut(&mut self.0).clear();
     }
 
     pub fn is_exclusively_owned(&self) -> bool {
         Arc::strong_count(&self.0) == 1
     }
 
-    /// Wrap an existing AtlasHashMap in a shared wrapper.
-    pub fn from_atlas(m: crate::stdlib::collections::hashmap::AtlasHashMap) -> Self {
-        ValueHashMap(Arc::new(Mutex::new(m)))
-    }
-
-    /// Expose inner Arc for cases that need pointer identity (e.g., circular reference detection).
-    pub fn arc(&self) -> &Arc<Mutex<crate::stdlib::collections::hashmap::AtlasHashMap>> {
+    /// Expose inner Arc (for pointer-identity checks, e.g., equality fast-path).
+    pub fn arc(&self) -> &Arc<crate::stdlib::collections::hashmap::AtlasHashMap> {
         &self.0
     }
 }
 
 impl PartialEq for ValueHashMap {
     fn eq(&self, other: &Self) -> bool {
-        if Arc::ptr_eq(&self.0, &other.0) {
-            return true;
-        }
-        let left = self.with(|inner| inner.clone());
-        let right = other.with(|inner| inner.clone());
-        left == right
+        Arc::ptr_eq(&self.0, &other.0) || self.0.as_ref() == other.0.as_ref()
     }
 }
 
@@ -705,10 +739,7 @@ impl fmt::Display for Value {
                 Ok(val) => write!(f, "Ok({})", val),
                 Err(err) => write!(f, "Err({})", err),
             },
-            Value::HashMap(map) => {
-                let len = map.with(|inner| inner.len());
-                write!(f, "<HashMap size={}>", len)
-            }
+            Value::HashMap(map) => write!(f, "<HashMap size={}>", map.len()),
             Value::HashSet(set) => write!(f, "<HashSet size={}>", set.inner().len()),
             Value::Queue(queue) => write!(f, "<Queue size={}>", queue.inner().len()),
             Value::Stack(stack) => write!(f, "<Stack size={}>", stack.inner().len()),
@@ -776,10 +807,7 @@ impl fmt::Debug for Value {
             Value::JsonValue(json) => write!(f, "JsonValue({:?})", json),
             Value::Option(opt) => write!(f, "Option({:?})", opt),
             Value::Result(res) => write!(f, "Result({:?})", res),
-            Value::HashMap(map) => {
-                let len = map.with(|inner| inner.len());
-                write!(f, "HashMap(size={})", len)
-            }
+            Value::HashMap(map) => write!(f, "HashMap(size={})", map.len()),
             Value::HashSet(set) => write!(f, "HashSet(size={})", set.inner().len()),
             Value::Queue(queue) => write!(f, "Queue(size={})", queue.inner().len()),
             Value::Stack(stack) => write!(f, "Stack(size={})", stack.inner().len()),

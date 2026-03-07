@@ -847,8 +847,7 @@ impl Interpreter {
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
-                let found = map.with(|inner| inner.get(&key).cloned());
-                match found {
+                match map.get(&key).cloned() {
                     Some(value) => Ok(value),
                     None => Err(RuntimeError::TypeError {
                         msg: format!("Missing field '{}'", field.name),
@@ -908,11 +907,13 @@ impl Interpreter {
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
-                let existing = map.with(|inner| inner.get(&key).cloned());
-                let existing = existing.ok_or_else(|| RuntimeError::TypeError {
-                    msg: format!("Missing field '{}'", field.name),
-                    span,
-                })?;
+                let existing = map
+                    .get(&key)
+                    .cloned()
+                    .ok_or_else(|| RuntimeError::TypeError {
+                        msg: format!("Missing field '{}'", field.name),
+                        span,
+                    })?;
                 if existing.type_name() != value.type_name() {
                     return Err(RuntimeError::TypeError {
                         msg: format!(
@@ -924,9 +925,7 @@ impl Interpreter {
                         span,
                     });
                 }
-                map.with_mut(|inner| {
-                    inner.insert(key, value);
-                });
+                map.insert(key, value);
                 Ok(())
             }
             other => Err(RuntimeError::TypeError {
@@ -1280,15 +1279,15 @@ impl Interpreter {
                     use crate::stdlib::collections::hash::HashKey;
                     use crate::value::ValueHashMap;
 
-                    let map = ValueHashMap::new();
+                    let mut atlas_map = crate::stdlib::collections::hashmap::AtlasHashMap::new();
                     for (name, value) in exports.iter() {
                         let key = HashKey::String(Arc::new(name.clone()));
-                        map.with_mut(|inner| {
-                            inner.insert(key, value.clone());
-                        });
+                        atlas_map.insert(key, value.clone());
                     }
-                    self.globals
-                        .insert(alias.name.clone(), (Value::HashMap(map), false));
+                    self.globals.insert(
+                        alias.name.clone(),
+                        (Value::HashMap(ValueHashMap::from_atlas(atlas_map)), false),
+                    );
                 }
             }
         }

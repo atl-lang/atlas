@@ -188,17 +188,18 @@ impl<'a> ModuleExecutor<'a> {
                 }
                 ImportSpecifier::Namespace { alias, span: _ } => {
                     use crate::stdlib::collections::hash::HashKey;
+                    use crate::stdlib::collections::hashmap::AtlasHashMap;
                     use crate::value::ValueHashMap;
 
-                    let map = ValueHashMap::new();
+                    let mut atlas_map = AtlasHashMap::new();
                     for (name, value) in exports {
                         let key = HashKey::String(std::sync::Arc::new(name.clone()));
-                        map.with_mut(|inner| {
-                            inner.insert(key, value.clone());
-                        });
+                        atlas_map.insert(key, value.clone());
                     }
-                    self.interpreter
-                        .define_global(alias.name.clone(), Value::HashMap(map));
+                    self.interpreter.define_global(
+                        alias.name.clone(),
+                        Value::HashMap(ValueHashMap::from_atlas(atlas_map)),
+                    );
                 }
             }
         }
