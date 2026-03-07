@@ -1294,3 +1294,30 @@ fn test_parity_block03_scenario_j_vm() {
     );
     assert_eq!(result.unwrap(), "Number(14)");
 }
+
+// H-116: range syntax in for-in (VM parity)
+#[test]
+fn test_for_in_range_vm() {
+    assert_parity(
+        "
+let mut sum: number = 0;
+for i in 0..5 {
+    sum = sum + i;
+}
+sum
+        ",
+    );
+}
+
+#[test]
+fn test_for_in_range_inclusive_vm() {
+    assert_parity(
+        "
+let mut sum: number = 0;
+for i in 1..=5 {
+    sum = sum + i;
+}
+sum
+        ",
+    );
+}

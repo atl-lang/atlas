@@ -2,6 +2,7 @@ use atlas_runtime::binder::Binder;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::typechecker::TypeChecker;
+use atlas_runtime::{Atlas, Value};
 
 // From test_for_in_semantic.rs
 // ============================================================================
@@ -218,6 +219,35 @@ fn test_for_in_variable_shadowing() {
     // This should succeed - the loop variable shadows the outer one
     // After the loop, 'item' refers to the outer variable again
     assert!(success, "Should allow variable shadowing: {:?}", errors);
+}
+
+// H-116: range syntax in for-in
+#[test]
+fn test_for_in_range() {
+    let source = r#"
+let mut sum: number = 0;
+for i in 0..5 {
+    sum = sum + i;
+}
+sum
+    "#;
+    let runtime = Atlas::new();
+    let result = runtime.eval(source);
+    assert_eq!(result.unwrap(), Value::Number(10.0)); // 0+1+2+3+4 = 10
+}
+
+#[test]
+fn test_for_in_range_inclusive() {
+    let source = r#"
+let mut sum: number = 0;
+for i in 1..=5 {
+    sum = sum + i;
+}
+sum
+    "#;
+    let runtime = Atlas::new();
+    let result = runtime.eval(source);
+    assert_eq!(result.unwrap(), Value::Number(15.0)); // 1+2+3+4+5 = 15
 }
 
 // ============================================================================

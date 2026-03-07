@@ -692,11 +692,19 @@ impl Compiler {
             self.bytecode.patch_jump(break_jump);
         }
 
-        // Pop the 4 hidden locals (var, idx, len, arr — top to bottom)
+        // Pop the 4 hidden locals (var, idx, len, arr — top to bottom).
+        // We emit Null + Pop after the cleanup so that the 4th cleanup Pop is
+        // never the "last Pop before Halt" — otherwise the Pop opcode skips and
+        // the iterable (e.g. a Range) is left on the stack as the return value.
         self.bytecode.emit(Opcode::Pop, span); // x
         self.bytecode.emit(Opcode::Pop, span); // __for_idx
         self.bytecode.emit(Opcode::Pop, span); // __for_len
         self.bytecode.emit(Opcode::Pop, span); // __for_arr
+                                               // Sentinel: push Null so the last cleanup Pop above is not before Halt.
+                                               // The sentinel Pop is the one that skips when for-in is the last statement,
+                                               // leaving Null as the statement's return value (harmless and correct).
+        self.bytecode.emit(Opcode::Null, span);
+        self.bytecode.emit(Opcode::Pop, span); // sentinel
 
         // Remove hidden locals from compile-time tracking
         self.locals.truncate(locals_before);
