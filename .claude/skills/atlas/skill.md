@@ -144,7 +144,8 @@ git commit -m "fix(...): description"
 
 **Session close** — required at end of every session, even if interrupted:
 
-**Step 1 — Write `.atlas-handoff.md` (MANDATORY before atlas-track done):**
+**Step 1 — Overwrite `.atlas-handoff.md` with this session's state (MANDATORY before atlas-track done):**
+**REPLACE the entire file — do NOT append.** One file, one session's snapshot. Previous content is now in git history.
 ```markdown
 # Atlas Handoff — <session-id>
 
