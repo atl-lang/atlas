@@ -35,6 +35,38 @@ Stdlib uses global functions (`arrayPush(arr, x)`) not method syntax (`arr.push(
 
 ## Recently Fixed
 
+### H-110 / H-111: Enum Match Typechecker (FIXED 2026-03-07)
+**Was:** Matching on user-defined enums inside function bodies returned `?` (unknown type). Double-match on same enum at top level also produced `?` on second match.
+**Now:** Enum match correctly resolves to the named enum type. `enum_decls` registry added to TypeChecker.
+
+### H-112: hashMapHas / hashSetHas Return Type (FIXED 2026-03-07)
+**Was:** `hashMapHas` and `hashSetHas` returned `any` from the typechecker — couldn't use result in `if` condition.
+**Now:** Both return `Type::Bool`.
+
+### H-113: hashSetRemove CoW Semantics (FIXED 2026-03-07)
+**Was:** `s = hashSetRemove(s, x)` replaced `s` with `Bool` instead of the updated HashSet — inconsistent with `hashSetAdd`.
+**Now:** `hashSetRemove` returns the updated HashSet (CoW, like `hashSetAdd`). Use `hashSetHas` before removing if you need the existence check.
+
+### H-114: Return Inside Match Arm (FIXED 2026-03-07)
+**Was:** `return value` inside a match arm body was a parse error.
+**Now:** Parser wraps it in an `Expr::Block` — both `return` and expressions work in match arms.
+
+### H-115: If/Else as Expression Type (FIXED 2026-03-07)
+**Was:** `if/else` used as an expression returned `?` from the typechecker.
+**Now:** Typechecker detects the single-if-with-else-tail-expr pattern in `Expr::Block` and infers the union type.
+
+### H-116: Range Syntax in For-In (FIXED 2026-03-07)
+**Was:** `for i in 0..5 { }` and `for i in 1..=5 { }` were not supported.
+**Now:** Both interpreter and VM handle range iteration. Root fix: VM's Pop-before-Halt optimization was corrupting for-in cleanup — fixed with a Null+Pop sentinel in `compile_for_in`.
+
+### H-117: Struct Array Fn Param Types (FIXED 2026-03-07)
+**Was:** `fn foo(items: MyStruct[])` typed the param as `?[]` — struct type inside array annotation was lost.
+**Now:** TypeChecker updates symbol table with resolved param types after struct resolution pass.
+
+### H-120: Enum Tuple Pattern Binding Types (FIXED 2026-03-07)
+**Was:** Variables bound inside `Pattern::EnumVariant` (e.g., `Shape::Circle(r)`) were typed `?` — no field type registry existed.
+**Now:** `enum_decls` HashMap added to TypeChecker; `enum_variant_field_types()` resolves binding types from the declaration.
+
 ### H-086: Deprecate Anonymous Struct Syntax (FIXED 2026-03-05)
 **Was:** `{ x: 1, y: 2 }` accepted as anonymous struct literal — requires fragile 2-token lookahead, ambiguous with blocks.
 **Now:** Emits deprecation warning. Use `record { x: 1, y: 2 }` (explicit keyword) or `StructName { x: 1 }` (named instantiation).

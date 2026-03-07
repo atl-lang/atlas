@@ -1,0 +1,21 @@
+{
+  "committed_at": "2026-03-07T20:57:11Z",
+  "commit": "35d6d4b",
+  "changed_files": [
+    "crates/atlas-runtime/src/compiler/expr.rs",
+    "crates/atlas-runtime/src/interpreter/expr.rs",
+    "crates/atlas-runtime/src/stdlib/collections/hashset.rs",
+    "crates/atlas-runtime/tests/collections.rs"
+  ],
+  "domains": [
+    "compiler",
+    "interpreter",
+    "stdlib"
+  ],
+  "relevant_docs": [
+    "docs/known-issues.md",
+    "docs/stdlib/index.md"
+  ],
+  "status": "done",
+  "patched_at": "2026-03-07T21:00:00Z"
+}
