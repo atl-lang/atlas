@@ -19,6 +19,13 @@ The user is architect only. You own all implementation, tracking, and continuity
 
 **Proactive filing:** Find a gap in coverage? Missing corpus test? File it before moving on.
 
+**Before restructuring test domains or changing test strategy — run the decision gate:**
+```bash
+atlas-track decisions infra   # test organization decisions live here
+# 2 seconds. Prevents re-litigating already-decided test structure.
+```
+New test strategy decision not covered — log it: `atlas-track add-decision "Title" infra "Rule" "Rationale"`.
+
 **Block tracking (if testing is part of a phase):**
 ```bash
 atlas-track phase-done B<N>

@@ -111,7 +111,14 @@ Anything said to the user that isn't architecture = gone after session ends.
 
 **Proactive filing mid-fix:** Discover a second bug, edge case, or missing feature? File it before continuing. 30 seconds now saves hours of re-discovery. Include: what file demonstrates it, workaround used, fix risk for the next agent.
 
-**Before any design decision:** `atlas-track decisions all` — may already be decided. Follow it. If new, log: `atlas-track add-decision "Title" component "Rule" "Rationale"`.
+**Before touching any component — run the decision gate:**
+```bash
+atlas-track decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+# 3-8 lines back. 2 seconds. Non-negotiable before any fix that touches internal architecture.
+```
+If a decision covers your fix approach — follow it, don't invent a different pattern.
+If your fix contradicts a decision — stop, surface it to the architect.
+If no decision exists and you made a design call — log it: `atlas-track add-decision`.
 
 **Block tracking (if this fix closes out a phase):**
 ```bash

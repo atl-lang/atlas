@@ -23,7 +23,12 @@ Anything said to the user that isn't architecture = gone after session ends.
 
 **Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, interpreter+VM parity. Run: `bash battle-test/atlas-full-audit/run.sh`. Use as regression net before/after any typechecker or runtime fix.
 
-**Before any design decision:** `atlas-track decisions all` — may already be decided. Follow it. If new, log: `atlas-track add-decision`.
+**Before any architectural change triggered by battle test findings — run the decision gate:**
+```bash
+atlas-track decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime
+# 3-8 lines. 2 seconds. A battle test failure may already have a standing fix decision.
+```
+Follow existing decisions. If findings expose a gap not covered — log it: `atlas-track add-decision`.
 
 **Block tracking (if battle test is the final phase of a block):**
 ```bash

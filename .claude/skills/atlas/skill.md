@@ -103,7 +103,17 @@ The user is architect only. You own all implementation, tracking, and continuity
 
 **Proactive filing:** Discover a bug, workaround, inconsistency, or gap mid-task? File it before moving on. 30 seconds now saves hours of re-discovery later. Include: battle test reference if applicable, workaround used, fix risk.
 
-**Before any design decision:** `atlas-track decisions all` — check if it's already decided. If D-XXX exists, follow it. If not, decide and log: `atlas-track add-decision`.
+**Before touching any component — run the decision gate (mandatory, not aspirational):**
+```bash
+atlas-track decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+# Returns 3-8 lines. Takes 2 seconds. Skipping it risks violating a standing decision.
+```
+Map your task to a component, run it, read it. If a decision covers your change — follow it.
+If your change contradicts a decision — stop and discuss with the architect before proceeding.
+If no decision exists for your design choice — make the call, then log it:
+```bash
+atlas-track add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
+```
 
 **Block tracking — mandatory after every phase commit:**
 ```bash

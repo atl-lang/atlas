@@ -118,12 +118,13 @@ Verify:
 
 ### Domain 6: Skill, Gate + Lazy-Load Files
 
-**All skills** (verify each exists and has the AI Continuity section):
+**All skills** (verify each exists and has the AI Continuity + decision gate sections):
 - `.claude/skills/atlas/skill.md`
 - `.claude/skills/atlas-blocks/skill.md`
 - `.claude/skills/atlas-bugfix/skill.md`
 - `.claude/skills/atlas-battle/skill.md`
 - `.claude/skills/atlas-test/skill.md`
+- `.claude/skills/atlas-brainstorm/skill.md`
 - `.claude/skills/atlas/gates/*.md`
 - `.claude/lazy/git.md`
 - `.claude/lazy/architecture.md`
