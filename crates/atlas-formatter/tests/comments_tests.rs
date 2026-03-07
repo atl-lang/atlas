@@ -191,7 +191,7 @@ fn test_mixed_comment_types() {
 
 #[test]
 fn test_comment_between_functions() {
-    let result = fmt("fn a() {}\n// separator\nfn b() {}");
+    let result = fmt("fn a() -> void {}\n// separator\nfn b() -> void {}");
     assert!(
         result.contains("// separator"),
         "Comment between functions preserved, got: {}",
@@ -250,7 +250,7 @@ fn test_multiple_trailing_and_leading() {
 
 #[test]
 fn test_comment_indented_in_block() {
-    let result = fmt("fn foo() {\n// comment\nlet x = 5;\n}");
+    let result = fmt("fn foo() -> void {\n// comment\nlet x = 5;\n}");
     assert!(
         result.contains("// comment"),
         "Comment should appear in output, got: {}",
@@ -264,7 +264,7 @@ fn test_comment_indented_in_block() {
 #[case("// comment\nlet x = 5;")]
 #[case("let x = 5; // inline")]
 #[case("/* block */\nlet x = 5;")]
-#[case("/// doc\nfn foo() {}")]
+#[case("/// doc\nfn foo() -> void {}")]
 #[case("// a\n// b\nlet x = 5;")]
 fn test_comment_idempotency(#[case] source: &str) {
     let first = fmt(source);
@@ -352,7 +352,7 @@ fn test_formatted_with_comments_parses() {
 
 #[test]
 fn test_comment_after_block() {
-    let result = fmt("fn foo() {} // after");
+    let result = fmt("fn foo() -> void {} // after");
     assert!(
         result.contains("// after"),
         "Comment after block preserved, got: {}",
@@ -381,7 +381,7 @@ fn test_comment_span_preserved() {
 
 #[test]
 fn test_doc_comment_multiline() {
-    let result = fmt("/// Line 1\n/// Line 2\nfn foo() {}");
+    let result = fmt("/// Line 1\n/// Line 2\nfn foo() -> void {}");
     assert!(result.contains("/// Line 1"));
     assert!(result.contains("/// Line 2"));
 }

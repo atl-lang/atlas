@@ -251,7 +251,7 @@ fn test_no_param() -> void {{
         fs::write(
             &test1_path,
             r#"
-fn test_add() {
+fn test_add() -> void {
     assertEqual(1 + 1, 2);
 }
 "#,
@@ -262,7 +262,7 @@ fn test_add() {
         fs::write(
             &test2_path,
             r#"
-fn test_concat() {
+fn test_concat() -> void {
     assertEqual("a" + "b", "ab");
 }
 "#,
@@ -273,7 +273,7 @@ fn test_concat() {
         fs::write(
             &non_test_path,
             r#"
-fn test_should_be_ignored() {
+fn test_should_be_ignored() -> void {
     assert(true, "ignored");
 }
 "#,
