@@ -32,6 +32,6 @@ print("set items: " + str(hashSetSize(s)));
 print("has apple: " + str(hashSetHas(s, "apple")));
 print("has cherry: " + str(hashSetHas(s, "cherry")));
 
-// hashSetRemove mutates in-place like hashMapRemove — do NOT rebind
-hashSetRemove(s, "banana");
+// hashSetRemove returns the updated set (CoW, like hashSetAdd) — rebind to update
+s = hashSetRemove(s, "banana");
 print("after remove: " + str(hashSetSize(s)));

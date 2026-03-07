@@ -276,6 +276,8 @@ impl Compiler {
             // HashSet
             "hashSetAdd",
             "hash_set_add",
+            "hashSetRemove",
+            "hash_set_remove",
             "hashSetClear",
             "hash_set_clear",
             // Queue
@@ -297,8 +299,6 @@ impl Compiler {
             // HashMap / HashSet / Queue / Stack
             "hashMapRemove",
             "hash_map_remove",
-            "hashSetRemove",
-            "hash_set_remove",
             "queueDequeue",
             "queue_dequeue",
             "stackPop",

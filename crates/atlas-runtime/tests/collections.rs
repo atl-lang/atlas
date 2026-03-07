@@ -332,24 +332,25 @@ fn test_hashset_add_different_types() {
 
 #[test]
 fn test_hashset_remove_existing() {
-    let result = eval(
-        r#"
-        let set = hash_set_from_array([1, 2, 3]);
-        hash_set_remove(set, 2)
-    "#,
-    );
-    assert_eq!(result, Value::Bool(true));
+    // hash_set_remove returns the updated HashSet (CoW, like hash_set_add)
+    // After removing 2 from {1,2,3}, size = 2
+    let code = r#"
+        let mut set = hash_set_from_array([1, 2, 3]);
+        set = hash_set_remove(set, 2);
+        hash_set_size(set)
+    "#;
+    assert_eval_number(code, 2.0);
 }
 
 #[test]
 fn test_hashset_remove_nonexistent() {
-    let result = eval(
-        r#"
-        let set = hash_set_from_array([1, 2, 3]);
-        hash_set_remove(set, 99)
-    "#,
-    );
-    assert_eq!(result, Value::Bool(false));
+    // Removing non-existent element leaves set unchanged, size = 3
+    let code = r#"
+        let mut set = hash_set_from_array([1, 2, 3]);
+        set = hash_set_remove(set, 99);
+        hash_set_size(set)
+    "#;
+    assert_eval_number(code, 3.0);
 }
 
 #[test]
@@ -1685,6 +1686,20 @@ fn test_hashset_remove_nonexistent_no_error() {
         hash_set_size(s)
     "#;
     assert_eval_number(code, 0.0);
+}
+
+// H-113: hashSetRemove should return updated HashSet (CoW, like hashSetAdd)
+#[test]
+fn test_h113_hashset_remove_cow_returns_set() {
+    // s = hashSetRemove(s, x) should update s to a HashSet, not Bool
+    let code = r#"
+        let mut s = hash_set_new();
+        s = hash_set_add(s, "apple");
+        s = hash_set_add(s, "banana");
+        s = hash_set_remove(s, "banana");
+        hash_set_size(s)
+    "#;
+    assert_eval_number(code, 1.0);
 }
 
 #[test]

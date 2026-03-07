@@ -193,7 +193,8 @@ pub fn add(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     Ok(set_val)
 }
 
-/// Remove element from HashSet. Returns [bool, modified HashSet] (CoW).
+/// Remove element from HashSet. Returns the modified HashSet (CoW, like hashSetAdd).
+/// Use hashSetHas before removing if you need to know whether the element existed.
 pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 2 {
         return Err(stdlib_arity_error("HashSet.remove", 2, args.len(), span));
@@ -202,8 +203,8 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     let key = HashKey::from_value(&args[1], span)?;
 
     let mut set_val = args[0].clone();
-    let existed = if let Value::HashSet(ref mut s) = set_val {
-        s.inner_mut().remove(&key)
+    if let Value::HashSet(ref mut s) = set_val {
+        s.inner_mut().remove(&key);
     } else {
         return Err(stdlib_arg_error(
             "HashSet.remove",
@@ -211,9 +212,9 @@ pub fn remove(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
             &args[0],
             span,
         ));
-    };
+    }
 
-    Ok(Value::array(vec![Value::Bool(existed), set_val]))
+    Ok(set_val)
 }
 
 /// Check if element exists in HashSet
