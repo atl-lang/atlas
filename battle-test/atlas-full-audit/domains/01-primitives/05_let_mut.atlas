@@ -1,0 +1,45 @@
+// 05_let_mut.atlas
+// Tests: let (immutable), let mut (mutable), mutation in loop, type annotations
+
+// Immutable binding
+let fixed: number = 100;
+let label: string = "total";
+
+// Mutable binding
+let mut counter: number = 0;
+let mut accumulator: number = 0;
+
+// Mutation in a while loop
+while counter < 10 {
+    accumulator = accumulator + counter;
+    counter = counter + 1;
+}
+
+print("fixed (unchanged): " + str(fixed));
+print("counter after loop: " + str(counter));
+print("sum 0..9: " + str(accumulator));
+
+// Mutable string
+let mut message: string = "start";
+message = message + " -> middle";
+message = message + " -> end";
+print("message: " + message);
+
+// Mutable array with rebind (CoW pattern)
+let mut items: number[] = [];
+items = array_push(items, 10);
+items = array_push(items, 20);
+items = array_push(items, 30);
+print("items count: " + str(len(items)));
+
+// Accumulate with for-in
+let mut for_sum: number = 0;
+for v in items {
+    for_sum = for_sum + v;
+}
+print("items sum: " + str(for_sum));
+
+// Final: combine immutable + mutable results
+let result: number = fixed + accumulator + for_sum;
+print(label + ": " + str(result));
+print(result);

@@ -1,0 +1,31 @@
+// 05_reflect.atlas
+// Tests: typeof() on each Atlas type, len() on string/array/hashmap.
+// FRICTION: parseJSON returns Result<json, string>, not json directly.
+//           Must use unwrap() or match to get json value.
+
+print("typeof(42): " + typeof(42));
+print("typeof(\"hi\"): " + typeof("hi"));
+print("typeof(true): " + typeof(true));
+print("typeof(null): " + typeof(null));
+
+let arr: number[] = [1, 2, 3];
+print("typeof([]): " + typeof(arr));
+
+let hm = hashMapNew();
+print("typeof(hashmap): " + typeof(hm));
+
+fn sample_fn(x: number) -> number { return x; }
+print("typeof(fn): " + typeof(sample_fn));
+
+// parseJSON returns Result<json, string> — must unwrap
+let jv = unwrap(parseJSON("{\"x\": 1}"));
+print("typeof(json): " + typeof(jv));
+
+// len() on string, array, hashmap
+print("len(string): " + str(len("hello world")));
+print("len(array): " + str(len([1, 2, 3, 4, 5])));
+
+let mut m = hashMapNew();
+m = hashMapPut(m, "a", 1);
+m = hashMapPut(m, "b", 2);
+print("len(hashmap) via hashMapSize: " + str(hashMapSize(m)));

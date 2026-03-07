@@ -1,0 +1,43 @@
+// 02_default_method.atlas
+// Tests: trait with default method body, struct using default, struct overriding.
+// BUG: Default method body calling another trait method (self.method()) causes AT3035.
+//      The typechecker cannot resolve self's type inside default method bodies.
+//      Workaround: default methods that use 'self' must only call methods that
+//      the typechecker can resolve at definition time — avoid self.other_method() calls.
+
+trait Displayable {
+    fn display(self) -> string;
+    fn display_upper(self) -> string {
+        // NOTE: calling self.display() here causes AT3035 — self type unknown
+        // WORKAROUND: use a helper fn or just override in each impl
+        return "DISPLAYABLE";
+    }
+}
+
+struct Animal { kind: string, name: string }
+struct Vehicle { brand: string, year: number }
+
+impl Displayable for Animal {
+    fn display(self) -> string {
+        return self.kind + ": " + self.name;
+    }
+    // Override default to actually use self.display()
+    fn display_upper(self) -> string {
+        return toUpperCase(self.kind + ": " + self.name);
+    }
+}
+
+impl Displayable for Vehicle {
+    fn display(self) -> string {
+        return self.brand + " (" + str(self.year) + ")";
+    }
+    // Uses default display_upper (just returns "DISPLAYABLE" — known limitation)
+}
+
+let dog: Animal = Animal { kind: "dog", name: "Rex" };
+let car: Vehicle = Vehicle { brand: "Tesla", year: 2024 };
+
+print(dog.display());
+print(dog.display_upper());
+print(car.display());
+print(car.display_upper());

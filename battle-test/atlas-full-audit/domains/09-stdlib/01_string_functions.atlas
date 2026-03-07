@@ -1,0 +1,60 @@
+// 01_string_functions.atlas
+// Tests: split, join, trim, toUpperCase, toLowerCase, includes, startsWith, endsWith,
+//        replace, len, indexOf (Option-returning), substring.
+// Pipeline: sentence → split → transform each word → rejoin.
+
+let sentence: string = "  the quick brown fox jumps over the lazy dog  ";
+
+// trim
+let trimmed: string = trim(sentence);
+print("trimmed: '" + trimmed + "'");
+
+// toUpperCase / toLowerCase
+let upper: string = toUpperCase(trimmed);
+let lower: string = toLowerCase(upper);
+print("upper: " + upper);
+print("lower: " + lower);
+
+// len
+let char_count: number = len(trimmed);
+print("len: " + str(char_count));
+
+// split
+let words: string[] = split(trimmed, " ");
+print("word count: " + str(len(words)));
+
+// includes (the Atlas name for contains-on-string)
+let has_fox: bool = includes(trimmed, "fox");
+let has_cat: bool = includes(trimmed, "cat");
+print("includes 'fox': " + str(has_fox));
+print("includes 'cat': " + str(has_cat));
+
+// startsWith / endsWith
+let sw: bool = startsWith(trimmed, "the");
+let ew: bool = endsWith(trimmed, "dog");
+print("startsWith 'the': " + str(sw));
+print("endsWith 'dog': " + str(ew));
+
+// replace
+let replaced: string = replace(trimmed, "fox", "cat");
+print("replaced: " + replaced);
+
+// indexOf returns Option<number> — unwrap via match
+let idx: Option<number> = indexOf(trimmed, "brown");
+let idx_val: number = match idx {
+    Some(v) => v,
+    None => -1
+};
+print("indexOf 'brown': " + str(idx_val));
+
+// substring(str, start, end)
+let sub: string = substring(trimmed, 4, 9);
+print("substring(4,9): " + sub);
+
+// Pipeline: split → uppercase each word → rejoin with dash
+let tag_words: string[] = split("atlas language test", " ");
+let upper_words: string[] = map(tag_words, fn(w: string) -> string {
+    return toUpperCase(w);
+});
+let result: string = join(upper_words, "-");
+print(result);

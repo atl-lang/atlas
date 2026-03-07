@@ -1,0 +1,37 @@
+// 01_basic_trait.atlas
+// Tests: trait declaration, impl for struct, method dispatch on two different structs
+
+trait Printable {
+    fn to_string(self) -> string;
+}
+
+struct Dog {
+    name: string,
+    breed: string,
+}
+
+struct Car {
+    make: string,
+    year: number,
+}
+
+impl Printable for Dog {
+    fn to_string(self) -> string {
+        return "Dog(" + self.name + ", " + self.breed + ")";
+    }
+}
+
+impl Printable for Car {
+    fn to_string(self) -> string {
+        return "Car(" + self.make + ", " + str(self.year) + ")";
+    }
+}
+
+let d = Dog { name: "Rex", breed: "Labrador" };
+let c = Car { make: "Toyota", year: 2021 };
+
+let dog_str: string = d.to_string();
+let car_str: string = c.to_string();
+
+print(dog_str);
+print(car_str);

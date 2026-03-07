@@ -1,0 +1,38 @@
+// 01_arrays.atlas
+// Tests: array literal, typed array, indexing, len, arrayPush, arrayPop, arrayIncludes.
+// FRICTION: Variable named 'pop' shadows prelude builtin 'pop' — must rename.
+// FRICTION: arrayPop returns [removed, newArray] tuple — must index to extract.
+// NOTE: 'contains' for arrays is 'arrayIncludes' in Atlas stdlib.
+
+let original: number[] = [10, 20, 30, 40, 50];
+
+// indexing
+print("first: " + str(original[0]));
+print("last: " + str(original[4]));
+print("len: " + str(len(original)));
+
+// arrayPush (CoW: rebind required)
+let extended: number[] = arrayPush(original, 60);
+print("extended len: " + str(len(extended)));
+print("original unchanged: " + str(len(original)));
+
+// arrayPush multiple
+let mut building: number[] = [];
+building = arrayPush(building, 1);
+building = arrayPush(building, 2);
+building = arrayPush(building, 3);
+print("built len: " + str(len(building)));
+
+// arrayIncludes (NOT 'contains' — different name in Atlas)
+let has20: bool = arrayIncludes(original, 20);
+let has99: bool = arrayIncludes(original, 99);
+print("includes 20: " + str(has20));
+print("includes 99: " + str(has99));
+
+// arrayPop returns [removed_element, new_array]
+// FRICTION: Cannot name variable 'pop' — conflicts with prelude 'pop' builtin
+let pop_result = arrayPop(extended);
+let removed: number = pop_result[0];
+let after_pop: number[] = pop_result[1];
+print("removed: " + str(removed));
+print("after pop len: " + str(len(after_pop)));

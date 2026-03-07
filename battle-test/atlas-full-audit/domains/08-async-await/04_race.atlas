@@ -1,0 +1,30 @@
+// 04_race.atlas
+// Tests: futureRace with single and multiple resolved futures (deterministic)
+
+// Race with single future — must return that future's value
+let only_one = futureResolve(99);
+let race_single = await futureRace([only_one]);
+print(race_single);
+
+// Race with multiple already-resolved futures — first one wins
+let fa = futureResolve(10);
+let fb = futureResolve(20);
+let fc = futureResolve(30);
+let race_winner = await futureRace([fa, fb, fc]);
+print(race_winner);
+
+// futureAll for comparison — all results available
+let all_results = await futureAll([futureResolve(1), futureResolve(2), futureResolve(3)]);
+print(all_results[0]);
+print(all_results[1]);
+print(all_results[2]);
+
+// Race before await returns Future
+let pending_race = futureRace([futureResolve(5)]);
+print(typeof(pending_race));
+
+// Combine race and all results
+let race_val = await futureRace([futureResolve(7)]);
+let all_val = await futureAll([futureResolve(3), futureResolve(4)]);
+let combined: number = race_val + all_val[0] + all_val[1];
+print(combined);

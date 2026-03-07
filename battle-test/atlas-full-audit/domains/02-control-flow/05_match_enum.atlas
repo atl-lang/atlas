@@ -1,0 +1,56 @@
+// 05_match_enum.atlas
+// Tests: match on enum variants (unit, tuple), Option<T>, Result<T,E>.
+// FRICTION: let x: string = match ... fails (typechecker returns '?').
+//           Must use let x = match ... (no type annotation) for match expressions.
+
+enum Direction { North, South, East, West }
+enum Shape { Circle(number), Rectangle(number, number), Point }
+
+// Match on unit enum — no type annotation on binding
+let dir: Direction = Direction::North;
+let dir_str = match dir {
+    Direction::North => "north",
+    Direction::South => "south",
+    Direction::East => "east",
+    Direction::West => "west"
+};
+print("direction: " + dir_str);
+
+// Match on tuple-like enum variants
+let shape: Shape = Shape::Circle(5);
+let area_label = match shape {
+    Shape::Circle(r) => "circle r=" + str(r),
+    Shape::Rectangle(w, h) => "rect " + str(w) + "x" + str(h),
+    Shape::Point => "point"
+};
+print("shape: " + area_label);
+
+// Match on Option<T>
+let maybe: Option<number> = Some(99);
+let opt_val = match maybe {
+    Some(v) => v,
+    None => 0
+};
+print("option: " + str(opt_val));
+
+let nothing: Option<number> = None;
+let opt_default = match nothing {
+    Some(v) => v,
+    None => -1
+};
+print("none default: " + str(opt_default));
+
+// Match on Result
+let ok_val: Result<number, string> = Ok(42);
+let err_val: Result<number, string> = Err("something went wrong");
+
+let ok_out = match ok_val {
+    Ok(v) => "ok: " + str(v),
+    Err(e) => "error: " + e
+};
+let err_out = match err_val {
+    Ok(v) => "ok: " + str(v),
+    Err(e) => "error: " + e
+};
+print(ok_out);
+print(err_out);

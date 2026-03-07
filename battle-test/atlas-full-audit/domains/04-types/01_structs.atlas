@@ -1,0 +1,54 @@
+// 01_structs.atlas
+// Tests: struct declaration, instantiation, field access, struct in fn.
+// FRICTION: Must use let mut for any variable that will be reassigned.
+//           Let without mut = always immutable.
+
+struct User {
+    id: number,
+    name: string,
+    active: bool,
+}
+
+struct Point {
+    x: number,
+    y: number,
+}
+
+fn user_label(u: User) -> string {
+    // WORKAROUND: cannot use if-as-expression; must use let mut + if
+    let mut status: string = "inactive";
+    if u.active {
+        status = "active";
+    }
+    return "#" + str(u.id) + " " + u.name + " (" + status + ")";
+}
+
+fn distance_sq(p: Point) -> number {
+    return p.x * p.x + p.y * p.y;
+}
+
+fn make_origin() -> Point {
+    return Point { x: 0, y: 0 };
+}
+
+let alice: User = User { id: 1, name: "Alice", active: true };
+let bob: User = User { id: 2, name: "Bob", active: false };
+
+print(user_label(alice));
+print(user_label(bob));
+
+let id: number = alice.id;
+let name: string = alice.name;
+print("id: " + str(id));
+print("name: " + name);
+
+let p: Point = Point { x: 3, y: 4 };
+print("dist_sq: " + str(distance_sq(p)));
+
+let origin: Point = make_origin();
+print("origin x: " + str(origin.x));
+
+// Array of structs
+let users: User[] = [alice, bob];
+print("user count: " + str(len(users)));
+print("first: " + users[0].name);

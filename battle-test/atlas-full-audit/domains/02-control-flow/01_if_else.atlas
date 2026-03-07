@@ -1,0 +1,55 @@
+// 01_if_else.atlas
+// Tests: if/else, else if chain, nested if, if without else.
+// FRICTION: if-as-expression not supported (typechecker returns '?').
+//           Must use let mut + assignment pattern instead.
+// FRICTION: match-as-expression works WITHOUT type annotation; fails with annotation.
+
+let score: number = 75;
+
+// if without else (statement form, side effect)
+let mut pass_fail: string = "fail";
+if score >= 60 {
+    pass_fail = "pass";
+}
+print("pass_fail: " + pass_fail);
+
+// else if chain via let mut + if/else if
+let mut grade: string = "F";
+if score >= 90 {
+    grade = "A";
+} else if score >= 80 {
+    grade = "B";
+} else if score >= 70 {
+    grade = "C";
+} else if score >= 60 {
+    grade = "D";
+}
+print("grade: " + grade);
+
+// Nested if
+let x: number = 15;
+let mut nested_result: string = "small";
+if x > 10 {
+    if x > 20 {
+        nested_result = "large";
+    } else {
+        nested_result = "medium";
+    }
+}
+print("nested: " + nested_result);
+
+// Compound condition
+let a: number = 5;
+let b: number = 10;
+let mut both_positive: string = "not both positive";
+if a > 0 && b > 0 {
+    both_positive = "both positive";
+}
+print("both_positive: " + both_positive);
+
+// Final branch determination
+let mut final_branch: string = "other branch";
+if score >= 70 && score < 80 {
+    final_branch = "C-range branch taken";
+}
+print(final_branch);

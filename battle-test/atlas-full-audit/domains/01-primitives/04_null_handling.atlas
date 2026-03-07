@@ -1,0 +1,48 @@
+// 04_null_handling.atlas
+// Tests: null literal, null == null, Option<T> with Some/None, match on Option
+
+// null literal and equality
+let nothing = null;
+let also_null = null;
+let null_eq: bool = nothing == also_null;
+print("null == null: " + str(null_eq));
+
+// Option<T> — Some variant
+let some_val: Option<number> = Some(42);
+let extracted: number = match some_val {
+    Some(v) => v,
+    None => 0
+};
+print("Some(42) extracted: " + str(extracted));
+
+// Option<T> — None variant
+let no_val: Option<number> = None;
+let default_val: number = match no_val {
+    Some(v) => v,
+    None => -1
+};
+print("None default: " + str(default_val));
+
+// Option<string>
+let maybe_name: Option<string> = Some("Atlas");
+let name_or_default: string = match maybe_name {
+    Some(s) => s,
+    None => "unknown"
+};
+print("name: " + name_or_default);
+
+// Nested Option usage
+let opt_opt: Option<number> = Some(100);
+let doubled: number = match opt_opt {
+    Some(v) => v * 2,
+    None => 0
+};
+print("doubled from Option: " + str(doubled));
+
+// None string case
+let no_name: Option<string> = None;
+let result: string = match no_name {
+    Some(s) => "got: " + s,
+    None => "null handled"
+};
+print(result);

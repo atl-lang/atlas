@@ -1,0 +1,46 @@
+// 02_string_ops.atlas
+// Tests: concatenation, len, split, join, trim, toUpperCase, toLowerCase,
+//        startsWith, endsWith, includes, replace, indexOf (Option), substring.
+// FRICTION: 'contains' for strings is 'includes' in Atlas stdlib.
+// FRICTION: indexOf returns Option<number> — must unwrap with match.
+
+let greeting: string = "  Hello, World!  ";
+
+let trimmed: string = trim(greeting);
+print("trimmed: " + trimmed);
+
+let upper: string = toUpperCase(trimmed);
+let lower: string = toLowerCase(trimmed);
+print("upper: " + upper);
+print("lower: " + lower);
+
+print("len: " + str(len(trimmed)));
+print("startsWith Hello: " + str(startsWith(trimmed, "Hello")));
+print("endsWith !: " + str(endsWith(trimmed, "!")));
+
+// includes (Atlas uses 'includes', not 'contains')
+print("includes World: " + str(includes(trimmed, "World")));
+print("includes Atlas: " + str(includes(trimmed, "Atlas")));
+
+// split / join
+let csv: string = "one,two,three,four";
+let parts: string[] = split(csv, ",");
+print("parts len: " + str(len(parts)));
+print("joined: " + join(parts, " | "));
+
+// replace
+print("replaced: " + replace("foo bar foo", "foo", "baz"));
+
+// indexOf returns Option<number> — must unwrap
+let idx_opt = indexOf("hello world", "world");
+let idx = match idx_opt { Some(n) => n, None => -1 };
+print("indexOf world: " + str(idx));
+
+let missing_opt = indexOf("hello world", "xyz");
+let missing_idx = match missing_opt { Some(n) => n, None => -1 };
+print("indexOf xyz: " + str(missing_idx));
+
+// substring
+print("substring: " + substring("hello world", 6, 11));
+
+print("done");
