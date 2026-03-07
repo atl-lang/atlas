@@ -3,6 +3,7 @@
 // Split to stay under 12KB file size limit per atlas-testing.md
 
 mod array_alias;
+mod enum_types;
 mod error_codes;
 mod hashmap_generics;
 mod ownership_part1;

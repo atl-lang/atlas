@@ -296,6 +296,9 @@ pub struct TypeChecker<'a> {
     struct_type_cache: HashMap<String, Type>,
     /// Stack used to detect recursive struct definitions during resolution.
     struct_resolution_stack: Vec<String>,
+    /// Names of all user-defined enum types declared in this module.
+    /// Used by resolve_type_ref to return a proper named type instead of Unknown.
+    enum_names: HashSet<String>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -373,6 +376,7 @@ impl<'a> TypeChecker<'a> {
             struct_decls: HashMap::new(),
             struct_type_cache: HashMap::new(),
             struct_resolution_stack: Vec::new(),
+            enum_names: HashSet::new(),
         }
     }
 
@@ -385,6 +389,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Type check a program
     pub fn check(&mut self, program: &Program) -> Vec<Diagnostic> {
+        self.collect_enum_names(program);
         self.collect_struct_decls(program);
         self.collect_type_guards(program);
         self.validate_type_aliases(program);
@@ -440,6 +445,7 @@ impl<'a> TypeChecker<'a> {
         }
 
         // Type check all items (imports already validated during binding)
+        self.collect_enum_names(program);
         self.collect_struct_decls(program);
         self.collect_type_guards(program);
         self.validate_type_aliases(program);
@@ -485,9 +491,20 @@ impl<'a> TypeChecker<'a> {
                     self.validate_struct_decl(struct_decl);
                 }
             }
-            Item::Enum(_enum_decl) => {
-                // TODO: Validate enum variant types and check for cycles
-                // For now, just skip - enum type validation coming in later phase
+            Item::Enum(enum_decl) => {
+                // Register enum name so resolve_type_ref recognises it as a valid named type.
+                // Full variant validation is B9+ work; for now we just need the name to be known
+                // so that parameters / let bindings typed as this enum don't resolve to Unknown.
+                self.enum_names.insert(enum_decl.name.name.clone());
+            }
+        }
+    }
+
+    fn collect_enum_names(&mut self, program: &Program) {
+        self.enum_names.clear();
+        for item in &program.items {
+            if let Item::Enum(enum_decl) = item {
+                self.enum_names.insert(enum_decl.name.name.clone());
             }
         }
     }
@@ -2267,6 +2284,9 @@ impl<'a> TypeChecker<'a> {
             Type::Generic { name, type_args } => {
                 if name == "Option" || name == "Result" {
                     type_args.iter().all(|arg| self.is_copy_type(arg))
+                } else if self.enum_names.contains(&name) {
+                    // User-defined enums are value types with pure value semantics — always Copy.
+                    true
                 } else {
                     self.trait_registry.implements(&name, "Copy")
                 }
@@ -2417,6 +2437,16 @@ impl<'a> TypeChecker<'a> {
 
                     if self.trait_registry.trait_exists(name) {
                         return Type::TraitObject { name: name.clone() };
+                    }
+
+                    // User-defined enum types: return a named Generic with no type args.
+                    // This prevents the type from resolving to Unknown, which would cause
+                    // check_match to bail early and return '?' for all match arms (H-110, H-111).
+                    if self.enum_names.contains(name) {
+                        return Type::Generic {
+                            name: name.clone(),
+                            type_args: vec![],
+                        };
                     }
 
                     Type::Unknown

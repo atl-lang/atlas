@@ -210,8 +210,16 @@ impl<'a> TypeChecker<'a> {
                         self.check_expr(arg);
                     }
                 }
-                // Enum type tracking is B8+ work — return Unknown for now
-                Type::Unknown
+                // If the enum name is registered, return its named type so that variables
+                // holding enum values don't resolve to Unknown (H-110, H-111).
+                if self.enum_names.contains(&ev.enum_name.name) {
+                    Type::Generic {
+                        name: ev.enum_name.name.clone(),
+                        type_args: vec![],
+                    }
+                } else {
+                    Type::Unknown
+                }
             }
             Expr::Await { expr, span } => {
                 // AT4001: await outside async context
