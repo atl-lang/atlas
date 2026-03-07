@@ -155,6 +155,22 @@ pub enum Opcode {
     /// Stack: [EnumValue] → Array
     ExtractEnumData = 0x9A,
 
+    // ===== Async (0xA0-0xAF) =====
+    /// Call async function [u16 fn_const_idx, u8 arg_count]
+    /// Pops arg_count args + function, pushes Value::Future (pending resolution)
+    AsyncCall = 0xA0,
+    /// Await a Future [no operands]
+    /// Pops Value::Future, blocks until resolved, pushes inner value
+    /// Runtime error AT4002 if TOS is not a Future
+    Await = 0xA1,
+    /// Wrap a value in an immediately-resolved Future [no operands]
+    /// Pops any value, pushes Value::Future(resolved(value))
+    WrapFuture = 0xA2,
+    /// Spawn async task for concurrent execution [u16 fn_const_idx, u8 arg_count]
+    /// Like AsyncCall but runs on multi-thread Tokio runtime (D-030)
+    /// Pushes Value::Future handle; caller awaits later
+    SpawnTask = 0xA3,
+
     // ===== Special (0xF0-0xFF) =====
     /// End of bytecode
     Halt = 0xFF,
@@ -225,6 +241,10 @@ impl TryFrom<u8> for Opcode {
             0x98 => Ok(Opcode::EnumVariant),
             0x99 => Ok(Opcode::CheckEnumVariant),
             0x9A => Ok(Opcode::ExtractEnumData),
+            0xA0 => Ok(Opcode::AsyncCall),
+            0xA1 => Ok(Opcode::Await),
+            0xA2 => Ok(Opcode::WrapFuture),
+            0xA3 => Ok(Opcode::SpawnTask),
             0xFF => Ok(Opcode::Halt),
             _ => Err(()),
         }

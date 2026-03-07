@@ -1847,6 +1847,24 @@ impl VM {
                     }
                 }
 
+                // ===== Async (Phase 10) =====
+                // AsyncCall, Await, WrapFuture, SpawnTask are implemented in Phase 10.
+                // Reaching these in the VM before Phase 10 is a hard error.
+                Opcode::AsyncCall | Opcode::SpawnTask => {
+                    let _fn_const_idx = self.read_u16()?;
+                    let _arg_count = self.read_u8()?;
+                    return Err(RuntimeError::TypeError {
+                        msg: "async fn calls require Phase 10 VM integration".to_string(),
+                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                    });
+                }
+                Opcode::Await | Opcode::WrapFuture => {
+                    return Err(RuntimeError::TypeError {
+                        msg: "await/wrap-future require Phase 10 VM integration".to_string(),
+                        span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                    });
+                }
+
                 // ===== Special =====
                 Opcode::Halt => break,
             }

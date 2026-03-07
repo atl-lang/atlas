@@ -259,6 +259,15 @@ fn read_operand(opcode: Opcode, code: &[u8], ip: usize) -> Result<(usize, i64), 
             }
             Ok((1, code[ip] as i64))
         }
+        // AsyncCall/SpawnTask: 3 bytes (u16 fn_const_idx + u8 arg_count)
+        Opcode::AsyncCall | Opcode::SpawnTask => {
+            if ip + 2 >= code.len() {
+                return Err(opcode_name(opcode));
+            }
+            let hi = code[ip] as u16;
+            let lo = code[ip + 1] as u16;
+            Ok((3, ((hi << 8) | lo) as i64))
+        }
         // TraitDispatch: 5 bytes (trait_idx, method_idx, arg_count)
         Opcode::TraitDispatch => {
             if ip + 4 >= code.len() {
@@ -337,6 +346,10 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::MakeClosure => "MakeClosure",
         Opcode::GetUpvalue => "GetUpvalue",
         Opcode::SetUpvalue => "SetUpvalue",
+        Opcode::AsyncCall => "AsyncCall",
+        Opcode::Await => "Await",
+        Opcode::WrapFuture => "WrapFuture",
+        Opcode::SpawnTask => "SpawnTask",
     }
 }
 
@@ -498,15 +511,22 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         // CheckEnumVariant: pop 3 (value, enum_name, variant_name), push 1 (bool)
         Opcode::CheckEnumVariant => Some(-2),
 
+        // Await: pop Future, push resolved value (net 0)
+        // WrapFuture: pop value, push Future (net 0)
+        Opcode::Await | Opcode::WrapFuture => Some(0),
+
         // Variable-arity — skip (MakeClosure pops n_upvalues, push 1; net depends on operand)
         // EnumVariant pops enum_name, variant_name, and args; pushes 1
+        // AsyncCall/SpawnTask pop args + fn, push Future (arg_count varies)
         Opcode::Call
         | Opcode::TraitDispatch
         | Opcode::Array
         | Opcode::HashMap
         | Opcode::Struct
         | Opcode::MakeClosure
-        | Opcode::EnumVariant => None,
+        | Opcode::EnumVariant
+        | Opcode::AsyncCall
+        | Opcode::SpawnTask => None,
 
         // Return drains the frame — stop tracking
         Opcode::Return => None,
