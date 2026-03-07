@@ -62,6 +62,32 @@ impl<'a> TypeChecker<'a> {
                 span,
             } => self.check_anon_fn(params, return_type.as_ref(), body, *span),
             Expr::Block(block) => {
+                // H-115: if/else as expression — parser wraps `if cond { a } else { b }`
+                // as Block { statements: [Stmt::If(...)], tail_expr: None }. Infer type from
+                // both branches when both have tail expressions.
+                if block.tail_expr.is_none()
+                    && block.statements.len() == 1
+                    && block.tail_expr.is_none()
+                {
+                    if let Stmt::If(if_stmt) = &block.statements[0] {
+                        if let Some(else_block) = &if_stmt.else_block {
+                            if let (Some(then_tail), Some(else_tail)) =
+                                (&if_stmt.then_block.tail_expr, &else_block.tail_expr)
+                            {
+                                self.enter_scope();
+                                let then_type = self.check_expr(then_tail);
+                                self.exit_scope();
+                                self.enter_scope();
+                                let else_type = self.check_expr(else_tail);
+                                self.exit_scope();
+                                if then_type == else_type {
+                                    return then_type;
+                                }
+                                return Type::union(vec![then_type, else_type]);
+                            }
+                        }
+                    }
+                }
                 self.enter_scope();
                 for stmt in &block.statements {
                     self.check_statement(stmt);

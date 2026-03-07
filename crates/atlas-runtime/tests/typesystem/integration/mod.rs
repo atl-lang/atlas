@@ -6,6 +6,7 @@ mod array_alias;
 mod enum_types;
 mod error_codes;
 mod hashmap_generics;
+mod if_expr;
 mod ownership_part1;
 mod ownership_part2;
 mod ownership_part3;
