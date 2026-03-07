@@ -69,6 +69,8 @@ DECISIONS (source of truth — not MEMORY.md):
 BLOCKS:
   blocks                           # Block progress with names
   block 8                          # Block detail + AC (also accepts: block B8)
+  phase-done B8                    # Increment phases_done +1 (MANDATORY after every phase commit)
+  complete-block B8 "notes"        # Mark block complete (MANDATORY when all phases done)
 
 WHAT TO WORK ON:
   next                             # Smart triage: groups by root cause, chains, delete-first flags
@@ -130,7 +132,9 @@ case "${1:-}" in
     status)     cmd_status ;;
     issues)     cmd_issues "${2:-}" ;;
     decisions)  cmd_decisions "${2:-}" ;;
-    blocks)     cmd_blocks ;;
+    blocks)         cmd_blocks ;;
+    phase-done)     cmd_phase_done "${2:?'Block number required (e.g. B8)'}" ;;
+    complete-block) cmd_complete_block "${2:?'Block number required (e.g. B8)'}" "${3:-}" ;;
     sessions)   cmd_sessions ;;
     issue)      cmd_issue_detail "${2:?'Issue ID required'}" ;;
     decision)   cmd_decision_detail "${2:?'Decision ID required'}" ;;

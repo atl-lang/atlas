@@ -92,12 +92,46 @@ cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'  # ✅
 
 ---
 
-## Issue Lifecycle
+## AI Continuity — Non-Negotiable (100% AI-maintained project)
+
+The user is architect only. You own all implementation, tracking, and continuity.
+
+**Never narrate — act or file. These are the only two options:**
+- ❌ "The next agent will need to look out for X" → `atlas-track add` it. NOW.
+- ❌ "We should probably Y" → Do it now, or `atlas-track add "Y" P2 "why"`.
+- ❌ Anything said to the user that isn't architecture = gone forever after the session ends.
+
+**Proactive filing:** Discover a bug, workaround, inconsistency, or gap mid-task? File it before moving on. 30 seconds now saves hours of re-discovery later. Include: battle test reference if applicable, workaround used, fix risk.
+
+**Before any design decision:** `atlas-track decisions all` — check if it's already decided. If D-XXX exists, follow it. If not, decide and log: `atlas-track add-decision`.
+
+**Block tracking — mandatory after every phase commit:**
 ```bash
-atlas-track claim H-001              # Mark you're working on it
-atlas-track fix H-001 "Root cause" "Fix applied"
-atlas-track done S-004 success "What was done" "Next steps"
+atlas-track phase-done B<N>                              # Every phase, no exceptions
+atlas-track complete-block B<N> "what shipped, bugs filed"  # Final phase only
 ```
+
+---
+
+## Issue Lifecycle — CLOSE IMMEDIATELY, NOT AT END
+
+**Rule:** Fix → verify → close issue → commit → THEN move to the next issue. Never batch closures at session end.
+
+```bash
+atlas-track claim H-001                                       # Before starting
+# ... implement, verify ...
+atlas-track fix H-001 "Root cause (specific: what was wrong)" "Fix (specific: what changed)"
+git commit -m "fix(...): description"
+# NOW move to next issue
+```
+
+**Session close** — required at end of every session, even if interrupted:
+```bash
+atlas-track done S-XXX success \
+  "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \
+  "Next: Phase-05 — Value::Future in runtime, interpreter dispatch"
+```
+Format: one sentence per issue/phase closed. Root cause + fix. Next: 1–2 sentences. No bullet dumps.
 
 ## Work Selection
 P0 blockers > P1 bugs > P2 features > cleanup

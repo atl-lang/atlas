@@ -141,6 +141,45 @@ cmd_block_detail() {
         end'
 }
 
+# phase-done — increment phases_done for a block (e.g. atlas-track phase-done B8)
+cmd_phase_done() {
+    local num="${1#[Bb]}"
+    local row
+    row=$(sqlite3 -json "$DB" "SELECT block_num, name, phases_done, phases_total, status FROM blocks WHERE version='0.3.0' AND block_num=$num" | jq -r '.[0] // empty')
+    if [[ -z "$row" ]]; then echo "Block not found: $1"; return 1; fi
+    local done total status name
+    done=$(echo "$row" | jq -r '.phases_done')
+    total=$(echo "$row" | jq -r '.phases_total')
+    status=$(echo "$row" | jq -r '.status')
+    name=$(echo "$row" | jq -r '.name')
+    if [[ "$status" == "complete" ]]; then echo "Block B$num already complete — use complete-block to reopen or verify."; return 0; fi
+    local new_done=$((done + 1))
+    sqlite3 "$DB" "UPDATE blocks SET phases_done=$new_done, status='in_progress' WHERE version='0.3.0' AND block_num=$num"
+    echo "✓ B$num phase $new_done/$total done: $name"
+    if [[ $new_done -ge $total ]]; then echo "  → All phases done. Run: atlas-track complete-block B$num \"notes\""; fi
+}
+
+# complete-block — mark a block complete with optional notes
+cmd_complete_block() {
+    local num="${1#[Bb]}"
+    local notes="${2:-}"
+    local session_id
+    session_id=$(sqlite3 "$DB" "SELECT id FROM sessions WHERE outcome IS NULL ORDER BY started_at DESC LIMIT 1" 2>/dev/null || echo "")
+    local row
+    row=$(sqlite3 -json "$DB" "SELECT block_num, name, phases_done, phases_total FROM blocks WHERE version='0.3.0' AND block_num=$num" | jq -r '.[0] // empty')
+    if [[ -z "$row" ]]; then echo "Block not found: $1"; return 1; fi
+    local name phases_done phases_total
+    name=$(echo "$row" | jq -r '.name')
+    phases_done=$(echo "$row" | jq -r '.phases_done')
+    phases_total=$(echo "$row" | jq -r '.phases_total')
+    local today
+    today=$(date +%Y-%m-%d)
+    local escaped_notes="${notes//\'/\'\'}"
+    sqlite3 "$DB" "UPDATE blocks SET status='complete', completed_date='$today', completed_by='${session_id:-manual}', notes='$escaped_notes' WHERE version='0.3.0' AND block_num=$num"
+    echo "✓ B$num complete ($phases_done/$phases_total phases): $name"
+    if [[ -n "$notes" ]]; then echo "  Notes: $notes"; fi
+}
+
 # CI status — proper function (was broken inline `local` in case block)
 cmd_ci_status() {
     local ci_file
