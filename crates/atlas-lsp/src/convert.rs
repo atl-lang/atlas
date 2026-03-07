@@ -54,8 +54,61 @@ pub fn position_to_offset(text: &str, position: lsp_types::Position) -> usize {
     offset
 }
 
-/// Convert an Atlas diagnostic to an LSP diagnostic
+/// Unused-symbol warning codes that should render as dimmed (UNNECESSARY) in editors,
+/// not as red squiggles. Matches D-031.
+const UNUSED_CODES: &[&str] = &["AT2001", "AT2004", "AT2008"];
+
+/// Convert an Atlas diagnostic to an LSP diagnostic.
+///
+/// Forwards all diagnostic data per D-031:
+/// - `notes` + `help` appended to message so editors display them
+/// - `related` → `related_information` with proper LSP locations
+/// - Unused-symbol codes tagged `UNNECESSARY` (dim, not red)
+/// - `DiagnosticLevel::Hint` → `DiagnosticSeverity::HINT`
 pub fn diagnostic_to_lsp(diag: &Diagnostic) -> lsp_types::Diagnostic {
+    // Build full message: main + notes + help
+    let mut message = diag.message.clone();
+    for note in &diag.notes {
+        message.push_str(&format!("\nnote: {note}"));
+    }
+    if let Some(help) = &diag.help {
+        message.push_str(&format!("\nhelp: {help}"));
+    }
+
+    // Convert related locations → LSP DiagnosticRelatedInformation
+    let related_information = if diag.related.is_empty() {
+        None
+    } else {
+        Some(
+            diag.related
+                .iter()
+                .map(|r| lsp_types::DiagnosticRelatedInformation {
+                    location: lsp_types::Location {
+                        uri: file_path_to_uri(&r.file),
+                        range: lsp_types::Range {
+                            start: lsp_types::Position {
+                                line: (r.line.saturating_sub(1)) as u32,
+                                character: (r.column.saturating_sub(1)) as u32,
+                            },
+                            end: lsp_types::Position {
+                                line: (r.line.saturating_sub(1)) as u32,
+                                character: (r.column.saturating_sub(1) + r.length) as u32,
+                            },
+                        },
+                    },
+                    message: r.message.clone(),
+                })
+                .collect(),
+        )
+    };
+
+    // Tag unused-symbol warnings as UNNECESSARY (dim) not ERROR (red)
+    let tags = if UNUSED_CODES.contains(&diag.code.as_str()) {
+        Some(vec![lsp_types::DiagnosticTag::UNNECESSARY])
+    } else {
+        None
+    };
+
     lsp_types::Diagnostic {
         range: lsp_types::Range {
             start: lsp_types::Position {
@@ -70,10 +123,29 @@ pub fn diagnostic_to_lsp(diag: &Diagnostic) -> lsp_types::Diagnostic {
         severity: Some(match diag.level {
             DiagnosticLevel::Error => lsp_types::DiagnosticSeverity::ERROR,
             DiagnosticLevel::Warning => lsp_types::DiagnosticSeverity::WARNING,
+            DiagnosticLevel::Hint => lsp_types::DiagnosticSeverity::HINT,
         }),
         code: Some(lsp_types::NumberOrString::String(diag.code.clone())),
         source: Some("atlas".to_string()),
-        message: diag.message.clone(),
+        message,
+        related_information,
+        tags,
         ..Default::default()
     }
+}
+
+/// Convert a file path to an LSP URI.
+/// Falls back to a placeholder for synthetic paths like `<input>` or `<unknown>`.
+fn file_path_to_uri(path: &str) -> lsp_types::Url {
+    if path.starts_with('<') {
+        placeholder_uri()
+    } else {
+        lsp_types::Url::from_file_path(path).unwrap_or_else(|_| placeholder_uri())
+    }
+}
+
+/// Placeholder URI for synthetic/unknown file paths.
+fn placeholder_uri() -> lsp_types::Url {
+    // "file:///unknown" is a statically valid URI — parse cannot fail
+    lsp_types::Url::parse("file:///unknown").expect("hardcoded valid URI")
 }

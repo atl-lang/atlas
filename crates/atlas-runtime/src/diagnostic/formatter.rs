@@ -116,6 +116,7 @@ impl DiagnosticFormatter {
         let (color, label) = match diag.level {
             DiagnosticLevel::Error => (Color::Red, "error"),
             DiagnosticLevel::Warning => (Color::Yellow, "warning"),
+            DiagnosticLevel::Hint => (Color::Cyan, "hint"),
         };
 
         w.set_color(ColorSpec::new().set_fg(Some(color)).set_bold(true))?;
@@ -171,6 +172,7 @@ impl DiagnosticFormatter {
             let color = match diag.level {
                 DiagnosticLevel::Error => Color::Red,
                 DiagnosticLevel::Warning => Color::Yellow,
+                DiagnosticLevel::Hint => Color::Cyan,
             };
             w.set_color(ColorSpec::new().set_fg(Some(color)).set_bold(true))?;
             write!(w, "{}", "^".repeat(caret_len))?;

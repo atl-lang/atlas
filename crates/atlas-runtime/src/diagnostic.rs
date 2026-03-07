@@ -25,6 +25,9 @@ pub enum DiagnosticLevel {
     /// Warning that doesn't prevent compilation
     #[serde(rename = "warning")]
     Warning,
+    /// Hint — informational, non-actionable (e.g., AI scaffolding notes)
+    #[serde(rename = "hint")]
+    Hint,
 }
 
 impl fmt::Display for DiagnosticLevel {
@@ -32,6 +35,7 @@ impl fmt::Display for DiagnosticLevel {
         match self {
             DiagnosticLevel::Error => write!(f, "error"),
             DiagnosticLevel::Warning => write!(f, "warning"),
+            DiagnosticLevel::Hint => write!(f, "hint"),
         }
     }
 }
@@ -219,6 +223,28 @@ impl Diagnostic {
         self
     }
 
+    /// Create a new hint diagnostic with code
+    pub fn hint_with_code(code: impl Into<String>, message: impl Into<String>, span: Span) -> Self {
+        let (line, column, snippet) =
+            source_context_for_span(span).unwrap_or((1, span.start + 1, String::new()));
+        Self {
+            diag_version: DIAG_VERSION,
+            level: DiagnosticLevel::Hint,
+            code: code.into(),
+            message: message.into(),
+            file: span.file().to_string(),
+            line,
+            column,
+            length: span.end.saturating_sub(span.start),
+            snippet,
+            label: String::new(),
+            notes: Vec::new(),
+            related: Vec::new(),
+            stack_trace: Vec::new(),
+            help: None,
+        }
+    }
+
     /// Check if this diagnostic is an error (not a warning)
     pub fn is_error(&self) -> bool {
         matches!(self.level, DiagnosticLevel::Error)
@@ -227,6 +253,11 @@ impl Diagnostic {
     /// Check if this diagnostic is a warning
     pub fn is_warning(&self) -> bool {
         matches!(self.level, DiagnosticLevel::Warning)
+    }
+
+    /// Check if this diagnostic is a hint
+    pub fn is_hint(&self) -> bool {
+        matches!(self.level, DiagnosticLevel::Hint)
     }
 
     /// Format as human-readable string
@@ -317,10 +348,16 @@ fn source_context_for_span(span: Span) -> Option<(usize, usize, String)> {
 /// Sort diagnostics by level (errors first), then by location
 pub fn sort_diagnostics(diagnostics: &mut [Diagnostic]) {
     diagnostics.sort_by(|a, b| {
-        // Errors before warnings
+        // Errors before warnings before hints
         match (a.level, b.level) {
-            (DiagnosticLevel::Error, DiagnosticLevel::Warning) => std::cmp::Ordering::Less,
-            (DiagnosticLevel::Warning, DiagnosticLevel::Error) => std::cmp::Ordering::Greater,
+            (DiagnosticLevel::Error, DiagnosticLevel::Warning | DiagnosticLevel::Hint) => {
+                std::cmp::Ordering::Less
+            }
+            (DiagnosticLevel::Warning | DiagnosticLevel::Hint, DiagnosticLevel::Error) => {
+                std::cmp::Ordering::Greater
+            }
+            (DiagnosticLevel::Warning, DiagnosticLevel::Hint) => std::cmp::Ordering::Less,
+            (DiagnosticLevel::Hint, DiagnosticLevel::Warning) => std::cmp::Ordering::Greater,
             _ => {
                 // Same level: sort by file, line, column
                 a.file
