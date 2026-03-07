@@ -81,6 +81,8 @@ cmd_go() {
     echo "── P0 Blockers ($p0_count) ──"
     if [[ "$p0_count" -gt 0 ]]; then
         echo "$p0_json" | jq -r '.[] | "\(.id) [\(.component)] \(.title)"'
+        echo ""
+        echo "  → Run 'atlas-track next' for recommended work order + root cause grouping"
     else
         echo "None - ready to unblock"
     fi

@@ -203,7 +203,7 @@ mod tests {
     fn test_runner_pass() {
         let file = create_test_file(
             r#"
-fn test_simple() {
+fn test_simple() -> void {
     assert(true, "should pass");
 }
 "#,
@@ -225,7 +225,7 @@ fn test_simple() {
     fn test_runner_fail() {
         let file = create_test_file(
             r#"
-fn test_failing() {
+fn test_failing() -> void {
     assert(false, "should fail");
 }
 "#,
@@ -264,8 +264,8 @@ fn test_failing() {
     fn test_runner_sequential() {
         let file = create_test_file(
             r#"
-fn test_one() { assert(true, "ok"); }
-fn test_two() { assert(true, "ok"); }
+fn test_one() -> void { assert(true, "ok"); }
+fn test_two() -> void { assert(true, "ok"); }
 "#,
         );
 
@@ -296,9 +296,9 @@ fn test_two() { assert(true, "ok"); }
     fn test_runner_parallel() {
         let file = create_test_file(
             r#"
-fn test_a() { assert(true, "ok"); }
-fn test_b() { assert(true, "ok"); }
-fn test_c() { assert(true, "ok"); }
+fn test_a() -> void { assert(true, "ok"); }
+fn test_b() -> void { assert(true, "ok"); }
+fn test_c() -> void { assert(true, "ok"); }
 "#,
         );
 
@@ -348,7 +348,7 @@ fn test_c() { assert(true, "ok"); }
     fn test_runner_test_mode_allows_process_and_env() {
         let file = create_test_file_with_suffix(
             r#"
-fn test_process_env() {
+fn test_process_env() -> void {
     setEnv("ATLAS_TEST_VAR", "ok");
     let value = unwrap(getEnv("ATLAS_TEST_VAR"));
     assertEqual(value, "ok");

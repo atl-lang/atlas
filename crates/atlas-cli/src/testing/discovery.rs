@@ -171,15 +171,15 @@ mod tests {
         write!(
             file,
             r#"
-fn test_addition() {{
+fn test_addition() -> void {{
     assertEqual(2 + 2, 4);
 }}
 
-fn test_subtraction() {{
+fn test_subtraction() -> void {{
     assertEqual(5 - 3, 2);
 }}
 
-fn helper() {{
+fn helper() -> void {{
     // Not a test
 }}
 "#
@@ -198,11 +198,11 @@ fn helper() {{
         write!(
             file,
             r#"
-fn test_with_param(x: number) {{
+fn test_with_param(x: number) -> void {{
     // Should be skipped
 }}
 
-fn test_no_param() {{
+fn test_no_param() -> void {{
     assert(true, "ok");
 }}
 "#

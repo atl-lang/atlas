@@ -53,6 +53,9 @@ ISSUES:
 END:
   done S-001 success "Sum" "Next"  # End (BLOCKED if unclosed)
 
+WHAT TO WORK ON:
+  next                             # Recommended work order — grouped by root cause, chains, triage flags
+
 INDEX (max 5, jq formatted):
   issues [P0|component]
   decisions [component|all]
@@ -110,6 +113,7 @@ case "${1:-}" in
     deprecate)    cmd_deprecate "${2:?}" "${3:-}" ;;
 
     # Queries
+    next)       cmd_next ;;
     status)     cmd_status ;;
     issues)     cmd_issues "${2:-}" ;;
     decisions)  cmd_decisions "${2:-}" ;;

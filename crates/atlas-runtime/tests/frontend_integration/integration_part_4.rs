@@ -161,7 +161,7 @@ fn test_diagnostic_json_with_related_locations() {
 
 #[rstest]
 #[case("let x = 1; let y = 2;", vec!["let x = 1;", "let y = 2;"])]
-#[case("fn foo() { return 42; }", vec!["fn foo()", "return 42;"])]
+#[case("fn foo() -> number { return 42; }", vec!["fn foo()", "return 42;"])]
 #[case("if x > 0 { let a = 1; }", vec!["if", "x > 0", "let a = 1;"])]
 fn test_format_various_patterns(#[case] source: &str, #[case] expected_parts: Vec<&str>) {
     let formatted = fmt(source);
@@ -244,7 +244,7 @@ fn test_diagnostic_version_always_set() {
 // ============================================================
 
 #[rstest]
-#[case("fn nested() { if true { while false { let x = 1; } } }")]
+#[case("fn nested() -> void { if true { while false { let x = 1; } } }")]
 #[case("let a = 1; let b = 2; let c = a + b; let d = c * 2;")]
 #[case("fn f(x: number) -> number { if x > 0 { return x; } else { return 0; } }")]
 fn test_format_reparse_complex(#[case] source: &str) {

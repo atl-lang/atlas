@@ -174,11 +174,11 @@ let arr = [1, 2, 3];
 arr = arrayPush(arr, 4); // Must rebind
 ```
 
-### Shared Mutation (HashMap/HashSet)
-Collections use Arc<Mutex<...>> for shared mutation:
+### HashMap/HashSet — CoW Value Semantics
+Collections use Copy-on-Write (Arc::make_mut internally). Aliases never share mutable state — always rebind:
 ```atlas
 let map = hashMapNew();
-map = hashMapPut(map, "key", "value");
+map = hashMapPut(map, "key", "value"); // Must rebind — same pattern as arrays
 ```
 
 ### Option/Result Pattern

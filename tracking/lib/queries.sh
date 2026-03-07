@@ -77,3 +77,82 @@ cmd_block_detail() {
     sqlite3 -json "$DB" "SELECT block_num, name, status, phases_done, phases_total, tests_at_start, tests_at_end, blockers FROM blocks WHERE version='0.3.0' AND block_num=$num" | \
         jq -r '.[0] | "Block \(.block_num): \(.name)\nStatus: \(.status) | Phases: \(.phases_done)/\(.phases_total)\nTests: \(.tests_at_start // "?") → \(.tests_at_end // "?")\nBlockers: \(.blockers // "none")"'
 }
+
+# next — Recommended work order for AI agents
+# Groups issues by root cause, flags triage-first items, shows chain reasoning
+cmd_next() {
+    local db="$DB"
+
+    # Count open P0s
+    local p0_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P0'")
+    local p1_count=$(sqlite3 "$db" "SELECT COUNT(*) FROM issues WHERE status='open' AND priority='P1'")
+
+    echo "── RECOMMENDED NEXT ACTIONS ──"
+    echo "Open: ${p0_count} P0 blockers, ${p1_count} P1 issues"
+    echo ""
+
+    # Step 1: Show any P0s that are DELETES (wrong test, not bugs)
+    local deletes=$(sqlite3 -json "$db" \
+        "SELECT id, title, problem FROM issues
+         WHERE status='open' AND priority='P0'
+         AND (problem LIKE '%DELETE%' OR problem LIKE '%WRONG TEST%' OR problem LIKE '%WONTFIX%' OR tags LIKE '%wrong-test%')
+         ORDER BY id")
+    if [[ "$deletes" != "[]" && -n "$deletes" ]]; then
+        echo "① DELETE FIRST (wrong tests — correct behavior, not bugs):"
+        echo "$deletes" | jq -r '.[] | "   \(.id)  \(.title)"'
+        echo ""
+    fi
+
+    # Step 2: Show P0s needing triage before touching
+    local triage=$(sqlite3 -json "$db" \
+        "SELECT id, title FROM issues
+         WHERE status='open' AND priority='P0'
+         AND (problem LIKE '%TRIAGE%' OR problem LIKE '%must diff%' OR problem LIKE '%check first%')
+         ORDER BY id")
+    if [[ "$triage" != "[]" && -n "$triage" ]]; then
+        echo "② TRIAGE FIRST (diff actual vs expected before deciding fix or delete):"
+        echo "$triage" | jq -r '.[] | "   \(.id)  \(.title)"'
+        echo ""
+    fi
+
+    # Step 3: P0s grouped by component (likely same root cause)
+    echo "③ FIX — P0 blockers by component (same component = likely same root cause):"
+    sqlite3 -json "$db" \
+        "SELECT component, group_concat(id, ', ') as ids, COUNT(*) as cnt
+         FROM issues
+         WHERE status='open' AND priority='P0'
+         AND problem NOT LIKE '%DELETE%'
+         AND problem NOT LIKE '%WRONG TEST%'
+         AND problem NOT LIKE '%TRIAGE%'
+         AND (tags NOT LIKE '%wrong-test%' OR tags IS NULL)
+         GROUP BY component
+         ORDER BY cnt DESC, component" | \
+        jq -r '.[] | "   [\(.component)] \(.ids)  (\(.cnt) issue\(if .cnt == "1" then "" else "s" end))"'
+    echo ""
+
+    # Step 4: P1s grouped by component
+    if [[ $p1_count -gt 0 ]]; then
+        echo "④ AFTER P0s — P1 issues by component:"
+        sqlite3 -json "$db" \
+            "SELECT component, group_concat(id, ', ') as ids, COUNT(*) as cnt
+             FROM issues
+             WHERE status='open' AND priority='P1'
+             GROUP BY component
+             ORDER BY cnt DESC, component" | \
+            jq -r '.[] | "   [\(.component)] \(.ids)  (\(.cnt) issue\(if .cnt == "1" then "" else "s" end))"'
+        echo ""
+    fi
+
+    # Step 5: linked chains (blocks relationships)
+    local chains=$(sqlite3 -json "$db" \
+        "SELECT id, title, blocks_issues FROM issues
+         WHERE status='open' AND blocks_issues IS NOT NULL AND blocks_issues != ''
+         ORDER BY priority, id" 2>/dev/null)
+    if [[ -n "$chains" && "$chains" != "[]" && "$chains" != "null" ]]; then
+        echo "⑤ CHAINS (fix these before their dependents):"
+        echo "$chains" | jq -r '.[] | "   \(.id) → blocks \(.blocks_issues)  [\(.title)]"'
+        echo ""
+    fi
+
+    echo "── Run 'atlas-track issue H-XXX' for full detail on any issue ──"
+}

@@ -114,10 +114,10 @@ fn test_errors_before_warnings() {
 #[test]
 fn test_diagnostics_sorted_by_location() {
     let source = r#"
-        fn first() {}
-        fn second() {}
-        fn first() {}
-        fn second() {}
+        fn first() -> void {}
+        fn second() -> void {}
+        fn first() -> void {}
+        fn second() -> void {}
     "#;
 
     let mut diags = get_all_diagnostics(source);
@@ -178,7 +178,7 @@ fn test_sort_is_deterministic() {
 
 #[test]
 fn test_normalization_removes_absolute_paths() {
-    let source = "fn foo() {}";
+    let source = "fn foo() -> void {}";
 
     let mut diags = get_all_diagnostics(source);
 
@@ -200,7 +200,7 @@ fn test_normalization_removes_absolute_paths() {
 
 #[test]
 fn test_normalization_preserves_special_paths() {
-    let source = "fn foo() {}";
+    let source = "fn foo() -> void {}";
 
     let mut diags = get_all_diagnostics(source);
 
@@ -224,8 +224,8 @@ fn test_normalization_preserves_special_paths() {
 #[test]
 fn test_normalization_normalizes_related_locations() {
     let source = r#"
-        fn foo() {}
-        fn foo() {}
+        fn foo() -> void {}
+        fn foo() -> void {}
     "#;
 
     let mut diags = get_all_diagnostics(source);
@@ -258,8 +258,8 @@ fn test_normalization_normalizes_related_locations() {
 
 #[test]
 fn test_same_error_normalizes_to_same_output() {
-    let source1 = "fn foo() {}";
-    let source2 = "fn foo() {}";
+    let source1 = "fn foo() -> void {}";
+    let source2 = "fn foo() -> void {}";
 
     let mut diags1 = get_all_diagnostics(source1);
     let mut diags2 = get_all_diagnostics(source2);
@@ -308,8 +308,8 @@ fn test_same_error_normalizes_to_same_output() {
 #[test]
 fn test_multi_span_diagnostics() {
     let source = r#"
-        fn foo() {}
-        fn foo() {}
+        fn foo() -> void {}
+        fn foo() -> void {}
     "#;
 
     let diags = get_all_diagnostics(source);
@@ -338,7 +338,7 @@ fn test_diagnostic_ordering_across_files() {
     // Since we're testing with single source, we'll simulate multiple files
     // by creating diagnostics with different file names
 
-    let source = "fn foo() {}";
+    let source = "fn foo() -> void {}";
     let mut diags = get_all_diagnostics(source);
 
     if diags.len() >= 3 {
@@ -363,7 +363,7 @@ fn test_diagnostic_ordering_across_files() {
 
 #[test]
 fn test_json_output_is_deterministic() {
-    let source = "fn foo() {}";
+    let source = "fn foo() -> void {}";
 
     let diags = get_all_diagnostics(source);
 
@@ -410,8 +410,8 @@ fn typecheck_program(
 #[test]
 fn test_function_redeclaration_has_related_span() {
     let source = r#"
-        fn foo() {}
-        fn foo() {}
+        fn foo() -> void {}
+        fn foo() -> void {}
     "#;
 
     let (ast, parse_diags) = parse(source);
@@ -444,7 +444,7 @@ fn test_function_redeclaration_has_related_span() {
 #[test]
 fn test_parameter_redeclaration_has_related_span() {
     let source = r#"
-        fn foo(x: number, x: string) {}
+        fn foo(x: number, x: string) -> void {}
     "#;
 
     let (ast, parse_diags) = parse(source);
@@ -646,9 +646,9 @@ fn test_let_mut_does_not_emit_deprecation_warning() {
 #[test]
 fn test_related_span_points_to_correct_location() {
     let source = r#"
-        fn first() {}
-        fn second() {}
-        fn first() {}
+        fn first() -> void {}
+        fn second() -> void {}
+        fn first() -> void {}
     "#;
 
     let (ast, parse_diags) = parse(source);
@@ -698,8 +698,8 @@ fn test_multiple_redeclarations_each_have_related_span() {
 #[test]
 fn test_related_span_serializes_to_json() {
     let source = r#"
-        fn foo() {}
-        fn foo() {}
+        fn foo() -> void {}
+        fn foo() -> void {}
     "#;
 
     let (ast, _) = parse(source);
@@ -721,8 +721,8 @@ fn test_related_span_serializes_to_json() {
 #[test]
 fn test_related_span_renders_in_human_format() {
     let source = r#"
-        fn foo() {}
-        fn foo() {}
+        fn foo() -> void {}
+        fn foo() -> void {}
     "#;
 
     let (ast, _) = parse(source);
@@ -1222,7 +1222,7 @@ fn test_distinct_error_codes() {
 
 #[test]
 fn test_reserved_keyword_error_code() {
-    let (_, diags) = parse("fn let() {}");
+    let (_, diags) = parse("fn let() -> void {}");
     assert!(
         diags.iter().any(|diag| diag.code == "AT1005"),
         "Expected reserved keyword code AT1005, got: {:?}",

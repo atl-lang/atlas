@@ -1,0 +1,126 @@
+// hydra-v4/config.atlas
+// Port of: internal/config/config.go
+// Tests: struct nesting, typed fields, default construction, JSON round-trip
+
+struct BehaviorConfig {
+    max_restarts: number,
+    debounce_ms: number,
+    restart_delay_ms: number,
+    graceful_shutdown_ms: number,
+    restart_window_seconds: number
+}
+
+struct WatchConfig {
+    enabled: bool,
+    paths: string[],
+    extensions: string[]
+}
+
+struct InjectableToolsConfig {
+    enabled: bool,
+    tools: string[],
+    on_collision: string
+}
+
+struct RecorderConfig {
+    enabled: bool,
+    buffer_size: number,
+    export_on_crash: bool,
+    export_path: string
+}
+
+struct SecurityConfig {
+    redact_patterns: string[],
+    redact_replacement: string
+}
+
+struct ServerConfig {
+    command: string,
+    cwd: string,
+    behavior: BehaviorConfig,
+    watch: WatchConfig,
+    injectable_tools: InjectableToolsConfig,
+    recorder: RecorderConfig,
+    security: SecurityConfig
+}
+
+fn default_behavior() -> BehaviorConfig {
+    return BehaviorConfig {
+        max_restarts: 10,
+        debounce_ms: 500,
+        restart_delay_ms: 0,
+        graceful_shutdown_ms: 2000,
+        restart_window_seconds: 60
+    };
+}
+
+fn default_watch() -> WatchConfig {
+    return WatchConfig {
+        enabled: false,
+        paths: ["."],
+        extensions: [".py", ".js", ".ts", ".go"]
+    };
+}
+
+fn default_injectable() -> InjectableToolsConfig {
+    return InjectableToolsConfig {
+        enabled: true,
+        tools: ["hydra_restart", "hydra_logs", "hydra_status", "hydra_force_restart"],
+        on_collision: "error"
+    };
+}
+
+fn default_recorder() -> RecorderConfig {
+    return RecorderConfig {
+        enabled: false,
+        buffer_size: 50,
+        export_on_crash: true,
+        export_path: "/tmp/hydra-traffic.json"
+    };
+}
+
+fn default_security() -> SecurityConfig {
+    return SecurityConfig {
+        redact_patterns: ["sk-[A-Za-z0-9]{32,}", "Bearer [A-Za-z0-9._-]+", "ghp_[A-Za-z0-9]{36}"],
+        redact_replacement: "[REDACTED by Hydra]"
+    };
+}
+
+fn make_server_config(command: string, cwd: string) -> ServerConfig {
+    return ServerConfig {
+        command: command,
+        cwd: cwd,
+        behavior: default_behavior(),
+        watch: default_watch(),
+        injectable_tools: default_injectable(),
+        recorder: default_recorder(),
+        security: default_security()
+    };
+}
+
+fn config_to_json(cfg: ServerConfig) -> string {
+    let obj = hashMapNew();
+    let obj1 = hashMapPut(obj, "command", cfg.command);
+    let obj2 = hashMapPut(obj1, "cwd", cfg.cwd);
+    let obj3 = hashMapPut(obj2, "max_restarts", cfg.behavior.max_restarts);
+    let obj4 = hashMapPut(obj3, "watch_enabled", cfg.watch.enabled);
+    let obj5 = hashMapPut(obj4, "injectable_enabled", cfg.injectable_tools.enabled);
+    return toJSON(obj5);
+}
+
+// === Tests ===
+let cfg = make_server_config("node server.js", "/home/user/project");
+print("command: " + cfg.command);
+print("cwd: " + cfg.cwd);
+print("max_restarts: " + str(cfg.behavior.max_restarts));
+print("debounce_ms: " + str(cfg.behavior.debounce_ms));
+print("watch_enabled: " + str(cfg.watch.enabled));
+print("tools_count: " + str(len(cfg.injectable_tools.tools)));
+print("on_collision: " + cfg.injectable_tools.on_collision);
+print("recorder_enabled: " + str(cfg.recorder.enabled));
+print("buffer_size: " + str(cfg.recorder.buffer_size));
+print("redact_count: " + str(len(cfg.security.redact_patterns)));
+print("replacement: " + cfg.security.redact_replacement);
+
+let json_out = config_to_json(cfg);
+print("json_ok: " + str(len(json_out) > 0));
