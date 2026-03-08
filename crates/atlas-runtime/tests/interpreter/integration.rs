@@ -275,3 +275,6 @@ mod ownership_parity;
 
 #[path = "integration/ownership_traits.rs"]
 mod ownership_traits;
+
+#[path = "integration/arrays_methods.rs"]
+mod arrays_methods;

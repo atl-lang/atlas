@@ -1464,6 +1464,11 @@ impl<'a> TypeChecker<'a> {
             for (i, arg) in args.iter().enumerate() {
                 let arg_type = self.check_expr(arg);
                 if let Some(expected_type) = params.get(i) {
+                    // Unknown expected type means the method accepts any argument
+                    // (e.g. callback-based array methods: arr.map, arr.filter, etc.)
+                    if expected_type.normalized() == crate::typechecker::Type::Unknown {
+                        continue;
+                    }
                     if !self.is_assignable_with_traits(&arg_type, expected_type) {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
@@ -1647,6 +1652,10 @@ impl<'a> TypeChecker<'a> {
                         let arg_type = self.check_expr(arg);
                         for sig in &signatures {
                             if let Some(expected_type) = sig.arg_types.get(i) {
+                                // Unknown expected type means the method accepts any argument
+                                if expected_type.normalized() == crate::typechecker::Type::Unknown {
+                                    continue;
+                                }
                                 if !self.is_assignable_with_traits(&arg_type, expected_type) {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
@@ -1737,6 +1746,10 @@ impl<'a> TypeChecker<'a> {
                         for (i, arg) in args.iter().enumerate() {
                             let arg_type = self.check_expr(arg);
                             if let Some(expected_type) = param_types.get(i) {
+                                // Unknown expected type means the method accepts any argument
+                                if expected_type.normalized() == crate::typechecker::Type::Unknown {
+                                    continue;
+                                }
                                 if !self.is_assignable_with_traits(&arg_type, expected_type) {
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
@@ -1815,6 +1828,11 @@ impl<'a> TypeChecker<'a> {
                 for (i, arg) in args.iter().enumerate() {
                     let arg_type = self.check_expr(arg);
                     if let Some(expected_type) = method_sig.arg_types.get(i) {
+                        // Unknown expected type means the method accepts any argument
+                        // (e.g. callback-based array methods: arr.map, arr.filter, etc.)
+                        if expected_type.normalized() == crate::typechecker::Type::Unknown {
+                            continue;
+                        }
                         if !self.is_assignable_with_traits(&arg_type, expected_type) {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(

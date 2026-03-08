@@ -334,6 +334,14 @@ impl SymbolTable {
             },
         );
         table.define_builtin(
+            "arrayIsEmpty",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::Array(Box::new(Type::any_placeholder()))],
+                return_type: Box::new(Type::Bool),
+            },
+        );
+        table.define_builtin(
             "slice",
             Type::Function {
                 type_params: vec![],

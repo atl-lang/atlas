@@ -392,6 +392,13 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let arr = extract_array(&args[0], "arrayIncludes", span)?;
             Ok(Value::Bool(array::includes(&arr, &args[1])))
         });
+        m.insert("arrayIsEmpty", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arrayIsEmpty", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayIsEmpty", span)?;
+            Ok(Value::Bool(arr.is_empty()))
+        });
         m.insert("slice", |args, span, _, _| {
             if args.len() != 3 {
                 return Err(stdlib_arity_error("slice", 3, args.len(), span));
@@ -1817,6 +1824,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("arrayIndexOf", "array_index_of"),
             ("arrayLastIndexOf", "array_last_index_of"),
             ("arrayIncludes", "array_includes"),
+            ("arrayIsEmpty", "array_is_empty"),
             // JSON functions
             ("parseJSON", "parse_json"),
             ("toJSON", "to_json"),

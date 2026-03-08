@@ -100,18 +100,18 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         "includes" => "arrayIncludes",
         "indexOf" => "arrayIndexOf",
         "lastIndexOf" => "arrayLastIndexOf",
-        "find" => "arrayFind",
-        "findIndex" => "arrayFindIndex",
-        "some" => "arraySome",
-        "every" => "arrayEvery",
-        "forEach" => "arrayForEach",
+        "find" => "find",
+        "findIndex" => "findIndex",
+        "some" => "some",
+        "every" => "every",
+        "forEach" => "forEach",
         "map" => "map",
         "filter" => "filter",
         "reduce" => "reduce",
         "slice" => "slice",
         "concat" => "concat",
         "flat" | "flatten" => "flatten",
-        "flatMap" => "arrayFlatMap",
+        "flatMap" => "flatMap",
         "join" => "join",
         _ => return None,
     };
@@ -263,4 +263,33 @@ fn capitalize_first(s: &str) -> String {
             }
         })
         .collect()
+}
+
+/// Returns true if the resolved stdlib function name is a callback-based intrinsic.
+///
+/// These cannot be called via call_builtin (stdlib registry) — they must be dispatched
+/// via invoke_callee as Value::Builtin(name) so the interpreter/VM can execute the callback.
+pub fn is_callback_intrinsic(func_name: &str) -> bool {
+    matches!(
+        func_name,
+        "map"
+            | "filter"
+            | "reduce"
+            | "forEach"
+            | "find"
+            | "findIndex"
+            | "flatMap"
+            | "some"
+            | "every"
+            | "sort"
+            | "sortBy"
+            | "resultMap"
+            | "resultMapErr"
+            | "hashMapForEach"
+            | "hashMapMap"
+            | "hashMapFilter"
+            | "hashSetForEach"
+            | "hashSetMap"
+            | "hashSetFilter"
+    )
 }

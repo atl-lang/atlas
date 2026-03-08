@@ -659,6 +659,17 @@ impl Interpreter {
                 }
             }
 
+            // 4a. Callback-based intrinsics (map, filter, reduce, etc.) must go through
+            //     invoke_callee so the interpreter can execute the callback.
+            if crate::method_dispatch::is_callback_intrinsic(&func_name) {
+                return self.invoke_callee(
+                    Value::Builtin(func_name.into()),
+                    args,
+                    member.span,
+                    None,
+                );
+            }
+
             // 4. Call stdlib function
             let security =
                 self.current_security
