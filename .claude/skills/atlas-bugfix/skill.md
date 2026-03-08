@@ -81,7 +81,7 @@ All universal gates (session start, pt next, pt decisions, pt claim, pt fix, pt 
 - Run `pt decisions <component>` before any fix touching internal architecture
 - Discover a second bug mid-fix? `pt add` it immediately — 30 seconds now saves hours
 - Include in issue: file ref, workaround used, fix risk for next agent
-- Block tracking if this fix closes a phase: `pt phase-done B<N>`
+- Block tracking if this fix closes a phase: `pt phase-done B<N>-P<XX> "outcome"`
 
 ---
 

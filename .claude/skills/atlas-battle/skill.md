@@ -16,7 +16,7 @@ All universal gates apply without exception. Battle-specific reminders:
 - **Every failure found MUST be filed before moving to next test:**
   `pt add "Bug: X" P1 "exact .atlas file path, error code, workaround, fix risk"`
 - **Before architectural changes from findings:** `pt decisions <component>` (2 seconds)
-- **Block tracking if this is the final phase:** `pt phase-done B<N>` + `pt complete-block B<N> "47/47 pass, bugs filed H-XXX"`
+- **Block tracking if this is the final phase:** `pt phase-done B<N>-P<XX> "outcome"` + `pt complete-block B<N> "47/47 pass, bugs filed H-XXX"`
 - **Handoff:** include pass rate, domains tested, H-XXX filed, failure patterns
 
 **Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, interpreter+VM parity.

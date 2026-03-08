@@ -15,7 +15,7 @@ All universal gates apply without exception. Testing-specific reminders:
 
 - **Coverage gap found?** `pt add "Missing test coverage: X" P2 "what's untested, why it matters"` — immediately
 - **Before restructuring test domains:** `pt decisions infra` (test organization decisions live here)
-- **Block tracking:** `pt phase-done B<N>` if testing is part of a phase
+- **Block tracking:** `pt phase-done B<N>-P<XX> "outcome"` if testing is part of a phase
 - **Handoff:** include what tests were added, gaps found and filed, next action
 
 ## Two-Tier System — See CLAUDE.md for full rules
