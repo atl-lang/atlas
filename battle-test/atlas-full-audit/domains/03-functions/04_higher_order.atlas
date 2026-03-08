@@ -1,34 +1,34 @@
 // 04_higher_order.atlas
 // Tests: fn accepting fn param, fn returning fn (factory), map+filter+reduce pipeline.
 
-fn apply(f: (number) -> number, x: number) -> number {
+fn apply(borrow f: (number) -> number, borrow x: number) -> number {
     return f(x);
 }
 
-fn apply_twice(f: (number) -> number, x: number) -> number {
+fn apply_twice(borrow f: (number) -> number, borrow x: number) -> number {
     return f(f(x));
 }
 
-fn compose(f: (number) -> number, g: (number) -> number, x: number) -> number {
+fn compose(borrow f: (number) -> number, borrow g: (number) -> number, borrow x: number) -> number {
     return f(g(x));
 }
 
-fn make_adder(n: number) -> (number) -> number {
-    return fn(x: number) -> number {
+fn make_adder(borrow n: number) -> (number) -> number {
+    return fn(borrow x: number) -> number {
         return x + n;
     };
 }
 
-fn make_multiplier(n: number) -> (number) -> number {
-    return fn(x: number) -> number {
+fn make_multiplier(borrow n: number) -> (number) -> number {
+    return fn(borrow x: number) -> number {
         return x * n;
     };
 }
 
-fn pipeline(arr: number[], transform: (number) -> number, predicate: (number) -> bool) -> number {
+fn pipeline(borrow arr: number[], borrow transform: (number) -> number, borrow predicate: (number) -> bool) -> number {
     let filtered: number[] = filter(arr, predicate);
     let mapped: number[] = map(filtered, transform);
-    let total: number = reduce(mapped, fn(acc: number, x: number) -> number {
+    let total: number = reduce(mapped, fn(borrow acc: number, borrow x: number) -> number {
         return acc + x;
     }, 0);
     return total;
@@ -51,7 +51,7 @@ print("triple(9): " + str(triple(9)));
 
 // pipeline: filter evens from 1..10, then triple them, sum result
 let nums: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-let is_even: (number) -> bool = fn(x: number) -> bool { return x % 2 == 0; };
+let is_even: (number) -> bool = fn(borrow x: number) -> bool { return x % 2 == 0; };
 let result: number = pipeline(nums, triple, is_even);
 print("pipeline(triple, evens): " + str(result));
 

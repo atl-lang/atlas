@@ -1,19 +1,19 @@
 // 02_sequential_pipeline.atlas
 // Tests: chained async fns, each transforming the previous result, 3+ steps
 
-async fn step1(x: number) -> number {
+async fn step1(borrow x: number) -> number {
     return x + 10;
 }
 
-async fn step2(x: number) -> string {
+async fn step2(borrow x: number) -> string {
     return "val_" + str(x);
 }
 
-async fn step3(s: string) -> string {
+async fn step3(borrow s: string) -> string {
     return toUpperCase(s);
 }
 
-async fn step4(s: string) -> string {
+async fn step4(borrow s: string) -> string {
     return s + "!";
 }
 

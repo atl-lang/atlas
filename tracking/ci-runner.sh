@@ -116,28 +116,33 @@ if [[ "$PARITY_STATUS" == "pass" ]]; then
 fi
 
 # ── Check 5: battle tests ─────────────────────────────────────────────────────
-log "battle tests (battle-test/hydra-v2/)"
-BATTLE_DIR="$PROJECT_ROOT/battle-test/hydra-v2"
+# Active suites: hydra-v6 (latest hydra round) + atlas-full-audit (domain coverage)
+# Archived rounds (hydra-v2 through v5) live in battle-test/archive/ — not run by CI
 BATTLE_FAILED_FILES=""
-if [[ -d "$BATTLE_DIR" ]]; then
-  BATTLE_FILES=$(find "$BATTLE_DIR" -name "*.atlas" 2>/dev/null || true)
-  if [[ -n "$BATTLE_FILES" ]]; then
-    while IFS= read -r f; do
-      if ! atlas run "$f" >/dev/null 2>&1; then
-        BATTLE_STATUS="fail"
-        OVERALL_STATUS="fail"
-        BATTLE_FAILED_FILES="$BATTLE_FAILED_FILES $f"
-        fail "battle: $(basename "$f")"
-      fi
-    done <<< "$BATTLE_FILES"
-    if [[ "$BATTLE_STATUS" == "pass" ]]; then
-      pass "battle tests"
+for BATTLE_DIR in \
+  "$PROJECT_ROOT/battle-test/hydra-v6" \
+  "$PROJECT_ROOT/battle-test/atlas-full-audit"; do
+  log "battle tests ($(basename "$BATTLE_DIR")/)"
+  if [[ -d "$BATTLE_DIR" ]]; then
+    BATTLE_FILES=$(find "$BATTLE_DIR" -name "*.atlas" -o -name "*.atl" 2>/dev/null || true)
+    if [[ -n "$BATTLE_FILES" ]]; then
+      while IFS= read -r f; do
+        if ! atlas run "$f" >/dev/null 2>&1; then
+          BATTLE_STATUS="fail"
+          OVERALL_STATUS="fail"
+          BATTLE_FAILED_FILES="$BATTLE_FAILED_FILES $f"
+          fail "battle: $(basename "$BATTLE_DIR")/$(basename "$f")"
+        fi
+      done <<< "$BATTLE_FILES"
+    else
+      log "  No battle test files found — skipping"
     fi
   else
-    log "  No battle test files found — skipping"
+    log "  $(basename "$BATTLE_DIR")/ not found — skipping"
   fi
-else
-  log "  battle-test/hydra-v2/ not found — skipping"
+done
+if [[ "$BATTLE_STATUS" == "pass" ]]; then
+  pass "battle tests (hydra-v6 + atlas-full-audit)"
 fi
 
 # ── Check 6: corpus tests ─────────────────────────────────────────────────────

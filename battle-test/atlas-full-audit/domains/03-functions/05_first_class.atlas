@@ -6,24 +6,24 @@ struct Transformer {
     func: (number) -> number,
 }
 
-fn make_transformer(name: string, f: (number) -> number) -> Transformer {
+fn make_transformer(borrow name: string, borrow f: (number) -> number) -> Transformer {
     return Transformer { name: name, func: f };
 }
 
-fn run_transformer(t: Transformer, x: number) -> number {
+fn run_transformer(borrow t: Transformer, borrow x: number) -> number {
     return t.func(x);
 }
 
 fn get_doubler() -> (number) -> number {
-    return fn(x: number) -> number { return x * 2; };
+    return fn(borrow x: number) -> number { return x * 2; };
 }
 
 fn get_squarer() -> (number) -> number {
-    return fn(x: number) -> number { return x * x; };
+    return fn(borrow x: number) -> number { return x * x; };
 }
 
 fn get_negator() -> (number) -> number {
-    return fn(x: number) -> number { return -x; };
+    return fn(borrow x: number) -> number { return -x; };
 }
 
 // Fns stored in variables
@@ -39,7 +39,7 @@ print("negate(5): " + str(negate(5)));
 let fns: ((number) -> number)[] = [double, square, negate];
 let input: number = 6;
 let mut acc: number = 0;
-forEach(fns, fn(f: (number) -> number) -> void {
+forEach(fns, fn(borrow f: (number) -> number) -> void {
     let val: number = f(input);
     print("fn(" + str(input) + ") = " + str(val));
 });
@@ -53,7 +53,7 @@ print("transformer '" + t2.name + "' on 8: " + str(run_transformer(t2, 8)));
 
 // Accumulate results: apply each transformer to 10 and sum
 let transformers: Transformer[] = [t1, t2];
-let result: number = reduce(transformers, fn(acc: number, t: Transformer) -> number {
+let result: number = reduce(transformers, fn(borrow acc: number, borrow t: Transformer) -> number {
     return acc + t.func(10);
 }, 0);
 

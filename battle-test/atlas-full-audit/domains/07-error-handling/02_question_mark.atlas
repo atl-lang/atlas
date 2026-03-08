@@ -1,25 +1,25 @@
 // 02_question_mark.atlas
 // Tests: ? operator for early-return propagation through chained fallible functions
 
-fn validate(n: number) -> Result<number, string> {
+fn validate(borrow n: number) -> Result<number, string> {
     if n <= 0 {
         return Err("must be positive");
     }
     return Ok(n);
 }
 
-fn transform(n: number) -> Result<number, string> {
+fn transform(borrow n: number) -> Result<number, string> {
     if n > 1000 {
         return Err("too large");
     }
     return Ok(n * 2);
 }
 
-fn format_result(n: number) -> Result<string, string> {
+fn format_result(borrow n: number) -> Result<string, string> {
     return Ok("value=" + str(n));
 }
 
-fn pipeline(n: number) -> Result<string, string> {
+fn pipeline(borrow n: number) -> Result<string, string> {
     let v: number = validate(n)?;
     let t: number = transform(v)?;
     let s: string = format_result(t)?;

@@ -2,14 +2,14 @@
 // Tests: Result<T, E>, Ok/Err construction, match on Result,
 //        function returning Result — safe_div.
 
-fn safe_div(a: number, b: number) -> Result<number, string> {
+fn safe_div(borrow a: number, borrow b: number) -> Result<number, string> {
     if b == 0 {
         return Err("division by zero");
     }
     return Ok(a / b);
 }
 
-fn safe_sqrt(x: number) -> Result<number, string> {
+fn safe_sqrt(borrow x: number) -> Result<number, string> {
     if x < 0 {
         return Err("cannot take sqrt of negative: " + str(x));
     }
@@ -20,21 +20,21 @@ fn safe_sqrt(x: number) -> Result<number, string> {
     return Ok(i - 1);
 }
 
-fn result_to_string(r: Result<number, string>) -> string {
+fn result_to_string(borrow r: Result<number, string>) -> string {
     return match r {
         Ok(v) => "Ok(" + str(v) + ")",
         Err(e) => "Err(" + e + ")",
     };
 }
 
-fn result_or(r: Result<number, string>, default: number) -> number {
+fn result_or(borrow r: Result<number, string>, borrow default: number) -> number {
     return match r {
         Ok(v) => v,
         Err(_) => default,
     };
 }
 
-fn chain_ops(x: number, divisor: number) -> Result<number, string> {
+fn chain_ops(borrow x: number, borrow divisor: number) -> Result<number, string> {
     let sqrt_r: Result<number, string> = safe_sqrt(x);
     return match sqrt_r {
         Err(e) => Err(e),

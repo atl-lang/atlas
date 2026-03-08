@@ -5,14 +5,14 @@
 //           Must split into separate match or use if/else.
 // FRICTION: let x: string = match ... fails — must use let x = match ...
 
-fn parse_positive(n: number) -> Result<number, string> {
+fn parse_positive(borrow n: number) -> Result<number, string> {
     if n <= 0 {
         return Err("must be positive, got " + str(n));
     }
     return Ok(n);
 }
 
-fn double_positive(n: number) -> Result<number, string> {
+fn double_positive(borrow n: number) -> Result<number, string> {
     let r: Result<number, string> = parse_positive(n);
     // WORKAROUND: cannot use 'return' in match arm — use match + local var
     let ok = match r {

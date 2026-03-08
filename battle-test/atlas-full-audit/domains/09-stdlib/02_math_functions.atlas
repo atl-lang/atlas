@@ -33,7 +33,7 @@ let dist = unwrap(sqrt(3 * 3 + 4 * 4));
 print("distance 3-4-5: " + str(dist));
 
 // Clamped value — function renamed to avoid prelude 'clamp' conflict
-fn clamp_to_range(x: number, lo: number, hi: number) -> number {
+fn clamp_to_range(borrow x: number, borrow lo: number, borrow hi: number) -> number {
     return max(lo, min(hi, x));
 }
 print("clamped 150: " + str(clamp_to_range(150, 0, 100)));

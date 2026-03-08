@@ -2,19 +2,19 @@
 // Tests: anonymous fn stored in let, passed to map/filter,
 //        fn type annotation, filter + map pipeline.
 
-let double: (number) -> number = fn(x: number) -> number {
+let double: (number) -> number = fn(borrow x: number) -> number {
     return x * 2;
 };
 
-let square: (number) -> number = fn(x: number) -> number {
+let square: (number) -> number = fn(borrow x: number) -> number {
     return x * x;
 };
 
-let is_even: (number) -> bool = fn(x: number) -> bool {
+let is_even: (number) -> bool = fn(borrow x: number) -> bool {
     return x % 2 == 0;
 };
 
-let add_ten: (number) -> number = fn(x: number) -> number {
+let add_ten: (number) -> number = fn(borrow x: number) -> number {
     return x + 10;
 };
 
@@ -29,7 +29,7 @@ let evens: number[] = filter(nums, is_even);
 print("evens count: " + str(len(evens)));
 
 // inline anonymous fn in map
-let squared: number[] = map(nums, fn(x: number) -> number {
+let squared: number[] = map(nums, fn(borrow x: number) -> number {
     return x * x;
 });
 print("squared[0..2]: " + str(squared[0]) + ", " + str(squared[1]));
@@ -39,7 +39,7 @@ let even_doubled: number[] = map(filter(nums, is_even), double);
 print("even_doubled: " + str(len(even_doubled)) + " items");
 
 // reduce with inline anonymous fn
-let total: number = reduce(nums, fn(acc: number, x: number) -> number {
+let total: number = reduce(nums, fn(borrow acc: number, borrow x: number) -> number {
     return acc + x;
 }, 0);
 print("sum(1..10): " + str(total));
@@ -47,7 +47,7 @@ print("sum(1..10): " + str(total));
 // Final result: sum of (filter evens -> add_ten -> map)
 let result: number = reduce(
     map(filter(nums, is_even), add_ten),
-    fn(acc: number, x: number) -> number { return acc + x; },
+    fn(borrow acc: number, borrow x: number) -> number { return acc + x; },
     0
 );
 print(result);

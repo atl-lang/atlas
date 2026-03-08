@@ -14,7 +14,7 @@ struct Point {
     y: number,
 }
 
-fn user_label(u: User) -> string {
+fn user_label(borrow u: User) -> string {
     // WORKAROUND: cannot use if-as-expression; must use let mut + if
     let mut status: string = "inactive";
     if u.active {
@@ -23,7 +23,7 @@ fn user_label(u: User) -> string {
     return "#" + str(u.id) + " " + u.name + " (" + status + ")";
 }
 
-fn distance_sq(p: Point) -> number {
+fn distance_sq(borrow p: Point) -> number {
     return p.x * p.x + p.y * p.y;
 }
 

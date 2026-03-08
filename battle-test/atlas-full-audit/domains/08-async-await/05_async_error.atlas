@@ -2,7 +2,7 @@
 // Tests: async fn with error conditions, early return on error, Future type checks
 
 // Async fn that returns a Result — success path
-async fn safe_divide(a: number, b: number) -> Result<number, string> {
+async fn safe_divide(borrow a: number, borrow b: number) -> Result<number, string> {
     if b == 0 {
         return Err("division by zero");
     }
@@ -26,7 +26,7 @@ let div_err_out: string = match div_err {
 print(div_err_out);
 
 // Async fn with early return on condition
-async fn find_positive(n: number) -> number {
+async fn find_positive(borrow n: number) -> number {
     if n < 0 {
         return 0;
     }
