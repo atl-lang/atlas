@@ -38,11 +38,11 @@ fn test_borrow_param_does_not_consume_binding() {
     std::assert_eq!(result.unwrap(), "Number(3)");
 }
 
-/// An unannotated parameter must NOT consume the caller's binding.
+/// A `borrow` parameter must NOT consume the caller's binding.
 #[test]
 fn test_unannotated_param_does_not_consume_binding() {
     let src = r#"
-        fn take(data: array<number>) -> void { }
+        fn take(borrow data: array<number>) -> void { }
         let arr: array<number> = [1, 2, 3];
         take(arr);
         len(arr);
@@ -50,7 +50,7 @@ fn test_unannotated_param_does_not_consume_binding() {
     let result = run_interpreter(src);
     assert!(
         result.is_ok(),
-        "unannotated param should not consume binding, got: {:?}",
+        "borrow param should not consume binding, got: {:?}",
         result
     );
     std::assert_eq!(result.unwrap(), "Number(3)");
@@ -100,7 +100,7 @@ fn test_own_param_with_expression_arg_no_consume() {
 #[test]
 fn test_shared_param_rejects_plain_value_debug() {
     let src = r#"
-        fn register(shared handler: number[]) -> void { }
+        fn register(share handler: number[]) -> void { }
         let arr: number[] = [1, 2, 3];
         register(arr);
     "#;
@@ -123,7 +123,7 @@ fn test_shared_param_accepts_shared_value() {
 
     // Parse and register the function
     let src = r#"
-        fn register(shared handler: number[]) -> void { }
+        fn register(share handler: number[]) -> void { }
         register(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src);

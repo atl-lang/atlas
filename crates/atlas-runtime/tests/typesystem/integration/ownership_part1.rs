@@ -59,7 +59,7 @@ fn test_typechecker_warns_own_on_primitive() {
         .collect();
     assert!(
         !warnings.is_empty(),
-        "expected AT2010 warning for `own` on primitive, got: {diags:?}"
+        "expected AT2010 warning for `own` on primitive, borrow got: {diags:?}"
     );
 }
 
@@ -91,7 +91,7 @@ fn test_typechecker_accepts_borrow_annotation() {
 #[test]
 fn test_typechecker_stores_return_ownership() {
     use atlas_runtime::ast::OwnershipAnnotation;
-    let src = "fn allocate(_size: number) -> own number { return 0; }";
+    let src = "fn allocate(borrow _size: number) -> own number { return 0; }";
     let (diags, checker) = typecheck_with_checker(src);
     let errors: Vec<_> = diags
         .iter()
@@ -123,7 +123,7 @@ fn caller(borrow data: number[]) -> void { consumer(data); }
         .collect();
     assert!(
         !warnings.is_empty(),
-        "expected AT2012 warning for borrow-to-own, got: {diags:?}"
+        "expected AT2012 warning for borrow-to-own, borrow got: {diags:?}"
     );
 }
 
@@ -141,7 +141,7 @@ fn caller() -> void {
     let at2012: Vec<_> = diags.iter().filter(|d| d.code == "AT2012").collect();
     assert!(
         at2012.is_empty(),
-        "unexpected AT2012 for owned-value-to-own, got: {diags:?}"
+        "unexpected AT2012 for owned-value-to-own, borrow got: {diags:?}"
     );
 }
 
@@ -182,7 +182,7 @@ fn caller(borrow data: number[]) -> void { reader(data); }
 fn test_typechecker_non_shared_to_shared_error() {
     // Passing a plain (non-shared) value to a `shared` param should emit AT3028
     let src = r#"
-fn register(shared _handler: number[]) -> void { }
+fn register(share _handler: number[]) -> void { }
 fn caller() -> void {
     let arr: number[] = [1, 2, 3];
     register(arr);
@@ -192,7 +192,7 @@ fn caller() -> void {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3028").collect();
     assert!(
         !errors.is_empty(),
-        "expected AT3028 error for non-shared-to-shared, got: {diags:?}"
+        "expected AT3028 error for non-shared-to-shared, borrow got: {diags:?}"
     );
 }
 
@@ -212,8 +212,8 @@ fn test_trait_with_multiple_methods_no_diagnostics() {
     let diags = typecheck_source(
         "
         trait Comparable {
-            fn compare(self: Comparable, other: Comparable) -> number;
-            fn equals(self: Comparable, other: Comparable) -> bool;
+            fn compare(borrow self: Comparable, borrow other: Comparable) -> number;
+            fn equals(borrow self: Comparable, borrow other: Comparable) -> bool;
         }
     ",
     );
@@ -234,7 +234,7 @@ fn test_duplicate_trait_declaration_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3031").collect();
     assert!(
         !errors.is_empty(),
-        "Duplicate trait should produce AT3031, got: {diags:?}"
+        "Duplicate trait should produce AT3031, borrow got: {diags:?}"
     );
 }
 
@@ -244,7 +244,7 @@ fn test_redefining_builtin_trait_copy_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
     assert!(
         !errors.is_empty(),
-        "Redefining Copy should produce AT3030, got: {diags:?}"
+        "Redefining Copy should produce AT3030, borrow got: {diags:?}"
     );
 }
 
@@ -254,7 +254,7 @@ fn test_redefining_builtin_trait_move_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
     assert!(
         !errors.is_empty(),
-        "Redefining Move should produce AT3030, got: {diags:?}"
+        "Redefining Move should produce AT3030, borrow got: {diags:?}"
     );
 }
 
@@ -264,7 +264,7 @@ fn test_redefining_builtin_trait_drop_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
     assert!(
         !errors.is_empty(),
-        "Redefining Drop should produce AT3030, got: {diags:?}"
+        "Redefining Drop should produce AT3030, borrow got: {diags:?}"
     );
 }
 
@@ -274,7 +274,7 @@ fn test_redefining_builtin_trait_display_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
     assert!(
         !errors.is_empty(),
-        "Redefining Display should produce AT3030, got: {diags:?}"
+        "Redefining Display should produce AT3030, borrow got: {diags:?}"
     );
 }
 
@@ -284,7 +284,7 @@ fn test_redefining_builtin_trait_debug_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3030").collect();
     assert!(
         !errors.is_empty(),
-        "Redefining Debug should produce AT3030, got: {diags:?}"
+        "Redefining Debug should produce AT3030, borrow got: {diags:?}"
     );
 }
 
@@ -294,7 +294,7 @@ fn test_impl_unknown_trait_is_error() {
     let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
     assert!(
         !errors.is_empty(),
-        "impl unknown trait should produce AT3032, got: {diags:?}"
+        "impl unknown trait should produce AT3032, borrow got: {diags:?}"
     );
 }
 
@@ -309,6 +309,6 @@ fn test_impl_known_user_trait_no_error() {
     let trait_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3032").collect();
     assert!(
         trait_errors.is_empty(),
-        "impl known trait should not produce AT3032, got: {diags:?}"
+        "impl known trait should not produce AT3032, borrow got: {diags:?}"
     );
 }

@@ -535,7 +535,7 @@ fn test_compiler_emits_own_annotation() {
 #[test]
 fn test_compiler_emits_mixed_annotations() {
     use atlas_runtime::ast::OwnershipAnnotation;
-    let bc = compile("fn f(own a: number, borrow b: string, c: bool) -> void { }");
+    let bc = compile("fn f(own a: number, borrow b: string, borrow c: bool) -> void { }");
     let func = find_function_ref(&bc, "f");
     assert_eq!(func.param_ownership.len(), 3);
     assert_eq!(func.param_ownership[0], Some(OwnershipAnnotation::Own));
@@ -619,13 +619,13 @@ fn test_vm_own_consumes_local() {
     let result = vm_run_source(src);
     assert!(
         result.is_err(),
-        "Expected error after consuming arr via VM, got: {:?}",
+        "Expected error after consuming arr via VM, borrow got: {:?}",
         result
     );
     let msg = result.unwrap_err();
     assert!(
         msg.contains("use of moved value"),
-        "Error should mention 'use of moved value', got: {}",
+        "Error should mention 'use of moved value', borrow got: {}",
         msg
     );
 }
@@ -643,7 +643,7 @@ fn test_vm_borrow_does_not_consume_local() {
     let result = vm_run_source(src);
     assert!(
         result.is_ok(),
-        "borrow should not consume binding in VM, got: {:?}",
+        "borrow should not consume binding in VM, borrow got: {:?}",
         result
     );
     assert_eq!(result.unwrap(), "Some(Number(3))");
@@ -661,7 +661,7 @@ fn test_vm_own_literal_arg_no_consume() {
     let result = vm_run_source(src);
     assert!(
         result.is_ok(),
-        "literal arg to own param should not error in VM, got: {:?}",
+        "literal arg to own param should not error in VM, borrow got: {:?}",
         result
     );
     assert_eq!(result.unwrap(), "Some(Number(42))");
@@ -724,7 +724,7 @@ fn test_vm_shared_param_rejects_plain_value() {
     let result = vm_run_source(src);
     assert!(
         result.is_err(),
-        "Expected ownership violation error in VM, got: {:?}",
+        "Expected ownership violation error in VM, borrow got: {:?}",
         result
     );
     assert!(
@@ -763,7 +763,7 @@ fn test_vm_shared_param_accepts_shared_value() {
     let result = vm.run(&SecurityContext::allow_all());
     assert!(
         result.is_ok(),
-        "SharedValue passed to shared param should succeed in VM, got: {:?}",
+        "SharedValue passed to shared param should succeed in VM, borrow got: {:?}",
         result
     );
 }
@@ -819,9 +819,9 @@ fn test_vm_shared_identical_to_interpreter() {
 fn test_vm_trait_method_static_dispatch_number() {
     let result = run_vm(
         "
-        trait Describe { fn describe(self: Describe) -> string; }
+        trait Describe { fn describe(borrow self: Describe) -> string; }
         impl Describe for number {
-            fn describe(self: number) -> string { return str(self); }
+            fn describe(borrow self: number) -> string { return str(self); }
         }
         let x: number = 42;
         let s: string = x.describe();
@@ -835,9 +835,9 @@ fn test_vm_trait_method_static_dispatch_number() {
 fn test_vm_trait_method_static_dispatch_string() {
     let result = run_vm(
         r#"
-        trait Wrap { fn wrap(self: Wrap) -> string; }
+        trait Wrap { fn wrap(borrow self: Wrap) -> string; }
         impl Wrap for string {
-            fn wrap(self: string) -> string { return "[" + self + "]"; }
+            fn wrap(borrow self: string) -> string { return "[" + self + "]"; }
         }
         let s: string = "hello";
         let r: string = s.wrap();
@@ -852,12 +852,12 @@ fn test_vm_multiple_impl_methods_callable() {
     let result = run_vm(
         "
         trait Math {
-            fn double(self: Math) -> number;
-            fn triple(self: Math) -> number;
+            fn double(borrow self: Math) -> number;
+            fn triple(borrow self: Math) -> number;
         }
         impl Math for number {
-            fn double(self: number) -> number { return self * 2; }
-            fn triple(self: number) -> number { return self * 3; }
+            fn double(borrow self: number) -> number { return self * 2; }
+            fn triple(borrow self: number) -> number { return self * 3; }
         }
         let n: number = 5;
         let d: number = n.double();
@@ -874,12 +874,12 @@ fn test_vm_impl_for_different_types_no_collision() {
     // Both number and string implement Label — each should dispatch to its own impl
     let d_result = run_vm(
         "
-        trait Label { fn label(self: Label) -> string; }
+        trait Label { fn label(borrow self: Label) -> string; }
         impl Label for number {
-            fn label(self: number) -> string { return \"num:\" + str(self); }
+            fn label(borrow self: number) -> string { return \"num:\" + str(self); }
         }
         impl Label for string {
-            fn label(self: string) -> string { return \"str:\" + self; }
+            fn label(borrow self: string) -> string { return \"str:\" + self; }
         }
         let n: number = 7;
         let nr: string = n.label();
@@ -890,12 +890,12 @@ fn test_vm_impl_for_different_types_no_collision() {
 
     let s_result = run_vm(
         r#"
-        trait Label { fn label(self: Label) -> string; }
+        trait Label { fn label(borrow self: Label) -> string; }
         impl Label for number {
-            fn label(self: number) -> string { return "num:" + str(self); }
+            fn label(borrow self: number) -> string { return "num:" + str(self); }
         }
         impl Label for string {
-            fn label(self: string) -> string { return "str:" + self; }
+            fn label(borrow self: string) -> string { return "str:" + self; }
         }
         let s: string = "world";
         let sr: string = s.label();
@@ -909,9 +909,9 @@ fn test_vm_impl_for_different_types_no_collision() {
 fn test_vm_impl_method_return_bool() {
     let result = run_vm(
         "
-        trait Check { fn is_positive(self: Check) -> bool; }
+        trait Check { fn is_positive(borrow self: Check) -> bool; }
         impl Check for number {
-            fn is_positive(self: number) -> bool { return self > 0; }
+            fn is_positive(borrow self: number) -> bool { return self > 0; }
         }
         let n: number = 5;
         let r: bool = n.is_positive();
@@ -925,14 +925,14 @@ fn test_vm_impl_method_return_bool() {
 fn test_vm_trait_type_param_dispatch() {
     let result = run_vm(
         "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         struct Dog { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
         }
         impl Describable for Dog {
-            fn describe(self: Dog) -> string { return \"Dog: \" + self.name; }
+            fn describe(borrow self: Dog) -> string { return \"Dog: \" + self.name; }
         }
         fn show(item: Describable) -> string { return item.describe(); }
         let c = Cat { name: \"Whiskers\" };
@@ -949,10 +949,10 @@ fn test_vm_trait_type_param_dispatch() {
 fn test_vm_trait_type_return_dispatch() {
     let result = run_vm(
         "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
         }
         fn make_describable() -> Describable { return Cat { name: \"Default\" }; }
         let d = make_describable();
@@ -968,7 +968,7 @@ fn test_vm_trait_compiles_without_bytecode() {
     // The program just declares a trait and evaluates a number — no error expected
     let result = run_vm(
         "
-        trait Marker { fn mark(self: Marker) -> void; }
+        trait Marker { fn mark(borrow self: Marker) -> void; }
         let x: number = 42;
         x
     ",
@@ -982,7 +982,7 @@ fn test_vm_trait_default_method_inherited() {
     let result = run_vm(
         "
         trait Greetable {
-            fn greet(self: Greetable) -> string {
+            fn greet(borrow self: Greetable) -> string {
                 return \"Hello!\";
             }
         }
@@ -1009,9 +1009,9 @@ fn test_interp_trait_method_dispatch_number() {
     let atlas = Atlas::new();
     let result = atlas.eval(
         "
-        trait Describe { fn describe(self: Describe) -> string; }
+        trait Describe { fn describe(borrow self: Describe) -> string; }
         impl Describe for number {
-            fn describe(self: number) -> string { return str(self); }
+            fn describe(borrow self: number) -> string { return str(self); }
         }
         let x: number = 42;
         let s: string = x.describe();
@@ -1026,9 +1026,9 @@ fn test_interp_trait_method_dispatch_bool_return() {
     let atlas = Atlas::new();
     let result = atlas.eval(
         "
-        trait Check { fn is_positive(self: Check) -> bool; }
+        trait Check { fn is_positive(borrow self: Check) -> bool; }
         impl Check for number {
-            fn is_positive(self: number) -> bool { return self > 0; }
+            fn is_positive(borrow self: number) -> bool { return self > 0; }
         }
         let n: number = 5;
         let r: bool = n.is_positive();
@@ -1044,12 +1044,12 @@ fn test_interp_trait_method_multi_methods() {
     let result = atlas.eval(
         "
         trait Math {
-            fn double(self: Math) -> number;
-            fn triple(self: Math) -> number;
+            fn double(borrow self: Math) -> number;
+            fn triple(borrow self: Math) -> number;
         }
         impl Math for number {
-            fn double(self: number) -> number { return self * 2; }
-            fn triple(self: number) -> number { return self * 3; }
+            fn double(borrow self: number) -> number { return self * 2; }
+            fn triple(borrow self: number) -> number { return self * 3; }
         }
         let n: number = 5;
         let d: number = n.double();
@@ -1065,9 +1065,9 @@ fn test_interp_trait_method_multi_methods() {
 fn test_interp_vm_trait_dispatch_parity() {
     // VM path (via run_vm which uses the compiler pipeline)
     let source = "
-        trait Label { fn label(self: Label) -> string; }
+        trait Label { fn label(borrow self: Label) -> string; }
         impl Label for number {
-            fn label(self: number) -> string { return \"n:\" + str(self); }
+            fn label(borrow self: number) -> string { return \"n:\" + str(self); }
         }
         let x: number = 7;
         let s: string = x.label();
@@ -1087,19 +1087,19 @@ fn test_interp_vm_trait_dispatch_parity() {
 fn test_interp_vm_trait_default_override_parity() {
     let source = "
         trait Greetable {
-            fn greet(self: Greetable) -> string {
+            fn greet(borrow self: Greetable) -> string {
                 return \"Hello!\";
             }
         }
         struct Robot { name: string }
-        struct Human { name: string, age: number }
+        struct Human { name: string, borrow age: number }
         impl Greetable for Robot { }
         impl Greetable for Human {
-            fn greet(self: Human) -> string { return \"Hi, I'm \" + self.name; }
+            fn greet(borrow self: Human) -> string { return \"Hi, I'm \" + self.name; }
         }
         fn main() -> string {
             let r = Robot { name: \"Atlas\" };
-            let h = Human { name: \"Ada\", age: 36 };
+            let h = Human { name: \"Ada\", borrow age: 36 };
             let a: string = r.greet();
             let b: string = h.greet();
             return a + \"|\" + b;
@@ -1121,10 +1121,10 @@ fn test_parity_block03_scenario_a_vm() {
     // Multiple traits on same type
     let result = run_vm(
         "
-        trait Addable { fn add(self: Addable, n: number) -> number; }
-        trait Subtractable { fn sub(self: Subtractable, n: number) -> number; }
-        impl Addable for number { fn add(self: number, n: number) -> number { return self + n; } }
-        impl Subtractable for number { fn sub(self: number, n: number) -> number { return self - n; } }
+        trait Addable { fn add(borrow self: Addable, borrow n: number) -> number; }
+        trait Subtractable { fn sub(borrow self: Subtractable, borrow n: number) -> number; }
+        impl Addable for number { fn add(borrow self: number, borrow n: number) -> number { return self + n; } }
+        impl Subtractable for number { fn sub(borrow self: number, borrow n: number) -> number { return self - n; } }
         let x: number = 10;
         let a: number = x.add(5);
         let b: number = a.sub(3);
@@ -1139,9 +1139,9 @@ fn test_parity_block03_scenario_b_vm() {
     // Trait method returning bool, used in condition
     let result = run_vm(
         r#"
-        trait Comparable { fn greater_than(self: Comparable, other: number) -> bool; }
+        trait Comparable { fn greater_than(borrow self: Comparable, borrow other: number) -> bool; }
         impl Comparable for number {
-            fn greater_than(self: number, other: number) -> bool { return self > other; }
+            fn greater_than(borrow self: number, borrow other: number) -> bool { return self > other; }
         }
         let x: number = 10;
         let mut r: string = "no";
@@ -1157,9 +1157,9 @@ fn test_parity_block03_scenario_c_vm() {
     // Trait method calling stdlib function
     let result = run_vm(
         r#"
-        trait Formatted { fn fmt(self: Formatted) -> string; }
+        trait Formatted { fn fmt(borrow self: Formatted) -> string; }
         impl Formatted for number {
-            fn fmt(self: number) -> string { return "Value: " + str(self); }
+            fn fmt(borrow self: number) -> string { return "Value: " + str(self); }
         }
         let x: number = 42;
         let r: string = x.fmt();
@@ -1174,8 +1174,8 @@ fn test_parity_block03_scenario_d_vm() {
     // Chained trait method calls via intermediate variables
     let result = run_vm(
         "
-        trait Inc { fn inc(self: Inc) -> number; }
-        impl Inc for number { fn inc(self: number) -> number { return self + 1; } }
+        trait Inc { fn inc(borrow self: Inc) -> number; }
+        impl Inc for number { fn inc(borrow self: number) -> number { return self + 1; } }
         let x: number = 40;
         let y: number = x.inc();
         let z: number = y.inc();
@@ -1190,9 +1190,9 @@ fn test_parity_block03_scenario_e_vm() {
     // Trait method with multiple parameters
     let result = run_vm(
         "
-        trait Interpolator { fn interpolate(self: Interpolator, t: number, other: number) -> number; }
+        trait Interpolator { fn interpolate(borrow self: Interpolator, borrow t: number, borrow other: number) -> number; }
         impl Interpolator for number {
-            fn interpolate(self: number, t: number, other: number) -> number {
+            fn interpolate(borrow self: number, borrow t: number, borrow other: number) -> number {
                 return self + (other - self) * t;
             }
         }
@@ -1209,9 +1209,9 @@ fn test_parity_block03_scenario_f_vm() {
     // Trait method with conditional return paths (clamp)
     let result = run_vm(
         "
-        trait Clamp { fn clamp(self: Clamp, min: number, max: number) -> number; }
+        trait Clamp { fn clamp(borrow self: Clamp, borrow min: number, borrow max: number) -> number; }
         impl Clamp for number {
-            fn clamp(self: number, min: number, max: number) -> number {
+            fn clamp(borrow self: number, borrow min: number, borrow max: number) -> number {
                 if (self < min) { return min; }
                 if (self > max) { return max; }
                 return self;
@@ -1230,9 +1230,9 @@ fn test_parity_block03_scenario_g_vm() {
     // Impl method with local state (no leakage to caller)
     let result = run_vm(
         "
-        trait Counter { fn count_to(self: Counter, n: number) -> number; }
+        trait Counter { fn count_to(borrow self: Counter, borrow n: number) -> number; }
         impl Counter for number {
-            fn count_to(self: number, n: number) -> number {
+            fn count_to(borrow self: number, borrow n: number) -> number {
                 let mut total: number = 0;
                 let mut i: number = self;
                 while (i <= n) { total = total + i; i = i + 1; }
@@ -1252,9 +1252,9 @@ fn test_parity_block03_scenario_h_vm() {
     // String type impl
     let result = run_vm(
         r#"
-        trait Shouter { fn shout(self: Shouter) -> string; }
+        trait Shouter { fn shout(borrow self: Shouter) -> string; }
         impl Shouter for string {
-            fn shout(self: string) -> string { return self + "!!!"; }
+            fn shout(borrow self: string) -> string { return self + "!!!"; }
         }
         let s: string = "hello";
         let r: string = s.shout();
@@ -1269,8 +1269,8 @@ fn test_parity_block03_scenario_i_vm() {
     // Bool type impl
     let result = run_vm(
         "
-        trait Toggle { fn toggle(self: Toggle) -> bool; }
-        impl Toggle for bool { fn toggle(self: bool) -> bool { return !self; } }
+        trait Toggle { fn toggle(borrow self: Toggle) -> bool; }
+        impl Toggle for bool { fn toggle(borrow self: bool) -> bool { return !self; } }
         let b: bool = true;
         let r: bool = b.toggle();
         r
@@ -1284,8 +1284,8 @@ fn test_parity_block03_scenario_j_vm() {
     // Trait method returning array, index into result
     let result = run_vm(
         "
-        trait Pair { fn pair(self: Pair) -> number[]; }
-        impl Pair for number { fn pair(self: number) -> number[] { return [self, self * 2]; } }
+        trait Pair { fn pair(borrow self: Pair) -> number[]; }
+        impl Pair for number { fn pair(borrow self: number) -> number[] { return [self, self * 2]; } }
         let x: number = 7;
         let p: number[] = x.pair();
         let r: number = p[1];

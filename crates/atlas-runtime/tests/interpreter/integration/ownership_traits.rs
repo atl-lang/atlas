@@ -7,10 +7,10 @@ fn test_parity_block03_scenario_a_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Addable { fn add(self: Addable, n: number) -> number; }
-        trait Subtractable { fn sub(self: Subtractable, n: number) -> number; }
-        impl Addable for number { fn add(self: number, n: number) -> number { return self + n; } }
-        impl Subtractable for number { fn sub(self: number, n: number) -> number { return self - n; } }
+        trait Addable { fn add(borrow self: Addable, borrow n: number) -> number; }
+        trait Subtractable { fn sub(borrow self: Subtractable, borrow n: number) -> number; }
+        impl Addable for number { fn add(borrow self: number, borrow n: number) -> number { return self + n; } }
+        impl Subtractable for number { fn sub(borrow self: number, borrow n: number) -> number { return self - n; } }
         let x: number = 10;
         let a: number = x.add(5);
         let b: number = a.sub(3);
@@ -28,9 +28,9 @@ fn test_parity_block03_scenario_b_interpreter() {
     let result = atlas
         .eval(
             r#"
-        trait Comparable { fn greater_than(self: Comparable, other: number) -> bool; }
+        trait Comparable { fn greater_than(borrow self: Comparable, borrow other: number) -> bool; }
         impl Comparable for number {
-            fn greater_than(self: number, other: number) -> bool { return self > other; }
+            fn greater_than(borrow self: number, borrow other: number) -> bool { return self > other; }
         }
         let x: number = 10;
         let mut r: string = "no";
@@ -49,9 +49,9 @@ fn test_parity_block03_scenario_c_interpreter() {
     let result = atlas
         .eval(
             r#"
-        trait Formatted { fn fmt(self: Formatted) -> string; }
+        trait Formatted { fn fmt(borrow self: Formatted) -> string; }
         impl Formatted for number {
-            fn fmt(self: number) -> string { return "Value: " + str(self); }
+            fn fmt(borrow self: number) -> string { return "Value: " + str(self); }
         }
         let x: number = 42;
         let r: string = x.fmt();
@@ -69,8 +69,8 @@ fn test_parity_block03_scenario_d_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Inc { fn inc(self: Inc) -> number; }
-        impl Inc for number { fn inc(self: number) -> number { return self + 1; } }
+        trait Inc { fn inc(borrow self: Inc) -> number; }
+        impl Inc for number { fn inc(borrow self: number) -> number { return self + 1; } }
         let x: number = 40;
         let y: number = x.inc();
         let z: number = y.inc();
@@ -88,9 +88,9 @@ fn test_parity_block03_scenario_e_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Interpolator { fn interpolate(self: Interpolator, t: number, other: number) -> number; }
+        trait Interpolator { fn interpolate(borrow self: Interpolator, borrow t: number, borrow other: number) -> number; }
         impl Interpolator for number {
-            fn interpolate(self: number, t: number, other: number) -> number {
+            fn interpolate(borrow self: number, borrow t: number, borrow other: number) -> number {
                 return self + (other - self) * t;
             }
         }
@@ -110,9 +110,9 @@ fn test_parity_block03_scenario_f_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Clamp { fn clamp(self: Clamp, min: number, max: number) -> number; }
+        trait Clamp { fn clamp(borrow self: Clamp, borrow min: number, borrow max: number) -> number; }
         impl Clamp for number {
-            fn clamp(self: number, min: number, max: number) -> number {
+            fn clamp(borrow self: number, borrow min: number, borrow max: number) -> number {
                 if (self < min) { return min; }
                 if (self > max) { return max; }
                 return self;
@@ -134,9 +134,9 @@ fn test_parity_block03_scenario_g_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Counter { fn count_to(self: Counter, n: number) -> number; }
+        trait Counter { fn count_to(borrow self: Counter, borrow n: number) -> number; }
         impl Counter for number {
-            fn count_to(self: number, n: number) -> number {
+            fn count_to(borrow self: number, borrow n: number) -> number {
                 let mut total: number = 0;
                 let mut i: number = self;
                 while (i <= n) { total = total + i; i = i + 1; }
@@ -159,9 +159,9 @@ fn test_parity_block03_scenario_h_interpreter() {
     let result = atlas
         .eval(
             r#"
-        trait Shouter { fn shout(self: Shouter) -> string; }
+        trait Shouter { fn shout(borrow self: Shouter) -> string; }
         impl Shouter for string {
-            fn shout(self: string) -> string { return self + "!!!"; }
+            fn shout(borrow self: string) -> string { return self + "!!!"; }
         }
         let s: string = "hello";
         let r: string = s.shout();
@@ -179,8 +179,8 @@ fn test_parity_block03_scenario_i_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Toggle { fn toggle(self: Toggle) -> bool; }
-        impl Toggle for bool { fn toggle(self: bool) -> bool { return !self; } }
+        trait Toggle { fn toggle(borrow self: Toggle) -> bool; }
+        impl Toggle for bool { fn toggle(borrow self: bool) -> bool { return !self; } }
         let b: bool = true;
         let r: bool = b.toggle();
         r
@@ -197,8 +197,8 @@ fn test_parity_block03_scenario_j_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Pair { fn pair(self: Pair) -> number[]; }
-        impl Pair for number { fn pair(self: number) -> number[] { return [self, self * 2]; } }
+        trait Pair { fn pair(borrow self: Pair) -> number[]; }
+        impl Pair for number { fn pair(borrow self: number) -> number[] { return [self, self * 2]; } }
         let x: number = 7;
         let p: number[] = x.pair();
         let r: number = p[1];

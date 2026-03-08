@@ -6,12 +6,12 @@ use super::*;
 fn test_parse_impl_with_multiple_methods() {
     let src = "
         trait Shape {
-            fn area(self: Shape) -> number;
-            fn perimeter(self: Shape) -> number;
+            fn area(borrow self: Shape) -> number;
+            fn perimeter(borrow self: Shape) -> number;
         }
         impl Shape for Circle {
-            fn area(self: Circle) -> number { return 0.0; }
-            fn perimeter(self: Circle) -> number { return 0.0; }
+            fn area(borrow self: Circle) -> number { return 0.0; }
+            fn perimeter(borrow self: Circle) -> number { return 0.0; }
         }
     ";
     let (prog, diags) = parse_source(src);
@@ -28,9 +28,9 @@ fn test_parse_impl_with_multiple_methods() {
 #[test]
 fn test_parse_impl_generic_trait() {
     let src = "
-        trait Container<T> { fn size(self: Container<T>) -> number; }
+        trait Container<T> { fn size(borrow self: Container<T>) -> number; }
         impl Container<number> for NumberList {
-            fn size(self: NumberList) -> number { return 0; }
+            fn size(borrow self: NumberList) -> number { return 0; }
         }
     ";
     let (prog, diags) = parse_source(src);
@@ -46,7 +46,7 @@ fn test_parse_impl_generic_trait() {
 
 #[test]
 fn test_parse_impl_requires_for_keyword() {
-    let src = "impl Display number { fn display(self: number) -> string { return \"\"; } }";
+    let src = "impl Display number { fn display(borrow self: number) -> string { return \"\"; } }";
     let (_, diags) = parse_source(src);
     let errors: Vec<_> = diags
         .iter()
@@ -160,7 +160,7 @@ fn test_parse_type_param_multiple_trait_bounds() {
 
 #[test]
 fn test_parse_multiple_type_params_with_bounds() {
-    let src = "fn pair<T: Display, U: Display>(a: T, b: U) -> string { return \"\"; }";
+    let src = "fn pair<T: Display, U: Display>(a: T, borrow b: U) -> string { return \"\"; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -246,7 +246,7 @@ fn test_parse_three_trait_bounds() {
 
 #[test]
 fn test_parse_mixed_bounded_and_unbounded_type_params() {
-    let src = "fn mixed<T: Copy, U>(a: T, b: U) -> void { }";
+    let src = "fn mixed<T: Copy, U>(a: T, borrow b: U) -> void { }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {

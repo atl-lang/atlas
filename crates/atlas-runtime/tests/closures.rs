@@ -1903,7 +1903,7 @@ fn test_shared_param_anon_fn_typechecks_without_error() {
     // `shared` annotation parses and typechecks; runtime requires shared<T> value (not tested here)
     typecheck_ok(
         r#"
-let f = fn(shared x: number) -> number { return 0; };
+let f = fn(share x: number) -> number { return 0; };
 "#,
     );
 }
@@ -1912,8 +1912,8 @@ let f = fn(shared x: number) -> number { return 0; };
 fn test_shared_param_typechecks_without_error() {
     typecheck_ok(
         r#"
-fn outer(shared x: number) -> number {
-    let f = fn(shared y: number) -> number { return 0; };
+fn outer(share x: number) -> number {
+    let f = fn(share y: number) -> number { return 0; };
     return 0;
 }
 "#,

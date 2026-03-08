@@ -47,7 +47,7 @@ fn test_parity_borrow_param_caller_retains_value() {
 fn test_parity_shared_param_rejects_plain_value() {
     assert_ownership_parity_err(
         r#"
-        fn register(shared handler: array<number>) -> void { }
+        fn register(share handler: array<number>) -> void { }
         let arr: array<number> = [1, 2, 3];
         register(arr);
         "#,
@@ -61,7 +61,7 @@ fn test_parity_shared_param_rejects_plain_value() {
 fn test_parity_mixed_annotations_own_borrow_none() {
     assert_ownership_parity(
         r#"
-        fn process(own a: array<number>, borrow b: array<number>, c: number) -> number {
+        fn process(own a: array<number>, borrow b: array<number>, borrow c: number) -> number {
             len(a) + len(b) + c;
         }
         process([1, 2], [3, 4, 5], 10);
@@ -177,7 +177,7 @@ fn test_parity_own_then_second_access_errors() {
 fn test_parity_own_recursive_function() {
     assert_ownership_parity(
         r#"
-        fn sum(borrow data: array<number>, i: number) -> number {
+        fn sum(borrow data: array<number>, borrow i: number) -> number {
             if i >= len(data) { 0; } else { data[i] + sum(data, i + 1); }
         }
         let arr: array<number> = [1, 2, 3, 4, 5];
@@ -284,7 +284,7 @@ fn test_parity_error_message_identical_own_violation() {
 #[cfg(debug_assertions)]
 fn test_parity_error_message_identical_shared_violation() {
     let src = r#"
-        fn register(shared handler: array<number>) -> void { }
+        fn register(share handler: array<number>) -> void { }
         let arr: array<number> = [1, 2, 3];
         register(arr);
     "#;
@@ -321,9 +321,9 @@ fn test_parity_trait_method_string_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Wrap { fn wrap(self: Wrap) -> string; }
+        trait Wrap { fn wrap(borrow self: Wrap) -> string; }
         impl Wrap for string {
-            fn wrap(self: string) -> string { return \"[\" + self + \"]\"; }
+            fn wrap(borrow self: string) -> string { return \"[\" + self + \"]\"; }
         }
         let s: string = \"hello\";
         let r: string = s.wrap();
@@ -340,9 +340,9 @@ fn test_parity_trait_method_number_compute() {
     let result = atlas
         .eval(
             "
-        trait Double { fn double(self: Double) -> number; }
+        trait Double { fn double(borrow self: Double) -> number; }
         impl Double for number {
-            fn double(self: number) -> number { return self * 2; }
+            fn double(borrow self: number) -> number { return self * 2; }
         }
         let n: number = 21;
         let r: number = n.double();
@@ -360,12 +360,12 @@ fn test_parity_multiple_impl_types_no_collision() {
     let result_n = atlas
         .eval(
             "
-        trait Tag { fn tag(self: Tag) -> string; }
+        trait Tag { fn tag(borrow self: Tag) -> string; }
         impl Tag for number {
-            fn tag(self: number) -> string { return \"num\"; }
+            fn tag(borrow self: number) -> string { return \"num\"; }
         }
         impl Tag for string {
-            fn tag(self: string) -> string { return \"str\"; }
+            fn tag(borrow self: string) -> string { return \"str\"; }
         }
         let n: number = 1;
         let r: string = n.tag();
@@ -378,12 +378,12 @@ fn test_parity_multiple_impl_types_no_collision() {
     let result_s = atlas
         .eval(
             "
-        trait Tag { fn tag(self: Tag) -> string; }
+        trait Tag { fn tag(borrow self: Tag) -> string; }
         impl Tag for number {
-            fn tag(self: number) -> string { return \"num\"; }
+            fn tag(borrow self: number) -> string { return \"num\"; }
         }
         impl Tag for string {
-            fn tag(self: string) -> string { return \"str\"; }
+            fn tag(borrow self: string) -> string { return \"str\"; }
         }
         let s: string = \"hi\";
         let r: string = s.tag();
@@ -401,9 +401,9 @@ fn test_parity_trait_method_self_arg_is_receiver() {
     let result = atlas
         .eval(
             "
-        trait Identity { fn identity(self: Identity) -> number; }
+        trait Identity { fn identity(borrow self: Identity) -> number; }
         impl Identity for number {
-            fn identity(self: number) -> number { return self; }
+            fn identity(borrow self: number) -> number { return self; }
         }
         let n: number = 99;
         let r: number = n.identity();
@@ -420,16 +420,16 @@ fn test_parity_trait_type_param_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         struct Dog { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
         }
         impl Describable for Dog {
-            fn describe(self: Dog) -> string { return \"Dog: \" + self.name; }
+            fn describe(borrow self: Dog) -> string { return \"Dog: \" + self.name; }
         }
-        fn show(item: Describable) -> string { return item.describe(); }
+        fn show(borrow item: Describable) -> string { return item.describe(); }
         let c = Cat { name: \"Whiskers\" };
         let d = Dog { name: \"Rex\" };
         let a = show(c);
@@ -447,10 +447,10 @@ fn test_parity_trait_type_return_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
         }
         fn make_describable() -> Describable { return Cat { name: \"Default\" }; }
         let d = make_describable();

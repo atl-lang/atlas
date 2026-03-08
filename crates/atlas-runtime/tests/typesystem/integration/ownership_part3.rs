@@ -4,8 +4,8 @@ fn test_stdlib_method_not_shadowed_by_trait() {
     // Array push() is stdlib — a trait method named push doesn't conflict
     let diags = typecheck_source(
         "
-        trait Pushable { fn push(self: Pushable, x: number) -> void; }
-        impl Pushable for number { fn push(self: number, x: number) -> void { } }
+        trait Pushable { fn push(borrow self: Pushable, borrow x: number) -> void; }
+        impl Pushable for number { fn push(borrow self: number, borrow x: number) -> void { } }
         let arr: number[] = [1, 2, 3];
         arr = arr.push(4);
     ",
@@ -22,9 +22,9 @@ fn test_stdlib_method_not_shadowed_by_trait() {
 fn test_trait_method_bool_return_resolves() {
     let diags = typecheck_source(
         "
-        trait Check { fn is_valid(self: Check) -> bool; }
+        trait Check { fn is_valid(borrow self: Check) -> bool; }
         impl Check for number {
-            fn is_valid(self: number) -> bool { return self > 0; }
+            fn is_valid(borrow self: number) -> bool { return self > 0; }
         }
         let x: number = 5;
         let ok: bool = x.is_valid();
@@ -154,7 +154,7 @@ fn test_impl_copy_for_type_registers_in_trait_registry() {
 fn test_copy_bound_satisfied_by_number() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(x: T) -> T { return x; }
+        fn safe_copy<T: Copy>(borrow x: T) -> T { return x; }
         let n: number = safe_copy(42);
     ",
     );
@@ -169,7 +169,7 @@ fn test_copy_bound_satisfied_by_number() {
 fn test_copy_bound_satisfied_by_string() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(x: T) -> T { return x; }
+        fn safe_copy<T: Copy>(borrow x: T) -> T { return x; }
         let s: string = safe_copy(\"hello\");
     ",
     );
@@ -184,7 +184,7 @@ fn test_copy_bound_satisfied_by_string() {
 fn test_copy_bound_satisfied_by_bool() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(x: T) -> T { return x; }
+        fn safe_copy<T: Copy>(borrow x: T) -> T { return x; }
         let b: bool = safe_copy(true);
     ",
     );
@@ -199,7 +199,7 @@ fn test_copy_bound_satisfied_by_bool() {
 fn test_copy_bound_rejects_hashmap() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(x: T) -> T { return x; }
+        fn safe_copy<T: Copy>(borrow x: T) -> T { return x; }
         let m: HashMap = hash_map_new();
         let v = safe_copy(m);
     ",
@@ -216,7 +216,7 @@ fn test_unbounded_type_param_no_error() {
     // Unbounded type params must still work
     let diags = typecheck_source(
         "
-        fn identity<T>(x: T) -> T { return x; }
+        fn identity<T>(borrow x: T) -> T { return x; }
         let n: number = identity(42);
         let s: string = identity(\"hello\");
     ",
@@ -232,11 +232,11 @@ fn test_unbounded_type_param_no_error() {
 fn test_user_trait_bound_satisfied() {
     let diags = typecheck_source(
         "
-        trait Printable { fn print_self(self: Printable) -> void; }
+        trait Printable { fn print_self(borrow self: Printable) -> void; }
         impl Printable for number {
-            fn print_self(self: number) -> void { }
+            fn print_self(borrow self: number) -> void { }
         }
-        fn log_it<T: Printable>(x: T) -> void { }
+        fn log_it<T: Printable>(borrow x: T) -> void { }
         log_it(42);
     ",
     );
@@ -251,11 +251,11 @@ fn test_user_trait_bound_satisfied() {
 fn test_user_trait_bound_not_satisfied_is_error() {
     let diags = typecheck_source(
         "
-        trait Printable { fn print_self(self: Printable) -> void; }
+        trait Printable { fn print_self(borrow self: Printable) -> void; }
         impl Printable for number {
-            fn print_self(self: number) -> void { }
+            fn print_self(borrow self: number) -> void { }
         }
-        fn log_it<T: Printable>(x: T) -> void { }
+        fn log_it<T: Printable>(borrow x: T) -> void { }
         log_it(\"hello\");
     ",
     );
@@ -270,9 +270,9 @@ fn test_user_trait_bound_not_satisfied_is_error() {
 fn test_multiple_bounds_all_satisfied() {
     let diags = typecheck_source(
         "
-        trait Printable { fn print_self(self: Printable) -> void; }
-        impl Printable for number { fn print_self(self: number) -> void { } }
-        fn process<T: Copy + Printable>(x: T) -> void { }
+        trait Printable { fn print_self(borrow self: Printable) -> void; }
+        impl Printable for number { fn print_self(borrow self: number) -> void { } }
+        fn process<T: Copy + Printable>(borrow x: T) -> void { }
         process(42);
     ",
     );
@@ -287,8 +287,8 @@ fn test_multiple_bounds_all_satisfied() {
 fn test_multiple_bounds_one_missing_is_error() {
     let diags = typecheck_source(
         "
-        trait Printable { fn print_self(self: Printable) -> void; }
-        fn process<T: Copy + Printable>(x: T) -> void { }
+        trait Printable { fn print_self(borrow self: Printable) -> void; }
+        fn process<T: Copy + Printable>(borrow x: T) -> void { }
         process(42);
     ",
     );
@@ -304,10 +304,10 @@ fn test_multiple_bounds_one_missing_is_error() {
 fn test_trait_type_as_param_is_allowed() {
     let diags = typecheck_source(
         "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return self.name; }
+            fn describe(borrow self: Cat) -> string { return self.name; }
         }
         fn show(own item: Describable) -> string { return item.describe(); }
         let c = Cat { name: \"Whiskers\" };
@@ -324,10 +324,10 @@ fn test_trait_type_as_param_is_allowed() {
 fn test_trait_type_as_return_is_allowed() {
     let diags = typecheck_source(
         "
-        trait Describable { fn describe(self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable) -> string; }
         struct Cat { name: string }
         impl Describable for Cat {
-            fn describe(self: Cat) -> string { return self.name; }
+            fn describe(borrow self: Cat) -> string { return self.name; }
         }
         fn make_describable() -> Describable {
             return Cat { name: \"Default\" };

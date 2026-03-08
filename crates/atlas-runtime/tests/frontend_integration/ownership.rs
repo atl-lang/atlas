@@ -47,7 +47,7 @@ fn test_ownership_keywords_in_function_signature() {
 fn test_ownership_keywords_not_identifiers() {
     use atlas_runtime::token::TokenKind;
 
-    for src in ["own", "borrow", "shared"] {
+    for src in ["own", "borrow", "share"] {
         let mut lexer = Lexer::new(src);
         let (tokens, _) = lexer.tokenize();
         assert_ne!(
@@ -100,26 +100,38 @@ fn test_parse_borrow_param() {
 
 #[test]
 fn test_parse_shared_param() {
-    let params = parse_fn_params("fn share(shared data: number) -> number { return data; }");
+    let params = parse_fn_params("fn display(share data: number) -> number { return data; }");
     assert_eq!(params.len(), 1);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Share));
 }
 
 #[test]
-fn test_parse_unannotated_param_unchanged() {
-    let params = parse_fn_params("fn f(x: number) -> number { return x; }");
-    assert_eq!(params.len(), 1);
-    assert_eq!(params[0].ownership, None);
+fn test_parse_unannotated_param_is_error() {
+    // Since B11-P02 (D-034), unannotated params are a parse error (AT1007).
+    let src = "fn f(x: number) -> number { return x; }";
+    let mut lexer = Lexer::new(src);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (_, diags) = parser.parse();
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error && d.code == "AT1007")
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "expected AT1007 error for unannotated param, got: {diags:?}"
+    );
 }
 
 #[test]
 fn test_parse_mixed_ownership_params() {
-    let params =
-        parse_fn_params("fn mixed(own a: number, borrow b: string, c: bool) -> bool { return c; }");
+    let params = parse_fn_params(
+        "fn mixed(own a: number, borrow b: string, borrow c: bool) -> bool { return c; }",
+    );
     assert_eq!(params.len(), 3);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Own));
     assert_eq!(params[1].ownership, Some(OwnershipAnnotation::Borrow));
-    assert_eq!(params[2].ownership, None);
+    assert_eq!(params[2].ownership, Some(OwnershipAnnotation::Borrow));
 }
 
 #[test]
@@ -166,7 +178,7 @@ fn parse_fn_decl(src: &str) -> FunctionDecl {
 
 #[test]
 fn test_parse_own_return_type() {
-    let decl = parse_fn_decl("fn allocate(size: number) -> own number { return 0; }");
+    let decl = parse_fn_decl("fn allocate(borrow size: number) -> own number { return 0; }");
     assert_eq!(decl.return_ownership, Some(OwnershipAnnotation::Own));
     assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }

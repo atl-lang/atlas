@@ -9,8 +9,8 @@ use super::super::*;
 fn test_at3035_method_call_trait_not_implemented() {
     let diags = typecheck_source(
         "
-        trait Flippable { fn flip(self: Flippable) -> bool; }
-        impl Flippable for bool { fn flip(self: bool) -> bool { return true; } }
+        trait Flippable { fn flip(borrow self: Flippable) -> bool; }
+        impl Flippable for bool { fn flip(borrow self: bool) -> bool { return true; } }
         let n: number = 42;
         n.flip();
     ",
@@ -26,8 +26,8 @@ fn test_at3035_method_call_trait_not_implemented() {
 fn test_at3035_not_fired_when_impl_exists() {
     let diags = typecheck_source(
         "
-        trait Flippable { fn flip(self: Flippable) -> bool; }
-        impl Flippable for bool { fn flip(self: bool) -> bool { return true; } }
+        trait Flippable { fn flip(borrow self: Flippable) -> bool; }
+        impl Flippable for bool { fn flip(borrow self: bool) -> bool { return true; } }
         let b: bool = true;
         b.flip();
     ",
@@ -43,8 +43,8 @@ fn test_at3035_not_fired_when_impl_exists() {
 fn test_record_literal_infers_structural_type() {
     let diags = typecheck_source(
         r#"
-        let r = record { a: 1, b: "ok" };
-        let _s: { a: number, b: string } = r;
+        let r = record { a: 1, borrow b: "ok" };
+        let _s: { a: number, borrow b: string } = r;
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);

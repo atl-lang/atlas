@@ -133,10 +133,10 @@ fn test_h076_supertrait_parses() {
     assert_parses(
         r#"
         trait A {
-            fn foo(self: A) -> number;
+            fn foo(borrow self: A) -> number;
         }
         trait B: A {
-            fn bar(self: B) -> string;
+            fn bar(borrow self: B) -> string;
         }
         "#,
     );
@@ -146,9 +146,9 @@ fn test_h076_supertrait_parses() {
 fn test_h076_multiple_supertraits_parse() {
     assert_parses(
         r#"
-        trait A { fn a(self: A) -> number; }
-        trait B { fn b(self: B) -> string; }
-        trait C: A + B { fn c(self: C) -> bool; }
+        trait A { fn a(borrow self: A) -> number; }
+        trait B { fn b(borrow self: B) -> string; }
+        trait C: A + B { fn c(borrow self: C) -> bool; }
         "#,
     );
 }
@@ -158,10 +158,10 @@ fn test_h076_impl_of_subtrait_requires_supertrait_methods() {
     let errors = typecheck_errors(
         r#"
         struct MyType { x: number }
-        trait A { fn foo(self: A) -> number; }
-        trait B: A { fn bar(self: B) -> string; }
+        trait A { fn foo(borrow self: A) -> number; }
+        trait B: A { fn bar(borrow self: B) -> string; }
         impl B for MyType {
-            fn bar(self: MyType) -> string { "hello"; }
+            fn bar(borrow self: MyType) -> string { "hello"; }
         }
         "#,
     );
@@ -176,19 +176,19 @@ fn test_h076_impl_with_all_methods_is_ok() {
     let errors = typecheck_errors(
         r#"
         struct MyType { x: number }
-        trait A { fn foo(self: A) -> number; }
+        trait A { fn foo(borrow self: A) -> number; }
         trait B: A {
-            fn bar(self: B) -> string;
+            fn bar(borrow self: B) -> string;
         }
         impl B for MyType {
-            fn foo(self: MyType) -> number { 42; }
-            fn bar(self: MyType) -> string { "hello"; }
+            fn foo(borrow self: MyType) -> number { 42; }
+            fn bar(borrow self: MyType) -> string { "hello"; }
         }
         "#,
     );
     assert!(
         errors.is_empty(),
-        "Expected no errors when all methods satisfied, got: {:?}",
+        "Expected no errors when all methods satisfied, borrow got: {:?}",
         errors
     );
 }
@@ -198,7 +198,7 @@ fn test_h076_undefined_supertrait_is_error() {
     let errors = typecheck_errors(
         r#"
         trait B: NonExistent {
-            fn bar(self: B) -> string;
+            fn bar(borrow self: B) -> string;
         }
         "#,
     );
@@ -217,8 +217,8 @@ fn test_h077_generic_trait_parses() {
     assert_parses(
         r#"
         trait Container<T> {
-            fn get(self: Container<T>) -> T;
-            fn set(self: Container<T>, value: T) -> Container<T>;
+            fn get(borrow self: Container<T>) -> T;
+            fn set(borrow self: Container<T>, borrow value: T) -> Container<T>;
         }
         "#,
     );
@@ -230,16 +230,16 @@ fn test_h077_impl_generic_trait_with_concrete_type_is_ok() {
         r#"
         struct Box { value: number }
         trait Container<T> {
-            fn get(self: Container<T>) -> T;
+            fn get(borrow self: Container<T>) -> T;
         }
         impl Container<number> for Box {
-            fn get(self: Box) -> number { self.value; }
+            fn get(borrow self: Box) -> number { self.value; }
         }
         "#,
     );
     assert!(
         errors.is_empty(),
-        "Expected no errors for valid generic trait impl, got: {:?}",
+        "Expected no errors for valid generic trait impl, borrow got: {:?}",
         errors
     );
 }
@@ -250,10 +250,10 @@ fn test_h077_impl_generic_trait_wrong_return_type_is_error() {
         r#"
         struct Box { value: number }
         trait Container<T> {
-            fn get(self: Container<T>) -> T;
+            fn get(borrow self: Container<T>) -> T;
         }
         impl Container<number> for Box {
-            fn get(self: Box) -> string { "wrong"; }
+            fn get(borrow self: Box) -> string { "wrong"; }
         }
         "#,
     );
@@ -269,16 +269,16 @@ fn test_h077_generic_trait_with_string_type_arg_is_ok() {
         r#"
         struct StrBox { value: string }
         trait Container<T> {
-            fn get(self: Container<T>) -> T;
+            fn get(borrow self: Container<T>) -> T;
         }
         impl Container<string> for StrBox {
-            fn get(self: StrBox) -> string { self.value; }
+            fn get(borrow self: StrBox) -> string { self.value; }
         }
         "#,
     );
     assert!(
         errors.is_empty(),
-        "Expected no errors for Container<string> impl, got: {:?}",
+        "Expected no errors for Container<string> impl, borrow got: {:?}",
         errors
     );
 }
