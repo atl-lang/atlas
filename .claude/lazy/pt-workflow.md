@@ -31,6 +31,7 @@ pt claim H-XXX                                        # Lock it — signals in-p
 # ... implement, verify ...
 pt fix H-XXX "Root cause (specific)" "Fix (specific)" # Close immediately after verification
 git commit -m "fix(...): description"
+pt note S-XXX "fixed H-XXX: <one-line root cause + fix>"  # ALWAYS — keeps session data alive
 # NOW move to next issue
 ```
 **Close immediately, never batch at session end.** Batched closures lose root cause specificity.
@@ -75,6 +76,7 @@ pt blocks                           # All blocks + status
 pt block B<N>                       # Detail + acceptance criteria
 pt phase-start B<N>-P<XX>           # Mark phase in_progress (optional but good hygiene)
 pt phase-done B<N>-P<XX> "outcome"  # After EVERY phase commit — auto-updates block count
+pt note S-XXX "P<XX> done: <what shipped>"  # ALWAYS after phase-done — session data survives if pt done never runs
 pt block B<N>                       # After final phase — verify ALL AC met + see full phase list
 pt complete-block B<N> "summary"    # Mark block complete
 pt phase-skip B<N>-P<XX> "reason"   # If a phase is intentionally skipped

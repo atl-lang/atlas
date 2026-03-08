@@ -123,9 +123,11 @@ pt claim H-XXX
 # 5. WHEN ISSUE RESOLVED — immediately, never batch
 pt fix H-XXX "Root cause (specific)" "Fix (specific)"
 git commit -m "fix(...): description"
+pt note S-XXX "fixed H-XXX: <one-line root cause + fix>"   # ← ALWAYS. Keeps session alive even if pt done never runs.
 
 # 6. AFTER EACH PHASE COMMIT
 pt phase-done B<N>-P<XX> "outcome summary"   # marks named phase done, auto-updates count
+pt note S-XXX "P<XX> done: <what shipped, test count>"     # ← ALWAYS. Same reason.
 pt block B<N>                                 # final phase only — verify AC met + phases shown
 pt complete-block B<N> "what shipped, bugs filed"
 

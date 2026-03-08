@@ -156,6 +156,14 @@ pt decision D-001  # Read specific decision in full
 pt add-decision "Title" component "Rule" "Rationale"
 ```
 
+### Mid-session progress (call after EVERY phase-done and issue fix)
+```bash
+pt note S-001 "P05 done: AT3053 use-after-own, 8 tests"
+pt note S-001 "fixed H-123: null deref in parser — added bounds check"
+```
+Appends a timestamped note to the session summary. Sessions with no `pt done` still have
+meaningful data. This is the insurance policy against interrupted sessions.
+
 ### End of session
 ```bash
 pt done S-001 success "What was done" "What comes next"
