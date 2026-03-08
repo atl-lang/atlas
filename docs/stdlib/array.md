@@ -159,6 +159,21 @@ Finds last index of element. Returns None if not found.
 
 **Returns:** `Option<number>` - Index of last match or None
 
+## arrayIsEmpty
+
+```atlas
+fn arrayIsEmpty(arr: T[]) -> bool
+```
+
+Returns true if the array has no elements.
+
+**Parameters:**
+- `arr` - Array to check
+
+**Returns:** `bool` - True if length is zero, false otherwise
+
+**Method form:** `arr.isEmpty()`
+
 ## arrayIncludes
 
 ```atlas
