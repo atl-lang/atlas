@@ -50,12 +50,14 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    - "Scaffold Block N" alone: present and wait
    - "Scaffold Block N, go": proceed immediately
 4. **Create block branch:** `git checkout -b block/{name}`
-5. **Register phases in DB — MANDATORY before any phase work:**
+5. **Register block + phases in DB — MANDATORY before any phase work:**
    ```bash
+   pt block-add B<N> "Block Title" "Acceptance criteria"    # CREATE BLOCK FIRST
    pt phase-add B<N> "Phase title" "optional description"   # one per phase
    # repeat for every phase in the kickoff doc
    pt phases B<N>   # verify the full list before continuing
    ```
+   `block-add` must come before `phase-add` on new blocks — ensures a named block row exists in `pt blocks`.
    Phases must exist in pt before `pt phase-done` can be called on them.
    Never start a phase without its DB record.
 6. Scaffold all phase files

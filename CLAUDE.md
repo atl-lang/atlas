@@ -129,6 +129,15 @@ pt phase-done B<N>-P<XX> "outcome summary"   # marks named phase done, auto-upda
 pt block B<N>                                 # final phase only — verify AC met + phases shown
 pt complete-block B<N> "what shipped, bugs filed"
 
+# WHEN SCAFFOLDING A NEW BLOCK — block-add FIRST, then phase-add:
+pt block-add B<N> "Block Title" "Acceptance criteria"    # creates block row
+pt phase-add B<N> "Phase title" "desc"                   # repeat per phase
+# Other block/phase management:
+# pt block-delete B<N>                 — delete block + all phases
+# pt block-update B<N> field value     — update: name|ac|blockers|notes|status
+# pt phase-delete B<N>-P<XX>           — delete a phase
+# pt phase-update B<N>-P<XX> field val — update: title|description|status
+
 # 7. AFTER ANY COMMIT TOUCHING SOURCE — fire atlas-doc-patch agent (Haiku, ~1-2 min)
 
 # 8. SESSION END — always last

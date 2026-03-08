@@ -69,12 +69,36 @@ pt deprecate D-001 "reason"             # Mark deprecated
 
 ---
 
-## Blocks
+## Blocks & Phases
 
 ```bash
-pt blocks          # All blocks with name + progress
-pt block 8         # Block detail + acceptance criteria (also: block B8)
+# Blocks
+pt blocks                                    # All blocks with name + progress
+pt block B8                                  # Detail + AC + inline phase list
+pt block-add B11 "Title" ["AC"]              # Create new block explicitly
+pt block-delete B11                          # Delete block + all its phases
+pt block-update B11 name "New Title"         # Update: name|ac|blockers|notes|status
+pt complete-block B8 "summary"               # Mark block complete
+
+# Phases
+pt phases B8                                 # List all phases for a block
+pt phase B8-P01                              # Phase detail
+pt phase-add B8 "title" ["desc"]             # Add phase (auto-creates block if missing)
+pt phase-start B8-P01                        # Mark in_progress
+pt phase-done B8-P01 "outcome"               # Mark done (auto-updates block count)
+pt phase-skip B8-P01 "reason"               # Skip a phase
+pt phase-delete B8-P01                       # Delete a phase
+pt phase-update B8-P01 title "New title"     # Update: title|description|status
 ```
+
+**Scaffolding a new block — correct order:**
+```bash
+pt block-add B11 "Block Title" "AC description"   # Create block first
+pt phase-add B11 "Phase 1 title" "desc"           # Then add phases
+pt phase-add B11 "Phase 2 title" "desc"
+pt phases B11                                      # Verify list
+```
+Never use `phase-add` alone to scaffold a new block — `block-add` first ensures a named block row exists.
 
 ---
 

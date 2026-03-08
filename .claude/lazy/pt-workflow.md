@@ -81,10 +81,20 @@ pt phase-skip B<N>-P<XX> "reason"   # If a phase is intentionally skipped
 ```
 Skipping `pt phase-done` = next agent re-derives block state from scratch. Don't.
 
-**When scaffolding a new block**, add phases to the DB first:
+**When scaffolding a new block**, always create the block first, then phases:
 ```bash
+pt block-add B<N> "Block Title" "Acceptance criteria"    # CREATE BLOCK FIRST
 pt phase-add B<N> "Phase title" "optional description"   # repeat for each phase
 pt phases B<N>                                            # verify the list
+```
+
+**Block + Phase management commands:**
+```bash
+pt block-add B11 "Title" ["AC"]          # Create block (required before phase-add on new blocks)
+pt block-delete B11                      # Delete block + all its phases
+pt block-update B11 name "New Title"     # Update: name|ac|blockers|notes|status
+pt phase-delete B8-P01                   # Delete a phase (recounts block totals)
+pt phase-update B8-P01 title "New"       # Update: title|description|status
 ```
 
 ### Handoff File (MANDATORY before pt done)
