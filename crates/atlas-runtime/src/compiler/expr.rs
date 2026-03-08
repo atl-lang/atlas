@@ -485,7 +485,7 @@ impl Compiler {
             self.bytecode.emit(Opcode::Call, member.span);
             self.bytecode.emit_u8(arg_count as u8);
 
-            // CoW write-back: for mutating array methods, update the receiver variable.
+            // CoW write-back: for mutating collection methods, update the receiver variable.
             // Only possible when the target is a simple identifier.
             if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
                 let var_name = id.name.as_str();
@@ -495,6 +495,22 @@ impl Compiler {
                 } else if crate::method_dispatch::is_array_mutating_pair(&func_name) {
                     // Stack: [extracted, new_array]
                     // Dup → get index 1 (new_array) → set receiver → pop → get index 0 (extracted)
+                    self.bytecode.emit(Opcode::Dup, member.span);
+                    let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
+                    self.bytecode.emit(Opcode::Constant, member.span);
+                    self.bytecode.emit_u16(idx1);
+                    self.bytecode.emit(Opcode::GetIndex, member.span);
+                    self.emit_force_writeback(var_name, member.span);
+                    self.bytecode.emit(Opcode::Pop, member.span);
+                    let idx0 = self.bytecode.add_constant(crate::value::Value::Number(0.0));
+                    self.bytecode.emit(Opcode::Constant, member.span);
+                    self.bytecode.emit_u16(idx0);
+                    self.bytecode.emit(Opcode::GetIndex, member.span);
+                } else if crate::method_dispatch::is_collection_mutating_simple(&func_name) {
+                    // Stack: new_collection — write back to receiver, value stays on stack
+                    self.emit_force_writeback(var_name, member.span);
+                } else if crate::method_dispatch::is_collection_mutating_pair(&func_name) {
+                    // Stack: [extracted, new_collection] — same pattern as array pair
                     self.bytecode.emit(Opcode::Dup, member.span);
                     let idx1 = self.bytecode.add_constant(crate::value::Value::Number(1.0));
                     self.bytecode.emit(Opcode::Constant, member.span);
