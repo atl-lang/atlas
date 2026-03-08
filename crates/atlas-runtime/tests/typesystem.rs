@@ -132,3 +132,5 @@ mod generics;
 mod inference;
 #[path = "typesystem/integration/mod.rs"]
 mod integration;
+#[path = "typesystem/ownership_own.rs"]
+mod ownership_own;

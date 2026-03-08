@@ -111,6 +111,22 @@ impl<'a> TypeChecker<'a> {
                 // Track that this symbol was used
                 self.used_symbols.insert(id.name.clone());
 
+                // AT3053: use-after-own — variable was moved into an `own` call
+                if self.moved_vars.contains(&id.name) {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            error_codes::USE_AFTER_OWN,
+                            format!(
+                                "use of moved value `{}`: value was moved into an `own` parameter",
+                                id.name
+                            ),
+                            id.span,
+                        )
+                        .with_label("value moved here")
+                        .with_help("value moved into callee, cannot be used after `own` transfer"),
+                    );
+                }
+
                 if id.name == "None" {
                     return Type::Generic {
                         name: "Option".to_string(),
@@ -584,6 +600,9 @@ impl<'a> TypeChecker<'a> {
                                 )
                                 .with_help("pass an owned value instead of a `borrow` parameter"),
                             );
+                        } else {
+                            // Mark variable as moved — any subsequent use triggers AT3053
+                            self.moved_vars.insert(id.name.clone());
                         }
                     }
                 }

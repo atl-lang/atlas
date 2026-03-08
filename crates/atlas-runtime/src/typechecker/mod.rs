@@ -350,6 +350,9 @@ pub struct TypeChecker<'a> {
     /// Maps param name -> ownership annotation. Used by call-site checks to detect
     /// whether an argument is a `borrow` parameter of the enclosing function.
     pub(super) current_fn_param_ownerships: HashMap<String, Option<OwnershipAnnotation>>,
+    /// Variables that have been moved via an `own` parameter call in the current function scope.
+    /// Any subsequent use of a name in this set triggers AT3053 (use-after-own).
+    pub(super) moved_vars: HashSet<String>,
     /// Registry of all known traits (built-in + user-defined).
     pub trait_registry: TraitRegistry,
     /// Registry of all impl blocks keyed by (type_name, trait_name).
@@ -441,6 +444,7 @@ impl<'a> TypeChecker<'a> {
             alias_resolution_stack: Vec::new(),
             fn_ownership_registry: HashMap::new(),
             current_fn_param_ownerships: HashMap::new(),
+            moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
             active_type_params: Vec::new(),
@@ -1222,6 +1226,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_moved_vars = std::mem::take(&mut self.moved_vars);
 
         self.current_function_return_type = Some(self.resolve_type_ref(&method.return_type));
         self.current_function_info = Some((method.name.name.clone(), method.span));
@@ -1261,6 +1266,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.moved_vars = prev_moved_vars;
     }
 
     fn check_function(&mut self, func: &FunctionDecl) {
@@ -1306,6 +1312,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_moved_vars = std::mem::take(&mut self.moved_vars);
         let prev_type_params = std::mem::take(&mut self.active_type_params);
         let prev_in_async = self.in_async_context;
         // Entering a sync fn clears the async context; entering an async fn sets it
@@ -1526,6 +1533,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.moved_vars = prev_moved_vars;
         self.in_async_context = prev_in_async;
         self.current_fn_allow_unused = prev_allow_unused;
     }
