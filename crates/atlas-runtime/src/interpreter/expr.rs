@@ -667,6 +667,10 @@ impl Interpreter {
                     | crate::method_dispatch::TypeTag::ProcessNs
                     | crate::method_dispatch::TypeTag::DateTimeNs
                     | crate::method_dispatch::TypeTag::PathNs
+                    | crate::method_dispatch::TypeTag::HttpNs
+                    | crate::method_dispatch::TypeTag::NetNs
+                    | crate::method_dispatch::TypeTag::CryptoNs
+                    | crate::method_dispatch::TypeTag::RegexNs
             );
             let mut args = if is_ns {
                 Vec::new()

@@ -33,6 +33,14 @@ pub enum TypeTag {
     DateTimeNs,
     /// Static namespace: Path.join(), Path.dirname(), Path.basename(), etc.
     PathNs,
+    /// Static namespace: Http.get(), Http.post(), Http.put(), etc.
+    HttpNs,
+    /// Static namespace: Net.tcpConnect(), Net.tcpListen(), etc.
+    NetNs,
+    /// Static namespace: Crypto.sha256(), Crypto.sha512(), etc.
+    CryptoNs,
+    /// Static namespace: Regex.test(), Regex.match(), Regex.replace(), etc.
+    RegexNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -56,6 +64,10 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::ProcessNs => resolve_process_ns_method(method_name),
         TypeTag::DateTimeNs => resolve_datetime_ns_method(method_name),
         TypeTag::PathNs => resolve_path_ns_method(method_name),
+        TypeTag::HttpNs => resolve_http_ns_method(method_name),
+        TypeTag::NetNs => resolve_net_ns_method(method_name),
+        TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
+        TypeTag::RegexNs => resolve_regex_ns_method(method_name),
     }
 }
 
@@ -63,7 +75,17 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
 pub fn is_static_namespace(name: &str) -> bool {
     matches!(
         name,
-        "Json" | "Math" | "Env" | "File" | "Process" | "DateTime" | "Path"
+        "Json"
+            | "Math"
+            | "Env"
+            | "File"
+            | "Process"
+            | "DateTime"
+            | "Path"
+            | "Http"
+            | "Net"
+            | "Crypto"
+            | "Regex"
     )
 }
 
@@ -77,6 +99,10 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "Process" => Some(TypeTag::ProcessNs),
         "DateTime" => Some(TypeTag::DateTimeNs),
         "Path" => Some(TypeTag::PathNs),
+        "Http" => Some(TypeTag::HttpNs),
+        "Net" => Some(TypeTag::NetNs),
+        "Crypto" => Some(TypeTag::CryptoNs),
+        "Regex" => Some(TypeTag::RegexNs),
         _ => None,
     }
 }
@@ -368,6 +394,66 @@ fn resolve_path_ns_method(method_name: &str) -> Option<String> {
         "cwd" => "pathCwd",
         "tempdir" => "pathTempdir",
         "separator" => "pathSeparator",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Http.method() → stdlib function name.
+fn resolve_http_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "get" => "httpRequestGet",
+        "post" => "httpRequestPost",
+        "put" => "httpRequestPut",
+        "delete" => "httpRequestDelete",
+        "patch" => "httpRequestPatch",
+        "request" => "httpRequest",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Net.method() → stdlib function name.
+fn resolve_net_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "tcpConnect" => "tcpConnect",
+        "tcpListen" => "tcpListen",
+        "tcpWrite" => "tcpWrite",
+        "tcpRead" => "tcpRead",
+        "tcpClose" => "tcpClose",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Crypto.method() → stdlib function name.
+fn resolve_crypto_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "sha256" => "sha256",
+        "sha512" => "sha512",
+        "aesEncrypt" => "aesGcmEncrypt",
+        "aesDecrypt" => "aesGcmDecrypt",
+        "generateKey" => "aesGcmGenerateKey",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Regex.method() → stdlib function name.
+/// Note: Regex.new() returns Result<Regex>. Methods like test/isMatch/find take the compiled Regex.
+/// Regex.test(r, s) and Regex.isMatch(r, s) both map to regexIsMatch (compiled Regex, string).
+/// Regex.escape(s) maps to regexEscape (string pattern only, no Regex arg).
+fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "new" => "regexNew",
+        "test" | "isMatch" => "regexIsMatch",
+        "find" => "regexFind",
+        "findAll" => "regexFindAll",
+        "replace" => "regexReplace",
+        "replaceAll" => "regexReplaceAll",
+        "split" => "regexSplit",
+        "captures" => "regexCaptures",
+        "escape" => "regexEscape",
         _ => return None,
     };
     Some(func_name.to_string())

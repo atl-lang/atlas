@@ -395,5 +395,123 @@ fn test_path_exists_false() {
 }
 
 // ============================================================================
-// End B10-P07/P08 tests
+// B10-P09: Static namespaces Http, Net, Crypto, Regex — PascalCase.method()
+// Both interpreter and VM parity tested throughout.
+// ============================================================================
+
+// --- Regex.new() / Regex.test() / Regex.isMatch() / Regex.find() / Regex.replace() ---
+
+#[test]
+fn test_regex_new() {
+    // Regex.new(pattern) returns Result<Regex>
+    let src = r#"let r = Regex.new("[0-9]+"); isOk(r);"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_test_true() {
+    // unwrap() the Result<Regex> before passing to Regex.test
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.test(r, "hello 42 world");"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_test_false() {
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.test(r, "no digits here");"#;
+    assert_eval_bool(src, false);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_is_match() {
+    // isMatch maps to regexIsMatch (compiled Regex + string)
+    let src = r#"let r = unwrap(Regex.new("^hello")); Regex.isMatch(r, "hello world");"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_is_match_false() {
+    let src = r#"let r = unwrap(Regex.new("^world")); Regex.isMatch(r, "hello world");"#;
+    assert_eval_bool(src, false);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_find() {
+    // find() returns Option<string>
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); isSome(Regex.find(r, "foo 42 bar"));"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_find_none() {
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); isNone(Regex.find(r, "no digits"));"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_replace() {
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.replace(r, "foo 42 bar", "NUM");"#;
+    assert_eval_string(src, "foo NUM bar");
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_replace_all() {
+    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.replaceAll(r, "1 and 2 and 3", "N");"#;
+    assert_eval_string(src, "N and N and N");
+    assert_parity(src);
+}
+
+#[test]
+fn test_regex_escape() {
+    // escape() makes special regex chars literal
+    let src = r#"let escaped = Regex.escape("hello.world"); escaped != "";"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+// --- Crypto.sha256() / Crypto.sha512() ---
+
+#[test]
+fn test_crypto_sha256() {
+    // sha256("hello") returns a hex string of length 64
+    let src = r#"
+        let h = Crypto.sha256("hello");
+        len(h) == 64;
+    "#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_crypto_sha256_deterministic() {
+    // Same input = same hash
+    let src = r#"
+        let h1 = Crypto.sha256("atlas");
+        let h2 = Crypto.sha256("atlas");
+        h1 == h2;
+    "#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_crypto_sha512() {
+    // sha512 returns 128-char hex string
+    let src = r#"
+        let h = Crypto.sha512("hello");
+        len(h) == 128;
+    "#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+// ============================================================================
+// End B10-P07/P08/P09 tests
 // ============================================================================
