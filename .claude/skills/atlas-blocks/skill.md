@@ -53,12 +53,22 @@ Lead directs — does not execute. See `gates/session-protection.md`.
 5. **Register block + phases in DB — MANDATORY before any phase work:**
    ```bash
    pt block-add B<N> "Block Title" "Acceptance criteria"    # CREATE BLOCK FIRST
-   pt phase-add B<N> "Phase title" "optional description"   # one per phase
-   # repeat for every phase in the kickoff doc
-   pt phases B<N>   # verify the full list before continuing
+   pt phase-add B<N> "Phase title"                          # one per phase, repeat for each
+   pt phases B<N>                                           # verify the full list
    ```
-   `block-add` must come before `phase-add` on new blocks — ensures a named block row exists in `pt blocks`.
-   Phases must exist in pt before `pt phase-done` can be called on them.
+   Then populate structured fields on each phase — this is what gives future agents rich context:
+   ```bash
+   pt phase-update B<N>-P01 deps "none OR prior phase IDs"
+   pt phase-update B<N>-P01 files "file1.rs, file2.rs (what to create/update)"
+   pt phase-update B<N>-P01 do "what to implement — specific, actionable"
+   pt phase-update B<N>-P01 dont "what NOT to do — guard rails for cold-start agents"
+   pt phase-update B<N>-P01 verify "cargo check -p atlas-runtime  # exact command"
+   pt phase-update B<N>-P01 ac "specific deliverables that must be true when done"
+   pt phase-update B<N>-P01 refs "D-XXX, docs/language/foo.md"
+   ```
+   All 7 fields are optional but DO/DONT/VERIFY/AC are strongly recommended — they prevent
+   a cold-start agent from misinterpreting scope, running banned commands, or reversing intent.
+   `block-add` must come before `phase-add` — ensures named block row exists in `pt blocks`.
    Never start a phase without its DB record.
 6. Scaffold all phase files
 7. Run `pt blocks` to verify block + phase count
