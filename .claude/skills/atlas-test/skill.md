@@ -9,52 +9,20 @@ description: Atlas testing workflow. Use when writing tests, adding coverage, in
 
 ---
 
-## AI Continuity — Non-Negotiable (100% AI-maintained project)
+## pt Gates — See CLAUDE.md "Mandatory pt Gates"
 
-The user is architect only. You own all implementation, tracking, and continuity.
+All universal gates apply without exception. Testing-specific reminders:
 
-**Never narrate — act or file. These are the only two options:**
-- ❌ "The next agent should add tests for X"
-- ✅ `pt add "Missing test coverage: X" P2 "what's untested, why it matters"` then move on.
+- **Coverage gap found?** `pt add "Missing test coverage: X" P2 "what's untested, why it matters"` — immediately
+- **Before restructuring test domains:** `pt decisions infra` (test organization decisions live here)
+- **Block tracking:** `pt phase-done B<N>` if testing is part of a phase
+- **Handoff:** include what tests were added, gaps found and filed, next action
 
-**Proactive filing:** Find a gap in coverage? Missing corpus test? File it before moving on.
+## Two-Tier System — See CLAUDE.md for full rules
 
-**Before restructuring test domains or changing test strategy — run the decision gate:**
-```bash
-pt decisions infra   # test organization decisions live here
-# 2 seconds. Prevents re-litigating already-decided test structure.
-```
-New test strategy decision not covered — log it: `pt add-decision "Title" infra "Rule" "Rationale"`.
-
-**Block tracking (if testing is part of a phase):**
-```bash
-pt phase-done B<N>
-pt complete-block B<N> "tests added, coverage areas"  # final phase only
-```
-
-**Session close — write `~/.project-tracker/handoffs/atlas-handoff.md` FIRST (MANDATORY):**
-Write: what tests were added/fixed, coverage gaps found (file them if not already), next action. See core `atlas` skill for the full template. Commit it, then run `pt done`.
-
----
-
-## Two-Tier System (NEVER VIOLATE)
-
-| Tier | When | What | Time |
-|------|------|------|------|
-| **1: Pre-commit** | Every commit (automatic) | `cargo fmt` + `cargo clippy` only | <15s |
-| **2: Nightly CI** | 2am or `pt run-ci` | Full nextest suite | ~20min |
-
-**Banned during development — all nextest except one:**
-```bash
-cargo nextest run -p atlas-runtime -E 'test(exact_name)'  # ✅ TDD only, exact name
-cargo nextest run --workspace                              # ❌ BANNED
-cargo nextest run -p atlas-runtime                        # ❌ BANNED
-```
-
-**Fastest verification path (prefer this):**
-```bash
-atlas run /tmp/test.atlas    # instant — use before any nextest invocation
-```
+**Fastest:** `atlas run /tmp/test.atlas` — always before nextest.
+**Allowed nextest:** ONE exact test name only (TDD or corpus update).
+**Banned:** all nextest invocations except those two cases.
 
 ---
 

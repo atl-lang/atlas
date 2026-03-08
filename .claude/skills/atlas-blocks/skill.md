@@ -13,13 +13,8 @@ description: Atlas block/phase execution. Scaffolding, gate sequence, phase hand
 
 1. **Run GATE -1** — full state audit (see `gates/gate-minus1-sanity.md`)
 2. Run `pt sitrep` (check mode, P0 blockers, block progress)
-2a. **Run the decision gate — before writing a single line of code:**
-    ```bash
-    pt decisions <component>   # e.g. typechecker, parser, vm, stdlib, runtime
-    ```
-    3-8 lines back. If a decision covers your approach — follow it.
-    If your plan contradicts one — stop, surface to architect.
-    New design choice not covered — decide, then: `pt add-decision`
+2a. **Run the decision gate — before writing a single line of code** (see CLAUDE.md pt Gates):
+    `pt decisions <component>` — if it covers your approach, follow it; if contradicts, stop.
 3. **Git Setup:** GATE -1 determines branch state — see `gates/git-workflow.md`
 4. Declare workflow type: **Structured Development**
 5. **Execute gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md`)

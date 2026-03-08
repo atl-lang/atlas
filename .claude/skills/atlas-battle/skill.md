@@ -9,35 +9,18 @@ description: Atlas battle testing and validation. Use for regression testing, pa
 
 ---
 
-## AI Continuity — Non-Negotiable (100% AI-maintained project)
+## pt Gates — See CLAUDE.md "Mandatory pt Gates"
 
-The user is architect only. You own all implementation, tracking, and continuity.
+All universal gates apply without exception. Battle-specific reminders:
 
-**Never narrate — act or file. These are the only two options:**
-- ❌ "The next agent should know that X pattern breaks Y"
-- ❌ "Worth noting this battle test found Z"
-- ✅ `pt add "Bug: X breaks Y" P1 "battle-test file ref, workaround, fix risk"` then move on.
-Anything said to the user that isn't architecture = gone after session ends.
+- **Every failure found MUST be filed before moving to next test:**
+  `pt add "Bug: X" P1 "exact .atlas file path, error code, workaround, fix risk"`
+- **Before architectural changes from findings:** `pt decisions <component>` (2 seconds)
+- **Block tracking if this is the final phase:** `pt phase-done B<N>` + `pt complete-block B<N> "47/47 pass, bugs filed H-XXX"`
+- **Handoff:** include pass rate, domains tested, H-XXX filed, failure patterns
 
-**Proactive filing during battle tests:** Every failure, workaround, and friction point found MUST be filed before moving to the next test. Include: the exact `.atlas` file path, the error code, the workaround used, and the fix risk. This is the data that drives language improvement.
-
-**Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, interpreter+VM parity. Run: `bash battle-test/atlas-full-audit/run.sh`. Use as regression net before/after any typechecker or runtime fix.
-
-**Before any architectural change triggered by battle test findings — run the decision gate:**
-```bash
-pt decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime
-# 3-8 lines. 2 seconds. A battle test failure may already have a standing fix decision.
-```
-Follow existing decisions. If findings expose a gap not covered — log it: `pt add-decision`.
-
-**Block tracking (if battle test is the final phase of a block):**
-```bash
-pt phase-done B<N>
-pt complete-block B<N> "47/47 pass, bugs filed H-XXX"  # final phase only
-```
-
-**Session close — write `~/.project-tracker/handoffs/atlas-handoff.md` FIRST (MANDATORY):**
-Write: battle test results (pass rate, domains), bugs filed (H-XXX with file path), any patterns in failures, next action. See core `atlas` skill for the full template. Commit it, then run `pt done`.
+**Full audit suite:** `battle-test/atlas-full-audit/` — 47 programs, 10 domains, interpreter+VM parity.
+Run: `bash battle-test/atlas-full-audit/run.sh`
 
 ---
 
