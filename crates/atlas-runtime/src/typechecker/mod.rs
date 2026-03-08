@@ -2363,6 +2363,26 @@ impl<'a> TypeChecker<'a> {
                         if let Some(field_ty) = resolve_structural_member(&members) {
                             field_ty
                         } else {
+                            let available: Vec<&str> =
+                                members.iter().map(|m| m.name.as_str()).collect();
+                            let suggestion = suggestions::suggest_similar_name(
+                                member_name,
+                                available.iter().copied(),
+                            );
+                            let help = if let Some(sugg) = suggestion {
+                                format!(
+                                    "field '{}' not found — did you mean '{}'? Available: {}",
+                                    member_name,
+                                    sugg,
+                                    available.join(", ")
+                                )
+                            } else {
+                                format!(
+                                    "field '{}' not found. Available fields: {}",
+                                    member_name,
+                                    available.join(", ")
+                                )
+                            };
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3010",
@@ -2373,7 +2393,8 @@ impl<'a> TypeChecker<'a> {
                                     ),
                                     member.span,
                                 )
-                                .with_label("field not found"),
+                                .with_label("field not found")
+                                .with_help(help),
                             );
                             Type::Unknown
                         }
@@ -2398,8 +2419,10 @@ impl<'a> TypeChecker<'a> {
                                             )
                                             .with_label("field not found")
                                             .with_help(format!(
-                                                "field '{}' must exist on all union members",
-                                                member_name
+                                                "field '{}' not found on '{}'. Available fields: {}. Note: field must exist on all union members.",
+                                                member_name,
+                                                member_ty.display_name(),
+                                                members.iter().map(|m| m.name.as_str()).collect::<Vec<_>>().join(", ")
                                             )),
                                         );
                                         return Type::Unknown;
@@ -2433,6 +2456,26 @@ impl<'a> TypeChecker<'a> {
                                 if let Some(field_ty) = resolve_structural_member(&members) {
                                     field_ty
                                 } else {
+                                    let available: Vec<&str> =
+                                        members.iter().map(|m| m.name.as_str()).collect();
+                                    let suggestion = suggestions::suggest_similar_name(
+                                        member_name,
+                                        available.iter().copied(),
+                                    );
+                                    let help = if let Some(sugg) = suggestion {
+                                        format!(
+                                            "field '{}' not found — did you mean '{}'? Available: {}",
+                                            member_name,
+                                            sugg,
+                                            available.join(", ")
+                                        )
+                                    } else {
+                                        format!(
+                                            "field '{}' not found. Available fields: {}",
+                                            member_name,
+                                            available.join(", ")
+                                        )
+                                    };
                                     self.diagnostics.push(
                                         Diagnostic::error_with_code(
                                             "AT3010",
@@ -2443,7 +2486,8 @@ impl<'a> TypeChecker<'a> {
                                             ),
                                             member.span,
                                         )
-                                        .with_label("field not found"),
+                                        .with_label("field not found")
+                                        .with_help(help),
                                     );
                                     Type::Unknown
                                 }

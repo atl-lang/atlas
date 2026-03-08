@@ -837,18 +837,34 @@ impl<'a> TypeChecker<'a> {
                 }) {
                     Type::Number
                 } else {
+                    let op_str = match binary.op {
+                        BinaryOp::Sub => "-",
+                        BinaryOp::Mul => "*",
+                        BinaryOp::Div => "/",
+                        BinaryOp::Mod => "%",
+                        _ => unreachable!(),
+                    };
+                    let help =
+                        suggestions::suggest_binary_operator_fix(op_str, &left_type, &right_type)
+                            .unwrap_or_else(|| {
+                                format!(
+                                    "'{op_str}' requires both operands to be numbers; found {} and {}. Use num() to convert strings.",
+                                    left_type.display_name(),
+                                    right_type.display_name()
+                                )
+                            });
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
                             format!(
-                                "Arithmetic operator requires number operands, found {} and {}",
+                                "'{op_str}' requires number operands, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
                             ),
                             binary.span,
                         )
                         .with_label("type mismatch")
-                        .with_help("arithmetic operators (-, *, /, %) only work with numbers"),
+                        .with_help(help),
                     );
                     Type::Unknown
                 }
