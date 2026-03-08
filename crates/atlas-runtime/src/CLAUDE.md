@@ -28,6 +28,23 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `async_runtime/` | Tokio integration, AtlasFuture, channels |
 | `debugger/` | Breakpoints, stepping, source mapping |
 | `optimizer/` | Constant folding, dead code, peephole |
+| `api/` | Native binding API (`mod.rs`, `conversion.rs`, `native.rs`, `runtime.rs`, `config.rs`) |
+| `profiler/` | Runtime profiling — hotspot detection, perf report, collector |
+| `reflect/` | Type reflection API — `type_info.rs`, `value_info.rs` |
+| `sourcemap/` | Source map encoding/decoding for debugging (`encoder.rs`, `vlq.rs`) |
+| `stack_trace.rs` | Stack trace formatting and inspection |
+| `span.rs` | Source code span tracking |
+| `symbol.rs` | Symbol table and name management |
+| `runtime.rs` | Runtime manager struct + lifecycle |
+| `repl.rs` | Read-eval-print loop implementation |
+| `method_dispatch.rs` | Method call dispatch mechanism |
+| `module_executor.rs` | Module execution coordination |
+| `module_loader.rs` | Module discovery and loading |
+| `jit_trait.rs` | Trait interface for JIT integration |
+| `json_value.rs` | JSON value wrapper |
+| `test_utils.rs` | Testing utilities for runtime |
+| `typecheck_dump.rs` | Type checker debugging output |
+| `types.rs` | Type system core structures |
 
 ## Tests
 
@@ -94,7 +111,7 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 - `ValueArray` = `Arc<Vec<Value>>` — CoW via `Arc::make_mut`
 - `ValueHashMap` = `Arc<AtlasHashMap>` — CoW via `Arc::make_mut` (same pattern as `ValueArray`)
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
-- `FunctionRef` at `value.rs:464` — holds arity, bytecode_offset, local_count
+- `FunctionRef` at `value.rs:548` — holds arity, bytecode_offset, local_count
 - `Param` at `ast.rs:405` — name, type_ref, ownership, mutable, span (mutable added H-089, ownership added Block 2)
 - `FunctionDecl.return_type: Option<TypeRef>` — `None` means inferred (Block 5); `infer_return_type()` in `typechecker/inference.rs`
 - AT3050 (inconsistent returns), AT3051 (uninferrable type param), AT3052 (inferred type incompatible) — registered in `diagnostic/error_codes.rs`

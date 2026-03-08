@@ -427,9 +427,9 @@ let msg = channelReceive(rx)?;
 print(msg); // "hello"
 
 // Future chaining
-let future = futureResolve(5)
-  |> futureThen(|x| x * 2)
-  |> futureThen(|x| x + 1);
+let mut future = futureResolve(5);
+future = futureThen(future, fn(x: number) -> number { return x * 2; });
+future = futureThen(future, fn(x: number) -> number { return x + 1; });
 print(await(future)?); // 11
 
 // Timeout

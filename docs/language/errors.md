@@ -6,16 +6,16 @@ Every Atlas error has a named code (`ATxxxx`), a specific problem description, a
 
 | Range | Category |
 |-------|----------|
-| AT0001–AT0009 | Runtime errors (core) |
-| AT01xx | Stdlib errors |
-| AT03xx | Permission errors |
-| AT04xx | I/O errors |
-| AT05xx | Resource limit errors |
+| AT0001–AT0007 | Runtime errors (core) |
+| AT0102–AT0103, AT0140 | Stdlib errors |
+| AT0300–AT0303 | Permission errors |
+| AT0400 | I/O errors |
 | AT1000–AT1019 | Parser / syntax errors |
-| AT12xx | Shadowing warnings (parser) |
-| AT2xxx | Warnings (unused, shadowing, deprecated) |
+| AT2001–AT2014 | Warnings (unused, shadowing, deprecated) |
 | AT3001–AT3055 | Typechecker / semantic errors |
-| AT9xxx | Internal compiler errors (bugs) |
+| AT4001–AT4010 | Async/Await errors |
+| AT5001–AT5008 | Module system errors |
+| AT9000, AT9995–AT9999 | Internal errors (bugs) |
 
 ---
 
@@ -353,6 +353,19 @@ Passing a non-shared value where `share` semantics are required.
 ### AT3029 — Impl Already Exists
 A trait implementation for this type already exists.
 
+### AT3030–AT3037 — Trait System Errors
+
+| Code | Description |
+|------|-------------|
+| AT3030 | Trait redefines built-in (Copy, Move, Drop, Display, Debug) |
+| AT3031 | Trait already defined in scope |
+| AT3032 | Trait not found (referenced in `impl` but not declared) |
+| AT3033 | `impl` block missing a required method |
+| AT3034 | `impl` method signature does not match trait |
+| AT3035 | Type does not implement required trait |
+| AT3036 | Copy type required (non-Copy type provided) |
+| AT3037 | Generic type argument does not satisfy trait bound |
+
 ### AT3040 — Closure Captures Borrow
 A closure captures a `borrow` parameter, which may escape the parameter's lifetime. Use `share` or `own` instead.
 
@@ -382,6 +395,38 @@ A `borrow` reference escapes the scope of the borrowed value.
 
 ### AT3055 — Share Violation
 Invalid use of `share` semantics.
+
+---
+
+## AT4xxx — Async/Await Errors
+
+| Code | Description |
+|------|-------------|
+| AT4001 | `await` used outside `async` context |
+| AT4002 | `await` applied to non-Future type |
+| AT4003 | Async function return type mismatch |
+| AT4004 | Async function passed where sync function expected |
+| AT4005 | Future result used without `await` |
+| AT4006 | `async fn main()` is forbidden |
+| AT4007 | Task spawn in synchronous context |
+| AT4008 | Future type mismatch in composition |
+| AT4009 | Async closures not supported |
+| AT4010 | `await` in synchronous loop |
+
+---
+
+## AT5xxx — Module System Errors
+
+| Code | Description |
+|------|-------------|
+| AT5001 | Invalid module path |
+| AT5002 | Module not found |
+| AT5003 | Circular module dependency |
+| AT5004 | Export not found |
+| AT5005 | Import resolution failed |
+| AT5006 | Module not exported (private) |
+| AT5007 | Namespace import not supported |
+| AT5008 | Duplicate export name |
 
 ---
 

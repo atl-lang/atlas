@@ -4,12 +4,12 @@ This document reflects actual parsing rules in `crates/atlas-runtime/src/parser/
 
 **Function Declarations**
 ```
-fn name<T>(param: Type, ...) -> [own|borrow] ReturnType { ... }
+fn name<T>(param: Type, ...) [-> [own|borrow] ReturnType] { ... }
 ```
 - Type parameters (`<T, U>`) are optional.
 - Parameters in declarations **require type annotations**.
-- Return type annotation is **required**. Use `-> void` for functions that return nothing.
-- `own` and `borrow` are valid ownership annotations on return types. `share` is **not** allowed on return types.
+- Return type annotation is **optional** — the typechecker infers return types from all code paths. Use `-> void` for functions that return nothing.
+- If a return type is explicitly annotated, `own` and `borrow` are valid ownership annotations. `share` is **not** allowed on return types.
 - Type predicates are supported: `-> bool is param: Type`.
 
 Example (tested):

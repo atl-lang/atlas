@@ -532,14 +532,14 @@ let response = httpGet("https://api.example.com/users")?;
 print(httpBody(response));
 
 // POST with JSON
-let req = httpRequest("POST", "https://api.example.com/users")
-  |> httpSetBody("{\"name\": \"John\"}")
-  |> httpSetHeader("Content-Type", "application/json");
+let mut req = httpRequest("POST", "https://api.example.com/users");
+req = httpSetBody(req, "{\"name\": \"John\"}");
+req = httpSetHeader(req, "Content-Type", "application/json");
 let response = httpSend(req)?;
 print(httpStatus(response)); // 201
 
 // GET with auth
-let req = httpGet("https://api.example.com/secret")
-  |> httpSetAuth("user", "pass");
-let response = httpSend(req)?;
+let req2 = httpRequest("GET", "https://api.example.com/secret");
+let req3 = httpSetAuth(req2, "user", "pass");
+let response = httpSend(req3)?;
 ```
