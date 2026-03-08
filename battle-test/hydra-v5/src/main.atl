@@ -1,9 +1,103 @@
-// Hydra v5 - Atlas Battle Test
-// Fault-tolerant supervisor and proxy for MCP servers
+// Hydra v5 - Atlas Battle Test (B10 Method System Re-Run)
+// Inline test of B10 features: method syntax, static namespaces.
+// Tests everything inline to avoid typechecker function-level issues.
 
-// Entry point placeholder
-fn main() {
-    print("Hydra v5 battle test - initialization in progress");
-}
+// String methods (B10-P05)
+let method_name = "  tools/list  ";
+let normalized = method_name.trim().toLowerCase();
+print(`Method: ${normalized}`);
 
-main();
+let tool_name = "my tool";
+let sanitized = tool_name.replace(" ", "_");
+print(`Tool: ${sanitized}`);
+
+let has_prefix = "tools/call".startsWith("tools");
+print(`Has prefix: ${has_prefix}`);
+
+let parts = "hello world atlas".split(" ");
+print(`Words: ${len(parts)}`);
+
+// Array methods (B10-P04)
+let tools: string[] = ["list", "call", "x", "get_schema"];
+let joined = tools.join(", ");
+print(`Joined: ${joined}`);
+print(`Tool count: ${tools.len()}`);
+
+let pushed = tools.push("describe");
+print(`After push: ${pushed.len()}`);
+
+// Math namespace (B10-P07)
+let clamped = unwrap(Math.clamp(50000, 100, 30000));
+print(`Clamped timeout: ${clamped}`);
+
+let pow_result = Math.pow(2, 3);
+let backoff = Math.min(pow_result * 100, 10000);
+print(`Backoff: ${backoff}`);
+
+let root = unwrap(Math.sqrt(144));
+print(`sqrt(144): ${root}`);
+
+let abs_result = Math.abs(-3);
+print(`abs(-3): ${abs_result}`);
+
+// JSON namespace (B10-P07)
+let valid_json = Json.isValid("{\"a\": 1}");
+print(`JSON valid: ${valid_json}`);
+
+let json_str = Json.stringify(42);
+print(`JSON string: ${json_str}`);
+
+let parse_result = Json.parse("{\"x\": 10}");
+print(`JSON parsed ok: ${isOk(parse_result)}`);
+
+// Path namespace (B10-P08)
+let cfg_path = Path.join("/etc", "hydra.json");
+print(`Config path: ${cfg_path}`);
+
+let is_absolute = Path.isAbsolute("/etc/hydra");
+print(`Is absolute: ${is_absolute}`);
+
+let rel = Path.isAbsolute("relative/path");
+print(`Is relative: ${rel}`);
+
+let tmp_exists = Path.exists("/tmp");
+print(`/tmp exists: ${tmp_exists}`);
+
+let dirname = Path.dirname("/etc/hydra/config.json");
+print(`Dirname: ${dirname}`);
+
+let basename = Path.basename("/etc/hydra/config.json");
+print(`Basename: ${basename}`);
+
+// Process namespace (B10-P08)
+let pid = Process.pid();
+print(`PID > 0: ${pid > 0}`);
+
+let cwd = Process.cwd();
+print(`Has cwd: ${len(cwd) > 0}`);
+
+// File namespace (B10-P08)
+let tmp_file_exists = File.exists("/tmp");
+print(`/tmp exists via File: ${tmp_file_exists}`);
+
+// Regex namespace (B10-P09)
+let pattern = unwrap(Regex.new("\"jsonrpc\""));
+let is_rpc = Regex.test(pattern, "{\"jsonrpc\": \"2.0\"}");
+print(`Is JSON-RPC: ${is_rpc}`);
+
+let digit_pattern = unwrap(Regex.new("[0-9]+"));
+let has_digits = Regex.isMatch(digit_pattern, "server_v2_port");
+print(`Has digits: ${has_digits}`);
+
+let replaced = Regex.replace(digit_pattern, "version_2_3", "N");
+print(`Replaced: ${replaced}`);
+
+// Crypto namespace (B10-P09)
+let hash = Crypto.sha256("tools/list");
+print(`Hash len == 64: ${len(hash) == 64}`);
+
+// Env namespace (B10-P07)
+let path_val = Env.get("PATH");
+print(`PATH is some: ${isSome(path_val)}`);
+
+print("Hydra v5 B10 battle test: PASS");

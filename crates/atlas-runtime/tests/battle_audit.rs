@@ -384,3 +384,20 @@ mod battle_10_integration {
     battle!(int02_data_pipeline, "02_data_pipeline.atlas");
     battle!(int03_config_loader, "03_config_loader.atlas");
 }
+
+// ---------------------------------------------------------------------------
+// Hydra v5 battle test — B10 method system validation
+// ---------------------------------------------------------------------------
+#[test]
+fn hydra_v5_b10_battle() {
+    // Use absolute path since atlas_root() resolves to grandparent of project
+    let hydra_path = std::path::PathBuf::from(
+        "/Users/proxikal/dev/projects/atlas/battle-test/hydra-v5/src/main.atl",
+    );
+    assert!(
+        hydra_path.exists(),
+        "Hydra v5 source not found at {:?}",
+        hydra_path
+    );
+    assert_battle(&hydra_path);
+}
