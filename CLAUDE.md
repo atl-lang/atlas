@@ -103,7 +103,7 @@ Killing cargo mid-run leaves lock files that block all future runs — never do 
 
 ```bash
 # 1. SESSION START — always first, no exceptions
-pt go [opus|sonnet|haiku]           # sitrep, handoff, P0s, CI status, active plans
+pt go                               # sitrep, handoff, P0s, CI status, active plans (model auto-detected)
 pt in-progress                       # check in-flight work before claiming anything
 
 # 2. BEFORE PICKING WORK

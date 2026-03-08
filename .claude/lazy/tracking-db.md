@@ -17,7 +17,7 @@ pt in-progress    # What's being worked on right now — check BEFORE claiming
 ## Session Lifecycle
 
 ```bash
-pt go opus                              # START: init session + full sitrep
+pt go                                   # START: init session + full sitrep (model auto-detected)
 pt done S-001 success "Summary" "Next" # END: required for handoff
 pt sitrep                               # Status only, no session created
 ```
@@ -137,7 +137,7 @@ pt gc --aggressive # + archive old issues, vacuum DB
 
 ### Start of session
 ```bash
-pt go sonnet
+pt go
 pt context         # Quick orientation if already in a session
 pt in-progress     # Check what's in flight before claiming work
 ```

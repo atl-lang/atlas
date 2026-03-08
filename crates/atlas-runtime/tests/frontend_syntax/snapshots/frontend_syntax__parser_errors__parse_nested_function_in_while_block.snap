@@ -1,5 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+assertion_line: 82
 expression: program
 ---
 items:
@@ -10,6 +11,8 @@ items:
           start: 12
           end: 17
           file: "<input>"
+      attributes: []
+      is_async: false
       type_params: []
       params: []
       return_type:
@@ -77,6 +80,8 @@ items:
                           start: 110
                           end: 119
                           file: "<input>"
+                      attributes: []
+                      is_async: false
                       type_params: []
                       params: []
                       return_type:

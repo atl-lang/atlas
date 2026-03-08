@@ -1,17 +1,8 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/lexer.rs
+assertion_line: 222
 expression: diagnostics
 ---
-- diag_version: 1
-  level: error
-  code: AT1001
-  message: "Unexpected character '@'"
-  file: tests/errors/unexpected_char.atl
-  line: 2
-  column: 11
-  length: 1
-  snippet: let x = 5 @ 3;
-  label: lexer error
 - diag_version: 1
   level: error
   code: AT1001

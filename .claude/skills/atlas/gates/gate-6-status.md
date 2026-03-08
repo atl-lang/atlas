@@ -33,7 +33,7 @@ pt done S-004 success "Phase 25 complete: Block 1 finished, all ACs met" "Next: 
 
 ---
 
-**BLOCKING:** Required for structured development. The next agent runs `pt go opus`
+**BLOCKING:** Required for structured development. The next agent runs `pt go`
 and sees your handoff in the "Handoff" section. If you skip this, they have no context.
 
 **Next:** GATE 7

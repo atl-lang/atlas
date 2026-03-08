@@ -9,7 +9,7 @@
 
 ### Session Start
 ```bash
-pt go opus          # Full sitrep: session ID, mode, P0s, CI status, block progress, handoff
+pt go          # Full sitrep: session ID, mode, P0s, CI status, block progress, handoff (model auto-detected)
 pt in-progress      # What's already claimed — avoid duplicate effort
 ```
 If handoff shows `~/.project-tracker/handoffs/atlas-handoff.md` → **read it before anything else**.

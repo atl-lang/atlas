@@ -23,7 +23,7 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 ## On Skill Activation (EVERY SESSION — DO THIS FIRST)
 
 ```bash
-pt go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+pt go   # returns sitrep, handoff, P0s, stale issues (model detected automatically)
 pt in-progress              # Check what's already claimed — avoid duplicate work
 ```
 

@@ -20,7 +20,7 @@
 
 ```bash
 # Every session starts with:
-pt go opus              # THE command: init + full sitrep
+pt go              # THE command: init + full sitrep (model auto-detected)
 
 # Check what needs work:
 pt issues P0
