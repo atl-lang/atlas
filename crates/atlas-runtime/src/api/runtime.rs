@@ -77,7 +77,7 @@ impl std::fmt::Display for EvalError {
                 }
                 Ok(())
             }
-            EvalError::RuntimeError(err) => write!(f, "Runtime error: {:?}", err),
+            EvalError::RuntimeError(err) => write!(f, "Runtime error: {}", err),
         }
     }
 }

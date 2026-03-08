@@ -225,7 +225,7 @@ generic_type   := IDENT "<" type_ref ("," type_ref)* ">"
 9. Range: `..` `..=`
 
 **Template Strings**
-- Backtick-delimited: `` `hello {name}` ``
-- Interpolation uses `{ ... }` inside backticks.
-- Double-quoted strings support `{ ... }` interpolation and are desugared into concatenations.
+- Backtick-delimited: `` `hello ${name}` ``
+- Interpolation uses `${ ... }` inside backticks.
+- Double-quoted strings support `${ ... }` interpolation and are desugared into concatenations.
 
