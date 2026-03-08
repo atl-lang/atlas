@@ -278,3 +278,6 @@ mod ownership_traits;
 
 #[path = "integration/arrays_methods.rs"]
 mod arrays_methods;
+
+#[path = "integration/hashmaps_methods.rs"]
+mod hashmaps_methods;
