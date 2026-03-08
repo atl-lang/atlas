@@ -396,6 +396,35 @@ fn test_string_length_via_variable() {
 }
 
 // ============================================================================
+// str() conversion tests (H-136)
+// ============================================================================
+
+#[test]
+fn test_h136_str_array() {
+    // str() accepts any value per spec: fn str(value: any) -> string
+    let code = r#"str([1, 2, 3])"#;
+    assert_eval_string(code, "[1, 2, 3]");
+}
+
+#[test]
+fn test_h136_str_string() {
+    let code = r#"str("hello")"#;
+    assert_eval_string(code, "hello");
+}
+
+#[test]
+fn test_h136_str_chain_result() {
+    // arr.filter(fn).map(fn) result must be usable with str()
+    let code = r#"
+        fn gt2(x: number) -> bool { return x > 2; }
+        fn dbl(x: number) -> number { return x * 2; }
+        let arr = [1, 2, 3, 4, 5];
+        str(arr.filter(gt2).map(dbl))
+    "#;
+    assert_eval_string(code, "[6, 8, 10]");
+}
+
+// ============================================================================
 // String Method Chaining Tests
 // ============================================================================
 
