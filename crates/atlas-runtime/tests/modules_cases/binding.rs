@@ -5,7 +5,7 @@ use std::path::PathBuf;
 #[test]
 fn test_basic_export_function() {
     let source = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -99,7 +99,7 @@ fn test_basic_named_import() {
 
     // Module A exports 'add'
     let module_a = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -153,7 +153,7 @@ fn test_import_nonexistent_export_via_registry() {
 
     // Module A exports 'add' but not 'subtract'
     let module_a = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -179,11 +179,11 @@ fn test_import_multiple_named_exports() {
 
     // Module A exports multiple functions
     let module_a = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 
-export fn subtract(a: number, b: number) -> number {
+export fn subtract(borrow a: number, borrow b: number) -> number {
     return a - b;
 }
 
@@ -215,7 +215,7 @@ fn test_namespace_import_binds_namespace() {
     let mut registry = ModuleRegistry::new();
 
     let module_a = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 export let MY_PI = 3.14159;
@@ -257,7 +257,7 @@ fn test_import_preserves_type() {
 
     // Module A exports typed function
     let module_a = r#"
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;

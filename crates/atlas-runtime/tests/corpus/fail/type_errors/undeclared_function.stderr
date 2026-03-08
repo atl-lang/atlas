@@ -1,1 +1,1 @@
-Parse error: Unknown symbol 'nonexistent_function'
+Parse error: unknown identifier 'nonexistent_function'

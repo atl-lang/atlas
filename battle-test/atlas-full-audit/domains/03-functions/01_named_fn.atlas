@@ -3,11 +3,11 @@
 // FRICTION: Function named 'clamp' conflicts with prelude builtin 'clamp'.
 //           Must rename to avoid AT1012 shadow error.
 
-fn add(borrow a: number, borrow b: number) -> number {
+fn add(own a: number, borrow b: number) -> number {
     return a + b;
 }
 
-fn multiply(borrow a: number, borrow b: number) -> number {
+fn multiply(own a: number, borrow b: number) -> number {
     return a * b;
 }
 
@@ -15,7 +15,7 @@ fn greet(borrow name: string) -> string {
     return "Hello, " + name + "!";
 }
 
-fn is_positive(borrow n: number) -> bool {
+fn is_positive(own n: number) -> bool {
     return n > 0;
 }
 
@@ -30,7 +30,7 @@ fn early_exit(borrow n: number) -> string {
 }
 
 // clamp renamed to avoid prelude conflict
-fn clamp_value(borrow x: number, borrow lo: number, borrow hi: number) -> number {
+fn clamp_value(own x: number, own lo: number, own hi: number) -> number {
     if x < lo { return lo; }
     if x > hi { return hi; }
     return x;

@@ -40,7 +40,7 @@ fn test_ast_dump_variable_declaration() {
 #[test]
 fn test_ast_dump_function_declaration() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -88,7 +88,7 @@ fn test_ast_dump_binary_expression() {
 #[test]
 fn test_ast_dump_function_call() {
     let source = r#"
-fn greet(name: string) -> string {
+fn greet(borrow name: string) -> string {
     return name;
 }
 let msg: string = greet("world");

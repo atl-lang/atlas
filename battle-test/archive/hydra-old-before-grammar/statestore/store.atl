@@ -1,13 +1,13 @@
 // StateStore (Atlas port)
 
-export fn new_store(base_dir: string) -> Result<json, string> {
+export fn new_store(borrow base_dir: string) -> Result<json, string> {
     let obj = { base_dir: base_dir };
     let encoded = toJSON(obj);
     let parsed = parseJSON(encoded)?;
     return Ok(parsed);
 }
 
-export fn save_state(store: json, name: string, json_str: string) -> Result<null, string> {
+export fn save_state(borrow store: json, borrow name: string, borrow json_str: string) -> Result<null, string> {
     let dir = store["base_dir"].as_string();
     let _ = createDir(dir);
     let path = pathJoin(dir, name + ".json");
@@ -15,14 +15,14 @@ export fn save_state(store: json, name: string, json_str: string) -> Result<null
     return Ok(null);
 }
 
-export fn load_state(store: json, name: string) -> Result<string, string> {
+export fn load_state(borrow store: json, borrow name: string) -> Result<string, string> {
     let path = pathJoin(store["base_dir"].as_string(), name + ".json");
     if (!fsIsFile(path)) { return Err("state not found"); }
     let data = readFile(path);
     return Ok(data);
 }
 
-export fn delete_state(store: json, name: string) -> Result<null, string> {
+export fn delete_state(borrow store: json, borrow name: string) -> Result<null, string> {
     let path = pathJoin(store["base_dir"].as_string(), name + ".json");
     if (fsIsFile(path)) { removeFile(path); }
     return Ok(null);

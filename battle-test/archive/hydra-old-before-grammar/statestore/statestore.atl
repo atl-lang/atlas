@@ -4,7 +4,7 @@
 // Works with JSON strings - use parseJSON() and toJSON() in calling code
 
 // Create a state store path for a session
-export fn new_store(session_id: string) -> string {
+export fn new_store(borrow session_id: string) -> string {
     return ".hydra/sessions/" + session_id + ".json";
 }
 
@@ -21,7 +21,7 @@ fn ensure_dir() -> void {
 }
 
 // Save state to disk (takes JSON string)
-export fn save_state(store_path: string, json_str: string) -> bool {
+export fn save_state(borrow store_path: string, borrow json_str: string) -> bool {
     // Ensure directory exists
     ensure_dir();
 
@@ -32,26 +32,26 @@ export fn save_state(store_path: string, json_str: string) -> bool {
 }
 
 // Load state from disk (returns JSON string)
-export fn load_state(store_path: string) -> string {
+export fn load_state(borrow store_path: string) -> string {
     // Read file
     let content: string = readFile(store_path);
     return content;
 }
 
 // Check if state exists
-export fn has_state(store_path: string) -> bool {
+export fn has_state(borrow store_path: string) -> bool {
     return fsIsFile(store_path);
 }
 
 // Clear state (write empty object)
-export fn clear_state(store_path: string) -> bool {
+export fn clear_state(borrow store_path: string) -> bool {
     let empty: string = "{}";
     writeFile(store_path, empty);
     return true;
 }
 
 // Delete state file
-export fn delete_state(store_path: string) -> bool {
+export fn delete_state(borrow store_path: string) -> bool {
     removeFile(store_path);
     return true;
 }

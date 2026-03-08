@@ -44,7 +44,7 @@ fn test_number_passed_without_annotation_no_error() {
     // number is Copy — no ownership annotation needed
     let diags = typecheck_source(
         "
-        fn double(x: number) -> number { return x * 2; }
+        fn double(borrow x: number) -> number { return x * 2; }
         let n: number = 5;
         let result: number = double(n);
     ",
@@ -61,7 +61,7 @@ fn test_number_passed_without_annotation_no_error() {
 fn test_string_passed_without_annotation_no_error() {
     let diags = typecheck_source(
         "
-        fn greet(name: string) -> string { return name; }
+        fn greet(borrow name: string) -> string { return name; }
         let s: string = \"hello\";
         let g: string = greet(s);
     ",
@@ -77,7 +77,7 @@ fn test_string_passed_without_annotation_no_error() {
 fn test_bool_passed_without_annotation_no_error() {
     let diags = typecheck_source(
         "
-        fn negate(b: bool) -> bool { return !b; }
+        fn negate(borrow b: bool) -> bool { return !b; }
         let flag: bool = true;
         let result: bool = negate(flag);
     ",
@@ -93,7 +93,7 @@ fn test_bool_passed_without_annotation_no_error() {
 fn test_array_passed_without_annotation_no_error() {
     let diags = typecheck_source(
         "
-        fn first(arr: number[]) -> number { return arr[0]; }
+        fn first(borrow arr: number[]) -> number { return arr[0]; }
         let a: number[] = [1, 2, 3];
         let n: number = first(a);
     ",

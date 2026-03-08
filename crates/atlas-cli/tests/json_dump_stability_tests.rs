@@ -107,7 +107,7 @@ fn test_ast_dump_deterministic_simple() {
 #[test]
 fn test_ast_dump_deterministic_complex() {
     let source = r#"
-fn factorial(n: number) -> number {
+fn factorial(borrow n: number) -> number {
     if n <= 1 {
         return 1;
     }
@@ -134,7 +134,7 @@ let y: string = "hello";
 #[test]
 fn test_ast_dump_consistent_indentation() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -195,7 +195,7 @@ fn test_typecheck_dump_deterministic_simple() {
 #[test]
 fn test_typecheck_dump_deterministic_complex() {
     let source = r#"
-fn factorial(n: number) -> number {
+fn factorial(borrow n: number) -> number {
     if n <= 1 {
         return 1;
     }
@@ -222,7 +222,7 @@ let y: string = "hello";
 #[test]
 fn test_typecheck_dump_consistent_indentation() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -247,11 +247,11 @@ fn test_typecheck_dump_has_version_field() {
 #[test]
 fn test_typecheck_dump_deterministic_with_multiple_scopes() {
     let source = r#"
-fn helper(b: number) -> number {
+fn helper(borrow b: number) -> number {
     return b * 2;
 }
 
-fn outer(a: number) -> number {
+fn outer(borrow a: number) -> number {
     let x: number = helper(5);
     if a > 0 {
         let y: number = a + x;

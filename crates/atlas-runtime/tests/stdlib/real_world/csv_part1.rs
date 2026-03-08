@@ -79,7 +79,7 @@ fn test_csv_filter_by_criteria() {
 
     let code = format!(
         r#"
-        fn isExpensive(row: string) -> bool {{
+        fn isExpensive(borrow row: string) -> bool {{
             let fields: string[] = split(row, ",");
             let price: number = unwrap(parse_float(fields[1]));
             return price >= 2.0;
@@ -110,7 +110,7 @@ fn test_csv_extract_column() {
 
     let code = format!(
         r#"
-        fn getName(row: string) -> string {{
+        fn getName(borrow row: string) -> string {{
             let fields: string[] = split(row, ",");
             return fields[0];
         }}
@@ -135,7 +135,7 @@ fn test_csv_sum_column() {
 
     let code = format!(
         r#"
-        fn sumAmounts(total: number, row: string) -> number {{
+        fn sumAmounts(borrow total: number, borrow row: string) -> number {{
             let fields: string[] = split(row, ",");
             let amount: number = unwrap(parse_float(fields[1]));
             return total + amount;
@@ -215,7 +215,7 @@ fn test_csv_write_transformed() {
 
     let code = format!(
         r#"
-        fn transform(row: string) -> string {{
+        fn transform(borrow row: string) -> string {{
             let fields: string[] = split(row, ",");
             let name: string = fields[0];
             let value: number = unwrap(parse_float(fields[1]));
@@ -251,7 +251,7 @@ fn test_csv_calculate_average() {
 
     let code = format!(
         r#"
-        fn sumScores(total: number, row: string) -> number {{
+        fn sumScores(borrow total: number, borrow row: string) -> number {{
             let fields: string[] = split(row, ",");
             let score: number = unwrap(parse_float(fields[1]));
             return total + score;
@@ -278,7 +278,7 @@ fn test_csv_filter_and_count() {
 
     let code = format!(
         r#"
-        fn isAdult(row: string) -> bool {{
+        fn isAdult(borrow row: string) -> bool {{
             let fields: string[] = split(row, ",");
             let age: number = unwrap(parse_float(fields[1]));
             return age >= 30.0;
@@ -304,7 +304,7 @@ fn test_csv_max_value() {
 
     let code = format!(
         r#"
-        fn findMax(current: number, row: string) -> number {{
+        fn findMax(borrow current: number, borrow row: string) -> number {{
             let fields: string[] = split(row, ",");
             let value: number = unwrap(parse_float(fields[1]));
             return max(current, value);

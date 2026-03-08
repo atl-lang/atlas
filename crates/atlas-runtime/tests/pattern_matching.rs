@@ -247,7 +247,7 @@ fn test_literal_multiple_arms_first_wins() {
 fn test_literal_match_exhaustive_via_wildcard() {
     // Wildcard makes any match exhaustive — type checker should accept
     let (success, msgs) = typecheck(
-        r#"fn run(x: number) -> string {
+        r#"fn run(borrow x: number) -> string {
             return match x {
                 1 => "one",
                 _ => "other"
@@ -332,7 +332,7 @@ fn test_variable_shadows_outer() {
 #[test]
 fn test_variable_binding_combined_with_literals() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 => "zero",
                 x => "got: " + str(x)
@@ -350,7 +350,7 @@ fn test_variable_binding_combined_with_literals() {
 #[test]
 fn test_option_some_binds_value() {
     assert_parity_number(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) => x,
                 None => 0
@@ -364,7 +364,7 @@ fn test_option_some_binds_value() {
 #[test]
 fn test_option_none_arm() {
     assert_parity_number(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) => x,
                 None => 0
@@ -378,7 +378,7 @@ fn test_option_none_arm() {
 #[test]
 fn test_option_some_with_expression_body() {
     assert_parity_number(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) => x * 2 + 1,
                 None => -1
@@ -392,7 +392,7 @@ fn test_option_some_with_expression_body() {
 #[test]
 fn test_option_nested_some_some() {
     assert_parity_number(
-        r#"fn run(opt: Option<Option<number>>) -> number {
+        r#"fn run(borrow opt: Option<Option<number>>) -> number {
             return match opt {
                 Some(Some(x)) => x,
                 Some(None) => -1,
@@ -407,7 +407,7 @@ fn test_option_nested_some_some() {
 #[test]
 fn test_option_nested_some_none() {
     assert_parity_number(
-        r#"fn run(opt: Option<Option<number>>) -> number {
+        r#"fn run(borrow opt: Option<Option<number>>) -> number {
             return match opt {
                 Some(Some(x)) => x,
                 Some(None) => -1,
@@ -423,7 +423,7 @@ fn test_option_nested_some_none() {
 fn test_option_wildcard_exhaustive() {
     // Wildcard should make Option match exhaustive
     let (success, msgs) = typecheck(
-        r#"fn run(opt: Option<number>) -> string {
+        r#"fn run(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x) => "some",
                 _ => "none or other"
@@ -436,7 +436,7 @@ fn test_option_wildcard_exhaustive() {
 #[test]
 fn test_option_type_bound_value_string() {
     assert_parity_string(
-        r#"fn run(opt: Option<string>) -> string {
+        r#"fn run(borrow opt: Option<string>) -> string {
             return match opt {
                 Some(s) => s,
                 None => "empty"
@@ -480,7 +480,7 @@ fn test_option_none_arm_executes_none_value() {
 #[test]
 fn test_option_as_function_return() {
     assert_parity_string(
-        r#"fn maybe_string(flag: bool) -> Option<string> {
+        r#"fn maybe_string(borrow flag: bool) -> Option<string> {
             if (flag) {
                 return Some("yes");
             }
@@ -504,7 +504,7 @@ fn test_option_as_function_return() {
 #[test]
 fn test_result_ok_binds_value() {
     assert_parity_number(
-        r#"fn run(res: Result<number, string>) -> number {
+        r#"fn run(borrow res: Result<number, string>) -> number {
             return match res {
                 Ok(x) => x,
                 Err(e) => -1
@@ -518,7 +518,7 @@ fn test_result_ok_binds_value() {
 #[test]
 fn test_result_err_binds_value() {
     assert_parity_string(
-        r#"fn run(res: Result<number, string>) -> string {
+        r#"fn run(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(x) => "ok",
                 Err(e) => e
@@ -532,7 +532,7 @@ fn test_result_err_binds_value() {
 #[test]
 fn test_result_ok_nested_ok() {
     assert_parity_number(
-        r#"fn run(res: Result<Result<number, string>, string>) -> number {
+        r#"fn run(borrow res: Result<Result<number, string>, string>) -> number {
             return match res {
                 Ok(Ok(x)) => x,
                 Ok(Err(e)) => -1,
@@ -547,7 +547,7 @@ fn test_result_ok_nested_ok() {
 #[test]
 fn test_result_wildcard_exhaustive() {
     let (success, msgs) = typecheck(
-        r#"fn run(res: Result<number, string>) -> string {
+        r#"fn run(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(x) => "ok",
                 _ => "err"
@@ -560,7 +560,7 @@ fn test_result_wildcard_exhaustive() {
 #[test]
 fn test_result_error_type_number() {
     assert_parity_number(
-        r#"fn run(res: Result<string, number>) -> number {
+        r#"fn run(borrow res: Result<string, number>) -> number {
             return match res {
                 Ok(s) => 0,
                 Err(code) => code
@@ -574,7 +574,7 @@ fn test_result_error_type_number() {
 #[test]
 fn test_result_real_use_case_divide() {
     assert_parity_string(
-        r#"fn divide(a: number, b: number) -> Result<number, string> {
+        r#"fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
             if (b == 0) {
                 return Err("division by zero");
             }
@@ -594,7 +594,7 @@ fn test_result_real_use_case_divide() {
 #[test]
 fn test_result_error_propagation_pattern() {
     assert_parity_string(
-        r#"fn divide(a: number, b: number) -> Result<number, string> {
+        r#"fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
             if (b == 0) {
                 return Err("div by zero");
             }
@@ -629,7 +629,7 @@ fn test_result_chained_match() {
 #[test]
 fn test_result_as_function_return() {
     assert_parity_number(
-        r#"fn safe_sqrt(x: number) -> Result<number, string> {
+        r#"fn safe_sqrt(borrow x: number) -> Result<number, string> {
             if (x < 0) {
                 return Err("negative");
             }
@@ -650,7 +650,7 @@ fn test_result_as_function_return() {
 fn test_result_ok_err_type_any() {
     // Both Ok and Err can hold any type
     assert_parity_string(
-        r#"fn run(res: Result<bool, number>) -> string {
+        r#"fn run(borrow res: Result<bool, number>) -> string {
             return match res {
                 Ok(b) => str(b),
                 Err(n) => str(n)
@@ -668,7 +668,7 @@ fn test_result_ok_err_type_any() {
 #[test]
 fn test_array_empty_pattern() {
     assert_parity_string(
-        r#"fn run(arr: number[]) -> string {
+        r#"fn run(borrow arr: number[]) -> string {
             return match arr {
                 [] => "empty",
                 _ => "not empty"
@@ -682,7 +682,7 @@ fn test_array_empty_pattern() {
 #[test]
 fn test_array_single_element_pattern() {
     assert_parity_number(
-        r#"fn run(arr: number[]) -> number {
+        r#"fn run(borrow arr: number[]) -> number {
             return match arr {
                 [] => 0,
                 [x] => x,
@@ -697,7 +697,7 @@ fn test_array_single_element_pattern() {
 #[test]
 fn test_array_two_element_pattern() {
     assert_parity_number(
-        r#"fn run(arr: number[]) -> number {
+        r#"fn run(borrow arr: number[]) -> number {
             return match arr {
                 [a, b] => a + b,
                 _ => 0
@@ -711,7 +711,7 @@ fn test_array_two_element_pattern() {
 #[test]
 fn test_array_length_mismatch_tries_next_arm() {
     assert_parity_string(
-        r#"fn run(arr: number[]) -> string {
+        r#"fn run(borrow arr: number[]) -> string {
             return match arr {
                 [x] => "one",
                 [x, y] => "two",
@@ -726,7 +726,7 @@ fn test_array_length_mismatch_tries_next_arm() {
 #[test]
 fn test_array_wildcard_element() {
     assert_parity_number(
-        r#"fn run(arr: number[]) -> number {
+        r#"fn run(borrow arr: number[]) -> number {
             return match arr {
                 [_, x] => x,
                 _ => 0
@@ -741,7 +741,7 @@ fn test_array_wildcard_element() {
 fn test_array_empty_vs_nonempty() {
     // Empty array matches [], non-empty doesn't
     assert_parity_bool(
-        r#"fn run(arr: number[]) -> bool {
+        r#"fn run(borrow arr: number[]) -> bool {
             return match arr {
                 [] => true,
                 _ => false
@@ -759,7 +759,7 @@ fn test_array_empty_vs_nonempty() {
 #[test]
 fn test_arm_type_mismatch_rejected() {
     let (success, msgs) = typecheck(
-        r#"fn run(x: number) -> string {
+        r#"fn run(borrow x: number) -> string {
             return match x {
                 0 => "zero",
                 1 => 123,
@@ -797,7 +797,7 @@ fn test_match_as_expression_assignable() {
 #[test]
 fn test_bool_exhaustive_both_arms() {
     let (success, msgs) = typecheck(
-        r#"fn run(b: bool) -> string {
+        r#"fn run(borrow b: bool) -> string {
             return match b {
                 true => "yes",
                 false => "no"
@@ -810,7 +810,7 @@ fn test_bool_exhaustive_both_arms() {
 #[test]
 fn test_number_match_requires_wildcard() {
     let (success, msgs) = typecheck(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 1 => "one",
                 _ => "other"
@@ -827,7 +827,7 @@ fn test_number_match_requires_wildcard() {
 #[test]
 fn test_string_match_requires_wildcard() {
     let (success, msgs) = typecheck(
-        r#"fn run(s: string) -> number {
+        r#"fn run(borrow s: string) -> number {
             return match s {
                 "a" => 1,
                 _ => 0
@@ -844,7 +844,7 @@ fn test_string_match_requires_wildcard() {
 #[test]
 fn test_option_missing_none_rejected() {
     let (success, msgs) = typecheck(
-        r#"fn run(opt: Option<number>) -> string {
+        r#"fn run(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x) => "some"
             };
@@ -865,7 +865,7 @@ fn test_option_missing_none_rejected() {
 #[test]
 fn test_option_missing_some_rejected() {
     let (success, msgs) = typecheck(
-        r#"fn run(opt: Option<number>) -> string {
+        r#"fn run(borrow opt: Option<number>) -> string {
             return match opt {
                 None => "none"
             };
@@ -886,7 +886,7 @@ fn test_option_missing_some_rejected() {
 #[test]
 fn test_result_missing_err_rejected() {
     let (success, msgs) = typecheck(
-        r#"fn run(res: Result<number, string>) -> string {
+        r#"fn run(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(x) => "ok"
             };
@@ -907,7 +907,7 @@ fn test_result_missing_err_rejected() {
 #[test]
 fn test_result_missing_ok_rejected() {
     let (success, msgs) = typecheck(
-        r#"fn run(res: Result<number, string>) -> string {
+        r#"fn run(borrow res: Result<number, string>) -> string {
             return match res {
                 Err(e) => "err"
             };
@@ -944,7 +944,7 @@ fn test_parity_simple_literal_match() {
 #[test]
 fn test_parity_constructor_option_match() {
     assert_parity(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) => x * 10,
                 None => 0
@@ -957,7 +957,7 @@ fn test_parity_constructor_option_match() {
 #[test]
 fn test_parity_nested_constructor_match() {
     assert_parity(
-        r#"fn run(res: Result<Option<number>, string>) -> number {
+        r#"fn run(borrow res: Result<Option<number>, string>) -> number {
             return match res {
                 Ok(Some(v)) => v,
                 Ok(None) => 0,
@@ -998,7 +998,7 @@ fn test_parity_match_as_expression_in_computation() {
 #[test]
 fn test_parity_array_pattern() {
     assert_parity(
-        r#"fn run(arr: number[]) -> number {
+        r#"fn run(borrow arr: number[]) -> number {
             return match arr {
                 [] => 0,
                 [x] => x,
@@ -1038,7 +1038,7 @@ fn test_match_multiple_in_same_function() {
 #[test]
 fn test_match_result_from_user_function() {
     assert_parity_string(
-        r#"fn checked_add(a: number, b: number) -> Result<number, string> {
+        r#"fn checked_add(borrow a: number, borrow b: number) -> Result<number, string> {
             if (a < 0 || b < 0) {
                 return Err("negative input");
             }
@@ -1079,7 +1079,7 @@ fn test_match_in_loop() {
 #[test]
 fn test_match_nested_option_result() {
     assert_parity_number(
-        r#"fn parse(s: string) -> Option<Result<number, string>> {
+        r#"fn parse(borrow s: string) -> Option<Result<number, string>> {
             if (s == "") {
                 return None;
             }
@@ -1103,7 +1103,7 @@ fn test_match_nested_option_result() {
 #[test]
 fn debug_direct_some_match() {
     // No function wrapper
-    let src = r#"fn run(opt: Option<number>) -> number { return match opt { Some(x) => x, None => 0 }; } run(Some(42));"#;
+    let src = r#"fn run(borrow opt: Option<number>) -> number { return match opt { Some(x) => x, None => 0 }; } run(Some(42));"#;
     let interp = interp_eval(src);
     println!("Interp result: {:?}", interp);
     // Test VM separately, catch panics
@@ -1113,7 +1113,7 @@ fn debug_direct_some_match() {
 
 #[test]
 fn debug_none_value() {
-    let src = r#"fn run(opt: Option<number>) -> number { return match opt { Some(x) => x, None => 0 }; } run(None);"#;
+    let src = r#"fn run(borrow opt: Option<number>) -> number { return match opt { Some(x) => x, None => 0 }; } run(None);"#;
     let interp = interp_eval(src);
     println!("Interp result: {:?}", interp);
 }
@@ -1125,7 +1125,7 @@ fn debug_none_value() {
 #[test]
 fn test_guard_basic_positive() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 => "pos",
                 _ => "non-pos"
@@ -1139,7 +1139,7 @@ fn test_guard_basic_positive() {
 #[test]
 fn test_guard_basic_negative() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 => "pos",
                 _ => "non-pos"
@@ -1154,7 +1154,7 @@ fn test_guard_basic_negative() {
 fn test_guard_false_tries_next_arm() {
     // guard fails → falls to wildcard
     assert_parity_number(
-        r#"fn run(n: number) -> number {
+        r#"fn run(borrow n: number) -> number {
             return match n {
                 x if x > 10 => 1,
                 _ => 2
@@ -1168,7 +1168,7 @@ fn test_guard_false_tries_next_arm() {
 #[test]
 fn test_guard_uses_bound_variable() {
     assert_parity_number(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) if x > 10 => x,
                 Some(x) => 0,
@@ -1184,7 +1184,7 @@ fn test_guard_uses_bound_variable() {
 fn test_guard_bound_variable_fails() {
     // x = 5, guard fails, second Some arm matches
     assert_parity_number(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) if x > 10 => x,
                 Some(x) => 0,
@@ -1199,7 +1199,7 @@ fn test_guard_bound_variable_fails() {
 #[test]
 fn test_guard_accesses_outer_scope() {
     assert_parity_string(
-        r#"fn run(val: number, limit: number) -> string {
+        r#"fn run(borrow val: number, borrow limit: number) -> string {
             return match val {
                 x if x == limit => "hit",
                 _ => "miss"
@@ -1213,7 +1213,7 @@ fn test_guard_accesses_outer_scope() {
 #[test]
 fn test_guard_multiple_guarded_arms_first_wins() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x < 0 => "neg",
                 x if x == 0 => "zero",
@@ -1228,7 +1228,7 @@ fn test_guard_multiple_guarded_arms_first_wins() {
 #[test]
 fn test_guard_with_boolean_expression() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 && x < 10 => "single digit",
                 _ => "other"
@@ -1242,7 +1242,7 @@ fn test_guard_with_boolean_expression() {
 #[test]
 fn test_guard_boolean_expression_fails() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 && x < 10 => "single digit",
                 _ => "other"
@@ -1256,7 +1256,7 @@ fn test_guard_boolean_expression_fails() {
 #[test]
 fn test_guard_on_result_constructor() {
     assert_parity_number(
-        r#"fn run(r: Result<number, string>) -> number {
+        r#"fn run(borrow r: Result<number, string>) -> number {
             return match r {
                 Ok(v) if v != 0 => v,
                 Ok(_) => 0,
@@ -1271,7 +1271,7 @@ fn test_guard_on_result_constructor() {
 #[test]
 fn test_guard_on_result_constructor_zero() {
     assert_parity_number(
-        r#"fn run(r: Result<number, string>) -> number {
+        r#"fn run(borrow r: Result<number, string>) -> number {
             return match r {
                 Ok(v) if v != 0 => v,
                 Ok(_) => 0,
@@ -1287,7 +1287,7 @@ fn test_guard_on_result_constructor_zero() {
 fn test_guard_does_not_satisfy_exhaustiveness_alone() {
     // Guarded arm does NOT make match exhaustive — wildcard still required
     let (ok, diags) = typecheck(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 => "pos"
             };
@@ -1308,7 +1308,7 @@ fn test_guard_does_not_satisfy_exhaustiveness_alone() {
 #[test]
 fn test_guard_parity_interpreter_vm() {
     assert_parity_number(
-        r#"fn run(n: number) -> number {
+        r#"fn run(borrow n: number) -> number {
             return match n {
                 x if x > 0 => x * 2,
                 _ => 0
@@ -1323,7 +1323,7 @@ fn test_guard_parity_interpreter_vm() {
 fn test_guard_with_multiple_bound_variables() {
     // Guard with multiple bound variables from array pattern
     assert_parity_string(
-        r#"fn run(a: number, b: number) -> string {
+        r#"fn run(borrow a: number, borrow b: number) -> string {
             return match [a, b] {
                 [x, y] if x < y => "ascending",
                 [x, y] => "not ascending",
@@ -1339,7 +1339,7 @@ fn test_guard_with_multiple_bound_variables() {
 fn test_guard_zero_does_not_match() {
     // Explicit test: guard `x > 0` on value 0 should fall through
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 0 => "positive",
                 _ => "non-positive"
@@ -1357,7 +1357,7 @@ fn test_guard_zero_does_not_match() {
 #[test]
 fn test_or_basic_two_literals() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | 1 => "small",
                 _ => "big"
@@ -1371,7 +1371,7 @@ fn test_or_basic_two_literals() {
 #[test]
 fn test_or_basic_second_alternative() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | 1 => "small",
                 _ => "big"
@@ -1385,7 +1385,7 @@ fn test_or_basic_second_alternative() {
 #[test]
 fn test_or_three_way() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | 1 | 2 => "tiny",
                 _ => "big"
@@ -1399,7 +1399,7 @@ fn test_or_three_way() {
 #[test]
 fn test_or_does_not_match_falls_to_next_arm() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | 1 => "small",
                 _ => "big"
@@ -1413,7 +1413,7 @@ fn test_or_does_not_match_falls_to_next_arm() {
 #[test]
 fn test_or_string_patterns() {
     assert_parity_bool(
-        r#"fn run(s: string) -> bool {
+        r#"fn run(borrow s: string) -> bool {
             return match s {
                 "yes" | "y" | "true" => true,
                 _ => false
@@ -1427,7 +1427,7 @@ fn test_or_string_patterns() {
 #[test]
 fn test_or_string_no_match() {
     assert_parity_bool(
-        r#"fn run(s: string) -> bool {
+        r#"fn run(borrow s: string) -> bool {
             return match s {
                 "yes" | "y" | "true" => true,
                 _ => false
@@ -1442,7 +1442,7 @@ fn test_or_string_no_match() {
 fn test_or_bool_exhaustive() {
     // true | false covers all bools — exhaustive without wildcard
     let (ok, diags) = typecheck(
-        r#"fn run(b: bool) -> string {
+        r#"fn run(borrow b: bool) -> string {
             return match b {
                 true | false => "covered"
             };
@@ -1459,7 +1459,7 @@ fn test_or_bool_exhaustive() {
 #[test]
 fn test_or_bool_exhaustive_runtime() {
     assert_parity_string(
-        r#"fn run(b: bool) -> string {
+        r#"fn run(borrow b: bool) -> string {
             return match b {
                 true | false => "covered"
             };
@@ -1473,7 +1473,7 @@ fn test_or_bool_exhaustive_runtime() {
 fn test_or_option_exhaustive() {
     // Some(_) | None covers Option — exhaustive
     let (ok, diags) = typecheck(
-        r#"fn run(opt: Option<number>) -> number {
+        r#"fn run(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(_) | None => 0
             };
@@ -1491,7 +1491,7 @@ fn test_or_option_exhaustive() {
 fn test_or_result_exhaustive() {
     // Ok(_) | Err(_) covers Result — exhaustive
     let (ok, diags) = typecheck(
-        r#"fn run(r: Result<number, string>) -> number {
+        r#"fn run(borrow r: Result<number, string>) -> number {
             return match r {
                 Ok(_) | Err(_) => 0
             };
@@ -1508,7 +1508,7 @@ fn test_or_result_exhaustive() {
 #[test]
 fn test_or_parity_interpreter_vm() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 1 | 2 | 3 => "low",
                 4 | 5 | 6 => "mid",
@@ -1524,7 +1524,7 @@ fn test_or_parity_interpreter_vm() {
 fn test_or_first_match_wins() {
     // First arm has OR that matches; second arm not reached
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 1 | 2 => "first",
                 2 | 3 => "second",
@@ -1540,7 +1540,7 @@ fn test_or_first_match_wins() {
 fn test_or_no_bindings_in_literal_alternatives() {
     // Pure literal OR — no variable binding, just result
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | 1 => "zero or one",
                 _ => "other"
@@ -1554,7 +1554,7 @@ fn test_or_no_bindings_in_literal_alternatives() {
 #[test]
 fn test_or_in_first_arm_wildcard_second() {
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 10 | 20 => "tens",
                 _ => "other"
@@ -1569,7 +1569,7 @@ fn test_or_in_first_arm_wildcard_second() {
 fn test_or_with_wildcard_sub_pattern() {
     // `0 | _` — the wildcard sub-pattern always matches
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 0 | _ => "anything",
             };
@@ -1583,7 +1583,7 @@ fn test_or_with_wildcard_sub_pattern() {
 fn test_guard_plus_unguarded_wildcard() {
     // Classic: guarded arm then unguarded wildcard
     assert_parity_string(
-        r#"fn run(n: number) -> string {
+        r#"fn run(borrow n: number) -> string {
             return match n {
                 x if x > 100 => "big",
                 _ => "small"
@@ -1598,7 +1598,7 @@ fn test_guard_plus_unguarded_wildcard() {
 fn test_or_all_arms_same_type() {
     // OR pattern result type must be consistent with rest of match
     assert_parity_number(
-        r#"fn run(n: number) -> number {
+        r#"fn run(borrow n: number) -> number {
             return match n {
                 0 | 1 | 2 => 99,
                 _ => 0

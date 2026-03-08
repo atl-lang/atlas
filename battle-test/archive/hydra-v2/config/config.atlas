@@ -5,7 +5,7 @@ type ServerConfig = HashMap<string, string>;
 
 type Registry = HashMap<string, string>;
 
-fn split_lines(value: string) -> string[] {
+fn split_lines(borrow value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     let has_value: bool = value != "";
     if has_value {
@@ -14,7 +14,7 @@ fn split_lines(value: string) -> string[] {
     return parts;
 }
 
-fn join_lines(parts: string[]) -> string {
+fn join_lines(borrow parts: string[]) -> string {
     let is_empty: bool = len(parts) == 0;
     if is_empty {
         return "";
@@ -37,7 +37,7 @@ export fn default_server_config() -> ServerConfig {
     return cfg;
 }
 
-fn cfg_get(borrow cfg: ServerConfig, key: string) -> string {
+fn cfg_get(borrow cfg: ServerConfig, borrow key: string) -> string {
     let has_key: bool = hash_map_has(cfg, key);
     if has_key {
         return unwrap(hash_map_get(cfg, key));
@@ -45,7 +45,7 @@ fn cfg_get(borrow cfg: ServerConfig, key: string) -> string {
     return "";
 }
 
-fn cfg_set(cfg: ServerConfig, key: string, value: string) -> ServerConfig {
+fn cfg_set(borrow cfg: ServerConfig, borrow key: string, borrow value: string) -> ServerConfig {
     return hash_map_put(cfg, key, value);
 }
 
@@ -53,11 +53,11 @@ fn cfg_get_args(borrow cfg: ServerConfig) -> string[] {
     return split_lines(cfg_get(cfg, "args"));
 }
 
-fn cfg_set_args(cfg: ServerConfig, args: string[]) -> ServerConfig {
+fn cfg_set_args(borrow cfg: ServerConfig, borrow args: string[]) -> ServerConfig {
     return cfg_set(cfg, "args", join_lines(args));
 }
 
-export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerConfig {
+export fn merge_server_config(borrow dst: ServerConfig, borrow src: ServerConfig) -> ServerConfig {
     let mut out = dst;
     let cmd = cfg_get(src, "command");
     let has_cmd: bool = cmd != "";
@@ -82,7 +82,7 @@ export fn merge_server_config(dst: ServerConfig, src: ServerConfig) -> ServerCon
     return out;
 }
 
-export fn substitute_env_vars(value: string) -> string {
+export fn substitute_env_vars(borrow value: string) -> string {
     let has_prefix: bool = starts_with(value, "env:");
     if has_prefix {
         return value;
@@ -90,7 +90,7 @@ export fn substitute_env_vars(value: string) -> string {
     return value;
 }
 
-export fn apply_env_vars(cfg: ServerConfig) -> ServerConfig {
+export fn apply_env_vars(borrow cfg: ServerConfig) -> ServerConfig {
     let cmd = substitute_env_vars(cfg_get(cfg, "command"));
     let cwd = substitute_env_vars(cfg_get(cfg, "cwd"));
     let env_file = substitute_env_vars(cfg_get(cfg, "env_file"));

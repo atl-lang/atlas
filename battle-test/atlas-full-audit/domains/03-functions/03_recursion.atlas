@@ -2,7 +2,7 @@
 // Tests: recursive fn with base case, factorial (tree recursion style),
 //        fibonacci (tree recursion), and sum (tail-call style accumulator).
 
-fn factorial(borrow n: number) -> number {
+fn factorial(own n: number) -> number {
     if n <= 1 {
         return 1;
     }
@@ -20,14 +20,14 @@ fn fibonacci(borrow n: number) -> number {
 }
 
 // Tail-call style with accumulator
-fn sum_to(borrow n: number, borrow acc: number) -> number {
+fn sum_to(borrow n: number, own acc: number) -> number {
     if n <= 0 {
         return acc;
     }
     return sum_to(n - 1, acc + n);
 }
 
-fn power(borrow base: number, borrow exp: number) -> number {
+fn power(own base: number, borrow exp: number) -> number {
     if exp == 0 {
         return 1;
     }

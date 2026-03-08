@@ -2,20 +2,20 @@
 
 import { protocol_lsp, protocol_ndjson } from "./types";
 
-export fn format_lsp(payload: string) -> string {
+export fn format_lsp(borrow payload: string) -> string {
     let content_length = len(payload);
     let header = "Content-Length: " + str(content_length) + "\r\n\r\n";
     return header + payload;
 }
 
-export fn format_ndjson(payload: string) -> string {
+export fn format_ndjson(borrow payload: string) -> string {
     if (len(payload) == 0 || !endsWith(payload, "\n")) {
         return payload + "\n";
     }
     return payload;
 }
 
-export fn format_message(payload: string, protocol: string) -> Result<string, string> {
+export fn format_message(borrow payload: string, borrow protocol: string) -> Result<string, string> {
     if (protocol == protocol_lsp()) {
         return Ok(format_lsp(payload));
     }
@@ -25,7 +25,7 @@ export fn format_message(payload: string, protocol: string) -> Result<string, st
     return Err("Unknown protocol");
 }
 
-export fn validate_jsonrpc(payload: string) -> Result<null, string> {
+export fn validate_jsonrpc(borrow payload: string) -> Result<null, string> {
     if (!isValidJSON(payload)) {
         return Err("Invalid JSON");
     }

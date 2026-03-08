@@ -3,7 +3,7 @@
 
 // Without process APIs, we cannot validate PIDs. This function only validates
 // JSON state file readability and returns Ok even if no cleanup is possible.
-export fn cleanup_stale_states(state_dir: string) -> Result<null, string> {
+export fn cleanup_stale_states(borrow state_dir: string) -> Result<null, string> {
     if (!fsIsDir(state_dir)) { return Ok(null); }
     let entries = readDir(state_dir);
     for name in entries {

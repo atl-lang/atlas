@@ -96,7 +96,7 @@ fn test_sandboxed_runtime_basic_arithmetic() {
 fn test_sandboxed_runtime_function_definitions() {
     let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
     runtime
-        .eval("fn add(a: number, b: number) -> number { return a + b; }")
+        .eval("fn add(borrow a: number, borrow b: number) -> number { return a + b; }")
         .unwrap();
 
     let result = runtime.eval("add(10, 20)").unwrap();
@@ -123,7 +123,7 @@ fn test_sandboxed_runtime_conditionals() {
     runtime
         .eval(
             r#"
-        fn maximum(a: number, b: number) -> number {
+        fn maximum(borrow a: number, borrow b: number) -> number {
             if (a > b) {
                 return a;
             } else {
@@ -231,7 +231,7 @@ fn test_sandboxed_runtime_persistent_state() {
 
     // Define a function in one eval()
     runtime
-        .eval("fn increment(x: number) -> number { return x + 1; }")
+        .eval("fn increment(borrow x: number) -> number { return x + 1; }")
         .unwrap();
 
     // Call it in subsequent eval() calls

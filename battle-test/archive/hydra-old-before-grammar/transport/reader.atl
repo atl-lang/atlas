@@ -2,7 +2,7 @@
 
 import { protocol_lsp, protocol_ndjson, new_message_result } from "./types";
 
-export fn detect_protocol(initial_data: string) -> string {
+export fn detect_protocol(borrow initial_data: string) -> string {
     if (len(initial_data) >= 14) {
         let peek = substr(initial_data, 0, 14);
         if (peek == "Content-Length") {
@@ -12,7 +12,7 @@ export fn detect_protocol(initial_data: string) -> string {
     return protocol_ndjson();
 }
 
-export fn read_ndjson(input: string) -> Result<json, string> {
+export fn read_ndjson(borrow input: string) -> Result<json, string> {
     let lines = split(input, "\n");
     if (len(lines) == 0) {
         return Err("No data available");
@@ -32,7 +32,7 @@ export fn read_ndjson(input: string) -> Result<json, string> {
     return new_message_result(line, remaining, consumed);
 }
 
-fn parse_content_length(line: string) -> Result<number, string> {
+fn parse_content_length(borrow line: string) -> Result<number, string> {
     if (!startsWith(line, "Content-Length: ")) {
         return Err("Not a Content-Length header");
     }
@@ -48,7 +48,7 @@ fn parse_content_length(line: string) -> Result<number, string> {
     return Ok(parseFloat(value));
 }
 
-export fn read_lsp(input: string) -> Result<json, string> {
+export fn read_lsp(borrow input: string) -> Result<json, string> {
     let header_end = indexOf(input, "\r\n\r\n");
     if (header_end == -1) {
         return Err("Incomplete headers - waiting for \\r\\n\\r\\n");
@@ -90,7 +90,7 @@ export fn read_lsp(input: string) -> Result<json, string> {
     return new_message_result(payload, remaining, body_end);
 }
 
-export fn read_message(buffer: string, protocol: string) -> Result<json, string> {
+export fn read_message(borrow buffer: string, borrow protocol: string) -> Result<json, string> {
     if (len(buffer) == 0) {
         return Err("Empty buffer");
     }

@@ -136,7 +136,7 @@ fn test_run_variable_declaration_no_output() {
 #[test]
 fn test_run_function_call() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 add(10, 20);
@@ -256,7 +256,7 @@ fn test_run_type_error() {
 #[test]
 fn test_run_type_error_function_call() {
     let source = r#"
-fn greet(name: string) -> string {
+fn greet(borrow name: string) -> string {
     return name;
 }
 greet(42);
@@ -318,7 +318,7 @@ fn test_build_creates_bytecode_file() {
 #[test]
 fn test_build_with_function() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 "#;
@@ -349,7 +349,7 @@ fn test_build_with_disasm_flag() {
 #[test]
 fn test_build_complex_program() {
     let source = r#"
-fn factorial(n: number) -> number {
+fn factorial(borrow n: number) -> number {
     if n <= 1 {
         return 1;
     }
@@ -439,7 +439,7 @@ fn test_check_valid_program() {
 #[test]
 fn test_check_complex_valid_program() {
     let source = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 

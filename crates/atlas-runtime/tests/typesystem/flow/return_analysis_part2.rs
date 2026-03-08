@@ -4,7 +4,7 @@ use super::super::*;
 fn test_if_else_with_early_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn complex(x: number, y: number) -> number {
+        fn complex(borrow x: number, borrow y: number) -> number {
             if (x < 0) {
                 return -1;
             }
@@ -26,7 +26,7 @@ fn test_if_else_with_early_return() {
 fn test_multiple_if_without_final_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(x: number, y: number) -> number {
+        fn test(borrow x: number, borrow y: number) -> number {
             if (x < 0) {
                 return -1;
             }
@@ -156,7 +156,7 @@ fn test_all_branches_return_same_value() {
 fn test_if_else_if_else_all_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn classify(x: number) -> number {
+        fn classify(borrow x: number) -> number {
             if (x < 0) {
                 return -1;
             } else {
@@ -189,7 +189,7 @@ fn test_simple_return_without_nesting() {
 fn test_return_after_if_without_else() {
     let diagnostics = typecheck_source(
         r#"
-        fn myMax(a: number, b: number) -> number {
+        fn myMax(borrow a: number, borrow b: number) -> number {
             if (a > b) {
                 return a;
             }
@@ -206,11 +206,11 @@ fn test_return_after_if_without_else() {
 fn test_multiple_functions_all_valid() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
-        fn multiply(a: number, b: number) -> number {
+        fn multiply(borrow a: number, borrow b: number) -> number {
             return a * b;
         }
 
@@ -226,7 +226,7 @@ fn test_multiple_functions_all_valid() {
 fn test_multiple_functions_one_invalid() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 

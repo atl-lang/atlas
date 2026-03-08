@@ -506,7 +506,7 @@ arr;
 #[test]
 fn ai_mistake_own_param_missing_annotation_flagged() {
     // AI defines function without ownership annotations — should get AT1007
-    let source = "fn process(x: number) -> number { return x; }";
+    let source = "fn process(borrow x: number) -> number { return x; }";
     let diags = get_diagnostics(source);
     assert_self_correcting(&diags, "AT1007", &["ownership"]);
 }
@@ -518,7 +518,7 @@ fn ai_mistake_own_param_missing_annotation_flagged() {
 #[test]
 fn ai_mistake_missing_ownership_annotation() {
     // AI defines function without ownership annotation
-    let source = r#"fn add(x: number, y: number) -> number { return x + y; }"#;
+    let source = r#"fn add(borrow x: number, borrow y: number) -> number { return x + y; }"#;
     let diags = get_diagnostics(source);
     assert_self_correcting(&diags, "AT1007", &["ownership", "share"]);
 }
@@ -526,7 +526,7 @@ fn ai_mistake_missing_ownership_annotation() {
 #[test]
 fn ai_mistake_missing_ownership_on_array_param() {
     // AI passes array param without annotation
-    let source = r#"fn sum(nums: number[]) -> number { return 0.0; }"#;
+    let source = r#"fn sum(borrow nums: number[]) -> number { return 0.0; }"#;
     let diags = get_diagnostics(source);
     assert_self_correcting(&diags, "AT1007", &["ownership"]);
 }
@@ -560,7 +560,7 @@ fn ai_mistake_missing_closing_brace() {
 #[test]
 fn ai_mistake_wrong_arrow_syntax() {
     // AI uses => instead of ->
-    let source = "fn add(x: number, y: number) => number { return x + y; }";
+    let source = "fn add(borrow x: number, borrow y: number) => number { return x + y; }";
     let diags = get_diagnostics(source);
     assert!(
         !diags.is_empty(),

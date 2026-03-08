@@ -3,10 +3,10 @@
 
 import { classify_chunk } from "../sanitizer/classifier";
 
-export fn classify(chunk: string) -> string {
+export fn classify(borrow chunk: string) -> string {
     return classify_chunk(chunk);
 }
 
-export fn validate_utf8(data: string) -> string {
+export fn validate_utf8(borrow data: string) -> string {
     return data;
 }

@@ -4,7 +4,7 @@
 import { load_registry } from "../config/loader";
 import { registry_path_from_args, server_name_from_args } from "./pathutil";
 
-export fn cmd_add(args: json) -> Result<json, string> {
+export fn cmd_add(borrow args: json) -> Result<json, string> {
     let _ = server_name_from_args(args)?;
     let reg_path = registry_path_from_args(args);
     let _ = load_registry(reg_path)?;

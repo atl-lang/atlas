@@ -1,9 +1,9 @@
 // Test module - simple export
 
-export fn greet(name: string) -> string {
+export fn greet(borrow name: string) -> string {
     return "Hello, " + name;
 }
 
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }

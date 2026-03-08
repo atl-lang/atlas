@@ -10,7 +10,7 @@ struct Record { name: string, score: number, active: bool }
 let records: Record[] = [Record { name: "Alice", score: 92, active: true }, Record { name: "Bob", score: 45, active: false }, Record { name: "Carol", score: 78, active: true }, Record { name: "Dave", score: 61, active: false }, Record { name: "Eve", score: 85, active: true }, Record { name: "Frank", score: 33, active: false }];
 
 // Filter active
-let active: Record[] = filter(records, fn(borrow r: Record) -> bool { return r.active; });
+let active: Record[] = filter(records, fn(own r: Record) -> bool { return r.active; });
 print("active count: " + str(len(active)));
 
 // Sum scores of active via for-in (reduce with struct field access may have type issues)
@@ -31,6 +31,6 @@ print("max: " + str(max_score));
 print("min: " + str(min_score));
 
 // Names of active records
-let active_names: string[] = map(active, fn(borrow r: Record) -> string { return r.name; });
+let active_names: string[] = map(active, fn(own r: Record) -> string { return r.name; });
 let names_str: string = join(active_names, ", ");
 print("active: " + names_str);

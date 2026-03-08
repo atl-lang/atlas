@@ -1,6 +1,6 @@
 // Logs tool (Atlas port)
 
-export fn hydra_logs(lines: number) -> array {
+export fn hydra_logs(borrow lines: number) -> array {
     // No log buffer implemented
     return [];
 }

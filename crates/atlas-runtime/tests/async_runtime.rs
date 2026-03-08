@@ -1928,7 +1928,7 @@ fn test_sleep_sequence() {
 #[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_sleep_with_value_return() {
     let code = r#"
-        fn sleepAndReturn(value: number) -> Future<number> {
+        fn sleepAndReturn(borrow value: number) -> Future<number> {
             return async {
                 await sleep(5);
                 value

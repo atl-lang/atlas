@@ -1,6 +1,6 @@
 // Basic redactor (substring-based; Atlas lacks regex).
 
-export fn redact(text: string, patterns: string[], replacement: string) -> string {
+export fn redact(borrow text: string, borrow patterns: string[], borrow replacement: string) -> string {
     let mut result: string = text;
     for pattern in patterns {
         if (pattern != "") {

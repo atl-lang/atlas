@@ -103,7 +103,7 @@ fn test_initial_build_three_files() {
         ("src/lib.atlas", simple_lib()),
         (
             "src/utils.atlas",
-            r#"export fn mul(a: number, b: number) -> number { return a * b; }"#,
+            r#"export fn mul(borrow a: number, borrow b: number) -> number { return a * b; }"#,
         ),
     ]);
     let mut builder = make_builder(&path);

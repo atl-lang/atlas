@@ -105,7 +105,7 @@ fn test_import_nonexistent_export() {
     create_module(
         temp_dir.path(),
         "math",
-        "export fn add(a: number, b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
     );
 
     let main = create_module(
@@ -212,13 +212,13 @@ fn test_multiple_imports_from_different_modules() {
     create_module(
         temp_dir.path(),
         "math",
-        "export fn add(a: number, b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
     );
 
     create_module(
         temp_dir.path(),
         "string_utils",
-        r#"export fn greeting(name: string) -> string { return "Hello, " + name; }"#,
+        r#"export fn greeting(borrow name: string) -> string { return "Hello, " + name; }"#,
     );
 
     create_module(
@@ -258,11 +258,11 @@ fn test_exported_function_uses_local_helper() {
         temp_dir.path(),
         "math",
         r#"
-fn helper(x: number) -> number {
+fn helper(borrow x: number) -> number {
     return x * 2;
 }
 
-export fn double(x: number) -> number {
+export fn double(borrow x: number) -> number {
     return helper(x);
 }
 "#,
@@ -298,7 +298,7 @@ fn test_exported_function_uses_exported_variable() {
         "config",
         r#"
 export let MULTIPLIER: number = 3;
-export fn multiply(x: number) -> number {
+export fn multiply(borrow x: number) -> number {
     return x * MULTIPLIER;
 }
 "#,

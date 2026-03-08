@@ -3,7 +3,7 @@
 
 import { scan_paths } from "../discovery/scanner";
 
-export fn cmd_discover(args: json) -> Result<json, string> {
+export fn cmd_discover(borrow args: json) -> Result<json, string> {
     if (args["paths"].is_null()) { return Err("paths array is required"); }
     let paths = args["paths"];
     let results = scan_paths(paths)?;

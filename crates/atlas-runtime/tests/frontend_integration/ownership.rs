@@ -108,7 +108,7 @@ fn test_parse_shared_param() {
 #[test]
 fn test_parse_unannotated_param_is_error() {
     // Since B11-P02 (D-034), unannotated params are a parse error (AT1007).
-    let src = "fn f(x: number) -> number { return x; }";
+    let src = "fn f(borrow x: number) -> number { return x; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -136,7 +136,7 @@ fn test_parse_mixed_ownership_params() {
 
 #[test]
 fn test_parse_ownership_annotation_error_no_identifier() {
-    let src = "fn f(own: number) -> number { return 0; }";
+    let src = "fn f(borrow own: number) -> number { return 0; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);

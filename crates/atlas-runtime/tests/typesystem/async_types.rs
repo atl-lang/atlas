@@ -47,7 +47,7 @@ fn test_async_fn_no_annotation_infers_void() {
 fn test_explicit_future_annotation_accepted() {
     let diags = errors(
         r#"
-        async fn async_add(a: number, b: number) -> number { return a + b; }
+        async fn async_add(borrow a: number, borrow b: number) -> number { return a + b; }
         let f: Future<number> = async_add(1, 2);
         "#,
     );
@@ -95,7 +95,7 @@ fn test_await_result_in_arithmetic() {
 fn test_sync_fn_call_unaffected() {
     let diags = errors(
         r#"
-        fn double(x: number) -> number { return x * 2; }
+        fn double(borrow x: number) -> number { return x * 2; }
         let n: number = double(3);
         "#,
     );
@@ -262,7 +262,7 @@ fn test_at4001_await_in_sync_for_loop() {
     let diags = errors(
         r#"
         async fn step() -> number { return 0; }
-        fn process(items: number[]) -> void {
+        fn process(borrow items: number[]) -> void {
             for item in items {
                 let _n = await step();
             }
@@ -282,7 +282,7 @@ fn test_at4001_await_in_sync_for_loop() {
 fn test_regression_sync_fn_return_type() {
     let diags = errors(
         r#"
-        fn greet(name: string) -> string { return "hello " + name; }
+        fn greet(borrow name: string) -> string { return "hello " + name; }
         let s: string = greet("world");
         "#,
     );
@@ -302,7 +302,7 @@ fn test_regression_at3_codes_unaffected() {
 fn test_regression_inference_unaffected() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let result = add(1, 2);
         "#,
     );
@@ -314,8 +314,8 @@ fn test_regression_inference_unaffected() {
 fn test_regression_nested_sync_fns() {
     let diags = errors(
         r#"
-        fn outer(x: number) -> number {
-            fn inner(y: number) -> number { return y * 2; }
+        fn outer(borrow x: number) -> number {
+            fn inner(borrow y: number) -> number { return y * 2; }
             return inner(x) + 1;
         }
         "#,

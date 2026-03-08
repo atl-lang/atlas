@@ -1,7 +1,7 @@
 // 01_basic_async.atlas
 // Tests: basic async fn definition, await call, async fn returning each primitive type
 
-async fn double_async(borrow n: number) -> number {
+async fn double_async(own n: number) -> number {
     return n * 2;
 }
 

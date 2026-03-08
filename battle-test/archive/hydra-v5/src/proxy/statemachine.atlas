@@ -18,7 +18,7 @@ struct StateTransition {
 // Tuple pattern matching not supported
 // State machine validation cannot be properly implemented
 
-fn is_valid_transition(_old_state: ProxyState, _new_state: ProxyState) -> bool {
+fn is_valid_transition(borrow _old_state: ProxyState, borrow _new_state: ProxyState) -> bool {
     // BLOCKED by H-110, H-111: cannot implement enum-based logic in functions
     // Placeholder returns false
     return false;

@@ -9,7 +9,7 @@ struct RestartBackoff {
 }
 
 trait CrashLearner {
-    fn observe_crash(self, reason: string) -> RestartBackoff;
+    fn observe_crash(self, borrow reason: string) -> RestartBackoff;
     fn can_recover(self) -> bool;
     fn reset(self) -> string;
 }
@@ -23,7 +23,7 @@ struct AdaptiveLearner {
 }
 
 impl CrashLearner for AdaptiveLearner {
-    fn observe_crash(self, reason: string) -> RestartBackoff {
+    fn observe_crash(self, borrow reason: string) -> RestartBackoff {
         // FRICTION: No time API, cannot implement proper crash window
         return RestartBackoff {
             base_ms: 100,

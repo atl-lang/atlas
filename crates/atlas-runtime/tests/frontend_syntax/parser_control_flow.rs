@@ -126,7 +126,7 @@ fn test_parse_comments_inside_expressions() {
 #[test]
 fn test_parse_comments_inside_blocks() {
     let source = r#"
-        fn add(x: number, y: number) -> number {
+        fn add(borrow x: number, borrow y: number) -> number {
             let sum = x + y; // inline comment
             /// doc comment inside block should be ignored
             return sum;
@@ -145,7 +145,7 @@ fn test_parse_comments_inside_blocks() {
 fn return_in_match_arm_parses() {
     let src = r#"
 enum Status { Active, Inactive }
-fn get_label(s: Status) -> string {
+fn get_label(borrow s: Status) -> string {
     match s {
         Status::Active => return "active",
         Status::Inactive => return "inactive",

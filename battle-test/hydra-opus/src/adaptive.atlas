@@ -30,7 +30,7 @@ fn new_learner() -> Learner {
 }
 
 // Records an event for later analysis
-fn observe(borrow learner: Learner, borrow event: string, borrow ctx: HashMap<string, any>) -> Learner {
+fn observe(borrow learner: Learner, own event: string, own ctx: HashMap<string, any>) -> Learner {
     let obs = Observation {
         timestamp_ms: dateTimeToTimestamp(dateTimeNow()),
         event: event,

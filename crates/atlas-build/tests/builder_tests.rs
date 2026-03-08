@@ -75,7 +75,7 @@ fn main() -> void {
         ),
         (
             "src/math.atlas",
-            r#"export fn add(x: number, y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number) -> number {
     return x + y;
 }"#,
         ),
@@ -94,7 +94,7 @@ fn main() -> void {
 fn test_build_library_target() {
     let (_temp, project_path) = create_test_project(&[(
         "src/lib.atlas",
-        r#"export fn greet(name: string) -> string {
+        r#"export fn greet(borrow name: string) -> string {
     return "Hello, " + name;
 }"#,
     )]);
@@ -235,7 +235,7 @@ fn test_multiple_targets_library_and_binary() {
     let (_temp, project_path) = create_test_project(&[
         (
             "src/lib.atlas",
-            r#"export fn double(x: number) -> number {
+            r#"export fn double(borrow x: number) -> number {
     return x * 2;
 }"#,
         ),
@@ -314,7 +314,7 @@ fn main() -> void {
         ),
         (
             "src/utils.atlas",
-            r#"export fn greet(name: string) -> void {
+            r#"export fn greet(borrow name: string) -> void {
     print(name);
 }"#,
         ),
@@ -341,11 +341,11 @@ fn main() -> void {
         ),
         (
             "src/math.atlas",
-            r#"export fn add(x: number, y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number) -> number {
     return x + y;
 }
 
-export fn subtract(x: number, y: number) -> number {
+export fn subtract(borrow x: number, borrow y: number) -> number {
     return x - y;
 }"#,
         ),
@@ -521,11 +521,11 @@ fn main() -> void {
         ),
         (
             "src/math.atlas",
-            r#"export fn add(x: number, y: number) -> number {
+            r#"export fn add(borrow x: number, borrow y: number) -> number {
     return x + y;
 }
 
-export fn multiply(x: number, y: number) -> number {
+export fn multiply(borrow x: number, borrow y: number) -> number {
     return x * y;
 }"#,
         ),

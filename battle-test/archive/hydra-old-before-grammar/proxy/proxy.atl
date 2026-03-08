@@ -5,7 +5,7 @@ import { state_stopped, state_starting, state_running, state_failed, new_proxy_s
 import { new_queue, enqueue, drain, size } from "./queue";
 
 // Create a new proxy instance (json state)
-export fn new_proxy(opts: json) -> Result<json, string> {
+export fn new_proxy(borrow opts: json) -> Result<json, string> {
     let qsize = opts["queue_size"].is_null() ? 100 : opts["queue_size"].as_number();
     let qttl = opts["queue_ttl_seconds"].is_null() ? 30 : opts["queue_ttl_seconds"].as_number();
     let queue = new_queue(qsize, qttl)?;
@@ -24,7 +24,7 @@ export fn new_proxy(opts: json) -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn run_proxy(proxy: json) -> Result<json, string> {
+export fn run_proxy(borrow proxy: json) -> Result<json, string> {
     // Synchronous placeholder: mark running
     let obj = {
         state: state_running(),
@@ -40,7 +40,7 @@ export fn run_proxy(proxy: json) -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn shutdown_proxy(proxy: json) -> Result<json, string> {
+export fn shutdown_proxy(borrow proxy: json) -> Result<json, string> {
     let obj = {
         state: state_stopped(),
         queue: proxy["queue"],
@@ -55,7 +55,7 @@ export fn shutdown_proxy(proxy: json) -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn status(proxy: json) -> Result<json, string> {
+export fn status(borrow proxy: json) -> Result<json, string> {
     let st = new_proxy_status()?;
     let obj = {
         state: proxy["state"],

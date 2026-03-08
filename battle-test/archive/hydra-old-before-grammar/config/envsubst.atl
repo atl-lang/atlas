@@ -2,7 +2,7 @@
 // Source: /Users/proxikal/dev/projects/hydra/internal/config/envsubst.go
 
 // Replace ${env:VAR} with environment variable value
-export fn substitute_env_vars(value: string) -> string {
+export fn substitute_env_vars(borrow value: string) -> string {
     let mut result = "";
     let mut i = 0;
     while (i < len(value)) {
@@ -29,7 +29,7 @@ export fn substitute_env_vars(value: string) -> string {
 }
 
 // Best-effort substitution on known config fields
-export fn substitute_env_vars_in_config(cfg: json) -> Result<json, string> {
+export fn substitute_env_vars_in_config(borrow cfg: json) -> Result<json, string> {
     let command = cfg["command"].is_null() ? "" : cfg["command"].as_string();
     let cwd = cfg["cwd"].is_null() ? "" : cfg["cwd"].as_string();
     let env_file = cfg["env_file"].is_null() ? "" : cfg["env_file"].as_string();

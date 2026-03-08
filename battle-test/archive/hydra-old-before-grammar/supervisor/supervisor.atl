@@ -9,7 +9,7 @@ export fn state_running() -> string { return "RUNNING"; }
 export fn state_restarting() -> string { return "RESTARTING"; }
 export fn state_failed() -> string { return "FAILED"; }
 
-export fn new_supervisor_state(max_restarts: number, restart_window_seconds: number) -> Result<json, string> {
+export fn new_supervisor_state(borrow max_restarts: number, borrow restart_window_seconds: number) -> Result<json, string> {
     let obj = {
         state: state_stopped(),
         restart_count: 0,
@@ -25,18 +25,18 @@ export fn new_supervisor_state(max_restarts: number, restart_window_seconds: num
 }
 
 // Execute command synchronously
-export fn execute_command(command: array) -> Result<json, string> {
+export fn execute_command(borrow command: array) -> Result<json, string> {
     return exec(command);
 }
 
-export fn check_success(output: json) -> bool {
+export fn check_success(borrow output: json) -> bool {
     // Expect { exitCode: number, stdout: string, stderr: string }
     if (output["exitCode"].is_null()) { return false; }
     return output["exitCode"].as_number() == 0;
 }
 
 // Restart loop (synchronous) - best effort
-export fn run_with_retry(command: array, max_attempts: number) -> bool {
+export fn run_with_retry(borrow command: array, borrow max_attempts: number) -> bool {
     let mut succeeded = false;
     for (let mut i = 0; i < max_attempts; i = i + 1) {
         let out = execute_command(command);
@@ -50,7 +50,7 @@ export fn run_with_retry(command: array, max_attempts: number) -> bool {
     return succeeded;
 }
 
-export fn start_supervisor(command: array, max_restarts: number, restart_window_seconds: number) -> Result<string, string> {
+export fn start_supervisor(borrow command: array, borrow max_restarts: number, borrow restart_window_seconds: number) -> Result<string, string> {
     let out = execute_command(command);
     match out {
         Ok(data) => {

@@ -15,7 +15,7 @@ fn parse_anon_fn_expr(source: &str) -> (Vec<Item>, Vec<Diagnostic>) {
 
 #[test]
 fn test_anon_fn_basic_parses_as_anon_fn_node() {
-    let (items, diags) = parse_anon_fn_expr("let f = fn(x: number) -> number { x; };");
+    let (items, diags) = parse_anon_fn_expr("let f = fn(borrow x: number) -> number { x; };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -35,7 +35,7 @@ fn test_anon_fn_basic_parses_as_anon_fn_node() {
 
 #[test]
 fn test_anon_fn_return_type_present() {
-    let (items, diags) = parse_anon_fn_expr("let f = fn(x: number) -> number { x; };");
+    let (items, diags) = parse_anon_fn_expr("let f = fn(borrow x: number) -> number { x; };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -52,7 +52,7 @@ fn test_anon_fn_return_type_present() {
 
 #[test]
 fn test_anon_fn_no_return_type_is_none() {
-    let (items, diags) = parse_anon_fn_expr("let f = fn(x: number) { x; };");
+    let (items, diags) = parse_anon_fn_expr("let f = fn(borrow x: number) { x; };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -86,7 +86,8 @@ fn test_anon_fn_no_params() {
 
 #[test]
 fn test_anon_fn_multiple_params() {
-    let (items, diags) = parse_anon_fn_expr("let f = fn(x: number, y: string) -> bool { true; };");
+    let (items, diags) =
+        parse_anon_fn_expr("let f = fn(borrow x: number, borrow y: string) -> bool { true; };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -146,7 +147,7 @@ fn test_anon_fn_borrow_annotation_on_param() {
 
 #[test]
 fn test_anon_fn_body_is_block_expr() {
-    let (items, diags) = parse_anon_fn_expr("let f = fn(x: number) -> number { x; };");
+    let (items, diags) = parse_anon_fn_expr("let f = fn(borrow x: number) -> number { x; };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -166,7 +167,7 @@ fn test_anon_fn_body_is_block_expr() {
 
 #[test]
 fn test_anon_fn_as_call_argument() {
-    let (items, diags) = parse_anon_fn_expr("apply(fn(x: number) -> number { x; });");
+    let (items, diags) = parse_anon_fn_expr("apply(fn(borrow x: number) -> number { x; });");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",
@@ -198,7 +199,7 @@ fn test_anon_fn_missing_paren_produces_diagnostic() {
 
 #[test]
 fn test_anon_fn_missing_body_brace_produces_diagnostic() {
-    let (_, diags) = parse_anon_fn_expr("let f = fn(x: number) -> number x; };");
+    let (_, diags) = parse_anon_fn_expr("let f = fn(borrow x: number) -> number x; };");
     let errors: Vec<_> = diags
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Error)

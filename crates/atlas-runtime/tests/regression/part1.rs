@@ -109,7 +109,7 @@ fn regression_var_variables(#[case] code: &str, #[case] expected: f64) {
 #[test]
 fn regression_function_declaration_and_call() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         add(2, 3);
@@ -120,7 +120,7 @@ fn regression_function_declaration_and_call() {
 #[test]
 fn regression_function_recursion() {
     let code = r#"
-        fn factorial(n: number) -> number {
+        fn factorial(borrow n: number) -> number {
             if (n <= 1) {
                 return 1;
             }
@@ -134,7 +134,7 @@ fn regression_function_recursion() {
 #[test]
 fn regression_function_local_variables() {
     let code = r#"
-        fn compute(x: number) -> number {
+        fn compute(borrow x: number) -> number {
             let temp: number = x * 2;
             return temp + 1;
         }

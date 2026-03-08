@@ -21,7 +21,7 @@ trait RateLimiter {
 
 // SizeLimiter trait - limits payload sizes
 trait SizeLimiter {
-    fn limit(self, borrow response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse;
+    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse;
 }
 
 // DefaultRedactor implements pattern-based redaction
@@ -30,7 +30,7 @@ struct DefaultRedactor {
 }
 
 // Creates a new DefaultRedactor
-fn new_redactor(borrow replacement: string) -> DefaultRedactor {
+fn new_redactor(own replacement: string) -> DefaultRedactor {
     return DefaultRedactor {
         replacement: replacement
     };
@@ -64,7 +64,7 @@ struct TokenBucketLimiter {
 }
 
 // Creates a new rate limiter
-fn new_rate_limiter(borrow rate_per_second: number) -> TokenBucketLimiter {
+fn new_rate_limiter(own rate_per_second: number) -> TokenBucketLimiter {
     return TokenBucketLimiter {
         max_tokens: rate_per_second,
         current_tokens: rate_per_second,
@@ -107,7 +107,7 @@ fn new_size_limiter() -> DefaultSizeLimiter {
 }
 
 impl SizeLimiter for DefaultSizeLimiter {
-    fn limit(self, borrow response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse {
+    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse {
         // Serialize to check size
         let result_str = match response.result {
             Some(r) => str(r),

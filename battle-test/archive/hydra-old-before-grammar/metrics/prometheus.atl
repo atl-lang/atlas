@@ -1,6 +1,6 @@
 // Prometheus exporter (Atlas port) - simplified
 
-export fn to_prometheus(snapshot: json, server_name: string) -> string {
+export fn to_prometheus(borrow snapshot: json, borrow server_name: string) -> string {
     // Minimal: expose total requests
     let line = "hydra_requests_total{server=\"" + server_name + "\"} " + str(snapshot["requests_total"].as_number());
     return line + "\n";

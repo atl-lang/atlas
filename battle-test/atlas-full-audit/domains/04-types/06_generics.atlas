@@ -1,7 +1,7 @@
 // 06_generics.atlas
 // Tests: generic fn with type parameter, generic applied to number and string.
 
-fn identity<T>(borrow x: T) -> T {
+fn identity<T>(own x: T) -> T {
     return x;
 }
 

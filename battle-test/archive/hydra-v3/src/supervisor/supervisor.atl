@@ -21,7 +21,7 @@ struct SupervisorState {
     start_time: number
 }
 
-export fn supervisor_state_str(state: ServerState) -> string {
+export fn supervisor_state_str(borrow state: ServerState) -> string {
     return match state {
         ServerState::Stopped => "stopped",
         ServerState::Starting => "starting",
@@ -32,11 +32,10 @@ export fn supervisor_state_str(state: ServerState) -> string {
 }
 
 export fn new_supervisor(
-    cmd: string[],
-    cwd: string,
-    max_restarts: number,
-    restart_window_seconds: number
-) -> SupervisorState {
+    borrow cmd: string[],
+    borrow cwd: string,
+    borrow max_restarts: number,
+    borrow restart_window_seconds: number) -> SupervisorState {
     return SupervisorState {
         cmd: cmd,
         cwd: cwd,
@@ -51,7 +50,7 @@ export fn new_supervisor(
     };
 }
 
-export fn supervisor_start(s: SupervisorState) -> SupervisorState {
+export fn supervisor_start(borrow s: SupervisorState) -> SupervisorState {
     if (s.state == ServerState::Running || s.state == ServerState::Starting) {
         return s;
     }
@@ -85,7 +84,7 @@ export fn supervisor_start(s: SupervisorState) -> SupervisorState {
     };
 }
 
-export fn supervisor_stop(s: SupervisorState) -> SupervisorState {
+export fn supervisor_stop(borrow s: SupervisorState) -> SupervisorState {
     return match s.handle {
         Some(handle) => {
             let _ignored = process_kill(handle, 15);
@@ -119,7 +118,7 @@ export fn supervisor_stop(s: SupervisorState) -> SupervisorState {
     };
 }
 
-fn filter_restart_times(times: number[], window_seconds: number) -> number[] {
+fn filter_restart_times(borrow times: number[], borrow window_seconds: number) -> number[] {
     let cutoff = now_seconds() - window_seconds;
     let mut filtered: number[] = [];
     for t in times {
@@ -130,7 +129,7 @@ fn filter_restart_times(times: number[], window_seconds: number) -> number[] {
     return filtered;
 }
 
-export fn supervisor_restart(s: SupervisorState) -> SupervisorState {
+export fn supervisor_restart(borrow s: SupervisorState) -> SupervisorState {
     let now = now_seconds();
     let mut restarts = s.restart_times + [now];
     restarts = filter_restart_times(restarts, s.restart_window_seconds);
@@ -163,7 +162,7 @@ export fn supervisor_restart(s: SupervisorState) -> SupervisorState {
     return supervisor_start(stopped);
 }
 
-export fn supervisor_poll(s: SupervisorState) -> SupervisorState {
+export fn supervisor_poll(borrow s: SupervisorState) -> SupervisorState {
     if (s.handle == None()) {
         return s;
     }
@@ -205,17 +204,17 @@ export fn supervisor_poll(s: SupervisorState) -> SupervisorState {
     };
 }
 
-export fn supervisor_uptime(s: SupervisorState) -> number {
+export fn supervisor_uptime(borrow s: SupervisorState) -> number {
     if (s.state != ServerState::Running) {
         return 0;
     }
     return seconds_since(s.start_time);
 }
 
-export fn supervisor_last_error(s: SupervisorState) -> string {
+export fn supervisor_last_error(borrow s: SupervisorState) -> string {
     return s.last_error;
 }
 
-export fn supervisor_pid(s: SupervisorState) -> number {
+export fn supervisor_pid(borrow s: SupervisorState) -> number {
     return s.pid;
 }

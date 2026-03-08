@@ -395,7 +395,7 @@ fn test_fmt_whitespace_only() {
 #[test]
 fn test_fmt_complex_code() {
     // Complex code - test that formatting works (may need reformatting)
-    let code = r#"fn factorial(n: number) -> number {
+    let code = r#"fn factorial(borrow n: number) -> number {
     if n <= 1 {
         return 1;
     }

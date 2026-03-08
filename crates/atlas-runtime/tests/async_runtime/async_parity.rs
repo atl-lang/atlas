@@ -180,7 +180,7 @@ fn parity_async_03_nested_three_levels() {
 fn parity_async_04_early_return() {
     assert_parity(
         r#"
-        async fn pick(flag: bool) -> number {
+        async fn pick(borrow flag: bool) -> number {
             if flag {
                 return 1;
             }
@@ -197,7 +197,7 @@ fn parity_async_04_early_return() {
 fn parity_async_05a_if_else_true() {
     assert_parity(
         r#"
-        async fn choose(x: number) -> string {
+        async fn choose(borrow x: number) -> string {
             if x > 0 {
                 return "positive";
             } else {
@@ -215,7 +215,7 @@ fn parity_async_05a_if_else_true() {
 fn parity_async_05b_if_else_false() {
     assert_parity(
         r#"
-        async fn choose(x: number) -> string {
+        async fn choose(borrow x: number) -> string {
             if x > 0 {
                 return "positive";
             } else {
@@ -233,7 +233,7 @@ fn parity_async_05b_if_else_false() {
 fn parity_async_06_array_loop() {
     assert_parity(
         r#"
-        async fn sum_array(items: number[]) -> number {
+        async fn sum_array(borrow items: number[]) -> number {
             let mut total = 0;
             for item in items {
                 total = total + item;
@@ -251,8 +251,8 @@ fn parity_async_06_array_loop() {
 fn parity_async_07_inner_fn() {
     assert_parity(
         r#"
-        async fn apply(x: number) -> number {
-            fn double(v: number) -> number { return v * 2; }
+        async fn apply(borrow x: number) -> number {
+            fn double(borrow v: number) -> number { return v * 2; }
             return double(x);
         }
         await apply(21);
@@ -452,7 +452,7 @@ fn parity_error_20_at4002_string() {
 #[test]
 fn parity_error_21_division_result_parity() {
     let source = r#"
-        async fn divide(a: number, b: number) -> number {
+        async fn divide(borrow a: number, borrow b: number) -> number {
             return a / b;
         }
         await divide(10, 2);

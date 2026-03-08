@@ -5,7 +5,7 @@ export fn hydra_version() -> string {
     return "hydra-v3-atlas";
 }
 
-export fn run_cli(args: string[], registry_path: string, state_dir: string) -> Result<string, string> {
+export fn run_cli(borrow args: string[], borrow registry_path: string, borrow state_dir: string) -> Result<string, string> {
     return execute(args, registry_path, state_dir);
 }
 

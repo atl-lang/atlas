@@ -246,7 +246,7 @@ fn test_diagnostic_version_always_set() {
 #[rstest]
 #[case("fn nested() -> void { if true { while false { let x = 1; } } }")]
 #[case("let a = 1; let b = 2; let c = a + b; let d = c * 2;")]
-#[case("fn f(x: number) -> number { if x > 0 { return x; } else { return 0; } }")]
+#[case("fn f(borrow x: number) -> number { if x > 0 { return x; } else { return 0; } }")]
 fn test_format_reparse_complex(#[case] source: &str) {
     let formatted = fmt(source);
     let (ok, diags) = parse_source(&formatted);

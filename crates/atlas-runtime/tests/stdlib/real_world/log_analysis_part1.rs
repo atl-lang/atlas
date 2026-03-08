@@ -31,7 +31,7 @@ fn test_log_filter_errors() {
 
     let code = format!(
         r#"
-        fn isError(line: string) -> bool {{
+        fn isError(borrow line: string) -> bool {{
             return includes(line, "ERROR");
         }}
 
@@ -53,7 +53,7 @@ fn test_log_extract_timestamps() {
 
     let code = format!(
         r#"
-        fn getTimestamp(line: string) -> string {{
+        fn getTimestamp(borrow line: string) -> string {{
             return substring(line, 0.0, 10.0);
         }}
 
@@ -79,7 +79,7 @@ fn test_log_count_by_level() {
 
     let code = format!(
         r#"
-        fn isInfo(line: string) -> bool {{
+        fn isInfo(borrow line: string) -> bool {{
             return includes(line, "INFO");
         }}
 
@@ -129,7 +129,7 @@ fn test_log_filter_by_date() {
 
     let code = format!(
         r#"
-        fn isAfterJan10(line: string) -> bool {{
+        fn isAfterJan10(borrow line: string) -> bool {{
             let date: string = substring(line, 0.0, 10.0);
             return !starts_with(date, "2024-01-0");
         }}
@@ -153,7 +153,7 @@ fn test_log_severity_ordering() {
 
     let code = format!(
         r#"
-        fn isHighSeverity(line: string) -> bool {{
+        fn isHighSeverity(borrow line: string) -> bool {{
             return includes(line, "ERROR") || includes(line, "WARN");
         }}
 
@@ -199,7 +199,7 @@ fn test_log_empty_lines_filter() {
 
     let code = format!(
         r#"
-        fn isNotEmpty(line: string) -> bool {{
+        fn isNotEmpty(borrow line: string) -> bool {{
             return len(line) > 0.0;
         }}
 
@@ -225,7 +225,7 @@ fn test_log_contains_pattern() {
 
     let code = format!(
         r#"
-        fn mentionsAlice(line: string) -> bool {{
+        fn mentionsAlice(borrow line: string) -> bool {{
             return includes(line, "alice");
         }}
 
@@ -248,7 +248,7 @@ fn test_log_case_insensitive_search() {
 
     let code = format!(
         r#"
-        fn hasError(line: string) -> bool {{
+        fn hasError(borrow line: string) -> bool {{
             let lower: string = to_lower_case(line);
             return includes(lower, "error");
         }}
@@ -276,7 +276,7 @@ fn test_log_extract_user_actions() {
 
     let code = format!(
         r#"
-        fn extractUser(line: string) -> string {{
+        fn extractUser(borrow line: string) -> string {{
             let parts: string[] = split(line, " ");
             let userPart: string = parts[0];
             let userFields: string[] = split(userPart, ":");
@@ -301,7 +301,7 @@ fn test_log_count_occurrences() {
 
     let code = format!(
         r#"
-        fn isLogin(line: string) -> bool {{
+        fn isLogin(borrow line: string) -> bool {{
             return line == "login";
         }}
 
@@ -324,7 +324,7 @@ fn test_log_trim_whitespace() {
 
     let code = format!(
         r#"
-        fn cleanLine(line: string) -> string {{
+        fn cleanLine(borrow line: string) -> string {{
             return trim(line);
         }}
 
@@ -347,7 +347,7 @@ fn test_log_starts_with_timestamp() {
 
     let code = format!(
         r#"
-        fn hasTimestamp(line: string) -> bool {{
+        fn hasTimestamp(borrow line: string) -> bool {{
             return starts_with(line, "2024");
         }}
 

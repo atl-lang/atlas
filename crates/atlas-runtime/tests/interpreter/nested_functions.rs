@@ -36,7 +36,7 @@ fn parse_and_bind(source: &str) -> (Vec<String>, Vec<String>) {
 fn test_bind_nested_function_basic() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -53,10 +53,10 @@ fn test_bind_nested_function_basic() {
 fn test_bind_multiple_nested_functions() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
-            fn multiply(a: number, b: number) -> number {
+            fn multiply(borrow a: number, borrow b: number) -> number {
                 return a * b;
             }
             return add(2, multiply(3, 4));
@@ -118,13 +118,13 @@ fn test_bind_forward_reference_same_scope() {
 fn test_bind_mutual_recursion_same_scope() {
     let source = r#"
         fn outer() -> number {
-            fn isEven(n: number) -> bool {
+            fn isEven(borrow n: number) -> bool {
                 if n == 0 {
                     return true;
                 }
                 return isOdd(n - 1);
             }
-            fn isOdd(n: number) -> bool {
+            fn isOdd(borrow n: number) -> bool {
                 if n == 0 {
                     return false;
                 }
@@ -169,7 +169,7 @@ fn test_bind_nested_function_shadows_global() {
 fn test_bind_nested_function_shadows_builtin() {
     let source = r#"
         fn outer() -> number {
-            fn print(x: number) -> number {
+            fn print(borrow x: number) -> number {
                 return x;
             }
             return print(42);
@@ -260,7 +260,7 @@ fn test_bind_nested_function_in_if_block() {
 fn test_bind_nested_function_with_type_params() {
     let source = r#"
         fn outer<T>() -> number {
-            fn inner<E>(x: E) -> number {
+            fn inner<E>(borrow x: E) -> number {
                 return 42;
             }
             return inner(5);
@@ -301,7 +301,7 @@ fn nested_run_interpreter(source: &str) -> Result<Value, String> {
 fn test_interp_nested_function_basic() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -317,7 +317,7 @@ fn test_interp_nested_function_basic() {
 fn test_interp_nested_function_multiple_params() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
             return add(10, 32);
@@ -333,7 +333,7 @@ fn test_interp_nested_function_multiple_params() {
 fn test_interp_nested_function_string() {
     let source = r#"
         fn outer() -> string {
-            fn greet(name: string) -> string {
+            fn greet(borrow name: string) -> string {
                 return "Hello, " + name;
             }
             return greet("World");
@@ -352,8 +352,8 @@ fn test_interp_nested_function_string() {
 #[test]
 fn test_interp_nested_function_params() {
     let source = r#"
-        fn outer(x: number) -> number {
-            fn double(y: number) -> number {
+        fn outer(borrow x: number) -> number {
+            fn double(borrow y: number) -> number {
                 return y * 2;
             }
             return double(x);
@@ -512,7 +512,7 @@ fn test_interp_nested_function_void() {
 fn test_interp_nested_function_array_param() {
     let source = r#"
         fn outer() -> number {
-            fn sum(arr: number[]) -> number {
+            fn sum(borrow arr: number[]) -> number {
                 return arr[0] + arr[1];
             }
             let nums: number[] = [10, 32];
@@ -549,7 +549,7 @@ fn test_interp_nested_function_array_return() {
 fn test_interp_nested_function_conditional() {
     let source = r#"
         fn outer() -> number {
-            fn abs(x: number) -> number {
+            fn abs(borrow x: number) -> number {
                 if (x < 0) {
                     return -x;
                 } else {
@@ -638,7 +638,7 @@ fn nested_typecheck_source_with_warnings(source: &str) -> Vec<String> {
 fn test_typecheck_nested_function_basic() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -653,7 +653,7 @@ fn test_typecheck_nested_function_basic() {
 fn test_typecheck_nested_function_multiple_params() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
             return add(10, 20);
@@ -668,7 +668,7 @@ fn test_typecheck_nested_function_multiple_params() {
 fn test_typecheck_nested_function_different_types() {
     let source = r#"
         fn outer() -> string {
-            fn greet(name: string) -> string {
+            fn greet(borrow name: string) -> string {
                 return "Hello, " + name;
             }
             return greet("World");
@@ -687,7 +687,7 @@ fn test_typecheck_nested_function_different_types() {
 fn test_typecheck_nested_function_missing_return() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 let y: number = x * 2;
             }
             return 0;
@@ -707,7 +707,7 @@ fn test_typecheck_nested_function_missing_return() {
 fn test_typecheck_nested_function_conditional_return() {
     let source = r#"
         fn outer() -> number {
-            fn abs(x: number) -> number {
+            fn abs(borrow x: number) -> number {
                 if (x < 0) {
                     return -x;
                 } else {
@@ -726,7 +726,7 @@ fn test_typecheck_nested_function_conditional_return() {
 fn test_typecheck_nested_function_incomplete_return_paths() {
     let source = r#"
         fn outer() -> number {
-            fn test(x: number) -> number {
+            fn test(borrow x: number) -> number {
                 if (x > 0) {
                     return x;
                 }
@@ -752,7 +752,7 @@ fn test_typecheck_nested_function_incomplete_return_paths() {
 fn test_typecheck_nested_function_wrong_param_type() {
     let source = r#"
         fn outer() -> number {
-            fn double(x: number) -> number {
+            fn double(borrow x: number) -> number {
                 return x * 2;
             }
             return double("not a number");
@@ -796,7 +796,7 @@ fn test_typecheck_nested_function_wrong_return_type() {
 fn test_typecheck_nested_function_param_type_mismatch() {
     let source = r#"
         fn outer() -> void {
-            fn process(x: number, y: string) -> void {
+            fn process(borrow x: number, borrow y: string) -> void {
                 print(str(x) + y);
             }
             process(42, 100);
@@ -896,7 +896,7 @@ fn test_typecheck_nested_function_calling_outer() {
 fn test_typecheck_nested_function_with_type_params() {
     let source = r#"
         fn outer<T>() -> number {
-            fn inner<E>(x: E) -> number {
+            fn inner<E>(borrow x: E) -> number {
                 return 42;
             }
             return inner(100);
@@ -950,7 +950,7 @@ fn test_typecheck_nested_function_void_no_return_required() {
 fn test_typecheck_nested_function_array_param() {
     let source = r#"
         fn outer() -> number {
-            fn sum(arr: number[]) -> number {
+            fn sum(borrow arr: number[]) -> number {
                 return arr[0] + arr[1];
             }
             let nums: number[] = [10, 20];
@@ -985,7 +985,7 @@ fn test_typecheck_nested_function_array_return() {
 fn test_typecheck_nested_function_unused_param_warning() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number, y: number) -> number {
+            fn helper(borrow x: number, borrow y: number) -> number {
                 return x;
             }
             return helper(10, 20);
@@ -1005,7 +1005,7 @@ fn test_typecheck_nested_function_unused_param_warning() {
 fn test_typecheck_nested_function_underscore_suppresses_warning() {
     let source = r#"
         fn outer() -> number {
-            fn helper(_x: number) -> number {
+            fn helper(borrow _x: number) -> number {
                 return 42;
             }
             return helper(10);

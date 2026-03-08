@@ -7,15 +7,15 @@ export fn statestore_new() -> StateStore {
     return StateStore { initialize_params: null, subscriptions: hash_map_new() };
 }
 
-export fn statestore_set_initialize(store: StateStore, params: json) -> StateStore {
+export fn statestore_set_initialize(borrow store: StateStore, borrow params: json) -> StateStore {
     return StateStore { initialize_params: params, subscriptions: store.subscriptions };
 }
 
-export fn statestore_get_initialize(store: StateStore) -> json {
+export fn statestore_get_initialize(borrow store: StateStore) -> json {
     return store.initialize_params;
 }
 
-export fn statestore_add_subscription(store: StateStore, uri: string) -> StateStore {
+export fn statestore_add_subscription(borrow store: StateStore, borrow uri: string) -> StateStore {
     if (hash_map_get(store.subscriptions, uri) != None()) {
         return store;
     }
@@ -23,16 +23,16 @@ export fn statestore_add_subscription(store: StateStore, uri: string) -> StateSt
     return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
 }
 
-export fn statestore_remove_subscription(store: StateStore, uri: string) -> StateStore {
+export fn statestore_remove_subscription(borrow store: StateStore, borrow uri: string) -> StateStore {
     let subs = hashMapDelete(store.subscriptions, uri);
     return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
 }
 
-export fn statestore_get_subscriptions(store: StateStore) -> string[] {
+export fn statestore_get_subscriptions(borrow store: StateStore) -> string[] {
     return hash_map_keys(store.subscriptions);
 }
 
-export fn statestore_update_subscription_id(store: StateStore, uri: string, id: string) -> StateStore {
+export fn statestore_update_subscription_id(borrow store: StateStore, borrow uri: string, borrow id: string) -> StateStore {
     if (hash_map_get(store.subscriptions, uri) == None()) {
         return store;
     }
@@ -40,6 +40,6 @@ export fn statestore_update_subscription_id(store: StateStore, uri: string, id: 
     return StateStore { initialize_params: store.initialize_params, subscriptions: subs };
 }
 
-export fn statestore_clear(store: StateStore) -> StateStore {
+export fn statestore_clear(borrow store: StateStore) -> StateStore {
     return StateStore { initialize_params: null, subscriptions: hash_map_new() };
 }

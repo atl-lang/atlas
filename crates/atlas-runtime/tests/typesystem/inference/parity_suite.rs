@@ -13,7 +13,7 @@ use super::helpers::*;
 #[test]
 fn parity_return_infer_arithmetic() {
     assert_parity_num(
-        "fn double(x: number) -> number { return x * 2; } double(5);",
+        "fn double(borrow x: number) -> number { return x * 2; } double(5);",
         10.0,
     );
 }
@@ -42,7 +42,7 @@ fn parity_return_infer_void_no_return() {
 #[test]
 fn parity_return_infer_both_branches() {
     assert_parity_num(
-        "fn clamp2(x: number) -> number { if (x > 0) { return 1; } return 0; } clamp2(5);",
+        "fn clamp2(borrow x: number) -> number { if (x > 0) { return 1; } return 0; } clamp2(5);",
         1.0,
     );
 }
@@ -51,7 +51,7 @@ fn parity_return_infer_both_branches() {
 fn parity_return_infer_with_explicit_params() {
     // Params annotated, explicit return type — parity between engines
     assert_parity_num(
-        "fn add(a: number, b: number) -> number { return a + b; } add(3, 4);",
+        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(3, 4);",
         7.0,
     );
 }
@@ -59,7 +59,7 @@ fn parity_return_infer_with_explicit_params() {
 #[test]
 fn parity_return_infer_bool_comparison() {
     assert_parity_bool(
-        "fn is_positive(x: number) -> bool { return x > 0; } is_positive(5);",
+        "fn is_positive(borrow x: number) -> bool { return x > 0; } is_positive(5);",
         true,
     );
 }
@@ -115,7 +115,7 @@ fn parity_anonymous_struct_literal_fields() {
 #[test]
 fn parity_generic_identity_number() {
     assert_parity_num(
-        "fn identity<T>(x: T) -> T { return x; } identity(42);",
+        "fn identity<T>(own x: T) -> T { return x; } identity(42);",
         42.0,
     );
 }
@@ -123,7 +123,7 @@ fn parity_generic_identity_number() {
 #[test]
 fn parity_generic_identity_string() {
     assert_parity_str(
-        r#"fn identity<T>(x: T) -> T { return x; } identity("hello");"#,
+        r#"fn identity<T>(own x: T) -> T { return x; } identity("hello");"#,
         "hello",
     );
 }
@@ -131,7 +131,7 @@ fn parity_generic_identity_string() {
 #[test]
 fn parity_generic_first_element() {
     assert_parity_num(
-        "fn first<T>(arr: T[]) -> T { return arr[0]; } first([10, 20, 30]);",
+        "fn first<T>(borrow arr: T[]) -> T { return arr[0]; } first([10, 20, 30]);",
         10.0,
     );
 }
@@ -139,7 +139,7 @@ fn parity_generic_first_element() {
 #[test]
 fn parity_generic_multi_type_params() {
     assert_parity_num(
-        "fn pair<T, U>(x: T, y: U) -> T { return x; } pair(99, \"ignored\");",
+        "fn pair<T, U>(own x: T, own y: U) -> T { return x; } pair(99, \"ignored\");",
         99.0,
     );
 }
@@ -149,13 +149,16 @@ fn parity_generic_multi_type_params() {
 #[test]
 fn parity_edge_anon_fn_inferred() {
     // Anonymous fn with inferred return: fn(x) { x + 1 }
-    assert_parity_num("let f = fn(x: number) { x + 1 }; f(5);", 6.0);
+    assert_parity_num("let f = fn(borrow x: number) { x + 1 }; f(5);", 6.0);
 }
 
 #[test]
 fn parity_edge_hof_with_inferred_return() {
     // HOF: map with fn-expr having inferred return type
-    assert_parity_num("map([1,2,3], fn(x: number) { return x * 2; })[0];", 2.0);
+    assert_parity_num(
+        "map([1,2,3], fn(borrow x: number) { return x * 2; })[0];",
+        2.0,
+    );
 }
 
 #[test]
@@ -163,8 +166,8 @@ fn parity_edge_nested_inferred_functions() {
     // Nested functions with explicit return types
     assert_parity_num(
         r#"
-fn outer(x: number) -> number {
-    fn inner(y: number) -> number { return y * y; }
+fn outer(borrow x: number) -> number {
+    fn inner(borrow y: number) -> number { return y * y; }
     return inner(x);
 }
 outer(4);

@@ -1,7 +1,7 @@
 // Bootstrap path utilities (Atlas port, simplified)
 // Source: hydra/internal/bootstrap/pathutil.go
 
-export fn expand_home(path: string) -> string {
+export fn expand_home(borrow path: string) -> string {
     if (len(path) == 0 || substring(path, 0, 1) != "~") {
         return path;
     }
@@ -23,7 +23,7 @@ fn home_dir() -> string {
     return "";
 }
 
-fn first_existing(candidates: array) -> string {
+fn first_existing(borrow candidates: array) -> string {
     for p in candidates {
         if (fsIsFile(p)) { return p; }
     }
@@ -31,11 +31,11 @@ fn first_existing(candidates: array) -> string {
     return "";
 }
 
-export fn config_file_exists(path: string) -> bool {
+export fn config_file_exists(borrow path: string) -> bool {
     return fsIsFile(path);
 }
 
-export fn detect_client_config_path(client: string) -> Result<string, string> {
+export fn detect_client_config_path(borrow client: string) -> Result<string, string> {
     if (client == "claude") { return Ok(detect_claude_desktop_path()); }
     if (client == "cline") { return Ok(detect_cline_path()); }
     if (client == "cursor") { return Ok(detect_cursor_path()); }

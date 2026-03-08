@@ -48,7 +48,7 @@ fn test_allow_unused_on_fn_suppresses_param_warning() {
     assert!(!has_at2001(
         r#"
         @allow(unused)
-        fn process(x: number, y: number) -> number {
+        fn process(borrow x: number, borrow y: number) -> number {
             x;
         }
         process(1, 2);
@@ -61,7 +61,7 @@ fn test_allow_unused_parses_without_error() {
     let mut lexer = Lexer::new(
         r#"
         @allow(unused)
-        fn scaffold(x: number) -> number {
+        fn scaffold(borrow x: number) -> number {
             42;
         }
     "#,

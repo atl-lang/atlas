@@ -1,10 +1,9 @@
 ---
 source: crates/atlas-cli/tests/ast_dump_tests.rs
-assertion_line: 97
 expression: json
 ---
 {
-  "ast_version": 4,
+  "ast_version": 5,
   "items": [
     {
       "Function": {
@@ -16,14 +15,16 @@ expression: json
             "file": "<test>"
           }
         },
+        "attributes": [],
+        "is_async": false,
         "type_params": [],
         "params": [
           {
             "name": {
               "name": "name",
               "span": {
-                "start": 10,
-                "end": 14,
+                "start": 17,
+                "end": 21,
                 "file": "<test>"
               }
             },
@@ -31,17 +32,17 @@ expression: json
               "Named": [
                 "string",
                 {
-                  "start": 16,
-                  "end": 22,
+                  "start": 23,
+                  "end": 29,
                   "file": "<test>"
                 }
               ]
             },
-            "ownership": null,
+            "ownership": "Borrow",
             "mutable": false,
             "span": {
               "start": 10,
-              "end": 22,
+              "end": 29,
               "file": "<test>"
             }
           }
@@ -50,8 +51,8 @@ expression: json
           "Named": [
             "string",
             {
-              "start": 27,
-              "end": 33,
+              "start": 34,
+              "end": 40,
               "file": "<test>"
             }
           ]
@@ -66,15 +67,15 @@ expression: json
                   "Identifier": {
                     "name": "name",
                     "span": {
-                      "start": 47,
-                      "end": 51,
+                      "start": 54,
+                      "end": 58,
                       "file": "<test>"
                     }
                   }
                 },
                 "span": {
-                  "start": 40,
-                  "end": 52,
+                  "start": 47,
+                  "end": 59,
                   "file": "<test>"
                 }
               }
@@ -82,14 +83,14 @@ expression: json
           ],
           "tail_expr": null,
           "span": {
-            "start": 34,
-            "end": 54,
+            "start": 41,
+            "end": 61,
             "file": "<test>"
           }
         },
         "span": {
           "start": 1,
-          "end": 54,
+          "end": 61,
           "file": "<test>"
         }
       }
@@ -102,8 +103,8 @@ expression: json
           "name": {
             "name": "msg",
             "span": {
-              "start": 59,
-              "end": 62,
+              "start": 66,
+              "end": 69,
               "file": "<test>"
             }
           },
@@ -111,8 +112,8 @@ expression: json
             "Named": [
               "string",
               {
-                "start": 64,
-                "end": 70,
+                "start": 71,
+                "end": 77,
                 "file": "<test>"
               }
             ]
@@ -123,8 +124,8 @@ expression: json
                 "Identifier": {
                   "name": "greet",
                   "span": {
-                    "start": 73,
-                    "end": 78,
+                    "start": 80,
+                    "end": 85,
                     "file": "<test>"
                   }
                 }
@@ -136,23 +137,23 @@ expression: json
                       "String": "world"
                     },
                     {
-                      "start": 79,
-                      "end": 86,
+                      "start": 86,
+                      "end": 93,
                       "file": "<test>"
                     }
                   ]
                 }
               ],
               "span": {
-                "start": 73,
-                "end": 87,
+                "start": 80,
+                "end": 94,
                 "file": "<test>"
               }
             }
           },
           "span": {
-            "start": 55,
-            "end": 88,
+            "start": 62,
+            "end": 95,
             "file": "<test>"
           }
         }

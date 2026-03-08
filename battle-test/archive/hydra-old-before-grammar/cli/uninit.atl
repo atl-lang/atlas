@@ -4,7 +4,7 @@
 import { detect_client_config_path } from "../bootstrap/pathutil";
 import { expand_home } from "./pathutil";
 
-export fn cmd_uninit(args: json) -> Result<json, string> {
+export fn cmd_uninit(borrow args: json) -> Result<json, string> {
     let client = args["client"].is_null() ? "claude" : args["client"].as_string();
     let explicit = args["config"].is_null() ? "" : args["config"].as_string();
     let path = "";

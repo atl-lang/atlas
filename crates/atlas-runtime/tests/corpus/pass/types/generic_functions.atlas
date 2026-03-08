@@ -1,4 +1,4 @@
-fn identity<T>(borrow x: T) -> T {
+fn identity<T>(own x: T) -> T {
     return x;
 }
 

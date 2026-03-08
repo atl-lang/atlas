@@ -32,7 +32,7 @@ struct DefaultSanitizer {
 }
 
 // Creates a new DefaultSanitizer
-fn new_sanitizer(borrow strict: bool) -> DefaultSanitizer {
+fn new_sanitizer(own strict: bool) -> DefaultSanitizer {
     return DefaultSanitizer {
         strict_mode: strict
     };

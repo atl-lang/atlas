@@ -3,7 +3,7 @@
 import { err_collision } from "./proxy_errors";
 
 // Merge tools lists
-export fn merge_tools(child_tools: array, hydra_tools: array, on_collision: string) -> Result<array, string> {
+export fn merge_tools(borrow child_tools: array, borrow hydra_tools: array, borrow on_collision: string) -> Result<array, string> {
     if (on_collision != "" && on_collision != "error" && on_collision != "warn" && on_collision != "disable_hydra_tool") {
         return Err("invalid collision policy: " + on_collision);
     }

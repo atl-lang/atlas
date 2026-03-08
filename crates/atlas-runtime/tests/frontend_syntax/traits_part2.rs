@@ -131,7 +131,7 @@ fn test_parse_trait_and_impl_coexist() {
 
 #[test]
 fn test_parse_type_param_single_trait_bound() {
-    let src = "fn foo<T: Copy>(x: T) -> T { return x; }";
+    let src = "fn foo<T: Copy>(borrow x: T) -> T { return x; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -146,7 +146,7 @@ fn test_parse_type_param_single_trait_bound() {
 
 #[test]
 fn test_parse_type_param_multiple_trait_bounds() {
-    let src = "fn foo<T: Copy + Display>(x: T) -> string { return x.display(); }";
+    let src = "fn foo<T: Copy + Display>(borrow x: T) -> string { return x.display(); }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -160,7 +160,8 @@ fn test_parse_type_param_multiple_trait_bounds() {
 
 #[test]
 fn test_parse_multiple_type_params_with_bounds() {
-    let src = "fn pair<T: Display, U: Display>(a: T, borrow b: U) -> string { return \"\"; }";
+    let src =
+        "fn pair<T: Display, U: Display>(borrow a: T, borrow b: U) -> string { return \"\"; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -174,7 +175,7 @@ fn test_parse_multiple_type_params_with_bounds() {
 
 #[test]
 fn test_parse_type_param_no_bound_unchanged() {
-    let src = "fn identity<T>(x: T) -> T { return x; }";
+    let src = "fn identity<T>(borrow x: T) -> T { return x; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -187,7 +188,7 @@ fn test_parse_type_param_no_bound_unchanged() {
 #[test]
 fn test_parse_extends_keyword_is_parse_error() {
     // D-039: `extends` syntax removed — only `T: Trait` is valid
-    let src = "fn foo<T extends number>(x: T) -> T { return x; }";
+    let src = "fn foo<T extends number>(borrow x: T) -> T { return x; }";
     let (_prog, diags) = parse_source(src);
     assert!(
         !diags.is_empty(),
@@ -197,7 +198,7 @@ fn test_parse_extends_keyword_is_parse_error() {
 
 #[test]
 fn test_parse_trait_method_with_bounded_type_param() {
-    let src = "trait Printer { fn print<T: Display>(value: T) -> void; }";
+    let src = "trait Printer { fn print<T: Display>(borrow value: T) -> void; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Trait(t) = &prog.items[0] {
@@ -211,9 +212,9 @@ fn test_parse_trait_method_with_bounded_type_param() {
 #[test]
 fn test_parse_impl_method_with_bounded_type_param() {
     let src = "
-        trait Printer { fn print<T: Display>(value: T) -> void; }
+        trait Printer { fn print<T: Display>(borrow value: T) -> void; }
         impl Printer for ConsolePrinter {
-            fn print<T: Display>(value: T) -> void { }
+            fn print<T: Display>(borrow value: T) -> void { }
         }
     ";
     let (prog, diags) = parse_source(src);
@@ -228,7 +229,7 @@ fn test_parse_impl_method_with_bounded_type_param() {
 
 #[test]
 fn test_parse_three_trait_bounds() {
-    let src = "fn multi<T: Copy + Display + Debug>(x: T) -> void { }";
+    let src = "fn multi<T: Copy + Display + Debug>(borrow x: T) -> void { }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -243,7 +244,7 @@ fn test_parse_three_trait_bounds() {
 
 #[test]
 fn test_parse_mixed_bounded_and_unbounded_type_params() {
-    let src = "fn mixed<T: Copy, U>(a: T, borrow b: U) -> void { }";
+    let src = "fn mixed<T: Copy, U>(borrow a: T, borrow b: U) -> void { }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
@@ -258,7 +259,7 @@ fn test_parse_mixed_bounded_and_unbounded_type_params() {
 
 #[test]
 fn test_parse_trait_method_two_bounded_type_params() {
-    let src = "trait Converter { fn convert<T: Copy, U: Display>(val: T) -> U; }";
+    let src = "trait Converter { fn convert<T: Copy, U: Display>(borrow val: T) -> U; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Trait(t) = &prog.items[0] {
@@ -274,9 +275,9 @@ fn test_parse_trait_method_two_bounded_type_params() {
 #[test]
 fn test_parse_impl_method_three_bounds() {
     let src = "
-        trait Ops { fn do_it<T: Copy + Display + Debug>(x: T) -> void; }
+        trait Ops { fn do_it<T: Copy + Display + Debug>(borrow x: T) -> void; }
         impl Ops for Foo {
-            fn do_it<T: Copy + Display + Debug>(x: T) -> void { }
+            fn do_it<T: Copy + Display + Debug>(borrow x: T) -> void { }
         }
     ";
     let (prog, diags) = parse_source(src);

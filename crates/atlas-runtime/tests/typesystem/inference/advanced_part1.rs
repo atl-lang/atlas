@@ -76,7 +76,7 @@ fn test_bidir_mode_switch_at_function_boundary() {
     // Annotation on parameter sets expected type for the body
     let diags = typecheck_source(
         r#"
-        fn add_one(x: number) -> number {
+        fn add_one(borrow x: number) -> number {
             return x + 1;
         }
         "#,
@@ -88,7 +88,7 @@ fn test_bidir_mode_switch_at_function_boundary() {
 fn test_bidir_complex_expression_inferred() {
     let diags = typecheck_source(
         r#"
-        fn max_val(a: number, b: number) -> number {
+        fn max_val(borrow a: number, borrow b: number) -> number {
             if (a > b) {
                 return a;
             }
@@ -103,7 +103,7 @@ fn test_bidir_complex_expression_inferred() {
 fn test_bidir_expected_type_propagation_through_if() {
     let diags = typecheck_source(
         r#"
-        fn test(flag: bool) -> string {
+        fn test(borrow flag: bool) -> string {
             if (flag) {
                 return "yes";
             }
@@ -135,7 +135,7 @@ fn test_rank1_polymorphism_inferred() {
     // Simple rank-1 polymorphism: T is inferred from the argument
     let diags = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
         let _n = identity(42);
@@ -150,7 +150,7 @@ fn test_function_taking_generic_function() {
     // A function whose parameter is a generic function
     let diags = typecheck_source(
         r#"
-        fn apply<T>(f: (T) -> T, x: T) -> T {
+        fn apply<T>(borrow f: (T) -> T, x: T) -> T {
             return f(x);
         }
         "#,
@@ -162,7 +162,7 @@ fn test_function_taking_generic_function() {
 fn test_callback_with_typed_parameter() {
     let diags = typecheck_source(
         r#"
-        fn transform(f: (number) -> number, x: number) -> number {
+        fn transform(borrow f: (number) -> number, x: number) -> number {
             return f(x);
         }
         "#,
@@ -174,10 +174,10 @@ fn test_callback_with_typed_parameter() {
 fn test_generic_callback_applied() {
     let diags = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
-        fn use_identity(n: number) -> number {
+        fn use_identity(borrow n: number) -> number {
             return identity(n);
         }
         "#,
@@ -190,7 +190,7 @@ fn test_infer_with_rank_restrictions_concrete_param() {
     // When function type is concrete, inference works directly
     let diags = typecheck_source(
         r#"
-        fn double(f: (number) -> number) -> number {
+        fn double(borrow f: (number) -> number) -> number {
             return f(f(1));
         }
         "#,
@@ -202,8 +202,8 @@ fn test_infer_with_rank_restrictions_concrete_param() {
 fn test_function_type_parameter_unification() {
     let diags = typecheck_source(
         r#"
-        fn compose<A, B, C>(f: (B) -> C, g: (A) -> B) -> (A) -> C {
-            fn h(x: A) -> C {
+        fn compose<A, B, C>(borrow f: (B) -> C, g: (A) -> B) -> (A) -> C {
+            fn h(borrow x: A) -> C {
                 return f(g(x));
             }
             return h;
@@ -275,7 +275,7 @@ fn test_recursive_function_type_check() {
     // Recursive function - let binding supports recursive references
     let diags = typecheck_source(
         r#"
-        fn factorial(n: number) -> number {
+        fn factorial(borrow n: number) -> number {
             if (n == 0) {
                 return 1;
             }
@@ -295,7 +295,7 @@ fn test_flow_type_narrowed_in_then_branch() {
     // After checking typeof, the type is narrowed in the branch
     let diags = typecheck_source(
         r#"
-        fn narrow_test(x: number | string) -> number {
+        fn narrow_test(borrow x: number | string) -> number {
             if (typeof(x) == "number") {
                 return x;
             }
@@ -311,7 +311,7 @@ fn test_flow_widen_at_merge_point() {
     // After if-else, mutable variable can be assigned in both branches
     let diags = typecheck_source(
         r#"
-        fn get_val(flag: bool) -> number {
+        fn get_val(borrow flag: bool) -> number {
             let mut result = 0;
             if (flag) {
                 result = 1;
@@ -363,7 +363,7 @@ fn test_flow_impossible_never_branch() {
     // Narrowing to Never when both branches are covered
     let diags = typecheck_source(
         r#"
-        fn check(x: number) -> bool {
+        fn check(borrow x: number) -> bool {
             if (x > 0) {
                 return true;
             }

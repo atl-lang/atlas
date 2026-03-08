@@ -161,7 +161,7 @@ fn test_array_mutation_in_function() {
     // CoW value semantics: function receives a logical copy of the array.
     // Mutations inside the function do not affect the caller's binding.
     let code = r#"
-        fn modify(arr: number[]) -> void {
+        fn modify(borrow arr: number[]) -> void {
             arr[0] = 999;
         }
         let numbers: number[] = [1, 2, 3];
@@ -235,7 +235,7 @@ fn test_array_aliasing_reassignment_breaks_link() {
 #[test]
 fn test_array_sum_with_function() {
     let code = r#"
-        fn sum_array(arr: number[]) -> number {
+        fn sum_array(borrow arr: number[]) -> number {
             let mut total: number = 0;
             let mut i: number = 0;
             while (i < len(arr)) {

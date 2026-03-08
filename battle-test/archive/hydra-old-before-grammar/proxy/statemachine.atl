@@ -1,6 +1,6 @@
 // State machine (Atlas port) - simplified
 
-export fn handle_initialize_response(proxy: json) -> Result<json, string> {
+export fn handle_initialize_response(borrow proxy: json) -> Result<json, string> {
     let obj = {
         state: "RUNNING",
         queue: proxy["queue"],

@@ -102,8 +102,8 @@ fn test_future_keywords_as_function_names(
 }
 
 #[rstest]
-#[case("fn foo(import: number) { }", &["parameter", "identifier"])]
-#[case("fn foo(match: number) { }", &["parameter", "identifier"])]
+#[case("fn foo(borrow import: number) { }", &["parameter", "identifier"])]
+#[case("fn foo(borrow match: number) { }", &["parameter", "identifier"])]
 fn test_future_keywords_as_parameters(#[case] source: &str, #[case] expected_mentions: &[&str]) {
     let (_program, diagnostics) = parse_source(source);
     assert_parse_error_present(&diagnostics);

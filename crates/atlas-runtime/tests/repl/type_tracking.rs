@@ -95,7 +95,7 @@ fn vars_snapshot_sorted(commands: Vec<&str>, expected_names: Vec<&str>) {
     input,
     case("1 + \"a\";"),
     case("let x: number = \"no\";"),
-    case("fn f(a: number) -> number { return a + \"bad\"; };"),
+    case("fn f(borrow a: number) -> number { return a + \"bad\"; };"),
     case("let arr: string[] = [1,2];"),
     case("if (1) { let a = 1; };"),
     case("while (\"no\") { let a = 1; };"),

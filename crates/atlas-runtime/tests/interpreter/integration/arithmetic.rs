@@ -72,7 +72,7 @@ fn test_numeric_negative_modulo() {
 #[test]
 fn test_numeric_error_in_function() {
     let code = r#"
-        fn compute(a: number) -> number {
+        fn compute(borrow a: number) -> number {
             return a * a * a;
         }
         let big: number = 1e103;

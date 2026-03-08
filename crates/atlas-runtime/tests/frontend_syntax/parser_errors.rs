@@ -35,7 +35,7 @@ fn test_parse_missing_semicolon_error() {
 fn test_parse_nested_function_in_function() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -87,7 +87,7 @@ fn test_parse_nested_function_in_for_block() {
     let source = r#"
         fn outer() -> void {
             for i in [0, 1, 2, 3, 4] {
-                fn log(x: number) -> void {
+                fn log(borrow x: number) -> void {
                     print(str(x));
                 }
                 log(i);
@@ -103,10 +103,10 @@ fn test_parse_nested_function_in_for_block() {
 fn test_parse_multiple_nested_functions_same_scope() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
-            fn multiply(a: number, b: number) -> number {
+            fn multiply(borrow a: number, borrow b: number) -> number {
                 return a * b;
             }
             return add(2, multiply(3, 4));
@@ -139,7 +139,7 @@ fn test_parse_deeply_nested_functions() {
 fn test_parse_nested_function_with_type_params() {
     let source = r#"
         fn outer<T>() -> void {
-            fn inner<E>(x: E) -> E {
+            fn inner<E>(borrow x: E) -> E {
                 return x;
             }
         }
@@ -168,7 +168,7 @@ fn test_parse_nested_function_no_params() {
 fn test_parse_nested_function_requires_return_type() {
     let source = r#"
         fn outer() -> void {
-            fn helper(x: number) {
+            fn helper(borrow x: number) {
                 return x;
             }
         }

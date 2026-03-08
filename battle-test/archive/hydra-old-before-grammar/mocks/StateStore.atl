@@ -5,26 +5,26 @@ export fn new_state_store() -> json {
     return { initialize: null, subscriptions: [] };
 }
 
-export fn get_initialize(store: json) -> json {
+export fn get_initialize(borrow store: json) -> json {
     return store["initialize"];
 }
 
-export fn set_initialize(store: json, params: json) -> json {
+export fn set_initialize(borrow store: json, borrow params: json) -> json {
     return { initialize: params, subscriptions: store["subscriptions"] };
 }
 
-export fn get_subscriptions(store: json) -> array {
+export fn get_subscriptions(borrow store: json) -> array {
     return store["subscriptions"].is_null() ? [] : store["subscriptions"];
 }
 
-export fn add_subscription(store: json, uri: string) -> json {
+export fn add_subscription(borrow store: json, borrow uri: string) -> json {
     let subs = get_subscriptions(store);
     let exists = indexOf(toJSON(subs), "\"" + uri + "\"") != -1;
     if (exists) { return store; }
     return { initialize: store["initialize"], subscriptions: subs + [uri] };
 }
 
-export fn remove_subscription(store: json, uri: string) -> json {
+export fn remove_subscription(borrow store: json, borrow uri: string) -> json {
     let subs = get_subscriptions(store);
     let mut filtered = [];
     for s in subs {
@@ -33,7 +33,7 @@ export fn remove_subscription(store: json, uri: string) -> json {
     return { initialize: store["initialize"], subscriptions: filtered };
 }
 
-export fn update_subscription_id(store: json, uri: string, id: string) -> json {
+export fn update_subscription_id(borrow store: json, borrow uri: string, borrow id: string) -> json {
     let subs = get_subscriptions(store);
     let mut updated = [];
     for s in subs {
@@ -46,6 +46,6 @@ export fn update_subscription_id(store: json, uri: string, id: string) -> json {
     return { initialize: store["initialize"], subscriptions: updated };
 }
 
-export fn clear_store(store: json) -> json {
+export fn clear_store(borrow store: json) -> json {
     return { initialize: null, subscriptions: [] };
 }

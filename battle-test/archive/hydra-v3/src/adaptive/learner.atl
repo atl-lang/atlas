@@ -9,15 +9,14 @@ export fn new_learner() -> Learner {
 }
 
 export fn learner_observe(
-    learner: Learner,
-    event: string,
-    context: HashMap<string, json>
-) -> Learner {
+    borrow learner: Learner,
+    borrow event: string,
+    borrow context: HashMap<string, json>) -> Learner {
     let obs = record { timestamp: now_seconds(), event: event, context: context };
     return record { observations: learner.observations + [obs] };
 }
 
-fn count_event(observations: Observation[], target: string) -> number {
+fn count_event(borrow observations: Observation[], borrow target: string) -> number {
     let mut count = 0;
     for obs in observations {
         if (obs.event == target) {
@@ -28,10 +27,9 @@ fn count_event(observations: Observation[], target: string) -> number {
 }
 
 export fn learner_analyze(
-    learner: Learner,
-    snapshot: { restarts_total: number, avg_latency_ms: number, avg_queue_wait_ms: number },
-    config: HashMap<string, number>
-) -> Suggestion[] {
+    borrow learner: Learner,
+    borrow snapshot: { restarts_total: number, borrow avg_latency_ms: number, borrow avg_queue_wait_ms: number },
+    borrow config: HashMap<string, number>) -> Suggestion[] {
     let mut suggestions: Suggestion[] = [];
 
     let max_restarts = unwrapOr(hash_map_get(config, "max_restarts"), 0);

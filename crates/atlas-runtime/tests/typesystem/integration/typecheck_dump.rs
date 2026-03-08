@@ -64,7 +64,7 @@ fn test_version_field_in_compact_json() {
 #[test]
 fn test_typecheck_dump_is_deterministic() {
     let source = r#"
-        fn foo(x: number) -> number {
+        fn foo(borrow x: number) -> number {
             let y = x + 5;
             return y;
         }
@@ -85,7 +85,7 @@ fn test_typecheck_dump_is_deterministic() {
 #[test]
 fn test_typecheck_dump_compact_is_deterministic() {
     let source = r#"
-        fn bar(a: string) -> string {
+        fn bar(borrow a: string) -> string {
             let b = a;
             return b;
         }
@@ -269,7 +269,7 @@ fn test_empty_program_typecheck_dump() {
 #[test]
 fn test_complex_program_typecheck_dump() {
     let source = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -331,7 +331,7 @@ fn test_array_types_in_typecheck_dump() {
 #[test]
 fn test_function_types_in_typecheck_dump() {
     let source = r#"
-        fn foo(x: number) -> string {
+        fn foo(borrow x: number) -> string {
             return "hello";
         }
     "#;
@@ -362,7 +362,7 @@ fn test_function_types_in_typecheck_dump() {
 #[test]
 fn test_typecheck_dump_stability_across_runs() {
     let source = r#"
-        fn test(x: number, y: string) -> bool {
+        fn test(borrow x: number, borrow y: string) -> bool {
             let z = x + 5;
             return true;
         }

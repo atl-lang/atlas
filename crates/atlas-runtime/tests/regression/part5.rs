@@ -7,7 +7,7 @@ use atlas_runtime::Atlas;
 fn stability_stress_recursion_depth_50() {
     // Moderate recursion (50 levels) must complete without stack overflow.
     let code = r#"
-        fn countdown(n: number) -> number {
+        fn countdown(borrow n: number) -> number {
             if (n <= 0) { return 0; }
             return countdown(n - 1);
         }
@@ -21,7 +21,7 @@ fn stability_stress_recursion_depth_100() {
     // Deeper recursion (100 levels). Run on a thread with an explicit 8MB stack
     // to avoid overflow in debug builds where Rust frames are larger than release.
     let code = r#"
-        fn sum_down(n: number) -> number {
+        fn sum_down(borrow n: number) -> number {
             if (n <= 0) { return 0; }
             return n + sum_down(n - 1);
         }
@@ -81,7 +81,7 @@ fn stability_stress_many_function_calls() {
     // Many sequential function calls should not exhaust resources.
     let code = r#"
         fn test() -> number {
-            fn inc(x: number) -> number { return x + 1; }
+            fn inc(borrow x: number) -> number { return x + 1; }
             let mut n: number = 0;
             let mut i: number = 0;
             while (i < 200) {
@@ -137,7 +137,7 @@ fn stability_stress_while_1000_iterations() {
 fn stability_stress_fibonacci_15() {
     // Fibonacci(15) = 610 — exercises recursive call depth.
     let code = r#"
-        fn fib(n: number) -> number {
+        fn fib(borrow n: number) -> number {
             if (n <= 1) { return n; }
             return fib(n - 1) + fib(n - 2);
         }
@@ -175,7 +175,7 @@ fn stability_error_recovery_array_out_of_bounds() {
 #[test]
 fn stability_error_recovery_wrong_argument_count() {
     // Calling a function with wrong arity must produce an error.
-    assert_has_error("fn f(x: number) -> number { return x; } f(1, 2);");
+    assert_has_error("fn f(borrow x: number) -> number { return x; } f(1, 2);");
 }
 
 #[test]
@@ -241,7 +241,7 @@ fn stability_release_boolean_short_circuit() {
 fn stability_release_recursive_correctness() {
     // Recursive functions must produce correct results (not optimized away).
     let code = r#"
-        fn factorial(n: number) -> number {
+        fn factorial(borrow n: number) -> number {
             if (n <= 1) { return 1; }
             return n * factorial(n - 1);
         }

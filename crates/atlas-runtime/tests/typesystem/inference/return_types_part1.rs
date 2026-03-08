@@ -11,7 +11,7 @@ use super::helpers::*;
 fn test_infer_return_number() {
     let diags = errors(
         r#"
-        fn double(x: number) -> number { return x * 2; }
+        fn double(borrow x: number) -> number { return x * 2; }
         let _r = double(5);
     "#,
     );
@@ -26,7 +26,7 @@ fn test_infer_return_number() {
 fn test_infer_return_string() {
     let diags = errors(
         r#"
-        fn greet(name: string) -> string { return "hello " + name; }
+        fn greet(borrow name: string) -> string { return "hello " + name; }
         let _r = greet("world");
     "#,
     );
@@ -37,7 +37,7 @@ fn test_infer_return_string() {
 fn test_infer_return_bool() {
     let diags = errors(
         r#"
-        fn is_positive(x: number) -> bool { return x > 0; }
+        fn is_positive(borrow x: number) -> bool { return x > 0; }
         let _r = is_positive(5);
     "#,
     );
@@ -215,7 +215,7 @@ fn test_array_assigned_to_wrong_type() {
 fn test_infer_function_call_return() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let _x: number = add(1, 2);
     "#,
     );
@@ -226,7 +226,7 @@ fn test_infer_function_call_return() {
 fn test_function_call_return_mismatch() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let _x: string = add(1, 2);
     "#,
     );

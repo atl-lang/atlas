@@ -176,7 +176,7 @@ fn test_for_in_variable_shadowing() {
 #[test]
 fn test_for_in_in_function() {
     let source = r#"
-        fn sum_array(arr: array) -> number {
+        fn sum_array(borrow arr: array) -> number {
             let mut total: number = 0;
             for item in arr {
                 total = total + item;
@@ -487,7 +487,7 @@ fn test_vm_value_semantics_regression_push_copy_isolated() {
 #[test]
 fn test_vm_value_semantics_regression_fn_param_copy() {
     let result = run_vm(
-        r#"fn fill(arr: number[]) -> void { arr[0] = 999; } let nums: number[] = [1, 2, 3]; fill(nums); nums[0];"#,
+        r#"fn fill(borrow arr: number[]) -> void { arr[0] = 999; } let nums: number[] = [1, 2, 3]; fill(nums); nums[0];"#,
     );
     assert_eq!(result, Ok("Number(1)".to_string()));
 }
@@ -547,7 +547,7 @@ fn test_compiler_emits_mixed_annotations() {
 /// Compiling an unannotated function produces param_ownership: [None].
 #[test]
 fn test_compiler_unannotated_function() {
-    let bc = compile("fn f(x: number) -> number { return x; }");
+    let bc = compile("fn f(borrow x: number) -> number { return x; }");
     let func = find_function_ref(&bc, "f");
     assert_eq!(func.param_ownership.len(), 1);
     assert_eq!(func.param_ownership[0], None);
@@ -934,7 +934,7 @@ fn test_vm_trait_type_param_dispatch() {
         impl Describable for Dog {
             fn describe(borrow self: Dog) -> string { return \"Dog: \" + self.name; }
         }
-        fn show(item: Describable) -> string { return item.describe(); }
+        fn show(borrow item: Describable) -> string { return item.describe(); }
         let c = Cat { name: \"Whiskers\" };
         let d = Dog { name: \"Rex\" };
         let a = show(c);
@@ -1092,14 +1092,14 @@ fn test_interp_vm_trait_default_override_parity() {
             }
         }
         struct Robot { name: string }
-        struct Human { name: string, borrow age: number }
+        struct Human { name: string, age: number }
         impl Greetable for Robot { }
         impl Greetable for Human {
             fn greet(borrow self: Human) -> string { return \"Hi, I'm \" + self.name; }
         }
         fn main() -> string {
             let r = Robot { name: \"Atlas\" };
-            let h = Human { name: \"Ada\", borrow age: 36 };
+            let h = Human { name: \"Ada\", age: 36 };
             let a: string = r.greet();
             let b: string = h.greet();
             return a + \"|\" + b;

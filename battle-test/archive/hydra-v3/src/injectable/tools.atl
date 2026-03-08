@@ -1,4 +1,4 @@
-export fn tool_definition(name: string) -> Result<json, string> {
+export fn tool_definition(borrow name: string) -> Result<json, string> {
     match name {
         "hydra_restart" => {
             let schema = record {

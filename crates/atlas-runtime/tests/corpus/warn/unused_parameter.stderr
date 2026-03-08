@@ -1,1 +1,2 @@
 warning[AT2001]: Unused parameter 'y'
+warning[AT2010]: `own` annotation on parameter `x` has no effect: primitive types are always copied

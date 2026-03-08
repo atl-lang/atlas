@@ -193,7 +193,7 @@ fn test_function_definition_and_call_single_eval() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     // Define and call function in the same eval()
     let result = runtime
-        .eval("fn add(x: number, y: number) -> number { return x + y; } add(10, 20)")
+        .eval("fn add(borrow x: number, borrow y: number) -> number { return x + y; } add(10, 20)")
         .unwrap();
     assert!(matches!(result, Value::Number(n) if n == 30.0));
 }
@@ -202,7 +202,7 @@ fn test_function_definition_and_call_single_eval() {
 fn test_function_multiple_calls_single_eval() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     let result = runtime
-        .eval("fn square(x: number) -> number { return x * x; } square(3) + square(4)")
+        .eval("fn square(borrow x: number) -> number { return x * x; } square(3) + square(4)")
         .unwrap();
     assert!(matches!(result, Value::Number(n) if n == 25.0));
 }
@@ -221,7 +221,7 @@ fn test_global_variable_persistence_vm() {
 fn test_function_definition_persistence_vm() {
     let mut runtime = Runtime::new(ExecutionMode::VM);
     runtime
-        .eval("fn add(x: number, y: number) -> number { return x + y; }")
+        .eval("fn add(borrow x: number, borrow y: number) -> number { return x + y; }")
         .unwrap();
     // Note: VM doesn't persist state yet in this phase
 }

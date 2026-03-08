@@ -15,7 +15,7 @@ export fn scan_all() -> Discovery[] {
     return discoveries;
 }
 
-export fn scan_client(client: string) -> Result<Discovery, string> {
+export fn scan_client(borrow client: string) -> Result<Discovery, string> {
     let path_result = detect_client_config_path(client);
     match path_result {
         Ok(path) => {

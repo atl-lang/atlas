@@ -163,7 +163,7 @@ fn milestone_feature_for_loop() {
 #[test]
 fn milestone_feature_functions_with_params_and_return() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         add(3, 4);
@@ -174,7 +174,7 @@ fn milestone_feature_functions_with_params_and_return() {
 #[test]
 fn milestone_feature_recursion() {
     let code = r#"
-        fn fact(n: number) -> number {
+        fn fact(borrow n: number) -> number {
             if (n <= 1) { return 1; }
             return n * fact(n - 1);
         }

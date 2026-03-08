@@ -1,6 +1,6 @@
 // CLI recover (Atlas port, simplified)
 // Source: hydra/internal/cli/recover.go
 
-export fn cmd_recover(args: json) -> Result<json, string> {
+export fn cmd_recover(borrow args: json) -> Result<json, string> {
     return Err("recover not implemented in Atlas port");
 }

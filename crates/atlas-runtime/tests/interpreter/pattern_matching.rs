@@ -56,7 +56,7 @@ fn test_parse_simple_match() {
 #[test]
 fn test_parse_option_match() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x) => "has value",
                 None => "no value"
@@ -70,7 +70,7 @@ fn test_parse_option_match() {
 #[test]
 fn test_parse_result_match() {
     let source = r#"
-        fn test(res: Result<number, string>) -> string {
+        fn test(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(val) => "success",
                 Err(error) => "failure"
@@ -86,7 +86,7 @@ fn test_parse_result_match() {
 #[test]
 fn test_literal_patterns() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 0 => "zero",
                 1 => "one",
@@ -101,7 +101,7 @@ fn test_literal_patterns() {
 #[test]
 fn test_wildcard_pattern() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 _ => "anything"
             };
@@ -114,7 +114,7 @@ fn test_wildcard_pattern() {
 #[test]
 fn test_variable_binding_pattern() {
     let source = r#"
-        fn test(x: number) -> number {
+        fn test(borrow x: number) -> number {
             return match x {
                 value => value + 1
             };
@@ -127,7 +127,7 @@ fn test_variable_binding_pattern() {
 #[test]
 fn test_nested_constructor_patterns() {
     let source = r#"
-        fn test(res: Result<Option<number>, string>) -> string {
+        fn test(borrow res: Result<Option<number>, string>) -> string {
             return match res {
                 Ok(Some(x)) => "has value",
                 Ok(None) => "no value",
@@ -142,7 +142,7 @@ fn test_nested_constructor_patterns() {
 #[test]
 fn test_array_patterns() {
     let source = r#"
-        fn test(arr: number[]) -> string {
+        fn test(borrow arr: number[]) -> string {
             return match arr {
                 [] => "empty",
                 [x] => "one",
@@ -160,7 +160,7 @@ fn test_array_patterns() {
 #[test]
 fn test_pattern_type_mismatch() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 "hello" => "string",
                 _ => "other"
@@ -180,7 +180,7 @@ fn test_pattern_type_mismatch() {
 #[test]
 fn test_arm_type_mismatch() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 0 => "zero",
                 1 => 123,
@@ -202,7 +202,7 @@ fn test_arm_type_mismatch() {
 #[test]
 fn test_constructor_wrong_arity() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x, y) => "wrong",
                 None => "ok"
@@ -223,7 +223,7 @@ fn test_constructor_wrong_arity() {
 #[test]
 fn test_option_exhaustive() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x) => "has",
                 None => "none"
@@ -241,7 +241,7 @@ fn test_option_exhaustive() {
 #[test]
 fn test_option_non_exhaustive_missing_none() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 Some(x) => "has"
             };
@@ -260,7 +260,7 @@ fn test_option_non_exhaustive_missing_none() {
 #[test]
 fn test_option_non_exhaustive_missing_some() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 None => "none"
             };
@@ -279,7 +279,7 @@ fn test_option_non_exhaustive_missing_some() {
 #[test]
 fn test_result_exhaustive() {
     let source = r#"
-        fn test(res: Result<number, string>) -> string {
+        fn test(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(x) => "ok",
                 Err(e) => "err"
@@ -297,7 +297,7 @@ fn test_result_exhaustive() {
 #[test]
 fn test_result_non_exhaustive_missing_err() {
     let source = r#"
-        fn test(res: Result<number, string>) -> string {
+        fn test(borrow res: Result<number, string>) -> string {
             return match res {
                 Ok(x) => "ok"
             };
@@ -316,7 +316,7 @@ fn test_result_non_exhaustive_missing_err() {
 #[test]
 fn test_result_non_exhaustive_missing_ok() {
     let source = r#"
-        fn test(res: Result<number, string>) -> string {
+        fn test(borrow res: Result<number, string>) -> string {
             return match res {
                 Err(e) => "err"
             };
@@ -335,7 +335,7 @@ fn test_result_non_exhaustive_missing_ok() {
 #[test]
 fn test_bool_exhaustive() {
     let source = r#"
-        fn test(b: bool) -> string {
+        fn test(borrow b: bool) -> string {
             return match b {
                 true => "yes",
                 false => "no"
@@ -353,7 +353,7 @@ fn test_bool_exhaustive() {
 #[test]
 fn test_bool_non_exhaustive() {
     let source = r#"
-        fn test(b: bool) -> string {
+        fn test(borrow b: bool) -> string {
             return match b {
                 true => "yes"
             };
@@ -372,7 +372,7 @@ fn test_bool_non_exhaustive() {
 #[test]
 fn test_number_requires_wildcard() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 0 => "zero",
                 1 => "one"
@@ -391,7 +391,7 @@ fn test_number_requires_wildcard() {
 #[test]
 fn test_wildcard_makes_exhaustive() {
     let source = r#"
-        fn test(x: number) -> string {
+        fn test(borrow x: number) -> string {
             return match x {
                 0 => "zero",
                 _ => "other"
@@ -409,7 +409,7 @@ fn test_wildcard_makes_exhaustive() {
 #[test]
 fn test_variable_binding_makes_exhaustive() {
     let source = r#"
-        fn test(opt: Option<number>) -> string {
+        fn test(borrow opt: Option<number>) -> string {
             return match opt {
                 value => "anything"
             };
@@ -424,7 +424,7 @@ fn test_variable_binding_makes_exhaustive() {
 #[test]
 fn test_pattern_variable_scope() {
     let source = r#"
-        fn test(opt: Option<number>) -> number {
+        fn test(borrow opt: Option<number>) -> number {
             return match opt {
                 Some(x) => x + 1,
                 None => 0
@@ -438,7 +438,7 @@ fn test_pattern_variable_scope() {
 #[test]
 fn test_nested_pattern_variables() {
     let source = r#"
-        fn test(res: Result<Option<number>, string>) -> number {
+        fn test(borrow res: Result<Option<number>, string>) -> number {
             return match res {
                 Ok(Some(value)) => value,
                 Ok(None) => 0,
@@ -455,7 +455,7 @@ fn test_nested_pattern_variables() {
 #[test]
 fn test_match_as_expression() {
     let source = r#"
-        fn test(x: bool) -> string {
+        fn test(borrow x: bool) -> string {
             let result = match x {
                 true => "yes",
                 false => "no"
@@ -470,7 +470,7 @@ fn test_match_as_expression() {
 #[test]
 fn test_match_in_expression_context() {
     let source = r#"
-        fn test(x: bool) -> string {
+        fn test(borrow x: bool) -> string {
             return "Answer: " + match x {
                 true => "yes",
                 false => "no"
@@ -484,7 +484,7 @@ fn test_match_in_expression_context() {
 #[test]
 fn test_multiple_matches() {
     let source = r#"
-        fn test(a: Option<number>, b: Result<string, number>) -> string {
+        fn test(borrow a: Option<number>, borrow b: Result<string, number>) -> string {
             let x = match a {
                 Some(n) => "has",
                 None => "none"

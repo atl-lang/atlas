@@ -90,7 +90,7 @@ mod compile_run_workflow {
         fs::write(
             &file,
             r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 print(add(3, 4));

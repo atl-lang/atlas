@@ -3,7 +3,7 @@
 
 import { new_manager, load_state } from "../state/manager";
 
-export fn cmd_status(args: json) -> Result<json, string> {
+export fn cmd_status(borrow args: json) -> Result<json, string> {
     if (args["name"].is_null()) { return Err("name is required"); }
     let name = args["name"].as_string();
     let dir = args["state_dir"].is_null() ? ".hydra/state" : args["state_dir"].as_string();

@@ -87,7 +87,7 @@ impl Supervisor for ProcessSupervisor {
 }
 
 // Create a new process supervisor
-fn new_process_supervisor(command: string, args: string[]) -> ProcessSupervisor {
+fn new_process_supervisor(borrow command: string, borrow args: string[]) -> ProcessSupervisor {
     return ProcessSupervisor {
         command: command,
         args: args,

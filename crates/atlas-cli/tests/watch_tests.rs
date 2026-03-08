@@ -310,7 +310,7 @@ fn test_run_type_error_message() {
 #[test]
 fn test_run_with_functions() {
     let code = r#"
-fn add(a: number, b: number) -> number {
+fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }
 add(2, 3);

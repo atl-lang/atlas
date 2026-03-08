@@ -9,7 +9,7 @@ fn test_h088_while_loop_mutable_var_not_never() {
     // Previously: `bb != 0` narrowed bb to Never inside the loop body
     // (exclude_from(Number, Number) = Never), breaking arithmetic.
     let code = r#"
-        fn gcd(a: number, b: number) -> number {
+        fn gcd(borrow a: number, borrow b: number) -> number {
             let mut aa = a;
             let mut bb = b;
             while bb != 0 {
@@ -297,7 +297,7 @@ fn test_h089_mut_param_gcd() {
 fn test_h089_immutable_param_still_rejected() {
     // Without mut, params must remain immutable
     let code = r#"
-        fn bad(a: number) -> number {
+        fn bad(borrow a: number) -> number {
             a = 5;
             return a;
         }
@@ -330,7 +330,7 @@ fn test_h092_local_mut_shadows_outer_immutable() {
     // to the outer symbol and rejected assignment as AT3003.
     let code = r#"
         let primes = 0;
-        fn compute(n: number) -> number {
+        fn compute(borrow n: number) -> number {
             let mut primes = n;
             primes = primes * 2;
             return primes;

@@ -1,10 +1,9 @@
 ---
 source: crates/atlas-cli/tests/ast_dump_tests.rs
-assertion_line: 48
 expression: json
 ---
 {
-  "ast_version": 4,
+  "ast_version": 5,
   "items": [
     {
       "Function": {
@@ -16,14 +15,16 @@ expression: json
             "file": "<test>"
           }
         },
+        "attributes": [],
+        "is_async": false,
         "type_params": [],
         "params": [
           {
             "name": {
               "name": "a",
               "span": {
-                "start": 8,
-                "end": 9,
+                "start": 15,
+                "end": 16,
                 "file": "<test>"
               }
             },
@@ -31,17 +32,17 @@ expression: json
               "Named": [
                 "number",
                 {
-                  "start": 11,
-                  "end": 17,
+                  "start": 18,
+                  "end": 24,
                   "file": "<test>"
                 }
               ]
             },
-            "ownership": null,
+            "ownership": "Borrow",
             "mutable": false,
             "span": {
               "start": 8,
-              "end": 17,
+              "end": 24,
               "file": "<test>"
             }
           },
@@ -49,8 +50,8 @@ expression: json
             "name": {
               "name": "b",
               "span": {
-                "start": 19,
-                "end": 20,
+                "start": 33,
+                "end": 34,
                 "file": "<test>"
               }
             },
@@ -58,17 +59,17 @@ expression: json
               "Named": [
                 "number",
                 {
-                  "start": 22,
-                  "end": 28,
+                  "start": 36,
+                  "end": 42,
                   "file": "<test>"
                 }
               ]
             },
-            "ownership": null,
+            "ownership": "Borrow",
             "mutable": false,
             "span": {
-              "start": 19,
-              "end": 28,
+              "start": 26,
+              "end": 42,
               "file": "<test>"
             }
           }
@@ -77,8 +78,8 @@ expression: json
           "Named": [
             "number",
             {
-              "start": 33,
-              "end": 39,
+              "start": 47,
+              "end": 53,
               "file": "<test>"
             }
           ]
@@ -96,8 +97,8 @@ expression: json
                       "Identifier": {
                         "name": "a",
                         "span": {
-                          "start": 53,
-                          "end": 54,
+                          "start": 67,
+                          "end": 68,
                           "file": "<test>"
                         }
                       }
@@ -106,22 +107,22 @@ expression: json
                       "Identifier": {
                         "name": "b",
                         "span": {
-                          "start": 57,
-                          "end": 58,
+                          "start": 71,
+                          "end": 72,
                           "file": "<test>"
                         }
                       }
                     },
                     "span": {
-                      "start": 53,
-                      "end": 58,
+                      "start": 67,
+                      "end": 72,
                       "file": "<test>"
                     }
                   }
                 },
                 "span": {
-                  "start": 46,
-                  "end": 59,
+                  "start": 60,
+                  "end": 73,
                   "file": "<test>"
                 }
               }
@@ -129,14 +130,14 @@ expression: json
           ],
           "tail_expr": null,
           "span": {
-            "start": 40,
-            "end": 61,
+            "start": 54,
+            "end": 75,
             "file": "<test>"
           }
         },
         "span": {
           "start": 1,
-          "end": 61,
+          "end": 75,
           "file": "<test>"
         }
       }

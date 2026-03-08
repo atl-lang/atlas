@@ -26,7 +26,7 @@ let div_err_out: string = match div_err {
 print(div_err_out);
 
 // Async fn with early return on condition
-async fn find_positive(borrow n: number) -> number {
+async fn find_positive(own n: number) -> number {
     if n < 0 {
         return 0;
     }

@@ -188,7 +188,7 @@ fn test_top_level_var_mutation_and_read() {
     assert_parity_number(
         r#"
 let mut total = 100;
-fn subtract(n: number) { total = total - n; }
+fn subtract(borrow n: number) { total = total - n; }
 subtract(30);
 subtract(20);
 total;
@@ -248,7 +248,7 @@ fn test_top_level_let_shadow_by_param() {
     assert_parity_number(
         r#"
 let x = 100;
-fn shadow(x: number) -> number { return x; }
+fn shadow(borrow x: number) -> number { return x; }
 shadow(42);
 "#,
         42.0,
@@ -279,7 +279,7 @@ fn test_fn_stored_in_variable_and_called() {
     // Store a function reference in a variable, then call it
     assert_parity_number(
         r#"
-fn add_one(n: number) -> number { return n + 1; }
+fn add_one(borrow n: number) -> number { return n + 1; }
 let f = add_one;
 f(41);
 "#,
@@ -292,8 +292,8 @@ fn test_fn_passed_as_argument() {
     // Higher-order: pass a function as an argument
     assert_parity_number(
         r#"
-fn double(n: number) -> number { return n * 2; }
-fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+fn double(borrow n: number) -> number { return n * 2; }
+fn apply(borrow f: (number) -> number, x: number) -> number { return f(x); }
 apply(double, 21);
 "#,
         42.0,
@@ -305,7 +305,7 @@ fn test_fn_returned_from_fn() {
     // Return a function reference from a function, then call it
     assert_parity_number(
         r#"
-fn square(n: number) -> number { return n * n; }
+fn square(borrow n: number) -> number { return n * n; }
 fn get_square_fn() -> (number) -> number { return square; }
 let f = get_square_fn();
 f(6);
@@ -318,8 +318,8 @@ f(6);
 fn test_higher_order_apply_twice() {
     assert_parity_number(
         r#"
-fn inc(n: number) -> number { return n + 1; }
-fn apply_twice(f: (number) -> number, x: number) -> number { return f(f(x)); }
+fn inc(borrow n: number) -> number { return n + 1; }
+fn apply_twice(borrow f: (number) -> number, borrow x: number) -> number { return f(f(x)); }
 apply_twice(inc, 40);
 "#,
         42.0,
@@ -330,8 +330,8 @@ apply_twice(inc, 40);
 fn test_fn_identity_as_arg() {
     assert_parity_number(
         r#"
-fn identity(n: number) -> number { return n; }
-fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+fn identity(borrow n: number) -> number { return n; }
+fn apply(borrow f: (number) -> number, x: number) -> number { return f(x); }
 apply(identity, 99);
 "#,
         99.0,
@@ -344,9 +344,9 @@ fn test_fn_composition_manual() {
     // triple(4) = 12, add_ten(12) = 22
     assert_parity_number(
         r#"
-fn add_ten(n: number) -> number { return n + 10; }
-fn triple(n: number) -> number { return n * 3; }
-fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+fn add_ten(borrow n: number) -> number { return n + 10; }
+fn triple(borrow n: number) -> number { return n * 3; }
+fn apply(borrow f: (number) -> number, x: number) -> number { return f(x); }
 apply(add_ten, apply(triple, 4));
 "#,
         22.0,
@@ -363,7 +363,7 @@ fn test_recursive_fn_with_global_counter() {
     assert_parity_number(
         r#"
 let mut sum = 0;
-fn accumulate(n: number) -> void {
+fn accumulate(borrow n: number) -> void {
     if (n > 0) {
         sum = sum + n;
         accumulate(n - 1);
@@ -386,7 +386,7 @@ fn test_callback_closure_mutates_global_array() {
         r#"
 let mut tests: number[] = [];
 
-fn describe(block: () -> void) -> void {
+fn describe(borrow block: () -> void) -> void {
     block();
 }
 
@@ -410,7 +410,7 @@ fn test_callback_closure_mutates_global_hashmap() {
         r#"
 let mut m = hash_map_new();
 
-fn with_callback(block: () -> void) -> void {
+fn with_callback(borrow block: () -> void) -> void {
     block();
 }
 
@@ -430,11 +430,11 @@ fn test_nested_closures_mutate_global_array() {
         r#"
 let mut values: number[] = [];
 
-fn outer(block: () -> void) -> void {
+fn outer(borrow block: () -> void) -> void {
     block();
 }
 
-fn inner(block: () -> void) -> void {
+fn inner(borrow block: () -> void) -> void {
     block();
 }
 
@@ -456,7 +456,7 @@ fn test_closure_param_mutates_global_collection() {
         r#"
 let mut items: number[] = [];
 
-fn apply(block: () -> void) -> void {
+fn apply(borrow block: () -> void) -> void {
     block();
 }
 
@@ -543,8 +543,8 @@ fn test_nested_fn_params_only_no_capture() {
     // Inner fn uses only its own parameters — no outer reference — both engines work
     assert_parity_number(
         r#"
-fn outer(x: number) -> number {
-    fn inner(y: number) -> number {
+fn outer(borrow x: number) -> number {
+    fn inner(borrow y: number) -> number {
         return y * 2;
     }
     return inner(x);
@@ -578,7 +578,7 @@ fn test_nested_fn_with_outer_param() {
     // Both engines: inner function reads outer function's parameter via upvalue capture
     assert_parity_number(
         r#"
-fn outer(n: number) -> number {
+fn outer(borrow n: number) -> number {
     fn double_n() -> number {
         return n * 2;
     }
@@ -596,9 +596,9 @@ fn test_three_levels_no_cross_scope_access() {
     // Both engines work since no cross-scope access
     assert_parity_number(
         r#"
-fn level1(a: number) -> number {
-    fn level2(b: number) -> number {
-        fn level3(c: number) -> number {
+fn level1(borrow a: number) -> number {
+    fn level2(borrow b: number) -> number {
+        fn level3(borrow c: number) -> number {
             return c + 1;
         }
         return level3(b);
@@ -617,11 +617,11 @@ fn test_inner_fn_sibling_call() {
     // The VM compiler registers nested fns globally with scoped names for sibling access
     assert_parity_number(
         r#"
-fn outer(x: number) -> number {
-    fn helper(n: number) -> number {
+fn outer(borrow x: number) -> number {
+    fn helper(borrow n: number) -> number {
         return n + 1;
     }
-    fn compute(n: number) -> number {
+    fn compute(borrow n: number) -> number {
         return helper(n) * 2;
     }
     return compute(x);
@@ -651,7 +651,7 @@ fn test_returned_fn_with_global_access_still_works() {
         r#"
 let multiplier = 3;
 fn make_multiplier_fn() -> (number) -> number {
-    fn apply_multiplier(x: number) -> number {
+    fn apply_multiplier(borrow x: number) -> number {
         return x * multiplier;
     }
     return apply_multiplier;
@@ -669,7 +669,7 @@ fn test_fn_value_survives_scope_exit_for_globals() {
     assert_parity_number(
         r#"
 let mut factor = 2;
-fn times_factor(x: number) -> number { return x * factor; }
+fn times_factor(borrow x: number) -> number { return x * factor; }
 let saved = times_factor;
 factor = 3;
 saved(14);
@@ -686,8 +686,8 @@ saved(14);
 fn test_fn_that_calls_another_global_fn() {
     assert_parity_number(
         r#"
-fn add(a: number, b: number) -> number { return a + b; }
-fn double_add(a: number, b: number) -> number { return add(a, b) + add(a, b); }
+fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+fn double_add(borrow a: number, borrow b: number) -> number { return add(a, b) + add(a, b); }
 double_add(10, 11);
 "#,
         42.0,
@@ -700,7 +700,7 @@ fn test_parameter_does_not_bleed_to_outer_scope() {
     assert_parity_number(
         r#"
 let mut x = 99;
-fn set_inner(y: number) { let mut x = y; }
+fn set_inner(borrow y: number) { let mut x = y; }
 set_inner(1);
 x;
 "#,
@@ -713,7 +713,7 @@ fn test_fn_with_no_captures_works_from_any_context() {
     // Pure function (no external references) works regardless of call site
     assert_parity_number(
         r#"
-fn pure_add(a: number, b: number) -> number { return a + b; }
+fn pure_add(borrow a: number, borrow b: number) -> number { return a + b; }
 fn caller() -> number { return pure_add(20, 22); }
 caller();
 "#,
@@ -770,8 +770,8 @@ fn test_upvalue_arithmetic_with_outer_vars() {
     // Inner function uses outer vars in arithmetic
     assert_parity_number(
         r#"
-fn make_adder(base: number) -> number {
-    fn add(x: number) -> number {
+fn make_adder(borrow base: number) -> number {
+    fn add(borrow x: number) -> number {
         return base + x;
     }
     return add(10);
@@ -789,7 +789,7 @@ fn test_upvalue_multiple_inner_fns_same_outer() {
         r#"
 fn outer() -> number {
     let factor = 3;
-    fn triple(n: number) -> number {
+    fn triple(borrow n: number) -> number {
         return n * factor;
     }
     fn check() -> number {
@@ -808,7 +808,7 @@ fn test_upvalue_conditional_in_outer() {
     // Outer function has branching; inner captures the result
     assert_parity_number(
         r#"
-fn outer(x: number) -> number {
+fn outer(borrow x: number) -> number {
     let result = x * 2;
     fn get_result() -> number {
         return result;
@@ -826,7 +826,7 @@ fn test_upvalue_inner_fn_called_multiple_times() {
     // Inner function can be called multiple times and sees correct captured value
     assert_parity_number(
         r#"
-fn outer(n: number) -> number {
+fn outer(borrow n: number) -> number {
     fn double() -> number {
         return n * 2;
     }
@@ -843,7 +843,7 @@ fn test_upvalue_three_level_capture() {
     // Innermost function captures from outermost via upvalue chain
     assert_parity_number(
         r#"
-fn level1(x: number) -> number {
+fn level1(borrow x: number) -> number {
     fn level2() -> number {
         fn level3() -> number {
             return x + 1;
@@ -863,7 +863,7 @@ fn test_upvalue_string_capture() {
     // Upvalue capture works for string type too
     assert_parity_string(
         r#"
-fn outer(name: string) -> string {
+fn outer(borrow name: string) -> string {
     fn greet() -> string {
         return name;
     }
@@ -880,7 +880,7 @@ fn test_upvalue_bool_capture() {
     // Upvalue capture works for bool type
     assert_parity_bool(
         r#"
-fn outer(flag: bool) -> bool {
+fn outer(borrow flag: bool) -> bool {
     fn check() -> bool {
         return flag;
     }
@@ -897,11 +897,11 @@ fn test_upvalue_sibling_and_capture() {
     // Sibling calls (via scoped globals) AND upvalue capture work together
     assert_parity_number(
         r#"
-fn outer(n: number) -> number {
-    fn add_one(x: number) -> number {
+fn outer(borrow n: number) -> number {
+    fn add_one(borrow x: number) -> number {
         return x + 1;
     }
-    fn add_n(x: number) -> number {
+    fn add_n(borrow x: number) -> number {
         return x + n;
     }
     return add_one(add_n(10));
@@ -917,7 +917,7 @@ fn test_upvalue_outer_computation() {
     // Outer function computes a value, inner captures and uses it
     assert_parity_number(
         r#"
-fn outer(a: number, b: number) -> number {
+fn outer(borrow a: number, borrow b: number) -> number {
     let product = a * b;
     fn get_product() -> number {
         return product;
@@ -1042,7 +1042,7 @@ fn test_vm_returned_closure_accesses_top_level_globals() {
         r#"
 let base = 100;
 fn make_fn() -> (number) -> number {
-    fn add_base(n: number) -> number {
+    fn add_base(borrow n: number) -> number {
         return n + base;
     }
     return add_base;
@@ -1060,8 +1060,8 @@ fn test_vm_upvalue_param_captured_correctly() {
     // Both engines: parameter value at call time is the captured value.
     assert_parity_number(
         r#"
-fn make_adder(n: number) -> number {
-    fn add(x: number) -> number {
+fn make_adder(borrow n: number) -> number {
+    fn add(borrow x: number) -> number {
         return x + n;
     }
     return add(10);
@@ -1129,7 +1129,7 @@ fn test_tc_anon_fn_typed_params_produces_function_type() {
     // Typed anon fn — typechecker resolves it without error
     typecheck_ok(
         r#"
-let f = fn(x: number) -> number { x + 1; };
+let f = fn(borrow x: number) -> number { x + 1; };
 "#,
     );
 }
@@ -1149,7 +1149,7 @@ fn test_tc_anon_fn_return_type_mismatch_errors() {
     // Declared return type doesn't match body type
     let errors = typecheck_errors(
         r#"
-let f = fn(x: number) -> string { x + 1; };
+let f = fn(borrow x: number) -> string { x + 1; };
 "#,
     );
     assert!(
@@ -1164,10 +1164,10 @@ fn test_tc_anon_fn_passed_as_arg_no_error() {
     // Atlas function type syntax: (params) -> return, not fn(params) -> return
     typecheck_ok(
         r#"
-fn apply(f: (number) -> number, x: number) -> number {
+fn apply(borrow f: (number) -> number, x: number) -> number {
     return f(x);
 }
-apply(fn(x: number) -> number { x * 2; }, 5);
+apply(fn(borrow x: number) -> number { x * 2; }, 5);
 "#,
     );
 }
@@ -1242,7 +1242,7 @@ fn test_anon_fn_block_form_basic() {
     // Phase 05 AC: fn expression with explicit return compiles and executes
     assert_vm_number(
         r#"
-let f = fn(x: number) -> number { return x + 1; };
+let f = fn(borrow x: number) -> number { return x + 1; };
 f(5);
 "#,
         6.0,
@@ -1253,7 +1253,7 @@ f(5);
 fn test_anon_fn_block_form_two_params() {
     assert_vm_number(
         r#"
-let add = fn(a: number, b: number) -> number { return a + b; };
+let add = fn(borrow a: number, borrow b: number) -> number { return a + b; };
 add(3, 4);
 "#,
         7.0,
@@ -1275,7 +1275,7 @@ f();
 fn test_anon_fn_block_form_string_result() {
     assert_vm_string(
         r#"
-let greet = fn(name: string) -> string { return "hello " + name; };
+let greet = fn(borrow name: string) -> string { return "hello " + name; };
 greet("world");
 "#,
         "hello world",
@@ -1289,7 +1289,7 @@ fn test_anon_fn_arrow_form_basic() {
     // Phase 05 AC: `let f = fn(x) { x * 2 }; f(3);` → 6
     assert_vm_number(
         r#"
-let f = fn(x) { x * 2 };
+let f = fn(borrow x: number) -> number { x * 2 };
 f(3);
 "#,
         6.0,
@@ -1347,7 +1347,7 @@ fn test_anon_fn_captures_outer_param() {
     // Phase 05 AC: closure capturing an outer variable compiles with correct upvalue count
     assert_vm_number(
         r#"
-fn make_adder(n: number) -> number {
+fn make_adder(borrow n: number) -> number {
     let f = fn(x) { x + n };
     return f(10);
 }
@@ -1361,8 +1361,8 @@ make_adder(5);
 fn test_anon_fn_captures_outer_param_block_form() {
     assert_vm_number(
         r#"
-fn make_adder(n: number) -> number {
-    let f = fn(x: number) -> number { return x + n; };
+fn make_adder(borrow n: number) -> number {
+    let f = fn(borrow x: number) -> number { return x + n; };
     return f(10);
 }
 make_adder(3);
@@ -1375,7 +1375,7 @@ make_adder(3);
 fn test_anon_fn_captures_multiple_outer_vars() {
     assert_vm_number(
         r#"
-fn compute(a: number, b: number) -> number {
+fn compute(borrow a: number, borrow b: number) -> number {
     let f = fn(x) { x + a + b };
     return f(1);
 }
@@ -1391,7 +1391,7 @@ compute(2, 3);
 fn test_anon_fn_passed_as_arg() {
     assert_vm_number(
         r#"
-fn apply(f: any, x: number) -> number {
+fn apply(borrow f: any, borrow x: number) -> number {
     return f(x);
 }
 apply(fn(n) { n * 3 }, 4);
@@ -1404,7 +1404,7 @@ apply(fn(n) { n * 3 }, 4);
 fn test_anon_fn_arrow_passed_as_arg() {
     assert_vm_number(
         r#"
-fn apply(f: any, x: number) -> number {
+fn apply(borrow f: any, borrow x: number) -> number {
     return f(x);
 }
 apply(fn(n) { n + 100 }, 5);
@@ -1419,7 +1419,7 @@ apply(fn(n) { n + 100 }, 5);
 fn test_anon_fn_returned_from_function() {
     assert_vm_number(
         r#"
-fn make_multiplier(factor: number) -> any {
+fn make_multiplier(borrow factor: number) -> any {
     return fn(x) { x * factor };
 }
 let double = make_multiplier(2);
@@ -1435,7 +1435,7 @@ fn test_anon_fn_parity_fn_expr() {
     // expr value, VM pops it — use return to guarantee parity).
     assert_parity_number(
         r#"
-let f = fn(x: number) -> number { return x + 1; };
+let f = fn(borrow x: number) -> number { return x + 1; };
 f(5);
 "#,
         6.0,
@@ -1446,7 +1446,7 @@ f(5);
 fn test_anon_fn_parity_arrow() {
     assert_parity_number(
         r#"
-let f = fn(x) { x * 2 };
+let f = fn(borrow x: number) -> number { x * 2 };
 f(3);
 "#,
         6.0,
@@ -1457,8 +1457,8 @@ f(3);
 fn test_anon_fn_parity_capture() {
     assert_parity_number(
         r#"
-fn outer(n: number) -> number {
-    let f = fn(x) { x + n };
+fn outer(borrow n: number) -> number {
+    let f = fn(borrow x: number) -> number { x + n };
     return f(10);
 }
 outer(5);
@@ -1590,7 +1590,7 @@ fn test_hof_map_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3];
-let result = map(arr, fn(x: number) -> number { return x * 2; });
+let result = map(arr, fn(borrow x: number) -> number { return x * 2; });
 result[2];
 "#,
         6.0,
@@ -1633,7 +1633,7 @@ fn test_hof_filter_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4, 5];
-let result = filter(arr, fn(x: number) -> bool { return x > 2; });
+let result = filter(arr, fn(borrow x: number) -> bool { return x > 2; });
 result[0];
 "#,
         3.0,
@@ -1675,7 +1675,7 @@ fn test_hof_reduce_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3];
-reduce(arr, fn(acc: number, x: number) -> number { return acc + x; }, 0);
+reduce(arr, fn(borrow acc: number, borrow x: number) -> number { return acc + x; }, 0);
 "#,
         6.0,
     );
@@ -1700,7 +1700,7 @@ fn test_hof_for_each_fn_expr_executes() {
     let result = vm_eval(
         r#"
 let arr = [1, 2, 3];
-for_each(arr, fn(x: number) { });
+for_each(arr, fn(borrow x: number) { });
 42;
 "#,
     );
@@ -1726,7 +1726,7 @@ fn test_hof_find_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2, 3, 4];
-find(arr, fn(x: number) -> bool { return x == 3; })?;
+find(arr, fn(borrow x: number) -> bool { return x == 3; })?;
 "#,
         3.0,
     );
@@ -1750,7 +1750,7 @@ fn test_hof_any_fn_expr() {
     assert_parity_bool(
         r#"
 let arr = [1, 2, 3];
-some(arr, fn(x: number) -> bool { return x > 2; });
+some(arr, fn(borrow x: number) -> bool { return x > 2; });
 "#,
         true,
     );
@@ -1774,7 +1774,7 @@ fn test_hof_all_fn_expr() {
     assert_parity_bool(
         r#"
 let arr = [1, 2, 3];
-every(arr, fn(x: number) -> bool { return x > 0; });
+every(arr, fn(borrow x: number) -> bool { return x > 0; });
 "#,
         true,
     );
@@ -1798,7 +1798,7 @@ fn test_hof_sort_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [3, 1, 2];
-let result = sort(arr, fn(a: number, b: number) -> number { return a - b; });
+let result = sort(arr, fn(borrow a: number, borrow b: number) -> number { return a - b; });
 result[0];
 "#,
         1.0,
@@ -1824,7 +1824,7 @@ fn test_hof_flat_map_fn_expr() {
     assert_parity_number(
         r#"
 let arr = [1, 2];
-let result = flat_map(arr, fn(x: number) -> any { return [x, x * 10]; });
+let result = flat_map(arr, fn(borrow x: number) -> any { return [x, x * 10]; });
 len(result);
 "#,
         4.0,
@@ -1856,7 +1856,7 @@ fn test_own_param_anon_fn_parses_and_runs() {
     // fn(own x: number) parses correctly and runs in both engines
     assert_parity_number(
         r#"
-fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+fn apply(borrow f: (number) -> number, x: number) -> number { return f(x); }
 apply(fn(own x: number) -> number { return x * 2; }, 5);
 "#,
         10.0,
@@ -1879,7 +1879,7 @@ f(42);
 fn test_borrow_param_anon_fn_parses_and_runs() {
     assert_parity_number(
         r#"
-fn apply(f: (number) -> number, x: number) -> number { return f(x); }
+fn apply(borrow f: (number) -> number, x: number) -> number { return f(x); }
 apply(fn(borrow x: number) -> number { return x + 1; }, 9);
 "#,
         10.0,
@@ -1967,7 +1967,7 @@ f(1);
 fn test_parity_anon_fn_basic_call() {
     assert_parity_number(
         r#"
-let f = fn(x: number) -> number { return x + 1; };
+let f = fn(borrow x: number) -> number { return x + 1; };
 f(5);
 "#,
         6.0,
@@ -1978,7 +1978,7 @@ f(5);
 fn test_parity_arrow_basic_call() {
     assert_parity_number(
         r#"
-let g = fn(x) { x * 2 };
+let g = fn(borrow x: number) -> number { x * 2 };
 g(3);
 "#,
         6.0,
@@ -1989,7 +1989,7 @@ g(3);
 fn test_parity_multi_param_arrow() {
     assert_parity_number(
         r#"
-let add = fn(x, y) { x + y };
+let add = fn(borrow x: number, borrow y: number) -> number { x + y };
 add(3, 4);
 "#,
         7.0,
@@ -2044,8 +2044,8 @@ fn test_parity_nested_closure_make_adder() {
     // Inner closure captures outer fn param — both engines agree
     assert_parity_number(
         r#"
-fn make_adder(n: number) -> (number) -> number {
-    return fn(x: number) -> number { return x + n; };
+fn make_adder(borrow n: number) -> (number) -> number {
+    return fn(borrow x: number) -> number { return x + n; };
 }
 let add5 = make_adder(5);
 add5(3);
@@ -2059,7 +2059,7 @@ fn test_parity_closure_returned_called_once() {
     // Returned closure capturing outer var — called once
     assert_parity_number(
         r#"
-fn make_fn(base: number) -> () -> number {
+fn make_fn(borrow base: number) -> () -> number {
     return fn() -> number { return base + 1; };
 }
 let f = make_fn(10);
@@ -2073,7 +2073,7 @@ f();
 fn test_parity_capture_outer_fn_param() {
     assert_parity_number(
         r#"
-fn run(x: number) -> number {
+fn run(borrow x: number) -> number {
     let f = fn() -> number { return x * 3; };
     return f();
 }
@@ -2106,7 +2106,7 @@ run();
 fn test_parity_map_arrow_inline() {
     assert_parity_number(
         r#"
-let result = map([1, 2, 3], fn(x) { x * 10 });
+let result = map([1, 2, 3], fn(borrow x: number) -> number { x * 10 });
 result[1];
 "#,
         20.0,
@@ -2117,7 +2117,7 @@ result[1];
 fn test_parity_filter_fn_expr_inline() {
     assert_parity_number(
         r#"
-let result = filter([1, 2, 3, 4], fn(x: number) -> bool { return x % 2 == 0; });
+let result = filter([1, 2, 3, 4], fn(borrow x: number) -> bool { return x % 2 == 0; });
 result[0];
 "#,
         2.0,
@@ -2128,7 +2128,7 @@ result[0];
 fn test_parity_reduce_fn_expr_inline() {
     assert_parity_number(
         r#"
-reduce([1, 2, 3, 4, 5], fn(acc: number, x: number) -> number { return acc + x; }, 0);
+reduce([1, 2, 3, 4, 5], fn(borrow acc: number, borrow x: number) -> number { return acc + x; }, 0);
 "#,
         15.0,
     );
@@ -2139,10 +2139,10 @@ fn test_parity_function_composition() {
     // compose(f, g)(x) = f(g(x))
     assert_parity_number(
         r#"
-fn compose(f: (number) -> number, g: (number) -> number) -> (number) -> number {
-    return fn(x: number) -> number { return f(g(x)); };
+fn compose(borrow f: (number) -> number, borrow g: (number) -> number) -> (number) -> number {
+    return fn(borrow x: number) -> number { return f(g(x)); };
 }
-let double_then_add1 = compose(fn(x) { x + 1 }, fn(x) { x * 2 });
+let double_then_add1 = compose(fn(borrow x: number) -> number { x + 1 }, fn(borrow x: number) -> number { x * 2 });
 double_then_add1(3);
 "#,
         7.0,
@@ -2155,7 +2155,7 @@ double_then_add1(3);
 fn test_parity_closure_in_array_call() {
     assert_parity_number(
         r#"
-let ops = [fn(x) { x + 1 }, fn(x) { x * 2 }, fn(x) { x - 1 } ];
+let ops = [fn(borrow x: number) -> number { x + 1 }, fn(borrow x: number) -> number { x * 2 }, fn(borrow x: number) -> number { x - 1 } ];
 ops[1](5);
 "#,
         10.0,
@@ -2167,7 +2167,7 @@ fn test_parity_closure_array_second_element() {
     // Call second element of closure array
     assert_parity_number(
         r#"
-let ops = [fn(x) { x + 10 }, fn(x) { x * 3 } ];
+let ops = [fn(borrow x: number) -> number { x + 10 }, fn(borrow x: number) -> number { x * 3 } ];
 ops[1](4);
 "#,
         12.0,
@@ -2182,7 +2182,7 @@ fn test_parity_arrow_captures_outer_let() {
         r#"
 fn run() -> number {
     let factor = 4;
-    let f = fn(x) { x * factor };
+    let f = fn(borrow x: number) -> number { x * factor };
     return f(5);
 }
 run();
@@ -2195,7 +2195,7 @@ run();
 fn test_parity_anon_fn_bool_return() {
     assert_parity_bool(
         r#"
-let is_positive = fn(x: number) -> bool { return x > 0; };
+let is_positive = fn(borrow x: number) -> bool { return x > 0; };
 is_positive(5);
 "#,
         true,
@@ -2207,8 +2207,8 @@ fn test_parity_arrow_chained_hof() {
     // map then filter using arrow fns — [1,2,3,4]*2=[2,4,6,8], filter >4 → [6,8] → len 2
     assert_parity_number(
         r#"
-let doubled = map([1, 2, 3, 4], fn(x) { x * 2 });
-let large = filter(doubled, fn(x) { x > 4 });
+let doubled = map([1, 2, 3, 4], fn(borrow x: number) -> number { x * 2 });
+let large = filter(doubled, fn(borrow x: number) -> bool { x > 4 });
 len(large);
 "#,
         2.0,
@@ -2220,10 +2220,10 @@ fn test_parity_anon_fn_passed_directly_to_hof() {
     // Anonymous fn created inline as HOF argument
     assert_parity_number(
         r#"
-fn apply_twice(f: (number) -> number, x: number) -> number {
+fn apply_twice(borrow f: (number) -> number, borrow x: number) -> number {
     return f(f(x));
 }
-apply_twice(fn(n: number) -> number { return n + 3; }, 1);
+apply_twice(fn(borrow n: number) -> number { return n + 3; }, 1);
 "#,
         7.0,
     );
@@ -2233,7 +2233,7 @@ apply_twice(fn(n: number) -> number { return n + 3; }, 1);
 fn test_parity_closure_captures_string() {
     assert_parity_string(
         r#"
-fn greet(name: string) -> () -> string {
+fn greet(borrow name: string) -> () -> string {
     return fn() -> string { return "hello " + name; };
 }
 let hi = greet("world");

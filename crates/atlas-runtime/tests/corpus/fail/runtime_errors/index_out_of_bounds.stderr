@@ -1,1 +1,1 @@
-Runtime error: OutOfBounds { span: Span { start: 37, end: 44, file: "<input>" } }
+Runtime error: Array index out of bounds

@@ -13,7 +13,7 @@ fn test_integration_complex_program_no_annotations() {
     // Complex program with minimal annotations
     let diags = typecheck_source(
         r#"
-        fn fibonacci(n: number) -> number {
+        fn fibonacci(borrow n: number) -> number {
             if (n <= 1) {
                 return n;
             }
@@ -29,7 +29,7 @@ fn test_integration_complex_program_no_annotations() {
 fn test_integration_generic_identity_minimal_annotations() {
     let diags = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
         let _a = identity(42);
@@ -44,7 +44,7 @@ fn test_integration_generic_identity_minimal_annotations() {
 fn test_integration_real_world_string_processing() {
     let diags = typecheck_source(
         r#"
-        fn greet(name: string) -> string {
+        fn greet(borrow name: string) -> string {
             return "Hello, " + name + "!";
         }
         let _message = greet("World");
@@ -57,8 +57,8 @@ fn test_integration_real_world_string_processing() {
 fn test_integration_nested_function_inference() {
     let diags = typecheck_source(
         r#"
-        fn outer(x: number) -> number {
-            fn inner(y: number) -> number {
+        fn outer(borrow x: number) -> number {
+            fn inner(borrow y: number) -> number {
                 return y * 2;
             }
             return inner(x) + 1;
@@ -84,7 +84,7 @@ fn test_integration_type_checking_across_variables() {
 fn test_integration_array_operations() {
     let diags = typecheck_source(
         r#"
-        fn first<T>(arr: T[]) -> T {
+        fn first<T>(borrow arr: T[]) -> T {
             return arr[0];
         }
         let nums = [1, 2, 3];
@@ -98,10 +98,10 @@ fn test_integration_array_operations() {
 fn test_integration_multiple_functions_call_chain() {
     let diags = typecheck_source(
         r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
-        fn add_one(x: number) -> number {
+        fn add_one(borrow x: number) -> number {
             return x + 1;
         }
         let _result = add_one(double(5));
@@ -114,7 +114,7 @@ fn test_integration_multiple_functions_call_chain() {
 fn test_integration_generic_with_constraint() {
     let diags = typecheck_source(
         r#"
-        fn max_num<T extends Comparable>(a: T, b: T) -> T {
+        fn max_num<T extends Comparable>(borrow a: T, borrow b: T) -> T {
             if (a > b) {
                 return a;
             }
@@ -131,7 +131,7 @@ fn test_integration_option_type_usage() {
     // Option<number> should be recognized as a valid generic type
     let diags = typecheck_source(
         r#"
-        fn accepts_option(_x: Option<number>) -> void {}
+        fn accepts_option(borrow _x: Option<number>) -> void {}
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);
@@ -142,7 +142,7 @@ fn test_integration_result_type_usage() {
     // Result<number, string> should be recognized as a valid generic type
     let diags = typecheck_source(
         r#"
-        fn accepts_result(_x: Result<number, string>) -> void {}
+        fn accepts_result(borrow _x: Result<number, string>) -> void {}
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);
@@ -152,7 +152,7 @@ fn test_integration_result_type_usage() {
 fn test_integration_for_in_with_inferred_element_type() {
     let diags = typecheck_source(
         r#"
-        fn sum_array(nums: number[]) -> number {
+        fn sum_array(borrow nums: number[]) -> number {
             let mut total = 0;
             for n in nums {
                 total = total + n;
@@ -169,7 +169,7 @@ fn test_integration_type_alias_in_function() {
     let diags = typecheck_source(
         r#"
         type Predicate<T> = (T) -> bool;
-        fn always_true(_x: number) -> bool {
+        fn always_true(borrow _x: number) -> bool {
             return true;
         }
         let _pred: Predicate<number> = always_true;
@@ -182,7 +182,7 @@ fn test_integration_type_alias_in_function() {
 fn test_integration_union_type_function_params() {
     let diags = typecheck_source(
         r#"
-        fn show_value(x: number | string) -> string {
+        fn show_value(borrow x: number | string) -> string {
             if (typeof(x) == "number") {
                 return "it is a number";
             }
@@ -198,7 +198,7 @@ fn test_integration_structural_type_inference() {
     // Structural types accepted as function parameters
     let diags = typecheck_source(
         r#"
-        fn accepts_point(_point: { x: number, y: number }) -> void {}
+        fn accepts_point(borrow _point: { x: number, borrow y: number }) -> void {}
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);
@@ -233,7 +233,7 @@ fn test_integration_anonymous_struct_literal_return_type() {
 fn test_integration_deeply_nested_generics() {
     let diags = typecheck_source(
         r#"
-        fn nested(_x: Option<Result<number, string>>) -> void {}
+        fn nested(borrow _x: Option<Result<number, string>>) -> void {}
         "#,
     );
     assert!(!has_error(&diags), "Errors: {:?}", diags);

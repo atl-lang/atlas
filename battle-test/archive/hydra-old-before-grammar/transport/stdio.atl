@@ -6,7 +6,7 @@ import { detect_protocol, read_message } from "./reader";
 import { format_message } from "./writer";
 
 // Create a new stdio transport state (buffer-based)
-export fn new_stdio(initial_buffer: string) -> Result<json, string> {
+export fn new_stdio(borrow initial_buffer: string) -> Result<json, string> {
     let obj = {
         buffer: initial_buffer,
         protocol: protocol_unknown(),
@@ -18,7 +18,7 @@ export fn new_stdio(initial_buffer: string) -> Result<json, string> {
 }
 
 // Detect protocol using current buffer
-export fn detect_protocol_stdio(transport: json) -> Result<json, string> {
+export fn detect_protocol_stdio(borrow transport: json) -> Result<json, string> {
     let buffer = transport["buffer"].as_string();
     let proto = detect_protocol(buffer);
     let obj = {
@@ -32,7 +32,7 @@ export fn detect_protocol_stdio(transport: json) -> Result<json, string> {
 }
 
 // Read next message from buffer
-export fn read_stdio(transport: json) -> Result<json, string> {
+export fn read_stdio(borrow transport: json) -> Result<json, string> {
     let detected = transport["protocol_detected"].as_bool();
     let protocol = transport["protocol"].as_string();
     let buffer = transport["buffer"].as_string();
@@ -47,7 +47,7 @@ export fn read_stdio(transport: json) -> Result<json, string> {
 }
 
 // Write a payload using detected protocol
-export fn write_stdio(transport: json, payload: string) -> Result<string, string> {
+export fn write_stdio(borrow transport: json, borrow payload: string) -> Result<string, string> {
     let detected = transport["protocol_detected"].as_bool();
     if (!detected) {
         return Err("Protocol not detected");
@@ -56,6 +56,6 @@ export fn write_stdio(transport: json, payload: string) -> Result<string, string
     return format_message(payload, protocol);
 }
 
-export fn close_stdio(transport: json) -> Result<null, string> {
+export fn close_stdio(borrow transport: json) -> Result<null, string> {
     return Ok(null);
 }

@@ -9,7 +9,7 @@ fn test_h110_enum_match_in_fn_body_no_at2013() {
     let diagnostics = typecheck_source(
         r#"
         enum Status { Active, Inactive }
-        fn describe(s: Status) -> string {
+        fn describe(borrow s: Status) -> string {
             match s {
                 Status::Active => "active",
                 Status::Inactive => "inactive"
@@ -33,7 +33,7 @@ fn test_h110_enum_param_not_flagged_as_move() {
     let diagnostics = typecheck_source(
         r#"
         enum Color { Red, Green, Blue }
-        fn name(c: Color) -> string {
+        fn name(borrow c: Color) -> string {
             match c {
                 Color::Red => "red",
                 Color::Green => "green",

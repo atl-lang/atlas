@@ -58,7 +58,7 @@ fn test_at3050_not_fired_for_consistent_returns() {
     // Consistent return type should NOT trigger AT3050
     let diags = errors(
         r#"
-fn consistent(x: number) {
+fn consistent(borrow x: number) {
     if x > 0 { return 1; } else { return 2; }
 }
 "#,
@@ -75,7 +75,7 @@ fn test_at3051_not_fired_when_type_param_inferrable() {
     // identity(42) can infer T=number → no AT3051
     let diags = errors(
         r#"
-fn identity<T>(x: T) -> T { return x; }
+fn identity<T>(borrow x: T) -> T { return x; }
 identity(42);
 "#,
     );

@@ -150,7 +150,7 @@ fn test_pipeline_format_preserves_semantics() {
 #[case("let arr = [1, 2, 3];")]
 #[case("let s = \"hello world\";")]
 #[case("let a = true; let b = false;")]
-#[case("fn add(a: number, b: number) -> number { return a + b; }")]
+#[case("fn add(borrow a: number, borrow b: number) -> number { return a + b; }")]
 #[case("let x = 1 + 2 * 3;")]
 #[case("let neg = -5;")]
 fn test_formatted_output_reparses(#[case] source: &str) {
@@ -290,7 +290,7 @@ fn test_format_preserves_multiple_comments() {
 #[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("// comment\nlet x = 1;")]
-#[case("fn add(a: number, b: number) -> number { return a + b; }")]
+#[case("fn add(borrow a: number, borrow b: number) -> number { return a + b; }")]
 #[case("let x = 1;\nlet y = 2;\nlet z = x + y;")]
 fn test_format_idempotent(#[case] source: &str) {
     let first = fmt(source);

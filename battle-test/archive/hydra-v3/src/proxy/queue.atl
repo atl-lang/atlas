@@ -12,7 +12,7 @@ struct MessageQueue {
     entries: QueueEntry[]
 }
 
-export fn queue_new(max_size: number, ttl_seconds: number) -> MessageQueue {
+export fn queue_new(borrow max_size: number, borrow ttl_seconds: number) -> MessageQueue {
     let mut size = max_size;
     if (size <= 0) {
         size = 100;
@@ -24,7 +24,7 @@ export fn queue_new(max_size: number, ttl_seconds: number) -> MessageQueue {
     return MessageQueue { max_size: size, ttl_seconds: ttl, entries: [] };
 }
 
-fn purge_expired(queue: MessageQueue) -> MessageQueue {
+fn purge_expired(borrow queue: MessageQueue) -> MessageQueue {
     let cutoff = now_seconds() - queue.ttl_seconds;
     let mut filtered: QueueEntry[] = [];
     for entry in queue.entries {
@@ -35,11 +35,11 @@ fn purge_expired(queue: MessageQueue) -> MessageQueue {
     return MessageQueue { max_size: queue.max_size, ttl_seconds: queue.ttl_seconds, entries: filtered };
 }
 
-export fn queue_size(queue: MessageQueue) -> number {
+export fn queue_size(borrow queue: MessageQueue) -> number {
     return len(queue.entries);
 }
 
-export fn queue_push(queue: MessageQueue, payload: string) -> MessageQueue {
+export fn queue_push(borrow queue: MessageQueue, borrow payload: string) -> MessageQueue {
     let mut updated = purge_expired(queue);
     if (len(updated.entries) >= updated.max_size) {
         updated = MessageQueue { max_size: updated.max_size, ttl_seconds: updated.ttl_seconds, entries: drop_first(updated.entries) };
@@ -49,7 +49,7 @@ export fn queue_push(queue: MessageQueue, payload: string) -> MessageQueue {
     return MessageQueue { max_size: updated.max_size, ttl_seconds: updated.ttl_seconds, entries: new_entries };
 }
 
-export fn queue_pop(queue: MessageQueue) -> { item: Option<string>, queue: MessageQueue } {
+export fn queue_pop(borrow queue: MessageQueue) -> { item: Option<string>, queue: MessageQueue } {
     let updated = purge_expired(queue);
     if (len(updated.entries) == 0) {
         return record { item: None(), queue: updated };

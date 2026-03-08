@@ -1,1 +1,1 @@
-Runtime error: DivideByZero { span: Span { start: 16, end: 22, file: "<input>" } }
+Runtime error: Division by zero

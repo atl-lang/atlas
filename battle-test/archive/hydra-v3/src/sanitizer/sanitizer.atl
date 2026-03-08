@@ -4,7 +4,7 @@ enum ChunkType {
     Pollution
 }
 
-fn classify_enum(chunk: string) -> ChunkType {
+fn classify_enum(borrow chunk: string) -> ChunkType {
     if (trim(chunk) == "") {
         return ChunkType::Empty;
     }
@@ -27,7 +27,7 @@ fn classify_enum(chunk: string) -> ChunkType {
     };
 }
 
-export fn classify_chunk(chunk: string) -> string {
+export fn classify_chunk(borrow chunk: string) -> string {
     let res = classify_enum(chunk);
     return match res {
         ChunkType::Empty => "empty",
@@ -36,7 +36,7 @@ export fn classify_chunk(chunk: string) -> string {
     };
 }
 
-export fn validate_utf8(data: string) -> string {
+export fn validate_utf8(borrow data: string) -> string {
     // Atlas strings are UTF-8 by definition; return as-is.
     return data;
 }

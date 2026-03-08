@@ -102,7 +102,7 @@ fn test_generic_array_complex() {
 
 #[test]
 fn test_function_param_generic() {
-    let source = "fn foo(x: Option<number>) -> void {}";
+    let source = "fn foo(borrow x: Option<number>) -> void {}";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }
@@ -116,14 +116,15 @@ fn test_function_return_generic() {
 
 #[test]
 fn test_function_both_generic() {
-    let source = "fn baz(x: Option<T>) -> Result<T, E> { return null; }";
+    let source = "fn baz(borrow x: Option<T>) -> Result<T, E> { return null; }";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }
 
 #[test]
 fn test_function_multiple_generic_params() {
-    let source = "fn test(a: Option<T>, b: Result<T, E>) -> HashMap<K, V> { return null; }";
+    let source =
+        "fn test(borrow a: Option<T>, borrow b: Result<T, E>) -> HashMap<K, V> { return null; }";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }
@@ -282,7 +283,7 @@ fn test_parse_multiple_imports() {
 #[test]
 fn test_parse_export_function() {
     let source = r#"
-        export fn add(a: number, b: number) -> number {
+        export fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
     "#;
@@ -307,7 +308,7 @@ fn test_parse_export_var() {
 #[test]
 fn test_parse_export_generic_function() {
     let source = r#"
-        export fn identity<T>(x: T) -> T {
+        export fn identity<T>(borrow x: T) -> T {
             return x;
         }
     "#;
@@ -318,7 +319,7 @@ fn test_parse_export_generic_function() {
 #[test]
 fn test_parse_multiple_exports() {
     let source = r#"
-        export fn add(a: number, b: number) -> number {
+        export fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         export let PI = 3.14;
@@ -336,7 +337,7 @@ fn test_parse_module_with_import_and_export() {
     let source = r#"
         import { log } from "./logger";
 
-        export fn greet(name: string) -> string {
+        export fn greet(borrow name: string) -> string {
             log("greeting " + name);
             return "Hello, " + name;
         }
@@ -355,7 +356,7 @@ fn test_parse_module_with_multiple_imports_exports() {
         import { add, sub } from "./math";
         import * as logger from "./logger";
 
-        export fn calculate(a: number, b: number) -> number {
+        export fn calculate(borrow a: number, borrow b: number) -> number {
             return add(a, b);
         }
 

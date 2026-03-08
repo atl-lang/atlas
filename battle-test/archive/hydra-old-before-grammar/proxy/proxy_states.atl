@@ -2,7 +2,7 @@
 
 import { state_failed } from "./types";
 
-export fn crash_loop(proxy: json, err: string) -> Result<json, string> {
+export fn crash_loop(borrow proxy: json, borrow err: string) -> Result<json, string> {
     let obj = {
         state: state_failed(),
         queue: proxy["queue"],

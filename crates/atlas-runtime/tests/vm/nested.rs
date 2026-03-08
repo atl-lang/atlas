@@ -41,7 +41,7 @@ fn nested_run_vm(source: &str) -> Result<Value, String> {
 fn test_vm_nested_function_basic() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -57,7 +57,7 @@ fn test_vm_nested_function_basic() {
 fn test_vm_nested_function_multiple_params() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
             return add(10, 32);
@@ -73,7 +73,7 @@ fn test_vm_nested_function_multiple_params() {
 fn test_vm_nested_function_string() {
     let source = r#"
         fn outer() -> string {
-            fn greet(name: string) -> string {
+            fn greet(borrow name: string) -> string {
                 return "Hello, " + name;
             }
             return greet("World");
@@ -137,8 +137,8 @@ level1();
 #[test]
 fn test_vm_nested_function_params() {
     let source = r#"
-        fn outer(x: number) -> number {
-            fn double(y: number) -> number {
+        fn outer(borrow x: number) -> number {
+            fn double(borrow y: number) -> number {
                 return y * 2;
             }
             return double(x);
@@ -297,7 +297,7 @@ fn test_vm_nested_function_void() {
 fn test_vm_nested_function_array_param() {
     let source = r#"
         fn outer() -> number {
-            fn sum(arr: number[]) -> number {
+            fn sum(borrow arr: number[]) -> number {
                 return arr[0] + arr[1];
             }
             let nums: number[] = [10, 32];
@@ -334,7 +334,7 @@ fn test_vm_nested_function_array_return() {
 fn test_vm_nested_function_conditional() {
     let source = r#"
         fn outer() -> number {
-            fn abs(x: number) -> number {
+            fn abs(borrow x: number) -> number {
                 if (x < 0) {
                     return -x;
                 } else {

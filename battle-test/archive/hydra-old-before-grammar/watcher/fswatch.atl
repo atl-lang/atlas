@@ -2,7 +2,7 @@
 
 import { new_watcher } from "./watcher";
 
-export fn new(paths: array, ignore_patterns: array, debounce_ms: number, batch_window_ms: number) -> Result<json, string> {
+export fn new(borrow paths: array, borrow ignore_patterns: array, borrow debounce_ms: number, borrow batch_window_ms: number) -> Result<json, string> {
     // No real fsnotify; return watcher state
     return new_watcher(paths, ignore_patterns);
 }

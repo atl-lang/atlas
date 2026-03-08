@@ -29,11 +29,11 @@ fn assert_constraint_has_error(source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Iterable>(x: T) -> number { return 0; }")]
-#[case("fn f<T: Serializable>(x: T) -> string { return str(x); }")]
-#[case("fn f<T: Equatable>(x: T) -> bool { return true; }")]
-#[case("fn f<T: Comparable>(x: T) -> bool { return true; }")]
-#[case("fn f<T: Iterable + Serializable>(x: T) -> number { return 0; }")]
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; }")]
+#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); }")]
+#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; }")]
+#[case("fn f<T: Comparable>(borrow x: T) -> bool { return true; }")]
+#[case("fn f<T: Iterable + Serializable>(borrow x: T) -> number { return 0; }")]
 fn test_constraint_syntax_valid(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
@@ -43,8 +43,8 @@ fn test_constraint_syntax_valid(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T extends number>(x: T) -> T { return x; }")]
-#[case("fn f<T extends Iterable>(x: T) -> number { return 0; }")]
+#[case("fn f<T extends number>(borrow x: T) -> T { return x; }")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; }")]
 #[case("fn f<T extends { as_string: () -> string }>(x: T) -> T { return x; }")]
 #[case("type Box<T extends number> = T;")]
 fn test_extends_syntax_is_parse_error(#[case] source: &str) {
@@ -56,9 +56,9 @@ fn test_extends_syntax_is_parse_error(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Equatable>(x: T) -> bool { return true; } let y = f(false);")]
-#[case("fn f<T: Serializable>(x: T) -> string { return str(x); } let y = f(1);")]
-#[case("fn f<T: Iterable>(x: T) -> number { return 0; } let y = f([1, 2]);")]
+#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; } let y = f(false);")]
+#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f(1);")]
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f([1, 2]);")]
 fn test_constraint_checking_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
@@ -68,9 +68,9 @@ fn test_constraint_checking_success(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Iterable>(x: T) -> number { return 0; } let y = f(1);")]
-#[case("fn f<T: Serializable>(x: T) -> string { return str(x); } let y = f([1, 2]);")]
-#[case("fn f<T: UnknownTrait>(x: T) -> T { return x; }")]
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
+#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f([1, 2]);")]
+#[case("fn f<T: UnknownTrait>(borrow x: T) -> T { return x; }")]
 fn test_constraint_checking_failure(#[case] source: &str) {
     assert_constraint_has_error(source);
 }
@@ -80,8 +80,8 @@ fn test_constraint_checking_failure(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Serializable + Equatable>(x: T) -> T { return x; } let y = f(\"a\");")]
-#[case("fn f<T: Iterable + Serializable>(x: T) -> number { return 0; } let y = f([1]);")]
+#[case("fn f<T: Serializable + Equatable>(borrow x: T) -> T { return x; } let y = f(\"a\");")]
+#[case("fn f<T: Iterable + Serializable>(borrow x: T) -> number { return 0; } let y = f([1]);")]
 fn test_multiple_constraints_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
@@ -91,17 +91,17 @@ fn test_multiple_constraints_success(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Comparable>(x: T) -> bool { return true; } let y = f(1);")]
-#[case("fn f<T: Iterable>(x: T) -> number { return 0; } let y = f([1]);")]
-#[case("fn f<T: Equatable>(x: T) -> bool { return true; } let y = f(\"a\");")]
-#[case("fn f<T: Serializable>(x: T) -> string { return str(x); } let y = f(true);")]
+#[case("fn f<T: Comparable>(borrow x: T) -> bool { return true; } let y = f(1);")]
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f([1]);")]
+#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; } let y = f(\"a\");")]
+#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f(true);")]
 fn test_practical_constraint_patterns_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
 
 #[rstest]
-#[case("fn f<T: Iterable>(x: T) -> number { return 0; } let y = f(1);")]
-#[case("fn f<T: Serializable>(x: T) -> string { return str(x); } let y = f([1]);")]
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
+#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f([1]);")]
 fn test_practical_constraint_patterns_failure(#[case] source: &str) {
     assert_constraint_has_error(source);
 }

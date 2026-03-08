@@ -3,7 +3,7 @@
 // Filters out noise from stdout/stderr to keep JSON-RPC stream clean
 
 // Check if line looks like JSON-RPC
-export fn is_jsonrpc_line(line: string) -> bool {
+export fn is_jsonrpc_line(borrow line: string) -> bool {
     let trimmed: string = trim(line);
 
     // Must start with {
@@ -29,7 +29,7 @@ export fn is_jsonrpc_line(line: string) -> bool {
 }
 
 // Check if line is noise (should be filtered)
-export fn is_noise_line(line: string) -> bool {
+export fn is_noise_line(borrow line: string) -> bool {
     let trimmed: string = trim(line);
 
     if (len(trimmed) == 0) {
@@ -48,7 +48,7 @@ export fn is_noise_line(line: string) -> bool {
 }
 
 // Filter a line: return true if should keep
-export fn should_keep_line(line: string) -> bool {
+export fn should_keep_line(borrow line: string) -> bool {
     // If it's valid JSON-RPC, keep it
     if (is_jsonrpc_line(line)) {
         return true;
@@ -64,7 +64,7 @@ export fn should_keep_line(line: string) -> bool {
 }
 
 // Filter multiple lines
-export fn filter_output(output: string) -> string {
+export fn filter_output(borrow output: string) -> string {
     let lines: array = split(output, "\n");
     let mut result: string = "";
     let mut first: bool = true;

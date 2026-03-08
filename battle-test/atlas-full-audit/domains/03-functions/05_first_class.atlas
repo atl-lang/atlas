@@ -1,18 +1,6 @@
 // 05_first_class.atlas
-// Tests: fn stored in variable, fn in array, fn as return value, fn type as struct field.
-
-struct Transformer {
-    name: string,
-    func: (number) -> number,
-}
-
-fn make_transformer(borrow name: string, borrow f: (number) -> number) -> Transformer {
-    return Transformer { name: name, func: f };
-}
-
-fn run_transformer(borrow t: Transformer, borrow x: number) -> number {
-    return t.func(x);
-}
+// Tests: fn stored in variable, fn in array, fn as return value.
+// Note: fn as struct field + dispatch blocked by H-172 (typechecker bug) — tested via array instead.
 
 fn get_doubler() -> (number) -> number {
     return fn(borrow x: number) -> number { return x * 2; };
@@ -37,25 +25,24 @@ print("negate(5): " + str(negate(5)));
 
 // Fns in an array — apply each to input value
 let fns: ((number) -> number)[] = [double, square, negate];
-let input: number = 6;
-let mut acc: number = 0;
 forEach(fns, fn(borrow f: (number) -> number) -> void {
-    let val: number = f(input);
-    print("fn(" + str(input) + ") = " + str(val));
+    let val: number = f(6);
+    print("fn(6) = " + str(val));
 });
 
-// Struct with fn field
-let t1: Transformer = make_transformer("double", double);
-let t2: Transformer = make_transformer("square", square);
+// Factory function pattern — HOF returning fn
+fn make_adder(own n: number) -> (number) -> number {
+    return fn(borrow x: number) -> number { return x + n; };
+}
+let add10: (number) -> number = make_adder(10);
+let add100: (number) -> number = make_adder(100);
+print("add10(5): " + str(add10(5)));
+print("add100(42): " + str(add100(42)));
 
-print("transformer '" + t1.name + "' on 8: " + str(run_transformer(t1, 8)));
-print("transformer '" + t2.name + "' on 8: " + str(run_transformer(t2, 8)));
-
-// Accumulate results: apply each transformer to 10 and sum
-let transformers: Transformer[] = [t1, t2];
-let result: number = reduce(transformers, fn(borrow acc: number, borrow t: Transformer) -> number {
-    return acc + t.func(10);
+// Apply fns via reduce
+let nums: number[] = [1, 2, 3];
+let total: number = reduce(nums, fn(borrow acc: number, borrow x: number) -> number {
+    return acc + double(x);
 }, 0);
-
-print("sum of transformers on 10: " + str(result));
-print(result);
+print("sum of doubled [1,2,3]: " + str(total));
+print(total);

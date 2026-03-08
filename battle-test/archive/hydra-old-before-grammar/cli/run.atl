@@ -4,7 +4,7 @@
 import { execute_command } from "../supervisor/supervisor";
 import { resolve_server } from "../config/loader";
 
-export fn cmd_run(args: json) -> Result<json, string> {
+export fn cmd_run(borrow args: json) -> Result<json, string> {
     if (!args["command"].is_null()) {
         let cmd = args["command"];
         return execute_command(cmd);

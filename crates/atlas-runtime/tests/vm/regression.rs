@@ -123,12 +123,14 @@ fn test_parity_array_mutation() {
 
 #[test]
 fn test_parity_function_call() {
-    assert_parity("fn add(a: number, b: number) -> number { return a + b; } add(3, 4);");
+    assert_parity(
+        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(3, 4);",
+    );
 }
 
 #[test]
 fn test_parity_recursion() {
-    assert_parity("fn fact(n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(5);");
+    assert_parity("fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(5);");
 }
 
 #[test]
@@ -149,7 +151,7 @@ fn test_parity_nested_if() {
 fn test_parity_else_if_chain() {
     // Test `else if` syntax (not nested `else { if }`)
     assert_parity(
-        r#"fn classify(x: number) -> number {
+        r#"fn classify(borrow x: number) -> number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -161,7 +163,7 @@ fn test_parity_else_if_chain() {
         classify(15);"#,
     );
     assert_parity(
-        r#"fn classify(x: number) -> number {
+        r#"fn classify(borrow x: number) -> number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -173,7 +175,7 @@ fn test_parity_else_if_chain() {
         classify(7);"#,
     );
     assert_parity(
-        r#"fn classify(x: number) -> number {
+        r#"fn classify(borrow x: number) -> number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -374,7 +376,7 @@ fn test_v01_while_loop() {
 #[test]
 fn test_v01_function_definition() {
     assert_eq!(
-        vm_number("fn greet(n: number) -> number { return n * 2; } greet(21);"),
+        vm_number("fn greet(borrow n: number) -> number { return n * 2; } greet(21);"),
         42.0
     );
 }
@@ -404,8 +406,8 @@ fn test_v01_comparison_operators() {
 #[test]
 fn test_v01_nested_functions() {
     let source = r#"
-fn outer(x: number) -> number {
-    fn inner(y: number) -> number {
+fn outer(borrow x: number) -> number {
+    fn inner(borrow y: number) -> number {
         return y + 1;
     }
     return inner(x) * 2;
@@ -433,7 +435,7 @@ fn test_perf_large_loop() {
 #[test]
 fn test_perf_recursive_fib() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn fib(n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);");
+    let result = vm_number("fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);");
     let elapsed = start.elapsed();
     assert_eq!(result, 6765.0);
     assert!(
@@ -459,7 +461,7 @@ fn test_perf_nested_loops() {
 #[test]
 fn test_perf_function_calls() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn inc(x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
+    let result = vm_number("fn inc(borrow x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);
     assert!(
@@ -505,7 +507,7 @@ arr[0];
 #[test]
 fn test_perf_deep_recursion() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn sum_to(n: number) -> number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(500);");
+    let result = vm_number("fn sum_to(borrow n: number) -> number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(500);");
     let elapsed = start.elapsed();
     assert_eq!(result, 125250.0);
     assert!(
@@ -519,7 +521,7 @@ fn test_perf_deep_recursion() {
 fn test_perf_complex_computation() {
     let start = std::time::Instant::now();
     let source = r#"
-fn power(b: number, e: number) -> number {
+fn power(borrow b: number, borrow e: number) -> number {
     if (e == 0) { return 1; }
     return b * power(b, e - 1);
 }
@@ -597,7 +599,7 @@ fn test_regression_reassignment_in_loop() {
 #[test]
 fn test_regression_function_returning_bool() {
     assert!(vm_bool(
-        "fn is_positive(x: number) -> bool { return x > 0; } is_positive(5);"
+        "fn is_positive(borrow x: number) -> bool { return x > 0; } is_positive(5);"
     ));
 }
 
@@ -605,7 +607,7 @@ fn test_regression_function_returning_bool() {
 fn test_regression_function_returning_string() {
     assert_eq!(
         vm_string(
-            r#"fn greet(name: string) -> string { return "Hello, " + name; } greet("World");"#
+            r#"fn greet(borrow name: string) -> string { return "Hello, " + name; } greet("World");"#
         ),
         "Hello, World"
     );

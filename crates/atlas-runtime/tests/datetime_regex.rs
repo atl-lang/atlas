@@ -1227,7 +1227,7 @@ fn test_replace_at_boundaries() {
 #[test]
 fn test_replace_with_calls_callback_first_match() {
     let code = r#"
-        fn bracketize(m: HashMap) -> string {
+        fn bracketize(borrow m: HashMap) -> string {
             return "[" + unwrap(hash_map_get(m, "text")) + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
@@ -1239,7 +1239,7 @@ fn test_replace_with_calls_callback_first_match() {
 #[test]
 fn test_replace_all_with_calls_callback_all_matches() {
     let code = r#"
-        fn bracketize(m: HashMap) -> string {
+        fn bracketize(borrow m: HashMap) -> string {
             return "[" + unwrap(hash_map_get(m, "text")) + "]";
         }
         let pattern = unwrap(regex_new("\\d+"));
@@ -1251,7 +1251,7 @@ fn test_replace_all_with_calls_callback_all_matches() {
 #[test]
 fn test_callback_receives_correct_match_data() {
     let code = r#"
-        fn formatter(m: HashMap) -> string {
+        fn formatter(borrow m: HashMap) -> string {
             let text = unwrap(hash_map_get(m, "text"));
             let start = unwrap(hash_map_get(m, "start"));
             let end_pos = unwrap(hash_map_get(m, "end"));
@@ -1266,7 +1266,7 @@ fn test_callback_receives_correct_match_data() {
 #[test]
 fn test_callback_return_value_used_as_replacement() {
     let code = r#"
-        fn doubler(m: HashMap) -> string {
+        fn doubler(borrow m: HashMap) -> string {
             let num = unwrap(hash_map_get(m, "text"));
             return toString(unwrap(to_number(num)) * 2);
         }
@@ -1279,7 +1279,7 @@ fn test_callback_return_value_used_as_replacement() {
 #[test]
 fn test_callback_with_capture_groups() {
     let code = r#"
-        fn swapper(m: HashMap) -> string {
+        fn swapper(borrow m: HashMap) -> string {
             let groups = unwrap(hash_map_get(m, "groups"));
             let num = groups[1];
             let word = groups[2];
@@ -1294,7 +1294,7 @@ fn test_callback_with_capture_groups() {
 #[test]
 fn test_callback_can_use_match_positions() {
     let code = r#"
-        fn firstOrOther(m: HashMap) -> string {
+        fn firstOrOther(borrow m: HashMap) -> string {
             let start = unwrap(hash_map_get(m, "start"));
             if (start == 0) {
                 return "FIRST";
@@ -1311,7 +1311,7 @@ fn test_callback_can_use_match_positions() {
 #[test]
 fn test_callback_can_access_groups_array() {
     let code = r#"
-        fn extractCapture(m: HashMap) -> string {
+        fn extractCapture(borrow m: HashMap) -> string {
             let groups = unwrap(hash_map_get(m, "groups"));
             let captured = groups[1];
             return "[" + captured + "]";
@@ -1325,7 +1325,7 @@ fn test_callback_can_access_groups_array() {
 #[test]
 fn test_replace_all_with_processes_all_matches() {
     let code = r#"
-        fn bracketize(m: HashMap) -> string {
+        fn bracketize(borrow m: HashMap) -> string {
             let num = unwrap(hash_map_get(m, "text"));
             return "[" + num + "]";
         }
@@ -1552,7 +1552,7 @@ fn test_integration_csv_parsing() {
 #[test]
 fn test_integration_text_processing_pipeline() {
     let code = r#"
-        fn uppercase_numbers(m: HashMap) -> string {
+        fn uppercase_numbers(borrow m: HashMap) -> string {
             let num = unwrap(hash_map_get(m, "text"));
             return "[" + num + "]";
         }

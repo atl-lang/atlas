@@ -20,7 +20,7 @@ struct JSONRPCMessage {
 
 // Extract request ID from JSON payload (may be string or number)
 // Returns the id field or None if not present or JSON parse fails
-fn extract_id(payload: string) -> Option<json> {
+fn extract_id(borrow payload: string) -> Option<json> {
     match parseJSON(payload) {
         Ok(data) => {
             // FRICTION: Can't compare json to null; treating as always present

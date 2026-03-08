@@ -23,7 +23,7 @@ fn user_label(borrow u: User) -> string {
     return "#" + str(u.id) + " " + u.name + " (" + status + ")";
 }
 
-fn distance_sq(borrow p: Point) -> number {
+fn distance_sq(own p: Point) -> number {
     return p.x * p.x + p.y * p.y;
 }
 

@@ -197,7 +197,7 @@ fn test_eval_file_with_imports() {
     // Create math module
     fs::write(
         temp_dir.path().join("math.atl"),
-        "export fn add(a: number, b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
     )
     .unwrap();
 

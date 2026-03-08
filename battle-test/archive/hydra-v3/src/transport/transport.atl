@@ -11,11 +11,11 @@ struct InMemoryTransport {
     closed: bool
 }
 
-export fn new_in_memory_transport(payloads: string[]) -> InMemoryTransport {
+export fn new_in_memory_transport(borrow payloads: string[]) -> InMemoryTransport {
     return InMemoryTransport { protocol: Protocol::Unknown, read_buffer: payloads, write_buffer: [], closed: false };
 }
 
-export fn detect_protocol(t: InMemoryTransport) -> Protocol {
+export fn detect_protocol(borrow t: InMemoryTransport) -> Protocol {
     if (len(t.read_buffer) == 0) {
         return t.protocol;
     }
@@ -30,7 +30,7 @@ export fn detect_protocol(t: InMemoryTransport) -> Protocol {
     return Protocol::Unknown;
 }
 
-export fn transport_read(t: InMemoryTransport) -> Result<{ payload: string, transport: InMemoryTransport }, string> {
+export fn transport_read(borrow t: InMemoryTransport) -> Result<{ payload: string, transport: InMemoryTransport }, string> {
     if (t.closed) {
         return Err("transport closed");
     }
@@ -47,7 +47,7 @@ export fn transport_read(t: InMemoryTransport) -> Result<{ payload: string, tran
     return Ok(record { payload: payload, transport: updated });
 }
 
-export fn transport_write(t: InMemoryTransport, payload: string) -> InMemoryTransport {
+export fn transport_write(borrow t: InMemoryTransport, borrow payload: string) -> InMemoryTransport {
     if (t.closed) {
         return t;
     }
@@ -74,6 +74,6 @@ export fn transport_write(t: InMemoryTransport, payload: string) -> InMemoryTran
     };
 }
 
-export fn transport_close(t: InMemoryTransport) -> InMemoryTransport {
+export fn transport_close(borrow t: InMemoryTransport) -> InMemoryTransport {
     return InMemoryTransport { protocol: t.protocol, read_buffer: t.read_buffer, write_buffer: t.write_buffer, closed: true };
 }

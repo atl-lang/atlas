@@ -27,7 +27,7 @@ fn test_bind_nested_function_in_for_block() {
     let source = r#"
         fn outer() -> number {
             for i in [0, 1, 2, 3, 4] {
-                fn helper(x: number) -> number {
+                fn helper(borrow x: number) -> number {
                     return x;
                 }
                 let _unused = i;

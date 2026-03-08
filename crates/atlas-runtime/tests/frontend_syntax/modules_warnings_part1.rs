@@ -100,7 +100,7 @@ fn test_multiple_unused_variables() {
 
 #[test]
 fn test_unused_parameter_warning() {
-    let source = r#"fn add(a: number, b: number) -> number { return a; }"#;
+    let source = r#"fn add(borrow a: number, borrow b: number) -> number { return a; }"#;
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
@@ -116,7 +116,7 @@ fn test_unused_parameter_warning() {
 fn test_used_parameter_in_callback_no_warning() {
     // Bug reproduction: parameter is used in function body, but function is passed as callback
     let source = r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
         let result: number[] = map([1,2,3], double);
@@ -135,7 +135,7 @@ fn test_used_parameter_in_callback_no_warning() {
 fn test_used_parameters_in_sort_callback_no_warning() {
     // Bug reproduction: both parameters are used, function passed to sort
     let source = r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
         let sorted: number[] = sort([3,1,2], compare);
@@ -154,7 +154,7 @@ fn test_used_parameters_in_sort_callback_no_warning() {
 fn test_minimal_callback_parameter_usage() {
     // Minimal reproduction: parameter used in intrinsic function call
     let source = r#"
-        fn numToStr(n: number) -> string {
+        fn numToStr(borrow n: number) -> string {
             return toString(n);
         }
         let x: string = numToStr(5);
@@ -179,10 +179,10 @@ fn test_minimal_callback_parameter_usage() {
 fn test_parameter_used_in_user_function_call() {
     // Control test: parameter used in regular user function call
     let source = r#"
-        fn helper(x: number) -> number {
+        fn helper(borrow x: number) -> number {
             return x + 1;
         }
-        fn wrapper(n: number) -> number {
+        fn wrapper(borrow n: number) -> number {
             return helper(n);
         }
         let x: number = wrapper(5);

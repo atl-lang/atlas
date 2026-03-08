@@ -112,7 +112,8 @@ fn test_opt_debug_loop_semantics_preserved() {
 
 #[test]
 fn test_opt_debug_function_semantics_preserved() {
-    let source = "fn add(a: number, b: number) -> number { return a + b; } add(10, 20);";
+    let source =
+        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(10, 20);";
     let plain = vm_eval(source);
     let opt = vm_eval_opt(source);
     assert_eq!(plain, opt);
@@ -133,8 +134,8 @@ fn test_vm_anonymous_struct_literal() {
 #[test]
 fn test_opt_debug_nested_function_optimized() {
     let source = r#"
-fn outer(x: number) -> number {
-    fn inner(y: number) -> number {
+fn outer(borrow x: number) -> number {
+    fn inner(borrow y: number) -> number {
         return y * 2;
     }
     return inner(x) + 1;
@@ -361,7 +362,8 @@ fn test_debugger_source_map() {
 
 #[test]
 fn test_debugger_with_functions() {
-    let source = "fn add(a: number, b: number) -> number {\n  return a + b;\n}\nadd(1, 2);";
+    let source =
+        "fn add(borrow a: number, borrow b: number) -> number {\n  return a + b;\n}\nadd(1, 2);";
     let bc = compile(source);
     let mut session = DebuggerSession::new(bc, source, "test.atlas");
     session.process_request(DebugRequest::SetBreakpoint {
@@ -423,7 +425,7 @@ fn test_all_features_while_loop() {
 
 #[test]
 fn test_all_features_function_calls() {
-    let source = "fn square(x: number) -> number { return x * x; } square(7);";
+    let source = "fn square(borrow x: number) -> number { return x * x; } square(7);";
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -431,7 +433,7 @@ fn test_all_features_function_calls() {
 
 #[test]
 fn test_all_features_recursion() {
-    let source = "fn fact(n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(6);";
+    let source = "fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(6);";
     let opt = vm_eval_opt(source);
     let plain = vm_eval(source);
     assert_eq!(opt, plain);
@@ -535,7 +537,7 @@ fn test_optimizer_dead_code_after_return() {
 
 #[test]
 fn test_optimizer_chained_calls() {
-    let source = "fn inc(x: number) -> number { return x + 1; } inc(inc(inc(0)));";
+    let source = "fn inc(borrow x: number) -> number { return x + 1; } inc(inc(inc(0)));";
     let opt = vm_number_opt(source);
     assert_eq!(opt, 3.0);
 }
@@ -543,7 +545,7 @@ fn test_optimizer_chained_calls() {
 #[test]
 fn test_optimizer_complex_program() {
     let source = r#"
-fn gcd(a: number, b: number) -> number {
+fn gcd(borrow a: number, borrow b: number) -> number {
     if (b == 0) { return a; }
     return gcd(b, a % b);
 }
@@ -575,7 +577,9 @@ fn test_validate_optimized_program() {
 
 #[test]
 fn test_validate_function_program() {
-    let bc = compile("fn add(a: number, b: number) -> number { return a + b; } add(1, 2);");
+    let bc = compile(
+        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(1, 2);",
+    );
     let result = atlas_runtime::bytecode::validate(&bc);
     assert!(result.is_ok(), "Validation failed: {:?}", result);
 }
@@ -611,7 +615,7 @@ fn test_validate_string_program() {
 #[test]
 fn test_validate_nested_functions() {
     let bc = compile(
-        "fn outer(x: number) -> number { fn inner(y: number) -> number { return y * 2; } return inner(x); } outer(5);",
+        "fn outer(borrow x: number) -> number { fn inner(borrow y: number) -> number { return y * 2; } return inner(x); } outer(5);",
     );
     let result = atlas_runtime::bytecode::validate(&bc);
     assert!(result.is_ok(), "Validation failed: {:?}", result);
@@ -739,7 +743,7 @@ fn test_cross_conditionals(#[case] source: &str, #[case] expected: f64) {
 
 #[test]
 fn test_cross_fibonacci_parity() {
-    let source = "fn fib(n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(15);";
+    let source = "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(15);";
     let plain = vm_number(source);
     let opt = vm_number_opt(source);
     assert_eq!(plain, opt);

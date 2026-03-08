@@ -26,7 +26,7 @@ export fn new_collector() -> MetricsState {
     };
 }
 
-fn percentiles(values: number[], pct: number) -> number {
+fn percentiles(borrow values: number[], borrow pct: number) -> number {
     if (len(values) == 0) {
         return 0;
     }
@@ -36,7 +36,7 @@ fn percentiles(values: number[], pct: number) -> number {
     return sorted[index];
 }
 
-fn average(values: number[]) -> number {
+fn average(borrow values: number[]) -> number {
     if (len(values) == 0) {
         return 0;
     }
@@ -47,7 +47,7 @@ fn average(values: number[]) -> number {
     return total / num(len(values));
 }
 
-fn max_value(values: number[]) -> number {
+fn max_value(borrow values: number[]) -> number {
     if (len(values) == 0) {
         return 0;
     }
@@ -61,10 +61,9 @@ fn max_value(values: number[]) -> number {
 }
 
 export fn metrics_record_request(
-    state: MetricsState,
-    duration_ms: number,
-    success: bool
-) -> MetricsState {
+    borrow state: MetricsState,
+    borrow duration_ms: number,
+    borrow success: bool) -> MetricsState {
     let mut successes = state.requests_success;
     let mut failures = state.requests_failed;
     if (success) {
@@ -86,9 +85,8 @@ export fn metrics_record_request(
 }
 
 export fn metrics_record_queue_wait(
-    state: MetricsState,
-    duration_ms: number
-) -> MetricsState {
+    borrow state: MetricsState,
+    borrow duration_ms: number) -> MetricsState {
     return record {
         requests_total: state.requests_total,
         requests_success: state.requests_success,
@@ -103,9 +101,8 @@ export fn metrics_record_queue_wait(
 }
 
 export fn metrics_record_restart(
-    state: MetricsState,
-    reason: string
-) -> MetricsState {
+    borrow state: MetricsState,
+    borrow reason: string) -> MetricsState {
     let mut reasons = state.restart_reasons;
     let existing = hash_map_get(reasons, reason);
     match existing {
@@ -125,7 +122,7 @@ export fn metrics_record_restart(
     };
 }
 
-export fn metrics_snapshot(state: MetricsState) -> {
+export fn metrics_snapshot(borrow state: MetricsState) -> {
     requests_total: number,
     requests_success: number,
     requests_failed: number,
@@ -165,7 +162,7 @@ export fn metrics_snapshot(state: MetricsState) -> {
     };
 }
 
-export fn metrics_health_breakdown(state: MetricsState) -> { uptime_stability: number, error_rate: number, response_latency: number, queue_depth: number, restart_frequency: number } {
+export fn metrics_health_breakdown(borrow state: MetricsState) -> { uptime_stability: number, error_rate: number, response_latency: number, queue_depth: number, restart_frequency: number } {
     let uptime = now_seconds() - state.start_time;
     let mut uptime_score = 0;
     if (uptime > 3600) {
@@ -208,7 +205,7 @@ export fn metrics_health_breakdown(state: MetricsState) -> { uptime_stability: n
     };
 }
 
-export fn metrics_health_score(state: MetricsState) -> number {
+export fn metrics_health_score(borrow state: MetricsState) -> number {
     let breakdown = metrics_health_breakdown(state);
     let score = breakdown.uptime_stability * 0.30
         + breakdown.error_rate * 0.25

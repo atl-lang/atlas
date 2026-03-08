@@ -1,6 +1,6 @@
 // CLI restart (Atlas port, simplified)
 // Source: hydra/internal/cli/restart.go
 
-export fn cmd_restart(args: json) -> Result<json, string> {
+export fn cmd_restart(borrow args: json) -> Result<json, string> {
     return Err("restart not implemented in Atlas port");
 }

@@ -138,7 +138,7 @@ fn test_comments_ignored(#[case] input: &str, #[case] expected_token_count: usiz
 
 #[test]
 fn test_complex_expression() {
-    let source = r#"fn add(a: number, b: number) -> number { return a + b; }"#;
+    let source = r#"fn add(borrow a: number, borrow b: number) -> number { return a + b; }"#;
     let (tokens, diagnostics) = lex(source);
 
     assert_eq!(diagnostics.len(), 0, "Should lex without errors");

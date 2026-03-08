@@ -27,7 +27,7 @@ impl Describable for Movie {
     }
 }
 
-fn describe(borrow item: Describable) -> string {
+fn describe(own item: Describable) -> string {
     return item.describe();
 }
 

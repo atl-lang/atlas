@@ -9,7 +9,7 @@ use pretty_assertions::assert_eq;
 fn parity_nested_function_basic() {
     let source = r#"
         fn outer() -> number {
-            fn helper(x: number) -> number {
+            fn helper(borrow x: number) -> number {
                 return x * 2;
             }
             return helper(21);
@@ -28,7 +28,7 @@ fn parity_nested_function_basic() {
 fn parity_nested_function_multiple_params() {
     let source = r#"
         fn outer() -> number {
-            fn add(a: number, b: number) -> number {
+            fn add(borrow a: number, borrow b: number) -> number {
                 return a + b;
             }
             return add(10, 32);
@@ -47,7 +47,7 @@ fn parity_nested_function_multiple_params() {
 fn parity_nested_function_string() {
     let source = r#"
         fn outer() -> string {
-            fn greet(name: string) -> string {
+            fn greet(borrow name: string) -> string {
                 return "Hello, " + name;
             }
             return greet("World");
@@ -69,8 +69,8 @@ fn parity_nested_function_string() {
 #[test]
 fn parity_nested_function_params() {
     let source = r#"
-        fn outer(x: number) -> number {
-            fn double(y: number) -> number {
+        fn outer(borrow x: number) -> number {
+            fn double(borrow y: number) -> number {
                 return y * 2;
             }
             return double(x);
@@ -250,7 +250,7 @@ fn parity_nested_function_void() {
 fn parity_nested_function_array_param() {
     let source = r#"
         fn outer() -> number {
-            fn sum(arr: number[]) -> number {
+            fn sum(borrow arr: number[]) -> number {
                 return arr[0] + arr[1];
             }
             let nums: number[] = [10, 32];
@@ -293,7 +293,7 @@ fn parity_nested_function_array_return() {
 fn parity_nested_function_conditional() {
     let source = r#"
         fn outer() -> number {
-            fn abs(x: number) -> number {
+            fn abs(borrow x: number) -> number {
                 if (x < 0) {
                     return -x;
                 } else {
@@ -424,7 +424,7 @@ fn parity_nested_returning_bool() {
 fn parity_nested_with_arithmetic() {
     let source = r#"
         fn outer() -> number {
-            fn calculate(a: number, b: number, c: number) -> number {
+            fn calculate(borrow a: number, borrow b: number, borrow c: number) -> number {
                 return (a + b) * c;
             }
             return calculate(5, 9, 3);
@@ -443,7 +443,7 @@ fn parity_nested_with_arithmetic() {
 fn parity_nested_with_string_concat() {
     let source = r#"
         fn outer() -> string {
-            fn combine(a: string, b: string) -> string {
+            fn combine(borrow a: string, borrow b: string) -> string {
                 return a + b;
             }
             return combine("Hello", "World");

@@ -10,6 +10,6 @@ export fn now_iso() -> string {
     return iso;
 }
 
-export fn seconds_since(start_seconds: number) -> number {
+export fn seconds_since(borrow start_seconds: number) -> number {
     return now_seconds() - start_seconds;
 }

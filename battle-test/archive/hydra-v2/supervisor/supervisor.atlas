@@ -8,18 +8,18 @@ fn now_seconds() -> number {
     return dateTimeToTimestamp(dateTimeNow());
 }
 
-fn serialize_cmd(cmd: string[]) -> string {
+fn serialize_cmd(borrow cmd: string[]) -> string {
     return join(cmd, "\n");
 }
 
-fn deserialize_cmd(raw: string) -> string[] {
+fn deserialize_cmd(borrow raw: string) -> string[] {
     if raw == "" {
         return slice([""], 0, 0);
     }
     return split(raw, "\n");
 }
 
-fn get_num(store: HashMap<string, string>, key: string) -> number {
+fn get_num(borrow store: HashMap<string, string>, borrow key: string) -> number {
     let mut raw = "";
     let has_key: bool = hash_map_has(store, key);
     if has_key {
@@ -31,11 +31,11 @@ fn get_num(store: HashMap<string, string>, key: string) -> number {
     return unwrap(parse_float(raw));
 }
 
-fn set_num(store: HashMap<string, string>, key: string, value: number) -> HashMap<string, string> {
+fn set_num(borrow store: HashMap<string, string>, borrow key: string, borrow value: number) -> HashMap<string, string> {
     return hash_map_put(store, key, str(value));
 }
 
-fn get_str(store: HashMap<string, string>, key: string) -> string {
+fn get_str(borrow store: HashMap<string, string>, borrow key: string) -> string {
     let has_key: bool = hash_map_has(store, key);
     if has_key {
         return unwrap(hash_map_get(store, key));
@@ -43,11 +43,11 @@ fn get_str(store: HashMap<string, string>, key: string) -> string {
     return "";
 }
 
-fn set_str(store: HashMap<string, string>, key: string, value: string) -> HashMap<string, string> {
+fn set_str(borrow store: HashMap<string, string>, borrow key: string, borrow value: string) -> HashMap<string, string> {
     return hash_map_put(store, key, value);
 }
 
-fn split_lines(value: string) -> string[] {
+fn split_lines(borrow value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     if value != "" {
         parts = split(value, "\n");
@@ -55,14 +55,14 @@ fn split_lines(value: string) -> string[] {
     return parts;
 }
 
-fn join_lines(parts: string[]) -> string {
+fn join_lines(borrow parts: string[]) -> string {
     if len(parts) == 0 {
         return "";
     }
     return join(parts, "\n");
 }
 
-export fn new_supervisor(cmd: string[], max_restarts: number, restart_window_seconds: number) -> HashMap<string, string> {
+export fn new_supervisor(borrow cmd: string[], borrow max_restarts: number, borrow restart_window_seconds: number) -> HashMap<string, string> {
     let mut s = hash_map_new();
     s = set_str(s, "cmd", serialize_cmd(cmd));
     s = set_num(s, "max_restarts", max_restarts);
@@ -75,7 +75,7 @@ export fn new_supervisor(cmd: string[], max_restarts: number, restart_window_sec
     return s;
 }
 
-export fn supervisor_start(s: HashMap<string, string>) -> HashMap<string, string> {
+export fn supervisor_start(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     if get_str(s, "state") == STATE_RUNNING || get_str(s, "state") == STATE_STARTING {
         return s;
     }
@@ -97,7 +97,7 @@ export fn supervisor_start(s: HashMap<string, string>) -> HashMap<string, string
     return updated;
 }
 
-export fn supervisor_stop(s: HashMap<string, string>) -> HashMap<string, string> {
+export fn supervisor_stop(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     let pid = get_num(s, "pid");
     if pid == 0 {
         return set_str(s, "state", STATE_STOPPED);
@@ -108,7 +108,7 @@ export fn supervisor_stop(s: HashMap<string, string>) -> HashMap<string, string>
     return updated;
 }
 
-export fn supervisor_poll(s: HashMap<string, string>) -> HashMap<string, string> {
+export fn supervisor_poll(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     let pid = get_num(s, "pid");
     if pid == 0 {
         return s;
@@ -132,7 +132,7 @@ export fn supervisor_poll(s: HashMap<string, string>) -> HashMap<string, string>
     return s;
 }
 
-export fn supervisor_record_restart(s: HashMap<string, string>) -> HashMap<string, string> {
+export fn supervisor_record_restart(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     let now = now_seconds();
     let raw = get_str(s, "restart_times");
     let times = split_lines(raw);
@@ -153,7 +153,7 @@ export fn supervisor_record_restart(s: HashMap<string, string>) -> HashMap<strin
     return updated;
 }
 
-export fn supervisor_restart(s: HashMap<string, string>) -> HashMap<string, string> {
+export fn supervisor_restart(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     let s2 = supervisor_record_restart(s);
     if get_str(s2, "state") == STATE_FAILED {
         return s2;
@@ -162,14 +162,14 @@ export fn supervisor_restart(s: HashMap<string, string>) -> HashMap<string, stri
     return supervisor_start(stopped);
 }
 
-export fn supervisor_uptime(s: HashMap<string, string>) -> number {
+export fn supervisor_uptime(borrow s: HashMap<string, string>) -> number {
     if get_str(s, "state") != STATE_RUNNING {
         return 0;
     }
     return now_seconds() - get_num(s, "start_time");
 }
 
-fn supervisor_fake_running(s: HashMap<string, string>) -> HashMap<string, string> {
+fn supervisor_fake_running(borrow s: HashMap<string, string>) -> HashMap<string, string> {
     let mut updated = set_str(s, "state", STATE_RUNNING);
     updated = set_num(updated, "start_time", now_seconds());
     return updated;

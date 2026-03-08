@@ -170,7 +170,7 @@ export fn default_server_config_json() -> json {
     return to_json(default_server_struct());
 }
 
-export fn default_server_command_args(command_line: string) -> string[] {
+export fn default_server_command_args(borrow command_line: string) -> string[] {
     let trimmed = trim(command_line);
     if (trimmed == "") {
         return [];
@@ -178,7 +178,7 @@ export fn default_server_command_args(command_line: string) -> string[] {
     // Split by space as a simple baseline for CLI-style input.
     let parts = split(trimmed, " ");
     // Remove empty segments caused by consecutive spaces.
-    let filtered = filter(parts, fn(p: string) -> bool { return p != ""; });
+    let filtered = filter(parts, fn(borrow p: string) -> bool { return p != ""; });
     return filtered;
 }
 

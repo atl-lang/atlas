@@ -4,8 +4,7 @@ import { default_server_config_json } from "../config/defaults";
 type Discovery = { client: string, config_path: string, confidence: number, servers: number };
 
 export fn resolve_conflicts(
-    discoveries: Discovery[]
-) -> Discovery[] {
+    borrow discoveries: Discovery[]) -> Discovery[] {
     let mut map: HashMap<string, Discovery> = hash_map_new();
     for d in discoveries {
         let existing = hash_map_get(map, d.client);
@@ -26,9 +25,8 @@ export fn resolve_conflicts(
 }
 
 export fn merge_into_registry(
-    discoveries: Discovery[],
-    registry_path: string
-) -> Result<number, string> {
+    borrow discoveries: Discovery[],
+    borrow registry_path: string) -> Result<number, string> {
     let registry_result = load_registry(registry_path);
     match registry_result {
         Ok(registry) => {

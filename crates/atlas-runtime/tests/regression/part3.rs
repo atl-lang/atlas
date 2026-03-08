@@ -45,7 +45,7 @@ fn stability_determinism_string_concat() {
 #[test]
 fn stability_determinism_function_calls() {
     let code = r#"
-        fn fib(n: number) -> number {
+        fn fib(borrow n: number) -> number {
             if (n <= 1) { return n; }
             return fib(n - 1) + fib(n - 2);
         }
@@ -158,8 +158,8 @@ fn stability_determinism_while_loop() {
 #[test]
 fn stability_determinism_nested_functions() {
     let code = r#"
-        fn outer(x: number) -> number {
-            fn inner(y: number) -> number {
+        fn outer(borrow x: number) -> number {
+            fn inner(borrow y: number) -> number {
                 return y * 2;
             }
             return inner(x) + 1;

@@ -11,8 +11,8 @@ struct State {
 
 trait StateManager {
     fn save_state(self, borrow server_name: string, borrow pid: number, borrow uptime_ms: number) -> Result<string, string>;
-    fn load_state(self, server_name: string) -> Result<State, string>;
-    fn delete_state(self, server_name: string) -> Result<string, string>;
+    fn load_state(self, borrow server_name: string) -> Result<State, string>;
+    fn delete_state(self, borrow server_name: string) -> Result<string, string>;
 }
 
 struct FileStateManager {
@@ -20,7 +20,7 @@ struct FileStateManager {
 }
 
 impl StateManager for FileStateManager {
-    fn save_state(self, server_name: string, pid: number, uptime_ms: number) -> Result<string, string> {
+    fn save_state(self, borrow server_name: string, borrow pid: number, borrow uptime_ms: number) -> Result<string, string> {
         // FRICTION: No file I/O API in Atlas
         let state = State {
             server_name: server_name,
@@ -32,12 +32,12 @@ impl StateManager for FileStateManager {
         return Ok("state saved");
     }
 
-    fn load_state(self, server_name: string) -> Result<State, string> {
+    fn load_state(self, borrow server_name: string) -> Result<State, string> {
         // FRICTION: No file I/O API in Atlas
         return Err("file read not implemented");
     }
 
-    fn delete_state(self, server_name: string) -> Result<string, string> {
+    fn delete_state(self, borrow server_name: string) -> Result<string, string> {
         // FRICTION: No file I/O API in Atlas
         return Err("file delete not implemented");
     }

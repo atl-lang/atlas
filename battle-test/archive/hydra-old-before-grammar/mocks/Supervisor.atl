@@ -5,25 +5,25 @@ export fn new_supervisor() -> json {
     return { pid: 0, state: "STOPPED", last_error: null, started_ms: 0 };
 }
 
-export fn get_pid(sup: json) -> number { return sup["pid"].is_null() ? 0 : sup["pid"].as_number(); }
-export fn get_state(sup: json) -> string { return sup["state"].as_string(); }
-export fn get_last_error(sup: json) -> string { return sup["last_error"].is_null() ? "" : sup["last_error"].as_string(); }
+export fn get_pid(borrow sup: json) -> number { return sup["pid"].is_null() ? 0 : sup["pid"].as_number(); }
+export fn get_state(borrow sup: json) -> string { return sup["state"].as_string(); }
+export fn get_last_error(borrow sup: json) -> string { return sup["last_error"].is_null() ? "" : sup["last_error"].as_string(); }
 
-export fn start(sup: json) -> json {
+export fn start(borrow sup: json) -> json {
     return { pid: sup["pid"], state: "RUNNING", last_error: null, started_ms: sup["started_ms"] };
 }
 
-export fn stop(sup: json) -> json {
+export fn stop(borrow sup: json) -> json {
     return { pid: sup["pid"], state: "STOPPED", last_error: sup["last_error"], started_ms: sup["started_ms"] };
 }
 
-export fn restart(sup: json) -> json {
+export fn restart(borrow sup: json) -> json {
     return { pid: sup["pid"], state: "RUNNING", last_error: sup["last_error"], started_ms: sup["started_ms"] };
 }
 
-export fn reset_restart_counter(sup: json) -> json { return sup; }
+export fn reset_restart_counter(borrow sup: json) -> json { return sup; }
 
-export fn uptime_ms(sup: json, now_ms: number) -> number {
+export fn uptime_ms(borrow sup: json, borrow now_ms: number) -> number {
     if (sup["started_ms"].is_null()) { return 0; }
     return now_ms - sup["started_ms"].as_number();
 }

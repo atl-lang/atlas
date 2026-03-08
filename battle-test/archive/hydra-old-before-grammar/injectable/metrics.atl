@@ -1,5 +1,5 @@
 // Metrics tool (Atlas port)
 
-export fn hydra_metrics(snapshot: json) -> json {
+export fn hydra_metrics(borrow snapshot: json) -> json {
     return snapshot;
 }

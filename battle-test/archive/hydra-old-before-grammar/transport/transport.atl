@@ -10,7 +10,7 @@ export fn new_transport() -> Result<json, string> {
 }
 
 // Process incoming data and detect protocol if needed
-export fn process_input(transport: json, data: string) -> Result<json, string> {
+export fn process_input(borrow transport: json, borrow data: string) -> Result<json, string> {
     let buffer = transport["buffer"].as_string();
     let detected = transport["protocol_detected"].as_bool();
     let protocol = transport["protocol"].as_string();
@@ -43,7 +43,7 @@ export fn process_input(transport: json, data: string) -> Result<json, string> {
 }
 
 // Send a message through the transport
-export fn send_message(transport: json, payload: string) -> Result<string, string> {
+export fn send_message(borrow transport: json, borrow payload: string) -> Result<string, string> {
     let valid = validate_jsonrpc(payload);
     match valid {
         Ok(_) => {},
@@ -59,14 +59,14 @@ export fn send_message(transport: json, payload: string) -> Result<string, strin
     return format_message(payload, protocol);
 }
 
-export fn get_protocol(transport: json) -> string {
+export fn get_protocol(borrow transport: json) -> string {
     return transport["protocol"].as_string();
 }
 
-export fn is_ready(transport: json) -> bool {
+export fn is_ready(borrow transport: json) -> bool {
     return transport["protocol_detected"].as_bool();
 }
 
-export fn get_protocol_name(transport: json) -> string {
+export fn get_protocol_name(borrow transport: json) -> string {
     return protocol_name(transport["protocol"].as_string());
 }

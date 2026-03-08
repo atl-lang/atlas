@@ -2,7 +2,7 @@
 // Source: /Users/proxikal/dev/projects/hydra/internal/config/registry.go
 
 // Save registry to disk
-export fn save_registry(registry: hashmap, path: string) -> Result<null, string> {
+export fn save_registry(borrow registry: hashmap, borrow path: string) -> Result<null, string> {
     let mut p = path;
     if (len(p) > 0 && substring(p, 0, 1) == "~") {
         let home = getEnv("HOME");
@@ -21,7 +21,7 @@ export fn save_registry(registry: hashmap, path: string) -> Result<null, string>
 }
 
 // Add or update a server in registry
-export fn add_server(registry: hashmap, name: string, cfg: hashmap) -> hashmap {
+export fn add_server(borrow registry: hashmap, borrow name: string, borrow cfg: hashmap) -> hashmap {
     let servers_opt = hashMapGet(registry, "servers");
     let servers = match servers_opt {
         Some(val) => val,
@@ -34,7 +34,7 @@ export fn add_server(registry: hashmap, name: string, cfg: hashmap) -> hashmap {
 }
 
 // Remove server; returns [updated_registry, removed]
-export fn remove_server(registry: hashmap, name: string) -> array {
+export fn remove_server(borrow registry: hashmap, borrow name: string) -> array {
     let servers_opt = hashMapGet(registry, "servers");
     let servers = match servers_opt {
         Some(val) => val,
@@ -50,7 +50,7 @@ export fn remove_server(registry: hashmap, name: string) -> array {
 }
 
 // List server names
-export fn list_servers(registry: hashmap) -> array {
+export fn list_servers(borrow registry: hashmap) -> array {
     let servers_opt = hashMapGet(registry, "servers");
     let servers = match servers_opt {
         Some(val) => val,

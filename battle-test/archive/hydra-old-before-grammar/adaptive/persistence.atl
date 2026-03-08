@@ -1,12 +1,12 @@
 // Adaptive persistence (Atlas port, simplified)
 
-export fn save_learning(path: string, learner: json) -> Result<null, string> {
+export fn save_learning(borrow path: string, borrow learner: json) -> Result<null, string> {
     let data = toJSON(learner);
     writeFile(path, data);
     return Ok(null);
 }
 
-export fn load_learning(path: string) -> Result<json, string> {
+export fn load_learning(borrow path: string) -> Result<json, string> {
     if (!fsIsFile(path)) { return Ok(null); }
     let data = readFile(path);
     let parsed = parseJSON(data)?;

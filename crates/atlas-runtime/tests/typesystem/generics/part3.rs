@@ -86,7 +86,7 @@ fn test_immutable_variable_suggests_let_mut() {
 fn test_wrong_arity_shows_signature() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let _x = add(1);
     "#,
     );
@@ -107,7 +107,7 @@ fn test_wrong_arity_shows_signature() {
 fn test_too_many_args_says_remove() {
     let diags = errors(
         r#"
-        fn single(a: number) -> number { return a; }
+        fn single(borrow a: number) -> number { return a; }
         let _x = single(1, 2, 3);
     "#,
     );
@@ -123,7 +123,7 @@ fn test_too_many_args_says_remove() {
 fn test_wrong_arg_type_suggests_conversion() {
     let diags = errors(
         r#"
-        fn double(x: number) -> number { return x * 2; }
+        fn double(borrow x: number) -> number { return x * 2; }
         let _x = double("hello");
     "#,
     );
@@ -298,7 +298,7 @@ fn test_valid_string_concat() {
 fn test_valid_function_call() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let _x = add(1, 2);
     "#,
     );
@@ -362,7 +362,7 @@ fn test_generic_identity_infers_number() {
     // identity(42) infers T=number without explicit type arg
     let diags = errors(
         r#"
-fn identity<T>(x: T) -> T { return x; }
+fn identity<T>(borrow x: T) -> T { return x; }
 let _n: number = identity(42);
 "#,
     );
@@ -378,7 +378,7 @@ let _n: number = identity(42);
 fn test_generic_identity_infers_string() {
     let diags = errors(
         r#"
-fn identity<T>(x: T) -> T { return x; }
+fn identity<T>(borrow x: T) -> T { return x; }
 let _s: string = identity("hello");
 "#,
     );
@@ -394,7 +394,7 @@ let _s: string = identity("hello");
 fn test_generic_first_infers_element_type() {
     let diags = errors(
         r#"
-fn first<T>(arr: T[]) -> T { return arr[0]; }
+fn first<T>(borrow arr: T[]) -> T { return arr[0]; }
 let _n: number = first([1, 2, 3]);
 "#,
     );
@@ -411,7 +411,7 @@ fn test_generic_explicit_type_arg_still_works() {
     // Explicit identity::<number>(42) must still work
     let diags = errors(
         r#"
-fn identity<T>(x: T) -> T { return x; }
+fn identity<T>(borrow x: T) -> T { return x; }
 let _n: number = identity::<number>(42);
 "#,
     );
@@ -428,7 +428,7 @@ fn test_generic_multi_param_inference() {
     // fn pair<T, U>(x: T, y: U) -> T — both T and U inferrable from args
     let diags = errors(
         r#"
-fn pair<T, U>(x: T, y: U) -> T { return x; }
+fn pair<T, U>(borrow x: T, borrow y: U) -> T { return x; }
 let _n: number = pair(1, "a");
 "#,
     );

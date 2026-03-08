@@ -3,7 +3,7 @@
 let PROTOCOL_NDJSON = "ndjson";
 let PROTOCOL_LSP = "lsp";
 
-fn detect_protocol(peek: string) -> string {
+fn detect_protocol(borrow peek: string) -> string {
     let trimmed: string = trim(peek);
     let is_lsp: bool = starts_with(trimmed, "Content-Length");
     if is_lsp {
@@ -12,12 +12,12 @@ fn detect_protocol(peek: string) -> string {
     return PROTOCOL_NDJSON;
 }
 
-fn lsp_frame(payload: string) -> string {
+fn lsp_frame(borrow payload: string) -> string {
     let header = "Content-Length: " + str(len(payload)) + "\r\n\r\n";
     return header + payload;
 }
 
-fn read_lsp(buffer: string) -> string[] {
+fn read_lsp(borrow buffer: string) -> string[] {
     let parts: string[] = split(buffer, "\r\n\r\n");
     let has_body: bool = len(parts) >= 2;
     if !has_body {
@@ -42,7 +42,7 @@ fn state_new() -> StateStore {
     return store;
 }
 
-fn state_set_initialize(store: StateStore, params: json) -> StateStore {
+fn state_set_initialize(borrow store: StateStore, borrow params: json) -> StateStore {
     return hash_map_put(store, "initialize", to_json(params));
 }
 
@@ -60,7 +60,7 @@ fn proxy_new() -> HashMap<string, string> {
     return p;
 }
 
-fn proxy_handle_client(store: StateStore, message: string) -> StateStore {
+fn proxy_handle_client(borrow store: StateStore, borrow message: string) -> StateStore {
     let parsed = unwrap(parse_json(message));
     let method_val = parsed["method"];
     let has_method: bool = !json_is_null(method_val);

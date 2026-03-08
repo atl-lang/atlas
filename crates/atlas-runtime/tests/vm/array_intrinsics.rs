@@ -13,7 +13,7 @@ use atlas_runtime::value::Value;
 #[test]
 fn test_map_double() {
     let result = execute_vm_ok(r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
         let arr = [1, 2, 3];
@@ -34,7 +34,7 @@ fn test_map_double() {
 #[test]
 fn test_map_empty_array() {
     let result = execute_vm_ok(r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
         let arr: number[] = [];
@@ -52,7 +52,7 @@ fn test_map_empty_array() {
 #[test]
 fn test_map_single_element() {
     let result = execute_vm_ok(r#"
-        fn triple(x: number) -> number {
+        fn triple(borrow x: number) -> number {
             return x * 3;
         }
         let arr = [5];
@@ -72,7 +72,7 @@ fn test_map_single_element() {
 #[test]
 fn test_map_large_array() {
     let result = execute_vm_ok(r#"
-        fn triple(x: number) -> number {
+        fn triple(borrow x: number) -> number {
             return x * 3;
         }
         let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -89,7 +89,7 @@ fn test_map_large_array() {
 #[test]
 fn test_filter_evens() {
     let result = execute_vm_ok(r#"
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr = [1, 2, 3, 4, 5, 6];
@@ -109,7 +109,7 @@ fn test_filter_evens() {
 #[test]
 fn test_filter_empty_array() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
         let arr: number[] = [];
@@ -127,7 +127,7 @@ fn test_filter_empty_array() {
 #[test]
 fn test_filter_all_match() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
         let arr = [1, 2, 3, 4, 5];
@@ -145,7 +145,7 @@ fn test_filter_all_match() {
 #[test]
 fn test_filter_none_match() {
     let result = execute_vm_ok(r#"
-        fn isNegative(x: number) -> bool {
+        fn isNegative(borrow x: number) -> bool {
             return x < 0;
         }
         let arr = [1, 2, 3];
@@ -163,10 +163,10 @@ fn test_filter_none_match() {
 #[test]
 fn test_filter_chain() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr = [-2, -1, 0, 1, 2, 3, 4];
@@ -187,7 +187,7 @@ fn test_filter_chain() {
 #[test]
 fn test_filter_with_find() {
     let result = execute_vm_ok(r#"
-        fn isLarge(x: number) -> bool {
+        fn isLarge(borrow x: number) -> bool {
             return x > 5;
         }
         let arr = [1, 10, 3, 8, 2];
@@ -204,7 +204,7 @@ fn test_filter_with_find() {
 #[test]
 fn test_reduce_sum() {
     let result = execute_vm_ok(r#"
-        fn add(acc: number, x: number) -> number {
+        fn add(borrow acc: number, borrow x: number) -> number {
             return acc + x;
         }
         let arr = [1, 2, 3, 4, 5];
@@ -216,7 +216,7 @@ fn test_reduce_sum() {
 #[test]
 fn test_reduce_empty_array() {
     let result = execute_vm_ok(r#"
-        fn add(acc: number, x: number) -> number {
+        fn add(borrow acc: number, borrow x: number) -> number {
             return acc + x;
         }
         let arr: number[] = [];
@@ -228,7 +228,7 @@ fn test_reduce_empty_array() {
 #[test]
 fn test_reduce_single_element() {
     let result = execute_vm_ok(r#"
-        fn add(acc: number, x: number) -> number {
+        fn add(borrow acc: number, borrow x: number) -> number {
             return acc + x;
         }
         let arr = [5];
@@ -240,7 +240,7 @@ fn test_reduce_single_element() {
 #[test]
 fn test_reduce_product() {
     let result = execute_vm_ok(r#"
-        fn multiply(acc: number, x: number) -> number {
+        fn multiply(borrow acc: number, borrow x: number) -> number {
             return acc * x;
         }
         let arr = [2, 3, 4];
@@ -252,7 +252,7 @@ fn test_reduce_product() {
 #[test]
 fn test_reduce_max() {
     let result = execute_vm_ok(r#"
-        fn max(acc: number, x: number) -> number {
+        fn max(borrow acc: number, borrow x: number) -> number {
             if (x > acc) {
                 return x;
             } else {
@@ -268,10 +268,10 @@ fn test_reduce_max() {
 #[test]
 fn test_map_then_reduce() {
     let result = execute_vm_ok(r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
-        fn add(acc: number, x: number) -> number {
+        fn add(borrow acc: number, borrow x: number) -> number {
             return acc + x;
         }
         let arr = [1, 2, 3];
@@ -288,7 +288,7 @@ fn test_map_then_reduce() {
 #[test]
 fn test_find_first_match() {
     let result = execute_vm_ok(r#"
-        fn isLarge(x: number) -> bool {
+        fn isLarge(borrow x: number) -> bool {
             return x > 10;
         }
         let arr = [1, 5, 15, 20];
@@ -300,7 +300,7 @@ fn test_find_first_match() {
 #[test]
 fn test_find_no_match() {
     let result = execute_vm_ok(r#"
-        fn isLarge(x: number) -> bool {
+        fn isLarge(borrow x: number) -> bool {
             return x > 100;
         }
         let arr = [1, 5, 15];
@@ -312,7 +312,7 @@ fn test_find_no_match() {
 #[test]
 fn test_find_empty_array() {
     let result = execute_vm_ok(r#"
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr: number[] = [];
@@ -324,7 +324,7 @@ fn test_find_empty_array() {
 #[test]
 fn test_find_first_of_many() {
     let result = execute_vm_ok(r#"
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr = [1, 2, 3, 4, 5, 6];
@@ -336,7 +336,7 @@ fn test_find_first_of_many() {
 #[test]
 fn test_find_with_complex_predicate() {
     let result = execute_vm_ok(r#"
-        fn isDivisibleBy3And5(x: number) -> bool {
+        fn isDivisibleBy3And5(borrow x: number) -> bool {
             if (x % 3 == 0) {
                 if (x % 5 == 0) {
                     return true;
@@ -356,7 +356,7 @@ fn test_find_with_complex_predicate() {
 #[test]
 fn test_find_index() {
     let result = execute_vm_ok(r#"
-        fn isLarge(x: number) -> bool {
+        fn isLarge(borrow x: number) -> bool {
             return x > 10;
         }
         let arr = [1, 5, 15, 20];
@@ -368,7 +368,7 @@ fn test_find_index() {
 #[test]
 fn test_find_index_empty() {
     let result = execute_vm_ok(r#"
-        fn alwaysTrue(x: number) -> bool {
+        fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
         let arr: number[] = [];
@@ -380,7 +380,7 @@ fn test_find_index_empty() {
 #[test]
 fn test_find_index_not_found() {
     let result = execute_vm_ok(r#"
-        fn isNegative(x: number) -> bool {
+        fn isNegative(borrow x: number) -> bool {
             return x < 0;
         }
         let arr = [1, 2, 3];
@@ -396,7 +396,7 @@ fn test_find_index_not_found() {
 #[test]
 fn test_flat_map() {
     let result = execute_vm_ok(r#"
-        fn duplicate(x: number) -> number[] {
+        fn duplicate(borrow x: number) -> number[] {
             return [x, x];
         }
         let arr = [1, 2, 3];
@@ -417,7 +417,7 @@ fn test_flat_map() {
 #[test]
 fn test_flat_map_empty() {
     let result = execute_vm_ok(r#"
-        fn duplicate(x: number) -> number[] {
+        fn duplicate(borrow x: number) -> number[] {
             return [x, x];
         }
         let arr: number[] = [];
@@ -435,7 +435,7 @@ fn test_flat_map_empty() {
 #[test]
 fn test_flat_map_empty_results() {
     let result = execute_vm_ok(r#"
-        fn makeEmpty(x: number) -> number[] {
+        fn makeEmpty(borrow x: number) -> number[] {
             let check = x + 1;
             if (check > 0) {
                 let empty: number[] = [];
@@ -464,7 +464,7 @@ fn test_flat_map_empty_results() {
 #[test]
 fn test_some_true() {
     let result = execute_vm_ok(r#"
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr = [1, 3, 4, 5];
@@ -476,7 +476,7 @@ fn test_some_true() {
 #[test]
 fn test_some_false() {
     let result = execute_vm_ok(r#"
-        fn isEven(x: number) -> bool {
+        fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
         let arr = [1, 3, 5];
@@ -488,7 +488,7 @@ fn test_some_false() {
 #[test]
 fn test_some_empty_array() {
     let result = execute_vm_ok(r#"
-        fn alwaysTrue(x: number) -> bool {
+        fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
         let arr: number[] = [];
@@ -500,7 +500,7 @@ fn test_some_empty_array() {
 #[test]
 fn test_some_first_element() {
     let result = execute_vm_ok(r#"
-        fn isOne(x: number) -> bool {
+        fn isOne(borrow x: number) -> bool {
             return x == 1;
         }
         let arr = [1, 2, 3];
@@ -512,7 +512,7 @@ fn test_some_first_element() {
 #[test]
 fn test_some_short_circuit() {
     let result = execute_vm_ok(r#"
-        fn isHundred(x: number) -> bool {
+        fn isHundred(borrow x: number) -> bool {
             return x == 100;
         }
         let arr = [1, 2, 100, 4];
@@ -524,7 +524,7 @@ fn test_some_short_circuit() {
 #[test]
 fn test_every_true() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
         let arr = [1, 2, 3];
@@ -536,7 +536,7 @@ fn test_every_true() {
 #[test]
 fn test_every_false() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
         let arr = [1, -1, 3];
@@ -548,7 +548,7 @@ fn test_every_false() {
 #[test]
 fn test_every_empty_array() {
     let result = execute_vm_ok(r#"
-        fn alwaysTrue(x: number) -> bool {
+        fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
         let arr: number[] = [];
@@ -560,7 +560,7 @@ fn test_every_empty_array() {
 #[test]
 fn test_every_single_element_true() {
     let result = execute_vm_ok(r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
         let arr = [5];
@@ -572,7 +572,7 @@ fn test_every_single_element_true() {
 #[test]
 fn test_every_single_element_false() {
     let result = execute_vm_ok(r#"
-        fn isNegative(x: number) -> bool {
+        fn isNegative(borrow x: number) -> bool {
             return x < 0;
         }
         let arr = [5];
@@ -584,7 +584,7 @@ fn test_every_single_element_false() {
 #[test]
 fn test_every_short_circuit() {
     let result = execute_vm_ok(r#"
-        fn isSmall(x: number) -> bool {
+        fn isSmall(borrow x: number) -> bool {
             return x < 10;
         }
         let arr = [1, 2, 100, 4];
@@ -600,7 +600,7 @@ fn test_every_short_circuit() {
 #[test]
 fn test_sort_ascending() {
     let result = execute_vm_ok(r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
         let arr = [3, 1, 4, 1, 5];
@@ -620,7 +620,7 @@ fn test_sort_ascending() {
 #[test]
 fn test_sort_descending() {
     let result = execute_vm_ok(r#"
-        fn compareDesc(a: number, b: number) -> number {
+        fn compareDesc(borrow a: number, borrow b: number) -> number {
             return b - a;
         }
         let arr = [1, 5, 3, 2, 4];
@@ -640,7 +640,7 @@ fn test_sort_descending() {
 #[test]
 fn test_sort_empty_array() {
     let result = execute_vm_ok(r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
         let arr: number[] = [];
@@ -658,7 +658,7 @@ fn test_sort_empty_array() {
 #[test]
 fn test_sort_single_element() {
     let result = execute_vm_ok(r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
         let arr = [42];
@@ -678,7 +678,7 @@ fn test_sort_single_element() {
 #[test]
 fn test_sort_stability() {
     let result = execute_vm_ok(r#"
-        fn alwaysZero(a: number, b: number) -> number {
+        fn alwaysZero(borrow a: number, borrow b: number) -> number {
             let sum = a + b;
             return 0 - sum + sum;
         }
@@ -701,7 +701,7 @@ fn test_sort_stability() {
 #[test]
 fn test_sort_with_equal_elements() {
     let result = execute_vm_ok(r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
         let arr = [3, 1, 2, 1, 3];
@@ -722,7 +722,7 @@ fn test_sort_with_equal_elements() {
 #[test]
 fn test_sort_by_numeric_key() {
     let result = execute_vm_ok(r#"
-        fn getAbs(x: number) -> number {
+        fn getAbs(borrow x: number) -> number {
             if (x < 0) {
                 return 0 - x;
             } else {
@@ -747,7 +747,7 @@ fn test_sort_by_numeric_key() {
 #[test]
 fn test_sort_by_empty() {
     let result = execute_vm_ok(r#"
-        fn identity(x: number) -> number {
+        fn identity(borrow x: number) -> number {
             return x;
         }
         let arr: number[] = [];
@@ -765,7 +765,7 @@ fn test_sort_by_empty() {
 #[test]
 fn test_sort_by_single() {
     let result = execute_vm_ok(r#"
-        fn identity(x: number) -> number {
+        fn identity(borrow x: number) -> number {
             return x;
         }
         let arr = [99];

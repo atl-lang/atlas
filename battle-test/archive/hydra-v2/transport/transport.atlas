@@ -7,7 +7,7 @@ let RESULT_MESSAGE = 1;
 let RESULT_REST = 2;
 let RESULT_ERROR = 3;
 
-fn make_result(ok: bool, message: string, rest: string, error: string) -> string[] {
+fn make_result(borrow ok: bool, borrow message: string, borrow rest: string, borrow error: string) -> string[] {
     let mut flag = "false";
     if ok {
         flag = "true";
@@ -15,7 +15,7 @@ fn make_result(ok: bool, message: string, rest: string, error: string) -> string
     return [flag, message, rest, error];
 }
 
-export fn detect_protocol(peek: string) -> string {
+export fn detect_protocol(borrow peek: string) -> string {
     let trimmed: string = trim(peek);
     let is_empty: bool = len(trimmed) == 0;
     if is_empty {
@@ -28,7 +28,7 @@ export fn detect_protocol(peek: string) -> string {
     return PROTOCOL_NDJSON;
 }
 
-export fn ndjson_frame(payload: string) -> string {
+export fn ndjson_frame(borrow payload: string) -> string {
     let is_empty: bool = len(payload) == 0;
     if is_empty {
         return "\n";
@@ -40,12 +40,12 @@ export fn ndjson_frame(payload: string) -> string {
     return payload + "\n";
 }
 
-export fn lsp_frame(payload: string) -> string {
+export fn lsp_frame(borrow payload: string) -> string {
     let header = "Content-Length: " + str(len(payload)) + "\r\n\r\n";
     return header + payload;
 }
 
-fn parse_content_length(header_line: string) -> number {
+fn parse_content_length(borrow header_line: string) -> number {
     let has_prefix: bool = starts_with(header_line, "Content-Length:");
     if !has_prefix {
         return 0;
@@ -54,7 +54,7 @@ fn parse_content_length(header_line: string) -> number {
     return unwrap(to_number(value));
 }
 
-export fn read_ndjson(buffer: string) -> string[] {
+export fn read_ndjson(borrow buffer: string) -> string[] {
     let parts: string[] = split(buffer, "\n");
     let empty_parts: bool = len(parts) == 0;
     if empty_parts {
@@ -70,7 +70,7 @@ export fn read_ndjson(buffer: string) -> string[] {
     return make_result(has_message, message, rest, "");
 }
 
-export fn read_lsp(buffer: string) -> string[] {
+export fn read_lsp(borrow buffer: string) -> string[] {
     let parts: string[] = split(buffer, "\r\n\r\n");
     let has_header: bool = len(parts) >= 2;
     if !has_header {

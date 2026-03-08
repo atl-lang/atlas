@@ -196,7 +196,9 @@ fn multiline_line_comment_complete() {
 
 #[test]
 fn multiline_function_body_incomplete() {
-    match is_input_complete("fn add(a: number, b: number) -> number {\n  return a + b") {
+    match is_input_complete(
+        "fn add(borrow a: number, borrow b: number) -> number {\n  return a + b",
+    ) {
         InputCompleteness::Incomplete { reason } => {
             assert_eq!(reason, IncompleteReason::UnclosedBrace);
         }
@@ -207,7 +209,9 @@ fn multiline_function_body_incomplete() {
 #[test]
 fn multiline_function_body_complete() {
     assert_eq!(
-        is_input_complete("fn add(a: number, b: number) -> number {\n  return a + b;\n}"),
+        is_input_complete(
+            "fn add(borrow a: number, borrow b: number) -> number {\n  return a + b;\n}"
+        ),
         InputCompleteness::Complete
     );
 }

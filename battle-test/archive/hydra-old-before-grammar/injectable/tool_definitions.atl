@@ -1,6 +1,6 @@
 // Tool definitions (Atlas port)
 
-export fn tool_definition(name: string) -> Result<json, string> {
+export fn tool_definition(borrow name: string) -> Result<json, string> {
     if (name == "hydra_restart") {
         return Ok({ name: "hydra_restart", description: "Manually restart the supervised MCP server.", input_schema: { type: "object", properties: { reason: { type: "string" } } } });
     }

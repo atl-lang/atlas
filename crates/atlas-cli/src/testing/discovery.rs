@@ -198,7 +198,7 @@ fn helper() -> void {{
         write!(
             file,
             r#"
-fn test_with_param(x: number) -> void {{
+fn test_with_param(borrow x: number) -> void {{
     // Should be skipped
 }}
 

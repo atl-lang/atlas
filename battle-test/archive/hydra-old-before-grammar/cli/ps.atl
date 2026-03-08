@@ -1,7 +1,7 @@
 // CLI ps (Atlas port, simplified)
 // Source: hydra/internal/cli/ps.go
 
-export fn cmd_ps(args: json) -> Result<json, string> {
+export fn cmd_ps(borrow args: json) -> Result<json, string> {
     let dir = args["state_dir"].is_null() ? ".hydra/state" : args["state_dir"].as_string();
     if (!fsIsDir(dir)) { return Ok({ entries: [] }); }
     let entries = readDir(dir);

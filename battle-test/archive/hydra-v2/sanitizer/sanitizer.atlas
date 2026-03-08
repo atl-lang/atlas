@@ -2,7 +2,7 @@ let CHUNK_EMPTY = "empty";
 let CHUNK_JSONRPC = "jsonrpc";
 let CHUNK_POLLUTION = "pollution";
 
-export fn classify_chunk(chunk: string) -> string {
+export fn classify_chunk(borrow chunk: string) -> string {
     let trimmed: string = trim(chunk);
     let is_empty: bool = len(trimmed) == 0;
     if is_empty {
@@ -28,7 +28,7 @@ export fn classify_chunk(chunk: string) -> string {
     return CHUNK_POLLUTION;
 }
 
-export fn validate_utf8(data: string) -> string {
+export fn validate_utf8(borrow data: string) -> string {
     // Atlas strings are UTF-8; if invalid bytes are present upstream,
     // the runtime already normalized. No-op here.
     return data;

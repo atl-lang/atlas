@@ -1,8 +1,7 @@
 export fn build_status_response(
-    server_name: string,
-    snapshot: { state: string, pid: number, uptime_seconds: number, restarts_in_window: number, last_restart_reason: string, last_error: string, queue_size: number, can_recover: bool },
-    behavior: { max_restarts: number, restart_window_seconds: number }
-) -> json {
+    borrow server_name: string,
+    borrow snapshot: { state: string, borrow pid: number, borrow uptime_seconds: number, borrow restarts_in_window: number, borrow last_restart_reason: string, borrow last_error: string, borrow queue_size: number, borrow can_recover: bool },
+    borrow behavior: { max_restarts: number, borrow restart_window_seconds: number }) -> json {
     let payload = record {
         state: snapshot.state,
         server_name: server_name,

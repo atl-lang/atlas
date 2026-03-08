@@ -117,7 +117,7 @@ fn test_vm_sequential_awaits() {
 #[test]
 fn test_vm_async_fn_with_params() {
     let result = vm(r#"
-        async fn add(a: number, b: number) -> number {
+        async fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         await add(10, 32);
@@ -129,7 +129,7 @@ fn test_vm_async_fn_with_params() {
 #[test]
 fn test_vm_async_fn_branching() {
     let result = vm(r#"
-        async fn classify(n: number) -> string {
+        async fn classify(borrow n: number) -> string {
             if n > 0 {
                 return "positive";
             } else {
@@ -229,7 +229,7 @@ fn test_vm_deeply_nested_async() {
 #[test]
 fn test_parity_simple_async() {
     let code = r#"
-        async fn square(n: number) -> number { return n * n; }
+        async fn square(borrow n: number) -> number { return n * n; }
         await square(6);
     "#;
     assert_eq!(vm(code), interp(code));
@@ -239,8 +239,8 @@ fn test_parity_simple_async() {
 #[test]
 fn test_parity_nested_async() {
     let code = r#"
-        async fn double(n: number) -> number { return n * 2; }
-        async fn quad(n: number) -> number { return await double(await double(n)); }
+        async fn double(borrow n: number) -> number { return n * 2; }
+        async fn quad(borrow n: number) -> number { return await double(await double(n)); }
         await quad(3);
     "#;
     assert_eq!(vm(code), interp(code));
@@ -271,7 +271,7 @@ fn test_parity_sequential_awaits() {
 #[test]
 fn test_parity_async_branching() {
     let code = r#"
-        async fn classify_sign(n: number) -> string {
+        async fn classify_sign(borrow n: number) -> string {
             if n > 0 { return "pos"; } else { return "neg"; }
         }
         await classify_sign(-3);

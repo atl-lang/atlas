@@ -73,7 +73,7 @@ fn get_all_diagnostics(source: &str) -> Vec<atlas_runtime::Diagnostic> {
 #[test]
 fn test_errors_before_warnings() {
     let source = r#"
-        fn foo(x: number) -> number {
+        fn foo(borrow x: number) -> number {
             let y = 5;
             return "hello";
         }
@@ -444,7 +444,7 @@ fn test_function_redeclaration_has_related_span() {
 #[test]
 fn test_parameter_redeclaration_has_related_span() {
     let source = r#"
-        fn foo(x: number, x: string) -> void {}
+        fn foo(borrow x: number, borrow x: string) -> void {}
     "#;
 
     let (ast, parse_diags) = parse(source);

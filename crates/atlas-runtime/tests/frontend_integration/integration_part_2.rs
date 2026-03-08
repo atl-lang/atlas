@@ -245,7 +245,7 @@ fn test_pipeline_valid_let_declaration() {
 
 #[test]
 fn test_pipeline_valid_function() {
-    let source = "fn add(a: number, b: number) -> number { return a + b; }";
+    let source = "fn add(borrow a: number, borrow b: number) -> number { return a + b; }";
     let (ok, diags) = parse_source(source);
     assert!(ok);
     assert!(diags.is_empty());

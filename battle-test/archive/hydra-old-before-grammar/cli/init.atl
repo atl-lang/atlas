@@ -4,7 +4,7 @@
 import { default_registry } from "../config/config";
 import { registry_path_from_args, expand_home } from "./pathutil";
 
-export fn cmd_init(args: json) -> Result<json, string> {
+export fn cmd_init(borrow args: json) -> Result<json, string> {
     let reg_path = expand_home(registry_path_from_args(args));
     if (fsIsFile(reg_path)) {
         return Err("registry already exists at " + reg_path);

@@ -3,7 +3,7 @@ use super::super::*;
 #[test]
 fn hashmap_generic_params_must_match() {
     let src = r#"
-fn takes_numbers(m: HashMap<string, number>) -> void {
+fn takes_numbers(borrow m: HashMap<string, number>) -> void {
     let _ = m;
 }
 

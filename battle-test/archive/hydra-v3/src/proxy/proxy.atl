@@ -28,7 +28,7 @@ struct ProxyCore {
     restarts_in_window: number
 }
 
-export fn proxy_new(queue_size: number, queue_ttl: number) -> ProxyCore {
+export fn proxy_new(borrow queue_size: number, borrow queue_ttl: number) -> ProxyCore {
     return ProxyCore {
         state: ProxyState::Stopped,
         queue: queue_new(queue_size, queue_ttl),
@@ -39,7 +39,7 @@ export fn proxy_new(queue_size: number, queue_ttl: number) -> ProxyCore {
     };
 }
 
-export fn proxy_status(core: ProxyCore) -> { state: string, queue_size: number, last_restart_reason: string, last_error: string, uptime_seconds: number, restarts_in_window: number, can_recover: bool } {
+export fn proxy_status(borrow core: ProxyCore) -> { state: string, queue_size: number, last_restart_reason: string, last_error: string, uptime_seconds: number, restarts_in_window: number, can_recover: bool } {
     let can_recover = core.state == ProxyState::Failed;
     return record {
         state: proxy_state_string(core.state),
@@ -52,7 +52,7 @@ export fn proxy_status(core: ProxyCore) -> { state: string, queue_size: number, 
     };
 }
 
-fn proxy_state_string(state: ProxyState) -> string {
+fn proxy_state_string(borrow state: ProxyState) -> string {
     return match state {
         ProxyState::Stopped => "stopped",
         ProxyState::Starting => "starting",
@@ -61,7 +61,7 @@ fn proxy_state_string(state: ProxyState) -> string {
     };
 }
 
-export fn proxy_start(core: ProxyCore) -> ProxyCore {
+export fn proxy_start(borrow core: ProxyCore) -> ProxyCore {
     if (core.state == ProxyState::Running) {
         return core;
     }
@@ -75,7 +75,7 @@ export fn proxy_start(core: ProxyCore) -> ProxyCore {
     };
 }
 
-export fn proxy_stop(core: ProxyCore) -> ProxyCore {
+export fn proxy_stop(borrow core: ProxyCore) -> ProxyCore {
     return ProxyCore {
         state: ProxyState::Stopped,
         queue: core.queue,
@@ -87,11 +87,10 @@ export fn proxy_stop(core: ProxyCore) -> ProxyCore {
 }
 
 export fn proxy_route_client_message(
-    core: ProxyCore,
-    payload: string,
-    recorder: RecorderState,
-    metrics: MetricsState
-) -> ProxyOutput {
+    borrow core: ProxyCore,
+    borrow payload: string,
+    borrow recorder: RecorderState,
+    borrow metrics: MetricsState) -> ProxyOutput {
     let chunk_type = classify_chunk(payload);
     match chunk_type {
         "jsonrpc" => {
@@ -128,11 +127,10 @@ export fn proxy_route_client_message(
 }
 
 export fn proxy_handle_child_message(
-    core: ProxyCore,
-    payload: string,
-    recorder: RecorderState,
-    metrics: MetricsState
-) -> ProxyOutput {
+    borrow core: ProxyCore,
+    borrow payload: string,
+    borrow recorder: RecorderState,
+    borrow metrics: MetricsState) -> ProxyOutput {
     let chunk_type = classify_chunk(payload);
     match chunk_type {
         "jsonrpc" => {
@@ -160,9 +158,8 @@ export fn proxy_handle_child_message(
 }
 
 export fn proxy_flush_queue(
-    core: ProxyCore,
-    metrics: MetricsState
-) -> FlushOutput {
+    borrow core: ProxyCore,
+    borrow metrics: MetricsState) -> FlushOutput {
     let mut outputs: string[] = [];
     let mut queue = core.queue;
     let mut updated_metrics = metrics;

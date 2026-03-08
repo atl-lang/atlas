@@ -3,7 +3,7 @@
 
 // NOTE: No time API; TTL is ignored.
 
-export fn new_queue(max: number, ttl_seconds: number) -> json {
+export fn new_queue(borrow max: number, borrow ttl_seconds: number) -> json {
     let cap = max;
     if (cap <= 0) { cap = 1; }
     let obj = { max: cap, ttl_seconds: ttl_seconds, buf: [] };
@@ -12,7 +12,7 @@ export fn new_queue(max: number, ttl_seconds: number) -> json {
     return parsed;
 }
 
-export fn enqueue(queue: json, id: json, payload: string) -> Result<json, string> {
+export fn enqueue(borrow queue: json, borrow id: json, borrow payload: string) -> Result<json, string> {
     let buf = queue["buf"];
     if (len(buf) >= queue["max"].as_number()) {
         return Err("restart queue full");
@@ -25,12 +25,12 @@ export fn enqueue(queue: json, id: json, payload: string) -> Result<json, string
     return Ok(parsed);
 }
 
-export fn drain(queue: json) -> Result<array, string> {
+export fn drain(borrow queue: json) -> Result<array, string> {
     let buf = queue["buf"];
     // TTL ignored
     return Ok(buf);
 }
 
-export fn size(queue: json) -> number {
+export fn size(borrow queue: json) -> number {
     return len(queue["buf"]);
 }

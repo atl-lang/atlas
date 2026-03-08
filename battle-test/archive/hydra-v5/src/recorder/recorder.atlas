@@ -9,9 +9,9 @@ struct RecorderEntry {
 }
 
 trait Recorder {
-    fn record_request(self, direction: string, payload: string) -> string;
-    fn record_response(self, direction: string, payload: string) -> string;
-    fn save_to_file(self, path: string) -> Result<string, string>;
+    fn record_request(self, borrow direction: string, borrow payload: string) -> string;
+    fn record_response(self, borrow direction: string, borrow payload: string) -> string;
+    fn save_to_file(self, borrow path: string) -> Result<string, string>;
 }
 
 struct BufferRecorder {
@@ -21,27 +21,27 @@ struct BufferRecorder {
 }
 
 impl Recorder for BufferRecorder {
-    fn record_request(self, direction: string, payload: string) -> string {
+    fn record_request(self, borrow direction: string, borrow payload: string) -> string {
         if !self.enabled {
             return "disabled";
         }
         return "recorded";
     }
 
-    fn record_response(self, direction: string, payload: string) -> string {
+    fn record_response(self, borrow direction: string, borrow payload: string) -> string {
         if !self.enabled {
             return "disabled";
         }
         return "recorded";
     }
 
-    fn save_to_file(self, path: string) -> Result<string, string> {
+    fn save_to_file(self, borrow path: string) -> Result<string, string> {
         // FRICTION: No file I/O API in Atlas
         return Err("save_to_file not implemented");
     }
 }
 
-fn new_buffer_recorder(buffer_size: number, enabled: bool) -> BufferRecorder {
+fn new_buffer_recorder(borrow buffer_size: number, borrow enabled: bool) -> BufferRecorder {
     let empty_entries: RecorderEntry[] = [];
     return BufferRecorder {
         enabled: enabled,

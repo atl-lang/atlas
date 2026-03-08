@@ -1,4 +1,4 @@
-fn should_ignore(path: string, ignore: string[]) -> bool {
+fn should_ignore(borrow path: string, borrow ignore: string[]) -> bool {
     let base = pathBasename(path);
     for pat in ignore {
         if base == pat {
@@ -8,7 +8,7 @@ fn should_ignore(path: string, ignore: string[]) -> bool {
     return false;
 }
 
-export fn watcher_snapshot(paths: string[], ignore: string[]) -> HashMap<string, number> {
+export fn watcher_snapshot(borrow paths: string[], borrow ignore: string[]) -> HashMap<string, number> {
     let mut snapshot = hash_map_new();
     for root in paths {
         let entries = read_dir(root);

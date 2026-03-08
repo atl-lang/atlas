@@ -4,7 +4,7 @@
 import { default_registry, default_server_config } from "./config";
 import { substitute_env_vars_in_config } from "./envsubst";
 
-fn expand_home(path: string) -> string {
+fn expand_home(borrow path: string) -> string {
     if (len(path) > 0 && substring(path, 0, 1) == "~") {
         let home = getEnv("HOME");
         if (!home.is_null()) {
@@ -14,7 +14,7 @@ fn expand_home(path: string) -> string {
     return path;
 }
 
-export fn load_registry(path: string) -> Result<json, string> {
+export fn load_registry(borrow path: string) -> Result<json, string> {
     if (len(path) == 0) { return Err("registry path cannot be empty"); }
     let p = expand_home(path);
 
@@ -37,7 +37,7 @@ export fn load_registry(path: string) -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn load_server_config(path: string) -> Result<json, string> {
+export fn load_server_config(borrow path: string) -> Result<json, string> {
     let p = expand_home(path);
     if (!fsIsFile(p)) {
         return Ok(null);
@@ -47,7 +47,7 @@ export fn load_server_config(path: string) -> Result<json, string> {
     return Ok(parsed);
 }
 
-fn choose_string(src: json, field: string, fallback: string) -> string {
+fn choose_string(borrow src: json, borrow field: string, borrow fallback: string) -> string {
     if (!src[field].is_null()) {
         let val = src[field].as_string();
         if (len(val) > 0) { return val; }
@@ -55,7 +55,7 @@ fn choose_string(src: json, field: string, fallback: string) -> string {
     return fallback;
 }
 
-fn choose_number(src: json, field: string, fallback: number) -> number {
+fn choose_number(borrow src: json, borrow field: string, borrow fallback: number) -> number {
     if (!src[field].is_null()) {
         let val = src[field].as_number();
         if (val != 0) { return val; }
@@ -63,21 +63,21 @@ fn choose_number(src: json, field: string, fallback: number) -> number {
     return fallback;
 }
 
-fn choose_bool(src: json, field: string, fallback: bool) -> bool {
+fn choose_bool(borrow src: json, borrow field: string, borrow fallback: bool) -> bool {
     if (!src[field].is_null()) {
         return src[field].as_bool();
     }
     return fallback;
 }
 
-fn choose_array(src: json, field: string, fallback: array) -> array {
+fn choose_array(borrow src: json, borrow field: string, borrow fallback: array) -> array {
     if (!src[field].is_null()) {
         return src[field];
     }
     return fallback;
 }
 
-export fn merge_server_config(dst: json, src: json) -> Result<json, string> {
+export fn merge_server_config(borrow dst: json, borrow src: json) -> Result<json, string> {
     if (src.is_null()) { return Ok(dst); }
 
     let merged = {
@@ -125,7 +125,7 @@ export fn merge_server_config(dst: json, src: json) -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn resolve_server(server_name: string, local_override_path: string) -> Result<json, string> {
+export fn resolve_server(borrow server_name: string, borrow local_override_path: string) -> Result<json, string> {
     let registry = load_registry("~/.hydra/config.json")?;
     let server_cfg = registry["servers"][server_name];
     if (server_cfg.is_null()) {
@@ -148,7 +148,7 @@ export fn resolve_server(server_name: string, local_override_path: string) -> Re
     return Ok(substituted);
 }
 
-export fn validate_config(cfg: json) -> Result<null, string> {
+export fn validate_config(borrow cfg: json) -> Result<null, string> {
     if (cfg["command"].is_null() || len(cfg["command"].as_string()) == 0) {
         return Err("command is required");
     }

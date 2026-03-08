@@ -45,7 +45,7 @@ fn test_vm_result_try_propagates_err() {
 #[test]
 fn test_vm_result_try_multiple() {
     let code = r#"
-    fn divide(a: number, b: number) -> Result<number, string> {
+    fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
         if (b == 0) {
             return Err("division by zero");
         }
@@ -68,7 +68,7 @@ fn test_vm_result_try_multiple() {
 #[test]
 fn test_vm_result_try_early_return() {
     let code = r#"
-    fn divide(a: number, b: number) -> Result<number, string> {
+    fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
         if (b == 0) {
             return Err("division by zero");
         }
@@ -311,14 +311,14 @@ fn test_vm_try_multiple_in_expression() {
 #[test]
 fn test_vm_try_chained_transforms() {
     let code = r#"
-    fn parse_num(s: string) -> Result<number, string> {
+    fn parse_num(borrow s: string) -> Result<number, string> {
         if (s == "42") { return Ok(42); }
         return Err("not 42");
     }
-    fn double(n: number) -> Result<number, string> {
+    fn double(borrow n: number) -> Result<number, string> {
         return Ok(n * 2);
     }
-    fn process(s: string) -> Result<number, string> {
+    fn process(borrow s: string) -> Result<number, string> {
         let n = parse_num(s)?;
         let d = double(n)?;
         return Ok(d);

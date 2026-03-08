@@ -207,7 +207,7 @@ fn eval_expect_error(code: &str) -> bool {
 fn test_hashmap_foreach_returns_null() {
     let result = eval(
         r#"
-        fn callback(_v: number, _k: string) -> void {}
+        fn callback(borrow _v: number, borrow _k: string) -> void {}
         let hmap = hash_map_new();
         hash_map_put(hmap, "a", 1);
         hash_map_for_each(hmap, callback)
@@ -222,7 +222,7 @@ fn test_hashmap_foreach_executes_callback() {
     let result = eval(
         r#"
         let mut count: number = 0;
-        fn callback(_v: number, _k: string) -> void {
+        fn callback(borrow _v: number, borrow _k: string) -> void {
             count = count + 1;
         }
         let hmap = hash_map_new();
@@ -240,7 +240,7 @@ fn test_hashmap_foreach_executes_callback() {
 fn test_hashmap_map_transforms_values() {
     let result = eval(
         r#"
-        fn double(v: number, _k: string) -> number {
+        fn double(borrow v: number, borrow _k: string) -> number {
             return v * 2;
         }
         let hmap = hash_map_new();
@@ -257,7 +257,7 @@ fn test_hashmap_map_transforms_values() {
 fn test_hashmap_map_preserves_keys() {
     let result = eval(
         r#"
-        fn addFive(v: number, _k: string) -> number {
+        fn addFive(borrow v: number, borrow _k: string) -> number {
             return v + 5;
         }
         let hmap = hash_map_new();
@@ -274,7 +274,7 @@ fn test_hashmap_map_preserves_keys() {
 fn test_hashmap_map_preserves_size() {
     let result = eval(
         r#"
-        fn times10(v: number, _k: string) -> number {
+        fn times10(borrow v: number, borrow _k: string) -> number {
             return v * 10;
         }
         let hmap = hash_map_new();
@@ -292,7 +292,7 @@ fn test_hashmap_map_preserves_size() {
 fn test_hashmap_filter_keeps_matching_entries() {
     let result = eval(
         r#"
-        fn greaterThanOne(v: number, _k: string) -> bool {
+        fn greaterThanOne(borrow v: number, borrow _k: string) -> bool {
             return v > 1;
         }
         let hmap = hash_map_new();
@@ -310,7 +310,7 @@ fn test_hashmap_filter_keeps_matching_entries() {
 fn test_hashmap_filter_with_predicate() {
     let result = eval(
         r#"
-        fn isEven(v: number, _k: string) -> bool {
+        fn isEven(borrow v: number, borrow _k: string) -> bool {
             return v % 2 == 0;
         }
         let hmap = hash_map_new();
@@ -329,7 +329,7 @@ fn test_hashmap_filter_with_predicate() {
 fn test_hashmap_filter_removes_non_matching() {
     let result = eval(
         r#"
-        fn greaterThan10(v: number, _k: string) -> bool {
+        fn greaterThan10(borrow v: number, borrow _k: string) -> bool {
             return v > 10;
         }
         let hmap = hash_map_new();
@@ -347,7 +347,7 @@ fn test_hashmap_filter_removes_non_matching() {
 fn test_hashmap_empty_iteration() {
     let result = eval(
         r#"
-        fn identity(v: number, _k: string) -> number {
+        fn identity(borrow v: number, borrow _k: string) -> number {
             return v;
         }
         let hmap = hash_map_new();
@@ -362,10 +362,10 @@ fn test_hashmap_empty_iteration() {
 fn test_hashmap_chaining_operations() {
     let result = eval(
         r#"
-        fn double(v: number, _k: string) -> number {
+        fn double(borrow v: number, borrow _k: string) -> number {
             return v * 2;
         }
-        fn greaterThan2(v: number, _k: string) -> bool {
+        fn greaterThan2(borrow v: number, borrow _k: string) -> bool {
             return v > 2;
         }
         let hmap = hash_map_new();
@@ -385,7 +385,7 @@ fn test_hashmap_callback_receives_value_and_key() {
     // Verify callback receives both value and key parameters
     let result = eval(
         r#"
-        fn addIfTest(v: number, k: string) -> number {
+        fn addIfTest(borrow v: number, borrow k: string) -> number {
             if (k == "test") {
                 return v + 1;
             } else {
@@ -405,7 +405,7 @@ fn test_hashmap_callback_receives_value_and_key() {
 fn test_hashmap_large_map() {
     let result = eval(
         r#"
-        fn lessThan25(v: number, _k: string) -> bool {
+        fn lessThan25(borrow v: number, borrow _k: string) -> bool {
             return v < 25;
         }
         let hmap = hash_map_new();
@@ -461,7 +461,7 @@ fn test_hashmap_filter_non_bool_return() {
     // Filter predicate must return bool
     assert!(eval_expect_error(
         r#"
-        fn returnValue(v: number, _k: string) -> number {
+        fn returnValue(borrow v: number, borrow _k: string) -> number {
             return v;
         }
         let hmap = hash_map_new();
@@ -479,7 +479,7 @@ fn test_hashmap_filter_non_bool_return() {
 fn test_hashset_foreach_returns_null() {
     let result = eval(
         r#"
-        fn callback(_elem: number) -> void {}
+        fn callback(borrow _elem: number) -> void {}
         let hset = hash_set_new();
         hash_set_add(hset, 1);
         hash_set_for_each(hset, callback)
@@ -493,7 +493,7 @@ fn test_hashset_foreach_executes_callback() {
     let result = eval(
         r#"
         let mut count: number = 0;
-        fn callback(_elem: number) -> void {
+        fn callback(borrow _elem: number) -> void {
             count = count + 1;
         }
         let hset = hash_set_new();
@@ -511,7 +511,7 @@ fn test_hashset_foreach_executes_callback() {
 fn test_hashset_map_to_array() {
     let result = eval(
         r#"
-        fn double(elem: number) -> number {
+        fn double(borrow elem: number) -> number {
             return elem * 2;
         }
         let hset = hash_set_new();
@@ -528,7 +528,7 @@ fn test_hashset_map_to_array() {
 fn test_hashset_map_array_length() {
     let result = eval(
         r#"
-        fn times10(elem: number) -> number {
+        fn times10(borrow elem: number) -> number {
             return elem * 10;
         }
         let hset = hash_set_new();
@@ -546,7 +546,7 @@ fn test_hashset_map_array_length() {
 fn test_hashset_map_transforms_elements() {
     let result = eval(
         r#"
-        fn double(elem: number) -> number {
+        fn double(borrow elem: number) -> number {
             return elem * 2;
         }
         let hset = hash_set_new();
@@ -562,7 +562,7 @@ fn test_hashset_map_transforms_elements() {
 fn test_hashset_filter_keeps_matching() {
     let result = eval(
         r#"
-        fn greaterThan2(elem: number) -> bool {
+        fn greaterThan2(borrow elem: number) -> bool {
             return elem > 2;
         }
         let hset = hash_set_new();
@@ -581,7 +581,7 @@ fn test_hashset_filter_keeps_matching() {
 fn test_hashset_filter_removes_non_matching() {
     let result = eval(
         r#"
-        fn greaterThan10(elem: number) -> bool {
+        fn greaterThan10(borrow elem: number) -> bool {
             return elem > 10;
         }
         let hset = hash_set_new();
@@ -599,7 +599,7 @@ fn test_hashset_filter_removes_non_matching() {
 fn test_hashset_empty_filter() {
     let result = eval(
         r#"
-        fn alwaysTrue(_elem: number) -> bool {
+        fn alwaysTrue(borrow _elem: number) -> bool {
             return true;
         }
         let hset = hash_set_new();
@@ -614,10 +614,10 @@ fn test_hashset_empty_filter() {
 fn test_hashset_filter_chaining() {
     let result = eval(
         r#"
-        fn greaterThan1(elem: number) -> bool {
+        fn greaterThan1(borrow elem: number) -> bool {
             return elem > 1;
         }
-        fn lessThan4(elem: number) -> bool {
+        fn lessThan4(borrow elem: number) -> bool {
             return elem < 4;
         }
         let hset = hash_set_new();
@@ -637,7 +637,7 @@ fn test_hashset_filter_chaining() {
 fn test_hashset_large_set() {
     let result = eval(
         r#"
-        fn divisibleBy3(elem: number) -> bool {
+        fn divisibleBy3(borrow elem: number) -> bool {
             return elem % 3 == 0;
         }
         let hset = hash_set_new();
@@ -693,7 +693,7 @@ fn test_hashset_filter_non_bool_return() {
     // Filter predicate must return bool
     assert!(eval_expect_error(
         r#"
-        fn returnValue(elem: number) -> number {
+        fn returnValue(borrow elem: number) -> number {
             return elem;
         }
         let hset = hash_set_new();
@@ -726,10 +726,10 @@ fn test_integration_hashmap_to_hashset() {
 fn test_integration_hashset_map_to_array_filter() {
     let result = eval(
         r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
-        fn greaterThan2(x: number) -> bool {
+        fn greaterThan2(borrow x: number) -> bool {
             return x > 2;
         }
         let hset = hash_set_new();
@@ -748,10 +748,10 @@ fn test_integration_hashset_map_to_array_filter() {
 fn test_integration_empty_collections() {
     let result = eval(
         r#"
-        fn identity(v: number, _k: string) -> number {
+        fn identity(borrow v: number, borrow _k: string) -> number {
             return v;
         }
-        fn alwaysTrue(_x: number) -> bool {
+        fn alwaysTrue(borrow _x: number) -> bool {
             return true;
         }
         let hm = hash_map_new();
@@ -768,14 +768,14 @@ fn test_integration_empty_collections() {
 fn test_integration_complex_transformation() {
     let result = eval(
         r#"
-        fn double(v: number, _k: string) -> number {
+        fn double(borrow v: number, borrow _k: string) -> number {
             return v * 2;
         }
-        fn greaterOrEqual4(v: number, _k: string) -> bool {
+        fn greaterOrEqual4(borrow v: number, borrow _k: string) -> bool {
             return v >= 4;
         }
         let mut sum: number = 0;
-        fn addToSum(v: number) -> void {
+        fn addToSum(borrow v: number) -> void {
             sum = sum + v;
         }
         let hmap = hash_map_new();
@@ -818,7 +818,7 @@ fn test_parity_hashmap_foreach() {
     let result = eval(
         r#"
         let mut sum: number = 0;
-        fn addToSum(v: number, _k: string) -> void {
+        fn addToSum(borrow v: number, borrow _k: string) -> void {
             sum = sum + v;
         }
         let hmap = hash_map_new();
@@ -834,7 +834,7 @@ fn test_parity_hashmap_foreach() {
 fn test_parity_hashmap_map() {
     let result = eval(
         r#"
-        fn triple(v: number, _k: string) -> number {
+        fn triple(borrow v: number, borrow _k: string) -> number {
             return v * 3;
         }
         let hmap = hash_map_new();
@@ -850,7 +850,7 @@ fn test_parity_hashmap_map() {
 fn test_parity_hashmap_filter() {
     let result = eval(
         r#"
-        fn notEqual2(v: number, _k: string) -> bool {
+        fn notEqual2(borrow v: number, borrow _k: string) -> bool {
             return v != 2;
         }
         let hmap = hash_map_new();
@@ -869,7 +869,7 @@ fn test_parity_hashset_foreach() {
     let result = eval(
         r#"
         let mut sum: number = 0;
-        fn addToSum(elem: number) -> void {
+        fn addToSum(borrow elem: number) -> void {
             sum = sum + elem;
         }
         let hset = hash_set_new();
@@ -885,7 +885,7 @@ fn test_parity_hashset_foreach() {
 fn test_parity_hashset_map() {
     let result = eval(
         r#"
-        fn double(elem: number) -> number {
+        fn double(borrow elem: number) -> number {
             return elem * 2;
         }
         let hset = hash_set_new();
@@ -901,7 +901,7 @@ fn test_parity_hashset_map() {
 fn test_parity_hashset_filter() {
     let result = eval(
         r#"
-        fn lessOrEqual2(elem: number) -> bool {
+        fn lessOrEqual2(borrow elem: number) -> bool {
             return elem <= 2;
         }
         let hset = hash_set_new();

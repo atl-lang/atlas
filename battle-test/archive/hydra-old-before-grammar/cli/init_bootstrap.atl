@@ -8,7 +8,7 @@ import { configure_claude_cli } from "../bootstrap/claude_cli";
 import { configure_continue } from "../bootstrap/continue";
 import { configure_cursor_composer } from "../bootstrap/cursor_composer";
 
-export fn cmd_init_bootstrap(args: json) -> Result<json, string> {
+export fn cmd_init_bootstrap(borrow args: json) -> Result<json, string> {
     if (args["client"].is_null()) { return Err("client is required"); }
     let client = args["client"].as_string();
     let path = args["path"].is_null() ? "" : args["path"].as_string();

@@ -198,14 +198,13 @@ struct ProcessSupervisor {
 }
 
 fn new_supervisor(
-    command: string,
-    args: string[],
-    cwd: string,
-    env: HashMap<string, string>,
-    max_restarts: number,
-    restart_window_seconds: number,
-    graceful_shutdown_ms: number
-) -> ProcessSupervisor {
+    own command: string,
+    own args: string[],
+    own cwd: string,
+    own env: HashMap<string, string>,
+    own max_restarts: number,
+    own restart_window_seconds: number,
+    own graceful_shutdown_ms: number) -> ProcessSupervisor {
     return ProcessSupervisor {
         command: command,
         args: args,
@@ -260,7 +259,7 @@ struct DefaultSanitizer {
     strict_mode: bool
 }
 
-fn new_sanitizer(borrow strict: bool) -> DefaultSanitizer {
+fn new_sanitizer(own strict: bool) -> DefaultSanitizer {
     return DefaultSanitizer {
         strict_mode: strict
     };
@@ -362,7 +361,7 @@ fn new_metrics_collector() -> DefaultMetricsCollector {
     };
 }
 
-fn metrics_record_request(borrow c: DefaultMetricsCollector, borrow duration_ms: number, borrow is_success: bool) -> DefaultMetricsCollector {
+fn metrics_record_request(own c: DefaultMetricsCollector, borrow duration_ms: number, borrow is_success: bool) -> DefaultMetricsCollector {
     let new_total = c.requests_total + 1;
     let new_success = if is_success { c.requests_success + 1 } else { c.requests_success };
     let new_failed = if !is_success { c.requests_failed + 1 } else { c.requests_failed };
@@ -384,7 +383,7 @@ fn metrics_record_request(borrow c: DefaultMetricsCollector, borrow duration_ms:
     };
 }
 
-fn metrics_record_restart(borrow c: DefaultMetricsCollector, borrow reason: string) -> DefaultMetricsCollector {
+fn metrics_record_restart(own c: DefaultMetricsCollector, borrow reason: string) -> DefaultMetricsCollector {
     let current_count_opt = c.restart_reasons.get(reason);
     let new_count = match current_count_opt {
         Some(n) => n + 1,
@@ -427,7 +426,7 @@ fn calculate_percentile(borrow nums: number[], borrow percentile: number) -> num
     return sorted[safe_index];
 }
 
-fn metrics_snapshot(borrow c: DefaultMetricsCollector) -> MetricsSnapshot {
+fn metrics_snapshot(own c: DefaultMetricsCollector) -> MetricsSnapshot {
     let now = get_timestamp_ms();
     let uptime = now - c.start_time_ms;
 
@@ -505,7 +504,7 @@ fn new_learner() -> Learner {
     };
 }
 
-fn observe(borrow learner: Learner, borrow event: string, borrow ctx: HashMap<string, any>) -> Learner {
+fn observe(own learner: Learner, own event: string, own ctx: HashMap<string, any>) -> Learner {
     let obs = Observation {
         timestamp_ms: get_timestamp_ms(),
         event: event,
@@ -651,7 +650,7 @@ struct MessageQueue {
     ttl_ms: number
 }
 
-fn new_queue(borrow max_size: number, borrow ttl_ms: number) -> MessageQueue {
+fn new_queue(own max_size: number, own ttl_ms: number) -> MessageQueue {
     let empty_msgs: QueuedMessage[] = [];
     return MessageQueue {
         messages: empty_msgs,
@@ -676,7 +675,7 @@ struct Proxy {
     max_restarts: number
 }
 
-fn new_proxy(borrow options: ProxyOptions, borrow tools: ToolDefinition[]) -> Proxy {
+fn new_proxy(own options: ProxyOptions, own tools: ToolDefinition[]) -> Proxy {
     return Proxy {
         state: ProxyState::Stopped,
         queue: new_queue(options.queue_size, options.queue_ttl_ms),
@@ -690,7 +689,7 @@ fn new_proxy(borrow options: ProxyOptions, borrow tools: ToolDefinition[]) -> Pr
     };
 }
 
-fn proxy_status(borrow p: Proxy) -> ProxyStatus {
+fn proxy_status(own p: Proxy) -> ProxyStatus {
     let now = get_timestamp_ms();
     let uptime = if p.started_ms > 0 { now - p.started_ms } else { 0 };
 
@@ -706,7 +705,7 @@ fn proxy_status(borrow p: Proxy) -> ProxyStatus {
     };
 }
 
-fn proxy_start(borrow p: Proxy) -> Result<Proxy, string> {
+fn proxy_start(own p: Proxy) -> Result<Proxy, string> {
     if p.state == ProxyState::Running {
         return Err("proxy already running");
     }

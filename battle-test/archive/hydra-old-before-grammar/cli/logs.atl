@@ -1,6 +1,6 @@
 // CLI logs (Atlas port, simplified)
 // Source: hydra/internal/cli/logs.go
 
-export fn cmd_logs(args: json) -> Result<json, string> {
+export fn cmd_logs(borrow args: json) -> Result<json, string> {
     return Err("logs not implemented in Atlas port");
 }

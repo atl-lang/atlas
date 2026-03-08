@@ -286,21 +286,21 @@ fn test_async_fn_sets_is_async_true() {
 
 #[test]
 fn test_async_fn_with_params_and_return() {
-    let f = first_fn_decl("async fn fetch(url: string) -> string { return url; }");
+    let f = first_fn_decl("async fn fetch(borrow url: string) -> string { return url; }");
     assert!(f.is_async);
     assert_eq!(f.params.len(), 1);
 }
 
 #[test]
 fn test_async_fn_with_generics() {
-    let f = first_fn_decl("async fn wrap<T>(val: T) -> T { return val; }");
+    let f = first_fn_decl("async fn wrap<T>(borrow val: T) -> T { return val; }");
     assert!(f.is_async);
     assert_eq!(f.type_params.len(), 1);
 }
 
 #[test]
 fn test_non_async_fn_is_async_false() {
-    let f = first_fn_decl("fn add(a: number) -> number { return a; }");
+    let f = first_fn_decl("fn add(borrow a: number) -> number { return a; }");
     assert!(!f.is_async);
 }
 

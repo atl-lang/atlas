@@ -1,13 +1,13 @@
 // Rate limiter (Atlas port, simplified)
 
-export fn new_rate_limiter(rate: number, interval_seconds: number) -> json {
+export fn new_rate_limiter(borrow rate: number, borrow interval_seconds: number) -> json {
     let obj = { rate: rate, tokens: rate, interval_seconds: interval_seconds };
     let encoded = toJSON(obj);
     let parsed = parseJSON(encoded)?;
     return parsed;
 }
 
-export fn allow(rl: json) -> Result<array, string> {
+export fn allow(borrow rl: json) -> Result<array, string> {
     let tokens = rl["tokens"].as_number();
     if (tokens > 0) {
         tokens = tokens - 1;
@@ -19,7 +19,7 @@ export fn allow(rl: json) -> Result<array, string> {
     return Ok([false, rl]);
 }
 
-export fn reset(rl: json) -> Result<json, string> {
+export fn reset(borrow rl: json) -> Result<json, string> {
     let obj = { rate: rl["rate"], tokens: rl["rate"], interval_seconds: rl["interval_seconds"] };
     let encoded = toJSON(obj);
     let parsed = parseJSON(encoded)?;

@@ -23,7 +23,7 @@ export fn new_proxy_status() -> Result<json, string> {
     return Ok(parsed);
 }
 
-export fn new_options(queue_size: number, queue_ttl_seconds: number, collision_policy: string) -> Result<json, string> {
+export fn new_options(borrow queue_size: number, borrow queue_ttl_seconds: number, borrow collision_policy: string) -> Result<json, string> {
     let obj = {
         queue_size: queue_size,
         queue_ttl_seconds: queue_ttl_seconds,

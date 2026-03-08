@@ -4,14 +4,14 @@ import { scan_all } from "../discovery/scanner";
 import { resolve_conflicts } from "../discovery/merger";
 import { state_load } from "../state/manager";
 
-fn join_args(args: string[]) -> string {
+fn join_args(borrow args: string[]) -> string {
     if (len(args) == 0) {
         return "";
     }
     return join(args, " ");
 }
 
-export fn execute(args: string[], registry_path: string, state_dir: string) -> Result<string, string> {
+export fn execute(borrow args: string[], borrow registry_path: string, borrow state_dir: string) -> Result<string, string> {
     if (len(args) == 0) {
         return Err("no command provided");
     }

@@ -61,14 +61,13 @@ struct ProcessSupervisor {
 
 // Creates a new ProcessSupervisor
 fn new_supervisor(
-    command: string,
-    args: string[],
-    cwd: string,
-    env: HashMap<string, string>,
-    max_restarts: number,
-    restart_window_seconds: number,
-    graceful_shutdown_ms: number
-) -> ProcessSupervisor {
+    own command: string,
+    own args: string[],
+    own cwd: string,
+    own env: HashMap<string, string>,
+    own max_restarts: number,
+    own restart_window_seconds: number,
+    own graceful_shutdown_ms: number) -> ProcessSupervisor {
     return ProcessSupervisor {
         command: command,
         args: args,
@@ -170,7 +169,7 @@ impl Supervisor for ProcessSupervisor {
 }
 
 // Creates a SupervisorStatus snapshot
-fn supervisor_status(borrow sup: ProcessSupervisor) -> SupervisorStatus {
+fn supervisor_status(own sup: ProcessSupervisor) -> SupervisorStatus {
     return SupervisorStatus {
         state: sup.current_state,
         pid: sup.current_pid,

@@ -5,7 +5,7 @@ fn STATE_STOPPED() -> number { return 0; }
 fn STATE_RUNNING() -> number { return 2; }
 fn STATE_FAILED() -> number { return 4; }
 
-fn state_name(state: number) -> string {
+fn state_name(borrow state: number) -> string {
     if (state == 0) { return "STOPPED"; }
     if (state == 2) { return "RUNNING"; }
     if (state == 4) { return "FAILED"; }
@@ -13,7 +13,7 @@ fn state_name(state: number) -> string {
 }
 
 // Create supervisor
-export fn new_supervisor(command: string) -> object {
+export fn new_supervisor(borrow command: string) -> object {
     let sup: object = {
         state: 0,
         command: command,
@@ -23,7 +23,7 @@ export fn new_supervisor(command: string) -> object {
 }
 
 // Start process
-export fn start_process(supervisor: object, command: string) -> Result<object, string> {
+export fn start_process(borrow supervisor: object, borrow command: string) -> Result<object, string> {
     print("[Supervisor] Starting: " + command);
 
     // Try to execute
@@ -52,12 +52,12 @@ export fn start_process(supervisor: object, command: string) -> Result<object, s
 }
 
 // Get state
-export fn get_state(supervisor: object) -> number {
+export fn get_state(borrow supervisor: object) -> number {
     return supervisor["state"];
 }
 
 // Get state name
-export fn get_state_name(supervisor: object) -> string {
+export fn get_state_name(borrow supervisor: object) -> string {
     let s: number = supervisor["state"];
     return state_name(s);
 }

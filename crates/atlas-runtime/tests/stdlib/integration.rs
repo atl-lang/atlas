@@ -23,7 +23,7 @@ use super::*;
 #[test]
 fn test_split_map_join_pipeline() {
     let code = r#"
-        fn toUpper(s: string) -> string {
+        fn toUpper(borrow s: string) -> string {
             return to_upper_case(s);
         }
 
@@ -38,7 +38,7 @@ fn test_split_map_join_pipeline() {
 #[test]
 fn test_split_filter_length() {
     let code = r#"
-        fn isLong(s: string) -> bool {
+        fn isLong(borrow s: string) -> bool {
             return len(s) > 3;
         }
 
@@ -52,7 +52,7 @@ fn test_split_filter_length() {
 #[test]
 fn test_string_trim_split_trim_each() {
     let code = r#"
-        fn trimWord(s: string) -> string {
+        fn trimWord(borrow s: string) -> string {
             return trim(s);
         }
 
@@ -78,7 +78,7 @@ fn test_split_reverse_join() {
 #[test]
 fn test_substring_map_concat() {
     let code = r#"
-        fn first3(s: string) -> string {
+        fn first3(borrow s: string) -> string {
             return substring(s, 0, 3);
         }
 
@@ -92,7 +92,7 @@ fn test_substring_map_concat() {
 #[test]
 fn test_index_of_filter_slice() {
     let code = r#"
-        fn hasA(s: string) -> bool {
+        fn hasA(borrow s: string) -> bool {
             return is_some(index_of(s, "a"));
         }
 
@@ -107,7 +107,7 @@ fn test_index_of_filter_slice() {
 #[test]
 fn test_replace_all_in_array() {
     let code = r#"
-        fn removeDashes(s: string) -> string {
+        fn removeDashes(borrow s: string) -> string {
             return replace(s, "-", "");
         }
 
@@ -121,7 +121,7 @@ fn test_replace_all_in_array() {
 #[test]
 fn test_pad_start_alignment() {
     let code = r#"
-        fn pad5(s: string) -> string {
+        fn pad5(borrow s: string) -> string {
             return pad_start(s, 5, " ");
         }
 
@@ -135,7 +135,7 @@ fn test_pad_start_alignment() {
 #[test]
 fn test_split_flatten_join() {
     let code = r#"
-        fn splitLine(line: string) -> string[] {
+        fn splitLine(borrow line: string) -> string[] {
             return split(line, ",");
         }
 
@@ -150,7 +150,7 @@ fn test_split_flatten_join() {
 #[test]
 fn test_starts_with_filter_count() {
     let code = r#"
-        fn starts_withHttp(url: string) -> bool {
+        fn starts_withHttp(borrow url: string) -> bool {
             return starts_with(url, "http");
         }
 
@@ -173,11 +173,11 @@ fn test_starts_with_filter_count() {
 #[test]
 fn test_map_numbers_sum_with_reduce() {
     let code = r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
 
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -191,11 +191,11 @@ fn test_map_numbers_sum_with_reduce() {
 #[test]
 fn test_filter_positive_then_sum() {
     let code = r#"
-        fn isPositive(x: number) -> bool {
+        fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
 
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -219,11 +219,11 @@ fn test_abs_map_max() {
 #[test]
 fn test_sqrt_map_floor() {
     let code = r#"
-        fn sqrtFloor(x: number) -> number {
+        fn sqrtFloor(borrow x: number) -> number {
             return floor(unwrap(sqrt(x)));
         }
 
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -237,11 +237,11 @@ fn test_sqrt_map_floor() {
 #[test]
 fn test_clamp_map_range() {
     let code = r#"
-        fn clampTo10(n: number) -> number {
+        fn clampTo10(borrow n: number) -> number {
             return unwrap(clamp(n, 0, 10));
         }
 
-        fn numToStr(n: number) -> string {
+        fn numToStr(borrow n: number) -> string {
             return toString(n);
         }
 
@@ -255,11 +255,11 @@ fn test_clamp_map_range() {
 #[test]
 fn test_pow_reduce_product() {
     let code = r#"
-        fn square(x: number) -> number {
+        fn square(borrow x: number) -> number {
             return pow(x, 2);
         }
 
-        fn multiply(a: number, b: number) -> number {
+        fn multiply(borrow a: number, borrow b: number) -> number {
             return a * b;
         }
 
@@ -284,7 +284,7 @@ fn test_min_max_range() {
 #[test]
 fn test_round_map_average() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -299,11 +299,11 @@ fn test_round_map_average() {
 #[test]
 fn test_sign_filter_sort() {
     let code = r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
 
-        fn numToStr(x: number) -> string {
+        fn numToStr(borrow x: number) -> string {
             return toString(x);
         }
 
@@ -505,11 +505,11 @@ fn test_csv_to_json_transformation() {
 #[test]
 fn test_log_analysis_pipeline() {
     let code = r#"
-        fn hasError(line: string) -> bool {
+        fn hasError(borrow line: string) -> bool {
             return includes(line, "ERROR");
         }
 
-        fn extractTimestamp(line: string) -> string {
+        fn extractTimestamp(borrow line: string) -> string {
             return substring(line, 0, 10);
         }
 
@@ -529,7 +529,7 @@ fn test_log_analysis_pipeline() {
 #[test]
 fn test_data_normalization_pipeline() {
     let code = r#"
-        fn normalize(s: string) -> string {
+        fn normalize(borrow s: string) -> string {
             let trimmed: string = trim(s);
             let lower: string = to_lower_case(trimmed);
             return lower;
@@ -545,11 +545,11 @@ fn test_data_normalization_pipeline() {
 #[test]
 fn test_validation_and_transformation() {
     let code = r#"
-        fn isValidEmail(email: string) -> bool {
+        fn isValidEmail(borrow email: string) -> bool {
             return includes(email, "@") && includes(email, ".");
         }
 
-        fn extractDomain(email: string) -> string {
+        fn extractDomain(borrow email: string) -> string {
             let atIdx = index_of(email, "@");
             if (is_none(atIdx)) {
                 return "";
@@ -574,7 +574,7 @@ fn test_validation_and_transformation() {
 #[test]
 fn test_statistical_pipeline() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -585,7 +585,7 @@ fn test_statistical_pipeline() {
         let mean: number = sum / len(data);
 
         // Count values above mean
-        fn aboveMean(x: number) -> bool {
+        fn aboveMean(borrow x: number) -> bool {
             return x > mean;
         }
         let aboveCount: number[] = filter(data, aboveMean);
@@ -598,7 +598,7 @@ fn test_statistical_pipeline() {
 #[test]
 fn test_text_formatting_pipeline() {
     let code = r#"
-        fn titleCase(word: string) -> string {
+        fn titleCase(borrow word: string) -> string {
             if (len(word) == 0) {
                 return word;
             }
@@ -619,7 +619,7 @@ fn test_text_formatting_pipeline() {
 fn test_deduplication_pipeline() {
     let code = r#"
         // Manual deduplication since we don't have Set yet
-        fn notInList(items: string[], item: string) -> bool {
+        fn notInList(borrow items: string[], borrow item: string) -> bool {
             return !array_includes(items, item);
         }
 
@@ -693,7 +693,7 @@ fn test_markdown_to_text_pipeline() {
 #[test]
 fn test_score_calculation_pipeline() {
     let code = r#"
-        fn calculateGrade(score: number) -> string {
+        fn calculateGrade(borrow score: number) -> string {
             if (score >= 90) {
                 return "A";
             }
@@ -744,7 +744,7 @@ fn test_concat_strings_then_split() {
 #[test]
 fn test_filter_strings_by_length_then_join() {
     let code = r#"
-        fn isShort(s: string) -> bool {
+        fn isShort(borrow s: string) -> bool {
             return len(s) <= 3;
         }
 
@@ -758,7 +758,7 @@ fn test_filter_strings_by_length_then_join() {
 #[test]
 fn test_map_substring_all() {
     let code = r#"
-        fn firstThree(s: string) -> string {
+        fn firstThree(borrow s: string) -> string {
             if (len(s) < 3) {
                 return s;
             }
@@ -785,7 +785,7 @@ fn test_array_includes_string_check() {
 #[test]
 fn test_reverse_strings_then_concat() {
     let code = r#"
-        fn reverseString(s: string) -> string {
+        fn reverseString(borrow s: string) -> string {
             let chars: string[] = split(s, "");
             let rev: string[] = reverse(chars);
             return join(rev, "");
@@ -821,7 +821,7 @@ fn test_repeat_then_split_count() {
 #[test]
 fn test_trim_all_in_array() {
     let code = r#"
-        fn trimStr(s: string) -> string {
+        fn trimStr(borrow s: string) -> string {
             return trim(s);
         }
 
@@ -835,7 +835,7 @@ fn test_trim_all_in_array() {
 #[test]
 fn test_char_at_map() {
     let code = r#"
-        fn firstChar(s: string) -> string {
+        fn firstChar(borrow s: string) -> string {
             return unwrap(char_at(s, 0));
         }
 
@@ -849,10 +849,10 @@ fn test_char_at_map() {
 #[test]
 fn test_to_upper_to_lower_pipeline() {
     let code = r#"
-        fn upper(s: string) -> string {
+        fn upper(borrow s: string) -> string {
             return to_upper_case(s);
         }
-        fn lower(s: string) -> string {
+        fn lower(borrow s: string) -> string {
             return to_lower_case(s);
         }
 
@@ -867,7 +867,7 @@ fn test_to_upper_to_lower_pipeline() {
 #[test]
 fn test_ends_with_filter() {
     let code = r#"
-        fn ends_withIng(s: string) -> bool {
+        fn ends_withIng(borrow s: string) -> bool {
             return ends_with(s, "ing");
         }
 
@@ -881,7 +881,7 @@ fn test_ends_with_filter() {
 #[test]
 fn test_index_of_map_to_numbers() {
     let code = r#"
-        fn findComma(s: string) -> number {
+        fn findComma(borrow s: string) -> number {
             return unwrap_or(index_of(s, ","), -1);
         }
 
@@ -904,7 +904,7 @@ fn test_last_index_of_in_array() {
 #[test]
 fn test_replace_map_all_strings() {
     let code = r#"
-        fn removeDash(s: string) -> string {
+        fn removeDash(borrow s: string) -> string {
             return replace(s, "-", "");
         }
 
@@ -918,7 +918,7 @@ fn test_replace_map_all_strings() {
 #[test]
 fn test_pad_end_alignment() {
     let code = r#"
-        fn padTo10(s: string) -> string {
+        fn padTo10(borrow s: string) -> string {
             return pad_end(s, 10, ".");
         }
 
@@ -932,7 +932,7 @@ fn test_pad_end_alignment() {
 #[test]
 fn test_starts_with_then_count() {
     let code = r#"
-        fn starts_withA(s: string) -> bool {
+        fn starts_withA(borrow s: string) -> bool {
             return starts_with(s, "A");
         }
 
@@ -956,7 +956,7 @@ fn test_flatten_then_join_strings() {
 #[test]
 fn test_array_concat_then_filter() {
     let code = r#"
-        fn isLong(s: string) -> bool {
+        fn isLong(borrow s: string) -> bool {
             return len(s) > 3;
         }
 
@@ -972,7 +972,7 @@ fn test_array_concat_then_filter() {
 #[test]
 fn test_reduce_string_concatenation() {
     let code = r#"
-        fn concatFn(acc: string, s: string) -> string {
+        fn concatFn(borrow acc: string, borrow s: string) -> string {
             return acc + s + "-";
         }
 
@@ -990,7 +990,7 @@ fn test_reduce_string_concatenation() {
 #[test]
 fn test_sum_reduce_with_initial() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -1004,7 +1004,7 @@ fn test_sum_reduce_with_initial() {
 #[test]
 fn test_product_reduce() {
     let code = r#"
-        fn multiply(a: number, b: number) -> number {
+        fn multiply(borrow a: number, borrow b: number) -> number {
             return a * b;
         }
 
@@ -1018,10 +1018,10 @@ fn test_product_reduce() {
 #[test]
 fn test_ceil_floor_pipeline() {
     let code = r#"
-        fn ceilNum(n: number) -> number {
+        fn ceilNum(borrow n: number) -> number {
             return ceil(n);
         }
-        fn floorNum(n: number) -> number {
+        fn floorNum(borrow n: number) -> number {
             return floor(n);
         }
 
@@ -1036,10 +1036,10 @@ fn test_ceil_floor_pipeline() {
 #[test]
 fn test_abs_negative_sum() {
     let code = r#"
-        fn absVal(n: number) -> number {
+        fn absVal(borrow n: number) -> number {
             return abs(n);
         }
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -1054,10 +1054,10 @@ fn test_abs_negative_sum() {
 #[test]
 fn test_filter_even_then_square() {
     let code = r#"
-        fn isEven(n: number) -> bool {
+        fn isEven(borrow n: number) -> bool {
             return (n % 2) == 0;
         }
-        fn square(n: number) -> number {
+        fn square(borrow n: number) -> number {
             return pow(n, 2);
         }
 
@@ -1072,7 +1072,7 @@ fn test_filter_even_then_square() {
 #[test]
 fn test_min_of_array_manual() {
     let code = r#"
-        fn minimum(a: number, b: number) -> number {
+        fn minimum(borrow a: number, borrow b: number) -> number {
             return min(a, b);
         }
 
@@ -1086,7 +1086,7 @@ fn test_min_of_array_manual() {
 #[test]
 fn test_max_of_array_manual() {
     let code = r#"
-        fn maximum(a: number, b: number) -> number {
+        fn maximum(borrow a: number, borrow b: number) -> number {
             return max(a, b);
         }
 
@@ -1100,10 +1100,10 @@ fn test_max_of_array_manual() {
 #[test]
 fn test_sqrt_then_round() {
     let code = r#"
-        fn sqrtNum(n: number) -> number {
+        fn sqrtNum(borrow n: number) -> number {
             return unwrap(sqrt(n));
         }
-        fn roundNum(n: number) -> number {
+        fn roundNum(borrow n: number) -> number {
             return round(n);
         }
 
@@ -1118,7 +1118,7 @@ fn test_sqrt_then_round() {
 #[test]
 fn test_sign_map_to_direction() {
     let code = r#"
-        fn getSign(n: number) -> number {
+        fn getSign(borrow n: number) -> number {
             return sign(n);
         }
 
@@ -1132,7 +1132,7 @@ fn test_sign_map_to_direction() {
 #[test]
 fn test_clamp_array_values() {
     let code = r#"
-        fn clampTo10(n: number) -> number {
+        fn clampTo10(borrow n: number) -> number {
             return unwrap(clamp(n, 0, 10));
         }
 
@@ -1146,7 +1146,7 @@ fn test_clamp_array_values() {
 #[test]
 fn test_filter_positive_count() {
     let code = r#"
-        fn isPositive(n: number) -> bool {
+        fn isPositive(borrow n: number) -> bool {
             return n > 0;
         }
 
@@ -1160,7 +1160,7 @@ fn test_filter_positive_count() {
 #[test]
 fn test_sort_then_first_last() {
     let code = r#"
-        fn compare(a: number, b: number) -> number {
+        fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
 
@@ -1174,7 +1174,7 @@ fn test_sort_then_first_last() {
 #[test]
 fn test_pow_map_exponents() {
     let code = r#"
-        fn cube(n: number) -> number {
+        fn cube(borrow n: number) -> number {
             return pow(n, 3);
         }
 
@@ -1188,10 +1188,10 @@ fn test_pow_map_exponents() {
 #[test]
 fn test_log_then_floor() {
     let code = r#"
-        fn logNum(n: number) -> number {
+        fn logNum(borrow n: number) -> number {
             return unwrap(log(n));
         }
-        fn floorNum(n: number) -> number {
+        fn floorNum(borrow n: number) -> number {
             return floor(n);
         }
 
@@ -1206,10 +1206,10 @@ fn test_log_then_floor() {
 #[test]
 fn test_filter_range_then_average() {
     let code = r#"
-        fn inRange(n: number) -> bool {
+        fn inRange(borrow n: number) -> bool {
             return n >= 10 && n <= 50;
         }
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -1225,7 +1225,7 @@ fn test_filter_range_then_average() {
 #[test]
 fn test_map_modulo_patterns() {
     let code = r#"
-        fn mod3(n: number) -> number {
+        fn mod3(borrow n: number) -> number {
             return n % 3;
         }
 
@@ -1239,7 +1239,7 @@ fn test_map_modulo_patterns() {
 #[test]
 fn test_concat_numeric_arrays() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -1255,7 +1255,7 @@ fn test_concat_numeric_arrays() {
 #[test]
 fn test_slice_then_sum() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
 
@@ -1280,7 +1280,7 @@ fn test_reverse_numeric_array() {
 #[test]
 fn test_find_first_match() {
     let code = r#"
-        fn greaterThan10(n: number) -> bool {
+        fn greaterThan10(borrow n: number) -> bool {
             return n > 10;
         }
 
@@ -1323,7 +1323,7 @@ fn test_typeof_individual_values() {
 #[test]
 fn test_type_check_numbers_only() {
     let code = r#"
-        fn isNum(val: number) -> bool {
+        fn isNum(borrow val: number) -> bool {
             return is_number(val);
         }
 
@@ -1339,7 +1339,7 @@ fn test_type_check_numbers_only() {
 #[test]
 fn test_type_check_strings_only() {
     let code = r#"
-        fn isStr(val: string) -> bool {
+        fn isStr(borrow val: string) -> bool {
             return is_string(val);
         }
 
@@ -1364,7 +1364,7 @@ fn test_json_object_to_json_string() {
 #[test]
 fn test_is_valid_json_with_map() {
     let code = r#"
-        fn checkValid(s: string) -> bool {
+        fn checkValid(borrow s: string) -> bool {
             return is_valid_json(s);
         }
 
@@ -1389,7 +1389,7 @@ fn test_parse_json_numbers_sum() {
 #[test]
 fn test_to_string_numbers() {
     let code = r#"
-        fn stringify(val: number) -> string {
+        fn stringify(borrow val: number) -> string {
             return toString(val);
         }
 
@@ -1403,7 +1403,7 @@ fn test_to_string_numbers() {
 #[test]
 fn test_to_number_parse_strings() {
     let code = r#"
-        fn toNum(s: string) -> number {
+        fn toNum(borrow s: string) -> number {
             return to_number(s)?;
         }
 
@@ -1530,7 +1530,7 @@ fn test_parse_json_nested_array() {
 #[test]
 fn test_json_roundtrip_with_extraction() {
     let code = r#"
-        fn isPositive(n: number) -> bool {
+        fn isPositive(borrow n: number) -> bool {
             return n > 0;
         }
 
@@ -1637,7 +1637,7 @@ fn test_json_array_to_file_lines() {
     let (_temp, path) = temp_file_path("test_json6.txt");
     let code = format!(
         r#"
-        fn toNum(s: string) -> number {{
+        fn toNum(borrow s: string) -> number {{
             return to_number(s)?;
         }}
 

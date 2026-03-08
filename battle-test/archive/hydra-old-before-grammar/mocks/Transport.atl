@@ -5,12 +5,12 @@ export fn new_transport() -> json {
     return { reads: [], writes: [] };
 }
 
-export fn push_read(transport: json, payload: string) -> json {
+export fn push_read(borrow transport: json, borrow payload: string) -> json {
     let reads = transport["reads"].is_null() ? [] : transport["reads"];
     return { reads: reads + [payload], writes: transport["writes"] };
 }
 
-export fn read(transport: json) -> array {
+export fn read(borrow transport: json) -> array {
     let reads = transport["reads"].is_null() ? [] : transport["reads"];
     if (len(reads) == 0) { return ["", transport]; }
     let payload = reads[0].as_string();
@@ -24,13 +24,13 @@ export fn read(transport: json) -> array {
     return [payload, updated];
 }
 
-export fn write(transport: json, payload: string) -> json {
+export fn write(borrow transport: json, borrow payload: string) -> json {
     let writes = transport["writes"].is_null() ? [] : transport["writes"];
     return { reads: transport["reads"], writes: writes + [payload] };
 }
 
-export fn detect_protocol(transport: json) -> string {
+export fn detect_protocol(borrow transport: json) -> string {
     return "unknown";
 }
 
-export fn close_transport(transport: json) -> json { return transport; }
+export fn close_transport(borrow transport: json) -> json { return transport; }

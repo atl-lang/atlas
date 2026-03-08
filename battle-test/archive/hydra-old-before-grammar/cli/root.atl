@@ -19,7 +19,7 @@ import { cmd_tune } from "./tune";
 import { cmd_uninit } from "./uninit";
 import { cmd_validate } from "./validate";
 
-export fn execute_args(args: json) -> Result<json, string> {
+export fn execute_args(borrow args: json) -> Result<json, string> {
     if (args["command"].is_null()) { return Err("command is required"); }
     let cmd = args["command"].as_string();
 

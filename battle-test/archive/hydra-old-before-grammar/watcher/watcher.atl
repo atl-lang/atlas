@@ -1,6 +1,6 @@
 // Watcher (Atlas port, simplified)
 
-export fn new_watcher(paths: array, ignore: array) -> Result<json, string> {
+export fn new_watcher(borrow paths: array, borrow ignore: array) -> Result<json, string> {
     let obj = { paths: paths, ignore: ignore, events: [] };
     let encoded = toJSON(obj);
     let parsed = parseJSON(encoded)?;
@@ -8,7 +8,7 @@ export fn new_watcher(paths: array, ignore: array) -> Result<json, string> {
 }
 
 // Add a synthetic event
-export fn push_event(watcher: json, path: string, kind: string) -> Result<json, string> {
+export fn push_event(borrow watcher: json, borrow path: string, borrow kind: string) -> Result<json, string> {
     let ev = { path: path, kind: kind };
     let events = watcher["events"] + [ev];
     let obj = { paths: watcher["paths"], ignore: watcher["ignore"], events: events };
@@ -17,6 +17,6 @@ export fn push_event(watcher: json, path: string, kind: string) -> Result<json, 
     return Ok(parsed);
 }
 
-export fn drain_events(watcher: json) -> Result<array, string> {
+export fn drain_events(borrow watcher: json) -> Result<array, string> {
     return Ok(watcher["events"]);
 }

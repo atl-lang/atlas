@@ -17,7 +17,7 @@ fn is_darwin() -> bool {
     return includes(os, "darwin") || includes(os, "mac");
 }
 
-export fn detect_client_config_path(client: string) -> Result<string, string> {
+export fn detect_client_config_path(borrow client: string) -> Result<string, string> {
     match client {
         "claude" => { return Ok(detect_claude_path()); },
         "cline" => { return Ok(detect_cline_path()); },

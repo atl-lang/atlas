@@ -19,10 +19,10 @@ struct ConsoleLogger {
 }
 
 trait LoggerTrait {
-    fn log(self: LoggerTrait, level: LogLevel, message: string, context: HashMap<string, string>) -> LoggerTrait;
+    fn log(borrow self: LoggerTrait, borrow level: LogLevel, borrow message: string, borrow context: HashMap<string, string>) -> LoggerTrait;
 }
 
-fn level_rank(level: LogLevel) -> number {
+fn level_rank(borrow level: LogLevel) -> number {
     return match level {
         LogLevel::Debug => 10,
         LogLevel::Info => 20,
@@ -31,7 +31,7 @@ fn level_rank(level: LogLevel) -> number {
     };
 }
 
-fn level_label(level: LogLevel) -> string {
+fn level_label(borrow level: LogLevel) -> string {
     return match level {
         LogLevel::Debug => "DEBUG",
         LogLevel::Info => "INFO",
@@ -41,7 +41,7 @@ fn level_label(level: LogLevel) -> string {
 }
 
 impl LoggerTrait for ConsoleLogger {
-    fn log(self: ConsoleLogger, level: LogLevel, message: string, context: HashMap<string, string>) -> ConsoleLogger {
+    fn log(borrow self: ConsoleLogger, borrow level: LogLevel, borrow message: string, borrow context: HashMap<string, string>) -> ConsoleLogger {
         if (level_rank(level) < level_rank(self.min_level)) {
             return self;
         }
@@ -62,17 +62,16 @@ impl LoggerTrait for ConsoleLogger {
     }
 }
 
-export fn new_logger(min_level: string) -> { min_level: string, history: string[] } {
+export fn new_logger(borrow min_level: string) -> { min_level: string, history: string[] } {
     let mut history: string[] = [];
     return record { min_level: min_level, history: history };
 }
 
 export fn logger_log(
-    logger: { min_level: string, history: string[] },
-    level: string,
-    message: string,
-    context: HashMap<string, string>
-) -> { min_level: string, history: string[] } {
+    borrow logger: { min_level: string, borrow history: string[] },
+    borrow level: string,
+    borrow message: string,
+    borrow context: HashMap<string, string>) -> { min_level: string, history: string[] } {
     let entry = now_iso() + " " + level + " " + message;
     let mut history = logger.history + [entry];
     let mut ctx_items: string[] = [];

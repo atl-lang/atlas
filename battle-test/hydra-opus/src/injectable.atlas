@@ -118,10 +118,9 @@ fn has_collision(borrow tool_name: string, borrow existing_tools: string[]) -> b
 
 // Merge hydra tools with existing tools based on collision policy
 fn merge_tools(
-    hydra_tools: ToolDefinition[],
-    existing_tool_names: string[],
-    policy: string
-) -> Result<ToolDefinition[], string> {
+    borrow hydra_tools: ToolDefinition[],
+    borrow existing_tool_names: string[],
+    borrow policy: string) -> Result<ToolDefinition[], string> {
     let result: ToolDefinition[] = [];
 
     for i in 0..len(hydra_tools) {

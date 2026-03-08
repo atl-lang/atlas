@@ -13,9 +13,9 @@ struct MetricsSnapshot {
 
 trait MetricsCollector {
     fn snapshot(self) -> MetricsSnapshot;
-    fn record_message(self, direction: string) -> string;
-    fn record_restart(self, reason: string) -> string;
-    fn record_error(self, error: string) -> string;
+    fn record_message(self, borrow direction: string) -> string;
+    fn record_restart(self, borrow reason: string) -> string;
+    fn record_error(self, borrow error: string) -> string;
 }
 
 struct DefaultMetricsCollector {
@@ -39,15 +39,15 @@ impl MetricsCollector for DefaultMetricsCollector {
         };
     }
 
-    fn record_message(self, direction: string) -> string {
+    fn record_message(self, borrow direction: string) -> string {
         return "recorded";
     }
 
-    fn record_restart(self, reason: string) -> string {
+    fn record_restart(self, borrow reason: string) -> string {
         return "restart recorded";
     }
 
-    fn record_error(self, error: string) -> string {
+    fn record_error(self, borrow error: string) -> string {
         return "error recorded";
     }
 }

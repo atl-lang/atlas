@@ -151,31 +151,31 @@ fn test_array_basic_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::map(
-    "fn double(x: number) -> number { return x * 2; } map([1, 2, 3], double)[0]",
+    "fn double(borrow x: number) -> number { return x * 2; } map([1, 2, 3], double)[0]",
     "2"
 )]
 #[case::filter(
-    "fn isEven(x: number) -> bool { return x % 2 == 0; } filter([1, 2, 3, 4], isEven)[0]",
+    "fn isEven(borrow x: number) -> bool { return x % 2 == 0; } filter([1, 2, 3, 4], isEven)[0]",
     "2"
 )]
 #[case::reduce(
-    "fn sum(a: number, b: number) -> number { return a + b; } reduce([1, 2, 3], sum, 0)",
+    "fn sum(borrow a: number, borrow b: number) -> number { return a + b; } reduce([1, 2, 3], sum, 0)",
     "6"
 )]
 #[case::every_true(
-    "fn isPositive(x: number) -> bool { return x > 0; } every([1, 2, 3], isPositive)",
+    "fn isPositive(borrow x: number) -> bool { return x > 0; } every([1, 2, 3], isPositive)",
     "true"
 )]
 #[case::every_false(
-    "fn isPositive(x: number) -> bool { return x > 0; } every([1, -2, 3], isPositive)",
+    "fn isPositive(borrow x: number) -> bool { return x > 0; } every([1, -2, 3], isPositive)",
     "false"
 )]
 #[case::some_true(
-    "fn isNegative(x: number) -> bool { return x < 0; } some([1, -2, 3], isNegative)",
+    "fn isNegative(borrow x: number) -> bool { return x < 0; } some([1, -2, 3], isNegative)",
     "true"
 )]
 #[case::some_false(
-    "fn isNegative(x: number) -> bool { return x < 0; } some([1, 2, 3], isNegative)",
+    "fn isNegative(borrow x: number) -> bool { return x < 0; } some([1, 2, 3], isNegative)",
     "false"
 )]
 fn test_array_higher_order_parity(#[case] code: &str, #[case] expected: &str) {

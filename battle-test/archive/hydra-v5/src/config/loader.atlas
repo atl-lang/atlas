@@ -3,9 +3,9 @@
 
 // ConfigLoader loads and merges configuration from multiple sources
 trait ConfigLoader {
-    fn load_registry(self, path: string) -> Result<Registry, string>;
-    fn load_local_override(self, path: string) -> Result<ServerConfig, string>;
-    fn merge(self, registry: Registry, local: ServerConfig) -> ServerConfig;
+    fn load_registry(self, borrow path: string) -> Result<Registry, string>;
+    fn load_local_override(self, borrow path: string) -> Result<ServerConfig, string>;
+    fn merge(self, borrow registry: Registry, borrow local: ServerConfig) -> ServerConfig;
 }
 
 struct FileConfigLoader {
@@ -14,24 +14,24 @@ struct FileConfigLoader {
 }
 
 impl ConfigLoader for FileConfigLoader {
-    fn load_registry(self, path: string) -> Result<Registry, string> {
+    fn load_registry(self, borrow path: string) -> Result<Registry, string> {
         // FRICTION: No file I/O API in Atlas
         return Err("file read not implemented");
     }
 
-    fn load_local_override(self, path: string) -> Result<ServerConfig, string> {
+    fn load_local_override(self, borrow path: string) -> Result<ServerConfig, string> {
         // FRICTION: No file I/O API in Atlas
         return Err("file read not implemented");
     }
 
-    fn merge(self, registry: Registry, local: ServerConfig) -> ServerConfig {
+    fn merge(self, borrow registry: Registry, borrow local: ServerConfig) -> ServerConfig {
         // Simple merge: local overrides registry
         let merged = local;
         return merged;
     }
 }
 
-fn new_file_config_loader(home_dir: string, cwd: string) -> FileConfigLoader {
+fn new_file_config_loader(borrow home_dir: string, borrow cwd: string) -> FileConfigLoader {
     return FileConfigLoader {
         home_dir: home_dir,
         cwd: cwd,

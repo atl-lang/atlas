@@ -2,11 +2,10 @@ import { now_iso } from "../common/time";
 import { ends_with } from "../common/strings";
 
 export fn state_save(
-    state_dir: string,
-    server_name: string,
-    pid: number,
-    metrics_snapshot: json
-) -> Result<null, string> {
+    borrow state_dir: string,
+    borrow server_name: string,
+    borrow pid: number,
+    borrow metrics_snapshot: json) -> Result<null, string> {
     let _mkdir = create_dir(state_dir);
     let payload = record {
         server_name: server_name,
@@ -21,7 +20,7 @@ export fn state_save(
     return write_file(path, text);
 }
 
-export fn state_load(state_dir: string, server_name: string) -> Result<json, string> {
+export fn state_load(borrow state_dir: string, borrow server_name: string) -> Result<json, string> {
     let path = path_join([state_dir, server_name + ".json"]);
     let contents = read_file(path);
     match contents {
@@ -30,7 +29,7 @@ export fn state_load(state_dir: string, server_name: string) -> Result<json, str
     };
 }
 
-export fn state_delete(state_dir: string, server_name: string) -> Result<null, string> {
+export fn state_delete(borrow state_dir: string, borrow server_name: string) -> Result<null, string> {
     let path = path_join([state_dir, server_name + ".json"]);
     if (!file_exists(path)) {
         return Ok(null);
@@ -38,7 +37,7 @@ export fn state_delete(state_dir: string, server_name: string) -> Result<null, s
     return remove_file(path);
 }
 
-export fn state_list_all(state_dir: string) -> Result<json[], string> {
+export fn state_list_all(borrow state_dir: string) -> Result<json[], string> {
     let _mkdir = create_dir(state_dir);
     let entries_result = read_dir(state_dir);
     match entries_result {

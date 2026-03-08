@@ -67,7 +67,7 @@ fn test_at2013_is_warning_not_error() {
     // We verify the warning fires but the program is not rejected
     let diags = typecheck_source(
         "
-        fn take_user(x: number) -> void { }
+        fn take_user(borrow x: number) -> void { }
         take_user(42);
     ",
     );

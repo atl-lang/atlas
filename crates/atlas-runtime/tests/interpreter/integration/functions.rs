@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn test_function_definition_and_call() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         add(3, 4)
@@ -14,7 +14,7 @@ fn test_function_definition_and_call() {
 #[test]
 fn test_function_with_local_return() {
     let code = r#"
-        fn foo(x: number) -> number {
+        fn foo(borrow x: number) -> number {
             let y: number = x + 1;
             return y;
         }
@@ -26,7 +26,7 @@ fn test_function_with_local_return() {
 #[test]
 fn test_function_with_early_return() {
     let code = r#"
-        fn myAbs(x: number) -> number {
+        fn myAbs(borrow x: number) -> number {
             if (x < 0) {
                 return -x;
             }
@@ -40,7 +40,7 @@ fn test_function_with_early_return() {
 #[test]
 fn test_function_recursion() {
     let code = r#"
-        fn factorial(n: number) -> number {
+        fn factorial(borrow n: number) -> number {
             if (n <= 1) {
                 return 1;
             }
@@ -54,7 +54,7 @@ fn test_function_recursion() {
 #[test]
 fn test_function_with_local_variables() {
     let code = r#"
-        fn compute(x: number) -> number {
+        fn compute(borrow x: number) -> number {
             let a: number = x + 1;
             let b: number = a * 2;
             return b - 1;
@@ -67,13 +67,13 @@ fn test_function_with_local_variables() {
 #[test]
 fn test_function_nested_calls() {
     let code = r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
-        fn multiply(x: number, y: number) -> number {
+        fn multiply(borrow x: number, borrow y: number) -> number {
             return x * y;
         }
-        fn compute(n: number) -> number {
+        fn compute(borrow n: number) -> number {
             return add(multiply(n, 2), 5);
         }
         compute(3)
@@ -83,11 +83,11 @@ fn test_function_nested_calls() {
 
 #[rstest]
 #[case(
-    "fn add(a: number, b: number) -> number { return a + b; } add(5)",
+    "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(5)",
     "AT3005"
 )]
 #[case(
-    "fn add(a: number, b: number) -> number { return a + b; } add(1, 2, 3)",
+    "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(1, 2, 3)",
     "AT3005"
 )]
 fn test_function_wrong_arity(#[case] code: &str, #[case] error_code: &str) {
@@ -98,7 +98,7 @@ fn test_function_wrong_arity(#[case] code: &str, #[case] error_code: &str) {
 fn test_function_void_return() {
     let code = r#"
         let mut result: number = 0;
-        fn set_result(x: number) -> void {
+        fn set_result(borrow x: number) -> void {
             result = x;
         }
         set_result(42);
@@ -121,7 +121,7 @@ fn test_function_no_parameters() {
 #[test]
 fn test_function_multiple_parameters() {
     let code = r#"
-        fn sum_four(a: number, b: number, c: number, d: number) -> number {
+        fn sum_four(borrow a: number, borrow b: number, borrow c: number, borrow d: number) -> number {
             return a + b + c + d;
         }
         sum_four(1, 2, 3, 4)
@@ -132,7 +132,7 @@ fn test_function_multiple_parameters() {
 #[test]
 fn test_function_call_stack_depth() {
     let code = r#"
-        fn count_down(n: number) -> number {
+        fn count_down(borrow n: number) -> number {
             if (n <= 0) {
                 return 0;
             }
@@ -160,13 +160,13 @@ fn test_function_local_variable_isolation() {
 #[test]
 fn test_function_mutually_recursive() {
     let code = r#"
-        fn is_even(n: number) -> bool {
+        fn is_even(borrow n: number) -> bool {
             if (n == 0) {
                 return true;
             }
             return is_odd(n - 1);
         }
-        fn is_odd(n: number) -> bool {
+        fn is_odd(borrow n: number) -> bool {
             if (n == 0) {
                 return false;
             }
@@ -180,7 +180,7 @@ fn test_function_mutually_recursive() {
 #[test]
 fn test_fibonacci() {
     let code = r#"
-        fn fib(n: number) -> number {
+        fn fib(borrow n: number) -> number {
             if (n <= 1) {
                 return n;
             }
@@ -194,7 +194,7 @@ fn test_fibonacci() {
 #[test]
 fn test_runtime_error_in_function_call() {
     let code = r#"
-        fn divide(a: number, b: number) -> number {
+        fn divide(borrow a: number, borrow b: number) -> number {
             return a / b;
         }
         divide(10, 0)

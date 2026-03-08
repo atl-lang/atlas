@@ -82,7 +82,7 @@ fn test_parity_boolean_logic() {
 fn test_complex_program_with_control_flow_interpreter() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
     let program = r#"
-        fn factorial(n: number) -> number {
+        fn factorial(borrow n: number) -> number {
             if (n <= 1) {
                 return 1;
             } else {
@@ -116,9 +116,9 @@ fn test_multiple_function_definitions_single_eval() {
     let result = runtime
         .eval(
             r#"
-            fn add(x: number, y: number) -> number { return x + y; }
-            fn sub(x: number, y: number) -> number { return x - y; }
-            fn mul(x: number, y: number) -> number { return x * y; }
+            fn add(borrow x: number, borrow y: number) -> number { return x + y; }
+            fn sub(borrow x: number, borrow y: number) -> number { return x - y; }
+            fn mul(borrow x: number, borrow y: number) -> number { return x * y; }
             add(10, sub(20, mul(2, 3)))
         "#,
         )

@@ -1,6 +1,6 @@
 // Transport Test v2 - Using correct Atlas syntax
 
-fn detect_protocol(data: string) -> number {
+fn detect_protocol(borrow data: string) -> number {
     if (len(data) >= 14) {
         let peek: string = substring(data, 0, 14);
         if (peek == "Content-Length") {
@@ -10,7 +10,7 @@ fn detect_protocol(data: string) -> number {
     return 1; // NDJSON
 }
 
-fn protocol_name(protocol: number) -> string {
+fn protocol_name(borrow protocol: number) -> string {
     if (protocol == 2) {
         return "LSP";
     }

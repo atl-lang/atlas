@@ -1,6 +1,6 @@
 // Discovery scanner (Atlas port, simplified)
 
-export fn scan_paths(paths: array) -> Result<array, string> {
+export fn scan_paths(borrow paths: array) -> Result<array, string> {
     let results = [];
     for p in paths {
         if (pathExists(p)) {

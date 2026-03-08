@@ -1,6 +1,6 @@
 // JSON-RPC helpers.
 
-export fn parse_jsonrpc(text: string) -> Result<json, string> {
+export fn parse_jsonrpc(borrow text: string) -> Result<json, string> {
     let parsed = parseJson(text);
     return match parsed {
         Ok(value) => Ok(value),
@@ -8,15 +8,15 @@ export fn parse_jsonrpc(text: string) -> Result<json, string> {
     };
 }
 
-export fn is_jsonrpc_request(msg: json) -> bool {
+export fn is_jsonrpc_request(borrow msg: json) -> bool {
     return jsonHas(msg, "method");
 }
 
-export fn is_jsonrpc_response(msg: json) -> bool {
+export fn is_jsonrpc_response(borrow msg: json) -> bool {
     return jsonHas(msg, "result") || jsonHas(msg, "error");
 }
 
-export fn build_error_response(id: json, code: number, message: string) -> json {
+export fn build_error_response(borrow id: json, borrow code: number, borrow message: string) -> json {
     let payload = record {
         jsonrpc: "2.0",
         id: id,
@@ -25,7 +25,7 @@ export fn build_error_response(id: json, code: number, message: string) -> json 
     return to_json(payload);
 }
 
-export fn build_log_message(level: string, message: string) -> json {
+export fn build_log_message(borrow level: string, borrow message: string) -> json {
     let payload = record {
         jsonrpc: "2.0",
         method: "$/log",

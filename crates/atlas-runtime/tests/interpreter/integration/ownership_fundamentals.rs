@@ -192,7 +192,7 @@ fn test_shared_value_to_own_param_advisory_not_error() {
 fn test_parity_unannotated_function_no_regression() {
     assert_ownership_parity(
         r#"
-        fn add(a: number, b: number) -> number { a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { a + b; }
         add(3, 4);
         "#,
     );

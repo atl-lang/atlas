@@ -65,7 +65,7 @@ fn test_block_scope() {
 fn test_function_scope() {
     let code = r#"
         let mut x: number = 10;
-        fn foo(x: number) -> number {
+        fn foo(borrow x: number) -> number {
             return x + 1;
         }
         foo(5)

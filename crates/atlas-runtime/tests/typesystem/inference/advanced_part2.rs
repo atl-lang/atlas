@@ -12,7 +12,7 @@ use super::helpers::*;
 fn test_unification_generic_type_arg_inferred() {
     let diags = typecheck_source(
         r#"
-        fn wrap<T>(x: T) -> T[] {
+        fn wrap<T>(borrow x: T) -> T[] {
             let _arr: T[] = [x];
             return _arr;
         }
@@ -39,7 +39,7 @@ fn test_unification_struct_member_types() {
     // Structural type accepted as function parameter
     let diags = typecheck_source(
         r#"
-        fn validate_point(_p: { x: number, y: number }) -> bool {
+        fn validate_point(borrow _p: { x: number, borrow y: number }) -> bool {
             return true;
         }
         "#,
@@ -63,7 +63,7 @@ fn test_unification_union_type_parameters() {
 fn test_unification_function_signature_match() {
     let diags = typecheck_source(
         r#"
-        fn apply_fn(f: (number) -> string, x: number) -> string {
+        fn apply_fn(borrow f: (number) -> string, x: number) -> string {
             return f(x);
         }
         "#,
@@ -75,7 +75,7 @@ fn test_unification_function_signature_match() {
 fn test_unification_generic_constraints_satisfied() {
     let diags = typecheck_source(
         r#"
-        fn max_val<T extends Comparable>(a: T, b: T) -> T {
+        fn max_val<T extends Comparable>(borrow a: T, borrow b: T) -> T {
             if (a > b) {
                 return a;
             }
@@ -108,7 +108,7 @@ fn test_constraint_delayed_solving_generic_call() {
     // Type parameters inferred lazily from call site
     let diags = typecheck_source(
         r#"
-        fn id<T>(x: T) -> T {
+        fn id<T>(borrow x: T) -> T {
             return x;
         }
         let _n: number = id(42);
@@ -134,7 +134,7 @@ fn test_constraint_function_return_constraint() {
 fn test_constraint_parameter_type_propagated() {
     let diags = typecheck_source(
         r#"
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
         let _r: number = double(5);
@@ -147,7 +147,7 @@ fn test_constraint_parameter_type_propagated() {
 fn test_constraint_multiple_parameters_inferred() {
     let diags = typecheck_source(
         r#"
-        fn pair<A, B>(a: A, b: B) -> A {
+        fn pair<A, B>(borrow a: A, borrow b: B) -> A {
             return a;
         }
         let _r = pair(1, "two");
@@ -165,7 +165,7 @@ fn test_cross_module_export_valid() {
     // A module with a valid export
     let diags = typecheck_source(
         r#"
-        export fn add(a: number, b: number) -> number {
+        export fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         "#,
@@ -213,7 +213,7 @@ fn test_cross_module_exported_variable() {
 fn test_cross_module_inferred_type_exported() {
     let diags = typecheck_source(
         r#"
-        export fn identity<T>(x: T) -> T {
+        export fn identity<T>(borrow x: T) -> T {
             return x;
         }
         "#,
@@ -252,7 +252,7 @@ fn test_heuristic_literal_inference() {
     // Number literal infers to number
     let diags = typecheck_source(
         r#"
-        fn expects_num(x: number) -> number { return x; }
+        fn expects_num(borrow x: number) -> number { return x; }
         let _r = expects_num(42);
         "#,
     );
@@ -264,7 +264,7 @@ fn test_heuristic_union_inferred_from_conditional() {
     // Union type inferred when condition returns different types
     let diags = typecheck_source(
         r#"
-        fn get_val(flag: bool) -> number | string {
+        fn get_val(borrow flag: bool) -> number | string {
             if (flag) {
                 return 42;
             }
@@ -279,7 +279,7 @@ fn test_heuristic_union_inferred_from_conditional() {
 fn test_heuristic_prefer_primitive_in_generic_context() {
     let diags = typecheck_source(
         r#"
-        fn id<T>(x: T) -> T {
+        fn id<T>(borrow x: T) -> T {
             return x;
         }
         let _v = id(99);
@@ -294,7 +294,7 @@ fn test_heuristic_minimize_vars_unknown_fallback() {
     // the type checker should infer it from the call site
     let diags = typecheck_source(
         r#"
-        fn wrap<T>(x: T) -> T {
+        fn wrap<T>(borrow x: T) -> T {
             return x;
         }
         let _r = wrap(true);

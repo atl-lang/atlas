@@ -105,7 +105,7 @@ fn test_assert_not_equal_failure() {
 fn test_assert_ok_in_atlas_code() {
     eval_ok(
         r#"
-        fn divide(a: number, b: number) -> Result<number, string> {
+        fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
             if (b == 0) { return Err("division by zero"); }
             return Ok(a / b);
         }

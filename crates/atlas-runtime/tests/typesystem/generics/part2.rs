@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 fn test_multiple_calls_same_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
         let _a = identity(42);
@@ -36,7 +36,7 @@ fn test_generic_with_no_params() {
 fn test_generic_unused_type_param() {
     let diagnostics = typecheck_source(
         r#"
-        fn test<T>(_x: number) -> number {
+        fn test<T>(borrow _x: number) -> number {
             return 42;
         }
     "#,
@@ -51,8 +51,8 @@ fn test_type_parameter_in_nested_function() {
     // NOTE: Nested functions binding complete (Phases 1-3). Phases 4-6 pending for full execution.
     let diagnostics = typecheck_source(
         r#"
-        fn outer<T>(_x: T) -> void {
-            fn inner(_y: number) -> void {}
+        fn outer<T>(borrow _x: T) -> void {
+            fn inner(borrow _y: number) -> void {}
             inner(42);
         }
     "#,
@@ -77,7 +77,7 @@ fn test_type_parameter_in_nested_function() {
 fn test_non_generic_still_works() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(a: number, b: number) -> number {
+        fn add(borrow a: number, borrow b: number) -> number {
             return a + b;
         }
         let _result = add(1, 2);
@@ -90,10 +90,10 @@ fn test_non_generic_still_works() {
 fn test_mixed_generic_and_non_generic() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
-        fn double(x: number) -> number {
+        fn double(borrow x: number) -> number {
             return x * 2;
         }
         let _a = identity(42);
@@ -111,7 +111,7 @@ fn test_mixed_generic_and_non_generic() {
 fn test_generic_with_if_statement() {
     let diagnostics = typecheck_source(
         r#"
-        fn choose<T>(condition: bool, a: T, b: T) -> T {
+        fn choose<T>(borrow condition: bool, borrow a: T, borrow b: T) -> T {
             if condition {
                 return a;
             } else {
@@ -128,7 +128,7 @@ fn test_generic_with_if_statement() {
 fn test_generic_with_while_loop() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             let mut result = x;
             while false {
                 result = x;
@@ -144,7 +144,7 @@ fn test_generic_with_while_loop() {
 fn test_generic_with_array_indexing() {
     let diagnostics = typecheck_source(
         r#"
-        fn get_first<T>(arr: T[]) -> T {
+        fn get_first<T>(borrow arr: T[]) -> T {
             return arr[0];
         }
         let numbers = [1, 2, 3];
@@ -162,7 +162,7 @@ fn test_generic_with_array_indexing() {
 fn test_generic_function_as_value() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
         let _f = identity;
@@ -175,10 +175,10 @@ fn test_generic_function_as_value() {
 fn test_pass_generic_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(x: T) -> T {
+        fn identity<T>(borrow x: T) -> T {
             return x;
         }
-        fn apply<T>(_f: (T) -> T, _x: T) -> T {
+        fn apply<T>(borrow _f: (T) -> T, _x: T) -> T {
             return _x;
         }
         let _result = apply(identity, 42);
@@ -379,7 +379,7 @@ fn test_undefined_variable_error() {
 fn test_function_type_display_in_error() {
     let diags = errors(
         r#"
-        fn add(a: number, b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
         let _x: string = add;
     "#,
     );
@@ -396,7 +396,7 @@ fn test_function_type_display_in_error() {
 fn test_function_type_display_void_return() {
     let diags = errors(
         r#"
-        fn greet(_name: string) -> void { }
+        fn greet(borrow _name: string) -> void { }
         let _x: number = greet;
     "#,
     );

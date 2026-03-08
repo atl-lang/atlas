@@ -20,13 +20,12 @@ struct RecorderState {
 }
 
 export fn recorder_new(
-    enabled: bool,
-    buffer_size: number,
-    include_request_bodies: bool,
-    include_response_bodies: bool,
-    redact_patterns: string[],
-    redact_replacement: string
-) -> RecorderState {
+    borrow enabled: bool,
+    borrow buffer_size: number,
+    borrow include_request_bodies: bool,
+    borrow include_response_bodies: bool,
+    borrow redact_patterns: string[],
+    borrow redact_replacement: string) -> RecorderState {
     let mut size = buffer_size;
     if (size <= 0) {
         size = 50;
@@ -42,7 +41,7 @@ export fn recorder_new(
     };
 }
 
-fn push_entry(state: RecorderState, entry: RecorderEntry) -> RecorderState {
+fn push_entry(borrow state: RecorderState, borrow entry: RecorderEntry) -> RecorderState {
     let mut buffer = state.buffer;
     if (len(buffer) >= state.max_size) {
         buffer = drop_first(buffer);
@@ -59,7 +58,7 @@ fn push_entry(state: RecorderState, entry: RecorderEntry) -> RecorderState {
     };
 }
 
-fn scrub_message(state: RecorderState, kind: string, msg: json) -> json {
+fn scrub_message(borrow state: RecorderState, borrow kind: string, borrow msg: json) -> json {
     if (kind == "request" && !state.include_request_bodies) {
         if (jsonHas(msg, "params")) {
             msg["params"] = null;
@@ -76,7 +75,7 @@ fn scrub_message(state: RecorderState, kind: string, msg: json) -> json {
     return msg;
 }
 
-fn redact_message(state: RecorderState, msg: json) -> json {
+fn redact_message(borrow state: RecorderState, borrow msg: json) -> json {
     if (len(state.redact_patterns) == 0) {
         return msg;
     }
@@ -105,7 +104,7 @@ fn redact_message(state: RecorderState, msg: json) -> json {
     return msg;
 }
 
-export fn recorder_record_request(state: RecorderState, direction: string, msg: json) -> RecorderState {
+export fn recorder_record_request(borrow state: RecorderState, borrow direction: string, borrow msg: json) -> RecorderState {
     if (!state.enabled) {
         return state;
     }
@@ -114,7 +113,7 @@ export fn recorder_record_request(state: RecorderState, direction: string, msg: 
     return push_entry(state, entry);
 }
 
-export fn recorder_record_response(state: RecorderState, direction: string, msg: json) -> RecorderState {
+export fn recorder_record_response(borrow state: RecorderState, borrow direction: string, borrow msg: json) -> RecorderState {
     if (!state.enabled) {
         return state;
     }
@@ -123,7 +122,7 @@ export fn recorder_record_response(state: RecorderState, direction: string, msg:
     return push_entry(state, entry);
 }
 
-export fn recorder_export(state: RecorderState, path: string) -> Result<null, string> {
+export fn recorder_export(borrow state: RecorderState, borrow path: string) -> Result<null, string> {
     if (!state.enabled) {
         return Err("recorder disabled");
     }

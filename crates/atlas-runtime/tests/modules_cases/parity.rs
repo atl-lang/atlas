@@ -9,7 +9,7 @@ fn test_import_parity_basic_function() {
     create_module(
         temp_dir.path(),
         "math",
-        "export fn add(a: number, b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
     );
 
     let main = create_module(
@@ -54,8 +54,8 @@ fn test_import_parity_multiple_imports() {
         temp_dir.path(),
         "math",
         r#"
-            export fn add(a: number, b: number) -> number { return a + b; }
-            export fn multiply(a: number, b: number) -> number { return a * b; }
+            export fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+            export fn multiply(borrow a: number, borrow b: number) -> number { return a * b; }
         "#,
     );
 
@@ -106,7 +106,7 @@ fn test_import_parity_no_imports() {
         temp_dir.path(),
         "main",
         r#"
-            fn compute(x: number) -> number { return x * x + 1; }
+            fn compute(borrow x: number) -> number { return x * x + 1; }
             compute(5);
         "#,
     );
@@ -121,7 +121,7 @@ fn test_import_parity_atlas_extension() {
     let lib_path = temp_dir.path().join("lib.atlas");
     fs::write(
         &lib_path,
-        r#"export fn greet(name: string) -> string { return "Hello " + name; }"#,
+        r#"export fn greet(borrow name: string) -> string { return "Hello " + name; }"#,
     )
     .unwrap();
 

@@ -134,7 +134,7 @@ fn test_multiple_sequential_awaits() {
 fn test_async_fn_with_params() {
     let result = interp(
         r#"
-        async fn add(x: number, y: number) -> number {
+        async fn add(borrow x: number, borrow y: number) -> number {
             return x + y;
         }
         await add(3, 7);
@@ -148,7 +148,7 @@ fn test_async_fn_with_params() {
 fn test_async_fn_if_else() {
     let result_true = interp(
         r#"
-        async fn check(n: number) -> string {
+        async fn check(borrow n: number) -> string {
             if n > 0 {
                 return "positive";
             } else {
@@ -162,7 +162,7 @@ fn test_async_fn_if_else() {
 
     let result_false = interp(
         r#"
-        async fn check(n: number) -> string {
+        async fn check(borrow n: number) -> string {
             if n > 0 {
                 return "positive";
             } else {
@@ -214,7 +214,7 @@ fn test_async_fn_void() {
 fn test_async_fn_identity() {
     let result = interp(
         r#"
-        async fn id(x: number) -> number { return x; }
+        async fn id(borrow x: number) -> number { return x; }
         await id(123);
         "#,
     );
@@ -259,7 +259,7 @@ fn test_async_chain() {
     let result = interp(
         r#"
         async fn step1() -> number { return 3; }
-        async fn step2(n: number) -> number { return n * n; }
+        async fn step2(borrow n: number) -> number { return n * n; }
         async fn pipeline() -> number {
             let a = await step1();
             return await step2(a);
@@ -287,7 +287,7 @@ fn test_future_reject_type() {
 fn test_async_fn_with_loop() {
     let result = interp(
         r#"
-        async fn sum_to(n: number) -> number {
+        async fn sum_to(borrow n: number) -> number {
             let mut total = 0;
             let mut i = 1;
             while i <= n {
@@ -436,7 +436,7 @@ fn test_await_outside_async_context_rejected() {
 fn test_async_fn_calls_sync_fn() {
     let result = interp(
         r#"
-        fn double(n: number) -> number { return n * 2; }
+        fn double(borrow n: number) -> number { return n * 2; }
         async fn run() -> number {
             return double(21);
         }
@@ -455,7 +455,7 @@ fn test_async_fn_calls_sync_fn() {
 fn test_parity_simple_async_fn() {
     let result = interp(
         r#"
-        async fn greet(name: string) -> string {
+        async fn greet(borrow name: string) -> string {
             return "Hello, " + name + "!";
         }
         await greet("Atlas");
@@ -502,7 +502,7 @@ fn test_parity_async_return_type_of() {
 fn test_parity_async_bool_return() {
     let result = interp(
         r#"
-        async fn is_even(n: number) -> bool {
+        async fn is_even(borrow n: number) -> bool {
             return n % 2 == 0;
         }
         await is_even(4);

@@ -1,18 +1,18 @@
 // CLI helpers (Atlas port, simplified)
 
-export fn registry_path_from_args(args: json) -> string {
+export fn registry_path_from_args(borrow args: json) -> string {
     if (args["registry"].is_null()) { return "~/.hydra/config.json"; }
     return args["registry"].as_string();
 }
 
-export fn server_name_from_args(args: json) -> Result<string, string> {
+export fn server_name_from_args(borrow args: json) -> Result<string, string> {
     if (args["name"].is_null()) { return Err("name is required"); }
     let name = args["name"].as_string();
     if (len(name) == 0) { return Err("name cannot be empty"); }
     return Ok(name);
 }
 
-export fn expand_home(path: string) -> string {
+export fn expand_home(borrow path: string) -> string {
     if (len(path) == 0 || substring(path, 0, 1) != "~") {
         return path;
     }

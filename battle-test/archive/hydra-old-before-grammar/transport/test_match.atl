@@ -1,6 +1,6 @@
 // Test match syntax
 
-fn divide(a: number, b: number) -> Result<number, string> {
+fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
     if (b == 0) {
         return Err("division by zero");
     }

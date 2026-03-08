@@ -1,1 +1,1 @@
-Parse error: Unknown symbol 'undefined_var'
+Parse error: unknown identifier 'undefined_var'

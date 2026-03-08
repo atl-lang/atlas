@@ -5,19 +5,19 @@
 let numbers: number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // filter: keep only even numbers
-let evens: number[] = filter(numbers, fn(borrow x: number) -> bool {
+let evens: number[] = filter(numbers, fn(own x: number) -> bool {
     return x % 2 == 0;
 });
 print("evens len: " + str(len(evens)));
 
 // map: double each element
-let doubled: number[] = map(evens, fn(borrow x: number) -> number {
+let doubled: number[] = map(evens, fn(own x: number) -> number {
     return x * 2;
 });
 print("doubled[0]: " + str(doubled[0]));
 
 // reduce: sum all elements
-let total: number = reduce(doubled, fn(borrow acc: number, borrow x: number) -> number {
+let total: number = reduce(doubled, fn(own acc: number, borrow x: number) -> number {
     return acc + x;
 }, 0);
 print("sum of doubled evens: " + str(total));
