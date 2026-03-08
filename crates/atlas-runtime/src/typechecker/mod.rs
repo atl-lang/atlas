@@ -1660,6 +1660,33 @@ impl<'a> TypeChecker<'a> {
                 self.declared_symbols
                     .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));
 
+                // AT3054: borrow param cannot escape into a let binding
+                if let Expr::Identifier(id) = &var.init {
+                    let ownership = self
+                        .current_fn_param_ownerships
+                        .get(&id.name)
+                        .cloned()
+                        .flatten();
+                    if ownership == Some(OwnershipAnnotation::Borrow) {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                error_codes::BORROW_ESCAPE,
+                                format!(
+                                    "cannot store `borrow` parameter `{}` in a binding: \
+                                     borrows cannot outlive their scope",
+                                    id.name
+                                ),
+                                var.span,
+                            )
+                            .with_label("borrow stored here")
+                            .with_help(
+                                "copy the value or use a computation on the `borrow` parameter \
+                                 instead of storing it directly",
+                            ),
+                        );
+                    }
+                }
+
                 let init_type = self.check_expr(&var.init);
                 let is_empty_array_literal = matches!(
                     &var.init,
@@ -2031,13 +2058,44 @@ impl<'a> TypeChecker<'a> {
                     return;
                 }
 
+                // AT3054: borrow param cannot escape via return
+                if let Some(Expr::Identifier(id)) = &ret.value {
+                    {
+                        let ownership = self
+                            .current_fn_param_ownerships
+                            .get(&id.name)
+                            .cloned()
+                            .flatten();
+                        if ownership == Some(OwnershipAnnotation::Borrow) {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    error_codes::BORROW_ESCAPE,
+                                    format!(
+                                        "cannot return `borrow` parameter `{}`: \
+                                         borrows cannot escape the function",
+                                        id.name
+                                    ),
+                                    ret.span,
+                                )
+                                .with_label("borrow escapes here")
+                                .with_help(
+                                    "return a copy or owned value instead of a `borrow` parameter",
+                                ),
+                            );
+                        }
+                    }
+                }
+
                 let return_type = if let Some(value) = &ret.value {
                     self.check_expr(value)
                 } else {
                     Type::Void
                 };
 
-                let expected = self.current_function_return_type.as_ref().unwrap();
+                let expected = match self.current_function_return_type.as_ref() {
+                    Some(t) => t,
+                    None => return,
+                };
                 let expected_norm = expected.normalized();
                 if matches!(
                     expected_norm,

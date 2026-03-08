@@ -219,6 +219,32 @@ impl<'a> TypeChecker<'a> {
 
                     let mut seen_fields: HashSet<String> = HashSet::new();
                     for field in &struct_expr.fields {
+                        // AT3054: borrow param cannot escape into a struct field
+                        if let Expr::Identifier(id) = &field.value {
+                            let ownership = self
+                                .current_fn_param_ownerships
+                                .get(&id.name)
+                                .cloned()
+                                .flatten();
+                            if ownership == Some(OwnershipAnnotation::Borrow) {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        error_codes::BORROW_ESCAPE,
+                                        format!(
+                                            "cannot use `borrow` parameter `{}` as a struct field: \
+                                             borrows cannot outlive their scope",
+                                            id.name
+                                        ),
+                                        field.span,
+                                    )
+                                    .with_label("borrow escapes into struct")
+                                    .with_help(
+                                        "copy the value or use a computation result instead of \
+                                         storing a `borrow` parameter directly in a struct",
+                                    ),
+                                );
+                            }
+                        }
                         let value_type = self.check_expr(&field.value);
                         if let Some(expected_type) = member_types.get(&field.name.name) {
                             if !seen_fields.insert(field.name.name.clone()) {

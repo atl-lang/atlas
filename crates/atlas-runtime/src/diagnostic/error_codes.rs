@@ -89,6 +89,11 @@ pub const INFERRED_TYPE_INCOMPATIBLE: &str = "AT3052";
 /// The caller's binding is invalidated after an `own` transfer.
 pub const USE_AFTER_OWN: &str = "AT3053";
 
+/// Fired when a `borrow` parameter escapes its scope: returned from a function,
+/// stored in a let binding, or used as a struct literal field value.
+/// Borrows are read-only within the function body and cannot outlive the call.
+pub const BORROW_ESCAPE: &str = "AT3054";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -564,6 +569,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3053",
         description: "Use of moved value after `own` transfer",
         help: Some("When a variable is passed to an `own` parameter, ownership transfers to the callee and the caller's binding becomes invalid. Use the value before the call, or pass a copy."),
+    },
+    ErrorCodeInfo {
+        code: "AT3054",
+        description: "`borrow` parameter escapes its scope",
+        help: Some("`borrow` parameters are read-only within the function body. They cannot be returned, stored in a let binding, or used as struct field values. Read the value or copy primitives instead."),
     },
     // === AT4xxx: Async/Await Errors ===
     ErrorCodeInfo {
