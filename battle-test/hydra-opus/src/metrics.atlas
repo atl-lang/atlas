@@ -39,7 +39,7 @@ struct HealthComponents {
 }
 
 // Calculates weighted overall health score from components
-fn weighted_health_score(h: HealthComponents) -> number {
+fn weighted_health_score(borrow h: HealthComponents) -> number {
     let score = h.uptime_stability * 0.30 +
                 h.error_rate * 0.25 +
                 h.response_latency * 0.20 +
@@ -50,9 +50,9 @@ fn weighted_health_score(h: HealthComponents) -> number {
 
 // MetricsCollector trait for collecting and reporting proxy metrics
 trait MetricsCollector {
-    fn record_request(self, duration_ms: number, success: bool) -> void;
-    fn record_queue_wait(self, duration_ms: number) -> void;
-    fn record_restart(self, reason: string) -> void;
+    fn record_request(self, borrow duration_ms: number, borrow success: bool) -> void;
+    fn record_queue_wait(self, borrow duration_ms: number) -> void;
+    fn record_restart(self, borrow reason: string) -> void;
     fn snapshot(self) -> MetricsSnapshot;
     fn health_score(self) -> number;
     fn health_breakdown(self) -> HealthComponents;
@@ -94,7 +94,7 @@ fn new_metrics_collector() -> DefaultMetricsCollector {
 }
 
 impl MetricsCollector for DefaultMetricsCollector {
-    fn record_request(self, duration_ms: number, success: bool) -> void {
+    fn record_request(self, borrow duration_ms: number, borrow success: bool) -> void {
         self.requests_total = self.requests_total + 1;
 
         if success {
@@ -110,7 +110,7 @@ impl MetricsCollector for DefaultMetricsCollector {
         }
     }
 
-    fn record_queue_wait(self, duration_ms: number) -> void {
+    fn record_queue_wait(self, borrow duration_ms: number) -> void {
         self.queue_waits_total = self.queue_waits_total + 1;
         self.queue_waits = arrayPush(self.queue_waits, duration_ms);
 
@@ -119,7 +119,7 @@ impl MetricsCollector for DefaultMetricsCollector {
         }
     }
 
-    fn record_restart(self, reason: string) -> void {
+    fn record_restart(self, borrow reason: string) -> void {
         self.restarts_total = self.restarts_total + 1;
 
         let current_count = hashMapGet(self.restart_reasons, reason);
@@ -193,18 +193,18 @@ impl MetricsCollector for DefaultMetricsCollector {
 }
 
 // Calculate average of an array of numbers
-fn calculate_average(nums: number[]) -> number {
+fn calculate_average(borrow nums: number[]) -> number {
     if len(nums) == 0 {
         return 0;
     }
-    let sum = reduce(nums, fn(acc: number, n: number) -> number {
+    let sum = reduce(nums, fn(borrow acc: number, borrow n: number) -> number {
         return acc + n;
     }, 0);
     return sum / len(nums);
 }
 
 // Calculate percentile (simplified - uses sorted array position)
-fn calculate_percentile(nums: number[], percentile: number) -> number {
+fn calculate_percentile(borrow nums: number[], borrow percentile: number) -> number {
     if len(nums) == 0 {
         return 0;
     }

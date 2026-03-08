@@ -30,7 +30,7 @@ fn new_learner() -> Learner {
 }
 
 // Records an event for later analysis
-fn observe(learner: Learner, event: string, ctx: HashMap<string, any>) -> Learner {
+fn observe(borrow learner: Learner, borrow event: string, borrow ctx: HashMap<string, any>) -> Learner {
     let obs = Observation {
         timestamp_ms: dateTimeToTimestamp(dateTimeNow()),
         event: event,
@@ -43,7 +43,7 @@ fn observe(learner: Learner, event: string, ctx: HashMap<string, any>) -> Learne
 }
 
 // Analyzes observations and generates configuration suggestions
-fn analyze(learner: Learner, snapshot: MetricsSnapshot, current_config: HashMap<string, number>) -> Suggestion[] {
+fn analyze(borrow learner: Learner, borrow snapshot: MetricsSnapshot, borrow current_config: HashMap<string, number>) -> Suggestion[] {
     let suggestions: Suggestion[] = [];
 
     // Rule 1: Restart count < 50% max? Suggest lowering threshold
@@ -66,7 +66,7 @@ fn analyze(learner: Learner, snapshot: MetricsSnapshot, current_config: HashMap<
 }
 
 // Analyze restart threshold
-fn analyze_restart_threshold(learner: Learner, snapshot: MetricsSnapshot, config: HashMap<string, number>) -> Suggestion[] {
+fn analyze_restart_threshold(borrow learner: Learner, borrow snapshot: MetricsSnapshot, borrow config: HashMap<string, number>) -> Suggestion[] {
     let max_restarts_opt = hashMapGet(config, "max_restarts");
     let max_restarts = match max_restarts_opt {
         Some(n) => n,
@@ -107,7 +107,7 @@ fn analyze_restart_threshold(learner: Learner, snapshot: MetricsSnapshot, config
 }
 
 // Analyze queue capacity
-fn analyze_queue_capacity(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+fn analyze_queue_capacity(borrow learner: Learner, borrow config: HashMap<string, number>) -> Suggestion[] {
     let queue_size_opt = hashMapGet(config, "queue_size");
     let queue_size = match queue_size_opt {
         Some(n) => n,
@@ -138,7 +138,7 @@ fn analyze_queue_capacity(learner: Learner, config: HashMap<string, number>) -> 
 }
 
 // Analyze latency spikes
-fn analyze_latency_spikes(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+fn analyze_latency_spikes(borrow learner: Learner, borrow config: HashMap<string, number>) -> Suggestion[] {
     let debounce_ms_opt = hashMapGet(config, "debounce_ms");
     let debounce_ms = match debounce_ms_opt {
         Some(n) => n,
@@ -150,7 +150,7 @@ fn analyze_latency_spikes(learner: Learner, config: HashMap<string, number>) -> 
     }
 
     // Count high_latency observations near restarts
-    let high_latency_count = filter(learner.observations, fn(obs: Observation) -> bool {
+    let high_latency_count = filter(learner.observations, fn(borrow obs: Observation) -> bool {
         if obs.event != "high_latency" {
             return false;
         }
@@ -178,7 +178,7 @@ fn analyze_latency_spikes(learner: Learner, config: HashMap<string, number>) -> 
 }
 
 // Analyze crash loops
-fn analyze_crash_loops(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+fn analyze_crash_loops(borrow learner: Learner, borrow config: HashMap<string, number>) -> Suggestion[] {
     let crash_loop_count = count_events(learner.observations, "crash_loop");
 
     if crash_loop_count > 10 {
@@ -204,8 +204,8 @@ fn analyze_crash_loops(learner: Learner, config: HashMap<string, number>) -> Sug
 }
 
 // Count events of a specific type
-fn count_events(observations: Observation[], event_type: string) -> number {
-    let matching = filter(observations, fn(obs: Observation) -> bool {
+fn count_events(borrow observations: Observation[], borrow event_type: string) -> number {
+    let matching = filter(observations, fn(borrow obs: Observation) -> bool {
         return obs.event == event_type;
     });
     return len(matching);

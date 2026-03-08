@@ -16,7 +16,7 @@ struct ToolResult {
 }
 
 // Get the definition for a named tool
-fn get_tool_definition(name: string) -> Option<ToolDefinition> {
+fn get_tool_definition(borrow name: string) -> Option<ToolDefinition> {
     return match name {
         "hydra_restart" => Some(ToolDefinition {
             name: "hydra_restart",
@@ -112,7 +112,7 @@ fn default_tool_definitions() -> ToolDefinition[] {
 }
 
 // Check if a tool name conflicts with existing tools
-fn has_collision(tool_name: string, existing_tools: string[]) -> bool {
+fn has_collision(borrow tool_name: string, borrow existing_tools: string[]) -> bool {
     return arrayIncludes(existing_tools, tool_name);
 }
 

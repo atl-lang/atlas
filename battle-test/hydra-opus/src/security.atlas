@@ -11,7 +11,7 @@ struct JSONRPCResponse {
 
 // Redactor trait - redacts sensitive information from strings
 trait Redactor {
-    fn redact(self, content: string, patterns: string[]) -> string;
+    fn redact(self, borrow content: string, borrow patterns: string[]) -> string;
 }
 
 // RateLimiter trait - controls the rate of operations
@@ -21,7 +21,7 @@ trait RateLimiter {
 
 // SizeLimiter trait - limits payload sizes
 trait SizeLimiter {
-    fn limit(self, response: JSONRPCResponse, max_kb: number) -> JSONRPCResponse;
+    fn limit(self, borrow response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse;
 }
 
 // DefaultRedactor implements pattern-based redaction
@@ -30,14 +30,14 @@ struct DefaultRedactor {
 }
 
 // Creates a new DefaultRedactor
-fn new_redactor(replacement: string) -> DefaultRedactor {
+fn new_redactor(borrow replacement: string) -> DefaultRedactor {
     return DefaultRedactor {
         replacement: replacement
     };
 }
 
 impl Redactor for DefaultRedactor {
-    fn redact(self, content: string, patterns: string[]) -> string {
+    fn redact(self, borrow content: string, borrow patterns: string[]) -> string {
         let result = content;
 
         // Apply each redaction pattern
@@ -64,7 +64,7 @@ struct TokenBucketLimiter {
 }
 
 // Creates a new rate limiter
-fn new_rate_limiter(rate_per_second: number) -> TokenBucketLimiter {
+fn new_rate_limiter(borrow rate_per_second: number) -> TokenBucketLimiter {
     return TokenBucketLimiter {
         max_tokens: rate_per_second,
         current_tokens: rate_per_second,
@@ -107,7 +107,7 @@ fn new_size_limiter() -> DefaultSizeLimiter {
 }
 
 impl SizeLimiter for DefaultSizeLimiter {
-    fn limit(self, response: JSONRPCResponse, max_kb: number) -> JSONRPCResponse {
+    fn limit(self, borrow response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse {
         // Serialize to check size
         let result_str = match response.result {
             Some(r) => str(r),
@@ -134,7 +134,7 @@ impl SizeLimiter for DefaultSizeLimiter {
 }
 
 // Convenience function to redact common patterns
-fn redact_secrets(content: string) -> string {
+fn redact_secrets(borrow content: string) -> string {
     let redactor = new_redactor("[REDACTED]");
     let patterns = [
         "sk-[A-Za-z0-9]{32,}",

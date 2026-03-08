@@ -11,7 +11,7 @@ enum ServerState {
 }
 
 // Converts ServerState to its string representation
-fn server_state_to_string(state: ServerState) -> string {
+fn server_state_to_string(borrow state: ServerState) -> string {
     return match state {
         ServerState::Stopped => "stopped",
         ServerState::Starting => "starting",
@@ -170,7 +170,7 @@ impl Supervisor for ProcessSupervisor {
 }
 
 // Creates a SupervisorStatus snapshot
-fn supervisor_status(sup: ProcessSupervisor) -> SupervisorStatus {
+fn supervisor_status(borrow sup: ProcessSupervisor) -> SupervisorStatus {
     return SupervisorStatus {
         state: sup.current_state,
         pid: sup.current_pid,

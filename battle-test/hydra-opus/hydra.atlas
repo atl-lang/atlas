@@ -164,7 +164,7 @@ enum ServerState {
     Failed
 }
 
-fn server_state_to_string(state: ServerState) -> string {
+fn server_state_to_string(borrow state: ServerState) -> string {
     return match state {
         ServerState::Stopped => "stopped",
         ServerState::Starting => "starting",
@@ -226,11 +226,11 @@ fn get_timestamp_ms() -> number {
     return dateTimeToTimestamp(DateTime.now());
 }
 
-fn supervisor_state(sup: ProcessSupervisor) -> ServerState {
+fn supervisor_state(borrow sup: ProcessSupervisor) -> ServerState {
     return sup.current_state;
 }
 
-fn supervisor_uptime_ms(sup: ProcessSupervisor) -> number {
+fn supervisor_uptime_ms(borrow sup: ProcessSupervisor) -> number {
     if sup.current_state != ServerState::Running {
         return 0;
     }
@@ -248,7 +248,7 @@ enum ChunkType {
     Pollution
 }
 
-fn chunk_type_to_string(ct: ChunkType) -> string {
+fn chunk_type_to_string(borrow ct: ChunkType) -> string {
     return match ct {
         ChunkType::Empty => "empty",
         ChunkType::JSONRPC => "jsonrpc",
@@ -260,13 +260,13 @@ struct DefaultSanitizer {
     strict_mode: bool
 }
 
-fn new_sanitizer(strict: bool) -> DefaultSanitizer {
+fn new_sanitizer(borrow strict: bool) -> DefaultSanitizer {
     return DefaultSanitizer {
         strict_mode: strict
     };
 }
 
-fn sanitizer_classify(_san: DefaultSanitizer, chunk: string) -> ChunkType {
+fn sanitizer_classify(borrow _san: DefaultSanitizer, borrow chunk: string) -> ChunkType {
     let trimmed = chunk.trim();
 
     if len(trimmed) == 0 {
@@ -321,7 +321,7 @@ struct HealthComponents {
     restart_frequency: number
 }
 
-fn weighted_health_score(h: HealthComponents) -> number {
+fn weighted_health_score(borrow h: HealthComponents) -> number {
     let score = h.uptime_stability * 0.30 +
                 h.error_rate * 0.25 +
                 h.response_latency * 0.20 +
@@ -362,7 +362,7 @@ fn new_metrics_collector() -> DefaultMetricsCollector {
     };
 }
 
-fn metrics_record_request(c: DefaultMetricsCollector, duration_ms: number, is_success: bool) -> DefaultMetricsCollector {
+fn metrics_record_request(borrow c: DefaultMetricsCollector, borrow duration_ms: number, borrow is_success: bool) -> DefaultMetricsCollector {
     let new_total = c.requests_total + 1;
     let new_success = if is_success { c.requests_success + 1 } else { c.requests_success };
     let new_failed = if !is_success { c.requests_failed + 1 } else { c.requests_failed };
@@ -384,7 +384,7 @@ fn metrics_record_request(c: DefaultMetricsCollector, duration_ms: number, is_su
     };
 }
 
-fn metrics_record_restart(c: DefaultMetricsCollector, reason: string) -> DefaultMetricsCollector {
+fn metrics_record_restart(borrow c: DefaultMetricsCollector, borrow reason: string) -> DefaultMetricsCollector {
     let current_count_opt = c.restart_reasons.get(reason);
     let new_count = match current_count_opt {
         Some(n) => n + 1,
@@ -407,17 +407,17 @@ fn metrics_record_restart(c: DefaultMetricsCollector, reason: string) -> Default
     };
 }
 
-fn calculate_average(nums: number[]) -> number {
+fn calculate_average(borrow nums: number[]) -> number {
     if len(nums) == 0 {
         return 0;
     }
-    let sum = reduce(nums, fn(acc: number, n: number) -> number {
+    let sum = reduce(nums, fn(borrow acc: number, borrow n: number) -> number {
         return acc + n;
     }, 0);
     return sum / len(nums);
 }
 
-fn calculate_percentile(nums: number[], percentile: number) -> number {
+fn calculate_percentile(borrow nums: number[], borrow percentile: number) -> number {
     if len(nums) == 0 {
         return 0;
     }
@@ -427,7 +427,7 @@ fn calculate_percentile(nums: number[], percentile: number) -> number {
     return sorted[safe_index];
 }
 
-fn metrics_snapshot(c: DefaultMetricsCollector) -> MetricsSnapshot {
+fn metrics_snapshot(borrow c: DefaultMetricsCollector) -> MetricsSnapshot {
     let now = get_timestamp_ms();
     let uptime = now - c.start_time_ms;
 
@@ -450,7 +450,7 @@ fn metrics_snapshot(c: DefaultMetricsCollector) -> MetricsSnapshot {
     };
 }
 
-fn metrics_health_score(c: DefaultMetricsCollector) -> number {
+fn metrics_health_score(borrow c: DefaultMetricsCollector) -> number {
     let snap = metrics_snapshot(c);
     let uptime_hours = snap.uptime_ms / 3600000;
     let uptime_score = Math.min(100, uptime_hours * 100);
@@ -505,7 +505,7 @@ fn new_learner() -> Learner {
     };
 }
 
-fn observe(learner: Learner, event: string, ctx: HashMap<string, any>) -> Learner {
+fn observe(borrow learner: Learner, borrow event: string, borrow ctx: HashMap<string, any>) -> Learner {
     let obs = Observation {
         timestamp_ms: get_timestamp_ms(),
         event: event,
@@ -517,14 +517,14 @@ fn observe(learner: Learner, event: string, ctx: HashMap<string, any>) -> Learne
     };
 }
 
-fn count_events(observations: Observation[], event_type: string) -> number {
-    let matching = filter(observations, fn(obs: Observation) -> bool {
+fn count_events(borrow observations: Observation[], borrow event_type: string) -> number {
+    let matching = filter(observations, fn(borrow obs: Observation) -> bool {
         return obs.event == event_type;
     });
     return len(matching);
 }
 
-fn analyze(_learner: Learner, _snapshot: MetricsSnapshot, _current_config: HashMap<string, number>) -> Suggestion[] {
+fn analyze(borrow _learner: Learner, borrow _snapshot: MetricsSnapshot, borrow _current_config: HashMap<string, number>) -> Suggestion[] {
     let suggestions: Suggestion[] = [];
     return suggestions;
 }
@@ -546,7 +546,7 @@ fn build_empty_schema() -> HashMap<string, any> {
     return schema;
 }
 
-fn get_tool_definition(name: string) -> Option<ToolDefinition> {
+fn get_tool_definition(borrow name: string) -> Option<ToolDefinition> {
     return match name {
         "hydra_restart" => Some(ToolDefinition {
             name: "hydra_restart",
@@ -599,7 +599,7 @@ enum ProxyState {
     Failed
 }
 
-fn proxy_state_to_string(state: ProxyState) -> string {
+fn proxy_state_to_string(borrow state: ProxyState) -> string {
     return match state {
         ProxyState::Stopped => "stopped",
         ProxyState::Starting => "starting",
@@ -651,7 +651,7 @@ struct MessageQueue {
     ttl_ms: number
 }
 
-fn new_queue(max_size: number, ttl_ms: number) -> MessageQueue {
+fn new_queue(borrow max_size: number, borrow ttl_ms: number) -> MessageQueue {
     let empty_msgs: QueuedMessage[] = [];
     return MessageQueue {
         messages: empty_msgs,
@@ -660,7 +660,7 @@ fn new_queue(max_size: number, ttl_ms: number) -> MessageQueue {
     };
 }
 
-fn queue_size(q: MessageQueue) -> number {
+fn queue_size(borrow q: MessageQueue) -> number {
     return len(q.messages);
 }
 
@@ -676,7 +676,7 @@ struct Proxy {
     max_restarts: number
 }
 
-fn new_proxy(options: ProxyOptions, tools: ToolDefinition[]) -> Proxy {
+fn new_proxy(borrow options: ProxyOptions, borrow tools: ToolDefinition[]) -> Proxy {
     return Proxy {
         state: ProxyState::Stopped,
         queue: new_queue(options.queue_size, options.queue_ttl_ms),
@@ -690,7 +690,7 @@ fn new_proxy(options: ProxyOptions, tools: ToolDefinition[]) -> Proxy {
     };
 }
 
-fn proxy_status(p: Proxy) -> ProxyStatus {
+fn proxy_status(borrow p: Proxy) -> ProxyStatus {
     let now = get_timestamp_ms();
     let uptime = if p.started_ms > 0 { now - p.started_ms } else { 0 };
 
@@ -706,7 +706,7 @@ fn proxy_status(p: Proxy) -> ProxyStatus {
     };
 }
 
-fn proxy_start(p: Proxy) -> Result<Proxy, string> {
+fn proxy_start(borrow p: Proxy) -> Result<Proxy, string> {
     if p.state == ProxyState::Running {
         return Err("proxy already running");
     }

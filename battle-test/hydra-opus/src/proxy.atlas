@@ -10,7 +10,7 @@ enum ProxyState {
     Failed
 }
 
-fn proxy_state_to_string(state: ProxyState) -> string {
+fn proxy_state_to_string(borrow state: ProxyState) -> string {
     return match state {
         ProxyState::Stopped => "stopped",
         ProxyState::Starting => "starting",
@@ -68,7 +68,7 @@ struct MessageQueue {
 }
 
 // Creates a new message queue
-fn new_queue(max_size: number, ttl_ms: number) -> MessageQueue {
+fn new_queue(borrow max_size: number, borrow ttl_ms: number) -> MessageQueue {
     return MessageQueue {
         messages: [],
         max_size: max_size,
@@ -77,7 +77,7 @@ fn new_queue(max_size: number, ttl_ms: number) -> MessageQueue {
 }
 
 // Enqueue a message
-fn queue_enqueue(q: MessageQueue, msg: QueuedMessage) -> Result<MessageQueue, string> {
+fn queue_enqueue(borrow q: MessageQueue, borrow msg: QueuedMessage) -> Result<MessageQueue, string> {
     if len(q.messages) >= q.max_size {
         return Err("queue full");
     }
@@ -90,11 +90,11 @@ fn queue_enqueue(q: MessageQueue, msg: QueuedMessage) -> Result<MessageQueue, st
 }
 
 // Dequeue all messages (with TTL filtering)
-fn queue_drain(q: MessageQueue) -> MessageQueue {
+fn queue_drain(borrow q: MessageQueue) -> MessageQueue {
     let now = dateTimeToTimestamp(dateTimeNow());
 
     // Filter out expired messages
-    let valid = filter(q.messages, fn(msg: QueuedMessage) -> bool {
+    let valid = filter(q.messages, fn(borrow msg: QueuedMessage) -> bool {
         return (now - msg.queued_at_ms) < q.ttl_ms;
     });
 
@@ -106,7 +106,7 @@ fn queue_drain(q: MessageQueue) -> MessageQueue {
 }
 
 // Queue size
-fn queue_size(q: MessageQueue) -> number {
+fn queue_size(borrow q: MessageQueue) -> number {
     return len(q.messages);
 }
 
@@ -124,7 +124,7 @@ struct Proxy {
 }
 
 // Creates a new proxy
-fn new_proxy(options: ProxyOptions, tools: ToolDefinition[]) -> Proxy {
+fn new_proxy(borrow options: ProxyOptions, borrow tools: ToolDefinition[]) -> Proxy {
     return Proxy {
         state: ProxyState::Stopped,
         queue: new_queue(options.queue_size, options.queue_ttl_ms),
@@ -139,7 +139,7 @@ fn new_proxy(options: ProxyOptions, tools: ToolDefinition[]) -> Proxy {
 }
 
 // Get proxy status
-fn proxy_status(p: Proxy) -> ProxyStatus {
+fn proxy_status(borrow p: Proxy) -> ProxyStatus {
     let now = dateTimeToTimestamp(dateTimeNow());
     let uptime = if p.started_ms > 0 { now - p.started_ms } else { 0 };
 
@@ -156,7 +156,7 @@ fn proxy_status(p: Proxy) -> ProxyStatus {
 }
 
 // Start the proxy
-fn proxy_start(p: Proxy) -> Result<Proxy, string> {
+fn proxy_start(borrow p: Proxy) -> Result<Proxy, string> {
     if p.state == ProxyState::Running {
         return Err("proxy already running");
     }
@@ -175,7 +175,7 @@ fn proxy_start(p: Proxy) -> Result<Proxy, string> {
 }
 
 // Stop the proxy
-fn proxy_shutdown(p: Proxy) -> Proxy {
+fn proxy_shutdown(borrow p: Proxy) -> Proxy {
     return Proxy {
         state: ProxyState::Stopped,
         queue: new_queue(p.options.queue_size, p.options.queue_ttl_ms),
@@ -190,7 +190,7 @@ fn proxy_shutdown(p: Proxy) -> Proxy {
 }
 
 // Handle crash loop
-fn proxy_crash_loop(p: Proxy, error: string) -> Proxy {
+fn proxy_crash_loop(borrow p: Proxy, borrow error: string) -> Proxy {
     let new_restarts = p.restarts_in_window + 1;
 
     let new_state = if new_restarts > p.max_restarts {
@@ -213,12 +213,12 @@ fn proxy_crash_loop(p: Proxy, error: string) -> Proxy {
 }
 
 // Check if message is a hydra tool call
-fn is_hydra_tool_call(method: string) -> bool {
+fn is_hydra_tool_call(borrow method: string) -> bool {
     return startsWith(method, "hydra_");
 }
 
 // Route a client message
-fn route_client_message(p: Proxy, message: any) -> Result<Proxy, string> {
+fn route_client_message(borrow p: Proxy, borrow message: any) -> Result<Proxy, string> {
     // Parse message to check for hydra tools
     let method_opt = jsonGetString(message, "method");
 

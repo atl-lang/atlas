@@ -8,7 +8,7 @@ enum Protocol {
     LSP       // Content-Length: <len>\r\n\r\n
 }
 
-fn protocol_to_string(p: Protocol) -> string {
+fn protocol_to_string(borrow p: Protocol) -> string {
     return match p {
         Protocol::Unknown => "unknown",
         Protocol::NDJSON => "ndjson",
@@ -24,13 +24,13 @@ trait Transport {
     fn read(self) -> Result<string, string>;
 
     // Write sends a payload, adding framing based on detected protocol
-    fn write(self, payload: string) -> Result<void, string>;
+    fn write(self, borrow payload: string) -> Result<void, string>;
 
     // Close shuts down the transport and releases resources
     fn close(self) -> Result<void, string>;
 
     // DetectProtocol sniffs the first message to determine protocol
-    fn detect_protocol(self, timeout_ms: number) -> Result<Protocol, string>;
+    fn detect_protocol(self, borrow timeout_ms: number) -> Result<Protocol, string>;
 }
 
 // StdioTransport implements transport over stdin/stdout
@@ -64,7 +64,7 @@ impl Transport for StdioTransport {
         };
     }
 
-    fn write(self, payload: string) -> Result<void, string> {
+    fn write(self, borrow payload: string) -> Result<void, string> {
         if self.is_closed {
             return Err("transport closed");
         }
@@ -89,7 +89,7 @@ impl Transport for StdioTransport {
         return Ok(null);
     }
 
-    fn detect_protocol(self, timeout_ms: number) -> Result<Protocol, string> {
+    fn detect_protocol(self, borrow timeout_ms: number) -> Result<Protocol, string> {
         // Peek at first few bytes to detect protocol
         // LSP starts with "Content-Length:"
         // NDJSON starts with "{" and ends with newline
@@ -116,7 +116,7 @@ impl StdioTransport {
 }
 
 // Parse LSP Content-Length header
-fn parse_content_length(header: string) -> Result<number, string> {
+fn parse_content_length(borrow header: string) -> Result<number, string> {
     let prefix = "Content-Length: ";
     if !startsWith(header, prefix) {
         return Err("invalid Content-Length header");

@@ -74,7 +74,7 @@ impl Watcher for FSWatcher {
 }
 
 // Check if a path should be ignored
-fn should_ignore(watcher: FSWatcher, path: string) -> bool {
+fn should_ignore(borrow watcher: FSWatcher, borrow path: string) -> bool {
     // Check ignore patterns
     for i in 0..len(watcher.ignore_patterns) {
         let pattern = watcher.ignore_patterns[i];
@@ -101,7 +101,7 @@ fn should_ignore(watcher: FSWatcher, path: string) -> bool {
 }
 
 // Process a file change event (called externally)
-fn process_file_change(watcher: FSWatcher, path: string) -> FSWatcher {
+fn process_file_change(borrow watcher: FSWatcher, borrow path: string) -> FSWatcher {
     if !watcher.is_running {
         return watcher;
     }
