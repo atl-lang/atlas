@@ -84,11 +84,8 @@ impl Interpreter {
             }
             Stmt::Assign(assign) => self.eval_assign(assign),
             Stmt::CompoundAssign(compound) => self.eval_compound_assign(compound),
-            Stmt::Increment(inc) => self.eval_increment(inc),
-            Stmt::Decrement(dec) => self.eval_decrement(dec),
             Stmt::If(if_stmt) => self.eval_if(if_stmt),
             Stmt::While(while_stmt) => self.eval_while(while_stmt),
-            Stmt::For(for_stmt) => self.eval_for(for_stmt),
             Stmt::ForIn(for_in_stmt) => self.eval_for_in(for_in_stmt),
             Stmt::Return(return_stmt) => self.eval_return(return_stmt),
             Stmt::Break(_) => {
@@ -258,132 +255,6 @@ impl Interpreter {
         Ok(Value::Null)
     }
 
-    /// Evaluate an increment (++)
-    fn eval_increment(&mut self, inc: &IncrementStmt) -> Result<Value, RuntimeError> {
-        // Get current value
-        let current = match &inc.target {
-            AssignTarget::Name(id) => self.get_variable(&id.name, inc.span)?,
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let arr_val = self.eval_expr(target.as_ref())?;
-                let idx_val = self.eval_expr(index.as_ref())?;
-                self.get_array_element(arr_val, idx_val, *span)?
-            }
-            AssignTarget::Member {
-                target,
-                member,
-                span,
-            } => self.get_member_value(target, member, *span)?,
-        };
-
-        // Increment by 1
-        let result = match current {
-            Value::Number(n) => {
-                let res = n + 1.0;
-                if res.is_nan() || res.is_infinite() {
-                    return Err(RuntimeError::InvalidNumericResult { span: inc.span });
-                }
-                Value::Number(res)
-            }
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Increment requires number".to_string(),
-                    span: inc.span,
-                })
-            }
-        };
-
-        // Store the result
-        match &inc.target {
-            AssignTarget::Name(id) => {
-                self.set_variable(&id.name, result, inc.span)?;
-            }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
-                self.assign_at_index(target, idx_val, result, *span)?;
-            }
-            AssignTarget::Member {
-                target,
-                member,
-                span,
-            } => {
-                self.assign_at_member(target, member, result, *span)?;
-            }
-        }
-
-        Ok(Value::Null)
-    }
-
-    /// Evaluate a decrement (--)
-    fn eval_decrement(&mut self, dec: &DecrementStmt) -> Result<Value, RuntimeError> {
-        // Get current value
-        let current = match &dec.target {
-            AssignTarget::Name(id) => self.get_variable(&id.name, dec.span)?,
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let arr_val = self.eval_expr(target.as_ref())?;
-                let idx_val = self.eval_expr(index.as_ref())?;
-                self.get_array_element(arr_val, idx_val, *span)?
-            }
-            AssignTarget::Member {
-                target,
-                member,
-                span,
-            } => self.get_member_value(target, member, *span)?,
-        };
-
-        // Decrement by 1
-        let result = match current {
-            Value::Number(n) => {
-                let res = n - 1.0;
-                if res.is_nan() || res.is_infinite() {
-                    return Err(RuntimeError::InvalidNumericResult { span: dec.span });
-                }
-                Value::Number(res)
-            }
-            _ => {
-                return Err(RuntimeError::TypeError {
-                    msg: "Decrement requires number".to_string(),
-                    span: dec.span,
-                })
-            }
-        };
-
-        // Store the result
-        match &dec.target {
-            AssignTarget::Name(id) => {
-                self.set_variable(&id.name, result, dec.span)?;
-            }
-            AssignTarget::Index {
-                target,
-                index,
-                span,
-            } => {
-                let idx_val = self.eval_expr(index.as_ref())?;
-                self.assign_at_index(target, idx_val, result, *span)?;
-            }
-            AssignTarget::Member {
-                target,
-                member,
-                span,
-            } => {
-                self.assign_at_member(target, member, result, *span)?;
-            }
-        }
-
-        Ok(Value::Null)
-    }
-
     /// Evaluate an if statement
     fn eval_if(&mut self, if_stmt: &IfStmt) -> Result<Value, RuntimeError> {
         let condition = self.eval_expr(&if_stmt.cond)?;
@@ -427,50 +298,6 @@ impl Interpreter {
             }
         }
 
-        Ok(last_value)
-    }
-
-    /// Evaluate a for loop
-    fn eval_for(&mut self, for_stmt: &ForStmt) -> Result<Value, RuntimeError> {
-        // Push new scope for loop variable
-        self.push_scope();
-
-        // Initialize loop variable
-        self.eval_statement(&for_stmt.init)?;
-
-        let mut last_value = Value::Null;
-
-        loop {
-            // Check condition
-            let cond_val = self.eval_expr(&for_stmt.cond)?;
-            if !cond_val.is_truthy() {
-                break;
-            }
-
-            // Execute body
-            last_value = self.eval_block(&for_stmt.body)?;
-
-            match self.control_flow {
-                ControlFlow::Break => {
-                    self.control_flow = ControlFlow::None;
-                    break;
-                }
-                ControlFlow::Continue => {
-                    self.control_flow = ControlFlow::None;
-                    // Continue to step
-                }
-                ControlFlow::Return(_) => {
-                    // Propagate return up
-                    break;
-                }
-                ControlFlow::None => {}
-            }
-
-            // Execute step
-            self.eval_statement(&for_stmt.step)?;
-        }
-
-        self.pop_scope();
         Ok(last_value)
     }
 

@@ -204,20 +204,6 @@ fn extract_statement_folds(text: &str, stmt: &Stmt, ranges: &mut Vec<FoldingRang
             }
             extract_block_folds(text, &while_stmt.body, ranges);
         }
-        Stmt::For(for_stmt) => {
-            let body_range = span_to_range(text, for_stmt.body.span);
-            if body_range.end.line > body_range.start.line {
-                ranges.push(FoldingRange {
-                    start_line: body_range.start.line,
-                    start_character: Some(body_range.start.character),
-                    end_line: body_range.end.line,
-                    end_character: Some(body_range.end.character),
-                    kind: Some(FoldingRangeKind::Region),
-                    collapsed_text: None,
-                });
-            }
-            extract_block_folds(text, &for_stmt.body, ranges);
-        }
         Stmt::ForIn(for_in) => {
             let body_range = span_to_range(text, for_in.body.span);
             if body_range.end.line > body_range.start.line {

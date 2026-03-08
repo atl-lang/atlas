@@ -433,11 +433,8 @@ pub enum Stmt {
     FunctionDecl(FunctionDecl),
     Assign(Assign),
     CompoundAssign(CompoundAssign),
-    Increment(IncrementStmt),
-    Decrement(DecrementStmt),
     If(IfStmt),
     While(WhileStmt),
-    For(ForStmt),
     ForIn(ForInStmt),
     Return(ReturnStmt),
     Break(Span),
@@ -501,20 +498,6 @@ pub struct CompoundAssign {
     pub span: Span,
 }
 
-/// Increment statement (++)
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct IncrementStmt {
-    pub target: AssignTarget,
-    pub span: Span,
-}
-
-/// Decrement statement (--)
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct DecrementStmt {
-    pub target: AssignTarget,
-    pub span: Span,
-}
-
 /// If statement
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct IfStmt {
@@ -528,16 +511,6 @@ pub struct IfStmt {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct WhileStmt {
     pub cond: Expr,
-    pub body: Block,
-    pub span: Span,
-}
-
-/// For loop
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct ForStmt {
-    pub init: Box<Stmt>,
-    pub cond: Expr,
-    pub step: Box<Stmt>,
     pub body: Block,
     pub span: Span,
 }
@@ -978,11 +951,8 @@ impl Stmt {
             Stmt::FunctionDecl(f) => f.span,
             Stmt::Assign(a) => a.span,
             Stmt::CompoundAssign(c) => c.span,
-            Stmt::Increment(i) => i.span,
-            Stmt::Decrement(d) => d.span,
             Stmt::If(i) => i.span,
             Stmt::While(w) => w.span,
-            Stmt::For(f) => f.span,
             Stmt::ForIn(f) => f.span,
             Stmt::Return(r) => r.span,
             Stmt::Break(s) | Stmt::Continue(s) => *s,

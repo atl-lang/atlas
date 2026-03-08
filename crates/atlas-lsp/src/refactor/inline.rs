@@ -141,11 +141,6 @@ fn find_variable_in_block<'a>(block: &'a Block, name: &str) -> Option<&'a VarDec
                     return Some(decl);
                 }
             }
-            Stmt::For(for_stmt) => {
-                if let Some(decl) = find_variable_in_block(&for_stmt.body, name) {
-                    return Some(decl);
-                }
-            }
             Stmt::ForIn(for_in_stmt) => {
                 if let Some(decl) = find_variable_in_block(&for_in_stmt.body, name) {
                     return Some(decl);

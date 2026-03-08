@@ -471,11 +471,6 @@ fn extract_statement_symbols(
         Stmt::While(while_stmt) => {
             extract_block_symbols(uri, text, &while_stmt.body, container, symbols);
         }
-        Stmt::For(for_stmt) => {
-            // Extract init statement (may contain variable declaration)
-            extract_statement_symbols(uri, text, &for_stmt.init, container, symbols);
-            extract_block_symbols(uri, text, &for_stmt.body, container, symbols);
-        }
         Stmt::ForIn(for_in) => {
             // Iterator variable
             let range = span_to_range(text, for_in.variable.span);
@@ -779,9 +774,6 @@ fn extract_block_children(text: &str, block: &Block, children: &mut Vec<Document
             }
             Stmt::While(while_stmt) => {
                 extract_block_children(text, &while_stmt.body, children);
-            }
-            Stmt::For(for_stmt) => {
-                extract_block_children(text, &for_stmt.body, children);
             }
             Stmt::ForIn(for_in) => {
                 extract_block_children(text, &for_in.body, children);

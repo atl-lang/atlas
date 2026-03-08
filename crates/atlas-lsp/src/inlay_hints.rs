@@ -238,17 +238,6 @@ fn extract_statement_hints(
                 hints,
             );
         }
-        Stmt::For(for_stmt) => {
-            extract_block_hints(
-                text,
-                &for_stmt.body,
-                symbols,
-                config,
-                start_offset,
-                end_offset,
-                hints,
-            );
-        }
         Stmt::ForIn(for_in) => {
             extract_expression_hints(
                 text,

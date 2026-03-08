@@ -366,12 +366,6 @@ impl SymbolIndex {
                 self.index_expr(&while_stmt.cond, ctx, false);
                 self.index_block(&while_stmt.body, ctx);
             }
-            Stmt::For(for_stmt) => {
-                self.index_stmt(&for_stmt.init, ctx);
-                self.index_expr(&for_stmt.cond, ctx, false);
-                self.index_stmt(&for_stmt.step, ctx);
-                self.index_block(&for_stmt.body, ctx);
-            }
             Stmt::ForIn(for_in_stmt) => {
                 self.add_definition(
                     &for_in_stmt.variable.name,
@@ -398,12 +392,6 @@ impl SymbolIndex {
             Stmt::CompoundAssign(assign) => {
                 self.index_assign_target(&assign.target, ctx, true);
                 self.index_expr(&assign.value, ctx, false);
-            }
-            Stmt::Increment(inc) => {
-                self.index_assign_target(&inc.target, ctx, true);
-            }
-            Stmt::Decrement(dec) => {
-                self.index_assign_target(&dec.target, ctx, true);
             }
             Stmt::Break(_) | Stmt::Continue(_) => {}
         }

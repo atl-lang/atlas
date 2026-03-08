@@ -821,14 +821,6 @@ impl Binder {
                 self.bind_assign_target(&compound.target);
                 self.bind_expr(&compound.value);
             }
-            Stmt::Increment(inc) => {
-                // Bind increment target
-                self.bind_assign_target(&inc.target);
-            }
-            Stmt::Decrement(dec) => {
-                // Bind decrement target
-                self.bind_assign_target(&dec.target);
-            }
             Stmt::If(if_stmt) => {
                 self.bind_expr(&if_stmt.cond);
                 self.bind_block(&if_stmt.then_block);
@@ -839,17 +831,6 @@ impl Binder {
             Stmt::While(while_stmt) => {
                 self.bind_expr(&while_stmt.cond);
                 self.bind_block(&while_stmt.body);
-            }
-            Stmt::For(for_stmt) => {
-                // For loops create their own scope for the initializer
-                self.symbol_table.enter_scope();
-
-                self.bind_statement(&for_stmt.init);
-                self.bind_expr(&for_stmt.cond);
-                self.bind_statement(&for_stmt.step);
-                self.bind_block(&for_stmt.body);
-
-                self.symbol_table.exit_scope();
             }
             Stmt::ForIn(for_in_stmt) => {
                 // Bind iterable expression in current scope

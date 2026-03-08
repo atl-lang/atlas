@@ -140,12 +140,6 @@ fn extract_names_from_stmt(stmt: &Stmt, names: &mut Vec<String>) {
             extract_names_from_expr(&while_stmt.cond, names);
             extract_names_from_block(&while_stmt.body, names);
         }
-        Stmt::For(for_stmt) => {
-            extract_names_from_stmt(&for_stmt.init, names);
-            extract_names_from_expr(&for_stmt.cond, names);
-            extract_names_from_stmt(&for_stmt.step, names);
-            extract_names_from_block(&for_stmt.body, names);
-        }
         Stmt::ForIn(for_in_stmt) => {
             names.push(for_in_stmt.variable.name.clone());
             extract_names_from_expr(&for_in_stmt.iterable, names);
@@ -166,12 +160,6 @@ fn extract_names_from_stmt(stmt: &Stmt, names: &mut Vec<String>) {
         Stmt::CompoundAssign(assign) => {
             extract_names_from_assign_target(&assign.target, names);
             extract_names_from_expr(&assign.value, names);
-        }
-        Stmt::Increment(inc) => {
-            extract_names_from_assign_target(&inc.target, names);
-        }
-        Stmt::Decrement(dec) => {
-            extract_names_from_assign_target(&dec.target, names);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
     }

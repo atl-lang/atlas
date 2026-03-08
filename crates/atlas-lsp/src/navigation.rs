@@ -228,12 +228,6 @@ fn find_references_in_stmt(stmt: &Stmt, identifier: &str, references: &mut Vec<R
             find_references_in_expr(&while_stmt.cond, identifier, references);
             find_references_in_block(&while_stmt.body, identifier, references);
         }
-        Stmt::For(for_stmt) => {
-            find_references_in_stmt(&for_stmt.init, identifier, references);
-            find_references_in_expr(&for_stmt.cond, identifier, references);
-            find_references_in_stmt(&for_stmt.step, identifier, references);
-            find_references_in_block(&for_stmt.body, identifier, references);
-        }
         Stmt::ForIn(for_in_stmt) => {
             if for_in_stmt.variable.name == identifier {
                 references.push(Range::default());
@@ -256,12 +250,6 @@ fn find_references_in_stmt(stmt: &Stmt, identifier: &str, references: &mut Vec<R
         Stmt::CompoundAssign(assign) => {
             find_references_in_assign_target(&assign.target, identifier, references);
             find_references_in_expr(&assign.value, identifier, references);
-        }
-        Stmt::Increment(inc) => {
-            find_references_in_assign_target(&inc.target, identifier, references);
-        }
-        Stmt::Decrement(dec) => {
-            find_references_in_assign_target(&dec.target, identifier, references);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
     }

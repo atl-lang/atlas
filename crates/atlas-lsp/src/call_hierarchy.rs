@@ -346,12 +346,6 @@ fn collect_calls_from_stmt(stmt: &Stmt, calls: &mut Vec<CallExpr>) {
             collect_calls_from_expr(&while_stmt.cond, calls);
             collect_function_calls(&while_stmt.body, calls);
         }
-        Stmt::For(for_stmt) => {
-            collect_calls_from_expr(&for_stmt.cond, calls);
-            collect_calls_from_stmt(&for_stmt.init, calls);
-            collect_calls_from_stmt(&for_stmt.step, calls);
-            collect_function_calls(&for_stmt.body, calls);
-        }
         Stmt::ForIn(for_in_stmt) => {
             collect_calls_from_expr(&for_in_stmt.iterable, calls);
             collect_function_calls(&for_in_stmt.body, calls);

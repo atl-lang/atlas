@@ -133,11 +133,6 @@ fn symbol_exists_in_block(block: &Block, name: &str) -> bool {
                     return true;
                 }
             }
-            Stmt::For(for_stmt) => {
-                if symbol_exists_in_block(&for_stmt.body, name) {
-                    return true;
-                }
-            }
             Stmt::ForIn(for_in_stmt) => {
                 if for_in_stmt.variable.name == name {
                     return true;

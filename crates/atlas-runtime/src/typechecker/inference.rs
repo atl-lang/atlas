@@ -480,9 +480,6 @@ fn collect_return_types(stmts: &[Stmt], return_types: &mut Vec<Type>) {
             Stmt::While(while_stmt) => {
                 collect_return_types(&while_stmt.body.statements, return_types);
             }
-            Stmt::For(for_stmt) => {
-                collect_return_types(&for_stmt.body.statements, return_types);
-            }
             Stmt::ForIn(for_in_stmt) => {
                 collect_return_types(&for_in_stmt.body.statements, return_types);
             }

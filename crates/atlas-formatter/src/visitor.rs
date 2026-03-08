@@ -272,11 +272,8 @@ impl FormatVisitor {
             Stmt::FunctionDecl(f) => self.visit_function_decl(f),
             Stmt::Assign(a) => self.visit_assign(a),
             Stmt::CompoundAssign(c) => self.visit_compound_assign(c),
-            Stmt::Increment(i) => self.visit_increment(i),
-            Stmt::Decrement(d) => self.visit_decrement(d),
             Stmt::If(i) => self.visit_if(i),
             Stmt::While(w) => self.visit_while(w),
-            Stmt::For(f) => self.visit_for(f),
             Stmt::ForIn(f) => self.visit_for_in(f),
             Stmt::Return(r) => self.visit_return(r),
             Stmt::Break(span) => {
@@ -366,22 +363,6 @@ impl FormatVisitor {
         self.writeln();
     }
 
-    fn visit_increment(&mut self, i: &IncrementStmt) {
-        self.write_indent();
-        self.visit_assign_target(&i.target);
-        self.write("++;");
-        self.emit_trailing_comment(i.span.end);
-        self.writeln();
-    }
-
-    fn visit_decrement(&mut self, d: &DecrementStmt) {
-        self.write_indent();
-        self.visit_assign_target(&d.target);
-        self.write("--;");
-        self.emit_trailing_comment(d.span.end);
-        self.writeln();
-    }
-
     fn visit_assign_target(&mut self, target: &AssignTarget) {
         match target {
             AssignTarget::Name(id) => self.write(&id.name),
@@ -436,19 +417,6 @@ impl FormatVisitor {
         self.writeln();
     }
 
-    fn visit_for(&mut self, f: &ForStmt) {
-        self.write_indent();
-        self.write("for (");
-        self.visit_inline_statement(&f.init);
-        self.write("; ");
-        self.visit_expr(&f.cond);
-        self.write("; ");
-        self.visit_inline_statement(&f.step);
-        self.write(") ");
-        self.visit_block(&f.body);
-        self.writeln();
-    }
-
     fn visit_for_in(&mut self, f: &ForInStmt) {
         self.write_indent();
         self.write("for ");
@@ -458,53 +426,6 @@ impl FormatVisitor {
         self.write(" ");
         self.visit_block(&f.body);
         self.writeln();
-    }
-
-    /// Visit a statement inline (no indent, no trailing newline) - for `for` loop init/step
-    fn visit_inline_statement(&mut self, stmt: &Stmt) {
-        match stmt {
-            Stmt::VarDecl(v) => {
-                if v.mutable {
-                    self.write("let mut ");
-                } else {
-                    self.write("let ");
-                }
-                self.write(&v.name.name);
-                if let Some(ref type_ref) = v.type_ref {
-                    self.write(": ");
-                    self.visit_type_ref(type_ref);
-                }
-                self.write(" = ");
-                self.visit_expr(&v.init);
-            }
-            Stmt::Assign(a) => {
-                self.visit_assign_target(&a.target);
-                self.write(" = ");
-                self.visit_expr(&a.value);
-            }
-            Stmt::CompoundAssign(c) => {
-                self.visit_assign_target(&c.target);
-                let op = match c.op {
-                    CompoundOp::AddAssign => " += ",
-                    CompoundOp::SubAssign => " -= ",
-                    CompoundOp::MulAssign => " *= ",
-                    CompoundOp::DivAssign => " /= ",
-                    CompoundOp::ModAssign => " %= ",
-                };
-                self.write(op);
-                self.visit_expr(&c.value);
-            }
-            Stmt::Increment(i) => {
-                self.visit_assign_target(&i.target);
-                self.write("++");
-            }
-            Stmt::Decrement(d) => {
-                self.visit_assign_target(&d.target);
-                self.write("--");
-            }
-            Stmt::Expr(e) => self.visit_expr(&e.expr),
-            _ => {} // Other statement types shouldn't appear in for init/step
-        }
     }
 
     fn visit_return(&mut self, r: &ReturnStmt) {

@@ -239,14 +239,6 @@ fn collect_free_vars_stmt(
             collect_free_vars_block(&while_stmt.body, scopes, free_vars);
             scopes.pop_back();
         }
-        Stmt::For(for_stmt) => {
-            scopes.push_back(std::collections::HashSet::new());
-            collect_free_vars_stmt(&for_stmt.init, scopes, free_vars);
-            collect_free_vars_expr(&for_stmt.cond, scopes, free_vars);
-            collect_free_vars_stmt(&for_stmt.step, scopes, free_vars);
-            collect_free_vars_block(&for_stmt.body, scopes, free_vars);
-            scopes.pop_back();
-        }
         Stmt::ForIn(for_in_stmt) => {
             scopes.push_back(std::collections::HashSet::new());
             collect_free_vars_expr(&for_in_stmt.iterable, scopes, free_vars);
@@ -271,12 +263,6 @@ fn collect_free_vars_stmt(
         Stmt::CompoundAssign(assign) => {
             collect_free_vars_assign_target(&assign.target, scopes, free_vars);
             collect_free_vars_expr(&assign.value, scopes, free_vars);
-        }
-        Stmt::Increment(inc) => {
-            collect_free_vars_assign_target(&inc.target, scopes, free_vars);
-        }
-        Stmt::Decrement(dec) => {
-            collect_free_vars_assign_target(&dec.target, scopes, free_vars);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
     }

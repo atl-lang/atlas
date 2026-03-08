@@ -1934,74 +1934,6 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
             }
-            Stmt::Increment(inc) => {
-                let target_type = self.check_assign_target(&inc.target);
-                let target_norm = target_type.normalized();
-
-                // Increment requires number type (allow Unknown for error recovery)
-                if !matches!(target_norm, Type::Number | Type::Unknown) {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Increment requires number type, found {}",
-                                target_type.display_name()
-                            ),
-                            inc.span,
-                        )
-                        .with_label("type mismatch"),
-                    );
-                }
-
-                // Check mutability
-                if let AssignTarget::Name(id) = &inc.target {
-                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
-                        if !symbol.mutable {
-                            let diag = Diagnostic::error_with_code(
-                                "AT3003",
-                                format!("Cannot modify immutable variable '{}'", id.name),
-                                id.span,
-                            )
-                            .with_label("immutable variable");
-                            self.diagnostics.push(diag);
-                        }
-                    }
-                }
-            }
-            Stmt::Decrement(dec) => {
-                let target_type = self.check_assign_target(&dec.target);
-                let target_norm = target_type.normalized();
-
-                // Decrement requires number type (allow Unknown for error recovery)
-                if !matches!(target_norm, Type::Number | Type::Unknown) {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Decrement requires number type, found {}",
-                                target_type.display_name()
-                            ),
-                            dec.span,
-                        )
-                        .with_label("type mismatch"),
-                    );
-                }
-
-                // Check mutability
-                if let AssignTarget::Name(id) = &dec.target {
-                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
-                        if !symbol.mutable {
-                            let diag = Diagnostic::error_with_code(
-                                "AT3003",
-                                format!("Cannot modify immutable variable '{}'", id.name),
-                                id.span,
-                            )
-                            .with_label("immutable variable");
-                            self.diagnostics.push(diag);
-                        }
-                    }
-                }
-            }
             Stmt::If(if_stmt) => {
                 let cond_type = self.check_expr(&if_stmt.cond);
                 let cond_norm = cond_type.normalized();
@@ -2049,28 +1981,6 @@ impl<'a> TypeChecker<'a> {
                 self.apply_narrowings(&then_narrow);
                 self.check_block(&while_stmt.body);
                 self.exit_scope();
-                self.in_loop = old_in_loop;
-            }
-            Stmt::For(for_stmt) => {
-                self.check_statement(&for_stmt.init);
-                let cond_type = self.check_expr(&for_stmt.cond);
-                let cond_norm = cond_type.normalized();
-                if cond_norm != Type::Bool {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Condition must be bool, found {}", cond_type.display_name()),
-                            for_stmt.cond.span(),
-                        )
-                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
-                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
-                    );
-                }
-                self.check_statement(&for_stmt.step);
-
-                let old_in_loop = self.in_loop;
-                self.in_loop = true;
-                self.check_block(&for_stmt.body);
                 self.in_loop = old_in_loop;
             }
             Stmt::Return(ret) => {

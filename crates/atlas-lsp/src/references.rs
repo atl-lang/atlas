@@ -198,11 +198,6 @@ fn is_definition_in_stmt(stmt: &atlas_runtime::ast::Stmt, identifier: &str, offs
                     .is_some_and(|block| is_definition_in_block(block, identifier, offset))
         }
         Stmt::While(while_stmt) => is_definition_in_block(&while_stmt.body, identifier, offset),
-        Stmt::For(for_stmt) => {
-            is_definition_in_stmt(&for_stmt.init, identifier, offset)
-                || is_definition_in_stmt(&for_stmt.step, identifier, offset)
-                || is_definition_in_block(&for_stmt.body, identifier, offset)
-        }
         _ => false,
     }
 }
