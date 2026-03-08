@@ -14,6 +14,9 @@ pub enum TypeTag {
     HttpResponse,
     String,
     HashMap,
+    HashSet,
+    Queue,
+    Stack,
     Option,
     Result,
 }
@@ -27,6 +30,9 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::HttpResponse => resolve_http_response_method(method_name),
         TypeTag::String => resolve_string_method(method_name),
         TypeTag::HashMap => resolve_hashmap_method(method_name),
+        TypeTag::HashSet => resolve_hashset_method(method_name),
+        TypeTag::Queue => resolve_queue_method(method_name),
+        TypeTag::Stack => resolve_stack_method(method_name),
         TypeTag::Option => resolve_option_method(method_name),
         TypeTag::Result => resolve_result_method(method_name),
     }
@@ -50,9 +56,9 @@ fn resolve_http_response_method(method_name: &str) -> Option<String> {
 fn resolve_string_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         // Core methods
-        "length" => "len",
+        "len" | "length" => "len",
         "charAt" => "charAt",
-        "substring" => "substring",
+        "substring" | "slice" => "substring",
         // Search methods
         "indexOf" => "indexOf",
         "lastIndexOf" => "lastIndexOf",
@@ -67,6 +73,7 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
         "trimEnd" => "trimEnd",
         "repeat" => "repeat",
         "replace" => "replace",
+        "replaceAll" => "replace", // full replaceAll impl added in B10-P05
         "split" => "split",
         // Padding methods
         "padStart" => "padStart",
@@ -79,21 +86,32 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
 /// Resolve an array method call to its stdlib function name.
 fn resolve_array_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        // Mutating methods — write back to receiver
+        // Mutating methods — CoW write-back to receiver
         "push" => "arrayPush",
         "pop" => "arrayPop",
         "shift" => "arrayShift",
         "unshift" => "arrayUnshift",
         "reverse" => "arrayReverse",
-        // Non-mutating — return new value, receiver unchanged
+        // Non-mutating — return new value
         "sort" => "arraySort",
+        "sortBy" => "arraySortBy",
         "len" | "length" => "len",
+        "isEmpty" => "arrayIsEmpty",
         "includes" => "arrayIncludes",
         "indexOf" => "arrayIndexOf",
         "lastIndexOf" => "arrayLastIndexOf",
+        "find" => "arrayFind",
+        "findIndex" => "arrayFindIndex",
+        "some" => "arraySome",
+        "every" => "arrayEvery",
+        "forEach" => "arrayForEach",
+        "map" => "map",
+        "filter" => "filter",
+        "reduce" => "reduce",
         "slice" => "slice",
         "concat" => "concat",
-        "flatten" => "flatten",
+        "flat" | "flatten" => "flatten",
+        "flatMap" => "arrayFlatMap",
         "join" => "join",
         _ => return None,
     };
@@ -101,7 +119,7 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
 }
 
 /// Resolve a HashMap method call to its stdlib function name.
-/// HashMap mutates in-place via Arc<Mutex> — no CoW write-back needed.
+/// HashMap uses CoW semantics — mutating methods return a new map (write-back required).
 fn resolve_hashmap_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         // Read methods
@@ -112,10 +130,59 @@ fn resolve_hashmap_method(method_name: &str) -> Option<String> {
         "keys" => "hashMapKeys",
         "values" => "hashMapValues",
         "entries" => "hashMapEntries",
-        // Mutating methods (in-place via Arc<Mutex> — no write-back needed)
+        "forEach" => "hashMapForEach",
+        "map" => "hashMapMap",
+        "filter" => "hashMapFilter",
+        // Mutating methods — CoW, return new map (write-back required)
         "set" | "put" => "hashMapPut",
         "remove" | "delete" => "hashMapRemove",
         "clear" => "hashMapClear",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a HashSet method call to its stdlib function name.
+fn resolve_hashset_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "add" => "hashSetAdd",
+        "remove" | "delete" => "hashSetRemove",
+        "has" | "contains" => "hashSetHas",
+        "size" | "len" => "hashSetSize",
+        "isEmpty" => "hashSetIsEmpty",
+        "toArray" => "hashSetToArray",
+        "forEach" => "hashSetForEach",
+        "clear" => "hashSetClear",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a Queue method call to its stdlib function name.
+fn resolve_queue_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "enqueue" | "push" => "queueEnqueue",
+        "dequeue" | "pop" => "queueDequeue",
+        "peek" => "queuePeek",
+        "size" | "len" => "queueSize",
+        "isEmpty" => "queueIsEmpty",
+        "toArray" => "queueToArray",
+        "clear" => "queueClear",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a Stack method call to its stdlib function name.
+fn resolve_stack_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "push" => "stackPush",
+        "pop" => "stackPop",
+        "peek" => "stackPeek",
+        "size" | "len" => "stackSize",
+        "isEmpty" => "stackIsEmpty",
+        "toArray" => "stackToArray",
+        "clear" => "stackClear",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -157,6 +224,29 @@ pub fn is_array_mutating_collection(func_name: &str) -> bool {
 /// `[extracted_value, new_array]` (pop/shift pattern).
 pub fn is_array_mutating_pair(func_name: &str) -> bool {
     matches!(func_name, "arrayPop" | "arrayShift")
+}
+
+/// Returns true if a stdlib function mutates a collection and returns the new collection directly.
+/// Covers: HashMap.put/clear, HashSet.add/remove/clear, Queue.enqueue/clear, Stack.push/clear.
+pub fn is_collection_mutating_simple(func_name: &str) -> bool {
+    matches!(
+        func_name,
+        "hashMapPut"
+            | "hashMapClear"
+            | "hashSetAdd"
+            | "hashSetRemove"
+            | "hashSetClear"
+            | "queueEnqueue"
+            | "queueClear"
+            | "stackPush"
+            | "stackClear"
+    )
+}
+
+/// Returns true if a stdlib function mutates a collection and returns `[extracted_value, new_collection]`.
+/// Covers: HashMap.remove, Queue.dequeue, Stack.pop.
+pub fn is_collection_mutating_pair(func_name: &str) -> bool {
+    matches!(func_name, "hashMapRemove" | "queueDequeue" | "stackPop")
 }
 
 /// Capitalize first letter of each snake_case segment and join.

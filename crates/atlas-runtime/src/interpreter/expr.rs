@@ -635,6 +635,10 @@ impl Interpreter {
             Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
             Value::String(_) => Some(crate::method_dispatch::TypeTag::String),
+            Value::HashMap(_) => Some(crate::method_dispatch::TypeTag::HashMap),
+            Value::HashSet(_) => Some(crate::method_dispatch::TypeTag::HashSet),
+            Value::Queue(_) => Some(crate::method_dispatch::TypeTag::Queue),
+            Value::Stack(_) => Some(crate::method_dispatch::TypeTag::Stack),
             Value::Option(_) => Some(crate::method_dispatch::TypeTag::Option),
             Value::Result(_) => Some(crate::method_dispatch::TypeTag::Result),
             _ => None,
@@ -687,6 +691,26 @@ impl Interpreter {
                             let extracted = s[0].clone();
                             let new_arr = s[1].clone();
                             self.force_set_collection(&id.name, new_arr);
+                            return Ok(extracted);
+                        }
+                    }
+                    return Ok(result);
+                }
+                if crate::method_dispatch::is_collection_mutating_simple(&func_name) {
+                    // HashMap.put/clear, HashSet.add/remove/clear, Queue.enqueue/clear,
+                    // Stack.push/clear: result IS the new collection — write it back
+                    self.force_set_collection(&id.name, result.clone());
+                    return Ok(result);
+                }
+                if crate::method_dispatch::is_collection_mutating_pair(&func_name) {
+                    // HashMap.remove, Queue.dequeue, Stack.pop:
+                    // result is [extracted_value, new_collection] — write back collection, return extracted
+                    if let Value::Array(ref arr) = result {
+                        let s = arr.as_slice();
+                        if s.len() == 2 {
+                            let extracted = s[0].clone();
+                            let new_col = s[1].clone();
+                            self.force_set_collection(&id.name, new_col);
                             return Ok(extracted);
                         }
                     }

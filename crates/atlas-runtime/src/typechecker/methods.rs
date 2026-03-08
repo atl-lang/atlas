@@ -67,6 +67,33 @@ impl MethodTable {
             Type::Generic {
                 ref name,
                 ref type_args,
+            } if name == "HashSet" => {
+                return self.hashset_method_signature(
+                    method_name,
+                    type_args.first().unwrap_or(&Type::Unknown),
+                )
+            }
+            Type::Generic {
+                ref name,
+                ref type_args,
+            } if name == "Queue" => {
+                return self.queue_method_signature(
+                    method_name,
+                    type_args.first().unwrap_or(&Type::Unknown),
+                )
+            }
+            Type::Generic {
+                ref name,
+                ref type_args,
+            } if name == "Stack" => {
+                return self.stack_method_signature(
+                    method_name,
+                    type_args.first().unwrap_or(&Type::Unknown),
+                )
+            }
+            Type::Generic {
+                ref name,
+                ref type_args,
             } if name == "Option" => {
                 return self.option_method_signature(
                     method_name,
@@ -100,6 +127,7 @@ impl MethodTable {
 
         // String methods
         // Core methods
+        self.register("string", "len", vec![], Type::Number);
         self.register("string", "length", vec![], Type::Number);
         self.register(
             "string",
@@ -113,6 +141,12 @@ impl MethodTable {
         self.register(
             "string",
             "substring",
+            vec![Type::Number, Type::Number],
+            Type::String,
+        );
+        self.register(
+            "string",
+            "slice",
             vec![Type::Number, Type::Number],
             Type::String,
         );
@@ -153,6 +187,12 @@ impl MethodTable {
         );
         self.register(
             "string",
+            "replaceAll",
+            vec![Type::String, Type::String],
+            Type::String,
+        );
+        self.register(
+            "string",
             "split",
             vec![Type::String],
             Type::Array(Box::new(Type::String)),
@@ -180,18 +220,34 @@ impl MethodTable {
             // Mutating collection methods — return updated array
             "push" | "unshift" => (vec![elem_norm.clone()], array_of_elem.clone()),
             "reverse" | "sort" => (vec![], array_of_elem.clone()),
+            "sortBy" => (vec![Type::Unknown], array_of_elem.clone()),
             // Mutating pair methods — return extracted element
             "pop" | "shift" => (vec![], elem_norm.clone()),
             // Non-mutating methods — return new value
             "len" | "length" => (vec![], Type::Number),
+            "isEmpty" => (vec![], Type::Bool),
             "includes" => (vec![elem_norm.clone()], Type::Bool),
             "indexOf" | "lastIndexOf" => (vec![elem_norm.clone()], Type::Number),
+            "find" => (
+                vec![Type::Unknown],
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![elem_norm.clone()],
+                },
+            ),
+            "findIndex" => (vec![Type::Unknown], Type::Number),
+            "some" | "every" => (vec![Type::Unknown], Type::Bool),
+            "forEach" => (vec![Type::Unknown], Type::Null),
+            "map" => (vec![Type::Unknown], Type::Array(Box::new(Type::Unknown))),
+            "filter" => (vec![Type::Unknown], array_of_elem.clone()),
+            "reduce" => (vec![Type::Unknown, Type::Unknown], Type::Unknown),
             "slice" => (vec![Type::Number, Type::Number], array_of_elem.clone()),
             "concat" => (vec![array_of_elem.clone()], array_of_elem.clone()),
-            "flatten" => match elem_norm {
+            "flat" | "flatten" => match elem_norm {
                 Type::Array(inner) => (vec![], Type::Array(inner)),
                 other => (vec![], Type::Array(Box::new(other))),
             },
+            "flatMap" => (vec![Type::Unknown], Type::Array(Box::new(Type::Unknown))),
             "join" => (vec![Type::String], Type::String),
             _ => return None,
         };
@@ -225,7 +281,7 @@ impl MethodTable {
 
         let (arg_types, return_type) = match method_name {
             // Read methods
-            "get" => (vec![k.clone()], option_v),
+            "get" => (vec![k.clone()], option_v.clone()),
             "has" | "containsKey" => (vec![k.clone()], Type::Bool),
             "size" | "len" => (vec![], Type::Number),
             "isEmpty" => (vec![], Type::Bool),
@@ -235,13 +291,101 @@ impl MethodTable {
                 vec![],
                 Type::Array(Box::new(Type::Array(Box::new(Type::Unknown)))),
             ),
-            // Mutating methods — in-place via Arc<Mutex>, return the same HashMap
+            "forEach" => (vec![Type::Unknown], Type::Null),
+            "map" => (
+                vec![Type::Unknown],
+                Type::Generic {
+                    name: "HashMap".to_string(),
+                    type_args: vec![k.clone(), Type::Unknown],
+                },
+            ),
+            "filter" => (vec![Type::Unknown], hashmap_type.clone()),
+            // Mutating methods — CoW, return new HashMap
             "set" | "put" => (vec![k.clone(), v.clone()], hashmap_type.clone()),
             "remove" | "delete" => (vec![k.clone()], option_v),
             "clear" => (vec![], hashmap_type),
             _ => return None,
         };
 
+        Some(MethodSignature {
+            arg_types,
+            return_type,
+        })
+    }
+
+    fn hashset_method_signature(&self, method_name: &str, elem: &Type) -> Option<MethodSignature> {
+        let e = elem.clone();
+        let set_type = Type::Generic {
+            name: "HashSet".to_string(),
+            type_args: vec![e.clone()],
+        };
+        let (arg_types, return_type) = match method_name {
+            "add" => (vec![e.clone()], set_type.clone()),
+            "remove" | "delete" => (vec![e.clone()], set_type.clone()),
+            "has" | "contains" => (vec![e.clone()], Type::Bool),
+            "size" | "len" => (vec![], Type::Number),
+            "isEmpty" => (vec![], Type::Bool),
+            "toArray" => (vec![], Type::Array(Box::new(e.clone()))),
+            "forEach" => (vec![Type::Unknown], Type::Null),
+            "clear" => (vec![], set_type),
+            _ => return None,
+        };
+        Some(MethodSignature {
+            arg_types,
+            return_type,
+        })
+    }
+
+    fn queue_method_signature(&self, method_name: &str, elem: &Type) -> Option<MethodSignature> {
+        let e = elem.clone();
+        let queue_type = Type::Generic {
+            name: "Queue".to_string(),
+            type_args: vec![e.clone()],
+        };
+        let (arg_types, return_type) = match method_name {
+            "enqueue" | "push" => (vec![e.clone()], queue_type.clone()),
+            "dequeue" | "pop" => (vec![], e.clone()),
+            "peek" => (
+                vec![],
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![e.clone()],
+                },
+            ),
+            "size" | "len" => (vec![], Type::Number),
+            "isEmpty" => (vec![], Type::Bool),
+            "toArray" => (vec![], Type::Array(Box::new(e.clone()))),
+            "clear" => (vec![], queue_type),
+            _ => return None,
+        };
+        Some(MethodSignature {
+            arg_types,
+            return_type,
+        })
+    }
+
+    fn stack_method_signature(&self, method_name: &str, elem: &Type) -> Option<MethodSignature> {
+        let e = elem.clone();
+        let stack_type = Type::Generic {
+            name: "Stack".to_string(),
+            type_args: vec![e.clone()],
+        };
+        let (arg_types, return_type) = match method_name {
+            "push" => (vec![e.clone()], stack_type.clone()),
+            "pop" => (vec![], e.clone()),
+            "peek" => (
+                vec![],
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![e.clone()],
+                },
+            ),
+            "size" | "len" => (vec![], Type::Number),
+            "isEmpty" => (vec![], Type::Bool),
+            "toArray" => (vec![], Type::Array(Box::new(e.clone()))),
+            "clear" => (vec![], stack_type),
+            _ => return None,
+        };
         Some(MethodSignature {
             arg_types,
             return_type,

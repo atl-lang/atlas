@@ -1539,6 +1539,15 @@ impl<'a> TypeChecker<'a> {
             Type::Generic { ref name, .. } if name == "HashMap" => {
                 Some(crate::method_dispatch::TypeTag::HashMap)
             }
+            Type::Generic { ref name, .. } if name == "HashSet" => {
+                Some(crate::method_dispatch::TypeTag::HashSet)
+            }
+            Type::Generic { ref name, .. } if name == "Queue" => {
+                Some(crate::method_dispatch::TypeTag::Queue)
+            }
+            Type::Generic { ref name, .. } if name == "Stack" => {
+                Some(crate::method_dispatch::TypeTag::Stack)
+            }
             Type::Generic { ref name, .. } if name == "Option" => {
                 Some(crate::method_dispatch::TypeTag::Option)
             }
