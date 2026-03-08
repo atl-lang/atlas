@@ -227,7 +227,7 @@ create_p0_if_needed() {
 if [[ "$OVERALL_STATUS" == "fail" ]]; then
   log "Filing P0 issues for failures..."
   for check_name in fmt clippy tests parity battle corpus; do
-    var="${check_name^^}_STATUS"
+    var="$(echo "$check_name" | tr '[:lower:]' '[:upper:]')_STATUS"
     check_val="${!var}"
     p0_id=$(create_p0_if_needed "$check_name" "$check_val")
     if [[ -n "$p0_id" ]] && [[ -z "$P0_CREATED" ]]; then
