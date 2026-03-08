@@ -649,6 +649,32 @@ impl Interpreter {
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);
         if let Some(type_tag) = type_tag {
+            // For HashMap targets, check if the member is a callable field first.
+            // This handles namespace imports (`import * as ns`) which are stored as
+            // Value::HashMap but whose fields may be user-defined functions — not stdlib methods.
+            if matches!(type_tag, crate::method_dispatch::TypeTag::HashMap) && member.args.is_some()
+            {
+                let key = crate::stdlib::collections::hash::HashKey::String(Arc::new(
+                    member.member.name.clone(),
+                ));
+                if let Value::HashMap(ref map) = target_value {
+                    if let Some(field_val) = map.get(&key).cloned() {
+                        if matches!(
+                            field_val,
+                            Value::Function(_) | Value::Closure(_) | Value::NativeFunction(_)
+                        ) {
+                            let mut args = Vec::new();
+                            if let Some(method_args) = &member.args {
+                                for arg in method_args {
+                                    args.push(self.eval_expr(arg)?);
+                                }
+                            }
+                            return self.invoke_callee(field_val, args, member.span, None);
+                        }
+                    }
+                }
+            }
+
             let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
                 .ok_or_else(|| RuntimeError::TypeError {
                 msg: format!("No method '{}' on type {:?}", member.member.name, type_tag),

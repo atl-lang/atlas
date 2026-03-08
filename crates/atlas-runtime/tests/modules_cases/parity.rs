@@ -137,3 +137,33 @@ greet("World");
 
     assert_parity(&main_path);
 }
+
+#[test]
+fn test_h173_namespace_import_function_call() {
+    // H-173: `import * as ns` stored as HashMap — ns.fn(args) failed with
+    // "No method 'fn' on type HashMap" because member calls bypassed callable-field lookup.
+    let temp_dir = TempDir::new().unwrap();
+
+    let lib_path = temp_dir.path().join("utils.atlas");
+    fs::write(
+        &lib_path,
+        r#"
+export fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+export fn triple(borrow x: number) -> number { return x * 3; }
+export let PI: number = 3.14159;
+"#,
+    )
+    .unwrap();
+
+    let main_path = temp_dir.path().join("main.atlas");
+    fs::write(
+        &main_path,
+        r#"
+import * as utils from "./utils";
+str(utils.add(2, 3));
+"#,
+    )
+    .unwrap();
+
+    assert_parity(&main_path);
+}

@@ -454,6 +454,34 @@ impl Compiler {
         // If type_tag is None, the typechecker could not resolve the target type — surface as
         // a diagnostic rather than panicking (fuzzer safety, and graceful error for callers).
         if let Some(type_tag) = member.type_tag.get() {
+            // For HashMap targets, if resolve_method fails, fall back to treating the member
+            // as a callable field. This handles namespace imports (`import * as ns`) which are
+            // stored as Value::HashMap but whose fields are user-defined functions.
+            if matches!(type_tag, crate::method_dispatch::TypeTag::HashMap)
+                && member.args.is_some()
+                && crate::method_dispatch::resolve_method(type_tag, &member.member.name).is_none()
+            {
+                // Emit: load the HashMap, get the field (function value), then call it
+                self.compile_expr(&member.target)?;
+                let field_const = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(&member.member.name));
+                self.bytecode.emit(Opcode::Constant, member.span);
+                self.bytecode.emit_u16(field_const);
+                self.bytecode.emit(Opcode::GetIndex, member.span);
+
+                // Compile arguments
+                if let Some(args) = &member.args {
+                    for arg in args {
+                        self.compile_expr(arg)?;
+                    }
+                }
+                let arg_count = member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+                self.bytecode.emit(Opcode::Call, member.span);
+                self.bytecode.emit_u8(arg_count as u8);
+                return Ok(());
+            }
+
             let func_name = crate::method_dispatch::resolve_method(type_tag, &member.member.name)
                 .ok_or_else(|| {
                 vec![crate::diagnostic::Diagnostic::error(
