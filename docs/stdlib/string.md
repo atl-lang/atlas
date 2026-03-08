@@ -213,6 +213,27 @@ Replaces first occurrence of search with replacement.
 
 **Returns:** `string` - String with replacement made
 
+## replaceAll
+
+```atlas
+fn replaceAll(str: string, search: string, replacement: string) -> string
+```
+
+Replaces all occurrences of search with replacement. If search is empty, returns original string.
+
+**Parameters:**
+- `str` - String to search in
+- `search` - Text to find
+- `replacement` - Text to replace with
+
+**Returns:** `string` - String with all replacements made
+
+**Example:**
+```atlas
+let s: string = "aaa";
+s.replaceAll("a", "b");  // "bbb"
+```
+
 ## padStart
 
 ```atlas

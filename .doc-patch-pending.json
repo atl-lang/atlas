@@ -1,24 +1,21 @@
 {
-  "committed_at": "2026-03-08T00:43:34Z",
-  "commit": "2a5fbbc",
+  "committed_at": "2026-03-08T00:55:53Z",
+  "commit": "0a5ff83",
   "changed_files": [
-  "crates/atlas-runtime/src/interpreter/expr.rs",
+  "crates/atlas-runtime/src/interpreter/mod.rs",
   "crates/atlas-runtime/src/method_dispatch.rs",
   "crates/atlas-runtime/src/stdlib/mod.rs",
+  "crates/atlas-runtime/src/stdlib/string.rs",
   "crates/atlas-runtime/src/symbol.rs",
-  "crates/atlas-runtime/src/typechecker/expr.rs",
-  "crates/atlas-runtime/tests/interpreter/integration.rs",
-  "crates/atlas-runtime/tests/interpreter/integration/arrays_methods.rs"
+  "crates/atlas-runtime/tests/interpreter/integration/strings.rs"
 ],
   "domains": [
   "interpreter",
-  "stdlib",
-  "typechecker"
+  "stdlib"
 ],
   "relevant_docs": [
   "docs/known-issues.md",
-  "docs/language/types.md",
   "docs/stdlib/index.md"
 ],
-  "status": "done"
+  "status": "pending"
 }
