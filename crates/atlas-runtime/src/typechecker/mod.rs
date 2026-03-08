@@ -13,6 +13,7 @@ pub mod generics;
 pub mod inference;
 mod methods;
 mod narrowing;
+mod stdlib_ownership;
 pub mod suggestions;
 mod type_guards;
 pub mod unification;
@@ -442,7 +443,7 @@ impl<'a> TypeChecker<'a> {
             type_aliases,
             alias_cache: HashMap::new(),
             alias_resolution_stack: Vec::new(),
-            fn_ownership_registry: HashMap::new(),
+            fn_ownership_registry: stdlib_ownership::build_stdlib_ownership(),
             current_fn_param_ownerships: HashMap::new(),
             moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
