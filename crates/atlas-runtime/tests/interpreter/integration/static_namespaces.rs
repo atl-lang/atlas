@@ -216,5 +216,184 @@ fn test_env_get_known_var() {
 }
 
 // ============================================================================
-// End B10-P07 tests
+// B10-P08: Static namespaces File, Process, DateTime, Path — PascalCase.method()
+// Both interpreter and VM parity tested throughout.
+// ============================================================================
+
+// --- File.read() / File.write() / File.exists() / File.remove() ---
+// File operations require fs permissions — use run_interpreter (allow_all context).
+
+#[test]
+fn test_file_write_and_read() {
+    // Write then read — verify round-trip. readFile returns String directly.
+    let src = r#"
+        File.write("/tmp/atlas_test_p08.txt", "hello atlas");
+        let content = File.read("/tmp/atlas_test_p08.txt");
+        content;
+    "#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("hello atlas"),
+        "Expected file content"
+    );
+    assert_parity(src);
+}
+
+#[test]
+fn test_file_exists_true() {
+    // Write then check exists
+    let src = r#"
+        File.write("/tmp/atlas_test_exists.txt", "x");
+        File.exists("/tmp/atlas_test_exists.txt");
+    "#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("Bool(true)"),
+        "Expected Bool(true)"
+    );
+    assert_parity(src);
+}
+
+#[test]
+fn test_file_exists_false() {
+    let src = r#"File.exists("/tmp/atlas_nonexistent_zxqp.txt");"#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("Bool(false)"),
+        "Expected Bool(false)"
+    );
+    assert_parity(src);
+}
+
+#[test]
+fn test_file_append() {
+    let src = r#"
+        File.write("/tmp/atlas_append_p08.txt", "hello");
+        File.append("/tmp/atlas_append_p08.txt", " world");
+        let content = File.read("/tmp/atlas_append_p08.txt");
+        content;
+    "#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("hello world"),
+        "Expected appended content"
+    );
+    assert_parity(src);
+}
+
+// --- Process.cwd() / Process.pid() ---
+
+#[test]
+fn test_process_cwd() {
+    // cwd() returns a string directly (not Result)
+    let src = r#"
+        let cwd = Process.cwd();
+        cwd != "";
+    "#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("Bool(true)"),
+        "Expected Bool(true)"
+    );
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_pid() {
+    // pid() returns a number > 0
+    let src = r#"
+        let pid = Process.pid();
+        pid > 0;
+    "#;
+    let result = run_interpreter(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(
+        result.unwrap().contains("Bool(true)"),
+        "Expected Bool(true)"
+    );
+    assert_parity(src);
+}
+
+// --- DateTime.now() ---
+
+#[test]
+fn test_datetime_now_is_datetime() {
+    // DateTime.now() returns a DateTime value
+    let src = r#"
+        let dt = DateTime.now();
+        dt != null;
+    "#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_datetime_from_timestamp() {
+    // DateTime.fromTimestamp(0) = Unix epoch
+    let src = r#"
+        let dt = DateTime.fromTimestamp(0);
+        dt != null;
+    "#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+// --- Path.join() / Path.dirname() / Path.basename() / Path.exists() ---
+
+#[test]
+fn test_path_join() {
+    let src = r#"Path.join("/tmp", "atlas", "test.txt");"#;
+    assert_eval_string(src, "/tmp/atlas/test.txt");
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_dirname() {
+    let src = r#"Path.dirname("/tmp/atlas/test.txt");"#;
+    assert_eval_string(src, "/tmp/atlas");
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_basename() {
+    let src = r#"Path.basename("/tmp/atlas/test.txt");"#;
+    assert_eval_string(src, "test.txt");
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_extension() {
+    let src = r#"Path.extension("/tmp/atlas/test.txt");"#;
+    assert_eval_string(src, "txt");
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_is_absolute_true() {
+    let src = r#"Path.isAbsolute("/tmp/foo");"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_is_absolute_false() {
+    let src = r#"Path.isAbsolute("relative/path");"#;
+    assert_eval_bool(src, false);
+    assert_parity(src);
+}
+
+#[test]
+fn test_path_exists_false() {
+    let src = r#"Path.exists("/tmp/atlas_nonexistent_path_zxqp_99");"#;
+    assert_eval_bool(src, false);
+    assert_parity(src);
+}
+
+// ============================================================================
+// End B10-P07/P08 tests
 // ============================================================================

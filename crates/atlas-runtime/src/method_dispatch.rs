@@ -25,6 +25,14 @@ pub enum TypeTag {
     MathNs,
     /// Static namespace: Env.get(), Env.set(), Env.unset()
     EnvNs,
+    /// Static namespace: File.read(), File.write(), File.exists(), etc.
+    FileNs,
+    /// Static namespace: Process.cwd(), Process.pid(), Process.spawn(), etc.
+    ProcessNs,
+    /// Static namespace: DateTime.now(), DateTime.fromTimestamp(), etc.
+    DateTimeNs,
+    /// Static namespace: Path.join(), Path.dirname(), Path.basename(), etc.
+    PathNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -44,12 +52,19 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::JsonNs => resolve_json_ns_method(method_name),
         TypeTag::MathNs => resolve_math_ns_method(method_name),
         TypeTag::EnvNs => resolve_env_ns_method(method_name),
+        TypeTag::FileNs => resolve_file_ns_method(method_name),
+        TypeTag::ProcessNs => resolve_process_ns_method(method_name),
+        TypeTag::DateTimeNs => resolve_datetime_ns_method(method_name),
+        TypeTag::PathNs => resolve_path_ns_method(method_name),
     }
 }
 
 /// Check if an identifier name is a static namespace sentinel.
 pub fn is_static_namespace(name: &str) -> bool {
-    matches!(name, "Json" | "Math" | "Env")
+    matches!(
+        name,
+        "Json" | "Math" | "Env" | "File" | "Process" | "DateTime" | "Path"
+    )
 }
 
 /// Map a static namespace identifier to its TypeTag.
@@ -58,6 +73,10 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "Json" => Some(TypeTag::JsonNs),
         "Math" => Some(TypeTag::MathNs),
         "Env" => Some(TypeTag::EnvNs),
+        "File" => Some(TypeTag::FileNs),
+        "Process" => Some(TypeTag::ProcessNs),
+        "DateTime" => Some(TypeTag::DateTimeNs),
+        "Path" => Some(TypeTag::PathNs),
         _ => None,
     }
 }
@@ -280,6 +299,75 @@ fn resolve_env_ns_method(method_name: &str) -> Option<String> {
         "get" => "getEnv",
         "set" => "setEnv",
         "unset" => "unsetEnv",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve File.method() → stdlib function name.
+fn resolve_file_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "read" => "readFile",
+        "write" => "writeFile",
+        "append" => "appendFile",
+        "exists" => "fileExists",
+        "remove" => "removeFile",
+        "createDir" => "createDir",
+        "removeDir" => "removeDir",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Process.method() → stdlib function name.
+fn resolve_process_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "cwd" => "getCwd",
+        "pid" => "getPid",
+        "spawn" => "spawnProcess",
+        "exec" => "exec",
+        "shell" => "shell",
+        "env" => "getEnv",
+        "envList" => "listEnv",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve DateTime.method() → stdlib function name.
+fn resolve_datetime_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "now" => "dateTimeNow",
+        "fromTimestamp" => "dateTimeFromTimestamp",
+        "fromComponents" => "dateTimeFromComponents",
+        "parseIso" => "dateTimeParseIso",
+        "parse" => "dateTimeParse",
+        "parseRfc3339" => "dateTimeParseRfc3339",
+        "parseRfc2822" => "dateTimeParseRfc2822",
+        "utc" => "dateTimeUtc",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Path.method() → stdlib function name.
+fn resolve_path_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "join" => "pathJoin",
+        "dirname" => "pathDirname",
+        "basename" => "pathBasename",
+        "extension" => "pathExtension",
+        "exists" => "pathExists",
+        "isAbsolute" => "pathIsAbsolute",
+        "isRelative" => "pathIsRelative",
+        "normalize" => "pathNormalize",
+        "absolute" => "pathAbsolute",
+        "parent" => "pathParent",
+        "canonical" => "pathCanonical",
+        "homedir" => "pathHomedir",
+        "cwd" => "pathCwd",
+        "tempdir" => "pathTempdir",
+        "separator" => "pathSeparator",
         _ => return None,
     };
     Some(func_name.to_string())
