@@ -1,7 +1,0 @@
-// Discovery merger (Atlas port, simplified)
-
-export fn merge_discoveries(borrow items: array) -> Result<json, string> {
-    // Just merge first object as registry-like
-    if (len(items) == 0) { return Ok(null); }
-    return Ok(items[0]);
-}

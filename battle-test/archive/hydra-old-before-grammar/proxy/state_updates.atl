@@ -1,5 +1,0 @@
-// State updates (Atlas port) - no-op for now
-
-export fn update_state_store(borrow msg: json) -> void {
-    return;
-}

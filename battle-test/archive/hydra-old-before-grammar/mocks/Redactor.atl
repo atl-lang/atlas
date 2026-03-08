@@ -1,6 +1,0 @@
-// Redactor mock (Atlas port, simplified)
-// Source: hydra/internal/mocks/Redactor.go
-
-export fn redact(borrow content: string, borrow patterns: array) -> string {
-    return content;
-}

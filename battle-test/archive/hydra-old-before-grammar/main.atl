@@ -1,9 +1,0 @@
-// Hydra Atlas entrypoint (battle-test)
-// Source: /Users/proxikal/dev/projects/hydra/cmd/hydra/main.go
-
-import { execute } from "./cli/root";
-
-fn main() -> void {
-    // TODO: handle error result and exit codes when CLI port is complete
-    execute();
-}

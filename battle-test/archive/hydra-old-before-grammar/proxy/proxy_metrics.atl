@@ -1,6 +1,0 @@
-// Proxy metrics (Atlas port)
-// NOTE: No metrics backend; no-op functions.
-
-export fn record_request_complete(borrow start_ms: number, borrow success: bool) -> void { return; }
-export fn record_queue_wait(borrow enqueue_ms: number) -> void { return; }
-export fn record_restart(borrow reason: string) -> void { return; }

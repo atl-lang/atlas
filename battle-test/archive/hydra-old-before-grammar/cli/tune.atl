@@ -1,6 +1,0 @@
-// CLI tune (Atlas port, simplified)
-// Source: hydra/internal/cli/tune.go
-
-export fn cmd_tune(borrow args: json) -> Result<json, string> {
-    return Err("tune not implemented in Atlas port");
-}

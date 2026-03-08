@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(/Users/proxikal/dev/projects/atlas/target/release/atlas run:*)",
-      "Bash(/Users/proxikal/dev/projects/atlas/target/debug/atlas run:*)",
-      "Bash(grep:*)"
-    ]
-  }
-}

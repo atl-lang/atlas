@@ -1,5 +1,0 @@
-// Supervisor process (windows, simplified)
-
-export fn setup_windows_process() -> Result<null, string> {
-    return Ok(null);
-}
