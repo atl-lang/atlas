@@ -658,6 +658,21 @@ impl Parser {
 
         let type_params = self.parse_type_params()?;
 
+        // Parse optional supertrait bounds: `: A + B`
+        let mut super_traits = Vec::new();
+        if self.check(TokenKind::Colon) {
+            self.advance(); // consume `:`
+            loop {
+                let tok = self.consume_identifier("a supertrait name")?;
+                super_traits.push(tok.lexeme.clone());
+                if self.check(TokenKind::Plus) {
+                    self.advance(); // consume `+`
+                } else {
+                    break;
+                }
+            }
+        }
+
         self.consume(TokenKind::LeftBrace, "Expected '{' after trait name")?;
 
         let mut methods = Vec::new();
@@ -672,6 +687,7 @@ impl Parser {
         Ok(TraitDecl {
             name,
             type_params,
+            super_traits,
             methods,
             span: start_span.merge(end_span),
         })

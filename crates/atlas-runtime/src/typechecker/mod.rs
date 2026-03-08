@@ -67,7 +67,7 @@ pub struct TraitMethodEntry {
 /// Registry of known traits (built-in + user-defined).
 #[derive(Debug, Default)]
 pub struct TraitRegistry {
-    /// Maps trait name -> list of required method signatures
+    /// Maps trait name -> list of required method signatures (own only, not inherited)
     pub traits: HashMap<String, Vec<TraitMethodEntry>>,
     /// Set of built-in trait names (not user-definable)
     pub built_in: HashSet<String>,
@@ -76,6 +76,8 @@ pub struct TraitRegistry {
     /// Maps (type_name, trait_name) -> whether type implements the trait.
     /// For built-in types, pre-populated. For user types, populated during impl checking.
     pub implementations: HashMap<(String, String), bool>,
+    /// Maps trait name -> list of direct supertrait names
+    pub super_traits: HashMap<String, Vec<String>>,
 }
 
 impl TraitRegistry {
@@ -143,11 +145,46 @@ impl TraitRegistry {
         name: &str,
         methods: Vec<TraitMethodEntry>,
         default_methods: Vec<TraitMethodSig>,
+        supers: Vec<String>,
     ) {
         self.traits.insert(name.to_string(), methods);
         for method in default_methods {
             self.default_methods
                 .insert((name.to_string(), method.name.name.clone()), method);
+        }
+        self.super_traits.insert(name.to_string(), supers);
+    }
+
+    /// Returns all required methods for a trait, including those inherited from supertraits.
+    pub fn get_all_methods(&self, trait_name: &str) -> Vec<TraitMethodEntry> {
+        let mut result = Vec::new();
+        let mut visited = HashSet::new();
+        self.collect_methods(trait_name, &mut result, &mut visited);
+        result
+    }
+
+    fn collect_methods(
+        &self,
+        trait_name: &str,
+        result: &mut Vec<TraitMethodEntry>,
+        visited: &mut HashSet<String>,
+    ) {
+        if !visited.insert(trait_name.to_string()) {
+            return; // cycle guard
+        }
+        // First collect supertrait methods (so they appear before own methods)
+        if let Some(supers) = self.super_traits.get(trait_name) {
+            for s in supers.clone() {
+                self.collect_methods(&s, result, visited);
+            }
+        }
+        // Then own methods
+        if let Some(own) = self.traits.get(trait_name) {
+            for m in own {
+                if !result.iter().any(|r: &TraitMethodEntry| r.name == m.name) {
+                    result.push(m.clone());
+                }
+            }
         }
     }
 
@@ -933,8 +970,29 @@ impl<'a> TypeChecker<'a> {
             })
             .collect();
 
-        self.trait_registry
-            .register_user_trait(&trait_name, method_entries, default_methods);
+        // Validate supertrait names and collect them
+        let mut super_trait_names = Vec::new();
+        for super_name in &trait_decl.super_traits {
+            if !self.trait_registry.trait_exists(super_name) {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    error_codes::TRAIT_NOT_FOUND,
+                    format!(
+                        "Supertrait '{}' is not defined (required by trait '{}')",
+                        super_name, trait_name
+                    ),
+                    trait_decl.name.span,
+                ));
+            } else {
+                super_trait_names.push(super_name.clone());
+            }
+        }
+
+        self.trait_registry.register_user_trait(
+            &trait_name,
+            method_entries,
+            default_methods,
+            super_trait_names,
+        );
     }
 
     /// Check an impl block: verify the trait exists, check method conformance, register.
@@ -964,12 +1022,9 @@ impl<'a> TypeChecker<'a> {
             return;
         }
 
-        // 3. Get required methods from trait
-        let required_methods: Vec<TraitMethodEntry> = self
-            .trait_registry
-            .get_methods(&trait_name)
-            .cloned()
-            .unwrap_or_default();
+        // 3. Get required methods from trait (includes inherited from supertraits)
+        let required_methods: Vec<TraitMethodEntry> =
+            self.trait_registry.get_all_methods(&trait_name);
 
         // 4. Build a map of provided methods
         let provided: HashMap<String, &ImplMethod> = impl_block

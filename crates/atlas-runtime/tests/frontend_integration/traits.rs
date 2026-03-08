@@ -88,3 +88,122 @@ fn test_impl_as_variable_name_is_parse_error() {
 }
 
 // ============================================================================
+// H-076: Trait inheritance — trait B: A syntax
+// ============================================================================
+
+/// Helper: run typechecker on source, return error diagnostic strings.
+fn typecheck_errors(source: &str) -> Vec<String> {
+    use atlas_runtime::binder::Binder;
+    use atlas_runtime::typechecker::TypeChecker;
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (program, parse_errors) = parser.parse();
+    let parse_errs: Vec<_> = parse_errors
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(parse_errs.is_empty(), "parse errors: {:?}", parse_errs);
+    let mut binder = Binder::new();
+    let (mut table, _) = binder.bind(&program);
+    let mut checker = TypeChecker::new(&mut table);
+    let diags = checker.check(&program);
+    diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .map(|d| format!("{}: {}", d.code, d.message))
+        .collect()
+}
+
+/// Helper: parse source and assert no parse errors.
+fn assert_parses(source: &str) {
+    let mut lexer = Lexer::new(source);
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (_, diags) = parser.parse();
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(errors.is_empty(), "Unexpected parse errors: {:?}", errors);
+}
+
+#[test]
+fn test_h076_supertrait_parses() {
+    assert_parses(
+        r#"
+        trait A {
+            fn foo(self: A) -> number;
+        }
+        trait B: A {
+            fn bar(self: B) -> string;
+        }
+        "#,
+    );
+}
+
+#[test]
+fn test_h076_multiple_supertraits_parse() {
+    assert_parses(
+        r#"
+        trait A { fn a(self: A) -> number; }
+        trait B { fn b(self: B) -> string; }
+        trait C: A + B { fn c(self: C) -> bool; }
+        "#,
+    );
+}
+
+#[test]
+fn test_h076_impl_of_subtrait_requires_supertrait_methods() {
+    let errors = typecheck_errors(
+        r#"
+        struct MyType { x: number }
+        trait A { fn foo(self: A) -> number; }
+        trait B: A { fn bar(self: B) -> string; }
+        impl B for MyType {
+            fn bar(self: MyType) -> string { "hello"; }
+        }
+        "#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected error: impl B for MyType missing inherited method 'foo' from A"
+    );
+}
+
+#[test]
+fn test_h076_impl_with_all_methods_is_ok() {
+    let errors = typecheck_errors(
+        r#"
+        struct MyType { x: number }
+        trait A { fn foo(self: A) -> number; }
+        trait B: A {
+            fn bar(self: B) -> string;
+        }
+        impl B for MyType {
+            fn foo(self: MyType) -> number { 42; }
+            fn bar(self: MyType) -> string { "hello"; }
+        }
+        "#,
+    );
+    assert!(
+        errors.is_empty(),
+        "Expected no errors when all methods satisfied, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_h076_undefined_supertrait_is_error() {
+    let errors = typecheck_errors(
+        r#"
+        trait B: NonExistent {
+            fn bar(self: B) -> string;
+        }
+        "#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected error: supertrait 'NonExistent' is not defined"
+    );
+}

@@ -221,6 +221,8 @@ pub struct TraitDecl {
     pub name: Identifier,
     /// Type parameters for generic traits (e.g., `trait Functor<T>`)
     pub type_params: Vec<TypeParam>,
+    /// Supertrait bounds (e.g., `trait B: A + C`)
+    pub super_traits: Vec<String>,
     pub methods: Vec<TraitMethodSig>,
     pub span: Span,
 }
