@@ -78,6 +78,8 @@ pub struct TraitRegistry {
     pub implementations: HashMap<(String, String), bool>,
     /// Maps trait name -> list of direct supertrait names
     pub super_traits: HashMap<String, Vec<String>>,
+    /// Maps trait name -> ordered list of type parameter names (e.g., ["T", "U"])
+    pub trait_type_params: HashMap<String, Vec<String>>,
 }
 
 impl TraitRegistry {
@@ -146,6 +148,7 @@ impl TraitRegistry {
         methods: Vec<TraitMethodEntry>,
         default_methods: Vec<TraitMethodSig>,
         supers: Vec<String>,
+        type_param_names: Vec<String>,
     ) {
         self.traits.insert(name.to_string(), methods);
         for method in default_methods {
@@ -153,6 +156,16 @@ impl TraitRegistry {
                 .insert((name.to_string(), method.name.name.clone()), method);
         }
         self.super_traits.insert(name.to_string(), supers);
+        self.trait_type_params
+            .insert(name.to_string(), type_param_names);
+    }
+
+    /// Returns the ordered type parameter names for a trait (empty for non-generic traits).
+    pub fn get_type_param_names(&self, trait_name: &str) -> &[String] {
+        self.trait_type_params
+            .get(trait_name)
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
     }
 
     /// Returns all required methods for a trait, including those inherited from supertraits.
@@ -280,6 +293,22 @@ impl ImplRegistry {
     pub fn has_impl(&self, type_name: &str, trait_name: &str) -> bool {
         self.entries
             .contains_key(&(type_name.to_string(), trait_name.to_string()))
+    }
+}
+
+/// Recursively substitute TypeParameter occurrences in a Type using the given map.
+fn substitute_type(ty: Type, subst: &HashMap<String, Type>) -> Type {
+    match ty {
+        Type::TypeParameter { ref name } => subst.get(name).cloned().unwrap_or(ty),
+        Type::Array(elem) => Type::Array(Box::new(substitute_type(*elem, subst))),
+        Type::Generic { name, type_args } => Type::Generic {
+            name,
+            type_args: type_args
+                .into_iter()
+                .map(|a| substitute_type(a, subst))
+                .collect(),
+        },
+        other => other,
     }
 }
 
@@ -932,20 +961,32 @@ impl<'a> TypeChecker<'a> {
             return;
         }
 
+        // Collect trait-level type parameter names for use during method resolution
+        let trait_type_param_names: Vec<String> = trait_decl
+            .type_params
+            .iter()
+            .map(|tp| tp.name.clone())
+            .collect();
+
         // Resolve method signatures and register
         let mut default_methods = Vec::new();
         let method_entries: Vec<TraitMethodEntry> = trait_decl
             .methods
             .iter()
             .map(|method_sig| {
+                // Build combined type params: trait-level + method-level
+                let mut combined = trait_decl.type_params.clone();
+                combined.extend(method_sig.type_params.clone());
+
                 // Exclude `self` param — impl's self type differs from trait's self type
                 let param_types: Vec<Type> = method_sig
                     .params
                     .iter()
                     .filter(|p| p.name.name != "self")
-                    .map(|p| self.resolve_type_ref(&p.type_ref))
+                    .map(|p| self.resolve_type_ref_with_params(&p.type_ref, &combined))
                     .collect();
-                let return_type = self.resolve_type_ref(&method_sig.return_type);
+                let return_type =
+                    self.resolve_type_ref_with_params(&method_sig.return_type, &combined);
                 if method_sig.body.is_some() {
                     default_methods.push(method_sig.clone());
                 }
@@ -992,6 +1033,7 @@ impl<'a> TypeChecker<'a> {
             method_entries,
             default_methods,
             super_trait_names,
+            trait_type_param_names,
         );
     }
 
@@ -1023,8 +1065,37 @@ impl<'a> TypeChecker<'a> {
         }
 
         // 3. Get required methods from trait (includes inherited from supertraits)
-        let required_methods: Vec<TraitMethodEntry> =
+        let required_methods_raw: Vec<TraitMethodEntry> =
             self.trait_registry.get_all_methods(&trait_name);
+
+        // Build type substitution from trait type args: e.g., Container<number> -> {T -> number}
+        let type_param_names: Vec<String> = self
+            .trait_registry
+            .get_type_param_names(&trait_name)
+            .to_vec();
+        let type_arg_types: Vec<Type> = impl_block
+            .trait_type_args
+            .iter()
+            .map(|tr| self.resolve_type_ref(tr))
+            .collect();
+        let type_subst: HashMap<String, Type> =
+            type_param_names.into_iter().zip(type_arg_types).collect();
+
+        // Apply substitution to all required method types
+        let required_methods: Vec<TraitMethodEntry> = required_methods_raw
+            .into_iter()
+            .map(|mut entry| {
+                if !type_subst.is_empty() {
+                    entry.param_types = entry
+                        .param_types
+                        .into_iter()
+                        .map(|t| substitute_type(t, &type_subst))
+                        .collect();
+                    entry.return_type = substitute_type(entry.return_type, &type_subst);
+                }
+                entry
+            })
+            .collect();
 
         // 4. Build a map of provided methods
         let provided: HashMap<String, &ImplMethod> = impl_block

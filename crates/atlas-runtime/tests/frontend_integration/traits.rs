@@ -207,3 +207,78 @@ fn test_h076_undefined_supertrait_is_error() {
         "Expected error: supertrait 'NonExistent' is not defined"
     );
 }
+
+// ============================================================================
+// H-077: Generic traits — trait Container<T> syntax
+// ============================================================================
+
+#[test]
+fn test_h077_generic_trait_parses() {
+    assert_parses(
+        r#"
+        trait Container<T> {
+            fn get(self: Container<T>) -> T;
+            fn set(self: Container<T>, value: T) -> Container<T>;
+        }
+        "#,
+    );
+}
+
+#[test]
+fn test_h077_impl_generic_trait_with_concrete_type_is_ok() {
+    let errors = typecheck_errors(
+        r#"
+        struct Box { value: number }
+        trait Container<T> {
+            fn get(self: Container<T>) -> T;
+        }
+        impl Container<number> for Box {
+            fn get(self: Box) -> number { self.value; }
+        }
+        "#,
+    );
+    assert!(
+        errors.is_empty(),
+        "Expected no errors for valid generic trait impl, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_h077_impl_generic_trait_wrong_return_type_is_error() {
+    let errors = typecheck_errors(
+        r#"
+        struct Box { value: number }
+        trait Container<T> {
+            fn get(self: Container<T>) -> T;
+        }
+        impl Container<number> for Box {
+            fn get(self: Box) -> string { "wrong"; }
+        }
+        "#,
+    );
+    assert!(
+        !errors.is_empty(),
+        "Expected error: return type 'string' doesn't match Container<number>.get -> number"
+    );
+}
+
+#[test]
+fn test_h077_generic_trait_with_string_type_arg_is_ok() {
+    let errors = typecheck_errors(
+        r#"
+        struct StrBox { value: string }
+        trait Container<T> {
+            fn get(self: Container<T>) -> T;
+        }
+        impl Container<string> for StrBox {
+            fn get(self: StrBox) -> string { self.value; }
+        }
+        "#,
+    );
+    assert!(
+        errors.is_empty(),
+        "Expected no errors for Container<string> impl, got: {:?}",
+        errors
+    );
+}
