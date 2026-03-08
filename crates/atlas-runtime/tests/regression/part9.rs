@@ -24,7 +24,7 @@ fn milestone_parity_function_calls_consistent() {
 
 #[test]
 fn milestone_parity_array_operations_consistent() {
-    let code = "let arr: number[] = [1, 2, 3, 4, 5]; arr[4];";
+    let code = "let arr: []number = [1, 2, 3, 4, 5]; arr[4];";
     assert_eval_number(code, 5.0);
 }
 

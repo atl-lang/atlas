@@ -1746,7 +1746,7 @@ impl<'a> TypeChecker<'a> {
                             )
                             .with_label("type annotation required")
                             .with_help(
-                                "add an explicit array type annotation: `let x: number[] = []`",
+                                "add an explicit array type annotation: `let x: []number = []`",
                             ),
                         );
                     }
@@ -2646,7 +2646,7 @@ impl<'a> TypeChecker<'a> {
                         }
                         "list" | "List" | "Vec" | "vector" | "Vector" | "slice" | "Slice"
                         | "Array" => {
-                            format!("Atlas array type is `T[]` — e.g. `number[]` or `string[]`.\n  Change `{}` to e.g. `number[]`", name)
+                            format!("Atlas array type is `[]T` — e.g. `[]number` or `[]string`.\n  Change `{}` to e.g. `[]number`", name)
                         }
                         "tuple" | "Tuple" => {
                             "Atlas does not have tuples. Use a struct or an array instead.".to_string()

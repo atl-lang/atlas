@@ -15,11 +15,11 @@ fn sum(borrow nums: Array<number>) -> number {
     return total;
 }
 
-let a: number[] = [1, 2, 3];
+let a: []number = [1, 2, 3];
 let b: Array<number> = [1, 2, 3];
 
 let _c: Array<number> = a;
-let _d: number[] = b;
+let _d: []number = b;
 
 let _first_a = first(a);
 let _first_b = first(b);

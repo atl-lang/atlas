@@ -226,7 +226,7 @@ fn test_assert_contains_failure() {
 fn test_assert_empty_in_atlas_code() {
     eval_ok(
         r#"
-        let arr: number[] = [];
+        let arr: []number = [];
         assert_empty(arr);
     "#,
     );

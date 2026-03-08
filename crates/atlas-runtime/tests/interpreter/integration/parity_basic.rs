@@ -79,7 +79,7 @@ fn test_parity_while_loop(#[case] code: &str) {
 #[case("[1, 2, 3];")]
 #[case("let arr = [10, 20, 30]; arr[0];")]
 #[case("let arr = [1, 2, 3]; arr[2];")]
-#[case("let arr: number[] = [5]; len(arr);")]
+#[case("let arr: []number = [5]; len(arr);")]
 fn test_parity_arrays(#[case] code: &str) {
     assert_parity(code);
 }
@@ -101,18 +101,18 @@ fn test_parity_strings(#[case] code: &str) {
 
 // Array: index read
 #[rstest]
-#[case("let arr: number[] = [10, 20, 30]; arr[1];")]
-#[case("let arr: number[] = [10, 20, 30]; arr[0];")]
-#[case("let arr: number[] = [10, 20, 30]; arr[2];")]
+#[case("let arr: []number = [10, 20, 30]; arr[1];")]
+#[case("let arr: []number = [10, 20, 30]; arr[0];")]
+#[case("let arr: []number = [10, 20, 30]; arr[2];")]
 fn test_parity_array_index_read(#[case] code: &str) {
     assert_parity(code);
 }
 
 // Array: length
 #[rstest]
-#[case("let arr: number[] = [1, 2, 3]; len(arr);")]
-#[case("let arr: number[] = []; len(arr);")]
-#[case("let arr: number[] = [1, 2, 3]; arr.len();")]
+#[case("let arr: []number = [1, 2, 3]; len(arr);")]
+#[case("let arr: []number = []; len(arr);")]
+#[case("let arr: []number = [1, 2, 3]; arr.len();")]
 fn test_parity_array_length(#[case] code: &str) {
     assert_parity(code);
 }
@@ -143,8 +143,8 @@ fn test_parity_array_sort(#[case] code: &str) {
 
 // Array: concat via + operator
 #[rstest]
-#[case("let a: number[] = [1, 2]; let b: number[] = [3, 4]; let c = a + b; len(c);")]
-#[case("let a: number[] = [1, 2]; let b: number[] = [3, 4]; let c = a + b; c[0];")]
+#[case("let a: []number = [1, 2]; let b: []number = [3, 4]; let c = a + b; len(c);")]
+#[case("let a: []number = [1, 2]; let b: []number = [3, 4]; let c = a + b; c[0];")]
 fn test_parity_array_concat(#[case] code: &str) {
     assert_parity(code);
 }
@@ -160,9 +160,9 @@ fn test_parity_array_foreach(#[case] code: &str) {
 // Array: map/filter with closures — both engines error (acceptable parity until Block 4)
 // These are included so parity is verified even for unsupported operations.
 #[rstest]
-#[case("let a: number[] = [1, 2, 3]; map(a, fn(borrow x: number) -> number { return x * 2; });")]
+#[case("let a: []number = [1, 2, 3]; map(a, fn(borrow x: number) -> number { return x * 2; });")]
 #[case(
-    "let a: number[] = [1, 2, 3, 4]; filter(a, fn(borrow x: number) -> bool { return x > 2; });"
+    "let a: []number = [1, 2, 3, 4]; filter(a, fn(borrow x: number) -> bool { return x > 2; });"
 )]
 fn test_parity_array_map_filter_both_error(#[case] code: &str) {
     assert_parity(code); // Both engines must agree (both succeed or both fail)
@@ -223,9 +223,9 @@ fn test_parity_stack_operations(#[case] code: &str) {
 
 // CoW semantics: identical behavior in both engines
 #[rstest]
-#[case("let a: number[] = [1, 2, 3]; let b: number[] = a; a[0] = 99; b[0];")]
+#[case("let a: []number = [1, 2, 3]; let b: []number = a; a[0] = 99; b[0];")]
 #[case("let mut a: array = [1, 2]; let mut b: array = a; b.push(9); len(a);")]
-#[case("let a: number[] = [1, 2, 3]; let b: number[] = a; b[2] = 100; a[2];")]
+#[case("let a: []number = [1, 2, 3]; let b: []number = a; b[2] = 100; a[2];")]
 fn test_parity_cow_semantics(#[case] code: &str) {
     assert_parity(code);
 }

@@ -9,7 +9,7 @@ use super::*;
 #[case("1 + + 2", "expression")]
 #[case("let x = (1 + 2;", "')'")]
 #[case("let x = [1, 2, 3;", "']'")]
-#[case("arr[];", "expression")]
+#[case("[]arr;", "expression")]
 #[case("arr[0;", "']'")]
 #[case("foo(1, 2, 3;", "')'")]
 fn test_expression_errors(#[case] source: &str, #[case] expected: &str) {

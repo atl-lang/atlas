@@ -493,7 +493,7 @@ fn test_flatten_nested_empty_arrays() {
 
 #[test]
 fn test_flatten_one_level_only() {
-    // flatten([[[1, 2]], [[3, 4]]]) (number[][][]) → flattens ONE level → [[1,2], [3,4]] (number[][])
+    // flatten([[[1, 2]], [[3, 4]]]) ([][]number[]) → flattens ONE level → [[1,2], [3,4]] ([][]number)
     // Verify length = 2 meaning outer arrays were unwrapped but inner stays nested
     let result = eval_ok("flatten([[[1, 2]], [[3, 4]]]);");
     match result {

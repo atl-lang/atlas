@@ -207,7 +207,7 @@ fn ai_mistake_assign_to_function_call() {
 #[test]
 fn ai_mistake_assign_to_range_slice_index() {
     // AI tries to assign to a range-indexed slice (AT1016 — the specific path)
-    let source = "let arr: number[] = [1.0, 2.0, 3.0];\narr[0..2] = 99.0;";
+    let source = "let arr: []number = [1.0, 2.0, 3.0];\narr[0..2] = 99.0;";
     let diags = get_diagnostics(source);
     assert!(
         !diags.is_empty(),
@@ -380,7 +380,7 @@ fn ai_mistake_divide_by_zero_has_guard_hint() {
 fn ai_mistake_array_out_of_bounds_has_len_hint() {
     // AI accesses index beyond array length
     let source = r#"
-let arr: number[] = [1.0, 2.0, 3.0];
+let arr: []number = [1.0, 2.0, 3.0];
 let val: number = arr[10];
 "#;
     // Assert both engines produce a runtime error — message may vary by display impl
@@ -405,7 +405,7 @@ let val: number = arr[10];
 fn ai_mistake_invalid_index_float() {
     // AI uses float as array index
     let source = r#"
-let arr: number[] = [1.0, 2.0, 3.0];
+let arr: []number = [1.0, 2.0, 3.0];
 let val: number = arr[1.5];
 "#;
     assert_runtime_self_correcting(source, "index");
@@ -537,7 +537,7 @@ fn ai_mistake_bare_params_all_types() {
 #[test]
 fn ai_mistake_bare_array_param_valid() {
     // Array params without annotation default to borrow (D-040)
-    let source = r#"fn sum(nums: number[]) -> number { return 0.0; }"#;
+    let source = r#"fn sum(nums: []number) -> number { return 0.0; }"#;
     let diags = get_diagnostics(source);
     let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
     assert!(
@@ -637,7 +637,7 @@ fn ai_mistake_parity_divide_by_zero() {
 fn ai_mistake_parity_out_of_bounds() {
     // Array OOB should fail in both engines
     let source = r#"
-let arr: number[] = [1.0];
+let arr: []number = [1.0];
 let v: number = arr[5];
 "#;
     let (interp_err, vm_err) = eval_both_engines(source);
@@ -720,7 +720,7 @@ fn ai_mistake_runtime_divide_by_zero_has_help() {
 fn ai_mistake_runtime_oob_has_help() {
     // AT0006 error must mention len/length/index check
     let source = r#"
-let arr: number[] = [1.0];
+let arr: []number = [1.0];
 let v: number = arr[99];
 "#;
     let (interp_err, vm_err) = eval_both_engines(source);

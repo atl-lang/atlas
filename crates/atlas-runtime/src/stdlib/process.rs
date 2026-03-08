@@ -94,7 +94,7 @@ const PROCESS_STDERR_TAG: &str = "__process_stderr__";
 
 /// Execute a command and wait for completion
 ///
-/// Atlas signature: `exec(command: string | string[], options?: object) -> Result<object, string>`
+/// Atlas signature: `exec(command: string | []string, options?: object) -> Result<object, string>`
 ///
 /// Options:
 /// - env: object - Custom environment variables
@@ -510,7 +510,7 @@ pub fn get_pid(
 
 /// Spawn a process in the background
 ///
-/// Atlas signature: `spawnProcess(command: string[]) -> ProcessHandle`
+/// Atlas signature: `spawnProcess(command: []string) -> ProcessHandle`
 pub fn spawn_process(
     args: &[Value],
     span: Span,

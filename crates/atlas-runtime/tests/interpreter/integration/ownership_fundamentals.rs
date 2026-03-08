@@ -100,8 +100,8 @@ fn test_own_param_with_expression_arg_no_consume() {
 #[test]
 fn test_shared_param_rejects_plain_value_debug() {
     let src = r#"
-        fn register(share handler: number[]) -> void { }
-        let arr: number[] = [1, 2, 3];
+        fn register(share handler: []number) -> void { }
+        let arr: []number = [1, 2, 3];
         register(arr);
     "#;
     let result = run_interpreter(src);
@@ -123,7 +123,7 @@ fn test_shared_param_accepts_shared_value() {
 
     // Parse and register the function
     let src = r#"
-        fn register(share handler: number[]) -> void { }
+        fn register(share handler: []number) -> void { }
         register(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src);
@@ -157,7 +157,7 @@ fn test_shared_value_to_own_param_advisory_not_error() {
     use atlas_runtime::value::{Shared, Value};
 
     let src = r#"
-        fn consume(own handler: number[]) -> void { }
+        fn consume(own handler: []number) -> void { }
         consume(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src);

@@ -203,7 +203,7 @@ fn test_hashmap_method_keys_len() {
         let m: HashMap = hashMapNew();
         m.set("a", 1);
         m.set("b", 2);
-        let k: string[] = m.keys();
+        let k: []string = m.keys();
         k.len();
     "#;
     assert_eval_number(src, 2.0);
@@ -216,7 +216,7 @@ fn test_hashmap_method_values_len() {
         let m: HashMap = hashMapNew();
         m.set("a", 1);
         m.set("b", 2);
-        let v: number[] = m.values();
+        let v: []number = m.values();
         v.len();
     "#;
     assert_eval_number(src, 2.0);

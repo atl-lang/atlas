@@ -232,7 +232,7 @@ fn test_assertion_coverage() -> void {
     assert_none(none_opt);
 
     assert_contains(["a", "b", "c"], "b");
-    let empty_list: string[] = [];
+    let empty_list: []string = [];
     assert_empty(empty_list);
     assert_length([1, 2, 3], 3);
 

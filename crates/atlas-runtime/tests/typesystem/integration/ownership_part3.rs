@@ -6,7 +6,7 @@ fn test_stdlib_method_not_shadowed_by_trait() {
         "
         trait Pushable { fn push(borrow self: Pushable, borrow x: number) -> void; }
         impl Pushable for number { fn push(borrow self: number, borrow x: number) -> void { } }
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         arr = arr.push(4);
     ",
     );
@@ -93,8 +93,8 @@ fn test_bool_passed_without_annotation_no_error() {
 fn test_array_passed_without_annotation_no_error() {
     let diags = typecheck_source(
         "
-        fn first(borrow arr: number[]) -> number { return arr[0]; }
-        let a: number[] = [1, 2, 3];
+        fn first(borrow arr: []number) -> number { return arr[0]; }
+        let a: []number = [1, 2, 3];
         let n: number = first(a);
     ",
     );

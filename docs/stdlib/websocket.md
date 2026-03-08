@@ -42,7 +42,7 @@ wsSend(ws, "hello");
 ### wsSendBinary
 
 ```atlas
-fn wsSendBinary(ws: WebSocket, data: number[]) -> null
+fn wsSendBinary(ws: WebSocket, data: []number) -> null
 ```
 
 Sends binary data as an array of bytes.

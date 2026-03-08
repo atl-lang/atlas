@@ -160,7 +160,7 @@ fn test_string_method_substring() {
 
 #[test]
 fn test_string_method_split() {
-    let src = r#"let s: string = "a,b,c"; let parts: string[] = s.split(","); parts.len();"#;
+    let src = r#"let s: string = "a,b,c"; let parts: []string = s.split(","); parts.len();"#;
     assert_eval_number(src, 3.0);
     assert_parity(src);
 }

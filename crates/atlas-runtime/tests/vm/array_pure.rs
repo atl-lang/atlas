@@ -46,7 +46,7 @@ fn test_pop_single_element() {
 #[test]
 fn test_pop_empty_error() {
     let _err = execute_vm_err(r#"
-        let arr: number[] = [];
+        let arr: []number = [];
         pop(arr);
     "#);
 }
@@ -90,7 +90,7 @@ fn test_shift_single_element() {
 #[test]
 fn test_shift_empty_error() {
     let _err = execute_vm_err(r#"
-        let arr: number[] = [];
+        let arr: []number = [];
         shift(arr);
     "#);
 }
@@ -158,7 +158,7 @@ fn test_reverse_normal() {
 #[test]
 fn test_reverse_empty() {
     let result = execute_vm_ok(r#"
-        let arr: number[] = [];
+        let arr: []number = [];
         reverse(arr);
     "#);
     
@@ -222,8 +222,8 @@ fn test_concat_normal() {
 #[test]
 fn test_concat_empty_arrays() {
     let result = execute_vm_ok(r#"
-        let arr1: number[] = [];
-        let arr2: number[] = [];
+        let arr1: []number = [];
+        let arr2: []number = [];
         concat(arr1, arr2);
     "#);
     
@@ -239,7 +239,7 @@ fn test_concat_empty_arrays() {
 fn test_concat_with_empty() {
     let result = execute_vm_ok(r#"
         let arr1 = [1, 2, 3];
-        let arr2: number[] = [];
+        let arr2: []number = [];
         concat(arr1, arr2);
     "#);
     
@@ -278,8 +278,8 @@ fn test_concat_multiple_chains() {
 #[test]
 fn test_flatten_normal() {
     let result = execute_vm_ok(r#"
-        let nested: number[][] = [[1], [2, 3], [4]];
-        let flat: number[] = flatten(nested);
+        let nested: [][]number = [[1], [2, 3], [4]];
+        let flat: []number = flatten(nested);
         len(flat);
     "#);
     assert_eq!(result, Value::Number(4.0));
@@ -288,7 +288,7 @@ fn test_flatten_normal() {
 #[test]
 fn test_flatten_empty() {
     let result = execute_vm_ok(r#"
-        let nested: number[][] = [];
+        let nested: [][]number = [];
         flatten(nested);
     "#);
     
@@ -303,7 +303,7 @@ fn test_flatten_empty() {
 #[test]
 fn test_flatten_with_empty_inner() {
     let result = execute_vm_ok(r#"
-        let nested: number[][] = [[], [1], [], [2, 3]];
+        let nested: [][]number = [[], [1], [], [2, 3]];
         flatten(nested);
     "#);
     
@@ -320,7 +320,7 @@ fn test_flatten_with_empty_inner() {
 #[test]
 fn test_flatten_single_nested() {
     let result = execute_vm_ok(r#"
-        let nested: number[][] = [[1, 2, 3]];
+        let nested: [][]number = [[1, 2, 3]];
         flatten(nested);
     "#);
     

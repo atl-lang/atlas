@@ -148,7 +148,7 @@ fn milestone_feature_while_loop() {
 fn milestone_feature_for_loop() {
     assert_no_error(
         r#"
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         let mut sum: number = 0;
         let mut i: number = 0;
         while (i < 3) {
@@ -185,7 +185,7 @@ fn milestone_feature_recursion() {
 
 #[test]
 fn milestone_feature_arrays_create_and_index() {
-    assert_eval_number("let a: number[] = [10, 20, 30]; a[1];", 20.0);
+    assert_eval_number("let a: []number = [10, 20, 30]; a[1];", 20.0);
 }
 
 #[test]

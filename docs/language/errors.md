@@ -85,7 +85,7 @@ A stdlib function received the wrong argument type or count. The error message i
 
 ```
 len(): expected 1 argument, got 0
-  Signature: len(value: string | any[]) -> number
+  Signature: len(value: string | []any) -> number
 ```
 
 ### AT0103 — Invalid Index
@@ -169,7 +169,7 @@ fn bad(x: number) -> number { ... }          // ✗ AT1007
 
 fn good(share x: number) -> number { ... }   // ✓ share: both caller and fn hold refs
 fn good(borrow x: number) -> number { ... }  // ✓ borrow: read-only, caller retains
-fn good(own x: number[]) -> number { ... }   // ✓ own: moves value into fn
+fn good(own x: []number) -> number { ... }   // ✓ own: moves value into fn
 ```
 
 Choose `share` for primitives and read-only collections, `borrow` for read-only access, `own` when the function should take exclusive ownership.
@@ -382,7 +382,7 @@ The inferred return type is incompatible with how the function is used.
 A value was used after ownership was transferred.
 
 ```atlas
-fn consume(own x: number[]) -> void { }
+fn consume(own x: []number) -> void { }
 let arr = [1.0, 2.0];
 consume(arr);
 print(arr);    // ✗ AT3053 — arr was moved into consume()

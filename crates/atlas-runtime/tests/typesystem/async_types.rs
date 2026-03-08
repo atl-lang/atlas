@@ -262,7 +262,7 @@ fn test_at4001_await_in_sync_for_loop() {
     let diags = errors(
         r#"
         async fn step() -> number { return 0; }
-        fn process(borrow items: number[]) -> void {
+        fn process(borrow items: []number) -> void {
             for item in items {
                 let _n = await step();
             }

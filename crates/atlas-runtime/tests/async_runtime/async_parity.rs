@@ -233,7 +233,7 @@ fn parity_async_05b_if_else_false() {
 fn parity_async_06_array_loop() {
     assert_parity(
         r#"
-        async fn sum_array(borrow items: number[]) -> number {
+        async fn sum_array(borrow items: []number) -> number {
             let mut total = 0;
             for item in items {
                 total = total + item;

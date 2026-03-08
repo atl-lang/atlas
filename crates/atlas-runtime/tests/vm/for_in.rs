@@ -298,7 +298,7 @@ fn test_forin_vm_empty_array() {
     assert_parity(
         r#"
 let mut count = 0;
-let arr: number[] = [];
+let arr: []number = [];
 for x in arr {
     count = count + 1;
 }
@@ -464,14 +464,14 @@ fn test_vm_free_fn_reverse_cow_writeback() {
 /// affect the copy (CoW value semantics).
 #[test]
 fn test_vm_value_semantics_regression_assign_copy() {
-    let result = run_vm(r#"let a: number[] = [1, 2, 3]; let b: number[] = a; a[0] = 99; b[0];"#);
+    let result = run_vm(r#"let a: []number = [1, 2, 3]; let b: []number = a; a[0] = 99; b[0];"#);
     assert_eq!(result, Ok("Number(1)".to_string()));
 }
 
 /// Regression: mutation of assigned copy does not affect source.
 #[test]
 fn test_vm_value_semantics_regression_copy_mutation_isolated() {
-    let result = run_vm(r#"let a: number[] = [1, 2, 3]; let b: number[] = a; b[0] = 42; a[0];"#);
+    let result = run_vm(r#"let a: []number = [1, 2, 3]; let b: []number = a; b[0] = 42; a[0];"#);
     assert_eq!(result, Ok("Number(1)".to_string()));
 }
 
@@ -487,7 +487,7 @@ fn test_vm_value_semantics_regression_push_copy_isolated() {
 #[test]
 fn test_vm_value_semantics_regression_fn_param_copy() {
     let result = run_vm(
-        r#"fn fill(borrow arr: number[]) -> void { arr[0] = 999; } let nums: number[] = [1, 2, 3]; fill(nums); nums[0];"#,
+        r#"fn fill(borrow arr: []number) -> void { arr[0] = 999; } let nums: []number = [1, 2, 3]; fill(nums); nums[0];"#,
     );
     assert_eq!(result, Ok("Number(1)".to_string()));
 }
@@ -496,7 +496,7 @@ fn test_vm_value_semantics_regression_fn_param_copy() {
 #[test]
 fn test_vm_value_semantics_regression_three_way_copy() {
     let result = run_vm(
-        r#"let a: number[] = [1, 2, 3]; let b: number[] = a; let c: number[] = b; b[0] = 10; c[1] = 20; a[0] + a[1];"#,
+        r#"let a: []number = [1, 2, 3]; let b: []number = a; let c: []number = b; b[0] = 10; c[1] = 20; a[0] + a[1];"#,
     );
     assert_eq!(result, Ok("Number(3)".to_string()));
 }
@@ -524,7 +524,7 @@ fn find_function_ref(
 #[test]
 fn test_compiler_emits_own_annotation() {
     use atlas_runtime::ast::OwnershipAnnotation;
-    let bc = compile("fn process(own data: number[]) -> void { }");
+    let bc = compile("fn process(own data: []number) -> void { }");
     let func = find_function_ref(&bc, "process");
     assert_eq!(func.param_ownership.len(), 1);
     assert_eq!(func.param_ownership[0], Some(OwnershipAnnotation::Own));
@@ -558,7 +558,7 @@ fn test_compiler_unannotated_function() {
 #[test]
 fn test_bytecode_round_trips_ownership() {
     use atlas_runtime::ast::OwnershipAnnotation;
-    let bc = compile("fn consume(own data: number[], borrow key: string) -> void { }");
+    let bc = compile("fn consume(own data: []number, borrow key: string) -> void { }");
     let func_before = find_function_ref(&bc, "consume");
 
     // Serialize and deserialize
@@ -717,8 +717,8 @@ fn test_vm_own_borrow_identical_to_interpreter() {
 #[cfg(debug_assertions)]
 fn test_vm_shared_param_rejects_plain_value() {
     let src = r#"
-        fn register(shared handler: number[]) -> void { }
-        let arr: number[] = [1, 2, 3];
+        fn register(shared handler: []number) -> void { }
+        let arr: []number = [1, 2, 3];
         register(arr);
     "#;
     let result = vm_run_source(src);
@@ -740,7 +740,7 @@ fn test_vm_shared_param_accepts_shared_value() {
     use atlas_runtime::value::{Shared, Value};
 
     let src = r#"
-        fn register(shared handler: number[]) -> void { }
+        fn register(shared handler: []number) -> void { }
         register(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
@@ -775,8 +775,8 @@ fn test_vm_shared_identical_to_interpreter() {
     use atlas_runtime::interpreter::Interpreter;
 
     let src = r#"
-        fn register(shared handler: number[]) -> void { }
-        let arr: number[] = [1, 2, 3];
+        fn register(shared handler: []number) -> void { }
+        let arr: []number = [1, 2, 3];
         register(arr);
     "#;
 
@@ -1284,10 +1284,10 @@ fn test_parity_block03_scenario_j_vm() {
     // Trait method returning array, index into result
     let result = run_vm(
         "
-        trait Pair { fn pair(borrow self: Pair) -> number[]; }
-        impl Pair for number { fn pair(borrow self: number) -> number[] { return [self, self * 2]; } }
+        trait Pair { fn pair(borrow self: Pair) -> []number; }
+        impl Pair for number { fn pair(borrow self: number) -> []number { return [self, self * 2]; } }
         let x: number = 7;
-        let p: number[] = x.pair();
+        let p: []number = x.pair();
         let r: number = p[1];
         r
         ",

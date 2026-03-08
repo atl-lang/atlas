@@ -4,7 +4,7 @@ use super::common::*;
 
 #[test]
 fn milestone_stdlib_len_function() {
-    assert_eval_number("let a: number[] = [1, 2, 3]; len(a);", 3.0);
+    assert_eval_number("let a: []number = [1, 2, 3]; len(a);", 3.0);
 }
 
 #[test]
@@ -60,7 +60,7 @@ fn milestone_stdlib_type_conversion_to_string() {
 fn milestone_error_codes_stable() {
     // These error codes must remain stable across versions.
     assert_error_code("1 / 0;", "AT0005"); // DivisionByZero
-    assert_error_code("let a: number[] = [1]; a[5];", "AT0006"); // IndexOutOfBounds
+    assert_error_code("let a: []number = [1]; a[5];", "AT0006"); // IndexOutOfBounds
 }
 
 #[test]

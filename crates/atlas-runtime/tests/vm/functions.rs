@@ -580,20 +580,20 @@ fn test_vm_name_mangling_arrays() {
     let array_number = Type::Array(Box::new(Type::Number));
     assert_eq!(
         Monomorphizer::mangle_name("process", &[array_number]),
-        "process$number[]"
+        "process$[]number"
     );
 
     let array_string = Type::Array(Box::new(Type::String));
     assert_eq!(
         Monomorphizer::mangle_name("process", &[array_string]),
-        "process$string[]"
+        "process$[]string"
     );
 
     // Nested arrays
     let array_array = Type::Array(Box::new(Type::Array(Box::new(Type::Number))));
     assert_eq!(
         Monomorphizer::mangle_name("flatten", &[array_array]),
-        "flatten$number[][]"
+        "flatten$[][]number"
     );
 }
 

@@ -369,7 +369,7 @@ fn test_nested_result_ok() {
 #[test]
 fn test_array_pattern_empty() {
     let source = r#"
-        fn test(borrow arr: number[]) -> string {
+        fn test(borrow arr: []number) -> string {
             return match arr {
                 [] => "empty",
                 _ => "not empty"
@@ -389,7 +389,7 @@ fn test_array_pattern_empty() {
 #[test]
 fn test_array_pattern_single() {
     let source = r#"
-        fn test(borrow arr: number[]) -> number {
+        fn test(borrow arr: []number) -> number {
             return match arr {
                 [x] => x,
                 _ => 0
@@ -409,7 +409,7 @@ fn test_array_pattern_single() {
 #[test]
 fn test_array_pattern_pair() {
     let source = r#"
-        fn test(borrow arr: number[]) -> number {
+        fn test(borrow arr: []number) -> number {
             return match arr {
                 [x, y] => x + y,
                 _ => 0

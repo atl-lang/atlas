@@ -12,7 +12,7 @@ fn test_increment_decrement_basics(#[case] code: &str, #[case] expected: f64) {
 #[test]
 fn test_increment_array_element() {
     let code = r#"
-        let arr: number[] = [5, 10, 15];
+        let arr: []number = [5, 10, 15];
         arr[0] += 1;
         arr[0]
     "#;
@@ -22,7 +22,7 @@ fn test_increment_array_element() {
 #[test]
 fn test_decrement_array_element() {
     let code = r#"
-        let arr: number[] = [5, 10, 15];
+        let arr: []number = [5, 10, 15];
         arr[2] -= 1;
         arr[2]
     "#;
@@ -123,7 +123,7 @@ fn test_compound_chained() {
 #[test]
 fn test_compound_array_element() {
     let code = r#"
-        let arr: number[] = [10, 20, 30];
+        let arr: []number = [10, 20, 30];
         arr[1] += 5;
         arr[1]
     "#;

@@ -222,7 +222,7 @@ pub fn task_name(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 
 /// Join all tasks
 ///
-/// Atlas signature: `joinAll(handles: TaskHandle[]) -> Future<T[]>`
+/// Atlas signature: `joinAll(handles: []TaskHandle) -> Future<[]T>`
 pub fn join_all(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(stdlib_arity_error("joinAll", 1, args.len(), span));
@@ -353,7 +353,7 @@ pub fn channel_receive(args: &[Value], span: Span) -> Result<Value, RuntimeError
 
 /// Select from multiple channels
 ///
-/// Atlas signature: `channelSelect(receivers: ChannelReceiver[]) -> Future<[value, index]>`
+/// Atlas signature: `channelSelect(receivers: []ChannelReceiver) -> Future<[value, index]>`
 pub fn channel_select(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
         return Err(stdlib_arity_error("channelSelect", 1, args.len(), span));

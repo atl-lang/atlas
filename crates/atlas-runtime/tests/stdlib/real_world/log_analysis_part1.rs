@@ -10,7 +10,7 @@ fn test_log_parse_basic() {
     let code = format!(
         r#"
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let first: string = lines[0];
         includes(first, "INFO")
     "#,
@@ -36,8 +36,8 @@ fn test_log_filter_errors() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let errors: string[] = filter(lines, isError);
+        let lines: []string = split(logs, "\n");
+        let errors: []string = filter(lines, isError);
         len(errors)
     "#,
         path_for_atlas(&log_path)
@@ -58,7 +58,7 @@ fn test_log_extract_timestamps() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let line1: string = lines[0];
         getTimestamp(line1)
     "#,
@@ -84,9 +84,9 @@ fn test_log_count_by_level() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let infos: string[] = filter(dataLines, isInfo);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let infos: []string = filter(dataLines, isInfo);
         len(infos)
     "#,
         path_for_atlas(&log_path)
@@ -103,9 +103,9 @@ fn test_log_extract_error_messages() {
     let code = format!(
         r#"
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let line: string = lines[0];
-        let parts: string[] = split(line, "ERROR: ");
+        let parts: []string = split(line, "ERROR: ");
         let mut msg: string = "";
         if (len(parts) >= 2.0) {{
             msg = parts[1];
@@ -135,9 +135,9 @@ fn test_log_filter_by_date() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let recent: string[] = filter(dataLines, isAfterJan10);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let recent: []string = filter(dataLines, isAfterJan10);
         len(recent)
     "#,
         path_for_atlas(&log_path)
@@ -158,9 +158,9 @@ fn test_log_severity_ordering() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let high: string[] = filter(dataLines, isHighSeverity);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let high: []string = filter(dataLines, isHighSeverity);
         len(high)
     "#,
         path_for_atlas(&log_path)
@@ -181,7 +181,7 @@ fn test_log_multi_line_error() {
     let code = format!(
         r#"
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let first: string = lines[0];
         let second: string = lines[1];
         includes(first, "ERROR") && includes(second, "Stack")
@@ -204,8 +204,8 @@ fn test_log_empty_lines_filter() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let nonEmpty: string[] = filter(lines, isNotEmpty);
+        let lines: []string = split(logs, "\n");
+        let nonEmpty: []string = filter(lines, isNotEmpty);
         len(nonEmpty)
     "#,
         path_for_atlas(&log_path)
@@ -230,9 +230,9 @@ fn test_log_contains_pattern() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let aliceLogs: string[] = filter(dataLines, mentionsAlice);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let aliceLogs: []string = filter(dataLines, mentionsAlice);
         len(aliceLogs)
     "#,
         path_for_atlas(&log_path)
@@ -254,9 +254,9 @@ fn test_log_case_insensitive_search() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let errors: string[] = filter(dataLines, hasError);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let errors: []string = filter(dataLines, hasError);
         len(errors)
     "#,
         path_for_atlas(&log_path)
@@ -277,14 +277,14 @@ fn test_log_extract_user_actions() {
     let code = format!(
         r#"
         fn extractUser(borrow line: string) -> string {{
-            let parts: string[] = split(line, " ");
+            let parts: []string = split(line, " ");
             let userPart: string = parts[0];
-            let userFields: string[] = split(userPart, ":");
+            let userFields: []string = split(userPart, ":");
             return userFields[1];
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let line1: string = lines[0];
         extractUser(line1)
     "#,
@@ -306,9 +306,9 @@ fn test_log_count_occurrences() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let logins: string[] = filter(dataLines, isLogin);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let logins: []string = filter(dataLines, isLogin);
         len(logins)
     "#,
         path_for_atlas(&log_path)
@@ -329,7 +329,7 @@ fn test_log_trim_whitespace() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
+        let lines: []string = split(logs, "\n");
         let line1: string = lines[0];
         let cleaned: string = cleanLine(line1);
         cleaned
@@ -352,9 +352,9 @@ fn test_log_starts_with_timestamp() {
         }}
 
         let logs: string = read_file("{}");
-        let lines: string[] = split(logs, "\n");
-        let dataLines: string[] = slice(lines, 0.0, len(lines) - 1.0);
-        let timestamped: string[] = filter(dataLines, hasTimestamp);
+        let lines: []string = split(logs, "\n");
+        let dataLines: []string = slice(lines, 0.0, len(lines) - 1.0);
+        let timestamped: []string = filter(dataLines, hasTimestamp);
         len(timestamped)
     "#,
         path_for_atlas(&log_path)

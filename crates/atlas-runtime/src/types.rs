@@ -335,7 +335,7 @@ impl Type {
             Type::Bool => "bool".to_string(),
             Type::Null => "null".to_string(),
             Type::Void => "void".to_string(),
-            Type::Array(inner) => format!("{}[]", inner.display_name()),
+            Type::Array(inner) => format!("[]{}", inner.display_name()),
             Type::Range => "range".to_string(),
             Type::Function {
                 params,

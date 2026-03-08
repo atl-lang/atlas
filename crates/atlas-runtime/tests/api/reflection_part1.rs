@@ -39,7 +39,7 @@ fn test_type_info_from_array_type() {
     let arr_type = Type::Array(Box::new(Type::Number));
     let info = TypeInfo::from_type(&arr_type);
 
-    assert_eq!(info.name, "number[]");
+    assert_eq!(info.name, "[]number");
     assert_eq!(info.kind, TypeKind::Array);
     assert!(info.is_array());
     assert!(!info.is_primitive());
@@ -125,15 +125,15 @@ fn test_type_info_describe() {
 
 #[test]
 fn test_type_info_nested_arrays() {
-    // number[][]
+    // [][]number
     let nested = Type::Array(Box::new(Type::Array(Box::new(Type::Number))));
     let info = TypeInfo::from_type(&nested);
 
-    assert_eq!(info.name, "number[][]");
+    assert_eq!(info.name, "[][]number");
     assert!(info.is_array());
 
     let outer_elem = info.element_type.as_ref().unwrap();
-    assert_eq!(outer_elem.name, "number[]");
+    assert_eq!(outer_elem.name, "[]number");
     assert!(outer_elem.is_array());
 
     let inner_elem = outer_elem.element_type.as_ref().unwrap();

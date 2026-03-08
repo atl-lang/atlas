@@ -671,7 +671,7 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
     ErrorCodeInfo {
         code: "AT3060",
         description: "Unknown type name — likely a type from another language",
-        help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `T[]` for arrays, `HashMap<K,V>` for maps. Define structs for custom types."),
+        help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `[]T` for arrays, `HashMap<K,V>` for maps. Define structs for custom types."),
     },
     // === AT4xxx: Async/Await Errors ===
     ErrorCodeInfo {

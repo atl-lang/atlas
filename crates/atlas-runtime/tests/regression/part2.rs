@@ -19,7 +19,7 @@ fn regression_fibonacci() {
 #[test]
 fn regression_array_sum() {
     let code = r#"
-        let arr: number[] = [1, 2, 3, 4, 5];
+        let arr: []number = [1, 2, 3, 4, 5];
         let mut sum: number = 0;
         let mut i: number = 0;
         while (i < len(arr)) {

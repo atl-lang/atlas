@@ -776,7 +776,7 @@ fn test_name_mangling() {
     let array_type = Type::Array(Box::new(Type::Bool));
     assert_eq!(
         Monomorphizer::mangle_name("process", &[array_type]),
-        "process$bool[]"
+        "process$[]bool"
     );
 }
 

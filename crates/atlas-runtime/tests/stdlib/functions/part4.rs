@@ -279,7 +279,7 @@ fn test_collection_assertions_in_sequence() {
         assert_length(nums, 5);
         assert_contains(nums, 3);
 
-        let empty: number[] = [];
+        let empty: []number = [];
         assert_empty(empty);
         assert_length(empty, 0);
     "#,

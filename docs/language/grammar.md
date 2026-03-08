@@ -189,7 +189,7 @@ type_primary   := named_type
                | "(" type_ref ("," type_ref)* ")"
 
 named_type     := IDENT | "null"
-array_type     := type_primary "[]"  // suffix, repeatable
+array_type     := "[]" type_primary   // prefix, nestable: []T, [][]T
 function_type  := "(" type_ref ("," type_ref)* ")" "->" type_ref
 structural_type := "{" IDENT ":" type_ref ("," IDENT ":" type_ref)* "}"
 

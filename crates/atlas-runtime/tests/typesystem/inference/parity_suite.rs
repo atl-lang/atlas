@@ -131,7 +131,7 @@ fn parity_generic_identity_string() {
 #[test]
 fn parity_generic_first_element() {
     assert_parity_num(
-        "fn first<T>(borrow arr: T[]) -> T { return arr[0]; } first([10, 20, 30]);",
+        "fn first<T>(borrow arr: []T) -> T { return arr[0]; } first([10, 20, 30]);",
         10.0,
     );
 }

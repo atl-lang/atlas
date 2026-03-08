@@ -31,7 +31,7 @@ fn check_no_type_errors(source: &str) {
 
 #[test]
 fn test_str_split_returns_array() {
-    // split() returns string[] — usable as array
+    // split() returns []string — usable as array
     check_no_type_errors(
         r#"
         let s = "hello world";

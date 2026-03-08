@@ -760,9 +760,23 @@ impl Parser {
         }
     }
 
-    /// Parse primary type (named, generic, grouped, or function), plus array suffixes.
+    /// Parse primary type (named, generic, grouped, or function), plus array prefixes.
     fn parse_type_primary(&mut self) -> Result<TypeRef, ()> {
-        let mut type_ref = if self.check(TokenKind::LeftParen) {
+        // Handle prefix array type syntax: []T, [][]T
+        if self.check(TokenKind::LeftBracket) {
+            let start = self.peek().span;
+            self.advance(); // consume '['
+            let rbracket = self.consume(
+                TokenKind::RightBracket,
+                "Expected ']' after '[' in array type — use []T, not T[]",
+            )?;
+            let _ = rbracket;
+            let inner = self.parse_type_primary()?;
+            let full_span = start.merge(inner.span());
+            return Ok(TypeRef::Array(Box::new(inner), full_span));
+        }
+
+        let type_ref = if self.check(TokenKind::LeftParen) {
             self.parse_paren_type()?
         } else if self.check(TokenKind::LeftBrace) {
             self.parse_structural_type()?
@@ -782,20 +796,6 @@ impl Parser {
                 TypeRef::Named(name, span)
             }
         };
-
-        // Handle array type syntax: type[]
-        loop {
-            if !self.match_token(TokenKind::LeftBracket) {
-                break;
-            }
-            let rbracket_token = self.consume(
-                TokenKind::RightBracket,
-                "Expected ']' after '[' in array type",
-            )?;
-            let end_span = rbracket_token.span;
-            let full_span = type_ref.span().merge(end_span);
-            type_ref = TypeRef::Array(Box::new(type_ref), full_span);
-        }
 
         Ok(type_ref)
     }

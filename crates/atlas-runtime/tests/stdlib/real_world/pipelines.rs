@@ -8,9 +8,9 @@ fn test_pipeline_map_filter_reduce() {
         fn isEven(borrow x: number) -> bool { return x % 2.0 == 0.0; }
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0, 4.0, 5.0];
-        let doubled: number[] = map(numbers, double);
-        let evens: number[] = filter(doubled, isEven);
+        let numbers: []number = [1.0, 2.0, 3.0, 4.0, 5.0];
+        let doubled: []number = map(numbers, double);
+        let evens: []number = filter(doubled, isEven);
         reduce(evens, sum, 0.0)
     "#;
     assert_eval_number_with_io(code, 30.0); // doubled=[2,4,6,8,10], all even, sum=30
@@ -22,9 +22,9 @@ fn test_pipeline_filter_map_join() {
         fn isLong(borrow s: string) -> bool { return len(s) > 3.0; }
         fn toUpper(borrow s: string) -> string { return to_upper_case(s); }
 
-        let words: string[] = ["hi", "hello", "bye", "world"];
-        let long: string[] = filter(words, isLong);
-        let uppered: string[] = map(long, toUpper);
+        let words: []string = ["hi", "hello", "bye", "world"];
+        let long: []string = filter(words, isLong);
+        let uppered: []string = map(long, toUpper);
         join(uppered, "-")
     "#;
     assert_eval_string_with_io(code, "HELLO-WORLD");
@@ -33,10 +33,10 @@ fn test_pipeline_filter_map_join() {
 #[test]
 fn test_pipeline_nested_arrays() {
     let code = r#"
-        let nested: number[][] = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
-        let flat: number[] = flatten(nested);
+        let nested: [][]number = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
+        let flat: []number = flatten(nested);
         fn double(borrow x: number) -> number { return x * 2.0; }
-        let doubled: number[] = map(flat, double);
+        let doubled: []number = map(flat, double);
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
         reduce(doubled, sum, 0.0)
     "#;
@@ -51,8 +51,8 @@ fn test_pipeline_string_processing() {
             return to_lower_case(t);
         }
 
-        let input: string[] = ["  HELLO  ", "  WORLD  ", "  TEST  "];
-        let cleaned: string[] = map(input, trimAndLower);
+        let input: []string = ["  HELLO  ", "  WORLD  ", "  TEST  "];
+        let cleaned: []string = map(input, trimAndLower);
         join(cleaned, ",")
     "#;
     assert_eval_string_with_io(code, "hello,world,test");
@@ -64,9 +64,9 @@ fn test_pipeline_multi_step_filter() {
         fn isPositive(borrow x: number) -> bool { return x > 0.0; }
         fn isSmall(borrow x: number) -> bool { return x < 100.0; }
 
-        let numbers: number[] = [-5.0, 10.0, 150.0, 50.0, -20.0, 75.0];
-        let positive: number[] = filter(numbers, isPositive);
-        let small: number[] = filter(positive, isSmall);
+        let numbers: []number = [-5.0, 10.0, 150.0, 50.0, -20.0, 75.0];
+        let positive: []number = filter(numbers, isPositive);
+        let small: []number = filter(positive, isSmall);
         len(small)
     "#;
     assert_eval_number_with_io(code, 3.0); // [10, 50, 75]
@@ -77,9 +77,9 @@ fn test_pipeline_sort_and_slice() {
     let code = r#"
         fn compare(borrow a: number, borrow b: number) -> number { return a - b; }
 
-        let numbers: number[] = [5.0, 2.0, 8.0, 1.0, 9.0, 3.0];
-        let sorted: number[] = sort(numbers, compare);
-        let top3: number[] = slice(sorted, 0.0, 3.0);
+        let numbers: []number = [5.0, 2.0, 8.0, 1.0, 9.0, 3.0];
+        let sorted: []number = sort(numbers, compare);
+        let top3: []number = slice(sorted, 0.0, 3.0);
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
         reduce(top3, sum, 0.0)
     "#;
@@ -89,12 +89,12 @@ fn test_pipeline_sort_and_slice() {
 #[test]
 fn test_pipeline_flatmap_strings() {
     let code = r#"
-        fn splitWords(borrow s: string) -> string[] {
+        fn splitWords(borrow s: string) -> []string {
             return split(s, " ");
         }
 
-        let sentences: string[] = ["hello world", "foo bar"];
-        let words: string[] = flat_map(sentences, splitWords);
+        let sentences: []string = ["hello world", "foo bar"];
+        let words: []string = flat_map(sentences, splitWords);
         len(words)
     "#;
     assert_eval_number_with_io(code, 4.0);
@@ -110,8 +110,8 @@ fn test_pipeline_conditional_transform() {
             return x;
         }
 
-        let numbers: number[] = [-5.0, 10.0, -3.0, 7.0];
-        let transformed: number[] = map(numbers, transform);
+        let numbers: []number = [-5.0, 10.0, -3.0, 7.0];
+        let transformed: []number = map(numbers, transform);
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
         reduce(transformed, sum, 0.0)
     "#;
@@ -123,7 +123,7 @@ fn test_pipeline_find_and_transform() {
     let code = r#"
         fn isLarge(borrow x: number) -> bool { return x > 50.0; }
 
-        let numbers: number[] = [10.0, 60.0, 30.0, 80.0];
+        let numbers: []number = [10.0, 60.0, 30.0, 80.0];
         let found: number = unwrap(find(numbers, isLarge));
         found * 2.0
     "#;
@@ -135,7 +135,7 @@ fn test_pipeline_every_and_some() {
     let code = r#"
         fn isPositive(borrow x: number) -> bool { return x > 0.0; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0];
+        let numbers: []number = [1.0, 2.0, 3.0];
         let allPositive: bool = every(numbers, isPositive);
         let somePositive: bool = some(numbers, isPositive);
         allPositive && somePositive
@@ -146,8 +146,8 @@ fn test_pipeline_every_and_some() {
 #[test]
 fn test_pipeline_reverse_and_join() {
     let code = r#"
-        let words: string[] = ["one", "two", "three"];
-        let reversed: string[] = reverse(words);
+        let words: []string = ["one", "two", "three"];
+        let reversed: []string = reverse(words);
         join(reversed, "-")
     "#;
     assert_eval_string_with_io(code, "three-two-one");
@@ -156,10 +156,10 @@ fn test_pipeline_reverse_and_join() {
 #[test]
 fn test_pipeline_unshift_and_concat() {
     let code = r#"
-        let arr1: number[] = [2.0, 3.0];
-        let arr2: number[] = [4.0, 5.0];
-        let withOne: number[] = unshift(arr1, 1.0);
-        let combined: number[] = concat(withOne, arr2);
+        let arr1: []number = [2.0, 3.0];
+        let arr2: []number = [4.0, 5.0];
+        let withOne: []number = unshift(arr1, 1.0);
+        let combined: []number = concat(withOne, arr2);
         len(combined)
     "#;
     assert_eval_number_with_io(code, 5.0);
@@ -171,9 +171,9 @@ fn test_pipeline_multiple_maps() {
         fn add10(borrow x: number) -> number { return x + 10.0; }
         fn double(borrow x: number) -> number { return x * 2.0; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0];
-        let step1: number[] = map(numbers, add10);
-        let step2: number[] = map(step1, double);
+        let numbers: []number = [1.0, 2.0, 3.0];
+        let step1: []number = map(numbers, add10);
+        let step2: []number = map(step1, double);
         step2[0]
     "#;
     assert_eval_number_with_io(code, 22.0); // (1+10)*2 = 22
@@ -184,9 +184,9 @@ fn test_pipeline_filter_reverse_first() {
     let code = r#"
         fn isEven(borrow x: number) -> bool { return x % 2.0 == 0.0; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
-        let evens: number[] = filter(numbers, isEven);
-        let reversed: number[] = reverse(evens);
+        let numbers: []number = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0];
+        let evens: []number = filter(numbers, isEven);
+        let reversed: []number = reverse(evens);
         reversed[0]
     "#;
     assert_eval_number_with_io(code, 6.0);
@@ -197,8 +197,8 @@ fn test_pipeline_sortby_number() {
     let code = r#"
         fn negate(borrow x: number) -> number { return x * -1.0; }
 
-        let numbers: number[] = [3.0, 1.0, 4.0, 1.0, 5.0];
-        let sorted: number[] = sort_by(numbers, negate);
+        let numbers: []number = [3.0, 1.0, 4.0, 1.0, 5.0];
+        let sorted: []number = sort_by(numbers, negate);
         sorted[0]
     "#;
     assert_eval_number_with_io(code, 5.0); // sorted descending
@@ -207,9 +207,9 @@ fn test_pipeline_sortby_number() {
 #[test]
 fn test_pipeline_pop_and_process() {
     let code = r#"
-        let numbers: number[] = [1.0, 2.0, 3.0];
+        let numbers: []number = [1.0, 2.0, 3.0];
         let last: number = numbers[len(numbers) - 1.0];
-        let remaining: number[] = slice(numbers, 0.0, len(numbers) - 1.0);
+        let remaining: []number = slice(numbers, 0.0, len(numbers) - 1.0);
         last + len(remaining)
     "#;
     assert_eval_number_with_io(code, 5.0); // 3 + 2
@@ -218,9 +218,9 @@ fn test_pipeline_pop_and_process() {
 #[test]
 fn test_pipeline_shift_and_process() {
     let code = r#"
-        let numbers: number[] = [1.0, 2.0, 3.0];
+        let numbers: []number = [1.0, 2.0, 3.0];
         let first: number = numbers[0];
-        let remaining: number[] = slice(numbers, 1.0, len(numbers));
+        let remaining: []number = slice(numbers, 1.0, len(numbers));
         first + len(remaining)
     "#;
     assert_eval_number_with_io(code, 3.0); // 1 + 2
@@ -231,9 +231,9 @@ fn test_pipeline_findindex_and_slice() {
     let code = r#"
         fn isLarge(borrow x: number) -> bool { return x > 50.0; }
 
-        let numbers: number[] = [10.0, 20.0, 60.0, 80.0];
+        let numbers: []number = [10.0, 20.0, 60.0, 80.0];
         let idx: number = unwrap(find_index(numbers, isLarge));
-        let fromLarge: number[] = slice(numbers, idx, len(numbers));
+        let fromLarge: []number = slice(numbers, idx, len(numbers));
         len(fromLarge)
     "#;
     assert_eval_number_with_io(code, 2.0); // [60, 80]
@@ -245,8 +245,8 @@ fn test_pipeline_complex_aggregation() {
         fn square(borrow x: number) -> number { return x * x; }
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0, 4.0];
-        let squared: number[] = map(numbers, square);
+        let numbers: []number = [1.0, 2.0, 3.0, 4.0];
+        let squared: []number = map(numbers, square);
         let total: number = reduce(squared, sum, 0.0);
         total
     "#;
@@ -259,9 +259,9 @@ fn test_pipeline_string_filter_map() {
         fn notEmpty(borrow s: string) -> bool { return len(s) > 0.0; }
         fn firstChar(borrow s: string) -> string { return unwrap(char_at(s, 0.0)); }
 
-        let words: string[] = ["apple", "", "banana", "", "cherry"];
-        let nonEmpty: string[] = filter(words, notEmpty);
-        let firstChars: string[] = map(nonEmpty, firstChar);
+        let words: []string = ["apple", "", "banana", "", "cherry"];
+        let nonEmpty: []string = filter(words, notEmpty);
+        let firstChars: []string = map(nonEmpty, firstChar);
         join(firstChars, "")
     "#;
     assert_eval_string_with_io(code, "abc");
@@ -277,8 +277,8 @@ fn test_pipeline_nested_operations() {
         }
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0];
-        let processed: number[] = map(numbers, process);
+        let numbers: []number = [1.0, 2.0, 3.0];
+        let processed: []number = map(numbers, process);
         reduce(processed, sum, 0.0)
     "#;
     assert_eval_number_with_io(code, 42.0); // (1+5)*2=12, (2+5)*2=14, (3+5)*2=16, sum=42
@@ -291,8 +291,8 @@ fn test_pipeline_includes_filter() {
             return includes(s, "a");
         }
 
-        let words: string[] = ["apple", "berry", "apricot", "cherry"];
-        let withA: string[] = filter(words, hasLetterA);
+        let words: []string = ["apple", "berry", "apricot", "cherry"];
+        let withA: []string = filter(words, hasLetterA);
         len(withA)
     "#;
     assert_eval_number_with_io(code, 2.0); // apple, apricot
@@ -301,10 +301,10 @@ fn test_pipeline_includes_filter() {
 #[test]
 fn test_pipeline_index_access_transform() {
     let code = r#"
-        let matrix: number[][] = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
-        fn getFirst(borrow row: number[]) -> number { return row[0]; }
+        let matrix: [][]number = [[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]];
+        fn getFirst(borrow row: []number) -> number { return row[0]; }
 
-        let firstElements: number[] = map(matrix, getFirst);
+        let firstElements: []number = map(matrix, getFirst);
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
         reduce(firstElements, sum, 0.0)
     "#;
@@ -318,8 +318,8 @@ fn test_pipeline_replace_map() {
             return replace(s, " ", "_");
         }
 
-        let phrases: string[] = ["hello world", "foo bar"];
-        let replaced: string[] = map(phrases, removeSpaces);
+        let phrases: []string = ["hello world", "foo bar"];
+        let replaced: []string = map(phrases, removeSpaces);
         join(replaced, "|")
     "#;
     assert_eval_string_with_io(code, "hello_world|foo_bar");
@@ -332,8 +332,8 @@ fn test_pipeline_padstart_map() {
             return pad_start(s, 5.0, "0");
         }
 
-        let numbers: string[] = ["1", "22", "333"];
-        let padded: string[] = map(numbers, pad);
+        let numbers: []string = ["1", "22", "333"];
+        let padded: []string = map(numbers, pad);
         join(padded, ",")
     "#;
     assert_eval_string_with_io(code, "00001,00022,00333");
@@ -346,10 +346,10 @@ fn test_pipeline_substring_filter_map() {
             return substring(s, 0.0, 3.0);
         }
 
-        let words: string[] = ["apple", "application", "appropriate"];
-        let prefixes: string[] = map(words, getPrefix);
+        let words: []string = ["apple", "application", "appropriate"];
+        let prefixes: []string = map(words, getPrefix);
         fn isApp(borrow s: string) -> bool { return s == "app"; }
-        let appPrefixes: string[] = filter(prefixes, isApp);
+        let appPrefixes: []string = filter(prefixes, isApp);
         len(appPrefixes)
     "#;
     assert_eval_number_with_io(code, 3.0);
@@ -366,7 +366,7 @@ fn test_pipeline_min_max_aggregation() {
             return max(current, x);
         }
 
-        let numbers: number[] = [5.0, 2.0, 8.0, 1.0, 9.0];
+        let numbers: []number = [5.0, 2.0, 8.0, 1.0, 9.0];
         let minVal: number = reduce(numbers, findMin, 0.0);
         let maxVal: number = reduce(numbers, findMax, 0.0);
         maxVal - minVal
@@ -377,9 +377,9 @@ fn test_pipeline_min_max_aggregation() {
 #[test]
 fn test_pipeline_array_building() {
     let code = r#"
-        let arr1: number[] = [1.0];
-        let arr2: number[] = unshift(arr1, 0.0);
-        let arr3: number[] = concat(arr2, [2.0, 3.0]);
+        let arr1: []number = [1.0];
+        let arr2: []number = unshift(arr1, 0.0);
+        let arr3: []number = concat(arr2, [2.0, 3.0]);
         fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
         reduce(arr3, sum, 0.0)
     "#;
@@ -391,7 +391,7 @@ fn test_pipeline_foreach_side_effects() {
     let code = r#"
         fn noop(borrow _x: number) -> void { return; }
 
-        let numbers: number[] = [1.0, 2.0, 3.0];
+        let numbers: []number = [1.0, 2.0, 3.0];
         for_each(numbers, noop);
         // for_each returns null, verify it doesn't crash
         true

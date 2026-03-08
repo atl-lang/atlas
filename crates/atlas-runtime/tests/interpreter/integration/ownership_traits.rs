@@ -197,10 +197,10 @@ fn test_parity_block03_scenario_j_interpreter() {
     let result = atlas
         .eval(
             "
-        trait Pair { fn pair(borrow self: Pair) -> number[]; }
-        impl Pair for number { fn pair(borrow self: number) -> number[] { return [self, self * 2]; } }
+        trait Pair { fn pair(borrow self: Pair) -> []number; }
+        impl Pair for number { fn pair(borrow self: number) -> []number { return [self, self * 2]; } }
         let x: number = 7;
-        let p: number[] = x.pair();
+        let p: []number = x.pair();
         let r: number = p[1];
         r
         ",

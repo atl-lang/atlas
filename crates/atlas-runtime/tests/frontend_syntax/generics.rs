@@ -70,14 +70,14 @@ fn test_complex_nesting() {
 
 #[test]
 fn test_generic_with_array_arg() {
-    let source = "let x: Option<number[]> = null;";
+    let source = "let x: Option<[]number> = null;";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }
 
 #[test]
 fn test_generic_with_array_result() {
-    let source = "let x: Result<string[], Error> = null;";
+    let source = "let x: Result<[]string, Error> = null;";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }
@@ -91,7 +91,7 @@ fn test_array_of_generic() {
 
 #[test]
 fn test_generic_array_complex() {
-    let source = "let x: HashMap<string, number[]>[] = null;";
+    let source = "let x: HashMap<string, []number>[] = null;";
     let result = try_parse(source);
     assert!(result.is_ok(), "Failed to parse: {:?}", result.err());
 }

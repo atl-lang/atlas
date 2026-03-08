@@ -39,7 +39,7 @@ fn stability_stress_recursion_depth_100() {
 fn stability_stress_large_array_100_elements() {
     // 100 element array should be allocated and accessed without issues.
     let elements: Vec<String> = (0..100).map(|i| i.to_string()).collect();
-    let code = format!("let arr: number[] = [{}]; arr[99];", elements.join(", "));
+    let code = format!("let arr: []number = [{}]; arr[99];", elements.join(", "));
     assert_eval_number(&code, 99.0);
 }
 
@@ -47,7 +47,7 @@ fn stability_stress_large_array_100_elements() {
 fn stability_stress_large_array_500_elements() {
     // 500 element array stress test.
     let elements: Vec<String> = (0..500).map(|i| i.to_string()).collect();
-    let code = format!("let arr: number[] = [{}]; arr[499];", elements.join(", "));
+    let code = format!("let arr: []number = [{}]; arr[499];", elements.join(", "));
     assert_eval_number(&code, 499.0);
 }
 
@@ -169,7 +169,7 @@ fn stability_error_recovery_divide_by_zero() {
 #[test]
 fn stability_error_recovery_array_out_of_bounds() {
     // Out-of-bounds access must produce a runtime error, not a panic.
-    assert_has_error("let arr: number[] = [1, 2]; arr[10];");
+    assert_has_error("let arr: []number = [1, 2]; arr[10];");
 }
 
 #[test]
@@ -309,5 +309,5 @@ fn stability_release_nested_scope() {
 fn stability_release_error_codes_preserved() {
     // Error codes must be the same in debug and release builds.
     assert_error_code("1 / 0;", "AT0005");
-    assert_error_code("let arr: number[] = [1]; arr[5];", "AT0006");
+    assert_error_code("let arr: []number = [1]; arr[5];", "AT0006");
 }

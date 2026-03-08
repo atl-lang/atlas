@@ -5,7 +5,7 @@ Complete string manipulation API with Unicode support.
 ## split
 
 ```atlas
-fn split(str: string, separator: string) -> string[]
+fn split(str: string, separator: string) -> []string
 ```
 
 Splits a string by separator into array of parts. If separator is empty, returns array of individual characters.
@@ -14,12 +14,12 @@ Splits a string by separator into array of parts. If separator is empty, returns
 - `str` - String to split
 - `separator` - Separator string (empty = split into chars)
 
-**Returns:** `string[]` - Array of string parts
+**Returns:** `[]string` - Array of string parts
 
 ## join
 
 ```atlas
-fn join(arr: string[], separator: string) -> string
+fn join(arr: []string, separator: string) -> string
 ```
 
 Joins an array of strings with separator. Alias: `strJoin`.

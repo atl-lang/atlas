@@ -151,7 +151,7 @@ no runtime raises AT4007.
 ### all
 
 ```atlas
-fn all<T>(futures: Future<T>[]) -> Future<T[]>
+fn all<T>(futures: Future<T>[]) -> Future<[]T>
 ```
 
 Waits for **all** futures to resolve and returns their results in order.

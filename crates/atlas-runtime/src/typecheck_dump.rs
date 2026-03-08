@@ -143,7 +143,7 @@ fn type_to_string(ty: &Type) -> String {
         Type::Bool => "bool".to_string(),
         Type::Void => "void".to_string(),
         Type::Null => "null".to_string(),
-        Type::Array(elem) => format!("{}[]", type_to_string(elem)),
+        Type::Array(elem) => format!("[]{}", type_to_string(elem)),
         Type::Range => "range".to_string(),
         Type::Function {
             params,
@@ -251,7 +251,7 @@ fn collect_types(ty: &Type, types: &mut std::collections::HashSet<String>) {
 
 /// Parse type information into kind and details
 fn parse_type_info(type_name: &str) -> (String, Option<String>) {
-    if let Some(stripped) = type_name.strip_suffix("[]") {
+    if let Some(stripped) = type_name.strip_prefix("[]") {
         (
             "array".to_string(),
             Some(format!("element type: {}", stripped)),

@@ -16,8 +16,8 @@ fn test_array_method_push_parity_via_atlas_eval() {
 #[test]
 fn test_value_semantics_regression_assign_copy() {
     let code = r#"
-        let a: number[] = [1, 2, 3];
-        let b: number[] = a;
+        let a: []number = [1, 2, 3];
+        let b: []number = a;
         a[0] = 99;
         b[0]
     "#;
@@ -28,8 +28,8 @@ fn test_value_semantics_regression_assign_copy() {
 #[test]
 fn test_value_semantics_regression_copy_mutation_isolated() {
     let code = r#"
-        let a: number[] = [1, 2, 3];
-        let b: number[] = a;
+        let a: []number = [1, 2, 3];
+        let b: []number = a;
         b[0] = 42;
         a[0]
     "#;
@@ -52,10 +52,10 @@ fn test_value_semantics_regression_push_copy_isolated() {
 #[test]
 fn test_value_semantics_regression_fn_param_copy() {
     let code = r#"
-        fn fill(borrow arr: number[]) -> void {
+        fn fill(borrow arr: []number) -> void {
             arr[0] = 999;
         }
-        let nums: number[] = [1, 2, 3];
+        let nums: []number = [1, 2, 3];
         fill(nums);
         nums[0]
     "#;
@@ -66,9 +66,9 @@ fn test_value_semantics_regression_fn_param_copy() {
 #[test]
 fn test_value_semantics_regression_three_way_copy() {
     let code = r#"
-        let a: number[] = [1, 2, 3];
-        let b: number[] = a;
-        let c: number[] = b;
+        let a: []number = [1, 2, 3];
+        let b: []number = a;
+        let c: []number = b;
         b[0] = 10;
         c[1] = 20;
         a[0] + a[1]

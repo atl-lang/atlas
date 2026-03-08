@@ -10,7 +10,7 @@ fn stability_edge_empty_string_literal() {
 #[test]
 fn stability_edge_empty_array() {
     // Empty array literals are allowed with explicit type context.
-    assert_eval_number("let arr: number[] = []; len(arr);", 0.0);
+    assert_eval_number("let arr: []number = []; len(arr);", 0.0);
 }
 
 #[test]
@@ -109,8 +109,8 @@ fn stability_edge_string_escape_sequences() {
 
 #[test]
 fn stability_edge_nested_array_access() {
-    assert_eval_number("let arr: number[] = [10, 20, 30]; arr[0];", 10.0);
-    assert_eval_number("let arr: number[] = [10, 20, 30]; arr[2];", 30.0);
+    assert_eval_number("let arr: []number = [10, 20, 30]; arr[0];", 10.0);
+    assert_eval_number("let arr: []number = [10, 20, 30]; arr[2];", 30.0);
 }
 
 #[test]

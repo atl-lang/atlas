@@ -37,7 +37,7 @@ fn test_map_empty_array() {
         fn double(borrow x: number) -> number {
             return x * 2;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         map(arr, double);
     "#);
     
@@ -112,7 +112,7 @@ fn test_filter_empty_array() {
         fn isPositive(borrow x: number) -> bool {
             return x > 0;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         filter(arr, isPositive);
     "#);
     
@@ -219,7 +219,7 @@ fn test_reduce_empty_array() {
         fn add(borrow acc: number, borrow x: number) -> number {
             return acc + x;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         reduce(arr, add, 10);
     "#);
     assert_eq!(result, Value::Number(10.0)); // Returns initial value
@@ -315,7 +315,7 @@ fn test_find_empty_array() {
         fn isEven(borrow x: number) -> bool {
             return x % 2 == 0;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         find(arr, isEven);
     "#);
     assert_eq!(result, Value::Null);
@@ -371,7 +371,7 @@ fn test_find_index_empty() {
         fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         find_index(arr, alwaysTrue);
     "#);
     assert_eq!(result, Value::Number(-1.0));
@@ -396,7 +396,7 @@ fn test_find_index_not_found() {
 #[test]
 fn test_flat_map() {
     let result = eval_ok(r#"
-        fn duplicate(borrow x: number) -> number[] {
+        fn duplicate(borrow x: number) -> []number {
             return [x, x];
         }
         let arr = [1, 2, 3];
@@ -417,10 +417,10 @@ fn test_flat_map() {
 #[test]
 fn test_flat_map_empty() {
     let result = eval_ok(r#"
-        fn duplicate(borrow x: number) -> number[] {
+        fn duplicate(borrow x: number) -> []number {
             return [x, x];
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         flat_map(arr, duplicate);
     "#);
     
@@ -435,13 +435,13 @@ fn test_flat_map_empty() {
 #[test]
 fn test_flat_map_empty_results() {
     let result = eval_ok(r#"
-        fn makeEmpty(borrow x: number) -> number[] {
+        fn makeEmpty(borrow x: number) -> []number {
             let check = x + 1;
             if (check > 0) {
-                let empty: number[] = [];
+                let empty: []number = [];
                 return empty;
             } else {
-                let empty: number[] = [];
+                let empty: []number = [];
                 return empty;
             }
         }
@@ -491,7 +491,7 @@ fn test_some_empty_array() {
         fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         some(arr, alwaysTrue);
     "#);
     assert_eq!(result, Value::Bool(false));
@@ -551,7 +551,7 @@ fn test_every_empty_array() {
         fn alwaysTrue(borrow x: number) -> bool {
             return x == x;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         every(arr, alwaysTrue);
     "#);
     assert_eq!(result, Value::Bool(true)); // Vacuously true
@@ -643,7 +643,7 @@ fn test_sort_empty_array() {
         fn compare(borrow a: number, borrow b: number) -> number {
             return a - b;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         sort(arr, compare);
     "#);
     
@@ -750,7 +750,7 @@ fn test_sort_by_empty() {
         fn identity(borrow x: number) -> number {
             return x;
         }
-        let arr: number[] = [];
+        let arr: []number = [];
         sort_by(arr, identity);
     "#);
     

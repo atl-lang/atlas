@@ -129,7 +129,7 @@ mod migrated_types {
     #[test]
     fn test_array_type() {
         let arr_type = Type::Array(Box::new(Type::Number));
-        assert_eq!(arr_type.display_name(), "number[]");
+        assert_eq!(arr_type.display_name(), "[]number");
     }
 
     #[test]

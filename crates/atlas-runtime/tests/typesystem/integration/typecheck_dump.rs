@@ -299,7 +299,7 @@ fn test_complex_program_typecheck_dump() {
 fn test_array_types_in_typecheck_dump() {
     let source = r#"
         fn test() -> void {
-            let arr: number[] = [1, 2, 3];
+            let arr: []number = [1, 2, 3];
         }
     "#;
 

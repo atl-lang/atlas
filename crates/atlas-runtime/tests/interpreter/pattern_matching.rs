@@ -142,7 +142,7 @@ fn test_nested_constructor_patterns() {
 #[test]
 fn test_array_patterns() {
     let source = r#"
-        fn test(borrow arr: number[]) -> string {
+        fn test(borrow arr: []number) -> string {
             return match arr {
                 [] => "empty",
                 [x] => "one",

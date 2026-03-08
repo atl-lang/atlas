@@ -12,13 +12,13 @@ fn type_name(ty: &Type) -> String {
     case("1 + 1;", "number"),
     case("\"hi\";", "string"),
     case("true;", "bool"),
-    case("[1, 2, 3];", "number[]"),
+    case("[1, 2, 3];", "[]number"),
     case("len([1,2,3]) + 1;", "number"),
     case("len([1,2,3]);", "number"),
     case("match 1 { 1 => 2, _ => 0 };", "number"),
     case("let x = 1; x;", "number"),
     case("let msg: string = \"ok\"; msg;", "string"),
-    case("let arr = [true, false]; arr;", "bool[]"),
+    case("let arr = [true, false]; arr;", "[]bool"),
     case("let bools = [true, false]; bools[0];", "bool"),
     case("len(\"hello\");", "number")
 )]
@@ -40,12 +40,12 @@ fn type_of_expression_matches_expected(input: &str, expected: &str) {
     case("let x = 42;", "number"),
     case("let name = \"atlas\";", "string"),
     case("let mut flag = true;", "bool"),
-    case("let data = [1,2,3];", "number[]"),
+    case("let data = [1,2,3];", "[]number"),
     case("let mut nothing = null;", "null"),
-    case("let combo = [\"a\", \"b\"];", "string[]"),
+    case("let combo = [\"a\", \"b\"];", "[]string"),
     case("let mut result = len(\"abc\");", "number"),
-    case("let nested = [[1,2],[3,4]];", "number[][]"),
-    case("let mut vector = [1, 2, 3];", "number[]")
+    case("let nested = [[1,2],[3,4]];", "[][]number"),
+    case("let mut vector = [1, 2, 3];", "[]number")
 )]
 fn let_binding_records_type(input: &str, expected_type: &str) {
     let mut repl = ReplCore::new();
@@ -96,7 +96,7 @@ fn vars_snapshot_sorted(commands: Vec<&str>, expected_names: Vec<&str>) {
     case("1 + \"a\";"),
     case("let x: number = \"no\";"),
     case("fn f(borrow a: number) -> number { return a + \"bad\"; };"),
-    case("let arr: string[] = [1,2];"),
+    case("let arr: []string = [1,2];"),
     case("if (1) { let a = 1; };"),
     case("while (\"no\") { let a = 1; };"),
     case("let x = true; x + 1;"),
@@ -129,9 +129,9 @@ fn let_binding_captures_value_and_mutability() {
     expected_type,
     case("let greeting = \"hello\";", "hello", "string"),
     case("let total = 1 + 2 + 3;", "6", "number"),
-    case("let nested = [1, 2, 3];", "[1, 2, 3]", "number[]"),
+    case("let nested = [1, 2, 3];", "[1, 2, 3]", "[]number"),
     case("let truthy = !false;", "true", "bool"),
-    case("let pair = [\"a\", \"b\"];", "[a, b]", "string[]")
+    case("let pair = [\"a\", \"b\"];", "[a, b]", "[]string")
 )]
 fn bindings_capture_display_value(input: &str, expected_value: &str, expected_type: &str) {
     let mut repl = ReplCore::new();

@@ -46,7 +46,7 @@ fn test_imported_array_preserves_type() {
         temp_dir.path(),
         "data",
         r#"
-export let numbers: number[] = [1, 2, 3];
+export let numbers: []number = [1, 2, 3];
 "#,
     );
 

@@ -90,7 +90,7 @@ fn test_type_parameter_in_return() {
 fn test_type_parameter_in_array() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: T[]) -> T {
+        fn first<T>(borrow arr: []T) -> T {
             return arr[0];
         }
     "#,
@@ -219,7 +219,7 @@ fn test_inference_three_params() {
 fn test_inference_array_element_type() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: T[]) -> T {
+        fn first<T>(borrow arr: []T) -> T {
             return arr[0];
         }
         let numbers = [1, 2, 3];
@@ -233,7 +233,7 @@ fn test_inference_array_element_type() {
 fn test_inference_array_of_strings() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: T[]) -> T {
+        fn first<T>(borrow arr: []T) -> T {
             return arr[0];
         }
         let strings = ["a", "b", "c"];
@@ -386,7 +386,7 @@ fn test_array_element_mismatch() {
     // Returning a concrete type when T is expected
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow _arr: T[]) -> T {
+        fn first<T>(borrow _arr: []T) -> T {
             return "wrong";
         }
     "#,

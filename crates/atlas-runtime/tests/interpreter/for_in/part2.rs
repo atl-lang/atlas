@@ -191,7 +191,7 @@ fn test_for_in_with_function_call() {
 fn test_for_in_empty_array() {
     let source = r#"
         fn test() -> void {
-            let arr: number[] = [];
+            let arr: []number = [];
             for item in arr {
                 print(item);
             }

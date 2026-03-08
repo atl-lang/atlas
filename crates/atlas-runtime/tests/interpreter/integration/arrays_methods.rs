@@ -9,14 +9,14 @@ use super::*;
 
 #[test]
 fn test_array_method_len() {
-    let src = r#"let arr: number[] = [1, 2, 3]; arr.len();"#;
+    let src = r#"let arr: []number = [1, 2, 3]; arr.len();"#;
     assert_eval_number(src, 3.0);
     assert_parity(src);
 }
 
 #[test]
 fn test_array_method_len_empty() {
-    let src = r#"let arr: number[] = []; arr.len();"#;
+    let src = r#"let arr: []number = []; arr.len();"#;
     assert_eval_number(src, 0.0);
     assert_parity(src);
 }
@@ -25,14 +25,14 @@ fn test_array_method_len_empty() {
 
 #[test]
 fn test_array_method_is_empty_true() {
-    let src = r#"let arr: number[] = []; arr.isEmpty();"#;
+    let src = r#"let arr: []number = []; arr.isEmpty();"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_array_method_is_empty_false() {
-    let src = r#"let arr: number[] = [1]; arr.isEmpty();"#;
+    let src = r#"let arr: []number = [1]; arr.isEmpty();"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
@@ -41,14 +41,14 @@ fn test_array_method_is_empty_false() {
 
 #[test]
 fn test_array_method_includes_found() {
-    let src = r#"let arr: number[] = [1, 2, 3]; arr.includes(2);"#;
+    let src = r#"let arr: []number = [1, 2, 3]; arr.includes(2);"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_array_method_includes_not_found() {
-    let src = r#"let arr: number[] = [1, 2, 3]; arr.includes(99);"#;
+    let src = r#"let arr: []number = [1, 2, 3]; arr.includes(99);"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
@@ -58,13 +58,13 @@ fn test_array_method_includes_not_found() {
 #[test]
 fn test_array_method_index_of_found() {
     // indexOf returns Option<number> — test parity only
-    let src = r#"let arr: number[] = [10, 20, 30]; arr.indexOf(20);"#;
+    let src = r#"let arr: []number = [10, 20, 30]; arr.indexOf(20);"#;
     assert_parity(src);
 }
 
 #[test]
 fn test_array_method_index_of_not_found() {
-    let src = r#"let arr: number[] = [1, 2, 3]; arr.indexOf(99);"#;
+    let src = r#"let arr: []number = [1, 2, 3]; arr.indexOf(99);"#;
     assert_parity(src);
 }
 
@@ -73,14 +73,14 @@ fn test_array_method_index_of_not_found() {
 #[test]
 fn test_array_method_slice_basic() {
     let src =
-        r#"let arr: number[] = [1, 2, 3, 4, 5]; let s: number[] = arr.slice(1, 3); s[0] + s[1];"#;
+        r#"let arr: []number = [1, 2, 3, 4, 5]; let s: []number = arr.slice(1, 3); s[0] + s[1];"#;
     assert_eval_number(src, 5.0); // 2 + 3
     assert_parity(src);
 }
 
 #[test]
 fn test_array_method_slice_len() {
-    let src = r#"let arr: number[] = [1, 2, 3, 4, 5]; let s: number[] = arr.slice(0, 3); len(s);"#;
+    let src = r#"let arr: []number = [1, 2, 3, 4, 5]; let s: []number = arr.slice(0, 3); len(s);"#;
     assert_eval_number(src, 3.0);
     assert_parity(src);
 }
@@ -90,9 +90,9 @@ fn test_array_method_slice_len() {
 #[test]
 fn test_array_method_concat_basic() {
     let src = r#"
-        let a: number[] = [1, 2];
-        let b: number[] = [3, 4];
-        let c: number[] = a.concat(b);
+        let a: []number = [1, 2];
+        let b: []number = [3, 4];
+        let c: []number = a.concat(b);
         len(c);
     "#;
     assert_eval_number(src, 4.0);
@@ -102,9 +102,9 @@ fn test_array_method_concat_basic() {
 #[test]
 fn test_array_method_concat_values() {
     let src = r#"
-        let a: number[] = [1, 2];
-        let b: number[] = [3, 4];
-        let c: number[] = a.concat(b);
+        let a: []number = [1, 2];
+        let b: []number = [3, 4];
+        let c: []number = a.concat(b);
         c[0] + c[3];
     "#;
     assert_eval_number(src, 5.0); // 1 + 4
@@ -127,12 +127,12 @@ fn test_h138_closure_bare_expr_implicit_return() {
 
 #[test]
 fn test_h137_map_return_type_inferred_from_named_fn() {
-    // H-137: arr.map(dbl) should return number[], not ?[]
+    // H-137: arr.map(dbl) should return []number, not ?[]
     // Explicit annotation must not error.
     let src = r#"
         fn dbl(borrow x: number) -> number { return x * 2; }
-        let arr: number[] = [1, 2, 3];
-        let result: number[] = arr.map(dbl);
+        let arr: []number = [1, 2, 3];
+        let result: []number = arr.map(dbl);
         result[2];
     "#;
     assert_eval_number(src, 6.0);
@@ -142,8 +142,8 @@ fn test_h137_map_return_type_inferred_from_named_fn() {
 #[test]
 fn test_array_method_map_double() {
     let src = r#"
-        let arr: number[] = [1, 2, 3];
-        let doubled: number[] = arr.map(fn(borrow x: number) -> number { return x * 2; });
+        let arr: []number = [1, 2, 3];
+        let doubled: []number = arr.map(fn(borrow x: number) -> number { return x * 2; });
         doubled[0] + doubled[2];
     "#;
     assert_eval_number(src, 8.0); // 2 + 6
@@ -153,7 +153,7 @@ fn test_array_method_map_double() {
 #[test]
 fn test_array_method_map_preserves_len() {
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4];
+        let arr: []number = [1, 2, 3, 4];
         let result = arr.map(fn(borrow x: number) -> number { return x + 10; });
         len(result);
     "#;
@@ -166,7 +166,7 @@ fn test_array_method_map_preserves_len() {
 #[test]
 fn test_array_method_filter_gt() {
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4, 5];
+        let arr: []number = [1, 2, 3, 4, 5];
         let big = arr.filter(fn(borrow x: number) -> bool { return x > 3; });
         len(big);
     "#;
@@ -177,7 +177,7 @@ fn test_array_method_filter_gt() {
 #[test]
 fn test_array_method_filter_values() {
     let src = r#"
-        let arr: number[] = [10, 20, 30, 40];
+        let arr: []number = [10, 20, 30, 40];
         let big = arr.filter(fn(borrow x: number) -> bool { return x > 15; });
         big[0];
     "#;
@@ -190,7 +190,7 @@ fn test_array_method_filter_values() {
 #[test]
 fn test_array_method_reduce_sum() {
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4, 5];
+        let arr: []number = [1, 2, 3, 4, 5];
         let total = arr.reduce(fn(borrow acc: number, borrow x: number) -> number { return acc + x; }, 0);
         total;
     "#;
@@ -201,7 +201,7 @@ fn test_array_method_reduce_sum() {
 #[test]
 fn test_array_method_reduce_product() {
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4];
+        let arr: []number = [1, 2, 3, 4];
         let product = arr.reduce(fn(borrow acc: number, borrow x: number) -> number { return acc * x; }, 1);
         product;
     "#;
@@ -215,7 +215,7 @@ fn test_array_method_reduce_product() {
 fn test_array_method_find_match() {
     // find returns an optional value — test parity only
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4, 5];
+        let arr: []number = [1, 2, 3, 4, 5];
         arr.find(fn(borrow x: number) -> bool { return x > 3; });
     "#;
     assert_parity(src);
@@ -227,7 +227,7 @@ fn test_array_method_find_match() {
 fn test_array_method_find_index_match() {
     // findIndex returns an optional index — test parity only
     let src = r#"
-        let arr: number[] = [10, 20, 30, 40];
+        let arr: []number = [10, 20, 30, 40];
         arr.findIndex(fn(borrow x: number) -> bool { return x == 30; });
     "#;
     assert_parity(src);
@@ -238,7 +238,7 @@ fn test_array_method_find_index_match() {
 #[test]
 fn test_array_method_some_true() {
     let src = r#"
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         arr.some(fn(borrow x: number) -> bool { return x > 2; });
     "#;
     assert_eval_bool(src, true);
@@ -248,7 +248,7 @@ fn test_array_method_some_true() {
 #[test]
 fn test_array_method_some_false() {
     let src = r#"
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         arr.some(fn(borrow x: number) -> bool { return x > 10; });
     "#;
     assert_eval_bool(src, false);
@@ -260,7 +260,7 @@ fn test_array_method_some_false() {
 #[test]
 fn test_array_method_every_true() {
     let src = r#"
-        let arr: number[] = [2, 4, 6];
+        let arr: []number = [2, 4, 6];
         arr.every(fn(borrow x: number) -> bool { return x > 0; });
     "#;
     assert_eval_bool(src, true);
@@ -270,7 +270,7 @@ fn test_array_method_every_true() {
 #[test]
 fn test_array_method_every_false() {
     let src = r#"
-        let arr: number[] = [2, 3, 6];
+        let arr: []number = [2, 3, 6];
         arr.every(fn(borrow x: number) -> bool { return x > 5; });
     "#;
     assert_eval_bool(src, false);
@@ -282,7 +282,7 @@ fn test_array_method_every_false() {
 #[test]
 fn test_array_method_for_each_side_effect() {
     let src = r#"
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         let mut total: number = 0;
         arr.forEach(fn(borrow x: number) -> void { total = total + x; });
         total;
@@ -296,7 +296,7 @@ fn test_array_method_for_each_side_effect() {
 #[test]
 fn test_array_method_pipeline_filter_then_map() {
     let src = r#"
-        let arr: number[] = [1, 2, 3, 4, 5, 6];
+        let arr: []number = [1, 2, 3, 4, 5, 6];
         let filtered = arr.filter(fn(borrow x: number) -> bool { return x > 3; });
         let result = filtered.map(fn(borrow x: number) -> number { return x * 10; });
         result[0];
@@ -308,7 +308,7 @@ fn test_array_method_pipeline_filter_then_map() {
 #[test]
 fn test_array_method_pipeline_map_then_reduce() {
     let src = r#"
-        let arr: number[] = [1, 2, 3];
+        let arr: []number = [1, 2, 3];
         let squares = arr.map(fn(borrow x: number) -> number { return x * x; });
         let result = squares.reduce(fn(borrow acc: number, borrow x: number) -> number { return acc + x; }, 0);
         result;
