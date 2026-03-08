@@ -9,6 +9,86 @@ use crate::typechecker::TypeChecker;
 use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::{HashMap, HashSet};
 
+/// Resolve the return type for a static namespace method call (Json.parse, Math.sqrt, etc.)
+fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
+    match (ns, method) {
+        // Json namespace
+        ("Json", "parse") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::JsonValue, Type::String],
+        },
+        ("Json", "stringify") => Type::String,
+        ("Json", "isValid") => Type::Bool,
+        ("Json", "prettify") => Type::String,
+        // Math namespace
+        (
+            "Math",
+            "abs" | "floor" | "ceil" | "round" | "min" | "max" | "pow" | "sign" | "random",
+        ) => Type::Number,
+        ("Math", "sqrt" | "clamp" | "log" | "sin" | "cos" | "tan") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Number, Type::String],
+        },
+        // Env namespace
+        ("Env", "get") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
+        ("Env", "set" | "unset") => Type::Null,
+        // File namespace
+        ("File", "read") => Type::String,
+        ("File", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Null,
+        ("File", "exists") => Type::Bool,
+        // Process namespace
+        ("Process", "cwd") => Type::String,
+        ("Process", "pid") => Type::Number,
+        ("Process", "env") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
+        // Path namespace
+        (
+            "Path",
+            "join" | "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
+            | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
+        ) => Type::String,
+        ("Path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
+        // DateTime namespace
+        (
+            "DateTime",
+            "now" | "fromTimestamp" | "fromComponents" | "parseIso" | "parse" | "parseRfc3339"
+            | "parseRfc2822" | "utc",
+        ) => Type::Unknown,
+        // Regex namespace
+        ("Regex", "new") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Unknown, Type::String],
+        },
+        ("Regex", "test" | "isMatch") => Type::Bool,
+        ("Regex", "find") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
+        ("Regex", "findAll") => Type::Array(Box::new(Type::String)),
+        ("Regex", "replace" | "replaceAll" | "escape") => Type::String,
+        ("Regex", "split") => Type::Array(Box::new(Type::String)),
+        // Crypto namespace
+        ("Crypto", "sha256" | "sha512") => Type::String,
+        // Http namespace
+        ("Http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Unknown, Type::String],
+        },
+        // Net namespace
+        ("Net", "tcpConnect" | "tcpListen") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Unknown, Type::String],
+        },
+        // Default: unknown for unrecognized combinations
+        _ => Type::Unknown,
+    }
+}
+
 impl<'a> TypeChecker<'a> {
     /// Check an expression and return its type
     pub(super) fn check_expr(&mut self, expr: &Expr) -> Type {
@@ -1556,9 +1636,9 @@ impl<'a> TypeChecker<'a> {
         if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
             if let Some(ns_tag) = crate::method_dispatch::namespace_type_tag(&id.name) {
                 member.type_tag.set(Some(ns_tag));
-                // Return type is Unknown for now — could be typed per-method in future.
-                // Runtime dispatch handles the actual call.
-                return Type::Unknown;
+                // Resolve return type for namespace method calls
+                let return_type = resolve_namespace_return_type(&id.name, &member.member.name);
+                return return_type;
             }
         }
 

@@ -14,3 +14,5 @@ mod range;
 mod struct_member_access;
 mod typecheck_dump;
 mod typing_union;
+
+mod method_types;
