@@ -112,14 +112,26 @@ fn test_array_method_concat_values() {
 }
 
 // --- arr.map(fn) ---
-// Note: arr.map returns ?[] in the typechecker (generic element type not inferred yet — B10-P11).
-// Omit explicit number[] annotation on map results to avoid AT3001 type mismatch.
+
+#[test]
+fn test_h137_map_return_type_inferred_from_named_fn() {
+    // H-137: arr.map(dbl) should return number[], not ?[]
+    // Explicit annotation must not error.
+    let src = r#"
+        fn dbl(x: number) -> number { return x * 2; }
+        let arr: number[] = [1, 2, 3];
+        let result: number[] = arr.map(dbl);
+        result[2];
+    "#;
+    assert_eval_number(src, 6.0);
+    assert_parity(src);
+}
 
 #[test]
 fn test_array_method_map_double() {
     let src = r#"
         let arr: number[] = [1, 2, 3];
-        let doubled = arr.map(fn(x: number) -> number { return x * 2; });
+        let doubled: number[] = arr.map(fn(x: number) -> number { return x * 2; });
         doubled[0] + doubled[2];
     "#;
     assert_eval_number(src, 8.0); // 2 + 6

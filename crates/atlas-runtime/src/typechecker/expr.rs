@@ -1966,8 +1966,42 @@ impl<'a> TypeChecker<'a> {
                 }
             }
 
-            // Return the method's return type
-            method_sig.return_type
+            // For callback-based array methods whose return type depends on the callback's
+            // return type (map, flatMap), infer the element type from the callback arg.
+            let return_type = if matches!(method_name.as_str(), "map" | "flatMap") {
+                if let Some(args) = &member.args {
+                    if let Some(callback_arg) = args.first() {
+                        let cb_type = self.check_expr(callback_arg);
+                        if let Type::Function {
+                            return_type: cb_ret,
+                            ..
+                        } = cb_type.normalized()
+                        {
+                            if cb_ret.normalized() != Type::Unknown {
+                                if method_name == "flatMap" {
+                                    match cb_ret.normalized() {
+                                        Type::Array(inner) => Type::Array(inner),
+                                        other => Type::Array(Box::new(other)),
+                                    }
+                                } else {
+                                    Type::Array(cb_ret)
+                                }
+                            } else {
+                                method_sig.return_type
+                            }
+                        } else {
+                            method_sig.return_type
+                        }
+                    } else {
+                        method_sig.return_type
+                    }
+                } else {
+                    method_sig.return_type
+                }
+            } else {
+                method_sig.return_type
+            };
+            return_type
         } else if let Some((return_type, type_name, trait_name)) =
             self.resolve_trait_method_call_with_info(&target_type, method_name)
         {

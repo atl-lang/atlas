@@ -224,7 +224,7 @@ fn test_hashmap_method_values_len() {
 }
 
 // --- map.entries() ---
-// entries() returns array of [key, value] pairs; type is ?[][] due to H-137 (map return type)
+// entries() returns array of [key, value] pairs; type is ?[][] (entries() method signature uses Unknown element type)
 
 #[test]
 fn test_hashmap_method_entries_len() {
