@@ -260,30 +260,41 @@ pub(crate) fn runtime_error_to_diagnostic(
     let span = error.span();
 
     let (code, message) = match &error {
-        RuntimeError::DivideByZero { .. } => ("AT0005", "Divide by zero".to_string()),
-        RuntimeError::OutOfBounds { .. } => ("AT0006", "Array index out of bounds".to_string()),
+        RuntimeError::DivideByZero { .. } => (
+            "AT0005",
+            "division by zero: the divisor evaluated to 0".to_string(),
+        ),
+        RuntimeError::OutOfBounds { .. } => (
+            "AT0006",
+            "array index out of bounds: index exceeds array length".to_string(),
+        ),
         RuntimeError::InvalidNumericResult { .. } => (
             "AT0007",
-            "Invalid numeric result (NaN or Infinity)".to_string(),
+            "invalid numeric result: operation produced NaN or Infinity".to_string(),
         ),
         RuntimeError::InvalidIndex { .. } => (
             "AT0103",
-            "Invalid index: array indices must be whole numbers".to_string(),
+            "invalid index: array indices must be whole numbers (not fractions or negatives)"
+                .to_string(),
         ),
-        RuntimeError::InvalidStdlibArgument { .. } => (
-            "AT0102",
-            "Invalid argument to standard library function".to_string(),
-        ),
-        RuntimeError::TypeError { msg, .. } => ("AT0001", format!("Type error: {}", msg)),
+        // Use the detailed msg field (includes function signature from P05)
+        RuntimeError::InvalidStdlibArgument { msg, .. } => ("AT0102", msg.clone()),
+        RuntimeError::TypeError { msg, .. } => ("AT0001", format!("type error: {}", msg)),
         RuntimeError::UndefinedVariable { name, .. } => {
-            ("AT0002", format!("Unknown symbol: {}", name))
+            ("AT0002", format!("undefined variable '{}': variable is not in scope", name))
         }
         RuntimeError::UnknownFunction { name, .. } => {
-            ("AT0002", format!("Unknown function: {}", name))
+            ("AT0002", format!("unknown function '{}': not defined or not in scope", name))
         }
         // VM-specific errors
-        RuntimeError::UnknownOpcode { .. } => ("AT9998", "Unknown bytecode opcode".to_string()),
-        RuntimeError::StackUnderflow { .. } => ("AT9997", "Stack underflow".to_string()),
+        RuntimeError::UnknownOpcode { .. } => (
+            "AT9998",
+            "unknown bytecode opcode: this is a compiler bug; please report it".to_string(),
+        ),
+        RuntimeError::StackUnderflow { .. } => (
+            "AT9997",
+            "stack underflow: more values popped than pushed — this is a compiler bug; please report it".to_string(),
+        ),
         // Permission errors
         RuntimeError::FilesystemPermissionDenied {
             operation, path, ..
@@ -342,10 +353,31 @@ pub(crate) fn runtime_error_to_diagnostic(
         message
     };
 
-    let help = match error {
-        RuntimeError::DivideByZero { .. } => "division by zero is undefined",
-        RuntimeError::OutOfBounds { .. } => "check array bounds before accessing",
-        RuntimeError::InvalidNumericResult { .. } => "ensure the number is finite and not NaN",
+    let help = match &error {
+        RuntimeError::DivideByZero { .. } => {
+            "guard against zero before dividing:\n  if divisor != 0 { result = dividend / divisor }"
+        }
+        RuntimeError::OutOfBounds { .. } => {
+            "check array length before indexing:\n  if i < len(arr) { value = arr[i] }\n  or use arr.get(i) which returns null when out of bounds"
+        }
+        RuntimeError::InvalidNumericResult { .. } => {
+            "ensure inputs to math operations are finite numbers.\n  Use isFinite(n) to check before using the result."
+        }
+        RuntimeError::InvalidIndex { .. } => {
+            "array indices must be whole non-negative numbers.\n  Use floor(n) to convert a float, or check i >= 0 before indexing."
+        }
+        RuntimeError::InvalidStdlibArgument { .. } => {
+            // The msg field already contains full context (including signature from P05)
+            "check the function signature shown above for correct argument types and count"
+        }
+        RuntimeError::UndefinedVariable { name, .. } => {
+            // help is included in the message for dynamic content
+            let _ = name; // used in message
+            "declare the variable with 'let name = value' before using it"
+        }
+        RuntimeError::UnknownFunction { .. } => {
+            "check spelling — or import the function from its module"
+        }
         RuntimeError::FilesystemPermissionDenied { .. } => {
             "enable file permissions with --allow-file or adjust security settings"
         }
@@ -358,8 +390,13 @@ pub(crate) fn runtime_error_to_diagnostic(
         RuntimeError::EnvironmentPermissionDenied { .. } => {
             "enable environment permissions with --allow-env or adjust security settings"
         }
-        RuntimeError::InternalError { .. } => "this is a bug in the runtime; please report it",
-        _ => "check the error message for details",
+        RuntimeError::UnknownOpcode { .. } | RuntimeError::StackUnderflow { .. } => {
+            "this is a bug in the Atlas compiler; please report it at https://github.com/anthropics/atlas/issues"
+        }
+        RuntimeError::InternalError { .. } => {
+            "this is a bug in the runtime; please report it"
+        }
+        _ => "check the error message above for details",
     };
 
     Diagnostic::error_with_code(code, message, span)
