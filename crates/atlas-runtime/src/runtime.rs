@@ -250,7 +250,7 @@ impl Default for Atlas {
 }
 
 /// Convert a RuntimeError to a Diagnostic
-pub(crate) fn runtime_error_to_diagnostic(
+pub fn runtime_error_to_diagnostic(
     error: RuntimeError,
     stack_trace: Vec<StackTraceFrame>,
     function_name: Option<String>,

@@ -69,7 +69,7 @@ pub use repl::{
     is_input_complete, IncompleteReason, InputCompleteness, MultilineInput, ReplCore, ReplResult,
 };
 pub use resolver::ModuleResolver;
-pub use runtime::{Atlas, RuntimeResult};
+pub use runtime::{runtime_error_to_diagnostic, Atlas, RuntimeResult};
 pub use security::{
     AuditEntry, AuditEvent, AuditLogger, MemoryAuditLogger, NullAuditLogger, Permission,
     PermissionSet, SecurityContext, SecurityError,
