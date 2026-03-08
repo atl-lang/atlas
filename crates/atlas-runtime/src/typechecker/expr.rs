@@ -626,6 +626,24 @@ impl<'a> TypeChecker<'a> {
                                 )
                                 .with_help("pass an owned value instead of a `borrow` parameter"),
                             );
+                        } else if caller_ownership == Some(OwnershipAnnotation::Share) {
+                            // AT3055: share param passed to own — cannot transfer ownership of
+                            // something that is shared (caller still holds a valid ref)
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    error_codes::SHARE_VIOLATION,
+                                    format!(
+                                        "cannot pass `share` parameter `{}` to `own` parameter: \
+                                         ownership cannot transfer from a shared reference",
+                                        id.name
+                                    ),
+                                    arg.span(),
+                                )
+                                .with_help(
+                                    "share params are held by both caller and callee — \
+                                     ownership cannot be transferred to a third party",
+                                ),
+                            );
                         } else {
                             // Mark variable as moved — any subsequent use triggers AT3053
                             self.moved_vars.insert(id.name.clone());
@@ -633,25 +651,40 @@ impl<'a> TypeChecker<'a> {
                     }
                 }
                 Some(OwnershipAnnotation::Share) => {
-                    // Error if argument type is not `share<T>` (use pre-evaluated type)
-                    if let Some(arg_type) = arg_types.get(i) {
-                        let is_shared =
-                            matches!(arg_type, Type::Generic { name, .. } if name == "share");
-                        if !is_shared {
-                            self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    error_codes::NON_SHARED_TO_SHARED,
-                                    format!(
-                                        "expected `share<T>` value for `share` parameter, \
-                                         found `{}`",
-                                        arg_type.display_name()
-                                    ),
-                                    arg.span(),
-                                )
-                                .with_help(
-                                    "wrap the value in a shared reference before passing it",
-                                ),
+                    // A share-annotated param of the enclosing function is implicitly a shared
+                    // reference — allow passing it to another share param without AT3028.
+                    let arg_is_share_param = if let Expr::Identifier(id) = arg {
+                        self.current_fn_param_ownerships
+                            .get(&id.name)
+                            .cloned()
+                            .flatten()
+                            == Some(OwnershipAnnotation::Share)
+                    } else {
+                        false
+                    };
+                    // Error if argument type is not `share<T>` and not a share param
+                    if !arg_is_share_param {
+                        if let Some(arg_type) = arg_types.get(i) {
+                            let is_shared = matches!(
+                                arg_type,
+                                Type::Generic { name, .. } if name == "share"
                             );
+                            if !is_shared {
+                                self.diagnostics.push(
+                                    Diagnostic::error_with_code(
+                                        error_codes::NON_SHARED_TO_SHARED,
+                                        format!(
+                                            "expected `share<T>` value for `share` parameter, \
+                                             found `{}`",
+                                            arg_type.display_name()
+                                        ),
+                                        arg.span(),
+                                    )
+                                    .with_help(
+                                        "wrap the value in a shared reference before passing it",
+                                    ),
+                                );
+                            }
                         }
                     }
                 }

@@ -136,3 +136,5 @@ mod integration;
 mod ownership_borrow;
 #[path = "typesystem/ownership_own.rs"]
 mod ownership_own;
+#[path = "typesystem/ownership_share.rs"]
+mod ownership_share;

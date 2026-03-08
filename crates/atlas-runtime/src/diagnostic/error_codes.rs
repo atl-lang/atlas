@@ -94,6 +94,11 @@ pub const USE_AFTER_OWN: &str = "AT3053";
 /// Borrows are read-only within the function body and cannot outlive the call.
 pub const BORROW_ESCAPE: &str = "AT3054";
 
+/// Fired when a `share` parameter is mutated (assigned to) or transferred via `own`
+/// to another function. Share params are read-only from the callee's perspective —
+/// neither side may mutate through the shared reference.
+pub const SHARE_VIOLATION: &str = "AT3055";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -574,6 +579,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3054",
         description: "`borrow` parameter escapes its scope",
         help: Some("`borrow` parameters are read-only within the function body. They cannot be returned, stored in a let binding, or used as struct field values. Read the value or copy primitives instead."),
+    },
+    ErrorCodeInfo {
+        code: "AT3055",
+        description: "`share` parameter mutated or ownership-transferred",
+        help: Some("`share` parameters are immutable from the callee's perspective. You cannot assign to a `share` param or pass it to an `own` parameter (which would transfer ownership of something you do not own)."),
     },
     // === AT4xxx: Async/Await Errors ===
     ErrorCodeInfo {

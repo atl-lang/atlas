@@ -1819,6 +1819,33 @@ impl<'a> TypeChecker<'a> {
                     );
                 }
 
+                // AT3055: share param cannot be assigned to (immutable from callee perspective)
+                if let AssignTarget::Name(id) = &assign.target {
+                    let ownership = self
+                        .current_fn_param_ownerships
+                        .get(&id.name)
+                        .cloned()
+                        .flatten();
+                    if ownership == Some(OwnershipAnnotation::Share) {
+                        self.diagnostics.push(
+                            Diagnostic::error_with_code(
+                                error_codes::SHARE_VIOLATION,
+                                format!(
+                                    "cannot assign to `share` parameter `{}`: \
+                                     share params are immutable from the callee's perspective",
+                                    id.name
+                                ),
+                                assign.span,
+                            )
+                            .with_label("assignment to share param")
+                            .with_help(
+                                "share params cannot be mutated — both caller and callee hold \
+                                 valid refs, but neither may mutate through the share",
+                            ),
+                        );
+                    }
+                }
+
                 // Check mutability
                 if let AssignTarget::Name(id) = &assign.target {
                     if let Some(symbol) = self.symbol_table.lookup(&id.name) {
