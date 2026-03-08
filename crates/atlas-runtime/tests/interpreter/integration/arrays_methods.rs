@@ -114,6 +114,18 @@ fn test_array_method_concat_values() {
 // --- arr.map(fn) ---
 
 #[test]
+fn test_h138_closure_bare_expr_implicit_return() {
+    // H-138: bare expression as last closure statement should be implicit return
+    let src = r#"
+        let arr = [1, 2, 3, 4, 5];
+        let result = arr.filter(fn(x: number) -> bool { x > 2 });
+        len(result);
+    "#;
+    assert_eval_number(src, 3.0);
+    assert_parity(src);
+}
+
+#[test]
 fn test_h137_map_return_type_inferred_from_named_fn() {
     // H-137: arr.map(dbl) should return number[], not ?[]
     // Explicit annotation must not error.
