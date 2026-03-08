@@ -193,7 +193,6 @@ fn classify_token(
         | TokenKind::Extern
         | TokenKind::Match
         | TokenKind::As
-        | TokenKind::Extends
         | TokenKind::Is
         | TokenKind::Own
         | TokenKind::Borrow

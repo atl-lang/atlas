@@ -504,7 +504,6 @@ fn test_vm_monomorphizer_basic() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
     let type_args = vec![Type::Number];
@@ -523,7 +522,6 @@ fn test_vm_monomorphizer_multiple_types() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
 
@@ -605,7 +603,6 @@ fn test_vm_monomorphizer_cache_efficiency() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
     let type_args = vec![Type::Number];
@@ -626,7 +623,6 @@ fn test_vm_monomorphizer_different_functions() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
     let type_args = vec![Type::Number];
@@ -649,12 +645,10 @@ fn test_vm_generic_type_substitution() {
     let type_params = vec![
         TypeParamDef {
             name: "T".to_string(),
-            bound: None,
             trait_bounds: vec![],
         },
         TypeParamDef {
             name: "E".to_string(),
-            bound: None,
             trait_bounds: vec![],
         },
     ];

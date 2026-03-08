@@ -378,8 +378,6 @@ impl EnumDecl {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TypeParam {
     pub name: String,
-    /// Optional constraint bound (e.g., `T extends number`)
-    pub bound: Option<TypeRef>,
     /// Trait bounds on this type parameter (e.g., `T: Copy + Display`)
     pub trait_bounds: Vec<TraitBound>,
     pub span: Span,

@@ -1617,19 +1617,6 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
-    pub(super) fn lookup_type_param_bound(&self, name: &str) -> Option<Type> {
-        let (func_name, _) = self.current_function_info.as_ref()?;
-        let symbol = self.symbol_table.lookup(func_name)?;
-        if let Type::Function { type_params, .. } = &symbol.ty {
-            type_params
-                .iter()
-                .find(|param| param.name == name)
-                .and_then(|param| param.bound.as_ref().map(|b| *b.clone()))
-        } else {
-            None
-        }
-    }
-
     fn check_structural_method_call(
         &mut self,
         method_name: &str,
@@ -1748,11 +1735,6 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn comparable_operand_type(&mut self, ty: &Type) -> Type {
-        if let Type::TypeParameter { name } = ty.normalized() {
-            if let Some(bound) = self.lookup_type_param_bound(&name) {
-                return bound.normalized();
-            }
-        }
         ty.normalized()
     }
 
@@ -1814,18 +1796,6 @@ impl<'a> TypeChecker<'a> {
                     self.check_structural_property_access(method_name, members, member)
                 {
                     return return_type;
-                }
-            }
-
-            if let Type::TypeParameter { name } = &target_norm {
-                if let Some(bound) = self.lookup_type_param_bound(name) {
-                    if let Type::Structural { members } = bound.normalized() {
-                        if let Some(return_type) =
-                            self.check_structural_property_access(method_name, &members, member)
-                        {
-                            return return_type;
-                        }
-                    }
                 }
             }
         }
@@ -1932,21 +1902,6 @@ impl<'a> TypeChecker<'a> {
                     self.check_structural_method_call(method_name, members, member)
                 {
                     return return_type;
-                }
-            }
-        }
-
-        if let Type::TypeParameter { name } = &target_norm {
-            if let Some(bound) = self.lookup_type_param_bound(name) {
-                let bound_norm = bound.normalized();
-                if let Type::Structural { members } = bound_norm {
-                    if member.args.is_some() {
-                        if let Some(return_type) =
-                            self.check_structural_method_call(method_name, &members, member)
-                        {
-                            return return_type;
-                        }
-                    }
                 }
             }
         }

@@ -669,7 +669,6 @@ fn test_monomorphizer_substitutions() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
     let type_args = vec![Type::Number];
@@ -688,7 +687,6 @@ fn test_monomorphizer_multiple_instantiations() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
 
@@ -720,7 +718,6 @@ fn test_monomorphizer_complex_types() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
 
@@ -740,12 +737,10 @@ fn test_monomorphizer_multiple_type_params() {
     let type_params = vec![
         TypeParamDef {
             name: "K".to_string(),
-            bound: None,
             trait_bounds: vec![],
         },
         TypeParamDef {
             name: "V".to_string(),
-            bound: None,
             trait_bounds: vec![],
         },
     ];
@@ -791,7 +786,6 @@ fn test_monomorphizer_caching() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
     let type_args = vec![Type::Number];
@@ -822,7 +816,6 @@ fn test_monomorphizer_generic_types() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
 
@@ -845,7 +838,6 @@ fn test_monomorphizer_nested_generics() {
 
     let type_params = vec![TypeParamDef {
         name: "T".to_string(),
-        bound: None,
         trait_bounds: vec![],
     }];
 

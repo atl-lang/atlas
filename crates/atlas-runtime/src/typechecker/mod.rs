@@ -6,7 +6,6 @@
 //! - No truthy/falsey - conditionals require bool
 //! - Strict equality - == requires same-type operands
 
-mod constraints;
 mod expr;
 pub mod flow_sensitive;
 pub mod generics;
@@ -721,13 +720,6 @@ impl<'a> TypeChecker<'a> {
             .iter()
             .map(|param| TypeParamDef {
                 name: param.name.clone(),
-                bound: param.bound.as_ref().map(|bound| {
-                    Box::new(self.resolve_type_ref_with_params_and_context(
-                        bound,
-                        &combined_type_params,
-                        None,
-                    ))
-                }),
                 trait_bounds: param
                     .trait_bounds
                     .iter()
@@ -1005,7 +997,6 @@ impl<'a> TypeChecker<'a> {
                         .iter()
                         .map(|tp| TypeParamDef {
                             name: tp.name.clone(),
-                            bound: None,
                             trait_bounds: tp
                                 .trait_bounds
                                 .iter()
@@ -1271,8 +1262,6 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_function(&mut self, func: &FunctionDecl) {
-        self.validate_type_param_bounds(&func.type_params);
-
         // AT4006: async fn main() is forbidden
         if func.is_async && func.name.name == "main" {
             self.diagnostics.push(
@@ -2361,64 +2350,7 @@ impl<'a> TypeChecker<'a> {
                         if name == ANY_TYPE_PARAM {
                             return Type::any_placeholder();
                         }
-                        if let Some(bound) = self.lookup_type_param_bound(&name) {
-                            if let Type::Structural { members } = bound.normalized() {
-                                if let Some(field_ty) = resolve_structural_member(&members) {
-                                    field_ty
-                                } else {
-                                    let available: Vec<&str> =
-                                        members.iter().map(|m| m.name.as_str()).collect();
-                                    let suggestion = suggestions::suggest_similar_name(
-                                        member_name,
-                                        available.iter().copied(),
-                                    );
-                                    let help = if let Some(sugg) = suggestion {
-                                        format!(
-                                            "field '{}' not found — did you mean '{}'? Available: {}",
-                                            member_name,
-                                            sugg,
-                                            available.join(", ")
-                                        )
-                                    } else {
-                                        format!(
-                                            "field '{}' not found. Available fields: {}",
-                                            member_name,
-                                            available.join(", ")
-                                        )
-                                    };
-                                    self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3010",
-                                            format!(
-                                                "Type '{}' has no field named '{}'",
-                                                target_type.display_name(),
-                                                member_name
-                                            ),
-                                            member.span,
-                                        )
-                                        .with_label("field not found")
-                                        .with_help(help),
-                                    );
-                                    Type::Unknown
-                                }
-                            } else {
-                                self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "Cannot assign field '{}' on non-record type {}",
-                                            member_name,
-                                            bound.display_name()
-                                        ),
-                                        member.span,
-                                    )
-                                    .with_label("invalid field assignment"),
-                                );
-                                Type::Unknown
-                            }
-                        } else {
-                            Type::Unknown
-                        }
+                        Type::Unknown
                     }
                     Type::Unknown => Type::Unknown,
                     other => {
@@ -3119,7 +3051,6 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn validate_type_alias(&mut self, alias: &TypeAliasDecl) {
-        self.validate_type_param_bounds(&alias.type_params);
         let type_args = alias
             .type_params
             .iter()
@@ -3136,15 +3067,9 @@ impl<'a> TypeChecker<'a> {
         inferer: &generics::TypeInferer,
         span: Span,
     ) -> bool {
-        let mut ok = constraints::check_constraints(
-            type_params,
-            inferer,
-            &self.method_table,
-            &mut self.diagnostics,
-            span,
-        );
+        let mut ok = true;
 
-        // Also check trait bounds (`T: Copy + UserTrait`) from Phase 05/10
+        // Check trait bounds (`T: Copy + UserTrait`)
         for param in type_params {
             if param.trait_bounds.is_empty() {
                 continue;
@@ -3234,97 +3159,6 @@ impl<'a> TypeChecker<'a> {
                 .iter()
                 .all(|member| self.is_assignable_with_traits(actual, member)),
             _ => actual.is_assignable_to(expected),
-        }
-    }
-
-    fn validate_type_param_bounds(&mut self, type_params: &[crate::ast::TypeParam]) {
-        for param in type_params {
-            let Some(bound) = &param.bound else {
-                continue;
-            };
-
-            let resolved = self.resolve_type_ref_with_params_and_context(bound, type_params, None);
-            if self.contains_type_param(&resolved, &param.name) {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Type parameter '{}' cannot be constrained by itself",
-                            param.name
-                        ),
-                        param.span,
-                    )
-                    .with_label("circular constraint")
-                    .with_help("remove the self-referential constraint"),
-                );
-            }
-
-            if resolved.normalized() == Type::Unknown {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Unknown constraint type for type parameter '{}'",
-                            param.name
-                        ),
-                        param.span,
-                    )
-                    .with_label("unknown constraint")
-                    .with_help("define the constraint type or use a supported constraint"),
-                );
-            }
-
-            if resolved.normalized() == Type::Never {
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Constraint for type parameter '{}' is unsatisfiable",
-                            param.name
-                        ),
-                        param.span,
-                    )
-                    .with_label("conflicting constraint")
-                    .with_help("simplify or remove the conflicting constraint"),
-                );
-            }
-        }
-    }
-
-    fn contains_type_param(&self, ty: &Type, name: &str) -> bool {
-        match ty {
-            Type::TypeParameter { name: param_name } => param_name == name,
-            Type::Array(elem) => self.contains_type_param(elem, name),
-            Type::Function {
-                params,
-                return_type,
-                type_params,
-            } => {
-                params.iter().any(|p| self.contains_type_param(p, name))
-                    || self.contains_type_param(return_type, name)
-                    || type_params
-                        .iter()
-                        .filter_map(|param| param.bound.as_ref())
-                        .any(|bound| self.contains_type_param(bound, name))
-            }
-            Type::Generic { type_args, .. } => type_args
-                .iter()
-                .any(|arg| self.contains_type_param(arg, name)),
-            Type::Alias {
-                type_args, target, ..
-            } => {
-                type_args
-                    .iter()
-                    .any(|arg| self.contains_type_param(arg, name))
-                    || self.contains_type_param(target, name)
-            }
-            Type::Union(members) | Type::Intersection(members) => members
-                .iter()
-                .any(|member| self.contains_type_param(member, name)),
-            Type::Structural { members } => members
-                .iter()
-                .any(|member| self.contains_type_param(&member.ty, name)),
-            _ => false,
         }
     }
 }

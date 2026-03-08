@@ -74,7 +74,6 @@ fn process<T: Display + Copy>(value: T) -> string { ... }
 ```
 - Type parameters can require trait bounds using `:`.
 - Multiple bounds use `+`.
-- `extends` is also supported: `T extends number`.
 
 **Current limitations:**
 - Trait inheritance (`trait A: B`) — not yet implemented (H-076)

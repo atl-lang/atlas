@@ -222,10 +222,6 @@ impl Binder {
             .iter()
             .map(|param| TypeParamDef {
                 name: param.name.clone(),
-                bound: param
-                    .bound
-                    .as_ref()
-                    .map(|bound| Box::new(self.resolve_type_ref(bound))),
                 trait_bounds: param
                     .trait_bounds
                     .iter()
@@ -309,10 +305,6 @@ impl Binder {
             .iter()
             .map(|param| TypeParamDef {
                 name: param.name.clone(),
-                bound: param
-                    .bound
-                    .as_ref()
-                    .map(|bound| Box::new(self.resolve_type_ref(bound))),
                 trait_bounds: param
                     .trait_bounds
                     .iter()

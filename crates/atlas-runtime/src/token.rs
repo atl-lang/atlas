@@ -87,8 +87,6 @@ pub enum TokenKind {
     Match,
     /// `as` keyword (used in imports and patterns)
     As,
-    /// `extends` keyword (generic constraints)
-    Extends,
     /// `is` keyword (type predicates)
     Is,
 
@@ -248,7 +246,6 @@ impl TokenKind {
             "extern" => Some(TokenKind::Extern),
             "match" => Some(TokenKind::Match),
             "as" => Some(TokenKind::As),
-            "extends" => Some(TokenKind::Extends),
             "is" => Some(TokenKind::Is),
             "async" => Some(TokenKind::Async),
             "await" => Some(TokenKind::Await),
@@ -292,7 +289,6 @@ impl TokenKind {
             TokenKind::Extern => "extern",
             TokenKind::Match => "match",
             TokenKind::As => "as",
-            TokenKind::Extends => "extends",
             TokenKind::Is => "is",
             TokenKind::Async => "async",
             TokenKind::Await => "await",

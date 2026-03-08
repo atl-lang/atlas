@@ -7,11 +7,10 @@ use std::collections::HashMap;
 
 pub const ANY_TYPE_PARAM: &str = "__any";
 
-/// Generic type parameter with optional constraint bound
+/// Generic type parameter definition.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TypeParamDef {
     pub name: String,
-    pub bound: Option<Box<Type>>,
     /// Trait bounds from `:` syntax — e.g. `T: Copy + Display` → `["Copy", "Display"]`.
     /// Populated from AST `TypeParam.trait_bounds` during type checking.
     #[serde(default)]
@@ -297,13 +296,6 @@ impl Type {
                 if tp1.len() != tp2.len() {
                     return false;
                 }
-                for (a, b) in tp1.iter().zip(tp2.iter()) {
-                    let a_bound = a.bound.as_ref().map(|bound| bound.normalized());
-                    let b_bound = b.bound.as_ref().map(|bound| bound.normalized());
-                    if a_bound != b_bound {
-                        return false;
-                    }
-                }
 
                 p1.iter().zip(p2.iter()).all(|(a, b)| a.is_assignable_to(b))
                     && r1.is_assignable_to(r2)
@@ -356,10 +348,10 @@ impl Type {
                     let params = type_params
                         .iter()
                         .map(|param| {
-                            if let Some(bound) = &param.bound {
-                                format!("{} extends {}", param.name, bound.display_name())
-                            } else {
+                            if param.trait_bounds.is_empty() {
                                 param.name.clone()
+                            } else {
+                                format!("{}: {}", param.name, param.trait_bounds.join(" + "))
                             }
                         })
                         .collect::<Vec<_>>()
@@ -444,7 +436,6 @@ impl Type {
                     .iter()
                     .map(|param| TypeParamDef {
                         name: param.name.clone(),
-                        bound: param.bound.as_ref().map(|b| Box::new(b.normalized())),
                         trait_bounds: param.trait_bounds.clone(),
                     })
                     .collect(),

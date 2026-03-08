@@ -4,7 +4,6 @@
 //! - Constraint accumulation and batch solving
 //! - Occurs check to prevent infinite types
 //! - Structural unification for compound types
-//! - Constraint-aware unification respecting bounds
 //! - Backtracking unification for union types
 //! - Detailed, actionable error messages
 
@@ -22,8 +21,6 @@ pub enum Constraint {
     Equal(Type, Type),
     /// A type must be assignable to another
     Assignable { from: Type, to: Type },
-    /// A type must satisfy a bound
-    Bound { ty: Type, bound: Type },
 }
 
 /// Error produced during unification
@@ -33,12 +30,6 @@ pub enum UnificationError {
     Mismatch { expected: Type, found: Type },
     /// Occurs check failed: type variable would create infinite type
     InfiniteType { var: String, ty: Type },
-    /// A bound constraint was violated
-    ConstraintViolation {
-        ty: Type,
-        bound: Type,
-        detail: String,
-    },
     /// A constraint could not be solved
     Unsolvable { detail: String },
 }
@@ -57,12 +48,6 @@ impl UnificationError {
                 var,
                 ty.display_name()
             ),
-            Self::ConstraintViolation { ty, bound, detail } => format!(
-                "'{}' does not satisfy constraint '{}': {}",
-                ty.display_name(),
-                bound.display_name(),
-                detail
-            ),
             Self::Unsolvable { detail } => format!("unsolvable constraint: {}", detail),
         }
     }
@@ -75,14 +60,12 @@ impl UnificationError {
 /// Advanced unification engine
 ///
 /// Accumulates type constraints and solves them in batch.
-/// Supports backtracking for union types and constraint-aware binding.
+/// Supports backtracking for union types.
 pub struct UnificationEngine {
     /// Accumulated constraints to solve
     constraints: Vec<Constraint>,
     /// Current substitutions: type variable name -> concrete type
     substitutions: HashMap<String, Type>,
-    /// Bounds for named type parameters
-    bounds: HashMap<String, Type>,
     /// Counter for generating fresh type variable IDs
     next_var_id: u32,
 }
@@ -93,7 +76,6 @@ impl UnificationEngine {
         Self {
             constraints: Vec::new(),
             substitutions: HashMap::new(),
-            bounds: HashMap::new(),
             next_var_id: 0,
         }
     }
@@ -107,11 +89,6 @@ impl UnificationEngine {
         }
     }
 
-    /// Declare a bound for a named type parameter
-    pub fn add_bound(&mut self, param: &str, bound: Type) {
-        self.bounds.insert(param.to_string(), bound);
-    }
-
     /// Add a constraint: `a` must equal `b`
     pub fn constrain_equal(&mut self, a: Type, b: Type) {
         self.constraints.push(Constraint::Equal(a, b));
@@ -120,11 +97,6 @@ impl UnificationEngine {
     /// Add a constraint: `from` must be assignable to `to`
     pub fn constrain_assignable(&mut self, from: Type, to: Type) {
         self.constraints.push(Constraint::Assignable { from, to });
-    }
-
-    /// Add a bound constraint: `ty` must satisfy `bound`
-    pub fn constrain_bound(&mut self, ty: Type, bound: Type) {
-        self.constraints.push(Constraint::Bound { ty, bound });
     }
 
     /// Solve all accumulated constraints, returning any errors
@@ -146,10 +118,6 @@ impl UnificationEngine {
             .into_iter()
             .map(|c| match c {
                 Constraint::Equal(a, b) => Constraint::Equal(self.apply(&a), self.apply(&b)),
-                Constraint::Bound { ty, bound } => Constraint::Bound {
-                    ty: self.apply(&ty),
-                    bound: self.apply(&bound),
-                },
                 Constraint::Assignable { from, to } => Constraint::Assignable {
                     from: self.apply(&from),
                     to: self.apply(&to),
@@ -171,23 +139,6 @@ impl UnificationEngine {
                     Ok(())
                 } else {
                     self.unify(from, to)
-                }
-            }
-            Constraint::Bound { ty, bound } => {
-                let ty_applied = self.apply(&ty);
-                let bound_applied = self.apply(&bound);
-                if ty_applied.is_assignable_to(&bound_applied) {
-                    Ok(())
-                } else {
-                    Err(UnificationError::ConstraintViolation {
-                        ty: ty_applied.clone(),
-                        bound: bound_applied.clone(),
-                        detail: format!(
-                            "{} does not satisfy {}",
-                            ty_applied.display_name(),
-                            bound_applied.display_name()
-                        ),
-                    })
                 }
             }
         }
@@ -345,7 +296,6 @@ impl UnificationEngine {
         for member in &members {
             let mut probe = UnificationEngine::new();
             probe.substitutions = self.substitutions.clone();
-            probe.bounds = self.bounds.clone();
             if probe.unify(ty.clone(), member.clone()).is_ok() {
                 // Commit this branch's substitutions
                 self.substitutions = probe.substitutions;
@@ -372,18 +322,6 @@ impl UnificationEngine {
             return Err(UnificationError::InfiniteType { var, ty });
         }
 
-        // Check declared bound if any
-        if let Some(bound) = self.bounds.get(&var).cloned() {
-            let ty_norm = ty.normalized();
-            if !ty_norm.is_assignable_to(&bound) {
-                return Err(UnificationError::ConstraintViolation {
-                    ty: ty_norm,
-                    bound,
-                    detail: format!("bound not satisfied for '{}'", var),
-                });
-            }
-        }
-
         self.substitutions.insert(var, ty);
         Ok(())
     }
@@ -408,7 +346,6 @@ impl UnificationEngine {
                     .iter()
                     .map(|tp| TypeParamDef {
                         name: tp.name.clone(),
-                        bound: tp.bound.as_ref().map(|b| Box::new(self.apply(b))),
                         trait_bounds: tp.trait_bounds.clone(),
                     })
                     .collect(),
@@ -514,7 +451,6 @@ fn is_trivially_satisfied(constraint: &Constraint) -> bool {
     match constraint {
         Constraint::Equal(a, b) => a.normalized() == b.normalized(),
         Constraint::Assignable { from, to } => from.is_assignable_to(to),
-        Constraint::Bound { .. } => false,
     }
 }
 

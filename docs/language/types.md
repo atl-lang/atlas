@@ -66,9 +66,7 @@ type Serializable = Scalar | json;
 
 **Generics**
 - Type parameters: `<T, U>`
-- Optional bounds:
-  - `extends` bound: `T extends number`
-  - Trait bounds: `T: Copy + Display`
+- Optional bounds: `T: Trait` and `T: Trait1 + Trait2` (D-039)
 
 Example (tested):
 ```atlas

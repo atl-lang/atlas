@@ -179,23 +179,20 @@ fn test_parse_type_param_no_bound_unchanged() {
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Function(f) = &prog.items[0] {
         assert_eq!(f.type_params[0].trait_bounds.len(), 0);
-        assert!(f.type_params[0].bound.is_none());
     } else {
         panic!("expected function item");
     }
 }
 
 #[test]
-fn test_parse_extends_bound_still_works() {
+fn test_parse_extends_keyword_is_parse_error() {
+    // D-039: `extends` syntax removed — only `T: Trait` is valid
     let src = "fn foo<T extends number>(x: T) -> T { return x; }";
-    let (prog, diags) = parse_source(src);
-    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
-    if let Item::Function(f) = &prog.items[0] {
-        assert!(f.type_params[0].bound.is_some());
-        assert_eq!(f.type_params[0].trait_bounds.len(), 0);
-    } else {
-        panic!("expected function item");
-    }
+    let (_prog, diags) = parse_source(src);
+    assert!(
+        !diags.is_empty(),
+        "expected parse error for removed `extends` syntax, got none"
+    );
 }
 
 #[test]

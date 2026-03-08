@@ -549,7 +549,7 @@ impl Parser {
     // Shared parsing helpers
     // =========================================================================
 
-    /// Parse optional type parameters: `<T, U extends Bound, ...>` → `Vec<TypeParam>`.
+    /// Parse optional type parameters: `<T, U: Bound, ...>` → `Vec<TypeParam>`.
     /// Returns an empty vec if no `<` is present.
     fn parse_type_params(&mut self) -> Result<Vec<TypeParam>, ()> {
         let mut type_params = Vec::new();
@@ -560,13 +560,7 @@ impl Parser {
                 let type_param_name = type_param_tok.lexeme.clone();
                 let type_param_span = type_param_tok.span;
 
-                // Existing: `extends` type-level bound
-                let mut bound = None;
-                if self.match_token(TokenKind::Extends) {
-                    bound = Some(self.parse_type_ref()?);
-                }
-
-                // NEW: `:` trait bounds (one or more, separated by `+`)
+                // `:` trait bounds (one or more, separated by `+`): `T: Copy + Display`
                 let mut trait_bounds = Vec::new();
                 if self.match_token(TokenKind::Colon) {
                     loop {
@@ -585,7 +579,6 @@ impl Parser {
 
                 type_params.push(TypeParam {
                     name: type_param_name,
-                    bound,
                     trait_bounds,
                     span: type_param_start.merge(type_param_span),
                 });

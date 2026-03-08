@@ -252,10 +252,6 @@ impl TypeInferer {
                     .iter()
                     .map(|param| TypeParamDef {
                         name: param.name.clone(),
-                        bound: param
-                            .bound
-                            .as_ref()
-                            .map(|b| Box::new(self.apply_substitutions(b))),
                         trait_bounds: param.trait_bounds.clone(),
                     })
                     .collect(),
