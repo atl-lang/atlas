@@ -240,3 +240,57 @@ fn test_integration_deeply_nested_generics() {
 }
 
 // ============================================================================
+
+// ============================================================================
+// H-162: empty array literal in struct field accepts declared field type
+// ============================================================================
+
+#[test]
+fn test_h162_empty_array_in_struct_field_typed() {
+    // args: [] where field is string[] — should not produce AT3001
+    let diags = typecheck_source(
+        r#"
+        struct ServerConfig {
+            command: string,
+            args: string[],
+            port: number,
+        }
+        let cfg = ServerConfig {
+            command: "node",
+            args: [],
+            port: 3000,
+        };
+        "#,
+    );
+    assert!(
+        !has_error(&diags),
+        "empty array in typed struct field should be valid. Errors: {:?}",
+        diags
+    );
+}
+
+#[test]
+fn test_h162_empty_array_in_nested_struct_field() {
+    // Nested struct with multiple empty array fields
+    let diags = typecheck_source(
+        r#"
+        struct WatchConfig {
+            paths: string[],
+            extensions: string[],
+            ignore: string[],
+            enabled: bool,
+        }
+        let w = WatchConfig {
+            paths: [],
+            extensions: [],
+            ignore: [],
+            enabled: true,
+        };
+        "#,
+    );
+    assert!(
+        !has_error(&diags),
+        "multiple empty array fields should all be valid. Errors: {:?}",
+        diags
+    );
+}

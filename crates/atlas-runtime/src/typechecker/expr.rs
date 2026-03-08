@@ -267,7 +267,18 @@ impl<'a> TypeChecker<'a> {
                                     .with_help("each struct field can only be initialized once"),
                                 );
                             }
-                            if !self.is_assignable_with_traits(&value_type, expected_type) {
+                            // H-162: empty array literal [] in struct field — skip mismatch
+                            // if the declared field type is an array. The [] is typed as ?[]
+                            // by check_array_literal but is valid when the field type is T[].
+                            let is_empty_array = matches!(
+                                &field.value,
+                                Expr::ArrayLiteral(a) if a.elements.is_empty()
+                            );
+                            let expected_is_array =
+                                matches!(expected_type.normalized(), Type::Array(_));
+                            if is_empty_array && expected_is_array {
+                                // Valid — empty literal assigned to typed array field
+                            } else if !self.is_assignable_with_traits(&value_type, expected_type) {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
                                         "AT3001",
