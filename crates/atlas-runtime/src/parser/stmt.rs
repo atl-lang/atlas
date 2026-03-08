@@ -1,6 +1,12 @@
 //! Statement parsing
 
 use crate::ast::*;
+use crate::diagnostic::error_codes::{
+    FOREIGN_SYNTAX_CLASS, FOREIGN_SYNTAX_CONSOLE_LOG, FOREIGN_SYNTAX_ECHO,
+    FOREIGN_SYNTAX_FUNCTION_KW, FOREIGN_SYNTAX_IMPORT_FROM, FOREIGN_SYNTAX_INCREMENT,
+    FOREIGN_SYNTAX_VAR, INVALID_ASSIGN_TARGET, INVALID_ASSIGN_TARGET_CALL,
+    INVALID_ASSIGN_TARGET_MEMBER, INVALID_ASSIGN_TARGET_RANGE,
+};
 use crate::diagnostic::Diagnostic;
 use crate::parser::Parser;
 use crate::token::TokenKind;
@@ -8,6 +14,79 @@ use crate::token::TokenKind;
 impl Parser {
     /// Parse a statement
     pub(super) fn parse_statement(&mut self) -> Result<Stmt, ()> {
+        // Cross-language pattern detection: catch common foreign syntax before main dispatch.
+        if self.peek().kind == TokenKind::Identifier {
+            let lexeme = self.peek().lexeme.clone();
+            match lexeme.as_str() {
+                "echo" => {
+                    self.error_with_dynamic_help(
+                        FOREIGN_SYNTAX_ECHO,
+                        "`echo` is not valid Atlas syntax",
+                        "`echo` is not an Atlas keyword.\n  Use: print(expr)\n  Example: print(\"hello, world\")",
+                    );
+                    return Err(());
+                }
+                "var" => {
+                    self.error_with_dynamic_help(
+                        FOREIGN_SYNTAX_VAR,
+                        "`var` is not valid Atlas syntax",
+                        "`var` is not an Atlas keyword.\n  Use: let name = value         (immutable)\n       let mut name = value     (mutable)\n  Example: let x = 42  |  let mut count = 0",
+                    );
+                    return Err(());
+                }
+                "function" => {
+                    self.error_with_dynamic_help(
+                        FOREIGN_SYNTAX_FUNCTION_KW,
+                        "`function` keyword is not valid Atlas syntax",
+                        "`function` is not an Atlas keyword.\n  Use: fn name(own param: Type) -> ReturnType { body }\n  Example: fn add(own a: number, own b: number) -> number { a + b }",
+                    );
+                    return Err(());
+                }
+                "class" => {
+                    self.error_with_dynamic_help(
+                        FOREIGN_SYNTAX_CLASS,
+                        "`class` is not valid Atlas syntax",
+                        "`class` is not an Atlas keyword.\n  Use: struct Name { field: Type }\n  Example:\n    struct Point { x: number, y: number }\n    let p = Point { x: 1, y: 2 };",
+                    );
+                    return Err(());
+                }
+                "console" => {
+                    // Detect `console.log(...)` specifically
+                    let next_is_dot =
+                        self.peek_nth_nontrivia(1).map(|t| t.kind) == Some(TokenKind::Dot);
+                    let next_is_log = self
+                        .peek_nth_nontrivia(2)
+                        .map(|t| t.lexeme.as_str() == "log")
+                        == Some(true);
+                    if next_is_dot && next_is_log {
+                        self.error_with_dynamic_help(
+                            FOREIGN_SYNTAX_CONSOLE_LOG,
+                            "`console.log` is not valid Atlas syntax",
+                            "`console.log` is not Atlas syntax.\n  Use: print(expr)\n  Example: print(\"value: \" + str(x))",
+                        );
+                        return Err(());
+                    }
+                }
+                _ => {}
+            }
+
+            // Detect `x++` and `x--` increment/decrement patterns
+            let next1 = self.peek_nth_nontrivia(1).map(|t| t.kind);
+            let next2 = self.peek_nth_nontrivia(2).map(|t| t.kind);
+            let is_increment = next1 == Some(TokenKind::Plus) && next2 == Some(TokenKind::Plus);
+            let is_decrement = next1 == Some(TokenKind::Minus) && next2 == Some(TokenKind::Minus);
+            if is_increment || is_decrement {
+                let op = if is_increment { "++" } else { "--" };
+                let atlas_op = if is_increment { "+" } else { "-" };
+                let msg = format!("`{lexeme}{op}` is not valid Atlas syntax");
+                let help = format!(
+                    "`{op}` increment/decrement operators do not exist in Atlas.\n  Use: {lexeme} = {lexeme} {atlas_op} 1\n  Or:  {lexeme} {atlas_op}= 1"
+                );
+                self.error_with_dynamic_help(FOREIGN_SYNTAX_INCREMENT, msg, help);
+                return Err(());
+            }
+        }
+
         match self.peek().kind {
             TokenKind::Let => self.parse_var_decl(),
             TokenKind::If => self.parse_if_stmt(),
@@ -27,7 +106,11 @@ impl Parser {
             }
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),
             TokenKind::Import => {
-                self.error("Import statements are not supported in Atlas v0.1");
+                self.error_with_dynamic_help(
+                    FOREIGN_SYNTAX_IMPORT_FROM,
+                    "`import` statement is not valid here",
+                    "`import X from \"module\"` is not Atlas syntax.\n  Use: import { name } from \"./module\"\n  Or for external modules: see docs/language/modules.md",
+                );
                 Err(())
             }
             _ => self.parse_assign_or_expr_stmt(),
@@ -156,7 +239,11 @@ impl Parser {
             Expr::Index(idx) => match idx.index {
                 IndexValue::Single(index) => {
                     if matches!(index.as_ref(), Expr::Range { .. }) {
-                        self.error("Invalid assignment target");
+                        self.error_with_dynamic_help(
+                            INVALID_ASSIGN_TARGET_RANGE,
+                            "cannot assign to a range index — only specific indices are valid",
+                            "Array slice assignments are not supported. Assign to a specific index:\n  arr[0] = value   ✓\n  arr[0..3] = ...  ✗",
+                        );
                         return Err(());
                     }
                     Ok(AssignTarget::Index {
@@ -168,14 +255,22 @@ impl Parser {
             },
             Expr::Member(member) => {
                 if member.args.is_some() {
-                    self.error("Invalid assignment target");
+                    self.error_with_dynamic_help(
+                        INVALID_ASSIGN_TARGET_CALL,
+                        "cannot assign to the result of a method call",
+                        "Method call results are not addressable. Assign to a variable first:\n  let mut result = obj.method();\n  result = newValue;",
+                    );
                     return Err(());
                 }
                 if !matches!(
                     member.target.as_ref(),
                     Expr::Identifier(_) | Expr::Member(_) | Expr::Index(_)
                 ) {
-                    self.error("Invalid assignment target");
+                    self.error_with_dynamic_help(
+                        INVALID_ASSIGN_TARGET_MEMBER,
+                        "cannot assign to a member of a non-addressable expression",
+                        "Only variable, index, and member expressions are valid assignment targets:\n  x = value          ✓  (variable)\n  arr[0] = value     ✓  (index)\n  obj.field = value  ✓  (member of variable)\n  f().field = value  ✗  (member of call result)",
+                    );
                     return Err(());
                 }
                 Ok(AssignTarget::Member {
@@ -185,7 +280,11 @@ impl Parser {
                 })
             }
             _ => {
-                self.error("Invalid assignment target");
+                self.error_with_dynamic_help(
+                    INVALID_ASSIGN_TARGET,
+                    "expression is not a valid assignment target",
+                    "Valid assignment targets: variables, array indices, and struct fields.\n  x = value          ✓\n  arr[i] = value     ✓\n  obj.field = value  ✓",
+                );
                 Err(())
             }
         }

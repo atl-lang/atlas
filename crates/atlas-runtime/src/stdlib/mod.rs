@@ -50,38 +50,149 @@ pub fn stdout_writer() -> OutputWriter {
 type BuiltinFn =
     fn(&[Value], crate::span::Span, &SecurityContext, &OutputWriter) -> Result<Value, RuntimeError>;
 
+/// Look up the documented signature for a stdlib function.
+/// Returns `None` for functions without a registered signature.
+fn stdlib_signature(func_name: &str) -> Option<&'static str> {
+    match func_name {
+        // Core builtins
+        "print" => Some("print(value: any) -> void"),
+        "len" => Some("len(value: string | any[]) -> number"),
+        "str" => Some("str(value: any) -> string"),
+        "num" => Some("num(value: string) -> number"),
+        "bool" => Some("bool(value: any) -> bool"),
+        "type" => Some("type(value: any) -> string"),
+        "assert" => Some("assert(condition: bool, message: string) -> void"),
+        "assertEq" => Some("assertEq(actual: any, expected: any) -> void"),
+        "panic" => Some("panic(message: string) -> void"),
+        // String functions
+        "split" => Some("split(str: string, sep: string) -> string[]"),
+        "join" => Some("join(arr: string[], sep: string) -> string"),
+        "trim" => Some("trim(str: string) -> string"),
+        "trimStart" => Some("trimStart(str: string) -> string"),
+        "trimEnd" => Some("trimEnd(str: string) -> string"),
+        "indexOf" => Some("indexOf(str: string, sub: string) -> number"),
+        "lastIndexOf" => Some("lastIndexOf(str: string, sub: string) -> number"),
+        "includes" => Some("includes(str: string, sub: string) -> bool"),
+        "startsWith" => Some("startsWith(str: string, prefix: string) -> bool"),
+        "endsWith" => Some("endsWith(str: string, suffix: string) -> bool"),
+        "repeat" => Some("repeat(str: string, count: number) -> string"),
+        "replace" => Some("replace(str: string, old: string, new: string) -> string"),
+        "toUpperCase" => Some("toUpperCase(str: string) -> string"),
+        "toLowerCase" => Some("toLowerCase(str: string) -> string"),
+        "padStart" => Some("padStart(str: string, len: number, pad: string) -> string"),
+        "padEnd" => Some("padEnd(str: string, len: number, pad: string) -> string"),
+        "substring" => Some("substring(str: string, start: number, end: number) -> string"),
+        "charCodeAt" => Some("charCodeAt(str: string, index: number) -> number"),
+        "fromCharCode" => Some("fromCharCode(code: number) -> string"),
+        // Array functions
+        "arrayPush" => Some("arrayPush(arr: T[], value: T) -> T[]"),
+        "arrayPop" => Some("arrayPop(arr: T[]) -> T[]"),
+        "arrayShift" => Some("arrayShift(arr: T[]) -> T[]"),
+        "arrayUnshift" => Some("arrayUnshift(arr: T[], value: T) -> T[]"),
+        "arraySlice" => Some("arraySlice(arr: T[], start: number, end: number) -> T[]"),
+        "arrayConcat" => Some("arrayConcat(a: T[], b: T[]) -> T[]"),
+        "arrayIncludes" => Some("arrayIncludes(arr: T[], value: T) -> bool"),
+        "arrayIndexOf" => Some("arrayIndexOf(arr: T[], value: T) -> number"),
+        "arrayReverse" => Some("arrayReverse(arr: T[]) -> T[]"),
+        "arraySort" => Some("arraySort(arr: T[]) -> T[]"),
+        "arrayFlat" => Some("arrayFlat(arr: T[][]) -> T[]"),
+        "arrayFlatMap" => Some("arrayFlatMap(arr: T[], fn: (T) -> U[]) -> U[]"),
+        "arrayFill" => Some("arrayFill(arr: T[], value: T, start: number, end: number) -> T[]"),
+        // Math functions
+        "abs" => Some("abs(n: number) -> number"),
+        "ceil" => Some("ceil(n: number) -> number"),
+        "floor" => Some("floor(n: number) -> number"),
+        "round" => Some("round(n: number) -> number"),
+        "sqrt" => Some("sqrt(n: number) -> number"),
+        "pow" => Some("pow(base: number, exp: number) -> number"),
+        "min" => Some("min(a: number, b: number) -> number"),
+        "max" => Some("max(a: number, b: number) -> number"),
+        "random" => Some("random() -> number"),
+        "log" => Some("log(n: number) -> number"),
+        "log2" => Some("log2(n: number) -> number"),
+        "log10" => Some("log10(n: number) -> number"),
+        "sin" => Some("sin(n: number) -> number"),
+        "cos" => Some("cos(n: number) -> number"),
+        "tan" => Some("tan(n: number) -> number"),
+        "atan2" => Some("atan2(y: number, x: number) -> number"),
+        "clamp" => Some("clamp(n: number, min: number, max: number) -> number"),
+        // JSON
+        "parseJSON" => Some("parseJSON(json: string) -> any"),
+        "toJSON" => Some("toJSON(value: any) -> string"),
+        "formatJSON" => Some("formatJSON(value: any) -> string"),
+        // Collections
+        "hashMapNew" => Some("hashMapNew() -> HashMap<string, any>"),
+        "hashMapGet" => Some("hashMapGet(map: HashMap<K,V>, key: K) -> V | null"),
+        "hashMapSet" => Some("hashMapSet(map: HashMap<K,V>, key: K, value: V) -> HashMap<K,V>"),
+        "hashMapHas" => Some("hashMapHas(map: HashMap<K,V>, key: K) -> bool"),
+        "hashMapDelete" => Some("hashMapDelete(map: HashMap<K,V>, key: K) -> HashMap<K,V>"),
+        "hashMapKeys" => Some("hashMapKeys(map: HashMap<K,V>) -> K[]"),
+        "hashMapValues" => Some("hashMapValues(map: HashMap<K,V>) -> V[]"),
+        "hashMapEntries" => Some("hashMapEntries(map: HashMap<K,V>) -> [K, V][]"),
+        "hashSetNew" => Some("hashSetNew() -> HashSet<any>"),
+        "hashSetAdd" => Some("hashSetAdd(set: HashSet<T>, value: T) -> HashSet<T>"),
+        "hashSetHas" => Some("hashSetHas(set: HashSet<T>, value: T) -> bool"),
+        "hashSetRemove" => Some("hashSetRemove(set: HashSet<T>, value: T) -> HashSet<T>"),
+        _ => None,
+    }
+}
+
 /// Construct an InvalidStdlibArgument error with context.
+/// Automatically appends the function signature when registered.
 pub fn stdlib_arg_error(
     func_name: &str,
     expected: &str,
     actual: &Value,
     span: crate::span::Span,
 ) -> RuntimeError {
-    RuntimeError::InvalidStdlibArgument {
-        msg: format!(
+    let sig = stdlib_signature(func_name);
+    let msg = if let Some(sig) = sig {
+        format!(
+            "{}(): expected {}, got {}\n  Signature: {}",
+            func_name,
+            expected,
+            actual.type_name(),
+            sig
+        )
+    } else {
+        format!(
             "{}(): expected {}, got {}",
             func_name,
             expected,
             actual.type_name()
-        ),
-        span,
-    }
+        )
+    };
+    RuntimeError::InvalidStdlibArgument { msg, span }
 }
 
 /// Construct an arity error for stdlib functions.
+/// Automatically appends the function signature when registered.
 pub fn stdlib_arity_error(
     func_name: &str,
     expected: usize,
     actual: usize,
     span: crate::span::Span,
 ) -> RuntimeError {
-    RuntimeError::InvalidStdlibArgument {
-        msg: format!(
-            "{}(): expected {} argument(s), got {}",
-            func_name, expected, actual
-        ),
-        span,
-    }
+    let sig = stdlib_signature(func_name);
+    let msg = if let Some(sig) = sig {
+        format!(
+            "{}(): expected {} argument{}, got {}\n  Signature: {}",
+            func_name,
+            expected,
+            if expected == 1 { "" } else { "s" },
+            actual,
+            sig
+        )
+    } else {
+        format!(
+            "{}(): expected {} argument{}, got {}",
+            func_name,
+            expected,
+            if expected == 1 { "" } else { "s" },
+            actual
+        )
+    };
+    RuntimeError::InvalidStdlibArgument { msg, span }
 }
 
 static BUILTIN_REGISTRY: OnceLock<HashMap<&'static str, BuiltinFn>> = OnceLock::new();

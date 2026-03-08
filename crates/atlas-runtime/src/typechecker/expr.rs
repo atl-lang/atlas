@@ -117,13 +117,19 @@ impl<'a> TypeChecker<'a> {
                         Diagnostic::error_with_code(
                             error_codes::USE_AFTER_OWN,
                             format!(
-                                "use of moved value `{}`: value was moved into an `own` parameter",
+                                "use of moved value `{}`: value was transferred via `own` and is no longer valid",
                                 id.name
                             ),
                             id.span,
                         )
-                        .with_label("value moved here")
-                        .with_help("value moved into callee, cannot be used after `own` transfer"),
+                        .with_label("value already moved")
+                        .with_help(format!(
+                            "after passing `{}` to an `own` parameter, the binding is invalidated.\n\
+                             To keep using the value, change the parameter annotation:\n\
+                             • `borrow {}` — read-only access, caller retains ownership\n\
+                             • `share {}`  — both hold valid refs simultaneously",
+                            id.name, id.name, id.name
+                        )),
                     );
                 }
 
@@ -837,18 +843,34 @@ impl<'a> TypeChecker<'a> {
                 }) {
                     Type::Number
                 } else {
+                    let op_str = match binary.op {
+                        BinaryOp::Sub => "-",
+                        BinaryOp::Mul => "*",
+                        BinaryOp::Div => "/",
+                        BinaryOp::Mod => "%",
+                        _ => unreachable!(),
+                    };
+                    let help =
+                        suggestions::suggest_binary_operator_fix(op_str, &left_type, &right_type)
+                            .unwrap_or_else(|| {
+                                format!(
+                                    "'{op_str}' requires both operands to be numbers; found {} and {}. Use num() to convert strings.",
+                                    left_type.display_name(),
+                                    right_type.display_name()
+                                )
+                            });
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
                             "AT3002",
                             format!(
-                                "Arithmetic operator requires number operands, found {} and {}",
+                                "'{op_str}' requires number operands, found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
                             ),
                             binary.span,
                         )
                         .with_label("type mismatch")
-                        .with_help("arithmetic operators (-, *, /, %) only work with numbers"),
+                        .with_help(help),
                     );
                     Type::Unknown
                 }
@@ -3355,7 +3377,12 @@ impl<'a> TypeChecker<'a> {
                                 closure_span,
                             )
                             .with_label("borrow captured here")
-                            .with_help("consider passing the value by copy or using `own` ownership"),
+                            .with_help(format!(
+                                "cannot capture `borrow` parameter `{}` in a closure — borrows cannot outlive their scope.\n\
+                                 Fix: change the parameter annotation to `own` (moved in) or `share` (shared ref),\n\
+                                 or pass a copy of the value into the closure explicitly.",
+                                id.name
+                            )),
                         );
                     }
                 }

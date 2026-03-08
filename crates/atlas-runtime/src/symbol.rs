@@ -1330,6 +1330,21 @@ impl SymbolTable {
 
     /// Get all symbols from all scopes and functions
     /// Returns a vector of all symbols in the table
+    /// Collect all in-scope names for typo suggestion (edit-distance engine input).
+    /// Includes variables, user functions, and builtins — O(n) over the scope stack.
+    pub fn all_names_for_suggestion(&self) -> Vec<&str> {
+        let mut names = Vec::new();
+        for scope in &self.scopes {
+            for name in scope.keys() {
+                names.push(name.as_str());
+            }
+        }
+        for name in self.functions.keys() {
+            names.push(name.as_str());
+        }
+        names
+    }
+
     pub fn all_symbols(&self) -> Vec<Symbol> {
         let mut symbols = Vec::new();
 

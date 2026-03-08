@@ -1085,12 +1085,32 @@ impl Parser {
         self.error_at_with_code(code, message, span);
     }
 
-    /// Record an error at a specific span with an explicit code
+    /// Record an error at a specific span with an explicit code.
+    /// Attaches help text from the error code registry if available, falling back to generic advice.
     pub(super) fn error_at_with_code(&mut self, code: &'static str, message: &str, span: Span) {
+        use crate::diagnostic::error_codes;
+        let help =
+            error_codes::help_for(code).unwrap_or("check your syntax for typos or missing tokens");
         self.diagnostics.push(
             Diagnostic::error_with_code(code, message, span)
                 .with_label("syntax error")
-                .with_help("check your syntax for typos or missing tokens"),
+                .with_help(help),
+        );
+    }
+
+    /// Record an error at the current token with an explicit code and custom help text.
+    /// Use this when the help text must be dynamically formatted (e.g. includes the identifier name).
+    pub(super) fn error_with_dynamic_help(
+        &mut self,
+        code: &'static str,
+        message: impl Into<String>,
+        help: impl Into<String>,
+    ) {
+        let span = self.peek().span;
+        self.diagnostics.push(
+            Diagnostic::error_with_code(code, message, span)
+                .with_label("syntax error")
+                .with_help(help),
         );
     }
 

@@ -922,17 +922,26 @@ impl Binder {
             AssignTarget::Name(id) => {
                 // Check if the identifier exists
                 if self.symbol_table.lookup(&id.name).is_none() {
+                    let suggestion = crate::typechecker::suggestions::suggest_similar_name(
+                        &id.name,
+                        self.symbol_table.all_names_for_suggestion().into_iter(),
+                    );
+                    let help = if let Some(ref sugg) = suggestion {
+                        format!(
+                            "declare '{}' with 'let' before assigning to it — did you mean '{}'?",
+                            id.name, sugg
+                        )
+                    } else {
+                        format!("declare '{}' with 'let' before assigning to it", id.name)
+                    };
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
-                            "AT2002",
-                            format!("Unknown symbol '{}'", id.name),
+                            crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                            format!("unknown symbol '{}'", id.name),
                             id.span,
                         )
                         .with_label("undefined variable")
-                        .with_help(format!(
-                            "declare '{}' with 'let' or 'const' before assigning to it",
-                            id.name
-                        )),
+                        .with_help(help),
                     );
                 }
             }
@@ -966,17 +975,29 @@ impl Binder {
                     && !crate::stdlib::is_array_intrinsic(&id.name)
                     && !crate::method_dispatch::is_static_namespace(&id.name)
                 {
+                    let suggestion = crate::typechecker::suggestions::suggest_similar_name(
+                        &id.name,
+                        self.symbol_table.all_names_for_suggestion().into_iter(),
+                    );
+                    let help = if let Some(ref sugg) = suggestion {
+                        format!(
+                            "unknown identifier '{}' — did you mean '{}'?",
+                            id.name, sugg
+                        )
+                    } else {
+                        format!(
+                            "unknown identifier '{}' — declare it with 'let' before using it",
+                            id.name
+                        )
+                    };
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
-                            "AT2002",
-                            format!("Unknown symbol '{}'", id.name),
+                            crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                            format!("unknown identifier '{}'", id.name),
                             id.span,
                         )
-                        .with_label("undefined variable")
-                        .with_help(format!(
-                            "declare '{}' before using it, or check for typos",
-                            id.name
-                        )),
+                        .with_label("undefined identifier")
+                        .with_help(help),
                     );
                 }
             }

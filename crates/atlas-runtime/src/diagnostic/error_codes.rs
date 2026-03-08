@@ -46,6 +46,33 @@ pub const INVALID_NUMBER: &str = "AT1005";
 pub const UNEXPECTED_EOF: &str = "AT1006";
 /// Parse error: function parameter is missing an ownership annotation (`own`, `borrow`, or `share`).
 pub const MISSING_OWNERSHIP_ANNOTATION: &str = "AT1007";
+
+// AT1008–AT1015: Cross-language pattern errors (foreign syntax detected at parser level)
+/// `echo` is not Atlas syntax. Use `print(expr)`.
+pub const FOREIGN_SYNTAX_ECHO: &str = "AT1008";
+/// `var` is not Atlas syntax. Use `let` or `let mut`.
+pub const FOREIGN_SYNTAX_VAR: &str = "AT1009";
+/// `function` keyword is not Atlas syntax. Use `fn`.
+pub const FOREIGN_SYNTAX_FUNCTION_KW: &str = "AT1010";
+/// `class` is not Atlas syntax. Use `struct`.
+pub const FOREIGN_SYNTAX_CLASS: &str = "AT1011";
+/// `console.log` is not Atlas syntax. Use `print(...)`.
+pub const FOREIGN_SYNTAX_CONSOLE_LOG: &str = "AT1013";
+/// `x++` / `x--` are not Atlas syntax. Use `x = x + 1` / `x = x - 1`.
+pub const FOREIGN_SYNTAX_INCREMENT: &str = "AT1014";
+/// `import X from` is not Atlas module syntax.
+pub const FOREIGN_SYNTAX_IMPORT_FROM: &str = "AT1015";
+
+// AT1016–AT1019: Specific invalid assignment target codes (replacing the 4 duplicate generic errors)
+/// Assignment target is an index expression containing a range — not valid.
+pub const INVALID_ASSIGN_TARGET_RANGE: &str = "AT1016";
+/// Assignment to a method call result — not a valid lvalue.
+pub const INVALID_ASSIGN_TARGET_CALL: &str = "AT1017";
+/// Assignment to a member of a non-addressable expression — not valid.
+pub const INVALID_ASSIGN_TARGET_MEMBER: &str = "AT1018";
+/// Expression is not a valid assignment target.
+pub const INVALID_ASSIGN_TARGET: &str = "AT1019";
+
 pub const SHADOWING_PRELUDE: &str = "AT1012";
 
 // AT2xxx - Warnings
@@ -344,6 +371,62 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT1012",
         description: "Cannot shadow prelude builtin at top level",
         help: Some("Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope."),
+    },
+    // AT1008–AT1019: Cross-language patterns and specific assignment errors
+    ErrorCodeInfo {
+        code: "AT1008",
+        description: "Foreign syntax: `echo` is not valid in Atlas",
+        help: Some("`echo` is not an Atlas keyword.\n  Use: print(expr)\n  Example: print(\"hello, world\")"),
+    },
+    ErrorCodeInfo {
+        code: "AT1009",
+        description: "Foreign syntax: `var` is not valid in Atlas",
+        help: Some("`var` is not an Atlas keyword.\n  Use: let name = value         (immutable)\n       let mut name = value     (mutable)\n  Example: let x = 42  |  let mut count = 0"),
+    },
+    ErrorCodeInfo {
+        code: "AT1010",
+        description: "Foreign syntax: `function` keyword is not valid in Atlas",
+        help: Some("`function` is not an Atlas keyword.\n  Use: fn name(own param: Type) -> ReturnType { body }\n  Example: fn add(own a: number, own b: number) -> number { a + b }"),
+    },
+    ErrorCodeInfo {
+        code: "AT1011",
+        description: "Foreign syntax: `class` is not valid in Atlas",
+        help: Some("`class` is not an Atlas keyword.\n  Use: struct Name { field: Type }\n  Example:\n    struct Point { x: number, y: number }\n    let p = Point { x: 1, y: 2 };"),
+    },
+    ErrorCodeInfo {
+        code: "AT1013",
+        description: "Foreign syntax: `console.log` is not valid in Atlas",
+        help: Some("`console.log` is not Atlas syntax.\n  Use: print(expr)\n  Example: print(\"value: \" + str(x))"),
+    },
+    ErrorCodeInfo {
+        code: "AT1014",
+        description: "Foreign syntax: `++` / `--` increment/decrement operators are not valid in Atlas",
+        help: Some("`++` and `--` do not exist in Atlas.\n  Use: x = x + 1   (increment)\n       x = x - 1   (decrement)\n  Or:  x += 1  |  x -= 1"),
+    },
+    ErrorCodeInfo {
+        code: "AT1015",
+        description: "Foreign syntax: `import X from` is not Atlas module syntax",
+        help: Some("`import X from \"module\"` is not Atlas syntax.\n  Use: import { name } from \"./module\"\n  Or for external modules: see docs/language/modules.md"),
+    },
+    ErrorCodeInfo {
+        code: "AT1016",
+        description: "Invalid assignment target: cannot assign to a range index",
+        help: Some("Array slice assignments are not supported. Assign to a specific index:\n  arr[0] = value   ✓\n  arr[0..3] = ...  ✗"),
+    },
+    ErrorCodeInfo {
+        code: "AT1017",
+        description: "Invalid assignment target: cannot assign to a method call result",
+        help: Some("Method call results are not addressable. Assign to a variable first:\n  let result = obj.method();\n  result = newValue;   — only if result is let mut"),
+    },
+    ErrorCodeInfo {
+        code: "AT1018",
+        description: "Invalid assignment target: member access on a non-addressable expression",
+        help: Some("Only variable, index, and member expressions are valid assignment targets:\n  x = value          ✓  (variable)\n  arr[0] = value     ✓  (index)\n  obj.field = value  ✓  (member of variable)\n  f().field = value  ✗  (member of call result)"),
+    },
+    ErrorCodeInfo {
+        code: "AT1019",
+        description: "Invalid assignment target",
+        help: Some("Valid assignment targets: variables, array indices, and struct fields.\n  x = value          ✓\n  arr[i] = value     ✓\n  obj.field = value  ✓"),
     },
     // === AT2xxx: Warnings ===
     ErrorCodeInfo {

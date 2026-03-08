@@ -1,0 +1,409 @@
+# Atlas Error Reference
+
+Every Atlas error has a named code (`ATxxxx`), a specific problem description, and concrete fix guidance. This is intentional — Atlas is AI-first, and every error message must be self-correcting without external lookup.
+
+## Error Code Structure
+
+| Range | Category |
+|-------|----------|
+| AT0001–AT0009 | Runtime errors (core) |
+| AT01xx | Stdlib errors |
+| AT03xx | Permission errors |
+| AT04xx | I/O errors |
+| AT05xx | Resource limit errors |
+| AT1000–AT1019 | Parser / syntax errors |
+| AT12xx | Shadowing warnings (parser) |
+| AT2xxx | Warnings (unused, shadowing, deprecated) |
+| AT3001–AT3055 | Typechecker / semantic errors |
+| AT9xxx | Internal compiler errors (bugs) |
+
+---
+
+## AT0xxx — Runtime Errors (Core)
+
+### AT0001 — Type Error
+The operation was applied to an incompatible type.
+
+```atlas
+let x: number = "hello";  // ✗ AT0001
+let x: number = 5.0;      // ✓
+```
+
+### AT0002 — Undefined Symbol
+A variable or function name is not defined in scope.
+
+```atlas
+print(count);              // ✗ AT0002 if 'count' not declared
+let count: number = 0.0;
+print(count);              // ✓
+```
+
+Atlas suggests the closest matching name when available.
+
+### AT0003 — Invalid Arity
+Function called with wrong number of arguments. See AT3005 (typechecker) for compile-time checking.
+
+### AT0004 — Invalid Operation
+An operation is not valid for the given types.
+
+### AT0005 — Divide By Zero
+The divisor evaluated to zero.
+
+```atlas
+let result = a / b;        // ✗ AT0005 if b == 0
+// ✓ guard before dividing:
+if b != 0 {
+    let result = a / b;
+}
+```
+
+### AT0006 — Array Out of Bounds
+Index exceeds the array length.
+
+```atlas
+let v = arr[99];           // ✗ AT0006 if arr has fewer elements
+// ✓ check length first:
+if i < len(arr) {
+    let v = arr[i];
+}
+```
+
+### AT0007 — Invalid Numeric Result
+An operation produced `NaN` or `Infinity`.
+
+```atlas
+let r = sqrt(-1.0);        // produces NaN → AT0007
+// ✓ guard inputs: if x >= 0 { sqrt(x) }
+```
+
+---
+
+## AT01xx — Stdlib Errors
+
+### AT0102 — Invalid Stdlib Argument
+A stdlib function received the wrong argument type or count. The error message includes the full function signature.
+
+```
+len(): expected 1 argument, got 0
+  Signature: len(value: string | any[]) -> number
+```
+
+### AT0103 — Invalid Index
+Array index must be a whole non-negative number (not a float or negative).
+
+```atlas
+arr[1.5]   // ✗ AT0103 — fractional index
+arr[-1]    // ✗ AT0103 — negative index
+arr[1]     // ✓
+```
+
+Use `floor(n)` to convert a float index.
+
+---
+
+## AT03xx — Permission Errors
+
+| Code | Description |
+|------|-------------|
+| AT0300 | Filesystem read/write denied |
+| AT0301 | Network access denied |
+| AT0302 | Process execution denied |
+| AT0303 | Environment variable access denied |
+| AT0304 | FFI call denied |
+
+Enable permissions with `--allow-file`, `--allow-network`, `--allow-process`, `--allow-env`.
+
+---
+
+## AT04xx — I/O Errors
+
+### AT0400 — I/O Error
+File read/write or network I/O failed at the OS level.
+
+---
+
+## AT05xx — Resource Limits
+
+| Code | Description |
+|------|-------------|
+| AT0500 | Execution timeout exceeded |
+| AT0501 | Memory limit exceeded |
+
+---
+
+## AT1xxx — Parser / Syntax Errors
+
+### AT1000 — Syntax Error
+Generic syntax error. Check for typos or missing tokens near the indicated location.
+
+### AT1001 — Unexpected Token
+A token appeared where it was not expected.
+
+### AT1002 — Unterminated String
+A string literal was opened but not closed.
+
+```atlas
+let s = "hello;    // ✗ AT1002 — missing closing "
+let s = "hello";   // ✓
+```
+
+### AT1003 — Invalid Escape Sequence
+An unsupported `\x` escape in a string literal.
+
+Valid escapes: `\n`, `\t`, `\r`, `\\`, `\"`.
+
+### AT1004 — Unterminated Comment
+A block comment `/* ... */` was not closed.
+
+### AT1005 — Invalid Number
+A number literal has invalid syntax.
+
+### AT1006 — Unexpected EOF
+The file ended before a statement or expression was complete. In the REPL, this usually means you opened a block `{` without closing it — type the closing `}`.
+
+### AT1007 — Missing Ownership Annotation
+Every function parameter requires an ownership annotation: `own`, `borrow`, or `share`.
+
+```atlas
+fn bad(x: number) -> number { ... }          // ✗ AT1007
+
+fn good(share x: number) -> number { ... }   // ✓ share: both caller and fn hold refs
+fn good(borrow x: number) -> number { ... }  // ✓ borrow: read-only, caller retains
+fn good(own x: number[]) -> number { ... }   // ✓ own: moves value into fn
+```
+
+Choose `share` for primitives and read-only collections, `borrow` for read-only access, `own` when the function should take exclusive ownership.
+
+### AT1008 — Foreign Syntax: echo
+`echo` is PHP/shell syntax. Use `print()` in Atlas.
+
+```atlas
+echo "hello";      // ✗ AT1008
+print("hello");    // ✓
+```
+
+### AT1009 — Foreign Syntax: var
+`var` is JavaScript syntax. Use `let` in Atlas.
+
+```atlas
+var x = 5;         // ✗ AT1009
+let x = 5.0;       // ✓
+```
+
+### AT1010 — Foreign Syntax: function keyword
+`function` is JavaScript/PHP syntax. Use `fn` in Atlas.
+
+```atlas
+function greet() { }   // ✗ AT1010
+fn greet() -> void { } // ✓
+```
+
+### AT1011 — Foreign Syntax: class
+`class` is OOP syntax. Atlas uses `struct` for data and `impl` for behavior.
+
+```atlas
+class Foo { }          // ✗ AT1011
+struct Foo { }         // ✓
+```
+
+### AT1012 — Prelude Shadowing
+Declaring a variable with the same name as a built-in function shadows it.
+
+### AT1013 — Foreign Syntax: console.log
+`console.log` is JavaScript syntax. Use `print()` in Atlas.
+
+```atlas
+console.log("hello");  // ✗ AT1013
+print("hello");        // ✓
+```
+
+### AT1014 — Foreign Syntax: ++ / --
+`x++` and `x--` are not valid in Atlas. Use explicit assignment.
+
+```atlas
+x++;           // ✗ AT1014
+x = x + 1;    // ✓
+
+x--;           // ✗ AT1014
+x = x - 1;    // ✓
+```
+
+### AT1015 — Foreign Syntax: import X from
+ES module `import X from` syntax is not valid. Use Atlas module syntax.
+
+### AT1016 — Invalid Assignment Target: Range Index
+Range-based slice assignment is not supported.
+
+```atlas
+arr[0..3] = value;   // ✗ AT1016
+arr[0] = value;      // ✓ assign to specific index
+```
+
+### AT1017 — Invalid Assignment Target: Method Call Result
+You cannot assign to the result of a method call.
+
+```atlas
+obj.method() = value;  // ✗ AT1017
+// ✓ store result in a variable first:
+let mut result = obj.method();
+result = value;
+```
+
+### AT1018 — Invalid Assignment Target: Member of Non-Addressable
+Cannot assign to a member of a non-addressable expression.
+
+```atlas
+f().field = value;     // ✗ AT1018 — f() is not addressable
+let mut r = f();
+r.field = value;       // ✓
+```
+
+### AT1019 — Invalid Assignment Target
+Expression is not a valid assignment target.
+
+Valid targets: variables, array indices, struct fields.
+
+```atlas
+len("hi") = 5;         // ✗ AT1019
+x = 5;                 // ✓
+arr[i] = 5.0;          // ✓
+obj.field = 5.0;       // ✓
+```
+
+---
+
+## AT2xxx — Warnings
+
+Warnings do not stop compilation. Fix them for cleaner code.
+
+| Code | Warning |
+|------|---------|
+| AT2001 | Unused variable |
+| AT2002 | Unreachable code |
+| AT2003 | Duplicate declaration |
+| AT2004 | Unused function |
+| AT2005 | Variable shadowing |
+| AT2006 | Constant condition (always true/false) |
+| AT2007 | Unnecessary type annotation |
+| AT2008 | Unused import |
+| AT2009 | Deprecated type alias |
+| AT2010 | `own` on primitive type (unnecessary) |
+| AT2011 | `borrow` on already-shared value |
+| AT2012 | Trying to borrow and then pass as own |
+| AT2013 | Move-type requires ownership annotation |
+| AT2014 | Deprecated `var` keyword |
+
+---
+
+## AT3xxx — Typechecker / Semantic Errors
+
+### AT3001 — Type Error
+General type mismatch — expected type X, found type Y.
+
+### AT3002 — Binary Operator Type Error
+Operator cannot be applied to the given operand types.
+
+```atlas
+let r: number = 5.0 + "hi";    // ✗ AT3002
+let r: string = "a" + "b";     // ✓ string concatenation
+let r: number = 5.0 + 3.0;     // ✓
+```
+
+### AT3003 — Immutable Assignment
+Assigning to a `let` binding (not `let mut`).
+
+```atlas
+let x = 5.0;
+x = 10.0;          // ✗ AT3003
+let mut x = 5.0;
+x = 10.0;          // ✓
+```
+
+### AT3004 — Missing Return
+A function with a non-void return type is missing a return statement on some path.
+
+### AT3005 — Arity Mismatch
+Function called with wrong number of arguments (compile-time check).
+
+### AT3006 — Not Callable
+Trying to call a value that is not a function.
+
+### AT3010 — Invalid Index Type
+Index must be a `number`, not another type.
+
+### AT3011 — Not Indexable
+Type does not support index access `[]`.
+
+### AT3020–AT3027 — Match Errors
+
+| Code | Description |
+|------|-------------|
+| AT3020 | Empty match — no arms |
+| AT3021 | Match arm type mismatch |
+| AT3022 | Pattern type mismatch |
+| AT3023 | Constructor arity mismatch |
+| AT3024 | Unknown constructor |
+| AT3025 | Unsupported pattern type |
+| AT3026 | Array pattern type mismatch |
+| AT3027 | Non-exhaustive match |
+
+### AT3028 — Non-Shared to Shared
+Passing a non-shared value where `share` semantics are required.
+
+### AT3029 — Impl Already Exists
+A trait implementation for this type already exists.
+
+### AT3040 — Closure Captures Borrow
+A closure captures a `borrow` parameter, which may escape the parameter's lifetime. Use `share` or `own` instead.
+
+### AT3050 — Cannot Infer Return Type
+The return type cannot be inferred because return expressions have incompatible types.
+
+### AT3051 — Cannot Infer Type Argument
+A generic type parameter cannot be inferred from context.
+
+### AT3052 — Inferred Type Incompatible
+The inferred return type is incompatible with how the function is used.
+
+### AT3053 — Use After Own
+A value was used after ownership was transferred.
+
+```atlas
+fn consume(own x: number[]) -> void { }
+let arr = [1.0, 2.0];
+consume(arr);
+print(arr);    // ✗ AT3053 — arr was moved into consume()
+```
+
+Options: pass `share arr` to keep the reference, or clone before moving.
+
+### AT3054 — Borrow Escape
+A `borrow` reference escapes the scope of the borrowed value.
+
+### AT3055 — Share Violation
+Invalid use of `share` semantics.
+
+---
+
+## AT9xxx — Internal Errors
+
+These indicate bugs in the Atlas compiler. Please report them.
+
+| Code | Description |
+|------|-------------|
+| AT9995 | Internal error |
+| AT9997 | Stack underflow (VM compiler bug) |
+| AT9998 | Unknown opcode (VM compiler bug) |
+
+Report at: https://github.com/anthropics/atlas/issues
+
+---
+
+## Design: Self-Correcting Errors
+
+Atlas error messages follow the AT1007 quality bar:
+1. **Named code** — `[AT1007]` — unique, searchable, stable
+2. **Specific problem** — what went wrong and where
+3. **Concrete fix** — Atlas syntax showing the correct way
+
+This means you can fix Atlas errors by reading the error output alone. No documentation lookup required. This is intentional for AI code generation: a model can generate valid Atlas just by reading error messages.
