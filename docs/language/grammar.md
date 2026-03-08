@@ -26,10 +26,11 @@ item           := import_decl
 function_decl  := "fn" IDENT type_params? "(" params? ")" "->" type_ref block
 params         := param ("," param)* (",")?
 param          := ownership? IDENT ":" type_ref
-ownership      := "own" | "borrow" | "shared"
+ownership      := "own" | "borrow" | "share"
 ```
 Return type is **required** on named functions. Use `-> void` for functions that return nothing.
 Closures (`anon_fn`) may omit param types and return type (inferred from context).
+`ownership` is optional — bare parameters default to `borrow`. Only `own` and `share` need to be written explicitly. (D-040)
 
 **Trait Declarations**
 ```

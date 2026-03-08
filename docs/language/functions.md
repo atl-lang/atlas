@@ -24,9 +24,10 @@ fn is_string(value: string) -> bool is value: string {
 ```
 
 **Parameters and Ownership**
-- Ownership annotations are **mandatory** and appear before the parameter name: `own name: Type`.
-- Valid annotations: `own`, `borrow`, `share`. Missing annotation is a parse error (AT1007).
-- See `docs/language/ownership.md` for semantics and decision tree. (D-034)
+- Ownership annotations are **optional** and appear before the parameter name: `own name: Type`.
+- `borrow` is the **implicit default** — bare parameters like `a: number` are treated as `borrow a: number`. (D-040)
+- Valid annotations: `own`, `borrow`, `share`. Only `own` and `share` need to be written explicitly.
+- See `docs/language/ownership.md` for semantics and decision tree.
 - `mut` keyword before a parameter name allows reassigning it inside the function body: `fn f(mut a: number) { a = 5; }`
 - Parameters without `mut` are immutable — assignment produces AT3003.
 
@@ -45,7 +46,7 @@ fn take(own data: HashMap<string, number>, borrow label: string, share cache: Ha
 fn(param, ...) -> ReturnType { block }
 ```
 - Parameters in anonymous functions **may omit** type annotations.
-- Ownership annotations are **mandatory** on closure parameters too: `fn(own x: T, borrow y: number) { ... }`.
+- Ownership annotations on closure parameters follow the same rule: `borrow` is implicit, `own` and `share` must be explicit.
 - Return type annotation is optional for closures (inferred from context), **required** for named functions.
 
 Example (tested):
