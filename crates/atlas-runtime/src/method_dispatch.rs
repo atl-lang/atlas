@@ -475,8 +475,7 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "arrayIncludes" => Some("arr.includes(x)"),
         "arrayIndexOf" => Some("arr.indexOf(x)"),
         "arrayLastIndexOf" => Some("arr.lastIndexOf(x)"),
-        // HashMap
-        "hashMapNew" => Some("let m = {}"),
+        // HashMap — hashMapNew() is NOT deprecated (no replacement syntax exists yet per spec)
         "hashMapGet" => Some("m.get(key)"),
         "hashMapPut" => Some("m.set(key, val)"),
         "hashMapRemove" => Some("m.remove(key)"),
