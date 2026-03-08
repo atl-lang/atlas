@@ -2337,26 +2337,15 @@ pub fn print(
     span: crate::span::Span,
     output: &OutputWriter,
 ) -> Result<(), RuntimeError> {
-    match value {
-        Value::String(_)
-        | Value::Number(_)
-        | Value::Bool(_)
-        | Value::Null
-        | Value::EnumValue { .. } => {
-            let mut w = output.lock().unwrap();
-            writeln!(w, "{}", value.to_display_string()).map_err(|_| RuntimeError::TypeError {
-                msg: "write failed".into(),
-                span,
-            })?;
-            Ok(())
-        }
-        _ => Err(stdlib_arg_error(
-            "print",
-            "string, number, bool, null, or enum",
-            value,
-            span,
-        )),
-    }
+    let mut w = output.lock().map_err(|_| RuntimeError::TypeError {
+        msg: "output lock poisoned".into(),
+        span,
+    })?;
+    writeln!(w, "{}", value.to_display_string()).map_err(|_| RuntimeError::TypeError {
+        msg: "write failed".into(),
+        span,
+    })?;
+    Ok(())
 }
 
 /// Get the length of a string or array
