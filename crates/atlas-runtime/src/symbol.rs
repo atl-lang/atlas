@@ -207,6 +207,14 @@ impl SymbolTable {
                 return_type: Box::new(Type::String),
             },
         );
+        table.define_builtin(
+            "replaceAll",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::String, Type::String, Type::String],
+                return_type: Box::new(Type::String),
+            },
+        );
 
         // String functions - Formatting
         table.define_builtin(

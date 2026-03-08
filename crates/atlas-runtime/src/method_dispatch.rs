@@ -73,7 +73,7 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
         "trimEnd" => "trimEnd",
         "repeat" => "repeat",
         "replace" => "replace",
-        "replaceAll" => "replace", // full replaceAll impl added in B10-P05
+        "replaceAll" => "replaceAll",
         "split" => "split",
         // Padding methods
         "padStart" => "padStart",

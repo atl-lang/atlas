@@ -210,6 +210,17 @@ pub fn replace(s: &str, search: &str, replacement: &str) -> String {
     s.replacen(search, replacement, 1)
 }
 
+/// Replace all occurrences
+///
+/// Replaces every occurrence of search with replacement.
+pub fn replace_all(s: &str, search: &str, replacement: &str) -> String {
+    if search.is_empty() {
+        return s.to_string();
+    }
+
+    s.replace(search, replacement)
+}
+
 // ============================================================================
 // Formatting
 // ============================================================================

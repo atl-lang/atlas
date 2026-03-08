@@ -150,6 +150,7 @@ impl Interpreter {
         interpreter.register_builtin("toLowerCase", 1);
         interpreter.register_builtin("repeat", 2);
         interpreter.register_builtin("replace", 3);
+        interpreter.register_builtin("replaceAll", 3);
         interpreter.register_builtin("padStart", 3);
         interpreter.register_builtin("padEnd", 3);
 

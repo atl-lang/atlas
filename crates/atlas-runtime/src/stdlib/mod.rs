@@ -238,6 +238,15 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let replacement = extract_string(&args[2], "replace", span)?;
             Ok(Value::string(string::replace(s, search, replacement)))
         });
+        m.insert("replaceAll", |args, span, _, _| {
+            if args.len() != 3 {
+                return Err(stdlib_arity_error("replaceAll", 3, args.len(), span));
+            }
+            let s = extract_string(&args[0], "replaceAll", span)?;
+            let search = extract_string(&args[1], "replaceAll", span)?;
+            let replacement = extract_string(&args[2], "replaceAll", span)?;
+            Ok(Value::string(string::replace_all(s, search, replacement)))
+        });
         m.insert("padStart", |args, span, _, _| {
             if args.len() != 3 {
                 return Err(stdlib_arity_error("padStart", 3, args.len(), span));
