@@ -1,4 +1,4 @@
-fn classify(n: number) -> string {
+fn classify(borrow n: number) -> string {
     if n < 0 {
         return "negative";
     } else {

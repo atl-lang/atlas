@@ -1,4 +1,4 @@
-fn log_message(msg: string) -> void {
+fn log_message(borrow msg: string) -> void {
     print("LOG: " + msg);
 }
 

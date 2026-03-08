@@ -1,4 +1,4 @@
 // math.atlas - exported math functions
-export fn add(a: number, b: number) -> number {
+export fn add(borrow a: number, borrow b: number) -> number {
     return a + b;
 }

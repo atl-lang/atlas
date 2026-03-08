@@ -1,4 +1,4 @@
-fn fib(n: number) -> number {
+fn fib(borrow n: number) -> number {
     if n <= 1 {
         return n;
     }

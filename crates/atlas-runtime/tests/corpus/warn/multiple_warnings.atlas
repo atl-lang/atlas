@@ -1,4 +1,4 @@
-fn mixed(a: number, b: number) -> number {
+fn mixed(borrow a: number, borrow b: number) -> number {
     let unused1: number = 10;
     let unused2: number = 20;
     return a + b;
