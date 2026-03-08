@@ -13,6 +13,19 @@ use std::cell::Cell;
 /// Increment when making breaking changes to the AST structure.
 pub const AST_VERSION: u32 = 5;
 
+/// An attribute annotation on a declaration.
+///
+/// Syntax: `@allow(unused)` or `@allow(dead_code)`
+/// Currently only `@allow(lint_name)` is supported.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Attribute {
+    /// The attribute name — currently always "allow"
+    pub name: String,
+    /// The lint/argument inside the parens — e.g., "unused"
+    pub arg: String,
+    pub span: Span,
+}
+
 /// Top-level program containing all items
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Program {
@@ -163,6 +176,8 @@ pub enum ExternTypeAnnotation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FunctionDecl {
     pub name: Identifier,
+    /// Attributes on this declaration (e.g., `@allow(unused)`)
+    pub attributes: Vec<Attribute>,
     /// Whether this function is declared with the `async` keyword
     pub is_async: bool,
     /// Type parameters (e.g., <T, E> in fn foo<T, E>(...))
@@ -219,6 +234,8 @@ pub struct TraitMethodSig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TraitDecl {
     pub name: Identifier,
+    /// Attributes on this declaration (e.g., `@allow(unused)`)
+    pub attributes: Vec<Attribute>,
     /// Type parameters for generic traits (e.g., `trait Functor<T>`)
     pub type_params: Vec<TypeParam>,
     /// Supertrait bounds (e.g., `trait B: A + C`)
@@ -282,6 +299,8 @@ pub struct StructField {
 /// Syntax: `struct User { name: string, age: number }`
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructDecl {
+    /// Attributes on this declaration (e.g., `@allow(unused)`)
+    pub attributes: Vec<Attribute>,
     pub name: Identifier,
     /// Type parameters for generic structs (e.g., `struct Pair<T, U>`)
     pub type_params: Vec<TypeParam>,

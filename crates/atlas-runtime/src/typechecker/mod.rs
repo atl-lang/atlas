@@ -368,6 +368,8 @@ pub struct TypeChecker<'a> {
     /// Full enum declarations keyed by enum name.
     /// Used by check_pattern to look up tuple-variant field types (H-120).
     enum_decls: HashMap<String, EnumDecl>,
+    /// True when the current function/method has `@allow(unused)` — suppresses AT2001 warnings.
+    current_fn_allow_unused: bool,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -447,6 +449,7 @@ impl<'a> TypeChecker<'a> {
             struct_resolution_stack: Vec::new(),
             enum_names: HashSet::new(),
             enum_decls: HashMap::new(),
+            current_fn_allow_unused: false,
         }
     }
 
@@ -1276,6 +1279,27 @@ impl<'a> TypeChecker<'a> {
             );
         }
 
+        // Set @allow(unused) flag for this function scope
+        let prev_allow_unused = self.current_fn_allow_unused;
+        self.current_fn_allow_unused = func
+            .attributes
+            .iter()
+            .any(|a| a.name == "allow" && a.arg == "unused");
+
+        // Warn on unrecognized @allow lint names
+        for attr in &func.attributes {
+            if attr.name == "allow" && attr.arg != "unused" && !attr.arg.is_empty() {
+                self.diagnostics.push(
+                    Diagnostic::warning_with_code(
+                        "AT2009",
+                        format!("Unknown lint '{}' in @allow attribute", attr.arg),
+                        attr.span,
+                    )
+                    .with_help("Did you mean @allow(unused)?"),
+                );
+            }
+        }
+
         // Save previous function context (for nested functions)
         let prev_return_type = self.current_function_return_type.clone();
         let prev_function_info = self.current_function_info.clone();
@@ -1501,10 +1525,16 @@ impl<'a> TypeChecker<'a> {
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
         self.in_async_context = prev_in_async;
+        self.current_fn_allow_unused = prev_allow_unused;
     }
 
     /// Emit warnings for unused symbols
     fn emit_unused_warnings(&mut self) {
+        // @allow(unused) on the enclosing function suppresses all unused warnings
+        if self.current_fn_allow_unused {
+            return;
+        }
+
         for (name, (span, kind)) in &self.declared_symbols {
             // Skip if symbol starts with underscore (suppression)
             if name.starts_with('_') {

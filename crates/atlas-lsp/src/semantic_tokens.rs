@@ -236,6 +236,7 @@ fn classify_token(
         | TokenKind::AmpAmp
         | TokenKind::PipePipe
         | TokenKind::Ampersand
+        | TokenKind::At
         | TokenKind::Pipe
         | TokenKind::PlusEqual
         | TokenKind::MinusEqual

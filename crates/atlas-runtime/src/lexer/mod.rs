@@ -264,6 +264,7 @@ impl Lexer {
                     self.make_token(TokenKind::Greater, ">")
                 }
             }
+            '@' => self.make_token(TokenKind::At, "@"),
             '&' => {
                 if self.match_char('&') {
                     self.make_token(TokenKind::AmpAmp, "&&")

@@ -203,3 +203,6 @@ mod for_in_traits_part1;
 
 #[path = "frontend_syntax/traits_part2.rs"]
 mod traits_part2;
+
+#[path = "frontend_syntax/warnings_attributes.rs"]
+mod warnings_attributes;

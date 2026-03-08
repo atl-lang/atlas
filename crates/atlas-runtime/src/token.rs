@@ -149,6 +149,8 @@ pub enum TokenKind {
     PipePipe,
     /// `&` (type intersection)
     Ampersand,
+    /// `@` (attribute prefix)
+    At,
     /// `|` (type union)
     Pipe,
 
@@ -317,6 +319,7 @@ impl TokenKind {
             TokenKind::AmpAmp => "&&",
             TokenKind::PipePipe => "||",
             TokenKind::Ampersand => "&",
+            TokenKind::At => "@",
             TokenKind::Pipe => "|",
             TokenKind::PlusEqual => "+=",
             TokenKind::MinusEqual => "-=",

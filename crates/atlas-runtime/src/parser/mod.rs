@@ -27,6 +27,8 @@ pub struct Parser {
     /// When true, `Identifier {` is NOT parsed as a struct literal.
     /// Set during condition parsing (if/while) to avoid ambiguity with blocks.
     pub(super) no_struct_literal: bool,
+    /// Attributes parsed in `parse_item` — drained by the next declaration parser.
+    pub(super) pending_attributes: Vec<crate::ast::Attribute>,
 }
 
 /// Operator precedence levels for Pratt parsing
@@ -66,6 +68,7 @@ impl Parser {
             current: 0,
             diagnostics: Vec::new(),
             no_struct_literal: false,
+            pending_attributes: Vec::new(),
         }
     }
 
@@ -89,8 +92,46 @@ impl Parser {
 
     // === Top-level parsing ===
 
+    /// Parse zero or more `@allow(lint)` attributes preceding an item.
+    fn parse_attributes(&mut self) -> Vec<crate::ast::Attribute> {
+        let mut attrs = Vec::new();
+        while self.check(TokenKind::At) {
+            let at_span = self.advance().span; // consume `@`
+            let name = match self.consume_identifier("an attribute name") {
+                Ok(tok) => tok.lexeme.clone(),
+                Err(_) => break,
+            };
+            // Parse optional `(arg)`
+            let arg = if self.check(TokenKind::LeftParen) {
+                self.advance(); // consume `(`
+                let arg = if self.check(TokenKind::RightParen) {
+                    String::new()
+                } else {
+                    match self.consume_identifier("an attribute argument") {
+                        Ok(tok) => tok.lexeme.clone(),
+                        Err(_) => String::new(),
+                    }
+                };
+                let _ = self.consume(
+                    TokenKind::RightParen,
+                    "Expected ')' after attribute argument",
+                );
+                arg
+            } else {
+                String::new()
+            };
+            let end_span = self.peek().span;
+            let span = at_span.merge(end_span);
+            attrs.push(crate::ast::Attribute { name, arg, span });
+        }
+        attrs
+    }
+
     /// Parse a top-level item (function, statement, import, export, or extern)
     fn parse_item(&mut self, doc_comment: Option<String>) -> Result<Item, ()> {
+        // Collect any leading attributes (@allow(unused) etc.) and store for the next declaration
+        self.pending_attributes = self.parse_attributes();
+
         if self.check(TokenKind::Import) {
             Ok(Item::Import(self.parse_import()?))
         } else if self.check(TokenKind::Export) {
@@ -162,13 +203,17 @@ impl Parser {
             }
         }
 
-        let end_span = self.consume(TokenKind::RightBrace, "Expected '}' after struct fields")?;
+        let end_span = self
+            .consume(TokenKind::RightBrace, "Expected '}' after struct fields")?
+            .span;
+        let attributes = std::mem::take(&mut self.pending_attributes);
 
         Ok(crate::ast::StructDecl {
             name,
+            attributes,
             type_params,
             fields,
-            span: struct_start.merge(end_span.span),
+            span: struct_start.merge(end_span),
         })
     }
 
@@ -349,8 +394,10 @@ impl Parser {
         let body = self.parse_block()?;
         let end_span = body.span;
 
+        let attributes = std::mem::take(&mut self.pending_attributes);
         Ok(FunctionDecl {
             name,
+            attributes,
             is_async,
             type_params,
             params,
@@ -684,8 +731,10 @@ impl Parser {
             .consume(TokenKind::RightBrace, "Expected '}' after trait body")?
             .span;
 
+        let attributes = std::mem::take(&mut self.pending_attributes);
         Ok(TraitDecl {
             name,
+            attributes,
             type_params,
             super_traits,
             methods,
