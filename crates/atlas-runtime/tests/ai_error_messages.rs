@@ -504,31 +504,47 @@ arr;
 }
 
 #[test]
-fn ai_mistake_own_param_missing_annotation_flagged() {
-    // AI defines function without ownership annotations — should get AT1007
-    let source = "fn process(borrow x: number) -> number { return x; }";
+fn ai_mistake_bare_params_now_valid() {
+    // D-040: borrow is implicit default — bare params no longer require annotation.
+    // This previously fired AT1007; now it must parse and run cleanly.
+    let source = "fn process(x: number) -> number { return x; }";
     let diags = get_diagnostics(source);
-    assert_self_correcting(&diags, "AT1007", &["ownership"]);
+    let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
+    assert!(
+        errors.is_empty(),
+        "D-040: bare params should be valid (borrow implicit), got: {:?}",
+        errors
+    );
 }
 
 // ---------------------------------------------------------------------------
-// P09: Missing mandatory ownership annotation (AT1007)
+// P09: Ownership annotations — only `own` and `share` need to be explicit (D-040)
 // ---------------------------------------------------------------------------
 
 #[test]
-fn ai_mistake_missing_ownership_annotation() {
-    // AI defines function without ownership annotation
-    let source = r#"fn add(borrow x: number, borrow y: number) -> number { return x + y; }"#;
+fn ai_mistake_bare_params_all_types() {
+    // Bare params for number, string, bool — all should be valid under D-040
+    let source = r#"fn add(x: number, y: number) -> number { return x + y; }"#;
     let diags = get_diagnostics(source);
-    assert_self_correcting(&diags, "AT1007", &["ownership", "share"]);
+    let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
+    assert!(
+        errors.is_empty(),
+        "D-040: bare number params should be valid, got: {:?}",
+        errors
+    );
 }
 
 #[test]
-fn ai_mistake_missing_ownership_on_array_param() {
-    // AI passes array param without annotation
-    let source = r#"fn sum(borrow nums: number[]) -> number { return 0.0; }"#;
+fn ai_mistake_bare_array_param_valid() {
+    // Array params without annotation default to borrow (D-040)
+    let source = r#"fn sum(nums: number[]) -> number { return 0.0; }"#;
     let diags = get_diagnostics(source);
-    assert_self_correcting(&diags, "AT1007", &["ownership"]);
+    let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
+    assert!(
+        errors.is_empty(),
+        "D-040: bare array param should be valid, got: {:?}",
+        errors
+    );
 }
 
 // ---------------------------------------------------------------------------

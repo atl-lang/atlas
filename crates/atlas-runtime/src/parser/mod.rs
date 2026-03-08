@@ -638,24 +638,15 @@ impl Parser {
                 (tok.lexeme.clone(), tok.span)
             };
 
-            // Enforce mandatory ownership annotation (D-034).
-            // Bare `self` in impl methods is the only exempt case — no colon follows it.
+            // D-040: borrow is the implicit default — no annotation required.
+            // Bare `self` in impl methods has no annotation and no colon.
             let is_bare_self =
                 ownership.is_none() && param_name == "self" && !self.check(TokenKind::Colon);
-            if ownership.is_none() && !is_bare_self {
-                let msg = format!(
-                    "Parameter '{param_name}' is missing an ownership annotation. \
-                     Add `own`, `borrow`, or `share` before the parameter name.\n  \
-                     own {param_name}: T    — caller's binding is moved into the function\n  \
-                     borrow {param_name}: T — read-only; caller retains ownership\n  \
-                     share {param_name}: T  — both hold valid references simultaneously"
-                );
-                self.error_with_code(
-                    crate::diagnostic::error_codes::MISSING_OWNERSHIP_ANNOTATION,
-                    &msg,
-                );
-                return Err(());
-            }
+            let ownership = if ownership.is_none() && !is_bare_self {
+                Some(OwnershipAnnotation::Borrow)
+            } else {
+                ownership
+            };
 
             let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
                 let type_ref = self.parse_type_ref()?;
