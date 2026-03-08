@@ -847,18 +847,18 @@ impl Interpreter {
 
         // Bind parameters (parameters are mutable)
         for (param, arg) in func.params.iter().zip(args.iter()) {
-            // Debug-mode ownership enforcement for `shared` parameters.
+            // Debug-mode ownership enforcement for `share` parameters.
             #[cfg(debug_assertions)]
             {
                 use crate::ast::OwnershipAnnotation;
                 match &param.ownership {
-                    Some(OwnershipAnnotation::Shared) => {
+                    Some(OwnershipAnnotation::Share) => {
                         if !matches!(arg, Value::SharedValue(_)) {
                             // Must pop scope before returning — we already pushed it.
                             self.pop_scope();
                             return Err(RuntimeError::TypeError {
                                 msg: format!(
-                                    "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                    "ownership violation: parameter '{}' expects share<T> but received {}",
                                     param.name.name,
                                     arg.type_name()
                                 ),
@@ -872,10 +872,10 @@ impl Interpreter {
                             let ann_str = match ann {
                                 OwnershipAnnotation::Own => "own",
                                 OwnershipAnnotation::Borrow => "borrow",
-                                OwnershipAnnotation::Shared => unreachable!(),
+                                OwnershipAnnotation::Share => unreachable!(),
                             };
                             eprintln!(
-                                "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                "warning: passing share<T> value to '{}' parameter '{}' — consider using the 'share' annotation",
                                 ann_str, param.name.name
                             );
                         }

@@ -396,8 +396,8 @@ pub enum OwnershipAnnotation {
     Own,
     /// `borrow param: T` — immutable borrow; caller retains ownership
     Borrow,
-    /// `shared param: T` — shared mutable reference (Arc<Mutex<T>>)
-    Shared,
+    /// `share param: T` — shared reference; both caller and callee hold valid refs, neither mutates
+    Share,
 }
 
 /// Function parameter
@@ -407,7 +407,7 @@ pub struct Param {
     /// Type annotation. Always present. Use `TypeRef::SelfType` for bare `self`
     /// params whose concrete type is resolved later from the impl context.
     pub type_ref: TypeRef,
-    /// Ownership annotation (`own`, `borrow`, `shared`), or `None` if unannotated
+    /// Ownership annotation (`own`, `borrow`, `share`), or `None` if unannotated
     pub ownership: Option<OwnershipAnnotation>,
     /// `mut` keyword present — parameter can be reassigned inside the function body.
     pub mutable: bool,

@@ -110,7 +110,7 @@ fn format_ownership(ownership: &Option<OwnershipAnnotation>) -> &'static str {
     match ownership {
         Some(OwnershipAnnotation::Own) => "own ",
         Some(OwnershipAnnotation::Borrow) => "borrow ",
-        Some(OwnershipAnnotation::Shared) => "shared ",
+        Some(OwnershipAnnotation::Share) => "share ",
         None => "",
     }
 }

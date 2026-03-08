@@ -17,7 +17,6 @@ set -euo pipefail
 SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 STATUS_FILE="$PROJECT_ROOT/tracking/ci-status.json"
-DB="$PROJECT_ROOT/tracking/atlas.db"
 
 # ── Colors ────────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -189,39 +188,43 @@ jq -n \
   }' > "$STATUS_FILE"
 
 # ── Create P0 issues for failures ─────────────────────────────────────────────
+# Issues are filed via `pt add` so they appear in the tracker like any other issue.
+# They are tagged "nightly-ci" and titled with [CI] so it's clear a machine filed them.
 create_p0_if_needed() {
   local check="$1"
   local check_status="$2"
 
   if [[ "$check_status" == "fail" ]]; then
-    local title="CI: $check failed (nightly)"
-    # Check if a CI P0 already exists for this check (don't duplicate)
+    local title="[CI] $check failed — nightly $(date +%Y-%m-%d) @ $GIT_COMMIT"
+    local problem="Nightly CI detected $check failure at $RUN_AT on commit $GIT_COMMIT. Filed automatically by ci-runner.sh — not an agent."
+
+    # Use pt to check for an existing open CI issue for this check to avoid duplicates
     local existing
-    existing=$(sqlite3 "$DB" "SELECT id FROM issues WHERE title LIKE 'CI: $check%' AND status IN ('open','in_progress') LIMIT 1" 2>/dev/null || echo "")
+    existing=$(pt issues 2>/dev/null | grep "\[CI\] $check failed" | grep "open\|in_progress" | head -1 | awk '{print $1}' || echo "")
+
     if [[ -z "$existing" ]]; then
       local new_id
-      new_id=$(sqlite3 "$DB" "SELECT 'H-' || printf('%03d', COALESCE(MAX(CAST(substr(id, 3) AS INTEGER)), 0) + 1) FROM issues" 2>/dev/null || echo "")
+      new_id=$(pt add "$title" P0 "$problem" 2>/dev/null | grep -oE 'H-[0-9]+' | head -1 || echo "")
       if [[ -n "$new_id" ]]; then
-        sqlite3 "$DB" "INSERT INTO issues (id, title, status, priority, severity, component, version, source, problem, fix_required, found_by, tags) VALUES ('$new_id', '$title', 'open', 'P0', 'critical', 'infra', '0.3.0', 'nightly-ci', 'Nightly CI detected $check failure at $RUN_AT on commit $GIT_COMMIT', 'Fix $check failures before continuing new work', 'nightly-ci', 'ci')" 2>/dev/null || true
+        # Tag it so it's identifiable as CI-filed, not agent-filed
+        pt update "$new_id" tags "nightly-ci,ci,automated" 2>/dev/null || true
         echo "$new_id"
-        log "  Created P0 issue: $new_id ($title)"
+        log "  Filed P0: $new_id — $title"
       fi
     else
-      log "  P0 already exists for $check: $existing (not duplicating)"
+      log "  P0 already open for $check: $existing (skipping duplicate)"
     fi
   fi
 }
 
-if [[ "$OVERALL_STATUS" == "fail" ]] && [[ -f "$DB" ]]; then
-  log "Creating P0 issues for failures..."
+if [[ "$OVERALL_STATUS" == "fail" ]]; then
+  log "Filing P0 issues for failures..."
   for check_name in fmt clippy tests parity battle corpus; do
     var="${check_name^^}_STATUS"
-    # indirect variable reference
     check_val="${!var}"
     p0_id=$(create_p0_if_needed "$check_name" "$check_val")
     if [[ -n "$p0_id" ]] && [[ -z "$P0_CREATED" ]]; then
       P0_CREATED="$p0_id"
-      # Update the status file with the P0 id
       jq --arg p0 "$P0_CREATED" '.p0_created = $p0' "$STATUS_FILE" > "${STATUS_FILE}.tmp" && mv "${STATUS_FILE}.tmp" "$STATUS_FILE"
     fi
   done
@@ -242,7 +245,7 @@ else
   [[ "$BATTLE_STATUS" == "fail" ]] && echo -e "  ${RED}✗${NC} battle"
   [[ "$CORPUS_STATUS" == "fail" ]] && echo -e "  ${RED}✗${NC} corpus"
   echo ""
-  echo -e "  Run 'atlas-track ci-status' for details."
+  echo -e "  Run 'pt ci-status' for details."
   echo -e "  CI failures = P0 blockers — fix before new work."
 fi
 echo -e "${BOLD}══════════════════════════════════════════════════════════════════${NC}"

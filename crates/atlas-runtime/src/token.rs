@@ -97,8 +97,8 @@ pub enum TokenKind {
     Own,
     /// `borrow` keyword (borrowed parameter annotation)
     Borrow,
-    /// `shared` keyword (shared parameter annotation)
-    Shared,
+    /// `share` keyword (shared parameter annotation)
+    Share,
     // Async/await (B8)
     /// `async` keyword
     Async,
@@ -254,7 +254,7 @@ impl TokenKind {
             "await" => Some(TokenKind::Await),
             "own" => Some(TokenKind::Own),
             "borrow" => Some(TokenKind::Borrow),
-            "shared" => Some(TokenKind::Shared),
+            "share" => Some(TokenKind::Share),
             "trait" => Some(TokenKind::Trait),
             "impl" => Some(TokenKind::Impl),
             "struct" => Some(TokenKind::Struct),
@@ -298,7 +298,7 @@ impl TokenKind {
             TokenKind::Await => "await",
             TokenKind::Own => "own",
             TokenKind::Borrow => "borrow",
-            TokenKind::Shared => "shared",
+            TokenKind::Share => "share",
             TokenKind::Trait => "trait",
             TokenKind::Impl => "impl",
             TokenKind::Struct => "struct",

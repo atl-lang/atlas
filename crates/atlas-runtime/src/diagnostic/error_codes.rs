@@ -377,8 +377,8 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
     },
     ErrorCodeInfo {
         code: "AT2011",
-        description: "`borrow` annotation on `shared<T>` type is redundant",
-        help: Some("`shared<T>` already has reference semantics. The `borrow` annotation has no additional effect."),
+        description: "`borrow` annotation on `share<T>` type is redundant",
+        help: Some("`share<T>` already has reference semantics. The `borrow` annotation has no additional effect."),
     },
     ErrorCodeInfo {
         code: "AT2012",
@@ -478,8 +478,8 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
     },
     ErrorCodeInfo {
         code: "AT3028",
-        description: "Passing non-`shared<T>` value to `shared` parameter",
-        help: Some("Wrap the value in a shared reference before passing it to a `shared` parameter."),
+        description: "Passing non-`share<T>` value to `share` parameter",
+        help: Some("Wrap the value in a shared reference before passing it to a `share` parameter."),
     },
     ErrorCodeInfo {
         code: "AT3029",

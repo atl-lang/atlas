@@ -345,7 +345,7 @@ impl Parser {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
-            } else if self.check(TokenKind::Shared) {
+            } else if self.check(TokenKind::Share) {
                 let span = self.peek().span;
                 self.advance();
                 self.diagnostics.push(Diagnostic::error(
@@ -616,8 +616,8 @@ impl Parser {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
-            } else if self.match_token(TokenKind::Shared) {
-                Some(OwnershipAnnotation::Shared)
+            } else if self.match_token(TokenKind::Share) {
+                Some(OwnershipAnnotation::Share)
             } else {
                 None
             };
@@ -629,7 +629,7 @@ impl Parser {
                         let kw = match ownership {
                             Some(OwnershipAnnotation::Own) => "own",
                             Some(OwnershipAnnotation::Borrow) => "borrow",
-                            Some(OwnershipAnnotation::Shared) => "shared",
+                            Some(OwnershipAnnotation::Share) => "share",
                             None => unreachable!(),
                         };
                         self.error(&format!(

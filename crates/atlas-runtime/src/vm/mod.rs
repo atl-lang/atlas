@@ -2299,18 +2299,18 @@ impl VM {
                         }
                     }
 
-                    // Debug mode: enforce `shared` parameter ownership contracts.
+                    // Debug mode: enforce `share` parameter ownership contracts.
                     #[cfg(debug_assertions)]
                     {
                         let args_base = self.stack.len() - arg_count;
                         for (i, ownership) in func.param_ownership.iter().enumerate() {
                             let arg = &self.stack[args_base + i];
                             match ownership {
-                                Some(crate::ast::OwnershipAnnotation::Shared) => {
+                                Some(crate::ast::OwnershipAnnotation::Share) => {
                                     if !matches!(arg, Value::SharedValue(_)) {
                                         return Err(RuntimeError::TypeError {
                                             msg: format!(
-                                                "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                                "ownership violation: parameter '{}' expects share<T> but received {}",
                                                 func.param_names
                                                     .get(i)
                                                     .map(|s| s.as_str())
@@ -2334,7 +2334,7 @@ impl VM {
                                             _ => unreachable!(),
                                         };
                                         eprintln!(
-                                            "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                            "warning: passing share<T> value to '{}' parameter '{}' — consider using the 'share' annotation",
                                             ann_str,
                                             func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
                                         );
@@ -2414,18 +2414,18 @@ impl VM {
                     }
                 }
 
-                // Debug mode: enforce `shared` parameter ownership contracts.
+                // Debug mode: enforce `share` parameter ownership contracts.
                 #[cfg(debug_assertions)]
                 {
                     let args_base = self.stack.len() - arg_count;
                     for (i, ownership) in func.param_ownership.iter().enumerate() {
                         let arg = &self.stack[args_base + i];
                         match ownership {
-                            Some(crate::ast::OwnershipAnnotation::Shared) => {
+                            Some(crate::ast::OwnershipAnnotation::Share) => {
                                 if !matches!(arg, Value::SharedValue(_)) {
                                     return Err(RuntimeError::TypeError {
                                         msg: format!(
-                                            "ownership violation: parameter '{}' expects shared<T> but received {}",
+                                            "ownership violation: parameter '{}' expects share<T> but received {}",
                                             func.param_names
                                                 .get(i)
                                                 .map(|s| s.as_str())
@@ -2447,7 +2447,7 @@ impl VM {
                                         _ => unreachable!(),
                                     };
                                     eprintln!(
-                                        "warning: passing shared<T> value to '{}' parameter '{}' — consider using the 'shared' annotation",
+                                        "warning: passing share<T> value to '{}' parameter '{}' — consider using the 'share' annotation",
                                         ann_str,
                                         func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
                                     );

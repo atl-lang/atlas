@@ -12,7 +12,7 @@ fn test_ownership_keywords_lex_as_keywords() {
     for (src, expected) in [
         ("own", TokenKind::Own),
         ("borrow", TokenKind::Borrow),
-        ("shared", TokenKind::Shared),
+        ("share", TokenKind::Share),
     ] {
         let mut lexer = Lexer::new(src);
         let (tokens, errors) = lexer.tokenize();
@@ -102,7 +102,7 @@ fn test_parse_borrow_param() {
 fn test_parse_shared_param() {
     let params = parse_fn_params("fn share(shared data: number) -> number { return data; }");
     assert_eq!(params.len(), 1);
-    assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Shared));
+    assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Share));
 }
 
 #[test]

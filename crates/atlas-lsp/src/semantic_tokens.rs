@@ -197,7 +197,7 @@ fn classify_token(
         | TokenKind::Is
         | TokenKind::Own
         | TokenKind::Borrow
-        | TokenKind::Shared
+        | TokenKind::Share
         | TokenKind::Trait
         | TokenKind::Impl
         | TokenKind::Struct

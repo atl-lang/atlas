@@ -1445,22 +1445,24 @@ impl<'a> TypeChecker<'a> {
                         }
                     }
                     OwnershipAnnotation::Borrow => {
-                        if matches!(&ty, Type::Generic { name, .. } if name == "shared") {
+                        if matches!(&ty, Type::Generic { name, .. } if name == "share") {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
                                     error_codes::BORROW_ON_SHARED,
                                     format!(
                                         "`borrow` annotation on parameter `{}` is redundant: \
-                                         `shared<T>` already has reference semantics",
+                                         `share<T>` already has reference semantics",
                                         param.name.name
                                     ),
                                     param.name.span,
                                 )
-                                .with_help("remove the `borrow` annotation from this `shared<T>` parameter"),
+                                .with_help(
+                                    "remove the `borrow` annotation from this `share<T>` parameter",
+                                ),
                             );
                         }
                     }
-                    OwnershipAnnotation::Shared => {}
+                    OwnershipAnnotation::Share => {}
                 }
             }
             param_ownerships.push(param.ownership.clone());
@@ -2453,7 +2455,7 @@ impl<'a> TypeChecker<'a> {
             Type::Array(_) | Type::JsonValue => true,
             // Function types are Copy (reference-counted internally)
             Type::Function { .. } => true,
-            // Generic types: Copy if explicitly registered (e.g. shared<T> is NOT Copy)
+            // Generic types: Copy if explicitly registered (e.g. share<T> is NOT Copy)
             Type::Generic { name, type_args } => {
                 if name == "Option" || name == "Result" {
                     type_args.iter().all(|arg| self.is_copy_type(arg))

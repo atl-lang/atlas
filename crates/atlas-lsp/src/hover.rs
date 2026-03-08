@@ -14,7 +14,7 @@ fn ownership_prefix(ownership: &Option<OwnershipAnnotation>) -> &'static str {
     match ownership {
         Some(OwnershipAnnotation::Own) => "own ",
         Some(OwnershipAnnotation::Borrow) => "borrow ",
-        Some(OwnershipAnnotation::Shared) => "shared ",
+        Some(OwnershipAnnotation::Share) => "share ",
         None => "",
     }
 }
@@ -24,7 +24,7 @@ fn ownership_label(ownership: &Option<OwnershipAnnotation>) -> &'static str {
     match ownership {
         Some(OwnershipAnnotation::Own) => "(own parameter) ",
         Some(OwnershipAnnotation::Borrow) => "(borrow parameter) ",
-        Some(OwnershipAnnotation::Shared) => "(shared parameter) ",
+        Some(OwnershipAnnotation::Share) => "(share parameter) ",
         None => "(parameter) ",
     }
 }

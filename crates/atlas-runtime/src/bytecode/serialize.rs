@@ -247,7 +247,7 @@ fn serialize_ownership(ann: &Option<crate::ast::OwnershipAnnotation>) -> u8 {
         None => 0,
         Some(crate::ast::OwnershipAnnotation::Own) => 1,
         Some(crate::ast::OwnershipAnnotation::Borrow) => 2,
-        Some(crate::ast::OwnershipAnnotation::Shared) => 3,
+        Some(crate::ast::OwnershipAnnotation::Share) => 3,
     }
 }
 
@@ -256,7 +256,7 @@ fn deserialize_ownership(b: u8) -> Option<crate::ast::OwnershipAnnotation> {
     match b {
         1 => Some(crate::ast::OwnershipAnnotation::Own),
         2 => Some(crate::ast::OwnershipAnnotation::Borrow),
-        3 => Some(crate::ast::OwnershipAnnotation::Shared),
+        3 => Some(crate::ast::OwnershipAnnotation::Share),
         _ => None,
     }
 }

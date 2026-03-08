@@ -984,8 +984,8 @@ impl Parser {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
-            } else if self.match_token(TokenKind::Shared) {
-                Some(OwnershipAnnotation::Shared)
+            } else if self.match_token(TokenKind::Share) {
+                Some(OwnershipAnnotation::Share)
             } else {
                 None
             };

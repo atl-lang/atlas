@@ -550,7 +550,7 @@ impl<'a> TypeChecker<'a> {
     /// Accepts pre-evaluated argument types to avoid double-evaluating expressions.
     /// Validates:
     /// - `own` param: warn if argument is a `borrow`-annotated param of the caller
-    /// - `shared` param: error if argument type is not `shared<T>`
+    /// - `shared` param: error if argument type is not `share<T>`
     /// - `borrow` param: always accepted, no diagnostic
     fn check_call_ownership(&mut self, call: &CallExpr, callee_name: &str, arg_types: &[Type]) {
         let ownerships = match self.fn_ownership_registry.get(callee_name) {
@@ -587,17 +587,17 @@ impl<'a> TypeChecker<'a> {
                         }
                     }
                 }
-                Some(OwnershipAnnotation::Shared) => {
-                    // Error if argument type is not `shared<T>` (use pre-evaluated type)
+                Some(OwnershipAnnotation::Share) => {
+                    // Error if argument type is not `share<T>` (use pre-evaluated type)
                     if let Some(arg_type) = arg_types.get(i) {
                         let is_shared =
-                            matches!(arg_type, Type::Generic { name, .. } if name == "shared");
+                            matches!(arg_type, Type::Generic { name, .. } if name == "share");
                         if !is_shared {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     error_codes::NON_SHARED_TO_SHARED,
                                     format!(
-                                        "expected `shared<T>` value for `shared` parameter, \
+                                        "expected `share<T>` value for `share` parameter, \
                                          found `{}`",
                                         arg_type.display_name()
                                     ),
