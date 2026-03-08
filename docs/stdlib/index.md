@@ -16,8 +16,8 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### String Functions
 - **File:** `string.md`
-- **Functions:** split, join, trim, indexOf, includes, toUpperCase, toLowerCase, substring, charAt, repeat, replace, padStart, padEnd, startsWith, endsWith
-- **Count:** 20 functions
+- **Functions:** split, join, trim, trimStart, trimEnd, indexOf, lastIndexOf, includes, toUpperCase, toLowerCase, substring, charAt, repeat, replace, replaceAll, padStart, padEnd, startsWith, endsWith
+- **Count:** 19 functions
 - **Purpose:** String manipulation and Unicode support
 
 ### Array Functions
