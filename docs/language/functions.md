@@ -9,7 +9,7 @@ fn name<T>(param: Type, ...) -> [own|borrow] ReturnType { ... }
 - Type parameters (`<T, U>`) are optional.
 - Parameters in declarations **require type annotations**.
 - Return type annotation is **required**. Use `-> void` for functions that return nothing.
-- `own` and `borrow` are valid ownership annotations on return types. `shared` is **not** allowed on return types.
+- `own` and `borrow` are valid ownership annotations on return types. `share` is **not** allowed on return types.
 - Type predicates are supported: `-> bool is param: Type`.
 
 Example (tested):
@@ -24,14 +24,15 @@ fn is_string(value: string) -> bool is value: string {
 ```
 
 **Parameters and Ownership**
-- Ownership annotations are optional and appear before the parameter name: `own name: Type`.
-- Valid annotations: `own`, `borrow`, `shared`.
+- Ownership annotations are **mandatory** and appear before the parameter name: `own name: Type`.
+- Valid annotations: `own`, `borrow`, `share`. Missing annotation is a parse error (AT1007).
+- See `docs/language/ownership.md` for semantics and decision tree. (D-034)
 - `mut` keyword before a parameter name allows reassigning it inside the function body: `fn f(mut a: number) { a = 5; }`
 - Parameters without `mut` are immutable — assignment produces AT3003.
 
 Example (tested):
 ```atlas
-fn take(own data: HashMap<string, number>, borrow label: string, shared cache: HashMap<string, number>) -> void {
+fn take(own data: HashMap<string, number>, borrow label: string, share cache: HashMap<string, number>) -> void {
     data;
     label;
     cache;
@@ -44,7 +45,7 @@ fn take(own data: HashMap<string, number>, borrow label: string, shared cache: H
 fn(param, ...) -> ReturnType { block }
 ```
 - Parameters in anonymous functions **may omit** type annotations.
-- Ownership annotations are allowed: `fn(own x, borrow y: number) { ... }`.
+- Ownership annotations are **mandatory** on closure parameters too: `fn(own x: T, borrow y: number) { ... }`.
 - Return type annotation is optional for closures (inferred from context), **required** for named functions.
 
 Example (tested):
