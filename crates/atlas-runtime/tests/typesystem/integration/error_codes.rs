@@ -187,3 +187,62 @@ mod migrated_types {
         assert!(any.is_assignable_to(&Type::any_placeholder()));
     }
 }
+
+// AT3060 — Unknown type name (AI-friendly error for other-language types)
+#[test]
+fn test_at3060_int_type_suggests_number() {
+    let diags = typecheck_source("let x: int = 5;");
+    let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
+    assert!(
+        errors.iter().any(|d| d.code == "AT3060"),
+        "Expected AT3060 for unknown type 'int', got: {:?}",
+        errors
+    );
+    let at3060 = errors.iter().find(|d| d.code == "AT3060").unwrap();
+    assert!(
+        at3060
+            .help
+            .as_ref()
+            .map(|h| h.as_str())
+            .unwrap_or("")
+            .contains("number"),
+        "AT3060 help should suggest 'number', got: {:?}",
+        at3060.help
+    );
+}
+
+#[test]
+fn test_at3060_string_type_suggests_string() {
+    let diags = typecheck_source("let x: String = \"hello\";");
+    assert!(
+        diags.iter().any(|d| d.code == "AT3060"),
+        "Expected AT3060 for unknown type 'String'"
+    );
+}
+
+#[test]
+fn test_at3060_boolean_type_suggests_bool() {
+    let diags = typecheck_source("let x: boolean = true;");
+    assert!(
+        diags.iter().any(|d| d.code == "AT3060"),
+        "Expected AT3060 for unknown type 'boolean'"
+    );
+}
+
+#[test]
+fn test_at3060_int_in_struct_field() {
+    let diags = typecheck_source("struct Foo { age: int }");
+    assert!(
+        diags.iter().any(|d| d.code == "AT3060"),
+        "Expected AT3060 for 'int' in struct field"
+    );
+}
+
+#[test]
+fn test_at3060_unknown_type_generic_message() {
+    let diags = typecheck_source("let x: FooBarBaz = 1;");
+    assert!(
+        diags.iter().any(|d| d.code == "AT3060"),
+        "Expected AT3060 for completely unknown type 'FooBarBaz'"
+    );
+}

@@ -668,6 +668,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         description: "`share` parameter mutated or ownership-transferred",
         help: Some("`share` parameters are immutable from the callee's perspective. You cannot assign to a `share` param or pass it to an `own` parameter (which would transfer ownership of something you do not own)."),
     },
+    ErrorCodeInfo {
+        code: "AT3060",
+        description: "Unknown type name — likely a type from another language",
+        help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `T[]` for arrays, `HashMap<K,V>` for maps. Define structs for custom types."),
+    },
     // === AT4xxx: Async/Await Errors ===
     ErrorCodeInfo {
         code: "AT4001",

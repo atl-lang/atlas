@@ -2604,6 +2604,49 @@ impl<'a> TypeChecker<'a> {
                         };
                     }
 
+                    // Unknown type name — emit a helpful diagnostic.
+                    // Detect common mistakes from other languages.
+                    let help = match name.as_str() {
+                        "int" | "integer" | "Integer" | "Int" | "i32" | "i64" | "u32" | "u64"
+                        | "f32" | "f64" | "float" | "Float" | "double" | "Double" | "long"
+                        | "Long" | "short" | "Short" | "byte" | "Byte" | "uint" => {
+                            format!("Atlas has one numeric type: `number`\n  Change `{}` to `number`", name)
+                        }
+                        "str" | "String" | "Str" | "varchar" | "char" | "Char" => {
+                            format!("Atlas string type is lowercase: `string`\n  Change `{}` to `string`", name)
+                        }
+                        "boolean" | "Boolean" | "Bool" => {
+                            format!("Atlas boolean type is lowercase: `bool`\n  Change `{}` to `bool`", name)
+                        }
+                        "Void" | "unit" | "Unit" | "never" | "Never" => {
+                            format!("Did you mean `void`? Atlas uses `void` for functions that return nothing.\n  Change `{}` to `void`", name)
+                        }
+                        "object" | "Object" | "dict" | "Dict" | "map" | "Map" | "Record" => {
+                            "For a key-value map use `HashMap<K, V>`. For a fixed-shape type, define a struct.".to_string()
+                        }
+                        "list" | "List" | "Vec" | "vector" | "Vector" | "slice" | "Slice"
+                        | "Array" => {
+                            format!("Atlas array type is `T[]` — e.g. `number[]` or `string[]`.\n  Change `{}` to e.g. `number[]`", name)
+                        }
+                        "tuple" | "Tuple" => {
+                            "Atlas does not have tuples. Use a struct or an array instead.".to_string()
+                        }
+                        _ => format!(
+                            "Unknown type '{}'. Check for typos, or define a `struct`, trait, or type alias named '{}'.",
+                            name, name
+                        ),
+                    };
+
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3060",
+                            format!("Unknown type '{}'", name),
+                            *span,
+                        )
+                        .with_label("unknown type")
+                        .with_help(help),
+                    );
+
                     Type::Unknown
                 }
             },
