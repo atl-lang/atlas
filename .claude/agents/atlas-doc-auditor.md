@@ -136,7 +136,7 @@ Verify:
 - `.claude/agents/atlas-doc-patch.md` (scoped Haiku doc fixer, triggered post-commit)
 
 Verify:
-- All 5 skill files exist; `atlas/skill.md` and `atlas-bugfix/skill.md` are the canonical source of continuity rules — derivative skills reference CLAUDE.md pt Gates instead
+- All 6 skill files exist; `atlas/skill.md` and `atlas-bugfix/skill.md` are the canonical source of continuity rules — derivative skills reference CLAUDE.md pt Gates instead
 - Any new skill added to `.claude/skills/` is listed here — if not, add it and flag it
 - Gate file references to `.claude/rules/*.md` — all referenced files exist
 - Gate phase lists reference existing `phases/v0.3/` files

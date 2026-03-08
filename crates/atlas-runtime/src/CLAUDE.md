@@ -53,12 +53,12 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 
 | Domain | Add tests to... |
 |--------|----------------|
-| Stdlib | `tests/stdlib/` → strings, json, io, types, functions, collections, parity, vm_stdlib, integration, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
+| Stdlib | `tests/stdlib/` → strings, json, io, types, collections, parity, integration, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
 | Type system | `tests/typesystem/` → inference, constraints, flow, generics, bindings, integration |
-| VM behavior | `tests/vm/` → integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
-| Interpreter | `tests/interpreter/` → member, nested_functions, scope, pattern_matching, assignment, for_in, integration |
+| VM behavior | `tests/vm/` → integration, member, complex_programs, regression, regression_loops, performance, functions, functions_loops, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, async_vm, error_handling, logical, opcodes |
+| Interpreter | `tests/interpreter/` → member, nested_functions, nested_functions_loops, scope, pattern_matching, assignment, integration |
 | System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
-| Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, for_in_traits_part1, traits_part2 |
+| Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, parser_errors_part2, parser_control_flow, parser_anonymous_structs, parser_ranges, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, warnings_attributes, for_in_traits_part1, traits_part2 |
 | Frontend integration | `tests/frontend_integration/` → integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2} |
 
 **How to pick the right file:** match the feature domain (e.g., new string builtin → `tests/stdlib/strings.rs`).
@@ -95,7 +95,7 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 - `ValueHashMap` = `Arc<AtlasHashMap>` — CoW via `Arc::make_mut` (same pattern as `ValueArray`)
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
 - `FunctionRef` at `value.rs:464` — holds arity, bytecode_offset, local_count
-- `Param` at `ast.rs:382` — name, type_ref, ownership, mutable, span (mutable added H-089, ownership added Block 2)
+- `Param` at `ast.rs:405` — name, type_ref, ownership, mutable, span (mutable added H-089, ownership added Block 2)
 - `FunctionDecl.return_type: Option<TypeRef>` — `None` means inferred (Block 5); `infer_return_type()` in `typechecker/inference.rs`
 - AT3050 (inconsistent returns), AT3051 (uninferrable type param), AT3052 (inferred type incompatible) — registered in `diagnostic/error_codes.rs`
 - Expression statements require semicolons — `f(x)` without `;` fails to parse
