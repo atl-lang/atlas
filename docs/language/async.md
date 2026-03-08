@@ -277,7 +277,13 @@ print(cfg);
 
 ```atlas
 async fn with_timeout(f: Future<string>, secs: number) -> Result<string, string> {
-    let timed_out = sleep(secs) |> fn(_) -> Result<string, string> { return Err("timeout"); };
-    return await race([f |> fn(v) -> Result<string, string> { return Ok(v); }, timed_out]);
+    fn make_timeout(s: Future<void>) -> Future<Result<string, string>> {
+        return s.then(fn(_) -> Result<string, string> { return Err("timeout"); });
+    }
+    fn make_ok(s: Future<string>) -> Future<Result<string, string>> {
+        return s.then(fn(v: string) -> Result<string, string> { return Ok(v); });
+    }
+    return await race([make_ok(f), make_timeout(sleep(secs))]);
 }
 ```
+> **Note:** The `|>` pipeline operator is not yet implemented. Use named helper functions or chained method calls instead.

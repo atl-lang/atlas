@@ -16,14 +16,23 @@ If you're implementing a phase and wonder "should this be a method or a global?"
 
 ## Rule 1 — Built-in Value Types Use Dot-Method Syntax
 
+> **⚠ CoW SEMANTICS — READ FIRST:**
+> All collection mutation methods (`push`, `pop`, `set`, `add`, `remove`, etc.) return a **new collection**.
+> You MUST rebind the result or the mutation is silently discarded.
+> ```atlas
+> arr.push(x)        // ❌ WRONG — arr is unchanged, mutation lost
+> arr = arr.push(x)  // ✅ CORRECT — rebind the result
+> ```
+> This applies to Array, HashMap, HashSet, Queue, and Stack.
+
 Every built-in collection and string exposes its operations as methods:
 
 ```atlas
 // ✅ Correct (B10+)
-arr.push(x)
-arr.pop()
-arr.map(|x| x * 2)
-arr.filter(|x| x > 0)
+arr = arr.push(x)          // CoW: mutation returns new array — always rebind
+arr = arr.pop()            // CoW: rebind required
+arr.map(fn(x) { x * 2 })  // closures use fn(param) { expr } syntax
+arr.filter(fn(x) { x > 0 })
 arr.len()
 arr.includes(x)
 
@@ -273,7 +282,7 @@ P07–P09 can be parallelized after P03. P10 after all surfaces done. P11 after 
 
 | Old global | New method |
 |-----------|------------|
-| `hashMapNew()` | `HashMap.new()` |
+| `hashMapNew()` | `hashMapNew()` *(not yet deprecated — no replacement syntax exists, D-033)* |
 | `hashMapGet(map, k)` | `map.get(k)` |
 | `hashMapPut(map, k, v)` | `map.put(k, v)` |
 | `hashMapRemove(map, k)` | `map.remove(k)` |

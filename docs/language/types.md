@@ -94,7 +94,8 @@ enum Status {
 
 **Option<T> and Result<T, E>**
 - Built-in generic types with standard constructors and helpers.
-- Constructors are functions: `Some(value)`, `None()`, `Ok(value)`, `Err(value)`.
+- Constructors: `Some(value)`, `None`, `Ok(value)`, `Err(value)`.
+- Use bare `None` (not `None()`) — consistent in both expression and pattern position.
 - Optional type suffix (`T?`) is not supported. Use `Option<T>`.
 
 Example (tested):

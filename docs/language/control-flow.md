@@ -82,7 +82,7 @@ fn first_positive(values: number[]) -> Option<number> {
             return Some(v);
         }
     }
-    return None();
+    return None;
 }
 ```
 
