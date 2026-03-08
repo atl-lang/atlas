@@ -1,0 +1,21 @@
+fn main() -> void {
+    // Test what actually works
+    
+    // Try old API
+    let map1: HashMap<string, number> = hashMapNew();
+    print("hashMapNew() works");
+    
+    // Try method syntax
+    let arr: number[] = [1, 2, 3];
+    let pushed: number[] = arr.push(4);
+    print(`arr.push() works: ${pushed.len()}`);
+    
+    // Try string methods
+    let s: string = "  hello  ";
+    let trimmed: string = s.trim();
+    print(`s.trim() works: '${trimmed}'`);
+    
+    // Try JSON
+    let valid: bool = Json.isValid(`{"test": true}`);
+    print(`Json.isValid() works: ${valid}`);
+}

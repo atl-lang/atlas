@@ -1,0 +1,61 @@
+// Supervisor Domain - Process Lifecycle
+// Status: ✅ COMPILES (demonstrates self parameter works!)
+// Tests: State machines, mutable self via return values, enums
+
+enum ServerState {
+    Stopped,
+    Starting,
+    Running,
+    Restarting,
+    Failed(string),
+}
+
+struct ProcessSupervisor {
+    state: ServerState,
+    pid: number,
+    restartCount: number,
+    maxRestarts: number,
+}
+
+trait Supervisor {
+    fn state(self) -> ServerState;
+    fn canRestart(self) -> bool;
+    fn incrementRestarts(self) -> ProcessSupervisor;
+}
+
+fn newSupervisor(maxRestarts: number) -> ProcessSupervisor {
+    return ProcessSupervisor {
+        state: ServerState::Stopped,
+        pid: 0,
+        restartCount: 0,
+        maxRestarts: maxRestarts,
+    };
+}
+
+impl Supervisor for ProcessSupervisor {
+    fn state(self) -> ServerState {
+        return self.state;
+    }
+    
+    fn canRestart(self) -> bool {
+        return self.restartCount < self.maxRestarts;
+    }
+    
+    fn incrementRestarts(self) -> ProcessSupervisor {
+        return ProcessSupervisor {
+            state: self.state,
+            pid: self.pid,
+            restartCount: self.restartCount + 1,
+            maxRestarts: self.maxRestarts,
+        };
+    }
+}
+
+fn main() -> void {
+    let mut supervisor: ProcessSupervisor = newSupervisor(5);
+    print(`Can restart: ${supervisor.canRestart()}`);
+    print(`Restart count: ${supervisor.restartCount}`);
+    
+    supervisor = supervisor.incrementRestarts();
+    print(`After increment: ${supervisor.restartCount}`);
+}

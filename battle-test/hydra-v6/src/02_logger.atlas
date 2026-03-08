@@ -1,0 +1,71 @@
+// Logger Domain - Structured Logging  
+// Status: ✅ COMPILES AND RUNS
+// Tests: Enums, trait methods with self, conditional logic
+
+enum LogLevel {
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+
+trait Logger {
+    fn log(self, level: LogLevel, msg: string) -> void;
+    fn debug(self, msg: string) -> void;
+    fn info(self, msg: string) -> void;
+}
+
+struct ConsoleLogger {
+    minLevel: LogLevel,
+}
+
+fn newLogger(minLevel: LogLevel) -> ConsoleLogger {
+    return ConsoleLogger { minLevel: minLevel };
+}
+
+fn shouldLog(current: LogLevel, min: LogLevel) -> bool {
+    let currentVal: number = match current {
+        LogLevel::Debug => 0,
+        LogLevel::Info => 1,
+        LogLevel::Warn => 2,
+        LogLevel::Error => 3,
+    };
+    
+    let minVal: number = match min {
+        LogLevel::Debug => 0,
+        LogLevel::Info => 1,
+        LogLevel::Warn => 2,
+        LogLevel::Error => 3,
+    };
+    
+    return currentVal >= minVal;
+}
+
+impl Logger for ConsoleLogger {
+    fn log(self, level: LogLevel, msg: string) -> void {
+        if shouldLog(level, self.minLevel) {
+            let levelStr: string = match level {
+                LogLevel::Debug => "DEBUG",
+                LogLevel::Info => "INFO",
+                LogLevel::Warn => "WARN",
+                LogLevel::Error => "ERROR",
+            };
+            print(`[${levelStr}] ${msg}`);
+        }
+    }
+    
+    fn debug(self, msg: string) -> void {
+        self.log(LogLevel::Debug, msg);
+    }
+    
+    fn info(self, msg: string) -> void {
+        self.log(LogLevel::Info, msg);
+    }
+}
+
+fn main() -> void {
+    let logger: ConsoleLogger = newLogger(LogLevel::Info);
+    logger.debug("This won't print");
+    logger.info("This will print");
+    logger.log(LogLevel::Warn, "Warning message");
+}

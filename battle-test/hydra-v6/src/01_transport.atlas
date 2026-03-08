@@ -1,0 +1,54 @@
+// Transport Domain - Protocol Detection
+// Status: ✅ COMPILES AND RUNS
+// Tests: Enums, pattern matching, Result types
+
+enum Protocol {
+    Unknown,
+    NDJSON,
+    LSP,
+}
+
+fn protocolName(p: Protocol) -> string {
+    return match p {
+        Protocol::Unknown => "unknown",
+        Protocol::NDJSON => "ndjson",
+        Protocol::LSP => "lsp",
+    };
+}
+
+trait Transport {
+    fn detectProtocol(self, data: string) -> Result<Protocol, string>;
+}
+
+struct StdioTransport {
+    detected: bool,
+}
+
+fn newTransport() -> StdioTransport {
+    return StdioTransport { detected: false };
+}
+
+impl Transport for StdioTransport {
+    fn detectProtocol(self, data: string) -> Result<Protocol, string> {
+        if data.includes("Content-Length:") {
+            return Ok(Protocol::LSP);
+        }
+        
+        if data.includes("{") {
+            return Ok(Protocol::NDJSON);
+        }
+        
+        return Ok(Protocol::Unknown);
+    }
+}
+
+fn main() -> void {
+    let transport: StdioTransport = newTransport();
+    let lspData: string = "Content-Length: 123\r\n\r\n{...}";
+    
+    let result: Result<Protocol, string> = transport.detectProtocol(lspData);
+    match result {
+        Ok(proto) => print(`Detected: ${protocolName(proto)}`),
+        Err(msg) => print(`Error: ${msg}`),
+    };
+}
