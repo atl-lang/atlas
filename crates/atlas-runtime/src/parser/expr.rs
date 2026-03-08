@@ -979,7 +979,7 @@ impl Parser {
         loop {
             let param_span_start = self.peek().span;
 
-            // Optional ownership annotation: own | borrow | shared
+            // Mandatory ownership annotation: own | borrow | share (D-034)
             let ownership = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
@@ -990,9 +990,26 @@ impl Parser {
                 None
             };
 
-            let param_name_tok = self.consume_identifier("a parameter name")?;
-            let param_name = param_name_tok.lexeme.clone();
-            let param_name_span = param_name_tok.span;
+            let (param_name, param_name_span) = {
+                let tok = self.consume_identifier("a parameter name")?;
+                (tok.lexeme.clone(), tok.span)
+            };
+
+            // Enforce mandatory ownership annotation on closure params (D-034).
+            if ownership.is_none() {
+                let msg = format!(
+                    "Closure parameter '{param_name}' is missing an ownership annotation. \
+                     Add `own`, `borrow`, or `share` before the parameter name.\n  \
+                     own {param_name}: T    — caller's binding is moved into the closure\n  \
+                     borrow {param_name}: T — read-only; caller retains ownership\n  \
+                     share {param_name}: T  — both hold valid references simultaneously"
+                );
+                self.error_with_code(
+                    crate::diagnostic::error_codes::MISSING_OWNERSHIP_ANNOTATION,
+                    &msg,
+                );
+                return Err(());
+            }
 
             // Type annotation is required: `param: Type`
             self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;

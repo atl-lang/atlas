@@ -44,6 +44,8 @@ pub const INVALID_ESCAPE: &str = "AT1003";
 pub const UNTERMINATED_COMMENT: &str = "AT1004";
 pub const INVALID_NUMBER: &str = "AT1005";
 pub const UNEXPECTED_EOF: &str = "AT1006";
+/// Parse error: function parameter is missing an ownership annotation (`own`, `borrow`, or `share`).
+pub const MISSING_OWNERSHIP_ANNOTATION: &str = "AT1007";
 pub const SHADOWING_PRELUDE: &str = "AT1012";
 
 // AT2xxx - Warnings
@@ -318,6 +320,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT1006",
         description: "Unexpected end of file",
         help: Some("The file ended unexpectedly. Check for missing closing brackets or semicolons."),
+    },
+    ErrorCodeInfo {
+        code: "AT1007",
+        description: "Missing ownership annotation on function parameter",
+        help: Some("Every function parameter requires exactly one of: `own`, `borrow`, or `share`.\n  own x: T    — caller's binding is moved; callee owns the lifetime\n  borrow x: T — read-only; caller retains ownership after the call\n  share x: T  — both hold valid references simultaneously"),
     },
     ErrorCodeInfo {
         code: "AT1012",
