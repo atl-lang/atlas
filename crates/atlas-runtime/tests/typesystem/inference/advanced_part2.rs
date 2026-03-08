@@ -309,3 +309,64 @@ fn test_heuristic_array_element_type_inferred() {
     let diags = typecheck_source("let _arr = [1, 2, 3];");
     assert!(!has_error(&diags), "Errors: {:?}", diags);
 }
+
+// ============================================================================
+// H-164: unwrap() type inference
+// ============================================================================
+
+#[test]
+fn test_unwrap_option_infers_inner_type() {
+    // unwrap(Option<number>) should resolve to number, not any/?
+    let diags = typecheck_source(
+        r#"
+        fn get_val(borrow x: number) -> Option<number> {
+            return Some(x);
+        }
+        let raw: Option<number> = get_val(42);
+        let result: number = unwrap(raw);
+        "#,
+    );
+    assert!(
+        !has_error(&diags),
+        "unwrap(Option<T>) should resolve to T, not any. Errors: {:?}",
+        diags
+    );
+}
+
+#[test]
+fn test_unwrap_result_infers_ok_type() {
+    // unwrap(Result<string, string>) should resolve to string
+    let diags = typecheck_source(
+        r#"
+        fn parse(borrow s: string) -> Result<string, string> {
+            return Ok(s);
+        }
+        let raw: Result<string, string> = parse("hello");
+        let result: string = unwrap(raw);
+        "#,
+    );
+    assert!(
+        !has_error(&diags),
+        "unwrap(Result<T,E>) should resolve to T, not any. Errors: {:?}",
+        diags
+    );
+}
+
+#[test]
+fn test_unwrap_result_used_in_expression() {
+    // unwrap() return value should be usable without explicit annotation
+    let diags = typecheck_source(
+        r#"
+        fn try_parse(borrow s: string) -> Result<number, string> {
+            return Ok(42);
+        }
+        let raw: Result<number, string> = try_parse("42");
+        let n: number = unwrap(raw) + 1;
+        "#,
+    );
+    assert!(
+        !has_error(&diags),
+        "unwrap() result should be usable in arithmetic. Errors: {:?}",
+        diags
+    );
+}

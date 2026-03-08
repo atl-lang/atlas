@@ -1306,6 +1306,22 @@ impl<'a> TypeChecker<'a> {
                 "hashMapHas" | "hash_map_has" | "hashSetHas" | "hash_set_has" => {
                     return Type::Bool;
                 }
+                // H-164: unwrap() returns the inner type T from Option<T> or Result<T, E>
+                "unwrap" => {
+                    if call.args.len() == 1 {
+                        let arg_type = self.check_expr(&call.args[0]);
+                        let inner = match arg_type.normalized() {
+                            Type::Generic { name, type_args }
+                                if (name == "Option" || name == "Result")
+                                    && !type_args.is_empty() =>
+                            {
+                                type_args[0].clone()
+                            }
+                            _ => arg_type,
+                        };
+                        return inner;
+                    }
+                }
                 _ => {}
             }
         }
