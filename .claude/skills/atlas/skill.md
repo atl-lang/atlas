@@ -135,8 +135,8 @@ pt add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
 
 **Block tracking — mandatory after every phase commit:**
 ```bash
-pt phase-done B<N>                              # Every phase, no exceptions
-pt complete-block B<N> "what shipped, bugs filed"  # Final phase only
+pt phase-done B<N>-P<XX> "outcome"              # Every phase, no exceptions
+pt complete-block B<N> "what shipped, bugs filed"  # Final phase only (after pt block B<N> AC check)
 ```
 
 ---

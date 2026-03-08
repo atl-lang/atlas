@@ -73,11 +73,19 @@ pt supersede D-XXX D-YYY            # Mark D-XXX superseded by D-YYY
 ```bash
 pt blocks                           # All blocks + status
 pt block B<N>                       # Detail + acceptance criteria
-pt phase-done B<N>                  # After EVERY phase commit — no exceptions
-pt block B<N>                       # After final phase — verify ALL AC met
+pt phase-start B<N>-P<XX>           # Mark phase in_progress (optional but good hygiene)
+pt phase-done B<N>-P<XX> "outcome"  # After EVERY phase commit — auto-updates block count
+pt block B<N>                       # After final phase — verify ALL AC met + see full phase list
 pt complete-block B<N> "summary"    # Mark block complete
+pt phase-skip B<N>-P<XX> "reason"   # If a phase is intentionally skipped
 ```
 Skipping `pt phase-done` = next agent re-derives block state from scratch. Don't.
+
+**When scaffolding a new block**, add phases to the DB first:
+```bash
+pt phase-add B<N> "Phase title" "optional description"   # repeat for each phase
+pt phases B<N>                                            # verify the list
+```
 
 ### Handoff File (MANDATORY before pt done)
 Overwrite `~/.project-tracker/handoffs/atlas-handoff.md` — REPLACE entirely, don't append:

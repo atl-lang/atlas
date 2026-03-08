@@ -125,8 +125,8 @@ pt fix H-XXX "Root cause (specific)" "Fix (specific)"
 git commit -m "fix(...): description"
 
 # 6. AFTER EACH PHASE COMMIT
-pt phase-done B<N>
-pt block B<N>                        # final phase only — verify AC met
+pt phase-done B<N>-P<XX> "outcome summary"   # marks named phase done, auto-updates count
+pt block B<N>                                 # final phase only — verify AC met + phases shown
 pt complete-block B<N> "what shipped, bugs filed"
 
 # 7. AFTER ANY COMMIT TOUCHING SOURCE — fire atlas-doc-patch agent (Haiku, ~1-2 min)

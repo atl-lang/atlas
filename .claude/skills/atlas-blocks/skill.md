@@ -65,7 +65,7 @@ Lead directs — does not execute. See `gates/session-protection.md`.
 2. Close any issues fixed this phase: `pt fix H-XXX "cause" "fix"` — do this NOW, not later
 3. **Update block progress — NON-NEGOTIABLE, do this before session close:**
    ```bash
-   pt phase-done B<N>
+   pt phase-done B<N>-P<XX> "outcome summary"
    # If this was the FINAL phase — check AC:
    pt block B<N>          # Verify all AC are met
    pt complete-block B<N> "What was implemented. Any bugs filed (H-XXX)."
