@@ -27,6 +27,16 @@ use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
+/// Deduplicate diagnostics by (code, file, line, column) — prevents the same
+/// error from being emitted twice when multiple passes resolve the same span.
+fn dedup_diagnostics(diags: Vec<Diagnostic>) -> Vec<Diagnostic> {
+    let mut seen = HashSet::new();
+    diags
+        .into_iter()
+        .filter(|d| seen.insert((d.code.clone(), d.file.clone(), d.line, d.column)))
+        .collect()
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 struct AliasKey {
     name: String,
@@ -474,7 +484,7 @@ impl<'a> TypeChecker<'a> {
             self.check_item(item);
         }
 
-        std::mem::take(&mut self.diagnostics)
+        dedup_diagnostics(std::mem::take(&mut self.diagnostics))
     }
 
     /// Type check a program with cross-module support (BLOCKER 04-C)
@@ -530,7 +540,7 @@ impl<'a> TypeChecker<'a> {
             self.check_item(item);
         }
 
-        std::mem::take(&mut self.diagnostics)
+        dedup_diagnostics(std::mem::take(&mut self.diagnostics))
     }
 
     /// Check a top-level item
