@@ -13,13 +13,8 @@ description: Atlas block/phase execution. Scaffolding, gate sequence, phase hand
 
 1. **Run GATE -1** — full state audit (see `gates/gate-minus1-sanity.md`)
 2. Run `pt sitrep` (check mode, P0 blockers, block progress)
-2a. **Run the decision gate — before writing a single line of code:**
-    ```bash
-    pt decisions <component>   # e.g. typechecker, parser, vm, stdlib, runtime
-    ```
-    3-8 lines back. If a decision covers your approach — follow it.
-    If your plan contradicts one — stop, surface to architect.
-    New design choice not covered — decide, then: `pt add-decision`
+2a. **Run the decision gate — before writing a single line of code** (see CLAUDE.md pt Gates):
+    `pt decisions <component>` — if it covers your approach, follow it; if contradicts, stop.
 3. **Git Setup:** GATE -1 determines branch state — see `gates/git-workflow.md`
 4. Declare workflow type: **Structured Development**
 5. **Execute gates** 0→1→2→3→4→5→6→7 (see `gates/gate-applicability.md`)
@@ -55,9 +50,17 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    - "Scaffold Block N" alone: present and wait
    - "Scaffold Block N, go": proceed immediately
 4. **Create block branch:** `git checkout -b block/{name}`
-5. Scaffold all phase files
-6. Run `pt blocks` to verify
-7. **Commit scaffold — no push, no PR**
+5. **Register phases in DB — MANDATORY before any phase work:**
+   ```bash
+   pt phase-add B<N> "Phase title" "optional description"   # one per phase
+   # repeat for every phase in the kickoff doc
+   pt phases B<N>   # verify the full list before continuing
+   ```
+   Phases must exist in pt before `pt phase-done` can be called on them.
+   Never start a phase without its DB record.
+6. Scaffold all phase files
+7. Run `pt blocks` to verify block + phase count
+8. **Commit scaffold — no push, no PR**
 
 ---
 
@@ -70,7 +73,7 @@ Lead directs — does not execute. See `gates/session-protection.md`.
 2. Close any issues fixed this phase: `pt fix H-XXX "cause" "fix"` — do this NOW, not later
 3. **Update block progress — NON-NEGOTIABLE, do this before session close:**
    ```bash
-   pt phase-done B<N>
+   pt phase-done B<N>-P<XX> "outcome summary"
    # If this was the FINAL phase — check AC:
    pt block B<N>          # Verify all AC are met
    pt complete-block B<N> "What was implemented. Any bugs filed (H-XXX)."

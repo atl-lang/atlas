@@ -9,42 +9,16 @@ description: Atlas bug fix workflow with TDD. Use for fixing bugs, resolving iss
 
 ---
 
-## Testing — Two-Tier System (CRITICAL)
+## Testing (Two-Tier System — see CLAUDE.md for full rules)
 
-### Tier 1: Pre-commit (automatic, < 15s)
-- `cargo fmt --check` + `cargo clippy` only — NO nextest, by design
+**FASTEST:** `atlas run /tmp/test.atlas` — use before any nextest invocation.
+**ALLOWED:** `cargo check -p atlas-runtime` + ONE exact TDD nextest (see below).
+**BANNED:** All other nextest invocations. CLI confirmation supersedes nextest — don't run both.
 
-### Tier 2: Nightly CI (2am via launchd, or `pt run-ci`)
-- Full suite, parity, battle tests → results in `tracking/ci-status.json`
-
-### BANNED — all nextest except ONE exact TDD test:
-```bash
-cargo nextest run -p atlas-runtime -E 'test(interpreter)'    # ❌ BANNED
-cargo nextest run -p atlas-runtime -E 'test(regression)'     # ❌ BANNED
-cargo nextest run -p atlas-runtime -E 'test(stdlib)'         # ❌ BANNED
-cargo nextest run -p atlas-runtime -E 'test(corpus)'         # ❌ BANNED
-cargo nextest run -p atlas-runtime                           # ❌ BANNED (full suite)
-cargo nextest run --workspace                                 # ❌ BANNED
-```
-
-### ALLOWED — cargo check + ONE exact TDD test only:
-```bash
-cargo check -p atlas-runtime                                           # ✅ ~0.5s always fine
-cargo nextest run -p atlas-runtime -E 'test(my_exact_test_name)'      # ✅ TDD only, exact name
-atlas run /tmp/test.atlas                                              # ✅ FASTEST — use this first
-```
-
-### ⛔ STOP — CLI confirmation supersedes nextest
-
-**If you already confirmed correctness with `atlas run file.atlas` → DO NOT run nextest.**
-
-Nextest compiles every test binary in the crate before running one (~1-5 min due to aws-lc-sys).
-Running it after a CLI-confirmed fix wastes the entire time for zero additional information.
-
-**Decision tree:**
-1. Can I verify with `atlas run /tmp/test.atlas`? → Yes → do that, skip nextest, commit
-2. Is this a Rust unit test with no CLI equivalent? → Then use nextest with exact name only
-3. Never run nextest "just to be sure" after CLI already confirmed it
+Decision tree:
+1. `atlas run /tmp/test.atlas` confirms it → commit, skip nextest
+2. Pure Rust unit test with no CLI equivalent → nextest with exact name only
+3. Never run nextest "just to be sure" after CLI confirmed
 
 ---
 
@@ -99,60 +73,15 @@ git commit -m "fix(...): description"                        # Guardian hook run
 
 ---
 
-## AI Continuity — Non-Negotiable (100% AI-maintained project)
+## pt Gates — See CLAUDE.md "Mandatory pt Gates"
 
-The user is architect only. You own all implementation, tracking, and continuity.
+All universal gates (session start, pt next, pt decisions, pt claim, pt fix, pt phase-done, handoff, pt done) are defined in CLAUDE.md and apply here without exception.
 
-**Never narrate — act or file. These are the only two options:**
-- ❌ "The next agent will need to watch out for X when fixing Y"
-- ❌ "Worth noting that this workaround exists"
-- ✅ `pt add "Title" P1 "context, file ref, fix risk"` then move on.
-Anything said to the user that isn't architecture = gone after session ends.
-
-**Proactive filing mid-fix:** Discover a second bug, edge case, or missing feature? File it before continuing. 30 seconds now saves hours of re-discovery. Include: what file demonstrates it, workaround used, fix risk for the next agent.
-
-**Before touching any component — run the decision gate:**
-```bash
-pt decisions <component>   # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
-# 3-8 lines back. 2 seconds. Non-negotiable before any fix that touches internal architecture.
-```
-If a decision covers your fix approach — follow it, don't invent a different pattern.
-If your fix contradicts a decision — stop, surface it to the architect.
-If no decision exists and you made a design call — log it: `pt add-decision`.
-
-**Block tracking (if this fix closes out a phase):**
-```bash
-pt phase-done B<N>
-pt complete-block B<N> "what shipped, bugs filed"  # final phase only
-```
-
----
-
-## Issue Lifecycle — CLOSE IMMEDIATELY AFTER VERIFICATION
-
-**Rule:** Verify fix works → `pt fix` → commit → THEN move to next issue. Never batch at end.
-
-```bash
-pt claim H-001              # Before starting
-# ... TDD fix cycle ...
-# Fix verified (CLI or nextest) — close NOW:
-pt fix H-001 "Root cause (specific: what was wrong in the code)" "Fix (specific: what you changed)"
-git commit -m "fix(...): description"
-# NOW move to next issue
-```
-
-**Session close** — required at end of every session:
-**Step 1 — Write `~/.project-tracker/handoffs/atlas-handoff.md` (MANDATORY before pt done):**
-Write the handoff file with: what was fixed (issue IDs + root cause), in-flight work if interrupted, next action (specific issue ID + file path), critical context (patterns found, pitfalls). See core `atlas` skill for the exact template.
-Then: `git add ~/.project-tracker/handoffs/atlas-handoff.md` and include in the final commit or its own `chore: update handoff` commit.
-
-**Step 2 — Close session:**
-```bash
-pt done S-XXX success \
-  "Fixed H-001 (missing increment in VM loop → added i += 1). Fixed H-002 (wrong token in parser → swapped Async for AsyncFn)." \
-  "Next: H-003 — Value::Future missing from runtime enum, needed for async eval"
-```
-Format: one clause per issue, root cause + fix. Next: specific issue + one sentence on scope.
+**Bugfix-specific reminders:**
+- Run `pt decisions <component>` before any fix touching internal architecture
+- Discover a second bug mid-fix? `pt add` it immediately — 30 seconds now saves hours
+- Include in issue: file ref, workaround used, fix risk for next agent
+- Block tracking if this fix closes a phase: `pt phase-done B<N>-P<XX> "outcome"`
 
 ---
 

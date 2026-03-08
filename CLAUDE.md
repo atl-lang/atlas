@@ -99,10 +99,47 @@ cargo nextest run -p atlas-runtime -E 'test(my_new_exact_test_name)'
 
 Killing cargo mid-run leaves lock files that block all future runs — never do it.
 
-## Session Start (MANDATORY)
+## Mandatory pt Gates (ALL AGENTS — NEVER SKIP)
+
 ```bash
-pt go opus   # or sonnet/haiku — returns sitrep, handoff, P0s, stale issues
+# 1. SESSION START — always first, no exceptions
+pt go [opus|sonnet|haiku]           # sitrep, handoff, P0s, CI status, active plans
+pt in-progress                       # check in-flight work before claiming anything
+
+# 2. BEFORE PICKING WORK
+pt next                              # smart triage — groups by root cause, shows chains,
+                                     # delete-first/triage-first flags. NOT blind P0→P1 sorting.
+
+# 3. BEFORE ANY ARCHITECTURE / DESIGN WORK
+pt decisions <component>             # parser|typechecker|vm|interpreter|stdlib|runtime|lsp|infra
+                                     # 2 sec. If a decision covers your change — follow it.
+                                     # Contradicts one — stop, surface to architect.
+                                     # No decision exists — decide, then log it:
+pt add-decision "Title" <component> "Rule: what was decided" "Rationale: why"
+
+# 4. BEFORE STARTING AN ISSUE
+pt claim H-XXX
+
+# 5. WHEN ISSUE RESOLVED — immediately, never batch
+pt fix H-XXX "Root cause (specific)" "Fix (specific)"
+git commit -m "fix(...): description"
+
+# 6. AFTER EACH PHASE COMMIT
+pt phase-done B<N>-P<XX> "outcome summary"   # marks named phase done, auto-updates count
+pt block B<N>                                 # final phase only — verify AC met + phases shown
+pt complete-block B<N> "what shipped, bugs filed"
+
+# 7. AFTER ANY COMMIT TOUCHING SOURCE — fire atlas-doc-patch agent (Haiku, ~1-2 min)
+
+# 8. SESSION END — always last
+# Step 1: Overwrite ~/.project-tracker/handoffs/atlas-handoff.md (see atlas skill for template)
+pt done S-XXX success "what was done (IDs + root causes)" "next action (specific)"
 ```
+
+**Never narrate — act or file:** Any observation/risk said to user = gone after session.
+→ `pt add "title" P0|P1|P2 "context, file ref, fix risk"` immediately. Then move on.
+
+Full pt reference: `.claude/lazy/tracking-db.md` | Workflow guide: `.claude/lazy/pt-workflow.md`
 
 ## Auto-Loaded Rules (no need to read manually)
 These load automatically based on which files you're editing:
