@@ -7,16 +7,16 @@
 // Logger provides structured logging interface
 trait Logger {
     // Log info-level message with context
-    fn info(self, message: string, context: json) -> string;
+    fn info(self, borrow message: string, borrow context: json) -> string;
 
     // Log warning-level message with context
-    fn warn(self, message: string, context: json) -> string;
+    fn warn(self, borrow message: string, borrow context: json) -> string;
 
     // Log error-level message with context
-    fn error(self, message: string, context: json) -> string;
+    fn error(self, borrow message: string, borrow context: json) -> string;
 
     // Log debug-level message with context
-    fn debug(self, message: string, context: json) -> string;
+    fn debug(self, borrow message: string, borrow context: json) -> string;
 }
 
 // StdoutLogger implements Logger interface using print
@@ -25,22 +25,22 @@ struct StdoutLogger {
 }
 
 impl Logger for StdoutLogger {
-    fn info(self, message: string, context: json) -> string {
+    fn info(self, borrow message: string, borrow context: json) -> string {
         print("[INFO] " + message);
         return message;
     }
 
-    fn warn(self, message: string, context: json) -> string {
+    fn warn(self, borrow message: string, borrow context: json) -> string {
         print("[WARN] " + message);
         return message;
     }
 
-    fn error(self, message: string, context: json) -> string {
+    fn error(self, borrow message: string, borrow context: json) -> string {
         print("[ERROR] " + message);
         return message;
     }
 
-    fn debug(self, message: string, context: json) -> string {
+    fn debug(self, borrow message: string, borrow context: json) -> string {
         print("[DEBUG] " + message);
         return message;
     }

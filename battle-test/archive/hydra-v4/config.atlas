@@ -86,7 +86,7 @@ fn default_security() -> SecurityConfig {
     };
 }
 
-fn make_server_config(command: string, cwd: string) -> ServerConfig {
+fn make_server_config(borrow command: string, borrow cwd: string) -> ServerConfig {
     return ServerConfig {
         command: command,
         cwd: cwd,
@@ -98,7 +98,7 @@ fn make_server_config(command: string, cwd: string) -> ServerConfig {
     };
 }
 
-fn config_to_json(cfg: ServerConfig) -> string {
+fn config_to_json(borrow cfg: ServerConfig) -> string {
     let obj = hashMapNew();
     let obj1 = hashMapPut(obj, "command", cfg.command);
     let obj2 = hashMapPut(obj1, "cwd", cfg.cwd);

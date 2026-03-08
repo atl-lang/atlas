@@ -6,7 +6,7 @@
 
 type StateStore = HashMap<string, string>;
 
-fn store_get(borrow store: StateStore, key: string) -> string {
+fn store_get(borrow store: StateStore, borrow key: string) -> string {
     let has_key: bool = hash_map_has(store, key);
     if has_key {
         return unwrap(hash_map_get(store, key));
@@ -14,11 +14,11 @@ fn store_get(borrow store: StateStore, key: string) -> string {
     return "";
 }
 
-fn store_set(store: StateStore, key: string, value: string) -> StateStore {
+fn store_set(borrow store: StateStore, borrow key: string, borrow value: string) -> StateStore {
     return hash_map_put(store, key, value);
 }
 
-fn split_lines(value: string) -> string[] {
+fn split_lines(borrow value: string) -> string[] {
     let mut parts: string[] = slice([""], 0, 0);
     let has_value: bool = value != "";
     if has_value {
@@ -27,7 +27,7 @@ fn split_lines(value: string) -> string[] {
     return parts;
 }
 
-fn join_lines(parts: string[]) -> string {
+fn join_lines(borrow parts: string[]) -> string {
     let is_empty: bool = len(parts) == 0;
     if is_empty {
         return "";
@@ -43,7 +43,7 @@ export fn new_state_store() -> StateStore {
     return store;
 }
 
-export fn state_set_initialize(own store: StateStore, params: json) -> StateStore {
+export fn state_set_initialize(own store: StateStore, borrow params: json) -> StateStore {
     let updated = store_set(store, "initialize", to_json(params));
     return updated;
 }
@@ -57,7 +57,7 @@ export fn state_get_initialize(borrow store: StateStore) -> json {
     return unwrap(parse_json(raw));
 }
 
-export fn state_add_subscription(own store: StateStore, uri: string) -> StateStore {
+export fn state_add_subscription(own store: StateStore, borrow uri: string) -> StateStore {
     let raw = store_get(store, "subs");
     let parts: string[] = split_lines(raw);
     let mut exists = false;
@@ -74,7 +74,7 @@ export fn state_add_subscription(own store: StateStore, uri: string) -> StateSto
     return store;
 }
 
-export fn state_remove_subscription(own store: StateStore, uri: string) -> StateStore {
+export fn state_remove_subscription(own store: StateStore, borrow uri: string) -> StateStore {
     let raw = store_get(store, "subs");
     let parts: string[] = split_lines(raw);
     let mut filtered: string[] = slice([""], 0, 0);
@@ -92,7 +92,7 @@ export fn state_get_subscriptions(borrow store: StateStore) -> string[] {
     return split_lines(raw);
 }
 
-export fn state_update_subscription_id(own store: StateStore, uri: string, id: string) -> StateStore {
+export fn state_update_subscription_id(own store: StateStore, borrow uri: string, borrow id: string) -> StateStore {
     let raw = store_get(store, "sub_ids");
     let parts: string[] = split_lines(raw);
     let mut updated: string[] = slice([""], 0, 0);

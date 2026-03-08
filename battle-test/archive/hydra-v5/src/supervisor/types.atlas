@@ -11,7 +11,7 @@ enum ServerState {
 }
 
 // String returns the string representation of ServerState
-fn server_state_to_string(state: ServerState) -> string {
+fn server_state_to_string(borrow state: ServerState) -> string {
     return match state {
         ServerState::Stopped => "stopped",
         ServerState::Starting => "starting",

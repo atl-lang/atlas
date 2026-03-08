@@ -9,7 +9,7 @@ enum ChunkType {
 }
 
 trait Sanitizer {
-    fn classify(self, chunk: string) -> ChunkType;
+    fn classify(self, borrow chunk: string) -> ChunkType;
 }
 
 struct OutputSanitizer {}
@@ -19,7 +19,7 @@ fn newSanitizer() -> OutputSanitizer {
 }
 
 impl Sanitizer for OutputSanitizer {
-    fn classify(self, chunk: string) -> ChunkType {
+    fn classify(self, borrow chunk: string) -> ChunkType {
         let trimmed: string = chunk.trim();
         
         if trimmed.len() == 0 {

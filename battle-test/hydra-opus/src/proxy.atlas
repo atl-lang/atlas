@@ -1,0 +1,236 @@
+// proxy.atlas - Main proxy orchestration
+// Port of: internal/proxy/proxy.go, types.go
+
+// ProxyState represents the current state of the proxy
+enum ProxyState {
+    Stopped,
+    Starting,
+    Running,
+    Restarting,
+    Failed
+}
+
+fn proxy_state_to_string(state: ProxyState) -> string {
+    return match state {
+        ProxyState::Stopped => "stopped",
+        ProxyState::Starting => "starting",
+        ProxyState::Running => "running",
+        ProxyState::Restarting => "restarting",
+        ProxyState::Failed => "failed"
+    };
+}
+
+// ProxyStatus exposes current proxy metrics
+struct ProxyStatus {
+    state: ProxyState,
+    pid: number,
+    uptime_ms: number,
+    restarts_in_window: number,
+    queue_size: number,
+    can_recover: bool,
+    last_restart_reason: string,
+    last_error: string
+}
+
+// ProxyOptions configure proxy behavior
+struct ProxyOptions {
+    queue_size: number,
+    queue_ttl_ms: number,
+    collision_policy: string,
+    crash_export_path: string,
+    crash_export_enabled: bool
+}
+
+// Default proxy options
+fn default_proxy_options() -> ProxyOptions {
+    return ProxyOptions {
+        queue_size: 100,
+        queue_ttl_ms: 30000,
+        collision_policy: "error",
+        crash_export_path: "/tmp/hydra-traffic-crash.json",
+        crash_export_enabled: true
+    };
+}
+
+// QueuedMessage represents a message waiting during restart
+struct QueuedMessage {
+    id: any,
+    method: string,
+    params: any,
+    queued_at_ms: number
+}
+
+// MessageQueue manages messages during restarts
+struct MessageQueue {
+    messages: QueuedMessage[],
+    max_size: number,
+    ttl_ms: number
+}
+
+// Creates a new message queue
+fn new_queue(max_size: number, ttl_ms: number) -> MessageQueue {
+    return MessageQueue {
+        messages: [],
+        max_size: max_size,
+        ttl_ms: ttl_ms
+    };
+}
+
+// Enqueue a message
+fn queue_enqueue(q: MessageQueue, msg: QueuedMessage) -> Result<MessageQueue, string> {
+    if len(q.messages) >= q.max_size {
+        return Err("queue full");
+    }
+
+    return Ok(MessageQueue {
+        messages: arrayPush(q.messages, msg),
+        max_size: q.max_size,
+        ttl_ms: q.ttl_ms
+    });
+}
+
+// Dequeue all messages (with TTL filtering)
+fn queue_drain(q: MessageQueue) -> MessageQueue {
+    let now = dateTimeToTimestamp(dateTimeNow());
+
+    // Filter out expired messages
+    let valid = filter(q.messages, fn(msg: QueuedMessage) -> bool {
+        return (now - msg.queued_at_ms) < q.ttl_ms;
+    });
+
+    return MessageQueue {
+        messages: [],
+        max_size: q.max_size,
+        ttl_ms: q.ttl_ms
+    };
+}
+
+// Queue size
+fn queue_size(q: MessageQueue) -> number {
+    return len(q.messages);
+}
+
+// Proxy orchestrates routing between client and child MCP server
+struct Proxy {
+    state: ProxyState,
+    queue: MessageQueue,
+    options: ProxyOptions,
+    hydra_tools: ToolDefinition[],
+    last_restart_reason: string,
+    last_error: string,
+    started_ms: number,
+    restarts_in_window: number,
+    max_restarts: number
+}
+
+// Creates a new proxy
+fn new_proxy(options: ProxyOptions, tools: ToolDefinition[]) -> Proxy {
+    return Proxy {
+        state: ProxyState::Stopped,
+        queue: new_queue(options.queue_size, options.queue_ttl_ms),
+        options: options,
+        hydra_tools: tools,
+        last_restart_reason: "",
+        last_error: "",
+        started_ms: 0,
+        restarts_in_window: 0,
+        max_restarts: 10
+    };
+}
+
+// Get proxy status
+fn proxy_status(p: Proxy) -> ProxyStatus {
+    let now = dateTimeToTimestamp(dateTimeNow());
+    let uptime = if p.started_ms > 0 { now - p.started_ms } else { 0 };
+
+    return ProxyStatus {
+        state: p.state,
+        pid: 0,  // Would come from supervisor
+        uptime_ms: uptime,
+        restarts_in_window: p.restarts_in_window,
+        queue_size: queue_size(p.queue),
+        can_recover: p.state == ProxyState::Failed,
+        last_restart_reason: p.last_restart_reason,
+        last_error: p.last_error
+    };
+}
+
+// Start the proxy
+fn proxy_start(p: Proxy) -> Result<Proxy, string> {
+    if p.state == ProxyState::Running {
+        return Err("proxy already running");
+    }
+
+    return Ok(Proxy {
+        state: ProxyState::Running,
+        queue: p.queue,
+        options: p.options,
+        hydra_tools: p.hydra_tools,
+        last_restart_reason: p.last_restart_reason,
+        last_error: "",
+        started_ms: dateTimeToTimestamp(dateTimeNow()),
+        restarts_in_window: p.restarts_in_window,
+        max_restarts: p.max_restarts
+    });
+}
+
+// Stop the proxy
+fn proxy_shutdown(p: Proxy) -> Proxy {
+    return Proxy {
+        state: ProxyState::Stopped,
+        queue: new_queue(p.options.queue_size, p.options.queue_ttl_ms),
+        options: p.options,
+        hydra_tools: p.hydra_tools,
+        last_restart_reason: p.last_restart_reason,
+        last_error: p.last_error,
+        started_ms: 0,
+        restarts_in_window: 0,
+        max_restarts: p.max_restarts
+    };
+}
+
+// Handle crash loop
+fn proxy_crash_loop(p: Proxy, error: string) -> Proxy {
+    let new_restarts = p.restarts_in_window + 1;
+
+    let new_state = if new_restarts > p.max_restarts {
+        ProxyState::Failed
+    } else {
+        ProxyState::Restarting
+    };
+
+    return Proxy {
+        state: new_state,
+        queue: p.queue,
+        options: p.options,
+        hydra_tools: p.hydra_tools,
+        last_restart_reason: "crash",
+        last_error: error,
+        started_ms: p.started_ms,
+        restarts_in_window: new_restarts,
+        max_restarts: p.max_restarts
+    };
+}
+
+// Check if message is a hydra tool call
+fn is_hydra_tool_call(method: string) -> bool {
+    return startsWith(method, "hydra_");
+}
+
+// Route a client message
+fn route_client_message(p: Proxy, message: any) -> Result<Proxy, string> {
+    // Parse message to check for hydra tools
+    let method_opt = jsonGetString(message, "method");
+
+    if is_ok(method_opt) {
+        let method = unwrap(method_opt);
+
+        if is_hydra_tool_call(method) {
+            // Handle internally
+            return Ok(p);
+        }
+    }
+
+    // Forward to child (in real implementation)
+    return Ok(p);
+}

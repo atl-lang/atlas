@@ -116,11 +116,13 @@ if [[ "$PARITY_STATUS" == "pass" ]]; then
 fi
 
 # ── Check 5: battle tests ─────────────────────────────────────────────────────
-# Active suites: hydra-v6 (latest hydra round) + atlas-full-audit (domain coverage)
-# Archived rounds (hydra-v2 through v5) live in battle-test/archive/ — not run by CI
+# Active suites:
+#   hydra-opus     — Opus port of Hydra (Go→Atlas), real-world complexity
+#   atlas-full-audit — domain coverage matrix (47 files, primitives→async→stdlib)
+# Archived: hydra-v2 through v6 in battle-test/archive/ — not run by CI
 BATTLE_FAILED_FILES=""
 for BATTLE_DIR in \
-  "$PROJECT_ROOT/battle-test/hydra-v6" \
+  "$PROJECT_ROOT/battle-test/hydra-opus" \
   "$PROJECT_ROOT/battle-test/atlas-full-audit"; do
   log "battle tests ($(basename "$BATTLE_DIR")/)"
   if [[ -d "$BATTLE_DIR" ]]; then
@@ -142,7 +144,7 @@ for BATTLE_DIR in \
   fi
 done
 if [[ "$BATTLE_STATUS" == "pass" ]]; then
-  pass "battle tests (hydra-v6 + atlas-full-audit)"
+  pass "battle tests (hydra-opus + atlas-full-audit)"
 fi
 
 # ── Check 6: corpus tests ─────────────────────────────────────────────────────

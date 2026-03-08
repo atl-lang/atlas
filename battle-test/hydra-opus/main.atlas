@@ -1,0 +1,247 @@
+// main.atlas - Hydra MCP Supervisor entry point
+// Atlas port of the Go Hydra implementation
+
+// ============================================================================
+// Import all modules (Atlas uses file-based organization)
+// ============================================================================
+
+// Config module - configuration types and defaults
+// src/config.atlas
+
+// Supervisor module - process lifecycle management
+// src/supervisor.atlas
+
+// Transport module - message framing (NDJSON/LSP)
+// src/transport.atlas
+
+// Sanitizer module - validate JSON-RPC, filter pollution
+// src/sanitizer.atlas
+
+// Metrics module - performance tracking and health scoring
+// src/metrics.atlas
+
+// Security module - redaction, rate limiting, size limiting
+// src/security.atlas
+
+// Adaptive module - configuration optimization via learning
+// src/adaptive.atlas
+
+// StateStore module - session state persistence
+// src/statestore.atlas
+
+// Watcher module - file system hot-reload
+// src/watcher.atlas
+
+// Injectable module - hydra_* tool injection
+// src/injectable.atlas
+
+// Proxy module - main message routing orchestration
+// src/proxy.atlas
+
+// ============================================================================
+// Main application
+// ============================================================================
+
+fn main() -> void {
+    print("Hydra MCP Supervisor - Atlas Port");
+    print("==================================");
+    print("");
+
+    // Test configuration
+    test_config();
+
+    // Test supervisor state machine
+    test_supervisor();
+
+    // Test sanitizer
+    test_sanitizer();
+
+    // Test metrics
+    test_metrics();
+
+    // Test adaptive learning
+    test_adaptive();
+
+    // Test proxy
+    test_proxy();
+
+    print("");
+    print("All module tests completed.");
+}
+
+// ============================================================================
+// Module Tests
+// ============================================================================
+
+fn test_config() -> void {
+    print("[Config] Testing configuration...");
+
+    // Create default registry
+    let registry = default_registry();
+    print(`  Version: {registry.version}`);
+    print(`  Default debounce_ms: {registry.defaults.debounce_ms}`);
+
+    // Create default server config
+    let server = default_server_config();
+    print(`  Default max_restarts: {server.behavior.max_restarts}`);
+    print(`  Watch extensions: {str(server.watch.extensions)}`);
+
+    print("[Config] OK");
+}
+
+fn test_supervisor() -> void {
+    print("[Supervisor] Testing process lifecycle...");
+
+    // Test ServerState enum
+    let state = ServerState::Running;
+    print(`  State: {server_state_to_string(state)}`);
+
+    // Test state transitions
+    let stopped = ServerState::Stopped;
+    let starting = ServerState::Starting;
+    let failed = ServerState::Failed;
+
+    print(`  Stopped: {server_state_to_string(stopped)}`);
+    print(`  Starting: {server_state_to_string(starting)}`);
+    print(`  Failed: {server_state_to_string(failed)}`);
+
+    // Create supervisor
+    let sup = new_supervisor(
+        "python3",
+        ["server.py"],
+        "/tmp",
+        hashMapNew(),
+        10,
+        60,
+        2000
+    );
+
+    print(`  Supervisor created, state: {server_state_to_string(sup.current_state)}`);
+
+    print("[Supervisor] OK");
+}
+
+fn test_sanitizer() -> void {
+    print("[Sanitizer] Testing JSON-RPC classification...");
+
+    let sanitizer = new_sanitizer(true);
+
+    // Test valid JSON-RPC
+    let valid_jsonrpc = "{\"jsonrpc\": \"2.0\", \"method\": \"test\", \"id\": 1}";
+    let chunk_type = sanitizer.classify(valid_jsonrpc);
+    print(`  Valid JSON-RPC classified as: {chunk_type_to_string(chunk_type)}`);
+
+    // Test pollution
+    let pollution = "DEBUG: Starting server...";
+    let pollution_type = sanitizer.classify(pollution);
+    print(`  Pollution classified as: {chunk_type_to_string(pollution_type)}`);
+
+    // Test empty
+    let empty_type = sanitizer.classify("");
+    print(`  Empty classified as: {chunk_type_to_string(empty_type)}`);
+
+    print("[Sanitizer] OK");
+}
+
+fn test_metrics() -> void {
+    print("[Metrics] Testing metrics collection...");
+
+    let collector = new_metrics_collector();
+
+    // Record some requests
+    collector.record_request(50, true);
+    collector.record_request(100, true);
+    collector.record_request(200, false);
+
+    // Record restart
+    collector.record_restart("file_change");
+
+    // Get snapshot
+    let snap = collector.snapshot();
+    print(`  Requests total: {snap.requests_total}`);
+    print(`  Requests success: {snap.requests_success}`);
+    print(`  Requests failed: {snap.requests_failed}`);
+    print(`  Avg latency: {snap.avg_latency_ms}ms`);
+
+    // Get health score
+    let health = collector.health_score();
+    print(`  Health score: {health}`);
+
+    print("[Metrics] OK");
+}
+
+fn test_adaptive() -> void {
+    print("[Adaptive] Testing adaptive learning...");
+
+    let learner = new_learner();
+
+    // Record some observations
+    let ctx = hashMapNew();
+    learner = observe(learner, "restart", ctx);
+    learner = observe(learner, "restart", ctx);
+    learner = observe(learner, "queue_full", ctx);
+
+    print(`  Observations recorded: {len(learner.observations)}`);
+
+    // Create config for analysis
+    let config = hashMapNew();
+    config = hashMapPut(config, "max_restarts", 10);
+    config = hashMapPut(config, "queue_size", 100);
+    config = hashMapPut(config, "debounce_ms", 500);
+
+    // Create mock snapshot
+    let snap = MetricsSnapshot {
+        requests_total: 100,
+        requests_success: 95,
+        requests_failed: 5,
+        restarts_total: 3,
+        queue_waits_total: 10,
+        avg_latency_ms: 50,
+        p50_latency_ms: 45,
+        p95_latency_ms: 100,
+        p99_latency_ms: 150,
+        max_latency_ms: 200,
+        avg_queue_wait_ms: 10,
+        max_queue_wait_ms: 50,
+        start_time_ms: 0,
+        uptime_ms: 3600000,
+        restart_reasons: hashMapNew()
+    };
+
+    let suggestions = analyze(learner, snap, config);
+    print(`  Suggestions generated: {len(suggestions)}`);
+
+    print("[Adaptive] OK");
+}
+
+fn test_proxy() -> void {
+    print("[Proxy] Testing proxy orchestration...");
+
+    // Create proxy
+    let options = default_proxy_options();
+    let tools = default_tool_definitions();
+    let proxy = new_proxy(options, tools);
+
+    print(`  Proxy state: {proxy_state_to_string(proxy.state)}`);
+    print(`  Hydra tools: {len(proxy.hydra_tools)}`);
+
+    // Start proxy
+    let start_result = proxy_start(proxy);
+    if is_ok(start_result) {
+        let running_proxy = unwrap(start_result);
+        print(`  After start: {proxy_state_to_string(running_proxy.state)}`);
+
+        // Get status
+        let status = proxy_status(running_proxy);
+        print(`  Queue size: {status.queue_size}`);
+        print(`  Can recover: {status.can_recover}`);
+    }
+
+    print("[Proxy] OK");
+}
+
+// ============================================================================
+// Run main
+// ============================================================================
+
+main();

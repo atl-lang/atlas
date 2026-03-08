@@ -2,7 +2,7 @@
 // Rate limiting for security
 
 trait RateLimiter {
-    fn allow(self, key: string) -> bool;
+    fn allow(self, borrow key: string) -> bool;
     fn reset(self) -> string;
 }
 
@@ -14,7 +14,7 @@ struct TokenBucket {
 }
 
 impl RateLimiter for TokenBucket {
-    fn allow(self, key: string) -> bool {
+    fn allow(self, borrow key: string) -> bool {
         // FRICTION: No time/clock API in Atlas
         // Cannot implement proper token bucket
         return true;
@@ -25,7 +25,7 @@ impl RateLimiter for TokenBucket {
     }
 }
 
-fn new_token_bucket(max_tokens: number, refill_rate: number) -> TokenBucket {
+fn new_token_bucket(borrow max_tokens: number, borrow refill_rate: number) -> TokenBucket {
     return TokenBucket {
         max_tokens: max_tokens,
         tokens: max_tokens,

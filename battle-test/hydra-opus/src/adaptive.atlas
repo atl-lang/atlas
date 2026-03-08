@@ -1,0 +1,212 @@
+// adaptive.atlas - Adaptive learning system for configuration optimization
+// Port of: internal/adaptive/learner.go
+
+// Suggestion represents an adaptive configuration suggestion
+struct Suggestion {
+    parameter: string,      // "max_restarts", "queue_size", "debounce_ms"
+    current: number,        // Current value
+    suggested: number,      // Suggested value
+    confidence: number,     // 0.0-1.0 confidence score
+    reason: string          // Human-readable explanation
+}
+
+// Observation records an event for learning
+struct Observation {
+    timestamp_ms: number,
+    event: string,          // "restart", "queue_full", "high_latency", "crash_loop"
+    context: HashMap<string, any>
+}
+
+// Learner analyzes observations and suggests configuration improvements
+struct Learner {
+    observations: Observation[]
+}
+
+// Creates a new adaptive learner
+fn new_learner() -> Learner {
+    return Learner {
+        observations: []
+    };
+}
+
+// Records an event for later analysis
+fn observe(learner: Learner, event: string, ctx: HashMap<string, any>) -> Learner {
+    let obs = Observation {
+        timestamp_ms: dateTimeToTimestamp(dateTimeNow()),
+        event: event,
+        context: ctx
+    };
+
+    return Learner {
+        observations: arrayPush(learner.observations, obs)
+    };
+}
+
+// Analyzes observations and generates configuration suggestions
+fn analyze(learner: Learner, snapshot: MetricsSnapshot, current_config: HashMap<string, number>) -> Suggestion[] {
+    let suggestions: Suggestion[] = [];
+
+    // Rule 1: Restart count < 50% max? Suggest lowering threshold
+    let restart_suggestions = analyze_restart_threshold(learner, snapshot, current_config);
+    suggestions = concat(suggestions, restart_suggestions);
+
+    // Rule 2: Queue frequently near capacity? Suggest increasing
+    let queue_suggestions = analyze_queue_capacity(learner, current_config);
+    suggestions = concat(suggestions, queue_suggestions);
+
+    // Rule 3: Latency spikes correlate with restarts? Suggest higher debounce
+    let latency_suggestions = analyze_latency_spikes(learner, current_config);
+    suggestions = concat(suggestions, latency_suggestions);
+
+    // Rule 4: Crash loops occur? Suggest higher restart delay
+    let crash_suggestions = analyze_crash_loops(learner, current_config);
+    suggestions = concat(suggestions, crash_suggestions);
+
+    return suggestions;
+}
+
+// Analyze restart threshold
+fn analyze_restart_threshold(learner: Learner, snapshot: MetricsSnapshot, config: HashMap<string, number>) -> Suggestion[] {
+    let max_restarts_opt = hashMapGet(config, "max_restarts");
+    let max_restarts = match max_restarts_opt {
+        Some(n) => n,
+        None => 0
+    };
+
+    if max_restarts == 0 {
+        return [];
+    }
+
+    // Count restart observations
+    let restart_obs = count_events(learner.observations, "restart");
+
+    // Need minimum observations
+    if restart_obs < 5 {
+        return [];
+    }
+
+    // If restarts are consistently < 50% of max, suggest lowering
+    let utilization_pct = snapshot.restarts_total / max_restarts;
+
+    if utilization_pct < 0.5 && snapshot.restarts_total > 0 {
+        let confidence = min(1.0, restart_obs / 8);
+        let new_max = max(3, floor(snapshot.restarts_total * 1.5));
+
+        if new_max < max_restarts {
+            return [Suggestion {
+                parameter: "max_restarts",
+                current: max_restarts,
+                suggested: new_max,
+                confidence: confidence,
+                reason: "Restart count consistently below threshold"
+            }];
+        }
+    }
+
+    return [];
+}
+
+// Analyze queue capacity
+fn analyze_queue_capacity(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+    let queue_size_opt = hashMapGet(config, "queue_size");
+    let queue_size = match queue_size_opt {
+        Some(n) => n,
+        None => 0
+    };
+
+    if queue_size == 0 {
+        return [];
+    }
+
+    let queue_full_count = count_events(learner.observations, "queue_full");
+
+    // If queue frequently full (>= 10 observations), suggest increase
+    if queue_full_count >= 10 {
+        let confidence = min(1.0, queue_full_count / 30);
+        let new_size = floor(queue_size * 1.5);
+
+        return [Suggestion {
+            parameter: "queue_size",
+            current: queue_size,
+            suggested: new_size,
+            confidence: confidence,
+            reason: "Queue frequently near capacity"
+        }];
+    }
+
+    return [];
+}
+
+// Analyze latency spikes
+fn analyze_latency_spikes(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+    let debounce_ms_opt = hashMapGet(config, "debounce_ms");
+    let debounce_ms = match debounce_ms_opt {
+        Some(n) => n,
+        None => 0
+    };
+
+    if debounce_ms == 0 {
+        return [];
+    }
+
+    // Count high_latency observations near restarts
+    let high_latency_count = filter(learner.observations, fn(obs: Observation) -> bool {
+        if obs.event != "high_latency" {
+            return false;
+        }
+        let near_restart_opt = hashMapGet(obs.context, "near_restart");
+        return match near_restart_opt {
+            Some(v) => v == true,
+            None => false
+        };
+    });
+
+    if len(high_latency_count) > 5 {
+        let confidence = min(1.0, len(high_latency_count) / 15);
+        let new_debounce = floor(debounce_ms * 2.0);
+
+        return [Suggestion {
+            parameter: "debounce_ms",
+            current: debounce_ms,
+            suggested: new_debounce,
+            confidence: confidence,
+            reason: "Latency spikes correlate with restarts"
+        }];
+    }
+
+    return [];
+}
+
+// Analyze crash loops
+fn analyze_crash_loops(learner: Learner, config: HashMap<string, number>) -> Suggestion[] {
+    let crash_loop_count = count_events(learner.observations, "crash_loop");
+
+    if crash_loop_count > 10 {
+        let debounce_ms_opt = hashMapGet(config, "debounce_ms");
+        let debounce_ms = match debounce_ms_opt {
+            Some(n) => n,
+            None => 500
+        };
+
+        let confidence = min(1.0, crash_loop_count / 20);
+        let new_debounce = floor(debounce_ms * 3.0);
+
+        return [Suggestion {
+            parameter: "debounce_ms",
+            current: debounce_ms,
+            suggested: new_debounce,
+            confidence: confidence,
+            reason: "Crash loops detected - increase restart delay"
+        }];
+    }
+
+    return [];
+}
+
+// Count events of a specific type
+fn count_events(observations: Observation[], event_type: string) -> number {
+    let matching = filter(observations, fn(obs: Observation) -> bool {
+        return obs.event == event_type;
+    });
+    return len(matching);
+}

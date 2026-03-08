@@ -1,0 +1,145 @@
+// config.atlas - Configuration types for Hydra
+// Port of: internal/config/config.go
+
+// Registry represents the global Hydra configuration (~/.hydra/config.json).
+// This is the single source of truth for all MCP servers.
+struct Registry {
+    version: string,
+    defaults: Defaults,
+    servers: HashMap<string, ServerConfig>
+}
+
+// ServerConfig represents a single MCP server configuration.
+// Can exist in registry or local override (./hydra.json).
+struct ServerConfig {
+    command: string,
+    args: string[],
+    cwd: string,
+    env_file: string,
+    environment: HashMap<string, string>,
+    watch: WatchConfig,
+    behavior: BehaviorConfig,
+    injectable_tools: InjectableToolsConfig,
+    recorder: RecorderConfig,
+    security: SecurityConfig
+}
+
+// Defaults holds system-wide default values for all servers.
+struct Defaults {
+    debounce_ms: number,
+    graceful_shutdown_ms: number,
+    max_output_size_kb: number,
+    log_rate_limit_per_second: number,
+    restart_queue_max_messages: number,
+    restart_queue_ttl_seconds: number,
+    restart_timeout_seconds: number
+}
+
+// WatchConfig configures file watching for hot-reload.
+struct WatchConfig {
+    enabled: bool,
+    paths: string[],
+    extensions: string[],
+    ignore_files: string[],
+    ignore: string[]
+}
+
+// BehaviorConfig controls restart and crash loop behavior.
+struct BehaviorConfig {
+    debounce_ms: number,
+    restart_delay_ms: number,
+    max_restarts: number,
+    graceful_shutdown_ms: number,
+    restart_window_seconds: number,
+    pre_restart_command: string
+}
+
+// InjectableToolsConfig configures hydra_* tool injection.
+struct InjectableToolsConfig {
+    enabled: bool,
+    tools: string[],
+    on_collision: string
+}
+
+// RecorderConfig configures traffic recorder.
+struct RecorderConfig {
+    enabled: bool,
+    buffer_size: number,
+    include_request_bodies: bool,
+    include_response_bodies: bool,
+    export_on_crash: bool,
+    export_path: string
+}
+
+// SecurityConfig holds redaction patterns and replacement.
+struct SecurityConfig {
+    redact_patterns: string[],
+    redact_replacement: string
+}
+
+// Creates a new Registry with safe defaults
+fn default_registry() -> Registry {
+    return Registry {
+        version: "1.0",
+        defaults: Defaults {
+            debounce_ms: 500,
+            graceful_shutdown_ms: 2000,
+            max_output_size_kb: 50,
+            log_rate_limit_per_second: 10,
+            restart_queue_max_messages: 100,
+            restart_queue_ttl_seconds: 30,
+            restart_timeout_seconds: 10
+        },
+        servers: hashMapNew()
+    };
+}
+
+// Creates a new ServerConfig with safe defaults
+fn default_server_config() -> ServerConfig {
+    return ServerConfig {
+        command: "",
+        args: [],
+        cwd: "",
+        env_file: "",
+        environment: hashMapNew(),
+        watch: WatchConfig {
+            enabled: false,
+            paths: ["."],
+            extensions: [".py", ".js", ".ts", ".go"],
+            ignore_files: [".gitignore"],
+            ignore: [".git", "node_modules", "__pycache__", ".hydra"]
+        },
+        behavior: BehaviorConfig {
+            debounce_ms: 500,
+            restart_delay_ms: 0,
+            max_restarts: 10,
+            graceful_shutdown_ms: 2000,
+            restart_window_seconds: 60,
+            pre_restart_command: ""
+        },
+        injectable_tools: InjectableToolsConfig {
+            enabled: true,
+            tools: ["hydra_restart", "hydra_logs", "hydra_status", "hydra_force_restart"],
+            on_collision: "error"
+        },
+        recorder: RecorderConfig {
+            enabled: false,
+            buffer_size: 50,
+            include_request_bodies: false,
+            include_response_bodies: false,
+            export_on_crash: true,
+            export_path: "/tmp/hydra-traffic-{timestamp}.json"
+        },
+        security: SecurityConfig {
+            redact_patterns: [
+                "sk-[A-Za-z0-9]{32,}",
+                "API[_-]?KEY",
+                "password",
+                "Bearer [A-Za-z0-9._-]+",
+                "ghp_[A-Za-z0-9]{36}",
+                "xox[baprs]-[A-Za-z0-9-]+"
+            ],
+            redact_replacement: "[REDACTED by Hydra]"
+        }
+    };
+}

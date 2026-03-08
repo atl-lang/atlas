@@ -62,7 +62,7 @@ fn default_options() -> Options {
 }
 
 // Convert ProxyState to string for logging
-fn proxy_state_to_string(state: ProxyState) -> string {
+fn proxy_state_to_string(borrow state: ProxyState) -> string {
     return match state {
         ProxyState::Stopped => "stopped",
         ProxyState::Starting => "starting",

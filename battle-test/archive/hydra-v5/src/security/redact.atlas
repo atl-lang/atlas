@@ -2,7 +2,7 @@
 // Message redaction for sensitive data
 
 trait Redactor {
-    fn redact(self, message: string) -> string;
+    fn redact(self, borrow message: string) -> string;
 }
 
 struct PatternRedactor {
@@ -11,7 +11,7 @@ struct PatternRedactor {
 }
 
 impl Redactor for PatternRedactor {
-    fn redact(self, message: string) -> string {
+    fn redact(self, borrow message: string) -> string {
         let mut result: string = message;
         // FRICTION: No regex API in Atlas
         // Can only do simple string replacement
@@ -19,7 +19,7 @@ impl Redactor for PatternRedactor {
     }
 }
 
-fn new_pattern_redactor(patterns: string[], replacement: string) -> PatternRedactor {
+fn new_pattern_redactor(borrow patterns: string[], borrow replacement: string) -> PatternRedactor {
     return PatternRedactor {
         patterns: patterns,
         replacement: replacement,

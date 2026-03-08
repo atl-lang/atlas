@@ -10,7 +10,7 @@ struct State {
 }
 
 trait StateManager {
-    fn save_state(self, server_name: string, pid: number, uptime_ms: number) -> Result<string, string>;
+    fn save_state(self, borrow server_name: string, borrow pid: number, borrow uptime_ms: number) -> Result<string, string>;
     fn load_state(self, server_name: string) -> Result<State, string>;
     fn delete_state(self, server_name: string) -> Result<string, string>;
 }
@@ -43,7 +43,7 @@ impl StateManager for FileStateManager {
     }
 }
 
-fn new_file_state_manager(state_dir: string) -> FileStateManager {
+fn new_file_state_manager(borrow state_dir: string) -> FileStateManager {
     return FileStateManager {
         state_dir: state_dir,
     };

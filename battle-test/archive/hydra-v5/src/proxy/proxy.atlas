@@ -30,7 +30,7 @@ impl Proxy for ProxyImpl {
     }
 }
 
-fn new_proxy(name: string, options: Options) -> ProxyImpl {
+fn new_proxy(borrow name: string, borrow options: Options) -> ProxyImpl {
     let status = ProxyStatus {
         state: ProxyState::Stopped,
         pid: 0,

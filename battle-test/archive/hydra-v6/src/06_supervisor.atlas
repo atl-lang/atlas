@@ -23,7 +23,7 @@ trait Supervisor {
     fn incrementRestarts(self) -> ProcessSupervisor;
 }
 
-fn newSupervisor(maxRestarts: number) -> ProcessSupervisor {
+fn newSupervisor(borrow maxRestarts: number) -> ProcessSupervisor {
     return ProcessSupervisor {
         state: ServerState::Stopped,
         pid: 0,

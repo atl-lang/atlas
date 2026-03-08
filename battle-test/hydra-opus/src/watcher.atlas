@@ -1,0 +1,134 @@
+// watcher.atlas - File system watching for hot-reload
+// Port of: internal/watcher/watcher.go, fswatch.go
+
+// WatchEvent represents a file system change event
+struct WatchEvent {
+    path: string,
+    timestamp_ms: number
+}
+
+// Watcher trait - monitors file system changes with debouncing
+trait Watcher {
+    fn start(self) -> Result<void, string>;
+    fn stop(self) -> Result<void, string>;
+    fn events(self) -> WatchEvent[];
+}
+
+// FSWatcher implements file system watching
+struct FSWatcher {
+    paths: string[],
+    extensions: string[],
+    ignore_patterns: string[],
+    debounce_ms: number,
+    is_running: bool,
+    pending_events: WatchEvent[],
+    last_event_ms: number
+}
+
+// Creates a new file system watcher
+fn new_watcher(
+    paths: string[],
+    extensions: string[],
+    ignore: string[],
+    debounce_ms: number
+) -> FSWatcher {
+    return FSWatcher {
+        paths: paths,
+        extensions: extensions,
+        ignore_patterns: ignore,
+        debounce_ms: debounce_ms,
+        is_running: false,
+        pending_events: [],
+        last_event_ms: 0
+    };
+}
+
+impl Watcher for FSWatcher {
+    fn start(self) -> Result<void, string> {
+        if self.is_running {
+            return Err("watcher already running");
+        }
+
+        // In real implementation, would set up file system notify
+        // Atlas doesn't have native fs watch - would need external process
+        self.is_running = true;
+        return Ok(null);
+    }
+
+    fn stop(self) -> Result<void, string> {
+        if !self.is_running {
+            return Ok(null);
+        }
+
+        self.is_running = false;
+        self.pending_events = [];
+        return Ok(null);
+    }
+
+    fn events(self) -> WatchEvent[] {
+        // Return and clear pending events
+        let events = self.pending_events;
+        self.pending_events = [];
+        return events;
+    }
+}
+
+// Check if a path should be ignored
+fn should_ignore(watcher: FSWatcher, path: string) -> bool {
+    // Check ignore patterns
+    for i in 0..len(watcher.ignore_patterns) {
+        let pattern = watcher.ignore_patterns[i];
+        if includes(path, pattern) {
+            return true;
+        }
+    }
+
+    // Check extensions - path must end with one of them
+    if len(watcher.extensions) > 0 {
+        let has_valid_ext = false;
+        for i in 0..len(watcher.extensions) {
+            let ext = watcher.extensions[i];
+            if endsWith(path, ext) {
+                has_valid_ext = true;
+            }
+        }
+        if !has_valid_ext {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+// Process a file change event (called externally)
+fn process_file_change(watcher: FSWatcher, path: string) -> FSWatcher {
+    if !watcher.is_running {
+        return watcher;
+    }
+
+    if should_ignore(watcher, path) {
+        return watcher;
+    }
+
+    let now = dateTimeToTimestamp(dateTimeNow());
+
+    // Debounce: skip if too soon after last event
+    if now - watcher.last_event_ms < watcher.debounce_ms {
+        return watcher;
+    }
+
+    let event = WatchEvent {
+        path: path,
+        timestamp_ms: now
+    };
+
+    return FSWatcher {
+        paths: watcher.paths,
+        extensions: watcher.extensions,
+        ignore_patterns: watcher.ignore_patterns,
+        debounce_ms: watcher.debounce_ms,
+        is_running: watcher.is_running,
+        pending_events: arrayPush(watcher.pending_events, event),
+        last_event_ms: now
+    };
+}

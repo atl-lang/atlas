@@ -1,0 +1,144 @@
+// injectable.atlas - Hydra tool injection into MCP sessions
+// Port of: internal/injectable/tools.go, tool_definitions.go
+
+// ToolDefinition represents an injectable tool schema
+struct ToolDefinition {
+    name: string,
+    description: string,
+    input_schema: HashMap<string, any>
+}
+
+// ToolResult represents the result of executing a tool
+struct ToolResult {
+    success: bool,
+    content: string,
+    error: Option<string>
+}
+
+// Get the definition for a named tool
+fn get_tool_definition(name: string) -> Option<ToolDefinition> {
+    return match name {
+        "hydra_restart" => Some(ToolDefinition {
+            name: "hydra_restart",
+            description: "Manually restart the supervised MCP server.",
+            input_schema: build_restart_schema()
+        }),
+        "hydra_status" => Some(ToolDefinition {
+            name: "hydra_status",
+            description: "Get current Hydra supervisor status.",
+            input_schema: build_empty_schema()
+        }),
+        "hydra_logs" => Some(ToolDefinition {
+            name: "hydra_logs",
+            description: "Retrieve recent child stderr logs.",
+            input_schema: build_logs_schema()
+        }),
+        "hydra_metrics" => Some(ToolDefinition {
+            name: "hydra_metrics",
+            description: "Get comprehensive Hydra proxy metrics including health score, request stats, and latency percentiles.",
+            input_schema: build_empty_schema()
+        }),
+        "hydra_force_restart" => Some(ToolDefinition {
+            name: "hydra_force_restart",
+            description: "Force restart even if in FAILED state.",
+            input_schema: build_force_restart_schema()
+        }),
+        _ => None
+    };
+}
+
+// Build schema for hydra_restart
+fn build_restart_schema() -> HashMap<string, any> {
+    let properties = hashMapNew();
+    let reason_prop = hashMapNew();
+    reason_prop = hashMapPut(reason_prop, "type", "string");
+    reason_prop = hashMapPut(reason_prop, "description", "Optional reason for restart");
+    properties = hashMapPut(properties, "reason", reason_prop);
+
+    let schema = hashMapNew();
+    schema = hashMapPut(schema, "type", "object");
+    schema = hashMapPut(schema, "properties", properties);
+    return schema;
+}
+
+// Build empty schema
+fn build_empty_schema() -> HashMap<string, any> {
+    let schema = hashMapNew();
+    schema = hashMapPut(schema, "type", "object");
+    schema = hashMapPut(schema, "properties", hashMapNew());
+    return schema;
+}
+
+// Build schema for hydra_logs
+fn build_logs_schema() -> HashMap<string, any> {
+    let properties = hashMapNew();
+    let lines_prop = hashMapNew();
+    lines_prop = hashMapPut(lines_prop, "type", "number");
+    lines_prop = hashMapPut(lines_prop, "description", "Number of recent log lines to retrieve");
+    lines_prop = hashMapPut(lines_prop, "minimum", 1);
+    lines_prop = hashMapPut(lines_prop, "maximum", 500);
+    properties = hashMapPut(properties, "lines", lines_prop);
+
+    let schema = hashMapNew();
+    schema = hashMapPut(schema, "type", "object");
+    schema = hashMapPut(schema, "properties", properties);
+    return schema;
+}
+
+// Build schema for hydra_force_restart
+fn build_force_restart_schema() -> HashMap<string, any> {
+    let properties = hashMapNew();
+    let confirm_prop = hashMapNew();
+    confirm_prop = hashMapPut(confirm_prop, "type", "boolean");
+    confirm_prop = hashMapPut(confirm_prop, "description", "Must be true to confirm force restart");
+    properties = hashMapPut(properties, "confirm", confirm_prop);
+
+    let schema = hashMapNew();
+    schema = hashMapPut(schema, "type", "object");
+    schema = hashMapPut(schema, "properties", properties);
+    schema = hashMapPut(schema, "required", ["confirm"]);
+    return schema;
+}
+
+// Get all default tool definitions
+fn default_tool_definitions() -> ToolDefinition[] {
+    return [
+        unwrap(get_tool_definition("hydra_restart")),
+        unwrap(get_tool_definition("hydra_status")),
+        unwrap(get_tool_definition("hydra_logs")),
+        unwrap(get_tool_definition("hydra_metrics")),
+        unwrap(get_tool_definition("hydra_force_restart"))
+    ];
+}
+
+// Check if a tool name conflicts with existing tools
+fn has_collision(tool_name: string, existing_tools: string[]) -> bool {
+    return arrayIncludes(existing_tools, tool_name);
+}
+
+// Merge hydra tools with existing tools based on collision policy
+fn merge_tools(
+    hydra_tools: ToolDefinition[],
+    existing_tool_names: string[],
+    policy: string
+) -> Result<ToolDefinition[], string> {
+    let result: ToolDefinition[] = [];
+
+    for i in 0..len(hydra_tools) {
+        let tool = hydra_tools[i];
+
+        if has_collision(tool.name, existing_tool_names) {
+            if policy == "error" {
+                return Err(`tool collision: {tool.name} already exists`);
+            } else if policy == "skip" {
+                // Skip this tool
+            } else if policy == "override" {
+                result = arrayPush(result, tool);
+            }
+        } else {
+            result = arrayPush(result, tool);
+        }
+    }
+
+    return Ok(result);
+}

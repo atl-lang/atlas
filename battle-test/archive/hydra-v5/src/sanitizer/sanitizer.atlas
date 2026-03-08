@@ -16,8 +16,8 @@ struct SanitizedMessage {
 }
 
 trait Sanitizer {
-    fn sanitize(self, message: string) -> Result<SanitizedMessage, string>;
-    fn classify(self, message: string) -> MessageType;
+    fn sanitize(self, borrow message: string) -> Result<SanitizedMessage, string>;
+    fn classify(self, borrow message: string) -> MessageType;
 }
 
 struct JSONSanitizer {
@@ -25,7 +25,7 @@ struct JSONSanitizer {
 }
 
 impl Sanitizer for JSONSanitizer {
-    fn sanitize(self, message: string) -> Result<SanitizedMessage, string> {
+    fn sanitize(self, borrow message: string) -> Result<SanitizedMessage, string> {
         let size_bytes = len(message);
         let max_size_bytes = self.max_size_kb * 1024;
 
@@ -45,14 +45,14 @@ impl Sanitizer for JSONSanitizer {
         });
     }
 
-    fn classify(self, message: string) -> MessageType {
+    fn classify(self, borrow message: string) -> MessageType {
         // FRICTION: No regex or pattern matching on JSON
         // Default to Request for now
         return MessageType::Request;
     }
 }
 
-fn new_json_sanitizer(max_size_kb: number) -> JSONSanitizer {
+fn new_json_sanitizer(borrow max_size_kb: number) -> JSONSanitizer {
     return JSONSanitizer {
         max_size_kb: max_size_kb,
     };

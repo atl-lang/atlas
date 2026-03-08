@@ -8,7 +8,7 @@ enum Protocol {
     LSP,
 }
 
-fn protocolName(p: Protocol) -> string {
+fn protocolName(borrow p: Protocol) -> string {
     return match p {
         Protocol::Unknown => "unknown",
         Protocol::NDJSON => "ndjson",
@@ -17,7 +17,7 @@ fn protocolName(p: Protocol) -> string {
 }
 
 trait Transport {
-    fn detectProtocol(self, data: string) -> Result<Protocol, string>;
+    fn detectProtocol(self, borrow data: string) -> Result<Protocol, string>;
 }
 
 struct StdioTransport {
@@ -29,7 +29,7 @@ fn newTransport() -> StdioTransport {
 }
 
 impl Transport for StdioTransport {
-    fn detectProtocol(self, data: string) -> Result<Protocol, string> {
+    fn detectProtocol(self, borrow data: string) -> Result<Protocol, string> {
         if data.includes("Content-Length:") {
             return Ok(Protocol::LSP);
         }

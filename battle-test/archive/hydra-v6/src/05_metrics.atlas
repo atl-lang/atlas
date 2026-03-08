@@ -26,7 +26,7 @@ impl HealthScore for HealthComponents {
     }
 }
 
-fn newHealthComponents(uptime: number, errors: number, latency: number, queue: number, restarts: number) -> HealthComponents {
+fn newHealthComponents(borrow uptime: number, borrow errors: number, borrow latency: number, borrow queue: number, borrow restarts: number) -> HealthComponents {
     return HealthComponents {
         uptimeStability: uptime,
         errorRate: errors,

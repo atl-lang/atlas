@@ -2,8 +2,8 @@
 // Message routing between client and child
 
 trait Router {
-    fn route_client_message(self, payload: string) -> Result<string, string>;
-    fn route_child_message(self, payload: string) -> Result<string, string>;
+    fn route_client_message(self, borrow payload: string) -> Result<string, string>;
+    fn route_child_message(self, borrow payload: string) -> Result<string, string>;
 }
 
 struct MessageRouter {
@@ -12,18 +12,18 @@ struct MessageRouter {
 }
 
 impl Router for MessageRouter {
-    fn route_client_message(self, payload: string) -> Result<string, string> {
+    fn route_client_message(self, borrow payload: string) -> Result<string, string> {
         // FRICTION: No stdio write API
         return Ok("routed to child");
     }
 
-    fn route_child_message(self, payload: string) -> Result<string, string> {
+    fn route_child_message(self, borrow payload: string) -> Result<string, string> {
         // FRICTION: No stdio write API
         return Ok("routed to client");
     }
 }
 
-fn new_message_router(client_id: string, server_id: string) -> MessageRouter {
+fn new_message_router(borrow client_id: string, borrow server_id: string) -> MessageRouter {
     return MessageRouter {
         client_id: client_id,
         server_id: server_id,
