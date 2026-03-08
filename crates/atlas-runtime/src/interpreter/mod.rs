@@ -154,6 +154,17 @@ impl Interpreter {
         interpreter.register_builtin("padStart", 3);
         interpreter.register_builtin("padEnd", 3);
 
+        // Static namespace sentinels (Json, Math, Env)
+        // These are immutable globals that eval_member uses to dispatch namespace calls.
+        for ns in ["Json", "Math", "Env"] {
+            let sentinel = crate::value::Value::Builtin(std::sync::Arc::from(
+                format!("__ns__{}", ns).as_str(),
+            ));
+            interpreter
+                .globals
+                .insert(ns.to_string(), (sentinel, false));
+        }
+
         interpreter
     }
 

@@ -470,8 +470,19 @@ impl Compiler {
             self.bytecode.emit(Opcode::Constant, member.span);
             self.bytecode.emit_u16(const_idx);
 
-            // Compile target (becomes first argument)
-            self.compile_expr(&member.target)?;
+            // For static namespaces (Json/Math/Env), the target is a sentinel — not a receiver.
+            // Skip compiling it as an argument.
+            let is_ns = matches!(
+                type_tag,
+                crate::method_dispatch::TypeTag::JsonNs
+                    | crate::method_dispatch::TypeTag::MathNs
+                    | crate::method_dispatch::TypeTag::EnvNs
+            );
+
+            if !is_ns {
+                // Compile target (becomes first argument for instance methods)
+                self.compile_expr(&member.target)?;
+            }
 
             // Compile method arguments
             if let Some(args) = &member.args {
@@ -480,8 +491,13 @@ impl Compiler {
                 }
             }
 
-            // Emit call instruction with total argument count (target + args)
-            let arg_count = 1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+            // Emit call instruction
+            let arg_count = if is_ns {
+                // No receiver for namespace calls — only explicit args
+                member.args.as_ref().map(|a| a.len()).unwrap_or(0)
+            } else {
+                1 + member.args.as_ref().map(|a| a.len()).unwrap_or(0)
+            };
             self.bytecode.emit(Opcode::Call, member.span);
             self.bytecode.emit_u8(arg_count as u8);
 

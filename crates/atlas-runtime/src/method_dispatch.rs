@@ -19,6 +19,12 @@ pub enum TypeTag {
     Stack,
     Option,
     Result,
+    /// Static namespace: Json.parse(), Json.stringify(), etc.
+    JsonNs,
+    /// Static namespace: Math.sqrt(), Math.abs(), etc.
+    MathNs,
+    /// Static namespace: Env.get(), Env.set(), Env.unset()
+    EnvNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -35,6 +41,24 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::Stack => resolve_stack_method(method_name),
         TypeTag::Option => resolve_option_method(method_name),
         TypeTag::Result => resolve_result_method(method_name),
+        TypeTag::JsonNs => resolve_json_ns_method(method_name),
+        TypeTag::MathNs => resolve_math_ns_method(method_name),
+        TypeTag::EnvNs => resolve_env_ns_method(method_name),
+    }
+}
+
+/// Check if an identifier name is a static namespace sentinel.
+pub fn is_static_namespace(name: &str) -> bool {
+    matches!(name, "Json" | "Math" | "Env")
+}
+
+/// Map a static namespace identifier to its TypeTag.
+pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
+    match name {
+        "Json" => Some(TypeTag::JsonNs),
+        "Math" => Some(TypeTag::MathNs),
+        "Env" => Some(TypeTag::EnvNs),
+        _ => None,
     }
 }
 
@@ -210,6 +234,52 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
         "isErr" => "isErr",
         "map" => "resultMap",
         "mapErr" => "resultMapErr",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Json.method() → stdlib function name.
+fn resolve_json_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "parse" => "parseJSON",
+        "stringify" => "toJSON",
+        "isValid" => "isValidJSON",
+        "prettify" => "prettifyJSON",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Math.method() → stdlib function name.
+fn resolve_math_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "sqrt" => "sqrt",
+        "abs" => "abs",
+        "floor" => "floor",
+        "ceil" => "ceil",
+        "round" => "round",
+        "min" => "min",
+        "max" => "max",
+        "pow" => "pow",
+        "log" => "log",
+        "sin" => "sin",
+        "cos" => "cos",
+        "tan" => "tan",
+        "clamp" => "clamp",
+        "sign" => "sign",
+        "random" => "random",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Env.method() → stdlib function name.
+fn resolve_env_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "get" => "getEnv",
+        "set" => "setEnv",
+        "unset" => "unsetEnv",
         _ => return None,
     };
     Some(func_name.to_string())

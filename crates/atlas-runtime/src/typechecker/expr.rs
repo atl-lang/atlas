@@ -427,6 +427,12 @@ impl<'a> TypeChecker<'a> {
                 if expected_type.normalized() == Type::Unknown {
                     continue;
                 }
+                // Skip type check when argument type is Unknown (e.g., returned from a
+                // static namespace call like Json.parse() or Env.get() whose return type
+                // isn't tracked by the typechecker yet).
+                if arg_type.normalized() == Type::Unknown {
+                    continue;
+                }
                 if !self.is_assignable_with_traits(&arg_type, expected_type) {
                     let help = suggestions::suggest_type_mismatch(expected_type, &arg_type)
                         .unwrap_or_else(|| {
@@ -1533,6 +1539,17 @@ impl<'a> TypeChecker<'a> {
 
     /// Check a member expression (method call)
     fn check_member(&mut self, member: &MemberExpr) -> Type {
+        // Fast-path: static namespace identifiers (Json, Math, Env).
+        // These are not registered in the symbol table — detect by identifier name.
+        if let crate::ast::Expr::Identifier(id) = member.target.as_ref() {
+            if let Some(ns_tag) = crate::method_dispatch::namespace_type_tag(&id.name) {
+                member.type_tag.set(Some(ns_tag));
+                // Return type is Unknown for now — could be typed per-method in future.
+                // Runtime dispatch handles the actual call.
+                return Type::Unknown;
+            }
+        }
+
         // Type-check the target expression
         let target_type = self.check_expr(&member.target);
 

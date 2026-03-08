@@ -281,3 +281,6 @@ mod arrays_methods;
 
 #[path = "integration/hashmaps_methods.rs"]
 mod hashmaps_methods;
+
+#[path = "integration/static_namespaces.rs"]
+mod static_namespaces;

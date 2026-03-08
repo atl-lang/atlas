@@ -641,6 +641,10 @@ impl Interpreter {
             Value::Stack(_) => Some(crate::method_dispatch::TypeTag::Stack),
             Value::Option(_) => Some(crate::method_dispatch::TypeTag::Option),
             Value::Result(_) => Some(crate::method_dispatch::TypeTag::Result),
+            // Static namespace sentinels: Value::Builtin("__ns__Json") etc.
+            Value::Builtin(name) if name.starts_with("__ns__") => {
+                crate::method_dispatch::namespace_type_tag(&name["__ns__".len()..])
+            }
             _ => None,
         };
         let type_tag = member.type_tag.get().or(dynamic_tag);
@@ -651,8 +655,20 @@ impl Interpreter {
                 span: member.span,
             })?;
 
-            // 3. Build argument list (target + method args)
-            let mut args = vec![target_value];
+            // 3. Build argument list.
+            // For static namespaces (Json/Math/Env), target is a sentinel — not a receiver.
+            // For instance methods, target is arg[0].
+            let is_ns = matches!(
+                type_tag,
+                crate::method_dispatch::TypeTag::JsonNs
+                    | crate::method_dispatch::TypeTag::MathNs
+                    | crate::method_dispatch::TypeTag::EnvNs
+            );
+            let mut args = if is_ns {
+                Vec::new()
+            } else {
+                vec![target_value]
+            };
             if let Some(method_args) = &member.args {
                 for arg in method_args {
                     args.push(self.eval_expr(arg)?);

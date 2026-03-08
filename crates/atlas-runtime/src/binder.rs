@@ -960,10 +960,11 @@ impl Binder {
                 }
             }
             Expr::Identifier(id) => {
-                // Check if identifier is defined (in symbol table, as builtin, or as intrinsic)
+                // Check if identifier is defined (in symbol table, as builtin, intrinsic, or static namespace)
                 if self.symbol_table.lookup(&id.name).is_none()
                     && !crate::stdlib::is_builtin(&id.name)
                     && !crate::stdlib::is_array_intrinsic(&id.name)
+                    && !crate::method_dispatch::is_static_namespace(&id.name)
                 {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
