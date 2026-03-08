@@ -284,3 +284,6 @@ mod hashmaps_methods;
 
 #[path = "integration/static_namespaces.rs"]
 mod static_namespaces;
+
+#[path = "integration/deprecated_globals.rs"]
+mod deprecated_globals;

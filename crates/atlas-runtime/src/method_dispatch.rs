@@ -459,6 +459,123 @@ fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
     Some(func_name.to_string())
 }
 
+/// Look up the preferred replacement for a deprecated global stdlib function name.
+/// Returns `Some("use X.method() instead")` if the name is deprecated, or `None` if it is current.
+pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
+    match name {
+        // Array
+        "arrayPush" => Some("arr.push(x)"),
+        "arrayPop" => Some("arr.pop()"),
+        "arrayShift" => Some("arr.shift()"),
+        "arrayUnshift" => Some("arr.unshift(x)"),
+        "arrayReverse" => Some("arr.reverse()"),
+        "arraySort" => Some("arr.sort()"),
+        "arraySortBy" => Some("arr.sortBy(fn)"),
+        "arrayIsEmpty" => Some("arr.isEmpty()"),
+        "arrayIncludes" => Some("arr.includes(x)"),
+        "arrayIndexOf" => Some("arr.indexOf(x)"),
+        "arrayLastIndexOf" => Some("arr.lastIndexOf(x)"),
+        // HashMap
+        "hashMapNew" => Some("let m = {}"),
+        "hashMapGet" => Some("m.get(key)"),
+        "hashMapPut" => Some("m.set(key, val)"),
+        "hashMapRemove" => Some("m.remove(key)"),
+        "hashMapHas" => Some("m.has(key)"),
+        "hashMapSize" => Some("m.size()"),
+        "hashMapIsEmpty" => Some("m.isEmpty()"),
+        "hashMapKeys" => Some("m.keys()"),
+        "hashMapValues" => Some("m.values()"),
+        "hashMapEntries" => Some("m.entries()"),
+        "hashMapClear" => Some("m.clear()"),
+        // HashSet
+        "hashSetNew" => Some("let s = hashSet()"),
+        "hashSetAdd" => Some("s.add(x)"),
+        "hashSetRemove" => Some("s.remove(x)"),
+        "hashSetHas" => Some("s.has(x)"),
+        "hashSetSize" => Some("s.size()"),
+        "hashSetIsEmpty" => Some("s.isEmpty()"),
+        "hashSetToArray" => Some("s.toArray()"),
+        "hashSetClear" => Some("s.clear()"),
+        // Queue / Stack
+        "queueEnqueue" => Some("q.enqueue(x)"),
+        "queueDequeue" => Some("q.dequeue()"),
+        "queuePeek" => Some("q.peek()"),
+        "queueSize" => Some("q.size()"),
+        "queueIsEmpty" => Some("q.isEmpty()"),
+        "stackPush" => Some("s.push(x)"),
+        "stackPop" => Some("s.pop()"),
+        "stackPeek" => Some("s.peek()"),
+        "stackSize" => Some("s.size()"),
+        "stackIsEmpty" => Some("s.isEmpty()"),
+        // String
+        "toUpperCase" | "toLowerCase" | "trim" | "trimStart" | "trimEnd" => Some("str.method()"),
+        // JSON
+        "parseJSON" => Some("Json.parse(s)"),
+        "toJSON" => Some("Json.stringify(v)"),
+        "isValidJSON" => Some("Json.isValid(s)"),
+        // Math
+        "sqrt" => Some("Math.sqrt(n)"),
+        "abs" => Some("Math.abs(n)"),
+        "floor" => Some("Math.floor(n)"),
+        "ceil" => Some("Math.ceil(n)"),
+        "round" => Some("Math.round(n)"),
+        "clamp" => Some("Math.clamp(n, min, max)"),
+        "sign" => Some("Math.sign(n)"),
+        "random" => Some("Math.random()"),
+        "pow" => Some("Math.pow(base, exp)"),
+        // IO / File
+        "readFile" => Some("File.read(path)"),
+        "writeFile" => Some("File.write(path, content)"),
+        "appendFile" => Some("File.append(path, content)"),
+        "fileExists" => Some("File.exists(path)"),
+        "removeFile" => Some("File.remove(path)"),
+        "createDir" => Some("File.createDir(path)"),
+        "removeDir" => Some("File.removeDir(path)"),
+        // Path
+        "pathJoin" => Some("Path.join(...)"),
+        "pathDirname" => Some("Path.dirname(path)"),
+        "pathBasename" => Some("Path.basename(path)"),
+        "pathExtension" => Some("Path.extension(path)"),
+        "pathExists" => Some("Path.exists(path)"),
+        "pathIsAbsolute" => Some("Path.isAbsolute(path)"),
+        "pathIsRelative" => Some("Path.isRelative(path)"),
+        "pathNormalize" => Some("Path.normalize(path)"),
+        "pathAbsolute" => Some("Path.absolute(path)"),
+        "pathParent" => Some("Path.parent(path)"),
+        // Process / Env
+        "getEnv" => Some("Env.get(key)"),
+        "setEnv" => Some("Env.set(key, val)"),
+        "unsetEnv" => Some("Env.unset(key)"),
+        "getCwd" => Some("Process.cwd()"),
+        "getPid" => Some("Process.pid()"),
+        // DateTime
+        "dateTimeNow" => Some("DateTime.now()"),
+        "dateTimeFromTimestamp" => Some("DateTime.fromTimestamp(ts)"),
+        "dateTimeParseIso" => Some("DateTime.parseIso(s)"),
+        // Regex
+        "regexNew" => Some("Regex.new(pattern)"),
+        "regexTest" => Some("Regex.test(r, s)"),
+        "regexIsMatch" => Some("Regex.isMatch(r, s)"),
+        "regexFind" => Some("Regex.find(r, s)"),
+        "regexFindAll" => Some("Regex.findAll(r, s)"),
+        "regexReplace" => Some("Regex.replace(r, s, rep)"),
+        "regexReplaceAll" => Some("Regex.replaceAll(r, s, rep)"),
+        "regexSplit" => Some("Regex.split(r, s)"),
+        "regexEscape" => Some("Regex.escape(s)"),
+        // Crypto
+        "sha256" => Some("Crypto.sha256(s)"),
+        "sha512" => Some("Crypto.sha512(s)"),
+        "aesGcmEncrypt" => Some("Crypto.aesEncrypt(key, data)"),
+        "aesGcmDecrypt" => Some("Crypto.aesDecrypt(key, data)"),
+        // Http
+        "httpRequestGet" => Some("Http.get(url)"),
+        "httpRequestPost" => Some("Http.post(url, body)"),
+        "httpRequestPut" => Some("Http.put(url, body)"),
+        "httpRequestDelete" => Some("Http.delete(url)"),
+        _ => None,
+    }
+}
+
 /// Returns true if a stdlib function name is a mutating array method (returns modified collection).
 pub fn is_array_mutating_collection(func_name: &str) -> bool {
     matches!(func_name, "arrayPush" | "arrayUnshift" | "arrayReverse")
