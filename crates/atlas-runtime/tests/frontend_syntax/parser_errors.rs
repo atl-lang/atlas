@@ -353,3 +353,41 @@ fn test_for_loop_errors(#[case] source: &str, #[case] expected: &str) {
     let diagnostics = parse_errors(source);
     assert_has_parser_error(&diagnostics, expected);
 }
+
+// ============================================================================
+// H-202: Cascade suppression — brace-aware synchronize
+// ============================================================================
+
+/// TypeName[] syntax error should produce exactly 1 error (AT1004), not cascade AT1000s.
+/// The synchronize() must skip past the nested match { } block rather than stopping
+/// at a `return` inside a nested arm.
+#[test]
+fn test_h202_type_array_syntax_no_cascade() {
+    let source = r#"
+fn main() -> void {
+    let mut people: Person[] = match load() {
+        Ok(p) => p,
+        Err(e) => {
+            print(e);
+            return;
+        }
+    };
+}
+"#;
+    let diagnostics = parse_errors(source);
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::DiagnosticLevel::Error)
+        .collect();
+    assert_eq!(
+        errors.len(),
+        1,
+        "expected exactly 1 parse error (AT1004 for Person[]), got {}: {:?}",
+        errors.len(),
+        errors
+            .iter()
+            .map(|d| format!("{}@{}:{}", d.code, d.line, d.column))
+            .collect::<Vec<_>>()
+    );
+    assert_eq!(errors[0].code, "AT1004", "primary error should be AT1004");
+}

@@ -1324,28 +1324,50 @@ impl Parser {
         }
     }
 
-    /// Synchronize after error — clears `in_panic_mode` to re-enable error reporting
+    /// Synchronize after error — clears `in_panic_mode` to re-enable error reporting.
+    ///
+    /// Tracks brace depth so it skips nested `{ }` blocks entirely before stopping at
+    /// a statement boundary. Without depth tracking, `synchronize()` would stop at a
+    /// `return` inside a nested match arm and cause cascade AT1000 errors when the
+    /// abandoned `}` tokens are later encountered in the wrong context (H-202).
     pub(super) fn synchronize(&mut self) {
         self.in_panic_mode = false;
         self.advance();
 
+        let mut depth: usize = 0;
+
         while !self.is_at_end() {
-            if self.tokens[self.current - 1].kind == TokenKind::Semicolon {
-                return;
+            // Track depth based on the token we just consumed
+            match self.tokens[self.current - 1].kind {
+                TokenKind::LeftBrace => {
+                    depth += 1;
+                }
+                TokenKind::RightBrace => {
+                    if depth == 0 {
+                        // We've exited the enclosing block — let the block parser handle it
+                        return;
+                    }
+                    depth -= 1;
+                }
+                TokenKind::Semicolon if depth == 0 => return,
+                _ => {}
             }
 
-            match self.peek().kind {
-                TokenKind::Fn
-                | TokenKind::Type
-                | TokenKind::Let
-                | TokenKind::If
-                | TokenKind::While
-                | TokenKind::For
-                | TokenKind::Return => return,
-                _ => {
-                    self.advance();
+            // Only stop at statement-starting keywords when at the top level (depth == 0)
+            if depth == 0 {
+                match self.peek().kind {
+                    TokenKind::Fn
+                    | TokenKind::Type
+                    | TokenKind::Let
+                    | TokenKind::If
+                    | TokenKind::While
+                    | TokenKind::For
+                    | TokenKind::Return => return,
+                    _ => {}
                 }
             }
+
+            self.advance();
         }
     }
 
