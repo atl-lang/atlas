@@ -99,6 +99,9 @@ pub struct Interpreter {
     call_stack: Vec<RuntimeCallFrame>,
     /// Nominal struct names for HashMap-backed struct values (keyed by map identity).
     struct_type_names: HashMap<usize, String>,
+    /// Runtime warnings collected during execution (ownership mismatches, etc.).
+    /// Callers retrieve and emit these after execution via `take_runtime_warnings()`.
+    pub runtime_warnings: Vec<crate::diagnostic::Diagnostic>,
 }
 
 impl Interpreter {
@@ -128,6 +131,7 @@ impl Interpreter {
                 call_span: None,
             }],
             struct_type_names: HashMap::new(),
+            runtime_warnings: Vec::new(),
         };
 
         // Register builtin functions in globals
@@ -555,6 +559,13 @@ impl Interpreter {
                 call_span: None,
             });
         }
+    }
+
+    /// Drain and return all runtime warnings collected during execution.
+    /// Called by the runtime layer after eval() to surface warnings through
+    /// the proper diagnostic system instead of inline eprintln!().
+    pub fn take_runtime_warnings(&mut self) -> Vec<crate::diagnostic::Diagnostic> {
+        std::mem::take(&mut self.runtime_warnings)
     }
 
     fn push_call_frame(&mut self, function_name: String, call_span: crate::span::Span) {
@@ -1111,6 +1122,7 @@ impl Interpreter {
                     call_span: None,
                 }],
                 struct_type_names: struct_type_names.clone(),
+                runtime_warnings: Vec::new(),
             };
 
             // Get function body

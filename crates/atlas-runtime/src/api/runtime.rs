@@ -22,6 +22,25 @@
 use crate::ast::{
     Expr, Identifier, ImportSpecifier, Item, ObjectEntry, ObjectLiteral, Program, Stmt, VarDecl,
 };
+
+/// Emit warnings through the proper diagnostic formatter to stderr (H-196).
+/// Replaces raw `eprintln!("{}", diag.to_human_string())` calls.
+fn emit_warnings_via_formatter(warnings: &[Diagnostic]) {
+    use crate::diagnostic::formatter::DiagnosticFormatter;
+    use termcolor::{ColorChoice, StandardStream};
+    if warnings.is_empty() {
+        return;
+    }
+    let formatter = DiagnosticFormatter::auto();
+    let mut stream = StandardStream::stderr(if std::env::var("NO_COLOR").is_ok() {
+        ColorChoice::Never
+    } else {
+        ColorChoice::Auto
+    });
+    for diag in warnings {
+        let _ = formatter.write_diagnostic(&mut stream, diag);
+    }
+}
 use crate::binder::Binder;
 use crate::compiler::Compiler;
 use crate::diagnostic::Diagnostic;
@@ -367,18 +386,18 @@ impl Runtime {
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&ast);
 
-        // Only fail on errors, not warnings
+        // Only fail on errors, not warnings. Return ALL diagnostics (errors + warnings)
+        // so the CLI can emit them in one pass via the proper formatter (H-196).
         let has_errors = type_diagnostics.iter().any(|d| d.is_error());
         if has_errors {
             return Err(EvalError::TypeError(type_diagnostics));
         }
 
-        // Print warnings to stderr (they don't block execution)
-        for diag in &type_diagnostics {
-            if diag.is_warning() {
-                eprintln!("{}", diag.to_human_string());
-            }
-        }
+        // Collect typecheck warnings — emit after execution alongside runtime warnings.
+        let typecheck_warnings: Vec<crate::diagnostic::Diagnostic> = type_diagnostics
+            .into_iter()
+            .filter(|d| d.is_warning())
+            .collect();
 
         // Start execution timer and prepare limits for sharing
         let execution_limits = {
@@ -395,9 +414,14 @@ impl Runtime {
                 if execution_limits.is_active() {
                     interpreter.set_execution_limits(execution_limits);
                 }
-                interpreter
+                let result = interpreter
                     .eval(&ast, &self.security)
-                    .map_err(EvalError::RuntimeError)
+                    .map_err(EvalError::RuntimeError);
+                // Collect and emit all warnings via the proper formatter (H-196)
+                let mut all_warnings = typecheck_warnings;
+                all_warnings.extend(interpreter.take_runtime_warnings());
+                emit_warnings_via_formatter(&all_warnings);
+                result
             }
             ExecutionMode::VM => {
                 // Compile new AST to bytecode
@@ -439,6 +463,11 @@ impl Runtime {
                     Ok(None) => Ok(Value::Null),
                     Err(e) => Err(EvalError::RuntimeError(e)),
                 };
+
+                // Collect and emit all warnings via the proper formatter (H-196)
+                let mut all_warnings = typecheck_warnings;
+                all_warnings.extend(vm.take_runtime_warnings());
+                emit_warnings_via_formatter(&all_warnings);
 
                 // Copy VM globals back to interpreter for persistence across eval() calls
                 // Note: VM doesn't track mutability, so we default to mutable for copied-back values

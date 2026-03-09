@@ -104,6 +104,9 @@ pub struct VM {
     consumed_globals: std::collections::HashSet<String>,
     /// Optional JIT compiler for hot function execution
     jit: Option<Box<dyn crate::JitCompiler>>,
+    /// Runtime warnings collected during execution (ownership mismatches, etc.).
+    /// Callers retrieve and emit these after execution via `take_runtime_warnings()`.
+    pub runtime_warnings: Vec<crate::diagnostic::Diagnostic>,
 }
 
 impl VM {
@@ -144,6 +147,7 @@ impl VM {
             #[cfg(debug_assertions)]
             consumed_globals: std::collections::HashSet::new(),
             jit: None,
+            runtime_warnings: Vec::new(),
         }
     }
 
@@ -164,6 +168,13 @@ impl VM {
     /// Set the output writer (used by Runtime to redirect print() output)
     pub fn set_output_writer(&mut self, writer: crate::stdlib::OutputWriter) {
         self.output_writer = writer;
+    }
+
+    /// Drain and return all runtime warnings collected during execution.
+    /// Called by the runtime layer after execute() to surface warnings through
+    /// the proper diagnostic system instead of inline eprintln!().
+    pub fn take_runtime_warnings(&mut self) -> Vec<crate::diagnostic::Diagnostic> {
+        std::mem::take(&mut self.runtime_warnings)
     }
 
     /// Set execution limits for timeout enforcement
@@ -2333,10 +2344,16 @@ impl VM {
                                             }
                                             _ => unreachable!(),
                                         };
-                                        eprintln!(
-                                            "warning: passing share<T> value to '{}' parameter '{}' — consider using the 'share' annotation",
-                                            ann_str,
-                                            func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                        self.runtime_warnings.push(
+                                            crate::diagnostic::Diagnostic::warning_with_code(
+                                                crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE,
+                                                format!(
+                                                    "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
+                                                    ann_str,
+                                                    func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                                ),
+                                                crate::span::Span::new(0, 0),
+                                            ),
                                         );
                                     }
                                 }
@@ -2446,10 +2463,16 @@ impl VM {
                                         Some(crate::ast::OwnershipAnnotation::Borrow) => "borrow",
                                         _ => unreachable!(),
                                     };
-                                    eprintln!(
-                                        "warning: passing share<T> value to '{}' parameter '{}' — consider using the 'share' annotation",
-                                        ann_str,
-                                        func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                    self.runtime_warnings.push(
+                                        crate::diagnostic::Diagnostic::warning_with_code(
+                                            crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE,
+                                            format!(
+                                                "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
+                                                ann_str,
+                                                func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
+                                            ),
+                                            crate::span::Span::new(0, 0),
+                                        ),
                                     );
                                 }
                             }

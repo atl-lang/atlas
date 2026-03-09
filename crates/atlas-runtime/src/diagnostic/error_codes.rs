@@ -145,6 +145,10 @@ pub const INHERENT_SELF_NOT_FIRST: &str = "AT3058";
 /// but the warning helps catch accidental shadowing.
 pub const INHERENT_SHADOWS_TRAIT_METHOD: &str = "AW3059";
 
+/// Runtime warning: a `share<T>` value was passed to a parameter annotated `own` or `borrow`.
+/// The value will be used but the ownership mismatch may indicate a design issue.
+pub const SHARE_PASSED_TO_NON_SHARE: &str = "AW3060";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -952,6 +956,12 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT9999",
         description: "Generic error",
         help: None,
+        example: None,
+    },
+    ErrorCodeInfo {
+        code: "AW3060",
+        description: "A share<T> value was passed to a parameter annotated `own` or `borrow`",
+        help: Some("Change the parameter annotation to `share` to accept shared references, or unwrap the shared value before passing it."),
         example: None,
     },
     ErrorCodeInfo {
