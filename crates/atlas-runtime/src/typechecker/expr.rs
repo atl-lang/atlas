@@ -1770,6 +1770,25 @@ impl<'a> TypeChecker<'a> {
                 member.type_tag.set(Some(ns_tag));
                 // Resolve return type for namespace method calls
                 let return_type = resolve_namespace_return_type(&id.name, &member.member.name);
+                // D-010: Type::Unknown is always an error state, never a silent wildcard.
+                // If a namespace method has no type entry, emit a diagnostic immediately.
+                if return_type == Type::Unknown {
+                    self.diagnostics.push(
+                        Diagnostic::error_with_code(
+                            "AT3061",
+                            format!(
+                                "{}.{}() has no return type registered in the typechecker",
+                                id.name, member.member.name
+                            ),
+                            member.span,
+                        )
+                        .with_label("untyped namespace method")
+                        .with_help(format!(
+                            "add a return type entry for {}.{}() in resolve_namespace_return_type()",
+                            id.name, member.member.name
+                        )),
+                    );
+                }
                 return return_type;
             }
         }

@@ -669,6 +669,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         help: Some("`share` parameters are immutable from the callee's perspective. You cannot assign to a `share` param or pass it to an `own` parameter (which would transfer ownership of something you do not own)."),
     },
     ErrorCodeInfo {
+        code: "AT3061",
+        description: "Namespace method has no return type in typechecker — D-010 violation",
+        help: Some("Add a return type entry for this namespace method in resolve_namespace_return_type() in typechecker/expr.rs. Type::Unknown is never a valid return type."),
+    },
+    ErrorCodeInfo {
         code: "AT3060",
         description: "Unknown type name — likely a type from another language",
         help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `[]T` for arrays, `HashMap<K,V>` for maps. Define structs for custom types."),
