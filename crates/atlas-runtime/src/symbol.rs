@@ -777,6 +777,61 @@ impl SymbolTable {
             },
         );
         table.define_builtin(
+            "jsonGetString",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue, Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::String],
+                }),
+            },
+        );
+        table.define_builtin(
+            "jsonGetNumber",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue, Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Number],
+                }),
+            },
+        );
+        table.define_builtin(
+            "jsonGetBool",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue, Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Bool],
+                }),
+            },
+        );
+        table.define_builtin(
+            "jsonGetArray",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue, Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Array(Box::new(Type::JsonValue))],
+                }),
+            },
+        );
+        table.define_builtin(
+            "jsonGetObject",
+            Type::Function {
+                type_params: vec![],
+                params: vec![Type::JsonValue, Type::String],
+                return_type: Box::new(Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::JsonValue],
+                }),
+            },
+        );
+        table.define_builtin(
             "toString",
             Type::Function {
                 type_params: vec![],
