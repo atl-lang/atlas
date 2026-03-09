@@ -16,38 +16,24 @@ impl Parser {
     pub(super) fn parse_statement(&mut self) -> Result<Stmt, ()> {
         // Cross-language pattern detection: catch common foreign syntax before main dispatch.
         if self.peek().kind == TokenKind::Identifier {
+            // Capture span NOW — before any advance() — so all errors point to the foreign token.
+            let token_span = self.peek().span;
             let lexeme = self.peek().lexeme.clone();
             match lexeme.as_str() {
                 "echo" => {
-                    self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_ECHO.code,
-                        "`echo` is not valid Atlas syntax",
-                        "`echo` is not an Atlas keyword.\n  Use: print(expr)\n  Example: print(\"hello, world\")",
-                    );
+                    self.emit_descriptor(FOREIGN_SYNTAX_ECHO.emit(token_span));
                     return Err(());
                 }
                 "var" => {
-                    self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_VAR.code,
-                        "`var` is not valid Atlas syntax",
-                        "`var` is not an Atlas keyword.\n  Use: let name = value         (immutable)\n       let mut name = value     (mutable)\n  Example: let x = 42  |  let mut count = 0",
-                    );
+                    self.emit_descriptor(FOREIGN_SYNTAX_VAR.emit(token_span));
                     return Err(());
                 }
                 "function" => {
-                    self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_FUNCTION_KW.code,
-                        "`function` keyword is not valid Atlas syntax",
-                        "`function` is not an Atlas keyword.\n  Use: fn name(own param: Type) -> ReturnType { body }\n  Example: fn add(own a: number, own b: number) -> number { a + b }",
-                    );
+                    self.emit_descriptor(FOREIGN_SYNTAX_FUNCTION_KW.emit(token_span));
                     return Err(());
                 }
                 "class" => {
-                    self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_CLASS.code,
-                        "`class` is not valid Atlas syntax",
-                        "`class` is not an Atlas keyword.\n  Use: struct Name { field: Type }\n  Example:\n    struct Point { x: number, y: number }\n    let p = Point { x: 1, y: 2 };",
-                    );
+                    self.emit_descriptor(FOREIGN_SYNTAX_CLASS.emit(token_span));
                     return Err(());
                 }
                 "console" => {
@@ -59,11 +45,7 @@ impl Parser {
                         .map(|t| t.lexeme.as_str() == "log")
                         == Some(true);
                     if next_is_dot && next_is_log {
-                        self.error_with_dynamic_help(
-                            FOREIGN_SYNTAX_CONSOLE_LOG.code,
-                            "`console.log` is not valid Atlas syntax",
-                            "`console.log` is not Atlas syntax.\n  Use: print(expr)\n  Example: print(\"value: \" + str(x))",
-                        );
+                        self.emit_descriptor(FOREIGN_SYNTAX_CONSOLE_LOG.emit(token_span));
                         return Err(());
                     }
                 }
@@ -77,12 +59,7 @@ impl Parser {
             let is_decrement = next1 == Some(TokenKind::Minus) && next2 == Some(TokenKind::Minus);
             if is_increment || is_decrement {
                 let op = if is_increment { "++" } else { "--" };
-                let atlas_op = if is_increment { "+" } else { "-" };
-                let msg = format!("`{lexeme}{op}` is not valid Atlas syntax");
-                let help = format!(
-                    "`{op}` increment/decrement operators do not exist in Atlas.\n  Use: {lexeme} = {lexeme} {atlas_op} 1\n  Or:  {lexeme} {atlas_op}= 1"
-                );
-                self.error_with_dynamic_help(FOREIGN_SYNTAX_INCREMENT.code, msg, help);
+                self.emit_descriptor(FOREIGN_SYNTAX_INCREMENT.emit(token_span).arg("op", op));
                 return Err(());
             }
         }
@@ -113,11 +90,8 @@ impl Parser {
             }
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),
             TokenKind::Import => {
-                self.error_with_dynamic_help(
-                    FOREIGN_SYNTAX_IMPORT_FROM.code,
-                    "`import` statement is not valid here",
-                    "`import X from \"module\"` is not Atlas syntax.\n  Use: import { name } from \"./module\"\n  Or for external modules: see docs/language/modules.md",
-                );
+                let import_span = self.peek().span;
+                self.emit_descriptor(FOREIGN_SYNTAX_IMPORT_FROM.emit(import_span));
                 Err(())
             }
             _ => self.parse_assign_or_expr_stmt(),

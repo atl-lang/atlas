@@ -7,6 +7,7 @@ mod expr;
 mod stmt;
 
 use crate::ast::*;
+use crate::diagnostic::descriptor::DiagnosticBuilder;
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::token::{Token, TokenKind};
@@ -1222,6 +1223,21 @@ impl Parser {
                 .with_label("syntax error")
                 .with_help(help),
         );
+    }
+
+    /// Emit a diagnostic from a fully-constructed `DiagnosticBuilder`.
+    ///
+    /// Applies the `in_panic_mode` guard and `"syntax error"` label, then pushes to
+    /// the diagnostics list. Call sites capture the span before any `advance()`, build
+    /// the descriptor builder with `.emit(span)`, and pass it here.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
+    pub(super) fn emit_descriptor(&mut self, builder: DiagnosticBuilder) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
+        self.diagnostics
+            .push(builder.build().with_label("syntax error"));
     }
 
     /// Check if a token kind is a reserved keyword
