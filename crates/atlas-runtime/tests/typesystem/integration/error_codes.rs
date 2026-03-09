@@ -246,3 +246,23 @@ fn test_at3060_unknown_type_generic_message() {
         "Expected AT3060 for completely unknown type 'FooBarBaz'"
     );
 }
+
+// H-188: empty block {} in match arm should have type void, not ?, so it unifies with void arms
+#[test]
+fn test_issue_h188_empty_block_match_arm_unifies_with_void() {
+    let diags = typecheck_source(
+        "
+        fn handle(x: number) -> void {
+            match x {
+                1 => {},
+                _ => print(\"other\"),
+            }
+        }
+    ",
+    );
+    let errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3021").collect();
+    assert!(
+        errors.is_empty(),
+        "H-188: empty block {{}} should unify with void arms, no AT3021 expected, got: {errors:?}"
+    );
+}
