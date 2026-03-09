@@ -33,6 +33,23 @@ git -C /Users/proxikal/dev/projects/atlas diff HEAD~1 HEAD -- <changed_files>
 
 Understand WHAT changed: new features, bug fixes, behavior changes, removed items.
 
+### Step 2b — Load decisions for touched domains (MANDATORY — 1 tool call)
+
+```bash
+pt decisions all
+```
+
+Read the output before touching any doc. Every decision is a constraint on what you may write.
+**If a decision contradicts a doc change you were about to make — do NOT make that change.**
+
+Key decisions to watch for:
+- CLI permission flags: **no `--allow-*` flags ever** (locked architectural decision)
+- Operator/syntax decisions: D-006 through D-015 govern what syntax is valid
+- Any D-XXX that covers the domains in `relevant_docs`
+
+If you are unsure whether a doc addition is consistent with existing decisions, **skip it**.
+A missed doc update is recoverable. A doc that contradicts a locked decision spreads misinformation.
+
 ### Step 3 — Read relevant docs (parallel, 1 turn)
 
 Read ONLY the docs listed in `relevant_docs`. Do not read anything else.
@@ -104,7 +121,9 @@ ACTION FOR MAIN AGENT: stage and commit the above files.
 ## Critical Rules
 
 - **Read the diff first.** Never assume what changed — read it.
+- **Run `pt decisions all` before editing.** Decisions are hard constraints — never document something that contradicts a locked decision.
 - **"None" is a valid output.** If docs are accurate, say so and clear the pending file.
 - **No source changes.** Touch ONLY `.md` files and the pending JSON.
 - **No git ops. Ever.** No `git add`, no `git commit`, no `git push`. The main agent owns all git operations — Haiku touching git risks conflicts with active sessions.
 - **Scope is sacred.** Only check files in `relevant_docs`. Not the full codebase.
+- **When in doubt, skip.** A missing doc note is safe. A doc that contradicts architecture is harmful.
