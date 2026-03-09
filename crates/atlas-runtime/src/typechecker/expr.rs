@@ -319,6 +319,24 @@ impl<'a> TypeChecker<'a> {
                                 );
                             }
                         } else {
+                            let close_match = suggestions::suggest_similar_name(
+                                &field.name.name,
+                                member_types.keys().map(|k| k.as_str()),
+                            );
+                            let valid_fields = {
+                                let mut names: Vec<_> =
+                                    member_types.keys().map(|k| format!("`{k}`")).collect();
+                                names.sort();
+                                names.join(", ")
+                            };
+                            let help = if let Some(ref suggestion) = close_match {
+                                format!("{} — valid fields are: {}", suggestion, valid_fields)
+                            } else {
+                                format!(
+                                    "valid fields for `{}` are: {}",
+                                    struct_expr.name.name, valid_fields
+                                )
+                            };
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     "AT3010",
@@ -329,7 +347,7 @@ impl<'a> TypeChecker<'a> {
                                     field.span,
                                 )
                                 .with_label("unknown field")
-                                .with_help("check the struct declaration for valid fields"),
+                                .with_help(help),
                             );
                         }
                     }
