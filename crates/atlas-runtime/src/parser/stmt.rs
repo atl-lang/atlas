@@ -104,6 +104,13 @@ impl Parser {
                     span,
                 }))
             }
+            TokenKind::Match => {
+                // Match at statement position — no trailing semicolon required
+                // (consistent with if/while/for which also end with `}`)
+                let expr = self.parse_expression()?;
+                let span = expr.span();
+                Ok(Stmt::Expr(ExprStmt { expr, span }))
+            }
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),
             TokenKind::Import => {
                 self.error_with_dynamic_help(

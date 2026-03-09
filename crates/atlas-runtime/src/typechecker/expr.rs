@@ -204,9 +204,10 @@ impl<'a> TypeChecker<'a> {
                 }
                 // If the block ends with a return/break/continue, its type is Never
                 // (the bottom type — compatible with any other type in unification).
+                // An empty block or a block of pure statements (no tail expr) has type Void.
                 let block_type = match block.statements.last() {
                     Some(Stmt::Return(_)) => Type::Never,
-                    _ => Type::Unknown,
+                    _ => Type::Void,
                 };
                 self.exit_scope();
                 block_type

@@ -140,6 +140,27 @@ fn test_parse_comments_inside_blocks() {
     );
 }
 
+// H-187: match as statement (non-tail) should not require trailing semicolon
+#[test]
+fn test_issue_h187_match_stmt_no_semicolon() {
+    let src = r#"
+fn main() -> void {
+    let x = 1;
+    match x {
+        1 => print("one"),
+        _ => print("other"),
+    }
+    print("after match");
+}
+"#;
+    let (_, diagnostics) = parse_source(src);
+    assert!(
+        diagnostics.is_empty(),
+        "H-187: match at non-tail statement position should not require ';', got: {:?}",
+        diagnostics
+    );
+}
+
 // H-114: return inside match arm body should parse without error
 #[test]
 fn return_in_match_arm_parses() {
