@@ -46,22 +46,28 @@ File listed in CLAUDE.md that no longer exists → remove the entry.
 **Location:** `/Users/proxikal/.claude/projects/-Users-proxikal-dev-projects-atlas/memory/`
 (This is Claude Code's auto-memory directory. NOT in the git repo.)
 
-Files:
+Files (ALL must be checked — not just some):
 - `MEMORY.md` — auto-loaded every message (first 200 lines)
-- `codex_rules.md` — Codex delegation rules (lazy-loaded)
-- `patterns.md` — Index file pointing to `patterns/*.md` topic files (lazy-loaded)
-- `patterns/*.md` — Split topic files: runtime, collections, traits, stdlib, typesystem, vm, lsp, cli, language
-- `testing-patterns.md` — test organization rules (lazy-loaded)
-- `domain-prereqs.md` — AST/Type/Value quick-refs (lazy-loaded)
-- `battle-tests.md` — battle test project status (lazy-loaded)
+- `infrastructure.md` — crate map, pipeline diagram
+- `build-performance.md` — sccache config, cargo safety, build times
+- `codex_rules.md` — Codex delegation rules
+- `patterns.md` — index to `patterns/*.md`
+- `patterns/*.md` — runtime, collections, traits, stdlib, typesystem, vm, lsp, cli, language
+- `testing-patterns.md` — test file routing table
+- `domain-prereqs.md` — AST/Type/Value quick-refs
+- `battle-tests.md` — battle test project status
+- `compiler-quality/ai-compiler.md` — AI compiler lessons + parity test file locations
+- `compiler-quality/battle-testing.md` — battle test locations and design rules
 
 Verify:
-- `MEMORY.md` lazy-load table points to files that exist
-- `patterns.md` index table lists all files in `patterns/` — no missing, no extra
+- `MEMORY.md` lazy-load table matches files that actually exist — no entries for deleted files
+- `patterns.md` index lists all files in `patterns/` — no missing, no extra
 - Each `patterns/*.md` file exists and is non-empty
 - Key invariants in `domain-prereqs.md` match current `ast.rs`, `value.rs`
-- `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents
-- `MEMORY.md` stays ≤80 lines (warn at 70) — lean index only
+- `testing-patterns.md` test file table matches actual `crates/atlas-runtime/tests/` contents (check subdirs: stdlib/functions/, stdlib/vm_stdlib/, interpreter/for_in/)
+- `build-performance.md` sccache config matches `.cargo/config.toml` — sccache must NOT be in config.toml (CI breaks); must be in `~/.zshrc`
+- `compiler-quality/battle-testing.md` battle test paths match actual `battle-test/` directories
+- **MEMORY.md current state cross-check:** Run `pt block B<N>` for any block claimed complete/in-progress. If tracking DB disagrees with MEMORY.md claim, flag as drift — MEMORY.md is likely stale.
 - No git-tracked `.claude/memory/` directory exists (deleted — was never part of Claude's memory system)
 
 ### Domain 3: Rules Files Accuracy
@@ -153,7 +159,7 @@ Verify:
 
 ### Phase 1 — Discover (one parallel turn)
 
-Run ALL of these simultaneously:
+Run ALL of these simultaneously (including the pt commands — they're fast):
 
 ```bash
 # CLAUDE.md inventory
@@ -179,6 +185,11 @@ Glob: docs/**/*.md
 
 # CI
 Read: .github/workflows/ci.yml (job keys)
+
+# Tracking DB cross-check (run these bash commands — they're fast)
+# Compare output against MEMORY.md "CURRENT STATE" claims
+pt blocks          # actual block status — compare to what MEMORY.md says
+pt in-progress     # what's actually claimed — compare to MEMORY.md "NEXT ACTION"
 ```
 
 ### Phase 2 — Read All Managed Docs (one parallel turn)

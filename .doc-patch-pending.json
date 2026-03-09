@@ -1,0 +1,16 @@
+{
+  "committed_at": "2026-03-09T00:51:18Z",
+  "commit": "7ed5746",
+  "changed_files": [
+  "crates/atlas-runtime/src/interpreter/expr.rs",
+  "crates/atlas-runtime/src/interpreter/stmt.rs",
+  "crates/atlas-runtime/tests/interpreter/integration/arrays.rs"
+],
+  "domains": [
+  "interpreter"
+],
+  "relevant_docs": [
+  "docs/known-issues.md"
+],
+  "status": "pending"
+}
