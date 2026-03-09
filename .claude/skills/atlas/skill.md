@@ -155,40 +155,16 @@ git commit -m "fix(...): description"
 
 **Session close** — required at end of every session, even if interrupted:
 
-**Step 1 — Overwrite `~/.project-tracker/handoffs/atlas-handoff.md` with this session's state (MANDATORY before pt done):**
-**REPLACE the entire file — do NOT append.** One file, one session's snapshot. Previous content is now in git history.
-```markdown
-# Atlas Handoff — <session-id>
-
-**Updated:** <ISO timestamp> | **Commit:** <git sha> | **Agent:** <model>
-
-## What Was Done This Session
-<one sentence per issue/phase — specific: IDs, files, decisions. No bullet dumps.>
-
-## Current State
-<P0/P1/P2 counts, CI status, active block, any in-progress claims>
-
-## In-Flight Work
-<NONE — or: what was started but not finished, exact state, what the next concrete step is>
-
-## Next Action
-<specific enough for a cold-start agent: issue ID + what to do + relevant file/function path>
-
-## Open Questions (Needs Architect Input)
-<NONE — or: decisions that need the architect, not implementation choices>
-
-## Critical Context (Don't Lose This)
-<anything a future agent would discover the hard way: patterns, pitfalls, non-obvious state>
-```
-Then: `git add ~/.project-tracker/handoffs/atlas-handoff.md` and include in the final commit (or its own `chore: update handoff` commit).
-
-**Step 2 — Close session:**
 ```bash
 pt done S-XXX success \
   "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \
-  "Next: Phase-05 — Value::Future in runtime, interpreter dispatch"
+  "claim H-002 — fix Y in crates/atlas-runtime/src/eval.rs, grep for fn eval_expr"
 ```
-Format: one sentence per issue/phase closed. Root cause + fix. Next: 1–2 sentences. No bullet dumps.
+
+- **Arg 3 (summary):** backward-looking — what was done. One clause per issue/phase, root cause + fix. No bullet dumps.
+- **Arg 4 (next):** forward-looking — what the next agent does first. Issue ID + action + file/function. Specific enough to act on cold.
+
+The next agent sees this as `── Next Action (from last session) ──` in `pt go`. No file to write, no extra steps.
 
 ## Work Selection
 P0 blockers > P1 bugs > P2 features > cleanup

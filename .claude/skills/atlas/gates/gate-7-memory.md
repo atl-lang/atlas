@@ -13,7 +13,7 @@
 3. **Crate-specific pattern?** → Update `testing-patterns.md` or `patterns.md`
 4. **Added/renamed AST node, Type variant, opcode, function, error code?** → Run `atlas-doc-auditor`
 5. **Block completion phase?** → **Always run `atlas-doc-auditor`** (full sweep)
-6. **ALWAYS — Write `~/.project-tracker/handoffs/atlas-handoff.md` before `pt done`** (see core `atlas` skill for template)
+6. **ALWAYS — close session with `pt done S-XXX success "summary" "next action"` — next agent sees it in `pt go`**
 
 ---
 

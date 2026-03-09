@@ -105,15 +105,12 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    ```
 5. Memory checked (GATE 7)
 6. **Commit only** — local-first workflow
-7. Write `~/.project-tracker/handoffs/atlas-handoff.md` and close session (for AI continuity):
-
-**Write `~/.project-tracker/handoffs/atlas-handoff.md` FIRST — mandatory before pt done:**
-Write: what phase completed + what was wired, bugs filed this phase, next phase name + scope + key files to touch. See core `atlas` skill for the full template. Commit it with the phase commit or as `chore: update handoff (Phase-XX)`.
+7. Close session — context is stored in DB, surfaced in next agent's `pt go`:
 
 ```bash
 pt done <session-id> success \
   "Phase-XX complete: [what was wired up]. Fixed H-XXX (cause → fix). Filed H-YYY (bug discovered)." \
-  "Next: Phase-YY — [one sentence: what needs doing and why]"
+  "claim next phase B<N>-P<YY> — [one sentence: what needs doing and key files]"
 ```
 
 **Summary rules:**

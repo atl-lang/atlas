@@ -77,8 +77,8 @@ Plans (PL-XXX) capture implementation intent — timestamped with a git commit s
 
 No brainstorm session ends with "let's think about this more" as the only output. That's lost.
 
-**After brainstorm — also update `~/.project-tracker/handoffs/atlas-handoff.md`:**
-If the brainstorm produced a concrete next action or changed what the next agent should do, update the handoff file. Include: what was decided, what PL-XXX was created, what the next concrete step is.
+**After brainstorm — close session with the concrete next action in `pt done` arg 4:**
+If the brainstorm produced a concrete next action, pass it forward: `pt done S-XXX success "brainstorm summary" "claim H-XXX — next concrete step"`. The next agent sees it in `pt go`.
 
 ---
 
