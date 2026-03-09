@@ -420,10 +420,16 @@ impl Compiler {
                 self.bytecode.emit_u16(method_idx);
                 self.bytecode.emit_u8(arg_count as u8);
             } else {
-                let mangled_name = format!(
-                    "__impl__{}__{}__{}",
-                    type_name, trait_name, member.member.name
-                );
+                // Inherent:  __impl__TypeName__MethodName      (trait_name is empty)
+                // Trait:     __impl__TypeName__TraitName__MethodName
+                let mangled_name = if trait_name.is_empty() {
+                    format!("__impl__{}__{}", type_name, member.member.name)
+                } else {
+                    format!(
+                        "__impl__{}__{}__{}",
+                        type_name, trait_name, member.member.name
+                    )
+                };
 
                 // Push the mangled function by name from globals
                 let name_idx = self
