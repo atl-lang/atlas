@@ -29,6 +29,10 @@ pub struct Parser {
     pub(super) no_struct_literal: bool,
     /// Attributes parsed in `parse_item` — drained by the next declaration parser.
     pub(super) pending_attributes: Vec<crate::ast::Attribute>,
+    /// Cascade suppression: set on first error, cleared by `synchronize()`.
+    /// When true, subsequent errors in the same recovery region are suppressed
+    /// so that one source bug produces at most one primary diagnostic.
+    pub(super) in_panic_mode: bool,
 }
 
 /// Operator precedence levels for Pratt parsing
@@ -69,6 +73,7 @@ impl Parser {
             diagnostics: Vec::new(),
             no_struct_literal: false,
             pending_attributes: Vec::new(),
+            in_panic_mode: false,
         }
     }
 
@@ -141,8 +146,7 @@ impl Parser {
         } else if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.diagnostics
-                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                self.error_at("expected `fn` after `async`", async_span);
                 return Err(());
             }
             Ok(Item::Function(self.parse_function_with_async(true)?))
@@ -348,11 +352,11 @@ impl Parser {
             } else if self.check(TokenKind::Share) {
                 let span = self.peek().span;
                 self.advance();
-                self.diagnostics.push(Diagnostic::error(
+                self.error_at(
                     "`shared` is not valid as a return ownership annotation; \
                      callers receive a `shared<T>` typed value instead",
                     span,
-                ));
+                );
                 return Err(());
             } else {
                 None
@@ -484,8 +488,7 @@ impl Parser {
         let item = if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.diagnostics
-                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                self.error_at("expected `fn` after `async`", async_span);
                 return Err(());
             }
             ExportItem::Function(self.parse_function_with_async(true)?)
@@ -1086,6 +1089,12 @@ impl Parser {
         self.error_with_code(E_GENERIC, message);
     }
 
+    /// Record an error at a specific span using the generic error code.
+    /// Respects `in_panic_mode` (cascade suppression — D-043).
+    pub(super) fn error_at(&mut self, message: &str, span: Span) {
+        self.error_at_with_code(E_GENERIC, message, span);
+    }
+
     /// Record an error at the current token with an explicit code
     pub(super) fn error_with_code(&mut self, code: &'static str, message: &str) {
         let span = self.peek().span;
@@ -1094,7 +1103,12 @@ impl Parser {
 
     /// Record an error at a specific span with an explicit code.
     /// Attaches help text from the error code registry if available, falling back to generic advice.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
     pub(super) fn error_at_with_code(&mut self, code: &'static str, message: &str, span: Span) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
         use crate::diagnostic::error_codes;
         let help =
             error_codes::help_for(code).unwrap_or("check your syntax for typos or missing tokens");
@@ -1107,12 +1121,17 @@ impl Parser {
 
     /// Record an error at the current token with an explicit code and custom help text.
     /// Use this when the help text must be dynamically formatted (e.g. includes the identifier name).
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
     pub(super) fn error_with_dynamic_help(
         &mut self,
         code: &'static str,
         message: impl Into<String>,
         help: impl Into<String>,
     ) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
         let span = self.peek().span;
         self.diagnostics.push(
             Diagnostic::error_with_code(code, message, span)
@@ -1232,8 +1251,9 @@ impl Parser {
         }
     }
 
-    /// Synchronize after error
+    /// Synchronize after error — clears `in_panic_mode` to re-enable error reporting
     pub(super) fn synchronize(&mut self) {
+        self.in_panic_mode = false;
         self.advance();
 
         while !self.is_at_end() {

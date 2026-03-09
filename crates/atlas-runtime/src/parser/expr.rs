@@ -449,10 +449,7 @@ impl Parser {
 
         // `await` must be followed by an expression
         if self.is_at_end() || self.check(TokenKind::Semicolon) {
-            self.diagnostics.push(Diagnostic::error(
-                "expected expression after `await`",
-                await_span,
-            ));
+            self.error_at("expected expression after `await`", await_span);
             return Err(());
         }
 
