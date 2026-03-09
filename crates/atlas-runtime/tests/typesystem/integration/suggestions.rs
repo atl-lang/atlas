@@ -21,11 +21,20 @@ fn test_method_suggestion_string_typo() {
         !at3010.is_empty(),
         "AT3010 expected for unknown method, got: {diags:?}"
     );
-    let help = at3010[0].help.first().map(|s| s.as_str()).unwrap_or("");
+    let d = &at3010[0];
+    let has_in_help = d
+        .help
+        .iter()
+        .any(|h| h.contains("did you mean") || h.contains("length"));
+    let has_in_suggestions = d
+        .suggestions
+        .iter()
+        .any(|s| s.description.contains("length") || s.new_line.contains("length"));
     assert!(
-        help.contains("did you mean") || help.contains("length"),
-        "help should suggest 'length' for 'lenght', got: {:?}",
-        help
+        has_in_help || has_in_suggestions,
+        "should suggest 'length' for 'lenght' (help or suggestions), got help={:?} suggestions={:?}",
+        d.help,
+        d.suggestions
     );
 }
 
@@ -128,6 +137,83 @@ fn test_trait_suggestion_impl_typo() {
         msg.contains("did you mean") || msg.contains("Greetable"),
         "message should suggest 'Greetable' for 'Greetabel', got: {:?}",
         msg
+    );
+}
+
+// ---- H-195: Suggestion diff (code diff format) ---------------------------
+
+/// Method typo produces a SuggestionDiff with old/new source lines.
+#[test]
+fn test_h195_method_typo_produces_suggestion_diff() {
+    let diags = typecheck_source(
+        r#"
+        let s: string = "hello";
+        s.lenght();
+        "#,
+    );
+    let at3010: Vec<_> = diags.iter().filter(|d| d.code == "AT3010").collect();
+    assert!(!at3010.is_empty(), "AT3010 expected, got: {diags:?}");
+    let d = &at3010[0];
+    assert!(
+        !d.suggestions.is_empty(),
+        "expected SuggestionDiff for method typo 'lenght', got none; help={:?}",
+        d.help
+    );
+    let sug = &d.suggestions[0];
+    assert!(
+        sug.new_line.contains("length"),
+        "suggestion new_line should contain 'length', got: {:?}",
+        sug.new_line
+    );
+    assert!(
+        sug.old_line.contains("lenght"),
+        "suggestion old_line should contain 'lenght', got: {:?}",
+        sug.old_line
+    );
+}
+
+/// Field typo produces a SuggestionDiff with old/new source lines.
+#[test]
+fn test_h195_field_typo_produces_suggestion_diff() {
+    let diags = typecheck_source(
+        r#"
+        struct Person { name: string, age: number }
+        let p: Person = Person { name: "Alice", age: 30 };
+        let v = p.naem;
+        "#,
+    );
+    let field_errs: Vec<_> = diags
+        .iter()
+        .filter(|d| d.message.contains("member") || d.message.contains("field"))
+        .collect();
+    assert!(
+        !field_errs.is_empty(),
+        "field-not-found error expected, got: {diags:?}"
+    );
+    let d = &field_errs[0];
+    assert!(
+        !d.suggestions.is_empty(),
+        "expected SuggestionDiff for field typo 'naem', suggestions empty; help={:?}",
+        d.help
+    );
+}
+
+/// Method diff renders as code diff in to_human_string().
+#[test]
+fn test_h195_suggestion_diff_renders_in_human_string() {
+    let diags = typecheck_source(
+        r#"
+        let s: string = "hello";
+        s.lenght();
+        "#,
+    );
+    let at3010: Vec<_> = diags.iter().filter(|d| d.code == "AT3010").collect();
+    assert!(!at3010.is_empty(), "AT3010 expected, got: {diags:?}");
+    let human = at3010[0].to_human_string();
+    assert!(
+        human.contains("- ") && human.contains("+ "),
+        "to_human_string should contain '- ' and '+ ' diff lines, got:\n{}",
+        human
     );
 }
 

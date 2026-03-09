@@ -170,6 +170,32 @@ pub fn suggest_mutability_fix(var_name: &str) -> String {
 
 /// Find the most similar name from a list of known names (for typo suggestions).
 ///
+/// Like `suggest_similar_name` but returns the raw name, not a formatted string.
+/// Use this when you want to build a `SuggestionDiff` via `with_suggestion_rename`.
+pub fn find_similar_name<'a>(
+    unknown: &str,
+    known_names: impl Iterator<Item = &'a str>,
+) -> Option<&'a str> {
+    let max_distance = match unknown.len() {
+        0..=2 => 1,
+        3..=5 => 2,
+        _ => 3,
+    };
+
+    let mut best: Option<(&str, usize)> = None;
+
+    for name in known_names {
+        let dist = levenshtein_distance(unknown, name);
+        if dist <= max_distance && best.is_none_or(|(_, d)| dist < d) {
+            best = Some((name, dist));
+        }
+    }
+
+    best.map(|(name, _)| name)
+}
+
+/// Find the most similar name from a list of known names (for typo suggestions).
+///
 /// Uses Levenshtein distance. Returns `None` if no name is close enough.
 pub fn suggest_similar_name<'a>(
     unknown: &str,
@@ -185,7 +211,7 @@ pub fn suggest_similar_name<'a>(
 
     for name in known_names {
         let dist = levenshtein_distance(unknown, name);
-        if dist <= max_distance && (best.is_none() || dist < best.unwrap().1) {
+        if dist <= max_distance && best.is_none_or(|(_, d)| dist < d) {
             best = Some((name, dist));
         }
     }

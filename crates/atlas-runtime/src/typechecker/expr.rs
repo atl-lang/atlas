@@ -1738,18 +1738,29 @@ impl<'a> TypeChecker<'a> {
     ) -> Option<Type> {
         let required = members.iter().find(|m| m.name == member_name);
         let Some(required) = required else {
-            self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3010",
-                    format!("Type has no member named '{}'", member_name),
-                    member.member.span,
-                )
-                .with_label("member not found")
-                .with_help(format!(
-                    "check that '{}' exists on this record or namespace",
-                    member_name
-                )),
+            let available: Vec<&str> = members.iter().map(|m| m.name.as_str()).collect();
+            let similar = crate::typechecker::suggestions::find_similar_name(
+                member_name,
+                available.iter().copied(),
             );
+            let mut diag = Diagnostic::error_with_code(
+                "AT3010",
+                format!("Type has no member named '{}'", member_name),
+                member.member.span,
+            )
+            .with_label("member not found")
+            .with_help(format!(
+                "check that '{}' exists on this record or namespace",
+                member_name
+            ));
+            if let Some(name) = similar {
+                diag = diag.with_suggestion_rename(
+                    format!("did you mean `{}`?", name),
+                    member_name,
+                    name,
+                );
+            }
+            self.diagnostics.push(diag);
             return Some(Type::Unknown);
         };
 
@@ -2183,33 +2194,31 @@ impl<'a> TypeChecker<'a> {
                 );
             } else {
                 // Method not found for this type (not a trait method either)
-                let suggestion = self.method_suggestion_for(&target_type, method_name);
-                let help = match suggestion {
-                    Some(s) => format!(
-                        "type '{}' does not support method '{}' — {}",
-                        target_type.display_name(),
-                        method_name,
-                        s
-                    ),
-                    None => format!(
-                        "type '{}' does not support method '{}'",
+                let similar = self.method_suggestion_for(&target_type, method_name);
+                let help = format!(
+                    "type '{}' does not support method '{}'",
+                    target_type.display_name(),
+                    method_name
+                );
+                let mut diag = Diagnostic::error_with_code(
+                    "AT3010",
+                    format!(
+                        "Type '{}' has no method named '{}'",
                         target_type.display_name(),
                         method_name
                     ),
-                };
-                self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3010",
-                        format!(
-                            "Type '{}' has no method named '{}'",
-                            target_type.display_name(),
-                            method_name
-                        ),
-                        member.member.span,
-                    )
-                    .with_label("method not found")
-                    .with_help(help),
-                );
+                    member.member.span,
+                )
+                .with_label("method not found")
+                .with_help(help);
+                if let Some(name) = similar {
+                    diag = diag.with_suggestion_rename(
+                        format!("did you mean `{}`?", name),
+                        method_name,
+                        &name,
+                    );
+                }
+                self.diagnostics.push(diag);
             }
             Type::Unknown
         }

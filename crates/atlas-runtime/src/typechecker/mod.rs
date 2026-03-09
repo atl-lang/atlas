@@ -2476,37 +2476,34 @@ impl<'a> TypeChecker<'a> {
                         } else {
                             let available: Vec<&str> =
                                 members.iter().map(|m| m.name.as_str()).collect();
-                            let suggestion = suggestions::suggest_similar_name(
+                            let similar = suggestions::find_similar_name(
                                 member_name,
                                 available.iter().copied(),
                             );
-                            let help = if let Some(sugg) = suggestion {
-                                format!(
-                                    "field '{}' not found — did you mean '{}'? Available: {}",
-                                    member_name,
-                                    sugg,
-                                    available.join(", ")
-                                )
-                            } else {
-                                format!(
-                                    "field '{}' not found. Available fields: {}",
-                                    member_name,
-                                    available.join(", ")
-                                )
-                            };
-                            self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3010",
-                                    format!(
-                                        "Type '{}' has no field named '{}'",
-                                        target_type.display_name(),
-                                        member_name
-                                    ),
-                                    member.span,
-                                )
-                                .with_label("field not found")
-                                .with_help(help),
+                            let help = format!(
+                                "field '{}' not found. Available fields: {}",
+                                member_name,
+                                available.join(", ")
                             );
+                            let mut diag = Diagnostic::error_with_code(
+                                "AT3010",
+                                format!(
+                                    "Type '{}' has no field named '{}'",
+                                    target_type.display_name(),
+                                    member_name
+                                ),
+                                member.span,
+                            )
+                            .with_label("field not found")
+                            .with_help(help);
+                            if let Some(name) = similar {
+                                diag = diag.with_suggestion_rename(
+                                    format!("did you mean `{}`?", name),
+                                    member_name,
+                                    name,
+                                );
+                            }
+                            self.diagnostics.push(diag);
                             Type::Unknown
                         }
                     }
@@ -2675,6 +2672,8 @@ impl<'a> TypeChecker<'a> {
 
     /// Try to resolve a method call through the trait/impl system.
     /// Collect method name suggestions for a type (stdlib + inherent), used by "method not found" errors.
+    ///
+    /// Returns the raw similar name (no formatting) so callers can build a `SuggestionDiff`.
     pub(super) fn method_suggestion_for(
         &self,
         receiver_type: &Type,
@@ -2692,7 +2691,8 @@ impl<'a> TypeChecker<'a> {
                 .filter(|(t, _)| t == &type_name)
                 .map(|(_, m)| m.clone()),
         );
-        suggestions::suggest_similar_name(method_name, names.iter().map(|s| s.as_str()))
+        suggestions::find_similar_name(method_name, names.iter().map(|s| s.as_str()))
+            .map(|s| s.to_owned())
     }
 
     /// Returns the return type if a matching impl method is found, `None` otherwise.

@@ -57,7 +57,7 @@ pub use bytecode::{Bytecode, Opcode};
 pub use compiler::Compiler;
 pub use diagnostic::{
     error_codes, formatter, normalizer, sort_diagnostics, warnings, Diagnostic, DiagnosticLevel,
-    RelatedLocation, DIAG_VERSION,
+    RelatedLocation, SuggestionDiff, DIAG_VERSION,
 };
 pub use interpreter::Interpreter;
 pub use json_value::JsonValue;

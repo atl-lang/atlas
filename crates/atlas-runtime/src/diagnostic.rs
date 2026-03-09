@@ -68,6 +68,27 @@ pub struct StackTraceFrame {
     pub column: usize,
 }
 
+/// A structured code-diff suggestion (Rust-style `-old / +new` lines).
+///
+/// Shown when Atlas knows exactly what token to replace (e.g. "did you mean `len`?").
+/// Rendered in `to_human_string()` as:
+/// ```text
+/// help: did you mean `len`?
+///   6 - s.lenght();
+///   6 + s.len();
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SuggestionDiff {
+    /// Short description (e.g. `"did you mean \`len\`?"`)
+    pub description: String,
+    /// Source line number (1-based)
+    pub line_number: usize,
+    /// Original source line (the typo)
+    pub old_line: String,
+    /// Fixed source line (the correction)
+    pub new_line: String,
+}
+
 /// A diagnostic message (error or warning)
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Diagnostic {
@@ -107,6 +128,9 @@ pub struct Diagnostic {
     /// visually subordinated (D-043: cascade suppression). Omitted from JSON if false.
     #[serde(skip_serializing_if = "std::ops::Not::not", default)]
     pub is_secondary: bool,
+    /// Structured code-diff suggestions (H-195). Rendered as `-old / +new` lines.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub suggestions: Vec<SuggestionDiff>,
 }
 
 impl Diagnostic {
@@ -134,6 +158,7 @@ impl Diagnostic {
             stack_trace: Vec::new(),
             help: Vec::new(),
             is_secondary: false,
+            suggestions: Vec::new(),
         }
     }
 
@@ -161,6 +186,7 @@ impl Diagnostic {
             stack_trace: Vec::new(),
             help: Vec::new(),
             is_secondary: false,
+            suggestions: Vec::new(),
         }
     }
 
@@ -229,6 +255,33 @@ impl Diagnostic {
         self
     }
 
+    /// Add a code-diff suggestion (H-195: Rust-style `-old / +new`).
+    ///
+    /// Replaces the first occurrence of `old_token` with `new_token` in the diagnostic's
+    /// existing snippet to build the diff lines. If the snippet doesn't contain `old_token`
+    /// (e.g. multi-line expression), falls back to a plain `help:` line.
+    pub fn with_suggestion_rename(
+        mut self,
+        description: impl Into<String>,
+        old_token: &str,
+        new_token: &str,
+    ) -> Self {
+        let description = description.into();
+        if !self.snippet.is_empty() && self.snippet.contains(old_token) {
+            let new_line = self.snippet.replacen(old_token, new_token, 1);
+            self.suggestions.push(SuggestionDiff {
+                description,
+                line_number: self.line,
+                old_line: self.snippet.clone(),
+                new_line,
+            });
+        } else {
+            // Fallback: plain help text when snippet doesn't contain the token
+            self.help.push(format!("{}: `{}`", description, new_token));
+        }
+        self
+    }
+
     /// Mark this diagnostic as a secondary/cascade error (D-043).
     /// Secondary diagnostics are visually subordinated in output and omitted from
     /// JSON when `is_secondary` is false.
@@ -257,6 +310,7 @@ impl Diagnostic {
             stack_trace: Vec::new(),
             help: Vec::new(),
             is_secondary: false,
+            suggestions: Vec::new(),
         }
     }
 
@@ -335,6 +389,13 @@ impl Diagnostic {
         // Help lines (actionable fixes — what to write/change)
         for help in &self.help {
             output.push_str(&format!("help: {}\n", help));
+        }
+
+        // Suggestion diffs — Rust-style `-old / +new` code blocks (H-195)
+        for sug in &self.suggestions {
+            output.push_str(&format!("help: {}\n", sug.description));
+            output.push_str(&format!("  {} - {}\n", sug.line_number, sug.old_line));
+            output.push_str(&format!("  {} + {}\n", sug.line_number, sug.new_line));
         }
 
         // Note lines (context/explanation + related locations)
