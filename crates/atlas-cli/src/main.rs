@@ -514,6 +514,25 @@ enum Commands {
         verbose: bool,
     },
 
+    /// Explain an Atlas error code
+    ///
+    /// Looks up an error code in the registry and prints its description,
+    /// help text, and an example showing how to fix the issue.
+    ///
+    /// EXAMPLES:
+    ///     atlas explain AT1003        Explain error AT1003
+    ///     atlas explain 1003          Same (AT prefix inferred)
+    ///     atlas explain at1003        Case-insensitive
+    ///     atlas explain --list        List all error codes
+    Explain {
+        /// Error code to explain (e.g., AT1003, AW3059, or just 1003)
+        #[arg(conflicts_with = "list")]
+        code: Option<String>,
+        /// List all known error codes
+        #[arg(long)]
+        list: bool,
+    },
+
     /// Create a new Atlas project from a template
     ///
     /// Creates a new project directory with a complete project structure
@@ -855,6 +874,19 @@ fn main() -> Result<()> {
                 verbose,
             };
             commands::publish::run(args)?;
+        }
+        Commands::Explain { code, list } => {
+            if list {
+                commands::explain::run_list()?;
+            } else {
+                let code = code.ok_or_else(|| {
+                    anyhow::anyhow!(
+                        "Usage: atlas explain <CODE>  or  atlas explain --list\n\
+                         Example: atlas explain AT1003"
+                    )
+                })?;
+                commands::explain::run(&code)?;
+            }
         }
         Commands::New {
             name,
