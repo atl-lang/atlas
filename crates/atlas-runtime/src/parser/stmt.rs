@@ -220,11 +220,8 @@ impl Parser {
             Expr::Index(idx) => match idx.index {
                 IndexValue::Single(index) => {
                     if matches!(index.as_ref(), Expr::Range { .. }) {
-                        self.error_with_dynamic_help(
-                            INVALID_ASSIGN_TARGET_RANGE.code,
-                            "cannot assign to a range index — only specific indices are valid",
-                            "Array slice assignments are not supported. Assign to a specific index:\n  arr[0] = value   ✓\n  arr[0..3] = ...  ✗",
-                        );
+                        let span = self.peek().span;
+                        self.emit_descriptor(INVALID_ASSIGN_TARGET_RANGE.emit(span));
                         return Err(());
                     }
                     Ok(AssignTarget::Index {
@@ -236,22 +233,16 @@ impl Parser {
             },
             Expr::Member(member) => {
                 if member.args.is_some() {
-                    self.error_with_dynamic_help(
-                        INVALID_ASSIGN_TARGET_CALL.code,
-                        "cannot assign to the result of a method call",
-                        "Method call results are not addressable. Assign to a variable first:\n  let mut result = obj.method();\n  result = newValue;",
-                    );
+                    let span = self.peek().span;
+                    self.emit_descriptor(INVALID_ASSIGN_TARGET_CALL.emit(span));
                     return Err(());
                 }
                 if !matches!(
                     member.target.as_ref(),
                     Expr::Identifier(_) | Expr::Member(_) | Expr::Index(_)
                 ) {
-                    self.error_with_dynamic_help(
-                        INVALID_ASSIGN_TARGET_MEMBER.code,
-                        "cannot assign to a member of a non-addressable expression",
-                        "Only variable, index, and member expressions are valid assignment targets:\n  x = value          ✓  (variable)\n  arr[0] = value     ✓  (index)\n  obj.field = value  ✓  (member of variable)\n  f().field = value  ✗  (member of call result)",
-                    );
+                    let span = self.peek().span;
+                    self.emit_descriptor(INVALID_ASSIGN_TARGET_MEMBER.emit(span));
                     return Err(());
                 }
                 Ok(AssignTarget::Member {
@@ -261,11 +252,8 @@ impl Parser {
                 })
             }
             _ => {
-                self.error_with_dynamic_help(
-                    INVALID_ASSIGN_TARGET.code,
-                    "expression is not a valid assignment target",
-                    "Valid assignment targets: variables, array indices, and struct fields.\n  x = value          ✓\n  arr[i] = value     ✓\n  obj.field = value  ✓",
-                );
+                let span = self.peek().span;
+                self.emit_descriptor(INVALID_ASSIGN_TARGET.emit(span));
                 Err(())
             }
         }
