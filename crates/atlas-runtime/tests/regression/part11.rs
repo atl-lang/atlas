@@ -115,6 +115,39 @@ fn test_b9_implicit_return_explicit_still_works() {
 }
 
 // ============================================================================
+// H-194: AT3001 type mismatch uses dual-span (declaration + value site)
+// ============================================================================
+
+#[test]
+fn test_h194_type_mismatch_has_related_location() {
+    // H-194: AT3001 should show two spans like Rust E0308:
+    //   let x: number = "hello";
+    //          ------   ^^^^^^^
+    //          |        found string
+    //          expected due to this type annotation
+    //
+    // The diagnostic must have a related location pointing at the type annotation.
+    let code = r#"let x: number = "hello";"#;
+    let runtime = Atlas::new();
+    let diags = runtime.eval(code).expect_err("expected AT3001");
+    let at3001 = diags
+        .iter()
+        .find(|d| d.code == "AT3001")
+        .expect("expected AT3001 diagnostic");
+    assert!(
+        !at3001.related.is_empty(),
+        "AT3001 should have a related location pointing at the type annotation. Got: {:?}",
+        at3001
+    );
+    let rel = &at3001.related[0];
+    assert!(
+        rel.message.contains("expected") || rel.message.contains("annotation"),
+        "Related location message should describe expected type, got: {:?}",
+        rel.message
+    );
+}
+
+// ============================================================================
 // H-193: Error pipeline collects diagnostics across all phases
 // ============================================================================
 

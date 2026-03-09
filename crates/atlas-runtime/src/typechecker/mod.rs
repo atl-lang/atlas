@@ -1886,23 +1886,47 @@ impl<'a> TypeChecker<'a> {
                                     init_type.display_name()
                                 )
                             });
-                        self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type mismatch: expected {}, found {}",
-                                    declared_type.display_name(),
-                                    init_type.display_name()
-                                ),
-                                var.span,
-                            )
-                            .with_label(format!(
-                                "expected {}, found {}",
+                        // H-194: dual-span like Rust E0308 — primary span on the
+                        // value (what was found), related location on the type
+                        // annotation (where the expected type was declared).
+                        let init_span = var.init.span();
+                        let annotation_span = type_ref.span();
+                        // Resolve annotation span to line/col using the same source
+                        // registry that error_with_code uses.
+                        let ann_source = crate::span::source_for_file(annotation_span.file);
+                        let (ann_line, ann_col) = ann_source
+                            .as_deref()
+                            .map(|src| {
+                                crate::diagnostic::formatter::offset_to_line_col(
+                                    src,
+                                    annotation_span.start,
+                                )
+                            })
+                            .unwrap_or((1, annotation_span.start + 1));
+                        let diag = Diagnostic::error_with_code(
+                            "AT3001",
+                            format!(
+                                "Type mismatch: expected {}, found {}",
                                 declared_type.display_name(),
                                 init_type.display_name()
-                            ))
-                            .with_help(help),
+                            ),
+                            init_span,
+                        )
+                        .with_label(format!("found {} here", init_type.display_name()))
+                        .with_help(help)
+                        .with_related_location(
+                            crate::diagnostic::RelatedLocation {
+                                file: annotation_span.file().to_string(),
+                                line: ann_line,
+                                column: ann_col,
+                                length: annotation_span.len(),
+                                message: format!(
+                                    "expected {} due to this type annotation",
+                                    declared_type.display_name()
+                                ),
+                            },
                         );
+                        self.diagnostics.push(diag);
                     }
                     declared_type
                 } else {
