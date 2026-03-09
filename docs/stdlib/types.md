@@ -192,13 +192,14 @@ Converts value to boolean.
 ### parseInt
 
 ```atlas
-fn parseInt(str: string) -> Result<number, string>
+fn parseInt(str: string, radix: number?) -> Result<number, string>
 ```
 
-Parses string as integer.
+Parses string as integer in the given radix (default: 10).
 
 **Parameters:**
 - `str` - String to parse
+- `radix` - (optional) Base between 2 and 36, inclusive. Defaults to 10.
 
 **Returns:**
 - `Ok(number)` on success

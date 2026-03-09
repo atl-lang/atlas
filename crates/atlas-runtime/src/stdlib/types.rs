@@ -634,8 +634,8 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
 /// String is trimmed and can have optional +/- prefix.
 /// Returns error if string is invalid for the given radix.
 pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
-    if args.len() != 2 {
-        return Err(stdlib_arity_error("parseInt", 2, args.len(), span));
+    if args.is_empty() || args.len() > 2 {
+        return Err(stdlib_arity_error("parseInt", 1, args.len(), span));
     }
 
     let string = match &args[0] {
@@ -648,21 +648,25 @@ pub fn parse_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         }
     };
 
-    let radix = match &args[1] {
-        Value::Number(n) => {
-            if n.fract() != 0.0 || *n < 2.0 || *n > 36.0 {
-                return Ok(Value::Result(Err(Box::new(Value::string(
-                    "parseInt() radix must be integer between 2 and 36",
-                )))));
+    let radix = if args.len() == 2 {
+        match &args[1] {
+            Value::Number(n) => {
+                if n.fract() != 0.0 || *n < 2.0 || *n > 36.0 {
+                    return Ok(Value::Result(Err(Box::new(Value::string(
+                        "parseInt() radix must be integer between 2 and 36",
+                    )))));
+                }
+                *n as u32
             }
-            *n as u32
+            _ => {
+                return Err(RuntimeError::TypeError {
+                    msg: "parseInt() requires number as second argument".to_string(),
+                    span,
+                })
+            }
         }
-        _ => {
-            return Err(RuntimeError::TypeError {
-                msg: "parseInt() requires number as second argument".to_string(),
-                span,
-            })
-        }
+    } else {
+        10u32
     };
 
     let trimmed = string.trim();
