@@ -239,15 +239,13 @@ fn ai_mistake_undefined_variable_with_suggestion() {
     let full = diags
         .iter()
         .map(|d| {
-            format!(
-                "{} {}",
-                d.message,
-                d.help.first().map(|s| s.as_str()).unwrap_or("")
-            )
+            let notes = d.notes.join(" ");
+            let help = d.help.join(" ");
+            format!("{} {} {}", d.message, help, notes)
         })
         .collect::<Vec<_>>()
         .join(" ");
-    // Should suggest "count"
+    // Should suggest "count" (now emitted as a note)
     assert!(
         full.contains("count"),
         "Expected suggestion 'count' for typo 'coutn'\nFull: {}",

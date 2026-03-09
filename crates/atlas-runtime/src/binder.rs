@@ -935,23 +935,21 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let help = if let Some(ref sugg) = suggestion {
-                        format!(
-                            "declare '{}' with 'let' before assigning to it — did you mean '{}'?",
-                            id.name, sugg
-                        )
-                    } else {
-                        format!("declare '{}' with 'let' before assigning to it", id.name)
-                    };
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
-                            format!("unknown symbol '{}'", id.name),
-                            id.span,
-                        )
-                        .with_label("undefined variable")
-                        .with_help(help),
-                    );
+                    let mut diag = Diagnostic::error_with_code(
+                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                        format!("unknown symbol '{}'", id.name),
+                        id.span,
+                    )
+                    .with_label("undefined variable")
+                    .with_help(format!(
+                        "declare `{}` with `let` before assigning to it: `let {} = value;`",
+                        id.name, id.name
+                    ))
+                    .with_note("variables must be declared before assignment — Atlas has no implicit declaration");
+                    if let Some(ref sugg) = suggestion {
+                        diag = diag.with_note(format!("did you mean `{}`?", sugg));
+                    }
+                    self.diagnostics.push(diag);
                 }
             }
             AssignTarget::Index { target, index, .. } => {
@@ -988,26 +986,25 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let help = if let Some(ref sugg) = suggestion {
-                        format!(
-                            "unknown identifier '{}' — did you mean '{}'?",
-                            id.name, sugg
-                        )
-                    } else {
-                        format!(
-                            "unknown identifier '{}' — declare it with 'let' before using it",
-                            id.name
-                        )
-                    };
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
-                            format!("unknown identifier '{}'", id.name),
-                            id.span,
-                        )
-                        .with_label("undefined identifier")
-                        .with_help(help),
-                    );
+                    let mut diag = Diagnostic::error_with_code(
+                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                        format!("unknown identifier `{}`", id.name),
+                        id.span,
+                    )
+                    .with_label("undefined identifier")
+                    .with_help(format!(
+                        "declare `{}` with `let` before using it: `let {} = value;`",
+                        id.name, id.name
+                    ))
+                    .with_help(format!(
+                        "if `{}` is defined in another file, import it: `import {{ {} }} from \"./module\"`",
+                        id.name, id.name
+                    ))
+                    .with_note("identifiers must be declared in the current scope before use");
+                    if let Some(ref sugg) = suggestion {
+                        diag = diag.with_note(format!("did you mean `{}`?", sugg));
+                    }
+                    self.diagnostics.push(diag);
                 }
             }
             Expr::Binary(binary) => {

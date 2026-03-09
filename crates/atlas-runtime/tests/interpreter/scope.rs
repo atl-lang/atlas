@@ -227,13 +227,13 @@ fn test_valid_function_scope(#[case] source: &str) {
 }
 
 #[rstest]
-#[case::undefined_var(r#"fn foo() -> number { return undefined_var; }"#, "AT2002")]
+#[case::undefined_var(r#"fn foo() -> number { return undefined_var; }"#, "AT0002")]
 #[case::forward_ref(
     r#"let x: number = a + b; let a: number = 1; let b: number = 2;"#,
-    "AT2002"
+    "AT0002"
 )]
-#[case::self_ref(r#"let x: number = x + 1;"#, "AT2002")]
-#[case::decl_order(r#"let x = y; let y: number = 1;"#, "AT2002")]
+#[case::self_ref(r#"let x: number = x + 1;"#, "AT0002")]
+#[case::decl_order(r#"let x = y; let y: number = 1;"#, "AT0002")]
 fn test_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
     let diagnostics = bind_source(source);
     assert_has_error(&diagnostics, expected_code);

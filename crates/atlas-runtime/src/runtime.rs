@@ -454,7 +454,47 @@ pub fn runtime_error_to_diagnostic(
         }
     };
 
-    Diagnostic::error_with_code(code, message, span)
+    // Build the diagnostic with base help, then add second help + notes per error type
+    let mut diag = Diagnostic::error_with_code(code, message, span)
         .with_stack_trace(stack_trace)
-        .with_help(help)
+        .with_help(help);
+
+    match &error {
+        RuntimeError::DivideByZero { .. } => {
+            diag = diag.with_note(
+                "division by zero is a runtime fault — Atlas does not implicitly return 0 or NaN",
+            );
+        }
+        RuntimeError::OutOfBounds { .. } => {
+            diag = diag
+                .with_help("use `arr.get(i)` which returns `null` instead of panicking")
+                .with_note("array indices are zero-based; valid range is 0 to len(arr) - 1");
+        }
+        RuntimeError::InvalidStdlibArgument { .. } => {
+            diag = diag.with_note(
+                "stdlib functions are strict about argument count and type — no implicit coercions",
+            );
+        }
+        RuntimeError::TypeError { msg, .. } => {
+            diag = diag
+                .with_help("use `type_of(value)` to inspect the value's type at runtime")
+                .with_note(format!("detail: {msg}"));
+        }
+        RuntimeError::UndefinedVariable { name, .. } => {
+            diag = diag
+                .with_help(format!("if `{name}` is from another module, import it first: `import {{ {name} }} from \"./module\"`"))
+                .with_note("variables are not visible outside the scope where they were declared");
+        }
+        RuntimeError::UnknownFunction { name, .. } => {
+            diag = diag.with_note(format!(
+                "`{name}` was not found in scope — check spelling or verify the module is imported"
+            ));
+        }
+        RuntimeError::IoError { message: msg, .. } => {
+            diag = diag.with_note(format!("OS detail: {msg}"));
+        }
+        _ => {}
+    }
+
+    diag
 }

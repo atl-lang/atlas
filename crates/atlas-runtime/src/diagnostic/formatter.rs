@@ -82,7 +82,17 @@ impl DiagnosticFormatter {
             self.write_snippet(w, diag)?;
         }
 
-        // Notes
+        // Stack trace (shows execution path before fix guidance)
+        if !diag.stack_trace.is_empty() {
+            self.write_stack_trace(w, diag)?;
+        }
+
+        // Help lines (actionable fixes — what to write/change)
+        for help in &diag.help {
+            self.write_help(w, help)?;
+        }
+
+        // Note lines (context/explanation + related locations)
         for note in &diag.notes {
             self.write_note(w, note)?;
         }
@@ -96,16 +106,6 @@ impl DiagnosticFormatter {
                     related.file, related.line, related.column, related.message
                 ),
             )?;
-        }
-
-        // Stack trace
-        if !diag.stack_trace.is_empty() {
-            self.write_stack_trace(w, diag)?;
-        }
-
-        // Help (multiple lines allowed)
-        for help in &diag.help {
-            self.write_help(w, help)?;
         }
 
         writeln!(w)?;

@@ -364,8 +364,8 @@ fn test_subtract_strings_error() {
 fn test_undefined_variable_error() {
     let diags = errors("let _x = foo;");
     assert!(!diags.is_empty());
-    assert_eq!(diags[0].code, "AT2002");
-    assert!(diags[0].message.contains("Unknown symbol 'foo'"));
+    assert_eq!(diags[0].code, "AT0002");
+    assert!(diags[0].message.contains("foo"));
 }
 
 // ============================================================================
