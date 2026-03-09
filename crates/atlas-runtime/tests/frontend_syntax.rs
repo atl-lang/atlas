@@ -206,3 +206,6 @@ mod traits_part2;
 
 #[path = "frontend_syntax/warnings_attributes.rs"]
 mod warnings_attributes;
+
+#[path = "frontend_syntax/diagnostic_descriptor.rs"]
+mod diagnostic_descriptor;

@@ -3,6 +3,7 @@
 //! All errors and warnings flow through the unified Diagnostic type,
 //! ensuring consistent formatting across compiler, interpreter, and VM.
 
+pub mod descriptor;
 pub mod error_codes;
 pub mod formatter;
 pub mod normalizer;
