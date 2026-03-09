@@ -802,6 +802,51 @@ impl Parser {
             }
         };
 
+        // H-200: detect postfix array syntax `TypeName[]` and emit a surgical AT1004.
+        // Atlas uses prefix syntax `[]TypeName`. Consume the bogus `[]` so parse can
+        // continue (avoiding cascade errors from the caller finding `[` where `)` is expected).
+        if let TypeRef::Named(ref type_name, named_span) = type_ref {
+            let next_is_lbracket = self.check(TokenKind::LeftBracket);
+            let next2_is_rbracket = self
+                .peek_nth_nontrivia(1)
+                .map(|t| t.kind == TokenKind::RightBracket)
+                .unwrap_or(false);
+            if next_is_lbracket && next2_is_rbracket {
+                let type_name = type_name.clone();
+                let old_token = format!("{}[]", type_name);
+                let new_token = format!("[]{}", type_name);
+                // consume `[` — capture its span before advancing
+                let lbracket_span = self.peek().span;
+                self.advance();
+                // consume `]` — capture its span before advancing
+                let rbracket_span = self.peek().span;
+                self.advance();
+                // span covers `TypeName[]`
+                let full_span = named_span.merge(lbracket_span).merge(rbracket_span);
+                self.error_at_with_code_help_note(
+                    "AT1004",
+                    "array types use prefix syntax — write `[]` before the type name, not after",
+                    full_span,
+                    format!("use `{}` instead of `{}`", new_token, old_token),
+                    "Atlas uses prefix array syntax: `[]T` not postfix `T[]`",
+                );
+                // Push the SuggestionDiff onto the last diagnostic.
+                // Safety: error_at_with_code_help_note always pushes when not in_panic_mode.
+                if let Some(diag) = self.diagnostics.last_mut() {
+                    let new_line = diag.snippet.replacen(&old_token, &new_token, 1);
+                    if diag.snippet.contains(&*old_token) {
+                        diag.suggestions.push(crate::diagnostic::SuggestionDiff {
+                            description: format!("use `{}` instead", new_token),
+                            line_number: diag.line,
+                            old_line: diag.snippet.clone(),
+                            new_line,
+                        });
+                    }
+                }
+                return Err(());
+            }
+        }
+
         Ok(type_ref)
     }
 

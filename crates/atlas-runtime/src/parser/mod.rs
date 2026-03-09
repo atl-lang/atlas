@@ -1098,6 +1098,21 @@ impl Parser {
                     E_MISSING_BRACE,
                     "Add `)` to close the function call or grouped expression.",
                 ),
+                TokenKind::Colon => (
+                    E_UNEXPECTED,
+                    "Add `:` — type annotations use `name: Type` syntax.",
+                ),
+                TokenKind::Comma => (E_UNEXPECTED, "Add `,` to separate items in the list."),
+                TokenKind::Arrow => (
+                    E_UNEXPECTED,
+                    "Add `->` — function return types use `fn name() -> Type` syntax.",
+                ),
+                TokenKind::LeftParen => (E_UNEXPECTED, "Add `(` to open the parameter list."),
+                TokenKind::LeftBrace => (E_UNEXPECTED, "Add `{` to open the block body."),
+                TokenKind::Identifier => (
+                    E_UNEXPECTED,
+                    "Provide an identifier (a name) here — identifiers start with a letter or `_`.",
+                ),
                 _ => (
                     E_UNEXPECTED,
                     "Check for missing punctuation or a typo in the token.",
