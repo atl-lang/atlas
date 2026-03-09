@@ -2,7 +2,6 @@
 
 use crate::ast::*;
 use crate::diagnostic::error_codes;
-use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::typechecker::suggestions;
 use crate::typechecker::TypeChecker;
@@ -122,22 +121,17 @@ impl<'a> TypeChecker<'a> {
                 // AT3053: use-after-own — variable was moved into an `own` call
                 if self.moved_vars.contains(&id.name) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            error_codes::USE_AFTER_OWN.code,
-                            format!(
-                                "use of moved value `{}`: value was transferred via `own` and is no longer valid",
-                                id.name
-                            ),
-                            id.span,
-                        )
-                        .with_label("value already moved")
-                        .with_help(format!(
-                            "after passing `{}` to an `own` parameter, the binding is invalidated.\n\
-                             To keep using the value, change the parameter annotation:\n\
-                             • `borrow {}` — read-only access, caller retains ownership\n\
-                             • `share {}`  — both hold valid refs simultaneously",
-                            id.name, id.name, id.name
-                        )),
+                        error_codes::USE_AFTER_OWN.emit(id.span)
+                            .arg("name", &id.name)
+                            .with_help(format!(
+                                "after passing `{}` to an `own` parameter, the binding is invalidated.\n\
+                                 To keep using the value, change the parameter annotation:\n\
+                                 • `borrow {}` — read-only access, caller retains ownership\n\
+                                 • `share {}`  — both hold valid refs simultaneously",
+                                id.name, id.name, id.name
+                            ))
+                            .build()
+                            .with_label("value already moved"),
                     );
                 }
 
@@ -251,20 +245,14 @@ impl<'a> TypeChecker<'a> {
                                 .flatten();
                             if ownership == Some(OwnershipAnnotation::Borrow) {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        error_codes::BORROW_ESCAPE.code,
-                                        format!(
-                                            "cannot use `borrow` parameter `{}` as a struct field: \
-                                             borrows cannot outlive their scope",
-                                            id.name
-                                        ),
-                                        field.span,
-                                    )
-                                    .with_label("borrow escapes into struct")
-                                    .with_help(
-                                        "copy the value or use a computation result instead of \
-                                         storing a `borrow` parameter directly in a struct",
-                                    ),
+                                    error_codes::BORROW_ESCAPE.emit(field.span)
+                                        .arg("name", &id.name)
+                                        .with_help(
+                                            "copy the value or use a computation result instead of \
+                                             storing a `borrow` parameter directly in a struct",
+                                        )
+                                        .build()
+                                        .with_label("borrow escapes into struct"),
                                 );
                             }
                         }
@@ -272,16 +260,18 @@ impl<'a> TypeChecker<'a> {
                         if let Some(expected_type) = member_types.get(&field.name.name) {
                             if !seen_fields.insert(field.name.name.clone()) {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "Duplicate field '{}' in struct '{}'",
-                                            field.name.name, struct_expr.name.name
-                                        ),
-                                        field.span,
-                                    )
-                                    .with_label("duplicate field initializer")
-                                    .with_help("each struct field can only be initialized once"),
+                                    error_codes::TYPE_ERROR
+                                        .emit(field.span)
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "Duplicate field '{}' in struct '{}'",
+                                                field.name.name, struct_expr.name.name
+                                            ),
+                                        )
+                                        .with_help("each struct field can only be initialized once")
+                                        .build()
+                                        .with_label("duplicate field initializer"),
                                 );
                             }
                             // H-162: empty array literal [] in struct field — skip mismatch
@@ -297,25 +287,27 @@ impl<'a> TypeChecker<'a> {
                                 // Valid — empty literal assigned to typed array field
                             } else if !self.is_assignable_with_traits(&value_type, expected_type) {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "Type mismatch: expected {}, found {}",
+                                    error_codes::TYPE_ERROR
+                                        .emit(field.span)
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "Type mismatch: expected {}, found {}",
+                                                expected_type.display_name(),
+                                                value_type.display_name()
+                                            ),
+                                        )
+                                        .with_help(format!(
+                                            "field '{}' must be of type {}",
+                                            field.name.name,
+                                            expected_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label(format!(
+                                            "expected {}, found {}",
                                             expected_type.display_name(),
                                             value_type.display_name()
-                                        ),
-                                        field.span,
-                                    )
-                                    .with_label(format!(
-                                        "expected {}, found {}",
-                                        expected_type.display_name(),
-                                        value_type.display_name()
-                                    ))
-                                    .with_help(format!(
-                                        "field '{}' must be of type {}",
-                                        field.name.name,
-                                        expected_type.display_name()
-                                    )),
+                                        )),
                                 );
                             }
                         } else {
@@ -338,16 +330,19 @@ impl<'a> TypeChecker<'a> {
                                 )
                             };
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3010",
-                                    format!(
-                                        "Struct '{}' has no field named '{}'",
-                                        struct_expr.name.name, field.name.name
-                                    ),
-                                    field.span,
-                                )
-                                .with_label("unknown field")
-                                .with_help(help),
+                                error_codes::INVALID_INDEX_TYPE
+                                    .emit(field.span)
+                                    .arg("index_type", &field.name.name)
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "struct '{}' has no field named '{}'",
+                                            struct_expr.name.name, field.name.name
+                                        ),
+                                    )
+                                    .with_help(help)
+                                    .build()
+                                    .with_label("unknown field"),
                             );
                         }
                     }
@@ -355,16 +350,21 @@ impl<'a> TypeChecker<'a> {
                     for (field_name, _) in member_types {
                         if !seen_fields.contains(&field_name) {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!(
-                                        "Missing field '{}' in struct '{}'",
-                                        field_name, struct_expr.name.name
-                                    ),
-                                    struct_expr.span,
-                                )
-                                .with_label("missing field")
-                                .with_help(format!("provide a value for field '{}'", field_name)),
+                                error_codes::TYPE_ERROR
+                                    .emit(struct_expr.span)
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "Missing field '{}' in struct '{}'",
+                                            field_name, struct_expr.name.name
+                                        ),
+                                    )
+                                    .with_help(format!(
+                                        "provide a value for field '{}'",
+                                        field_name
+                                    ))
+                                    .build()
+                                    .with_label("missing field"),
                             );
                         }
                     }
@@ -376,16 +376,18 @@ impl<'a> TypeChecker<'a> {
                     for field in &struct_expr.fields {
                         if !seen.insert(field.name.name.clone()) {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!(
-                                        "Duplicate field '{}' in struct '{}'",
-                                        field.name.name, struct_expr.name.name
-                                    ),
-                                    field.span,
-                                )
-                                .with_label("duplicate field initializer")
-                                .with_help("each struct field can only be initialized once"),
+                                error_codes::TYPE_ERROR
+                                    .emit(field.span)
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "Duplicate field '{}' in struct '{}'",
+                                            field.name.name, struct_expr.name.name
+                                        ),
+                                    )
+                                    .with_help("each struct field can only be initialized once")
+                                    .build()
+                                    .with_label("duplicate field initializer"),
                             );
                         }
                         let value_type = self.check_expr(&field.value);
@@ -425,16 +427,12 @@ impl<'a> TypeChecker<'a> {
                 // AT4001: await outside async context
                 if !self.in_async_context {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            error_codes::AWAIT_OUTSIDE_ASYNC.code,
-                            "`await` used outside of an async function or top-level scope"
-                                .to_string(),
-                            *span,
-                        )
-                        .with_label("not inside an async fn or top-level")
-                        .with_help(
-                            "move this into an `async fn`, or restructure so the `await` appears at the top level of the script",
-                        ),
+                        error_codes::AWAIT_OUTSIDE_ASYNC.emit(*span)
+                            .with_help(
+                                "move this into an `async fn`, or restructure so the `await` appears at the top level of the script",
+                            )
+                            .build()
+                            .with_label("not inside an async fn or top-level"),
                     );
                     self.check_expr(expr);
                     return Type::Unknown;
@@ -450,19 +448,15 @@ impl<'a> TypeChecker<'a> {
                     Type::Unknown => Type::Unknown, // upstream error already reported
                     _ => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                error_codes::AWAIT_NON_FUTURE.code,
-                                format!(
-                                    "`await` applied to a non-Future value of type `{}`",
+                            error_codes::AWAIT_NON_FUTURE
+                                .emit(*span)
+                                .arg("type_name", operand_norm.display_name())
+                                .with_help("only values of type `Future<T>` can be awaited")
+                                .build()
+                                .with_label(format!(
+                                    "type `{}` is not `Future<_>`",
                                     operand_norm.display_name()
-                                ),
-                                *span,
-                            )
-                            .with_label(format!(
-                                "type `{}` is not `Future<_>`",
-                                operand_norm.display_name()
-                            ))
-                            .with_help("only values of type `Future<T>` can be awaited"),
+                                )),
                         );
                         Type::Unknown
                     }
@@ -483,16 +477,18 @@ impl<'a> TypeChecker<'a> {
                 let bound_norm = bound_type.normalized();
                 if bound_norm != Type::Number {
                     this.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Range bound must be number, found {}",
-                                bound_type.display_name()
-                            ),
-                            expr.span(),
-                        )
-                        .with_label("type mismatch")
-                        .with_help("range bounds must be numbers"),
+                        error_codes::TYPE_ERROR
+                            .emit(expr.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Range bound must be number, found {}",
+                                    bound_type.display_name()
+                                ),
+                            )
+                            .with_help("range bounds must be numbers")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                 }
             }
@@ -553,22 +549,18 @@ impl<'a> TypeChecker<'a> {
         // Check argument count
         if call.args.len() != params.len() {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3005",
-                    format!(
-                        "Function expects {} argument{}, found {}",
+                error_codes::ARITY_MISMATCH
+                    .emit(call.span)
+                    .arg("name", callee_type.display_name())
+                    .arg("expected", format!("{}", params.len()))
+                    .arg("found", format!("{}", call.args.len()))
+                    .with_help(suggestions::suggest_arity_fix(
                         params.len(),
-                        if params.len() == 1 { "" } else { "s" },
-                        call.args.len()
-                    ),
-                    call.span,
-                )
-                .with_label("argument count mismatch")
-                .with_help(suggestions::suggest_arity_fix(
-                    params.len(),
-                    call.args.len(),
-                    callee_type,
-                )),
+                        call.args.len(),
+                        callee_type,
+                    ))
+                    .build()
+                    .with_label("argument count mismatch"),
             );
         }
 
@@ -617,22 +609,24 @@ impl<'a> TypeChecker<'a> {
                             )
                         });
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Argument {} type mismatch: expected {}, found {}",
-                                i + 1,
+                        error_codes::TYPE_ERROR
+                            .emit(arg.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Argument {} type mismatch: expected {}, found {}",
+                                    i + 1,
+                                    expected_type.display_name(),
+                                    arg_type.display_name()
+                                ),
+                            )
+                            .with_help(help)
+                            .build()
+                            .with_label(format!(
+                                "expected {}, found {}",
                                 expected_type.display_name(),
                                 arg_type.display_name()
-                            ),
-                            arg.span(),
-                        )
-                        .with_label(format!(
-                            "expected {}, found {}",
-                            expected_type.display_name(),
-                            arg_type.display_name()
-                        ))
-                        .with_help(help),
+                            )),
                     );
                 }
             }
@@ -667,34 +661,27 @@ impl<'a> TypeChecker<'a> {
                             .flatten();
                         if caller_ownership == Some(OwnershipAnnotation::Borrow) {
                             self.diagnostics.push(
-                                Diagnostic::warning_with_code(
-                                    error_codes::BORROW_TO_OWN.code,
-                                    format!(
-                                        "passing borrowed parameter `{}` to `own` parameter — \
-                                         ownership cannot transfer",
-                                        id.name
-                                    ),
-                                    arg.span(),
-                                )
-                                .with_help("pass an owned value instead of a `borrow` parameter"),
+                                error_codes::BORROW_TO_OWN
+                                    .emit(arg.span())
+                                    .arg("name", &id.name)
+                                    .with_help(
+                                        "pass an owned value instead of a `borrow` parameter",
+                                    )
+                                    .build(),
                             );
                         } else if caller_ownership == Some(OwnershipAnnotation::Share) {
                             // AT3055: share param passed to own — cannot transfer ownership of
                             // something that is shared (caller still holds a valid ref)
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    error_codes::SHARE_VIOLATION.code,
-                                    format!(
-                                        "cannot pass `share` parameter `{}` to `own` parameter: \
-                                         ownership cannot transfer from a shared reference",
-                                        id.name
-                                    ),
-                                    arg.span(),
-                                )
-                                .with_help(
-                                    "share params are held by both caller and callee — \
-                                     ownership cannot be transferred to a third party",
-                                ),
+                                error_codes::SHARE_VIOLATION
+                                    .emit(arg.span())
+                                    .arg("action", "pass to `own` parameter")
+                                    .arg("name", &id.name)
+                                    .with_help(
+                                        "share params are held by both caller and callee — \
+                                         ownership cannot be transferred to a third party",
+                                    )
+                                    .build(),
                             );
                         } else {
                             // Mark variable as moved — any subsequent use triggers AT3053
@@ -723,18 +710,12 @@ impl<'a> TypeChecker<'a> {
                             );
                             if !is_shared {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        error_codes::NON_SHARED_TO_SHARED.code,
-                                        format!(
-                                            "expected `share<T>` value for `share` parameter, \
-                                             found `{}`",
-                                            arg_type.display_name()
-                                        ),
-                                        arg.span(),
-                                    )
-                                    .with_help(
-                                        "wrap the value in a shared reference before passing it",
-                                    ),
+                                    error_codes::NON_SHARED_TO_SHARED.emit(arg.span())
+                                        .arg("type_name", arg_type.display_name())
+                                        .with_help(
+                                            "wrap the value in a shared reference before passing it",
+                                        )
+                                        .build(),
                                 );
                             }
                         }
@@ -751,19 +732,14 @@ impl<'a> TypeChecker<'a> {
                         }
                         if self.is_move_type(arg_type) {
                             self.diagnostics.push(
-                                Diagnostic::warning_with_code(
-                                    error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION.code,
-                                    format!(
-                                        "Type '{}' is not Copy — consider annotating with \
-                                         'own' or 'borrow' to clarify ownership intent",
-                                        arg_type.display_name()
-                                    ),
-                                    arg.span(),
-                                )
-                                .with_help(
-                                    "non-Copy types should use explicit 'own' or 'borrow' \
-                                     ownership annotations",
-                                ),
+                                error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION
+                                    .emit(arg.span())
+                                    .arg("name", arg_type.display_name())
+                                    .with_help(
+                                        "non-Copy types should use explicit 'own' or 'borrow' \
+                                         ownership annotations",
+                                    )
+                                    .build(),
                             );
                         }
                     }
@@ -783,32 +759,24 @@ impl<'a> TypeChecker<'a> {
         // Emit for the left side if it is an identifier
         if matches!(*binary.left, Expr::Identifier(_)) {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3052",
-                    format!(
-                        "inferred type '{}' is incompatible with '{}' at this use site",
-                        left_type.display_name(),
-                        right_type.display_name()
-                    ),
-                    binary.left.span(),
-                )
-                .with_label(format!("has inferred type '{}'", left_type.display_name()))
-                .with_help("add an explicit type annotation to clarify the intended type"),
+                error_codes::INFERRED_TYPE_INCOMPATIBLE
+                    .emit(binary.left.span())
+                    .arg("inferred", left_type.display_name())
+                    .arg("expected", right_type.display_name())
+                    .with_help("add an explicit type annotation to clarify the intended type")
+                    .build()
+                    .with_label(format!("has inferred type '{}'", left_type.display_name())),
             );
         } else if matches!(*binary.right, Expr::Identifier(_)) {
             // Emit for the right side
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3052",
-                    format!(
-                        "inferred type '{}' is incompatible with '{}' at this use site",
-                        right_type.display_name(),
-                        left_type.display_name()
-                    ),
-                    binary.right.span(),
-                )
-                .with_label(format!("has inferred type '{}'", right_type.display_name()))
-                .with_help("add an explicit type annotation to clarify the intended type"),
+                error_codes::INFERRED_TYPE_INCOMPATIBLE
+                    .emit(binary.right.span())
+                    .arg("inferred", right_type.display_name())
+                    .arg("expected", left_type.display_name())
+                    .with_help("add an explicit type annotation to clarify the intended type")
+                    .build()
+                    .with_label(format!("has inferred type '{}'", right_type.display_name())),
             );
         }
     }
@@ -863,21 +831,18 @@ impl<'a> TypeChecker<'a> {
                     let help = suggestions::suggest_binary_operator_fix("+", &left_type, &right_type)
                         .unwrap_or_else(|| "ensure both operands are numbers (for addition), strings (for concatenation), or arrays with compatible element types".to_string());
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "'+' requires matching types, found {} and {}",
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(binary.span)
+                            .arg("op", "+")
+                            .arg("left", left_type.display_name())
+                            .arg("right", right_type.display_name())
+                            .with_help(help)
+                            .build()
+                            .with_label(format!(
+                                "found {} and {}",
                                 left_type.display_name(),
                                 right_type.display_name()
-                            ),
-                            binary.span,
-                        )
-                        .with_label(format!(
-                            "found {} and {}",
-                            left_type.display_name(),
-                            right_type.display_name()
-                        ))
-                        .with_help(help),
+                            )),
                     );
                     self.maybe_emit_at3052_for_binary(binary, &left_type, &right_type);
                     Type::Unknown
@@ -906,17 +871,14 @@ impl<'a> TypeChecker<'a> {
                                 )
                             });
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "'{op_str}' requires number operands, found {} and {}",
-                                left_type.display_name(),
-                                right_type.display_name()
-                            ),
-                            binary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help(help),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(binary.span)
+                            .arg("op", op_str)
+                            .arg("left", left_type.display_name())
+                            .arg("right", right_type.display_name())
+                            .with_help(help)
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     Type::Unknown
                 }
@@ -925,17 +887,16 @@ impl<'a> TypeChecker<'a> {
                 // Equality requires same types
                 if !self.types_overlap(&left_norm, &right_norm) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "Equality comparison requires same types, found {} and {}",
-                                left_type.display_name(),
-                                right_type.display_name()
-                            ),
-                            binary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("both operands must have the same type for equality comparison"),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(binary.span)
+                            .arg("op", "==")
+                            .arg("left", left_type.display_name())
+                            .arg("right", right_type.display_name())
+                            .with_help(
+                                "both operands must have the same type for equality comparison",
+                            )
+                            .build()
+                            .with_label("type mismatch"),
                     );
                 }
                 Type::Bool
@@ -949,17 +910,14 @@ impl<'a> TypeChecker<'a> {
                     Type::Bool
                 } else {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "Comparison requires number operands, found {} and {}",
-                                left_type.display_name(),
-                                right_type.display_name()
-                            ),
-                            binary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("comparison operators (<, <=, >, >=) only work with numbers"),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(binary.span)
+                            .arg("op", "<")
+                            .arg("left", left_type.display_name())
+                            .arg("right", right_type.display_name())
+                            .with_help("comparison operators (<, <=, >, >=) only work with numbers")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     Type::Bool // Still return bool for error recovery
                 }
@@ -969,17 +927,14 @@ impl<'a> TypeChecker<'a> {
                     *a == Type::Bool && *b == Type::Bool
                 }) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "Logical operators require bool operands, found {} and {}",
-                                left_type.display_name(),
-                                right_type.display_name()
-                            ),
-                            binary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("logical operators (and, or) only work with bool values"),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(binary.span)
+                            .arg("op", "and/or")
+                            .arg("left", left_type.display_name())
+                            .arg("right", right_type.display_name())
+                            .with_help("logical operators (and, or) only work with bool values")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                 }
                 Type::Bool
@@ -1000,16 +955,14 @@ impl<'a> TypeChecker<'a> {
             UnaryOp::Negate => {
                 if expr_norm != Type::Number {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "Unary '-' requires number operand, found {}",
-                                expr_type.display_name()
-                            ),
-                            unary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("negation (-) only works with numbers"),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(unary.span)
+                            .arg("op", "unary -")
+                            .arg("left", expr_type.display_name())
+                            .arg("right", "number")
+                            .with_help("negation (-) only works with numbers")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     Type::Unknown
                 } else {
@@ -1019,16 +972,14 @@ impl<'a> TypeChecker<'a> {
             UnaryOp::Not => {
                 if expr_norm != Type::Bool {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3002",
-                            format!(
-                                "Unary '!' requires bool operand, found {}",
-                                expr_type.display_name()
-                            ),
-                            unary.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("logical not (!) only works with bool values"),
+                        error_codes::BINARY_OP_TYPE_ERROR
+                            .emit(unary.span)
+                            .arg("op", "unary !")
+                            .arg("left", expr_type.display_name())
+                            .arg("right", "bool")
+                            .with_help("logical not (!) only works with bool values")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     Type::Unknown
                 } else {
@@ -1054,26 +1005,26 @@ impl<'a> TypeChecker<'a> {
             // AT9000: Deprecation warning for old global stdlib names
             if let Some(replacement) = crate::method_dispatch::deprecated_global_replacement(name) {
                 self.diagnostics.push(
-                    Diagnostic::warning_with_code(
-                        "AT9000",
-                        format!("Deprecated: use {} instead of {}()", replacement, name),
-                        call.span,
-                    )
-                    .with_label("deprecated global")
-                    .with_help("Use method syntax or static namespace instead."),
+                    error_codes::DEPRECATED_STDLIB_GLOBAL
+                        .emit(call.span)
+                        .arg("name", name.as_str())
+                        .with_help(format!("use {} instead of {}()", replacement, name))
+                        .build()
+                        .with_label("deprecated global"),
                 );
             }
             match name.as_str() {
                 "Some" => {
                     if call.args.len() != 1 {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3023",
-                                format!("Some expects 1 argument, found {}", call.args.len()),
-                                call.span,
-                            )
-                            .with_label("wrong arity")
-                            .with_help("Some requires exactly 1 argument: Some(value)"),
+                            error_codes::CONSTRUCTOR_ARITY
+                                .emit(call.span)
+                                .arg("type_name", "Some")
+                                .arg("expected", "1")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("Some requires exactly 1 argument: Some(value)")
+                                .build()
+                                .with_label("wrong arity"),
                         );
                         return Type::Unknown;
                     }
@@ -1086,13 +1037,14 @@ impl<'a> TypeChecker<'a> {
                 "None" => {
                     if !call.args.is_empty() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3023",
-                                format!("None expects 0 arguments, found {}", call.args.len()),
-                                call.span,
-                            )
-                            .with_label("wrong arity")
-                            .with_help("None requires no arguments: None"),
+                            error_codes::CONSTRUCTOR_ARITY
+                                .emit(call.span)
+                                .arg("type_name", "None")
+                                .arg("expected", "0")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("None requires no arguments: None")
+                                .build()
+                                .with_label("wrong arity"),
                         );
                         return Type::Unknown;
                     }
@@ -1104,13 +1056,14 @@ impl<'a> TypeChecker<'a> {
                 "Ok" => {
                     if call.args.len() != 1 {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3023",
-                                format!("Ok expects 1 argument, found {}", call.args.len()),
-                                call.span,
-                            )
-                            .with_label("wrong arity")
-                            .with_help("Ok requires exactly 1 argument: Ok(value)"),
+                            error_codes::CONSTRUCTOR_ARITY
+                                .emit(call.span)
+                                .arg("type_name", "Ok")
+                                .arg("expected", "1")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("Ok requires exactly 1 argument: Ok(value)")
+                                .build()
+                                .with_label("wrong arity"),
                         );
                         return Type::Unknown;
                     }
@@ -1123,13 +1076,14 @@ impl<'a> TypeChecker<'a> {
                 "Err" => {
                     if call.args.len() != 1 {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3023",
-                                format!("Err expects 1 argument, found {}", call.args.len()),
-                                call.span,
-                            )
-                            .with_label("wrong arity")
-                            .with_help("Err requires exactly 1 argument: Err(value)"),
+                            error_codes::CONSTRUCTOR_ARITY
+                                .emit(call.span)
+                                .arg("type_name", "Err")
+                                .arg("expected", "1")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("Err requires exactly 1 argument: Err(value)")
+                                .build()
+                                .with_label("wrong arity"),
                         );
                         return Type::Unknown;
                     }
@@ -1142,16 +1096,14 @@ impl<'a> TypeChecker<'a> {
                 "hashMapNew" | "hash_map_new" => {
                     if !call.args.is_empty() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3005",
-                                format!(
-                                    "hashMapNew expects 0 arguments, found {}",
-                                    call.args.len()
-                                ),
-                                call.span,
-                            )
-                            .with_label("argument count mismatch")
-                            .with_help("hashMapNew() takes no arguments"),
+                            error_codes::ARITY_MISMATCH
+                                .emit(call.span)
+                                .arg("name", "hashMapNew")
+                                .arg("expected", "0")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("hashMapNew() takes no arguments")
+                                .build()
+                                .with_label("argument count mismatch"),
                         );
                         return Type::Unknown;
                     }
@@ -1163,16 +1115,16 @@ impl<'a> TypeChecker<'a> {
                 "hashMapPut" | "hash_map_put" => {
                     if call.args.len() != 3 {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3005",
-                                format!(
-                                    "hashMapPut expects 3 arguments, found {}",
-                                    call.args.len()
-                                ),
-                                call.span,
-                            )
-                            .with_label("argument count mismatch")
-                            .with_help("hashMapPut(map, key, value) requires exactly 3 arguments"),
+                            error_codes::ARITY_MISMATCH
+                                .emit(call.span)
+                                .arg("name", "hashMapPut")
+                                .arg("expected", "3")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help(
+                                    "hashMapPut(map, key, value) requires exactly 3 arguments",
+                                )
+                                .build()
+                                .with_label("argument count mismatch"),
                         );
                         return Type::Unknown;
                     }
@@ -1194,16 +1146,18 @@ impl<'a> TypeChecker<'a> {
                             return map_type;
                         }
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "hashMapPut expects HashMap for argument 1, found {}",
-                                    map_type.display_name()
-                                ),
-                                call.args[0].span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help("argument 1 must be a HashMap"),
+                            error_codes::TYPE_ERROR
+                                .emit(call.args[0].span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "hashMapPut expects HashMap for argument 1, found {}",
+                                        map_type.display_name()
+                                    ),
+                                )
+                                .with_help("argument 1 must be a HashMap")
+                                .build()
+                                .with_label("type mismatch"),
                         );
                         return Type::Unknown;
                     };
@@ -1219,17 +1173,19 @@ impl<'a> TypeChecker<'a> {
                                     )
                                 });
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!(
-                                        "hashMapPut key type mismatch: expected {}, found {}",
-                                        expected_key.display_name(),
-                                        key_type.display_name()
-                                    ),
-                                    call.args[1].span(),
-                                )
-                                .with_label("type mismatch")
-                                .with_help(help),
+                                error_codes::TYPE_ERROR
+                                    .emit(call.args[1].span())
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "hashMapPut key type mismatch: expected {}, found {}",
+                                            expected_key.display_name(),
+                                            key_type.display_name()
+                                        ),
+                                    )
+                                    .with_help(help)
+                                    .build()
+                                    .with_label("type mismatch"),
                             );
                         }
                         if !self.is_assignable_with_traits(&value_type, &expected_value) {
@@ -1243,17 +1199,19 @@ impl<'a> TypeChecker<'a> {
                                         )
                                     });
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!(
-                                        "hashMapPut value type mismatch: expected {}, found {}",
-                                        expected_value.display_name(),
-                                        value_type.display_name()
-                                    ),
-                                    call.args[2].span(),
-                                )
-                                .with_label("type mismatch")
-                                .with_help(help),
+                                error_codes::TYPE_ERROR
+                                    .emit(call.args[2].span())
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "hashMapPut value type mismatch: expected {}, found {}",
+                                            expected_value.display_name(),
+                                            value_type.display_name()
+                                        ),
+                                    )
+                                    .with_help(help)
+                                    .build()
+                                    .with_label("type mismatch"),
                             );
                         }
                     }
@@ -1263,16 +1221,14 @@ impl<'a> TypeChecker<'a> {
                 "hashMapGet" | "hash_map_get" => {
                     if call.args.len() != 2 {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3005",
-                                format!(
-                                    "hashMapGet expects 2 arguments, found {}",
-                                    call.args.len()
-                                ),
-                                call.span,
-                            )
-                            .with_label("argument count mismatch")
-                            .with_help("hashMapGet(map, key) requires exactly 2 arguments"),
+                            error_codes::ARITY_MISMATCH
+                                .emit(call.span)
+                                .arg("name", "hashMapGet")
+                                .arg("expected", "2")
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help("hashMapGet(map, key) requires exactly 2 arguments")
+                                .build()
+                                .with_label("argument count mismatch"),
                         );
                         return Type::Unknown;
                     }
@@ -1296,16 +1252,18 @@ impl<'a> TypeChecker<'a> {
                             };
                         }
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "hashMapGet expects HashMap for argument 1, found {}",
-                                    map_type.display_name()
-                                ),
-                                call.args[0].span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help("argument 1 must be a HashMap"),
+                            error_codes::TYPE_ERROR
+                                .emit(call.args[0].span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "hashMapGet expects HashMap for argument 1, found {}",
+                                        map_type.display_name()
+                                    ),
+                                )
+                                .with_help("argument 1 must be a HashMap")
+                                .build()
+                                .with_label("type mismatch"),
                         );
                         return Type::Unknown;
                     };
@@ -1322,17 +1280,19 @@ impl<'a> TypeChecker<'a> {
                                 )
                             });
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "hashMapGet key type mismatch: expected {}, found {}",
-                                    expected_key.display_name(),
-                                    key_type.display_name()
-                                ),
-                                call.args[1].span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help(help),
+                            error_codes::TYPE_ERROR
+                                .emit(call.args[1].span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "hashMapGet key type mismatch: expected {}, found {}",
+                                        expected_key.display_name(),
+                                        key_type.display_name()
+                                    ),
+                                )
+                                .with_help(help)
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
 
@@ -1411,31 +1371,24 @@ impl<'a> TypeChecker<'a> {
                                 signature = Some(member.clone());
                             } else if signature.as_ref() != Some(member) {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3005",
-                                        "Cannot call union of incompatible function signatures",
-                                        call.span,
-                                    )
-                                    .with_label("ambiguous call")
-                                    .with_help(
-                                        "ensure all union members share the same function signature",
-                                    ),
+                                    error_codes::TYPE_ERROR.emit(call.span)
+                                        .arg("detail", "Cannot call union of incompatible function signatures")
+                                        .with_help("ensure all union members share the same function signature")
+                                        .build()
+                                        .with_label("ambiguous call"),
                                 );
                                 return Type::Unknown;
                             }
                         }
                         _ => {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3006",
-                                    format!(
-                                        "Cannot call non-function type {}",
-                                        member.display_name()
-                                    ),
-                                    call.span,
-                                )
-                                .with_label("not callable")
-                                .with_help(suggestions::suggest_not_callable(&callee_type)),
+                                error_codes::NOT_CALLABLE
+                                    .emit(call.span)
+                                    .arg("expr", member.display_name())
+                                    .arg("type_name", member.display_name())
+                                    .with_help(suggestions::suggest_not_callable(&callee_type))
+                                    .build()
+                                    .with_label("not callable"),
                             );
                             return Type::Unknown;
                         }
@@ -1469,16 +1422,13 @@ impl<'a> TypeChecker<'a> {
             }
             _ => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3006",
-                        format!(
-                            "Cannot call non-function type {}",
-                            callee_type.display_name()
-                        ),
-                        call.span,
-                    )
-                    .with_label("not callable")
-                    .with_help(suggestions::suggest_not_callable(&callee_type)),
+                    error_codes::NOT_CALLABLE
+                        .emit(call.span)
+                        .arg("expr", callee_type.display_name())
+                        .arg("type_name", callee_type.display_name())
+                        .with_help(suggestions::suggest_not_callable(&callee_type))
+                        .build()
+                        .with_label("not callable"),
                 );
                 Type::Unknown
             }
@@ -1506,18 +1456,16 @@ impl<'a> TypeChecker<'a> {
                 if let Err(e) = inferer.unify(param_type, &arg_type) {
                     // Inference failed - report error
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
+                        error_codes::TYPE_ERROR.emit(arg.span())
+                            .arg("detail", format!(
                                 "Type inference failed: cannot match argument {} of type {} with parameter of type {}",
                                 i + 1,
                                 arg_type.display_name(),
                                 param_type.display_name()
-                            ),
-                            arg.span(),
-                        )
-                        .with_label("type mismatch")
-                        .with_help(format!("Inference error: {:?}", e)),
+                            ))
+                            .with_help(format!("Inference error: {:?}", e))
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     return Type::Unknown;
                 }
@@ -1535,19 +1483,11 @@ impl<'a> TypeChecker<'a> {
 
             for param_name in &uninferred {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3051",
-                        format!(
-                            "cannot infer type argument `{}` — add explicit type annotation `<{}>`",
-                            param_name, param_name
-                        ),
-                        call.span,
-                    )
-                    .with_label("type argument cannot be inferred from call arguments")
-                    .with_help(
-                        "This type parameter only appears in the return type or is unconstrained. \
-                         Provide an explicit type argument: `func::<Type>(args)`",
-                    ),
+                    error_codes::CANNOT_INFER_TYPE_ARG.emit(call.span)
+                        .arg("name", param_name)
+                        .with_help("This type parameter only appears in the return type or is unconstrained. Provide an explicit type argument: `func::<Type>(args)`")
+                        .build()
+                        .with_label("type argument cannot be inferred from call arguments"),
                 );
             }
             return Type::Unknown;
@@ -1666,26 +1606,17 @@ impl<'a> TypeChecker<'a> {
         } = &required.ty
         else {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3010",
-                    format!(
-                        "Type '{}' has no method named '{}'",
-                        required.ty.display_name(),
-                        method_name
-                    ),
-                    member.member.span,
-                )
-                .with_label("method not found")
-                .with_help(format!(
-                    "type '{}' does not support method '{}'",
-                    required.ty.display_name(),
-                    method_name
-                ))
-                .with_note(format!(
-                    "trait constraint `{}` requires this method — check that the correct trait is implemented for `{}`",
-                    method_name,
-                    required.ty.display_name()
-                )),
+                error_codes::INVALID_INDEX_TYPE.emit(member.member.span)
+                    .arg("index_type", method_name)
+                    .arg("detail", format!("type '{}' has no method '{}'", required.ty.display_name(), method_name))
+                    .with_help(format!("type '{}' does not support method '{}'", required.ty.display_name(), method_name))
+                    .with_note(format!(
+                        "trait constraint `{}` requires this method — check that the correct trait is implemented for `{}`",
+                        method_name,
+                        required.ty.display_name()
+                    ))
+                    .build()
+                    .with_label("method not found"),
             );
             return Some(Type::Unknown);
         };
@@ -1694,21 +1625,19 @@ impl<'a> TypeChecker<'a> {
         let expected_args = params.len();
         if provided_args != expected_args {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3005",
-                    format!(
-                        "Method '{}' expects {} arguments, found {}",
-                        method_name, expected_args, provided_args
-                    ),
-                    member.span,
-                )
-                .with_label("argument count mismatch")
-                .with_help(format!(
-                    "method '{}' requires exactly {} argument{}",
-                    method_name,
-                    expected_args,
-                    if expected_args == 1 { "" } else { "s" }
-                )),
+                error_codes::ARITY_MISMATCH
+                    .emit(member.span)
+                    .arg("name", method_name)
+                    .arg("expected", format!("{}", expected_args))
+                    .arg("found", format!("{}", provided_args))
+                    .with_help(format!(
+                        "method '{}' requires exactly {} argument{}",
+                        method_name,
+                        expected_args,
+                        if expected_args == 1 { "" } else { "s" }
+                    ))
+                    .build()
+                    .with_label("argument count mismatch"),
             );
         }
 
@@ -1723,22 +1652,24 @@ impl<'a> TypeChecker<'a> {
                     }
                     if !self.is_assignable_with_traits(&arg_type, expected_type) {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Argument {} has wrong type: expected {}, found {}",
+                            error_codes::TYPE_ERROR
+                                .emit(arg.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Argument {} has wrong type: expected {}, found {}",
+                                        i + 1,
+                                        expected_type.display_name(),
+                                        arg_type.display_name()
+                                    ),
+                                )
+                                .with_help(format!(
+                                    "argument {} must be of type {}",
                                     i + 1,
-                                    expected_type.display_name(),
-                                    arg_type.display_name()
-                                ),
-                                arg.span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help(format!(
-                                "argument {} must be of type {}",
-                                i + 1,
-                                expected_type.display_name()
-                            )),
+                                    expected_type.display_name()
+                                ))
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
                 }
@@ -1761,16 +1692,16 @@ impl<'a> TypeChecker<'a> {
                 member_name,
                 available.iter().copied(),
             );
-            let mut diag = Diagnostic::error_with_code(
-                "AT3010",
-                format!("Type has no member named '{}'", member_name),
-                member.member.span,
-            )
-            .with_label("member not found")
-            .with_help(format!(
-                "check that '{}' exists on this record or namespace",
-                member_name
-            ));
+            let mut diag = error_codes::INVALID_INDEX_TYPE
+                .emit(member.member.span)
+                .arg("index_type", member_name)
+                .arg("detail", format!("type has no member '{}'", member_name))
+                .with_help(format!(
+                    "check that '{}' exists on this record or namespace",
+                    member_name
+                ))
+                .build()
+                .with_label("member not found");
             if let Some(name) = similar {
                 diag = diag.with_suggestion_rename(
                     format!("did you mean `{}`?", name),
@@ -1802,19 +1733,12 @@ impl<'a> TypeChecker<'a> {
                 // If a namespace method has no type entry, emit a diagnostic immediately.
                 if return_type == Type::Unknown {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3061",
-                            format!(
-                                "{}.{}() has no return type registered in the typechecker",
-                                id.name, member.member.name
-                            ),
-                            member.span,
-                        )
-                        .with_label("untyped namespace method")
-                        .with_help(format!(
-                            "add a return type entry for {}.{}() in resolve_namespace_return_type()",
-                            id.name, member.member.name
-                        )),
+                        error_codes::NAMESPACE_METHOD_NO_RETURN_TYPE
+                            .emit(member.span)
+                            .arg("namespace", &id.name)
+                            .arg("method", &member.member.name)
+                            .build()
+                            .with_label("untyped namespace method"),
                     );
                 }
                 return return_type;
@@ -1880,20 +1804,23 @@ impl<'a> TypeChecker<'a> {
                     return_types.push(sig.return_type);
                 } else {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3010",
-                            format!(
-                                "Type '{}' has no method named '{}'",
-                                member_ty.display_name(),
+                        error_codes::INVALID_INDEX_TYPE
+                            .emit(member.member.span)
+                            .arg("index_type", method_name.as_str())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "type '{}' has no method '{}'",
+                                    member_ty.display_name(),
+                                    method_name
+                                ),
+                            )
+                            .with_help(format!(
+                                "method '{}' must exist on all union members",
                                 method_name
-                            ),
-                            member.member.span,
-                        )
-                        .with_label("method not found")
-                        .with_help(format!(
-                            "method '{}' must exist on all union members",
-                            method_name
-                        )),
+                            ))
+                            .build()
+                            .with_label("method not found"),
                     );
                     return Type::Unknown;
                 }
@@ -1905,21 +1832,19 @@ impl<'a> TypeChecker<'a> {
 
                 if provided_args != expected_args {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3005",
-                            format!(
-                                "Method '{}' expects {} arguments, found {}",
-                                method_name, expected_args, provided_args
-                            ),
-                            member.span,
-                        )
-                        .with_label("argument count mismatch")
-                        .with_help(format!(
-                            "method '{}' requires exactly {} argument{}",
-                            method_name,
-                            expected_args,
-                            if expected_args == 1 { "" } else { "s" }
-                        )),
+                        error_codes::ARITY_MISMATCH
+                            .emit(member.span)
+                            .arg("name", method_name.as_str())
+                            .arg("expected", format!("{}", expected_args))
+                            .arg("found", format!("{}", provided_args))
+                            .with_help(format!(
+                                "method '{}' requires exactly {} argument{}",
+                                method_name,
+                                expected_args,
+                                if expected_args == 1 { "" } else { "s" }
+                            ))
+                            .build()
+                            .with_label("argument count mismatch"),
                     );
                 }
 
@@ -1934,24 +1859,24 @@ impl<'a> TypeChecker<'a> {
                                 }
                                 if !self.is_assignable_with_traits(&arg_type, expected_type) {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3001",
-                                            format!(
+                                        error_codes::TYPE_ERROR
+                                            .emit(arg.span())
+                                            .arg(
+                                                "detail",
+                                                format!(
                                                 "Argument {} has wrong type: expected {}, found {}",
                                                 i + 1,
                                                 expected_type.display_name(),
                                                 arg_type.display_name()
                                             ),
-                                            arg.span(),
-                                        )
-                                        .with_label("type mismatch")
-                                        .with_help(
-                                            format!(
+                                            )
+                                            .with_help(format!(
                                                 "argument {} must be of type {}",
                                                 i + 1,
                                                 expected_type.display_name()
-                                            ),
-                                        ),
+                                            ))
+                                            .build()
+                                            .with_label("type mismatch"),
                                     );
                                     return Type::Unknown;
                                 }
@@ -1985,21 +1910,19 @@ impl<'a> TypeChecker<'a> {
                     let provided_args = member.args.as_ref().map(|args| args.len()).unwrap_or(0);
                     if provided_args != expected_args {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3005",
-                                format!(
-                                    "Method '{}' expects {} arguments, found {}",
-                                    method_name, expected_args, provided_args
-                                ),
-                                member.span,
-                            )
-                            .with_label("argument count mismatch")
-                            .with_help(format!(
-                                "method '{}' requires exactly {} argument{}",
-                                method_name,
-                                expected_args,
-                                if expected_args == 1 { "" } else { "s" }
-                            )),
+                            error_codes::ARITY_MISMATCH
+                                .emit(member.span)
+                                .arg("name", method_name.as_str())
+                                .arg("expected", format!("{}", expected_args))
+                                .arg("found", format!("{}", provided_args))
+                                .with_help(format!(
+                                    "method '{}' requires exactly {} argument{}",
+                                    method_name,
+                                    expected_args,
+                                    if expected_args == 1 { "" } else { "s" }
+                                ))
+                                .build()
+                                .with_label("argument count mismatch"),
                         );
                     }
 
@@ -2013,24 +1936,24 @@ impl<'a> TypeChecker<'a> {
                                 }
                                 if !self.is_assignable_with_traits(&arg_type, expected_type) {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3001",
-                                            format!(
+                                        error_codes::TYPE_ERROR
+                                            .emit(arg.span())
+                                            .arg(
+                                                "detail",
+                                                format!(
                                                 "Argument {} has wrong type: expected {}, found {}",
                                                 i + 1,
                                                 expected_type.display_name(),
                                                 arg_type.display_name()
                                             ),
-                                            arg.span(),
-                                        )
-                                        .with_label("type mismatch")
-                                        .with_help(
-                                            format!(
+                                            )
+                                            .with_help(format!(
                                                 "argument {} must be of type {}",
                                                 i + 1,
                                                 expected_type.display_name()
-                                            ),
-                                        ),
+                                            ))
+                                            .build()
+                                            .with_label("type mismatch"),
                                     );
                                     return Type::Unknown;
                                 }
@@ -2042,19 +1965,15 @@ impl<'a> TypeChecker<'a> {
                     return return_type;
                 } else if member.args.is_some() {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3010",
-                            format!(
-                                "Trait '{}' has no method named '{}'",
-                                trait_name, method_name
-                            ),
-                            member.member.span,
-                        )
-                        .with_label("method not found")
-                        .with_help(format!(
-                            "trait `{trait_name}` does not define a method `{method_name}` — check the trait definition for the correct method name"
-                        ))
-                        .with_note("if you intended to call an inherent method, remove the trait annotation from the `impl` block"),
+                        error_codes::INVALID_INDEX_TYPE.emit(member.member.span)
+                            .arg("index_type", method_name.as_str())
+                            .arg("detail", format!("trait '{}' has no method '{}'", trait_name, method_name))
+                            .with_help(format!(
+                                "trait `{trait_name}` does not define a method `{method_name}` — check the trait definition for the correct method name"
+                            ))
+                            .with_note("if you intended to call an inherent method, remove the trait annotation from the `impl` block")
+                            .build()
+                            .with_label("method not found"),
                     );
                     return Type::Unknown;
                 }
@@ -2070,21 +1989,19 @@ impl<'a> TypeChecker<'a> {
 
             if provided_args != expected_args {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3005",
-                        format!(
-                            "Method '{}' expects {} arguments, found {}",
-                            method_name, expected_args, provided_args
-                        ),
-                        member.span,
-                    )
-                    .with_label("argument count mismatch")
-                    .with_help(format!(
-                        "method '{}' requires exactly {} argument{}",
-                        method_name,
-                        expected_args,
-                        if expected_args == 1 { "" } else { "s" }
-                    )),
+                    error_codes::ARITY_MISMATCH
+                        .emit(member.span)
+                        .arg("name", method_name.as_str())
+                        .arg("expected", format!("{}", expected_args))
+                        .arg("found", format!("{}", provided_args))
+                        .with_help(format!(
+                            "method '{}' requires exactly {} argument{}",
+                            method_name,
+                            expected_args,
+                            if expected_args == 1 { "" } else { "s" }
+                        ))
+                        .build()
+                        .with_label("argument count mismatch"),
                 );
             }
 
@@ -2100,22 +2017,24 @@ impl<'a> TypeChecker<'a> {
                         }
                         if !self.is_assignable_with_traits(&arg_type, expected_type) {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!(
-                                        "Argument {} has wrong type: expected {}, found {}",
+                                error_codes::TYPE_ERROR
+                                    .emit(arg.span())
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "Argument {} has wrong type: expected {}, found {}",
+                                            i + 1,
+                                            expected_type.display_name(),
+                                            arg_type.display_name()
+                                        ),
+                                    )
+                                    .with_help(format!(
+                                        "argument {} must be of type {}",
                                         i + 1,
-                                        expected_type.display_name(),
-                                        arg_type.display_name()
-                                    ),
-                                    arg.span(),
-                                )
-                                .with_label("type mismatch")
-                                .with_help(format!(
-                                    "argument {} must be of type {}",
-                                    i + 1,
-                                    expected_type.display_name()
-                                )),
+                                        expected_type.display_name()
+                                    ))
+                                    .build()
+                                    .with_label("type mismatch"),
                             );
                         }
                     }
@@ -2196,19 +2115,16 @@ impl<'a> TypeChecker<'a> {
             if let Some(trait_name) = trait_name_with_method {
                 let type_display = self.nominal_display_name(&target_type);
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT.code,
-                        format!(
-                            "Type '{}' does not implement trait '{}' required for method '{}'",
-                            type_display, trait_name, method_name
-                        ),
-                        member.member.span,
-                    )
-                    .with_label(format!("trait '{}' not implemented", trait_name))
-                    .with_help(format!(
-                        "implement '{}' for '{}' with: impl {} for {} {{ ... }}",
-                        trait_name, type_display, trait_name, type_display
-                    )),
+                    error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT
+                        .emit(member.member.span)
+                        .arg("type_name", &type_display)
+                        .arg("trait_name", &trait_name)
+                        .with_help(format!(
+                            "implement '{}' for '{}' with: impl {} for {} {{ ... }}",
+                            trait_name, type_display, trait_name, type_display
+                        ))
+                        .build()
+                        .with_label(format!("trait '{}' not implemented", trait_name)),
                 );
             } else {
                 // Method not found for this type (not a trait method either)
@@ -2218,17 +2134,20 @@ impl<'a> TypeChecker<'a> {
                     target_type.display_name(),
                     method_name
                 );
-                let mut diag = Diagnostic::error_with_code(
-                    "AT3010",
-                    format!(
-                        "Type '{}' has no method named '{}'",
-                        target_type.display_name(),
-                        method_name
-                    ),
-                    member.member.span,
-                )
-                .with_label("method not found")
-                .with_help(help);
+                let mut diag = error_codes::INVALID_INDEX_TYPE
+                    .emit(member.member.span)
+                    .arg("index_type", method_name.as_str())
+                    .arg(
+                        "detail",
+                        format!(
+                            "type '{}' has no method '{}'",
+                            target_type.display_name(),
+                            method_name
+                        ),
+                    )
+                    .with_help(help)
+                    .build()
+                    .with_label("method not found");
                 if let Some(name) = similar {
                     diag = diag.with_suggestion_rename(
                         format!("did you mean `{}`?", name),
@@ -2266,16 +2185,18 @@ impl<'a> TypeChecker<'a> {
                 } else {
                     if index_norm != Type::Number {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Array index must be number, found {}",
-                                    index_type.display_name()
-                                ),
-                                index_expr.span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help("array indices must be numbers"),
+                            error_codes::TYPE_ERROR
+                                .emit(index_expr.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Array index must be number, found {}",
+                                        index_type.display_name()
+                                    ),
+                                )
+                                .with_help("array indices must be numbers")
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
                     *elem_type
@@ -2284,28 +2205,31 @@ impl<'a> TypeChecker<'a> {
             Type::JsonValue => {
                 if index_is_range {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            "Range indices are only valid for arrays".to_string(),
-                            index_expr.span(),
-                        )
-                        .with_label("not indexable")
-                        .with_help("only arrays can be sliced with ranges"),
+                        error_codes::TYPE_ERROR
+                            .emit(index_expr.span())
+                            .arg("detail", "Range indices are only valid for arrays")
+                            .with_help("only arrays can be sliced with ranges")
+                            .build()
+                            .with_label("not indexable"),
                     );
                     Type::Unknown
                 } else {
                     if index_norm != Type::String && index_norm != Type::Number {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "JSON index must be string or number, found {}",
-                                    index_type.display_name()
-                                ),
-                                index_expr.span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help("use a string key or numeric index to access JSON values"),
+                            error_codes::TYPE_ERROR
+                                .emit(index_expr.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "JSON index must be string or number, found {}",
+                                        index_type.display_name()
+                                    ),
+                                )
+                                .with_help(
+                                    "use a string key or numeric index to access JSON values",
+                                )
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
                     Type::JsonValue
@@ -2314,28 +2238,29 @@ impl<'a> TypeChecker<'a> {
             Type::String => {
                 if index_is_range {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            "Range indices are only valid for arrays".to_string(),
-                            index_expr.span(),
-                        )
-                        .with_label("not indexable")
-                        .with_help("only arrays can be sliced with ranges"),
+                        error_codes::TYPE_ERROR
+                            .emit(index_expr.span())
+                            .arg("detail", "Range indices are only valid for arrays")
+                            .with_help("only arrays can be sliced with ranges")
+                            .build()
+                            .with_label("not indexable"),
                     );
                     Type::Unknown
                 } else {
                     if index_norm != Type::Number {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "String index must be number, found {}",
-                                    index_type.display_name()
-                                ),
-                                index_expr.span(),
-                            )
-                            .with_label("type mismatch")
-                            .with_help("string indices must be numbers"),
+                            error_codes::TYPE_ERROR
+                                .emit(index_expr.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "String index must be number, found {}",
+                                        index_type.display_name()
+                                    ),
+                                )
+                                .with_help("string indices must be numbers")
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
                     Type::String
@@ -2351,16 +2276,18 @@ impl<'a> TypeChecker<'a> {
                             } else {
                                 if index_norm != Type::Number {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3001",
-                                            format!(
-                                                "Array index must be number, found {}",
-                                                index_type.display_name()
-                                            ),
-                                            index_expr.span(),
-                                        )
-                                        .with_label("type mismatch")
-                                        .with_help("array indices must be numbers"),
+                                        error_codes::TYPE_ERROR
+                                            .emit(index_expr.span())
+                                            .arg(
+                                                "detail",
+                                                format!(
+                                                    "Array index must be number, found {}",
+                                                    index_type.display_name()
+                                                ),
+                                            )
+                                            .with_help("array indices must be numbers")
+                                            .build()
+                                            .with_label("type mismatch"),
                                     );
                                 }
                                 result_types.push(*elem_type);
@@ -2369,30 +2296,22 @@ impl<'a> TypeChecker<'a> {
                         Type::JsonValue => {
                             if index_is_range {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        "Range indices are only valid for arrays".to_string(),
-                                        index_expr.span(),
-                                    )
-                                    .with_label("not indexable")
-                                    .with_help("only arrays can be sliced with ranges"),
+                                    error_codes::TYPE_ERROR
+                                        .emit(index_expr.span())
+                                        .arg("detail", "Range indices are only valid for arrays")
+                                        .with_help("only arrays can be sliced with ranges")
+                                        .build()
+                                        .with_label("not indexable"),
                                 );
                                 return Type::Unknown;
                             }
                             if index_norm != Type::String && index_norm != Type::Number {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "JSON index must be string or number, found {}",
-                                            index_type.display_name()
-                                        ),
-                                        index_expr.span(),
-                                    )
-                                    .with_label("type mismatch")
-                                    .with_help(
-                                        "use a string key or numeric index to access JSON values",
-                                    ),
+                                    error_codes::TYPE_ERROR.emit(index_expr.span())
+                                        .arg("detail", format!("JSON index must be string or number, found {}", index_type.display_name()))
+                                        .with_help("use a string key or numeric index to access JSON values")
+                                        .build()
+                                        .with_label("type mismatch"),
                                 );
                             }
                             result_types.push(Type::JsonValue);
@@ -2400,41 +2319,46 @@ impl<'a> TypeChecker<'a> {
                         Type::String => {
                             if index_is_range {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        "Range indices are only valid for arrays".to_string(),
-                                        index_expr.span(),
-                                    )
-                                    .with_label("not indexable")
-                                    .with_help("only arrays can be sliced with ranges"),
+                                    error_codes::TYPE_ERROR
+                                        .emit(index_expr.span())
+                                        .arg("detail", "Range indices are only valid for arrays")
+                                        .with_help("only arrays can be sliced with ranges")
+                                        .build()
+                                        .with_label("not indexable"),
                                 );
                                 return Type::Unknown;
                             }
                             if index_norm != Type::Number {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3001",
-                                        format!(
-                                            "String index must be number, found {}",
-                                            index_type.display_name()
-                                        ),
-                                        index_expr.span(),
-                                    )
-                                    .with_label("type mismatch")
-                                    .with_help("string indices must be numbers"),
+                                    error_codes::TYPE_ERROR
+                                        .emit(index_expr.span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "String index must be number, found {}",
+                                                index_type.display_name()
+                                            ),
+                                        )
+                                        .with_help("string indices must be numbers")
+                                        .build()
+                                        .with_label("type mismatch"),
                                 );
                             }
                             result_types.push(Type::String);
                         }
                         _ => {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3001",
-                                    format!("Cannot index into type {}", member.display_name()),
-                                    index.target.span(),
-                                )
-                                .with_label("not indexable")
-                                .with_help("only arrays, strings, and json values can be indexed"),
+                                error_codes::TYPE_ERROR
+                                    .emit(index.target.span())
+                                    .arg(
+                                        "detail",
+                                        format!("Cannot index into type {}", member.display_name()),
+                                    )
+                                    .with_help(
+                                        "only arrays, strings, and json values can be indexed",
+                                    )
+                                    .build()
+                                    .with_label("not indexable"),
                             );
                             return Type::Unknown;
                         }
@@ -2445,13 +2369,15 @@ impl<'a> TypeChecker<'a> {
             Type::Unknown => Type::Unknown,
             _ => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!("Cannot index into type {}", target_type.display_name()),
-                        index.target.span(),
-                    )
-                    .with_label("not indexable")
-                    .with_help("only arrays, strings, and json values can be indexed"),
+                    error_codes::TYPE_ERROR
+                        .emit(index.target.span())
+                        .arg(
+                            "detail",
+                            format!("Cannot index into type {}", target_type.display_name()),
+                        )
+                        .with_help("only arrays, strings, and json values can be indexed")
+                        .build()
+                        .with_label("not indexable"),
                 );
                 Type::Unknown
             }
@@ -2473,21 +2399,23 @@ impl<'a> TypeChecker<'a> {
             let elem_type = self.check_expr(elem);
             if !self.is_assignable_with_traits(&elem_type, &first_type) {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Array element {} has wrong type: expected {}, found {}",
-                            i,
-                            first_type.display_name(),
-                            elem_type.display_name()
-                        ),
-                        elem.span(),
-                    )
-                    .with_label("type mismatch")
-                    .with_help(format!(
-                        "all array elements must be type {} (inferred from first element)",
-                        first_type.display_name()
-                    )),
+                    error_codes::TYPE_ERROR
+                        .emit(elem.span())
+                        .arg(
+                            "detail",
+                            format!(
+                                "Array element {} has wrong type: expected {}, found {}",
+                                i,
+                                first_type.display_name(),
+                                elem_type.display_name()
+                            ),
+                        )
+                        .with_help(format!(
+                            "all array elements must be type {} (inferred from first element)",
+                            first_type.display_name()
+                        ))
+                        .build()
+                        .with_label("type mismatch"),
                 );
             }
         }
@@ -2534,16 +2462,18 @@ impl<'a> TypeChecker<'a> {
                 let guard_type = self.check_expr(guard);
                 if guard_type.normalized() != Type::Bool {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3029",
-                            format!(
-                                "Guard expression must be bool, found {}",
-                                guard_type.display_name()
-                            ),
-                            guard.span(),
-                        )
-                        .with_label("must be bool")
-                        .with_help("guard expressions must evaluate to a boolean value"),
+                        error_codes::TYPE_ERROR
+                            .emit(guard.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Guard expression must be bool, found {}",
+                                    guard_type.display_name()
+                                ),
+                            )
+                            .with_help("guard expressions must evaluate to a boolean value")
+                            .build()
+                            .with_label("must be bool"),
                     );
                 }
             }
@@ -2560,39 +2490,31 @@ impl<'a> TypeChecker<'a> {
         if arm_types.is_empty() {
             // Empty match (parser should prevent this, but handle gracefully)
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3020",
-                    "Match expression must have at least one arm",
-                    match_expr.span,
-                )
-                .with_label("empty match")
-                .with_help("add at least one match arm with a pattern and expression"),
+                error_codes::MATCH_EMPTY
+                    .emit(match_expr.span)
+                    .build()
+                    .with_label("empty match"),
             );
             return Type::Unknown;
         }
 
         let mut unified = arm_types[0].0.clone();
-        for (arm_type, arm_span, arm_idx) in &arm_types[1..] {
+        for (arm_type, arm_span, _arm_idx) in &arm_types[1..] {
             if let Some(lub) = crate::typechecker::inference::least_upper_bound(&unified, arm_type)
             {
                 unified = lub;
             } else {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3021",
-                        format!(
-                            "Match arm {} returns incompatible type: expected {}, found {}",
-                            arm_idx + 1,
-                            unified.display_name(),
-                            arm_type.display_name()
-                        ),
-                        *arm_span,
-                    )
-                    .with_label("type mismatch")
-                    .with_help(format!(
-                        "all match arms must return compatible types (current: {})",
-                        unified.display_name()
-                    )),
+                    error_codes::MATCH_ARM_TYPE_MISMATCH
+                        .emit(*arm_span)
+                        .arg("found", arm_type.display_name())
+                        .arg("expected", unified.display_name())
+                        .with_help(format!(
+                            "all match arms must return compatible types (current: {})",
+                            unified.display_name()
+                        ))
+                        .build()
+                        .with_label("type mismatch"),
                 );
             }
         }
@@ -2685,13 +2607,12 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3027",
-                            format!("Non-exhaustive match on Option: missing {}", missing),
-                            match_span,
-                        )
-                        .with_label("non-exhaustive")
-                        .with_help(format!("Add arm: {} => ...", missing)),
+                        error_codes::NON_EXHAUSTIVE_MATCH
+                            .emit(match_span)
+                            .arg("missing", &missing)
+                            .with_help(format!("Add arm: {} => ...", missing))
+                            .build()
+                            .with_label("non-exhaustive"),
                     );
                 }
             }
@@ -2716,13 +2637,12 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3027",
-                            format!("Non-exhaustive match on Result: missing {}", missing),
-                            match_span,
-                        )
-                        .with_label("non-exhaustive")
-                        .with_help(format!("Add arm: {} => ...", missing)),
+                        error_codes::NON_EXHAUSTIVE_MATCH
+                            .emit(match_span)
+                            .arg("missing", &missing)
+                            .with_help(format!("Add arm: {} => ...", missing))
+                            .build()
+                            .with_label("non-exhaustive"),
                     );
                 }
             }
@@ -2746,13 +2666,12 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3027",
-                            format!("Non-exhaustive match on bool: missing {}", missing),
-                            match_span,
-                        )
-                        .with_label("non-exhaustive")
-                        .with_help(format!("Add arm: {} => ... or use wildcard _", missing)),
+                        error_codes::NON_EXHAUSTIVE_MATCH
+                            .emit(match_span)
+                            .arg("missing", &missing)
+                            .with_help(format!("Add arm: {} => ... or use wildcard _", missing))
+                            .build()
+                            .with_label("non-exhaustive"),
                     );
                 }
             }
@@ -2760,16 +2679,15 @@ impl<'a> TypeChecker<'a> {
             Type::Number | Type::String | Type::Array(_) | Type::Null => {
                 // These types have infinite values - require wildcard
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3027",
-                        format!(
-                            "Non-exhaustive match on {}: patterns must cover all possible values",
-                            scrutinee_type.display_name()
-                        ),
-                        match_span,
-                    )
-                    .with_label("non-exhaustive")
-                    .with_help("Add wildcard pattern: _ => ..."),
+                    error_codes::NON_EXHAUSTIVE_MATCH
+                        .emit(match_span)
+                        .arg(
+                            "missing",
+                            format!("wildcard for {}", scrutinee_type.display_name()),
+                        )
+                        .with_help("Add wildcard pattern: _ => ...")
+                        .build()
+                        .with_label("non-exhaustive"),
                 );
             }
 
@@ -2807,17 +2725,13 @@ impl<'a> TypeChecker<'a> {
                         .any(|member| self.is_assignable_with_traits(&lit_type, member))
                     {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3022",
-                                format!(
-                                    "Pattern type mismatch: expected {}, found {}",
-                                    Type::Union(members).display_name(),
-                                    lit_type.display_name()
-                                ),
-                                *span,
-                            )
-                            .with_label("type mismatch")
-                            .with_help("use a matching literal or wildcard pattern"),
+                            error_codes::PATTERN_TYPE_MISMATCH
+                                .emit(*span)
+                                .arg("value_type", Type::Union(members).display_name())
+                                .arg("pattern_type", lit_type.display_name())
+                                .with_help("use a matching literal or wildcard pattern")
+                                .build()
+                                .with_label("type mismatch"),
                         );
                     }
                     return bindings;
@@ -2841,17 +2755,13 @@ impl<'a> TypeChecker<'a> {
                     }
 
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3022",
-                            format!(
-                                "Pattern type mismatch: expected {}, found constructor {}",
-                                Type::Union(members).display_name(),
-                                name.name
-                            ),
-                            *span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("use a matching constructor or wildcard pattern"),
+                        error_codes::PATTERN_TYPE_MISMATCH
+                            .emit(*span)
+                            .arg("value_type", Type::Union(members).display_name())
+                            .arg("pattern_type", format!("constructor {}", name.name))
+                            .with_help("use a matching constructor or wildcard pattern")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     return bindings;
                 }
@@ -2862,16 +2772,13 @@ impl<'a> TypeChecker<'a> {
                         }
                     }
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3022",
-                            format!(
-                                "Pattern type mismatch: expected {}, found array pattern",
-                                Type::Union(members).display_name()
-                            ),
-                            *span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("use a matching array pattern or wildcard"),
+                        error_codes::PATTERN_TYPE_MISMATCH
+                            .emit(*span)
+                            .arg("value_type", Type::Union(members).display_name())
+                            .arg("pattern_type", "array pattern")
+                            .with_help("use a matching array pattern or wildcard")
+                            .build()
+                            .with_label("type mismatch"),
                     );
                     return bindings;
                 }
@@ -2918,20 +2825,16 @@ impl<'a> TypeChecker<'a> {
 
                 if !self.is_assignable_with_traits(&lit_type, &expected_norm) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3022",
-                            format!(
-                                "Pattern type mismatch: expected {}, found {}",
-                                expected_norm.display_name(),
-                                lit_type.display_name()
-                            ),
-                            *span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help(format!(
-                            "use a {} literal or wildcard pattern",
-                            expected_norm.display_name()
-                        )),
+                        error_codes::PATTERN_TYPE_MISMATCH
+                            .emit(*span)
+                            .arg("value_type", expected_norm.display_name())
+                            .arg("pattern_type", lit_type.display_name())
+                            .with_help(format!(
+                                "use a {} literal or wildcard pattern",
+                                expected_norm.display_name()
+                            ))
+                            .build()
+                            .with_label("type mismatch"),
                     );
                 }
             }
@@ -3010,16 +2913,16 @@ impl<'a> TypeChecker<'a> {
                             "Some" => {
                                 if args.len() != 1 {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3023",
-                                            format!(
-                                                "Some expects 1 argument, found {}",
-                                                args.len()
-                                            ),
-                                            span,
-                                        )
-                                        .with_label("wrong arity")
-                                        .with_help("Some requires exactly 1 argument: Some(value)"),
+                                        error_codes::CONSTRUCTOR_ARITY
+                                            .emit(span)
+                                            .arg("type_name", "Some")
+                                            .arg("expected", "1")
+                                            .arg("found", format!("{}", args.len()))
+                                            .with_help(
+                                                "Some requires exactly 1 argument: Some(value)",
+                                            )
+                                            .build()
+                                            .with_label("wrong arity"),
                                     );
                                 } else {
                                     // Check inner pattern against T
@@ -3029,30 +2932,27 @@ impl<'a> TypeChecker<'a> {
                             "None" => {
                                 if !args.is_empty() {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3023",
-                                            format!(
-                                                "None expects 0 arguments, found {}",
-                                                args.len()
-                                            ),
-                                            span,
-                                        )
-                                        .with_label("wrong arity")
-                                        .with_help("None requires no arguments: None"),
+                                        error_codes::CONSTRUCTOR_ARITY
+                                            .emit(span)
+                                            .arg("type_name", "None")
+                                            .arg("expected", "0")
+                                            .arg("found", format!("{}", args.len()))
+                                            .with_help("None requires no arguments: None")
+                                            .build()
+                                            .with_label("wrong arity"),
                                     );
                                 }
                             }
                             _ => {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3024",
-                                        format!("Unknown Option constructor: {}", name.name),
-                                        name.span,
-                                    )
-                                    .with_label("unknown constructor")
-                                    .with_help(
-                                        "Option only has constructors: Some(value) and None",
-                                    ),
+                                    error_codes::UNKNOWN_CONSTRUCTOR
+                                        .emit(name.span)
+                                        .arg("name", &name.name)
+                                        .with_help(
+                                            "Option only has constructors: Some(value) and None",
+                                        )
+                                        .build()
+                                        .with_label("unknown constructor"),
                                 );
                             }
                         }
@@ -3063,13 +2963,14 @@ impl<'a> TypeChecker<'a> {
                             "Ok" => {
                                 if args.len() != 1 {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3023",
-                                            format!("Ok expects 1 argument, found {}", args.len()),
-                                            span,
-                                        )
-                                        .with_label("wrong arity")
-                                        .with_help("Ok requires exactly 1 argument: Ok(value)"),
+                                        error_codes::CONSTRUCTOR_ARITY
+                                            .emit(span)
+                                            .arg("type_name", "Ok")
+                                            .arg("expected", "1")
+                                            .arg("found", format!("{}", args.len()))
+                                            .with_help("Ok requires exactly 1 argument: Ok(value)")
+                                            .build()
+                                            .with_label("wrong arity"),
                                     );
                                 } else {
                                     // Check inner pattern against T
@@ -3079,13 +2980,16 @@ impl<'a> TypeChecker<'a> {
                             "Err" => {
                                 if args.len() != 1 {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3023",
-                                            format!("Err expects 1 argument, found {}", args.len()),
-                                            span,
-                                        )
-                                        .with_label("wrong arity")
-                                        .with_help("Err requires exactly 1 argument: Err(error)"),
+                                        error_codes::CONSTRUCTOR_ARITY
+                                            .emit(span)
+                                            .arg("type_name", "Err")
+                                            .arg("expected", "1")
+                                            .arg("found", format!("{}", args.len()))
+                                            .with_help(
+                                                "Err requires exactly 1 argument: Err(error)",
+                                            )
+                                            .build()
+                                            .with_label("wrong arity"),
                                     );
                                 } else {
                                     // Check inner pattern against E
@@ -3094,48 +2998,37 @@ impl<'a> TypeChecker<'a> {
                             }
                             _ => {
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT3024",
-                                        format!("Unknown Result constructor: {}", name.name),
-                                        name.span,
-                                    )
-                                    .with_label("unknown constructor")
-                                    .with_help(
-                                        "Result only has constructors: Ok(value) and Err(error)",
-                                    ),
+                                    error_codes::UNKNOWN_CONSTRUCTOR.emit(name.span)
+                                        .arg("name", &name.name)
+                                        .with_help("Result only has constructors: Ok(value) and Err(error)")
+                                        .build()
+                                        .with_label("unknown constructor"),
                                 );
                             }
                         }
                     }
                     _ => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3025",
-                                format!(
-                                    "Constructor patterns not supported for type {}",
-                                    expected_type.display_name()
-                                ),
-                                span,
-                            )
-                            .with_label("unsupported type")
-                            .with_help(
-                                "constructor patterns only work with Option and Result types",
-                            ),
+                            error_codes::UNSUPPORTED_PATTERN_TYPE
+                                .emit(span)
+                                .arg("pattern_type", expected_type.display_name())
+                                .with_help(
+                                    "constructor patterns only work with Option and Result types",
+                                )
+                                .build()
+                                .with_label("unsupported type"),
                         );
                     }
                 }
             }
             _ => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3025",
-                        format!(
-                            "Constructor patterns not supported for type {}",
-                            expected_type.display_name()
-                        ),
-                        span,
-                    )
-                    .with_label("unsupported type"),
+                    error_codes::UNSUPPORTED_PATTERN_TYPE
+                        .emit(span)
+                        .arg("pattern_type", expected_type.display_name())
+                        .with_help("constructor patterns only work with Option and Result types")
+                        .build()
+                        .with_label("unsupported type"),
                 );
             }
         }
@@ -3162,16 +3055,13 @@ impl<'a> TypeChecker<'a> {
             }
             _ => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3026",
-                        format!(
-                            "Array pattern used on non-array type: {}",
-                            expected_type.display_name()
-                        ),
-                        span,
-                    )
-                    .with_label("type mismatch")
-                    .with_help("array patterns can only match array types"),
+                    error_codes::ARRAY_PATTERN_TYPE_MISMATCH
+                        .emit(span)
+                        .arg("expected", "array")
+                        .arg("found", expected_type.display_name())
+                        .with_help("array patterns can only match array types")
+                        .build()
+                        .with_label("type mismatch"),
                 );
             }
         }
@@ -3212,18 +3102,11 @@ impl<'a> TypeChecker<'a> {
             }
             _ => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3027",
-                        format!(
-                            "? operator requires Result<T, E> or Option<T> type, found {}",
-                            expr_type.display_name()
-                        ),
-                        try_expr.span,
-                    )
-                    .with_label("not a Result or Option type")
-                    .with_help(
-                        "the ? operator can only be applied to Result<T, E> or Option<T> values",
-                    ),
+                    error_codes::TYPE_ERROR.emit(try_expr.span)
+                        .arg("detail", format!("? operator requires Result<T, E> or Option<T> type, found {}", expr_type.display_name()))
+                        .with_help("the ? operator can only be applied to Result<T, E> or Option<T> values")
+                        .build()
+                        .with_label("not a Result or Option type"),
                 );
                 return Type::Unknown;
             }
@@ -3266,20 +3149,18 @@ impl<'a> TypeChecker<'a> {
                         // Error types must be compatible (any-placeholder is always compatible)
                         if !err_is_any && !function_err_is_any && err_norm != function_err_norm {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT3029",
-                                    format!(
+                                error_codes::TYPE_ERROR.emit(try_expr.span)
+                                    .arg("detail", format!(
                                         "? operator error type mismatch: expression has error type {}, but function returns {}",
                                         err_type.display_name(),
                                         function_err_type.display_name()
-                                    ),
-                                    try_expr.span,
-                                )
-                                .with_label("error type mismatch")
-                                .with_help(format!(
-                                    "convert the error type to {} or change the function's error type",
-                                    function_err_type.display_name()
-                                )),
+                                    ))
+                                    .with_help(format!(
+                                        "convert the error type to {} or change the function's error type",
+                                        function_err_type.display_name()
+                                    ))
+                                    .build()
+                                    .with_label("error type mismatch"),
                             );
                         }
 
@@ -3408,16 +3289,18 @@ impl<'a> TypeChecker<'a> {
             Some(declared) => {
                 if !self.is_assignable_with_traits(&body_type, &declared) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "closure body returns {} but declared return type is {}",
-                                body_type.display_name(),
-                                declared.display_name()
-                            ),
-                            span,
-                        )
-                        .with_label("return type mismatch"),
+                        error_codes::TYPE_ERROR
+                            .emit(span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "closure body returns {} but declared return type is {}",
+                                    body_type.display_name(),
+                                    declared.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label("return type mismatch"),
                     );
                 }
                 declared
@@ -3445,21 +3328,16 @@ impl<'a> TypeChecker<'a> {
                 if let Some(ownership) = self.current_fn_param_ownerships.get(&id.name) {
                     if matches!(ownership, Some(crate::ast::OwnershipAnnotation::Borrow)) {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3040",
-                                format!(
-                                    "cannot capture `{}` by reference in a closure — borrows cannot outlive their scope",
+                            error_codes::CLOSURE_CAPTURES_BORROW.emit(closure_span)
+                                .arg("name", &id.name)
+                                .with_help(format!(
+                                    "cannot capture `borrow` parameter `{}` in a closure — borrows cannot outlive their scope.\n\
+                                     Fix: change the parameter annotation to `own` (moved in) or `share` (shared ref),\n\
+                                     or pass a copy of the value into the closure explicitly.",
                                     id.name
-                                ),
-                                closure_span,
-                            )
-                            .with_label("borrow captured here")
-                            .with_help(format!(
-                                "cannot capture `borrow` parameter `{}` in a closure — borrows cannot outlive their scope.\n\
-                                 Fix: change the parameter annotation to `own` (moved in) or `share` (shared ref),\n\
-                                 or pass a copy of the value into the closure explicitly.",
-                                id.name
-                            )),
+                                ))
+                                .build()
+                                .with_label("borrow captured here"),
                         );
                     }
                 }
