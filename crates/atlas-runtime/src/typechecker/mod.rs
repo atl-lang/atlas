@@ -367,6 +367,9 @@ pub struct TypeChecker<'a> {
     pub trait_registry: TraitRegistry,
     /// Registry of all impl blocks keyed by (type_name, trait_name).
     pub impl_registry: ImplRegistry,
+    /// Registry of inherent impl methods keyed by (type_name, method_name).
+    /// Inherent methods take precedence over trait methods at call sites (D-037).
+    pub inherent_registry: HashMap<(String, String), ImplMethod>,
     /// Active type parameters in scope (including outer function params).
     active_type_params: Vec<crate::ast::TypeParam>,
     /// Struct declarations available in this module scope.
@@ -457,6 +460,7 @@ impl<'a> TypeChecker<'a> {
             moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
+            inherent_registry: HashMap::new(),
             active_type_params: Vec::new(),
             struct_decls: HashMap::new(),
             struct_type_cache: HashMap::new(),
@@ -1087,8 +1091,8 @@ impl<'a> TypeChecker<'a> {
     /// Inherent impl blocks (no trait name) are handled separately in
     /// `check_inherent_impl_block` (wired in B13-P03).
     fn check_impl_block(&mut self, impl_block: &ImplBlock) {
-        // Inherent impl typechecking is wired in B13-P03.
         if impl_block.is_inherent() {
+            self.check_inherent_impl_block(impl_block);
             return;
         }
 
@@ -1266,6 +1270,42 @@ impl<'a> TypeChecker<'a> {
             self.impl_registry
                 .register(&type_name, &trait_name, method_map);
             self.trait_registry.mark_implements(&type_name, &trait_name);
+        }
+    }
+
+    /// Check an inherent impl block: register methods into `inherent_registry` and typecheck bodies.
+    /// Validates self receiver ownership annotation (D-038).
+    fn check_inherent_impl_block(&mut self, impl_block: &ImplBlock) {
+        let type_name = impl_block.type_name.name.clone();
+        let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
+        let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
+
+        // Validate type exists as a known struct or primitive (report warning if not).
+        // We proceed regardless — unknown type name is caught by the struct-check phase.
+
+        for method in &impl_block.methods {
+            // D-038: first param named 'self' must have an ownership annotation.
+            if let Some(self_param) = method.params.first() {
+                if self_param.name.name == "self" && self_param.ownership.is_none() {
+                    self.diagnostics.push(Diagnostic::error_with_code(
+                        error_codes::MISSING_OWNERSHIP_ANNOTATION,
+                        format!(
+                            "Self receiver in inherent impl method '{}' requires an ownership annotation (borrow self, own self, or share self)",
+                            method.name.name
+                        ),
+                        self_param.span,
+                    ));
+                }
+            }
+
+            // Register into inherent_registry keyed by (type_name, method_name).
+            self.inherent_registry.insert(
+                (type_name.clone(), method.name.name.clone()),
+                method.clone(),
+            );
+
+            // Typecheck the method body.
+            self.check_impl_method_body(method, Some(&impl_self_type));
         }
     }
 
@@ -2501,7 +2541,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Returns `true` if the given type implements `Copy` (value semantics).
     /// Built-in value types are always Copy. User types are Copy only if they have
-    /// an explicit `impl Copy for T { }` registered in the trait registry.
+    /// an explicit `impl Copy for T` (with methods) registered in the trait registry.
     pub fn is_copy_type(&self, ty: &Type) -> bool {
         match ty.normalized() {
             // All built-in value types are Copy
@@ -2537,6 +2577,22 @@ impl<'a> TypeChecker<'a> {
 
     /// Try to resolve a method call through the trait/impl system.
     /// Returns the return type if a matching impl method is found, `None` otherwise.
+    /// Resolve an inherent method call (D-037: inherent methods take priority over trait methods).
+    /// Returns `(return_type, type_name)` when found. Call site sets `trait_dispatch = Some((type_name, ""))`.
+    pub(super) fn resolve_inherent_method_call(
+        &mut self,
+        receiver_type: &Type,
+        method_name: &str,
+    ) -> Option<(Type, String)> {
+        let type_name = type_to_impl_key_with_structs(receiver_type, &self.struct_type_cache)?;
+        let method = self
+            .inherent_registry
+            .get(&(type_name.clone(), method_name.to_string()))
+            .cloned()?;
+        let return_type = self.resolve_type_ref(&method.return_type.clone());
+        Some((return_type, type_name))
+    }
+
     /// Only fires after stdlib method dispatch has failed (dispatch priority slot 2).
     /// Like `resolve_trait_method_call_with_info` but discards dispatch info.
     pub(super) fn resolve_trait_method_call_with_info(
