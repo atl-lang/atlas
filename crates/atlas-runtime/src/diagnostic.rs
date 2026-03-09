@@ -103,6 +103,10 @@ pub struct Diagnostic {
     /// Suggested fix (optional)
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub help: Option<String>,
+    /// When true, this diagnostic is a secondary/cascade error and should be
+    /// visually subordinated (D-043: cascade suppression). Omitted from JSON if false.
+    #[serde(skip_serializing_if = "std::ops::Not::not", default)]
+    pub is_secondary: bool,
 }
 
 impl Diagnostic {
@@ -129,6 +133,7 @@ impl Diagnostic {
             related: Vec::new(),
             stack_trace: Vec::new(),
             help: None,
+            is_secondary: false,
         }
     }
 
@@ -155,6 +160,7 @@ impl Diagnostic {
             related: Vec::new(),
             stack_trace: Vec::new(),
             help: None,
+            is_secondary: false,
         }
     }
 
@@ -223,6 +229,14 @@ impl Diagnostic {
         self
     }
 
+    /// Mark this diagnostic as a secondary/cascade error (D-043).
+    /// Secondary diagnostics are visually subordinated in output and omitted from
+    /// JSON when `is_secondary` is false.
+    pub fn as_secondary(mut self) -> Self {
+        self.is_secondary = true;
+        self
+    }
+
     /// Create a new hint diagnostic with code
     pub fn hint_with_code(code: impl Into<String>, message: impl Into<String>, span: Span) -> Self {
         let (line, column, snippet) =
@@ -242,6 +256,7 @@ impl Diagnostic {
             related: Vec::new(),
             stack_trace: Vec::new(),
             help: None,
+            is_secondary: false,
         }
     }
 
@@ -265,10 +280,18 @@ impl Diagnostic {
         let mut output = String::new();
 
         // Header: error[AT0001]: Type mismatch
-        output.push_str(&format!(
-            "{}[{}]: {}\n",
-            self.level, self.code, self.message
-        ));
+        // Secondary diagnostics are prefixed with `note:` to subordinate them visually (D-043).
+        if self.is_secondary {
+            output.push_str(&format!(
+                "note[{}] (secondary): {}\n",
+                self.code, self.message
+            ));
+        } else {
+            output.push_str(&format!(
+                "{}[{}]: {}\n",
+                self.level, self.code, self.message
+            ));
+        }
 
         // Location: --> path/to/file.atl:12:9
         output.push_str(&format!(

@@ -144,5 +144,62 @@ fn test_help_text_missing_semi_is_context_specific() {
 }
 
 // ============================================================================
+// is_secondary Field Tests (B14-P04 — D-043)
+// ============================================================================
+
+/// Diagnostics created via the normal error path are NOT secondary by default.
+#[test]
+fn test_diagnostic_is_not_secondary_by_default() {
+    use atlas_runtime::{Lexer, Parser};
+    let mut lexer = Lexer::new("let x = ;");
+    let (tokens, _) = lexer.tokenize();
+    let mut parser = Parser::new(tokens);
+    let (_, diags) = parser.parse();
+    assert!(!diags.is_empty());
+    assert!(
+        !diags[0].is_secondary,
+        "Primary parser error should have is_secondary = false"
+    );
+}
+
+/// Diagnostics marked via `.as_secondary()` have is_secondary = true
+/// and display with `note:` prefix (not `error:`).
+#[test]
+fn test_as_secondary_builder_sets_flag() {
+    use atlas_runtime::{Diagnostic, Span};
+    let span = Span::new(0, 1);
+    let diag = Diagnostic::error_with_code("AT1000", "test error", span).as_secondary();
+    assert!(
+        diag.is_secondary,
+        "as_secondary() should set is_secondary = true"
+    );
+    let rendered = diag.to_human_string();
+    assert!(
+        rendered.starts_with("note["),
+        "Secondary diagnostic should render with note: prefix, got: {:?}",
+        rendered
+    );
+    assert!(
+        rendered.contains("secondary"),
+        "Secondary diagnostic header should mention 'secondary', got: {:?}",
+        rendered
+    );
+}
+
+/// Primary diagnostics still render with the level prefix (error/warning).
+#[test]
+fn test_primary_diagnostic_renders_with_level_prefix() {
+    use atlas_runtime::{Diagnostic, Span};
+    let span = Span::new(0, 1);
+    let diag = Diagnostic::error_with_code("AT1000", "test error", span);
+    let rendered = diag.to_human_string();
+    assert!(
+        rendered.starts_with("error["),
+        "Primary error should render with 'error[' prefix, got: {:?}",
+        rendered
+    );
+}
+
+// ============================================================================
 // Operator Precedence Tests (from operator_precedence_tests.rs)
 // ============================================================================
