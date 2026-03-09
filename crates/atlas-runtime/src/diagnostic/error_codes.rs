@@ -74,6 +74,8 @@ pub const INVALID_ASSIGN_TARGET_MEMBER: &str = "AT1018";
 pub const INVALID_ASSIGN_TARGET: &str = "AT1019";
 
 pub const SHADOWING_PRELUDE: &str = "AT1012";
+/// Parse error: statement is missing a terminating semicolon.
+pub const MISSING_SEMICOLON: &str = "AT1020";
 
 // AT2xxx - Warnings
 pub const UNUSED_VARIABLE: &str = "AT2001";
@@ -427,6 +429,11 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT1019",
         description: "Invalid assignment target",
         help: Some("Valid assignment targets: variables, array indices, and struct fields.\n  x = value          ✓\n  arr[i] = value     ✓\n  obj.field = value  ✓"),
+    },
+    ErrorCodeInfo {
+        code: "AT1020",
+        description: "Missing semicolon",
+        help: Some("Add ';' to terminate the statement."),
     },
     // === AT2xxx: Warnings ===
     ErrorCodeInfo {

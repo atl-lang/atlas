@@ -27,6 +27,28 @@ fn test_parse_missing_semicolon_error() {
     );
 }
 
+#[test]
+fn test_issue_h186_missing_semi_uses_at1020_not_at1002() {
+    // H-186: missing semicolon was using AT1002 (unterminated string), causing
+    // "Add the closing quote" help text to appear on semicolon errors.
+    // Missing semicolons must use AT1020, not AT1002.
+    let diagnostics = parse_errors("let x = 42");
+    assert!(!diagnostics.is_empty(), "Expected missing semicolon error");
+    let semi_diag = diagnostics
+        .iter()
+        .find(|d| d.message.contains(';'))
+        .expect("Expected a ';' diagnostic");
+    assert_eq!(
+        semi_diag.code, "AT1020",
+        "Missing semicolon must use AT1020, got {}",
+        semi_diag.code
+    );
+    assert_ne!(
+        semi_diag.code, "AT1002",
+        "AT1002 is for unterminated strings — must not be used for missing semicolons"
+    );
+}
+
 // ============================================================================
 // Nested Functions (Phase 1: Parser Support)
 // ============================================================================
@@ -218,7 +240,7 @@ fn parse_errors(source: &str) -> Vec<atlas_runtime::diagnostic::Diagnostic> {
 fn is_parser_error_code(code: &str) -> bool {
     matches!(
         code,
-        "AT1000" | "AT1001" | "AT1002" | "AT1003" | "AT1004" | "AT1005"
+        "AT1000" | "AT1001" | "AT1002" | "AT1003" | "AT1004" | "AT1005" | "AT1020"
     )
 }
 

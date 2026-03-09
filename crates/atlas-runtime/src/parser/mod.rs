@@ -14,7 +14,7 @@ use crate::token::{Token, TokenKind};
 // Parser error codes
 const E_GENERIC: &str = "AT1000"; // Generic/uncategorized parse error
 const E_BAD_NUMBER: &str = "AT1001"; // Invalid number literal
-const E_MISSING_SEMI: &str = "AT1002"; // Missing semicolon
+const E_MISSING_SEMI: &str = "AT1020"; // Missing semicolon (AT1002 is unterminated string)
 const E_MISSING_BRACE: &str = "AT1003"; // Missing closing brace/bracket/paren
 const E_UNEXPECTED: &str = "AT1004"; // Unexpected token
 const E_RESERVED: &str = "AT1005"; // Reserved keyword used as identifier
