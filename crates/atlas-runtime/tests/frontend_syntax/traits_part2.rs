@@ -36,7 +36,7 @@ fn test_parse_impl_generic_trait() {
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Impl(ib) = &prog.items[1] {
-        assert_eq!(ib.trait_name.name, "Container");
+        assert_eq!(ib.trait_name.as_ref().unwrap().name, "Container");
         assert_eq!(ib.trait_type_args.len(), 1);
         assert_eq!(ib.type_name.name, "NumberList");
     } else {
@@ -81,7 +81,7 @@ fn test_parse_impl_empty_body() {
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Impl(ib) = &prog.items[1] {
         assert!(ib.methods.is_empty());
-        assert_eq!(ib.trait_name.name, "Marker");
+        assert_eq!(ib.trait_name.as_ref().unwrap().name, "Marker");
         assert_eq!(ib.type_name.name, "number");
     } else {
         panic!("expected Item::Impl");

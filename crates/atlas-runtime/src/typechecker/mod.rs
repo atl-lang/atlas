@@ -1084,8 +1084,19 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Check an impl block: verify the trait exists, check method conformance, register.
+    /// Inherent impl blocks (no trait name) are handled separately in
+    /// `check_inherent_impl_block` (wired in B13-P03).
     fn check_impl_block(&mut self, impl_block: &ImplBlock) {
-        let trait_name = impl_block.trait_name.name.clone();
+        // Inherent impl typechecking is wired in B13-P03.
+        if impl_block.is_inherent() {
+            return;
+        }
+
+        let trait_id = impl_block
+            .trait_name
+            .as_ref()
+            .expect("non-inherent impl has trait_name");
+        let trait_name = trait_id.name.clone();
         let type_name = impl_block.type_name.name.clone();
         let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
         let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
@@ -1095,7 +1106,7 @@ impl<'a> TypeChecker<'a> {
             self.diagnostics.push(Diagnostic::error_with_code(
                 error_codes::TRAIT_NOT_FOUND,
                 format!("Trait '{}' is not defined", trait_name),
-                impl_block.trait_name.span,
+                trait_id.span,
             ));
             return;
         }

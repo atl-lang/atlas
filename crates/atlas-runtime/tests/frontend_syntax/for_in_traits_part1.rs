@@ -375,7 +375,7 @@ fn test_parse_simple_impl_block() {
     assert_eq!(prog.items.len(), 2);
     assert!(matches!(prog.items[1], Item::Impl(_)));
     if let Item::Impl(ib) = &prog.items[1] {
-        assert_eq!(ib.trait_name.name, "Display");
+        assert_eq!(ib.trait_name.as_ref().unwrap().name, "Display");
         assert_eq!(ib.type_name.name, "number");
         assert_eq!(ib.methods.len(), 1);
         assert_eq!(ib.methods[0].name.name, "display");

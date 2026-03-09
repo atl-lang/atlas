@@ -851,7 +851,7 @@ impl Parser {
             .span;
 
         Ok(ImplBlock {
-            trait_name,
+            trait_name: Some(trait_name),
             trait_type_args,
             type_name,
             methods,
