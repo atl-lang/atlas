@@ -23,10 +23,13 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
         Err(diagnostics) => {
             // Print all diagnostics
             if json_output {
-                // JSON format
-                for diag in &diagnostics {
-                    println!("{}", diag.to_json_string().unwrap());
-                }
+                // Structured JSON: {"errors": [...], "warnings": [...]} (B14-P06)
+                let source = std::fs::read_to_string(file_path).ok();
+                crate::diagnostics::emit_diagnostics_json(
+                    &diagnostics,
+                    source.as_deref(),
+                    Some(file_path),
+                );
             } else {
                 // Human-readable format
                 eprintln!("Errors occurred while running {}:", file_path);
