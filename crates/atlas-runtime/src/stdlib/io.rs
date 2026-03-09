@@ -108,27 +108,33 @@ pub fn read_file(
     };
 
     let path = PathBuf::from(path_str);
-    let abs_path = path.canonicalize().map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to resolve path '{}': {}", path_str, e),
-        span,
-    })?;
+    let abs_path = match path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "File.read: path '{}' not found or inaccessible: {}",
+                path_str, e
+            ))))));
+        }
+    };
 
     // Check permission
-    security.check_filesystem_read(&abs_path).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "file read".to_string(),
-            path: abs_path.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_read(&abs_path).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.read: permission denied for '{}'",
+            abs_path.display()
+        ))))));
+    }
 
     // Read file
-    let contents = fs::read_to_string(&abs_path).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to read file '{}': {}", abs_path.display(), e),
-        span,
-    })?;
-
-    Ok(Value::string(contents))
+    match fs::read_to_string(&abs_path) {
+        Ok(contents) => Ok(Value::Result(Ok(Box::new(Value::string(contents))))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.read: failed to read '{}': {}",
+            abs_path.display(),
+            e
+        )))))),
+    }
 }
 
 /// Write string to file (create or overwrite)
@@ -157,35 +163,44 @@ pub fn write_file(
 
     // For write operations, check permission on the parent directory if file doesn't exist
     let check_path = if path.exists() {
-        path.canonicalize().map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to resolve path '{}': {}", path_str, e),
-            span,
-        })?
+        match path.canonicalize() {
+            Ok(p) => p,
+            Err(e) => {
+                return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                    "File.write: cannot resolve path '{}': {}",
+                    path_str, e
+                ))))));
+            }
+        }
     } else {
-        // Check parent directory permission
         let parent = path.parent().unwrap_or_else(|| Path::new("."));
-        parent.canonicalize().map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to resolve parent path: {}", e),
-            span,
-        })?
+        match parent.canonicalize() {
+            Ok(p) => p,
+            Err(e) => {
+                return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                    "File.write: cannot resolve parent path: {}",
+                    e
+                ))))));
+            }
+        }
     };
 
     // Check permission
-    security.check_filesystem_write(&check_path).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "file write".to_string(),
-            path: check_path.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_write(&check_path).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.write: permission denied for '{}'",
+            check_path.display()
+        ))))));
+    }
 
     // Write file
-    fs::write(&path, contents).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to write file '{}': {}", path_str, e),
-        span,
-    })?;
-
-    Ok(Value::Null)
+    match fs::write(&path, contents) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.write: failed to write '{}': {}",
+            path_str, e
+        )))))),
+    }
 }
 
 /// Append string to end of file (create if doesn't exist)
@@ -214,44 +229,54 @@ pub fn append_file(
 
     // Check permission (same logic as write_file)
     let check_path = if path.exists() {
-        path.canonicalize().map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to resolve path '{}': {}", path_str, e),
-            span,
-        })?
+        match path.canonicalize() {
+            Ok(p) => p,
+            Err(e) => {
+                return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                    "File.append: cannot resolve path '{}': {}",
+                    path_str, e
+                ))))));
+            }
+        }
     } else {
         let parent = path.parent().unwrap_or_else(|| Path::new("."));
-        parent.canonicalize().map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to resolve parent path: {}", e),
-            span,
-        })?
+        match parent.canonicalize() {
+            Ok(p) => p,
+            Err(e) => {
+                return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                    "File.append: cannot resolve parent path: {}",
+                    e
+                ))))));
+            }
+        }
     };
 
-    security.check_filesystem_write(&check_path).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "file write".to_string(),
-            path: check_path.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_write(&check_path).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.append: permission denied for '{}'",
+            check_path.display()
+        ))))));
+    }
 
     // Append to file
     use std::io::Write;
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(&path)
-        .map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to open file '{}': {}", path_str, e),
-            span,
-        })?;
+    let mut file = match fs::OpenOptions::new().create(true).append(true).open(&path) {
+        Ok(f) => f,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "File.append: failed to open '{}': {}",
+                path_str, e
+            ))))));
+        }
+    };
 
-    file.write_all(contents.as_bytes())
-        .map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to append to file '{}': {}", path_str, e),
-            span,
-        })?;
-
-    Ok(Value::Null)
+    match file.write_all(contents.as_bytes()) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.append: failed to write '{}': {}",
+            path_str, e
+        )))))),
+    }
 }
 
 /// Check if file or directory exists
@@ -355,29 +380,32 @@ pub fn create_dir(
         };
     }
 
-    let abs_check = check_path
-        .canonicalize()
-        .map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to resolve path: {}", e),
-            span,
-        })?;
+    let abs_check = match check_path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "File.createDir: cannot resolve ancestor path: {}",
+                e
+            ))))));
+        }
+    };
 
     // Check permission on existing ancestor
-    security.check_filesystem_write(&abs_check).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "directory create".to_string(),
-            path: abs_check.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_write(&abs_check).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.createDir: permission denied for '{}'",
+            abs_check.display()
+        ))))));
+    }
 
     // Create directory
-    fs::create_dir_all(&path).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to create directory '{}': {}", path_str, e),
-        span,
-    })?;
-
-    Ok(Value::Null)
+    match fs::create_dir_all(&path) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.createDir: failed to create '{}': {}",
+            path_str, e
+        )))))),
+    }
 }
 
 /// Remove file (not directory)
@@ -398,27 +426,33 @@ pub fn remove_file(
     };
 
     let path = PathBuf::from(path_str);
-    let abs_path = path.canonicalize().map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to resolve path '{}': {}", path_str, e),
-        span,
-    })?;
+    let abs_path = match path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "File.remove: path '{}' not found: {}",
+                path_str, e
+            ))))));
+        }
+    };
 
     // Check permission
-    security.check_filesystem_write(&abs_path).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "file delete".to_string(),
-            path: abs_path.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_write(&abs_path).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.remove: permission denied for '{}'",
+            abs_path.display()
+        ))))));
+    }
 
     // Remove file
-    fs::remove_file(&abs_path).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to remove file '{}': {}", abs_path.display(), e),
-        span,
-    })?;
-
-    Ok(Value::Null)
+    match fs::remove_file(&abs_path) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.remove: failed to remove '{}': {}",
+            abs_path.display(),
+            e
+        )))))),
+    }
 }
 
 /// Remove empty directory
@@ -439,27 +473,33 @@ pub fn remove_dir(
     };
 
     let path = PathBuf::from(path_str);
-    let abs_path = path.canonicalize().map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to resolve path '{}': {}", path_str, e),
-        span,
-    })?;
+    let abs_path = match path.canonicalize() {
+        Ok(p) => p,
+        Err(e) => {
+            return Ok(Value::Result(Err(Box::new(Value::string(format!(
+                "File.removeDir: path '{}' not found: {}",
+                path_str, e
+            ))))));
+        }
+    };
 
     // Check permission
-    security.check_filesystem_write(&abs_path).map_err(|_| {
-        RuntimeError::FilesystemPermissionDenied {
-            operation: "directory delete".to_string(),
-            path: abs_path.display().to_string(),
-            span,
-        }
-    })?;
+    if security.check_filesystem_write(&abs_path).is_err() {
+        return Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.removeDir: permission denied for '{}'",
+            abs_path.display()
+        ))))));
+    }
 
     // Remove directory (must be empty)
-    fs::remove_dir(&abs_path).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to remove directory '{}': {}", abs_path.display(), e),
-        span,
-    })?;
-
-    Ok(Value::Null)
+    match fs::remove_dir(&abs_path) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "File.removeDir: failed to remove '{}': {}",
+            abs_path.display(),
+            e
+        )))))),
+    }
 }
 
 /// Get file metadata (size, modified time, is_file, is_dir)

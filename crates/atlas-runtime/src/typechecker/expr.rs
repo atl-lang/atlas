@@ -40,7 +40,10 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
-        ("File", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Null,
+        ("File", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Null, Type::String],
+        },
         ("File", "exists") => Type::Bool,
         // Process namespace
         ("Process", "cwd") => Type::String,

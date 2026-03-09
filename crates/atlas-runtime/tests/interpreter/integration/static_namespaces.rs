@@ -225,7 +225,7 @@ fn test_env_get_known_var() {
 
 #[test]
 fn test_file_write_and_read() {
-    // Write then read — verify round-trip. readFile returns String directly.
+    // Write then read — verify round-trip. File ops return Result<T,string> — debug contains content.
     let src = r#"
         File.write("/tmp/atlas_test_p08.txt", "hello atlas");
         let content = File.read("/tmp/atlas_test_p08.txt");
