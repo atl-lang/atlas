@@ -56,18 +56,25 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    pt phase-add B<N> "Phase title"                          # one per phase, repeat for each
    pt phases B<N>                                           # verify the full list
    ```
-   Then populate structured fields on each phase — this is what gives future agents rich context:
+   > **MANDATORY: READ `.claude/skills/atlas/phase-template.md` BEFORE POPULATING PHASES.**
+   > That file is the canonical definition of what every phase must contain.
+   > A phase with only a title is INCOMPLETE — it WILL be misexecuted by a cold-start agent.
+
+   **Populate ALL 7 structured fields for EVERY phase — no exceptions:**
    ```bash
-   pt phase-update B<N>-P01 deps "none OR prior phase IDs"
-   pt phase-update B<N>-P01 files "file1.rs, file2.rs (what to create/update)"
-   pt phase-update B<N>-P01 do "what to implement — specific, actionable"
-   pt phase-update B<N>-P01 dont "what NOT to do — guard rails for cold-start agents"
-   pt phase-update B<N>-P01 verify "cargo check -p atlas-runtime  # exact command"
-   pt phase-update B<N>-P01 ac "specific deliverables that must be true when done"
-   pt phase-update B<N>-P01 refs "D-XXX, docs/language/foo.md"
+   pt phase-update B<N>-P01 deps "none OR prior phase IDs (e.g. B13-P01)"
+   pt phase-update B<N>-P01 files "file1.rs (~N lines), file2.rs (~N lines additions)"
+   pt phase-update B<N>-P01 do "what to implement — specific, actionable, no ambiguity"
+   pt phase-update B<N>-P01 dont "what NOT to do — guard rails: banned commands, out-of-scope, parity traps"
+   pt phase-update B<N>-P01 verify "exact cargo check / nextest command to confirm the phase compiled"
+   pt phase-update B<N>-P01 ac "specific deliverables that must be TRUE when phase is done"
+   pt phase-update B<N>-P01 refs "D-XXX decisions, docs/language/foo.md, related phases"
    ```
-   All 7 fields are optional but DO/DONT/VERIFY/AC are strongly recommended — they prevent
-   a cold-start agent from misinterpreting scope, running banned commands, or reversing intent.
+   Repeat for every phase in the block. This is what separates a real scaffold from a title dump.
+   The 7 fields give future cold-start agents: scope guard, file list, implementation intent,
+   explicit restrictions, verification command, acceptance criteria, and decision context.
+   Without them, the agent guesses — and guesses wrong.
+
    `block-add` must come before `phase-add` — ensures named block row exists in `pt blocks`.
    Never start a phase without its DB record.
 6. Scaffold all phase files

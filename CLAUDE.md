@@ -37,9 +37,16 @@ If AI has to work around something that should be built-in, that's a bug, not a 
 
 ## Git Process (Local-First v2)
 - **Local CI first.** All validation via `cargo fmt/clippy/nextest`.
-- **Batch pushes.** Commits accumulate on local main.
+- **Batch pushes.** Commits accumulate locally before push.
 - **Single workspace:** `~/dev/projects/atlas/`
 - **See `.claude/lazy/git.md`** for full workflow.
+
+**Branch mandate (hook-enforced — no exceptions):**
+- Rust source (`.rs`) and Cargo.toml dep changes → MUST be on a branch, never main
+- `fix/H-XXX` for bug fixes | `block/B-XX-name` for block phases | `feat/name` for features
+- Docs, config, `.claude/**`, CI → may commit directly to main
+- **Always run `git branch --show-current` before writing Rust code. If output is `main` → create a branch first.**
+- Stale branch audit: `git branch --no-merged main` — resolve before session end (Stop hook warns)
 
 ## Testing — The Two-Tier System
 
