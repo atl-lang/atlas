@@ -2,6 +2,50 @@
 
 Every Atlas error has a named code (`ATxxxx`), a specific problem description, and concrete fix guidance. This is intentional — Atlas is AI-first, and every error message must be self-correcting without external lookup.
 
+---
+
+## Canonical Error Format (B16 — updated 2026-03-09)
+
+Every Atlas diagnostic renders in this exact format. No Rust internal chrome, no `panicked at`, no anonymous spans.
+
+```
+error[AT1020]: return type annotation required on named functions, found `;`
+main.atlas:5:1
+5: fn greet(name: str) {
+   ^^^^^^^^^^^^^^^^^^^^^^^ syntax error
+help: add `-> void` if the function returns nothing: `fn name(params) -> void { ... }`
+note: named functions require explicit return types — closures may omit them
+```
+
+### Format Lines
+
+| Line | Format | Meaning |
+|------|--------|---------|
+| 1 | `{level}[{code}]: {message}` | Level is `error`, `warning`, or `note`. Code is `ATxxxx`. Message names exactly what is wrong. |
+| 2 | `{file}:{line}:{col}` | Precise source location. |
+| 3 | `{line_number}: {source_snippet}` | The offending source line. |
+| 4 | `{indent}^^^^ {label}` | Carets point at the first bad token. Label names the error category. |
+| 5+ | `help: {text}` | **Actionable fix** — what to write or change. May repeat for multiple distinct fixes. |
+| last | `note: {text}` | **Context/explanation** — why the rule exists or what the rule is. Not a repetition of help. |
+
+Secondary (cascade) diagnostics render as:
+```
+note[ATxxxx] (secondary): {message}
+```
+
+### Help vs Note
+
+- **help**: actionable — tells the developer exactly what to write. Example: `write \`-> void\` if the function returns nothing`.
+- **note**: explanatory — explains the rule or why it matters. Example: `named functions require explicit return types — closures may omit them`.
+
+Both are optional. When both are present, `help` comes first. Multiple `help` lines are valid when there are 2+ distinct fixes. Multiple `note` lines are valid when multiple context points apply.
+
+### Empty Snippet
+
+When source is unavailable (e.g. generated code, runtime-only errors), lines 3–4 are omitted. The location line still appears.
+
+---
+
 ## Error Code Structure
 
 | Range | Category |
