@@ -36,7 +36,10 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         ("Env", "set" | "unset") => Type::Null,
         // File namespace
-        ("File", "read") => Type::String,
+        ("File", "read") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::String, Type::String],
+        },
         ("File", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Null,
         ("File", "exists") => Type::Bool,
         // Process namespace
@@ -84,6 +87,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             name: "Result".to_string(),
             type_args: vec![Type::Unknown, Type::String],
         },
+        // Io namespace
+        ("Io", "readLine" | "readLinePrompt") => Type::String,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }
