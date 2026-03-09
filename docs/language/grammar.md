@@ -44,11 +44,17 @@ Implementations live in `impl` blocks.
 
 **Impl Blocks**
 ```
-impl_block     := "impl" trait_ref "for" type_name "{" impl_method* "}"
-impl_method    := "fn" IDENT type_params? "(" params? ")" ("->" type_ref)? block
+impl_block     := "impl" IDENT type_args? ("for" IDENT)? "{" impl_method* "}"
+impl_method    := "fn" IDENT type_params? "(" params? ")" "->" type_ref block
 ```
 
-`trait_ref` may include type arguments (e.g., `Functor<number>`).
+Two forms:
+- **Inherent impl** — `impl TypeName { ... }`: methods owned by the type, no trait required (D-036).
+- **Trait impl** — `impl TraitName for TypeName { ... }`: polymorphism contract (existing behaviour).
+
+`TraitName` may include type arguments (e.g., `impl Functor<number> for MyType`).
+Inherent methods resolve before trait methods at call sites (D-037).
+Self receiver requires an ownership annotation — `borrow self`, `own self`, or `share self` (D-038).
 
 **Import / Export / Extern**
 ```

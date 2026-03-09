@@ -24,23 +24,48 @@ trait Greetable {
 }
 ```
 
-**Impl Blocks**
+**Inherent Impl Blocks** (B13, D-036)
 ```
-impl TraitName for TypeName {
-    fn method(self) -> Type { body }
+impl TypeName {
+    fn method(borrow self: TypeName) -> Type { body }
 }
 ```
-- The `self` parameter type is inferred — write `self`, not `self: TypeName`.
+- Methods belong directly to the type — no trait required.
+- `self` receiver requires an ownership annotation: `borrow self`, `own self`, or `share self` (D-038).
+- Inherent methods resolve before trait methods at call sites (D-037).
+- Mangling: `__impl__TypeName__MethodName`.
+
+Example (tested):
+```atlas
+struct Point { x: number, y: number }
+
+impl Point {
+    fn magnitude(borrow self: Point) -> number {
+        return self.x * self.x + self.y * self.y;
+    }
+}
+
+let p = Point { x: 3, y: 4 };
+print(p.magnitude()); // 25
+```
+
+**Trait Impl Blocks**
+```
+impl TraitName for TypeName {
+    fn method(borrow self: TypeName) -> Type { body }
+}
+```
 - Must implement all required methods (those without default bodies).
 - May override default methods.
+- Mangling: `__impl__TypeName__TraitName__MethodName`.
 
 Example (tested):
 ```atlas
 struct Person { name: string }
 
 impl Greetable for Person {
-    fn greet(self) -> string {
-        return `Hello, I'm {self.name}`;
+    fn greet(borrow self: Person) -> string {
+        return `Hello, I'm ${self.name}`;
     }
     // farewell uses the default implementation
 }
