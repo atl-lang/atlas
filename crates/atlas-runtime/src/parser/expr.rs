@@ -1,6 +1,6 @@
 //! Expression parsing (Pratt parsing)
 
-use super::E_BAD_NUMBER;
+use super::{E_BAD_NUMBER, E_GENERIC};
 use crate::ast::*;
 use crate::diagnostic::error_codes;
 use crate::diagnostic::Diagnostic;
@@ -111,10 +111,12 @@ impl Parser {
         let value: f64 = match lexeme.parse::<f64>() {
             Ok(value) if value.is_finite() => value,
             _ => {
-                self.error_at_with_code(
+                self.error_at_with_code_help_note(
                     E_BAD_NUMBER,
-                    &format!("Invalid number literal: '{}'", lexeme),
+                    &format!("invalid number literal `{}`", lexeme),
                     span,
+                    "number literals must be finite values like `42`, `3.14`, or `1e10`",
+                    "use `math:nan()` or `math:inf()` to represent special numeric values",
                 );
                 0.0
             }
@@ -449,7 +451,13 @@ impl Parser {
 
         // `await` must be followed by an expression
         if self.is_at_end() || self.check(TokenKind::Semicolon) {
-            self.error_at("expected expression after `await`", await_span);
+            self.error_at_with_code_help_note(
+                E_GENERIC,
+                "expected expression after `await`",
+                await_span,
+                "write `await some_async_call()` — `await` requires an expression to suspend on",
+                "`await` can only be used inside `async fn` functions",
+            );
             return Err(());
         }
 

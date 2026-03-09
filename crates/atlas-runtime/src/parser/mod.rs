@@ -146,7 +146,13 @@ impl Parser {
         } else if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.error_at("expected `fn` after `async`", async_span);
+                self.error_at_with_code_help_note(
+                    E_GENERIC,
+                    "expected `fn` after `async`",
+                    async_span,
+                    "write `async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`",
+                    "`async` is not a standalone keyword; it modifies a function declaration",
+                );
                 return Err(());
             }
             Ok(Item::Function(self.parse_function_with_async(true)?))
@@ -352,10 +358,12 @@ impl Parser {
             } else if self.check(TokenKind::Share) {
                 let span = self.peek().span;
                 self.advance();
-                self.error_at(
+                self.error_at_with_code_and_help(
+                    E_GENERIC,
                     "`shared` is not valid as a return ownership annotation; \
                      callers receive a `shared<T>` typed value instead",
                     span,
+                    "remove the `shared` annotation — write `-> shared<T>` as the return type instead",
                 );
                 return Err(());
             } else {
@@ -488,7 +496,13 @@ impl Parser {
         let item = if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.error_at("expected `fn` after `async`", async_span);
+                self.error_at_with_code_help_note(
+                    E_GENERIC,
+                    "expected `fn` after `async`",
+                    async_span,
+                    "write `export async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`",
+                    "`async` is not a standalone keyword; it modifies a function declaration",
+                );
                 return Err(());
             }
             ExportItem::Function(self.parse_function_with_async(true)?)
@@ -1109,12 +1123,6 @@ impl Parser {
         self.error_with_code(E_GENERIC, &full_message);
     }
 
-    /// Record an error at a specific span using the generic error code.
-    /// Respects `in_panic_mode` (cascade suppression — D-043).
-    pub(super) fn error_at(&mut self, message: &str, span: Span) {
-        self.error_at_with_code(E_GENERIC, message, span);
-    }
-
     /// Record an error at the current token with an explicit code
     pub(super) fn error_with_code(&mut self, code: &'static str, message: &str) {
         let span = self.peek().span;
@@ -1153,6 +1161,29 @@ impl Parser {
             Diagnostic::error_with_code(code, message, span)
                 .with_label("syntax error")
                 .with_help(help),
+        );
+    }
+
+    /// Record an error at a specific span with an explicit code, help text, and an explanatory note.
+    /// Use this at sites where both a fix suggestion (help) and a rule/why explanation (note) are
+    /// available at the call location. Suppressed when `in_panic_mode` is set (cascade — D-043).
+    pub(super) fn error_at_with_code_help_note(
+        &mut self,
+        code: &'static str,
+        message: &str,
+        span: Span,
+        help: impl Into<String>,
+        note: impl Into<String>,
+    ) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
+        self.diagnostics.push(
+            Diagnostic::error_with_code(code, message, span)
+                .with_label("syntax error")
+                .with_help(help)
+                .with_note(note),
         );
     }
 
@@ -1281,10 +1312,13 @@ impl Parser {
         } else if current.kind == TokenKind::Identifier {
             Ok(self.advance())
         } else {
-            // Not an identifier and not a keyword — emit with no help (no relevant generic advice)
-            self.error_with_code(
+            // Not an identifier and not a keyword — give specific token-aware help
+            self.error_at_with_code_help_note(
                 E_UNEXPECTED,
-                &format!("Expected {}, found `{}`", context, current.kind.as_str()),
+                &format!("expected {}, found `{}`", context, current.kind.as_str()),
+                current.span,
+                format!("replace `{}` with a valid identifier name", current.kind.as_str()),
+                "identifiers must start with a letter or `_` and contain only letters, digits, and `_`",
             );
             Err(())
         }

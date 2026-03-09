@@ -1,7 +1,7 @@
 //! Integration tests for `atlas explain ATXXXX` (B14-P05) and JSON output (B14-P06)
 
 use atlas_runtime::diagnostic::error_codes;
-use atlas_runtime::{Diagnostic, DiagnosticLevel, Span};
+use atlas_runtime::{Diagnostic, Span};
 
 /// The error_codes registry lookup handles lowercase and numeric-only codes
 /// when normalised by the explain command logic.
