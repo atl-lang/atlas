@@ -939,6 +939,12 @@ impl Interpreter {
         if !had_explicit_return {
             if let Some(tail) = &func.body.tail_expr {
                 result = self.eval_expr(tail)?;
+                // H-178: if the tail expr (e.g. a match) internally executed a `return`
+                // statement, ControlFlow::Return carries the real value — use it.
+                if let ControlFlow::Return(val) = &self.control_flow {
+                    result = val.clone();
+                    self.control_flow = ControlFlow::None;
+                }
             }
         }
 

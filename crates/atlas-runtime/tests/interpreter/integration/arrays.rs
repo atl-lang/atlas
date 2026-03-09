@@ -251,3 +251,31 @@ fn test_array_sum_with_function() {
 }
 
 // ============================================================================
+
+#[test]
+fn test_h178_return_from_match_arm_in_tail_position() {
+    // Bug: call_user_function didn't check ControlFlow::Return after evaluating
+    // a tail expression (match). A `return` inside a match arm set ControlFlow
+    // but result was discarded — function returned Null instead of the array.
+    let code = r#"
+struct Person {
+    name: string,
+    age: number
+}
+fn register(name: string, age: number, mut own people: []Person) -> []Person {
+    let found: bool = false;
+    match found {
+        true => { return people; },
+        false => {
+            let p: Person = Person { name: name, age: age };
+            people.push(p);
+            return people;
+        }
+    }
+}
+let mut people: []Person = [];
+people = register("Alice", 30, people);
+people[0].name
+"#;
+    assert_eval_string(code, "Alice");
+}

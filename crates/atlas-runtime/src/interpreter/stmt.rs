@@ -122,6 +122,11 @@ impl Interpreter {
         match &assign.target {
             AssignTarget::Name(id) => {
                 self.set_variable(&id.name, value, assign.span)?;
+                // H-177/H-178: assignment rebinds the variable — clear consumed flag.
+                // x = f(own x) pattern: value moved in, returned, rebound — now valid again.
+                for scope in self.consumed_locals.iter_mut() {
+                    scope.remove(&id.name);
+                }
             }
             AssignTarget::Index {
                 target,
