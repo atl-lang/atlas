@@ -103,8 +103,8 @@ impl DiagnosticFormatter {
             self.write_stack_trace(w, diag)?;
         }
 
-        // Help
-        if let Some(help) = &diag.help {
+        // Help (multiple lines allowed)
+        for help in &diag.help {
             self.write_help(w, help)?;
         }
 
@@ -131,37 +131,21 @@ impl DiagnosticFormatter {
     }
 
     fn write_location(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
-        w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-        write!(w, "  --> ")?;
-        w.reset()?;
+        // Clean format: path:line:col (no --> arrow)
         writeln!(w, "{}:{}:{}", diag.file, diag.line, diag.column)?;
         Ok(())
     }
 
     fn write_snippet(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
-        let line_num_str = format!("{}", diag.line);
-        let gutter_width = line_num_str.len() + 1;
+        // Line prefix: "83: " — no gutter bars
+        let line_prefix = format!("{}: ", diag.line);
 
-        // Empty gutter line
-        w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-        write!(w, "{:>width$}|", "", width = gutter_width)?;
-        w.reset()?;
-        writeln!(w)?;
+        writeln!(w, "{}{}", line_prefix, diag.snippet)?;
 
-        // Source line
-        w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-        write!(w, "{:>width$}| ", diag.line, width = gutter_width)?;
-        w.reset()?;
-        writeln!(w, "{}", diag.snippet)?;
-
-        // Caret line
+        // Caret line indented to match source character position
         if diag.length > 0 {
-            w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-            write!(w, "{:>width$}| ", "", width = gutter_width)?;
-            w.reset()?;
-
-            // Compute caret position accounting for Unicode
-            let padding = compute_display_width(&diag.snippet, diag.column.saturating_sub(1));
+            let padding = line_prefix.len()
+                + compute_display_width(&diag.snippet, diag.column.saturating_sub(1));
             write!(w, "{}", " ".repeat(padding))?;
 
             let col = diag.column.saturating_sub(1);
@@ -188,27 +172,19 @@ impl DiagnosticFormatter {
     }
 
     fn write_note(&self, w: &mut impl WriteColor, note: &str) -> std::io::Result<()> {
-        w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-        write!(w, "   = ")?;
-        w.reset()?;
-
+        // Clean format: "note: text" (no "   = " prefix)
         w.set_color(ColorSpec::new().set_bold(true))?;
         write!(w, "note")?;
         w.reset()?;
-
         writeln!(w, ": {}", note)?;
         Ok(())
     }
 
     fn write_help(&self, w: &mut impl WriteColor, help: &str) -> std::io::Result<()> {
-        w.set_color(ColorSpec::new().set_fg(Some(Color::Cyan)).set_bold(true))?;
-        write!(w, "   = ")?;
-        w.reset()?;
-
+        // Clean format: "help: text" (no "   = " prefix)
         w.set_color(ColorSpec::new().set_fg(Some(Color::Green)).set_bold(true))?;
         write!(w, "help")?;
         w.reset()?;
-
         writeln!(w, ": {}", help)?;
         Ok(())
     }

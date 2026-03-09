@@ -110,7 +110,11 @@ fn test_cascade_suppression_two_independent_errors() {
 fn test_help_text_missing_brace_is_context_specific() {
     let diagnostics = parse_errors("fn foo() -> number { return 1;");
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
-    let help = diagnostics[0].help.as_deref().unwrap_or("");
+    let help = diagnostics[0]
+        .help
+        .first()
+        .map(|s| s.as_str())
+        .unwrap_or("");
     assert!(
         help.contains("close") || help.contains("`}`"),
         "Expected context-specific brace-closing help, got: {:?}",
@@ -129,7 +133,11 @@ fn test_help_text_missing_brace_is_context_specific() {
 fn test_help_text_missing_semi_is_context_specific() {
     let diagnostics = parse_errors("let x = 1 let y = 2;");
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
-    let help = diagnostics[0].help.as_deref().unwrap_or("");
+    let help = diagnostics[0]
+        .help
+        .first()
+        .map(|s| s.as_str())
+        .unwrap_or("");
     assert!(
         help.contains(";") || help.contains("semicolon") || help.contains("statement"),
         "Expected context-specific semicolon help, got: {:?}",

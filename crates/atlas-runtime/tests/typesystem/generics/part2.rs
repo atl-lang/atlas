@@ -255,7 +255,7 @@ fn test_suggest_num_conversion() {
     assert!(!diags.is_empty());
     // Should suggest num() conversion
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("num(")),
+        diags[0].help.iter().any(|h| h.contains("num(")),
         "Expected num() suggestion, got: {:?}",
         diags[0].help
     );
@@ -266,7 +266,7 @@ fn test_suggest_str_conversion() {
     let diags = errors("let x: string = 42;");
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("str(")),
+        diags[0].help.iter().any(|h| h.contains("str(")),
         "Expected str() suggestion, got: {:?}",
         diags[0].help
     );
@@ -316,10 +316,7 @@ fn test_return_void_from_number_function() {
     assert!(!diags.is_empty());
     assert!(diags[0].message.contains("expected number"));
     assert!(
-        diags[0]
-            .help
-            .as_ref()
-            .is_some_and(|h| h.contains("missing return")),
+        diags[0].help.iter().any(|h| h.contains("missing return")),
         "Expected missing return suggestion, got: {:?}",
         diags[0].help
     );
@@ -335,7 +332,7 @@ fn test_add_string_number_suggests_str() {
     assert!(!diags.is_empty());
     assert_eq!(diags[0].code, "AT3002");
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("str(")),
+        diags[0].help.iter().any(|h| h.contains("str(")),
         "Expected str() suggestion for string + number, got: {:?}",
         diags[0].help
     );
@@ -346,7 +343,7 @@ fn test_add_number_string_suggests_str() {
     let diags = errors(r#"let _x = 42 + "hello";"#);
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("str(")),
+        diags[0].help.iter().any(|h| h.contains("str(")),
         "Expected str() suggestion for number + string, got: {:?}",
         diags[0].help
     );

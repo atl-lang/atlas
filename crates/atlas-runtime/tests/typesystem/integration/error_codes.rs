@@ -200,12 +200,7 @@ fn test_at3060_int_type_suggests_number() {
     );
     let at3060 = errors.iter().find(|d| d.code == "AT3060").unwrap();
     assert!(
-        at3060
-            .help
-            .as_ref()
-            .map(|h| h.as_str())
-            .unwrap_or("")
-            .contains("number"),
+        at3060.help.iter().any(|h| h.contains("number")),
         "AT3060 help should suggest 'number', got: {:?}",
         at3060.help
     );

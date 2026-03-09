@@ -100,9 +100,9 @@ pub struct Diagnostic {
     /// Runtime stack trace (optional)
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub stack_trace: Vec<StackTraceFrame>,
-    /// Suggested fix (optional)
-    #[serde(skip_serializing_if = "Option::is_none", default)]
-    pub help: Option<String>,
+    /// Suggested fixes (optional, multiple allowed)
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub help: Vec<String>,
     /// When true, this diagnostic is a secondary/cascade error and should be
     /// visually subordinated (D-043: cascade suppression). Omitted from JSON if false.
     #[serde(skip_serializing_if = "std::ops::Not::not", default)]
@@ -132,7 +132,7 @@ impl Diagnostic {
             notes: Vec::new(),
             related: Vec::new(),
             stack_trace: Vec::new(),
-            help: None,
+            help: Vec::new(),
             is_secondary: false,
         }
     }
@@ -159,7 +159,7 @@ impl Diagnostic {
             notes: Vec::new(),
             related: Vec::new(),
             stack_trace: Vec::new(),
-            help: None,
+            help: Vec::new(),
             is_secondary: false,
         }
     }
@@ -204,9 +204,9 @@ impl Diagnostic {
         self
     }
 
-    /// Add a help message
+    /// Add a help message (multiple calls produce multiple help lines)
     pub fn with_help(mut self, help: impl Into<String>) -> Self {
-        self.help = Some(help.into());
+        self.help.push(help.into());
         self
     }
 
@@ -255,7 +255,7 @@ impl Diagnostic {
             notes: Vec::new(),
             related: Vec::new(),
             stack_trace: Vec::new(),
-            help: None,
+            help: Vec::new(),
             is_secondary: false,
         }
     }
@@ -276,10 +276,21 @@ impl Diagnostic {
     }
 
     /// Format as human-readable string
+    ///
+    /// Clean Atlas format — no Rust chrome (no `-->`, no `|` gutters, no `= ` prefixes).
+    ///
+    /// ```text
+    /// error[AT0001]: Type mismatch
+    /// path/to/file.atl:12:9
+    /// 12: let x: str = 42;
+    ///             ^ type mismatch
+    /// help: expected `str`, found `int`
+    /// note: declared as `str` on this line
+    /// ```
     pub fn to_human_string(&self) -> String {
         let mut output = String::new();
 
-        // Header: error[AT0001]: Type mismatch
+        // Line 1: error[CODE]: message
         // Secondary diagnostics are prefixed with `note:` to subordinate them visually (D-043).
         if self.is_secondary {
             output.push_str(&format!(
@@ -293,23 +304,19 @@ impl Diagnostic {
             ));
         }
 
-        // Location: --> path/to/file.atl:12:9
-        output.push_str(&format!(
-            "  --> {}:{}:{}\n",
-            self.file, self.line, self.column
-        ));
+        // Line 2: path:line:col
+        output.push_str(&format!("{}:{}:{}\n", self.file, self.line, self.column));
 
-        // Snippet with caret
+        // Lines 3-4: source snippet with caret
         if !self.snippet.is_empty() {
-            output.push_str("   |\n");
-            output.push_str(&format!("{:>2} | {}\n", self.line, self.snippet));
+            let line_prefix = format!("{}: ", self.line);
+            output.push_str(&format!("{}{}\n", line_prefix, self.snippet));
 
-            // Caret line
             if self.length > 0 {
-                let padding = " ".repeat(self.column - 1);
-                let carets = "^".repeat(self.length);
-                output.push_str(&format!("   | {}{}", padding, carets));
-
+                // Caret indented to match the source character position
+                let caret_indent = " ".repeat(line_prefix.len() + self.column.saturating_sub(1));
+                let carets = "^".repeat(self.length.max(1));
+                output.push_str(&format!("{}{}", caret_indent, carets));
                 if !self.label.is_empty() {
                     output.push_str(&format!(" {}", self.label));
                 }
@@ -317,32 +324,28 @@ impl Diagnostic {
             }
         }
 
-        // Notes
-        for note in &self.notes {
-            output.push_str(&format!("   = note: {}\n", note));
-        }
-
-        // Related locations
-        for related in &self.related {
+        // Stack trace (before help/notes — shows execution path first)
+        for frame in &self.stack_trace {
             output.push_str(&format!(
-                "   = note: related location at {}:{}:{}: {}\n",
-                related.file, related.line, related.column, related.message
+                "  at {} ({}:{}:{})\n",
+                frame.function, frame.file, frame.line, frame.column
             ));
         }
 
-        // Stack trace
-        if !self.stack_trace.is_empty() {
-            for frame in &self.stack_trace {
-                output.push_str(&format!(
-                    "  at {} ({}:{}:{})\n",
-                    frame.function, frame.file, frame.line, frame.column
-                ));
-            }
+        // Help lines (actionable fixes — what to write/change)
+        for help in &self.help {
+            output.push_str(&format!("help: {}\n", help));
         }
 
-        // Help
-        if let Some(help) = &self.help {
-            output.push_str(&format!("   = help: {}\n", help));
+        // Note lines (context/explanation + related locations)
+        for note in &self.notes {
+            output.push_str(&format!("note: {}\n", note));
+        }
+        for related in &self.related {
+            output.push_str(&format!(
+                "note: see {}:{}:{}: {}\n",
+                related.file, related.line, related.column, related.message
+            ));
         }
 
         output

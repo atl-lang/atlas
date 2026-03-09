@@ -71,7 +71,7 @@ pub fn diagnostic_to_lsp(diag: &Diagnostic) -> lsp_types::Diagnostic {
     for note in &diag.notes {
         message.push_str(&format!("\nnote: {note}"));
     }
-    if let Some(help) = &diag.help {
+    for help in &diag.help {
         message.push_str(&format!("\nhelp: {help}"));
     }
 

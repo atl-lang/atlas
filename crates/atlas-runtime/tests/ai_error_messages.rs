@@ -78,7 +78,7 @@ fn assert_self_correcting(diags: &[Diagnostic], expected_code: &str, expected_te
     let full_text = format!(
         "{} {} {}",
         diag.message,
-        diag.help.as_deref().unwrap_or(""),
+        diag.help.first().map(|s| s.as_str()).unwrap_or(""),
         diag.label
     );
 
@@ -238,7 +238,13 @@ fn ai_mistake_undefined_variable_with_suggestion() {
     );
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     // Should suggest "count"
@@ -284,7 +290,13 @@ let val: number = p.z;
     );
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     // Should list available fields x, y
@@ -313,7 +325,13 @@ let s: string = u.naem;
     );
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     // Should suggest "name"
@@ -427,7 +445,13 @@ let result: number = x + s;
     assert!(!diags.is_empty(), "Expected type error for number + string");
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     assert!(
@@ -465,7 +489,13 @@ double("hello");
     assert!(!diags.is_empty(), "Expected type error for wrong arg type");
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     assert!(
@@ -585,7 +615,13 @@ fn ai_mistake_wrong_arrow_syntax() {
     // Error code should mention return type
     let full = diags
         .iter()
-        .map(|d| format!("{} {}", d.message, d.help.as_deref().unwrap_or("")))
+        .map(|d| {
+            format!(
+                "{} {}",
+                d.message,
+                d.help.first().map(|s| s.as_str()).unwrap_or("")
+            )
+        })
         .collect::<Vec<_>>()
         .join(" ");
     assert!(
@@ -685,7 +721,7 @@ fn ai_mistake_all_parse_errors_have_help() {
         );
         let diag = matching[0];
         assert!(
-            diag.help.is_some() && !diag.help.as_ref().unwrap().is_empty(),
+            !diag.help.is_empty(),
             "Diagnostic {} has no help text for: {}",
             expected_code,
             source
@@ -707,7 +743,7 @@ fn ai_mistake_runtime_divide_by_zero_has_help() {
     };
     let diag = runtime_error_to_diagnostic(err, vec![], None);
     assert_eq!(diag.code, "AT0005", "Expected AT0005 code");
-    let help = diag.help.as_deref().unwrap_or("");
+    let help = diag.help.first().map(|s| s.as_str()).unwrap_or("");
     assert!(!help.is_empty(), "AT0005 must have help text");
     assert!(
         help.contains("divisor") || help.contains("zero") || help.contains("!= 0"),

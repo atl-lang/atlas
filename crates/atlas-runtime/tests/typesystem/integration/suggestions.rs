@@ -21,7 +21,7 @@ fn test_method_suggestion_string_typo() {
         !at3010.is_empty(),
         "AT3010 expected for unknown method, got: {diags:?}"
     );
-    let help = at3010[0].help.as_deref().unwrap_or("");
+    let help = at3010[0].help.first().map(|s| s.as_str()).unwrap_or("");
     assert!(
         help.contains("did you mean") || help.contains("length"),
         "help should suggest 'length' for 'lenght', got: {:?}",
@@ -77,7 +77,7 @@ fn test_unknown_type_suggestion_struct_typo() {
         !type_errs.is_empty(),
         "AT3060 expected for unknown type 'Ponit', got: {diags:?}"
     );
-    let help = type_errs[0].help.as_deref().unwrap_or("");
+    let help = type_errs[0].help.first().map(|s| s.as_str()).unwrap_or("");
     assert!(
         help.contains("did you mean") || help.contains("Point"),
         "help should suggest 'Point' for 'Ponit', got: {:?}",

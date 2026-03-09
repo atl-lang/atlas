@@ -1316,7 +1316,7 @@ fn test_diagnostic_builder_chain() {
     assert_eq!(diag.snippet, "source code");
     assert_eq!(diag.label, "error here");
     assert_eq!(diag.notes.len(), 1);
-    assert!(diag.help.is_some());
+    assert!(!diag.help.is_empty());
 }
 
 #[test]

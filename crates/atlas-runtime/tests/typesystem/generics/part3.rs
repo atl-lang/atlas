@@ -37,7 +37,7 @@ fn test_if_condition_number_suggests_comparison() {
     let diags = errors("if 42 { }");
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("!=")),
+        diags[0].help.iter().any(|h| h.contains("!=")),
         "Expected comparison suggestion, got: {:?}",
         diags[0].help
     );
@@ -48,7 +48,7 @@ fn test_while_condition_string_suggests_comparison() {
     let diags = errors(r#"while "hello" { }"#);
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("len")),
+        diags[0].help.iter().any(|h| h.contains("len")),
         "Expected len suggestion, got: {:?}",
         diags[0].help
     );
@@ -69,10 +69,7 @@ fn test_immutable_variable_suggests_let_mut() {
     assert!(!diags.is_empty());
     assert_eq!(diags[0].code, "AT3003");
     assert!(
-        diags[0]
-            .help
-            .as_ref()
-            .is_some_and(|h| h.contains("let mut")),
+        diags[0].help.iter().any(|h| h.contains("let mut")),
         "Expected 'let mut' suggestion, got: {:?}",
         diags[0].help
     );
@@ -96,8 +93,8 @@ fn test_wrong_arity_shows_signature() {
     assert!(
         diags[0]
             .help
-            .as_ref()
-            .is_some_and(|h| h.contains("(number, number) -> number")),
+            .iter()
+            .any(|h| h.contains("(number, number) -> number")),
         "Expected function signature in help, got: {:?}",
         diags[0].help
     );
@@ -113,7 +110,7 @@ fn test_too_many_args_says_remove() {
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("remove")),
+        diags[0].help.iter().any(|h| h.contains("remove")),
         "Expected 'remove' suggestion, got: {:?}",
         diags[0].help
     );
@@ -130,7 +127,7 @@ fn test_wrong_arg_type_suggests_conversion() {
     assert!(!diags.is_empty());
     // Should suggest num() conversion
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("num(")),
+        diags[0].help.iter().any(|h| h.contains("num(")),
         "Expected num() suggestion, got: {:?}",
         diags[0].help
     );
@@ -175,7 +172,7 @@ fn test_for_in_number_suggests_range() {
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].help.as_ref().is_some_and(|h| h.contains("range")),
+        diags[0].help.iter().any(|h| h.contains("range")),
         "Expected range suggestion, got: {:?}",
         diags[0].help
     );

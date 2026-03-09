@@ -128,7 +128,7 @@ fn test_error_code_json_roundtrip() {
     assert_eq!(deserialized.code, "AT1001");
     assert_eq!(deserialized.level, DiagnosticLevel::Error);
     assert_eq!(
-        deserialized.help.as_deref(),
+        deserialized.help.first().map(|s| s.as_str()),
         Some("Remove the invalid character")
     );
     assert_eq!(deserialized.diag_version, DIAG_VERSION);

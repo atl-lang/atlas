@@ -214,12 +214,11 @@ impl ReplCore {
                 .map(|mut d| {
                     // REPL-specific: AT1006 (unexpected EOF) likely means incomplete multi-line input.
                     if d.code == "AT1006" {
-                        let existing_help = d.help.take().unwrap_or_default();
-                        d.help = Some(format!(
-                            "{}\n  REPL tip: if your expression spans multiple lines, \
-                     press Shift+Enter (or paste the full block at once).",
-                            existing_help
-                        ));
+                        d.help.push(
+                            "REPL tip: if your expression spans multiple lines, \
+                     press Shift+Enter (or paste the full block at once)."
+                                .to_string(),
+                        );
                     }
                     d
                 }),
@@ -244,11 +243,10 @@ impl ReplCore {
         diagnostics.extend(bind_diags.into_iter().map(|mut d| {
             // REPL-specific: undefined identifier → remind user that let bindings persist
             if d.code == "AT0002" {
-                let existing = d.help.take().unwrap_or_default();
-                d.help = Some(format!(
-                    "{}\n  REPL tip: use `let name = value;` to bind — bindings persist for the session.",
-                    existing
-                ));
+                d.help.push(
+                    "REPL tip: use `let name = value;` to bind — bindings persist for the session."
+                        .to_string(),
+                );
             }
             d
         }));

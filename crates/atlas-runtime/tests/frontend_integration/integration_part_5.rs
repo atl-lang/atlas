@@ -239,7 +239,7 @@ fn test_diagnostic_builder_all_fields() {
     assert_eq!(diag.label, "type error here");
     assert_eq!(diag.notes.len(), 2);
     assert_eq!(diag.related.len(), 1);
-    assert!(diag.help.is_some());
+    assert!(!diag.help.is_empty());
     assert_eq!(diag.diag_version, DIAG_VERSION);
     assert_eq!(diag.level, DiagnosticLevel::Error);
     assert_eq!(diag.column, 6); // span.start + 1
