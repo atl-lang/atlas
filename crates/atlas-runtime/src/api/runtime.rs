@@ -43,6 +43,7 @@ fn emit_warnings_via_formatter(warnings: &[Diagnostic]) {
 }
 use crate::binder::Binder;
 use crate::compiler::Compiler;
+use crate::diagnostic::error_codes::IMPORT_RESOLUTION_FAILED;
 use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
@@ -627,13 +628,12 @@ impl Runtime {
                     .map_err(Box::new)?;
                 let exports = exports_by_path.get(&import_path).ok_or_else(|| {
                     Box::new(
-                        Diagnostic::error_with_code(
-                            "AT5005",
-                            format!("Cannot find module '{}'", import_decl.source),
-                            import_decl.span,
-                        )
-                        .with_label("namespace import")
-                        .with_help("ensure the module exists and has been loaded before importing"),
+                        IMPORT_RESOLUTION_FAILED
+                            .emit(import_decl.span)
+                            .arg("path", &import_decl.source)
+                            .arg("detail", "module not found")
+                            .build()
+                            .with_label("namespace import"),
                     )
                 })?;
 

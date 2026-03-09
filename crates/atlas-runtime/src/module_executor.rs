@@ -4,6 +4,7 @@
 //! Ensures single evaluation per module with proper dependency order.
 
 use crate::ast::{ImportDecl, ImportSpecifier, Item};
+use crate::diagnostic::error_codes::EXPORT_NOT_FOUND;
 use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
 use crate::module_loader::{LoadedModule, ModuleLoader};
@@ -202,12 +203,11 @@ impl<'a> ModuleExecutor<'a> {
                     } else if type_only.contains(&name.name) {
                         // Type-only export (struct/enum/type alias) — no runtime value needed
                     } else {
-                        return Err(vec![Diagnostic::error_with_code(
-                            "AT5004",
-                            format!("'{}' is not exported from module", name.name),
-                            *span,
-                        )
-                        .with_help("check the module's exports or import a different symbol")]);
+                        return Err(vec![EXPORT_NOT_FOUND
+                            .emit(*span)
+                            .arg("name", &name.name)
+                            .arg("module", "this module")
+                            .build()]);
                     }
                 }
                 ImportSpecifier::Namespace { alias, span: _ } => {

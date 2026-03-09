@@ -1,7 +1,7 @@
 //! Type guard registry and validation.
 
 use crate::ast::FunctionDecl;
-use crate::diagnostic::Diagnostic;
+use crate::diagnostic::error_codes::TYPE_ERROR;
 use crate::types::{StructuralMemberType, Type};
 use std::collections::HashMap;
 
@@ -122,13 +122,15 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
         // Type predicates require an explicit `-> bool` annotation
         let Some(return_type_ref) = &func.return_type else {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    "Type predicate requires explicit `-> bool` return type annotation",
-                    predicate.span,
-                )
-                .with_label("type predicate must return bool")
-                .with_help("add `-> bool` before the `is` predicate"),
+                TYPE_ERROR
+                    .emit(predicate.span)
+                    .arg(
+                        "detail",
+                        "type predicate requires explicit `-> bool` return type annotation",
+                    )
+                    .with_help("add `-> bool` before the `is` predicate")
+                    .build()
+                    .with_label("type predicate must return bool"),
             );
             return;
         };
@@ -136,16 +138,18 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
         let return_norm = return_type.normalized();
         if return_norm != Type::Bool {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    format!(
-                        "Type predicate requires bool return type, found {}",
-                        return_type.display_name()
-                    ),
-                    predicate.span,
-                )
-                .with_label("type predicate must return bool")
-                .with_help("use `-> bool` before the predicate"),
+                TYPE_ERROR
+                    .emit(predicate.span)
+                    .arg(
+                        "detail",
+                        format!(
+                            "type predicate requires bool return type, found {}",
+                            return_type.display_name()
+                        ),
+                    )
+                    .with_help("use `-> bool` before the predicate")
+                    .build()
+                    .with_label("type predicate must return bool"),
             );
             return;
         }
@@ -158,16 +162,18 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
             Some(index) => index,
             None => {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Type predicate refers to unknown parameter '{}'",
-                            predicate.param.name
-                        ),
-                        predicate.param.span,
-                    )
-                    .with_label("unknown predicate parameter")
-                    .with_help("use a parameter name from the function signature"),
+                    TYPE_ERROR
+                        .emit(predicate.param.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "type predicate refers to unknown parameter '{}'",
+                                predicate.param.name
+                            ),
+                        )
+                        .with_help("use a parameter name from the function signature")
+                        .build()
+                        .with_label("unknown predicate parameter"),
                 );
                 return;
             }
@@ -179,17 +185,18 @@ impl<'a> crate::typechecker::TypeChecker<'a> {
 
         if !target_type.is_assignable_to(&param_type) {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    format!(
-                        "Predicate type {} is not assignable to parameter type {}",
-                        target_type.display_name(),
-                        param_type.display_name()
-                    ),
-                    predicate.span,
-                )
-                .with_label("unsafe type predicate")
-                .with_help("ensure the predicate type is a subtype of the parameter type"),
+                TYPE_ERROR
+                    .emit(predicate.span)
+                    .arg(
+                        "detail",
+                        format!(
+                            "predicate type {} is not assignable to parameter type {}",
+                            target_type.display_name(),
+                            param_type.display_name()
+                        ),
+                    )
+                    .build()
+                    .with_label("unsafe type predicate"),
             );
             return;
         }

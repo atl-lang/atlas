@@ -7,6 +7,7 @@
 // Allow large error variants (Diagnostic) - consistent with rest of codebase
 #![allow(clippy::result_large_err)]
 
+use crate::diagnostic::error_codes::{CIRCULAR_DEPENDENCY, INVALID_MODULE_PATH, MODULE_NOT_FOUND};
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use std::collections::{HashMap, HashSet};
@@ -59,12 +60,10 @@ impl ModuleResolver {
             // Relative path: resolve from importing file's directory
             self.resolve_relative(source, importing_file)?
         } else {
-            return Err(Diagnostic::error_with_code(
-                "AT5001",
-                format!("Invalid module path: '{}'. Paths must start with './', '../', or '/'", source),
-                span,
-            )
-            .with_help("Use './file' for same directory, '../file' for parent, or '/src/file' for absolute paths".to_string()));
+            return Err(INVALID_MODULE_PATH.emit(span)
+                .arg("path", source)
+                .with_help("use './file' for same directory, '../file' for parent, or '/src/file' for absolute paths")
+                .build());
         };
 
         let candidates = self.build_candidates(&base_path, source);
@@ -86,23 +85,22 @@ impl ModuleResolver {
                     .join(", ");
                 format!("tried: {}", tried)
             };
-            return Err(Diagnostic::error_with_code(
-                "AT5002",
-                format!("Module not found: '{}'", source),
-                span,
-            )
-            .with_label(label)
-            .with_help("Check that the file exists and the path is correct".to_string()));
+            return Err(MODULE_NOT_FOUND
+                .emit(span)
+                .arg("path", source)
+                .with_help("check that the file exists and the path is correct")
+                .build()
+                .with_label(label));
         }
 
         // Canonicalize to get consistent paths (fixes cycle detection with ./.. components)
         let resolved = resolved.canonicalize().map_err(|e| {
-            Diagnostic::error_with_code(
-                "AT5002",
-                format!("Failed to resolve module path: {}", e),
-                span,
-            )
-            .with_label(format!("path: {}", resolved.display()))
+            MODULE_NOT_FOUND
+                .emit(span)
+                .arg("path", resolved.display().to_string())
+                .with_help(format!("OS error: {e}"))
+                .build()
+                .with_label(format!("path: {}", resolved.display()))
         })?;
 
         // Cache the resolved path
@@ -163,13 +161,11 @@ impl ModuleResolver {
                 .collect::<Vec<_>>()
                 .join(" -> ");
 
-            return Err(Diagnostic::error_with_code(
-                "AT5003",
-                "Circular dependency detected",
-                span,
-            )
-            .with_label(format!("cycle: {}", cycle_str))
-            .with_help("Modules cannot import each other in a cycle. Refactor to remove circular dependencies.".to_string()));
+            return Err(CIRCULAR_DEPENDENCY
+                .emit(span)
+                .arg("cycle", &cycle_str)
+                .build()
+                .with_label(format!("cycle: {}", cycle_str)));
         }
 
         Ok(())

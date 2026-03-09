@@ -5,6 +5,7 @@
 use crate::ast::*;
 use crate::bytecode::Opcode;
 use crate::compiler::{Compiler, Local, UpvalueCapture, UpvalueContext};
+use crate::diagnostic::error_codes::INTERNAL_ERROR;
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::value::Value;
@@ -1057,14 +1058,10 @@ impl Compiler {
         match name.name.as_str() {
             "None" => {
                 if !args.is_empty() {
-                    return Err(vec![Diagnostic::error_with_code(
-                        "AT9995",
-                        "None pattern should not have arguments",
-                        span,
-                    )
-                    .with_help(
-                        "use 'None' without arguments to match empty Option values",
-                    )]);
+                    return Err(vec![INTERNAL_ERROR.emit(span)
+                        .arg("detail", "None pattern should not have arguments")
+                        .with_help("use 'None' without arguments to match empty Option values")
+                        .build()]);
                 }
 
                 // IsOptionNone: pops copy, pushes bool
@@ -1081,14 +1078,10 @@ impl Compiler {
 
             "Some" => {
                 if args.len() != 1 {
-                    return Err(vec![Diagnostic::error_with_code(
-                        "AT9995",
-                        "Some pattern requires exactly one argument",
-                        span,
-                    )
-                    .with_help(
-                        "use 'Some(value)' to match and extract the inner value from Option",
-                    )]);
+                    return Err(vec![INTERNAL_ERROR.emit(span)
+                        .arg("detail", "Some pattern requires exactly one argument")
+                        .with_help("use 'Some(value)' to match and extract the inner value from Option")
+                        .build()]);
                 }
 
                 self.compile_wrapping_constructor_pattern(
@@ -1102,14 +1095,10 @@ impl Compiler {
 
             "Ok" => {
                 if args.len() != 1 {
-                    return Err(vec![Diagnostic::error_with_code(
-                        "AT9995",
-                        "Ok pattern requires exactly one argument",
-                        span,
-                    )
-                    .with_help(
-                        "use 'Ok(value)' to match and extract the success value from Result",
-                    )]);
+                    return Err(vec![INTERNAL_ERROR.emit(span)
+                        .arg("detail", "Ok pattern requires exactly one argument")
+                        .with_help("use 'Ok(value)' to match and extract the success value from Result")
+                        .build()]);
                 }
 
                 self.compile_wrapping_constructor_pattern(
@@ -1123,14 +1112,10 @@ impl Compiler {
 
             "Err" => {
                 if args.len() != 1 {
-                    return Err(vec![Diagnostic::error_with_code(
-                        "AT9995",
-                        "Err pattern requires exactly one argument",
-                        span,
-                    )
-                    .with_help(
-                        "use 'Err(error)' to match and extract the error value from Result",
-                    )]);
+                    return Err(vec![INTERNAL_ERROR.emit(span)
+                        .arg("detail", "Err pattern requires exactly one argument")
+                        .with_help("use 'Err(error)' to match and extract the error value from Result")
+                        .build()]);
                 }
 
                 self.compile_wrapping_constructor_pattern(
@@ -1142,14 +1127,10 @@ impl Compiler {
                 )
             }
 
-            _ => Err(vec![Diagnostic::error_with_code(
-                "AT9995",
-                format!("Unknown constructor pattern: {}", name.name),
-                span,
-            )
-            .with_help(
-                "valid constructor patterns are: Some, None (for Option) and Ok, Err (for Result)",
-            )]),
+            _ => Err(vec![INTERNAL_ERROR.emit(span)
+                .arg("detail", format!("unknown constructor pattern: {}", name.name))
+                .with_help("valid constructor patterns are: Some, None (for Option) and Ok, Err (for Result)")
+                .build()]),
         }
     }
 
@@ -1730,11 +1711,10 @@ impl Compiler {
         }
 
         let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
-            vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
-                "Internal error: missing upvalue context",
-                span,
-            )]
+            vec![INTERNAL_ERROR
+                .emit(span)
+                .arg("detail", "missing upvalue context")
+                .build()]
         })?;
         let upvalues = upvalue_ctx.captures;
 

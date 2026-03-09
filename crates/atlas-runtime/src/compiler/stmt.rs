@@ -5,6 +5,7 @@
 use crate::ast::*;
 use crate::bytecode::Opcode;
 use crate::compiler::{Compiler, Local, LoopContext, UpvalueCapture, UpvalueContext};
+use crate::diagnostic::error_codes::INTERNAL_ERROR;
 use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::value::Value;
@@ -70,11 +71,10 @@ impl Compiler {
 
         // Pop upvalue context — now we know all captured outer-scope variables
         let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
-            vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
-                "Internal error: missing upvalue context",
-                func.span,
-            )]
+            vec![INTERNAL_ERROR
+                .emit(func.span)
+                .arg("detail", "missing upvalue context")
+                .build()]
         })?;
         let upvalues = upvalue_ctx.captures;
 
@@ -488,11 +488,10 @@ impl Compiler {
 
         // Patch all break statements
         let loop_ctx = self.loops.pop().ok_or_else(|| {
-            vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
-                "Internal error: missing loop context",
-                while_stmt.span,
-            )]
+            vec![INTERNAL_ERROR
+                .emit(while_stmt.span)
+                .arg("detail", "missing loop context")
+                .build()]
         })?;
         for break_jump in loop_ctx.break_jumps {
             self.bytecode.patch_jump(break_jump);
@@ -628,11 +627,10 @@ impl Compiler {
         // ── Cleanup: patch exit_jump and all break_jumps here ─────────────────
         self.bytecode.patch_jump(exit_jump);
         let loop_ctx = self.loops.pop().ok_or_else(|| {
-            vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
-                "Internal error: missing loop context",
-                span,
-            )]
+            vec![INTERNAL_ERROR
+                .emit(span)
+                .arg("detail", "missing loop context")
+                .build()]
         })?;
         for break_jump in loop_ctx.break_jumps {
             self.bytecode.patch_jump(break_jump);

@@ -2,6 +2,7 @@
 //!
 //! The lexer converts Atlas source code into a stream of tokens with accurate span information.
 
+use crate::diagnostic::error_codes::UNTERMINATED_COMMENT;
 use crate::diagnostic::Diagnostic;
 use crate::span::{intern_file, register_source, FileId, Span};
 use crate::token::{Token, TokenKind};
@@ -390,15 +391,12 @@ impl Lexer {
                             let span = Span::new_in(self.start_pos, self.current, self.file);
                             let snippet = self.get_line_snippet(comment_start_line);
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT1004",
-                                    "Unterminated multi-line comment",
-                                    span,
-                                )
-                                .with_line(comment_start_line as usize)
-                                .with_snippet(snippet)
-                                .with_label("comment starts here")
-                                .with_help("add '*/' to close the multi-line comment"),
+                                UNTERMINATED_COMMENT
+                                    .emit(span)
+                                    .build()
+                                    .with_line(comment_start_line as usize)
+                                    .with_snippet(snippet)
+                                    .with_label("comment starts here"),
                             );
                         }
                     } else {

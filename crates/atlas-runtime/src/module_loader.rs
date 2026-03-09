@@ -5,6 +5,7 @@
 //! Type checking happens in BLOCKER 04-C.
 
 use crate::ast::{ImportDecl, Item, Program};
+use crate::diagnostic::error_codes::{CIRCULAR_DEPENDENCY, MODULE_NOT_FOUND};
 use crate::diagnostic::Diagnostic;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
@@ -145,15 +146,11 @@ impl ModuleLoader {
 
         // Check if currently being loaded (circular dependency)
         if self.loading.contains(&abs_path) {
-            return Err(vec![Diagnostic::error_with_code(
-                "AT5003",
-                "Circular dependency detected",
-                Span::dummy(),
-            )
-            .with_label(format!("module: {}", abs_path.display()))
-            .with_help(
-                "Refactor to remove circular dependencies between modules".to_string(),
-            )]);
+            return Err(vec![CIRCULAR_DEPENDENCY
+                .emit(Span::dummy())
+                .arg("cycle", abs_path.display().to_string())
+                .build()
+                .with_label(format!("module: {}", abs_path.display()))]);
         }
 
         // Mark as currently loading
@@ -204,13 +201,14 @@ impl ModuleLoader {
     fn load_and_parse(&self, path: &Path) -> Result<LoadedModule, Vec<Diagnostic>> {
         // Read file contents
         let source = fs::read_to_string(path).map_err(|e| {
-            vec![Diagnostic::error_with_code(
-                "AT5002",
-                format!("Failed to read module file: {}", e),
-                Span::dummy(),
-            )
-            .with_label(format!("path: {}", path.display()))
-            .with_help("ensure the file exists and you have read permissions")]
+            vec![MODULE_NOT_FOUND
+                .emit(Span::dummy())
+                .arg("path", path.display().to_string())
+                .with_help(format!(
+                    "file read error: {e} — ensure the file exists and you have read permissions"
+                ))
+                .build()
+                .with_label(format!("path: {}", path.display()))]
         })?;
 
         // Lex
@@ -323,12 +321,10 @@ impl ModuleLoader {
 
         // Check if all reachable nodes were processed (no cycles)
         if sorted.len() != reachable.len() {
-            return Err(vec![Diagnostic::error_with_code(
-                "AT5003",
-                "Circular dependency detected during topological sort",
-                Span::dummy(),
-            )
-            .with_help("refactor your modules to remove circular imports - modules cannot import each other in a cycle")]);
+            return Err(vec![CIRCULAR_DEPENDENCY
+                .emit(Span::dummy())
+                .arg("cycle", "detected during topological sort")
+                .build()]);
         }
 
         Ok(sorted)
