@@ -1819,6 +1819,12 @@ impl<'a> TypeChecker<'a> {
                     );
                 }
 
+                // H-177: assignment rebinds the variable — clear moved flag so it's usable again.
+                // x = f(own x) is the canonical pattern: value is moved in, returned, rebound.
+                if let AssignTarget::Name(id) = &assign.target {
+                    self.moved_vars.remove(&id.name);
+                }
+
                 // AT3055: share param cannot be assigned to (immutable from callee perspective)
                 if let AssignTarget::Name(id) = &assign.target {
                     let ownership = self
