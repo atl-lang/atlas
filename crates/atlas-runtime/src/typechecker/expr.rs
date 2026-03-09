@@ -241,22 +241,15 @@ impl<'a> TypeChecker<'a> {
                     let mut seen_fields: HashSet<String> = HashSet::new();
                     for field in &struct_expr.fields {
                         // AT3054: borrow param cannot escape into a struct field.
-                        // Exemption: primitives (number, bool, string) are always copied (D-040).
+                        // No exemption for primitives — explicit `borrow` annotation means
+                        // the value must not outlive the function scope.
                         if let Expr::Identifier(id) = &field.value {
                             let ownership = self
                                 .current_fn_param_ownerships
                                 .get(&id.name)
                                 .cloned()
                                 .flatten();
-                            let param_ty = self
-                                .symbol_table
-                                .lookup(&id.name)
-                                .map(|s| s.ty.normalized());
-                            let is_primitive = matches!(
-                                param_ty,
-                                Some(Type::Number) | Some(Type::Bool) | Some(Type::String)
-                            );
-                            if ownership == Some(OwnershipAnnotation::Borrow) && !is_primitive {
+                            if ownership == Some(OwnershipAnnotation::Borrow) {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
                                         error_codes::BORROW_ESCAPE,

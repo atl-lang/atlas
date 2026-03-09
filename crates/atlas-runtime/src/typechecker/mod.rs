@@ -2171,8 +2171,9 @@ impl<'a> TypeChecker<'a> {
                 }
 
                 // AT3054: borrow param cannot escape via return.
-                // Exemption: primitives (number, bool, string) are always copied —
-                // returning them is safe regardless of borrow annotation (D-040).
+                // No exemption for primitives — explicit `borrow` annotation means
+                // the caller's contract is "I will not keep this value", and that
+                // applies regardless of whether the type is a primitive or not.
                 if let Some(Expr::Identifier(id)) = &ret.value {
                     {
                         let ownership = self
@@ -2180,15 +2181,7 @@ impl<'a> TypeChecker<'a> {
                             .get(&id.name)
                             .cloned()
                             .flatten();
-                        let param_ty = self
-                            .symbol_table
-                            .lookup(&id.name)
-                            .map(|s| s.ty.normalized());
-                        let is_primitive = matches!(
-                            param_ty,
-                            Some(Type::Number) | Some(Type::Bool) | Some(Type::String)
-                        );
-                        if ownership == Some(OwnershipAnnotation::Borrow) && !is_primitive {
+                        if ownership == Some(OwnershipAnnotation::Borrow) {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
                                     error_codes::BORROW_ESCAPE,

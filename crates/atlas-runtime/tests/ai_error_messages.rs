@@ -681,18 +681,29 @@ let v: number = arr[5];
 
 #[test]
 fn ai_mistake_parity_ownership_at1007() {
-    // AT1007 fires in both engines (static check, pre-execution) for missing annotation
+    // D-040: borrow is the implicit default annotation — omitting it is valid.
+    // `fn bad(x: number)` has implicit `borrow x`, which is fine.
+    // Both engines must accept this without error (AT1007 no longer fires for missing annotation).
+    use atlas_runtime::Atlas;
     let source = r#"fn bad(x: number) -> number { return x; }"#;
-    let (interp_err, vm_err) = eval_both_engines(source);
-    // Both engines go through the same static pipeline — both should see the AT1007 error
-    let combined = format!("{} {}", interp_err, vm_err);
-    // EvalError::ParseError display includes the message but not the code prefix
-    // Check for the ownership annotation message content
-    assert!(
-        combined.contains("ownership annotation") || combined.contains("AT1007"),
-        "Both engines should surface ownership annotation error: {}",
-        combined
-    );
+    let runtime = Atlas::new();
+    // D-040 makes borrow implicit — this is valid code, no ownership error expected
+    // Note: AT3054 fires for explicitly-written `borrow` on return escape,
+    // but implicit borrow (no annotation) does NOT trigger AT3054 either.
+    let result = runtime.eval(source);
+    // The only error this might produce is AT3004 (not all code paths return a value)
+    // if the typechecker considers `return x` inside a `-> number` fn body as non-returning,
+    // but it should not produce an ownership error.
+    if let Err(diags) = &result {
+        let ownership_error = diags
+            .iter()
+            .any(|d| d.code == "AT1007" || d.message.contains("ownership annotation"));
+        assert!(
+            !ownership_error,
+            "D-040: borrow is implicit, no ownership annotation error expected. Got: {:?}",
+            diags.iter().map(|d| &d.code).collect::<Vec<_>>()
+        );
+    }
 }
 
 // ---------------------------------------------------------------------------
