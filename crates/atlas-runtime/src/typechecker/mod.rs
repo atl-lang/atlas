@@ -1280,22 +1280,91 @@ impl<'a> TypeChecker<'a> {
         let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
         let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
 
-        // Validate type exists as a known struct or primitive (report warning if not).
-        // We proceed regardless — unknown type name is caught by the struct-check phase.
+        // AT3056: type must be a known struct or primitive.
+        let is_known_type = self.struct_decls.contains_key(&type_name)
+            || type_to_impl_key(&impl_self_type).is_some();
+        if !is_known_type {
+            self.diagnostics.push(Diagnostic::error_with_code(
+                error_codes::INHERENT_IMPL_UNKNOWN_TYPE,
+                format!("Type '{}' is not declared in this scope", type_name),
+                impl_block.type_name.span,
+            ));
+            return;
+        }
+
+        // Track seen method names for AT3057 (duplicate method detection).
+        let mut seen_methods: std::collections::HashSet<String> = std::collections::HashSet::new();
 
         for method in &impl_block.methods {
-            // D-038: first param named 'self' must have an ownership annotation.
-            if let Some(self_param) = method.params.first() {
-                if self_param.name.name == "self" && self_param.ownership.is_none() {
+            // AT3057: duplicate method name in this inherent impl.
+            if !seen_methods.insert(method.name.name.clone()) {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    format!(
+                        "Duplicate method '{}' in inherent implementation of '{}'",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
+                continue;
+            }
+
+            // Also check if already registered from a previous inherent impl block.
+            if self
+                .inherent_registry
+                .contains_key(&(type_name.clone(), method.name.name.clone()))
+            {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    format!(
+                        "Method '{}' already defined for '{}' in a previous impl block",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
+                continue;
+            }
+
+            // AT3058: self receiver must be first parameter.
+            let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
+            if let Some(pos) = self_param_pos {
+                if pos != 0 {
+                    self.diagnostics.push(Diagnostic::error_with_code(
+                        error_codes::INHERENT_SELF_NOT_FIRST,
+                        format!(
+                            "Self receiver in method '{}' must be the first parameter",
+                            method.name.name
+                        ),
+                        method.params[pos].span,
+                    ));
+                }
+
+                // D-038: self must have an ownership annotation.
+                if method.params[0].name.name == "self" && method.params[0].ownership.is_none() {
                     self.diagnostics.push(Diagnostic::error_with_code(
                         error_codes::MISSING_OWNERSHIP_ANNOTATION,
                         format!(
-                            "Self receiver in inherent impl method '{}' requires an ownership annotation (borrow self, own self, or share self)",
+                            "Self receiver in method '{}' requires an ownership annotation (borrow self, own self, or share self)",
                             method.name.name
                         ),
-                        self_param.span,
+                        method.params[0].span,
                     ));
                 }
+            }
+
+            // AW3059: warn if an inherent method shadows a trait method of the same name.
+            let shadows_trait = self.impl_registry.entries.iter().any(|((t, _), entry)| {
+                t == &type_name && entry.methods.contains_key(&method.name.name)
+            });
+            if shadows_trait {
+                self.diagnostics.push(Diagnostic::warning_with_code(
+                    error_codes::INHERENT_SHADOWS_TRAIT_METHOD,
+                    format!(
+                        "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
             }
 
             // Register into inherent_registry keyed by (type_name, method_name).
