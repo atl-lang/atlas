@@ -1061,11 +1061,13 @@ impl Parser {
         }
     }
 
-    /// Consume token of given kind or error
+    /// Consume token of given kind or error.
+    /// Automatically appends `, found \`<token>\`` to the message (D-043).
     pub(super) fn consume(&mut self, kind: TokenKind, message: &str) -> Result<&Token, ()> {
         if self.check(kind) {
             Ok(self.advance())
         } else {
+            let found = self.peek().kind;
             let code = match kind {
                 TokenKind::Semicolon => E_MISSING_SEMI,
                 TokenKind::RightBrace | TokenKind::RightBracket | TokenKind::RightParen => {
@@ -1073,7 +1075,8 @@ impl Parser {
                 }
                 _ => E_UNEXPECTED,
             };
-            self.error_with_code(code, message);
+            let full_message = format!("{}, found `{}`", message, found.as_str());
+            self.error_with_code(code, &full_message);
             Err(())
         }
     }
@@ -1084,9 +1087,12 @@ impl Parser {
         self.is_at_end_raw()
     }
 
-    /// Record an error
+    /// Record an error at the current token position.
+    /// Automatically appends `, found \`<token>\`` to the message (D-043).
     pub(super) fn error(&mut self, message: &str) {
-        self.error_with_code(E_GENERIC, message);
+        let found = self.peek().kind;
+        let full_message = format!("{}, found `{}`", message, found.as_str());
+        self.error_with_code(E_GENERIC, &full_message);
     }
 
     /// Record an error at a specific span using the generic error code.
@@ -1245,7 +1251,7 @@ impl Parser {
         } else {
             self.error_with_code(
                 E_UNEXPECTED,
-                &format!("Expected {} but found {:?}", context, current.kind),
+                &format!("Expected {}, found `{}`", context, current.kind.as_str()),
             );
             Err(())
         }

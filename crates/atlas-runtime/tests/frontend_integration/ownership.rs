@@ -106,21 +106,32 @@ fn test_parse_shared_param() {
 }
 
 #[test]
-fn test_parse_unannotated_param_is_error() {
-    // Since B11-P02 (D-034), unannotated params are a parse error (AT1007).
-    let src = "fn f(borrow x: number) -> number { return x; }";
+fn test_parse_unannotated_param_defaults_to_borrow() {
+    // D-040 (supersedes D-034): unannotated params default to borrow — NOT a parse error.
+    // `fn f(x: number)` is valid; the parser sets ownership = Some(Borrow) implicitly.
+    let src = "fn f(x: number) -> number { return x; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
-    let (_, diags) = parser.parse();
+    let (program, diags) = parser.parse();
     let errors: Vec<_> = diags
         .iter()
-        .filter(|d| d.level == DiagnosticLevel::Error && d.code == "AT1007")
+        .filter(|d| d.level == DiagnosticLevel::Error)
         .collect();
     assert!(
-        !errors.is_empty(),
-        "expected AT1007 error for unannotated param, got: {diags:?}"
+        errors.is_empty(),
+        "unannotated param should parse cleanly per D-040, got errors: {errors:?}"
     );
+    // Verify the param got the implicit borrow annotation
+    if let Some(atlas_runtime::ast::Item::Function(f)) = program.items.first() {
+        assert_eq!(
+            f.params[0].ownership,
+            Some(OwnershipAnnotation::Borrow),
+            "unannotated param should default to borrow per D-040"
+        );
+    } else {
+        panic!("expected function item");
+    }
 }
 
 #[test]
