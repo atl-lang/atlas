@@ -90,6 +90,74 @@ async fn test_feature() {
 
 Add LSP tests to existing files in `crates/atlas-lsp/tests/`. Creating new LSP test files is allowed (different from runtime — no binary bloat issue).
 
+## Snapshot Tests (insta) — Strict Protocol
+
+Snapshots live exclusively in `tests/**/snapshots/`. They are test assertions — not noise to clear.
+
+### When you MAY accept a snapshot change
+
+A changed snapshot is only valid if it was caused by an **intentional, correct improvement**:
+
+| Valid reason to accept | Example |
+|------------------------|---------|
+| New feature added output | Added tuple Display — snapshot gains `(1, 2)` |
+| Bug fix corrected wrong output | Fixed wrong type name — snapshot changes `"int"` → `"number"` |
+| Error message made more specific | B14 improvement — snapshot gains `found \`[\` (LeftBracket)` |
+| Syntax changed by decision | D-041 array prefix — snapshot changes `T[]` → `[]T` |
+
+### When you MUST REJECT a snapshot change (regression)
+
+**BLOCKING — do not accept, fix the code instead:**
+
+| Banned reason | Example |
+|---------------|---------|
+| Cascade error regression | Snapshot gains 3 extra secondary errors |
+| Help text became less specific | `"add closing quote"` → `"check your syntax"` |
+| Output became empty or shorter | Snapshot loses expected output lines |
+| Format changed without a decision | Span format changed with no D-XXX backing it |
+| Wrong feature accepted to make CI green | Snapshot accepted to unblock a commit, not because it's correct |
+
+### The Review Process — MANDATORY before accepting
+
+```bash
+# 1. See what changed — READ the diff before doing anything
+cargo nextest run -p atlas-runtime -E 'test(failing_test)' 2>&1
+# insta prints the diff to terminal — read every line
+
+# 2. Decide: is this change correct?
+#    YES (intentional improvement) → accept it
+#    NO (regression) → fix the code, do NOT accept
+
+# 3. If correct — accept only the specific snapshot, not all:
+cargo insta review                    # interactive — review each one
+# OR for a specific test:
+cargo insta accept --test-name test_exact_name
+
+# BANNED — bulk accepts without review:
+cargo insta accept                    # ❌ accepts everything blindly
+INSTA_UPDATE=always cargo nextest ... # ❌ auto-accepts all changes
+cargo insta accept --all              # ❌ never
+```
+
+### Snapshot files are committed as source
+
+`.snap` files are committed to git — they are the ground truth.
+A changed `.snap` file in a commit means the behavior changed.
+The commit message must explain WHY (which decision, which fix).
+
+```bash
+# Good commit message for snapshot changes:
+git commit -m "fix(parser): H-178 — correct error cascade, update snapshots"
+# NOT:
+git commit -m "chore: accept snapshots"  # ❌ tells nobody what changed or why
+```
+
+### Post-B14: Error quality snapshots are BLOCKING regressions
+
+After B14 ships, `tests/diagnostics/error_quality.rs` contains locked snapshots
+for error output quality. These are the permanent regression gate for D-043.
+A changed error quality snapshot requires explicit architect approval — not just review.
+
 ## Run Commands
 
 ```bash
