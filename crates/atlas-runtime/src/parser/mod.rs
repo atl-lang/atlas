@@ -810,53 +810,72 @@ impl Parser {
     fn parse_impl_block(&mut self) -> Result<ImplBlock, ()> {
         let start_span = self.consume(TokenKind::Impl, "Expected 'impl'")?.span;
 
-        let trait_name_tok = self.consume_identifier("a trait name")?;
-        let trait_name = Identifier {
-            name: trait_name_tok.lexeme.clone(),
-            span: trait_name_tok.span,
+        // Parse the first identifier — could be trait name (trait impl) or type name (inherent).
+        let first_name_tok = self.consume_identifier("a type or trait name")?;
+        let first_name = Identifier {
+            name: first_name_tok.lexeme.clone(),
+            span: first_name_tok.span,
         };
 
-        // Optional type args: `impl Functor<number> for MyType`
-        let trait_type_args = if self.check(TokenKind::Less) {
+        // Optional type args on the first name: `impl Functor<number> for MyType`
+        let first_type_args = if self.check(TokenKind::Less) {
             self.parse_type_arg_list()?
         } else {
             vec![]
         };
 
-        self.consume(
-            TokenKind::For,
-            "Expected 'for' after trait name in impl block",
-        )?;
+        if self.check(TokenKind::For) {
+            // Trait impl: `impl TraitName[<Args>] for TypeName { ... }`
+            self.advance(); // consume `for`
+            let type_name_tok = self.consume_identifier("a type name after 'for'")?;
+            let type_name = Identifier {
+                name: type_name_tok.lexeme.clone(),
+                span: type_name_tok.span,
+            };
 
-        let type_name_tok = self.consume_identifier("a type name")?;
-        let type_name = Identifier {
-            name: type_name_tok.lexeme.clone(),
-            span: type_name_tok.span,
-        };
+            self.consume(
+                TokenKind::LeftBrace,
+                "Expected '{' after type name in impl block",
+            )?;
+            let self_type = TypeRef::Named(type_name.name.clone(), type_name.span);
+            let mut methods = Vec::new();
+            while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+                methods.push(self.parse_impl_method(&self_type)?);
+            }
+            let end_span = self
+                .consume(TokenKind::RightBrace, "Expected '}' after impl body")?
+                .span;
 
-        self.consume(
-            TokenKind::LeftBrace,
-            "Expected '{' after type name in impl block",
-        )?;
+            Ok(ImplBlock {
+                trait_name: Some(first_name),
+                trait_type_args: first_type_args,
+                type_name,
+                methods,
+                span: start_span.merge(end_span),
+            })
+        } else {
+            // Inherent impl: `impl TypeName { ... }`
+            self.consume(
+                TokenKind::LeftBrace,
+                "Expected '{' after type name in impl block",
+            )?;
+            let self_type = TypeRef::Named(first_name.name.clone(), first_name.span);
+            let mut methods = Vec::new();
+            while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
+                methods.push(self.parse_impl_method(&self_type)?);
+            }
+            let end_span = self
+                .consume(TokenKind::RightBrace, "Expected '}' after impl body")?
+                .span;
 
-        let self_type = TypeRef::Named(type_name.name.clone(), type_name.span);
-
-        let mut methods = Vec::new();
-        while !self.check(TokenKind::RightBrace) && !self.is_at_end() {
-            methods.push(self.parse_impl_method(&self_type)?);
+            Ok(ImplBlock {
+                trait_name: None,
+                trait_type_args: vec![],
+                type_name: first_name,
+                methods,
+                span: start_span.merge(end_span),
+            })
         }
-
-        let end_span = self
-            .consume(TokenKind::RightBrace, "Expected '}' after impl body")?
-            .span;
-
-        Ok(ImplBlock {
-            trait_name: Some(trait_name),
-            trait_type_args,
-            type_name,
-            methods,
-            span: start_span.merge(end_span),
-        })
     }
 
     /// Parse a method implementation inside an impl block.

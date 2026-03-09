@@ -302,3 +302,113 @@ fn test_parse_impl_method_three_bounds() {
 // NOTE: test block removed — required access to private function `len`
 
 // NOTE: test block removed — required access to private function `lookup`
+
+// ─── B13: Inherent impl parser tests ─────────────────────────────────────────
+
+#[test]
+fn test_parse_inherent_impl_basic() {
+    let src = "
+        struct Point { x: number, y: number }
+        impl Point {
+            fn magnitude(borrow self: Point) -> number {
+                return 0.0;
+            }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 2);
+    if let Item::Impl(ib) = &prog.items[1] {
+        assert!(ib.is_inherent(), "expected inherent impl");
+        assert!(ib.trait_name.is_none());
+        assert_eq!(ib.type_name.name, "Point");
+        assert_eq!(ib.methods.len(), 1);
+        assert_eq!(ib.methods[0].name.name, "magnitude");
+    } else {
+        panic!("expected Item::Impl");
+    }
+}
+
+#[test]
+fn test_parse_inherent_impl_multiple_methods() {
+    let src = "
+        struct Counter { value: number }
+        impl Counter {
+            fn increment(borrow self: Counter) -> number { return 0; }
+            fn reset(borrow self: Counter) -> void { }
+            fn get(borrow self: Counter) -> number { return 0; }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Impl(ib) = &prog.items[1] {
+        assert!(ib.is_inherent());
+        assert_eq!(ib.methods.len(), 3);
+    } else {
+        panic!("expected Item::Impl");
+    }
+}
+
+#[test]
+fn test_parse_inherent_impl_empty_body() {
+    let src = "
+        struct Tag {}
+        impl Tag {
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Impl(ib) = &prog.items[1] {
+        assert!(ib.is_inherent());
+        assert!(ib.methods.is_empty());
+    } else {
+        panic!("expected Item::Impl");
+    }
+}
+
+#[test]
+fn test_parse_trait_impl_still_works_after_inherent_support() {
+    // Regression: trait impl must still parse correctly alongside inherent.
+    let src = "
+        trait Greet { fn greet(borrow self: Greet) -> string; }
+        struct Person { name: string }
+        impl Greet for Person {
+            fn greet(borrow self: Person) -> string { return \"hi\"; }
+        }
+        impl Person {
+            fn shout(borrow self: Person) -> string { return \"HI\"; }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    assert_eq!(prog.items.len(), 4);
+    if let Item::Impl(trait_impl) = &prog.items[2] {
+        assert!(!trait_impl.is_inherent());
+        assert_eq!(trait_impl.trait_name.as_ref().unwrap().name, "Greet");
+    } else {
+        panic!("expected trait impl at index 2");
+    }
+    if let Item::Impl(inherent_impl) = &prog.items[3] {
+        assert!(inherent_impl.is_inherent());
+        assert_eq!(inherent_impl.type_name.name, "Person");
+    } else {
+        panic!("expected inherent impl at index 3");
+    }
+}
+
+#[test]
+fn test_parse_inherent_impl_mangle_names() {
+    let src = "
+        struct Vec2 { x: number, y: number }
+        impl Vec2 {
+            fn length(borrow self: Vec2) -> number { return 0.0; }
+        }
+    ";
+    let (prog, diags) = parse_source(src);
+    assert!(diags.is_empty(), "unexpected diags: {diags:?}");
+    if let Item::Impl(ib) = &prog.items[1] {
+        assert_eq!(ib.mangle_method_name("length"), "__impl__Vec2__length");
+    } else {
+        panic!("expected Item::Impl");
+    }
+}
