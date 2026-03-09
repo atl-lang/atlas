@@ -164,7 +164,8 @@ These load automatically based on which files you're editing:
 - `atlas-language-ref.md` — Atlas syntax quick reference (on `.atlas`/`.atl` files)
 - `atlas-context-guard.md` — Context window management protocol (on `.rs` files)
 - `atlas-cross-platform.md` — Cross-platform testing rules (on test/source files)
-- `atlas-parity.md` — Interpreter/VM parity contract (on interpreter/VM/compiler files)
+- `atlas-parity.md` — **THREE parity contracts** (interpreter/VM/compiler/typechecker/parser files) — covers execution parity, typechecker/runtime parity, AND parser/typechecker sync — BLOCKING
+- `atlas-fullstack.md` — **Full-stack feature completeness** (stdlib/parser/typechecker/method_dispatch files) — checklists for stdlib functions, namespaces, syntax features — BLOCKING
 - `atlas-diagnostics.md` — **Error quality contract D-043** (on diagnostic.rs, error_codes.rs, parser files) — BLOCKING standards, auto-enforced
 - `atlas-testing.md` — Test organization rules (on test files)
 - `atlas-ast.md`, `atlas-typechecker.md`, `atlas-interpreter.md`, `atlas-vm.md`, `atlas-syntax.md`

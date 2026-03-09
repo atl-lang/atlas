@@ -3,21 +3,48 @@ paths:
   - "crates/atlas-runtime/src/interpreter/**"
   - "crates/atlas-runtime/src/vm/**"
   - "crates/atlas-runtime/src/compiler/**"
+  - "crates/atlas-runtime/src/typechecker/**"
+  - "crates/atlas-runtime/src/parser/**"
 ---
 
 # Atlas Parity Rules
 
-Auto-loaded when touching interpreter, VM, or compiler files.
+Auto-loaded when touching interpreter, VM, compiler, typechecker, or parser files.
 
-## Parity is Sacred — BLOCKING
+## THREE Parity Contracts — All BLOCKING
 
+### 1. Execution Parity (interpreter ↔ VM) — Original contract
 Every behavior change must produce **identical output** in both execution engines:
 - Interpreter: `crates/atlas-runtime/src/interpreter/`
 - VM (bytecode): `crates/atlas-runtime/src/vm/` + `crates/atlas-runtime/src/compiler/`
 
-**Parity break = BLOCKING. Never ship a phase with parity divergence.**
-
 If you touch one engine, you touch both. No exceptions.
+
+### 2. Typechecker/Runtime Parity — NEW — equally binding
+
+The typechecker's knowledge of every stdlib function return type MUST match what the
+runtime actually returns. This is the most commonly violated parity rule.
+
+**Rule:** If the runtime returns `Result<T, E>`, the typechecker must declare `Result<T, E>`.
+If the runtime always returns a plain value, the typechecker must declare that value type.
+`Type::Unknown` as a stdlib return type = a typechecker bug = P1 issue.
+
+**Where to enforce:** `typechecker/expr.rs` → `resolve_namespace_return_type()`
+
+When adding ANY stdlib function: update this function in the same commit.
+When adding ANY stdlib function: verify the runtime return type matches the declared type.
+
+### 3. Parser/Typechecker/Runtime Parity — NEW — equally binding
+
+If a grammar rule exists in `docs/language/grammar.md`, it MUST be:
+1. Implemented in the parser → produces an AST node
+2. Handled in the typechecker → knows the type of that node
+3. Evaluated in the interpreter → runs correctly
+4. Compiled + executed in the VM → runs correctly with identical output
+
+A grammar rule that exists in docs but not in the parser = P1 bug, file immediately.
+A parser rule not handled in the typechecker = P1 bug, file immediately.
+**"I'll add the typechecker later" = parity break = unacceptable.**
 
 ## Verifying Parity
 
