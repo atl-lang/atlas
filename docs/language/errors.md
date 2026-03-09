@@ -55,7 +55,7 @@ When source is unavailable (e.g. generated code, runtime-only errors), lines 3�
 | AT0102–AT0103, AT0140 | Stdlib errors |
 | AT0300–AT0303 | Permission errors |
 | AT0400 | I/O errors |
-| AT1000–AT1019 | Parser / syntax errors |
+| AT1000–AT1022 | Parser / syntax errors |
 | AT2001–AT2014 | Warnings (unused, shadowing, deprecated) |
 | AT3001–AT3055 | Typechecker / semantic errors |
 | AT4001–AT4010 | Async/Await errors |
@@ -313,6 +313,39 @@ len("hi") = 5;         // ✗ AT1019
 x = 5;                 // ✓
 arr[i] = 5.0;          // ✓
 obj.field = 5.0;       // ✓
+```
+
+### AT1020 — Missing Semicolon
+A statement requires a terminating semicolon.
+
+```atlas
+let x = 5              // ✗ AT1020 — missing `;`
+let x = 5;             // ✓
+print("hello")         // ✗ AT1020
+print("hello");        // ✓
+```
+
+### AT1021 — Missing Closing Delimiter
+A block, list, or expression is missing its closing delimiter (`}`, `]`, or `)`).
+
+```atlas
+if x > 0 {
+    print("positive")  // ✗ AT1021 — missing closing `}`
+
+if x > 0 {
+    print("positive")
+}                      // ✓
+```
+
+### AT1022 — Reserved Keyword Used as Identifier
+A reserved keyword cannot be used as an identifier.
+
+```atlas
+let fn = 5.0;         // ✗ AT1022 — fn is reserved
+let func = 5.0;       // ✓
+
+struct import { }      // ✗ AT1022 — import is reserved
+struct Container { }   // ✓
 ```
 
 ---
