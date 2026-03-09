@@ -1,4 +1,5 @@
 use super::common::*;
+use atlas_runtime::Atlas;
 
 // ============================================================================
 // B9: Template string interpolation — ${ } syntax
@@ -111,4 +112,37 @@ fn test_b9_implicit_return_explicit_still_works() {
         my_abs(-3) + my_abs(4)
     "#;
     assert_eval_number(code, 7.0);
+}
+
+// ============================================================================
+// H-193: Error pipeline collects diagnostics across all phases
+// ============================================================================
+
+#[test]
+fn test_h193_error_pipeline_collects_all_phase_errors() {
+    // Bug H-193: eval_source returned early on binder errors, so typecheck
+    // never ran. A file with errors in both phases must report ALL of them.
+    //
+    // AT2003 = duplicate function (binder)
+    // AT3001 = type annotation mismatch (typechecker)
+    let code = r#"
+        fn greet() -> number { 1; }
+        fn greet() -> number { 2; }
+        let x: number = "hello";
+    "#;
+    let runtime = Atlas::new();
+    let diags = runtime
+        .eval(code)
+        .expect_err("expected errors from both phases");
+    let codes: Vec<&str> = diags.iter().map(|d| d.code.as_str()).collect();
+    assert!(
+        codes.iter().any(|c| *c == "AT2003"),
+        "Expected AT2003 (duplicate function) in diagnostics, got: {:?}",
+        codes
+    );
+    assert!(
+        codes.iter().any(|c| *c == "AT3001"),
+        "Expected AT3001 (type mismatch) in diagnostics, got: {:?}",
+        codes
+    );
 }

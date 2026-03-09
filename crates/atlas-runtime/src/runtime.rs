@@ -157,27 +157,27 @@ impl Atlas {
         // Bind symbols
         let mut binder = Binder::new();
         let (mut symbol_table, bind_diagnostics) = binder.bind(&ast);
+        let bind_has_errors = bind_diagnostics.iter().any(|d| d.is_error());
 
-        if !bind_diagnostics.is_empty() {
-            return Err(bind_diagnostics);
-        }
-
-        // Type check
+        // Type check — always run even when bind produced errors, so all phase
+        // diagnostics are collected together (H-193: stops at first failing phase).
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&ast);
+        let type_has_errors = type_diagnostics.iter().any(|d| d.is_error());
 
-        // Only fail on errors, not warnings
-        let has_errors = type_diagnostics.iter().any(|d| d.is_error());
-        if has_errors {
-            // Return ALL diagnostics (errors + warnings together) so the CLI
-            // can emit them in one pass via the proper formatter (H-196).
-            return Err(type_diagnostics);
+        if bind_has_errors || type_has_errors {
+            // Return all diagnostics from both phases together so the user sees
+            // every error in one pass (H-193).
+            let mut all = bind_diagnostics;
+            all.extend(type_diagnostics);
+            return Err(all);
         }
 
-        // Typecheck warnings: emit through the proper formatter, not raw eprintln!
-        let typecheck_warnings: Vec<Diagnostic> = type_diagnostics
+        // No errors in either phase — emit bind + typecheck warnings
+        let typecheck_warnings: Vec<Diagnostic> = bind_diagnostics
             .into_iter()
             .filter(|d| d.is_warning())
+            .chain(type_diagnostics.into_iter().filter(|d| d.is_warning()))
             .collect();
 
         // Interpret the AST
