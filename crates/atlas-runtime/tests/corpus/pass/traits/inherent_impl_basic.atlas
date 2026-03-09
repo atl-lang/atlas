@@ -1,0 +1,14 @@
+struct Point { x: number, y: number }
+
+impl Point {
+    fn magnitude(borrow self: Point) -> number {
+        return self.x * self.x + self.y * self.y;
+    }
+    fn to_string(borrow self: Point) -> string {
+        return `(${self.x}, ${self.y})`;
+    }
+}
+
+let p = Point { x: 3, y: 4 };
+print(p.magnitude());
+print(p.to_string());
