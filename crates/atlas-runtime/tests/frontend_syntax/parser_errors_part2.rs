@@ -101,5 +101,48 @@ fn test_cascade_suppression_two_independent_errors() {
 }
 
 // ============================================================================
+// Context-Aware Help Text Tests (B14-P03 — D-043)
+// ============================================================================
+
+/// Missing `}` should produce help text about closing a block/struct literal,
+/// NOT the old registry string about string escapes (the AT1003 code clash bug).
+#[test]
+fn test_help_text_missing_brace_is_context_specific() {
+    let diagnostics = parse_errors("fn foo() -> number { return 1;");
+    assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
+    let help = diagnostics[0].help.as_deref().unwrap_or("");
+    assert!(
+        help.contains("close") || help.contains("`}`"),
+        "Expected context-specific brace-closing help, got: {:?}",
+        help
+    );
+    // Verify the old wrong registry help (string escapes) is NOT attached
+    assert!(
+        !help.contains("escape") && !help.contains("\\n"),
+        "Got incorrect string-escape help on a missing-brace error: {:?}",
+        help
+    );
+}
+
+/// Missing semicolon help should say to add `;`, not a generic message.
+#[test]
+fn test_help_text_missing_semi_is_context_specific() {
+    let diagnostics = parse_errors("let x = 1 let y = 2;");
+    assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
+    let help = diagnostics[0].help.as_deref().unwrap_or("");
+    assert!(
+        help.contains(";") || help.contains("semicolon") || help.contains("statement"),
+        "Expected context-specific semicolon help, got: {:?}",
+        help
+    );
+    // Verify old wrong registry help (block comment) is NOT attached
+    assert!(
+        !help.contains("*/") && !help.contains("comment"),
+        "Got incorrect block-comment help on a missing-semicolon error: {:?}",
+        help
+    );
+}
+
+// ============================================================================
 // Operator Precedence Tests (from operator_precedence_tests.rs)
 // ============================================================================

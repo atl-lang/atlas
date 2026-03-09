@@ -1061,22 +1061,36 @@ impl Parser {
         }
     }
 
-    /// Consume token of given kind or error.
-    /// Automatically appends `, found \`<token>\`` to the message (D-043).
+    /// Consume token of given kind or error with context-specific help (D-043).
+    /// Automatically appends `, found \`<token>\`` to the message.
+    /// Help text is derived from the expected token kind — never from a generic registry lookup.
     pub(super) fn consume(&mut self, kind: TokenKind, message: &str) -> Result<&Token, ()> {
         if self.check(kind) {
             Ok(self.advance())
         } else {
             let found = self.peek().kind;
-            let code = match kind {
-                TokenKind::Semicolon => E_MISSING_SEMI,
-                TokenKind::RightBrace | TokenKind::RightBracket | TokenKind::RightParen => {
-                    E_MISSING_BRACE
-                }
-                _ => E_UNEXPECTED,
+            let span = self.peek().span;
+            let (code, help) = match kind {
+                TokenKind::Semicolon => (E_MISSING_SEMI, "Add `;` at the end of the statement."),
+                TokenKind::RightBrace => (
+                    E_MISSING_BRACE,
+                    "Add `}` to close the block or struct literal.",
+                ),
+                TokenKind::RightBracket => (
+                    E_MISSING_BRACE,
+                    "Add `]` to close the array literal or index expression.",
+                ),
+                TokenKind::RightParen => (
+                    E_MISSING_BRACE,
+                    "Add `)` to close the function call or grouped expression.",
+                ),
+                _ => (
+                    E_UNEXPECTED,
+                    "Check for missing punctuation or a typo in the token.",
+                ),
             };
             let full_message = format!("{}, found `{}`", message, found.as_str());
-            self.error_with_code(code, &full_message);
+            self.error_at_with_code_and_help(code, &full_message, span, help);
             Err(())
         }
     }
@@ -1107,17 +1121,34 @@ impl Parser {
         self.error_at_with_code(code, message, span);
     }
 
-    /// Record an error at a specific span with an explicit code.
-    /// Attaches help text from the error code registry if available, falling back to generic advice.
+    /// Record an error at a specific span with an explicit code and NO help text.
+    /// Help text must be provided explicitly at the call site via `error_with_dynamic_help`
+    /// or via `consume()` (which provides token-specific help). Per D-043, help is never
+    /// auto-fetched from the registry — the registry is for `atlas explain` only.
     /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
     pub(super) fn error_at_with_code(&mut self, code: &'static str, message: &str, span: Span) {
         if self.in_panic_mode {
             return;
         }
         self.in_panic_mode = true;
-        use crate::diagnostic::error_codes;
-        let help =
-            error_codes::help_for(code).unwrap_or("check your syntax for typos or missing tokens");
+        self.diagnostics
+            .push(Diagnostic::error_with_code(code, message, span).with_label("syntax error"));
+    }
+
+    /// Record an error at a specific span with an explicit code and explicit help text.
+    /// Use this at sites where the correct help is known at the call location.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
+    pub(super) fn error_at_with_code_and_help(
+        &mut self,
+        code: &'static str,
+        message: &str,
+        span: Span,
+        help: impl Into<String>,
+    ) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
         self.diagnostics.push(
             Diagnostic::error_with_code(code, message, span)
                 .with_label("syntax error")
@@ -1225,30 +1256,32 @@ impl Parser {
 
         // Check if it's a reserved keyword
         if Self::is_reserved_keyword(current.kind) {
-            let keyword_name = current.lexeme;
-
+            let keyword_name = current.lexeme.clone();
+            let span = current.span;
             // Special message for import/match (reserved for future)
             if current.kind == TokenKind::Import || current.kind == TokenKind::Match {
-                self.error_with_code(
+                self.error_at_with_code_and_help(
                     E_RESERVED,
                     &format!(
-                    "Cannot use reserved keyword '{}' as {}. This keyword is reserved for future use",
-                    keyword_name, context
-                ),
-                );
-            } else {
-                self.error_with_code(
-                    E_RESERVED,
-                    &format!(
-                        "Cannot use reserved keyword '{}' as {}",
+                        "Cannot use reserved keyword `{}` as {}; this keyword is reserved for future use",
                         keyword_name, context
                     ),
+                    span,
+                    format!("Rename the identifier to avoid clashing with the reserved keyword `{keyword_name}`."),
+                );
+            } else {
+                self.error_at_with_code_and_help(
+                    E_RESERVED,
+                    &format!("Cannot use reserved keyword `{}` as {}", keyword_name, context),
+                    span,
+                    format!("Rename the identifier — `{keyword_name}` is a built-in Atlas keyword and cannot be used as a name."),
                 );
             }
             Err(())
         } else if current.kind == TokenKind::Identifier {
             Ok(self.advance())
         } else {
+            // Not an identifier and not a keyword — emit with no help (no relevant generic advice)
             self.error_with_code(
                 E_UNEXPECTED,
                 &format!("Expected {}, found `{}`", context, current.kind.as_str()),
