@@ -965,7 +965,11 @@ impl<'a> TypeChecker<'a> {
                             format!("Unknown generic type '{}'", name),
                             *span,
                         )
-                        .with_label("unknown type"),
+                        .with_label("unknown type")
+                        .with_help(format!(
+                            "check the spelling of `{name}` or import the type if it is defined elsewhere"
+                        ))
+                        .with_note("generic type parameters must be declared on the enclosing function or struct"),
                     );
                     return Type::Unknown;
                 }
@@ -3000,8 +3004,16 @@ impl<'a> TypeChecker<'a> {
                 } else {
                     // Unknown generic type
                     self.diagnostics.push(
-                        Diagnostic::error(format!("Unknown generic type '{}'", name), *span)
-                            .with_label("unknown type"),
+                        Diagnostic::error_with_code(
+                            "AT3001",
+                            format!("Unknown generic type '{}'", name),
+                            *span,
+                        )
+                        .with_label("unknown type")
+                        .with_help(format!(
+                            "check the spelling of `{name}` or import the type if it is defined elsewhere"
+                        ))
+                        .with_note("generic type parameters must be declared on the enclosing function or struct"),
                     );
                     return Type::Unknown;
                 }
@@ -3197,7 +3209,11 @@ impl<'a> TypeChecker<'a> {
                             format!("Unknown generic type '{}'", name),
                             *span,
                         )
-                        .with_label("unknown type"),
+                        .with_label("unknown type")
+                        .with_help(format!(
+                            "check the spelling of `{name}` or import the type if it is defined elsewhere"
+                        ))
+                        .with_note("generic type parameters must be declared on the enclosing function or struct"),
                     );
                     return Type::Unknown;
                 }

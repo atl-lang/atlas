@@ -1669,6 +1669,11 @@ impl<'a> TypeChecker<'a> {
                     "type '{}' does not support method '{}'",
                     required.ty.display_name(),
                     method_name
+                ))
+                .with_note(format!(
+                    "trait constraint `{}` requires this method — check that the correct trait is implemented for `{}`",
+                    method_name,
+                    required.ty.display_name()
                 )),
             );
             return Some(Type::Unknown);
@@ -2023,7 +2028,11 @@ impl<'a> TypeChecker<'a> {
                             ),
                             member.member.span,
                         )
-                        .with_label("method not found"),
+                        .with_label("method not found")
+                        .with_help(format!(
+                            "trait `{trait_name}` does not define a method `{method_name}` — check the trait definition for the correct method name"
+                        ))
+                        .with_note("if you intended to call an inherent method, remove the trait annotation from the `impl` block"),
                     );
                     return Type::Unknown;
                 }
