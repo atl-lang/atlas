@@ -26,6 +26,7 @@ note: named functions require explicit return types — closures may omit them
 | 3 | `{line_number}: {source_snippet}` | The offending source line. |
 | 4 | `{indent}^^^^ {label}` | Carets point at the first bad token. Label names the error category. |
 | 5+ | `help: {text}` | **Actionable fix** — what to write or change. May repeat for multiple distinct fixes. |
+| 5+ | `help: did you mean \`X\`?` + diff | **Code-diff suggestion** (H-195) — when Atlas knows exactly what token to replace, it renders a Rust-style `-old / +new` diff immediately after the `help:` line. |
 | last | `note: {text}` | **Context/explanation** — why the rule exists or what the rule is. Not a repetition of help. |
 
 Secondary (cascade) diagnostics render as:
