@@ -68,7 +68,8 @@ Verify:
 
 Files in `.claude/rules/`:
 - `atlas-architecture.md` — file size limits, subagent policy
-- `atlas-testing.md` — test domain table
+- `atlas-diagnostics.md` — error quality contract (D-043: cascade, expected/found, help text, secondary errors, AT codes, spans)
+- `atlas-testing.md` — test domain table, snapshot protocol (no bulk accept)
 - `atlas-parity.md` — parity contract
 - `atlas-git.md` — branch/push policy
 - `atlas-ci.md` — CI job names and structure
