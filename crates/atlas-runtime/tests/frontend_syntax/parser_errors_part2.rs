@@ -209,5 +209,46 @@ fn test_primary_diagnostic_renders_with_level_prefix() {
 }
 
 // ============================================================================
+// H-200: AT1004 TypeName[] — specific help + diff + note
+// ============================================================================
+
+/// AT1004 on `TypeName[]` in type position emits "prefix syntax" in the message.
+#[test]
+fn test_issue_h200_typename_postfix_brackets_emits_prefix_syntax_help() {
+    let source = "fn foo(x: Person[]) -> number { return 0; }";
+    let diagnostics = parse_errors(source);
+    assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
+    let diag = diagnostics
+        .iter()
+        .find(|d| d.code == "AT1004")
+        .expect("Expected AT1004");
+    // message must mention prefix syntax
+    assert!(
+        diag.message.to_lowercase().contains("prefix"),
+        "AT1004 message should mention 'prefix', got: {:?}",
+        diag.message
+    );
+    // help must suggest []Person
+    let help_text = diag.help.join(" ");
+    let suggestion_text = diag
+        .suggestions
+        .iter()
+        .map(|s| format!("{} {}", s.description, s.new_line))
+        .collect::<Vec<_>>()
+        .join(" ");
+    assert!(
+        help_text.contains("[]Person") || suggestion_text.contains("[]Person"),
+        "Expected help or suggestion to contain '[]Person', help={:?}, suggestions={:?}",
+        help_text,
+        suggestion_text
+    );
+    // note must explain the rule
+    assert!(
+        !diag.notes.is_empty(),
+        "Expected at least one note explaining the rule, got none"
+    );
+}
+
+// ============================================================================
 // Operator Precedence Tests (from operator_precedence_tests.rs)
 // ============================================================================
