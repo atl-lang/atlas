@@ -15,6 +15,36 @@ use std::cell::RefCell;
 /// Result type for runtime operations
 pub type RuntimeResult<T> = Result<T, Vec<Diagnostic>>;
 
+/// Emit warnings through the proper diagnostic formatter to stderr.
+/// Replaces raw `eprintln!("{}", diag.to_human_string())` calls (H-196).
+fn emit_warnings_via_formatter(warnings: &[Diagnostic], source: &str, file: &str) {
+    use crate::diagnostic::formatter::DiagnosticFormatter;
+    use termcolor::{ColorChoice, StandardStream};
+    if warnings.is_empty() {
+        return;
+    }
+    let formatter = DiagnosticFormatter::auto();
+    let mut stream = StandardStream::stderr(if std::env::var("NO_COLOR").is_ok() {
+        ColorChoice::Never
+    } else {
+        ColorChoice::Auto
+    });
+    for diag in warnings {
+        let mut enriched = diag.clone();
+        if enriched.file.is_empty() || enriched.file == "<unknown>" {
+            enriched.file = file.to_string();
+        }
+        if enriched.snippet.is_empty() {
+            if let Some(snippet) =
+                crate::diagnostic::formatter::extract_snippet(source, enriched.line)
+            {
+                enriched.snippet = snippet;
+            }
+        }
+        let _ = formatter.write_diagnostic(&mut stream, &enriched);
+    }
+}
+
 /// Atlas runtime instance
 ///
 /// Provides a high-level API for embedding Atlas in host applications.
@@ -139,21 +169,28 @@ impl Atlas {
         // Only fail on errors, not warnings
         let has_errors = type_diagnostics.iter().any(|d| d.is_error());
         if has_errors {
+            // Return ALL diagnostics (errors + warnings together) so the CLI
+            // can emit them in one pass via the proper formatter (H-196).
             return Err(type_diagnostics);
         }
 
-        // Print warnings to stderr (they don't block execution)
-        for diag in &type_diagnostics {
-            if diag.is_warning() {
-                eprintln!("{}", diag.to_human_string());
-            }
-        }
+        // Typecheck warnings: emit through the proper formatter, not raw eprintln!
+        let typecheck_warnings: Vec<Diagnostic> = type_diagnostics
+            .into_iter()
+            .filter(|d| d.is_warning())
+            .collect();
 
         // Interpret the AST
         let mut interpreter = self.interpreter.borrow_mut();
 
         match interpreter.eval(&ast, &self.security) {
-            Ok(value) => Ok(value),
+            Ok(value) => {
+                // Collect runtime warnings (e.g. ownership mismatches) from the interpreter.
+                let mut all_warnings = typecheck_warnings;
+                all_warnings.extend(interpreter.take_runtime_warnings());
+                emit_warnings_via_formatter(&all_warnings, source_with_semi.as_str(), file);
+                Ok(value)
+            }
             Err(runtime_error) => {
                 let stack_trace = interpreter.stack_trace_frames(
                     runtime_error.span(),
