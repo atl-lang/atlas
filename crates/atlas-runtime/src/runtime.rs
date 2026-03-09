@@ -427,13 +427,31 @@ pub fn runtime_error_to_diagnostic(
         RuntimeError::EnvironmentPermissionDenied { .. } => {
             "enable environment permissions with --allow-env or adjust security settings"
         }
+        RuntimeError::TypeError { .. } => {
+            "check the value's type before this operation; use `type_of(value)` to inspect it at runtime"
+        }
+        RuntimeError::IoError { .. } => {
+            "check that the file or resource path is correct and that it exists"
+        }
+        RuntimeError::UnhashableType { type_name, .. } => {
+            let _ = type_name; // named in the message
+            "use a hashable type (number, string, bool, or null) as the map key"
+        }
+        RuntimeError::Timeout { .. } => {
+            "optimize the computation to reduce execution time, or increase the limit with --timeout <ms>"
+        }
+        RuntimeError::MemoryLimitExceeded { .. } => {
+            "reduce memory usage or increase the limit with --memory <bytes>"
+        }
         RuntimeError::UnknownOpcode { .. } | RuntimeError::StackUnderflow { .. } => {
             "this is a bug in the Atlas compiler; please report it at https://github.com/anthropics/atlas/issues"
         }
         RuntimeError::InternalError { .. } => {
             "this is a bug in the runtime; please report it"
         }
-        _ => "check the error message above for details",
+        RuntimeError::FfiPermissionDenied { .. } => {
+            "enable FFI permissions with --allow-ffi or adjust security settings"
+        }
     };
 
     Diagnostic::error_with_code(code, message, span)
