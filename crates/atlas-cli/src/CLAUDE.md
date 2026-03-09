@@ -22,6 +22,7 @@ debugging, and managing Atlas projects. Built with `clap`.
 | `repl.rs` | `atlas repl` | Basic REPL |
 | `repl_tui.rs` | `atlas repl --tui` | TUI REPL with syntax highlighting |
 | `debug.rs` | `atlas debug` | Interactive debugger frontend (calls `debugger/`) |
+| `explain.rs` | `atlas explain` | Look up an error code (AT/AW prefix); `--list` shows all codes |
 | `typecheck.rs` | `atlas typecheck` | Alias for `check` with extended type info output |
 | `ast.rs` | `atlas ast` | Print AST as JSON/pretty for debugging |
 | `profile.rs` | `atlas profile` | Run with profiling enabled; outputs flamegraph data |

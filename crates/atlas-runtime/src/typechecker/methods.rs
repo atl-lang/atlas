@@ -44,6 +44,18 @@ impl MethodTable {
         self.methods.insert(key, sig);
     }
 
+    /// Return all method names registered for `type_name` (used for typo suggestions).
+    pub fn method_names_for_type_str<'a>(
+        &'a self,
+        type_name: &str,
+    ) -> impl Iterator<Item = &'a str> {
+        let owned = type_name.to_owned();
+        self.methods
+            .keys()
+            .filter(move |(t, _)| *t == owned)
+            .map(|(_, m)| m.as_str())
+    }
+
     /// Look up a method for a type
     pub fn lookup(&self, receiver_type: &Type, method_name: &str) -> Option<MethodSignature> {
         let receiver_type = receiver_type.normalized();

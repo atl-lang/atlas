@@ -29,6 +29,10 @@ pub struct Parser {
     pub(super) no_struct_literal: bool,
     /// Attributes parsed in `parse_item` — drained by the next declaration parser.
     pub(super) pending_attributes: Vec<crate::ast::Attribute>,
+    /// Cascade suppression: set on first error, cleared by `synchronize()`.
+    /// When true, subsequent errors in the same recovery region are suppressed
+    /// so that one source bug produces at most one primary diagnostic.
+    pub(super) in_panic_mode: bool,
 }
 
 /// Operator precedence levels for Pratt parsing
@@ -69,6 +73,7 @@ impl Parser {
             diagnostics: Vec::new(),
             no_struct_literal: false,
             pending_attributes: Vec::new(),
+            in_panic_mode: false,
         }
     }
 
@@ -141,8 +146,7 @@ impl Parser {
         } else if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.diagnostics
-                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                self.error_at("expected `fn` after `async`", async_span);
                 return Err(());
             }
             Ok(Item::Function(self.parse_function_with_async(true)?))
@@ -348,11 +352,11 @@ impl Parser {
             } else if self.check(TokenKind::Share) {
                 let span = self.peek().span;
                 self.advance();
-                self.diagnostics.push(Diagnostic::error(
+                self.error_at(
                     "`shared` is not valid as a return ownership annotation; \
                      callers receive a `shared<T>` typed value instead",
                     span,
-                ));
+                );
                 return Err(());
             } else {
                 None
@@ -484,8 +488,7 @@ impl Parser {
         let item = if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.diagnostics
-                    .push(Diagnostic::error("expected `fn` after `async`", async_span));
+                self.error_at("expected `fn` after `async`", async_span);
                 return Err(());
             }
             ExportItem::Function(self.parse_function_with_async(true)?)
@@ -1058,19 +1061,36 @@ impl Parser {
         }
     }
 
-    /// Consume token of given kind or error
+    /// Consume token of given kind or error with context-specific help (D-043).
+    /// Automatically appends `, found \`<token>\`` to the message.
+    /// Help text is derived from the expected token kind — never from a generic registry lookup.
     pub(super) fn consume(&mut self, kind: TokenKind, message: &str) -> Result<&Token, ()> {
         if self.check(kind) {
             Ok(self.advance())
         } else {
-            let code = match kind {
-                TokenKind::Semicolon => E_MISSING_SEMI,
-                TokenKind::RightBrace | TokenKind::RightBracket | TokenKind::RightParen => {
-                    E_MISSING_BRACE
-                }
-                _ => E_UNEXPECTED,
+            let found = self.peek().kind;
+            let span = self.peek().span;
+            let (code, help) = match kind {
+                TokenKind::Semicolon => (E_MISSING_SEMI, "Add `;` at the end of the statement."),
+                TokenKind::RightBrace => (
+                    E_MISSING_BRACE,
+                    "Add `}` to close the block or struct literal.",
+                ),
+                TokenKind::RightBracket => (
+                    E_MISSING_BRACE,
+                    "Add `]` to close the array literal or index expression.",
+                ),
+                TokenKind::RightParen => (
+                    E_MISSING_BRACE,
+                    "Add `)` to close the function call or grouped expression.",
+                ),
+                _ => (
+                    E_UNEXPECTED,
+                    "Check for missing punctuation or a typo in the token.",
+                ),
             };
-            self.error_with_code(code, message);
+            let full_message = format!("{}, found `{}`", message, found.as_str());
+            self.error_at_with_code_and_help(code, &full_message, span, help);
             Err(())
         }
     }
@@ -1081,9 +1101,18 @@ impl Parser {
         self.is_at_end_raw()
     }
 
-    /// Record an error
+    /// Record an error at the current token position.
+    /// Automatically appends `, found \`<token>\`` to the message (D-043).
     pub(super) fn error(&mut self, message: &str) {
-        self.error_with_code(E_GENERIC, message);
+        let found = self.peek().kind;
+        let full_message = format!("{}, found `{}`", message, found.as_str());
+        self.error_with_code(E_GENERIC, &full_message);
+    }
+
+    /// Record an error at a specific span using the generic error code.
+    /// Respects `in_panic_mode` (cascade suppression — D-043).
+    pub(super) fn error_at(&mut self, message: &str, span: Span) {
+        self.error_at_with_code(E_GENERIC, message, span);
     }
 
     /// Record an error at the current token with an explicit code
@@ -1092,12 +1121,34 @@ impl Parser {
         self.error_at_with_code(code, message, span);
     }
 
-    /// Record an error at a specific span with an explicit code.
-    /// Attaches help text from the error code registry if available, falling back to generic advice.
+    /// Record an error at a specific span with an explicit code and NO help text.
+    /// Help text must be provided explicitly at the call site via `error_with_dynamic_help`
+    /// or via `consume()` (which provides token-specific help). Per D-043, help is never
+    /// auto-fetched from the registry — the registry is for `atlas explain` only.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
     pub(super) fn error_at_with_code(&mut self, code: &'static str, message: &str, span: Span) {
-        use crate::diagnostic::error_codes;
-        let help =
-            error_codes::help_for(code).unwrap_or("check your syntax for typos or missing tokens");
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
+        self.diagnostics
+            .push(Diagnostic::error_with_code(code, message, span).with_label("syntax error"));
+    }
+
+    /// Record an error at a specific span with an explicit code and explicit help text.
+    /// Use this at sites where the correct help is known at the call location.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
+    pub(super) fn error_at_with_code_and_help(
+        &mut self,
+        code: &'static str,
+        message: &str,
+        span: Span,
+        help: impl Into<String>,
+    ) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
         self.diagnostics.push(
             Diagnostic::error_with_code(code, message, span)
                 .with_label("syntax error")
@@ -1107,12 +1158,17 @@ impl Parser {
 
     /// Record an error at the current token with an explicit code and custom help text.
     /// Use this when the help text must be dynamically formatted (e.g. includes the identifier name).
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
     pub(super) fn error_with_dynamic_help(
         &mut self,
         code: &'static str,
         message: impl Into<String>,
         help: impl Into<String>,
     ) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
         let span = self.peek().span;
         self.diagnostics.push(
             Diagnostic::error_with_code(code, message, span)
@@ -1200,40 +1256,43 @@ impl Parser {
 
         // Check if it's a reserved keyword
         if Self::is_reserved_keyword(current.kind) {
-            let keyword_name = current.lexeme;
-
+            let keyword_name = current.lexeme.clone();
+            let span = current.span;
             // Special message for import/match (reserved for future)
             if current.kind == TokenKind::Import || current.kind == TokenKind::Match {
-                self.error_with_code(
+                self.error_at_with_code_and_help(
                     E_RESERVED,
                     &format!(
-                    "Cannot use reserved keyword '{}' as {}. This keyword is reserved for future use",
-                    keyword_name, context
-                ),
-                );
-            } else {
-                self.error_with_code(
-                    E_RESERVED,
-                    &format!(
-                        "Cannot use reserved keyword '{}' as {}",
+                        "Cannot use reserved keyword `{}` as {}; this keyword is reserved for future use",
                         keyword_name, context
                     ),
+                    span,
+                    format!("Rename the identifier to avoid clashing with the reserved keyword `{keyword_name}`."),
+                );
+            } else {
+                self.error_at_with_code_and_help(
+                    E_RESERVED,
+                    &format!("Cannot use reserved keyword `{}` as {}", keyword_name, context),
+                    span,
+                    format!("Rename the identifier — `{keyword_name}` is a built-in Atlas keyword and cannot be used as a name."),
                 );
             }
             Err(())
         } else if current.kind == TokenKind::Identifier {
             Ok(self.advance())
         } else {
+            // Not an identifier and not a keyword — emit with no help (no relevant generic advice)
             self.error_with_code(
                 E_UNEXPECTED,
-                &format!("Expected {} but found {:?}", context, current.kind),
+                &format!("Expected {}, found `{}`", context, current.kind.as_str()),
             );
             Err(())
         }
     }
 
-    /// Synchronize after error
+    /// Synchronize after error — clears `in_panic_mode` to re-enable error reporting
     pub(super) fn synchronize(&mut self) {
+        self.in_panic_mode = false;
         self.advance();
 
         while !self.is_at_end() {

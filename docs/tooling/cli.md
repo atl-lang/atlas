@@ -341,6 +341,26 @@ Example:
 atlas publish --dry-run
 ```
 
+**atlas explain**
+- Looks up an Atlas error code and prints its description, help text, and example.
+
+Usage:
+```
+atlas explain <code>
+atlas explain --list
+```
+
+Options:
+- `<code>` — error code to explain (e.g., `AT1003`, `AW3059`, or bare `1003`). Case-insensitive; `AT` prefix inferred if omitted.
+- `--list` — list all known error codes with descriptions.
+
+Example:
+```bash
+atlas explain AT1003
+atlas explain 1003
+atlas explain --list
+```
+
 **atlas new**
 - Creates a new project from a template.
 

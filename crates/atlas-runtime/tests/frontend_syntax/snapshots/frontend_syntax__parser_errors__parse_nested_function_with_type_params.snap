@@ -1,6 +1,5 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
-assertion_line: 149
 expression: program
 ---
 items:
@@ -11,9 +10,10 @@ items:
           start: 12
           end: 17
           file: "<input>"
+      attributes: []
+      is_async: false
       type_params:
         - name: T
-          bound: ~
           trait_bounds: []
           span:
             start: 18
@@ -37,9 +37,10 @@ items:
                   start: 48
                   end: 53
                   file: "<input>"
+              attributes: []
+              is_async: false
               type_params:
                 - name: E
-                  bound: ~
                   trait_bounds: []
                   span:
                     start: 54
@@ -49,26 +50,26 @@ items:
                 - name:
                     name: x
                     span:
-                      start: 57
-                      end: 58
+                      start: 64
+                      end: 65
                       file: "<input>"
                   type_ref:
                     Named:
                       - E
-                      - start: 60
-                        end: 61
+                      - start: 67
+                        end: 68
                         file: "<input>"
-                  ownership: ~
+                  ownership: Borrow
                   mutable: false
                   span:
                     start: 57
-                    end: 61
+                    end: 68
                     file: "<input>"
               return_type:
                 Named:
                   - E
-                  - start: 66
-                    end: 67
+                  - start: 73
+                    end: 74
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -79,28 +80,28 @@ items:
                         Identifier:
                           name: x
                           span:
-                            start: 93
-                            end: 94
+                            start: 100
+                            end: 101
                             file: "<input>"
                       span:
-                        start: 86
-                        end: 95
+                        start: 93
+                        end: 102
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 68
-                  end: 109
+                  start: 75
+                  end: 116
                   file: "<input>"
               span:
                 start: 45
-                end: 109
+                end: 116
                 file: "<input>"
         tail_expr: ~
         span:
           start: 31
-          end: 119
+          end: 126
           file: "<input>"
       span:
         start: 9
-        end: 119
+        end: 126
         file: "<input>"

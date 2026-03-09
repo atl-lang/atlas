@@ -66,7 +66,8 @@ pub fn run(file_path: &str, json_output: bool) -> Result<()> {
     Ok(())
 }
 
-/// Print diagnostics to stderr (or stdout for JSON)
+/// Print diagnostics to stderr (or stdout for JSON).
+/// JSON output uses the `{"errors": [...], "warnings": [...]}` wrapper format (B14-P06, D-043).
 fn print_diagnostics(
     diagnostics: &[atlas_runtime::Diagnostic],
     source: &str,
@@ -74,12 +75,8 @@ fn print_diagnostics(
     json_output: bool,
 ) {
     if json_output {
-        // JSON format to stdout
-        for diag in diagnostics {
-            println!("{}", diag.to_json_string().unwrap());
-        }
+        crate::diagnostics::emit_diagnostics_json(diagnostics, Some(source), Some(file_path));
     } else {
-        // Human-readable format to stderr
         crate::diagnostics::emit_diagnostics_stderr(diagnostics, Some(source), Some(file_path));
     }
 }

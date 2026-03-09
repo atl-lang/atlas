@@ -3,6 +3,7 @@ pub mod ast;
 pub mod build;
 pub mod check;
 pub mod debug;
+pub mod explain;
 pub mod fmt;
 pub mod init;
 pub mod install;

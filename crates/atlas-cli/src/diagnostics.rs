@@ -1,10 +1,9 @@
 //! CLI diagnostic formatting helpers
 
-use atlas_runtime::diagnostic::error_codes::help_for;
 use atlas_runtime::diagnostic::formatter::{
     enrich_diagnostic, extract_snippet, DiagnosticFormatter,
 };
-use atlas_runtime::Diagnostic;
+use atlas_runtime::{Diagnostic, DiagnosticLevel};
 use std::path::Path;
 use termcolor::{ColorChoice, StandardStream, WriteColor};
 
@@ -16,6 +15,48 @@ pub fn emit_diagnostics_stderr(
     let formatter = DiagnosticFormatter::auto();
     let mut stream = StandardStream::stderr(color_choice());
     emit_all(&formatter, &mut stream, diagnostics, source, fallback_file);
+}
+
+/// Emit all diagnostics as a single JSON object: `{"errors": [...], "warnings": [...]}`.
+/// This is the structured machine-readable format (B14-P06, D-043).
+pub fn emit_diagnostics_json(
+    diagnostics: &[Diagnostic],
+    source: Option<&str>,
+    fallback_file: Option<&str>,
+) {
+    let prepared: Vec<Diagnostic> = diagnostics
+        .iter()
+        .map(|d| prepare_diagnostic(d, source, fallback_file))
+        .collect();
+
+    let errors: Vec<&Diagnostic> = prepared
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    let warnings: Vec<&Diagnostic> = prepared
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Warning)
+        .collect();
+
+    let errors_json: Vec<serde_json::Value> = errors
+        .iter()
+        .filter_map(|d| d.to_json_compact().ok())
+        .filter_map(|s| serde_json::from_str(&s).ok())
+        .collect();
+    let warnings_json: Vec<serde_json::Value> = warnings
+        .iter()
+        .filter_map(|d| d.to_json_compact().ok())
+        .filter_map(|s| serde_json::from_str(&s).ok())
+        .collect();
+
+    let output = serde_json::json!({
+        "errors": errors_json,
+        "warnings": warnings_json,
+    });
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&output).unwrap_or_default()
+    );
 }
 
 pub fn emit_diagnostics_stdout(
@@ -86,11 +127,9 @@ fn prepare_diagnostic(
         }
     }
 
-    if diag.help.is_none() {
-        if let Some(help) = help_for(&diag.code) {
-            diag.help = Some(help.to_string());
-        }
-    }
+    // NOTE: help text is NOT auto-injected from the registry here (D-043 rule 3).
+    // Help must come from the diagnostic emitting site via error_at_with_code_and_help()
+    // or error_with_dynamic_help(). The registry is reserved for `atlas explain`.
 
     diag
 }
