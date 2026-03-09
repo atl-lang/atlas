@@ -90,6 +90,8 @@ pub struct Interpreter {
     current_module_path: Option<PathBuf>,
     /// Cache of module exports (path -> exports map) for inline import processing
     module_exports_cache: HashMap<PathBuf, HashMap<String, Value>>,
+    /// Cache of type-only export names (struct/enum/type alias — no runtime value)
+    module_type_exports_cache: HashMap<PathBuf, std::collections::HashSet<String>>,
     /// Lookup cache for optimized variable resolution (infrastructure for future optimization)
     #[allow(dead_code)]
     lookup_cache: cache::InterpreterCache,
@@ -119,6 +121,7 @@ impl Interpreter {
             callbacks: Vec::new(),
             current_module_path: None,
             module_exports_cache: HashMap::new(),
+            module_type_exports_cache: HashMap::new(),
             lookup_cache: cache::InterpreterCache::new(),
             call_stack: vec![RuntimeCallFrame {
                 function_name: "<main>".to_string(),
@@ -368,6 +371,9 @@ impl Interpreter {
                         }
                         crate::ast::ExportItem::TypeAlias(_) => {
                             // Type aliases are compile-time only
+                        }
+                        crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                            // Type declarations only — no runtime value
                         }
                     }
                 }
@@ -1100,6 +1106,7 @@ impl Interpreter {
                 callbacks: Vec::new(),
                 current_module_path: None,
                 module_exports_cache: HashMap::new(),
+                module_type_exports_cache: HashMap::new(),
                 lookup_cache: cache::InterpreterCache::new(),
                 call_stack: vec![RuntimeCallFrame {
                     function_name: "<main>".to_string(),
@@ -1215,8 +1222,13 @@ impl Interpreter {
             })?;
 
         // Check cache first
-        if let Some(exports) = self.module_exports_cache.get(&import_path) {
-            return self.bind_imports(import, exports.clone());
+        if let Some(exports) = self.module_exports_cache.get(&import_path).cloned() {
+            let type_only = self
+                .module_type_exports_cache
+                .get(&import_path)
+                .cloned()
+                .unwrap_or_default();
+            return self.bind_imports(import, exports, &type_only);
         }
 
         // Load and evaluate the module
@@ -1254,13 +1266,39 @@ impl Interpreter {
             self.eval(&module.ast, &security)?;
 
             // Extract and cache exports
-            let exports = self.extract_module_exports(module);
+            let (exports, type_only) = self.extract_module_exports(module);
             self.module_exports_cache
                 .insert(module.path.clone(), exports);
+            self.module_type_exports_cache
+                .insert(module.path.clone(), type_only);
 
             // Restore previous path
             self.current_module_path = prev_path;
         }
+
+        // Collect type-only export names from the requested module's AST
+        let type_only: std::collections::HashSet<String> = modules
+            .iter()
+            .find(|m| m.path == import_path)
+            .map(|m| {
+                m.ast
+                    .items
+                    .iter()
+                    .filter_map(|item| {
+                        if let Item::Export(e) = item {
+                            match &e.item {
+                                crate::ast::ExportItem::Struct(s) => Some(s.name.name.clone()),
+                                crate::ast::ExportItem::Enum(en) => Some(en.name.name.clone()),
+                                crate::ast::ExportItem::TypeAlias(a) => Some(a.name.name.clone()),
+                                _ => None,
+                            }
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
 
         // Get the requested module's exports and bind imports
         let exports = self
@@ -1268,7 +1306,7 @@ impl Interpreter {
             .get(&import_path)
             .cloned()
             .unwrap_or_default();
-        self.bind_imports(import, exports)
+        self.bind_imports(import, exports, &type_only)
     }
 
     /// Bind imported symbols to globals
@@ -1276,22 +1314,25 @@ impl Interpreter {
         &mut self,
         import: &ImportDecl,
         exports: HashMap<String, Value>,
+        type_only: &std::collections::HashSet<String>,
     ) -> Result<(), RuntimeError> {
         for specifier in &import.specifiers {
             match specifier {
                 ImportSpecifier::Named { name, span } => {
-                    let value = exports
-                        .get(&name.name)
-                        .ok_or_else(|| RuntimeError::TypeError {
+                    if let Some(value) = exports.get(&name.name) {
+                        self.globals
+                            .insert(name.name.clone(), (value.clone(), false));
+                    } else if type_only.contains(&name.name) {
+                        // Type-only export — no runtime value needed
+                    } else {
+                        return Err(RuntimeError::TypeError {
                             msg: format!(
                                 "'{}' is not exported from module '{}'",
                                 name.name, import.source
                             ),
                             span: *span,
-                        })?;
-                    // Imported values are immutable bindings
-                    self.globals
-                        .insert(name.name.clone(), (value.clone(), false));
+                        });
+                    }
                 }
                 ImportSpecifier::Namespace { alias, span: _ } => {
                     use crate::stdlib::collections::hash::HashKey;
@@ -1316,8 +1357,9 @@ impl Interpreter {
     fn extract_module_exports(
         &self,
         module: &crate::module_loader::LoadedModule,
-    ) -> HashMap<String, Value> {
+    ) -> (HashMap<String, Value>, std::collections::HashSet<String>) {
         let mut exports = HashMap::new();
+        let mut type_only = std::collections::HashSet::new();
         for item in &module.ast.items {
             if let Item::Export(export_decl) = item {
                 match &export_decl.item {
@@ -1331,13 +1373,19 @@ impl Interpreter {
                             exports.insert(var.name.name.clone(), value.clone());
                         }
                     }
-                    crate::ast::ExportItem::TypeAlias(_) => {
-                        // Type aliases are compile-time only
+                    crate::ast::ExportItem::TypeAlias(alias) => {
+                        type_only.insert(alias.name.name.clone());
+                    }
+                    crate::ast::ExportItem::Struct(s) => {
+                        type_only.insert(s.name.name.clone());
+                    }
+                    crate::ast::ExportItem::Enum(e) => {
+                        type_only.insert(e.name.name.clone());
                     }
                 }
             }
         }
-        exports
+        (exports, type_only)
     }
 }
 

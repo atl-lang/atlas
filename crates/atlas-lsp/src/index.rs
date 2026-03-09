@@ -41,6 +41,8 @@ pub enum SymbolKind {
     Variable,
     Parameter,
     Type,
+    Struct,
+    Enum,
 }
 
 /// Workspace-wide symbol index
@@ -278,6 +280,12 @@ impl SymbolIndex {
                         None,
                         ctx,
                     );
+                }
+                ExportItem::Struct(s) => {
+                    self.add_definition(&s.name.name, &s.name.span, SymbolKind::Struct, None, ctx);
+                }
+                ExportItem::Enum(e) => {
+                    self.add_definition(&e.name.name, &e.name.span, SymbolKind::Enum, None, ctx);
                 }
             },
             Item::Extern(_) => {

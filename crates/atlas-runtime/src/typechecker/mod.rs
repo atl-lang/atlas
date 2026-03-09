@@ -510,6 +510,8 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::Function(func) => &func.name.name,
                     crate::ast::ExportItem::Variable(var) => &var.name.name,
                     crate::ast::ExportItem::TypeAlias(alias) => &alias.name.name,
+                    crate::ast::ExportItem::Struct(s) => &s.name.name,
+                    crate::ast::ExportItem::Enum(e) => &e.name.name,
                 };
 
                 if exported_names.contains(name) {
@@ -562,6 +564,10 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are validated in a pre-pass
                     }
+                    crate::ast::ExportItem::Struct(s) => self.validate_struct_decl(s),
+                    crate::ast::ExportItem::Enum(_) => {
+                        // Enum declarations are validated in collect_enum_names pre-pass
+                    }
                 }
             }
             Item::Extern(_) => {
@@ -590,11 +596,26 @@ impl<'a> TypeChecker<'a> {
     fn collect_enum_names(&mut self, program: &Program) {
         self.enum_names.clear();
         self.enum_decls.clear();
+        // Inject imported enum decls from symbol table
+        for (name, decl) in self.symbol_table.get_enum_exports() {
+            self.enum_names.insert(name.clone());
+            self.enum_decls.insert(name.clone(), decl.clone());
+        }
         for item in &program.items {
-            if let Item::Enum(enum_decl) = item {
-                self.enum_names.insert(enum_decl.name.name.clone());
-                self.enum_decls
-                    .insert(enum_decl.name.name.clone(), enum_decl.clone());
+            match item {
+                Item::Enum(enum_decl) => {
+                    self.enum_names.insert(enum_decl.name.name.clone());
+                    self.enum_decls
+                        .insert(enum_decl.name.name.clone(), enum_decl.clone());
+                }
+                Item::Export(export_decl) => {
+                    if let crate::ast::ExportItem::Enum(enum_decl) = &export_decl.item {
+                        self.enum_names.insert(enum_decl.name.name.clone());
+                        self.enum_decls
+                            .insert(enum_decl.name.name.clone(), enum_decl.clone());
+                    }
+                }
+                _ => {}
             }
         }
     }
@@ -623,11 +644,27 @@ impl<'a> TypeChecker<'a> {
         self.struct_decls.clear();
         self.struct_type_cache.clear();
         self.struct_resolution_stack.clear();
+        // Inject imported struct decls from symbol table
+        for (name, decl) in self.symbol_table.get_struct_exports() {
+            self.struct_decls
+                .entry(name.clone())
+                .or_insert_with(|| decl.clone());
+        }
         for item in &program.items {
-            if let Item::Struct(struct_decl) = item {
-                self.struct_decls
-                    .entry(struct_decl.name.name.clone())
-                    .or_insert_with(|| struct_decl.clone());
+            match item {
+                Item::Struct(struct_decl) => {
+                    self.struct_decls
+                        .entry(struct_decl.name.name.clone())
+                        .or_insert_with(|| struct_decl.clone());
+                }
+                Item::Export(export_decl) => {
+                    if let crate::ast::ExportItem::Struct(struct_decl) = &export_decl.item {
+                        self.struct_decls
+                            .entry(struct_decl.name.name.clone())
+                            .or_insert_with(|| struct_decl.clone());
+                    }
+                }
+                _ => {}
             }
         }
     }

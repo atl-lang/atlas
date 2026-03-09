@@ -21,12 +21,15 @@ pub type ModuleResult<T> = Result<T, Vec<Diagnostic>>;
 struct ModuleCache {
     /// Map of module path -> exported symbols (name -> value)
     exports: HashMap<PathBuf, HashMap<String, Value>>,
+    /// Map of module path -> type-only export names (struct/enum — no runtime value)
+    type_exports: HashMap<PathBuf, std::collections::HashSet<String>>,
 }
 
 impl ModuleCache {
     fn new() -> Self {
         Self {
             exports: HashMap::new(),
+            type_exports: HashMap::new(),
         }
     }
 
@@ -34,7 +37,13 @@ impl ModuleCache {
         self.exports.contains_key(path)
     }
 
-    fn store_exports(&mut self, path: PathBuf, exports: HashMap<String, Value>) {
+    fn store_exports(
+        &mut self,
+        path: PathBuf,
+        exports: HashMap<String, Value>,
+        type_only: std::collections::HashSet<String>,
+    ) {
+        self.type_exports.insert(path.clone(), type_only);
         self.exports.insert(path, exports);
     }
 
@@ -142,8 +151,9 @@ impl<'a> ModuleExecutor<'a> {
             })?;
 
         // Extract and cache exports
-        let exports = self.extract_exports(module);
-        self.cache.store_exports(module.path.clone(), exports);
+        let (exports, type_only) = self.extract_exports(module);
+        self.cache
+            .store_exports(module.path.clone(), exports, type_only);
 
         Ok(result)
     }
@@ -160,31 +170,45 @@ impl<'a> ModuleExecutor<'a> {
             .map_err(|e| vec![e])?;
 
         // Get cached exports (module should already be executed due to topological order)
-        let exports = self.cache.get_exports(&import_path).ok_or_else(|| {
-            vec![Diagnostic::error(
-                format!(
-                    "Module not yet executed: {}. This indicates a bug in topological sorting.",
-                    import_path.display()
-                ),
-                import.span,
-            )]
-        })?;
+        // Clone both maps to avoid borrow conflicts in the loop below.
+        let exports = self
+            .cache
+            .get_exports(&import_path)
+            .ok_or_else(|| {
+                vec![Diagnostic::error(
+                    format!(
+                        "Module not yet executed: {}. This indicates a bug in topological sorting.",
+                        import_path.display()
+                    ),
+                    import.span,
+                )]
+            })?
+            .clone();
+        let type_only = self
+            .cache
+            .type_exports
+            .get(&import_path)
+            .cloned()
+            .unwrap_or_default();
 
         // Process import specifiers
         for specifier in &import.specifiers {
             match specifier {
                 ImportSpecifier::Named { name, span } => {
-                    // Import specific named export
-                    let value = exports.get(&name.name).ok_or_else(|| {
-                        vec![Diagnostic::error_with_code(
+                    if let Some(value) = exports.get(&name.name) {
+                        // Runtime value — inject into interpreter globals
+                        self.interpreter
+                            .define_global(name.name.clone(), value.clone());
+                    } else if type_only.contains(&name.name) {
+                        // Type-only export (struct/enum/type alias) — no runtime value needed
+                    } else {
+                        return Err(vec![Diagnostic::error_with_code(
                             "AT5004",
                             format!("'{}' is not exported from module", name.name),
                             *span,
                         )
-                        .with_help("check the module's exports or import a different symbol")]
-                    })?;
-                    self.interpreter
-                        .define_global(name.name.clone(), value.clone());
+                        .with_help("check the module's exports or import a different symbol")]);
+                    }
                 }
                 ImportSpecifier::Namespace { alias, span: _ } => {
                     use crate::stdlib::collections::hash::HashKey;
@@ -192,7 +216,7 @@ impl<'a> ModuleExecutor<'a> {
                     use crate::value::ValueHashMap;
 
                     let mut atlas_map = AtlasHashMap::new();
-                    for (name, value) in exports {
+                    for (name, value) in &exports {
                         let key = HashKey::String(std::sync::Arc::new(name.clone()));
                         atlas_map.insert(key, value.clone());
                     }
@@ -211,14 +235,17 @@ impl<'a> ModuleExecutor<'a> {
     ///
     /// Examines the module's AST to find exported items and retrieves
     /// their values from the interpreter's globals.
-    fn extract_exports(&self, module: &LoadedModule) -> HashMap<String, Value> {
+    fn extract_exports(
+        &self,
+        module: &LoadedModule,
+    ) -> (HashMap<String, Value>, std::collections::HashSet<String>) {
         let mut exports = HashMap::new();
+        let mut type_only = std::collections::HashSet::new();
 
         for item in &module.ast.items {
             if let Item::Export(export_decl) = item {
                 match &export_decl.item {
                     crate::ast::ExportItem::Function(func) => {
-                        // Get function value from interpreter globals
                         if let Some((value, _mutable)) =
                             self.interpreter.globals.get(&func.name.name)
                         {
@@ -226,20 +253,25 @@ impl<'a> ModuleExecutor<'a> {
                         }
                     }
                     crate::ast::ExportItem::Variable(var) => {
-                        // Get variable value from interpreter globals
                         if let Some((value, _mutable)) =
                             self.interpreter.globals.get(&var.name.name)
                         {
                             exports.insert(var.name.name.clone(), value.clone());
                         }
                     }
-                    crate::ast::ExportItem::TypeAlias(_) => {
-                        // Type aliases are compile-time only
+                    crate::ast::ExportItem::TypeAlias(alias) => {
+                        type_only.insert(alias.name.name.clone());
+                    }
+                    crate::ast::ExportItem::Struct(s) => {
+                        type_only.insert(s.name.name.clone());
+                    }
+                    crate::ast::ExportItem::Enum(e) => {
+                        type_only.insert(e.name.name.clone());
                     }
                 }
             }
         }
 
-        exports
+        (exports, type_only)
     }
 }

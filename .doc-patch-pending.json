@@ -2,15 +2,16 @@
   "committed_at": "2026-03-09T00:51:18Z",
   "commit": "7ed5746",
   "changed_files": [
-  "crates/atlas-runtime/src/interpreter/expr.rs",
-  "crates/atlas-runtime/src/interpreter/stmt.rs",
-  "crates/atlas-runtime/tests/interpreter/integration/arrays.rs"
-],
+    "crates/atlas-runtime/src/interpreter/expr.rs",
+    "crates/atlas-runtime/src/interpreter/stmt.rs",
+    "crates/atlas-runtime/tests/interpreter/integration/arrays.rs"
+  ],
   "domains": [
-  "interpreter"
-],
+    "interpreter"
+  ],
   "relevant_docs": [
-  "docs/known-issues.md"
-],
-  "status": "pending"
+    "docs/known-issues.md"
+  ],
+  "status": "done",
+  "patched_at": "2026-03-09T03:04:22Z"
 }

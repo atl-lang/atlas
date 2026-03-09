@@ -373,6 +373,30 @@ fn extract_indexed_symbols(uri: &Url, text: &str, program: &Program) -> Vec<Inde
                         container_name: None,
                     });
                 }
+                ExportItem::Struct(s) => {
+                    let range = span_to_range(text, s.span);
+                    symbols.push(IndexedSymbol {
+                        name: s.name.name.clone(),
+                        kind: SymbolKind::STRUCT,
+                        location: Location {
+                            uri: uri.clone(),
+                            range,
+                        },
+                        container_name: None,
+                    });
+                }
+                ExportItem::Enum(e) => {
+                    let range = span_to_range(text, e.span);
+                    symbols.push(IndexedSymbol {
+                        name: e.name.name.clone(),
+                        kind: SymbolKind::ENUM,
+                        location: Location {
+                            uri: uri.clone(),
+                            range,
+                        },
+                        container_name: None,
+                    });
+                }
             },
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl symbol extraction handled in Block 3
@@ -679,6 +703,38 @@ pub fn extract_document_symbols(text: &str, program: &Program) -> Vec<DocumentSy
                             format_type_ref(&alias.type_ref)
                         )),
                         kind: SymbolKind::TYPE_PARAMETER,
+                        range,
+                        selection_range,
+                        children: None,
+                        tags: None,
+                        deprecated: None,
+                    });
+                }
+                ExportItem::Struct(s) => {
+                    let range = span_to_range(text, s.span);
+                    let selection_range = span_to_range(text, s.name.span);
+
+                    #[allow(deprecated)]
+                    symbols.push(DocumentSymbol {
+                        name: s.name.name.clone(),
+                        detail: Some("export struct".to_string()),
+                        kind: SymbolKind::STRUCT,
+                        range,
+                        selection_range,
+                        children: None,
+                        tags: None,
+                        deprecated: None,
+                    });
+                }
+                ExportItem::Enum(e) => {
+                    let range = span_to_range(text, e.span);
+                    let selection_range = span_to_range(text, e.name.span);
+
+                    #[allow(deprecated)]
+                    symbols.push(DocumentSymbol {
+                        name: e.name.name.clone(),
+                        detail: Some("export enum".to_string()),
+                        kind: SymbolKind::ENUM,
                         range,
                         selection_range,
                         children: None,

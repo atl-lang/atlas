@@ -130,6 +130,10 @@ pub enum ExportItem {
     Variable(VarDecl),
     /// Export type alias: `export type Foo = bar`
     TypeAlias(TypeAliasDecl),
+    /// Export struct: `export struct Person { name: string }`
+    Struct(StructDecl),
+    /// Export enum: `export enum Status { Active, Inactive }`
+    Enum(EnumDecl),
 }
 
 /// Extern function declaration (FFI)

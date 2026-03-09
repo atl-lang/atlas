@@ -1053,6 +1053,12 @@ impl FormatVisitor {
             ExportItem::TypeAlias(alias) => {
                 self.visit_type_alias(alias);
             }
+            ExportItem::Struct(s) => {
+                self.visit_struct_decl(s);
+            }
+            ExportItem::Enum(e) => {
+                self.visit_enum_decl(e);
+            }
         }
     }
 

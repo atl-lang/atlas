@@ -1,6 +1,6 @@
 //! Symbol table and name binding
 
-use crate::ast::TypeAliasDecl;
+use crate::ast::{EnumDecl, StructDecl, TypeAliasDecl};
 use crate::span::Span;
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
@@ -46,6 +46,10 @@ pub struct SymbolTable {
     type_aliases: HashMap<String, TypeAliasDecl>,
     /// Exported type alias names
     type_alias_exports: HashSet<String>,
+    /// Exported struct declarations (name -> StructDecl)
+    struct_exports: HashMap<String, StructDecl>,
+    /// Exported enum declarations (name -> EnumDecl)
+    enum_exports: HashMap<String, EnumDecl>,
 }
 
 impl SymbolTable {
@@ -56,6 +60,8 @@ impl SymbolTable {
             functions: HashMap::new(),
             type_aliases: HashMap::new(),
             type_alias_exports: HashSet::new(),
+            struct_exports: HashMap::new(),
+            enum_exports: HashMap::new(),
         };
 
         // Add prelude builtins
@@ -1245,6 +1251,26 @@ impl SymbolTable {
         } else {
             false
         }
+    }
+
+    /// Add an exported struct declaration
+    pub fn add_struct_export(&mut self, decl: StructDecl) {
+        self.struct_exports.insert(decl.name.name.clone(), decl);
+    }
+
+    /// Add an exported enum declaration
+    pub fn add_enum_export(&mut self, decl: EnumDecl) {
+        self.enum_exports.insert(decl.name.name.clone(), decl);
+    }
+
+    /// Get all exported struct declarations
+    pub fn get_struct_exports(&self) -> &HashMap<String, StructDecl> {
+        &self.struct_exports
+    }
+
+    /// Get all exported enum declarations
+    pub fn get_enum_exports(&self) -> &HashMap<String, EnumDecl> {
+        &self.enum_exports
     }
 
     /// Get exported type aliases

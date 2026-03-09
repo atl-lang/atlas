@@ -239,6 +239,8 @@ impl ModuleLoader {
                         crate::ast::ExportItem::Function(func) => func.name.name.clone(),
                         crate::ast::ExportItem::Variable(var) => var.name.name.clone(),
                         crate::ast::ExportItem::TypeAlias(alias) => alias.name.name.clone(),
+                        crate::ast::ExportItem::Struct(s) => s.name.name.clone(),
+                        crate::ast::ExportItem::Enum(e) => e.name.name.clone(),
                     };
                     exports.push(name);
                 }

@@ -503,8 +503,12 @@ impl Parser {
             }
         } else if self.check(TokenKind::Type) {
             ExportItem::TypeAlias(self.parse_type_alias(None)?)
+        } else if self.check(TokenKind::Struct) {
+            ExportItem::Struct(self.parse_struct()?)
+        } else if self.check(TokenKind::Enum) {
+            ExportItem::Enum(self.parse_enum()?)
         } else {
-            self.error("Expected 'fn', 'let', or 'type' after 'export'");
+            self.error("Expected 'fn', 'let', 'type', 'struct', or 'enum' after 'export'");
             return Err(());
         };
 

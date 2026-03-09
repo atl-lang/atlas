@@ -71,27 +71,38 @@ impl Binder {
         // Phase 3: Mark exported symbols
         for item in &program.items {
             if let Item::Export(export_decl) = item {
-                let name = match &export_decl.item {
-                    ExportItem::Function(func) => &func.name.name,
-                    ExportItem::Variable(var) => &var.name.name,
-                    ExportItem::TypeAlias(alias) => &alias.name.name,
-                };
+                match &export_decl.item {
+                    ExportItem::Struct(decl) => {
+                        self.symbol_table.add_struct_export(decl.clone());
+                    }
+                    ExportItem::Enum(decl) => {
+                        self.symbol_table.add_enum_export(decl.clone());
+                    }
+                    _ => {
+                        let name = match &export_decl.item {
+                            ExportItem::Function(func) => &func.name.name,
+                            ExportItem::Variable(var) => &var.name.name,
+                            ExportItem::TypeAlias(alias) => &alias.name.name,
+                            ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
+                        };
 
-                let mut exported = self.symbol_table.mark_exported(name);
-                if !exported {
-                    exported = self.symbol_table.mark_type_alias_exported(name);
-                }
+                        let mut exported = self.symbol_table.mark_exported(name);
+                        if !exported {
+                            exported = self.symbol_table.mark_type_alias_exported(name);
+                        }
 
-                if !exported {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT5004",
-                            format!("Cannot export '{}': symbol not found", name),
-                            export_decl.span,
-                        )
-                        .with_label("export declaration")
-                        .with_help(format!("define '{}' before exporting it", name)),
-                    );
+                        if !exported {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT5004",
+                                    format!("Cannot export '{}': symbol not found", name),
+                                    export_decl.span,
+                                )
+                                .with_label("export declaration")
+                                .with_help(format!("define '{}' before exporting it", name)),
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -147,27 +158,38 @@ impl Binder {
         // Phase 3: Mark exported symbols
         for item in &program.items {
             if let Item::Export(export_decl) = item {
-                let name = match &export_decl.item {
-                    ExportItem::Function(func) => &func.name.name,
-                    ExportItem::Variable(var) => &var.name.name,
-                    ExportItem::TypeAlias(alias) => &alias.name.name,
-                };
+                match &export_decl.item {
+                    ExportItem::Struct(decl) => {
+                        self.symbol_table.add_struct_export(decl.clone());
+                    }
+                    ExportItem::Enum(decl) => {
+                        self.symbol_table.add_enum_export(decl.clone());
+                    }
+                    _ => {
+                        let name = match &export_decl.item {
+                            ExportItem::Function(func) => &func.name.name,
+                            ExportItem::Variable(var) => &var.name.name,
+                            ExportItem::TypeAlias(alias) => &alias.name.name,
+                            ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
+                        };
 
-                let mut exported = self.symbol_table.mark_exported(name);
-                if !exported {
-                    exported = self.symbol_table.mark_type_alias_exported(name);
-                }
+                        let mut exported = self.symbol_table.mark_exported(name);
+                        if !exported {
+                            exported = self.symbol_table.mark_type_alias_exported(name);
+                        }
 
-                if !exported {
-                    self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT5004",
-                            format!("Cannot export '{}': symbol not found", name),
-                            export_decl.span,
-                        )
-                        .with_label("export declaration")
-                        .with_help(format!("define '{}' before exporting it", name)),
-                    );
+                        if !exported {
+                            self.diagnostics.push(
+                                Diagnostic::error_with_code(
+                                    "AT5004",
+                                    format!("Cannot export '{}': symbol not found", name),
+                                    export_decl.span,
+                                )
+                                .with_label("export declaration")
+                                .with_help(format!("define '{}' before exporting it", name)),
+                            );
+                        }
+                    }
                 }
             }
         }
@@ -374,6 +396,9 @@ impl Binder {
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are handled during collection
                     }
+                    crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                        // Struct/enum type declarations are type-system only
+                    }
                 }
             }
             Item::Extern(_) => {
@@ -416,6 +441,9 @@ impl Binder {
                     }
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are handled during collection
+                    }
+                    crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                        // Struct/enum type declarations are type-system only
                     }
                 }
             }
@@ -477,6 +505,8 @@ impl Binder {
         // Get exported symbols from source module
         let exports = source_symbols.get_exports();
         let type_alias_exports = source_symbols.get_type_alias_exports();
+        let struct_exports = source_symbols.get_struct_exports().clone();
+        let enum_exports = source_symbols.get_enum_exports().clone();
 
         // Process each import specifier
         for specifier in &import_decl.specifiers {
@@ -520,6 +550,12 @@ impl Binder {
                                             ),
                                     );
                                 }
+                            } else if let Some(struct_decl) = struct_exports.get(&name.name) {
+                                // Exported struct type — inject into this module's symbol table
+                                self.symbol_table.add_struct_export(struct_decl.clone());
+                            } else if let Some(enum_decl) = enum_exports.get(&name.name) {
+                                // Exported enum type — inject into this module's symbol table
+                                self.symbol_table.add_enum_export(enum_decl.clone());
                             } else {
                                 // Exported symbol not found
                                 self.diagnostics.push(

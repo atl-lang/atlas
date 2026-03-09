@@ -226,6 +226,10 @@ impl Compiler {
                         self.compile_stmt(&crate::ast::Stmt::VarDecl(var.clone()))
                     }
                     crate::ast::ExportItem::TypeAlias(_) => Ok(()),
+                    crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                        // Type declarations only — no bytecode generated
+                        Ok(())
+                    }
                 }
             }
             Item::Extern(_) => {

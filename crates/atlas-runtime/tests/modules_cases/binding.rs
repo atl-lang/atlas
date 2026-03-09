@@ -308,3 +308,106 @@ export fn bar() -> number {
     assert!(exports.contains_key("foo"));
     assert!(exports.contains_key("bar"));
 }
+
+// H-181 / H-185: export struct and export enum
+// ============================================================================
+
+#[test]
+fn test_issue_h181_export_struct_parses() {
+    // export struct must parse without error
+    let source = r#"
+export struct Person {
+    name: string,
+    age: number
+}
+"#;
+    let (_, diags) = bind_module(source);
+    assert!(
+        diags.is_empty(),
+        "Expected no diagnostics for export struct, got: {:?}",
+        diags
+    );
+}
+
+#[test]
+fn test_issue_h185_export_enum_parses() {
+    // export enum must parse without error
+    let source = r#"
+export enum Status {
+    Active,
+    Inactive,
+    Pending(string)
+}
+"#;
+    let (_, diags) = bind_module(source);
+    assert!(
+        diags.is_empty(),
+        "Expected no diagnostics for export enum, got: {:?}",
+        diags
+    );
+}
+
+#[test]
+fn test_export_struct_in_struct_exports() {
+    // After binding, exported struct must appear in struct_exports
+    let source = r#"
+export struct Person {
+    name: string,
+    age: number
+}
+"#;
+    let (symbol_table, diags) = bind_module(source);
+    assert!(diags.is_empty(), "Unexpected diagnostics: {:?}", diags);
+    let struct_exports = symbol_table.get_struct_exports();
+    assert!(
+        struct_exports.contains_key("Person"),
+        "Expected 'Person' in struct_exports, got: {:?}",
+        struct_exports.keys().collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_export_enum_in_enum_exports() {
+    // After binding, exported enum must appear in enum_exports
+    let source = r#"
+export enum Status {
+    Active,
+    Inactive
+}
+"#;
+    let (symbol_table, diags) = bind_module(source);
+    assert!(diags.is_empty(), "Unexpected diagnostics: {:?}", diags);
+    let enum_exports = symbol_table.get_enum_exports();
+    assert!(
+        enum_exports.contains_key("Status"),
+        "Expected 'Status' in enum_exports, got: {:?}",
+        enum_exports.keys().collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn test_export_struct_and_function_together() {
+    // export struct must not break sibling export fn
+    let source = r#"
+export struct Point {
+    x: number,
+    y: number
+}
+
+export fn distance(borrow p: Point) -> number {
+    return 0.0;
+}
+"#;
+    let (symbol_table, diags) = bind_module(source);
+    assert!(diags.is_empty(), "Unexpected diagnostics: {:?}", diags);
+    let exports = symbol_table.get_exports();
+    assert!(
+        exports.contains_key("distance"),
+        "distance must be exported"
+    );
+    let struct_exports = symbol_table.get_struct_exports();
+    assert!(
+        struct_exports.contains_key("Point"),
+        "Point must be in struct_exports"
+    );
+}
