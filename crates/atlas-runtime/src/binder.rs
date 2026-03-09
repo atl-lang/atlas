@@ -5,6 +5,7 @@
 //! 2. Bind all items and resolve identifiers
 
 use crate::ast::*;
+use crate::diagnostic::error_codes;
 use crate::diagnostic::Diagnostic;
 use crate::module_loader::ModuleRegistry;
 use crate::span::Span;
@@ -93,13 +94,15 @@ impl Binder {
 
                         if !exported {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT5004",
-                                    format!("Cannot export '{}': symbol not found", name),
-                                    export_decl.span,
-                                )
-                                .with_label("export declaration")
-                                .with_help(format!("define '{}' before exporting it", name)),
+                                error_codes::EXPORT_NOT_FOUND
+                                    .emit(export_decl.span)
+                                    .arg(
+                                        "detail",
+                                        format!("Cannot export '{}': symbol not found", name),
+                                    )
+                                    .build()
+                                    .with_label("export declaration")
+                                    .with_help(format!("define '{}' before exporting it", name)),
                             );
                         }
                     }
@@ -180,13 +183,15 @@ impl Binder {
 
                         if !exported {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    "AT5004",
-                                    format!("Cannot export '{}': symbol not found", name),
-                                    export_decl.span,
-                                )
-                                .with_label("export declaration")
-                                .with_help(format!("define '{}' before exporting it", name)),
+                                error_codes::EXPORT_NOT_FOUND
+                                    .emit(export_decl.span)
+                                    .arg(
+                                        "detail",
+                                        format!("Cannot export '{}': symbol not found", name),
+                                    )
+                                    .build()
+                                    .with_label("export declaration")
+                                    .with_help(format!("define '{}' before exporting it", name)),
                             );
                         }
                     }
@@ -204,14 +209,10 @@ impl Binder {
     fn hoist_function(&mut self, func: &FunctionDecl) {
         // Check for global shadowing of prelude builtins
         if self.symbol_table.is_prelude_builtin(&func.name.name) {
-            let diag = Diagnostic::error_with_code(
-                "AT1012",
-                format!(
+            let diag = error_codes::SHADOWING_PRELUDE.emit(func.name.span).arg("detail", format!(
                     "Cannot shadow prelude builtin '{}' in global scope",
                     func.name.name
-                ),
-                func.name.span,
-            )
+                )).build()
             .with_label("shadows prelude builtin")
             .with_help("Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.".to_string());
 
@@ -267,7 +268,10 @@ impl Binder {
 
         if let Err(err) = self.symbol_table.define_function(symbol) {
             let (msg, existing) = *err;
-            let mut diag = Diagnostic::error_with_code("AT2003", &msg, func.name.span)
+            let mut diag = error_codes::DUPLICATE_DECLARATION
+                .emit(func.name.span)
+                .arg("detail", &msg)
+                .build()
                 .with_label("redeclaration")
                 .with_help(format!(
                     "rename or remove one of the '{}' declarations",
@@ -351,7 +355,10 @@ impl Binder {
         // Use define_scoped_function to add to current scope (not global functions)
         if let Err(err) = self.symbol_table.define_scoped_function(symbol) {
             let (msg, existing) = *err;
-            let mut diag = Diagnostic::error_with_code("AT2003", &msg, func.name.span)
+            let mut diag = error_codes::DUPLICATE_DECLARATION
+                .emit(func.name.span)
+                .arg("detail", &msg)
+                .build()
                 .with_label("redeclaration")
                 .with_help(format!(
                     "rename or remove one of the '{}' declarations",
@@ -488,15 +495,17 @@ impl Binder {
             None => {
                 // Source module not in registry - error
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT5005",
-                        format!("Cannot find module '{}'", import_decl.source),
-                        import_decl.span,
-                    )
-                    .with_label("import statement")
-                    .with_help(
-                        "ensure the module exists and has been loaded before importing from it",
-                    ),
+                    error_codes::IMPORT_RESOLUTION_FAILED
+                        .emit(import_decl.span)
+                        .arg(
+                            "detail",
+                            format!("Cannot find module '{}'", import_decl.source),
+                        )
+                        .build()
+                        .with_label("import statement")
+                        .with_help(
+                            "ensure the module exists and has been loaded before importing from it",
+                        ),
                 );
                 return;
             }
@@ -529,7 +538,7 @@ impl Binder {
                             if let Err(err) = self.symbol_table.define(imported_symbol) {
                                 let (msg, _) = *err;
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code("AT2003", &msg, *span)
+                                    error_codes::DUPLICATE_DECLARATION.emit(*span).arg("detail", &msg).build()
                                         .with_label("imported symbol")
                                         .with_help("rename the import or remove the conflicting local declaration"),
                                 );
@@ -543,7 +552,7 @@ impl Binder {
                                 {
                                     let (msg, _) = *err;
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code("AT2003", &msg, *span)
+                                        error_codes::DUPLICATE_DECLARATION.emit(*span).arg("detail", &msg).build()
                                             .with_label("imported type alias")
                                             .with_help(
                                                 "rename the import or remove the conflicting alias declaration",
@@ -559,14 +568,10 @@ impl Binder {
                             } else {
                                 // Exported symbol not found
                                 self.diagnostics.push(
-                                    Diagnostic::error_with_code(
-                                        "AT5006",
-                                        format!(
+                                    error_codes::MODULE_NOT_EXPORTED.emit(*span).arg("detail", format!(
                                             "Module '{}' does not export '{}'",
                                             import_decl.source, name.name
-                                        ),
-                                        *span,
-                                    )
+                                        )).build()
                                     .with_label("imported name")
                                     .with_help(
                                         "check the module's exports or import a different symbol",
@@ -599,7 +604,10 @@ impl Binder {
                     if let Err(err) = self.symbol_table.define(imported_symbol) {
                         let (msg, _) = *err;
                         self.diagnostics.push(
-                            Diagnostic::error_with_code("AT2003", &msg, *span)
+                            error_codes::DUPLICATE_DECLARATION
+                                .emit(*span)
+                                .arg("detail", &msg)
+                                .build()
                                 .with_label("namespace import")
                                 .with_help(
                                     "rename the import or remove the conflicting local declaration",
@@ -653,13 +661,15 @@ impl Binder {
         for param in &alias.type_params {
             if !seen.insert(param.name.clone()) {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT2003",
-                        format!("Duplicate type parameter '{}'", param.name),
-                        param.span,
-                    )
-                    .with_label("duplicate type parameter")
-                    .with_help("remove or rename the duplicate type parameter"),
+                    error_codes::DUPLICATE_DECLARATION
+                        .emit(param.span)
+                        .arg(
+                            "detail",
+                            format!("Duplicate type parameter '{}'", param.name),
+                        )
+                        .build()
+                        .with_label("duplicate type parameter")
+                        .with_help("remove or rename the duplicate type parameter"),
                 );
                 return;
             }
@@ -667,7 +677,10 @@ impl Binder {
 
         if let Err(err) = self.symbol_table.define_type_alias(alias.clone()) {
             let (msg, existing) = *err;
-            let mut diag = Diagnostic::error_with_code("AT2003", &msg, alias.name.span)
+            let mut diag = error_codes::DUPLICATE_DECLARATION
+                .emit(alias.name.span)
+                .arg("detail", &msg)
+                .build()
                 .with_label("duplicate type alias")
                 .with_help(format!(
                     "rename or remove one of the '{}' aliases",
@@ -714,7 +727,10 @@ impl Binder {
 
             if let Err(err) = self.symbol_table.define(symbol) {
                 let (msg, existing) = *err;
-                let mut diag = Diagnostic::error_with_code("AT2003", &msg, param.name.span)
+                let mut diag = error_codes::DUPLICATE_DECLARATION
+                    .emit(param.name.span)
+                    .arg("detail", &msg)
+                    .build()
                     .with_label("parameter redeclaration")
                     .with_help(format!(
                         "rename this parameter to avoid conflict with '{}'",
@@ -779,14 +795,10 @@ impl Binder {
                 if self.symbol_table.is_global_scope()
                     && self.symbol_table.is_prelude_builtin(&var.name.name)
                 {
-                    let diag = Diagnostic::error_with_code(
-                        "AT1012",
-                        format!(
+                    let diag = error_codes::SHADOWING_PRELUDE.emit(var.name.span).arg("detail", format!(
                             "Cannot shadow prelude builtin '{}' in global scope",
                             var.name.name
-                        ),
-                        var.name.span,
-                    )
+                        )).build()
                     .with_label("shadows prelude builtin")
                     .with_help("Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.".to_string());
 
@@ -815,7 +827,10 @@ impl Binder {
 
                 if let Err(err) = self.symbol_table.define(symbol) {
                     let (msg, existing) = *err;
-                    let mut diag = Diagnostic::error_with_code("AT2003", &msg, var.name.span)
+                    let mut diag = error_codes::DUPLICATE_DECLARATION
+                        .emit(var.name.span)
+                        .arg("detail", &msg)
+                        .build()
                         .with_label("variable redeclaration")
                         .with_help(format!(
                             "rename this variable or remove the previous declaration of '{}'",
@@ -879,9 +894,11 @@ impl Binder {
 
                 if let Err(err) = self.symbol_table.define(symbol) {
                     let (msg, existing) = *err;
-                    let mut diag =
-                        Diagnostic::error_with_code("AT2003", &msg, for_in_stmt.variable.span)
-                            .with_label("variable redeclaration");
+                    let mut diag = error_codes::DUPLICATE_DECLARATION
+                        .emit(for_in_stmt.variable.span)
+                        .arg("detail", &msg)
+                        .build()
+                        .with_label("variable redeclaration");
 
                     if let Some(existing_symbol) = existing {
                         diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
@@ -935,11 +952,7 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let mut diag = Diagnostic::error_with_code(
-                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL.code,
-                        format!("unknown symbol '{}'", id.name),
-                        id.span,
-                    )
+                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("detail", format!("unknown symbol '{}'", id.name)).build()
                     .with_label("undefined variable")
                     .with_help(format!(
                         "declare `{}` with `let` before assigning to it: `let {} = value;`",
@@ -986,11 +999,7 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let mut diag = Diagnostic::error_with_code(
-                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL.code,
-                        format!("unknown identifier `{}`", id.name),
-                        id.span,
-                    )
+                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("detail", format!("unknown identifier `{}`", id.name)).build()
                     .with_label("undefined identifier")
                     .with_help(format!(
                         "declare `{}` with `let` before using it: `let {} = value;`",
@@ -1370,13 +1379,15 @@ impl Binder {
         let alias_name = alias.name.name.clone();
         if self.type_alias_stack.contains(&alias_name) {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    format!("Circular type alias detected for '{}'", alias_name),
-                    span,
-                )
-                .with_label("circular type alias")
-                .with_help("remove the circular reference in type aliases"),
+                error_codes::TYPE_ERROR
+                    .emit(span)
+                    .arg(
+                        "detail",
+                        format!("Circular type alias detected for '{}'", alias_name),
+                    )
+                    .build()
+                    .with_label("circular type alias")
+                    .with_help("remove the circular reference in type aliases"),
             );
             return Type::Unknown;
         }
