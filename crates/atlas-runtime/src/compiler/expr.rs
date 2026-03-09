@@ -1731,7 +1731,7 @@ impl Compiler {
 
         let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
             vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
                 "Internal error: missing upvalue context",
                 span,
             )]

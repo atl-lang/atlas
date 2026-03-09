@@ -2346,7 +2346,7 @@ impl VM {
                                         };
                                         self.runtime_warnings.push(
                                             crate::diagnostic::Diagnostic::warning_with_code(
-                                                crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE,
+                                                crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE.code,
                                                 format!(
                                                     "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
                                                     ann_str,
@@ -2465,7 +2465,7 @@ impl VM {
                                     };
                                     self.runtime_warnings.push(
                                         crate::diagnostic::Diagnostic::warning_with_code(
-                                            crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE,
+                                            crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE.code,
                                             format!(
                                                 "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
                                                 ann_str,

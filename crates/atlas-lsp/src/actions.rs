@@ -92,28 +92,28 @@ fn generate_quick_fixes(
 
     match code {
         // AT0002: Undefined symbol - suggest declaration
-        c if c == error_codes::UNDEFINED_SYMBOL => {
+        c if c == error_codes::UNDEFINED_SYMBOL.code => {
             if let Some(action) = fix_undefined_symbol(uri, text, lsp_diag) {
                 actions.push(action);
             }
         }
 
         // AT1002: Unterminated string - add closing quote
-        c if c == error_codes::UNTERMINATED_STRING => {
+        c if c == error_codes::UNTERMINATED_STRING.code => {
             if let Some(action) = fix_unterminated_string(uri, lsp_diag) {
                 actions.push(action);
             }
         }
 
         // AT3003: Immutable assignment - suggest var instead of let
-        c if c == error_codes::IMMUTABLE_ASSIGNMENT => {
+        c if c == error_codes::IMMUTABLE_ASSIGNMENT.code => {
             if let Some(action) = fix_immutable_assignment(uri, text, lsp_diag) {
                 actions.push(action);
             }
         }
 
         // AT3005: Arity mismatch - remove or add arguments
-        c if c == error_codes::ARITY_MISMATCH => {
+        c if c == error_codes::ARITY_MISMATCH.code => {
             // Suggest checking function signature
             actions.push(create_diagnostic_action(
                 "Check function signature",
@@ -123,7 +123,7 @@ fn generate_quick_fixes(
         }
 
         // AT2001: Unused variable - prefix with underscore or remove
-        c if c == error_codes::UNUSED_VARIABLE => {
+        c if c == error_codes::UNUSED_VARIABLE.code => {
             if let Some(action) = fix_unused_variable(uri, text, lsp_diag) {
                 actions.push(action);
             }
@@ -133,14 +133,14 @@ fn generate_quick_fixes(
         }
 
         // AT2008: Unused import - remove it
-        c if c == error_codes::UNUSED_IMPORT => {
+        c if c == error_codes::UNUSED_IMPORT.code => {
             if let Some(action) = remove_unused_import(uri, text, lsp_diag) {
                 actions.push(action);
             }
         }
 
         // AT5002: Module not found - suggest creating it
-        c if c == error_codes::MODULE_NOT_FOUND => {
+        c if c == error_codes::MODULE_NOT_FOUND.code => {
             actions.push(create_diagnostic_action(
                 "Create missing module",
                 uri,
@@ -149,7 +149,7 @@ fn generate_quick_fixes(
         }
 
         // AT3027: Non-exhaustive match - add wildcard arm
-        c if c == error_codes::NON_EXHAUSTIVE_MATCH => {
+        c if c == error_codes::NON_EXHAUSTIVE_MATCH.code => {
             if let Some(action) = add_wildcard_arm(uri, text, lsp_diag) {
                 actions.push(action);
             }

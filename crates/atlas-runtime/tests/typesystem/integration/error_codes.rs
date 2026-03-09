@@ -83,16 +83,16 @@ fn test_at2013_is_warning_not_error() {
 #[test]
 fn test_at3xxx_codes_in_expected_range() {
     use atlas_runtime::diagnostic::error_codes;
-    let trait_codes = [
-        error_codes::IMPL_ALREADY_EXISTS,
-        error_codes::TRAIT_REDEFINES_BUILTIN,
-        error_codes::TRAIT_ALREADY_DEFINED,
-        error_codes::TRAIT_NOT_FOUND,
-        error_codes::IMPL_METHOD_MISSING,
-        error_codes::IMPL_METHOD_SIGNATURE_MISMATCH,
-        error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT,
-        error_codes::COPY_TYPE_REQUIRED,
-        error_codes::TRAIT_BOUND_NOT_SATISFIED,
+    let trait_codes: Vec<&str> = vec![
+        error_codes::IMPL_ALREADY_EXISTS.code,
+        error_codes::TRAIT_REDEFINES_BUILTIN.code,
+        error_codes::TRAIT_ALREADY_DEFINED.code,
+        error_codes::TRAIT_NOT_FOUND.code,
+        error_codes::IMPL_METHOD_MISSING.code,
+        error_codes::IMPL_METHOD_SIGNATURE_MISMATCH.code,
+        error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT.code,
+        error_codes::COPY_TYPE_REQUIRED.code,
+        error_codes::TRAIT_BOUND_NOT_SATISFIED.code,
     ];
     for code in &trait_codes {
         assert!(
@@ -102,7 +102,9 @@ fn test_at3xxx_codes_in_expected_range() {
         );
     }
     // AT2013 is a warning, correctly in AT2xxx range
-    assert!(error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION.starts_with("AT2"));
+    assert!(error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION
+        .code
+        .starts_with("AT2"));
 }
 
 // NOTE: test block removed — required access to private function `len`

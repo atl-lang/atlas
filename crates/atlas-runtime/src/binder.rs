@@ -936,7 +936,7 @@ impl Binder {
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
                     let mut diag = Diagnostic::error_with_code(
-                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL.code,
                         format!("unknown symbol '{}'", id.name),
                         id.span,
                     )
@@ -987,7 +987,7 @@ impl Binder {
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
                     let mut diag = Diagnostic::error_with_code(
-                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL,
+                        crate::diagnostic::error_codes::UNDEFINED_SYMBOL.code,
                         format!("unknown identifier `{}`", id.name),
                         id.span,
                     )

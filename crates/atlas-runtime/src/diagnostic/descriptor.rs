@@ -42,6 +42,10 @@ pub enum DiagnosticDomain {
 ///
 /// Descriptors are `const` — they live in the data segment and are referenced
 /// by pointer. No heap allocation is needed until `emit()` is called.
+///
+/// `Copy` is intentional: all fields are `&'static str` or plain enums — zero
+/// heap allocation, trivially copyable.
+#[derive(Copy, Clone)]
 pub struct DiagnosticDescriptor {
     /// Error code string, e.g. `"AT1000"`.
     pub code: &'static str,

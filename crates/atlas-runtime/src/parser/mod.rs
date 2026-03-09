@@ -11,13 +11,14 @@ use crate::diagnostic::Diagnostic;
 use crate::span::Span;
 use crate::token::{Token, TokenKind};
 
-// Parser error codes
-const E_GENERIC: &str = "AT1000"; // Generic/uncategorized parse error
-const E_BAD_NUMBER: &str = "AT1001"; // Invalid number literal
-const E_MISSING_SEMI: &str = "AT1020"; // Missing semicolon (AT1002 is unterminated string)
-const E_MISSING_BRACE: &str = "AT1003"; // Missing closing brace/bracket/paren
-const E_UNEXPECTED: &str = "AT1004"; // Unexpected token
-const E_RESERVED: &str = "AT1005"; // Reserved keyword used as identifier
+// Parser error code strings — keep as &str for internal parser helpers.
+// These match the DiagnosticDescriptor.code values in error_codes.rs exactly.
+const E_GENERIC: &str = "AT1000"; // SYNTAX_ERROR — generic/uncategorized parse error
+const E_BAD_NUMBER: &str = "AT1005"; // INVALID_NUMBER — invalid number literal
+const E_MISSING_SEMI: &str = "AT1020"; // MISSING_SEMICOLON
+const E_MISSING_BRACE: &str = "AT1021"; // MISSING_CLOSING_DELIMITER — was wrongly AT1003
+const E_UNEXPECTED: &str = "AT1001"; // UNEXPECTED_TOKEN — was wrongly AT1004
+const E_RESERVED: &str = "AT1022"; // RESERVED_KEYWORD_AS_IDENTIFIER — was wrongly AT1005
 
 /// Parser state for building AST from tokens
 pub struct Parser {

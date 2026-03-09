@@ -1150,7 +1150,7 @@ impl Parser {
                     if id.name == field_name.name {
                         self.diagnostics.push(
                             Diagnostic::warning_with_code(
-                                error_codes::GENERIC_WARNING,
+                                error_codes::GENERIC_WARNING.code,
                                 format!(
                                     "Redundant field value for '{}'; shorthand is available",
                                     field_name.name

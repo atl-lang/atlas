@@ -71,7 +71,7 @@ impl Compiler {
         // Pop upvalue context — now we know all captured outer-scope variables
         let upvalue_ctx = self.upvalue_stack.pop().ok_or_else(|| {
             vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
                 "Internal error: missing upvalue context",
                 func.span,
             )]
@@ -489,7 +489,7 @@ impl Compiler {
         // Patch all break statements
         let loop_ctx = self.loops.pop().ok_or_else(|| {
             vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
                 "Internal error: missing loop context",
                 while_stmt.span,
             )]
@@ -629,7 +629,7 @@ impl Compiler {
         self.bytecode.patch_jump(exit_jump);
         let loop_ctx = self.loops.pop().ok_or_else(|| {
             vec![Diagnostic::error_with_code(
-                crate::diagnostic::error_codes::INTERNAL_ERROR,
+                crate::diagnostic::error_codes::INTERNAL_ERROR.code,
                 "Internal error: missing loop context",
                 span,
             )]

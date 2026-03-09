@@ -20,7 +20,7 @@ impl Parser {
             match lexeme.as_str() {
                 "echo" => {
                     self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_ECHO,
+                        FOREIGN_SYNTAX_ECHO.code,
                         "`echo` is not valid Atlas syntax",
                         "`echo` is not an Atlas keyword.\n  Use: print(expr)\n  Example: print(\"hello, world\")",
                     );
@@ -28,7 +28,7 @@ impl Parser {
                 }
                 "var" => {
                     self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_VAR,
+                        FOREIGN_SYNTAX_VAR.code,
                         "`var` is not valid Atlas syntax",
                         "`var` is not an Atlas keyword.\n  Use: let name = value         (immutable)\n       let mut name = value     (mutable)\n  Example: let x = 42  |  let mut count = 0",
                     );
@@ -36,7 +36,7 @@ impl Parser {
                 }
                 "function" => {
                     self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_FUNCTION_KW,
+                        FOREIGN_SYNTAX_FUNCTION_KW.code,
                         "`function` keyword is not valid Atlas syntax",
                         "`function` is not an Atlas keyword.\n  Use: fn name(own param: Type) -> ReturnType { body }\n  Example: fn add(own a: number, own b: number) -> number { a + b }",
                     );
@@ -44,7 +44,7 @@ impl Parser {
                 }
                 "class" => {
                     self.error_with_dynamic_help(
-                        FOREIGN_SYNTAX_CLASS,
+                        FOREIGN_SYNTAX_CLASS.code,
                         "`class` is not valid Atlas syntax",
                         "`class` is not an Atlas keyword.\n  Use: struct Name { field: Type }\n  Example:\n    struct Point { x: number, y: number }\n    let p = Point { x: 1, y: 2 };",
                     );
@@ -60,7 +60,7 @@ impl Parser {
                         == Some(true);
                     if next_is_dot && next_is_log {
                         self.error_with_dynamic_help(
-                            FOREIGN_SYNTAX_CONSOLE_LOG,
+                            FOREIGN_SYNTAX_CONSOLE_LOG.code,
                             "`console.log` is not valid Atlas syntax",
                             "`console.log` is not Atlas syntax.\n  Use: print(expr)\n  Example: print(\"value: \" + str(x))",
                         );
@@ -82,7 +82,7 @@ impl Parser {
                 let help = format!(
                     "`{op}` increment/decrement operators do not exist in Atlas.\n  Use: {lexeme} = {lexeme} {atlas_op} 1\n  Or:  {lexeme} {atlas_op}= 1"
                 );
-                self.error_with_dynamic_help(FOREIGN_SYNTAX_INCREMENT, msg, help);
+                self.error_with_dynamic_help(FOREIGN_SYNTAX_INCREMENT.code, msg, help);
                 return Err(());
             }
         }
@@ -114,7 +114,7 @@ impl Parser {
             TokenKind::Fn => Ok(Stmt::FunctionDecl(self.parse_function()?)),
             TokenKind::Import => {
                 self.error_with_dynamic_help(
-                    FOREIGN_SYNTAX_IMPORT_FROM,
+                    FOREIGN_SYNTAX_IMPORT_FROM.code,
                     "`import` statement is not valid here",
                     "`import X from \"module\"` is not Atlas syntax.\n  Use: import { name } from \"./module\"\n  Or for external modules: see docs/language/modules.md",
                 );
@@ -247,7 +247,7 @@ impl Parser {
                 IndexValue::Single(index) => {
                     if matches!(index.as_ref(), Expr::Range { .. }) {
                         self.error_with_dynamic_help(
-                            INVALID_ASSIGN_TARGET_RANGE,
+                            INVALID_ASSIGN_TARGET_RANGE.code,
                             "cannot assign to a range index — only specific indices are valid",
                             "Array slice assignments are not supported. Assign to a specific index:\n  arr[0] = value   ✓\n  arr[0..3] = ...  ✗",
                         );
@@ -263,7 +263,7 @@ impl Parser {
             Expr::Member(member) => {
                 if member.args.is_some() {
                     self.error_with_dynamic_help(
-                        INVALID_ASSIGN_TARGET_CALL,
+                        INVALID_ASSIGN_TARGET_CALL.code,
                         "cannot assign to the result of a method call",
                         "Method call results are not addressable. Assign to a variable first:\n  let mut result = obj.method();\n  result = newValue;",
                     );
@@ -274,7 +274,7 @@ impl Parser {
                     Expr::Identifier(_) | Expr::Member(_) | Expr::Index(_)
                 ) {
                     self.error_with_dynamic_help(
-                        INVALID_ASSIGN_TARGET_MEMBER,
+                        INVALID_ASSIGN_TARGET_MEMBER.code,
                         "cannot assign to a member of a non-addressable expression",
                         "Only variable, index, and member expressions are valid assignment targets:\n  x = value          ✓  (variable)\n  arr[0] = value     ✓  (index)\n  obj.field = value  ✓  (member of variable)\n  f().field = value  ✗  (member of call result)",
                     );
@@ -288,7 +288,7 @@ impl Parser {
             }
             _ => {
                 self.error_with_dynamic_help(
-                    INVALID_ASSIGN_TARGET,
+                    INVALID_ASSIGN_TARGET.code,
                     "expression is not a valid assignment target",
                     "Valid assignment targets: variables, array indices, and struct fields.\n  x = value          ✓\n  arr[i] = value     ✓\n  obj.field = value  ✓",
                 );

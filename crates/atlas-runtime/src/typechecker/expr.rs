@@ -123,7 +123,7 @@ impl<'a> TypeChecker<'a> {
                 if self.moved_vars.contains(&id.name) {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
-                            error_codes::USE_AFTER_OWN,
+                            error_codes::USE_AFTER_OWN.code,
                             format!(
                                 "use of moved value `{}`: value was transferred via `own` and is no longer valid",
                                 id.name
@@ -252,7 +252,7 @@ impl<'a> TypeChecker<'a> {
                             if ownership == Some(OwnershipAnnotation::Borrow) {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
-                                        error_codes::BORROW_ESCAPE,
+                                        error_codes::BORROW_ESCAPE.code,
                                         format!(
                                             "cannot use `borrow` parameter `{}` as a struct field: \
                                              borrows cannot outlive their scope",
@@ -426,7 +426,7 @@ impl<'a> TypeChecker<'a> {
                 if !self.in_async_context {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
-                            error_codes::AWAIT_OUTSIDE_ASYNC,
+                            error_codes::AWAIT_OUTSIDE_ASYNC.code,
                             "`await` used outside of an async function or top-level scope"
                                 .to_string(),
                             *span,
@@ -451,7 +451,7 @@ impl<'a> TypeChecker<'a> {
                     _ => {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
-                                error_codes::AWAIT_NON_FUTURE,
+                                error_codes::AWAIT_NON_FUTURE.code,
                                 format!(
                                     "`await` applied to a non-Future value of type `{}`",
                                     operand_norm.display_name()
@@ -668,7 +668,7 @@ impl<'a> TypeChecker<'a> {
                         if caller_ownership == Some(OwnershipAnnotation::Borrow) {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
-                                    error_codes::BORROW_TO_OWN,
+                                    error_codes::BORROW_TO_OWN.code,
                                     format!(
                                         "passing borrowed parameter `{}` to `own` parameter — \
                                          ownership cannot transfer",
@@ -683,7 +683,7 @@ impl<'a> TypeChecker<'a> {
                             // something that is shared (caller still holds a valid ref)
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
-                                    error_codes::SHARE_VIOLATION,
+                                    error_codes::SHARE_VIOLATION.code,
                                     format!(
                                         "cannot pass `share` parameter `{}` to `own` parameter: \
                                          ownership cannot transfer from a shared reference",
@@ -724,7 +724,7 @@ impl<'a> TypeChecker<'a> {
                             if !is_shared {
                                 self.diagnostics.push(
                                     Diagnostic::error_with_code(
-                                        error_codes::NON_SHARED_TO_SHARED,
+                                        error_codes::NON_SHARED_TO_SHARED.code,
                                         format!(
                                             "expected `share<T>` value for `share` parameter, \
                                              found `{}`",
@@ -752,7 +752,7 @@ impl<'a> TypeChecker<'a> {
                         if self.is_move_type(arg_type) {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
-                                    error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION,
+                                    error_codes::MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION.code,
                                     format!(
                                         "Type '{}' is not Copy — consider annotating with \
                                          'own' or 'borrow' to clarify ownership intent",
@@ -2197,7 +2197,7 @@ impl<'a> TypeChecker<'a> {
                 let type_display = self.nominal_display_name(&target_type);
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
-                        error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT,
+                        error_codes::TYPE_DOES_NOT_IMPLEMENT_TRAIT.code,
                         format!(
                             "Type '{}' does not implement trait '{}' required for method '{}'",
                             type_display, trait_name, method_name

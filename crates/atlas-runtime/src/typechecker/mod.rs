@@ -999,7 +999,7 @@ impl<'a> TypeChecker<'a> {
         // Error if re-declaring a built-in trait
         if self.trait_registry.is_built_in(&trait_name) {
             self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_REDEFINES_BUILTIN,
+                error_codes::TRAIT_REDEFINES_BUILTIN.code,
                 format!("Cannot redefine built-in trait '{}'", trait_name),
                 trait_decl.name.span,
             ));
@@ -1009,7 +1009,7 @@ impl<'a> TypeChecker<'a> {
         // Error if duplicate user trait declaration
         if self.trait_registry.trait_exists(&trait_name) {
             self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_ALREADY_DEFINED,
+                error_codes::TRAIT_ALREADY_DEFINED.code,
                 format!("Trait '{}' is already defined", trait_name),
                 trait_decl.name.span,
             ));
@@ -1070,7 +1070,7 @@ impl<'a> TypeChecker<'a> {
         for super_name in &trait_decl.super_traits {
             if !self.trait_registry.trait_exists(super_name) {
                 self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::TRAIT_NOT_FOUND,
+                    error_codes::TRAIT_NOT_FOUND.code,
                     format!(
                         "Supertrait '{}' is not defined (required by trait '{}')",
                         super_name, trait_name
@@ -1120,7 +1120,7 @@ impl<'a> TypeChecker<'a> {
                 None => format!("Trait '{}' is not defined", trait_name),
             };
             self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_NOT_FOUND,
+                error_codes::TRAIT_NOT_FOUND.code,
                 msg,
                 trait_id.span,
             ));
@@ -1130,7 +1130,7 @@ impl<'a> TypeChecker<'a> {
         // 2. Check for duplicate impl
         if self.impl_registry.has_impl(&type_name, &trait_name) {
             self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::IMPL_ALREADY_EXISTS,
+                error_codes::IMPL_ALREADY_EXISTS.code,
                 format!("'{}' already implements '{}'", type_name, trait_name),
                 impl_block.span,
             ));
@@ -1210,7 +1210,7 @@ impl<'a> TypeChecker<'a> {
                         }
                     } else {
                         self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_MISSING,
+                            error_codes::IMPL_METHOD_MISSING.code,
                             format!(
                                 "Impl of '{}' for '{}' is missing required method '{}'",
                                 trait_name, type_name, required.name
@@ -1233,7 +1233,7 @@ impl<'a> TypeChecker<'a> {
 
                     if impl_param_types != required.param_types {
                         self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH,
+                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH.code,
                             format!(
                                 "Method '{}' in impl of '{}' for '{}' has wrong parameter types",
                                 required.name, trait_name, type_name
@@ -1246,7 +1246,7 @@ impl<'a> TypeChecker<'a> {
                     let impl_return = self.resolve_type_ref(&impl_method.return_type);
                     if impl_return != required.return_type {
                         self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH,
+                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH.code,
                             format!(
                                 "Method '{}' in impl of '{}' for '{}' has wrong return type",
                                 required.name, trait_name, type_name
@@ -1297,7 +1297,7 @@ impl<'a> TypeChecker<'a> {
             || type_to_impl_key(&impl_self_type).is_some();
         if !is_known_type {
             self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::INHERENT_IMPL_UNKNOWN_TYPE,
+                error_codes::INHERENT_IMPL_UNKNOWN_TYPE.code,
                 format!("Type '{}' is not declared in this scope", type_name),
                 impl_block.type_name.span,
             ));
@@ -1311,7 +1311,7 @@ impl<'a> TypeChecker<'a> {
             // AT3057: duplicate method name in this inherent impl.
             if !seen_methods.insert(method.name.name.clone()) {
                 self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    error_codes::INHERENT_METHOD_DUPLICATE.code,
                     format!(
                         "Duplicate method '{}' in inherent implementation of '{}'",
                         method.name.name, type_name
@@ -1327,7 +1327,7 @@ impl<'a> TypeChecker<'a> {
                 .contains_key(&(type_name.clone(), method.name.name.clone()))
             {
                 self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    error_codes::INHERENT_METHOD_DUPLICATE.code,
                     format!(
                         "Method '{}' already defined for '{}' in a previous impl block",
                         method.name.name, type_name
@@ -1342,7 +1342,7 @@ impl<'a> TypeChecker<'a> {
             if let Some(pos) = self_param_pos {
                 if pos != 0 {
                     self.diagnostics.push(Diagnostic::error_with_code(
-                        error_codes::INHERENT_SELF_NOT_FIRST,
+                        error_codes::INHERENT_SELF_NOT_FIRST.code,
                         format!(
                             "Self receiver in method '{}' must be the first parameter",
                             method.name.name
@@ -1354,7 +1354,7 @@ impl<'a> TypeChecker<'a> {
                 // D-038: self must have an ownership annotation.
                 if method.params[0].name.name == "self" && method.params[0].ownership.is_none() {
                     self.diagnostics.push(Diagnostic::error_with_code(
-                        error_codes::MISSING_OWNERSHIP_ANNOTATION,
+                        error_codes::MISSING_OWNERSHIP_ANNOTATION.code,
                         format!(
                             "Self receiver in method '{}' requires an ownership annotation (borrow self, own self, or share self)",
                             method.name.name
@@ -1370,7 +1370,7 @@ impl<'a> TypeChecker<'a> {
             });
             if shadows_trait {
                 self.diagnostics.push(Diagnostic::warning_with_code(
-                    error_codes::INHERENT_SHADOWS_TRAIT_METHOD,
+                    error_codes::INHERENT_SHADOWS_TRAIT_METHOD.code,
                     format!(
                         "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
                         method.name.name, type_name
@@ -1445,7 +1445,7 @@ impl<'a> TypeChecker<'a> {
         if func.is_async && func.name.name == "main" {
             self.diagnostics.push(
                 Diagnostic::error_with_code(
-                    error_codes::ASYNC_MAIN_FORBIDDEN,
+                    error_codes::ASYNC_MAIN_FORBIDDEN.code,
                     "`main` function cannot be declared `async`".to_string(),
                     func.name.span,
                 )
@@ -1606,7 +1606,7 @@ impl<'a> TypeChecker<'a> {
                         if matches!(ty, Type::Number | Type::Bool | Type::String) {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
-                                    error_codes::OWN_ON_PRIMITIVE,
+                                    error_codes::OWN_ON_PRIMITIVE.code,
                                     format!(
                                         "`own` annotation on parameter `{}` has no effect: \
                                          primitive types are always copied",
@@ -1624,7 +1624,7 @@ impl<'a> TypeChecker<'a> {
                         if matches!(&ty, Type::Generic { name, .. } if name == "share") {
                             self.diagnostics.push(
                                 Diagnostic::warning_with_code(
-                                    error_codes::BORROW_ON_SHARED,
+                                    error_codes::BORROW_ON_SHARED.code,
                                     format!(
                                         "`borrow` annotation on parameter `{}` is redundant: \
                                          `share<T>` already has reference semantics",
@@ -1839,7 +1839,7 @@ impl<'a> TypeChecker<'a> {
                     if ownership == Some(OwnershipAnnotation::Borrow) {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
-                                error_codes::BORROW_ESCAPE,
+                                error_codes::BORROW_ESCAPE.code,
                                 format!(
                                     "cannot store `borrow` parameter `{}` in a binding: \
                                      borrows cannot outlive their scope",
@@ -1933,7 +1933,7 @@ impl<'a> TypeChecker<'a> {
                     if is_empty_array_literal {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
-                                error_codes::INFERRED_TYPE_INCOMPATIBLE,
+                                error_codes::INFERRED_TYPE_INCOMPATIBLE.code,
                                 "Cannot infer type of empty array literal".to_string(),
                                 var.span,
                             )
@@ -2028,7 +2028,7 @@ impl<'a> TypeChecker<'a> {
                     if ownership == Some(OwnershipAnnotation::Share) {
                         self.diagnostics.push(
                             Diagnostic::error_with_code(
-                                error_codes::SHARE_VIOLATION,
+                                error_codes::SHARE_VIOLATION.code,
                                 format!(
                                     "cannot assign to `share` parameter `{}`: \
                                      share params are immutable from the callee's perspective",
@@ -2208,7 +2208,7 @@ impl<'a> TypeChecker<'a> {
                         if ownership == Some(OwnershipAnnotation::Borrow) {
                             self.diagnostics.push(
                                 Diagnostic::error_with_code(
-                                    error_codes::BORROW_ESCAPE,
+                                    error_codes::BORROW_ESCAPE.code,
                                     format!(
                                         "cannot return `borrow` parameter `{}`: \
                                          borrows cannot escape the function",
@@ -3401,7 +3401,7 @@ impl<'a> TypeChecker<'a> {
                 if !self.type_satisfies_trait_bound(&actual, trait_name) {
                     self.diagnostics.push(
                         Diagnostic::error_with_code(
-                            error_codes::TRAIT_BOUND_NOT_SATISFIED,
+                            error_codes::TRAIT_BOUND_NOT_SATISFIED.code,
                             format!(
                                 "Type '{}' does not implement trait '{}' required by type \
                                  parameter '{}'",

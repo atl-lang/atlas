@@ -12,25 +12,18 @@ pub fn run(code: &str) -> Result<()> {
             eprintln!("      Run `atlas explain --list` to see all codes.");
             std::process::exit(1);
         }
-        Some(info) => {
-            println!("{}", info.code);
+        Some(desc) => {
+            println!("{}", desc.code);
             println!();
             println!("Description");
             println!("-----------");
-            println!("{}", info.description);
+            println!("{}", desc.title);
 
-            if let Some(help) = info.help {
+            if let Some(help) = desc.static_help {
                 println!();
                 println!("Help");
                 println!("----");
                 println!("{}", help);
-            }
-
-            if let Some(example) = info.example {
-                println!();
-                println!("Example");
-                println!("-------");
-                println!("{}", example);
             }
         }
     }
@@ -38,13 +31,13 @@ pub fn run(code: &str) -> Result<()> {
     Ok(())
 }
 
-/// List all known error codes with their descriptions.
+/// List all known error codes with their titles.
 pub fn run_list() -> Result<()> {
-    let codes = error_codes::ERROR_CODES;
+    let codes = error_codes::DESCRIPTOR_REGISTRY;
     println!("{:<10}  Description", "Code");
     println!("{}", "-".repeat(70));
-    for info in codes {
-        println!("{:<10}  {}", info.code, info.description);
+    for desc in codes {
+        println!("{:<10}  {}", desc.code, desc.title);
     }
     Ok(())
 }
