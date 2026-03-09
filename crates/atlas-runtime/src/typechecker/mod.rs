@@ -1107,9 +1107,17 @@ impl<'a> TypeChecker<'a> {
 
         // 1. Verify trait exists
         if !self.trait_registry.trait_exists(&trait_name) {
+            let suggestion = suggestions::suggest_similar_name(
+                &trait_name,
+                self.trait_registry.traits.keys().map(|k| k.as_str()),
+            );
+            let msg = match suggestion {
+                Some(s) => format!("Trait '{}' is not defined — {}", trait_name, s),
+                None => format!("Trait '{}' is not defined", trait_name),
+            };
             self.diagnostics.push(Diagnostic::error_with_code(
                 error_codes::TRAIT_NOT_FOUND,
-                format!("Trait '{}' is not defined", trait_name),
+                msg,
                 trait_id.span,
             ));
             return;
@@ -2645,6 +2653,27 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Try to resolve a method call through the trait/impl system.
+    /// Collect method name suggestions for a type (stdlib + inherent), used by "method not found" errors.
+    pub(super) fn method_suggestion_for(
+        &self,
+        receiver_type: &Type,
+        method_name: &str,
+    ) -> Option<String> {
+        let type_name = type_to_impl_key_with_structs(receiver_type, &self.struct_type_cache)?;
+        let mut names: Vec<String> = self
+            .method_table
+            .method_names_for_type_str(&type_name)
+            .map(|s| s.to_owned())
+            .collect();
+        names.extend(
+            self.inherent_registry
+                .keys()
+                .filter(|(t, _)| t == &type_name)
+                .map(|(_, m)| m.clone()),
+        );
+        suggestions::suggest_similar_name(method_name, names.iter().map(|s| s.as_str()))
+    }
+
     /// Returns the return type if a matching impl method is found, `None` otherwise.
     /// Resolve an inherent method call (D-037: inherent methods take priority over trait methods).
     /// Returns `(return_type, type_name)` when found. Call site sets `trait_dispatch = Some((type_name, ""))`.
@@ -2830,10 +2859,25 @@ impl<'a> TypeChecker<'a> {
                         "tuple" | "Tuple" => {
                             "Atlas does not have tuples. Use a struct or an array instead.".to_string()
                         }
-                        _ => format!(
-                            "Unknown type '{}'. Check for typos, or define a `struct`, trait, or type alias named '{}'.",
-                            name, name
-                        ),
+                        _ => {
+                            let known: Vec<String> = self
+                                .struct_decls
+                                .keys()
+                                .chain(self.trait_registry.traits.keys())
+                                .chain(self.enum_names.iter())
+                                .cloned()
+                                .collect();
+                            let did_you_mean = suggestions::suggest_similar_name(
+                                name,
+                                known.iter().map(|s| s.as_str()),
+                            )
+                            .map(|s| format!(" — {}", s))
+                            .unwrap_or_default();
+                            format!(
+                                "Unknown type '{}'. Check for typos, or define a `struct`, trait, or type alias named '{}'.{}",
+                                name, name, did_you_mean
+                            )
+                        }
                     };
 
                     self.diagnostics.push(

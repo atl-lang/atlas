@@ -2181,6 +2181,20 @@ impl<'a> TypeChecker<'a> {
                 );
             } else {
                 // Method not found for this type (not a trait method either)
+                let suggestion = self.method_suggestion_for(&target_type, method_name);
+                let help = match suggestion {
+                    Some(s) => format!(
+                        "type '{}' does not support method '{}' — {}",
+                        target_type.display_name(),
+                        method_name,
+                        s
+                    ),
+                    None => format!(
+                        "type '{}' does not support method '{}'",
+                        target_type.display_name(),
+                        method_name
+                    ),
+                };
                 self.diagnostics.push(
                     Diagnostic::error_with_code(
                         "AT3010",
@@ -2192,11 +2206,7 @@ impl<'a> TypeChecker<'a> {
                         member.member.span,
                     )
                     .with_label("method not found")
-                    .with_help(format!(
-                        "type '{}' does not support method '{}'",
-                        target_type.display_name(),
-                        method_name
-                    )),
+                    .with_help(help),
                 );
             }
             Type::Unknown
