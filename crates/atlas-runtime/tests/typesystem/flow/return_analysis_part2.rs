@@ -243,3 +243,21 @@ fn test_multiple_functions_one_invalid() {
 }
 
 // ============================================================================
+#[test]
+fn test_return_in_match_arm_typed_as_never_h184() {
+    // H-184: `return` in a match arm must be typed as Never (bottom type),
+    // which is compatible with any other arm type.
+    // Pattern: match result { Ok(v) => v, Err(e) => return Err(e) }
+    let diagnostics = typecheck_source(
+        r#"
+        fn parse_and_double(borrow s: string) -> Result<number, string> {
+            let n = match parseInt(s, 10) {
+                Ok(v) => v,
+                Err(e) => return Err(e),
+            };
+            return Ok(n * 2.0);
+        }
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}

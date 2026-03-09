@@ -586,6 +586,15 @@ pub fn least_upper_bound(a: &Type, b: &Type) -> Option<Type> {
         return None;
     }
 
+    // Never is the bottom type — compatible with any type in unification.
+    // `match x { Ok(v) => v, Err(e) => return Err(e) }` → arms are T and Never → unified = T
+    if a_norm == Type::Never {
+        return Some(b_norm);
+    }
+    if b_norm == Type::Never {
+        return Some(a_norm);
+    }
+
     // Arrays: LUB of element types
     if let (Type::Array(ea), Type::Array(eb)) = (&a_norm, &b_norm) {
         return least_upper_bound(ea, eb).map(|lub| Type::Array(Box::new(lub)));

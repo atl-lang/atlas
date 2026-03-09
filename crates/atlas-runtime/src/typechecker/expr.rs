@@ -199,8 +199,14 @@ impl<'a> TypeChecker<'a> {
                 for stmt in &block.statements {
                     self.check_statement(stmt);
                 }
+                // If the block ends with a return/break/continue, its type is Never
+                // (the bottom type — compatible with any other type in unification).
+                let block_type = match block.statements.last() {
+                    Some(Stmt::Return(_)) => Type::Never,
+                    _ => Type::Unknown,
+                };
                 self.exit_scope();
-                Type::Unknown
+                block_type
             }
             Expr::ObjectLiteral(obj) => {
                 let mut members = Vec::with_capacity(obj.entries.len());
