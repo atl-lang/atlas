@@ -165,5 +165,6 @@ These load automatically based on which files you're editing:
 - `atlas-context-guard.md` — Context window management protocol (on `.rs` files)
 - `atlas-cross-platform.md` — Cross-platform testing rules (on test/source files)
 - `atlas-parity.md` — Interpreter/VM parity contract (on interpreter/VM/compiler files)
+- `atlas-diagnostics.md` — **Error quality contract D-043** (on diagnostic.rs, error_codes.rs, parser files) — BLOCKING standards, auto-enforced
 - `atlas-testing.md` — Test organization rules (on test files)
 - `atlas-ast.md`, `atlas-typechecker.md`, `atlas-interpreter.md`, `atlas-vm.md`, `atlas-syntax.md`
