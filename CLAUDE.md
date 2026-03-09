@@ -150,8 +150,8 @@ pt phase-add B<N> "Phase title" "desc"                   # repeat per phase
 # 7. AFTER ANY COMMIT TOUCHING SOURCE — fire atlas-doc-patch agent (Haiku, ~1-2 min)
 
 # 8. SESSION END — always last
-# Step 1: Overwrite ~/.project-tracker/handoffs/atlas-handoff.md (see atlas skill for template)
-pt done S-XXX success "what was done (IDs + root causes)" "next action (specific)"
+# No handoff file. Pass context through pt done directly — pt go shows it to the next agent.
+pt done S-XXX success "what was done (IDs + root causes)" "next action (specific enough to act on cold)"
 ```
 
 **Never narrate — act or file:** Any observation/risk said to user = gone after session.

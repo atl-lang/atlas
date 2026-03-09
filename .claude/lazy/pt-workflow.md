@@ -9,13 +9,13 @@
 
 ### Session Start
 ```bash
-pt go          # Full sitrep: session ID, mode, P0s, CI status, block progress, handoff (model auto-detected)
+pt go          # Full sitrep: session ID, mode, Next Action, P0s, CI status, block progress (model auto-detected)
 pt in-progress      # What's already claimed — avoid duplicate effort
 ```
-If handoff shows `~/.project-tracker/handoffs/atlas-handoff.md` → **read it before anything else**.
+`pt go` shows `── Next Action (from last session) ──` automatically — read it first, that's your starting point.
 If `Work: BLOCKED` → fix P0s first. No new features.
 Active plans: `pt plans` — shows open PL-XXX outcomes from brainstorm sessions.
-Quick mid-session orientation (no session overhead): `pt context`
+**Mid-session status check:** use `pt context` — read-only, no session side effects. Never call `pt go` mid-session.
 
 ### Picking Work
 ```bash
@@ -99,40 +99,19 @@ pt phase-delete B8-P01                   # Delete a phase (recounts block totals
 pt phase-update B8-P01 title "New"       # Update: title|description|status
 ```
 
-### Handoff File (MANDATORY before pt done)
-Overwrite `~/.project-tracker/handoffs/atlas-handoff.md` — REPLACE entirely, don't append:
-```markdown
-# Atlas Handoff — <session-id>
-
-**Updated:** <ISO timestamp> | **Commit:** <git sha> | **Agent:** <model>
-
-## What Was Done This Session
-<one sentence per issue/phase — specific: IDs, files, decisions. No bullet dumps.>
-
-## Current State
-<P0/P1/P2 counts, CI status, active block, any in-progress claims>
-
-## In-Flight Work
-<NONE — or: what was started but not finished, exact state, next concrete step>
-
-## Next Action
-<specific enough for cold-start: issue ID + what to do + file/function path>
-
-## Open Questions (Needs Architect Input)
-<NONE — or: decisions that need the architect, not implementation choices>
-
-## Critical Context (Don't Lose This)
-<anything a future agent would discover the hard way: patterns, pitfalls, non-obvious state>
-```
-`git add ~/.project-tracker/handoffs/atlas-handoff.md` — include in final commit or own `chore: update handoff` commit.
-
 ### Session Close
+No handoff file. Context is stored in the DB and surfaced automatically in `pt go`.
+
 ```bash
 pt done S-XXX success \
   "Fixed H-001 (cause → fix). Implemented Phase-04 (what was wired)." \
-  "Next: Phase-05 — Value::Future in runtime, file: crates/atlas-runtime/src/eval.rs"
+  "claim H-002 — fix Y in crates/atlas-runtime/src/eval.rs, grep for fn eval_expr"
 ```
-Format: one clause per issue/phase. Root cause + fix. Next: specific enough for cold-start.
+
+- **Arg 3 (summary):** backward-looking — what was done this session. One clause per issue/phase, root cause + fix.
+- **Arg 4 (next):** forward-looking — what the next agent should do first. Specific enough to act on without reading anything else: issue ID + action + file/function if known.
+
+The next agent sees this as `── Next Action (from last session) ──` in `pt go`, before P0 blockers. No extra steps needed.
 
 ---
 
@@ -171,8 +150,3 @@ pt gc               # Garbage collect stale records
 pt gc --aggressive  # Full GC
 ```
 
----
-
-## Handoff File Location
-`~/.project-tracker/handoffs/atlas-handoff.md` — NOT `.atlas-handoff.md` in project root.
-Centralized for GUI monitoring. Always this path.
