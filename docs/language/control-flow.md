@@ -56,6 +56,8 @@ match expr {
 ```
 - Arms may be separated by commas or semicolons.
 - A trailing separator is allowed.
+- `match` at statement position does not require a trailing semicolon (consistent with `if`, `while`, and `for`).
+- An empty block arm `{}` has type `void`.
 
 Example (tested):
 ```atlas

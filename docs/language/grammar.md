@@ -80,6 +80,7 @@ statement      := var_decl
                | if_stmt
                | while_stmt
                | for_in_stmt
+               | match_stmt
                | return_stmt
                | break_stmt
                | continue_stmt
@@ -96,6 +97,7 @@ assign_target  := IDENT
 if_stmt        := "if" expr block ("else" (if_stmt | block))?
 while_stmt     := "while" expr block
 for_in_stmt    := "for" IDENT "in" expr block
+match_stmt     := "match" expr "{" match_arm ( (","|";") match_arm )* (","|";")? "}"
 return_stmt    := "return" expr? ";"
 break_stmt     := "break" ";"
 continue_stmt  := "continue" ";"

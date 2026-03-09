@@ -1,17 +1,22 @@
 {
-  "committed_at": "2026-03-09T00:51:18Z",
-  "commit": "7ed5746",
+  "committed_at": "2026-03-09T04:42:12Z",
+  "commit": "2d29ff1",
   "changed_files": [
-    "crates/atlas-runtime/src/interpreter/expr.rs",
-    "crates/atlas-runtime/src/interpreter/stmt.rs",
-    "crates/atlas-runtime/tests/interpreter/integration/arrays.rs"
+    "crates/atlas-runtime/src/parser/stmt.rs",
+    "crates/atlas-runtime/src/typechecker/expr.rs",
+    "crates/atlas-runtime/tests/frontend_syntax/parser_control_flow.rs",
+    "crates/atlas-runtime/tests/typesystem/integration/error_codes.rs"
   ],
   "domains": [
-    "interpreter"
+    "parser",
+    "typechecker"
   ],
   "relevant_docs": [
-    "docs/known-issues.md"
+    "docs/known-issues.md",
+    "docs/language/control-flow.md",
+    "docs/language/grammar.md",
+    "docs/language/types.md"
   ],
   "status": "done",
-  "patched_at": "2026-03-09T03:04:22Z"
+  "patched_at": "2026-03-09T04:43:15Z"
 }
