@@ -1,6 +1,7 @@
-//! File I/O standard library functions
+//! File I/O and stdin standard library functions
 //!
-//! Provides file and directory operations with security checks and UTF-8 validation.
+//! Provides file and directory operations with security checks and UTF-8 validation,
+//! plus stdin reading for interactive CLI programs.
 //! All operations respect the SecurityContext permission model.
 
 use super::{stdlib_arg_error, stdlib_arity_error};
@@ -8,7 +9,85 @@ use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::value::{RuntimeError, Value};
 use std::fs;
+use std::io::BufRead;
 use std::path::{Path, PathBuf};
+
+/// Read one line from stdin (strips trailing newline).
+///
+/// Blocks until the user presses Enter. Returns the line as a string.
+/// EOF returns an empty string.
+pub fn io_read_line(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("ioReadLine", 0, args.len(), span));
+    }
+    let mut line = String::new();
+    std::io::stdin()
+        .lock()
+        .read_line(&mut line)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to read from stdin: {}", e),
+            span,
+        })?;
+    // Strip trailing \n or \r\n
+    if line.ends_with('\n') {
+        line.pop();
+        if line.ends_with('\r') {
+            line.pop();
+        }
+    }
+    Ok(Value::string(line))
+}
+
+/// Print a prompt then read one line from stdin (strips trailing newline).
+///
+/// Flushes stdout before reading so the prompt appears immediately.
+pub fn io_read_line_prompt(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("ioReadLinePrompt", 1, args.len(), span));
+    }
+    let prompt = match &args[0] {
+        Value::String(s) => s.as_ref().to_string(),
+        _ => {
+            return Err(stdlib_arg_error(
+                "ioReadLinePrompt",
+                "string",
+                &args[0],
+                span,
+            ))
+        }
+    };
+    use std::io::Write;
+    print!("{}", prompt);
+    std::io::stdout()
+        .flush()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to flush stdout: {}", e),
+            span,
+        })?;
+    let mut line = String::new();
+    std::io::stdin()
+        .lock()
+        .read_line(&mut line)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to read from stdin: {}", e),
+            span,
+        })?;
+    if line.ends_with('\n') {
+        line.pop();
+        if line.ends_with('\r') {
+            line.pop();
+        }
+    }
+    Ok(Value::string(line))
+}
 
 /// Read entire file as UTF-8 string
 ///

@@ -771,6 +771,10 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // File I/O functions
         // ====================================================================
+        m.insert("ioReadLine", |a, s, sc, _| io::io_read_line(a, s, sc));
+        m.insert("ioReadLinePrompt", |a, s, sc, _| {
+            io::io_read_line_prompt(a, s, sc)
+        });
         m.insert("readFile", |a, s, sc, _| io::read_file(a, s, sc));
         m.insert("writeFile", |a, s, sc, _| io::write_file(a, s, sc));
         m.insert("appendFile", |a, s, sc, _| io::append_file(a, s, sc));
@@ -1978,6 +1982,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("parseInt", "parse_int"),
             ("parseFloat", "parse_float"),
             // File I/O
+            ("ioReadLine", "io_read_line"),
+            ("ioReadLinePrompt", "io_read_line_prompt"),
             ("readFile", "read_file"),
             ("writeFile", "write_file"),
             ("appendFile", "append_file"),

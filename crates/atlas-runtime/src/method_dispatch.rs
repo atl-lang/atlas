@@ -41,6 +41,8 @@ pub enum TypeTag {
     CryptoNs,
     /// Static namespace: Regex.test(), Regex.match(), Regex.replace(), etc.
     RegexNs,
+    /// Static namespace: Io.readLine(), Io.readLinePrompt(), etc.
+    IoNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -68,6 +70,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::NetNs => resolve_net_ns_method(method_name),
         TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
         TypeTag::RegexNs => resolve_regex_ns_method(method_name),
+        TypeTag::IoNs => resolve_io_ns_method(method_name),
     }
 }
 
@@ -86,6 +89,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "Net"
             | "Crypto"
             | "Regex"
+            | "Io"
     )
 }
 
@@ -103,6 +107,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "Net" => Some(TypeTag::NetNs),
         "Crypto" => Some(TypeTag::CryptoNs),
         "Regex" => Some(TypeTag::RegexNs),
+        "Io" => Some(TypeTag::IoNs),
         _ => None,
     }
 }
@@ -652,4 +657,14 @@ pub fn is_callback_intrinsic(func_name: &str) -> bool {
             | "hashSetMap"
             | "hashSetFilter"
     )
+}
+
+/// Resolve Io.method() → stdlib function name.
+fn resolve_io_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "readLine" => "ioReadLine",
+        "readLinePrompt" => "ioReadLinePrompt",
+        _ => return None,
+    };
+    Some(func_name.to_string())
 }
