@@ -592,8 +592,10 @@ impl Interpreter {
             return Self::get_member_from_value(target_value, &member.member, member.span);
         }
 
-        // 1b. Check for trait dispatch (user-defined impl methods).
-        // The typechecker annotates `trait_dispatch` when a trait method is resolved.
+        // 1b. Check for trait/inherent dispatch (user-defined impl methods).
+        // The typechecker annotates `trait_dispatch` when a method is resolved.
+        // Empty trait_name = inherent dispatch (D-037): __impl__TypeName__MethodName
+        // Non-empty trait_name = trait dispatch:        __impl__TypeName__TraitName__MethodName
         if let Some((type_name, trait_name)) = member.trait_dispatch.borrow().clone() {
             let dispatch_type = if type_name.is_empty() {
                 self.struct_name_for_value(&target_value)
@@ -602,10 +604,14 @@ impl Interpreter {
             } else {
                 type_name
             };
-            let mangled_name = format!(
-                "__impl__{}__{}__{}",
-                dispatch_type, trait_name, member.member.name
-            );
+            let mangled_name = if trait_name.is_empty() {
+                format!("__impl__{}__{}", dispatch_type, member.member.name)
+            } else {
+                format!(
+                    "__impl__{}__{}__{}",
+                    dispatch_type, trait_name, member.member.name
+                )
+            };
             // Build argument list: receiver first (self), then method args
             let mut args = vec![target_value];
             if let Some(method_args) = &member.args {

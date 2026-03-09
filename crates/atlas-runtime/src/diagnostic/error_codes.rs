@@ -128,6 +128,23 @@ pub const BORROW_ESCAPE: &str = "AT3054";
 /// neither side may mutate through the shared reference.
 pub const SHARE_VIOLATION: &str = "AT3055";
 
+/// Fired when an inherent impl block names a type that has not been declared in scope.
+/// `impl UnknownType { ... }` — the type must be declared before the impl block.
+pub const INHERENT_IMPL_UNKNOWN_TYPE: &str = "AT3056";
+
+/// Fired when the same method name appears twice in an inherent impl block,
+/// or when a second inherent impl block for the same type re-declares a method.
+pub const INHERENT_METHOD_DUPLICATE: &str = "AT3057";
+
+/// Fired when a method in an inherent impl block has a `self` parameter that is
+/// not the first parameter. The `self` receiver must always be first (D-038).
+pub const INHERENT_SELF_NOT_FIRST: &str = "AT3058";
+
+/// Informational warning: an inherent method shadows a trait method of the same name
+/// on the same type (D-037). The inherent method wins. This is expected behaviour,
+/// but the warning helps catch accidental shadowing.
+pub const INHERENT_SHADOWS_TRAIT_METHOD: &str = "AW3059";
+
 // AT3xxx - Semantic and Type Checking Errors
 pub const TYPE_ERROR: &str = "AT3001";
 pub const BINARY_OP_TYPE_ERROR: &str = "AT3002";
@@ -674,6 +691,26 @@ pub static ERROR_CODES: &[ErrorCodeInfo] = &[
         code: "AT3055",
         description: "`share` parameter mutated or ownership-transferred",
         help: Some("`share` parameters are immutable from the callee's perspective. You cannot assign to a `share` param or pass it to an `own` parameter (which would transfer ownership of something you do not own)."),
+    },
+    ErrorCodeInfo {
+        code: "AT3056",
+        description: "Inherent impl block for unknown type",
+        help: Some("The type named in `impl TypeName { ... }` must be declared in the same file before the impl block. Declare a struct or type alias with that name first."),
+    },
+    ErrorCodeInfo {
+        code: "AT3057",
+        description: "Duplicate method in inherent impl",
+        help: Some("Each method name may appear only once in an inherent impl block for a given type. Rename one of the methods or remove the duplicate."),
+    },
+    ErrorCodeInfo {
+        code: "AT3058",
+        description: "Self receiver is not the first parameter in inherent impl method",
+        help: Some("The `self` receiver (e.g. `borrow self`) must be the first parameter in an impl method. Move the `self` parameter to the front of the parameter list."),
+    },
+    ErrorCodeInfo {
+        code: "AW3059",
+        description: "Inherent method shadows trait method of the same name (D-037)",
+        help: Some("An inherent impl method takes precedence over a trait method with the same name on the same type. This is expected behaviour — suppress with `@allow(inherent_shadow)` if intentional."),
     },
     ErrorCodeInfo {
         code: "AT3061",

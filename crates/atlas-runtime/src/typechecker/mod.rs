@@ -367,6 +367,9 @@ pub struct TypeChecker<'a> {
     pub trait_registry: TraitRegistry,
     /// Registry of all impl blocks keyed by (type_name, trait_name).
     pub impl_registry: ImplRegistry,
+    /// Registry of inherent impl methods keyed by (type_name, method_name).
+    /// Inherent methods take precedence over trait methods at call sites (D-037).
+    pub inherent_registry: HashMap<(String, String), ImplMethod>,
     /// Active type parameters in scope (including outer function params).
     active_type_params: Vec<crate::ast::TypeParam>,
     /// Struct declarations available in this module scope.
@@ -457,6 +460,7 @@ impl<'a> TypeChecker<'a> {
             moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
+            inherent_registry: HashMap::new(),
             active_type_params: Vec::new(),
             struct_decls: HashMap::new(),
             struct_type_cache: HashMap::new(),
@@ -1084,8 +1088,19 @@ impl<'a> TypeChecker<'a> {
     }
 
     /// Check an impl block: verify the trait exists, check method conformance, register.
+    /// Inherent impl blocks (no trait name) are handled separately in
+    /// `check_inherent_impl_block` (wired in B13-P03).
     fn check_impl_block(&mut self, impl_block: &ImplBlock) {
-        let trait_name = impl_block.trait_name.name.clone();
+        if impl_block.is_inherent() {
+            self.check_inherent_impl_block(impl_block);
+            return;
+        }
+
+        let trait_id = impl_block
+            .trait_name
+            .as_ref()
+            .expect("non-inherent impl has trait_name");
+        let trait_name = trait_id.name.clone();
         let type_name = impl_block.type_name.name.clone();
         let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
         let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
@@ -1095,7 +1110,7 @@ impl<'a> TypeChecker<'a> {
             self.diagnostics.push(Diagnostic::error_with_code(
                 error_codes::TRAIT_NOT_FOUND,
                 format!("Trait '{}' is not defined", trait_name),
-                impl_block.trait_name.span,
+                trait_id.span,
             ));
             return;
         }
@@ -1255,6 +1270,111 @@ impl<'a> TypeChecker<'a> {
             self.impl_registry
                 .register(&type_name, &trait_name, method_map);
             self.trait_registry.mark_implements(&type_name, &trait_name);
+        }
+    }
+
+    /// Check an inherent impl block: register methods into `inherent_registry` and typecheck bodies.
+    /// Validates self receiver ownership annotation (D-038).
+    fn check_inherent_impl_block(&mut self, impl_block: &ImplBlock) {
+        let type_name = impl_block.type_name.name.clone();
+        let impl_self_type_ref = TypeRef::Named(type_name.clone(), impl_block.type_name.span);
+        let impl_self_type = self.resolve_type_ref(&impl_self_type_ref);
+
+        // AT3056: type must be a known struct or primitive.
+        let is_known_type = self.struct_decls.contains_key(&type_name)
+            || type_to_impl_key(&impl_self_type).is_some();
+        if !is_known_type {
+            self.diagnostics.push(Diagnostic::error_with_code(
+                error_codes::INHERENT_IMPL_UNKNOWN_TYPE,
+                format!("Type '{}' is not declared in this scope", type_name),
+                impl_block.type_name.span,
+            ));
+            return;
+        }
+
+        // Track seen method names for AT3057 (duplicate method detection).
+        let mut seen_methods: std::collections::HashSet<String> = std::collections::HashSet::new();
+
+        for method in &impl_block.methods {
+            // AT3057: duplicate method name in this inherent impl.
+            if !seen_methods.insert(method.name.name.clone()) {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    format!(
+                        "Duplicate method '{}' in inherent implementation of '{}'",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
+                continue;
+            }
+
+            // Also check if already registered from a previous inherent impl block.
+            if self
+                .inherent_registry
+                .contains_key(&(type_name.clone(), method.name.name.clone()))
+            {
+                self.diagnostics.push(Diagnostic::error_with_code(
+                    error_codes::INHERENT_METHOD_DUPLICATE,
+                    format!(
+                        "Method '{}' already defined for '{}' in a previous impl block",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
+                continue;
+            }
+
+            // AT3058: self receiver must be first parameter.
+            let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
+            if let Some(pos) = self_param_pos {
+                if pos != 0 {
+                    self.diagnostics.push(Diagnostic::error_with_code(
+                        error_codes::INHERENT_SELF_NOT_FIRST,
+                        format!(
+                            "Self receiver in method '{}' must be the first parameter",
+                            method.name.name
+                        ),
+                        method.params[pos].span,
+                    ));
+                }
+
+                // D-038: self must have an ownership annotation.
+                if method.params[0].name.name == "self" && method.params[0].ownership.is_none() {
+                    self.diagnostics.push(Diagnostic::error_with_code(
+                        error_codes::MISSING_OWNERSHIP_ANNOTATION,
+                        format!(
+                            "Self receiver in method '{}' requires an ownership annotation (borrow self, own self, or share self)",
+                            method.name.name
+                        ),
+                        method.params[0].span,
+                    ));
+                }
+            }
+
+            // AW3059: warn if an inherent method shadows a trait method of the same name.
+            let shadows_trait = self.impl_registry.entries.iter().any(|((t, _), entry)| {
+                t == &type_name && entry.methods.contains_key(&method.name.name)
+            });
+            if shadows_trait {
+                self.diagnostics.push(Diagnostic::warning_with_code(
+                    error_codes::INHERENT_SHADOWS_TRAIT_METHOD,
+                    format!(
+                        "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
+                        method.name.name, type_name
+                    ),
+                    method.name.span,
+                ));
+            }
+
+            // Register into inherent_registry keyed by (type_name, method_name).
+            self.inherent_registry.insert(
+                (type_name.clone(), method.name.name.clone()),
+                method.clone(),
+            );
+
+            // Typecheck the method body.
+            self.check_impl_method_body(method, Some(&impl_self_type));
         }
     }
 
@@ -2490,7 +2610,7 @@ impl<'a> TypeChecker<'a> {
 
     /// Returns `true` if the given type implements `Copy` (value semantics).
     /// Built-in value types are always Copy. User types are Copy only if they have
-    /// an explicit `impl Copy for T { }` registered in the trait registry.
+    /// an explicit `impl Copy for T` (with methods) registered in the trait registry.
     pub fn is_copy_type(&self, ty: &Type) -> bool {
         match ty.normalized() {
             // All built-in value types are Copy
@@ -2526,6 +2646,22 @@ impl<'a> TypeChecker<'a> {
 
     /// Try to resolve a method call through the trait/impl system.
     /// Returns the return type if a matching impl method is found, `None` otherwise.
+    /// Resolve an inherent method call (D-037: inherent methods take priority over trait methods).
+    /// Returns `(return_type, type_name)` when found. Call site sets `trait_dispatch = Some((type_name, ""))`.
+    pub(super) fn resolve_inherent_method_call(
+        &mut self,
+        receiver_type: &Type,
+        method_name: &str,
+    ) -> Option<(Type, String)> {
+        let type_name = type_to_impl_key_with_structs(receiver_type, &self.struct_type_cache)?;
+        let method = self
+            .inherent_registry
+            .get(&(type_name.clone(), method_name.to_string()))
+            .cloned()?;
+        let return_type = self.resolve_type_ref(&method.return_type.clone());
+        Some((return_type, type_name))
+    }
+
     /// Only fires after stdlib method dispatch has failed (dispatch priority slot 2).
     /// Like `resolve_trait_method_call_with_info` but discards dispatch info.
     pub(super) fn resolve_trait_method_call_with_info(

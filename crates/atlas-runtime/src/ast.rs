@@ -268,14 +268,18 @@ pub struct ImplMethod {
 
 /// An impl block.
 ///
-/// Syntax: `impl TraitName for TypeName { fn method(...) { ... } }`
+/// Two forms:
+/// - Inherent: `impl TypeName { fn method(borrow self) -> T { } }`
+/// - Trait:    `impl TraitName for TypeName { fn method(borrow self) -> T { } }`
 ///
-/// `trait_name` is the trait being implemented (e.g., "Display").
-/// `type_name` is the type implementing the trait (e.g., "Buffer").
+/// `trait_name` is `None` for inherent impls, `Some(name)` for trait impls.
+/// `type_name` is the type being implemented (e.g., "Buffer").
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ImplBlock {
-    pub trait_name: Identifier,
-    /// Type arguments applied to the trait (e.g., `impl Functor<number> for MyType`)
+    /// `None` = inherent impl; `Some(name)` = trait impl.
+    pub trait_name: Option<Identifier>,
+    /// Type arguments applied to the trait (e.g., `impl Functor<number> for MyType`).
+    /// Empty for inherent impls.
     pub trait_type_args: Vec<TypeRef>,
     pub type_name: Identifier,
     pub methods: Vec<ImplMethod>,
@@ -285,6 +289,25 @@ pub struct ImplBlock {
 impl ImplBlock {
     pub fn span(&self) -> Span {
         self.span
+    }
+
+    /// Returns `true` when this is an inherent impl (`impl TypeName {}`),
+    /// i.e. not attached to any trait.
+    pub fn is_inherent(&self) -> bool {
+        self.trait_name.is_none()
+    }
+
+    /// Produces the mangled name for a method inside this impl block.
+    /// - Inherent:  `__impl__TypeName__MethodName`
+    /// - Trait:     `__impl__TypeName__TraitName__MethodName`
+    pub fn mangle_method_name(&self, method_name: &str) -> String {
+        match &self.trait_name {
+            None => format!("__impl__{}__{}", self.type_name.name, method_name),
+            Some(t) => format!(
+                "__impl__{}__{}__{}",
+                self.type_name.name, t.name, method_name
+            ),
+        }
     }
 }
 

@@ -2127,10 +2127,23 @@ impl<'a> TypeChecker<'a> {
                 method_sig.return_type
             };
             return_type
+        } else if let Some((return_type, type_name)) =
+            self.resolve_inherent_method_call(&target_type, method_name)
+        {
+            // Slot 2a: inherent method dispatch (D-037: inherent takes priority over trait)
+            // trait_dispatch uses empty string for trait_name to signal inherent dispatch.
+            *member.trait_dispatch.borrow_mut() = Some((type_name, String::new()));
+
+            if let Some(args) = &member.args {
+                for arg in args.iter() {
+                    let _ = self.check_expr(arg);
+                }
+            }
+            return_type
         } else if let Some((return_type, type_name, trait_name)) =
             self.resolve_trait_method_call_with_info(&target_type, method_name)
         {
-            // Slot 2: trait method dispatch — found a matching impl
+            // Slot 2b: trait method dispatch — found a matching impl
             // Annotate MemberExpr with dispatch info for compiler/interpreter
             *member.trait_dispatch.borrow_mut() = Some((type_name, trait_name));
 

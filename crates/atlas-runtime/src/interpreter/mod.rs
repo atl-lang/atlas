@@ -450,14 +450,11 @@ impl Interpreter {
                 }
                 Item::Impl(impl_block) => {
                     // Register each impl method under its mangled name for static dispatch.
-                    let type_name = &impl_block.type_name.name;
-                    let trait_name = &impl_block.trait_name.name;
+                    // Inherent:  __impl__TypeName__MethodName
+                    // Trait:     __impl__TypeName__TraitName__MethodName
                     let mut provided = HashSet::new();
                     for method in &impl_block.methods {
-                        let mangled_name = format!(
-                            "__impl__{}__{}__{}",
-                            type_name, trait_name, method.name.name
-                        );
+                        let mangled_name = impl_block.mangle_method_name(&method.name.name);
                         self.function_bodies.insert(
                             mangled_name.clone(),
                             UserFunction {
@@ -469,24 +466,25 @@ impl Interpreter {
                         );
                         provided.insert(method.name.name.clone());
                     }
-                    for ((default_trait, method_name), method_sig) in
-                        self.trait_default_methods.iter()
-                    {
-                        if default_trait == trait_name && !provided.contains(method_name) {
-                            if let Some(body) = method_sig.body.clone() {
-                                let mangled_name = format!(
-                                    "__impl__{}__{}__{}",
-                                    type_name, trait_name, method_name
-                                );
-                                self.function_bodies.insert(
-                                    mangled_name.clone(),
-                                    UserFunction {
-                                        name: mangled_name,
-                                        params: method_sig.params.clone(),
-                                        body,
-                                        captured: HashMap::new(),
-                                    },
-                                );
+                    // Default trait methods only apply to trait impls.
+                    if let Some(trait_id) = &impl_block.trait_name {
+                        let trait_name = &trait_id.name;
+                        for ((default_trait, method_name), method_sig) in
+                            self.trait_default_methods.iter()
+                        {
+                            if default_trait == trait_name && !provided.contains(method_name) {
+                                if let Some(body) = method_sig.body.clone() {
+                                    let mangled_name = impl_block.mangle_method_name(method_name);
+                                    self.function_bodies.insert(
+                                        mangled_name.clone(),
+                                        UserFunction {
+                                            name: mangled_name,
+                                            params: method_sig.params.clone(),
+                                            body,
+                                            captured: HashMap::new(),
+                                        },
+                                    );
+                                }
                             }
                         }
                     }

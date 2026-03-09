@@ -406,42 +406,37 @@ impl Compiler {
         &mut self,
         impl_block: &crate::ast::ImplBlock,
     ) -> Result<(), Vec<Diagnostic>> {
-        let type_name = &impl_block.type_name.name;
-        let trait_name = &impl_block.trait_name.name;
-
         let mut provided = std::collections::HashSet::new();
         for method in &impl_block.methods {
-            let mangled_name = format!(
-                "__impl__{}__{}__{}",
-                type_name, trait_name, method.name.name
-            );
+            let mangled_name = impl_block.mangle_method_name(&method.name.name);
             self.compile_impl_method(method, &mangled_name, impl_block.span)?;
             provided.insert(method.name.name.clone());
         }
 
-        let default_methods: Vec<crate::ast::TraitMethodSig> = self
-            .trait_default_methods
-            .iter()
-            .filter(|((default_trait, _), _)| default_trait == trait_name)
-            .filter(|((_, method_name), _)| !provided.contains(method_name))
-            .map(|(_, method_sig)| method_sig.clone())
-            .collect();
+        // Default trait methods only apply to trait impls.
+        if let Some(trait_id) = &impl_block.trait_name {
+            let trait_name = &trait_id.name;
+            let default_methods: Vec<crate::ast::TraitMethodSig> = self
+                .trait_default_methods
+                .iter()
+                .filter(|((default_trait, _), _)| default_trait == trait_name)
+                .filter(|((_, method_name), _)| !provided.contains(method_name))
+                .map(|(_, method_sig)| method_sig.clone())
+                .collect();
 
-        for method_sig in default_methods {
-            if let Some(body) = method_sig.body.clone() {
-                let mangled_name = format!(
-                    "__impl__{}__{}__{}",
-                    type_name, trait_name, method_sig.name.name
-                );
-                let default_method = crate::ast::ImplMethod {
-                    name: method_sig.name.clone(),
-                    type_params: method_sig.type_params.clone(),
-                    params: method_sig.params.clone(),
-                    return_type: method_sig.return_type.clone(),
-                    body,
-                    span: method_sig.span,
-                };
-                self.compile_impl_method(&default_method, &mangled_name, impl_block.span)?;
+            for method_sig in default_methods {
+                if let Some(body) = method_sig.body.clone() {
+                    let mangled_name = impl_block.mangle_method_name(&method_sig.name.name);
+                    let default_method = crate::ast::ImplMethod {
+                        name: method_sig.name.clone(),
+                        type_params: method_sig.type_params.clone(),
+                        params: method_sig.params.clone(),
+                        return_type: method_sig.return_type.clone(),
+                        body,
+                        span: method_sig.span,
+                    };
+                    self.compile_impl_method(&default_method, &mangled_name, impl_block.span)?;
+                }
             }
         }
         Ok(())

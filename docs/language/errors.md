@@ -365,6 +365,10 @@ A trait implementation for this type already exists.
 | AT3035 | Type does not implement required trait |
 | AT3036 | Copy type required (non-Copy type provided) |
 | AT3037 | Generic type argument does not satisfy trait bound |
+| AT3056 | Inherent impl block for unknown type |
+| AT3057 | Duplicate method in inherent impl |
+| AT3058 | Self receiver is not the first parameter |
+| AW3059 | Inherent method shadows trait method (warning, inherent wins — D-037) |
 
 ### AT3040 — Closure Captures Borrow
 A closure captures a `borrow` parameter, which may escape the parameter's lifetime. Use `share` or `own` instead.

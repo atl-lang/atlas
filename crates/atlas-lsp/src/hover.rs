@@ -353,14 +353,24 @@ fn find_trait_hover(program: &Program, identifier: &str) -> Option<String> {
 fn find_impl_hover(program: &Program, identifier: &str) -> Option<String> {
     for item in &program.items {
         if let Item::Impl(impl_block) = item {
-            let is_trait_name = impl_block.trait_name.name == identifier;
+            let is_trait_name = impl_block
+                .trait_name
+                .as_ref()
+                .is_some_and(|t| t.name == identifier);
             let is_type_name = impl_block.type_name.name == identifier;
             if is_trait_name || is_type_name {
                 let mut hover = String::new();
-                hover.push_str(&format!(
-                    "**(impl)** `{}` implements `{}`\n\n",
-                    impl_block.type_name.name, impl_block.trait_name.name
-                ));
+                if let Some(trait_id) = &impl_block.trait_name {
+                    hover.push_str(&format!(
+                        "**(impl)** `{}` implements `{}`\n\n",
+                        impl_block.type_name.name, trait_id.name
+                    ));
+                } else {
+                    hover.push_str(&format!(
+                        "**(impl)** `{}` (inherent)\n\n",
+                        impl_block.type_name.name
+                    ));
+                }
                 if !impl_block.methods.is_empty() {
                     hover.push_str("```atlas\n");
                     for method in &impl_block.methods {

@@ -282,3 +282,74 @@ fn test_h077_generic_trait_with_string_type_arg_is_ok() {
         errors
     );
 }
+
+// ============================================================================
+// B13: Inherent impl — typechecker integration tests
+// ============================================================================
+
+#[test]
+fn test_b13_inherent_impl_basic_ok() {
+    let errors = typecheck_errors(
+        r#"
+        struct Point { x: number, y: number }
+        impl Point {
+            fn magnitude(borrow self: Point) -> number {
+                return self.x * self.x + self.y * self.y;
+            }
+        }
+        let p = Point { x: 3, y: 4 };
+        "#,
+    );
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_b13_inherent_impl_duplicate_method_is_error() {
+    let errors = typecheck_errors(
+        r#"
+        struct Box { value: number }
+        impl Box {
+            fn get(borrow self: Box) -> number { return self.value; }
+            fn get(borrow self: Box) -> number { return self.value; }
+        }
+        "#,
+    );
+    assert!(
+        errors.iter().any(|e| e.contains("AT3057")),
+        "expected AT3057 duplicate method error, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_b13_inherent_impl_unknown_type_is_error() {
+    let errors = typecheck_errors(
+        r#"
+        impl Nonexistent {
+            fn foo(borrow self: Nonexistent) -> number { return 0; }
+        }
+        "#,
+    );
+    assert!(
+        errors.iter().any(|e| e.contains("AT3056")),
+        "expected AT3056 unknown type error, got: {:?}",
+        errors
+    );
+}
+
+#[test]
+fn test_b13_inherent_and_trait_impl_coexist_ok() {
+    let errors = typecheck_errors(
+        r#"
+        struct Animal { name: string }
+        trait Speak { fn speak(borrow self: Animal) -> string; }
+        impl Speak for Animal {
+            fn speak(borrow self: Animal) -> string { return "..."; }
+        }
+        impl Animal {
+            fn name_len(borrow self: Animal) -> number { return 0; }
+        }
+        "#,
+    );
+    assert!(errors.is_empty(), "unexpected errors: {:?}", errors);
+}
