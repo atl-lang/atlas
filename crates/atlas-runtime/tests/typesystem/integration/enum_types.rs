@@ -142,3 +142,51 @@ fn check(s: Status): string {
     );
     assert_no_errors(&diagnostics);
 }
+
+// H-229: enum variant tuple args must be type-checked against declared field types
+#[test]
+fn test_h229_enum_variant_arg_type_mismatch_rejected() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Status { Active(string), Inactive }
+let s = Status::Active(42);
+        "#,
+    );
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-229: Status::Active(42) where Active(string) should produce a type error, got none"
+    );
+}
+
+#[test]
+fn test_h229_enum_variant_arg_count_mismatch_rejected() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Shape { Circle(number), Rect(number, number) }
+let s = Shape::Circle(1.0, 2.0);
+        "#,
+    );
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-229: Shape::Circle(1.0, 2.0) where Circle has 1 field should produce an error"
+    );
+}
+
+#[test]
+fn test_h229_enum_variant_correct_args_accepted() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Status { Active(string), Inactive }
+let s = Status::Active("running");
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}

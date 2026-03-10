@@ -406,12 +406,88 @@ impl<'a> TypeChecker<'a> {
                 span,
             } => self.check_range(start, end, *span),
             Expr::EnumVariant(ev) => {
-                // Type check any arguments in the enum variant
+                // H-229: look up declared variant fields and type-check args against them.
+                // Clone the TypeRefs first to avoid borrow conflicts with self below.
+                let declared_field_typerefs: Option<Vec<crate::ast::TypeRef>> = self
+                    .enum_decls
+                    .get(&ev.enum_name.name)
+                    .and_then(|decl| {
+                        decl.variants
+                            .iter()
+                            .find(|v| v.name().name == ev.variant_name.name)
+                    })
+                    .and_then(|variant| {
+                        if let crate::ast::EnumVariant::Tuple { fields, .. } = variant {
+                            Some(fields.clone())
+                        } else {
+                            None
+                        }
+                    });
+                let declared_field_types: Option<Vec<Type>> = declared_field_typerefs
+                    .map(|refs| refs.iter().map(|f| self.resolve_type_ref(f)).collect());
+
                 if let Some(args) = &ev.args {
-                    for arg in args {
-                        self.check_expr(arg);
+                    if let Some(ref field_types) = declared_field_types {
+                        // Arity check
+                        if args.len() != field_types.len() {
+                            self.diagnostics.push(
+                                error_codes::ARITY_MISMATCH
+                                    .emit(ev.span)
+                                    .arg("name", &ev.variant_name.name)
+                                    .arg("expected", format!("{}", field_types.len()))
+                                    .arg("found", format!("{}", args.len()))
+                                    .with_help(format!(
+                                        "variant '{}::{}' has {} field{}",
+                                        ev.enum_name.name,
+                                        ev.variant_name.name,
+                                        field_types.len(),
+                                        if field_types.len() == 1 { "" } else { "s" }
+                                    ))
+                                    .build()
+                                    .with_label("argument count mismatch"),
+                            );
+                        } else {
+                            // Type check each arg against its declared field type
+                            for (i, (arg, expected)) in
+                                args.iter().zip(field_types.iter()).enumerate()
+                            {
+                                let arg_type = self.check_expr(arg);
+                                if expected.normalized() != Type::Unknown
+                                    && !self.is_assignable_with_traits(&arg_type, expected)
+                                {
+                                    self.diagnostics.push(
+                                        error_codes::TYPE_ERROR
+                                            .emit(arg.span())
+                                            .arg(
+                                                "detail",
+                                                format!(
+                                                    "Argument {} has wrong type: expected {}, found {}",
+                                                    i + 1,
+                                                    expected.display_name(),
+                                                    arg_type.display_name()
+                                                ),
+                                            )
+                                            .with_help(format!(
+                                                "field {} of '{}::{}' must be of type {}",
+                                                i + 1,
+                                                ev.enum_name.name,
+                                                ev.variant_name.name,
+                                                expected.display_name()
+                                            ))
+                                            .build()
+                                            .with_label("type mismatch"),
+                                    );
+                                }
+                            }
+                        }
+                    } else {
+                        // No declared field types (unit variant or unknown enum) — just check exprs
+                        for arg in args {
+                            self.check_expr(arg);
+                        }
                     }
                 }
+
                 // If the enum name is registered, return its named type so that variables
                 // holding enum values don't resolve to Unknown (H-110, H-111).
                 if self.enum_names.contains(&ev.enum_name.name) {
