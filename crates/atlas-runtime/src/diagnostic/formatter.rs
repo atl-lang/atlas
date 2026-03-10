@@ -175,8 +175,8 @@ impl DiagnosticFormatter {
         };
 
         if diag.length > 0 && w.supports_color() {
-            // TTY: render snippet with ANSI background highlight on the error token span.
-            // Splits the snippet line into before/span/after, highlights only the span.
+            // TTY: render snippet with colored text on the error token span.
+            // Splits the snippet line into before/span/after, colors only the span.
             let chars: Vec<char> = diag.snippet.chars().collect();
             let before: String = chars[..col0.min(chars.len())].iter().collect();
             let span_end = (col0 + span_len).min(chars.len());
@@ -184,12 +184,7 @@ impl DiagnosticFormatter {
             let after: String = chars[span_end..].iter().collect();
 
             write!(w, "{}{}", line_prefix, before)?;
-            w.set_color(
-                ColorSpec::new()
-                    .set_fg(Some(Color::Black))
-                    .set_bg(Some(level_color))
-                    .set_bold(true),
-            )?;
+            w.set_color(ColorSpec::new().set_fg(Some(level_color)).set_bold(true))?;
             write!(w, "{}", span_chars)?;
             w.reset()?;
             writeln!(w, "{}", after)?;
@@ -274,11 +269,19 @@ pub fn extract_snippet(source: &str, line: usize) -> Option<String> {
     source.lines().nth(line.saturating_sub(1)).map(String::from)
 }
 
-/// Compute line and column from byte offset in source
+/// Compute line and column from a char-index offset in source.
+///
+/// The Atlas lexer stores span positions as char indices (indices into the
+/// `Vec<char>` that it builds from the source string), NOT as byte offsets.
+/// For ASCII-only sources these are identical, but sources containing
+/// multi-byte Unicode code points (e.g., em-dashes or curly quotes in
+/// comments) will have char index < byte offset for positions after those
+/// characters.  Using byte offsets here would produce wrong columns for
+/// any file that contains Unicode before the error site.
 pub fn offset_to_line_col(source: &str, offset: usize) -> (usize, usize) {
     let mut line = 1;
     let mut col = 1;
-    for (i, ch) in source.char_indices() {
+    for (i, ch) in source.chars().enumerate() {
         if i >= offset {
             break;
         }
