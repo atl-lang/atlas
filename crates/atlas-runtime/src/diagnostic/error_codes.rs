@@ -1374,8 +1374,6 @@ pub fn title_for(code: &str) -> Option<&'static str> {
 }
 
 /// Get the description (title) for an error code.
-///
-/// Alias for `title_for` — retained for call-site compatibility during B17 migration.
 pub fn description_for(code: &str) -> Option<&'static str> {
     title_for(code)
 }
@@ -1507,32 +1505,3 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
 //
 // `ErrorCodeInfo` is retained until all call sites are migrated in P03–P07.
 // Do NOT add new uses of this struct — use DiagnosticDescriptor directly.
-
-/// Legacy error code info struct.  Retained for migration period only.
-///
-/// # Deprecated
-/// Use `DiagnosticDescriptor` and `lookup()` instead.
-#[derive(Debug, Clone)]
-pub struct ErrorCodeInfo {
-    /// The error code string (e.g., "AT0001")
-    pub code: &'static str,
-    /// Human-readable description
-    pub description: &'static str,
-    /// Optional contextual help text
-    pub help: Option<&'static str>,
-    /// Optional Atlas code example
-    pub example: Option<&'static str>,
-}
-
-/// Legacy lookup returning ErrorCodeInfo.  Wraps the new descriptor registry.
-///
-/// # Deprecated
-/// Use `lookup()` (returns `&DiagnosticDescriptor`) instead.
-pub fn lookup_legacy(code: &str) -> Option<ErrorCodeInfo> {
-    lookup(code).map(|d| ErrorCodeInfo {
-        code: d.code,
-        description: d.title,
-        help: d.static_help,
-        example: None,
-    })
-}

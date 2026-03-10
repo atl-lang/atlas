@@ -2345,15 +2345,12 @@ impl VM {
                                             _ => unreachable!(),
                                         };
                                         self.runtime_warnings.push(
-                                            crate::diagnostic::Diagnostic::warning_with_code(
-                                                crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE.code,
-                                                format!(
-                                                    "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
-                                                    ann_str,
-                                                    func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
-                                                ),
-                                                crate::span::Span::new(0, 0),
-                                            ),
+                                            crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE
+                                                .emit(crate::span::Span::new(0, 0))
+                                                .arg("inner", "T")
+                                                .arg("annotation", ann_str)
+                                                .arg("name", func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?"))
+                                                .build(),
                                         );
                                     }
                                 }
@@ -2464,15 +2461,18 @@ impl VM {
                                         _ => unreachable!(),
                                     };
                                     self.runtime_warnings.push(
-                                        crate::diagnostic::Diagnostic::warning_with_code(
-                                            crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE.code,
-                                            format!(
-                                                "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
-                                                ann_str,
-                                                func.param_names.get(i).map(|s| s.as_str()).unwrap_or("?")
-                                            ),
-                                            crate::span::Span::new(0, 0),
-                                        ),
+                                        crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE
+                                            .emit(crate::span::Span::new(0, 0))
+                                            .arg("inner", "T")
+                                            .arg("annotation", ann_str)
+                                            .arg(
+                                                "name",
+                                                func.param_names
+                                                    .get(i)
+                                                    .map(|s| s.as_str())
+                                                    .unwrap_or("?"),
+                                            )
+                                            .build(),
                                     );
                                 }
                             }

@@ -1,7 +1,7 @@
 //! Expression parsing (Pratt parsing)
 
 use crate::ast::*;
-use crate::diagnostic::error_codes::{self, INVALID_NUMBER, SYNTAX_ERROR};
+use crate::diagnostic::error_codes::{GENERIC_WARNING, INVALID_NUMBER, SYNTAX_ERROR};
 use crate::diagnostic::Diagnostic;
 use crate::parser::{Parser, Precedence};
 use crate::span::Span;
@@ -1144,16 +1144,18 @@ impl Parser {
                 if let Expr::Identifier(id) = &expr {
                     if id.name == field_name.name {
                         self.diagnostics.push(
-                            Diagnostic::warning_with_code(
-                                error_codes::GENERIC_WARNING.code,
-                                format!(
-                                    "Redundant field value for '{}'; shorthand is available",
-                                    field_name.name
-                                ),
-                                field_name.span,
-                            )
-                            .with_label("shorthand available")
-                            .with_help(format!("use `{{ {} }}` instead", field_name.name)),
+                            GENERIC_WARNING
+                                .emit(field_name.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "redundant field value for `{}`; shorthand is available",
+                                        field_name.name
+                                    ),
+                                )
+                                .with_help(format!("use `{{ {} }}` instead", field_name.name))
+                                .build()
+                                .with_label("shorthand available"),
                         );
                     }
                 }
