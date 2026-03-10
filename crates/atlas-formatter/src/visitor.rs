@@ -912,6 +912,20 @@ impl FormatVisitor {
                     self.write(")");
                 }
             }
+            Pattern::BareVariant { name, args, .. } => {
+                // Bare variant: emit as-is without EnumName:: prefix
+                self.write(&name.name);
+                if !args.is_empty() {
+                    self.write("(");
+                    for (i, arg) in args.iter().enumerate() {
+                        if i > 0 {
+                            self.write(", ");
+                        }
+                        self.visit_pattern(arg);
+                    }
+                    self.write(")");
+                }
+            }
         }
     }
 

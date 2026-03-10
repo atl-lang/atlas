@@ -427,6 +427,11 @@ fn collect_pattern_bindings(
                 collect_pattern_bindings(arg, scopes);
             }
         }
+        atlas_runtime::ast::Pattern::BareVariant { args, .. } => {
+            for arg in args {
+                collect_pattern_bindings(arg, scopes);
+            }
+        }
         atlas_runtime::ast::Pattern::Literal(_, _) | atlas_runtime::ast::Pattern::Wildcard(_) => {}
     }
 }

@@ -1578,20 +1578,55 @@ impl Parser {
                         })
                     }
                 } else if self.check(TokenKind::LeftParen) {
-                    // Check if this is a constructor pattern (has arguments)
-                    self.parse_constructor_pattern(id)
+                    // Built-in constructors (Ok, Err, Some) stay as Pattern::Constructor.
+                    // User-defined uppercase variants with args become Pattern::BareVariant.
+                    if matches!(id.name.as_str(), "Ok" | "Err" | "Some") {
+                        self.parse_constructor_pattern(id)
+                    } else if id.name.starts_with(|c: char| c.is_uppercase()) {
+                        // Bare user enum variant with args: Pending(msg), Success(x)
+                        let name_span = id.span;
+                        self.advance(); // consume (
+                        let mut args = Vec::new();
+                        if !self.check(TokenKind::RightParen) {
+                            loop {
+                                args.push(self.parse_or_pattern()?);
+                                if !self.match_token(TokenKind::Comma) {
+                                    break;
+                                }
+                            }
+                        }
+                        let end_span = self
+                            .consume(
+                                TokenKind::RightParen,
+                                "Expected ')' after variant arguments",
+                            )?
+                            .span;
+                        Ok(Pattern::BareVariant {
+                            name: id,
+                            args,
+                            span: name_span.merge(end_span),
+                        })
+                    } else {
+                        self.parse_constructor_pattern(id)
+                    }
                 } else {
-                    // Check if this is a zero-argument constructor (None, unit-like variants)
-                    // For now, recognize built-in constructors: None
+                    // Built-in zero-arg constructors and uppercase user variants
                     if id.name == "None" {
-                        // Zero-argument constructor
                         Ok(Pattern::Constructor {
                             name: id.clone(),
                             args: Vec::new(),
                             span: id.span,
                         })
+                    } else if id.name.starts_with(|c: char| c.is_uppercase()) {
+                        // Bare user enum variant (unit): Active, Inactive, Running
+                        let span = id.span;
+                        Ok(Pattern::BareVariant {
+                            name: id,
+                            args: Vec::new(),
+                            span,
+                        })
                     } else {
-                        // Variable binding pattern
+                        // Lowercase → variable binding
                         Ok(Pattern::Variable(id))
                     }
                 }

@@ -2872,6 +2872,18 @@ impl<'a> TypeChecker<'a> {
                     }
                     return bindings;
                 }
+                Pattern::BareVariant { name, args, .. } => {
+                    // H-223: bare variant — look up fields by variant name across all enums
+                    let field_types = self.bare_variant_field_types(&name.name);
+                    for (i, arg) in args.iter().enumerate() {
+                        let field_ty = field_types
+                            .get(i)
+                            .map(|tr| self.resolve_type_ref(tr))
+                            .unwrap_or(Type::Unknown);
+                        bindings.extend(self.check_pattern(arg, &field_ty));
+                    }
+                    return bindings;
+                }
             }
         }
 
@@ -2953,6 +2965,18 @@ impl<'a> TypeChecker<'a> {
                 // H-120: look up variant field types so bindings get proper types
                 let field_types =
                     self.enum_variant_field_types(&enum_name.name, &variant_name.name);
+                for (i, arg) in args.iter().enumerate() {
+                    let field_ty = field_types
+                        .get(i)
+                        .map(|tr| self.resolve_type_ref(tr))
+                        .unwrap_or(Type::Unknown);
+                    bindings.extend(self.check_pattern(arg, &field_ty));
+                }
+            }
+
+            Pattern::BareVariant { name, args, .. } => {
+                // H-223: bare variant — look up fields by variant name across all enums
+                let field_types = self.bare_variant_field_types(&name.name);
                 for (i, arg) in args.iter().enumerate() {
                     let field_ty = field_types
                         .get(i)

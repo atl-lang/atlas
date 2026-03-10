@@ -1234,6 +1234,35 @@ impl Interpreter {
                     None
                 }
             }
+
+            // Bare variant patterns: Running, Pending(msg) — infer enum from value.
+            // Only the variant_name is checked; the enum_name is not required at the call site.
+            Pattern::BareVariant { name, args, .. } => {
+                if let Value::EnumValue {
+                    variant_name: val_variant,
+                    data,
+                    ..
+                } = value
+                {
+                    if name.name != *val_variant {
+                        return None;
+                    }
+                    if args.len() != data.len() {
+                        return None;
+                    }
+                    let mut all_bindings = Vec::new();
+                    for (pattern, val) in args.iter().zip(data.iter()) {
+                        if let Some(bindings) = self.try_match_pattern(pattern, val) {
+                            all_bindings.extend(bindings);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Some(all_bindings)
+                } else {
+                    None
+                }
+            }
         }
     }
 

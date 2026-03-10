@@ -1056,6 +1056,17 @@ impl Compiler {
                 *span,
                 locals_before,
             ),
+
+            // Bare variant pattern: Running, Pending(msg) — no EnumName:: prefix.
+            // Compile as EnumVariant with an empty-string sentinel for enum_name;
+            // the VM skips the enum_name check when it is the empty string.
+            Pattern::BareVariant { name, args, span } => {
+                let sentinel = crate::ast::Identifier {
+                    name: String::new(),
+                    span: name.span,
+                };
+                self.compile_enum_variant_pattern(&sentinel, name, args, *span, locals_before)
+            }
         }
     }
 

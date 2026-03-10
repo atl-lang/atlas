@@ -633,6 +633,22 @@ impl<'a> TypeChecker<'a> {
 
     /// Look up field types for an enum tuple variant (H-120).
     /// Returns the field types for `EnumName::VariantName(...)` or empty vec if not found.
+    /// Look up variant field types by variant name only, scanning all known enums.
+    /// Used for bare variant patterns (H-223) where the enum_name is not written at the call site.
+    pub(super) fn bare_variant_field_types(&self, variant_name: &str) -> Vec<TypeRef> {
+        for decl in self.enum_decls.values() {
+            for variant in &decl.variants {
+                if variant.name().name == variant_name {
+                    if let EnumVariant::Tuple { fields, .. } = variant {
+                        return fields.clone();
+                    }
+                    return Vec::new(); // unit variant found
+                }
+            }
+        }
+        Vec::new()
+    }
+
     pub(super) fn enum_variant_field_types(
         &self,
         enum_name: &str,

@@ -851,6 +851,15 @@ pub enum Pattern {
         args: Vec<Pattern>,
         span: Span,
     },
+    /// Bare variant pattern: Running, Pending(msg) — no EnumName:: prefix.
+    /// Parser emits this for uppercase identifiers not in the built-in constructor set.
+    /// Typechecker resolves the enum type from the match scrutinee; at runtime only
+    /// the variant_name is checked (enum_name is inferred, not required).
+    BareVariant {
+        name: Identifier,
+        args: Vec<Pattern>,
+        span: Span,
+    },
 }
 
 /// Literal value
@@ -1046,6 +1055,7 @@ impl Pattern {
             Pattern::Tuple { span, .. } => *span,
             Pattern::Or(_, span) => *span,
             Pattern::EnumVariant { span, .. } => *span,
+            Pattern::BareVariant { span, .. } => *span,
         }
     }
 }
