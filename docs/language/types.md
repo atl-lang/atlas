@@ -14,13 +14,13 @@ This document reflects the type system implemented in `crates/atlas-runtime/src/
 - `json` — isolated JSON value type (only assignable to `json`).
 
 **Arrays**
-- Syntax: `[]T`
+- Syntax: `T[]`
 - Generic form (equivalent): `Array<T>`
 
 Example (tested):
 ```atlas
-let numbers: []number = [1, 2, 3];
-let aliases: Array<string> = ["a", "b"]; // same as []string
+let numbers: number[] = [1, 2, 3];
+let aliases: Array<string> = ["a", "b"]; // same as string[]
 ```
 
 **HashMap and HashSet**
@@ -124,7 +124,7 @@ Atlas uses two mutation models depending on the collection type:
 *Copy-on-Write (Arrays, Queue, Stack):*
 Mutation functions return a NEW collection. You MUST rebind:
 ```atlas
-let mut arr: []number = [1, 2, 3];
+let mut arr: number[] = [1, 2, 3];
 arr = arrayPush(arr, 4);       // CORRECT: rebind result
 // arrayPush(arr, 4);          // WRONG: result is discarded, arr unchanged
 ```
@@ -190,7 +190,7 @@ match pair {
 
 **Function return:**
 ```atlas
-fn min_max(arr: []number) : (number, number) {
+fn min_max(arr: number[]) : (number, number) {
     // ...
     return (min_val, max_val);
 }

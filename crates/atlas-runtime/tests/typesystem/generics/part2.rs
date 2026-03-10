@@ -144,7 +144,7 @@ fn test_generic_with_while_loop() {
 fn test_generic_with_array_indexing() {
     let diagnostics = typecheck_source(
         r#"
-        fn get_first<T>(borrow arr: []T): T {
+        fn get_first<T>(borrow arr: T[]): T {
             return arr[0];
         }
         let numbers = [1, 2, 3];

@@ -209,43 +209,49 @@ fn test_primary_diagnostic_renders_with_level_prefix() {
 }
 
 // ============================================================================
-// H-200: AT1004 TypeName[] — specific help + diff + note
+// H-224: Type[] postfix array syntax is canonical
 // ============================================================================
 
-/// AT1004 on `TypeName[]` in type position emits "prefix syntax" in the message.
+/// `Type[]` in type position is valid Atlas syntax (H-224 revert from []Type back to Type[]).
 #[test]
-fn test_issue_h200_typename_postfix_brackets_emits_prefix_syntax_help() {
+fn test_h224_postfix_array_syntax_parses_successfully() {
     let source = "fn foo(x: Person[]): number { return 0; }";
     let diagnostics = parse_errors(source);
-    assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
-    let diag = diagnostics
-        .iter()
-        .find(|d| d.code == "AT1004")
-        .expect("Expected AT1004");
-    // message must mention prefix syntax
     assert!(
-        diag.message.to_lowercase().contains("prefix"),
-        "AT1004 message should mention 'prefix', got: {:?}",
+        diagnostics.is_empty(),
+        "Person[] should parse as a valid array type annotation, got errors: {:?}",
+        diagnostics
+    );
+}
+
+/// Writing old prefix `[]Type` emits a clear error pointing to the correct postfix form.
+#[test]
+fn test_h224_prefix_array_syntax_emits_helpful_error() {
+    let source = "fn foo(x: []Person): number { return 0; }";
+    let diagnostics = parse_errors(source);
+    assert!(
+        !diagnostics.is_empty(),
+        "[]Person in type position should error"
+    );
+    let diag = &diagnostics[0];
+    // Error message names both old and new form
+    assert!(
+        diag.message.contains("Person[]") && diag.message.contains("[]Person"),
+        "error should show both forms, got: {:?}",
         diag.message
     );
-    // help must suggest []Person
-    let help_text = diag.help.join(" ");
-    let suggestion_text = diag
-        .suggestions
-        .iter()
-        .map(|s| format!("{} {}", s.description, s.new_line))
-        .collect::<Vec<_>>()
-        .join(" ");
+    // Help text shows the fix
+    let help = diag.help.join(" ");
     assert!(
-        help_text.contains("[]Person") || suggestion_text.contains("[]Person"),
-        "Expected help or suggestion to contain '[]Person', help={:?}, suggestions={:?}",
-        help_text,
-        suggestion_text
+        help.contains("Person[]"),
+        "help should suggest Person[], got: {:?}",
+        help
     );
-    // note must explain the rule
+    // Note explains the rule
     assert!(
-        !diag.notes.is_empty(),
-        "Expected at least one note explaining the rule, got none"
+        !diag.notes.is_empty() && diag.notes[0].contains("TypeScript"),
+        "note should explain TypeScript-style postfix rule, got: {:?}",
+        diag.notes
     );
 }
 

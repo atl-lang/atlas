@@ -215,7 +215,7 @@ type_primary   := named_type
                | "()"                               // unit tuple type
 
 named_type     := IDENT | "null"
-array_type     := "[]" type_primary   // prefix, nestable: []T, [][]T
+array_type     := type_primary "[]"   // postfix, chainable: T[], T[][]
 function_type  := "(" type_ref ("," type_ref)* ")" "->" type_ref
 structural_type := "{" IDENT ":" type_ref ("," IDENT ":" type_ref)* "}"
 

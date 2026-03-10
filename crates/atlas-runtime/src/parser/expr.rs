@@ -806,20 +806,46 @@ impl Parser {
         }
     }
 
-    /// Parse primary type (named, generic, grouped, or function), plus array prefixes.
+    /// Parse primary type (named, generic, grouped, or function), plus postfix array suffix.
     fn parse_type_primary(&mut self) -> Result<TypeRef, ()> {
-        // Handle prefix array type syntax: []T, [][]T
+        // Detect old prefix array syntax `[]Type` and emit a clear migration error.
+        // The inner type name must follow `[]` immediately (no space between `]` and name).
         if self.check(TokenKind::LeftBracket) {
-            let start = self.peek().span;
-            self.advance(); // consume '['
-            let rbracket = self.consume(
-                TokenKind::RightBracket,
-                "Expected ']' after '[' in array type — use []T, not T[]",
-            )?;
-            let _ = rbracket;
-            let inner = self.parse_type_primary()?;
-            let full_span = start.merge(inner.span());
-            return Ok(TypeRef::Array(Box::new(inner), full_span));
+            let next2_is_rbracket = self
+                .peek_nth_nontrivia(1)
+                .map(|t| t.kind == TokenKind::RightBracket)
+                .unwrap_or(false);
+            let next3_is_ident = self
+                .peek_nth_nontrivia(2)
+                .map(|t| {
+                    matches!(t.kind, TokenKind::Identifier)
+                        || TokenKind::is_keyword(t.lexeme.as_str()).is_some()
+                })
+                .unwrap_or(false);
+            if next2_is_rbracket && next3_is_ident {
+                let lbracket_span = self.peek().span;
+                self.advance(); // consume `[`
+                self.advance(); // consume `]`
+                let name_token = self.peek().clone();
+                let name = &name_token.lexeme;
+                let full_span = lbracket_span.merge(name_token.span);
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(full_span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "array types use postfix syntax — write `{}[]`, not `[]{}`",
+                                name, name
+                            ),
+                        )
+                        .with_help(format!("change `[]{}` to `{}[]`", name, name))
+                        .with_note(
+                            "Atlas uses TypeScript-style postfix array syntax: `T[]` not `[]T`",
+                        ),
+                );
+                return Err(());
+            }
         }
 
         let type_ref = if self.check(TokenKind::LeftParen) {
@@ -843,53 +869,28 @@ impl Parser {
             }
         };
 
-        // H-200: detect postfix array syntax `TypeName[]` and emit a surgical AT1004.
-        // Atlas uses prefix syntax `[]TypeName`. Consume the bogus `[]` so parse can
-        // continue (avoiding cascade errors from the caller finding `[` where `)` is expected).
-        if let TypeRef::Named(ref type_name, named_span) = type_ref {
+        // Handle postfix array type syntax: T[], T[][], generic<T>[], etc.
+        // Consume all trailing `[]` suffixes, wrapping outward each time.
+        let mut result = type_ref;
+        loop {
             let next_is_lbracket = self.check(TokenKind::LeftBracket);
             let next2_is_rbracket = self
                 .peek_nth_nontrivia(1)
                 .map(|t| t.kind == TokenKind::RightBracket)
                 .unwrap_or(false);
             if next_is_lbracket && next2_is_rbracket {
-                let type_name = type_name.clone();
-                let old_token = format!("{}[]", type_name);
-                let new_token = format!("[]{}", type_name);
-                // consume `[` — capture its span before advancing
                 let lbracket_span = self.peek().span;
-                self.advance();
-                // consume `]` — capture its span before advancing
+                self.advance(); // consume `[`
                 let rbracket_span = self.peek().span;
-                self.advance();
-                // span covers `TypeName[]`
-                let full_span = named_span.merge(lbracket_span).merge(rbracket_span);
-                self.emit_descriptor(
-                    SYNTAX_ERROR
-                        .emit(full_span)
-                        .arg("detail", "array types use prefix syntax — write `[]` before the type name, not after")
-                        .with_help(format!("use `{}` instead of `{}`", new_token, old_token))
-                        .with_note("Atlas uses prefix array syntax: `[]T` not postfix `T[]`"),
-                );
-                // Push the SuggestionDiff onto the last diagnostic.
-                // Safety: emit_descriptor always pushes when not in_panic_mode.
-                if let Some(diag) = self.diagnostics.last_mut() {
-                    let new_line = diag.snippet.replacen(&old_token, &new_token, 1);
-                    if diag.snippet.contains(&*old_token) {
-                        diag.suggestions.push(crate::diagnostic::SuggestionDiff {
-                            description: format!("use `{}` instead", new_token),
-                            line_number: diag.line,
-                            old_line: diag.snippet.clone(),
-                            new_line,
-                            note: None,
-                        });
-                    }
-                }
-                return Err(());
+                self.advance(); // consume `]`
+                let full_span = result.span().merge(lbracket_span).merge(rbracket_span);
+                result = TypeRef::Array(Box::new(result), full_span);
+            } else {
+                break;
             }
         }
 
-        Ok(type_ref)
+        Ok(result)
     }
 
     /// Parse structural type: { field: type, method: (params) -> return }

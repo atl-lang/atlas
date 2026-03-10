@@ -27,7 +27,7 @@ Parses JSON string into `json`.
 - JSON boolean → `bool`
 - JSON number → `number`
 - JSON string → `string`
-- JSON array → `[]json`
+- JSON array → `json[]`
 - JSON object → `record` (JSON object)
 
 ## toJSON

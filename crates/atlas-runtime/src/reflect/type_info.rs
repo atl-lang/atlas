@@ -68,7 +68,7 @@ pub struct FieldInfo {
 /// Complete type information for runtime introspection
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct TypeInfo {
-    /// Type name (e.g., "number", "[]string", "function")
+    /// Type name (e.g., "number", "string[]", "function")
     pub name: String,
 
     /// Type kind for categorization
@@ -171,7 +171,7 @@ impl TypeInfo {
             Type::Array(inner) => {
                 let element = TypeInfo::from_type(inner);
                 TypeInfo {
-                    name: format!("[]{}", element.name),
+                    name: format!("{}[]", element.name),
                     kind: TypeKind::Array,
                     fields: vec![],
                     parameters: vec![],

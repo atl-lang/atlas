@@ -103,8 +103,8 @@ fn test_alias_resolution(#[case] source: &str) {
 // ============================================================================
 
 #[rstest]
-#[case("type Box<T> = []T; let _x: Box<number> = [1, 2];")]
-#[case("type Box<T> = []T; let _x: Box<string> = [\"a\", \"b\"]; ")]
+#[case("type Box<T> = T[]; let _x: Box<number> = [1, 2];")]
+#[case("type Box<T> = T[]; let _x: Box<string> = [\"a\", \"b\"]; ")]
 #[case("type Pair<A, B> = (A, B): A; fn fst<A, B>(borrow a: A, borrow _b: B): A { return a; } let _x: Pair<number, string> = fst;")]
 #[case("type Pair<A, B> = (A, B): B; fn snd<A, B>(borrow _a: A, borrow b: B): B { return b; } let _x: Pair<number, string> = snd;")]
 #[case("type MapEntry<K, V> = (K, V): V; fn pick<K, V>(borrow _k: K, borrow v: V): V { return v; } let _x: MapEntry<string, number> = pick;")]
@@ -115,8 +115,8 @@ fn test_alias_resolution(#[case] source: &str) {
 #[case("type Nested<T> = Option<Result<T, string>>; let _x: Nested<number> = Some(Err(\"no\"));")]
 #[case("type Alias<T> = T; let _x: Alias<number> = 1;")]
 #[case("type Alias<T> = T; let _x: Alias<string> = \"ok\";")]
-#[case("type Alias<T> = []T; let _x: Alias<number> = [1];")]
-#[case("type Alias<T> = []T; let _x: Alias<string> = [\"a\"]; ")]
+#[case("type Alias<T> = T[]; let _x: Alias<number> = [1];")]
+#[case("type Alias<T> = T[]; let _x: Alias<string> = [\"a\"]; ")]
 fn test_generic_aliases(#[case] source: &str) {
     let diags = errors(source);
     assert!(diags.is_empty(), "Expected no errors, got: {:?}", diags);
@@ -136,7 +136,7 @@ fn test_generic_aliases(#[case] source: &str) {
 #[case("type A = HashMap<string, number>; type B = HashMap<string, number>; let _x: A = hash_map_new(); let _y: B = _x;")]
 #[case("type A = string; type B = A; let _x: B = \"ok\";")]
 #[case("type A = number; type B = A; type C = B; let _x: C = 1;")]
-#[case("type A<T> = []T; type B<T> = A<T>; let _x: B<number> = [1];")]
+#[case("type A<T> = T[]; type B<T> = A<T>; let _x: B<number> = [1];")]
 fn test_type_equivalence_with_aliases(#[case] source: &str) {
     let diags = errors(source);
     assert!(diags.is_empty(), "Expected no errors, got: {:?}", diags);
@@ -221,7 +221,7 @@ fn test_alias_name_in_error_message() {
 
 #[test]
 fn test_infer_alias_type_args_from_initializer() {
-    let diags = errors("type Box<T> = []T; let _x: Box = [1, 2, 3];");
+    let diags = errors("type Box<T> = T[]; let _x: Box = [1, 2, 3];");
     assert!(
         diags.is_empty(),
         "Expected inference to succeed, got: {:?}",
@@ -253,7 +253,7 @@ fn test_alias_export_import_generic() {
     let diags = typecheck_modules(
         "main",
         &[
-            ("types", "export type Box<T> = []T;"),
+            ("types", "export type Box<T> = T[];"),
             (
                 "main",
                 "import { Box } from \"./types\"; let _x: Box<number> = [1, 2];",

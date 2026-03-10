@@ -718,7 +718,7 @@ pub const NOT_INDEXABLE: DiagnosticDescriptor = DiagnosticDescriptor {
     title: "Type is not indexable",
     message_template: "type `{type_name}` cannot be indexed",
     static_help: Some(
-        "only arrays (`[]T`) and hashmaps (`HashMap<K,V>`) support index expressions",
+        "only arrays (`T[]`) and hashmaps (`HashMap<K,V>`) support index expressions",
     ),
     static_note: None,
     domain: DiagnosticDomain::Typechecker,
@@ -1057,7 +1057,7 @@ pub const UNKNOWN_TYPE_NAME: DiagnosticDescriptor = DiagnosticDescriptor {
     level: DiagnosticLevel::Error,
     title: "Unknown type name",
     message_template: "unknown type `{type_name}`",
-    static_help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `[]T` for arrays, `HashMap<K,V>` for maps — define structs for custom types"),
+    static_help: Some("Atlas types: `number` (not int/float), `string` (not str/String), `bool` (not boolean), `T[]` for arrays, `HashMap<K,V>` for maps — define structs for custom types"),
     static_note: None,
     domain: DiagnosticDomain::Typechecker,
 };

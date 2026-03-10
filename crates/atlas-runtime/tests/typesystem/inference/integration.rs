@@ -84,7 +84,7 @@ fn test_integration_type_checking_across_variables() {
 fn test_integration_array_operations() {
     let diags = typecheck_source(
         r#"
-        fn first<T>(borrow arr: []T): T {
+        fn first<T>(borrow arr: T[]): T {
             return arr[0];
         }
         let nums = [1, 2, 3];

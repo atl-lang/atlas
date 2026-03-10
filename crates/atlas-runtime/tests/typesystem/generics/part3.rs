@@ -10,8 +10,8 @@ fn test_array_type_display_in_error() {
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].message.contains("[]number"),
-        "Expected []number in error, got: {}",
+        diags[0].message.contains("number[]"),
+        "Expected number[] in error, got: {}",
         diags[0].message
     );
 }
@@ -391,7 +391,7 @@ let _s: string = identity("hello");
 fn test_generic_first_infers_element_type() {
     let diags = errors(
         r#"
-fn first<T>(borrow arr: []T): T { return arr[0]; }
+fn first<T>(borrow arr: T[]): T { return arr[0]; }
 let _n: number = first([1, 2, 3]);
 "#,
     );

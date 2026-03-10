@@ -72,8 +72,8 @@ struct Route {
 }
 
 struct Router {
-    routes: []Route,
-    middleware: []Middleware,
+    routes: Route[],
+    middleware: Middleware[],
     sessions: HashMap,
     nextSessionId: number
 }
@@ -98,7 +98,7 @@ impl Renderable for number {
     }
 }
 
-export fn renderAll<T extends Renderable>(items: []T) : string {
+export fn renderAll<T extends Renderable>(items: T[]) : string {
     let rendered = map(items, fn(item: T) : string { return item.render(); });
     return join(rendered, "");
 }
@@ -219,8 +219,8 @@ export fn statusReason(status: Status) : string {
 // ============================================================================
 
 export fn routerNew() : Router {
-    let routes: []Route = [];
-    let middleware: []Middleware = [];
+    let routes: Route[] = [];
+    let middleware: Middleware[] = [];
     let sessions = hash_map_new();
     return Router {
         routes: routes,
@@ -313,7 +313,7 @@ fn findRoute(router: Router, request: Request) : Option<RouteMatch> {
     return None();
 }
 
-fn applyMiddleware(handler: Handler, middleware: []Middleware) : Handler {
+fn applyMiddleware(handler: Handler, middleware: Middleware[]) : Handler {
     if len(middleware) == 0 {
         return handler;
     }

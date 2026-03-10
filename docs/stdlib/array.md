@@ -5,7 +5,7 @@ Pure array functions for manipulation and search. Returns new arrays (Copy-on-Wr
 ## arrayPush
 
 ```atlas
-fn arrayPush(arr: []T, item: T) : []T
+fn arrayPush(arr: T[], item: T) : T[]
 ```
 
 Appends element to end of array. Returns new array.
@@ -14,14 +14,14 @@ Appends element to end of array. Returns new array.
 - `arr` - Array to modify
 - `item` - Element to add
 
-**Returns:** `[]T` - New array with element appended
+**Returns:** `T[]` - New array with element appended
 
 **Note:** Returns new array (CoW). Use: `arr = arrayPush(arr, item);`
 
 ## arrayPop
 
 ```atlas
-fn arrayPop(arr: []T) : any
+fn arrayPop(arr: T[]) : any
 ```
 
 Removes and returns last element. Returns array: [removed_element, new_array].
@@ -29,7 +29,7 @@ Removes and returns last element. Returns array: [removed_element, new_array].
 **Parameters:**
 - `arr` - Array to modify
 
-**Returns:** `[T, []T]` - Two-element array with removed element and new array
+**Returns:** `[T, T[]]` - Two-element array with removed element and new array
 
 **Errors:**
 - Cannot pop from empty array
@@ -39,7 +39,7 @@ Removes and returns last element. Returns array: [removed_element, new_array].
 ## arrayShift
 
 ```atlas
-fn arrayShift(arr: []T) : any
+fn arrayShift(arr: T[]) : any
 ```
 
 Removes and returns first element. Returns array: [removed_element, new_array].
@@ -47,7 +47,7 @@ Removes and returns first element. Returns array: [removed_element, new_array].
 **Parameters:**
 - `arr` - Array to modify
 
-**Returns:** `[T, []T]` - Two-element array with removed element and new array
+**Returns:** `[T, T[]]` - Two-element array with removed element and new array
 
 **Errors:**
 - Cannot shift from empty array
@@ -57,7 +57,7 @@ Removes and returns first element. Returns array: [removed_element, new_array].
 ## arrayUnshift
 
 ```atlas
-fn arrayUnshift(arr: []T, item: T) : []T
+fn arrayUnshift(arr: T[], item: T) : T[]
 ```
 
 Prepends element to beginning of array. Returns new array.
@@ -66,7 +66,7 @@ Prepends element to beginning of array. Returns new array.
 - `arr` - Array to modify
 - `item` - Element to add
 
-**Returns:** `[]T` - New array with element prepended
+**Returns:** `T[]` - New array with element prepended
 
 **Note:** Returns new array (CoW). Use: `arr = arrayUnshift(arr, item);`
 
@@ -75,7 +75,7 @@ Prepends element to beginning of array. Returns new array.
 ## arrayReverse
 
 ```atlas
-fn arrayReverse(arr: []T) : []T
+fn arrayReverse(arr: T[]) : T[]
 ```
 
 Reverses array elements. Returns new array.
@@ -83,7 +83,7 @@ Reverses array elements. Returns new array.
 **Parameters:**
 - `arr` - Array to reverse
 
-**Returns:** `[]T` - New reversed array
+**Returns:** `T[]` - New reversed array
 
 **Note:** Returns new array (CoW). Use: `arr = arrayReverse(arr);`
 
@@ -92,7 +92,7 @@ Reverses array elements. Returns new array.
 ## arraySort
 
 ```atlas
-fn arraySort(arr: []T) : []T
+fn arraySort(arr: T[]) : T[]
 ```
 
 Sorts array by natural order. Numbers ascending, strings lexicographic. Returns new array.
@@ -100,14 +100,14 @@ Sorts array by natural order. Numbers ascending, strings lexicographic. Returns 
 **Parameters:**
 - `arr` - Array to sort
 
-**Returns:** `[]T` - New sorted array
+**Returns:** `T[]` - New sorted array
 
 **Note:** Returns new array (CoW). Use: `arr = arraySort(arr);`
 
 ## concat
 
 ```atlas
-fn concat(arr1: []T, arr2: []T) : []T
+fn concat(arr1: T[], arr2: T[]) : T[]
 ```
 
 Concatenates two arrays. Returns new array.
@@ -116,12 +116,12 @@ Concatenates two arrays. Returns new array.
 - `arr1` - First array
 - `arr2` - Second array
 
-**Returns:** `[]T` - New array with all elements
+**Returns:** `T[]` - New array with all elements
 
 ## flatten
 
 ```atlas
-fn flatten(arr: []T[]) : []T
+fn flatten(arr: T[][]) : T[]
 ```
 
 Flattens array by one level. Returns new array.
@@ -129,12 +129,12 @@ Flattens array by one level. Returns new array.
 **Parameters:**
 - `arr` - Array of arrays
 
-**Returns:** `[]T` - Flattened array
+**Returns:** `T[]` - Flattened array
 
 ## arrayIndexOf
 
 ```atlas
-fn arrayIndexOf(arr: []T, search: T) : Option<number>
+fn arrayIndexOf(arr: T[], search: T) : Option<number>
 ```
 
 Finds first index of element. Returns None if not found.
@@ -148,7 +148,7 @@ Finds first index of element. Returns None if not found.
 ## arrayLastIndexOf
 
 ```atlas
-fn arrayLastIndexOf(arr: []T, search: T) : Option<number>
+fn arrayLastIndexOf(arr: T[], search: T) : Option<number>
 ```
 
 Finds last index of element. Returns None if not found.
@@ -162,7 +162,7 @@ Finds last index of element. Returns None if not found.
 ## arrayIsEmpty
 
 ```atlas
-fn arrayIsEmpty(arr: []T) : bool
+fn arrayIsEmpty(arr: T[]) : bool
 ```
 
 Returns true if the array has no elements.
@@ -177,7 +177,7 @@ Returns true if the array has no elements.
 ## arrayIncludes
 
 ```atlas
-fn arrayIncludes(arr: []T, search: T) : bool
+fn arrayIncludes(arr: T[], search: T) : bool
 ```
 
 Checks if array contains element.
@@ -191,7 +191,7 @@ Checks if array contains element.
 ## slice
 
 ```atlas
-fn slice(arr: []T, start: number, end: number) : []T
+fn slice(arr: T[], start: number, end: number) : T[]
 ```
 
 Extracts slice from start (inclusive) to end (exclusive).
@@ -201,7 +201,7 @@ Extracts slice from start (inclusive) to end (exclusive).
 - `start` - Start index (integer, clamped to [0, len])
 - `end` - End index (integer, clamped to [0, len])
 
-**Returns:** `[]T` - Sliced array
+**Returns:** `T[]` - Sliced array
 
 **Errors:**
 - Start > end
@@ -213,7 +213,7 @@ Extracts slice from start (inclusive) to end (exclusive).
 ### map
 
 ```atlas
-fn map(arr: []T, callback: fn(T) : U) : []U
+fn map(arr: T[], callback: fn(T) : U) : U[]
 ```
 
 Transforms each element using `callback` and returns a new array.
@@ -222,7 +222,7 @@ Transforms each element using `callback` and returns a new array.
 - `arr` - Array to transform
 - `callback` - Function invoked for each element
 
-**Returns:** `[]U` - New array of mapped values
+**Returns:** `U[]` - New array of mapped values
 
 **Example:**
 ```atlas
@@ -232,7 +232,7 @@ let doubled = map([1, 2, 3], fn(x) { return x * 2; });
 ### filter
 
 ```atlas
-fn filter(arr: []T, predicate: fn(T) : bool) : []T
+fn filter(arr: T[], predicate: fn(T) : bool) : T[]
 ```
 
 Filters elements using a predicate.
@@ -241,7 +241,7 @@ Filters elements using a predicate.
 - `arr` - Array to filter
 - `predicate` - Function returning true to keep the element
 
-**Returns:** `[]T` - New array with matching elements
+**Returns:** `T[]` - New array with matching elements
 
 **Example:**
 ```atlas
@@ -251,7 +251,7 @@ let evens = filter([1, 2, 3, 4], fn(x) { return x % 2 == 0; });
 ### reduce
 
 ```atlas
-fn reduce(arr: []T, reducer: fn(any, T) : any, initial: any) : any
+fn reduce(arr: T[], reducer: fn(any, T) : any, initial: any) : any
 ```
 
 Accumulates values into a single result.
@@ -271,7 +271,7 @@ let sum = reduce([1, 2, 3], fn(acc, x) { return acc + x; }, 0);
 ### forEach
 
 ```atlas
-fn forEach(arr: []T, callback: fn(T) : any) : null
+fn forEach(arr: T[], callback: fn(T) : any) : null
 ```
 
 Invokes a callback for each element (side effects only).
@@ -290,7 +290,7 @@ forEach([1, 2], fn(x) { print(x); });
 ### find
 
 ```atlas
-fn find(arr: []T, predicate: fn(T) : bool) : Option<T>
+fn find(arr: T[], predicate: fn(T) : bool) : Option<T>
 ```
 
 Returns the first element that satisfies the predicate.
@@ -309,7 +309,7 @@ let first = find([1, 2, 3], fn(x) { return x > 1; });
 ### findIndex
 
 ```atlas
-fn findIndex(arr: []T, predicate: fn(T) : bool) : Option<number>
+fn findIndex(arr: T[], predicate: fn(T) : bool) : Option<number>
 ```
 
 Returns the index of the first element that satisfies the predicate.
@@ -328,7 +328,7 @@ let idx = findIndex([5, 6, 7], fn(x) { return x == 6; });
 ### flatMap
 
 ```atlas
-fn flatMap(arr: []T, callback: fn(T) : any) : []any
+fn flatMap(arr: T[], callback: fn(T) : any) : any[]
 ```
 
 Maps each element and flattens one level if the callback returns arrays.
@@ -347,7 +347,7 @@ let out = flatMap([1, 2], fn(x) { return [x, x * 10]; });
 ### some
 
 ```atlas
-fn some(arr: []T, predicate: fn(T) : bool) : bool
+fn some(arr: T[], predicate: fn(T) : bool) : bool
 ```
 
 Returns true if any element satisfies the predicate.
@@ -366,7 +366,7 @@ let hasEven = some([1, 3, 4], fn(x) { return x % 2 == 0; });
 ### every
 
 ```atlas
-fn every(arr: []T, predicate: fn(T) : bool) : bool
+fn every(arr: T[], predicate: fn(T) : bool) : bool
 ```
 
 Returns true if all elements satisfy the predicate.
@@ -385,7 +385,7 @@ let allEven = every([2, 4], fn(x) { return x % 2 == 0; });
 ### sort
 
 ```atlas
-fn sort(arr: []T, comparator: fn(T, T) : number) : []T
+fn sort(arr: T[], comparator: fn(T, T) : number) : T[]
 ```
 
 Sorts the array using a comparator function.
@@ -394,7 +394,7 @@ Sorts the array using a comparator function.
 - `arr` - Array to sort
 - `comparator` - Function returning negative, zero, or positive
 
-**Returns:** `[]T` - Sorted array.
+**Returns:** `T[]` - Sorted array.
 
 **Example:**
 ```atlas
@@ -404,7 +404,7 @@ let sorted = sort([3, 1, 2], fn(a, b) { return a - b; });
 ### sortBy
 
 ```atlas
-fn sortBy(arr: []T, keyExtractor: fn(T) : any) : []T
+fn sortBy(arr: T[], keyExtractor: fn(T) : any) : T[]
 ```
 
 Sorts the array by keys extracted from each element.
@@ -413,7 +413,7 @@ Sorts the array by keys extracted from each element.
 - `arr` - Array to sort
 - `keyExtractor` - Function returning a number or string key
 
-**Returns:** `[]T` - Sorted array.
+**Returns:** `T[]` - Sorted array.
 
 **Example:**
 ```atlas

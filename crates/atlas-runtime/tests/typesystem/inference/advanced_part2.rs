@@ -12,8 +12,8 @@ use super::helpers::*;
 fn test_unification_generic_type_arg_inferred() {
     let diags = typecheck_source(
         r#"
-        fn wrap<T>(borrow x: T): []T {
-            let _arr: []T = [x];
+        fn wrap<T>(borrow x: T): T[] {
+            let _arr: T[] = [x];
             return _arr;
         }
         "#,

@@ -91,7 +91,7 @@ Returns value of first completing future.
 ### futureAll
 
 ```atlas
-fn futureAll(futures: Future<T>[]) : Future<[]T>
+fn futureAll(futures: Future<T>[]) : Future<T[]>
 ```
 
 Waits for all futures to complete.
@@ -99,7 +99,7 @@ Waits for all futures to complete.
 **Parameters:**
 - `futures` - Array of futures
 
-**Returns:** `Future<[]T>` - Array of all resolved values
+**Returns:** `Future<T[]>` - Array of all resolved values
 
 **Errors:** Rejects if any future rejects
 

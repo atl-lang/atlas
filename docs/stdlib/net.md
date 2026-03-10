@@ -62,7 +62,7 @@ let data = tcpRead(stream, 1024);
 ### tcpReadBytes
 
 ```atlas
-fn tcpReadBytes(stream: TcpStream, max_bytes: number) : []number
+fn tcpReadBytes(stream: TcpStream, max_bytes: number) : number[]
 ```
 
 Reads up to `max_bytes` bytes and returns raw bytes as numbers.

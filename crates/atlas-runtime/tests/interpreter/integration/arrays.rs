@@ -262,7 +262,7 @@ struct Person {
     name: string,
     age: number
 }
-fn register(name: string, age: number, mut own people: []Person): []Person {
+fn register(name: string, age: number, mut own people: Person[]): Person[] {
     let found: bool = false;
     match found {
         true => { return people; },
@@ -273,7 +273,7 @@ fn register(name: string, age: number, mut own people: []Person): []Person {
         }
     }
 }
-let mut people: []Person = [];
+let mut people: Person[] = [];
 people = register("Alice", 30, people);
 people[0].name
 "#;

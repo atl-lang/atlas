@@ -78,7 +78,7 @@ return expr;
 
 Example (tested):
 ```atlas
-fn first_positive(values: []number) : Option<number> {
+fn first_positive(values: number[]) : Option<number> {
     for v in values {
         if v > 0 {
             return Some(v);

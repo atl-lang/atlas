@@ -130,7 +130,7 @@ A stdlib function received the wrong argument type or count. The error message i
 
 ```
 len(): expected 1 argument, got 0
-  Signature: len(value: string | []any) : number
+  Signature: len(value: string | any[]) : number
 ```
 
 ### AT0103 — Invalid Index
@@ -210,14 +210,14 @@ The file ended before a statement or expression was complete. In the REPL, this 
 Non-Copy types (arrays, structs, HashMaps) used in a move-sensitive context require an explicit ownership annotation: `own`, `borrow`, or `share`. Bare parameters default to `borrow` (D-040) and do not trigger AT1007.
 
 ```atlas
-fn bad(own x: []number, y: []number): void {
+fn bad(own x: number[], y: number[]): void {
     store(y)   // ✗ AT1007: y is bare (implicit borrow) — cannot escape
 }
 
-fn good(own x: []number): void { ... }     // ✓ own: moves value into fn
-fn good(borrow x: []number): void { ... }  // ✓ explicit borrow: read-only
-fn good(share x: []number): void { ... }   // ✓ share: co-held reference
-fn good(x: []number): void { ... }         // ✓ bare param: implicit borrow, no annotation needed
+fn good(own x: number[]): void { ... }     // ✓ own: moves value into fn
+fn good(borrow x: number[]): void { ... }  // ✓ explicit borrow: read-only
+fn good(share x: number[]): void { ... }   // ✓ share: co-held reference
+fn good(x: number[]): void { ... }         // ✓ bare param: implicit borrow, no annotation needed
 ```
 
 Choose `own` when the function should take exclusive ownership, `borrow` for read-only access, `share` when both caller and callee hold a valid reference. Primitives (`number`, `string`, `bool`) are Copy — no annotation required.
@@ -467,7 +467,7 @@ The inferred return type is incompatible with how the function is used.
 A value was used after ownership was transferred.
 
 ```atlas
-fn consume(own x: []number): void { }
+fn consume(own x: number[]): void { }
 let arr = [1.0, 2.0];
 consume(arr);
 print(arr);    // ✗ AT3053 — arr was moved into consume()
