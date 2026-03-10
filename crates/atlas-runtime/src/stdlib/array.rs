@@ -191,6 +191,27 @@ pub fn slice(arr: &[Value], start: f64, end: f64, span: Span) -> Result<Value, R
     Ok(Value::array(sliced))
 }
 
+/// Enumerate array — returns array of `(index, value)` tuples
+///
+/// `arrayEnumerate([a, b, c])` → `[(0, a), (1, b), (2, c)]`
+///
+/// Enables indexed iteration:
+/// ```text
+/// for pair in arrayEnumerate(items) {
+///     let (i, v) = pair;
+///     print(i);
+/// }
+/// ```
+pub fn enumerate(arr: &[Value]) -> Value {
+    use std::sync::Arc;
+    let pairs: Vec<Value> = arr
+        .iter()
+        .enumerate()
+        .map(|(i, v)| Value::Tuple(Arc::new(vec![Value::Number(i as f64), v.clone()])))
+        .collect();
+    Value::array(pairs)
+}
+
 // ============================================================================
 // Helper Functions
 // ============================================================================

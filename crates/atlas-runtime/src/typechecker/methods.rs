@@ -261,6 +261,13 @@ impl MethodTable {
             },
             "flatMap" => (vec![Type::Unknown], Type::Array(Box::new(Type::Unknown))),
             "join" => (vec![Type::String], Type::String),
+            "enumerate" => (
+                vec![],
+                Type::Array(Box::new(Type::Tuple(vec![
+                    Type::Number,
+                    elem_norm.clone(),
+                ]))),
+            ),
             _ => return None,
         };
 

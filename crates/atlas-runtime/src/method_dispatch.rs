@@ -169,6 +169,7 @@ fn resolve_array_method(method_name: &str) -> Option<String> {
         // Non-mutating — return new value
         "sort" => "arraySort",
         "sortBy" => "arraySortBy",
+        "enumerate" => "arrayEnumerate",
         "len" | "length" => "len",
         "isEmpty" => "arrayIsEmpty",
         "includes" => "arrayIncludes",
