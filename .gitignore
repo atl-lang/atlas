@@ -59,3 +59,4 @@ CODEX_VERIFY.md
 # Nightly CI (local state — never commit)
 tracking/ci-status.json
 tracking/ci-runner.log
+*.zip
