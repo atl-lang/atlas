@@ -97,6 +97,10 @@ pub struct Interpreter {
     lookup_cache: cache::InterpreterCache,
     /// Call stack for runtime error reporting
     call_stack: Vec<RuntimeCallFrame>,
+    /// User-defined enum variants: variant_name -> (enum_name, arity).
+    /// Populated when enum declarations are processed. Used to resolve bare variant
+    /// constructor calls like `Unknown(raw)` or `Quit` without `EnumName::` prefix.
+    pub(super) enum_variants: HashMap<String, (String, usize)>,
     /// Nominal struct names for HashMap-backed struct values (keyed by map identity).
     struct_type_names: HashMap<usize, String>,
     /// Runtime warnings collected during execution (ownership mismatches, etc.).
@@ -130,6 +134,7 @@ impl Interpreter {
                 function_name: "<main>".to_string(),
                 call_span: None,
             }],
+            enum_variants: HashMap::new(),
             struct_type_names: HashMap::new(),
             runtime_warnings: Vec::new(),
         };
@@ -376,8 +381,12 @@ impl Interpreter {
                         crate::ast::ExportItem::TypeAlias(_) => {
                             // Type aliases are compile-time only
                         }
-                        crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                        crate::ast::ExportItem::Struct(_) => {
                             // Type declarations only — no runtime value
+                        }
+                        crate::ast::ExportItem::Enum(decl) => {
+                            // Register exported enum variants for bare constructor calls.
+                            self.register_enum_variants(decl);
                         }
                     }
                 }
@@ -493,9 +502,12 @@ impl Interpreter {
                         }
                     }
                 }
-                Item::Struct(_) | Item::Enum(_) => {
-                    // Struct/enum declarations are type-info only — no runtime action needed.
-                    // The type system handles struct/enum definitions.
+                Item::Struct(_) => {
+                    // Struct declarations are type-info only — no runtime action needed.
+                }
+                Item::Enum(decl) => {
+                    // Register variants so bare constructor calls work without EnumName:: prefix.
+                    self.register_enum_variants(decl);
                 }
             }
         }
@@ -652,10 +664,35 @@ impl Interpreter {
             _ => {}
         }
 
+        // User-defined unit enum variants (e.g. `Quit` from `enum CommandResult { Quit, ... }`)
+        if let Some((enum_name, arity)) = self.enum_variants.get(name) {
+            if *arity == 0 {
+                return Ok(Value::EnumValue {
+                    enum_name: enum_name.clone(),
+                    variant_name: name.to_string(),
+                    data: Vec::new(),
+                });
+            }
+        }
+
         Err(RuntimeError::UndefinedVariable {
             name: name.to_string(),
             span,
         })
+    }
+
+    /// Register all variants of an enum declaration for bare constructor resolution.
+    pub(super) fn register_enum_variants(&mut self, decl: &crate::ast::EnumDecl) {
+        for variant in &decl.variants {
+            let variant_name = variant.name().name.clone();
+            let enum_name = decl.name.name.clone();
+            let arity = match variant {
+                crate::ast::EnumVariant::Unit { .. } => 0,
+                crate::ast::EnumVariant::Tuple { fields, .. } => fields.len(),
+                crate::ast::EnumVariant::Struct { fields, .. } => fields.len(),
+            };
+            self.enum_variants.insert(variant_name, (enum_name, arity));
+        }
     }
 
     /// Set a variable value
@@ -1105,6 +1142,7 @@ impl Interpreter {
         let globals = self.globals.clone();
         let output_writer = self.output_writer.clone();
         let struct_type_names = self.struct_type_names.clone();
+        let enum_variants = self.enum_variants.clone();
 
         // Create callback that calls interpreter
         let callback_fn = move |args: &[Value]| -> Result<Value, RuntimeError> {
@@ -1134,6 +1172,7 @@ impl Interpreter {
                     function_name: "<main>".to_string(),
                     call_span: None,
                 }],
+                enum_variants: enum_variants.clone(),
                 struct_type_names: struct_type_names.clone(),
                 runtime_warnings: Vec::new(),
             };

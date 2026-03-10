@@ -232,8 +232,41 @@ impl<'a> TypeChecker<'a> {
                 if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                     symbol.ty.clone()
                 } else {
-                    // Symbol not found - may be a builtin or undefined variable
-                    // Binder should have caught undefined variables, so this is likely a builtin
+                    // Check if it's a user-defined enum variant (bare constructor like `Quit`
+                    // or tuple variant like `Unknown` used as a function value).
+                    // Skip stdlib constructors which are handled separately.
+                    let is_stdlib_ctor = matches!(id.name.as_str(), "Ok" | "Err" | "Some" | "None");
+                    if !is_stdlib_ctor {
+                        // Clone data needed to avoid borrow conflict with resolve_type_ref.
+                        let found: Option<(String, crate::ast::EnumVariant)> =
+                            self.enum_decls.iter().find_map(|(enum_name, decl)| {
+                                decl.variants
+                                    .iter()
+                                    .find(|v| v.name().name == id.name)
+                                    .map(|v| (enum_name.clone(), v.clone()))
+                            });
+                        if let Some((enum_name, variant)) = found {
+                            let enum_type = Type::Generic {
+                                name: enum_name,
+                                type_args: vec![],
+                            };
+                            return match variant {
+                                crate::ast::EnumVariant::Unit { .. } => enum_type,
+                                crate::ast::EnumVariant::Tuple { fields, .. } => {
+                                    let params: Vec<Type> =
+                                        fields.iter().map(|f| self.resolve_type_ref(f)).collect();
+                                    Type::Function {
+                                        type_params: vec![],
+                                        params,
+                                        return_type: Box::new(enum_type),
+                                    }
+                                }
+                                crate::ast::EnumVariant::Struct { .. } => enum_type,
+                            };
+                        }
+                    }
+                    // Symbol not found - may be a builtin or undefined variable.
+                    // Binder should have caught undefined variables, so this is likely a builtin.
                     Type::Unknown
                 }
             }
