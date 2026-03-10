@@ -51,6 +51,13 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             name: "Option".to_string(),
             type_args: vec![Type::String],
         },
+        // H-213: Process.args() — CLI argv access
+        ("Process", "args") => Type::Array(Box::new(Type::String)),
+        // H-212: Process.run(program, args) — direct exec returns Result<string, string>
+        ("Process", "run") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::String, Type::String],
+        },
         // Path namespace
         (
             "Path",

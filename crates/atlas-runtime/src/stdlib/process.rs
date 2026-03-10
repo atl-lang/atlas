@@ -504,6 +504,105 @@ pub fn get_pid(
     Ok(Value::Number(std::process::id() as f64))
 }
 
+/// Get command-line arguments passed to the Atlas program (H-213)
+///
+/// Atlas signature: `getProcessArgs() -> string[]`
+pub fn get_process_args(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("getProcessArgs", 0, args.len(), span));
+    }
+
+    // Skip the first two args: the atlas binary and the source file path.
+    // User programs see only the arguments after the file name.
+    let argv: Vec<Value> = std::env::args().skip(2).map(Value::string).collect();
+    Ok(Value::Array(ValueArray::from_vec(argv)))
+}
+
+/// Direct process execution — no shell, returns stdout as string (H-212)
+///
+/// Atlas signature: `processRun(program: string, args: string[]) -> Result<string, string>`
+pub fn process_run(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("processRun", 2, args.len(), span));
+    }
+
+    let program = match &args[0] {
+        Value::String(s) => s.as_ref().clone(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "processRun: first argument (program) must be a string".to_string(),
+                span,
+            })
+        }
+    };
+
+    security
+        .check_process(&program)
+        .map_err(|_| RuntimeError::ProcessPermissionDenied {
+            command: program.clone(),
+            span,
+        })?;
+
+    let cmd_args: Vec<String> = match &args[1] {
+        Value::Array(arr) => arr
+            .iter()
+            .map(|v| match v {
+                Value::String(s) => Ok(s.as_ref().clone()),
+                _ => Err(RuntimeError::TypeError {
+                    msg: "processRun: args array must contain strings".to_string(),
+                    span,
+                }),
+            })
+            .collect::<Result<_, _>>()?,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "processRun: second argument (args) must be a string array".to_string(),
+                span,
+            })
+        }
+    };
+
+    let output = Command::new(&program)
+        .args(&cmd_args)
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .stdin(Stdio::null())
+        .output()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("processRun: failed to execute '{}': {}", program, e),
+            span,
+        })?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout)
+            .trim_end()
+            .to_string();
+        Ok(Value::Result(Ok(Box::new(Value::string(stdout)))))
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr)
+            .trim_end()
+            .to_string();
+        let msg = if stderr.is_empty() {
+            format!(
+                "process '{}' exited with code {}",
+                program,
+                output.status.code().unwrap_or(-1)
+            )
+        } else {
+            stderr
+        };
+        Ok(Value::Result(Err(Box::new(Value::string(msg)))))
+    }
+}
+
 // ============================================================================
 // Async Process Management
 // ============================================================================

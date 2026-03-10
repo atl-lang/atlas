@@ -367,6 +367,8 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "shell" => "shell",
         "env" => "getEnv",
         "envList" => "listEnv",
+        "args" => "getProcessArgs",
+        "run" => "processRun",
         _ => return None,
     };
     Some(func_name.to_string())
