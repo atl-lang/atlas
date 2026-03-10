@@ -155,7 +155,7 @@ fn test_parse_assignments(#[case] source: &str, #[case] snapshot_name: &str) {
 
 #[test]
 fn test_parse_function_no_params() {
-    let (program, diagnostics) = parse_source("fn foo() -> number { return 42; }");
+    let (program, diagnostics) = parse_source("fn foo(): number { return 42; }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }
@@ -163,7 +163,7 @@ fn test_parse_function_no_params() {
 #[test]
 fn test_parse_function_with_params() {
     let (program, diagnostics) =
-        parse_source("fn add(borrow x: number, borrow y: number) -> number { return x + y; }");
+        parse_source("fn add(borrow x: number, borrow y: number): number { return x + y; }");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }
@@ -171,7 +171,7 @@ fn test_parse_function_with_params() {
 #[test]
 fn test_parse_function_with_complex_body() {
     let source = r#"
-fn factorial(borrow n: number) -> number {
+fn factorial(borrow n: number): number {
     if n <= 1 {
         return 1;
     } else {

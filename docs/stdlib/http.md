@@ -7,7 +7,7 @@ HTTP client requests and response handling.
 ### httpRequest
 
 ```atlas
-fn httpRequest(method: string, url: string) -> HttpRequest
+fn httpRequest(method: string, url: string) : HttpRequest
 ```
 
 Creates a new HTTP request builder.
@@ -23,7 +23,7 @@ Creates a new HTTP request builder.
 ### httpGet
 
 ```atlas
-fn httpGet(url: string) -> Result<HttpResponse, string>
+fn httpGet(url: string) : Result<HttpResponse, string>
 ```
 
 Sends GET request.
@@ -40,7 +40,7 @@ Sends GET request.
 ### httpPost
 
 ```atlas
-fn httpPost(url: string, body: string) -> Result<HttpResponse, string>
+fn httpPost(url: string, body: string) : Result<HttpResponse, string>
 ```
 
 Sends POST request.
@@ -58,7 +58,7 @@ Sends POST request.
 ### httpPut
 
 ```atlas
-fn httpPut(url: string, body: string) -> Result<HttpResponse, string>
+fn httpPut(url: string, body: string) : Result<HttpResponse, string>
 ```
 
 Sends PUT request.
@@ -76,7 +76,7 @@ Sends PUT request.
 ### httpPatch
 
 ```atlas
-fn httpPatch(url: string, body: string) -> Result<HttpResponse, string>
+fn httpPatch(url: string, body: string) : Result<HttpResponse, string>
 ```
 
 Sends PATCH request.
@@ -94,7 +94,7 @@ Sends PATCH request.
 ### httpDelete
 
 ```atlas
-fn httpDelete(url: string) -> Result<HttpResponse, string>
+fn httpDelete(url: string) : Result<HttpResponse, string>
 ```
 
 Sends DELETE request.
@@ -113,7 +113,7 @@ Sends DELETE request.
 ### httpSetBody
 
 ```atlas
-fn httpSetBody(request: HttpRequest, body: string) -> HttpRequest
+fn httpSetBody(request: HttpRequest, body: string) : HttpRequest
 ```
 
 Sets request body.
@@ -127,7 +127,7 @@ Sets request body.
 ### httpSetHeader
 
 ```atlas
-fn httpSetHeader(request: HttpRequest, key: string, value: string) -> HttpRequest
+fn httpSetHeader(request: HttpRequest, key: string, value: string) : HttpRequest
 ```
 
 Sets HTTP header.
@@ -142,7 +142,7 @@ Sets HTTP header.
 ### httpSetQuery
 
 ```atlas
-fn httpSetQuery(request: HttpRequest, key: string, value: string) -> HttpRequest
+fn httpSetQuery(request: HttpRequest, key: string, value: string) : HttpRequest
 ```
 
 Sets query parameter.
@@ -157,7 +157,7 @@ Sets query parameter.
 ### httpSetAuth
 
 ```atlas
-fn httpSetAuth(request: HttpRequest, username: string, password: string) -> HttpRequest
+fn httpSetAuth(request: HttpRequest, username: string, password: string) : HttpRequest
 ```
 
 Sets Basic authentication.
@@ -172,7 +172,7 @@ Sets Basic authentication.
 ### httpSetUserAgent
 
 ```atlas
-fn httpSetUserAgent(request: HttpRequest, user_agent: string) -> HttpRequest
+fn httpSetUserAgent(request: HttpRequest, user_agent: string) : HttpRequest
 ```
 
 Sets User-Agent header.
@@ -186,7 +186,7 @@ Sets User-Agent header.
 ### httpSetTimeout
 
 ```atlas
-fn httpSetTimeout(request: HttpRequest, seconds: number) -> HttpRequest
+fn httpSetTimeout(request: HttpRequest, seconds: number) : HttpRequest
 ```
 
 Sets request timeout.
@@ -200,7 +200,7 @@ Sets request timeout.
 ### httpSetFollowRedirects
 
 ```atlas
-fn httpSetFollowRedirects(request: HttpRequest, follow: bool) -> HttpRequest
+fn httpSetFollowRedirects(request: HttpRequest, follow: bool) : HttpRequest
 ```
 
 Enables or disables redirect following.
@@ -214,7 +214,7 @@ Enables or disables redirect following.
 ### httpSetMaxRedirects
 
 ```atlas
-fn httpSetMaxRedirects(request: HttpRequest, max: number) -> HttpRequest
+fn httpSetMaxRedirects(request: HttpRequest, max: number) : HttpRequest
 ```
 
 Sets maximum redirects to follow.
@@ -230,7 +230,7 @@ Sets maximum redirects to follow.
 ### httpSend
 
 ```atlas
-fn httpSend(request: HttpRequest) -> Result<HttpResponse, string>
+fn httpSend(request: HttpRequest) : Result<HttpResponse, string>
 ```
 
 Sends HTTP request.
@@ -245,7 +245,7 @@ Sends HTTP request.
 ### httpSendAsync
 
 ```atlas
-fn httpSendAsync(request: HttpRequest) -> Future<Result<HttpResponse, string>>
+fn httpSendAsync(request: HttpRequest) : Future<Result<HttpResponse, string>>
 ```
 
 Sends HTTP request asynchronously.
@@ -260,7 +260,7 @@ Sends HTTP request asynchronously.
 ### httpGetJson
 
 ```atlas
-fn httpGetJson(url: string) -> Result<json, string>
+fn httpGetJson(url: string) : Result<json, string>
 ```
 
 GET request expecting JSON response. Parses automatically.
@@ -275,7 +275,7 @@ GET request expecting JSON response. Parses automatically.
 ### httpPostJson
 
 ```atlas
-fn httpPostJson(url: string, data: json) -> Result<HttpResponse, string>
+fn httpPostJson(url: string, data: json) : Result<HttpResponse, string>
 ```
 
 POST request with JSON body.
@@ -293,7 +293,7 @@ POST request with JSON body.
 ### httpPostAsync
 
 ```atlas
-fn httpPostAsync(url: string, body: string) -> Future<Result<HttpResponse, string>>
+fn httpPostAsync(url: string, body: string) : Future<Result<HttpResponse, string>>
 ```
 
 POST request asynchronously.
@@ -307,7 +307,7 @@ POST request asynchronously.
 ### httpGetAsync
 
 ```atlas
-fn httpGetAsync(url: string) -> Future<Result<HttpResponse, string>>
+fn httpGetAsync(url: string) : Future<Result<HttpResponse, string>>
 ```
 
 GET request asynchronously.
@@ -320,7 +320,7 @@ GET request asynchronously.
 ### httpDeleteAsync
 
 ```atlas
-fn httpDeleteAsync(url: string) -> Future<Result<HttpResponse, string>>
+fn httpDeleteAsync(url: string) : Future<Result<HttpResponse, string>>
 ```
 
 DELETE request asynchronously.
@@ -333,7 +333,7 @@ DELETE request asynchronously.
 ### httpPutAsync
 
 ```atlas
-fn httpPutAsync(url: string, body: string) -> Future<Result<HttpResponse, string>>
+fn httpPutAsync(url: string, body: string) : Future<Result<HttpResponse, string>>
 ```
 
 PUT request asynchronously.
@@ -349,7 +349,7 @@ PUT request asynchronously.
 ### httpStatus
 
 ```atlas
-fn httpStatus(response: HttpResponse) -> number
+fn httpStatus(response: HttpResponse) : number
 ```
 
 Gets HTTP status code.
@@ -362,7 +362,7 @@ Gets HTTP status code.
 ### httpStatusText
 
 ```atlas
-fn httpStatusText(response: HttpResponse) -> string
+fn httpStatusText(response: HttpResponse) : string
 ```
 
 Gets HTTP status text.
@@ -375,7 +375,7 @@ Gets HTTP status text.
 ### httpBody
 
 ```atlas
-fn httpBody(response: HttpResponse) -> string
+fn httpBody(response: HttpResponse) : string
 ```
 
 Gets response body as string.
@@ -388,7 +388,7 @@ Gets response body as string.
 ### httpContentType
 
 ```atlas
-fn httpContentType(response: HttpResponse) -> Option<string>
+fn httpContentType(response: HttpResponse) : Option<string>
 ```
 
 Gets Content-Type header value.
@@ -401,7 +401,7 @@ Gets Content-Type header value.
 ### httpContentLength
 
 ```atlas
-fn httpContentLength(response: HttpResponse) -> Option<number>
+fn httpContentLength(response: HttpResponse) : Option<number>
 ```
 
 Gets Content-Length header value.
@@ -414,7 +414,7 @@ Gets Content-Length header value.
 ### httpHeader
 
 ```atlas
-fn httpHeader(response: HttpResponse, key: string) -> Option<string>
+fn httpHeader(response: HttpResponse, key: string) : Option<string>
 ```
 
 Gets header value by name.
@@ -428,7 +428,7 @@ Gets header value by name.
 ### httpHeaders
 
 ```atlas
-fn httpHeaders(response: HttpResponse) -> HashMap<string, string>
+fn httpHeaders(response: HttpResponse) : HashMap<string, string>
 ```
 
 Gets all headers as a HashMap.
@@ -443,7 +443,7 @@ Gets all headers as a HashMap.
 ### httpIsSuccess
 
 ```atlas
-fn httpIsSuccess(response: HttpResponse) -> bool
+fn httpIsSuccess(response: HttpResponse) : bool
 ```
 
 Checks if status code is 2xx (success).
@@ -456,7 +456,7 @@ Checks if status code is 2xx (success).
 ### httpIsRedirect
 
 ```atlas
-fn httpIsRedirect(response: HttpResponse) -> bool
+fn httpIsRedirect(response: HttpResponse) : bool
 ```
 
 Checks if status code is 3xx (redirect).
@@ -469,7 +469,7 @@ Checks if status code is 3xx (redirect).
 ### httpIsClientError
 
 ```atlas
-fn httpIsClientError(response: HttpResponse) -> bool
+fn httpIsClientError(response: HttpResponse) : bool
 ```
 
 Checks if status code is 4xx (client error).
@@ -482,7 +482,7 @@ Checks if status code is 4xx (client error).
 ### httpIsServerError
 
 ```atlas
-fn httpIsServerError(response: HttpResponse) -> bool
+fn httpIsServerError(response: HttpResponse) : bool
 ```
 
 Checks if status code is 5xx (server error).
@@ -497,7 +497,7 @@ Checks if status code is 5xx (server error).
 ### httpCheckPermission
 
 ```atlas
-fn httpCheckPermission(url: string) -> Result<bool, string>
+fn httpCheckPermission(url: string) : Result<bool, string>
 ```
 
 Checks if URL is allowed by security policy.
@@ -512,7 +512,7 @@ Checks if URL is allowed by security policy.
 ### httpParseJson
 
 ```atlas
-fn httpParseJson(response: HttpResponse) -> Result<any, string>
+fn httpParseJson(response: HttpResponse) : Result<any, string>
 ```
 
 Parses response body as JSON.

@@ -1,4 +1,4 @@
-fn get_value() -> number {
+fn get_value() : number {
     let result: number = 42;
     return result;
     let never_reached: number = 0;

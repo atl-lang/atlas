@@ -42,7 +42,7 @@
 // Main application
 // ============================================================================
 
-fn main() -> void {
+fn main() : void {
     print("Hydra MCP Supervisor - Atlas Port");
     print("==================================");
     print("");
@@ -73,7 +73,7 @@ fn main() -> void {
 // Module Tests
 // ============================================================================
 
-fn test_config() -> void {
+fn test_config() : void {
     print("[Config] Testing configuration...");
 
     // Create default registry
@@ -89,7 +89,7 @@ fn test_config() -> void {
     print("[Config] OK");
 }
 
-fn test_supervisor() -> void {
+fn test_supervisor() : void {
     print("[Supervisor] Testing process lifecycle...");
 
     // Test ServerState enum
@@ -121,7 +121,7 @@ fn test_supervisor() -> void {
     print("[Supervisor] OK");
 }
 
-fn test_sanitizer() -> void {
+fn test_sanitizer() : void {
     print("[Sanitizer] Testing JSON-RPC classification...");
 
     let sanitizer = new_sanitizer(true);
@@ -143,7 +143,7 @@ fn test_sanitizer() -> void {
     print("[Sanitizer] OK");
 }
 
-fn test_metrics() -> void {
+fn test_metrics() : void {
     print("[Metrics] Testing metrics collection...");
 
     let collector = new_metrics_collector();
@@ -170,7 +170,7 @@ fn test_metrics() -> void {
     print("[Metrics] OK");
 }
 
-fn test_adaptive() -> void {
+fn test_adaptive() : void {
     print("[Adaptive] Testing adaptive learning...");
 
     let learner = new_learner();
@@ -214,7 +214,7 @@ fn test_adaptive() -> void {
     print("[Adaptive] OK");
 }
 
-fn test_proxy() -> void {
+fn test_proxy() : void {
     print("[Proxy] Testing proxy orchestration...");
 
     // Create proxy

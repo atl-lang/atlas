@@ -1,23 +1,23 @@
 // 06_generics.atlas
 // Tests: generic fn with type parameter, generic applied to number and string.
 
-fn identity<T>(own x: T) -> T {
+fn identity<T>(own x: T) : T {
     return x;
 }
 
-fn first<T>(borrow arr: T[]) -> T {
+fn first<T>(borrow arr: T[]) : T {
     return arr[0];
 }
 
-fn last<T>(borrow arr: T[]) -> T {
+fn last<T>(borrow arr: T[]) : T {
     return arr[len(arr) - 1];
 }
 
-fn wrap<T>(borrow x: T) -> T[] {
+fn wrap<T>(borrow x: T) : T[] {
     return [x];
 }
 
-fn swap_pair<T>(borrow pair: T[]) -> T[] {
+fn swap_pair<T>(borrow pair: T[]) : T[] {
     let a: T = pair[0];
     let b: T = pair[1];
     return [b, a];

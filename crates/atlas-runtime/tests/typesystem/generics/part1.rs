@@ -24,7 +24,7 @@ use pretty_assertions::assert_eq;
 fn test_generic_function_simple_declaration() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
     "#,
@@ -36,7 +36,7 @@ fn test_generic_function_simple_declaration() {
 fn test_generic_function_multiple_type_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn pair<A, B>(borrow first: A, borrow _second: B) -> A {
+        fn pair<A, B>(borrow first: A, borrow _second: B): A {
             return first;
         }
     "#,
@@ -48,7 +48,7 @@ fn test_generic_function_multiple_type_params() {
 fn test_generic_function_three_type_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C) -> A {
+        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C): A {
             return _a;
         }
     "#,
@@ -64,7 +64,7 @@ fn test_generic_function_three_type_params() {
 fn test_type_parameter_in_param() {
     let diagnostics = typecheck_source(
         r#"
-        fn test<T>(borrow _x: T) -> void {}
+        fn test<T>(borrow _x: T): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -76,7 +76,7 @@ fn test_type_parameter_in_return() {
     // We can't check type correctness without knowing T
     let diagnostics = typecheck_source(
         r#"
-        fn test<T>(borrow _x: number) -> T {
+        fn test<T>(borrow _x: number): T {
             return _x;
         }
     "#,
@@ -90,7 +90,7 @@ fn test_type_parameter_in_return() {
 fn test_type_parameter_in_array() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: []T) -> T {
+        fn first<T>(borrow arr: []T): T {
             return arr[0];
         }
     "#,
@@ -102,7 +102,7 @@ fn test_type_parameter_in_array() {
 fn test_duplicate_type_parameter() {
     let diagnostics = typecheck_source(
         r#"
-        fn bad<T, T>(borrow _x: T) -> T {
+        fn bad<T, T>(borrow _x: T): T {
             return _x;
         }
     "#,
@@ -119,7 +119,7 @@ fn test_duplicate_type_parameter() {
 fn test_inference_number() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let _result = identity(42);
@@ -132,7 +132,7 @@ fn test_inference_number() {
 fn test_inference_string() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let _result = identity("hello");
@@ -145,7 +145,7 @@ fn test_inference_string() {
 fn test_inference_bool() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let _result = identity(true);
@@ -158,7 +158,7 @@ fn test_inference_bool() {
 fn test_inference_array() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let arr = [1, 2, 3];
@@ -176,7 +176,7 @@ fn test_inference_array() {
 fn test_inference_multiple_same_type() {
     let diagnostics = typecheck_source(
         r#"
-        fn both<T>(borrow _a: T, borrow _b: T) -> T {
+        fn both<T>(borrow _a: T, borrow _b: T): T {
             return _a;
         }
         let _result = both(42, 84);
@@ -189,7 +189,7 @@ fn test_inference_multiple_same_type() {
 fn test_inference_multiple_different_types() {
     let diagnostics = typecheck_source(
         r#"
-        fn pair<A, B>(borrow _first: A, borrow _second: B) -> A {
+        fn pair<A, B>(borrow _first: A, borrow _second: B): A {
             return _first;
         }
         let _result = pair(42, "hello");
@@ -202,7 +202,7 @@ fn test_inference_multiple_different_types() {
 fn test_inference_three_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C) -> A {
+        fn triple<A, B, C>(borrow _a: A, borrow _b: B, borrow _c: C): A {
             return _a;
         }
         let _result = triple(1, "two", true);
@@ -219,7 +219,7 @@ fn test_inference_three_params() {
 fn test_inference_array_element_type() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: []T) -> T {
+        fn first<T>(borrow arr: []T): T {
             return arr[0];
         }
         let numbers = [1, 2, 3];
@@ -233,7 +233,7 @@ fn test_inference_array_element_type() {
 fn test_inference_array_of_strings() {
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow arr: []T) -> T {
+        fn first<T>(borrow arr: []T): T {
             return arr[0];
         }
         let strings = ["a", "b", "c"];
@@ -251,7 +251,7 @@ fn test_inference_array_of_strings() {
 fn test_option_correct_arity() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Option<number>) -> void {}
+        fn test(borrow _x: Option<number>): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -261,7 +261,7 @@ fn test_option_correct_arity() {
 fn test_result_correct_arity() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Result<number, string>) -> void {}
+        fn test(borrow _x: Result<number, string>): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -271,7 +271,7 @@ fn test_result_correct_arity() {
 fn test_option_wrong_arity_too_many() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Option<number, string>) -> void {}
+        fn test(borrow _x: Option<number, string>): void {}
     "#,
     );
     assert!(!diagnostics.is_empty());
@@ -282,7 +282,7 @@ fn test_option_wrong_arity_too_many() {
 fn test_result_wrong_arity_too_few() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Result<number>) -> void {}
+        fn test(borrow _x: Result<number>): void {}
     "#,
     );
     assert!(!diagnostics.is_empty());
@@ -293,7 +293,7 @@ fn test_result_wrong_arity_too_few() {
 fn test_unknown_generic_type() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: UnknownGeneric<number>) -> void {}
+        fn test(borrow _x: UnknownGeneric<number>): void {}
     "#,
     );
     assert!(!diagnostics.is_empty());
@@ -308,7 +308,7 @@ fn test_unknown_generic_type() {
 fn test_nested_option_result() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Option<Result<number, string>>) -> void {}
+        fn test(borrow _x: Option<Result<number, string>>): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -318,7 +318,7 @@ fn test_nested_option_result() {
 fn test_nested_result_option() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Result<Option<number>, string>) -> void {}
+        fn test(borrow _x: Result<Option<number>, string>): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -328,7 +328,7 @@ fn test_nested_result_option() {
 fn test_deeply_nested() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Option<Result<Option<number>, string>>) -> void {}
+        fn test(borrow _x: Option<Result<Option<number>, string>>): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -338,7 +338,7 @@ fn test_deeply_nested() {
 fn test_array_of_option() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow _x: Option<number>[]) -> void {}
+        fn test(borrow _x: Option<number>[]): void {}
     "#,
     );
     assert_eq!(diagnostics.len(), 0, "Diagnostics: {:?}", diagnostics);
@@ -352,7 +352,7 @@ fn test_array_of_option() {
 fn test_inference_type_mismatch() {
     let diagnostics = typecheck_source(
         r#"
-        fn both<T>(borrow _a: T, borrow _b: T) -> T {
+        fn both<T>(borrow _a: T, borrow _b: T): T {
             return _a;
         }
         let _result = both(42, "hello");
@@ -371,7 +371,7 @@ fn test_return_type_mismatch() {
     // This is allowed at declaration - error caught at call site
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow _x: T) -> T {
+        fn identity<T>(borrow _x: T): T {
             return 42;
         }
     "#,
@@ -386,7 +386,7 @@ fn test_array_element_mismatch() {
     // Returning a concrete type when T is expected
     let diagnostics = typecheck_source(
         r#"
-        fn first<T>(borrow _arr: []T) -> T {
+        fn first<T>(borrow _arr: []T): T {
             return "wrong";
         }
     "#,
@@ -404,10 +404,10 @@ fn test_array_element_mismatch() {
 fn test_inference_with_function_call_chain() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
-        fn double_identity<T>(borrow x: T) -> T {
+        fn double_identity<T>(borrow x: T): T {
             return identity(x);
         }
         let _result = double_identity(42);
@@ -420,7 +420,7 @@ fn test_inference_with_function_call_chain() {
 fn test_inference_with_variable() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let num = 42;

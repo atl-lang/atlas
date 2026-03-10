@@ -463,7 +463,7 @@ let result: number = x + s;
 fn ai_mistake_return_wrong_type() {
     // AI returns wrong type from function
     let source = r#"
-fn greet(share name: string) -> number {
+fn greet(share name: string): number {
     return name;
 }
 "#;
@@ -478,7 +478,7 @@ fn greet(share name: string) -> number {
 fn ai_mistake_wrong_arg_type_to_fn() {
     // AI passes string where number is expected
     let source = r#"
-fn double(share x: number) -> number {
+fn double(share x: number): number {
     return x * 2.0;
 }
 double("hello");
@@ -511,7 +511,7 @@ double("hello");
 fn ai_mistake_use_after_own() {
     // AI moves a value then tries to use it (interpreter-level check)
     let source = r#"
-fn consume(own data: array<number>) -> void { }
+fn consume(own data: array<number>): void { }
 let arr: array<number> = [1.0, 2.0];
 consume(arr);
 arr;
@@ -535,7 +535,7 @@ arr;
 fn ai_mistake_bare_params_now_valid() {
     // D-040: borrow is implicit default — bare params no longer require annotation.
     // This previously fired AT1007; now it must parse and run cleanly.
-    let source = "fn process(x: number) -> number { return x; }";
+    let source = "fn process(x: number): number { return x; }";
     let diags = get_diagnostics(source);
     let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
     assert!(
@@ -552,7 +552,7 @@ fn ai_mistake_bare_params_now_valid() {
 #[test]
 fn ai_mistake_bare_params_all_types() {
     // Bare params for number, string, bool — all should be valid under D-040
-    let source = r#"fn add(x: number, y: number) -> number { return x + y; }"#;
+    let source = r#"fn add(x: number, y: number): number { return x + y; }"#;
     let diags = get_diagnostics(source);
     let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
     assert!(
@@ -565,7 +565,7 @@ fn ai_mistake_bare_params_all_types() {
 #[test]
 fn ai_mistake_bare_array_param_valid() {
     // Array params without annotation default to borrow (D-040)
-    let source = r#"fn sum(nums: []number) -> number { return 0.0; }"#;
+    let source = r#"fn sum(nums: []number): number { return 0.0; }"#;
     let diags = get_diagnostics(source);
     let errors: Vec<_> = diags.iter().filter(|d| d.is_error()).collect();
     assert!(
@@ -593,7 +593,7 @@ fn ai_mistake_missing_semicolon() {
 #[test]
 fn ai_mistake_missing_closing_brace() {
     // AI forgets closing brace
-    let source = "fn foo() -> void {\n  print(\"hi\");\n";
+    let source = "fn foo(): void {\n  print(\"hi\");\n";
     let diags = get_diagnostics(source);
     assert!(
         !diags.is_empty(),
@@ -685,7 +685,7 @@ fn ai_mistake_parity_ownership_at1007() {
     // `fn bad(x: number)` has implicit `borrow x`, which is fine.
     // Both engines must accept this without error (AT1007 no longer fires for missing annotation).
     use atlas_runtime::Atlas;
-    let source = r#"fn bad(x: number) -> number { return x; }"#;
+    let source = r#"fn bad(x: number): number { return x; }"#;
     let runtime = Atlas::new();
     // D-040 makes borrow implicit — this is valid code, no ownership error expected
     // Note: AT3054 fires for explicitly-written `borrow` on return escape,

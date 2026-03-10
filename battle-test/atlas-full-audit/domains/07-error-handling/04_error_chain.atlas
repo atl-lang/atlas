@@ -6,14 +6,14 @@
 
 enum AppError { NotFound(string), InvalidInput(string), IoError(string) }
 
-fn lookup(borrow id: number) -> Result<string, AppError> {
+fn lookup(borrow id: number) : Result<string, AppError> {
     if id == 0 { return Err(AppError::InvalidInput("id must not be zero")); }
     if id == 1 { return Ok("data-alpha"); }
     if id == 2 { return Ok("data-beta"); }
     return Err(AppError::NotFound("no entry for id " + str(id)));
 }
 
-fn process(borrow id: number) -> Result<string, AppError> {
+fn process(borrow id: number) : Result<string, AppError> {
     let lookup_r: Result<string, AppError> = lookup(id);
     let succeeded = match lookup_r { Ok(_) => true, Err(_) => false };
     if !succeeded {

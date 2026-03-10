@@ -47,6 +47,6 @@ fn test_cannot_redeclare_variable() {
 #[test]
 fn test_cannot_redeclare_function() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn foo() -> number { return 1; }");
-    eval_err(&mut repl, "fn foo() -> number { return 2; }"); // Should error
+    eval_ok(&mut repl, "fn foo(): number { return 1; }");
+    eval_err(&mut repl, "fn foo(): number { return 2; }"); // Should error
 }

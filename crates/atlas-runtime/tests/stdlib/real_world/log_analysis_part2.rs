@@ -7,7 +7,7 @@ fn test_log_extract_ip_addresses() {
 
     let code = format!(
         r#"
-        fn extractIP(borrow line: string) -> string {{
+        fn extractIP(borrow line: string): string {{
             let parts: []string = split(line, " ");
             return parts[0];
         }}
@@ -34,7 +34,7 @@ fn test_log_group_by_category() {
 
     let code = format!(
         r#"
-        fn isDatabase(borrow line: string) -> bool {{
+        fn isDatabase(borrow line: string): bool {{
             return starts_with(line, "DB:");
         }}
 
@@ -81,7 +81,7 @@ fn test_log_count_warnings() {
 
     let code = format!(
         r#"
-        fn countWarnings(borrow total: number, borrow line: string) -> number {{
+        fn countWarnings(borrow total: number, borrow line: string): number {{
             if (line == "WARN") {{
                 return total + 1.0;
             }}
@@ -110,7 +110,7 @@ fn test_log_find_first_error() {
 
     let code = format!(
         r#"
-        fn isError(borrow line: string) -> bool {{
+        fn isError(borrow line: string): bool {{
             return includes(line, "ERROR");
         }}
 
@@ -156,9 +156,9 @@ fn test_log_summary_report() {
 
     let code = format!(
         r#"
-        fn isError(borrow line: string) -> bool {{ return includes(line, "ERROR"); }}
-        fn isWarn(borrow line: string) -> bool {{ return includes(line, "WARN"); }}
-        fn isInfo(borrow line: string) -> bool {{ return includes(line, "INFO"); }}
+        fn isError(borrow line: string): bool {{ return includes(line, "ERROR"); }}
+        fn isWarn(borrow line: string): bool {{ return includes(line, "WARN"); }}
+        fn isInfo(borrow line: string): bool {{ return includes(line, "INFO"); }}
 
         let logs: string = read_file("{}");
         let lines: []string = split(logs, "\n");
@@ -183,7 +183,7 @@ fn test_log_filter_time_range() {
 
     let code = format!(
         r#"
-        fn isMorning(borrow line: string) -> bool {{
+        fn isMorning(borrow line: string): bool {{
             let time: string = substring(line, 0.0, 2.0);
             return time == "08" || time == "09";
         }}
@@ -207,7 +207,7 @@ fn test_log_extract_http_codes() {
 
     let code = format!(
         r#"
-        fn is404(borrow line: string) -> bool {{
+        fn is404(borrow line: string): bool {{
             return includes(line, "404");
         }}
 
@@ -254,7 +254,7 @@ fn test_log_aggregate_metrics() {
 
     let code = format!(
         r#"
-        fn sumLatency(borrow total: number, borrow line: string) -> number {{
+        fn sumLatency(borrow total: number, borrow line: string): number {{
             let parts: []string = split(line, ":");
             let value: number = unwrap(parse_float(parts[1]));
             return total + value;
@@ -280,7 +280,7 @@ fn test_log_detect_anomalies() {
 
     let code = format!(
         r#"
-        fn isAnomaly(borrow line: string) -> bool {{
+        fn isAnomaly(borrow line: string): bool {{
             return line == "ANOMALY";
         }}
 
@@ -326,7 +326,7 @@ fn test_log_write_filtered() {
 
     let code = format!(
         r#"
-        fn isError(borrow line: string) -> bool {{
+        fn isError(borrow line: string): bool {{
             return includes(line, "ERROR");
         }}
 

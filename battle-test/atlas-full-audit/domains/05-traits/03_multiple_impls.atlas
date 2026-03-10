@@ -2,11 +2,11 @@
 // Tests: one struct implementing multiple traits, multiple structs implementing the same trait
 
 trait Area {
-    fn area(self) -> number;
+    fn area(self) : number;
 }
 
 trait Perimeter {
-    fn perimeter(self) -> number;
+    fn perimeter(self) : number;
 }
 
 struct Rectangle {
@@ -19,26 +19,26 @@ struct Circle {
 }
 
 impl Area for Rectangle {
-    fn area(self) -> number {
+    fn area(self) : number {
         return self.width * self.height;
     }
 }
 
 impl Perimeter for Rectangle {
-    fn perimeter(self) -> number {
+    fn perimeter(self) : number {
         return 2 * (self.width + self.height);
     }
 }
 
 impl Area for Circle {
-    fn area(self) -> number {
+    fn area(self) : number {
         // Pi approximated as 3.14159
         return 3.14159 * self.radius * self.radius;
     }
 }
 
 impl Perimeter for Circle {
-    fn perimeter(self) -> number {
+    fn perimeter(self) : number {
         return 2 * 3.14159 * self.radius;
     }
 }

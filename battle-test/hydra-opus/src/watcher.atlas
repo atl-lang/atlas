@@ -9,9 +9,9 @@ struct WatchEvent {
 
 // Watcher trait - monitors file system changes with debouncing
 trait Watcher {
-    fn start(self) -> Result<void, string>;
-    fn stop(self) -> Result<void, string>;
-    fn events(self) -> WatchEvent[];
+    fn start(self) : Result<void, string>;
+    fn stop(self) : Result<void, string>;
+    fn events(self) : WatchEvent[];
 }
 
 // FSWatcher implements file system watching
@@ -30,7 +30,7 @@ fn new_watcher(
     own paths: string[],
     own extensions: string[],
     own ignore: string[],
-    own debounce_ms: number) -> FSWatcher {
+    own debounce_ms: number) : FSWatcher {
     return FSWatcher {
         paths: paths,
         extensions: extensions,
@@ -43,7 +43,7 @@ fn new_watcher(
 }
 
 impl Watcher for FSWatcher {
-    fn start(self) -> Result<void, string> {
+    fn start(self) : Result<void, string> {
         if self.is_running {
             return Err("watcher already running");
         }
@@ -54,7 +54,7 @@ impl Watcher for FSWatcher {
         return Ok(null);
     }
 
-    fn stop(self) -> Result<void, string> {
+    fn stop(self) : Result<void, string> {
         if !self.is_running {
             return Ok(null);
         }
@@ -64,7 +64,7 @@ impl Watcher for FSWatcher {
         return Ok(null);
     }
 
-    fn events(self) -> WatchEvent[] {
+    fn events(self) : WatchEvent[] {
         // Return and clear pending events
         let events = self.pending_events;
         self.pending_events = [];
@@ -73,7 +73,7 @@ impl Watcher for FSWatcher {
 }
 
 // Check if a path should be ignored
-fn should_ignore(own watcher: FSWatcher, own path: string) -> bool {
+fn should_ignore(own watcher: FSWatcher, own path: string) : bool {
     // Check ignore patterns
     for i in 0..len(watcher.ignore_patterns) {
         let pattern = watcher.ignore_patterns[i];
@@ -100,7 +100,7 @@ fn should_ignore(own watcher: FSWatcher, own path: string) -> bool {
 }
 
 // Process a file change event (called externally)
-fn process_file_change(own watcher: FSWatcher, own path: string) -> FSWatcher {
+fn process_file_change(own watcher: FSWatcher, own path: string) : FSWatcher {
     if !watcher.is_running {
         return watcher;
     }

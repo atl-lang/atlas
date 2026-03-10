@@ -11,7 +11,7 @@ fn test_csv_multi_column_filter() {
 
     let code = format!(
         r#"
-        fn isHighValueInStock(borrow row: string) -> bool {{
+        fn isHighValueInStock(borrow row: string): bool {{
             let fields: []string = split(row, ",");
             let price: number = unwrap(parse_float(fields[1]));
             let stock: number = unwrap(parse_float(fields[2]));
@@ -42,7 +42,7 @@ fn test_csv_column_sum_with_condition() {
 
     let code = format!(
         r#"
-        fn sumNorth(borrow total: number, borrow row: string) -> number {{
+        fn sumNorth(borrow total: number, borrow row: string): number {{
             let fields: []string = split(row, ",");
             let region: string = fields[0];
             let amount: number = unwrap(parse_float(fields[1]));
@@ -75,7 +75,7 @@ fn test_csv_row_count_by_group() {
 
     let code = format!(
         r#"
-        fn isError(borrow row: string) -> bool {{
+        fn isError(borrow row: string): bool {{
             let fields: []string = split(row, ",");
             return fields[0] == "ERROR";
         }}
@@ -100,7 +100,7 @@ fn test_csv_transform_and_join() {
 
     let code = format!(
         r#"
-        fn fullName(borrow row: string) -> string {{
+        fn fullName(borrow row: string): string {{
             let fields: []string = split(row, ",");
             return fields[0] + " " + fields[1];
         }}
@@ -125,7 +125,7 @@ fn test_csv_percentage_calculation() {
 
     let code = format!(
         r#"
-        fn calcPercentage(borrow row: string) -> number {{
+        fn calcPercentage(borrow row: string): number {{
             let fields: []string = split(row, ",");
             let sold: number = unwrap(parse_float(fields[1]));
             let total: number = unwrap(parse_float(fields[2]));
@@ -151,7 +151,7 @@ fn test_csv_trim_whitespace() {
 
     let code = format!(
         r#"
-        fn cleanRow(borrow row: string) -> string {{
+        fn cleanRow(borrow row: string): string {{
             let fields: []string = split(row, ",");
             let name: string = trim(fields[0]);
             let value: string = trim(fields[1]);
@@ -181,7 +181,7 @@ fn test_csv_case_insensitive_filter() {
 
     let code = format!(
         r#"
-        fn isFruit(borrow row: string) -> bool {{
+        fn isFruit(borrow row: string): bool {{
             let fields: []string = split(row, ",");
             let kind: string = to_lower_case(fields[1]);
             return kind == "fruit";
@@ -211,7 +211,7 @@ fn test_csv_contains_filter() {
 
     let code = format!(
         r#"
-        fn hasError(borrow row: string) -> bool {{
+        fn hasError(borrow row: string): bool {{
             return includes(row, "Error");
         }}
 
@@ -235,7 +235,7 @@ fn test_csv_numeric_sort_data() {
 
     let code = format!(
         r#"
-        fn compareById(borrow a: string, borrow b: string) -> number {{
+        fn compareById(borrow a: string, borrow b: string): number {{
             let fieldsA: []string = split(a, ",");
             let fieldsB: []string = split(b, ",");
             let idA: number = unwrap(parse_float(fieldsA[0]));
@@ -289,7 +289,7 @@ fn test_csv_validate_column_count() {
 
     let code = format!(
         r#"
-        fn hasThreeColumns(borrow row: string) -> bool {{
+        fn hasThreeColumns(borrow row: string): bool {{
             let fields: []string = split(row, ",");
             return len(fields) == 3.0;
         }}
@@ -318,7 +318,7 @@ fn test_csv_extract_unique_values() {
 
     let code = format!(
         r#"
-        fn getCategory(borrow row: string) -> string {{
+        fn getCategory(borrow row: string): string {{
             let fields: []string = split(row, ",");
             return fields[1];
         }}
@@ -348,7 +348,7 @@ fn test_csv_conditional_transformation() {
 
     let code = format!(
         r#"
-        fn addGrade(borrow row: string) -> string {{
+        fn addGrade(borrow row: string): string {{
             let fields: []string = split(row, ",");
             let score: number = unwrap(parse_float(fields[1]));
             let mut grade: string = "F";
@@ -383,7 +383,7 @@ fn test_csv_min_value() {
 
     let code = format!(
         r#"
-        fn findMin(borrow current: number, borrow row: string) -> number {{
+        fn findMin(borrow current: number, borrow row: string): number {{
             let fields: []string = split(row, ",");
             let temp: number = unwrap(parse_float(fields[1]));
             if (current == 0.0) {{

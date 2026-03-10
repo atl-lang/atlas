@@ -76,7 +76,7 @@ fn test_arithmetic_mixed_operations() {
 #[test]
 fn test_function_simple_call() {
     let result = vm_number(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(3, 4);",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; } add(3, 4);",
     );
     assert_eq!(result, 7.0);
 }
@@ -84,7 +84,7 @@ fn test_function_simple_call() {
 #[test]
 fn test_function_recursive_fibonacci() {
     let result = vm_number(
-        "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(10);",
+        "fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(10);",
     );
     assert_eq!(result, 55.0);
 }
@@ -92,7 +92,7 @@ fn test_function_recursive_fibonacci() {
 #[test]
 fn test_function_nested_calls() {
     let result = vm_number(
-        "fn double(borrow x: number) -> number { return x * 2; } fn triple(borrow x: number) -> number { return x * 3; } fn compute(borrow x: number) -> number { return double(triple(x)); } compute(5);",
+        "fn double(borrow x: number): number { return x * 2; } fn triple(borrow x: number): number { return x * 3; } fn compute(borrow x: number): number { return double(triple(x)); } compute(5);",
     );
     assert_eq!(result, 30.0);
 }
@@ -100,7 +100,7 @@ fn test_function_nested_calls() {
 #[test]
 fn test_function_many_calls_loop() {
     let result = vm_number(
-        "fn increment(borrow x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 100) { r = increment(r); i = i + 1; } r;",
+        "fn increment(borrow x: number): number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 100) { r = increment(r); i = i + 1; } r;",
     );
     assert_eq!(result, 100.0);
 }
@@ -108,7 +108,7 @@ fn test_function_many_calls_loop() {
 #[test]
 fn test_function_return_value() {
     let result = vm_number(
-        "fn max(borrow a: number, borrow b: number) -> number { if (a > b) { return a; } return b; } max(10, 20);",
+        "fn max(borrow a: number, borrow b: number): number { if (a > b) { return a; } return b; } max(10, 20);",
     );
     assert_eq!(result, 20.0);
 }
@@ -116,7 +116,7 @@ fn test_function_return_value() {
 #[test]
 fn test_function_multiple_args() {
     let result = vm_number(
-        "fn sum3(borrow a: number, borrow b: number, borrow c: number) -> number { return a + b + c; } sum3(10, 20, 30);",
+        "fn sum3(borrow a: number, borrow b: number, borrow c: number): number { return a + b + c; } sum3(10, 20, 30);",
     );
     assert_eq!(result, 60.0);
 }
@@ -124,7 +124,7 @@ fn test_function_multiple_args() {
 #[test]
 fn test_function_recursive_factorial() {
     let result = vm_number(
-        "fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(10);",
+        "fn fact(borrow n: number): number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(10);",
     );
     assert_eq!(result, 3628800.0);
 }
@@ -132,7 +132,7 @@ fn test_function_recursive_factorial() {
 #[test]
 fn test_function_call_in_expression() {
     let result =
-        vm_number("fn square(borrow x: number) -> number { return x * x; } square(3) + square(4);");
+        vm_number("fn square(borrow x: number): number { return x * x; } square(3) + square(4);");
     assert_eq!(result, 25.0);
 }
 
@@ -189,7 +189,7 @@ fn test_loop_large_iteration() {
 #[test]
 fn test_loop_function_call_inside() {
     let result = vm_number(
-        "fn square(borrow x: number) -> number { return x * x; } let mut sum = 0; let mut i = 1; while (i <= 10) { sum = sum + square(i); i = i + 1; } sum;",
+        "fn square(borrow x: number): number { return x * x; } let mut sum = 0; let mut i = 1; while (i <= 10) { sum = sum + square(i); i = i + 1; } sum;",
     );
     assert_eq!(result, 385.0);
 }
@@ -376,7 +376,7 @@ fn test_perf_large_loop_completes() {
 fn test_perf_recursive_fib_completes() {
     let start = Instant::now();
     let result = vm_number(
-        "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(15);",
+        "fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(15);",
     );
     let elapsed = start.elapsed();
     assert_eq!(result, 610.0);
@@ -402,7 +402,7 @@ fn test_perf_nested_loops_complete() {
 fn test_perf_function_calls_complete() {
     let start = Instant::now();
     let result = vm_number(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } let mut sum = 0; let mut i = 0; while (i < 10000) { sum = add(sum, 1); i = i + 1; } sum;",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; } let mut sum = 0; let mut i = 0; while (i < 10000) { sum = add(sum, 1); i = i + 1; } sum;",
     );
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);

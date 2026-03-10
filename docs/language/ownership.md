@@ -30,7 +30,7 @@ When in doubt: use `borrow`. It is the most permissive read-only annotation.
 ### `own` — Caller gives up the binding
 
 ```atlas
-fn consume(own data: string) -> string {
+fn consume(own data: string) : string {
     return data;
 }
 
@@ -42,7 +42,7 @@ let result = consume(s);
 ### `borrow` — Read-only, no escape
 
 ```atlas
-fn greet(borrow name: string) -> void {
+fn greet(borrow name: string) : void {
     print(name);
     return;
 }
@@ -58,7 +58,7 @@ A `borrow` parameter cannot escape: returning it, storing it in `let`, or using 
 ### `share` — Co-held reference, no mutation
 
 ```atlas
-fn display(share cache: HashMap<string, number>) -> void {
+fn display(share cache: HashMap<string, number>) : void {
     print(str(hashMapSize(cache)));
     return;
 }

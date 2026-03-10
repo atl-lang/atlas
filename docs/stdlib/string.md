@@ -5,7 +5,7 @@ Complete string manipulation API with Unicode support.
 ## split
 
 ```atlas
-fn split(str: string, separator: string) -> []string
+fn split(str: string, separator: string) : []string
 ```
 
 Splits a string by separator into array of parts. If separator is empty, returns array of individual characters.
@@ -19,7 +19,7 @@ Splits a string by separator into array of parts. If separator is empty, returns
 ## join
 
 ```atlas
-fn join(arr: []string, separator: string) -> string
+fn join(arr: []string, separator: string) : string
 ```
 
 Joins an array of strings with separator. Alias: `strJoin`.
@@ -33,7 +33,7 @@ Joins an array of strings with separator. Alias: `strJoin`.
 ## trim
 
 ```atlas
-fn trim(str: string) -> string
+fn trim(str: string) : string
 ```
 
 Removes leading and trailing whitespace (Unicode-aware).
@@ -46,7 +46,7 @@ Removes leading and trailing whitespace (Unicode-aware).
 ## trimStart
 
 ```atlas
-fn trimStart(str: string) -> string
+fn trimStart(str: string) : string
 ```
 
 Removes leading whitespace (Unicode-aware).
@@ -59,7 +59,7 @@ Removes leading whitespace (Unicode-aware).
 ## trimEnd
 
 ```atlas
-fn trimEnd(str: string) -> string
+fn trimEnd(str: string) : string
 ```
 
 Removes trailing whitespace (Unicode-aware).
@@ -72,7 +72,7 @@ Removes trailing whitespace (Unicode-aware).
 ## indexOf
 
 ```atlas
-fn indexOf(str: string, search: string) -> Option<number>
+fn indexOf(str: string, search: string) : Option<number>
 ```
 
 Finds first occurrence of search string. Returns None if not found. Alias: `strIndexOf`.
@@ -93,7 +93,7 @@ Finds first occurrence of search string. Returns None if not found. Alias: `strI
 ## lastIndexOf
 
 ```atlas
-fn lastIndexOf(str: string, search: string) -> Option<number>
+fn lastIndexOf(str: string, search: string) : Option<number>
 ```
 
 Finds last occurrence of search string. Returns None if not found. Alias: `strLastIndexOf`.
@@ -107,7 +107,7 @@ Finds last occurrence of search string. Returns None if not found. Alias: `strLa
 ## includes
 
 ```atlas
-fn includes(str: string, search: string) -> bool
+fn includes(str: string, search: string) : bool
 ```
 
 Checks if string contains substring.
@@ -121,7 +121,7 @@ Checks if string contains substring.
 ## toUpperCase
 
 ```atlas
-fn toUpperCase(str: string) -> string
+fn toUpperCase(str: string) : string
 ```
 
 Converts string to uppercase (Unicode-aware).
@@ -134,7 +134,7 @@ Converts string to uppercase (Unicode-aware).
 ## toLowerCase
 
 ```atlas
-fn toLowerCase(str: string) -> string
+fn toLowerCase(str: string) : string
 ```
 
 Converts string to lowercase (Unicode-aware).
@@ -147,7 +147,7 @@ Converts string to lowercase (Unicode-aware).
 ## substring
 
 ```atlas
-fn substring(str: string, start: number, end: number) -> string
+fn substring(str: string, start: number, end: number) : string
 ```
 
 Extracts substring from start (inclusive) to end (exclusive). Validates UTF-8 boundaries.
@@ -168,7 +168,7 @@ Extracts substring from start (inclusive) to end (exclusive). Validates UTF-8 bo
 ## charAt
 
 ```atlas
-fn charAt(str: string, index: number) -> Option<string>
+fn charAt(str: string, index: number) : Option<string>
 ```
 
 Gets character at index (returns grapheme cluster, not byte).
@@ -182,7 +182,7 @@ Gets character at index (returns grapheme cluster, not byte).
 ## repeat
 
 ```atlas
-fn repeat(str: string, count: number) -> string
+fn repeat(str: string, count: number) : string
 ```
 
 Repeats string count times. Limited to prevent memory abuse.
@@ -201,7 +201,7 @@ Repeats string count times. Limited to prevent memory abuse.
 ## replace
 
 ```atlas
-fn replace(str: string, search: string, replacement: string) -> string
+fn replace(str: string, search: string, replacement: string) : string
 ```
 
 Replaces first occurrence of search with replacement.
@@ -216,7 +216,7 @@ Replaces first occurrence of search with replacement.
 ## replaceAll
 
 ```atlas
-fn replaceAll(str: string, search: string, replacement: string) -> string
+fn replaceAll(str: string, search: string, replacement: string) : string
 ```
 
 Replaces all occurrences of search with replacement. If search is empty, returns original string.
@@ -237,7 +237,7 @@ s.replaceAll("a", "b");  // "bbb"
 ## padStart
 
 ```atlas
-fn padStart(str: string, length: number, fill: string) -> string
+fn padStart(str: string, length: number, fill: string) : string
 ```
 
 Pads string at start to reach target length. Fill string is repeated as needed. If already >= length, returns original.
@@ -252,7 +252,7 @@ Pads string at start to reach target length. Fill string is repeated as needed. 
 ## padEnd
 
 ```atlas
-fn padEnd(str: string, length: number, fill: string) -> string
+fn padEnd(str: string, length: number, fill: string) : string
 ```
 
 Pads string at end to reach target length. Fill string is repeated as needed. If already >= length, returns original.
@@ -267,7 +267,7 @@ Pads string at end to reach target length. Fill string is repeated as needed. If
 ## startsWith
 
 ```atlas
-fn startsWith(str: string, prefix: string) -> bool
+fn startsWith(str: string, prefix: string) : bool
 ```
 
 Checks if string starts with prefix.
@@ -281,7 +281,7 @@ Checks if string starts with prefix.
 ## endsWith
 
 ```atlas
-fn endsWith(str: string, suffix: string) -> bool
+fn endsWith(str: string, suffix: string) : bool
 ```
 
 Checks if string ends with suffix.

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 #[test]
 fn test_basic_export_function() {
     let source = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 "#;
@@ -56,11 +56,11 @@ fn test_export_nonexistent_symbol() {
 #[test]
 fn test_duplicate_exports() {
     let source = r#"
-export fn foo() -> number {
+export fn foo(): number {
     return 1;
 }
 
-export fn foo() -> number {
+export fn foo(): number {
     return 2;
 }
 "#;
@@ -99,7 +99,7 @@ fn test_basic_named_import() {
 
     // Module A exports 'add'
     let module_a = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 "#;
@@ -153,7 +153,7 @@ fn test_import_nonexistent_export_via_registry() {
 
     // Module A exports 'add' but not 'subtract'
     let module_a = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 "#;
@@ -179,11 +179,11 @@ fn test_import_multiple_named_exports() {
 
     // Module A exports multiple functions
     let module_a = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 
-export fn subtract(borrow a: number, borrow b: number) -> number {
+export fn subtract(borrow a: number, borrow b: number): number {
     return a - b;
 }
 
@@ -215,7 +215,7 @@ fn test_namespace_import_binds_namespace() {
     let mut registry = ModuleRegistry::new();
 
     let module_a = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 export let MY_PI = 3.14159;
@@ -257,7 +257,7 @@ fn test_import_preserves_type() {
 
     // Module A exports typed function
     let module_a = r#"
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 "#;
@@ -287,11 +287,11 @@ import { add } from "/math.atl";
 #[test]
 fn test_exported_function_hoisting() {
     let source = r#"
-export fn foo() -> number {
+export fn foo(): number {
     return bar();
 }
 
-export fn bar() -> number {
+export fn bar(): number {
     return 42;
 }
 "#;
@@ -394,7 +394,7 @@ export struct Point {
     y: number
 }
 
-export fn distance(borrow p: Point) -> number {
+export fn distance(borrow p: Point): number {
     return 0.0;
 }
 "#;

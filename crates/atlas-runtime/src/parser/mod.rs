@@ -344,8 +344,9 @@ impl Parser {
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
         // Return type annotation is REQUIRED for named functions (H-084).
-        // Use `-> void` for functions that return nothing.
-        let (return_type, return_ownership) = if self.match_token(TokenKind::Arrow) {
+        // Use `: void` for functions that return nothing.
+        // H-225: TypeScript-style colon annotation `fn foo(): string` — consistent with all other Atlas type annotations.
+        let (return_type, return_ownership) = if self.match_token(TokenKind::Colon) {
             // Peek for ownership annotation: `own` or `borrow` are valid; `shared` is an error
             let ownership = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
@@ -358,7 +359,7 @@ impl Parser {
                     SYNTAX_ERROR
                         .emit(span)
                         .arg("detail", "`shared` is not valid as a return ownership annotation; callers receive a `shared<T>` typed value instead")
-                        .with_help("remove the `shared` annotation — write `-> shared<T>` as the return type instead"),
+                        .with_help("remove the `shared` annotation — write `: shared<T>` as the return type instead"),
                 );
                 return Err(());
             } else {
@@ -370,7 +371,7 @@ impl Parser {
             // Closures (anonymous functions) may omit type annotations.
             self.error(
                 "Return type annotation required on named functions. \
-                 Use `-> void` for functions that return nothing.",
+                 Use `: void` for functions that return nothing.",
             );
             return Err(());
         };
@@ -786,7 +787,7 @@ impl Parser {
             "Expected ')' after method parameters",
         )?;
 
-        self.consume(TokenKind::Arrow, "Expected '->' after method parameters")?;
+        self.consume(TokenKind::Colon, "Expected ':' after method parameters")?;
         let return_type = self.parse_type_ref()?;
 
         let (body, end_span) = if self.check(TokenKind::LeftBrace) {
@@ -917,7 +918,7 @@ impl Parser {
             "Expected ')' after method parameters",
         )?;
 
-        self.consume(TokenKind::Arrow, "Expected '->' after method parameters")?;
+        self.consume(TokenKind::Colon, "Expected ':' after method parameters")?;
         let return_type = self.parse_type_ref()?;
 
         let body = self.parse_block()?;
@@ -1000,7 +1001,7 @@ impl Parser {
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
         // Parse return type (required)
-        self.consume(TokenKind::Arrow, "Expected '->' for return type")?;
+        self.consume(TokenKind::Colon, "Expected ':' for return type")?;
         let return_type = self.parse_extern_type()?;
 
         // Consume the semicolon

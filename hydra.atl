@@ -45,12 +45,12 @@ struct Response {
 }
 
 // Higher-order types
-// NOTE: function type syntax is (T1, T2) -> R
+// NOTE: function type syntax is (T1, T2) : R
 // Handler takes Request and returns Response
 // Middleware takes Request and a next Handler, returns Response
 
-type Handler = (Request) -> Response;
-type Middleware = (Request, Handler) -> Response;
+type Handler = (Request) : Response;
+type Middleware = (Request, Handler) : Response;
 
 type ParsedUrl = { path: string, query: HashMap };
 
@@ -83,23 +83,23 @@ struct Router {
 // ============================================================================
 
 trait Renderable {
-    fn render(self: Renderable) -> string;
+    fn render(self: Renderable) : string;
 }
 
 impl Renderable for string {
-    fn render(self: string) -> string {
+    fn render(self: string) : string {
         return self;
     }
 }
 
 impl Renderable for number {
-    fn render(self: number) -> string {
+    fn render(self: number) : string {
         return str(self);
     }
 }
 
-export fn renderAll<T extends Renderable>(items: []T) -> string {
-    let rendered = map(items, fn(item: T) -> string { return item.render(); });
+export fn renderAll<T extends Renderable>(items: []T) : string {
+    let rendered = map(items, fn(item: T) : string { return item.render(); });
     return join(rendered, "");
 }
 
@@ -107,25 +107,25 @@ export fn renderAll<T extends Renderable>(items: []T) -> string {
 // Request / Response helpers
 // ============================================================================
 
-export fn methodGet() -> Method { return GET(); }
-export fn methodPost() -> Method { return POST(); }
-export fn methodPut() -> Method { return PUT(); }
-export fn methodDelete() -> Method { return DELETE(); }
-export fn methodPatch() -> Method { return PATCH(); }
-export fn methodOptions() -> Method { return OPTIONS(); }
-export fn methodHead() -> Method { return HEAD(); }
+export fn methodGet() : Method { return GET(); }
+export fn methodPost() : Method { return POST(); }
+export fn methodPut() : Method { return PUT(); }
+export fn methodDelete() : Method { return DELETE(); }
+export fn methodPatch() : Method { return PATCH(); }
+export fn methodOptions() : Method { return OPTIONS(); }
+export fn methodHead() : Method { return HEAD(); }
 
-export fn statusOk() -> Status { return OK(); }
-export fn statusCreated() -> Status { return CREATED(); }
-export fn statusNoContent() -> Status { return NO_CONTENT(); }
-export fn statusBadRequest() -> Status { return BAD_REQUEST(); }
-export fn statusUnauthorized() -> Status { return UNAUTHORIZED(); }
-export fn statusForbidden() -> Status { return FORBIDDEN(); }
-export fn statusNotFound() -> Status { return NOT_FOUND(); }
-export fn statusInternalServerError() -> Status { return INTERNAL_SERVER_ERROR(); }
-export fn statusRedirect() -> Status { return REDIRECT(); }
+export fn statusOk() : Status { return OK(); }
+export fn statusCreated() : Status { return CREATED(); }
+export fn statusNoContent() : Status { return NO_CONTENT(); }
+export fn statusBadRequest() : Status { return BAD_REQUEST(); }
+export fn statusUnauthorized() : Status { return UNAUTHORIZED(); }
+export fn statusForbidden() : Status { return FORBIDDEN(); }
+export fn statusNotFound() : Status { return NOT_FOUND(); }
+export fn statusInternalServerError() : Status { return INTERNAL_SERVER_ERROR(); }
+export fn statusRedirect() : Status { return REDIRECT(); }
 
-export fn requestNew(method: Method, url: string, body: string) -> Request {
+export fn requestNew(method: Method, url: string, body: string) : Request {
     let parsed = splitPathAndQuery(url);
     let headers = hash_map_new();
     let params = hash_map_new();
@@ -143,7 +143,7 @@ export fn requestNew(method: Method, url: string, body: string) -> Request {
     };
 }
 
-export fn requestWithHeader(request: Request, name: string, value: string) -> Request {
+export fn requestWithHeader(request: Request, name: string, value: string) : Request {
     let headers = request.headers;
     hash_map_put(headers, name, value);
     return Request {
@@ -158,33 +158,33 @@ export fn requestWithHeader(request: Request, name: string, value: string) -> Re
     };
 }
 
-export fn responseText(status: Status, body: string) -> Response {
+export fn responseText(status: Status, body: string) : Response {
     let headers = hash_map_new();
     hash_map_put(headers, "Content-Type", "text/plain; charset=utf-8");
     return Response { status: status, headers: headers, body: body };
 }
 
-export fn responseJson(status: Status, payload: JsonValue) -> Response {
+export fn responseJson(status: Status, payload: JsonValue) : Response {
     let headers = hash_map_new();
     hash_map_put(headers, "Content-Type", "application/json; charset=utf-8");
     return Response { status: status, headers: headers, body: to_json(payload) };
 }
 
-export fn responseSetHeader(response: Response, name: string, value: string) -> Response {
+export fn responseSetHeader(response: Response, name: string, value: string) : Response {
     let headers = response.headers;
     hash_map_put(headers, name, value);
     return Response { status: response.status, headers: headers, body: response.body };
 }
 
-export fn responseWithStatus(response: Response, status: Status) -> Response {
+export fn responseWithStatus(response: Response, status: Status) : Response {
     return Response { status: status, headers: response.headers, body: response.body };
 }
 
-export fn responseNotFound() -> Response {
+export fn responseNotFound() : Response {
     return responseText(NOT_FOUND(), "Not Found");
 }
 
-export fn statusCode(status: Status) -> number {
+export fn statusCode(status: Status) : number {
     return match status {
         OK => 200,
         CREATED => 201,
@@ -199,7 +199,7 @@ export fn statusCode(status: Status) -> number {
     };
 }
 
-export fn statusReason(status: Status) -> string {
+export fn statusReason(status: Status) : string {
     return match status {
         OK => "OK",
         CREATED => "Created",
@@ -218,7 +218,7 @@ export fn statusReason(status: Status) -> string {
 // Router
 // ============================================================================
 
-export fn routerNew() -> Router {
+export fn routerNew() : Router {
     let routes: []Route = [];
     let middleware: []Middleware = [];
     let sessions = hash_map_new();
@@ -230,7 +230,7 @@ export fn routerNew() -> Router {
     };
 }
 
-export fn routerAdd(router: Router, method: Method, pattern: string, handler: Handler) -> Router {
+export fn routerAdd(router: Router, method: Method, pattern: string, handler: Handler) : Router {
     let route = Route { method: method, pattern: pattern, handler: handler };
     let routes = array_push(router.routes, route);
     return Router {
@@ -241,7 +241,7 @@ export fn routerAdd(router: Router, method: Method, pattern: string, handler: Ha
     };
 }
 
-export fn routerUse(router: Router, mw: Middleware) -> Router {
+export fn routerUse(router: Router, mw: Middleware) : Router {
     let mws = array_push(router.middleware, mw);
     return Router {
         routes: router.routes,
@@ -251,11 +251,11 @@ export fn routerUse(router: Router, mw: Middleware) -> Router {
     };
 }
 
-export fn routerRouteCount(router: Router) -> number {
+export fn routerRouteCount(router: Router) : number {
     return len(router.routes);
 }
 
-export fn routerHandle(router: Router, request: Request) -> HandleResult {
+export fn routerHandle(router: Router, request: Request) : HandleResult {
     let session_info = attachSession(router, request);
     let router_with_session = session_info.router;
     let req_with_session = session_info.request;
@@ -292,7 +292,7 @@ export fn routerHandle(router: Router, request: Request) -> HandleResult {
     return record { response: final_response, router: updated };
 }
 
-fn findRoute(router: Router, request: Request) -> Option<RouteMatch> {
+fn findRoute(router: Router, request: Request) : Option<RouteMatch> {
     let routes = router.routes;
     let mut idx = 0;
     while idx < len(routes) {
@@ -313,7 +313,7 @@ fn findRoute(router: Router, request: Request) -> Option<RouteMatch> {
     return None();
 }
 
-fn applyMiddleware(handler: Handler, middleware: []Middleware) -> Handler {
+fn applyMiddleware(handler: Handler, middleware: []Middleware) : Handler {
     if len(middleware) == 0 {
         return handler;
     }
@@ -323,7 +323,7 @@ fn applyMiddleware(handler: Handler, middleware: []Middleware) -> Handler {
     while true {
         let mw = middleware[idx];
         let next = current;
-        current = fn(req: Request) -> Response {
+        current = fn(req: Request) : Response {
             return mw(req, next);
         };
         if idx == 0 { break; }
@@ -336,7 +336,7 @@ fn applyMiddleware(handler: Handler, middleware: []Middleware) -> Handler {
 // Route matching
 // ============================================================================
 
-fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
+fn matchPattern(pattern: string, path: string) : Option<HashMap> {
     if pattern == "*" {
         return Some(hash_map_new());
     }
@@ -382,7 +382,7 @@ fn matchPattern(pattern: string, path: string) -> Option<HashMap> {
     return Some(params);
 }
 
-fn pathSegments(path: string) -> []string {
+fn pathSegments(path: string) : []string {
     let parts = split(path, "/");
     let mut clean: []string = [];
     for part in parts {
@@ -397,7 +397,7 @@ fn pathSegments(path: string) -> []string {
 // Query parsing
 // ============================================================================
 
-fn splitPathAndQuery(url: string) -> ParsedUrl {
+fn splitPathAndQuery(url: string) : ParsedUrl {
     let parts = split(url, "?");
     if len(parts) == 1 {
         return record { path: url, query: hash_map_new() };
@@ -408,7 +408,7 @@ fn splitPathAndQuery(url: string) -> ParsedUrl {
     return record { path: path, query: query };
 }
 
-fn parseQueryString(query: string) -> HashMap {
+fn parseQueryString(query: string) : HashMap {
     let result = hash_map_new();
     if query == "" {
         return result;
@@ -431,7 +431,7 @@ fn parseQueryString(query: string) -> HashMap {
 // Templates
 // ============================================================================
 
-export fn renderTemplateString(template: string, data: HashMap) -> string {
+export fn renderTemplateString(template: string, data: HashMap) : string {
     let keys = hash_map_keys(data);
     let mut rendered = template;
 
@@ -448,7 +448,7 @@ export fn renderTemplateString(template: string, data: HashMap) -> string {
     return rendered;
 }
 
-export fn renderTemplateFile(path: string, data: HashMap) -> string {
+export fn renderTemplateFile(path: string, data: HashMap) : string {
     let template = read_file(path);
     return renderTemplateString(template, data);
 }
@@ -457,8 +457,8 @@ export fn renderTemplateFile(path: string, data: HashMap) -> string {
 // Static files
 // ============================================================================
 
-export fn staticFileHandler(root: string) -> Handler {
-    return fn(req: Request) -> Response {
+export fn staticFileHandler(root: string) : Handler {
+    return fn(req: Request) : Response {
         let wildcard_opt = hash_map_get(req.params, "wildcard");
         let file_rel = match wildcard_opt {
             Some(v) => v,
@@ -485,7 +485,7 @@ export fn staticFileHandler(root: string) -> Handler {
 // Sessions
 // ============================================================================
 
-fn attachSession(router: Router, request: Request) -> SessionInfo {
+fn attachSession(router: Router, request: Request) : SessionInfo {
     let existing = sessionIdFromRequest(request);
 
     let info = match existing {
@@ -528,7 +528,7 @@ fn attachSession(router: Router, request: Request) -> SessionInfo {
     return info;
 }
 
-fn createSession(router: Router) -> { router: Router, sessionId: string, session: HashMap } {
+fn createSession(router: Router) : { router: Router, sessionId: string, session: HashMap } {
     let session = hash_map_new();
 
     let mut id_num = router.nextSessionId;
@@ -548,7 +548,7 @@ fn createSession(router: Router) -> { router: Router, sessionId: string, session
     return record { router: updated, sessionId: session_id, session: session };
 }
 
-fn persistSession(router: Router, request: Request) -> Router {
+fn persistSession(router: Router, request: Request) : Router {
     if request.sessionId == "" {
         return router;
     }
@@ -562,7 +562,7 @@ fn persistSession(router: Router, request: Request) -> Router {
     };
 }
 
-fn sessionIdFromRequest(request: Request) -> Option<string> {
+fn sessionIdFromRequest(request: Request) : Option<string> {
     let id_opt = hash_map_get(request.headers, "X-Session-Id");
     if id_opt != None() {
         return id_opt;
@@ -595,7 +595,7 @@ fn sessionIdFromRequest(request: Request) -> Option<string> {
 // Utilities
 // ============================================================================
 
-export fn parseQueryNumber(request: Request, key: string) -> Result<number, string> {
+export fn parseQueryNumber(request: Request, key: string) : Result<number, string> {
     let opt = hash_map_get(request.query, key);
     return match opt {
         Some(value) => {
@@ -608,20 +608,20 @@ export fn parseQueryNumber(request: Request, key: string) -> Result<number, stri
     };
 }
 
-export fn requestParam(request: Request, key: string) -> Option<string> {
+export fn requestParam(request: Request, key: string) : Option<string> {
     return hash_map_get(request.params, key);
 }
 
-export fn requestQuery(request: Request, key: string) -> Option<string> {
+export fn requestQuery(request: Request, key: string) : Option<string> {
     return hash_map_get(request.query, key);
 }
 
-export fn renderStatusLine(status: Status) -> string {
+export fn renderStatusLine(status: Status) : string {
     return "HTTP/1.1 " + str(statusCode(status)) + " " + statusReason(status);
 }
 
 // A small record to prove record field assignment in v0.3
-export fn metricsNew() -> { hits: number } {
+export fn metricsNew() : { hits: number } {
     let metrics = record { hits: 0 };
     metrics.hits += 1;
     return metrics;
@@ -631,10 +631,10 @@ export fn metricsNew() -> { hits: number } {
 // Dev helpers (new stdlib: process spawn + fs watchers)
 // ============================================================================
 
-export fn watchTemplateDir(path: string) -> Watcher {
+export fn watchTemplateDir(path: string) : Watcher {
     return fsWatch(path);
 }
 
-export fn spawnCommand(command: []string) -> ProcessHandle {
+export fn spawnCommand(command: []string) : ProcessHandle {
     return spawn_process(command);
 }

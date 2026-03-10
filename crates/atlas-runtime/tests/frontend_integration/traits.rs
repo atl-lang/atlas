@@ -133,10 +133,10 @@ fn test_h076_supertrait_parses() {
     assert_parses(
         r#"
         trait A {
-            fn foo(borrow self: A) -> number;
+            fn foo(borrow self: A): number;
         }
         trait B: A {
-            fn bar(borrow self: B) -> string;
+            fn bar(borrow self: B): string;
         }
         "#,
     );
@@ -146,9 +146,9 @@ fn test_h076_supertrait_parses() {
 fn test_h076_multiple_supertraits_parse() {
     assert_parses(
         r#"
-        trait A { fn a(borrow self: A) -> number; }
-        trait B { fn b(borrow self: B) -> string; }
-        trait C extends A, B { fn c(borrow self: C) -> bool; }
+        trait A { fn a(borrow self: A): number; }
+        trait B { fn b(borrow self: B): string; }
+        trait C extends A, B { fn c(borrow self: C): bool; }
         "#,
     );
 }
@@ -158,10 +158,10 @@ fn test_h076_impl_of_subtrait_requires_supertrait_methods() {
     let errors = typecheck_errors(
         r#"
         struct MyType { x: number }
-        trait A { fn foo(borrow self: A) -> number; }
-        trait B: A { fn bar(borrow self: B) -> string; }
+        trait A { fn foo(borrow self: A): number; }
+        trait B: A { fn bar(borrow self: B): string; }
         impl B for MyType {
-            fn bar(borrow self: MyType) -> string { "hello"; }
+            fn bar(borrow self: MyType): string { "hello"; }
         }
         "#,
     );
@@ -176,13 +176,13 @@ fn test_h076_impl_with_all_methods_is_ok() {
     let errors = typecheck_errors(
         r#"
         struct MyType { x: number }
-        trait A { fn foo(borrow self: A) -> number; }
+        trait A { fn foo(borrow self: A): number; }
         trait B: A {
-            fn bar(borrow self: B) -> string;
+            fn bar(borrow self: B): string;
         }
         impl B for MyType {
-            fn foo(borrow self: MyType) -> number { 42; }
-            fn bar(borrow self: MyType) -> string { "hello"; }
+            fn foo(borrow self: MyType): number { 42; }
+            fn bar(borrow self: MyType): string { "hello"; }
         }
         "#,
     );
@@ -198,7 +198,7 @@ fn test_h076_undefined_supertrait_is_error() {
     let errors = typecheck_errors(
         r#"
         trait B: NonExistent {
-            fn bar(borrow self: B) -> string;
+            fn bar(borrow self: B): string;
         }
         "#,
     );
@@ -217,8 +217,8 @@ fn test_h077_generic_trait_parses() {
     assert_parses(
         r#"
         trait Container<T> {
-            fn get(borrow self: Container<T>) -> T;
-            fn set(borrow self: Container<T>, borrow value: T) -> Container<T>;
+            fn get(borrow self: Container<T>): T;
+            fn set(borrow self: Container<T>, borrow value: T): Container<T>;
         }
         "#,
     );
@@ -230,10 +230,10 @@ fn test_h077_impl_generic_trait_with_concrete_type_is_ok() {
         r#"
         struct Box { value: number }
         trait Container<T> {
-            fn get(borrow self: Container<T>) -> T;
+            fn get(borrow self: Container<T>): T;
         }
         impl Container<number> for Box {
-            fn get(borrow self: Box) -> number { self.value; }
+            fn get(borrow self: Box): number { self.value; }
         }
         "#,
     );
@@ -250,16 +250,16 @@ fn test_h077_impl_generic_trait_wrong_return_type_is_error() {
         r#"
         struct Box { value: number }
         trait Container<T> {
-            fn get(borrow self: Container<T>) -> T;
+            fn get(borrow self: Container<T>): T;
         }
         impl Container<number> for Box {
-            fn get(borrow self: Box) -> string { "wrong"; }
+            fn get(borrow self: Box): string { "wrong"; }
         }
         "#,
     );
     assert!(
         !errors.is_empty(),
-        "Expected error: return type 'string' doesn't match Container<number>.get -> number"
+        "Expected error: return type 'string' doesn't match Container<number>.get: number"
     );
 }
 
@@ -269,10 +269,10 @@ fn test_h077_generic_trait_with_string_type_arg_is_ok() {
         r#"
         struct StrBox { value: string }
         trait Container<T> {
-            fn get(borrow self: Container<T>) -> T;
+            fn get(borrow self: Container<T>): T;
         }
         impl Container<string> for StrBox {
-            fn get(borrow self: StrBox) -> string { self.value; }
+            fn get(borrow self: StrBox): string { self.value; }
         }
         "#,
     );
@@ -293,7 +293,7 @@ fn test_b13_inherent_impl_basic_ok() {
         r#"
         struct Point { x: number, y: number }
         impl Point {
-            fn magnitude(borrow self: Point) -> number {
+            fn magnitude(borrow self: Point): number {
                 return self.x * self.x + self.y * self.y;
             }
         }
@@ -309,8 +309,8 @@ fn test_b13_inherent_impl_duplicate_method_is_error() {
         r#"
         struct Box { value: number }
         impl Box {
-            fn get(borrow self: Box) -> number { return self.value; }
-            fn get(borrow self: Box) -> number { return self.value; }
+            fn get(borrow self: Box): number { return self.value; }
+            fn get(borrow self: Box): number { return self.value; }
         }
         "#,
     );
@@ -326,7 +326,7 @@ fn test_b13_inherent_impl_unknown_type_is_error() {
     let errors = typecheck_errors(
         r#"
         impl Nonexistent {
-            fn foo(borrow self: Nonexistent) -> number { return 0; }
+            fn foo(borrow self: Nonexistent): number { return 0; }
         }
         "#,
     );
@@ -342,12 +342,12 @@ fn test_b13_inherent_and_trait_impl_coexist_ok() {
     let errors = typecheck_errors(
         r#"
         struct Animal { name: string }
-        trait Speak { fn speak(borrow self: Animal) -> string; }
+        trait Speak { fn speak(borrow self: Animal): string; }
         impl Speak for Animal {
-            fn speak(borrow self: Animal) -> string { return "..."; }
+            fn speak(borrow self: Animal): string { return "..."; }
         }
         impl Animal {
-            fn name_len(borrow self: Animal) -> number { return 0; }
+            fn name_len(borrow self: Animal): number { return 0; }
         }
         "#,
     );

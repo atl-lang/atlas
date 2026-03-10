@@ -67,7 +67,7 @@ fn test_b9_template_no_interpolation() {
 #[test]
 fn test_b9_implicit_return_simple() {
     let code = r#"
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             x * 2
         }
         double(5)
@@ -80,7 +80,7 @@ fn test_b9_implicit_return_no_false_unused_warning() {
     // Params used only in tail_expr must not emit AT2001 unused warnings
     // This test just verifies it compiles and runs without errors
     let code = r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             a + b
         }
         add(3, 4)
@@ -91,7 +91,7 @@ fn test_b9_implicit_return_no_false_unused_warning() {
 #[test]
 fn test_b9_implicit_return_string() {
     let code = r#"
-        fn greet(borrow name: string) -> string {
+        fn greet(borrow name: string): string {
             `hello ${name}`
         }
         greet("atlas")
@@ -103,7 +103,7 @@ fn test_b9_implicit_return_string() {
 fn test_b9_implicit_return_explicit_still_works() {
     // explicit return must still work alongside implicit
     let code = r#"
-        fn my_abs(borrow x: number) -> number {
+        fn my_abs(borrow x: number): number {
             if x < 0 {
                 return x * -1;
             }
@@ -159,8 +159,8 @@ fn test_h193_error_pipeline_collects_all_phase_errors() {
     // AT2003 = duplicate function (binder)
     // AT3001 = type annotation mismatch (typechecker)
     let code = r#"
-        fn greet() -> number { 1; }
-        fn greet() -> number { 2; }
+        fn greet(): number { 1; }
+        fn greet(): number { 2; }
         let x: number = "hello";
     "#;
     let runtime = Atlas::new();

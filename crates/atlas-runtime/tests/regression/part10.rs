@@ -9,7 +9,7 @@ fn test_h088_while_loop_mutable_var_not_never() {
     // Previously: `bb != 0` narrowed bb to Never inside the loop body
     // (exclude_from(Number, Number) = Never), breaking arithmetic.
     let code = r#"
-        fn gcd(borrow a: number, borrow b: number) -> number {
+        fn gcd(borrow a: number, borrow b: number): number {
             let mut aa = a;
             let mut bb = b;
             while bb != 0 {
@@ -280,7 +280,7 @@ fn h078_result_is_err() {
 fn test_h089_mut_param_gcd() {
     // Natural GCD algorithm — Haiku writes params as mutable, not via let copies
     let code = r#"
-        fn gcd(mut a: number, mut b: number) -> number {
+        fn gcd(mut a: number, mut b: number): number {
             while b != 0 {
                 let tmp = b;
                 b = a % b;
@@ -297,7 +297,7 @@ fn test_h089_mut_param_gcd() {
 fn test_h089_immutable_param_still_rejected() {
     // Without mut, params must remain immutable
     let code = r#"
-        fn bad(borrow a: number) -> number {
+        fn bad(borrow a: number): number {
             a = 5;
             return a;
         }
@@ -310,7 +310,7 @@ fn test_h089_immutable_param_still_rejected() {
 fn test_h089_mut_param_single() {
     // Single mut param — simple mutation
     let code = r#"
-        fn double_it(mut x: number) -> number {
+        fn double_it(mut x: number): number {
             x = x * 2;
             return x;
         }
@@ -330,7 +330,7 @@ fn test_h092_local_mut_shadows_outer_immutable() {
     // to the outer symbol and rejected assignment as AT3003.
     let code = r#"
         let primes = 0;
-        fn compute(borrow n: number) -> number {
+        fn compute(borrow n: number): number {
             let mut primes = n;
             primes = primes * 2;
             return primes;
@@ -345,7 +345,7 @@ fn test_h092_outer_binding_unchanged() {
     // The outer binding must remain unchanged after the function runs
     let code = r#"
         let x = 99;
-        fn f() -> number {
+        fn f(): number {
             let mut x = 1;
             x = x + 1;
             return x;

@@ -14,7 +14,7 @@ fn test_ownership_share_valid_no_mutation_in_body() {
     // Just declaring and reading a share param without mutation is fine.
     // No main call avoids AT3028 (caller-side plain-value-to-share check).
     let src = r#"
-fn inspect(share val: string) -> number {
+fn inspect(share val: string): number {
     let limit: number = 5;
     return limit;
 }
@@ -26,8 +26,8 @@ fn inspect(share val: string) -> number {
 fn test_ownership_share_valid_pass_as_borrow() {
     // Passing a share param to a borrow param within the body is valid
     let src = r#"
-fn read_only(borrow s: string) -> void {}
-fn shared_relay(share s: string) -> void {
+fn read_only(borrow s: string): void {}
+fn shared_relay(share s: string): void {
     read_only(s);
 }
 "#;
@@ -38,8 +38,8 @@ fn shared_relay(share s: string) -> void {
 fn test_ownership_share_valid_pass_as_share() {
     // Passing a share param to another share param is valid
     let src = r#"
-fn downstream(share s: string) -> void {}
-fn upstream(share s: string) -> void {
+fn downstream(share s: string): void {}
+fn upstream(share s: string): void {
     downstream(s);
 }
 "#;
@@ -54,7 +54,7 @@ fn upstream(share s: string) -> void {
 fn test_ownership_share_assignment_fires() {
     // Assigning to a share param fires AT3055
     let src = r#"
-fn mutate(share val: string) -> void {
+fn mutate(share val: string): void {
     val = "new value";
 }
 "#;
@@ -65,7 +65,7 @@ fn mutate(share val: string) -> void {
 #[test]
 fn test_ownership_share_assignment_message_has_param_name() {
     let src = r#"
-fn mutate(share my_shared: string) -> void {
+fn mutate(share my_shared: string): void {
     my_shared = "new";
 }
 "#;
@@ -87,8 +87,8 @@ fn mutate(share my_shared: string) -> void {
 fn test_ownership_share_own_transfer_fires() {
     // Passing a share param to an own parameter fires AT3055
     let src = r#"
-fn consume(own data: string) -> void {}
-fn relay(share s: string) -> void {
+fn consume(own data: string): void {}
+fn relay(share s: string): void {
     consume(s);
 }
 "#;
@@ -99,8 +99,8 @@ fn relay(share s: string) -> void {
 #[test]
 fn test_ownership_share_own_transfer_message_has_param_name() {
     let src = r#"
-fn consume(own data: string) -> void {}
-fn relay(share my_share: string) -> void {
+fn consume(own data: string): void {}
+fn relay(share my_share: string): void {
     consume(my_share);
 }
 "#;

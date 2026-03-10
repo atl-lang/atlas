@@ -103,7 +103,7 @@ fn test_http_request_with_valid_method() {
 #[ignore = "requires network"]
 fn test_http_response_status() {
     let code = r#"
-        fn test() -> number {
+        fn test(): number {
             let result = httpGet("https://httpbin.org/status/200");
             if (is_err(result)) { return 0; }
             let response = unwrap(result);
@@ -120,7 +120,7 @@ fn test_http_response_status() {
 #[ignore = "requires network"]
 fn test_http_response_body() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/get");
             if (is_err(result)) { return "string"; }
             let response = unwrap(result);
@@ -135,7 +135,7 @@ fn test_http_response_body() {
 #[ignore = "requires network"]
 fn test_http_response_is_success_200() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/status/200");
             if (is_err(result)) { return false; }
             let response = unwrap(result);
@@ -151,7 +151,7 @@ fn test_http_response_is_success_200() {
 #[ignore = "requires network"]
 fn test_http_response_is_success_404() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/status/404");
             if (is_err(result)) { return false; }
             let response = unwrap(result);
@@ -166,7 +166,7 @@ fn test_http_response_is_success_404() {
 #[ignore = "requires network"]
 fn test_http_response_headers() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/get");
             if (is_err(result)) { return "hashmap"; }
             let response = unwrap(result);
@@ -182,7 +182,7 @@ fn test_http_response_headers() {
 #[ignore = "requires network"]
 fn test_http_response_header_by_name() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/get");
             if (is_err(result)) { return "Option"; }
             let response = unwrap(result);
@@ -198,7 +198,7 @@ fn test_http_response_header_by_name() {
 #[ignore = "requires network"]
 fn test_http_response_url() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/get");
             if (is_err(result)) { return "string"; }
             let response = unwrap(result);
@@ -244,7 +244,7 @@ fn test_http_post_simple() {
 #[ignore = "requires network"]
 fn test_http_post_with_body() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let body = "name=Atlas&version=0.2";
             let result = httpPost("https://httpbin.org/post", body);
             if (is_err(result)) { return false; }
@@ -284,7 +284,7 @@ fn test_http_send_with_custom_headers() {
 #[ignore = "requires network"]
 fn test_http_post_json() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let json_str = "{\"name\": \"Atlas\", \"version\": 0.2}";
             let json = parse_json(json_str);
             let result = httpPostJson("https://httpbin.org/post", json);
@@ -299,7 +299,7 @@ fn test_http_post_json() {
 #[ignore = "requires network"]
 fn test_http_parse_json_response() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/json");
             if (is_err(result)) { return "Result"; }
             let response = unwrap(result);
@@ -357,7 +357,7 @@ fn test_http_request_post_method() {
 #[ignore = "requires network"]
 fn test_http_complete_workflow_get() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestGet("https://httpbin.org/get");
             let req2 = httpSetHeader(req, "X-Test", "atlas");
             let result = httpSend(req2);
@@ -378,7 +378,7 @@ fn test_http_complete_workflow_get() {
 #[ignore = "requires network"]
 fn test_http_complete_workflow_post() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequest("POST", "https://httpbin.org/post");
             let req2 = httpSetBody(req, "test=data");
             let req3 = httpSetHeader(req2, "Content-Type", "application/x-www-form-urlencoded");
@@ -398,7 +398,7 @@ fn test_http_complete_workflow_post() {
 #[ignore = "requires network"]
 fn test_http_json_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let json_str = "{\"user\": \"atlas\", \"action\": \"test\"}";
             let json = parse_json(json_str);
             let result = httpPostJson("https://httpbin.org/post", json);
@@ -505,7 +505,7 @@ fn test_http_set_query_multiple() {
 #[ignore = "requires network"]
 fn test_http_query_url_encoding() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let req = httpRequestGet("https://httpbin.org/get");
             let req2 = httpSetQuery(req, "query", "hello world");
             let result = httpSend(req2);
@@ -591,7 +591,7 @@ fn test_http_multiple_configuration() {
 #[ignore = "requires network"]
 fn test_http_status_text_200() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/status/200");
             if (is_err(result)) { return "OK"; }
             let response = unwrap(result);
@@ -606,7 +606,7 @@ fn test_http_status_text_200() {
 #[ignore = "requires network"]
 fn test_http_status_text_404() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/status/404");
             if (is_err(result)) { return "Unknown"; }
             let response = unwrap(result);
@@ -621,7 +621,7 @@ fn test_http_status_text_404() {
 #[ignore = "requires network"]
 fn test_http_content_type() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGet("https://httpbin.org/get");
             if (is_err(result)) { return "option"; }
             let response = unwrap(result);
@@ -637,7 +637,7 @@ fn test_http_content_type() {
 #[ignore = "requires network"]
 fn test_http_is_redirect_false() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/status/200");
             if (is_err(result)) { return false; }
             let response = unwrap(result);
@@ -652,7 +652,7 @@ fn test_http_is_redirect_false() {
 #[ignore = "requires network"]
 fn test_http_is_client_error_true() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/status/404");
             if (is_err(result)) { return false; }
             let response = unwrap(result);
@@ -667,7 +667,7 @@ fn test_http_is_client_error_true() {
 #[ignore = "requires network"]
 fn test_http_is_server_error_false() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/status/200");
             if (is_err(result)) { return false; }
             let response = unwrap(result);
@@ -686,7 +686,7 @@ fn test_http_is_server_error_false() {
 #[ignore = "requires network"]
 fn test_http_get_json() {
     let code = r#"
-        fn test() -> string {
+        fn test(): string {
             let result = httpGetJson("https://httpbin.org/json");
             return typeof(result);
         }
@@ -699,7 +699,7 @@ fn test_http_get_json() {
 #[ignore = "requires network"]
 fn test_http_get_json_success() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGetJson("https://httpbin.org/json");
             if (is_err(result)) { return false; }
             let json_result = unwrap(result);
@@ -726,7 +726,7 @@ fn test_http_check_permission_placeholder() {
 #[ignore = "requires network"]
 fn test_http_put_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestPut("https://httpbin.org/put", "updated data");
             let req2 = httpSetHeader(req, "Content-Type", "text/plain");
             let result = httpSend(req2);
@@ -745,7 +745,7 @@ fn test_http_put_workflow() {
 #[ignore = "requires network"]
 fn test_http_delete_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestDelete("https://httpbin.org/delete");
             let result = httpSend(req);
 
@@ -763,7 +763,7 @@ fn test_http_delete_workflow() {
 #[ignore = "requires network"]
 fn test_http_patch_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestPatch("https://httpbin.org/patch", "partial update");
             let result = httpSend(req);
 
@@ -781,7 +781,7 @@ fn test_http_patch_workflow() {
 #[ignore = "requires network"]
 fn test_http_query_params_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestGet("https://httpbin.org/get");
             let req2 = httpSetQuery(req, "name", "Atlas");
             let req3 = httpSetQuery(req2, "version", "0.2");
@@ -801,7 +801,7 @@ fn test_http_query_params_workflow() {
 #[ignore = "requires network"]
 fn test_http_advanced_config_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let req = httpRequestGet("https://httpbin.org/get");
             let req2 = httpSetUserAgent(req, "CustomAgent/1.0");
             let req3 = httpSetMaxRedirects(req2, 3);
@@ -822,7 +822,7 @@ fn test_http_advanced_config_workflow() {
 #[ignore = "requires network"]
 fn test_http_response_utilities_workflow() {
     let code = r#"
-        fn test() -> bool {
+        fn test(): bool {
             let result = httpGet("https://httpbin.org/get");
 
             if (is_err(result)) { return false; }

@@ -37,7 +37,7 @@ fn interp(code: &str) -> Value {
 #[test]
 fn test_vm_async_call_returns_future() {
     let result = vm(r#"
-        async fn greet() -> string {
+        async fn greet(): string {
             return "hello";
         }
         typeof(greet());
@@ -49,7 +49,7 @@ fn test_vm_async_call_returns_future() {
 #[test]
 fn test_vm_await_resolved_future() {
     let result = vm(r#"
-        async fn answer() -> number {
+        async fn answer(): number {
             return 42;
         }
         await answer();
@@ -61,7 +61,7 @@ fn test_vm_await_resolved_future() {
 #[test]
 fn test_vm_async_fn_number() {
     let result = vm(r#"
-        async fn compute() -> number {
+        async fn compute(): number {
             return 100;
         }
         let x = await compute();
@@ -74,7 +74,7 @@ fn test_vm_async_fn_number() {
 #[test]
 fn test_vm_async_fn_string() {
     let result = vm(r#"
-        async fn label() -> string {
+        async fn label(): string {
             return "atlas";
         }
         await label();
@@ -86,10 +86,10 @@ fn test_vm_async_fn_string() {
 #[test]
 fn test_vm_nested_async_await() {
     let result = vm(r#"
-        async fn inner() -> number {
+        async fn inner(): number {
             return 5;
         }
-        async fn outer() -> number {
+        async fn outer(): number {
             let v = await inner();
             return v * 2;
         }
@@ -102,9 +102,9 @@ fn test_vm_nested_async_await() {
 #[test]
 fn test_vm_sequential_awaits() {
     let result = vm(r#"
-        async fn a() -> number { return 1; }
-        async fn b() -> number { return 2; }
-        async fn c() -> number { return 3; }
+        async fn a(): number { return 1; }
+        async fn b(): number { return 2; }
+        async fn c(): number { return 3; }
         let x = await a();
         let y = await b();
         let z = await c();
@@ -117,7 +117,7 @@ fn test_vm_sequential_awaits() {
 #[test]
 fn test_vm_async_fn_with_params() {
     let result = vm(r#"
-        async fn add(borrow a: number, borrow b: number) -> number {
+        async fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
         await add(10, 32);
@@ -129,7 +129,7 @@ fn test_vm_async_fn_with_params() {
 #[test]
 fn test_vm_async_fn_branching() {
     let result = vm(r#"
-        async fn classify(borrow n: number) -> string {
+        async fn classify(borrow n: number): string {
             if n > 0 {
                 return "positive";
             } else {
@@ -145,7 +145,7 @@ fn test_vm_async_fn_branching() {
 #[test]
 fn test_vm_await_result_in_expr() {
     let result = vm(r#"
-        async fn base() -> number { return 7; }
+        async fn base(): number { return 7; }
         let b = await base();
         b * b;
         "#);
@@ -156,7 +156,7 @@ fn test_vm_await_result_in_expr() {
 #[test]
 fn test_vm_typeof_awaited_result() {
     let result = vm(r#"
-        async fn num() -> number { return 1; }
+        async fn num(): number { return 1; }
         typeof(await num());
         "#);
     assert_eq!(result, Value::string("number"));
@@ -170,7 +170,7 @@ fn test_vm_typeof_awaited_result() {
 #[test]
 fn test_vm_async_fn_void() {
     let result = vm(r#"
-        async fn nothing() -> null { return null; }
+        async fn nothing(): null { return null; }
         await nothing();
         "#);
     assert_eq!(result, Value::Null);
@@ -193,7 +193,7 @@ fn test_vm_spawn_task_returns_future() {
     // SpawnTask is emitted for spawn() calls; for user async fns it mirrors AsyncCall.
     // Verify via typeof that the result is Future before any await.
     let result = vm(r#"
-        async fn work() -> number { return 7; }
+        async fn work(): number { return 7; }
         typeof(work());
         "#);
     assert_eq!(result, Value::string("Future"));
@@ -203,7 +203,7 @@ fn test_vm_spawn_task_returns_future() {
 #[test]
 fn test_vm_async_fn_bool_return() {
     let result = vm(r#"
-        async fn flag() -> bool { return true; }
+        async fn flag(): bool { return true; }
         await flag();
         "#);
     assert_eq!(result, Value::Bool(true));
@@ -213,9 +213,9 @@ fn test_vm_async_fn_bool_return() {
 #[test]
 fn test_vm_deeply_nested_async() {
     let result = vm(r#"
-        async fn level3() -> number { return 1; }
-        async fn level2() -> number { return (await level3()) + 1; }
-        async fn level1() -> number { return (await level2()) + 1; }
+        async fn level3(): number { return 1; }
+        async fn level2(): number { return (await level3()) + 1; }
+        async fn level1(): number { return (await level2()) + 1; }
         await level1();
         "#);
     assert_eq!(result, Value::Number(3.0));
@@ -229,7 +229,7 @@ fn test_vm_deeply_nested_async() {
 #[test]
 fn test_parity_simple_async() {
     let code = r#"
-        async fn square(borrow n: number) -> number { return n * n; }
+        async fn square(borrow n: number): number { return n * n; }
         await square(6);
     "#;
     assert_eq!(vm(code), interp(code));
@@ -239,8 +239,8 @@ fn test_parity_simple_async() {
 #[test]
 fn test_parity_nested_async() {
     let code = r#"
-        async fn double(borrow n: number) -> number { return n * 2; }
-        async fn quad(borrow n: number) -> number { return await double(await double(n)); }
+        async fn double(borrow n: number): number { return n * 2; }
+        async fn quad(borrow n: number): number { return await double(await double(n)); }
         await quad(3);
     "#;
     assert_eq!(vm(code), interp(code));
@@ -250,7 +250,7 @@ fn test_parity_nested_async() {
 #[test]
 fn test_parity_typeof_result() {
     let code = r#"
-        async fn value() -> number { return 42; }
+        async fn value(): number { return 42; }
         typeof(await value());
     "#;
     assert_eq!(vm(code), interp(code));
@@ -260,8 +260,8 @@ fn test_parity_typeof_result() {
 #[test]
 fn test_parity_sequential_awaits() {
     let code = r#"
-        async fn one() -> number { return 1; }
-        async fn two() -> number { return 2; }
+        async fn one(): number { return 1; }
+        async fn two(): number { return 2; }
         (await one()) + (await two());
     "#;
     assert_eq!(vm(code), interp(code));
@@ -271,7 +271,7 @@ fn test_parity_sequential_awaits() {
 #[test]
 fn test_parity_async_branching() {
     let code = r#"
-        async fn classify_sign(borrow n: number) -> string {
+        async fn classify_sign(borrow n: number): string {
             if n > 0 { return "pos"; } else { return "neg"; }
         }
         await classify_sign(-3);

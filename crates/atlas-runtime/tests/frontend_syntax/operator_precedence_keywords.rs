@@ -158,7 +158,7 @@ fn test_match_expressions_not_supported(#[case] source: &str, #[case] keyword: &
 
 #[rstest]
 #[case("let x = 1;")]
-#[case("fn foo() -> void { }")]
+#[case("fn foo(): void { }")]
 #[case("if (true) { }")]
 #[case("while (false) { }")]
 #[case("return 42;")]

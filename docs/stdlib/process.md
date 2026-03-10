@@ -7,7 +7,7 @@ Process spawning, execution, and management.
 ### spawn
 
 ```atlas
-fn spawn(command: string) -> Result<Process, string>
+fn spawn(command: string) : Result<Process, string>
 ```
 
 Spawns a subprocess and returns process handle.
@@ -24,7 +24,7 @@ Spawns a subprocess and returns process handle.
 ### shell
 
 ```atlas
-fn shell(command: string) -> Result<string, string>
+fn shell(command: string) : Result<string, string>
 ```
 
 Executes shell command and returns output.
@@ -43,7 +43,7 @@ Executes shell command and returns output.
 ### processStdout
 
 ```atlas
-fn processStdout(process: Process) -> string
+fn processStdout(process: Process) : string
 ```
 
 Gets stdout from completed process.
@@ -56,7 +56,7 @@ Gets stdout from completed process.
 ### processStderr
 
 ```atlas
-fn processStderr(process: Process) -> string
+fn processStderr(process: Process) : string
 ```
 
 Gets stderr from completed process.
@@ -69,7 +69,7 @@ Gets stderr from completed process.
 ### processStdin
 
 ```atlas
-fn processStdin(process: Process) -> string
+fn processStdin(process: Process) : string
 ```
 
 Gets stdin from process (if captured).
@@ -82,7 +82,7 @@ Gets stdin from process (if captured).
 ### processOutput
 
 ```atlas
-fn processOutput(process: Process) -> object
+fn processOutput(process: Process) : object
 ```
 
 Gets all output from process as object.
@@ -101,7 +101,7 @@ Gets all output from process as object.
 ### processWait
 
 ```atlas
-fn processWait(process: Process) -> Result<number, string>
+fn processWait(process: Process) : Result<number, string>
 ```
 
 Waits for process to complete and returns exit code.
@@ -116,7 +116,7 @@ Waits for process to complete and returns exit code.
 ### processKill
 
 ```atlas
-fn processKill(process: Process) -> Result<Null, string>
+fn processKill(process: Process) : Result<Null, string>
 ```
 
 Kills a running process.
@@ -131,7 +131,7 @@ Kills a running process.
 ### processIsRunning
 
 ```atlas
-fn processIsRunning(process: Process) -> bool
+fn processIsRunning(process: Process) : bool
 ```
 
 Checks if process is still running.
@@ -146,7 +146,7 @@ Checks if process is still running.
 ### getEnv
 
 ```atlas
-fn getEnv(name: string) -> Option<string>
+fn getEnv(name: string) : Option<string>
 ```
 
 Gets environment variable value.
@@ -159,7 +159,7 @@ Gets environment variable value.
 ### setEnv
 
 ```atlas
-fn setEnv(name: string, value: string) -> Result<Null, string>
+fn setEnv(name: string, value: string) : Result<Null, string>
 ```
 
 Sets environment variable.
@@ -175,7 +175,7 @@ Sets environment variable.
 ### unsetEnv
 
 ```atlas
-fn unsetEnv(name: string) -> Result<Null, string>
+fn unsetEnv(name: string) : Result<Null, string>
 ```
 
 Unsets environment variable.
@@ -190,7 +190,7 @@ Unsets environment variable.
 ### listEnv
 
 ```atlas
-fn listEnv() -> object
+fn listEnv() : object
 ```
 
 Gets all environment variables.
@@ -202,7 +202,7 @@ Gets all environment variables.
 ### getPid
 
 ```atlas
-fn getPid() -> number
+fn getPid() : number
 ```
 
 Gets process ID of current process.
@@ -212,7 +212,7 @@ Gets process ID of current process.
 ### getCwd
 
 ```atlas
-fn getCwd() -> Result<string, string>
+fn getCwd() : Result<string, string>
 ```
 
 Gets current working directory.

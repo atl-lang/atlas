@@ -11,17 +11,17 @@ struct JSONRPCResponse {
 
 // Redactor trait - redacts sensitive information from strings
 trait Redactor {
-    fn redact(self, borrow content: string, borrow patterns: string[]) -> string;
+    fn redact(self, borrow content: string, borrow patterns: string[]) : string;
 }
 
 // RateLimiter trait - controls the rate of operations
 trait RateLimiter {
-    fn allow(self) -> bool;
+    fn allow(self) : bool;
 }
 
 // SizeLimiter trait - limits payload sizes
 trait SizeLimiter {
-    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse;
+    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) : JSONRPCResponse;
 }
 
 // DefaultRedactor implements pattern-based redaction
@@ -30,14 +30,14 @@ struct DefaultRedactor {
 }
 
 // Creates a new DefaultRedactor
-fn new_redactor(own replacement: string) -> DefaultRedactor {
+fn new_redactor(own replacement: string) : DefaultRedactor {
     return DefaultRedactor {
         replacement: replacement
     };
 }
 
 impl Redactor for DefaultRedactor {
-    fn redact(self, borrow content: string, borrow patterns: string[]) -> string {
+    fn redact(self, borrow content: string, borrow patterns: string[]) : string {
         let result = content;
 
         // Apply each redaction pattern
@@ -64,7 +64,7 @@ struct TokenBucketLimiter {
 }
 
 // Creates a new rate limiter
-fn new_rate_limiter(own rate_per_second: number) -> TokenBucketLimiter {
+fn new_rate_limiter(own rate_per_second: number) : TokenBucketLimiter {
     return TokenBucketLimiter {
         max_tokens: rate_per_second,
         current_tokens: rate_per_second,
@@ -74,7 +74,7 @@ fn new_rate_limiter(own rate_per_second: number) -> TokenBucketLimiter {
 }
 
 impl RateLimiter for TokenBucketLimiter {
-    fn allow(self) -> bool {
+    fn allow(self) : bool {
         // Refill tokens based on elapsed time
         let now = dateTimeToTimestamp(dateTimeNow());
         let elapsed_ms = now - self.last_refill_ms;
@@ -100,14 +100,14 @@ struct DefaultSizeLimiter {
 }
 
 // Creates a new size limiter
-fn new_size_limiter() -> DefaultSizeLimiter {
+fn new_size_limiter() : DefaultSizeLimiter {
     return DefaultSizeLimiter {
         truncation_message: "[TRUNCATED by Hydra: output exceeds size limit]"
     };
 }
 
 impl SizeLimiter for DefaultSizeLimiter {
-    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) -> JSONRPCResponse {
+    fn limit(self, own response: JSONRPCResponse, borrow max_kb: number) : JSONRPCResponse {
         // Serialize to check size
         let result_str = match response.result {
             Some(r) => str(r),
@@ -134,7 +134,7 @@ impl SizeLimiter for DefaultSizeLimiter {
 }
 
 // Convenience function to redact common patterns
-fn redact_secrets(borrow content: string) -> string {
+fn redact_secrets(borrow content: string) : string {
     let redactor = new_redactor("[REDACTED]");
     let patterns = [
         "sk-[A-Za-z0-9]{32,}",

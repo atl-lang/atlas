@@ -69,8 +69,8 @@ fn typecheck_modules(entry: &str, modules: &[(&str, &str)]) -> Vec<Diagnostic> {
 #[case("type Count = number; let _x: Count = 42;")]
 #[case("type Flag = bool; let _x: Flag = true;")]
 #[case("type Numbers = []number; let _x: Numbers = [1, 2, 3];")]
-#[case("type Handler = (number, string) -> bool; fn h(borrow x: number, borrow y: string) -> bool { return true; } let _x: Handler = h;")]
-#[case("type Pair<T, U> = (T, U) -> T; fn fst<T, U>(borrow x: T, borrow _y: U) -> T { return x; } let _x: Pair<number, string> = fst;")]
+#[case("type Handler = (number, string): bool; fn h(borrow x: number, borrow y: string): bool { return true; } let _x: Handler = h;")]
+#[case("type Pair<T, U> = (T, U): T; fn fst<T, U>(borrow x: T, borrow _y: U): T { return x; } let _x: Pair<number, string> = fst;")]
 #[case(
     "type ResultMap = HashMap<string, Result<number, string>>; let _x: ResultMap = hash_map_new();"
 )]
@@ -88,9 +88,7 @@ fn test_alias_declarations(#[case] source: &str) {
 #[case("type A = number; let _x: A = 1;")]
 #[case("type A = string; type B = A; let _x: B = \"ok\";")]
 #[case("type A = []number; let _x: A = [1, 2];")]
-#[case(
-    "type A = (number) -> number; fn f(borrow x: number) -> number { return x; } let _x: A = f;"
-)]
+#[case("type A = (number): number; fn f(borrow x: number): number { return x; } let _x: A = f;")]
 #[case("type A = Result<number, string>; let _x: A = Ok(1);")]
 #[case("type A = HashMap<string, number>; let _x: A = hash_map_new();")]
 #[case("type A = Option<number>; let _x: A = Some(1);")]
@@ -107,9 +105,9 @@ fn test_alias_resolution(#[case] source: &str) {
 #[rstest]
 #[case("type Box<T> = []T; let _x: Box<number> = [1, 2];")]
 #[case("type Box<T> = []T; let _x: Box<string> = [\"a\", \"b\"]; ")]
-#[case("type Pair<A, B> = (A, B) -> A; fn fst<A, B>(borrow a: A, borrow _b: B) -> A { return a; } let _x: Pair<number, string> = fst;")]
-#[case("type Pair<A, B> = (A, B) -> B; fn snd<A, B>(borrow _a: A, borrow b: B) -> B { return b; } let _x: Pair<number, string> = snd;")]
-#[case("type MapEntry<K, V> = (K, V) -> V; fn pick<K, V>(borrow _k: K, borrow v: V) -> V { return v; } let _x: MapEntry<string, number> = pick;")]
+#[case("type Pair<A, B> = (A, B): A; fn fst<A, B>(borrow a: A, borrow _b: B): A { return a; } let _x: Pair<number, string> = fst;")]
+#[case("type Pair<A, B> = (A, B): B; fn snd<A, B>(borrow _a: A, borrow b: B): B { return b; } let _x: Pair<number, string> = snd;")]
+#[case("type MapEntry<K, V> = (K, V): V; fn pick<K, V>(borrow _k: K, borrow v: V): V { return v; } let _x: MapEntry<string, number> = pick;")]
 #[case("type Wrap<T> = Option<T>; let _x: Wrap<number> = Some(1);")]
 #[case("type Wrap<T> = Result<T, string>; let _x: Wrap<number> = Ok(1);")]
 #[case("type Wrap<T> = Result<T, string>; let _x: Wrap<number> = Err(\"no\");")]
@@ -132,7 +130,7 @@ fn test_generic_aliases(#[case] source: &str) {
 #[case("type A = number; type B = number; let _x: A = 1; let _y: B = _x;")]
 #[case("type A = string; type B = string; let _x: A = \"ok\"; let _y: B = _x;")]
 #[case("type A = []number; type B = []number; let _x: A = [1]; let _y: B = _x;")]
-#[case("type A = (number) -> number; type B = (number) -> number; fn f(borrow x: number) -> number { return x; } let _x: A = f; let _y: B = _x;")]
+#[case("type A = (number): number; type B = (number): number; fn f(borrow x: number): number { return x; } let _x: A = f; let _y: B = _x;")]
 #[case("type A = Result<number, string>; type B = Result<number, string>; let _x: A = Ok(1); let _y: B = _x;")]
 #[case("type A = Option<number>; type B = Option<number>; let _x: A = Some(1); let _y: B = _x;")]
 #[case("type A = HashMap<string, number>; type B = HashMap<string, number>; let _x: A = hash_map_new(); let _y: B = _x;")]
@@ -149,11 +147,11 @@ fn test_type_equivalence_with_aliases(#[case] source: &str) {
 // ============================================================================
 
 #[rstest]
-#[case("type UserId = string; fn f(borrow id: UserId) -> UserId { return id; }")]
-#[case("type Count = number; fn f(borrow x: Count) -> number { return x; }")]
+#[case("type UserId = string; fn f(borrow id: UserId): UserId { return id; }")]
+#[case("type Count = number; fn f(borrow x: Count): number { return x; }")]
 #[case("type Name = string; let _x: Name = \"ok\";")]
-#[case("type Ok = Result<number, string>; fn f() -> Ok { return Ok(1); }")]
-#[case("type MaybeNum = Option<number>; fn f() -> MaybeNum { return Some(1); }")]
+#[case("type Ok = Result<number, string>; fn f(): Ok { return Ok(1); }")]
+#[case("type MaybeNum = Option<number>; fn f(): MaybeNum { return Some(1); }")]
 #[case("type Arr = []number; let _x: Arr = [1, 2];")]
 fn test_alias_in_annotations(#[case] source: &str) {
     let diags = errors(source);
@@ -170,7 +168,7 @@ fn test_alias_in_annotations(#[case] source: &str) {
 #[case("type A = B; type B = C; type C = A; let _x: A = 1;")]
 #[case("type A<T> = A<T>; let _x: A<number> = 1;")]
 #[case("type A = B; type B = C; type C = D; type D = A; let _x: A = 1;")]
-#[case("type A = B; type B = (number) -> A; let _x: A = 1;")]
+#[case("type A = B; type B = (number): A; let _x: A = 1;")]
 fn test_circular_alias_detection(#[case] source: &str) {
     let diags = errors(source);
     assert!(!diags.is_empty(), "Expected circular alias errors");

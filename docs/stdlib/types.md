@@ -7,7 +7,7 @@ Type checking, conversion, and reflection functions.
 ### typeof
 
 ```atlas
-fn typeof(value: any) -> string
+fn typeof(value: any) : string
 ```
 
 Returns the type name of a value as string.
@@ -19,7 +19,7 @@ Returns the type name of a value as string.
 ### isString
 
 ```atlas
-fn isString(value: any) -> bool
+fn isString(value: any) : bool
 ```
 
 Checks if value is a string.
@@ -29,7 +29,7 @@ Checks if value is a string.
 ### isNumber
 
 ```atlas
-fn isNumber(value: any) -> bool
+fn isNumber(value: any) : bool
 ```
 
 Checks if value is a number.
@@ -39,7 +39,7 @@ Checks if value is a number.
 ### isBool
 
 ```atlas
-fn isBool(value: any) -> bool
+fn isBool(value: any) : bool
 ```
 
 Checks if value is a boolean.
@@ -49,7 +49,7 @@ Checks if value is a boolean.
 ### isNull
 
 ```atlas
-fn isNull(value: any) -> bool
+fn isNull(value: any) : bool
 ```
 
 Checks if value is null.
@@ -59,7 +59,7 @@ Checks if value is null.
 ### isArray
 
 ```atlas
-fn isArray(value: any) -> bool
+fn isArray(value: any) : bool
 ```
 
 Checks if value is an array.
@@ -69,7 +69,7 @@ Checks if value is an array.
 ### isFunction
 
 ```atlas
-fn isFunction(value: any) -> bool
+fn isFunction(value: any) : bool
 ```
 
 Checks if value is a function.
@@ -79,7 +79,7 @@ Checks if value is a function.
 ### isObject
 
 ```atlas
-fn isObject(value: any) -> bool
+fn isObject(value: any) : bool
 ```
 
 Checks if value is an object (HashMap).
@@ -89,7 +89,7 @@ Checks if value is an object (HashMap).
 ### isType
 
 ```atlas
-fn isType(value: any) -> bool
+fn isType(value: any) : bool
 ```
 
 Checks if value is a type descriptor.
@@ -101,7 +101,7 @@ Checks if value is a type descriptor.
 ### hasField
 
 ```atlas
-fn hasField(obj: any, field: string) -> bool
+fn hasField(obj: any, field: string) : bool
 ```
 
 Checks if object has a field with given name.
@@ -115,7 +115,7 @@ Checks if object has a field with given name.
 ### hasMethod
 
 ```atlas
-fn hasMethod(obj: any, method: string) -> bool
+fn hasMethod(obj: any, method: string) : bool
 ```
 
 Checks if object has a method with given name.
@@ -129,7 +129,7 @@ Checks if object has a method with given name.
 ### hasTag
 
 ```atlas
-fn hasTag(value: any, tag: string) -> bool
+fn hasTag(value: any, tag: string) : bool
 ```
 
 Checks if value has a specific tag (for tagged values).
@@ -145,7 +145,7 @@ Checks if value has a specific tag (for tagged values).
 ### toString
 
 ```atlas
-fn toString(value: any) -> string
+fn toString(value: any) : string
 ```
 
 Converts value to string representation.
@@ -158,7 +158,7 @@ Converts value to string representation.
 ### toNumber
 
 ```atlas
-fn toNumber(value: any) -> Result<number, string>
+fn toNumber(value: any) : Result<number, string>
 ```
 
 Converts value to number.
@@ -173,7 +173,7 @@ Converts value to number.
 ### toBool
 
 ```atlas
-fn toBool(value: any) -> bool
+fn toBool(value: any) : bool
 ```
 
 Converts value to boolean.
@@ -192,7 +192,7 @@ Converts value to boolean.
 ### parseInt
 
 ```atlas
-fn parseInt(str: string, radix: number?) -> Result<number, string>
+fn parseInt(str: string, radix: number?) : Result<number, string>
 ```
 
 Parses string as integer in the given radix (default: 10).
@@ -213,7 +213,7 @@ Parses string as integer in the given radix (default: 10).
 ### parseFloat
 
 ```atlas
-fn parseFloat(str: string) -> Result<number, string>
+fn parseFloat(str: string) : Result<number, string>
 ```
 
 Parses string as floating-point number.
@@ -236,7 +236,7 @@ Parses string as floating-point number.
 ### Some
 
 ```atlas
-fn Some(value: T) -> Option<T>
+fn Some(value: T) : Option<T>
 ```
 
 Constructs Some(value) - Option with a value.
@@ -249,7 +249,7 @@ Constructs Some(value) - Option with a value.
 ### None
 
 ```atlas
-fn None() -> Option<any>
+fn None() : Option<any>
 ```
 
 Constructs None - Option without a value.
@@ -261,7 +261,7 @@ Constructs None - Option without a value.
 ### Ok
 
 ```atlas
-fn Ok(value: T) -> Result<T, any>
+fn Ok(value: T) : Result<T, any>
 ```
 
 Constructs Ok(value) - successful Result.
@@ -274,7 +274,7 @@ Constructs Ok(value) - successful Result.
 ### Err
 
 ```atlas
-fn Err(error: E) -> Result<any, E>
+fn Err(error: E) : Result<any, E>
 ```
 
 Constructs Err(error) - failed Result.
@@ -289,7 +289,7 @@ Constructs Err(error) - failed Result.
 ### is_some
 
 ```atlas
-fn is_some(opt: Option<T>) -> bool
+fn is_some(opt: Option<T>) : bool
 ```
 
 Checks if Option has a value (is Some).
@@ -302,7 +302,7 @@ Checks if Option has a value (is Some).
 ### is_none
 
 ```atlas
-fn is_none(opt: Option<T>) -> bool
+fn is_none(opt: Option<T>) : bool
 ```
 
 Checks if Option is None.
@@ -317,7 +317,7 @@ Checks if Option is None.
 ### is_ok
 
 ```atlas
-fn is_ok(res: Result<T, E>) -> bool
+fn is_ok(res: Result<T, E>) : bool
 ```
 
 Checks if Result is Ok.
@@ -330,7 +330,7 @@ Checks if Result is Ok.
 ### is_err
 
 ```atlas
-fn is_err(res: Result<T, E>) -> bool
+fn is_err(res: Result<T, E>) : bool
 ```
 
 Checks if Result is Err.
@@ -343,7 +343,7 @@ Checks if Result is Err.
 ### result_map
 
 ```atlas
-fn result_map(res: Result<T, E>, transform: fn(T) -> U) -> Result<U, E>
+fn result_map(res: Result<T, E>, transform: fn(T) : U) : Result<U, E>
 ```
 
 Transforms the Ok value using a callback.
@@ -362,7 +362,7 @@ let out = result_map(Ok(2), fn(x) { return x * 3; });
 ### result_map_err
 
 ```atlas
-fn result_map_err(res: Result<T, E>, transform: fn(E) -> F) -> Result<T, F>
+fn result_map_err(res: Result<T, E>, transform: fn(E) : F) : Result<T, F>
 ```
 
 Transforms the Err value using a callback.
@@ -381,7 +381,7 @@ let out = result_map_err(Err(\"oops\"), fn(e) { return \"error: \" + e; });
 ### result_and_then
 
 ```atlas
-fn result_and_then(res: Result<T, E>, next: fn(T) -> Result<U, E>) -> Result<U, E>
+fn result_and_then(res: Result<T, E>, next: fn(T): Result<U, E>): Result<U, E>
 ```
 
 Chains a Result-returning callback on Ok values.
@@ -400,7 +400,7 @@ let out = result_and_then(Ok(2), fn(x) { return Ok(x + 1); });
 ### result_or_else
 
 ```atlas
-fn result_or_else(res: Result<T, E>, recover: fn(E) -> Result<T, F>) -> Result<T, F>
+fn result_or_else(res: Result<T, E>, recover: fn(E): Result<T, F>): Result<T, F>
 ```
 
 Recovers from Err values using a callback.
@@ -421,7 +421,7 @@ let out = result_or_else(Err(\"x\"), fn(e) { return Ok(0); });
 ### unwrap
 
 ```atlas
-fn unwrap(opt_or_res: Option<T> | Result<T, E>) -> T
+fn unwrap(opt_or_res: Option<T> | Result<T, E>): T
 ```
 
 Unwraps Option or Result value. Panics if None or Err.
@@ -436,7 +436,7 @@ Unwraps Option or Result value. Panics if None or Err.
 ### unwrap_or
 
 ```atlas
-fn unwrap_or(opt_or_res: Option<T> | Result<T, E>, default: T) -> T
+fn unwrap_or(opt_or_res: Option<T> | Result<T, E>, default: T): T
 ```
 
 Unwraps Option or Result with default value.
@@ -445,4 +445,4 @@ Unwraps Option or Result with default value.
 - `opt_or_res` - Option or Result
 - `default` - Default value if None/Err
 
-**Returns:** `T` - The value or default
+**Returns:** `T` - The value or default"

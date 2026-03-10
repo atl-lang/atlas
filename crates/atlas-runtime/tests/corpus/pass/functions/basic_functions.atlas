@@ -1,12 +1,12 @@
-fn add(borrow x: number, borrow y: number) -> number {
+fn add(borrow x: number, borrow y: number) : number {
     return x + y;
 }
 
-fn greet(borrow name: string) -> string {
+fn greet(borrow name: string) : string {
     return "Hello, " + name + "!";
 }
 
-fn is_even(borrow n: number) -> bool {
+fn is_even(borrow n: number) : bool {
     return n % 2 == 0;
 }
 

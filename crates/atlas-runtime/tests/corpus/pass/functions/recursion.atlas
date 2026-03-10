@@ -1,11 +1,11 @@
-fn sum_to(borrow n: number) -> number {
+fn sum_to(borrow n: number) : number {
     if n <= 0 {
         return 0;
     }
     return n + sum_to(n - 1);
 }
 
-fn power(borrow base: number, borrow exp: number) -> number {
+fn power(borrow base: number, borrow exp: number) : number {
     if exp == 0 {
         return 1;
     }

@@ -15,7 +15,7 @@ use pretty_assertions::assert_eq;
 #[test]
 fn test_vm_result_try_unwraps_ok() {
     let code = r#"
-    fn get_value() -> Result<number, string> {
+    fn get_value(): Result<number, string> {
         let result = Ok(42);
         return Ok(result?);
     }
@@ -30,7 +30,7 @@ fn test_vm_result_try_unwraps_ok() {
 #[test]
 fn test_vm_result_try_propagates_err() {
     let code = r#"
-    fn get_value() -> Result<number, string> {
+    fn get_value(): Result<number, string> {
         let result = Err("failed");
         return Ok(result?);
     }
@@ -45,13 +45,13 @@ fn test_vm_result_try_propagates_err() {
 #[test]
 fn test_vm_result_try_multiple() {
     let code = r#"
-    fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
+    fn divide(borrow a: number, borrow b: number): Result<number, string> {
         if (b == 0) {
             return Err("division by zero");
         }
         return Ok(a / b);
     }
-    fn calculate() -> Result<number, string> {
+    fn calculate(): Result<number, string> {
         let x = divide(100, 10)?;
         let y = divide(x, 2)?;
         let z = divide(y, 5)?;
@@ -68,13 +68,13 @@ fn test_vm_result_try_multiple() {
 #[test]
 fn test_vm_result_try_early_return() {
     let code = r#"
-    fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
+    fn divide(borrow a: number, borrow b: number): Result<number, string> {
         if (b == 0) {
             return Err("division by zero");
         }
         return Ok(a / b);
     }
-    fn calculate() -> Result<number, string> {
+    fn calculate(): Result<number, string> {
         let x = divide(100, 10)?;
         let y = divide(x, 0)?;
         let z = divide(y, 5)?;
@@ -91,10 +91,10 @@ fn test_vm_result_try_early_return() {
 #[test]
 fn test_vm_result_try_in_expression() {
     let code = r#"
-    fn get_number() -> Result<number, string> {
+    fn get_number(): Result<number, string> {
         return Ok(21);
     }
-    fn double_it() -> Result<number, string> {
+    fn double_it(): Result<number, string> {
         return Ok(get_number()? * 2);
     }
     unwrap(double_it());
@@ -108,9 +108,9 @@ fn test_vm_result_try_in_expression() {
 #[test]
 fn test_vm_result_try_nested_calls() {
     let code = r#"
-    fn inner() -> Result<number, string> { return Ok(42); }
-    fn middle() -> Result<number, string> { return Ok(inner()?); }
-    fn outer() -> Result<number, string> { return Ok(middle()?); }
+    fn inner(): Result<number, string> { return Ok(42); }
+    fn middle(): Result<number, string> { return Ok(inner()?); }
+    fn outer(): Result<number, string> { return Ok(middle()?); }
     unwrap(outer());
 "#;
     match vm_eval_checked(code) {
@@ -122,9 +122,9 @@ fn test_vm_result_try_nested_calls() {
 #[test]
 fn test_vm_result_try_nested_error_propagation() {
     let code = r#"
-    fn inner() -> Result<number, string> { return Err("inner failed"); }
-    fn middle() -> Result<number, string> { return Ok(inner()?); }
-    fn outer() -> Result<number, string> { return Ok(middle()?); }
+    fn inner(): Result<number, string> { return Err("inner failed"); }
+    fn middle(): Result<number, string> { return Ok(inner()?); }
+    fn outer(): Result<number, string> { return Ok(middle()?); }
     is_err(outer());
 "#;
     match vm_eval_checked(code) {
@@ -140,7 +140,7 @@ fn test_vm_result_try_nested_error_propagation() {
 #[test]
 fn test_parity_result_try_ok() {
     let code = r#"
-    fn get() -> Result<number, string> {
+    fn get(): Result<number, string> {
         let r = Ok(42);
         return Ok(r?);
     }
@@ -155,7 +155,7 @@ fn test_parity_result_try_ok() {
 #[test]
 fn test_parity_result_try_err() {
     let code = r#"
-    fn get() -> Result<number, string> {
+    fn get(): Result<number, string> {
         let r = Err("fail");
         return Ok(r?);
     }
@@ -173,7 +173,7 @@ fn test_parity_result_try_err() {
 #[test]
 fn test_vm_option_try_unwraps_some() {
     let code = r#"
-    fn find() -> Option<number> {
+    fn find(): Option<number> {
         let opt = Some(42);
         return Some(opt?);
     }
@@ -188,7 +188,7 @@ fn test_vm_option_try_unwraps_some() {
 #[test]
 fn test_vm_option_try_propagates_none() {
     let code = r#"
-    fn find() -> Option<number> {
+    fn find(): Option<number> {
         let opt: Option<number> = None();
         return Some(opt?);
     }
@@ -203,9 +203,9 @@ fn test_vm_option_try_propagates_none() {
 #[test]
 fn test_vm_option_try_multiple() {
     let code = r#"
-    fn a() -> Option<number> { return Some(10); }
-    fn b() -> Option<number> { return Some(20); }
-    fn calc() -> Option<number> {
+    fn a(): Option<number> { return Some(10); }
+    fn b(): Option<number> { return Some(20); }
+    fn calc(): Option<number> {
         let x = a()?;
         let y = b()?;
         return Some(x + y);
@@ -221,9 +221,9 @@ fn test_vm_option_try_multiple() {
 #[test]
 fn test_vm_option_try_early_none() {
     let code = r#"
-    fn a() -> Option<number> { return Some(10); }
-    fn b() -> Option<number> { return None(); }
-    fn calc() -> Option<number> {
+    fn a(): Option<number> { return Some(10); }
+    fn b(): Option<number> { return None(); }
+    fn calc(): Option<number> {
         let x = a()?;
         let y = b()?;
         return Some(x + y);
@@ -239,9 +239,9 @@ fn test_vm_option_try_early_none() {
 #[test]
 fn test_vm_option_try_nested() {
     let code = r#"
-    fn inner() -> Option<number> { return Some(42); }
-    fn middle() -> Option<number> { return Some(inner()?); }
-    fn outer() -> Option<number> { return Some(middle()?); }
+    fn inner(): Option<number> { return Some(42); }
+    fn middle(): Option<number> { return Some(inner()?); }
+    fn outer(): Option<number> { return Some(middle()?); }
     unwrap(outer());
 "#;
     match vm_eval_checked(code) {
@@ -257,7 +257,7 @@ fn test_vm_option_try_nested() {
 #[test]
 fn test_parity_option_try_some() {
     let code = r#"
-    fn find() -> Option<number> {
+    fn find(): Option<number> {
         let opt = Some(42);
         return Some(opt?);
     }
@@ -274,7 +274,7 @@ fn test_parity_option_try_some() {
 #[test]
 fn test_parity_option_try_none() {
     let code = r#"
-    fn find() -> Option<number> {
+    fn find(): Option<number> {
         let opt: Option<number> = None();
         return Some(opt?);
     }
@@ -295,9 +295,9 @@ fn test_parity_option_try_none() {
 #[test]
 fn test_vm_try_multiple_in_expression() {
     let code = r#"
-    fn a() -> Result<number, string> { return Ok(10); }
-    fn b() -> Result<number, string> { return Ok(32); }
-    fn calc() -> Result<number, string> {
+    fn a(): Result<number, string> { return Ok(10); }
+    fn b(): Result<number, string> { return Ok(32); }
+    fn calc(): Result<number, string> {
         return Ok(a()? + b()?);
     }
     unwrap(calc());
@@ -311,14 +311,14 @@ fn test_vm_try_multiple_in_expression() {
 #[test]
 fn test_vm_try_chained_transforms() {
     let code = r#"
-    fn parse_num(borrow s: string) -> Result<number, string> {
+    fn parse_num(borrow s: string): Result<number, string> {
         if (s == "42") { return Ok(42); }
         return Err("not 42");
     }
-    fn double(borrow n: number) -> Result<number, string> {
+    fn double(borrow n: number): Result<number, string> {
         return Ok(n * 2);
     }
-    fn process(borrow s: string) -> Result<number, string> {
+    fn process(borrow s: string): Result<number, string> {
         let n = parse_num(s)?;
         let d = double(n)?;
         return Ok(d);
@@ -334,9 +334,9 @@ fn test_vm_try_chained_transforms() {
 #[test]
 fn test_parity_try_multiple_expr() {
     let code = r#"
-    fn a() -> Result<number, string> { return Ok(10); }
-    fn b() -> Result<number, string> { return Ok(32); }
-    fn calc() -> Result<number, string> {
+    fn a(): Result<number, string> { return Ok(10); }
+    fn b(): Result<number, string> { return Ok(32); }
+    fn calc(): Result<number, string> {
         return Ok(a()? + b()?);
     }
     unwrap(calc());
@@ -352,9 +352,9 @@ fn test_parity_try_multiple_expr() {
 #[test]
 fn test_parity_try_first_fails() {
     let code = r#"
-    fn a() -> Result<number, string> { return Err("a failed"); }
-    fn b() -> Result<number, string> { return Ok(32); }
-    fn calc() -> Result<number, string> {
+    fn a(): Result<number, string> { return Err("a failed"); }
+    fn b(): Result<number, string> { return Ok(32); }
+    fn calc(): Result<number, string> {
         return Ok(a()? + b()?);
     }
     is_err(calc());
@@ -370,9 +370,9 @@ fn test_parity_try_first_fails() {
 #[test]
 fn test_parity_option_try_multiple_expr() {
     let code = r#"
-    fn a() -> Option<number> { return Some(10); }
-    fn b() -> Option<number> { return Some(32); }
-    fn calc() -> Option<number> {
+    fn a(): Option<number> { return Some(10); }
+    fn b(): Option<number> { return Some(32); }
+    fn calc(): Option<number> {
         return Some(a()? + b()?);
     }
     unwrap(calc());
@@ -388,8 +388,8 @@ fn test_parity_option_try_multiple_expr() {
 #[test]
 fn test_vm_try_in_if_condition() {
     let code = r#"
-    fn check() -> Result<bool, string> { return Ok(true); }
-    fn run() -> Result<number, string> {
+    fn check(): Result<bool, string> { return Ok(true); }
+    fn run(): Result<number, string> {
         if (check()?) {
             return Ok(42);
         }

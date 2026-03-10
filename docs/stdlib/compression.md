@@ -7,7 +7,7 @@ Gzip, Tar, and Zip compression/decompression.
 ### gzipCompress
 
 ```atlas
-fn gzipCompress(data: string | []number, level?: number) -> []number
+fn gzipCompress(data: string | []number, level?: number) : []number
 ```
 
 Compresses data with Gzip.
@@ -21,7 +21,7 @@ Compresses data with Gzip.
 ### gzipDecompress
 
 ```atlas
-fn gzipDecompress(compressed: []number) -> []number
+fn gzipDecompress(compressed: []number) : []number
 ```
 
 Decompresses Gzip data to bytes.
@@ -34,7 +34,7 @@ Decompresses Gzip data to bytes.
 ### gzipDecompressString
 
 ```atlas
-fn gzipDecompressString(compressed: []number) -> string
+fn gzipDecompressString(compressed: []number) : string
 ```
 
 Decompresses Gzip data to UTF-8 string.
@@ -47,7 +47,7 @@ Decompresses Gzip data to UTF-8 string.
 ### gzipIsGzip
 
 ```atlas
-fn gzipIsGzip(data: []number) -> bool
+fn gzipIsGzip(data: []number) : bool
 ```
 
 Checks if data is valid Gzip format.
@@ -60,7 +60,7 @@ Checks if data is valid Gzip format.
 ### gzipCompressionRatio
 
 ```atlas
-fn gzipCompressionRatio(original: number, compressed: number) -> number
+fn gzipCompressionRatio(original: number, compressed: number) : number
 ```
 
 Calculates compression ratio.
@@ -76,7 +76,7 @@ Calculates compression ratio.
 ### tarCreate
 
 ```atlas
-fn tarCreate(sources: []string, output: string) -> Null
+fn tarCreate(sources: []string, output: string) : Null
 ```
 
 Creates Tar archive from files and directories.
@@ -95,7 +95,7 @@ tarCreate(["/tmp/file1.txt", "/tmp/file2.txt"], "/tmp/archive.tar");
 ### tarCreateGz
 
 ```atlas
-fn tarCreateGz(sources: []string, output: string, level?: number) -> Null
+fn tarCreateGz(sources: []string, output: string, level?: number) : Null
 ```
 
 Creates Tar.Gz (compressed Tar) archive.
@@ -110,7 +110,7 @@ Creates Tar.Gz (compressed Tar) archive.
 ### tarExtract
 
 ```atlas
-fn tarExtract(tarPath: string, outputDir: string) -> []string
+fn tarExtract(tarPath: string, outputDir: string) : []string
 ```
 
 Extracts files from Tar archive.
@@ -124,7 +124,7 @@ Extracts files from Tar archive.
 ### tarExtractGz
 
 ```atlas
-fn tarExtractGz(tarGzPath: string, outputDir: string) -> []string
+fn tarExtractGz(tarGzPath: string, outputDir: string) : []string
 ```
 
 Extracts files from Tar.Gz archive.
@@ -138,7 +138,7 @@ Extracts files from Tar.Gz archive.
 ### tarList
 
 ```atlas
-fn tarList(tarPath: string) -> []object
+fn tarList(tarPath: string) : []object
 ```
 
 Lists files in Tar archive without extracting.
@@ -151,7 +151,7 @@ Lists files in Tar archive without extracting.
 ### tarContains
 
 ```atlas
-fn tarContains(tarPath: string, filePath: string) -> bool
+fn tarContains(tarPath: string, filePath: string) : bool
 ```
 
 Checks if file exists in Tar archive.
@@ -167,7 +167,7 @@ Checks if file exists in Tar archive.
 ### zipCreate
 
 ```atlas
-fn zipCreate(sources: []string, output: string, level?: number) -> Null
+fn zipCreate(sources: []string, output: string, level?: number) : Null
 ```
 
 Creates Zip archive from files and directories.
@@ -182,7 +182,7 @@ Creates Zip archive from files and directories.
 ### zipCreateWithComment
 
 ```atlas
-fn zipCreateWithComment(sources: []string, output: string, comment: string, level?: number) -> Null
+fn zipCreateWithComment(sources: []string, output: string, comment: string, level?: number) : Null
 ```
 
 Creates Zip archive with comment.
@@ -198,7 +198,7 @@ Creates Zip archive with comment.
 ### zipExtract
 
 ```atlas
-fn zipExtract(zipPath: string, outputDir: string) -> []string
+fn zipExtract(zipPath: string, outputDir: string) : []string
 ```
 
 Extracts all files from Zip archive.
@@ -212,7 +212,7 @@ Extracts all files from Zip archive.
 ### zipExtractFiles
 
 ```atlas
-fn zipExtractFiles(zipPath: string, outputDir: string, files: []string) -> []string
+fn zipExtractFiles(zipPath: string, outputDir: string, files: []string) : []string
 ```
 
 Extracts specific files from Zip archive.
@@ -227,7 +227,7 @@ Extracts specific files from Zip archive.
 ### zipList
 
 ```atlas
-fn zipList(zipPath: string) -> []object
+fn zipList(zipPath: string) : []object
 ```
 
 Lists files in Zip archive without extracting.
@@ -240,7 +240,7 @@ Lists files in Zip archive without extracting.
 ### zipContains
 
 ```atlas
-fn zipContains(zipPath: string, entryName: string) -> bool
+fn zipContains(zipPath: string, entryName: string) : bool
 ```
 
 Checks if entry exists in Zip archive.
@@ -254,7 +254,7 @@ Checks if entry exists in Zip archive.
 ### zipComment
 
 ```atlas
-fn zipComment(zipPath: string) -> string
+fn zipComment(zipPath: string) : string
 ```
 
 Gets comment from Zip archive.
@@ -267,7 +267,7 @@ Gets comment from Zip archive.
 ### zipValidate
 
 ```atlas
-fn zipValidate(zipPath: string) -> bool
+fn zipValidate(zipPath: string) : bool
 ```
 
 Validates Zip archive integrity.
@@ -280,7 +280,7 @@ Validates Zip archive integrity.
 ### zipCompressionRatio
 
 ```atlas
-fn zipCompressionRatio(zipPath: string) -> number
+fn zipCompressionRatio(zipPath: string) : number
 ```
 
 Calculates compression ratio.

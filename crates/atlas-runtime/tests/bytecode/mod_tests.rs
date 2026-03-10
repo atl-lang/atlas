@@ -64,7 +64,7 @@ fn test_bytecode_roundtrip_string_constant() {
 #[test]
 fn test_bytecode_roundtrip_function() {
     let source = r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
         add(3, 4);
@@ -104,7 +104,7 @@ fn test_bytecode_roundtrip_array_literal() {
 #[test]
 fn test_bytecode_roundtrip_complex_program() {
     let source = r#"
-        fn factorial(borrow n: number) -> number {
+        fn factorial(borrow n: number): number {
             if n <= 1 {
                 return 1;
             } else {

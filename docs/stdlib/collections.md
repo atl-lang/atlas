@@ -7,7 +7,7 @@ HashMap, HashSet, Queue, and Stack data structures.
 ### hashMapNew
 
 ```atlas
-fn hashMapNew() -> HashMap<string, any>
+fn hashMapNew() : HashMap<string, any>
 ```
 
 Creates a new empty HashMap.
@@ -17,7 +17,7 @@ Creates a new empty HashMap.
 ### hashMapFromEntries
 
 ```atlas
-fn hashMapFromEntries(entries: [string, any][]) -> HashMap<string, any>
+fn hashMapFromEntries(entries: [string, any][]) : HashMap<string, any>
 ```
 
 Creates HashMap from array of [key, value] pairs.
@@ -30,7 +30,7 @@ Creates HashMap from array of [key, value] pairs.
 ### hashMapPut
 
 ```atlas
-fn hashMapPut(map: HashMap<K, V>, key: K, value: V) -> HashMap<K, V>
+fn hashMapPut(map: HashMap<K, V>, key: K, value: V) : HashMap<K, V>
 ```
 
 Adds or updates key-value pair. Returns new map (CoW — always rebind the result).
@@ -47,7 +47,7 @@ Adds or updates key-value pair. Returns new map (CoW — always rebind the resul
 ### hashMapCopy
 
 ```atlas
-fn hashMapCopy(map: HashMap<K, V>) -> HashMap<K, V>
+fn hashMapCopy(map: HashMap<K, V>) : HashMap<K, V>
 ```
 
 Creates a shallow copy of HashMap.
@@ -60,7 +60,7 @@ Creates a shallow copy of HashMap.
 ### hashMapGet
 
 ```atlas
-fn hashMapGet(map: HashMap<K, V>, key: K) -> Option<V>
+fn hashMapGet(map: HashMap<K, V>, key: K) : Option<V>
 ```
 
 Gets value for key. Returns None if not found.
@@ -74,7 +74,7 @@ Gets value for key. Returns None if not found.
 ### hashMapRemove
 
 ```atlas
-fn hashMapRemove(map: HashMap<K, V>, key: K) -> HashMap<K, V>
+fn hashMapRemove(map: HashMap<K, V>, key: K) : HashMap<K, V>
 ```
 
 Removes key from map. Returns new map.
@@ -88,7 +88,7 @@ Removes key from map. Returns new map.
 ### hashMapHas
 
 ```atlas
-fn hashMapHas(map: HashMap<K, V>, key: K) -> bool
+fn hashMapHas(map: HashMap<K, V>, key: K) : bool
 ```
 
 Checks if key exists in map.
@@ -102,7 +102,7 @@ Checks if key exists in map.
 ### hashMapSize
 
 ```atlas
-fn hashMapSize(map: HashMap<K, V>) -> number
+fn hashMapSize(map: HashMap<K, V>) : number
 ```
 
 Returns number of entries in map.
@@ -115,7 +115,7 @@ Returns number of entries in map.
 ### hashMapIsEmpty
 
 ```atlas
-fn hashMapIsEmpty(map: HashMap<K, V>) -> bool
+fn hashMapIsEmpty(map: HashMap<K, V>) : bool
 ```
 
 Checks if map is empty.
@@ -128,7 +128,7 @@ Checks if map is empty.
 ### hashMapClear
 
 ```atlas
-fn hashMapClear(map: HashMap<K, V>) -> HashMap<K, V>
+fn hashMapClear(map: HashMap<K, V>) : HashMap<K, V>
 ```
 
 Removes all entries. Returns empty map.
@@ -141,7 +141,7 @@ Removes all entries. Returns empty map.
 ### hashMapKeys
 
 ```atlas
-fn hashMapKeys(map: HashMap<K, V>) -> []K
+fn hashMapKeys(map: HashMap<K, V>) : []K
 ```
 
 Gets all keys as array.
@@ -154,7 +154,7 @@ Gets all keys as array.
 ### hashMapValues
 
 ```atlas
-fn hashMapValues(map: HashMap<K, V>) -> []V
+fn hashMapValues(map: HashMap<K, V>) : []V
 ```
 
 Gets all values as array.
@@ -167,7 +167,7 @@ Gets all values as array.
 ### hashMapEntries
 
 ```atlas
-fn hashMapEntries(map: HashMap<K, V>) -> [K, V][]
+fn hashMapEntries(map: HashMap<K, V>) : [K, V][]
 ```
 
 Gets all entries as array of [key, value] tuples.
@@ -180,7 +180,7 @@ Gets all entries as array of [key, value] tuples.
 ### hashMapForEach
 
 ```atlas
-fn hashMapForEach(map: HashMap<K, V>, callback: fn(V, K) -> any) -> null
+fn hashMapForEach(map: HashMap<K, V>, callback: fn(V, K) : any) : null
 ```
 
 Invokes a callback for each key/value pair.
@@ -199,7 +199,7 @@ hashMapForEach(map, fn(value, key) { print(key); });
 ### hashMapMap
 
 ```atlas
-fn hashMapMap(map: HashMap<K, V>, callback: fn(V, K) -> U) -> HashMap<K, U>
+fn hashMapMap(map: HashMap<K, V>, callback: fn(V, K) : U) : HashMap<K, U>
 ```
 
 Transforms values using a callback and returns a new map.
@@ -218,7 +218,7 @@ let doubled = hashMapMap(map, fn(value, key) { return value * 2; });
 ### hashMapFilter
 
 ```atlas
-fn hashMapFilter(map: HashMap<K, V>, predicate: fn(V, K) -> bool) -> HashMap<K, V>
+fn hashMapFilter(map: HashMap<K, V>, predicate: fn(V, K) : bool) : HashMap<K, V>
 ```
 
 Filters entries using a predicate and returns a new map.
@@ -239,7 +239,7 @@ let filtered = hashMapFilter(map, fn(value, key) { return value > 10; });
 ### hashSetNew
 
 ```atlas
-fn hashSetNew() -> HashSet<T>
+fn hashSetNew() : HashSet<T>
 ```
 
 Creates a new empty HashSet.
@@ -249,7 +249,7 @@ Creates a new empty HashSet.
 ### hashSetFromArray
 
 ```atlas
-fn hashSetFromArray(arr: []T) -> HashSet<T>
+fn hashSetFromArray(arr: []T) : HashSet<T>
 ```
 
 Creates HashSet from array.
@@ -262,7 +262,7 @@ Creates HashSet from array.
 ### hashSetAdd
 
 ```atlas
-fn hashSetAdd(set: HashSet<T>, value: T) -> HashSet<T>
+fn hashSetAdd(set: HashSet<T>, value: T) : HashSet<T>
 ```
 
 Adds element to set. Returns new set (CoW — always rebind the result).
@@ -276,7 +276,7 @@ Adds element to set. Returns new set (CoW — always rebind the result).
 ### hashSetRemove
 
 ```atlas
-fn hashSetRemove(set: HashSet<T>, value: T) -> HashSet<T>
+fn hashSetRemove(set: HashSet<T>, value: T) : HashSet<T>
 ```
 
 Removes element from set. Returns new set.
@@ -290,7 +290,7 @@ Removes element from set. Returns new set.
 ### hashSetHas
 
 ```atlas
-fn hashSetHas(set: HashSet<T>, value: T) -> bool
+fn hashSetHas(set: HashSet<T>, value: T) : bool
 ```
 
 Checks if element is in set.
@@ -304,7 +304,7 @@ Checks if element is in set.
 ### hashSetSize
 
 ```atlas
-fn hashSetSize(set: HashSet<T>) -> number
+fn hashSetSize(set: HashSet<T>) : number
 ```
 
 Returns number of elements in set.
@@ -317,7 +317,7 @@ Returns number of elements in set.
 ### hashSetIsEmpty
 
 ```atlas
-fn hashSetIsEmpty(set: HashSet<T>) -> bool
+fn hashSetIsEmpty(set: HashSet<T>) : bool
 ```
 
 Checks if set is empty.
@@ -330,7 +330,7 @@ Checks if set is empty.
 ### hashSetClear
 
 ```atlas
-fn hashSetClear(set: HashSet<T>) -> HashSet<T>
+fn hashSetClear(set: HashSet<T>) : HashSet<T>
 ```
 
 Removes all elements. Returns empty set.
@@ -343,7 +343,7 @@ Removes all elements. Returns empty set.
 ### hashSetUnion
 
 ```atlas
-fn hashSetUnion(set1: HashSet<T>, set2: HashSet<T>) -> HashSet<T>
+fn hashSetUnion(set1: HashSet<T>, set2: HashSet<T>) : HashSet<T>
 ```
 
 Returns union of two sets (all elements from both).
@@ -357,7 +357,7 @@ Returns union of two sets (all elements from both).
 ### hashSetIntersection
 
 ```atlas
-fn hashSetIntersection(set1: HashSet<T>, set2: HashSet<T>) -> HashSet<T>
+fn hashSetIntersection(set1: HashSet<T>, set2: HashSet<T>) : HashSet<T>
 ```
 
 Returns intersection of two sets (elements in both).
@@ -371,7 +371,7 @@ Returns intersection of two sets (elements in both).
 ### hashSetDifference
 
 ```atlas
-fn hashSetDifference(set1: HashSet<T>, set2: HashSet<T>) -> HashSet<T>
+fn hashSetDifference(set1: HashSet<T>, set2: HashSet<T>) : HashSet<T>
 ```
 
 Returns difference: elements in set1 but not in set2.
@@ -385,7 +385,7 @@ Returns difference: elements in set1 but not in set2.
 ### hashSetSymmetricDifference
 
 ```atlas
-fn hashSetSymmetricDifference(set1: HashSet<T>, set2: HashSet<T>) -> HashSet<T>
+fn hashSetSymmetricDifference(set1: HashSet<T>, set2: HashSet<T>) : HashSet<T>
 ```
 
 Returns symmetric difference: elements in either but not both.
@@ -399,7 +399,7 @@ Returns symmetric difference: elements in either but not both.
 ### hashSetIsSubset
 
 ```atlas
-fn hashSetIsSubset(set1: HashSet<T>, set2: HashSet<T>) -> bool
+fn hashSetIsSubset(set1: HashSet<T>, set2: HashSet<T>) : bool
 ```
 
 Checks if set1 is subset of set2 (all elements of set1 in set2).
@@ -413,7 +413,7 @@ Checks if set1 is subset of set2 (all elements of set1 in set2).
 ### hashSetIsSuperset
 
 ```atlas
-fn hashSetIsSuperset(set1: HashSet<T>, set2: HashSet<T>) -> bool
+fn hashSetIsSuperset(set1: HashSet<T>, set2: HashSet<T>) : bool
 ```
 
 Checks if set1 is superset of set2 (all elements of set2 in set1).
@@ -427,7 +427,7 @@ Checks if set1 is superset of set2 (all elements of set2 in set1).
 ### hashSetToArray
 
 ```atlas
-fn hashSetToArray(set: HashSet<T>) -> []T
+fn hashSetToArray(set: HashSet<T>) : []T
 ```
 
 Converts set to array.
@@ -440,7 +440,7 @@ Converts set to array.
 ### hashSetForEach
 
 ```atlas
-fn hashSetForEach(set: HashSet<T>, callback: fn(T) -> any) -> null
+fn hashSetForEach(set: HashSet<T>, callback: fn(T) : any) : null
 ```
 
 Invokes a callback for each element in the set.
@@ -459,7 +459,7 @@ hashSetForEach(set, fn(value) { print(value); });
 ### hashSetMap
 
 ```atlas
-fn hashSetMap(set: HashSet<T>, callback: fn(T) -> U) -> []U
+fn hashSetMap(set: HashSet<T>, callback: fn(T) : U) : []U
 ```
 
 Maps set elements to an array of results.
@@ -478,7 +478,7 @@ let values = hashSetMap(set, fn(value) { return value * 2; });
 ### hashSetFilter
 
 ```atlas
-fn hashSetFilter(set: HashSet<T>, predicate: fn(T) -> bool) -> HashSet<T>
+fn hashSetFilter(set: HashSet<T>, predicate: fn(T) : bool) : HashSet<T>
 ```
 
 Filters set elements using a predicate.
@@ -499,7 +499,7 @@ let filtered = hashSetFilter(set, fn(value) { return value > 0; });
 ### queueNew
 
 ```atlas
-fn queueNew() -> Queue<T>
+fn queueNew() : Queue<T>
 ```
 
 Creates new empty queue.
@@ -509,7 +509,7 @@ Creates new empty queue.
 ### queueEnqueue
 
 ```atlas
-fn queueEnqueue(queue: Queue<T>, value: T) -> Queue<T>
+fn queueEnqueue(queue: Queue<T>, value: T) : Queue<T>
 ```
 
 Adds element to back of queue.
@@ -523,7 +523,7 @@ Adds element to back of queue.
 ### queueDequeue
 
 ```atlas
-fn queueDequeue(queue: Queue<T>) -> Option<T>
+fn queueDequeue(queue: Queue<T>) : Option<T>
 ```
 
 Removes and returns element from front of queue.
@@ -536,7 +536,7 @@ Removes and returns element from front of queue.
 ### queuePeek
 
 ```atlas
-fn queuePeek(queue: Queue<T>) -> Option<T>
+fn queuePeek(queue: Queue<T>) : Option<T>
 ```
 
 Returns front element without removing.
@@ -549,7 +549,7 @@ Returns front element without removing.
 ### queueSize
 
 ```atlas
-fn queueSize(queue: Queue<T>) -> number
+fn queueSize(queue: Queue<T>) : number
 ```
 
 Returns number of elements in queue.
@@ -562,7 +562,7 @@ Returns number of elements in queue.
 ### queueIsEmpty
 
 ```atlas
-fn queueIsEmpty(queue: Queue<T>) -> bool
+fn queueIsEmpty(queue: Queue<T>) : bool
 ```
 
 Checks if queue is empty.
@@ -575,7 +575,7 @@ Checks if queue is empty.
 ### queueClear
 
 ```atlas
-fn queueClear(queue: Queue<T>) -> Queue<T>
+fn queueClear(queue: Queue<T>) : Queue<T>
 ```
 
 Removes all elements.
@@ -588,7 +588,7 @@ Removes all elements.
 ### queueToArray
 
 ```atlas
-fn queueToArray(queue: Queue<T>) -> []T
+fn queueToArray(queue: Queue<T>) : []T
 ```
 
 Converts queue to array.
@@ -603,7 +603,7 @@ Converts queue to array.
 ### stackNew
 
 ```atlas
-fn stackNew() -> Stack<T>
+fn stackNew() : Stack<T>
 ```
 
 Creates new empty stack.
@@ -613,7 +613,7 @@ Creates new empty stack.
 ### stackPush
 
 ```atlas
-fn stackPush(stack: Stack<T>, value: T) -> Stack<T>
+fn stackPush(stack: Stack<T>, value: T) : Stack<T>
 ```
 
 Adds element to top of stack.
@@ -627,7 +627,7 @@ Adds element to top of stack.
 ### stackPop
 
 ```atlas
-fn stackPop(stack: Stack<T>) -> Option<T>
+fn stackPop(stack: Stack<T>) : Option<T>
 ```
 
 Removes and returns element from top of stack.
@@ -640,7 +640,7 @@ Removes and returns element from top of stack.
 ### stackPeek
 
 ```atlas
-fn stackPeek(stack: Stack<T>) -> Option<T>
+fn stackPeek(stack: Stack<T>) : Option<T>
 ```
 
 Returns top element without removing.
@@ -653,7 +653,7 @@ Returns top element without removing.
 ### stackSize
 
 ```atlas
-fn stackSize(stack: Stack<T>) -> number
+fn stackSize(stack: Stack<T>) : number
 ```
 
 Returns number of elements in stack.
@@ -666,7 +666,7 @@ Returns number of elements in stack.
 ### stackIsEmpty
 
 ```atlas
-fn stackIsEmpty(stack: Stack<T>) -> bool
+fn stackIsEmpty(stack: Stack<T>) : bool
 ```
 
 Checks if stack is empty.
@@ -679,7 +679,7 @@ Checks if stack is empty.
 ### stackClear
 
 ```atlas
-fn stackClear(stack: Stack<T>) -> Stack<T>
+fn stackClear(stack: Stack<T>) : Stack<T>
 ```
 
 Removes all elements.
@@ -692,7 +692,7 @@ Removes all elements.
 ### stackToArray
 
 ```atlas
-fn stackToArray(stack: Stack<T>) -> []T
+fn stackToArray(stack: Stack<T>) : []T
 ```
 
 Converts stack to array.

@@ -17,7 +17,7 @@ print("player total: " + str(player_total));
 print("player count: " + str(len(players)));
 print("first player: " + players[0].name);
 
-// HashMap of arrays (teams -> scores)
+// HashMap of arrays (teams : scores)
 let mut teams = hashMapNew();
 let alpha_scores: number[] = [10, 20, 30];
 let beta_scores: number[] = [15, 25];

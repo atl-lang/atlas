@@ -1,6 +1,6 @@
 // B15: Fibonacci using (prev, curr) tuple pairs
 
-fn fib_pair(n: number) -> (number, number) {
+fn fib_pair(n: number) : (number, number) {
     if n == 0 {
         return (0, 1);
     }

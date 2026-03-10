@@ -1049,7 +1049,7 @@ impl Parser {
 
     // parse_function_type removed in favor of parse_paren_type
 
-    /// Parse anonymous function expression: `fn(params) -> ReturnType { body }`
+    /// Parse anonymous function expression: `fn(params): ReturnType { body }`
     ///
     /// Anonymous functions allow optional type annotations on parameters.
     /// This is the unified syntax after arrow functions were removed.
@@ -1059,7 +1059,7 @@ impl Parser {
         let params = self.parse_anon_fn_params()?;
         self.consume(TokenKind::RightParen, "Expected ')' after parameters")?;
 
-        let return_type = if self.match_token(TokenKind::Arrow) {
+        let return_type = if self.match_token(TokenKind::Colon) {
             Some(self.parse_type_ref()?)
         } else {
             None

@@ -5,7 +5,7 @@ Synchronization primitives for shared state.
 ### rwLockNew
 
 ```atlas
-fn rwLockNew(initial_value: any) -> RwLock
+fn rwLockNew(initial_value: any) : RwLock
 ```
 
 Creates a new read/write lock initialized with a value.
@@ -23,7 +23,7 @@ let lock = rwLockNew(0);
 ### rwLockRead
 
 ```atlas
-fn rwLockRead(lock: RwLock) -> any
+fn rwLockRead(lock: RwLock) : any
 ```
 
 Acquires a read lock and returns a snapshot of the stored value.
@@ -41,7 +41,7 @@ let value = rwLockRead(lock);
 ### rwLockWrite
 
 ```atlas
-fn rwLockWrite(lock: RwLock, new_value: any) -> null
+fn rwLockWrite(lock: RwLock, new_value: any) : null
 ```
 
 Acquires a write lock and replaces the stored value.
@@ -60,7 +60,7 @@ rwLockWrite(lock, 42);
 ### rwLockTryRead
 
 ```atlas
-fn rwLockTryRead(lock: RwLock) -> Option<any>
+fn rwLockTryRead(lock: RwLock) : Option<any>
 ```
 
 Attempts to acquire a read lock without blocking.
@@ -78,7 +78,7 @@ let value = rwLockTryRead(lock);
 ### rwLockTryWrite
 
 ```atlas
-fn rwLockTryWrite(lock: RwLock, new_value: any) -> bool
+fn rwLockTryWrite(lock: RwLock, new_value: any) : bool
 ```
 
 Attempts to acquire a write lock without blocking.
@@ -97,7 +97,7 @@ let ok = rwLockTryWrite(lock, 7);
 ### semaphoreNew
 
 ```atlas
-fn semaphoreNew(permits: number) -> Semaphore
+fn semaphoreNew(permits: number) : Semaphore
 ```
 
 Creates a semaphore with the given number of permits.
@@ -115,7 +115,7 @@ let sem = semaphoreNew(4);
 ### semaphoreAcquire
 
 ```atlas
-fn semaphoreAcquire(sem: Semaphore) -> null
+fn semaphoreAcquire(sem: Semaphore) : null
 ```
 
 Blocks until a permit is available and acquires it.
@@ -133,7 +133,7 @@ semaphoreAcquire(sem);
 ### semaphoreTryAcquire
 
 ```atlas
-fn semaphoreTryAcquire(sem: Semaphore) -> bool
+fn semaphoreTryAcquire(sem: Semaphore) : bool
 ```
 
 Attempts to acquire a permit without blocking.
@@ -151,7 +151,7 @@ let ok = semaphoreTryAcquire(sem);
 ### semaphoreRelease
 
 ```atlas
-fn semaphoreRelease(sem: Semaphore) -> null
+fn semaphoreRelease(sem: Semaphore) : null
 ```
 
 Releases a previously acquired permit.
@@ -169,7 +169,7 @@ semaphoreRelease(sem);
 ### semaphoreAvailable
 
 ```atlas
-fn semaphoreAvailable(sem: Semaphore) -> number
+fn semaphoreAvailable(sem: Semaphore) : number
 ```
 
 Returns the number of currently available permits.
@@ -187,7 +187,7 @@ let remaining = semaphoreAvailable(sem);
 ### atomicNew
 
 ```atlas
-fn atomicNew(initial: number) -> AtomicCounter
+fn atomicNew(initial: number) : AtomicCounter
 ```
 
 Creates a new atomic counter with an initial value.
@@ -205,7 +205,7 @@ let counter = atomicNew(0);
 ### atomicLoad
 
 ```atlas
-fn atomicLoad(counter: AtomicCounter) -> number
+fn atomicLoad(counter: AtomicCounter) : number
 ```
 
 Loads the current value of the atomic counter.
@@ -223,7 +223,7 @@ let value = atomicLoad(counter);
 ### atomicStore
 
 ```atlas
-fn atomicStore(counter: AtomicCounter, value: number) -> null
+fn atomicStore(counter: AtomicCounter, value: number) : null
 ```
 
 Stores a new value into the atomic counter.
@@ -242,7 +242,7 @@ atomicStore(counter, 10);
 ### atomicAdd
 
 ```atlas
-fn atomicAdd(counter: AtomicCounter, delta: number) -> number
+fn atomicAdd(counter: AtomicCounter, delta: number) : number
 ```
 
 Adds `delta` and returns the previous value.
@@ -261,7 +261,7 @@ let prev = atomicAdd(counter, 1);
 ### atomicSub
 
 ```atlas
-fn atomicSub(counter: AtomicCounter, delta: number) -> number
+fn atomicSub(counter: AtomicCounter, delta: number) : number
 ```
 
 Subtracts `delta` and returns the previous value.
@@ -280,7 +280,7 @@ let prev = atomicSub(counter, 1);
 ### atomicCompareExchange
 
 ```atlas
-fn atomicCompareExchange(counter: AtomicCounter, expected: number, desired: number) -> bool
+fn atomicCompareExchange(counter: AtomicCounter, expected: number, desired: number) : bool
 ```
 
 Compares the current value with `expected` and, if equal, sets it to `desired`.

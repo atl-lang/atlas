@@ -220,7 +220,7 @@ fn test_parse_empty_trait() {
 
 #[test]
 fn test_parse_trait_single_method() {
-    let src = "trait Display { fn display(borrow self: Display) -> string; }";
+    let src = "trait Display { fn display(borrow self: Display): string; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     assert_eq!(prog.items.len(), 1);
@@ -238,8 +238,8 @@ fn test_parse_trait_single_method() {
 #[test]
 fn test_parse_trait_multiple_methods() {
     let src = "trait Comparable {
-        fn compare(borrow self: Comparable, borrow other: Comparable) -> number;
-        fn equals(borrow self: Comparable, borrow other: Comparable) -> bool;
+        fn compare(borrow self: Comparable, borrow other: Comparable): number;
+        fn equals(borrow self: Comparable, borrow other: Comparable): bool;
     }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
@@ -256,8 +256,7 @@ fn test_parse_trait_multiple_methods() {
 
 #[test]
 fn test_parse_generic_trait() {
-    let src =
-        "trait Container<T> { fn get(borrow self: Container<T>, borrow index: number) -> T; }";
+    let src = "trait Container<T> { fn get(borrow self: Container<T>, borrow index: number): T; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Trait(t) = &prog.items[0] {
@@ -272,7 +271,7 @@ fn test_parse_generic_trait() {
 
 #[test]
 fn test_parse_trait_method_with_ownership_params() {
-    let src = "trait Processor { fn process(own data: number) -> number; }";
+    let src = "trait Processor { fn process(own data: number): number; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Trait(t) = &prog.items[0] {
@@ -288,7 +287,7 @@ fn test_parse_trait_method_with_ownership_params() {
 #[test]
 fn test_trait_method_requires_semicolon() {
     // Missing semicolon after method sig — parse error
-    let src = "trait Foo { fn bar() -> number }";
+    let src = "trait Foo { fn bar(): number }";
     let (_, diags) = parse_source(src);
     let errors: Vec<_> = diags
         .iter()
@@ -302,7 +301,7 @@ fn test_trait_method_requires_semicolon() {
 
 #[test]
 fn test_trait_method_with_body_parses() {
-    let src = "trait Foo { fn bar() -> number { return 1; } }";
+    let src = "trait Foo { fn bar(): number { return 1; } }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     assert_eq!(prog.items.len(), 1);
@@ -319,8 +318,8 @@ fn test_trait_method_with_body_parses() {
 
 #[test]
 fn test_trait_coexists_with_functions() {
-    let src = "trait Display { fn display(borrow self: Display) -> string; }
-               fn greet() -> string { return \"hello\"; }";
+    let src = "trait Display { fn display(borrow self: Display): string; }
+               fn greet(): string { return \"hello\"; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     assert_eq!(prog.items.len(), 2);
@@ -331,8 +330,8 @@ fn test_trait_coexists_with_functions() {
 #[test]
 fn test_parse_trait_multiple_type_params() {
     let src = "trait BiMap<K, V> {
-        fn get(borrow self: BiMap<K, V>, borrow key: K) -> V;
-        fn set(borrow self: BiMap<K, V>, borrow key: K, borrow value: V) -> void;
+        fn get(borrow self: BiMap<K, V>, borrow key: K): V;
+        fn set(borrow self: BiMap<K, V>, borrow key: K, borrow value: V): void;
     }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
@@ -348,7 +347,7 @@ fn test_parse_trait_multiple_type_params() {
 
 #[test]
 fn test_parse_trait_method_no_params() {
-    let src = "trait Default { fn default() -> number; }";
+    let src = "trait Default { fn default(): number; }";
     let (prog, diags) = parse_source(src);
     assert!(diags.is_empty(), "unexpected diags: {diags:?}");
     if let Item::Trait(t) = &prog.items[0] {
@@ -365,9 +364,9 @@ fn test_parse_trait_method_no_params() {
 #[test]
 fn test_parse_simple_impl_block() {
     let src = "
-        trait Display { fn display(borrow self: Display) -> string; }
+        trait Display { fn display(borrow self: Display): string; }
         impl Display for number {
-            fn display(borrow self: number) -> string { return str(self); }
+            fn display(borrow self: number): string { return str(self); }
         }
     ";
     let (prog, diags) = parse_source(src);

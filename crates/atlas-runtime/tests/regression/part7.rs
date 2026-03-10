@@ -79,7 +79,7 @@ fn milestone_type_system_type_annotations_enforced() {
 #[test]
 fn milestone_type_system_function_return_type() {
     // Function return types must be checked.
-    assert_has_error("fn f() -> number { return true; }");
+    assert_has_error("fn f(): number { return true; }");
 }
 
 // ─── Language Feature Verification ───────────────────────────────────────────
@@ -118,11 +118,11 @@ fn milestone_feature_if_else() {
     // Note: if statements don't implicitly return values in Rust semantics.
     // Use explicit return in functions to test if-else branch selection.
     assert_eval_number(
-        "fn test() -> number { if (true) { return 1; } else { return 2; } } test()",
+        "fn test(): number { if (true) { return 1; } else { return 2; } } test()",
         1.0,
     );
     assert_eval_number(
-        "fn test() -> number { if (false) { return 1; } else { return 2; } } test()",
+        "fn test(): number { if (false) { return 1; } else { return 2; } } test()",
         2.0,
     );
 }
@@ -130,7 +130,7 @@ fn milestone_feature_if_else() {
 #[test]
 fn milestone_feature_while_loop() {
     let code = r#"
-        fn test() -> number {
+        fn test(): number {
             let mut i: number = 0;
             let mut sum: number = 0;
             while (i < 5) {
@@ -163,7 +163,7 @@ fn milestone_feature_for_loop() {
 #[test]
 fn milestone_feature_functions_with_params_and_return() {
     let code = r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
         add(3, 4);
@@ -174,7 +174,7 @@ fn milestone_feature_functions_with_params_and_return() {
 #[test]
 fn milestone_feature_recursion() {
     let code = r#"
-        fn fact(borrow n: number) -> number {
+        fn fact(borrow n: number): number {
             if (n <= 1) { return 1; }
             return n * fact(n - 1);
         }

@@ -78,7 +78,7 @@ fn test_fn_style_anon_fn_parses() {
 #[test]
 fn test_fn_style_anon_fn_with_typed_params() {
     // `fn(x: number) -> number { x * 2 }` with explicit types
-    let (items, diags) = parse_expr("let double = fn(borrow x: number) -> number { x * 2 };");
+    let (items, diags) = parse_expr("let double = fn(borrow x: number): number { x * 2 };");
     assert!(
         diags.iter().all(|d| d.level != DiagnosticLevel::Error),
         "unexpected errors: {:?}",

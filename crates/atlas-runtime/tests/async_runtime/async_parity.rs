@@ -102,7 +102,7 @@ fn assert_parity_err(source: &str, expected_fragment: &str) {
 fn parity_async_01_minimal_number() {
     assert_parity(
         r#"
-        async fn the_answer() -> number {
+        async fn the_answer(): number {
             return 42;
         }
         await the_answer();
@@ -116,7 +116,7 @@ fn parity_async_01_minimal_number() {
 fn parity_async_02a_string_return() {
     assert_parity(
         r#"
-        async fn greet() -> string {
+        async fn greet(): string {
             return "hello";
         }
         await greet();
@@ -130,7 +130,7 @@ fn parity_async_02a_string_return() {
 fn parity_async_02b_bool_return() {
     assert_parity(
         r#"
-        async fn flag() -> bool {
+        async fn flag(): bool {
             return true;
         }
         await flag();
@@ -144,7 +144,7 @@ fn parity_async_02b_bool_return() {
 fn parity_async_02c_null_return() {
     assert_parity(
         r#"
-        async fn nothing() -> null {
+        async fn nothing(): null {
             return null;
         }
         await nothing();
@@ -158,14 +158,14 @@ fn parity_async_02c_null_return() {
 fn parity_async_03_nested_three_levels() {
     assert_parity(
         r#"
-        async fn inner() -> number {
+        async fn inner(): number {
             return 1;
         }
-        async fn middle() -> number {
+        async fn middle(): number {
             let v = await inner();
             return v + 10;
         }
-        async fn outer() -> number {
+        async fn outer(): number {
             let v = await middle();
             return v + 100;
         }
@@ -180,7 +180,7 @@ fn parity_async_03_nested_three_levels() {
 fn parity_async_04_early_return() {
     assert_parity(
         r#"
-        async fn pick(borrow flag: bool) -> number {
+        async fn pick(borrow flag: bool): number {
             if flag {
                 return 1;
             }
@@ -197,7 +197,7 @@ fn parity_async_04_early_return() {
 fn parity_async_05a_if_else_true() {
     assert_parity(
         r#"
-        async fn choose(borrow x: number) -> string {
+        async fn choose(borrow x: number): string {
             if x > 0 {
                 return "positive";
             } else {
@@ -215,7 +215,7 @@ fn parity_async_05a_if_else_true() {
 fn parity_async_05b_if_else_false() {
     assert_parity(
         r#"
-        async fn choose(borrow x: number) -> string {
+        async fn choose(borrow x: number): string {
             if x > 0 {
                 return "positive";
             } else {
@@ -233,7 +233,7 @@ fn parity_async_05b_if_else_false() {
 fn parity_async_06_array_loop() {
     assert_parity(
         r#"
-        async fn sum_array(borrow items: []number) -> number {
+        async fn sum_array(borrow items: []number): number {
             let mut total = 0;
             for item in items {
                 total = total + item;
@@ -251,8 +251,8 @@ fn parity_async_06_array_loop() {
 fn parity_async_07_inner_fn() {
     assert_parity(
         r#"
-        async fn apply(borrow x: number) -> number {
-            fn double(borrow v: number) -> number { return v * 2; }
+        async fn apply(borrow x: number): number {
+            fn double(borrow v: number): number { return v * 2; }
             return double(x);
         }
         await apply(21);
@@ -266,7 +266,7 @@ fn parity_async_07_inner_fn() {
 fn parity_async_08_top_level_await() {
     assert_parity(
         r#"
-        async fn compute() -> number { return 7; }
+        async fn compute(): number { return 7; }
         let result = await compute();
         result * 6;
         "#,
@@ -279,7 +279,7 @@ fn parity_async_08_top_level_await() {
 fn parity_async_09_void_return() {
     assert_parity(
         r#"
-        async fn side_effect() -> null {
+        async fn side_effect(): null {
             let mut x = 1 + 1;
         }
         await side_effect();
@@ -293,9 +293,9 @@ fn parity_async_09_void_return() {
 fn parity_async_10_multiple_awaits() {
     assert_parity(
         r#"
-        async fn one() -> number { return 1; }
-        async fn two() -> number { return 2; }
-        async fn three() -> number { return 3; }
+        async fn one(): number { return 1; }
+        async fn two(): number { return 2; }
+        async fn three(): number { return 3; }
         let a = await one();
         let b = await two();
         let c = await three();
@@ -425,7 +425,7 @@ fn parity_stdlib_18_all_empty() {
 fn parity_error_19_at4002_number() {
     assert_parity_err(
         r#"
-        async fn bad() -> number {
+        async fn bad(): number {
             await 42;
         }
         await bad();
@@ -439,7 +439,7 @@ fn parity_error_19_at4002_number() {
 fn parity_error_20_at4002_string() {
     assert_parity_err(
         r#"
-        async fn bad() -> number {
+        async fn bad(): number {
             await "not a future";
         }
         await bad();
@@ -452,7 +452,7 @@ fn parity_error_20_at4002_string() {
 #[test]
 fn parity_error_21_division_result_parity() {
     let source = r#"
-        async fn divide(borrow a: number, borrow b: number) -> number {
+        async fn divide(borrow a: number, borrow b: number): number {
             return a / b;
         }
         await divide(10, 2);
@@ -466,10 +466,10 @@ fn parity_error_21_division_result_parity() {
 fn parity_error_22_nested_error_propagation() {
     assert_parity_err(
         r#"
-        async fn inner() -> number {
+        async fn inner(): number {
             await 999;
         }
-        async fn outer() -> number {
+        async fn outer(): number {
             return await inner();
         }
         await outer();
@@ -483,7 +483,7 @@ fn parity_error_22_nested_error_propagation() {
 fn parity_error_23_at4002_bool() {
     assert_parity_err(
         r#"
-        async fn bad() -> null {
+        async fn bad(): null {
             await false;
         }
         await bad();
@@ -497,7 +497,7 @@ fn parity_error_23_at4002_bool() {
 fn parity_error_24_at4002_null() {
     assert_parity_err(
         r#"
-        async fn bad() -> null {
+        async fn bad(): null {
             await null;
         }
         await bad();

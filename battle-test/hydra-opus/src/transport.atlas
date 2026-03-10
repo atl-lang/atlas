@@ -8,7 +8,7 @@ enum Protocol {
     LSP       // Content-Length: <len>\r\n\r\n
 }
 
-fn protocol_to_string(borrow p: Protocol) -> string {
+fn protocol_to_string(borrow p: Protocol) : string {
     return match p {
         Protocol::Unknown => "unknown",
         Protocol::NDJSON => "ndjson",
@@ -21,16 +21,16 @@ fn protocol_to_string(borrow p: Protocol) -> string {
 trait Transport {
     // Read returns the next complete message payload
     // Blocks until a message is available or connection closes
-    fn read(self) -> Result<string, string>;
+    fn read(self) : Result<string, string>;
 
     // Write sends a payload, adding framing based on detected protocol
-    fn write(self, borrow payload: string) -> Result<void, string>;
+    fn write(self, borrow payload: string) : Result<void, string>;
 
     // Close shuts down the transport and releases resources
-    fn close(self) -> Result<void, string>;
+    fn close(self) : Result<void, string>;
 
     // DetectProtocol sniffs the first message to determine protocol
-    fn detect_protocol(self, borrow timeout_ms: number) -> Result<Protocol, string>;
+    fn detect_protocol(self, borrow timeout_ms: number) : Result<Protocol, string>;
 }
 
 // StdioTransport implements transport over stdin/stdout
@@ -41,7 +41,7 @@ struct StdioTransport {
 }
 
 // Creates a new StdioTransport
-fn new_stdio_transport() -> StdioTransport {
+fn new_stdio_transport() : StdioTransport {
     return StdioTransport {
         detected_protocol: Protocol::Unknown,
         buffer: "",
@@ -50,7 +50,7 @@ fn new_stdio_transport() -> StdioTransport {
 }
 
 impl Transport for StdioTransport {
-    fn read(self) -> Result<string, string> {
+    fn read(self) : Result<string, string> {
         if self.is_closed {
             return Err("transport closed");
         }
@@ -64,7 +64,7 @@ impl Transport for StdioTransport {
         };
     }
 
-    fn write(self, borrow payload: string) -> Result<void, string> {
+    fn write(self, borrow payload: string) : Result<void, string> {
         if self.is_closed {
             return Err("transport closed");
         }
@@ -84,12 +84,12 @@ impl Transport for StdioTransport {
         return Ok(null);
     }
 
-    fn close(self) -> Result<void, string> {
+    fn close(self) : Result<void, string> {
         self.is_closed = true;
         return Ok(null);
     }
 
-    fn detect_protocol(self, borrow timeout_ms: number) -> Result<Protocol, string> {
+    fn detect_protocol(self, borrow timeout_ms: number) : Result<Protocol, string> {
         // Peek at first few bytes to detect protocol
         // LSP starts with "Content-Length:"
         // NDJSON starts with "{" and ends with newline
@@ -102,13 +102,13 @@ impl Transport for StdioTransport {
 
 // Helper methods for StdioTransport
 impl StdioTransport {
-    fn read_ndjson(self) -> Result<string, string> {
+    fn read_ndjson(self) : Result<string, string> {
         // Read until newline
         // This is a simplified implementation
         return Ok("{}");
     }
 
-    fn read_lsp(self) -> Result<string, string> {
+    fn read_lsp(self) : Result<string, string> {
         // Read Content-Length header, then body
         // This is a simplified implementation
         return Ok("{}");
@@ -116,7 +116,7 @@ impl StdioTransport {
 }
 
 // Parse LSP Content-Length header
-fn parse_content_length(borrow header: string) -> Result<number, string> {
+fn parse_content_length(borrow header: string) : Result<number, string> {
     let prefix = "Content-Length: ";
     if !startsWith(header, prefix) {
         return Err("invalid Content-Length header");

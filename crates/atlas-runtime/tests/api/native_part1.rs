@@ -295,7 +295,7 @@ fn test_native_called_from_atlas_function(#[case] mode: ExecutionMode) {
     });
 
     runtime
-        .eval("fn square(borrow x: number) -> number { return multiply(x, x); }")
+        .eval("fn square(borrow x: number): number { return multiply(x, x); }")
         .unwrap();
     let result = runtime.eval("square(5)").unwrap();
     assert_eq!(result, Value::Number(25.0));

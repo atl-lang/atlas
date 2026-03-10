@@ -13,11 +13,11 @@ use super::{assert_has_error, assert_no_errors, errors, typecheck};
 fn test_ownership_borrow_valid_read_in_body() {
     // Reading a borrow param (passing to a function call) is fine
     let src = r#"
-fn greet(borrow name: string) -> string {
+fn greet(borrow name: string): string {
     let prefix: string = "Hello, ";
     return prefix;
 }
-fn main() -> void {
+fn main(): void {
     let n: string = "Alice";
     let result: string = greet(n);
 }
@@ -29,11 +29,11 @@ fn main() -> void {
 fn test_ownership_borrow_valid_use_in_expression() {
     // Using a borrow param in a binary expression result is fine — result is a new value
     let src = r#"
-fn check_len(borrow s: string) -> bool {
+fn check_len(borrow s: string): bool {
     let limit: number = 10;
     return limit > 0;
 }
-fn main() -> void {
+fn main(): void {
     let text: string = "hello";
     let ok: bool = check_len(text);
 }
@@ -46,11 +46,11 @@ fn test_ownership_borrow_valid_pass_to_own() {
     // Passing borrow to own fires AT2012 (warning), not AT3054 (error)
     // This test just ensures no AT3054 is emitted in this scenario
     let src = r#"
-fn consume(own data: string) -> void {}
-fn relay(borrow s: string) -> void {
+fn consume(own data: string): void {}
+fn relay(borrow s: string): void {
     consume(s);
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hi";
     relay(x);
 }
@@ -67,10 +67,10 @@ fn main() -> void {
 #[test]
 fn test_ownership_borrow_return_escape_fires() {
     let src = r#"
-fn leak(borrow s: string) -> string {
+fn leak(borrow s: string): string {
     return s;
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hello";
     let result: string = leak(x);
 }
@@ -82,10 +82,10 @@ fn main() -> void {
 #[test]
 fn test_ownership_borrow_return_escape_message_has_param_name() {
     let src = r#"
-fn leak(borrow my_param: string) -> string {
+fn leak(borrow my_param: string): string {
     return my_param;
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hello";
     let result: string = leak(x);
 }
@@ -107,10 +107,10 @@ fn main() -> void {
 #[test]
 fn test_ownership_borrow_let_binding_escape_fires() {
     let src = r#"
-fn process(borrow s: string) -> void {
+fn process(borrow s: string): void {
     let stored: string = s;
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hello";
     process(x);
 }
@@ -129,11 +129,11 @@ fn test_ownership_borrow_struct_field_escape_fires() {
 struct Wrapper {
     value: string,
 }
-fn wrap(borrow s: string) -> Wrapper {
+fn wrap(borrow s: string): Wrapper {
     let w: Wrapper = Wrapper { value: s };
     return w;
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hello";
     let result: Wrapper = wrap(x);
 }
@@ -149,10 +149,10 @@ fn main() -> void {
 #[test]
 fn test_ownership_borrow_closure_capture_fires_at3040() {
     let src = r#"
-fn make_closure(borrow s: string) -> void {
-    let f = fn() -> void { let captured: string = s; };
+fn make_closure(borrow s: string): void {
+    let f = fn(): void { let captured: string = s; };
 }
-fn main() -> void {
+fn main(): void {
     let x: string = "hello";
     make_closure(x);
 }

@@ -29,7 +29,7 @@ An AI asked to "create a map" has three valid choices. The `record` keyword is a
 ### 1.2 Two closure syntaxes — one of them doesn't exist
 The grammar defines closures as:
 ```atlas
-fn(x: number) -> number { x + 1 }
+fn(x: number) : number { x + 1 }
 ```
 `METHOD-CONVENTIONS.md` (the AI-facing stdlib doc) shows:
 ```atlas
@@ -41,7 +41,7 @@ arr.filter(|x| x > 0)
 ### 1.3 Pipeline operator `|>` appears in spec, absent from implementation
 `docs/language/async.md` contains this example as functional working code:
 ```atlas
-let timed_out = sleep(secs) |> fn(_) -> Result<string, string> { return Err("timeout"); };
+let timed_out = sleep(secs) |> fn(_) : Result<string, string> { return Err("timeout"); };
 ```
 `|>` is not in `token.rs`. It is not in `grammar.md`. It is not in the parser. It is a phantom operator shown in a spec example. AI reading the async doc will try to use `|>` and get a parse error with no diagnostic explaining why.
 
@@ -103,9 +103,9 @@ The docs explicitly state: "Struct variants are parsed in declarations but are n
 ### 2.8 No `impl` blocks on plain structs — trait required
 The docs show:
 ```atlas
-impl Greetable for Person { fn greet(self) -> string { ... } }
+impl Greetable for Person { fn greet(self) : string { ... } }
 ```
-There is no `impl Person { fn greet(self) -> string { ... } }` syntax without a trait. Every AI trained on Rust, Go, or TypeScript will try to add methods directly to a struct without inventing a trait. H-144 confirms this is an open gap. AI-generated struct-heavy code will be broken.
+There is no `impl Person { fn greet(self) : string { ... } }` syntax without a trait. Every AI trained on Rust, Go, or TypeScript will try to add methods directly to a struct without inventing a trait. H-144 confirms this is an open gap. AI-generated struct-heavy code will be broken.
 
 ### 2.9 `math.md` doc inconsistency between global and dot syntax
 `Math.sqrt(x)` is the new canonical form. But `sqrt(x)` (bare) is also valid (no AT9000). The `math.md` doc still documents bare globals as the primary form. AI reading `math.md` will use bare globals; AI reading `METHOD-CONVENTIONS.md` will use `Math.sqrt`. Neither is wrong, but the inconsistency means AI-generated code will be inconsistent and the docs give no canonical guidance.
@@ -124,7 +124,7 @@ There is no `impl Person { fn greet(self) -> string { ... } }` syntax without a 
 The stdlib is caught between the old global API (`arrayPush`, `hashMapGet`, `regexTest`) and the new method API (`arr.push()`, `map.get()`, `Regex.test()`). Both work. Neither is wrong. But every doc file still documents the old form as the primary API — `array.md`, `string.md`, `collections.md`, `math.md` all lead with old-style globals. Only `METHOD-CONVENTIONS.md` shows the new API. An AI reading any individual stdlib doc will use the old API and get AT9000 warnings.
 
 ### 3.2 `len()` vs `.len()` — inconsistent length access
-`core.md` documents `fn len(value: []T) -> number` as a global. `METHOD-CONVENTIONS.md` shows `arr.len()` as a method. `str.len()` is the method form. No doc states which is preferred for which type. AI will use both interchangeably and be confused by inconsistency.
+`core.md` documents `fn len(value: []T) : number` as a global. `METHOD-CONVENTIONS.md` shows `arr.len()` as a method. `str.len()` is the method form. No doc states which is preferred for which type. AI will use both interchangeably and be confused by inconsistency.
 
 ### 3.3 Type check functions: `isString` (camelCase) but `is_some`, `is_ok` (snake_case)
 From `docs/stdlib/types.md`:
@@ -157,8 +157,8 @@ Atlas has `own param: T`, `borrow param: T`, `shared param: T` as parameter anno
 
 ### 4.2 `extends` AND `:` for trait bounds — two syntaxes for the same thing
 ```atlas
-fn identity<T: Copy>(value: T) -> T { ... }          // Rust-style
-fn identity<T extends number>(value: T) -> T { ... } // TypeScript-style
+fn identity<T: Copy>(value: T) : T { ... }          // Rust-style
+fn identity<T extends number>(value: T) : T { ... } // TypeScript-style
 ```
 Both are valid per the docs. AI trained on TypeScript will use `extends`. AI trained on Rust will use `:`. Both work. This is a direct copy of TypeScript's `extends` keyword appearing alongside Rust's `:` syntax. Pick one. Kill the other.
 

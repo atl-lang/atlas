@@ -103,7 +103,7 @@ fn test_type_info_function_signature() {
     let info = TypeInfo::from_type(&func_type);
     let sig = info.function_signature().unwrap();
 
-    assert_eq!(sig, "(number, string) -> bool");
+    assert_eq!(sig, "(number, string): bool");
 }
 
 #[test]
@@ -120,7 +120,7 @@ fn test_type_info_describe() {
         return_type: Box::new(Type::Void),
     };
     let func_info = TypeInfo::from_type(&func_type);
-    assert_eq!(func_info.describe(), "function (number) -> void");
+    assert_eq!(func_info.describe(), "function (number): void");
 }
 
 #[test]

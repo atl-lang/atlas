@@ -7,7 +7,7 @@ Complete math API following IEEE 754 semantics.
 ### abs
 
 ```atlas
-fn abs(x: number) -> number
+fn abs(x: number) : number
 ```
 
 Returns absolute value of x. Preserves signed zero: `abs(-0) = +0`.
@@ -19,7 +19,7 @@ Returns absolute value of x. Preserves signed zero: `abs(-0) = +0`.
 ### floor
 
 ```atlas
-fn floor(x: number) -> number
+fn floor(x: number) : number
 ```
 
 Returns largest integer ≤ x.
@@ -33,7 +33,7 @@ Returns largest integer ≤ x.
 ### ceil
 
 ```atlas
-fn ceil(x: number) -> number
+fn ceil(x: number) : number
 ```
 
 Returns smallest integer ≥ x.
@@ -47,7 +47,7 @@ Returns smallest integer ≥ x.
 ### round
 
 ```atlas
-fn round(x: number) -> number
+fn round(x: number) : number
 ```
 
 Rounds to nearest integer using banker's rounding (ties-to-even).
@@ -61,7 +61,7 @@ Rounds to nearest integer using banker's rounding (ties-to-even).
 ### min
 
 ```atlas
-fn min(a: number, b: number) -> number
+fn min(a: number, b: number) : number
 ```
 
 Returns smaller of two numbers.
@@ -71,7 +71,7 @@ Returns smaller of two numbers.
 ### max
 
 ```atlas
-fn max(a: number, b: number) -> number
+fn max(a: number, b: number) : number
 ```
 
 Returns larger of two numbers.
@@ -83,7 +83,7 @@ Returns larger of two numbers.
 ### sqrt
 
 ```atlas
-fn sqrt(x: number) -> Result<number, string>
+fn sqrt(x: number) : Result<number, string>
 ```
 
 Returns square root of x.
@@ -102,7 +102,7 @@ Returns square root of x.
 ### pow
 
 ```atlas
-fn pow(base: number, exponent: number) -> number
+fn pow(base: number, exponent: number) : number
 ```
 
 Returns base raised to exponent power.
@@ -115,7 +115,7 @@ Returns base raised to exponent power.
 ### log
 
 ```atlas
-fn log(x: number) -> Result<number, string>
+fn log(x: number) : Result<number, string>
 ```
 
 Returns natural logarithm (ln) of x.
@@ -129,7 +129,7 @@ Returns natural logarithm (ln) of x.
 ### sin
 
 ```atlas
-fn sin(x: number) -> number
+fn sin(x: number) : number
 ```
 
 Returns sine of x (x in radians).
@@ -139,7 +139,7 @@ Returns sine of x (x in radians).
 ### cos
 
 ```atlas
-fn cos(x: number) -> number
+fn cos(x: number) : number
 ```
 
 Returns cosine of x (x in radians).
@@ -149,7 +149,7 @@ Returns cosine of x (x in radians).
 ### tan
 
 ```atlas
-fn tan(x: number) -> number
+fn tan(x: number) : number
 ```
 
 Returns tangent of x (x in radians).
@@ -159,7 +159,7 @@ Returns tangent of x (x in radians).
 ### asin
 
 ```atlas
-fn asin(x: number) -> Result<number, string>
+fn asin(x: number) : Result<number, string>
 ```
 
 Returns arcsine of x.
@@ -171,7 +171,7 @@ Returns arcsine of x.
 ### acos
 
 ```atlas
-fn acos(x: number) -> Result<number, string>
+fn acos(x: number) : Result<number, string>
 ```
 
 Returns arccosine of x.
@@ -183,7 +183,7 @@ Returns arccosine of x.
 ### atan
 
 ```atlas
-fn atan(x: number) -> number
+fn atan(x: number) : number
 ```
 
 Returns arctangent of x in radians.
@@ -197,7 +197,7 @@ Returns arctangent of x in radians.
 ### clamp
 
 ```atlas
-fn clamp(value: number, min: number, max: number) -> Result<number, string>
+fn clamp(value: number, min: number, max: number) : Result<number, string>
 ```
 
 Restricts value to [min, max] range.
@@ -209,7 +209,7 @@ Restricts value to [min, max] range.
 ### sign
 
 ```atlas
-fn sign(x: number) -> number
+fn sign(x: number) : number
 ```
 
 Returns sign of x: -1 for negative, 0 for zero, 1 for positive.
@@ -221,7 +221,7 @@ Returns sign of x: -1 for negative, 0 for zero, 1 for positive.
 ### random
 
 ```atlas
-fn random() -> number
+fn random() : number
 ```
 
 Returns pseudo-random number in [0, 1) with uniform distribution.

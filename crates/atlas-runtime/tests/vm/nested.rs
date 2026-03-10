@@ -40,8 +40,8 @@ fn nested_run_vm(source: &str) -> Result<Value, String> {
 #[test]
 fn test_vm_nested_function_basic() {
     let source = r#"
-        fn outer() -> number {
-            fn helper(borrow x: number) -> number {
+        fn outer(): number {
+            fn helper(borrow x: number): number {
                 return x * 2;
             }
             return helper(21);
@@ -56,8 +56,8 @@ fn test_vm_nested_function_basic() {
 #[test]
 fn test_vm_nested_function_multiple_params() {
     let source = r#"
-        fn outer() -> number {
-            fn add(borrow a: number, borrow b: number) -> number {
+        fn outer(): number {
+            fn add(borrow a: number, borrow b: number): number {
                 return a + b;
             }
             return add(10, 32);
@@ -72,8 +72,8 @@ fn test_vm_nested_function_multiple_params() {
 #[test]
 fn test_vm_nested_function_string() {
     let source = r#"
-        fn outer() -> string {
-            fn greet(borrow name: string) -> string {
+        fn outer(): string {
+            fn greet(borrow name: string): string {
                 return "Hello, " + name;
             }
             return greet("World");
@@ -88,13 +88,13 @@ fn test_vm_nested_function_string() {
 #[test]
 fn test_vm_runtime_error_stack_trace() {
     let mut temp_file = NamedTempFile::new().unwrap();
-    let source = r#"fn level1() -> void {
+    let source = r#"fn level1(): void {
     level2();
 }
-fn level2() -> void {
+fn level2(): void {
     level3();
 }
-fn level3() -> void {
+fn level3(): void {
     let arr = [1, 2];
     arr[5];
 }
@@ -137,8 +137,8 @@ level1();
 #[test]
 fn test_vm_nested_function_params() {
     let source = r#"
-        fn outer(borrow x: number) -> number {
-            fn double(borrow y: number) -> number {
+        fn outer(borrow x: number): number {
+            fn double(borrow y: number): number {
                 return y * 2;
             }
             return double(x);
@@ -157,12 +157,12 @@ fn test_vm_nested_function_params() {
 #[test]
 fn test_vm_nested_function_shadows_global() {
     let source = r#"
-        fn foo() -> number {
+        fn foo(): number {
             return 1;
         }
 
-        fn outer() -> number {
-            fn foo() -> number {
+        fn outer(): number {
+            fn foo(): number {
                 return 42;
             }
             return foo();
@@ -177,12 +177,12 @@ fn test_vm_nested_function_shadows_global() {
 #[test]
 fn test_vm_nested_function_shadows_outer_nested() {
     let source = r#"
-        fn level1() -> number {
-            fn helper() -> number {
+        fn level1(): number {
+            fn helper(): number {
                 return 1;
             }
-            fn level2() -> number {
-                fn helper() -> number {
+            fn level2(): number {
+                fn helper(): number {
                     return 42;
                 }
                 return helper();
@@ -203,10 +203,10 @@ fn test_vm_nested_function_shadows_outer_nested() {
 #[test]
 fn test_vm_deeply_nested_functions() {
     let source = r#"
-        fn level1() -> number {
-            fn level2() -> number {
-                fn level3() -> number {
-                    fn level4() -> number {
+        fn level1(): number {
+            fn level2(): number {
+                fn level3(): number {
+                    fn level4(): number {
                         return 42;
                     }
                     return level4();
@@ -229,11 +229,11 @@ fn test_vm_deeply_nested_functions() {
 #[test]
 fn test_vm_nested_function_calling_nested() {
     let source = r#"
-        fn outer() -> number {
-            fn helper1() -> number {
+        fn outer(): number {
+            fn helper1(): number {
                 return 10;
             }
-            fn helper2() -> number {
+            fn helper2(): number {
                 return helper1() + 32;
             }
             return helper2();
@@ -248,12 +248,12 @@ fn test_vm_nested_function_calling_nested() {
 #[test]
 fn test_vm_nested_function_calling_outer() {
     let source = r#"
-        fn global() -> number {
+        fn global(): number {
             return 40;
         }
 
-        fn outer() -> number {
-            fn nested() -> number {
+        fn outer(): number {
+            fn nested(): number {
                 return global() + 2;
             }
             return nested();
@@ -274,8 +274,8 @@ fn test_vm_nested_function_void() {
     let source = r#"
         let mut result: number = 0;
 
-        fn outer() -> void {
-            fn setResult() -> void {
+        fn outer(): void {
+            fn setResult(): void {
                 result = 42;
             }
             setResult();
@@ -296,8 +296,8 @@ fn test_vm_nested_function_void() {
 #[test]
 fn test_vm_nested_function_array_param() {
     let source = r#"
-        fn outer() -> number {
-            fn sum(borrow arr: []number) -> number {
+        fn outer(): number {
+            fn sum(borrow arr: []number): number {
                 return arr[0] + arr[1];
             }
             let nums: []number = [10, 32];
@@ -313,8 +313,8 @@ fn test_vm_nested_function_array_param() {
 #[test]
 fn test_vm_nested_function_array_return() {
     let source = r#"
-        fn outer() -> []number {
-            fn makeArray() -> []number {
+        fn outer(): []number {
+            fn makeArray(): []number {
                 return [42, 100];
             }
             return makeArray();
@@ -333,8 +333,8 @@ fn test_vm_nested_function_array_return() {
 #[test]
 fn test_vm_nested_function_conditional() {
     let source = r#"
-        fn outer() -> number {
-            fn abs(borrow x: number) -> number {
+        fn outer(): number {
+            fn abs(borrow x: number): number {
                 if (x < 0) {
                     return -x;
                 } else {
@@ -357,9 +357,9 @@ fn test_vm_nested_function_conditional() {
 #[test]
 fn test_vm_nested_function_in_if_block() {
     let source = r#"
-        fn outer() -> number {
+        fn outer(): number {
             if (true) {
-                fn helper() -> number {
+                fn helper(): number {
                     return 42;
                 }
                 return helper();

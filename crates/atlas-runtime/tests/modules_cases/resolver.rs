@@ -251,7 +251,7 @@ fn test_resolve_prefers_atlas_extension() {
     std::fs::write(&main, "import { greet } from \"./lib\";").unwrap();
     std::fs::write(
         &lib,
-        "export fn greet(borrow name: string) -> string { return name; }",
+        "export fn greet(borrow name: string): string { return name; }",
     )
     .unwrap();
 

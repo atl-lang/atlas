@@ -151,31 +151,31 @@ fn test_array_basic_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::map(
-    "fn double(borrow x: number) -> number { return x * 2; } map([1, 2, 3], double)[0]",
+    "fn double(borrow x: number): number { return x * 2; } map([1, 2, 3], double)[0]",
     "2"
 )]
 #[case::filter(
-    "fn isEven(borrow x: number) -> bool { return x % 2 == 0; } filter([1, 2, 3, 4], isEven)[0]",
+    "fn isEven(borrow x: number): bool { return x % 2 == 0; } filter([1, 2, 3, 4], isEven)[0]",
     "2"
 )]
 #[case::reduce(
-    "fn sum(borrow a: number, borrow b: number) -> number { return a + b; } reduce([1, 2, 3], sum, 0)",
+    "fn sum(borrow a: number, borrow b: number): number { return a + b; } reduce([1, 2, 3], sum, 0)",
     "6"
 )]
 #[case::every_true(
-    "fn isPositive(borrow x: number) -> bool { return x > 0; } every([1, 2, 3], isPositive)",
+    "fn isPositive(borrow x: number): bool { return x > 0; } every([1, 2, 3], isPositive)",
     "true"
 )]
 #[case::every_false(
-    "fn isPositive(borrow x: number) -> bool { return x > 0; } every([1, -2, 3], isPositive)",
+    "fn isPositive(borrow x: number): bool { return x > 0; } every([1, -2, 3], isPositive)",
     "false"
 )]
 #[case::some_true(
-    "fn isNegative(borrow x: number) -> bool { return x < 0; } some([1, -2, 3], isNegative)",
+    "fn isNegative(borrow x: number): bool { return x < 0; } some([1, -2, 3], isNegative)",
     "true"
 )]
 #[case::some_false(
-    "fn isNegative(borrow x: number) -> bool { return x < 0; } some([1, 2, 3], isNegative)",
+    "fn isNegative(borrow x: number): bool { return x < 0; } some([1, 2, 3], isNegative)",
     "false"
 )]
 fn test_array_higher_order_parity(#[case] code: &str, #[case] expected: &str) {
@@ -556,7 +556,7 @@ fn test_file_create_remove_directory_parity() {
 #[case::is_null_false("is_null(0)", "false")]
 #[case::is_array_true("is_array([1, 2, 3])", "true")]
 #[case::is_array_false("is_array(\"[1,2,3]\")", "false")]
-#[case::is_function_true("fn test() -> void {} is_function(test)", "true")]
+#[case::is_function_true("fn test(): void {} is_function(test)", "true")]
 #[case::is_function_false("is_function(123)", "false")]
 fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();

@@ -1,8 +1,8 @@
-fn identity<T>(own x: T) -> T {
+fn identity<T>(own x: T) : T {
     return x;
 }
 
-fn wrap_in_option<T>(borrow x: T) -> Option<T> {
+fn wrap_in_option<T>(borrow x: T) : Option<T> {
     return Some(x);
 }
 

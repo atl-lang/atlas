@@ -1,8 +1,8 @@
-fn log_message(borrow msg: string) -> void {
+fn log_message(borrow msg: string) : void {
     print("LOG: " + msg);
 }
 
-fn no_op() -> void {
+fn no_op() : void {
 }
 
 log_message("hello");

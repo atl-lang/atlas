@@ -4,7 +4,7 @@ use super::*;
 fn test_parity_own_param_callee_receives_value() {
     assert_ownership_parity(
         r#"
-        fn consume(own data: array<number>) -> number { len(data); }
+        fn consume(own data: array<number>): number { len(data); }
         consume([10, 20, 30]);
         "#,
     );
@@ -17,7 +17,7 @@ fn test_parity_own_param_callee_receives_value() {
 fn test_parity_own_param_consumes_binding() {
     assert_ownership_parity_err(
         r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         consume(arr);
         arr;
@@ -32,7 +32,7 @@ fn test_parity_own_param_consumes_binding() {
 fn test_parity_borrow_param_caller_retains_value() {
     assert_ownership_parity(
         r#"
-        fn read(borrow data: array<number>) -> number { len(data); }
+        fn read(borrow data: array<number>): number { len(data); }
         let arr: array<number> = [1, 2, 3];
         read(arr);
         len(arr);
@@ -47,7 +47,7 @@ fn test_parity_borrow_param_caller_retains_value() {
 fn test_parity_shared_param_rejects_plain_value() {
     assert_ownership_parity_err(
         r#"
-        fn register(share handler: array<number>) -> void { }
+        fn register(share handler: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         register(arr);
         "#,
@@ -61,7 +61,7 @@ fn test_parity_shared_param_rejects_plain_value() {
 fn test_parity_mixed_annotations_own_borrow_none() {
     assert_ownership_parity(
         r#"
-        fn process(own a: array<number>, borrow b: array<number>, borrow c: number) -> number {
+        fn process(own a: array<number>, borrow b: array<number>, borrow c: number): number {
             len(a) + len(b) + c;
         }
         process([1, 2], [3, 4, 5], 10);
@@ -75,7 +75,7 @@ fn test_parity_mixed_annotations_own_borrow_none() {
 fn test_parity_own_literal_arg_no_consume() {
     assert_ownership_parity(
         r#"
-        fn consume(own data: array<number>) -> number { len(data); }
+        fn consume(own data: array<number>): number { len(data); }
         consume([1, 2, 3, 4]);
         42;
         "#,
@@ -90,7 +90,7 @@ fn test_parity_own_return_type_annotation() {
     // Result value not compared (function-body return diverges pre-Block2).
     assert_ownership_parity(
         r#"
-        fn make() -> own array<number> { [1, 2, 3]; }
+        fn make(): own array<number> { [1, 2, 3]; }
         make();
         42;
         "#,
@@ -104,7 +104,7 @@ fn test_parity_borrow_return_type_annotation() {
     // Both engines must accept borrow return annotation without error.
     assert_ownership_parity(
         r#"
-        fn peek(borrow data: array<number>) -> borrow array<number> { data; }
+        fn peek(borrow data: array<number>): borrow array<number> { data; }
         let arr: array<number> = [10, 20];
         peek(arr);
         42;
@@ -118,8 +118,8 @@ fn test_parity_borrow_return_type_annotation() {
 fn test_parity_nested_own_calls() {
     assert_ownership_parity(
         r#"
-        fn inner(own data: array<number>) -> number { len(data); }
-        fn outer(own data: array<number>) -> number { inner(data); }
+        fn inner(own data: array<number>): number { len(data); }
+        fn outer(own data: array<number>): number { inner(data); }
         outer([1, 2, 3, 4, 5]);
         "#,
     );
@@ -133,7 +133,7 @@ fn test_parity_own_param_fn_call_result() {
     // Both engines must accept and not error.
     assert_ownership_parity(
         r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         consume([1, 2, 3]);
         42;
         "#,
@@ -146,7 +146,7 @@ fn test_parity_own_param_fn_call_result() {
 fn test_parity_multiple_borrow_calls_same_value() {
     assert_ownership_parity(
         r#"
-        fn read(borrow data: array<number>) -> number { len(data); }
+        fn read(borrow data: array<number>): number { len(data); }
         let arr: array<number> = [1, 2, 3, 4, 5];
         read(arr);
         read(arr);
@@ -162,7 +162,7 @@ fn test_parity_multiple_borrow_calls_same_value() {
 fn test_parity_own_then_second_access_errors() {
     assert_ownership_parity_err(
         r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         consume(arr);
         consume(arr);
@@ -177,7 +177,7 @@ fn test_parity_own_then_second_access_errors() {
 fn test_parity_own_recursive_function() {
     assert_ownership_parity(
         r#"
-        fn sum(borrow data: array<number>, borrow i: number) -> number {
+        fn sum(borrow data: array<number>, borrow i: number): number {
             if i >= len(data) { 0; } else { data[i] + sum(data, i + 1); }
         }
         let arr: array<number> = [1, 2, 3, 4, 5];
@@ -192,7 +192,7 @@ fn test_parity_own_recursive_function() {
 fn test_parity_own_annotation_void_function() {
     assert_ownership_parity(
         r#"
-        fn sink(own data: array<number>) -> void { }
+        fn sink(own data: array<number>): void { }
         sink([1, 2, 3]);
         42;
         "#,
@@ -206,8 +206,8 @@ fn test_parity_own_annotation_void_function() {
 fn test_parity_borrow_then_own_same_binding() {
     assert_ownership_parity_err(
         r#"
-        fn borrow_it(borrow data: array<number>) -> void { }
-        fn own_it(own data: array<number>) -> void { }
+        fn borrow_it(borrow data: array<number>): void { }
+        fn own_it(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         borrow_it(arr);
         own_it(arr);
@@ -223,8 +223,8 @@ fn test_parity_borrow_then_own_same_binding() {
 fn test_parity_own_param_via_variable_call() {
     assert_ownership_parity(
         r#"
-        fn consume(own data: array<number>) -> number { len(data); }
-        let f: (array<number>) -> number = consume;
+        fn consume(own data: array<number>): number { len(data); }
+        let f: (array<number>): number = consume;
         f([10, 20, 30]);
         "#,
     );
@@ -236,7 +236,7 @@ fn test_parity_own_param_via_variable_call() {
 fn test_parity_multiple_own_calls_distinct_literals() {
     assert_ownership_parity(
         r#"
-        fn consume(own data: array<number>) -> number { len(data); }
+        fn consume(own data: array<number>): number { len(data); }
         consume([1]);
         consume([2, 3]);
         consume([4, 5, 6]);
@@ -250,8 +250,8 @@ fn test_parity_multiple_own_calls_distinct_literals() {
 fn test_parity_nested_scope_own_param() {
     assert_ownership_parity(
         r#"
-        fn outer() -> number {
-            fn inner(own data: array<number>) -> number { len(data); }
+        fn outer(): number {
+            fn inner(own data: array<number>): number { len(data); }
             inner([1, 2, 3, 4]);
         }
         outer();
@@ -265,7 +265,7 @@ fn test_parity_nested_scope_own_param() {
 #[cfg(debug_assertions)]
 fn test_parity_error_message_identical_own_violation() {
     let src = r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         consume(arr);
         arr;
@@ -284,7 +284,7 @@ fn test_parity_error_message_identical_own_violation() {
 #[cfg(debug_assertions)]
 fn test_parity_error_message_identical_shared_violation() {
     let src = r#"
-        fn register(share handler: array<number>) -> void { }
+        fn register(share handler: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         register(arr);
     "#;
@@ -321,9 +321,9 @@ fn test_parity_trait_method_string_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Wrap { fn wrap(borrow self: Wrap) -> string; }
+        trait Wrap { fn wrap(borrow self: Wrap): string; }
         impl Wrap for string {
-            fn wrap(borrow self: string) -> string { return \"[\" + self + \"]\"; }
+            fn wrap(borrow self: string): string { return \"[\" + self + \"]\"; }
         }
         let s: string = \"hello\";
         let r: string = s.wrap();
@@ -340,9 +340,9 @@ fn test_parity_trait_method_number_compute() {
     let result = atlas
         .eval(
             "
-        trait Double { fn double(borrow self: Double) -> number; }
+        trait Double { fn double(borrow self: Double): number; }
         impl Double for number {
-            fn double(borrow self: number) -> number { return self * 2; }
+            fn double(borrow self: number): number { return self * 2; }
         }
         let n: number = 21;
         let r: number = n.double();
@@ -360,12 +360,12 @@ fn test_parity_multiple_impl_types_no_collision() {
     let result_n = atlas
         .eval(
             "
-        trait Tag { fn tag(borrow self: Tag) -> string; }
+        trait Tag { fn tag(borrow self: Tag): string; }
         impl Tag for number {
-            fn tag(borrow self: number) -> string { return \"num\"; }
+            fn tag(borrow self: number): string { return \"num\"; }
         }
         impl Tag for string {
-            fn tag(borrow self: string) -> string { return \"str\"; }
+            fn tag(borrow self: string): string { return \"str\"; }
         }
         let n: number = 1;
         let r: string = n.tag();
@@ -378,12 +378,12 @@ fn test_parity_multiple_impl_types_no_collision() {
     let result_s = atlas
         .eval(
             "
-        trait Tag { fn tag(borrow self: Tag) -> string; }
+        trait Tag { fn tag(borrow self: Tag): string; }
         impl Tag for number {
-            fn tag(borrow self: number) -> string { return \"num\"; }
+            fn tag(borrow self: number): string { return \"num\"; }
         }
         impl Tag for string {
-            fn tag(borrow self: string) -> string { return \"str\"; }
+            fn tag(borrow self: string): string { return \"str\"; }
         }
         let s: string = \"hi\";
         let r: string = s.tag();
@@ -401,9 +401,9 @@ fn test_parity_trait_method_self_arg_is_receiver() {
     let result = atlas
         .eval(
             "
-        trait Identity { fn identity(borrow self: Identity) -> number; }
+        trait Identity { fn identity(borrow self: Identity): number; }
         impl Identity for number {
-            fn identity(borrow self: number) -> number { return self; }
+            fn identity(borrow self: number): number { return self; }
         }
         let n: number = 99;
         let r: number = n.identity();
@@ -420,16 +420,16 @@ fn test_parity_trait_type_param_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Describable { fn describe(borrow self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable): string; }
         struct Cat { name: string }
         struct Dog { name: string }
         impl Describable for Cat {
-            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat): string { return \"Cat: \" + self.name; }
         }
         impl Describable for Dog {
-            fn describe(borrow self: Dog) -> string { return \"Dog: \" + self.name; }
+            fn describe(borrow self: Dog): string { return \"Dog: \" + self.name; }
         }
-        fn show(borrow item: Describable) -> string { return item.describe(); }
+        fn show(borrow item: Describable): string { return item.describe(); }
         let c = Cat { name: \"Whiskers\" };
         let d = Dog { name: \"Rex\" };
         let a = show(c);
@@ -447,12 +447,12 @@ fn test_parity_trait_type_return_dispatch() {
     let result = atlas
         .eval(
             "
-        trait Describable { fn describe(borrow self: Describable) -> string; }
+        trait Describable { fn describe(borrow self: Describable): string; }
         struct Cat { name: string }
         impl Describable for Cat {
-            fn describe(borrow self: Cat) -> string { return \"Cat: \" + self.name; }
+            fn describe(borrow self: Cat): string { return \"Cat: \" + self.name; }
         }
-        fn make_describable() -> Describable { return Cat { name: \"Default\" }; }
+        fn make_describable(): Describable { return Cat { name: \"Default\" }; }
         let d = make_describable();
         d.describe()
     ",

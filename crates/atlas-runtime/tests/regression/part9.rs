@@ -16,7 +16,7 @@ fn milestone_parity_arithmetic_consistent() {
 #[test]
 fn milestone_parity_function_calls_consistent() {
     let code = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
         double(21);
     "#;
     assert_eval_number(code, 42.0);
@@ -70,7 +70,7 @@ fn milestone_stability_large_program() {
     let mut code = String::new();
     for i in 0..100 {
         code.push_str(&format!(
-            "fn f{}(x: number) -> number {{ return x + {}; }}\n",
+            "fn f{}(x: number): number {{ return x + {}; }}\n",
             i, i
         ));
     }

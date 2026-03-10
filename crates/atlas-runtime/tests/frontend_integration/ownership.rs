@@ -31,7 +31,7 @@ fn test_ownership_keywords_lex_as_keywords() {
 fn test_ownership_keywords_in_function_signature() {
     use atlas_runtime::token::TokenKind;
 
-    let src = "fn process(own data: number) -> number { return 0; }";
+    let src = "fn process(own data: number): number { return 0; }";
     let mut lexer = Lexer::new(src);
     let (tokens, errors) = lexer.tokenize();
     assert!(errors.is_empty(), "unexpected lex errors: {errors:?}");
@@ -85,7 +85,7 @@ fn parse_fn_params(src: &str) -> Vec<Param> {
 
 #[test]
 fn test_parse_own_param() {
-    let params = parse_fn_params("fn process(own data: number) -> number { return data; }");
+    let params = parse_fn_params("fn process(own data: number): number { return data; }");
     assert_eq!(params.len(), 1);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Own));
     assert_eq!(params[0].name.name, "data");
@@ -93,14 +93,14 @@ fn test_parse_own_param() {
 
 #[test]
 fn test_parse_borrow_param() {
-    let params = parse_fn_params("fn read(borrow data: number) -> number { return data; }");
+    let params = parse_fn_params("fn read(borrow data: number): number { return data; }");
     assert_eq!(params.len(), 1);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Borrow));
 }
 
 #[test]
 fn test_parse_shared_param() {
-    let params = parse_fn_params("fn display(share data: number) -> number { return data; }");
+    let params = parse_fn_params("fn display(share data: number): number { return data; }");
     assert_eq!(params.len(), 1);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Share));
 }
@@ -109,7 +109,7 @@ fn test_parse_shared_param() {
 fn test_parse_unannotated_param_defaults_to_borrow() {
     // D-040 (supersedes D-034): unannotated params default to borrow — NOT a parse error.
     // `fn f(x: number)` is valid; the parser sets ownership = Some(Borrow) implicitly.
-    let src = "fn f(x: number) -> number { return x; }";
+    let src = "fn f(x: number): number { return x; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -137,7 +137,7 @@ fn test_parse_unannotated_param_defaults_to_borrow() {
 #[test]
 fn test_parse_mixed_ownership_params() {
     let params = parse_fn_params(
-        "fn mixed(own a: number, borrow b: string, borrow c: bool) -> bool { return c; }",
+        "fn mixed(own a: number, borrow b: string, borrow c: bool): bool { return c; }",
     );
     assert_eq!(params.len(), 3);
     assert_eq!(params[0].ownership, Some(OwnershipAnnotation::Own));
@@ -147,7 +147,7 @@ fn test_parse_mixed_ownership_params() {
 
 #[test]
 fn test_parse_ownership_annotation_error_no_identifier() {
-    let src = "fn f(borrow own: number) -> number { return 0; }";
+    let src = "fn f(borrow own: number): number { return 0; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -189,28 +189,28 @@ fn parse_fn_decl(src: &str) -> FunctionDecl {
 
 #[test]
 fn test_parse_own_return_type() {
-    let decl = parse_fn_decl("fn allocate(borrow size: number) -> own number { return 0; }");
+    let decl = parse_fn_decl("fn allocate(borrow size: number): own number { return 0; }");
     assert_eq!(decl.return_ownership, Some(OwnershipAnnotation::Own));
     assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]
 fn test_parse_borrow_return_type() {
-    let decl = parse_fn_decl("fn peek(borrow arr: number) -> borrow number { return arr; }");
+    let decl = parse_fn_decl("fn peek(borrow arr: number): borrow number { return arr; }");
     assert_eq!(decl.return_ownership, Some(OwnershipAnnotation::Borrow));
     assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]
 fn test_parse_unannotated_return_type_unchanged() {
-    let decl = parse_fn_decl("fn f() -> number { return 1; }");
+    let decl = parse_fn_decl("fn f(): number { return 1; }");
     assert_eq!(decl.return_ownership, None);
     assert!(matches!(decl.return_type, Some(TypeRef::Named(ref n, _)) if n == "number"));
 }
 
 #[test]
 fn test_parse_shared_return_type_is_error() {
-    let src = "fn bad() -> shared number { return 0; }";
+    let src = "fn bad(): shared number { return 0; }";
     let mut lexer = Lexer::new(src);
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);

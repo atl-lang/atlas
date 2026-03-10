@@ -7,7 +7,7 @@ Date and time creation, arithmetic, conversion, and formatting.
 ### dateTimeNow
 
 ```atlas
-fn dateTimeNow() -> DateTime
+fn dateTimeNow() : DateTime
 ```
 
 Gets current UTC time.
@@ -17,7 +17,7 @@ Gets current UTC time.
 ### dateTimeFromTimestamp
 
 ```atlas
-fn dateTimeFromTimestamp(timestamp: number) -> DateTime
+fn dateTimeFromTimestamp(timestamp: number) : DateTime
 ```
 
 Creates DateTime from Unix timestamp (seconds since epoch).
@@ -31,7 +31,7 @@ Creates DateTime from Unix timestamp (seconds since epoch).
 
 ```atlas
 fn dateTimeFromComponents(year: number, month: number, day: number,
-                          hour: number, minute: number, second: number) -> DateTime
+                          hour: number, minute: number, second: number) : DateTime
 ```
 
 Creates DateTime from date/time components.
@@ -53,7 +53,7 @@ Creates DateTime from date/time components.
 ### dateTimeParseIso
 
 ```atlas
-fn dateTimeParseIso(text: string) -> Result<DateTime, string>
+fn dateTimeParseIso(text: string) : Result<DateTime, string>
 ```
 
 Parses ISO 8601 formatted datetime.
@@ -68,7 +68,7 @@ Parses ISO 8601 formatted datetime.
 ### dateTimeParse
 
 ```atlas
-fn dateTimeParse(text: string, format: string) -> Result<DateTime, string>
+fn dateTimeParse(text: string, format: string) : Result<DateTime, string>
 ```
 
 Parses datetime with custom format string.
@@ -84,7 +84,7 @@ Parses datetime with custom format string.
 ### dateTimeParseRfc3339
 
 ```atlas
-fn dateTimeParseRfc3339(text: string) -> Result<DateTime, string>
+fn dateTimeParseRfc3339(text: string) : Result<DateTime, string>
 ```
 
 Parses RFC 3339 formatted datetime.
@@ -99,7 +99,7 @@ Parses RFC 3339 formatted datetime.
 ### dateTimeParseRfc2822
 
 ```atlas
-fn dateTimeParseRfc2822(text: string) -> Result<DateTime, string>
+fn dateTimeParseRfc2822(text: string) : Result<DateTime, string>
 ```
 
 Parses RFC 2822 formatted datetime.
@@ -114,7 +114,7 @@ Parses RFC 2822 formatted datetime.
 ### dateTimeTryParse
 
 ```atlas
-fn dateTimeTryParse(text: string) -> Result<DateTime, string>
+fn dateTimeTryParse(text: string) : Result<DateTime, string>
 ```
 
 Attempts to parse datetime with automatic format detection.
@@ -131,7 +131,7 @@ Attempts to parse datetime with automatic format detection.
 ### dateTimeYear
 
 ```atlas
-fn dateTimeYear(dt: DateTime) -> number
+fn dateTimeYear(dt: DateTime) : number
 ```
 
 Gets year component.
@@ -144,7 +144,7 @@ Gets year component.
 ### dateTimeMonth
 
 ```atlas
-fn dateTimeMonth(dt: DateTime) -> number
+fn dateTimeMonth(dt: DateTime) : number
 ```
 
 Gets month component.
@@ -157,7 +157,7 @@ Gets month component.
 ### dateTimeDay
 
 ```atlas
-fn dateTimeDay(dt: DateTime) -> number
+fn dateTimeDay(dt: DateTime) : number
 ```
 
 Gets day of month component.
@@ -170,7 +170,7 @@ Gets day of month component.
 ### dateTimeHour
 
 ```atlas
-fn dateTimeHour(dt: DateTime) -> number
+fn dateTimeHour(dt: DateTime) : number
 ```
 
 Gets hour component.
@@ -183,7 +183,7 @@ Gets hour component.
 ### dateTimeMinute
 
 ```atlas
-fn dateTimeMinute(dt: DateTime) -> number
+fn dateTimeMinute(dt: DateTime) : number
 ```
 
 Gets minute component.
@@ -196,7 +196,7 @@ Gets minute component.
 ### dateTimeSecond
 
 ```atlas
-fn dateTimeSecond(dt: DateTime) -> number
+fn dateTimeSecond(dt: DateTime) : number
 ```
 
 Gets second component.
@@ -209,7 +209,7 @@ Gets second component.
 ### dateTimeWeekday
 
 ```atlas
-fn dateTimeWeekday(dt: DateTime) -> number
+fn dateTimeWeekday(dt: DateTime) : number
 ```
 
 Gets day of week.
@@ -222,7 +222,7 @@ Gets day of week.
 ### dateTimeDayOfYear
 
 ```atlas
-fn dateTimeDayOfYear(dt: DateTime) -> number
+fn dateTimeDayOfYear(dt: DateTime) : number
 ```
 
 Gets day of year.
@@ -237,7 +237,7 @@ Gets day of year.
 ### dateTimeAddSeconds
 
 ```atlas
-fn dateTimeAddSeconds(dt: DateTime, seconds: number) -> DateTime
+fn dateTimeAddSeconds(dt: DateTime, seconds: number) : DateTime
 ```
 
 Adds seconds to datetime.
@@ -251,7 +251,7 @@ Adds seconds to datetime.
 ### dateTimeAddMinutes
 
 ```atlas
-fn dateTimeAddMinutes(dt: DateTime, minutes: number) -> DateTime
+fn dateTimeAddMinutes(dt: DateTime, minutes: number) : DateTime
 ```
 
 Adds minutes to datetime.
@@ -265,7 +265,7 @@ Adds minutes to datetime.
 ### dateTimeAddHours
 
 ```atlas
-fn dateTimeAddHours(dt: DateTime, hours: number) -> DateTime
+fn dateTimeAddHours(dt: DateTime, hours: number) : DateTime
 ```
 
 Adds hours to datetime.
@@ -279,7 +279,7 @@ Adds hours to datetime.
 ### dateTimeAddDays
 
 ```atlas
-fn dateTimeAddDays(dt: DateTime, days: number) -> DateTime
+fn dateTimeAddDays(dt: DateTime, days: number) : DateTime
 ```
 
 Adds days to datetime.
@@ -295,7 +295,7 @@ Adds days to datetime.
 ### dateTimeCompare
 
 ```atlas
-fn dateTimeCompare(dt1: DateTime, dt2: DateTime) -> number
+fn dateTimeCompare(dt1: DateTime, dt2: DateTime) : number
 ```
 
 Compares two datetimes.
@@ -310,7 +310,7 @@ Compares two datetimes.
 ### dateTimeDiff
 
 ```atlas
-fn dateTimeDiff(dt1: DateTime, dt2: DateTime) -> number
+fn dateTimeDiff(dt1: DateTime, dt2: DateTime) : number
 ```
 
 Gets difference between two datetimes in seconds.
@@ -326,7 +326,7 @@ Gets difference between two datetimes in seconds.
 ### dateTimeToTimestamp
 
 ```atlas
-fn dateTimeToTimestamp(dt: DateTime) -> number
+fn dateTimeToTimestamp(dt: DateTime) : number
 ```
 
 Converts datetime to Unix timestamp.
@@ -339,7 +339,7 @@ Converts datetime to Unix timestamp.
 ### dateTimeToIso
 
 ```atlas
-fn dateTimeToIso(dt: DateTime) -> string
+fn dateTimeToIso(dt: DateTime) : string
 ```
 
 Formats datetime as ISO 8601 string.
@@ -352,7 +352,7 @@ Formats datetime as ISO 8601 string.
 ### dateTimeToRfc3339
 
 ```atlas
-fn dateTimeToRfc3339(dt: DateTime) -> string
+fn dateTimeToRfc3339(dt: DateTime) : string
 ```
 
 Formats datetime as RFC 3339 string.
@@ -365,7 +365,7 @@ Formats datetime as RFC 3339 string.
 ### dateTimeToRfc2822
 
 ```atlas
-fn dateTimeToRfc2822(dt: DateTime) -> string
+fn dateTimeToRfc2822(dt: DateTime) : string
 ```
 
 Formats datetime as RFC 2822 string.
@@ -378,7 +378,7 @@ Formats datetime as RFC 2822 string.
 ### dateTimeFormat
 
 ```atlas
-fn dateTimeFormat(dt: DateTime, format: string) -> string
+fn dateTimeFormat(dt: DateTime, format: string) : string
 ```
 
 Formats datetime with custom format pattern.
@@ -392,7 +392,7 @@ Formats datetime with custom format pattern.
 ### dateTimeToCustom
 
 ```atlas
-fn dateTimeToCustom(dt: DateTime, format: string) -> string
+fn dateTimeToCustom(dt: DateTime, format: string) : string
 ```
 
 Formats datetime with custom format (alias for dateTimeFormat).
@@ -408,7 +408,7 @@ Formats datetime with custom format (alias for dateTimeFormat).
 ### dateTimeUtc
 
 ```atlas
-fn dateTimeUtc(dt: DateTime) -> DateTime
+fn dateTimeUtc(dt: DateTime) : DateTime
 ```
 
 Converts datetime to UTC.
@@ -421,7 +421,7 @@ Converts datetime to UTC.
 ### dateTimeToUtc
 
 ```atlas
-fn dateTimeToUtc(dt: DateTime) -> DateTime
+fn dateTimeToUtc(dt: DateTime) : DateTime
 ```
 
 Converts datetime to UTC (alias for dateTimeUtc).
@@ -434,7 +434,7 @@ Converts datetime to UTC (alias for dateTimeUtc).
 ### dateTimeToLocal
 
 ```atlas
-fn dateTimeToLocal(dt: DateTime) -> DateTime
+fn dateTimeToLocal(dt: DateTime) : DateTime
 ```
 
 Converts datetime to local system timezone.
@@ -447,7 +447,7 @@ Converts datetime to local system timezone.
 ### dateTimeToTimezone
 
 ```atlas
-fn dateTimeToTimezone(dt: DateTime, tz: string) -> Result<DateTime, string>
+fn dateTimeToTimezone(dt: DateTime, tz: string) : Result<DateTime, string>
 ```
 
 Converts datetime to specified timezone.
@@ -463,7 +463,7 @@ Converts datetime to specified timezone.
 ### dateTimeGetTimezone
 
 ```atlas
-fn dateTimeGetTimezone(dt: DateTime) -> string
+fn dateTimeGetTimezone(dt: DateTime) : string
 ```
 
 Gets timezone of datetime.
@@ -476,7 +476,7 @@ Gets timezone of datetime.
 ### dateTimeGetOffset
 
 ```atlas
-fn dateTimeGetOffset(dt: DateTime) -> number
+fn dateTimeGetOffset(dt: DateTime) : number
 ```
 
 Gets UTC offset in seconds.
@@ -489,7 +489,7 @@ Gets UTC offset in seconds.
 ### dateTimeInTimezone
 
 ```atlas
-fn dateTimeInTimezone(dt: DateTime, tz: string) -> Result<DateTime, string>
+fn dateTimeInTimezone(dt: DateTime, tz: string) : Result<DateTime, string>
 ```
 
 Creates datetime in specific timezone.
@@ -507,7 +507,7 @@ Creates datetime in specific timezone.
 ### durationFromSeconds
 
 ```atlas
-fn durationFromSeconds(seconds: number) -> HashMap<string, number>
+fn durationFromSeconds(seconds: number) : HashMap<string, number>
 ```
 
 Creates duration from seconds.
@@ -520,7 +520,7 @@ Creates duration from seconds.
 ### durationFromMinutes
 
 ```atlas
-fn durationFromMinutes(minutes: number) -> HashMap<string, number>
+fn durationFromMinutes(minutes: number) : HashMap<string, number>
 ```
 
 Creates duration from minutes.
@@ -533,7 +533,7 @@ Creates duration from minutes.
 ### durationFromHours
 
 ```atlas
-fn durationFromHours(hours: number) -> HashMap<string, number>
+fn durationFromHours(hours: number) : HashMap<string, number>
 ```
 
 Creates duration from hours.
@@ -546,7 +546,7 @@ Creates duration from hours.
 ### durationFromDays
 
 ```atlas
-fn durationFromDays(days: number) -> HashMap<string, number>
+fn durationFromDays(days: number) : HashMap<string, number>
 ```
 
 Creates duration from days.
@@ -559,7 +559,7 @@ Creates duration from days.
 ### durationFormat
 
 ```atlas
-fn durationFormat(duration: HashMap<string, number>) -> string
+fn durationFormat(duration: HashMap<string, number>) : string
 ```
 
 Formats duration as string.

@@ -50,7 +50,7 @@ fn test_complex_nested_paths() {
 
 #[test]
 fn test_unused_variable_warning() {
-    let source = r#"fn main() -> number { let x: number = 42; return 5; }"#;
+    let source = r#"fn main(): number { let x: number = 42; return 5; }"#;
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
@@ -60,7 +60,7 @@ fn test_unused_variable_warning() {
 
 #[test]
 fn test_used_variable_no_warning() {
-    let source = r#"fn main() -> number { let x: number = 42; return x; }"#;
+    let source = r#"fn main(): number { let x: number = 42; return x; }"#;
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
@@ -69,7 +69,7 @@ fn test_used_variable_no_warning() {
 
 #[test]
 fn test_underscore_prefix_suppresses_warning() {
-    let source = r#"fn main() -> number { let _unused: number = 42; return 5; }"#;
+    let source = r#"fn main(): number { let _unused: number = 42; return 5; }"#;
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
@@ -82,7 +82,7 @@ fn test_underscore_prefix_suppresses_warning() {
 
 #[test]
 fn test_multiple_unused_variables() {
-    let source = r#"fn main() -> number {
+    let source = r#"fn main(): number {
         let x: number = 1;
         let y: number = 2;
         let z: number = 3;
@@ -100,7 +100,7 @@ fn test_multiple_unused_variables() {
 
 #[test]
 fn test_unused_parameter_warning() {
-    let source = r#"fn add(borrow a: number, borrow b: number) -> number { return a; }"#;
+    let source = r#"fn add(borrow a: number, borrow b: number): number { return a; }"#;
     let diags = get_all_diagnostics(source);
 
     let warnings: Vec<_> = diags.iter().filter(|d| d.code == "AT2001").collect();
@@ -116,7 +116,7 @@ fn test_unused_parameter_warning() {
 fn test_used_parameter_in_callback_no_warning() {
     // Bug reproduction: parameter is used in function body, but function is passed as callback
     let source = r#"
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             return x * 2;
         }
         let result: []number = map([1,2,3], double);
@@ -135,7 +135,7 @@ fn test_used_parameter_in_callback_no_warning() {
 fn test_used_parameters_in_sort_callback_no_warning() {
     // Bug reproduction: both parameters are used, function passed to sort
     let source = r#"
-        fn compare(borrow a: number, borrow b: number) -> number {
+        fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
         let sorted: []number = sort([3,1,2], compare);
@@ -154,7 +154,7 @@ fn test_used_parameters_in_sort_callback_no_warning() {
 fn test_minimal_callback_parameter_usage() {
     // Minimal reproduction: parameter used in intrinsic function call
     let source = r#"
-        fn numToStr(borrow n: number) -> string {
+        fn numToStr(borrow n: number): string {
             return toString(n);
         }
         let x: string = numToStr(5);
@@ -179,10 +179,10 @@ fn test_minimal_callback_parameter_usage() {
 fn test_parameter_used_in_user_function_call() {
     // Control test: parameter used in regular user function call
     let source = r#"
-        fn helper(borrow x: number) -> number {
+        fn helper(borrow x: number): number {
             return x + 1;
         }
-        fn wrapper(borrow n: number) -> number {
+        fn wrapper(borrow n: number): number {
             return helper(n);
         }
         let x: number = wrapper(5);
@@ -208,7 +208,7 @@ fn test_parameter_used_in_user_function_call() {
 
 #[test]
 fn test_unreachable_code_after_return() {
-    let source = r#"fn main() -> number {
+    let source = r#"fn main(): number {
         return 42;
         let x: number = 10;
     }"#;
@@ -221,7 +221,7 @@ fn test_unreachable_code_after_return() {
 
 #[test]
 fn test_no_unreachable_warning_without_return() {
-    let source = r#"fn main() -> number {
+    let source = r#"fn main(): number {
         let x: number = 42;
         let y: number = 10;
         return x;
@@ -242,7 +242,7 @@ fn test_no_unreachable_warning_without_return() {
 
 #[test]
 fn test_warnings_with_errors() {
-    let source = r#"fn main() -> number { let x: number = "bad"; return 5; }"#;
+    let source = r#"fn main(): number { let x: number = "bad"; return 5; }"#;
     let diags = get_all_diagnostics(source);
 
     // Should have both error (type mismatch) and warning (unused variable)

@@ -1,6 +1,6 @@
 // B15: Tuple match patterns
 
-fn classify(own pair: (number, number)) -> string {
+fn classify(own pair: (number, number)) : string {
     match pair {
         (0, 0) => {
             return "origin";

@@ -9,8 +9,8 @@ use super::super::*;
 fn test_at3035_method_call_trait_not_implemented() {
     let diags = typecheck_source(
         "
-        trait Flippable { fn flip(borrow self: Flippable) -> bool; }
-        impl Flippable for bool { fn flip(borrow self: bool) -> bool { return true; } }
+        trait Flippable { fn flip(borrow self: Flippable): bool; }
+        impl Flippable for bool { fn flip(borrow self: bool): bool { return true; } }
         let n: number = 42;
         n.flip();
     ",
@@ -26,8 +26,8 @@ fn test_at3035_method_call_trait_not_implemented() {
 fn test_at3035_not_fired_when_impl_exists() {
     let diags = typecheck_source(
         "
-        trait Flippable { fn flip(borrow self: Flippable) -> bool; }
-        impl Flippable for bool { fn flip(borrow self: bool) -> bool { return true; } }
+        trait Flippable { fn flip(borrow self: Flippable): bool; }
+        impl Flippable for bool { fn flip(borrow self: bool): bool { return true; } }
         let b: bool = true;
         b.flip();
     ",
@@ -67,7 +67,7 @@ fn test_at2013_is_warning_not_error() {
     // We verify the warning fires but the program is not rejected
     let diags = typecheck_source(
         "
-        fn take_user(borrow x: number) -> void { }
+        fn take_user(borrow x: number): void { }
         take_user(42);
     ",
     );
@@ -141,7 +141,7 @@ mod migrated_types {
             params: vec![Type::Number, Type::String],
             return_type: Box::new(Type::Bool),
         };
-        assert_eq!(func_type.display_name(), "(number, string) -> bool");
+        assert_eq!(func_type.display_name(), "(number, string): bool");
     }
 
     #[test]
@@ -249,7 +249,7 @@ fn test_at3060_unknown_type_generic_message() {
 fn test_issue_h188_empty_block_match_arm_unifies_with_void() {
     let diags = typecheck_source(
         "
-        fn handle(x: number) -> void {
+        fn handle(x: number): void {
             match x {
                 1 => {},
                 _ => print(\"other\"),

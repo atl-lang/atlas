@@ -21,7 +21,7 @@ fn test_edge_boolean_short_circuit_and() {
     // If short-circuit works, second function should not be called
     let code = r#"
         let mut called = 0;
-        fn side_effect() -> bool {
+        fn side_effect(): bool {
             called = called + 1;
             return true;
         }
@@ -36,7 +36,7 @@ fn test_edge_boolean_short_circuit_or() {
     // If short-circuit works, second function should not be called
     let code = r#"
         let mut called = 0;
-        fn side_effect() -> bool {
+        fn side_effect(): bool {
             called = called + 1;
             return false;
         }
@@ -49,7 +49,7 @@ fn test_edge_boolean_short_circuit_or() {
 #[test]
 fn test_edge_return_from_nested_block() {
     let code = r#"
-        fn test() -> number {
+        fn test(): number {
             if (true) {
                 if (true) {
                     return 42;
@@ -67,7 +67,7 @@ fn test_edge_while_loop_early_break() {
     // Note: Atlas may not have break keyword - if it does, test it
     // Otherwise test early return from function containing loop
     let code = r#"
-        fn first_over_5() -> number {
+        fn first_over_5(): number {
             let mut i = 0;
             while (i < 100) {
                 if (i > 5) { return i; }

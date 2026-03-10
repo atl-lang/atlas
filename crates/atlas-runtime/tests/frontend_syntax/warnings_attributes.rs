@@ -31,7 +31,7 @@ fn has_at2001(source: &str) -> bool {
 fn test_unused_var_emits_at2001_baseline() {
     assert!(has_at2001(
         r#"
-        fn foo() -> number {
+        fn foo(): number {
             let unused_x = 42;
             0;
         }
@@ -48,7 +48,7 @@ fn test_allow_unused_on_fn_suppresses_param_warning() {
     assert!(!has_at2001(
         r#"
         @allow(unused)
-        fn process(borrow x: number, borrow y: number) -> number {
+        fn process(borrow x: number, borrow y: number): number {
             x;
         }
         process(1, 2);
@@ -61,7 +61,7 @@ fn test_allow_unused_parses_without_error() {
     let mut lexer = Lexer::new(
         r#"
         @allow(unused)
-        fn scaffold(borrow x: number) -> number {
+        fn scaffold(borrow x: number): number {
             42;
         }
     "#,
@@ -102,7 +102,7 @@ fn test_allow_unknown_lint_is_warning() {
     let warnings = collect_warnings(
         r#"
         @allow(bogus_lint)
-        fn foo() -> number { 42; }
+        fn foo(): number { 42; }
         foo();
     "#,
     );

@@ -22,7 +22,7 @@ let val: string = config.get("timeout");
 
 **Export**
 ```
-export fn name(params) -> Type { ... }
+export fn name(params) : Type { ... }
 export let name: Type = value;
 export type Name = Type;
 export struct Name { ... }
@@ -33,7 +33,7 @@ export enum Name { ... }
 
 Example (tested):
 ```atlas
-export fn greet(name: string) -> string {
+export fn greet(name: string) : string {
     return `Hello {name}`;
 }
 
@@ -43,16 +43,16 @@ export let VERSION: string = "1.0";
 
 **Extern (FFI)**
 ```
-extern "library" fn name(params) -> Type;
-extern "library" fn name as "symbol"(params) -> Type;
+extern "library" fn name(params) : Type;
+extern "library" fn name as "symbol"(params) : Type;
 ```
 - Declares a function implemented in an external native library.
 - The optional `as "symbol"` renames the function for FFI binding.
 
 Example:
 ```atlas
-extern "libcrypto" fn sha256(data: string) -> string;
-extern "libz" fn compress as "zlib_compress"(data: string) -> string;
+extern "libcrypto" fn sha256(data: string) : string;
+extern "libz" fn compress as "zlib_compress"(data: string) : string;
 ```
 
 **fn main() Entry Point**

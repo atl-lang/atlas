@@ -4,7 +4,7 @@ use super::super::super::*;
 
 #[rstest]
 #[case::function_arithmetic(
-    r#"fn add(borrow a: number, borrow b: number) -> number { return a + b; }"#
+    r#"fn add(borrow a: number, borrow b: number): number { return a + b; }"#
 )]
 #[case::conditional_operators(
     r#"let x: number = 5; let y: number = 10; if (x < y && y > 0) { let z = x + y; }"#

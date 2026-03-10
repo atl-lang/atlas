@@ -7,7 +7,7 @@ File I/O, directory operations, and path utilities.
 ### readFile
 
 ```atlas
-fn readFile(path: string) -> Result<string, string>
+fn readFile(path: string) : Result<string, string>
 ```
 
 Reads entire file as string.
@@ -22,7 +22,7 @@ Reads entire file as string.
 ### writeFile
 
 ```atlas
-fn writeFile(path: string, content: string) -> Result<Null, string>
+fn writeFile(path: string, content: string) : Result<Null, string>
 ```
 
 Writes string to file, creating or overwriting.
@@ -38,7 +38,7 @@ Writes string to file, creating or overwriting.
 ### appendFile
 
 ```atlas
-fn appendFile(path: string, content: string) -> Result<Null, string>
+fn appendFile(path: string, content: string) : Result<Null, string>
 ```
 
 Appends string to end of file.
@@ -54,7 +54,7 @@ Appends string to end of file.
 ### fileExists
 
 ```atlas
-fn fileExists(path: string) -> bool
+fn fileExists(path: string) : bool
 ```
 
 Checks if file exists.
@@ -67,7 +67,7 @@ Checks if file exists.
 ### removeFile
 
 ```atlas
-fn removeFile(path: string) -> Result<Null, string>
+fn removeFile(path: string) : Result<Null, string>
 ```
 
 Deletes a file.
@@ -84,7 +84,7 @@ Deletes a file.
 ### readDir
 
 ```atlas
-fn readDir(path: string) -> Result<[]string, string>
+fn readDir(path: string) : Result<[]string, string>
 ```
 
 Lists files and directories in a directory.
@@ -99,7 +99,7 @@ Lists files and directories in a directory.
 ### createDir
 
 ```atlas
-fn createDir(path: string) -> Result<Null, string>
+fn createDir(path: string) : Result<Null, string>
 ```
 
 Creates a directory.
@@ -116,7 +116,7 @@ Creates a directory.
 ### removeDir
 
 ```atlas
-fn removeDir(path: string) -> Result<Null, string>
+fn removeDir(path: string) : Result<Null, string>
 ```
 
 Removes an empty directory.
@@ -133,7 +133,7 @@ Removes an empty directory.
 ### fileInfo
 
 ```atlas
-fn fileInfo(path: string) -> Result<object, string>
+fn fileInfo(path: string) : Result<object, string>
 ```
 
 Gets file metadata.
@@ -155,7 +155,7 @@ Gets file metadata.
 ### pathJoin
 
 ```atlas
-fn pathJoin(...paths: string) -> string
+fn pathJoin(...paths: string) : string
 ```
 
 Joins path components into a single path.
@@ -172,7 +172,7 @@ Joins path components into a single path.
 ### fsWalk
 
 ```atlas
-fn fsWalk(path: string) -> Result<[]string, string>
+fn fsWalk(path: string) : Result<[]string, string>
 ```
 
 Recursively lists all files and directories.
@@ -187,7 +187,7 @@ Recursively lists all files and directories.
 ### fsReaddir
 
 ```atlas
-fn fsReaddir(path: string) -> Result<[]string, string>
+fn fsReaddir(path: string) : Result<[]string, string>
 ```
 
 Lists entries in directory (non-recursive).
@@ -202,7 +202,7 @@ Lists entries in directory (non-recursive).
 ### fsMkdir
 
 ```atlas
-fn fsMkdir(path: string) -> Result<Null, string>
+fn fsMkdir(path: string) : Result<Null, string>
 ```
 
 Creates a directory.
@@ -217,7 +217,7 @@ Creates a directory.
 ### fsMkdirp
 
 ```atlas
-fn fsMkdirp(path: string) -> Result<Null, string>
+fn fsMkdirp(path: string) : Result<Null, string>
 ```
 
 Creates directory and parent directories if needed.
@@ -232,7 +232,7 @@ Creates directory and parent directories if needed.
 ### fsRmdir
 
 ```atlas
-fn fsRmdir(path: string) -> Result<Null, string>
+fn fsRmdir(path: string) : Result<Null, string>
 ```
 
 Removes empty directory.
@@ -247,7 +247,7 @@ Removes empty directory.
 ### fsRmdirRecursive
 
 ```atlas
-fn fsRmdirRecursive(path: string) -> Result<Null, string>
+fn fsRmdirRecursive(path: string) : Result<Null, string>
 ```
 
 Recursively removes directory and all contents.
@@ -262,7 +262,7 @@ Recursively removes directory and all contents.
 ### fsSize
 
 ```atlas
-fn fsSize(path: string) -> Result<number, string>
+fn fsSize(path: string) : Result<number, string>
 ```
 
 Gets file size in bytes.
@@ -277,7 +277,7 @@ Gets file size in bytes.
 ### fsMtime
 
 ```atlas
-fn fsMtime(path: string) -> Result<number, string>
+fn fsMtime(path: string) : Result<number, string>
 ```
 
 Gets last modified time as Unix timestamp.
@@ -292,7 +292,7 @@ Gets last modified time as Unix timestamp.
 ### fsCtime
 
 ```atlas
-fn fsCtime(path: string) -> Result<number, string>
+fn fsCtime(path: string) : Result<number, string>
 ```
 
 Gets creation/change time as Unix timestamp.
@@ -307,7 +307,7 @@ Gets creation/change time as Unix timestamp.
 ### fsAtime
 
 ```atlas
-fn fsAtime(path: string) -> Result<number, string>
+fn fsAtime(path: string) : Result<number, string>
 ```
 
 Gets last accessed time as Unix timestamp.
@@ -322,7 +322,7 @@ Gets last accessed time as Unix timestamp.
 ### fsIsDir
 
 ```atlas
-fn fsIsDir(path: string) -> bool
+fn fsIsDir(path: string) : bool
 ```
 
 Checks if path is a directory.
@@ -335,7 +335,7 @@ Checks if path is a directory.
 ### fsIsFile
 
 ```atlas
-fn fsIsFile(path: string) -> bool
+fn fsIsFile(path: string) : bool
 ```
 
 Checks if path is a regular file.
@@ -348,7 +348,7 @@ Checks if path is a regular file.
 ### fsIsSymlink
 
 ```atlas
-fn fsIsSymlink(path: string) -> Result<bool, string>
+fn fsIsSymlink(path: string) : Result<bool, string>
 ```
 
 Checks if path is a symbolic link.
@@ -363,7 +363,7 @@ Checks if path is a symbolic link.
 ### fsPermissions
 
 ```atlas
-fn fsPermissions(path: string) -> Result<number, string>
+fn fsPermissions(path: string) : Result<number, string>
 ```
 
 Gets file permissions as octal number.
@@ -378,7 +378,7 @@ Gets file permissions as octal number.
 ### fsSymlink
 
 ```atlas
-fn fsSymlink(target: string, link: string) -> Result<Null, string>
+fn fsSymlink(target: string, link: string) : Result<Null, string>
 ```
 
 Creates a symbolic link.
@@ -394,7 +394,7 @@ Creates a symbolic link.
 ### fsReadlink
 
 ```atlas
-fn fsReadlink(path: string) -> Result<string, string>
+fn fsReadlink(path: string) : Result<string, string>
 ```
 
 Reads symbolic link target.
@@ -409,7 +409,7 @@ Reads symbolic link target.
 ### fsTmpfile
 
 ```atlas
-fn fsTmpfile() -> Result<string, string>
+fn fsTmpfile() : Result<string, string>
 ```
 
 Creates temporary file and returns its path.
@@ -423,7 +423,7 @@ Creates temporary file and returns its path.
 ### fsTmpdir
 
 ```atlas
-fn fsTmpdir() -> Result<string, string>
+fn fsTmpdir() : Result<string, string>
 ```
 
 Returns system temporary directory path.
@@ -435,7 +435,7 @@ Returns system temporary directory path.
 ### fsTmpfileNamed
 
 ```atlas
-fn fsTmpfileNamed(prefix: string) -> Result<string, string>
+fn fsTmpfileNamed(prefix: string) : Result<string, string>
 ```
 
 Creates temporary file with name prefix.

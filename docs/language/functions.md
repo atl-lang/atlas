@@ -14,11 +14,11 @@ fn name<T>(param: Type, ...) [-> [own|borrow] ReturnType] { ... }
 
 Example (tested):
 ```atlas
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number) : number {
     return a + b;
 }
 
-fn is_string(value: string) -> bool is value: string {
+fn is_string(value: string) : bool is value: string {
     return value == value;
 }
 ```
@@ -33,7 +33,7 @@ fn is_string(value: string) -> bool is value: string {
 
 Example (tested):
 ```atlas
-fn take(own data: HashMap<string, number>, borrow label: string, share cache: HashMap<string, number>) -> void {
+fn take(own data: HashMap<string, number>, borrow label: string, share cache: HashMap<string, number>) : void {
     data;
     label;
     cache;
@@ -43,7 +43,7 @@ fn take(own data: HashMap<string, number>, borrow label: string, share cache: Ha
 
 **Anonymous Functions (Closures)**
 ```
-fn(param, ...) -> ReturnType { block }
+fn(param, ...) : ReturnType { block }
 ```
 - Parameters in anonymous functions **may omit** type annotations.
 - Ownership annotations on closure parameters follow the same rule: `borrow` is implicit, `own` and `share` must be explicit.
@@ -51,7 +51,7 @@ fn(param, ...) -> ReturnType { block }
 
 Example (tested):
 ```atlas
-let inc = fn(x: number) -> number {
+let inc = fn(x: number) : number {
     return x + 1;
 };
 ```
@@ -62,7 +62,7 @@ let inc = fn(x: number) -> number {
 
 Example (tested):
 ```atlas
-fn choose(flag: bool) -> number {
+fn choose(flag: bool) : number {
     if flag {
         return 1;
     } else {

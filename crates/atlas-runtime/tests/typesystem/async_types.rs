@@ -12,7 +12,7 @@ use super::*;
 fn test_async_fn_call_produces_future() {
     let diags = errors(
         r#"
-        async fn compute() -> number { return 42; }
+        async fn compute(): number { return 42; }
         let f: Future<number> = compute();
         "#,
     );
@@ -24,7 +24,7 @@ fn test_async_fn_call_produces_future() {
 fn test_await_future_number_produces_number() {
     let diags = errors(
         r#"
-        async fn get_num() -> number { return 10; }
+        async fn get_num(): number { return 10; }
         let result: number = await get_num();
         "#,
     );
@@ -36,7 +36,7 @@ fn test_await_future_number_produces_number() {
 fn test_async_fn_no_annotation_infers_void() {
     let diags = errors(
         r#"
-        async fn do_nothing() -> void { return; }
+        async fn do_nothing(): void { return; }
         "#,
     );
     assert_no_errors(&diags);
@@ -47,7 +47,7 @@ fn test_async_fn_no_annotation_infers_void() {
 fn test_explicit_future_annotation_accepted() {
     let diags = errors(
         r#"
-        async fn async_add(borrow a: number, borrow b: number) -> number { return a + b; }
+        async fn async_add(borrow a: number, borrow b: number): number { return a + b; }
         let f: Future<number> = async_add(1, 2);
         "#,
     );
@@ -59,8 +59,8 @@ fn test_explicit_future_annotation_accepted() {
 fn test_return_await_in_async_fn() {
     let diags = errors(
         r#"
-        async fn inner() -> number { return 7; }
-        async fn outer() -> number { return await inner(); }
+        async fn inner(): number { return 7; }
+        async fn outer(): number { return await inner(); }
         "#,
     );
     assert_no_errors(&diags);
@@ -71,7 +71,7 @@ fn test_return_await_in_async_fn() {
 fn test_top_level_await_accepted() {
     let diags = errors(
         r#"
-        async fn fetch() -> string { return "data"; }
+        async fn fetch(): string { return "data"; }
         let result = await fetch();
         "#,
     );
@@ -83,7 +83,7 @@ fn test_top_level_await_accepted() {
 fn test_await_result_in_arithmetic() {
     let diags = errors(
         r#"
-        async fn get_n() -> number { return 5; }
+        async fn get_n(): number { return 5; }
         let n = (await get_n()) + 1;
         "#,
     );
@@ -95,7 +95,7 @@ fn test_await_result_in_arithmetic() {
 fn test_sync_fn_call_unaffected() {
     let diags = errors(
         r#"
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
         let n: number = double(3);
         "#,
     );
@@ -107,9 +107,9 @@ fn test_sync_fn_call_unaffected() {
 fn test_sequential_awaits_in_async_fn() {
     let diags = errors(
         r#"
-        async fn step_a() -> number { return 1; }
-        async fn step_b() -> number { return 2; }
-        async fn run() -> number {
+        async fn step_a(): number { return 1; }
+        async fn step_b(): number { return 2; }
+        async fn run(): number {
             let a = await step_a();
             let b = await step_b();
             return a + b;
@@ -124,8 +124,8 @@ fn test_sequential_awaits_in_async_fn() {
 fn test_sync_fn_stores_future() {
     let diags = errors(
         r#"
-        async fn work() -> number { return 99; }
-        fn kick_off() -> Future<number> { return work(); }
+        async fn work(): number { return 99; }
+        fn kick_off(): Future<number> { return work(); }
         "#,
     );
     assert_no_errors(&diags);
@@ -140,8 +140,8 @@ fn test_sync_fn_stores_future() {
 fn test_at4001_await_in_sync_fn() {
     let diags = errors(
         r#"
-        async fn get_val() -> number { return 1; }
-        fn sync_fn() -> number {
+        async fn get_val(): number { return 1; }
+        fn sync_fn(): number {
             let v = await get_val();
             return v;
         }
@@ -188,7 +188,7 @@ fn test_at4002_await_bool() {
 fn test_at4006_async_main_forbidden() {
     let diags = errors(
         r#"
-        async fn main() -> void { return; }
+        async fn main(): void { return; }
         "#,
     );
     assert_has_error(&diags, "AT4006");
@@ -200,8 +200,8 @@ fn test_at4006_async_main_forbidden() {
 fn test_at4001_await_in_nested_sync_fn() {
     let diags = errors(
         r#"
-        async fn outer() -> number {
-            fn inner_sync() -> number {
+        async fn outer(): number {
+            fn inner_sync(): number {
                 let v = await futureResolve(1);
                 return v;
             }
@@ -217,7 +217,7 @@ fn test_at4001_await_in_nested_sync_fn() {
 fn test_at4002_await_null() {
     let diags = errors(
         r#"
-        async fn run() -> void {
+        async fn run(): void {
             let _ = await null;
             return;
         }
@@ -234,7 +234,7 @@ fn test_at4002_await_null() {
 fn test_top_level_no_at4001() {
     let diags = errors(
         r#"
-        async fn thing() -> number { return 1; }
+        async fn thing(): number { return 1; }
         let v = await thing();
         "#,
     );
@@ -249,8 +249,8 @@ fn test_top_level_no_at4001() {
 fn test_async_fn_module_scope_valid() {
     let diags = errors(
         r#"
-        async fn a() -> number { return 1; }
-        async fn b() -> string { return "hi"; }
+        async fn a(): number { return 1; }
+        async fn b(): string { return "hi"; }
         "#,
     );
     assert_no_errors(&diags);
@@ -261,8 +261,8 @@ fn test_async_fn_module_scope_valid() {
 fn test_at4001_await_in_sync_for_loop() {
     let diags = errors(
         r#"
-        async fn step() -> number { return 0; }
-        fn process(borrow items: []number) -> void {
+        async fn step(): number { return 0; }
+        fn process(borrow items: []number): void {
             for item in items {
                 let _n = await step();
             }
@@ -282,7 +282,7 @@ fn test_at4001_await_in_sync_for_loop() {
 fn test_regression_sync_fn_return_type() {
     let diags = errors(
         r#"
-        fn greet(borrow name: string) -> string { return "hello " + name; }
+        fn greet(borrow name: string): string { return "hello " + name; }
         let s: string = greet("world");
         "#,
     );
@@ -302,7 +302,7 @@ fn test_regression_at3_codes_unaffected() {
 fn test_regression_inference_unaffected() {
     let diags = errors(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
         let result = add(1, 2);
         "#,
     );
@@ -314,8 +314,8 @@ fn test_regression_inference_unaffected() {
 fn test_regression_nested_sync_fns() {
     let diags = errors(
         r#"
-        fn outer(borrow x: number) -> number {
-            fn inner(borrow y: number) -> number { return y * 2; }
+        fn outer(borrow x: number): number {
+            fn inner(borrow y: number): number { return y * 2; }
             return inner(x) + 1;
         }
         "#,
@@ -328,8 +328,8 @@ fn test_regression_nested_sync_fns() {
 fn test_regression_async_does_not_infect_sync() {
     let diags = errors(
         r#"
-        async fn async_one() -> number { return 1; }
-        fn sync_two() -> number { return 2; }
+        async fn async_one(): number { return 1; }
+        fn sync_two(): number { return 2; }
         let n: number = sync_two();
         "#,
     );

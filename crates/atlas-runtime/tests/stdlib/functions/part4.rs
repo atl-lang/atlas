@@ -210,11 +210,11 @@ fn test_assert_failure_parity() {
 fn test_realistic_test_function() {
     eval_ok(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
 
-        fn test_add() -> void {
+        fn test_add(): void {
             assert_equal(add(1, 2), 3);
             assert_equal(add(0, 0), 0);
             assert_equal(add(-1, 1), 0);
@@ -230,7 +230,7 @@ fn test_realistic_test_function() {
 fn test_result_chain_with_assertions() {
     eval_ok(
         r#"
-        fn safe_divide(borrow a: number, borrow b: number) -> Result<number, string> {
+        fn safe_divide(borrow a: number, borrow b: number): Result<number, string> {
             if (b == 0) { return Err("division by zero"); }
             return Ok(a / b);
         }
@@ -250,7 +250,7 @@ fn test_result_chain_with_assertions() {
 fn test_option_chain_with_assertions() {
     eval_ok(
         r#"
-        fn find_value(borrow arr: array, borrow target: number) -> Option<number> {
+        fn find_value(borrow arr: array, borrow target: number): Option<number> {
             let mut found = None();
             for item in arr {
                 if (item == target) {

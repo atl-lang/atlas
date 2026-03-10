@@ -56,8 +56,8 @@ fn test_issue_h186_missing_semi_uses_at1020_not_at1002() {
 #[test]
 fn test_parse_nested_function_in_function() {
     let source = r#"
-        fn outer() -> number {
-            fn helper(borrow x: number) -> number {
+        fn outer(): number {
+            fn helper(borrow x: number): number {
                 return x * 2;
             }
             return helper(21);
@@ -71,9 +71,9 @@ fn test_parse_nested_function_in_function() {
 #[test]
 fn test_parse_nested_function_in_if_block() {
     let source = r#"
-        fn outer() -> void {
+        fn outer(): void {
             if true {
-                fn helper() -> void {
+                fn helper(): void {
                     print("hello");
                 }
                 helper();
@@ -88,10 +88,10 @@ fn test_parse_nested_function_in_if_block() {
 #[test]
 fn test_parse_nested_function_in_while_block() {
     let source = r#"
-        fn outer() -> void {
+        fn outer(): void {
             let mut i: number = 0;
             while i < 5 {
-                fn increment() -> void {
+                fn increment(): void {
                     i += 1;
                 }
                 increment();
@@ -107,9 +107,9 @@ fn test_parse_nested_function_in_while_block() {
 #[test]
 fn test_parse_nested_function_in_for_block() {
     let source = r#"
-        fn outer() -> void {
+        fn outer(): void {
             for i in [0, 1, 2, 3, 4] {
-                fn log(borrow x: number) -> void {
+                fn log(borrow x: number): void {
                     print(str(x));
                 }
                 log(i);
@@ -124,11 +124,11 @@ fn test_parse_nested_function_in_for_block() {
 #[test]
 fn test_parse_multiple_nested_functions_same_scope() {
     let source = r#"
-        fn outer() -> number {
-            fn add(borrow a: number, borrow b: number) -> number {
+        fn outer(): number {
+            fn add(borrow a: number, borrow b: number): number {
                 return a + b;
             }
-            fn multiply(borrow a: number, borrow b: number) -> number {
+            fn multiply(borrow a: number, borrow b: number): number {
                 return a * b;
             }
             return add(2, multiply(3, 4));
@@ -142,9 +142,9 @@ fn test_parse_multiple_nested_functions_same_scope() {
 #[test]
 fn test_parse_deeply_nested_functions() {
     let source = r#"
-        fn level1() -> number {
-            fn level2() -> number {
-                fn level3() -> number {
+        fn level1(): number {
+            fn level2(): number {
+                fn level3(): number {
                     return 42;
                 }
                 return level3();
@@ -160,8 +160,8 @@ fn test_parse_deeply_nested_functions() {
 #[test]
 fn test_parse_nested_function_with_type_params() {
     let source = r#"
-        fn outer<T>() -> void {
-            fn inner<E>(borrow x: E) -> E {
+        fn outer<T>(): void {
+            fn inner<E>(borrow x: E): E {
                 return x;
             }
         }
@@ -174,8 +174,8 @@ fn test_parse_nested_function_with_type_params() {
 #[test]
 fn test_parse_nested_function_no_params() {
     let source = r#"
-        fn outer() -> number {
-            fn get_value() -> number {
+        fn outer(): number {
+            fn get_value(): number {
                 return 42;
             }
             return get_value();
@@ -189,7 +189,7 @@ fn test_parse_nested_function_no_params() {
 #[test]
 fn test_parse_nested_function_requires_return_type() {
     let source = r#"
-        fn outer() -> void {
+        fn outer(): void {
             fn helper(borrow x: number) {
                 return x;
             }
@@ -213,8 +213,8 @@ fn test_parse_nested_function_requires_return_type() {
 #[test]
 fn test_parse_nested_function_syntax_error_missing_body() {
     let source = r#"
-        fn outer() -> void {
-            fn helper() -> void;
+        fn outer(): void {
+            fn helper(): void;
         }
     "#;
     let (_program, diagnostics) = parse_source(source);
@@ -364,7 +364,7 @@ fn test_for_loop_errors(#[case] source: &str, #[case] expected: &str) {
 #[test]
 fn test_h202_type_array_syntax_no_cascade() {
     let source = r#"
-fn main() -> void {
+fn main(): void {
     let mut people: Person[] = match load() {
         Ok(p) => p,
         Err(e) => {

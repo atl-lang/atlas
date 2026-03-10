@@ -3,11 +3,11 @@ use super::super::*;
 #[test]
 fn array_generic_is_alias_for_array_syntax() {
     let src = r#"
-fn first(borrow nums: Array<number>) -> number {
+fn first(borrow nums: Array<number>): number {
     return nums[0];
 }
 
-fn sum(borrow nums: Array<number>) -> number {
+fn sum(borrow nums: Array<number>): number {
     let mut total = 0;
     for n in nums {
         total = total + n;

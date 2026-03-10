@@ -5,7 +5,7 @@ JSON parsing, serialization, validation, and manipulation.
 ## parseJSON
 
 ```atlas
-fn parseJSON(str: string) -> Result<json, string>
+fn parseJSON(str: string) : Result<json, string>
 ```
 
 Parses JSON string into `json`.
@@ -33,7 +33,7 @@ Parses JSON string into `json`.
 ## toJSON
 
 ```atlas
-fn toJSON(value: any) -> string
+fn toJSON(value: any) : string
 ```
 
 Serializes Atlas value to JSON string.
@@ -50,7 +50,7 @@ Serializes Atlas value to JSON string.
 ## isValidJSON
 
 ```atlas
-fn isValidJSON(str: string) -> bool
+fn isValidJSON(str: string) : bool
 ```
 
 Validates if string is valid JSON without parsing.
@@ -65,7 +65,7 @@ Validates if string is valid JSON without parsing.
 ## prettifyJSON
 
 ```atlas
-fn prettifyJSON(str: string, indent: number) -> string
+fn prettifyJSON(str: string, indent: number) : string
 ```
 
 Formats JSON string with indentation.
@@ -79,7 +79,7 @@ Formats JSON string with indentation.
 ## minifyJSON
 
 ```atlas
-fn minifyJSON(str: string) -> string
+fn minifyJSON(str: string) : string
 ```
 
 Removes all whitespace from JSON string.
@@ -92,7 +92,7 @@ Removes all whitespace from JSON string.
 ## jsonAsString
 
 ```atlas
-fn jsonAsString(json: json) -> Option<string>
+fn jsonAsString(json: json) : Option<string>
 ```
 
 Extracts string value from `json`.
@@ -105,7 +105,7 @@ Extracts string value from `json`.
 ## jsonAsNumber
 
 ```atlas
-fn jsonAsNumber(json: json) -> Option<number>
+fn jsonAsNumber(json: json) : Option<number>
 ```
 
 Extracts number value from `json`.
@@ -118,7 +118,7 @@ Extracts number value from `json`.
 ## jsonAsBool
 
 ```atlas
-fn jsonAsBool(json: json) -> Option<bool>
+fn jsonAsBool(json: json) : Option<bool>
 ```
 
 Extracts boolean value from `json`.
@@ -131,7 +131,7 @@ Extracts boolean value from `json`.
 ## jsonGetString
 
 ```atlas
-fn jsonGetString(json: json, key: string) -> Option<string>
+fn jsonGetString(json: json, key: string) : Option<string>
 ```
 
 Gets string value from JSON object by key.
@@ -145,7 +145,7 @@ Gets string value from JSON object by key.
 ## jsonGetNumber
 
 ```atlas
-fn jsonGetNumber(json: json, key: string) -> Option<number>
+fn jsonGetNumber(json: json, key: string) : Option<number>
 ```
 
 Gets number value from JSON object by key.
@@ -159,7 +159,7 @@ Gets number value from JSON object by key.
 ## jsonGetBool
 
 ```atlas
-fn jsonGetBool(json: json, key: string) -> Option<bool>
+fn jsonGetBool(json: json, key: string) : Option<bool>
 ```
 
 Gets boolean value from JSON object by key.
@@ -173,7 +173,7 @@ Gets boolean value from JSON object by key.
 ## jsonGetArray
 
 ```atlas
-fn jsonGetArray(json: json, key: string) -> Option<json>
+fn jsonGetArray(json: json, key: string) : Option<json>
 ```
 
 Gets array value from JSON object by key.
@@ -187,7 +187,7 @@ Gets array value from JSON object by key.
 ## jsonGetObject
 
 ```atlas
-fn jsonGetObject(json: json, key: string) -> Option<json>
+fn jsonGetObject(json: json, key: string) : Option<json>
 ```
 
 Gets object value from JSON object by key.
@@ -201,7 +201,7 @@ Gets object value from JSON object by key.
 ## jsonIsNull
 
 ```atlas
-fn jsonIsNull(json: json) -> bool
+fn jsonIsNull(json: json) : bool
 ```
 
 Checks if JSON value is null.

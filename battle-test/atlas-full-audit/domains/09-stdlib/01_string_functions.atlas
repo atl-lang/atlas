@@ -53,7 +53,7 @@ print("substring(4,9): " + sub);
 
 // Pipeline: split → uppercase each word → rejoin with dash
 let tag_words: string[] = split("atlas language test", " ");
-let upper_words: string[] = map(tag_words, fn(borrow w: string) -> string {
+let upper_words: string[] = map(tag_words, fn(borrow w: string) : string {
     return toUpperCase(w);
 });
 let result: string = join(upper_words, "-");

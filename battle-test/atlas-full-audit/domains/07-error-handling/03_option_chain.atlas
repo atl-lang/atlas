@@ -2,13 +2,13 @@
 // Tests: Option<T> with Some/None, match, chaining.
 // FRICTION: 'return' inside match arm is syntax error — must use if/else pattern.
 
-fn find_user(borrow id: number) -> Option<string> {
+fn find_user(borrow id: number) : Option<string> {
     if id == 1 { return Some("Alice"); }
     if id == 2 { return Some("Bob"); }
     return None;
 }
 
-fn greet_user(borrow id: number) -> string {
+fn greet_user(borrow id: number) : string {
     let user: Option<string> = find_user(id);
     // WORKAROUND: cannot 'return' inside match arm
     // Natural: match user { Some(n) => "hello, " + n, None => return "not found" }

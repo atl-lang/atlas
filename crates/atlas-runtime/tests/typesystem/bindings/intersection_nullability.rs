@@ -17,7 +17,7 @@ use pretty_assertions::assert_eq;
 #[case("let _x: bool & bool = true;")]
 #[case("let _x: []number & []number = [1, 2];")]
 #[case("type Same = number & number; let _x: Same = 1;")]
-#[case("fn f(borrow x: number) -> number { return x; } let _x: ((number) -> number) & ((number) -> number) = f;")]
+#[case("fn f(borrow x: number): number { return x; } let _x: ((number): number) & ((number): number) = f;")]
 #[case("let _x: (number | string) & number = 1;")]
 #[case("let _x: (number | string) & number = 2;")]
 #[case("let _x: (number | string) & string = \"hi\";")]
@@ -45,7 +45,7 @@ fn test_intersection_construction(#[case] source: &str) {
 #[case("let _x: (number | string) & string = 1;")]
 #[case("let _x: (bool | string) & number = 1;")]
 #[case(
-    "fn f(borrow x: number) -> number { return x; } let _x: (number) -> number & (string) -> string = f;"
+    "fn f(borrow x: number): number { return x; } let _x: (number): number & (string): string = f;"
 )]
 #[case("let _x: number & string & bool = 1;")]
 #[case("type Id<T> = T & string; let _x: Id<number> = 1;")]
@@ -150,13 +150,13 @@ fn test_null_assignment_errors(#[case] source: &str) {
 
 #[rstest]
 #[case::number_param(
-    "fn acceptsNumber(borrow x: number) -> number { return x; }\nlet result = acceptsNumber(null);"
+    "fn acceptsNumber(borrow x: number): number { return x; }\nlet result = acceptsNumber(null);"
 )]
 #[case::string_param(
-    "fn acceptsString(borrow x: string) -> string { return x; }\nlet result = acceptsString(null);"
+    "fn acceptsString(borrow x: string): string { return x; }\nlet result = acceptsString(null);"
 )]
 #[case::bool_param(
-    "fn acceptsBool(borrow x: bool) -> bool { return x; }\nlet result = acceptsBool(null);"
+    "fn acceptsBool(borrow x: bool): bool { return x; }\nlet result = acceptsBool(null);"
 )]
 fn test_null_function_parameter_errors(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
@@ -166,9 +166,9 @@ fn test_null_function_parameter_errors(#[case] source: &str) {
 // ========== Null Function Return Errors ==========
 
 #[rstest]
-#[case::number_return("fn returnsNumber() -> number { return null; }")]
-#[case::string_return("fn returnsString() -> string { return null; }")]
-#[case::bool_return("fn returnsBool() -> bool { return null; }")]
+#[case::number_return("fn returnsNumber(): number { return null; }")]
+#[case::string_return("fn returnsString(): string { return null; }")]
+#[case::bool_return("fn returnsBool(): bool { return null; }")]
 fn test_null_function_return_errors(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
     assert_has_error(&diagnostics, "AT3001");

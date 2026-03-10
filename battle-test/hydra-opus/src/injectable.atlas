@@ -16,7 +16,7 @@ struct ToolResult {
 }
 
 // Get the definition for a named tool
-fn get_tool_definition(borrow name: string) -> Option<ToolDefinition> {
+fn get_tool_definition(borrow name: string) : Option<ToolDefinition> {
     return match name {
         "hydra_restart" => Some(ToolDefinition {
             name: "hydra_restart",
@@ -48,7 +48,7 @@ fn get_tool_definition(borrow name: string) -> Option<ToolDefinition> {
 }
 
 // Build schema for hydra_restart
-fn build_restart_schema() -> HashMap<string, any> {
+fn build_restart_schema() : HashMap<string, any> {
     let properties = hashMapNew();
     let reason_prop = hashMapNew();
     reason_prop = hashMapPut(reason_prop, "type", "string");
@@ -62,7 +62,7 @@ fn build_restart_schema() -> HashMap<string, any> {
 }
 
 // Build empty schema
-fn build_empty_schema() -> HashMap<string, any> {
+fn build_empty_schema() : HashMap<string, any> {
     let schema = hashMapNew();
     schema = hashMapPut(schema, "type", "object");
     schema = hashMapPut(schema, "properties", hashMapNew());
@@ -70,7 +70,7 @@ fn build_empty_schema() -> HashMap<string, any> {
 }
 
 // Build schema for hydra_logs
-fn build_logs_schema() -> HashMap<string, any> {
+fn build_logs_schema() : HashMap<string, any> {
     let properties = hashMapNew();
     let lines_prop = hashMapNew();
     lines_prop = hashMapPut(lines_prop, "type", "number");
@@ -86,7 +86,7 @@ fn build_logs_schema() -> HashMap<string, any> {
 }
 
 // Build schema for hydra_force_restart
-fn build_force_restart_schema() -> HashMap<string, any> {
+fn build_force_restart_schema() : HashMap<string, any> {
     let properties = hashMapNew();
     let confirm_prop = hashMapNew();
     confirm_prop = hashMapPut(confirm_prop, "type", "boolean");
@@ -101,7 +101,7 @@ fn build_force_restart_schema() -> HashMap<string, any> {
 }
 
 // Get all default tool definitions
-fn default_tool_definitions() -> ToolDefinition[] {
+fn default_tool_definitions() : ToolDefinition[] {
     return [
         unwrap(get_tool_definition("hydra_restart")),
         unwrap(get_tool_definition("hydra_status")),
@@ -112,7 +112,7 @@ fn default_tool_definitions() -> ToolDefinition[] {
 }
 
 // Check if a tool name conflicts with existing tools
-fn has_collision(borrow tool_name: string, borrow existing_tools: string[]) -> bool {
+fn has_collision(borrow tool_name: string, borrow existing_tools: string[]) : bool {
     return arrayIncludes(existing_tools, tool_name);
 }
 
@@ -120,7 +120,7 @@ fn has_collision(borrow tool_name: string, borrow existing_tools: string[]) -> b
 fn merge_tools(
     borrow hydra_tools: ToolDefinition[],
     borrow existing_tool_names: string[],
-    borrow policy: string) -> Result<ToolDefinition[], string> {
+    borrow policy: string) : Result<ToolDefinition[], string> {
     let result: ToolDefinition[] = [];
 
     for i in 0..len(hydra_tools) {

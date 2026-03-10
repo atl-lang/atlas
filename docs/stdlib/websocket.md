@@ -5,7 +5,7 @@ WebSocket client primitives built on tungstenite.
 ### wsConnect
 
 ```atlas
-fn wsConnect(url: string) -> WebSocket
+fn wsConnect(url: string) : WebSocket
 ```
 
 Connects to a WebSocket server and returns a WebSocket handle.
@@ -23,7 +23,7 @@ let ws = wsConnect("wss://example.com/socket");
 ### wsSend
 
 ```atlas
-fn wsSend(ws: WebSocket, message: string) -> null
+fn wsSend(ws: WebSocket, message: string) : null
 ```
 
 Sends a text message.
@@ -42,7 +42,7 @@ wsSend(ws, "hello");
 ### wsSendBinary
 
 ```atlas
-fn wsSendBinary(ws: WebSocket, data: []number) -> null
+fn wsSendBinary(ws: WebSocket, data: []number) : null
 ```
 
 Sends binary data as an array of bytes.
@@ -61,7 +61,7 @@ wsSendBinary(ws, [1, 2, 3]);
 ### wsReceive
 
 ```atlas
-fn wsReceive(ws: WebSocket) -> [string, any]
+fn wsReceive(ws: WebSocket) : [string, any]
 ```
 
 Receives a message and returns `[type, data]`.
@@ -81,7 +81,7 @@ let [kind, payload] = wsReceive(ws);
 ### wsPing
 
 ```atlas
-fn wsPing(ws: WebSocket) -> null
+fn wsPing(ws: WebSocket) : null
 ```
 
 Sends a ping frame.
@@ -99,7 +99,7 @@ wsPing(ws);
 ### wsClose
 
 ```atlas
-fn wsClose(ws: WebSocket) -> null
+fn wsClose(ws: WebSocket) : null
 ```
 
 Closes the WebSocket connection.

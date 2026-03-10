@@ -44,7 +44,7 @@ fn test_function_persistence() {
     let mut repl = ReplCore::new();
     eval_ok(
         &mut repl,
-        "fn double(borrow x: number) -> number { return x * 2; }",
+        "fn double(borrow x: number): number { return x * 2; }",
     );
     assert_value(&mut repl, "double(21);", Value::Number(42.0));
 }
@@ -54,11 +54,11 @@ fn test_multiple_functions_persist() {
     let mut repl = ReplCore::new();
     eval_ok(
         &mut repl,
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; }",
     );
     eval_ok(
         &mut repl,
-        "fn mul(borrow a: number, borrow b: number) -> number { return a * b; }",
+        "fn mul(borrow a: number, borrow b: number): number { return a * b; }",
     );
     assert_value(&mut repl, "add(5, 3);", Value::Number(8.0));
     assert_value(&mut repl, "mul(6, 7);", Value::Number(42.0));
@@ -69,11 +69,11 @@ fn test_functions_call_other_functions() {
     let mut repl = ReplCore::new();
     eval_ok(
         &mut repl,
-        "fn square(borrow x: number) -> number { return x * x; }",
+        "fn square(borrow x: number): number { return x * x; }",
     );
     eval_ok(
         &mut repl,
-        "fn sum_of_squares(borrow a: number, borrow b: number) -> number { return square(a) + square(b); }",
+        "fn sum_of_squares(borrow a: number, borrow b: number): number { return square(a) + square(b); }",
     );
     assert_value(&mut repl, "sum_of_squares(3, 4);", Value::Number(25.0));
 }
@@ -88,7 +88,7 @@ fn test_functions_use_global_variables() {
     eval_ok(&mut repl, "let multiplier = 10;");
     eval_ok(
         &mut repl,
-        "fn scale(borrow x: number) -> number { return x * multiplier; }",
+        "fn scale(borrow x: number): number { return x * multiplier; }",
     );
     assert_value(&mut repl, "scale(5);", Value::Number(50.0));
 }
@@ -96,7 +96,7 @@ fn test_functions_use_global_variables() {
 #[test]
 fn test_variables_use_functions() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn getValue() -> number { return 42; }");
+    eval_ok(&mut repl, "fn getValue(): number { return 42; }");
     eval_ok(&mut repl, "let result = getValue();");
     assert_value(&mut repl, "result;", Value::Number(42.0));
 }
@@ -111,11 +111,11 @@ fn test_nested_function_calls_with_state() {
     eval_ok(&mut repl, "let base = 10;");
     eval_ok(
         &mut repl,
-        "fn add_base(borrow x: number) -> number { return x + base; }",
+        "fn add_base(borrow x: number): number { return x + base; }",
     );
     eval_ok(
         &mut repl,
-        "fn double_and_add(borrow x: number) -> number { return add_base(x * 2); }",
+        "fn double_and_add(borrow x: number): number { return add_base(x * 2); }",
     );
     assert_value(&mut repl, "double_and_add(5);", Value::Number(20.0));
 }
@@ -139,7 +139,7 @@ fn test_multiple_statements_in_one_input() {
 #[test]
 fn test_recursion_across_repl_inputs() {
     let mut repl = ReplCore::new();
-    eval_ok(&mut repl, "fn factorial(borrow n: number) -> number { if (n <= 1) { return 1; } return n * factorial(n - 1); }");
+    eval_ok(&mut repl, "fn factorial(borrow n: number): number { if (n <= 1) { return 1; } return n * factorial(n - 1); }");
     assert_value(&mut repl, "factorial(5);", Value::Number(120.0));
 }
 
@@ -150,7 +150,7 @@ fn test_recursion_across_repl_inputs() {
 #[test]
 fn repl_type_of_function_call() {
     let mut repl = ReplCore::new();
-    repl.eval_line("fn double(borrow x: number) -> number { return x * 2; }");
+    repl.eval_line("fn double(borrow x: number): number { return x * 2; }");
     let result = repl.type_of_expression("double(5);");
     assert!(result.diagnostics.is_empty());
     assert_eq!(result.ty.unwrap().display_name(), "number");

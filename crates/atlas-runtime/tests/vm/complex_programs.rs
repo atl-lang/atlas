@@ -20,72 +20,72 @@ use pretty_assertions::assert_eq;
 
 #[test]
 fn test_recursive_fibonacci_small() {
-    let source = "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(0);";
+    let source = "fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(0);";
     assert_eq!(vm_number(source), 0.0);
 }
 
 #[test]
 fn test_recursive_fibonacci_10() {
-    let source = "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(10);";
+    let source = "fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(10);";
     assert_eq!(vm_number(source), 55.0);
 }
 
 #[test]
 fn test_recursive_fibonacci_20() {
-    let source = "fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);";
+    let source = "fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);";
     assert_eq!(vm_number(source), 6765.0);
 }
 
 #[test]
 fn test_recursive_factorial() {
-    let source = "fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(10);";
+    let source = "fn fact(borrow n: number): number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(10);";
     assert_eq!(vm_number(source), 3628800.0);
 }
 
 #[test]
 fn test_recursive_factorial_1() {
-    let source = "fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(1);";
+    let source = "fn fact(borrow n: number): number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(1);";
     assert_eq!(vm_number(source), 1.0);
 }
 
 #[test]
 fn test_recursive_factorial_0() {
-    let source = "fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(0);";
+    let source = "fn fact(borrow n: number): number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(0);";
     assert_eq!(vm_number(source), 1.0);
 }
 
 #[test]
 fn test_recursive_gcd() {
-    let source = "fn gcd(borrow a: number, borrow b: number) -> number { if (b == 0) { return a; } return gcd(b, a % b); } gcd(48, 18);";
+    let source = "fn gcd(borrow a: number, borrow b: number): number { if (b == 0) { return a; } return gcd(b, a % b); } gcd(48, 18);";
     assert_eq!(vm_number(source), 6.0);
 }
 
 #[test]
 fn test_recursive_gcd_coprime() {
-    let source = "fn gcd(borrow a: number, borrow b: number) -> number { if (b == 0) { return a; } return gcd(b, a % b); } gcd(17, 13);";
+    let source = "fn gcd(borrow a: number, borrow b: number): number { if (b == 0) { return a; } return gcd(b, a % b); } gcd(17, 13);";
     assert_eq!(vm_number(source), 1.0);
 }
 
 #[test]
 fn test_recursive_power() {
-    let source = "fn power(borrow base: number, borrow exp: number) -> number { if (exp == 0) { return 1; } return base * power(base, exp - 1); } power(2, 10);";
+    let source = "fn power(borrow base: number, borrow exp: number): number { if (exp == 0) { return 1; } return base * power(base, exp - 1); } power(2, 10);";
     assert_eq!(vm_number(source), 1024.0);
 }
 
 #[test]
 fn test_recursive_sum() {
-    let source = "fn sum_to(borrow n: number) -> number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(100);";
+    let source = "fn sum_to(borrow n: number): number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(100);";
     assert_eq!(vm_number(source), 5050.0);
 }
 
 #[test]
 fn test_recursive_mutual_even_odd() {
     let source = r#"
-fn is_even(borrow n: number) -> bool {
+fn is_even(borrow n: number): bool {
     if (n == 0) { return true; }
     return is_odd(n - 1);
 }
-fn is_odd(borrow n: number) -> bool {
+fn is_odd(borrow n: number): bool {
     if (n == 0) { return false; }
     return is_even(n - 1);
 }
@@ -97,11 +97,11 @@ is_even(10);
 #[test]
 fn test_recursive_mutual_odd() {
     let source = r#"
-fn is_even(borrow n: number) -> bool {
+fn is_even(borrow n: number): bool {
     if (n == 0) { return true; }
     return is_odd(n - 1);
 }
-fn is_odd(borrow n: number) -> bool {
+fn is_odd(borrow n: number): bool {
     if (n == 0) { return false; }
     return is_even(n - 1);
 }
@@ -112,7 +112,7 @@ is_odd(7);
 
 #[test]
 fn test_recursive_count_digits() {
-    let source = "fn count_digits(borrow n: number) -> number { if (n < 10) { return 1; } return 1 + count_digits(n / 10); } count_digits(12345);";
+    let source = "fn count_digits(borrow n: number): number { if (n < 10) { return 1; } return 1 + count_digits(n / 10); } count_digits(12345);";
     // Note: 12345 / 10 = 1234.5, not integer division. Let's use a floor approach:
     // Actually Atlas uses float division. count_digits(1234.5) -> count_digits(123.45) etc.
     // This will keep going. Let me use a different approach.
@@ -123,9 +123,9 @@ fn test_recursive_count_digits() {
 #[test]
 fn test_recursive_nested_calls() {
     let source = r#"
-fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-fn mul(borrow a: number, borrow b: number) -> number { return a * b; }
-fn compute(borrow x: number) -> number {
+fn add(borrow a: number, borrow b: number): number { return a + b; }
+fn mul(borrow a: number, borrow b: number): number { return a * b; }
+fn compute(borrow x: number): number {
     return add(mul(x, x), mul(x, 2));
 }
 compute(5);
@@ -136,10 +136,10 @@ compute(5);
 #[test]
 fn test_recursive_deep_chain() {
     let source = r#"
-fn a(borrow x: number) -> number { return b(x + 1); }
-fn b(borrow x: number) -> number { return c(x + 1); }
-fn c(borrow x: number) -> number { return d(x + 1); }
-fn d(borrow x: number) -> number { return x + 1; }
+fn a(borrow x: number): number { return b(x + 1); }
+fn b(borrow x: number): number { return c(x + 1); }
+fn c(borrow x: number): number { return d(x + 1); }
+fn d(borrow x: number): number { return x + 1; }
 a(0);
 "#;
     assert_eq!(vm_number(source), 4.0);
@@ -422,8 +422,8 @@ count;
 #[test]
 fn test_function_composition_basic() {
     let source = r#"
-fn double(borrow x: number) -> number { return x * 2; }
-fn add_one(borrow x: number) -> number { return x + 1; }
+fn double(borrow x: number): number { return x * 2; }
+fn add_one(borrow x: number): number { return x + 1; }
 add_one(double(5));
 "#;
     assert_eq!(vm_number(source), 11.0);
@@ -432,9 +432,9 @@ add_one(double(5));
 #[test]
 fn test_function_composition_triple() {
     let source = r#"
-fn square(borrow x: number) -> number { return x * x; }
-fn negate(borrow x: number) -> number { return -x; }
-fn add_ten(borrow x: number) -> number { return x + 10; }
+fn square(borrow x: number): number { return x * x; }
+fn negate(borrow x: number): number { return -x; }
+fn add_ten(borrow x: number): number { return x + 10; }
 add_ten(negate(square(3)));
 "#;
     assert_eq!(vm_number(source), 1.0);
@@ -444,7 +444,7 @@ add_ten(negate(square(3)));
 fn test_function_higher_order_map_simulation() {
     // Simulate map by calling a function on each element
     let source = r#"
-fn double(borrow x: number) -> number { return x * 2; }
+fn double(borrow x: number): number { return x * 2; }
 let arr = [1, 2, 3, 4, 5];
 let mut i = 0;
 while (i < 5) {
@@ -459,7 +459,7 @@ arr[0] + arr[1] + arr[2] + arr[3] + arr[4];
 #[test]
 fn test_function_accumulator_pattern() {
     let source = r#"
-fn accumulate(borrow arr_sum: number, borrow val: number) -> number {
+fn accumulate(borrow arr_sum: number, borrow val: number): number {
     return arr_sum + val;
 }
 let arr = [10, 20, 30, 40, 50];
@@ -477,7 +477,7 @@ total;
 #[test]
 fn test_function_predicate_filter_simulation() {
     let source = r#"
-fn is_positive(borrow x: number) -> bool { return x > 0; }
+fn is_positive(borrow x: number): bool { return x > 0; }
 let arr = [-3, -1, 0, 2, 5, -4, 7, 1];
 let mut count = 0;
 let mut i = 0;
@@ -495,7 +495,7 @@ count;
 #[test]
 fn test_function_recursive_with_accumulator() {
     let source = r#"
-fn sum_acc(borrow n: number, borrow acc: number) -> number {
+fn sum_acc(borrow n: number, borrow acc: number): number {
     if (n <= 0) { return acc; }
     return sum_acc(n - 1, acc + n);
 }
@@ -507,7 +507,7 @@ sum_acc(100, 0);
 #[test]
 fn test_function_multiple_return_paths() {
     let source = r#"
-fn classify(borrow x: number) -> number {
+fn classify(borrow x: number): number {
     if (x > 0) { return 1; }
     if (x < 0) { return -1; }
     return 0;
@@ -520,7 +520,7 @@ classify(5) + classify(-3) + classify(0);
 #[test]
 fn test_function_string_builder_simulation() {
     let source = r#"
-fn repeat_char(borrow ch: string, borrow n: number) -> string {
+fn repeat_char(borrow ch: string, borrow n: number): string {
     let mut result = "";
     let mut i = 0;
     while (i < n) {
@@ -537,7 +537,7 @@ repeat_char("x", 5);
 #[test]
 fn test_function_abs() {
     let source = r#"
-fn abs(borrow x: number) -> number {
+fn abs(borrow x: number): number {
     if (x < 0) { return -x; }
     return x;
 }
@@ -549,8 +549,8 @@ abs(-42) + abs(42) + abs(0);
 #[test]
 fn test_function_min_max() {
     let source = r#"
-fn min(borrow a: number, borrow b: number) -> number { if (a < b) { return a; } return b; }
-fn max(borrow a: number, borrow b: number) -> number { if (a > b) { return a; } return b; }
+fn min(borrow a: number, borrow b: number): number { if (a < b) { return a; } return b; }
+fn max(borrow a: number, borrow b: number): number { if (a > b) { return a; } return b; }
 min(3, 7) + max(3, 7);
 "#;
     assert_eq!(vm_number(source), 10.0);
@@ -773,7 +773,7 @@ a + b + c + d;
 #[test]
 fn test_string_repeat_pattern() {
     let source = r#"
-fn repeat(borrow s: string, borrow n: number) -> string {
+fn repeat(borrow s: string, borrow n: number): string {
     let mut result = "";
     let mut i = 0;
     while (i < n) {
@@ -965,7 +965,7 @@ e;
 #[case(8, 40320.0)]
 fn test_math_factorial_parametric(#[case] n: i32, #[case] expected: f64) {
     let source = format!(
-        "fn fact(borrow n: number) -> number {{ if (n <= 1) {{ return 1; }} return n * fact(n - 1); }} fact({});",
+        "fn fact(borrow n: number): number {{ if (n <= 1) {{ return 1; }} return n * fact(n - 1); }} fact({});",
         n
     );
     assert_eq!(vm_number(&source), expected);
@@ -979,7 +979,7 @@ fn test_math_factorial_parametric(#[case] n: i32, #[case] expected: f64) {
 #[case(15, 377.0)]
 fn test_math_fibonacci_parametric(#[case] n: i32, #[case] expected: f64) {
     let source = format!(
-        "fn fib(borrow n: number) -> number {{ if (n <= 1) {{ return n; }} return fib(n - 1) + fib(n - 2); }} fib({});",
+        "fn fib(borrow n: number): number {{ if (n <= 1) {{ return n; }} return fib(n - 1) + fib(n - 2); }} fib({});",
         n
     );
     // fib(1)=1, fib(2)=1, fib(3)=2, fib(10)=55, fib(15)=610
@@ -1091,7 +1091,7 @@ output;
 #[test]
 fn test_control_early_return() {
     let source = r#"
-fn find_first_over(borrow threshold: number) -> number {
+fn find_first_over(borrow threshold: number): number {
     let mut i = 0;
     while (i < 100) {
         if (i * i > threshold) {
@@ -1109,7 +1109,7 @@ find_first_over(200);
 #[test]
 fn test_control_multiple_conditions() {
     let source = r#"
-fn in_range(borrow x: number, borrow lo: number, borrow hi: number) -> bool {
+fn in_range(borrow x: number, borrow lo: number, borrow hi: number): bool {
     return x >= lo && x <= hi;
 }
 let mut count = 0;
@@ -1175,7 +1175,7 @@ result;
 #[test]
 fn test_control_loop_with_function_call() {
     let source = r#"
-fn process(borrow x: number) -> number {
+fn process(borrow x: number): number {
     if (x % 2 == 0) { return x / 2; }
     return x * 3 + 1;
 }
@@ -1194,7 +1194,7 @@ steps;
 fn test_control_short_circuit_and() {
     let source = r#"
 let mut evaluated = 0;
-fn side_effect() -> bool {
+fn side_effect(): bool {
     evaluated = evaluated + 1;
     return true;
 }

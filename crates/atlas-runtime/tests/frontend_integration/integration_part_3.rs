@@ -144,13 +144,13 @@ fn test_pipeline_format_preserves_semantics() {
 
 #[rstest]
 #[case("let x = 42;")]
-#[case("fn foo() -> number { return 1; }")]
+#[case("fn foo(): number { return 1; }")]
 #[case("if true { let a = 1; } else { let b = 2; }")]
 #[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("let s = \"hello world\";")]
 #[case("let a = true; let b = false;")]
-#[case("fn add(borrow a: number, borrow b: number) -> number { return a + b; }")]
+#[case("fn add(borrow a: number, borrow b: number): number { return a + b; }")]
 #[case("let x = 1 + 2 * 3;")]
 #[case("let neg = -5;")]
 fn test_formatted_output_reparses(#[case] source: &str) {
@@ -266,7 +266,7 @@ fn test_format_preserves_block_comments() {
 
 #[test]
 fn test_format_preserves_doc_comments() {
-    let source = "/// Doc comment\nfn foo() -> number { return 1; }\n";
+    let source = "/// Doc comment\nfn foo(): number { return 1; }\n";
     let formatted = fmt(source);
     assert!(formatted.contains("/// Doc comment"));
 }
@@ -285,12 +285,12 @@ fn test_format_preserves_multiple_comments() {
 
 #[rstest]
 #[case("let x = 42;")]
-#[case("fn foo() -> number { return 1; }")]
+#[case("fn foo(): number { return 1; }")]
 #[case("if true { let a = 1; }")]
 #[case("while true { break; }")]
 #[case("let arr = [1, 2, 3];")]
 #[case("// comment\nlet x = 1;")]
-#[case("fn add(borrow a: number, borrow b: number) -> number { return a + b; }")]
+#[case("fn add(borrow a: number, borrow b: number): number { return a + b; }")]
 #[case("let x = 1;\nlet y = 2;\nlet z = x + y;")]
 fn test_format_idempotent(#[case] source: &str) {
     let first = fmt(source);
@@ -309,7 +309,7 @@ fn test_format_idempotent(#[case] source: &str) {
 #[test]
 fn test_format_with_indent_2() {
     let config = FormatConfig::default().with_indent_size(2);
-    let source = "fn foo() -> void { let x = 1; }";
+    let source = "fn foo(): void { let x = 1; }";
     let formatted = match format_source_with_config(source, &config) {
         FormatResult::Ok(s) => s,
         FormatResult::ParseError(e) => panic!("Parse error: {:?}", e),
@@ -320,7 +320,7 @@ fn test_format_with_indent_2() {
 #[test]
 fn test_format_with_indent_4() {
     let config = FormatConfig::default().with_indent_size(4);
-    let source = "fn foo() -> void { let x = 1; }";
+    let source = "fn foo(): void { let x = 1; }";
     let formatted = match format_source_with_config(source, &config) {
         FormatResult::Ok(s) => s,
         FormatResult::ParseError(e) => panic!("Parse error: {:?}", e),

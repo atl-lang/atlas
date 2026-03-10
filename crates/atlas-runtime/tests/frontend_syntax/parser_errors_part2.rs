@@ -23,7 +23,7 @@ fn test_expression_errors(#[case] source: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case("{ let x = 1", "}")]
-#[case("fn foo() -> number { return 1", "}")]
+#[case("fn foo(): number { return 1", "}")]
 fn test_block_errors(#[case] source: &str, #[case] expected: &str) {
     let diagnostics = parse_errors(source);
     assert_has_parser_error(&diagnostics, expected);
@@ -108,7 +108,7 @@ fn test_cascade_suppression_two_independent_errors() {
 /// NOT the old registry string about string escapes (the AT1003 code clash bug).
 #[test]
 fn test_help_text_missing_brace_is_context_specific() {
-    let diagnostics = parse_errors("fn foo() -> number { return 1;");
+    let diagnostics = parse_errors("fn foo(): number { return 1;");
     assert_eq!(diagnostics.len(), 1, "Expected exactly one diagnostic");
     let help = diagnostics[0]
         .help
@@ -215,7 +215,7 @@ fn test_primary_diagnostic_renders_with_level_prefix() {
 /// AT1004 on `TypeName[]` in type position emits "prefix syntax" in the message.
 #[test]
 fn test_issue_h200_typename_postfix_brackets_emits_prefix_syntax_help() {
-    let source = "fn foo(x: Person[]) -> number { return 0; }";
+    let source = "fn foo(x: Person[]): number { return 0; }";
     let diagnostics = parse_errors(source);
     assert!(!diagnostics.is_empty(), "Expected at least one diagnostic");
     let diag = diagnostics

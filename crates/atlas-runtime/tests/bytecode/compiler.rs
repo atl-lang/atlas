@@ -78,7 +78,7 @@ fn test_array_increment() {
 #[test]
 fn test_user_function_simple() {
     let result =
-        execute_source("fn double(borrow x: number) -> number { return x * 2; } double(21);");
+        execute_source("fn double(borrow x: number): number { return x * 2; } double(21);");
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
 }
@@ -86,7 +86,7 @@ fn test_user_function_simple() {
 #[test]
 fn test_user_function_with_multiple_params() {
     let result = execute_source(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(10, 32);",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; } add(10, 32);",
     );
     assert!(result.is_ok());
     assert_eq!(result.unwrap(), Some(Value::Number(42.0)));
@@ -96,7 +96,7 @@ fn test_user_function_with_multiple_params() {
 fn test_user_function_recursion() {
     let result = execute_source(
         r#"
-        fn factorial(borrow n: number) -> number {
+        fn factorial(borrow n: number): number {
             if n <= 1 { return 1; }
             return n * factorial(n - 1);
         }
@@ -111,7 +111,7 @@ fn test_user_function_recursion() {
 fn test_user_function_with_local_variables() {
     let result = execute_source(
         r#"
-        fn calculate(borrow x: number) -> number {
+        fn calculate(borrow x: number): number {
             let y = x * 2;
             let z = y + 10;
             return z;
@@ -127,8 +127,8 @@ fn test_user_function_with_local_variables() {
 fn test_multiple_functions() {
     let result = execute_source(
         r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn triple(borrow x: number) -> number { return x * 3; }
+        fn double(borrow x: number): number { return x * 2; }
+        fn triple(borrow x: number): number { return x * 3; }
         double(7) + triple(4);
     "#,
     );
@@ -140,8 +140,8 @@ fn test_multiple_functions() {
 fn test_function_calling_function() {
     let result = execute_source(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-        fn addThree(borrow a: number, borrow b: number, borrow c: number) -> number {
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
+        fn addThree(borrow a: number, borrow b: number, borrow c: number): number {
             return add(add(a, b), c);
         }
         addThree(10, 20, 12);
@@ -193,7 +193,7 @@ fn test_mixed_operators() {
 fn test_array_in_function() {
     let result = execute_source(
         r#"
-        fn modify_array() -> number {
+        fn modify_array(): number {
             let arr = [1, 2, 3];
             arr[1] += 10;
             return arr[1];

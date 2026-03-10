@@ -5,8 +5,8 @@ use super::*;
 #[test]
 fn test_return_function() {
     let source = r#"
-        fn getDouble() -> (number) -> number {
-            fn double(borrow x: number) -> number { return x * 2; }
+        fn getDouble(): (number): number {
+            fn double(borrow x: number): number { return x * 2; }
             return double;
         }
         let f = getDouble();
@@ -18,7 +18,7 @@ fn test_return_function() {
 #[test]
 fn test_return_builtin() {
     let source = r#"
-        fn getLen() -> (string) -> number {
+        fn getLen(): (string): number {
             return len;
         }
         let f = getLen();
@@ -30,10 +30,10 @@ fn test_return_builtin() {
 #[test]
 fn test_return_function_from_parameter() {
     let source = r#"
-        fn identity(borrow f: (number) -> number) -> (number) -> number {
+        fn identity(borrow f: (number): number): (number): number {
             return f;
         }
-        fn triple(borrow x: number) -> number { return x * 3; }
+        fn triple(borrow x: number): number { return x * 3; }
         let f = identity(triple);
         f(4);
     "#;
@@ -43,9 +43,9 @@ fn test_return_function_from_parameter() {
 #[test]
 fn test_conditional_function_return() {
     let source = r#"
-        fn getFunc(borrow flag: bool) -> (number) -> number {
-            fn double(borrow x: number) -> number { return x * 2; }
-            fn triple(borrow x: number) -> number { return x * 3; }
+        fn getFunc(borrow flag: bool): (number): number {
+            fn double(borrow x: number): number { return x * 2; }
+            fn triple(borrow x: number): number { return x * 3; }
             if (flag) {
                 return double;
             }
@@ -60,8 +60,8 @@ fn test_conditional_function_return() {
 #[test]
 fn test_return_function_and_call_immediately() {
     let source = r#"
-        fn getDouble() -> (number) -> number {
-            fn double(borrow x: number) -> number { return x * 2; }
+        fn getDouble(): (number): number {
+            fn double(borrow x: number): number { return x * 2; }
             return double;
         }
         getDouble()(6);
@@ -76,8 +76,8 @@ fn test_return_function_and_call_immediately() {
 #[test]
 fn test_type_error_wrong_function_type() {
     let source = r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-        let f: (number) -> number = add;
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
+        let f: (number): number = add;
     "#;
     assert_error_code(source, "AT3001");
 }
@@ -94,8 +94,8 @@ fn test_type_error_not_a_function() {
 #[test]
 fn test_type_error_wrong_return_type() {
     let source = r#"
-        fn getString() -> string {
-            fn getNum() -> number { return 42; }
+        fn getString(): string {
+            fn getNum(): number { return 42; }
             return getNum;
         }
     "#;
@@ -105,8 +105,8 @@ fn test_type_error_wrong_return_type() {
 #[test]
 fn test_type_valid_function_assignment() {
     let source = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        let f: (number) -> number = double;
+        fn double(borrow x: number): number { return x * 2; }
+        let f: (number): number = double;
         f(5);
     "#;
     assert_eval_number(source, 10.0);
@@ -115,7 +115,7 @@ fn test_type_valid_function_assignment() {
 #[test]
 fn test_type_valid_function_parameter() {
     let source = r#"
-        fn apply(borrow f: (string) -> number, s: string) -> number {
+        fn apply(borrow f: (string): number, s: string): number {
             return f(s);
         }
         apply(len, "test");
@@ -130,7 +130,7 @@ fn test_type_valid_function_parameter() {
 #[test]
 fn test_function_returning_void() {
     let source = r#"
-        fn getVoid() -> (string) -> void {
+        fn getVoid(): (string): void {
             return print;
         }
         let f = getVoid();
@@ -142,7 +142,7 @@ fn test_function_returning_void() {
 #[test]
 fn test_nested_function_calls_through_variables() {
     let source = r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
         let f = add;
         let g = f;
         let h = g;
@@ -154,8 +154,8 @@ fn test_nested_function_calls_through_variables() {
 #[test]
 fn test_function_with_no_params() {
     let source = r#"
-        fn getFortyTwo() -> number { return 42; }
-        let f: () -> number = getFortyTwo;
+        fn getFortyTwo(): number { return 42; }
+        let f: (): number = getFortyTwo;
         f();
     "#;
     assert_eval_number(source, 42.0);
@@ -164,7 +164,7 @@ fn test_function_with_no_params() {
 #[test]
 fn test_function_with_many_params() {
     let source = r#"
-        fn sum4(borrow a: number, borrow b: number, borrow c: number, borrow d: number) -> number {
+        fn sum4(borrow a: number, borrow b: number, borrow c: number, borrow d: number): number {
             return a + b + c + d;
         }
         let f = sum4;
@@ -176,9 +176,9 @@ fn test_function_with_many_params() {
 #[test]
 fn test_function_variable_in_global_scope() {
     let source = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
         let globalFunc = double;
-        fn useGlobal(borrow x: number) -> number {
+        fn useGlobal(borrow x: number): number {
             return globalFunc(x);
         }
         useGlobal(5);
@@ -194,16 +194,16 @@ fn test_function_variable_in_global_scope() {
 fn test_function_composition() {
     let source = r#"
         fn compose(
-            borrow f: (number) -> number,
-            g: (number) -> number
-        ) -> (number) -> number {
-            fn composed(borrow x: number) -> number {
+            borrow f: (number): number,
+            g: (number): number
+        ): (number): number {
+            fn composed(borrow x: number): number {
                 return f(g(x));
             }
             return composed;
         }
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn inc(borrow x: number) -> number { return x + 1; }
+        fn double(borrow x: number): number { return x * 2; }
+        fn inc(borrow x: number): number { return x + 1; }
         let doubleAndInc = compose(inc, double);
         doubleAndInc(5);
     "#;
@@ -215,12 +215,12 @@ fn test_callback_pattern() {
     let source = r#"
         fn processValue(
             borrow x: number,
-            borrow callback: (number) -> void
-        ) -> void {
+            borrow callback: (number): void
+        ): void {
             callback(x * 2);
         }
         let mut result = 0;
-        fn setResult(borrow x: number) -> void {
+        fn setResult(borrow x: number): void {
             result = x;
         }
         processValue(5, setResult);
@@ -232,9 +232,9 @@ fn test_callback_pattern() {
 #[test]
 fn test_function_array_element() {
     let source = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn triple(borrow x: number) -> number { return x * 3; }
-        let funcs: ((number) -> number)[] = [double, triple];
+        fn double(borrow x: number): number { return x * 2; }
+        fn triple(borrow x: number): number { return x * 3; }
+        let funcs: ((number): number)[] = [double, triple];
         funcs[0](5) + funcs[1](5);
     "#;
     assert_eval_number(source, 25.0);

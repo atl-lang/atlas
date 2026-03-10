@@ -92,7 +92,7 @@ fn test_arr_filter_returns_array() {
     check_no_type_errors(
         r#"
         let a = [1, 2, 3, 4];
-        let evens = a.filter(fn(x) -> bool { x > 2; });
+        let evens = a.filter(fn(x): bool { x > 2; });
         len(evens);
     "#,
     );

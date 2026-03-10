@@ -83,7 +83,7 @@ fn pm_run_vm(source: &str) -> Result<String, String> {
 #[test]
 fn test_literal_number_match() {
     let source = r#"
-        fn test(borrow x: number) -> string {
+        fn test(borrow x: number): string {
             return match x {
                 42 => "matched",
                 _ => "not matched"
@@ -104,7 +104,7 @@ fn test_literal_number_match() {
 #[test]
 fn test_literal_string_match() {
     let source = r#"
-        fn test(borrow s: string) -> number {
+        fn test(borrow s: string): number {
             return match s {
                 "hello" => 1,
                 "world" => 2,
@@ -125,7 +125,7 @@ fn test_literal_string_match() {
 #[test]
 fn test_literal_bool_match() {
     let source = r#"
-        fn test(borrow b: bool) -> string {
+        fn test(borrow b: bool): string {
             return match b {
                 true => "yes",
                 false => "no"
@@ -149,7 +149,7 @@ fn test_literal_bool_match() {
 #[test]
 fn test_wildcard_catch_all() {
     let source = r#"
-        fn test(borrow x: number) -> string {
+        fn test(borrow x: number): string {
             return match x {
                 _ => "always matches"
             };
@@ -172,7 +172,7 @@ fn test_wildcard_catch_all() {
 #[test]
 fn test_variable_binding_simple() {
     let source = r#"
-        fn test(borrow x: number) -> number {
+        fn test(borrow x: number): number {
             return match x {
                 value => value + 10
             };
@@ -191,7 +191,7 @@ fn test_variable_binding_simple() {
 #[test]
 fn test_variable_binding_with_literal() {
     let source = r#"
-        fn test(borrow x: number) -> number {
+        fn test(borrow x: number): number {
             return match x {
                 0 => 100,
                 n => n * 2
@@ -215,7 +215,7 @@ fn test_variable_binding_with_literal() {
 #[test]
 fn test_option_some_match() {
     let source = r#"
-        fn test(borrow opt: Option<number>) -> number {
+        fn test(borrow opt: Option<number>): number {
             return match opt {
                 Some(x) => x,
                 None => 0
@@ -235,7 +235,7 @@ fn test_option_some_match() {
 #[test]
 fn test_option_none_match() {
     let source = r#"
-        fn test(borrow opt: Option<number>) -> number {
+        fn test(borrow opt: Option<number>): number {
             return match opt {
                 Some(x) => x,
                 None => -1
@@ -255,7 +255,7 @@ fn test_option_none_match() {
 #[test]
 fn test_option_extract_and_use() {
     let source = r#"
-        fn double_option(borrow opt: Option<number>) -> Option<number> {
+        fn double_option(borrow opt: Option<number>): Option<number> {
             return match opt {
                 Some(x) => Some(x * 2),
                 None => None()
@@ -279,7 +279,7 @@ fn test_option_extract_and_use() {
 #[test]
 fn test_result_ok_match() {
     let source = r#"
-        fn test(borrow res: Result<number, string>) -> number {
+        fn test(borrow res: Result<number, string>): number {
             return match res {
                 Ok(x) => x,
                 Err(e) => 0
@@ -299,7 +299,7 @@ fn test_result_ok_match() {
 #[test]
 fn test_result_err_match() {
     let source = r#"
-        fn test(borrow res: Result<number, string>) -> string {
+        fn test(borrow res: Result<number, string>): string {
             return match res {
                 Ok(x) => "success",
                 Err(e) => e
@@ -323,7 +323,7 @@ fn test_result_err_match() {
 #[test]
 fn test_nested_option_some() {
     let source = r#"
-        fn test(borrow opt: Option<Option<number>>) -> number {
+        fn test(borrow opt: Option<Option<number>>): number {
             return match opt {
                 Some(Some(x)) => x,
                 Some(None) => -1,
@@ -344,7 +344,7 @@ fn test_nested_option_some() {
 #[test]
 fn test_nested_result_ok() {
     let source = r#"
-        fn test(borrow res: Result<Option<number>, string>) -> number {
+        fn test(borrow res: Result<Option<number>, string>): number {
             return match res {
                 Ok(Some(x)) => x,
                 Ok(None) => 0,
@@ -369,7 +369,7 @@ fn test_nested_result_ok() {
 #[test]
 fn test_array_pattern_empty() {
     let source = r#"
-        fn test(borrow arr: []number) -> string {
+        fn test(borrow arr: []number): string {
             return match arr {
                 [] => "empty",
                 _ => "not empty"
@@ -389,7 +389,7 @@ fn test_array_pattern_empty() {
 #[test]
 fn test_array_pattern_single() {
     let source = r#"
-        fn test(borrow arr: []number) -> number {
+        fn test(borrow arr: []number): number {
             return match arr {
                 [x] => x,
                 _ => 0
@@ -409,7 +409,7 @@ fn test_array_pattern_single() {
 #[test]
 fn test_array_pattern_pair() {
     let source = r#"
-        fn test(borrow arr: []number) -> number {
+        fn test(borrow arr: []number): number {
             return match arr {
                 [x, y] => x + y,
                 _ => 0
@@ -433,7 +433,7 @@ fn test_array_pattern_pair() {
 #[test]
 fn test_multiple_literal_arms() {
     let source = r#"
-        fn test(borrow x: number) -> string {
+        fn test(borrow x: number): string {
             return match x {
                 1 => "one",
                 2 => "two",
@@ -459,7 +459,7 @@ fn test_multiple_literal_arms() {
 #[test]
 fn test_match_in_arithmetic() {
     let source = r#"
-        fn test(borrow x: number) -> number {
+        fn test(borrow x: number): number {
             let result: number = (match x {
                 0 => 10,
                 _ => 20
@@ -484,7 +484,7 @@ fn test_match_in_arithmetic() {
 #[test]
 fn test_option_unwrap_or() {
     let source = r#"
-        fn get_or_default(borrow opt: Option<number>, borrow default: number) -> number {
+        fn get_or_default(borrow opt: Option<number>, borrow default: number): number {
             return match opt {
                 Some(x) => x,
                 None => default
@@ -504,7 +504,7 @@ fn test_option_unwrap_or() {
 #[test]
 fn test_result_map() {
     let source = r#"
-        fn map_result(borrow res: Result<number, string>) -> Result<number, string> {
+        fn map_result(borrow res: Result<number, string>): Result<number, string> {
             return match res {
                 Ok(x) => Ok(x * 2),
                 Err(e) => Err(e)

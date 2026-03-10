@@ -4,14 +4,14 @@ import * as hydra from "./hydra";
 // Router tests
 // ============================================================================
 
-fn test_router_pattern_matching() -> void {
+fn test_router_pattern_matching() : void {
     let router = hydra.routerNew();
 
     let users_router = hydra.routerAdd(
         router,
         hydra.methodGet(),
         "/users/:id",
-        fn(req: hydra.Request) -> hydra.Response {
+        fn(req: hydra.Request) : hydra.Response {
             let id_opt = hydra.requestParam(req, "id");
             let id = match id_opt {
                 Some(value) => value,
@@ -26,7 +26,7 @@ fn test_router_pattern_matching() -> void {
         users_router,
         hydra.methodGet(),
         "/assets/*",
-        fn(req: hydra.Request) -> hydra.Response {
+        fn(req: hydra.Request) : hydra.Response {
             let wildcard_opt = hydra.requestParam(req, "wildcard");
             let wildcard = match wildcard_opt {
                 Some(value) => value,
@@ -52,15 +52,15 @@ fn test_router_pattern_matching() -> void {
 // Middleware tests
 // ============================================================================
 
-fn test_middleware_order() -> void {
+fn test_middleware_order() : void {
     let router = hydra.routerNew();
 
-    let mw1: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) -> hydra.Response {
+    let mw1: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) : hydra.Response {
         let res = next(req);
         return hydra.responseText(res.status, "A" + res.body);
     };
 
-    let mw2: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) -> hydra.Response {
+    let mw2: hydra.Middleware = fn(req: hydra.Request, next: hydra.Handler) : hydra.Response {
         let res = next(req);
         return hydra.responseText(res.status, "B" + res.body);
     };
@@ -72,7 +72,7 @@ fn test_middleware_order() -> void {
         router3,
         hydra.methodGet(),
         "/",
-        fn(_req: hydra.Request) -> hydra.Response {
+        fn(_req: hydra.Request) : hydra.Response {
             return hydra.responseText(hydra.statusOk(), "handler");
         }
     );
@@ -88,7 +88,7 @@ fn test_middleware_order() -> void {
 // Request/Response tests
 // ============================================================================
 
-fn test_request_response_basics() -> void {
+fn test_request_response_basics() : void {
     let req = hydra.requestNew(hydra.methodPost(), "/submit?count=3", "payload");
     let query_opt = hydra.requestQuery(req, "count");
     let query = match query_opt {
@@ -116,7 +116,7 @@ fn test_request_response_basics() -> void {
 // Static file tests
 // ============================================================================
 
-fn test_static_file_serving() -> void {
+fn test_static_file_serving() : void {
     let temp_dir = fsTmpDir();
     let static_root = path_join(temp_dir, "hydra_static");
     fsMkdirp(static_root);
@@ -143,7 +143,7 @@ fn test_static_file_serving() -> void {
 // Template rendering tests
 // ============================================================================
 
-fn test_template_rendering() -> void {
+fn test_template_rendering() : void {
     let template = "Hello {{name}}
 Welcome to {{site}}";
     let data = hash_map_new();
@@ -166,14 +166,14 @@ Welcome to {{site}}";
 // Session tests
 // ============================================================================
 
-fn test_sessions_persist() -> void {
+fn test_sessions_persist() : void {
     let router = hydra.routerNew();
 
     let router2 = hydra.routerAdd(
         router,
         hydra.methodGet(),
         "/visit",
-        fn(req: hydra.Request) -> hydra.Response {
+        fn(req: hydra.Request) : hydra.Response {
             let count_opt = hash_map_get(req.session, "count");
             let mut count = match count_opt {
                 Some(value) => value,
@@ -214,7 +214,7 @@ fn test_sessions_persist() -> void {
 // Assertion coverage tests (use all 13 assertions)
 // ============================================================================
 
-fn test_assertion_coverage() -> void {
+fn test_assertion_coverage() : void {
     assert(true, "basic assert");
     assert_false(false, "basic assert_false");
 
@@ -245,11 +245,11 @@ fn test_assertion_coverage() -> void {
 // Exception handling tests
 // ============================================================================
 
-fn will_throw() -> void {
+fn will_throw() : void {
     let arr = [1, 2, 3];
     let _x = arr[99];
 }
 
-fn test_exception_handling() -> void {
+fn test_exception_handling() : void {
     assert_throws(will_throw);
 }

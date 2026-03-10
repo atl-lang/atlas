@@ -52,7 +52,7 @@ fn test_value_semantics_regression_push_copy_isolated() {
 #[test]
 fn test_value_semantics_regression_fn_param_copy() {
     let code = r#"
-        fn fill(borrow arr: []number) -> void {
+        fn fill(borrow arr: []number): void {
             arr[0] = 999;
         }
         let nums: []number = [1, 2, 3];

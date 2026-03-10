@@ -102,7 +102,7 @@ fn test_typeof_record() {
 #[test]
 fn test_typeof_function() {
     let code = r#"
-        fn add(borrow a: number, borrow b: number) -> number { a + b }
+        fn add(borrow a: number, borrow b: number): number { a + b }
         typeof(add)
     "#;
     assert_eval_string(code, "function");
@@ -123,7 +123,7 @@ fn test_type_of_record() {
 #[test]
 fn test_type_of_function() {
     let code = r#"
-        fn id(borrow x: number) -> number { x }
+        fn id(borrow x: number): number { x }
         type_of(id)
     "#;
     assert_eval_string(code, "function");
@@ -810,7 +810,7 @@ fn test_option_and_result_together() {
 #[test]
 fn test_option_in_conditional() {
     let code = r#"
-        fn test() -> number {
+        fn test(): number {
             let opt = Some(42);
             if (is_some(opt)) {
                 return unwrap(opt);
@@ -826,7 +826,7 @@ fn test_option_in_conditional() {
 #[test]
 fn test_result_in_conditional() {
     let code = r#"
-        fn test() -> number {
+        fn test(): number {
             let res = Ok(42);
             if (is_ok(res)) {
                 return unwrap(res);
@@ -968,7 +968,7 @@ fn test_result_err_from_err() {
 #[test]
 fn test_result_map_ok() {
     let code = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
         let result = Ok(21);
         let mapped = result_map(result, double);
         unwrap(mapped)
@@ -979,7 +979,7 @@ fn test_result_map_ok() {
 #[test]
 fn test_result_map_err_preserves() {
     let code = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
         let result = Err("failed");
         let mapped = result_map(result, double);
         is_err(mapped)
@@ -990,8 +990,8 @@ fn test_result_map_err_preserves() {
 #[test]
 fn test_result_map_chain() {
     let code = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn triple(borrow x: number) -> number { return x * 3; }
+        fn double(borrow x: number): number { return x * 2; }
+        fn triple(borrow x: number): number { return x * 3; }
         let result = Ok(7);
         let mapped = result_map(result, double);
         let mapped2 = result_map(mapped, triple);
@@ -1007,7 +1007,7 @@ fn test_result_map_chain() {
 #[test]
 fn test_result_map_err_transforms_error() {
     let code = r#"
-        fn format_error(borrow e: string) -> string { return "Error: " + e; }
+        fn format_error(borrow e: string): string { return "Error: " + e; }
         let result = Err("failed");
         let mapped = result_map_err(result, format_error);
         unwrap_or(mapped, "default")
@@ -1018,7 +1018,7 @@ fn test_result_map_err_transforms_error() {
 #[test]
 fn test_result_map_err_preserves_ok() {
     let code = r#"
-        fn format_error(borrow e: string) -> string { return "Error: " + e; }
+        fn format_error(borrow e: string): string { return "Error: " + e; }
         let result = Ok(42);
         let mapped = result_map_err(result, format_error);
         unwrap(mapped)
@@ -1033,7 +1033,7 @@ fn test_result_map_err_preserves_ok() {
 #[test]
 fn test_result_and_then_success_chain() {
     let code = r#"
-        fn divide(borrow x: number) -> Result<number, string> {
+        fn divide(borrow x: number): Result<number, string> {
             if (x == 0) {
                 return Err("division by zero");
             }
@@ -1049,7 +1049,7 @@ fn test_result_and_then_success_chain() {
 #[test]
 fn test_result_and_then_error_propagates() {
     let code = r#"
-        fn divide(borrow x: number) -> Result<number, string> {
+        fn divide(borrow x: number): Result<number, string> {
             if (x == 0) {
                 return Err("division by zero");
             }
@@ -1065,7 +1065,7 @@ fn test_result_and_then_error_propagates() {
 #[test]
 fn test_result_and_then_returns_error() {
     let code = r#"
-        fn divide(borrow x: number) -> Result<number, string> {
+        fn divide(borrow x: number): Result<number, string> {
             if (x == 0) {
                 return Err("division by zero");
             }
@@ -1085,7 +1085,7 @@ fn test_result_and_then_returns_error() {
 #[test]
 fn test_result_or_else_recovers_from_error() {
     let code = r#"
-        fn recover(borrow _e: string) -> Result<number, string> {
+        fn recover(borrow _e: string): Result<number, string> {
             return Ok(0);
         }
         let result = Err("failed");
@@ -1098,7 +1098,7 @@ fn test_result_or_else_recovers_from_error() {
 #[test]
 fn test_result_or_else_preserves_ok() {
     let code = r#"
-        fn recover(borrow _e: string) -> Result<number, string> {
+        fn recover(borrow _e: string): Result<number, string> {
             return Ok(0);
         }
         let result = Ok(42);
@@ -1111,7 +1111,7 @@ fn test_result_or_else_preserves_ok() {
 #[test]
 fn test_result_or_else_can_return_error() {
     let code = r#"
-        fn retry(borrow _e: string) -> Result<number, string> {
+        fn retry(borrow _e: string): Result<number, string> {
             return Err("retry failed");
         }
         let result = Err("initial");
@@ -1128,8 +1128,8 @@ fn test_result_or_else_can_return_error() {
 #[test]
 fn test_result_pipeline() {
     let code = r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn safe_divide(borrow x: number) -> Result<number, string> {
+        fn double(borrow x: number): number { return x * 2; }
+        fn safe_divide(borrow x: number): Result<number, string> {
             if (x == 0) {
                 return Err("division by zero");
             }
@@ -1147,10 +1147,10 @@ fn test_result_pipeline() {
 #[test]
 fn test_result_error_recovery_pipeline() {
     let code = r#"
-        fn recover(borrow _e: string) -> Result<number, string> {
+        fn recover(borrow _e: string): Result<number, string> {
             return Ok(99);
         }
-        fn double(borrow x: number) -> number { return x * 2; }
+        fn double(borrow x: number): number { return x * 2; }
 
         let result = Err("initial");
         let recovered = result_or_else(result, recover);
@@ -1167,7 +1167,7 @@ fn test_result_error_recovery_pipeline() {
 #[test]
 fn test_try_operator_unwraps_ok() {
     let code = r#"
-        fn get_value() -> Result<number, string> {
+        fn get_value(): Result<number, string> {
             let result = Ok(42);
             return Ok(result?);
         }
@@ -1179,7 +1179,7 @@ fn test_try_operator_unwraps_ok() {
 #[test]
 fn test_try_operator_propagates_error() {
     let code = r#"
-        fn get_value() -> Result<number, string> {
+        fn get_value(): Result<number, string> {
             let result = Err("failed");
             return Ok(result?);
         }
@@ -1191,14 +1191,14 @@ fn test_try_operator_propagates_error() {
 #[test]
 fn test_try_operator_multiple_propagations() {
     let code = r#"
-        fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
+        fn divide(borrow a: number, borrow b: number): Result<number, string> {
             if (b == 0) {
                 return Err("division by zero");
             }
             return Ok(a / b);
         }
 
-        fn calculate() -> Result<number, string> {
+        fn calculate(): Result<number, string> {
             let x = divide(100, 10)?;
             let y = divide(x, 2)?;
             let z = divide(y, 5)?;
@@ -1213,14 +1213,14 @@ fn test_try_operator_multiple_propagations() {
 #[test]
 fn test_try_operator_early_return() {
     let code = r#"
-        fn divide(borrow a: number, borrow b: number) -> Result<number, string> {
+        fn divide(borrow a: number, borrow b: number): Result<number, string> {
             if (b == 0) {
                 return Err("division by zero");
             }
             return Ok(a / b);
         }
 
-        fn calculate() -> Result<number, string> {
+        fn calculate(): Result<number, string> {
             let x = divide(100, 10)?;
             let y = divide(x, 0)?;  // This will error
             let z = divide(y, 5)?;  // This won't execute
@@ -1235,11 +1235,11 @@ fn test_try_operator_early_return() {
 #[test]
 fn test_try_operator_with_expressions() {
     let code = r#"
-        fn get_number() -> Result<number, string> {
+        fn get_number(): Result<number, string> {
             return Ok(21);
         }
 
-        fn double_it() -> Result<number, string> {
+        fn double_it(): Result<number, string> {
             return Ok(get_number()? * 2);
         }
 
@@ -1251,15 +1251,15 @@ fn test_try_operator_with_expressions() {
 #[test]
 fn test_try_operator_in_nested_calls() {
     let code = r#"
-        fn inner() -> Result<number, string> {
+        fn inner(): Result<number, string> {
             return Ok(42);
         }
 
-        fn middle() -> Result<number, string> {
+        fn middle(): Result<number, string> {
             return Ok(inner()?);
         }
 
-        fn outer() -> Result<number, string> {
+        fn outer(): Result<number, string> {
             return Ok(middle()?);
         }
 
@@ -1271,15 +1271,15 @@ fn test_try_operator_in_nested_calls() {
 #[test]
 fn test_try_operator_with_error_in_nested_calls() {
     let code = r#"
-        fn inner() -> Result<number, string> {
+        fn inner(): Result<number, string> {
             return Err("inner failed");
         }
 
-        fn middle() -> Result<number, string> {
+        fn middle(): Result<number, string> {
             return Ok(inner()?);
         }
 
-        fn outer() -> Result<number, string> {
+        fn outer(): Result<number, string> {
             return Ok(middle()?);
         }
 
@@ -1291,15 +1291,15 @@ fn test_try_operator_with_error_in_nested_calls() {
 #[test]
 fn test_try_operator_combined_with_methods() {
     let code = r#"
-        fn get_value() -> Result<number, string> {
+        fn get_value(): Result<number, string> {
             return Ok(10);
         }
 
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             return x * 2;
         }
 
-        fn process() -> Result<number, string> {
+        fn process(): Result<number, string> {
             let val = get_value()?;
             let mapped = Ok(double(val));
             return Ok(mapped?);
@@ -1323,7 +1323,7 @@ fn test_try_operator_combined_with_methods() {
 #[test]
 fn test_option_try_unwraps_some() {
     let code = r#"
-    fn find_value() -> Option<number> {
+    fn find_value(): Option<number> {
         let opt = Some(42);
         return Some(opt?);
     }
@@ -1335,7 +1335,7 @@ fn test_option_try_unwraps_some() {
 #[test]
 fn test_option_try_propagates_none() {
     let code = r#"
-    fn find_value() -> Option<number> {
+    fn find_value(): Option<number> {
         let opt: Option<number> = None();
         return Some(opt?);
     }
@@ -1347,13 +1347,13 @@ fn test_option_try_propagates_none() {
 #[test]
 fn test_option_try_multiple_propagations() {
     let code = r#"
-    fn get_first() -> Option<number> {
+    fn get_first(): Option<number> {
         return Some(10);
     }
-    fn get_second() -> Option<number> {
+    fn get_second(): Option<number> {
         return Some(20);
     }
-    fn calculate() -> Option<number> {
+    fn calculate(): Option<number> {
         let a = get_first()?;
         let b = get_second()?;
         return Some(a + b);
@@ -1366,13 +1366,13 @@ fn test_option_try_multiple_propagations() {
 #[test]
 fn test_option_try_early_return_on_none() {
     let code = r#"
-    fn get_first() -> Option<number> {
+    fn get_first(): Option<number> {
         return Some(10);
     }
-    fn get_second() -> Option<number> {
+    fn get_second(): Option<number> {
         return None();
     }
-    fn calculate() -> Option<number> {
+    fn calculate(): Option<number> {
         let a = get_first()?;
         let b = get_second()?;
         return Some(a + b);
@@ -1385,10 +1385,10 @@ fn test_option_try_early_return_on_none() {
 #[test]
 fn test_option_try_with_expression() {
     let code = r#"
-    fn get_number() -> Option<number> {
+    fn get_number(): Option<number> {
         return Some(21);
     }
-    fn double_it() -> Option<number> {
+    fn double_it(): Option<number> {
         return Some(get_number()? * 2);
     }
     unwrap(double_it())
@@ -1399,13 +1399,13 @@ fn test_option_try_with_expression() {
 #[test]
 fn test_option_try_nested_calls() {
     let code = r#"
-    fn inner() -> Option<number> {
+    fn inner(): Option<number> {
         return Some(42);
     }
-    fn middle() -> Option<number> {
+    fn middle(): Option<number> {
         return Some(inner()?);
     }
-    fn outer() -> Option<number> {
+    fn outer(): Option<number> {
         return Some(middle()?);
     }
     unwrap(outer())
@@ -1416,13 +1416,13 @@ fn test_option_try_nested_calls() {
 #[test]
 fn test_option_try_nested_none_propagation() {
     let code = r#"
-    fn inner() -> Option<number> {
+    fn inner(): Option<number> {
         return None();
     }
-    fn middle() -> Option<number> {
+    fn middle(): Option<number> {
         return Some(inner()?);
     }
-    fn outer() -> Option<number> {
+    fn outer(): Option<number> {
         return Some(middle()?);
     }
     is_none(outer())
@@ -1438,9 +1438,9 @@ fn test_option_try_nested_none_propagation() {
 fn test_try_result_multiple_in_single_expression() {
     // Multiple ? in one expression: foo()? + bar()?
     let code = r#"
-    fn a() -> Result<number, string> { return Ok(10); }
-    fn b() -> Result<number, string> { return Ok(32); }
-    fn calc() -> Result<number, string> {
+    fn a(): Result<number, string> { return Ok(10); }
+    fn b(): Result<number, string> { return Ok(32); }
+    fn calc(): Result<number, string> {
         return Ok(a()? + b()?);
     }
     unwrap(calc())
@@ -1451,9 +1451,9 @@ fn test_try_result_multiple_in_single_expression() {
 #[test]
 fn test_try_result_multiple_expr_first_fails() {
     let code = r#"
-    fn a() -> Result<number, string> { return Err("a failed"); }
-    fn b() -> Result<number, string> { return Ok(32); }
-    fn calc() -> Result<number, string> {
+    fn a(): Result<number, string> { return Err("a failed"); }
+    fn b(): Result<number, string> { return Ok(32); }
+    fn calc(): Result<number, string> {
         return Ok(a()? + b()?);
     }
     is_err(calc())
@@ -1464,8 +1464,8 @@ fn test_try_result_multiple_expr_first_fails() {
 #[test]
 fn test_try_result_in_if_condition() {
     let code = r#"
-    fn check() -> Result<bool, string> { return Ok(true); }
-    fn run() -> Result<number, string> {
+    fn check(): Result<bool, string> { return Ok(true); }
+    fn run(): Result<number, string> {
         if (check()?) {
             return Ok(42);
         }
@@ -1479,14 +1479,14 @@ fn test_try_result_in_if_condition() {
 #[test]
 fn test_try_result_chained_transforms() {
     let code = r#"
-    fn parse_num(borrow s: string) -> Result<number, string> {
+    fn parse_num(borrow s: string): Result<number, string> {
         if (s == "42") { return Ok(42); }
         return Err("not 42");
     }
-    fn double(borrow n: number) -> Result<number, string> {
+    fn double(borrow n: number): Result<number, string> {
         return Ok(n * 2);
     }
-    fn process(borrow s: string) -> Result<number, string> {
+    fn process(borrow s: string): Result<number, string> {
         let n = parse_num(s)?;
         let d = double(n)?;
         return Ok(d);
@@ -1499,8 +1499,8 @@ fn test_try_result_chained_transforms() {
 #[test]
 fn test_try_option_in_if_condition() {
     let code = r#"
-    fn get() -> Option<bool> { return Some(true); }
-    fn run() -> Option<number> {
+    fn get(): Option<bool> { return Some(true); }
+    fn run(): Option<number> {
         if (get()?) {
             return Some(42);
         }
@@ -1515,10 +1515,10 @@ fn test_try_option_in_if_condition() {
 fn test_try_result_direct_function_call() {
     // ? directly on function call result
     let code = r#"
-    fn get_value() -> Result<number, string> {
+    fn get_value(): Result<number, string> {
         return Ok(42);
     }
-    fn use_it() -> Result<number, string> {
+    fn use_it(): Result<number, string> {
         let x = get_value()?;
         return Ok(x);
     }
@@ -1530,9 +1530,9 @@ fn test_try_result_direct_function_call() {
 #[test]
 fn test_try_option_multiple_in_single_expression() {
     let code = r#"
-    fn a() -> Option<number> { return Some(10); }
-    fn b() -> Option<number> { return Some(32); }
-    fn calc() -> Option<number> {
+    fn a(): Option<number> { return Some(10); }
+    fn b(): Option<number> { return Some(32); }
+    fn calc(): Option<number> {
         return Some(a()? + b()?);
     }
     unwrap(calc())
@@ -1543,9 +1543,9 @@ fn test_try_option_multiple_in_single_expression() {
 #[test]
 fn test_try_option_second_fails() {
     let code = r#"
-    fn a() -> Option<number> { return Some(10); }
-    fn b() -> Option<number> { return None(); }
-    fn calc() -> Option<number> {
+    fn a(): Option<number> { return Some(10); }
+    fn b(): Option<number> { return None(); }
+    fn calc(): Option<number> {
         return Some(a()? + b()?);
     }
     is_none(calc())

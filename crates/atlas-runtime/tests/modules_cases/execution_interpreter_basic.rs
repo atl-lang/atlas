@@ -27,7 +27,7 @@ fn test_single_module_with_function() {
     let main = create_module(
         temp_dir.path(),
         "main",
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; }\nadd(10, 20);",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; }\nadd(10, 20);",
     );
 
     let mut interp = atlas_runtime::Interpreter::new();
@@ -47,7 +47,7 @@ fn test_module_with_export_function() {
     let math = create_module(
         temp_dir.path(),
         "math",
-        "export fn multiply(borrow a: number, borrow b: number) -> number { return a * b; }",
+        "export fn multiply(borrow a: number, borrow b: number): number { return a * b; }",
     );
 
     let mut interp = atlas_runtime::Interpreter::new();
@@ -81,7 +81,7 @@ fn test_import_single_function() {
     create_module(
         temp_dir.path(),
         "math",
-        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number): number { return a + b; }",
     );
 
     let main = create_module(
@@ -113,8 +113,8 @@ fn test_import_multiple_functions() {
         temp_dir.path(),
         "math",
         r#"
-export fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-export fn sub(borrow a: number, borrow b: number) -> number { return a - b; }
+export fn add(borrow a: number, borrow b: number): number { return a + b; }
+export fn sub(borrow a: number, borrow b: number): number { return a - b; }
 "#,
     );
 
@@ -181,7 +181,7 @@ fn test_import_mixed_function_and_variable() {
         "utils",
         r#"
 export let SCALE: number = 10;
-export fn scale(borrow x: number) -> number { return x * SCALE; }
+export fn scale(borrow x: number): number { return x * SCALE; }
 "#,
     );
 

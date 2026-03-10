@@ -34,19 +34,19 @@ let tags: HashSet<string> = hashSetNew();
 ```
 
 **Function Types**
-- Syntax: `(T1, T2) -> R`
+- Syntax: `(T1, T2) : R`
 - Function types can be generic via type parameters in declarations, not inline.
 
 Example (tested):
 ```atlas
-fn add(a: number, b: number) -> number {
+fn add(a: number, b: number) : number {
     return a + b;
 }
-let f: (number, number) -> number = add;
+let f: (number, number) : number = add;
 ```
 
 **Structural Types**
-- Syntax: `{ field: Type, method: (params) -> return }`
+- Syntax: `{ field: Type, method: (params) : return }`
 - Must contain at least one member.
 
 Example (tested):
@@ -70,7 +70,7 @@ type Serializable = Scalar | json;
 
 Example (tested):
 ```atlas
-fn identity<T extends Copy>(value: T) -> T {
+fn identity<T extends Copy>(value: T) : T {
     return value;
 }
 ```
@@ -114,7 +114,7 @@ Example (tested):
 ```atlas
 type ID = number | string;
 type StateStore = HashMap<string, string>;
-type Callback = (string) -> void;
+type Callback = (string) : void;
 ```
 
 **Mutation Semantics (CRITICAL for correct code generation)**
@@ -190,7 +190,7 @@ match pair {
 
 **Function return:**
 ```atlas
-fn min_max(arr: []number) -> (number, number) {
+fn min_max(arr: []number) : (number, number) {
     // ...
     return (min_val, max_val);
 }

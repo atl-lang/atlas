@@ -11,7 +11,7 @@ fn test_imported_function_preserves_types() {
         temp_dir.path(),
         "string_ops",
         r#"
-export fn concatStrings(borrow a: string, borrow b: string) -> string {
+export fn concatStrings(borrow a: string, borrow b: string): string {
     return a + b;
 }
 "#,
@@ -79,11 +79,11 @@ fn test_private_function_not_accessible() {
         temp_dir.path(),
         "math",
         r#"
-fn private_helper(borrow x: number) -> number {
+fn private_helper(borrow x: number): number {
     return x * 2;
 }
 
-export fn public_fn(borrow x: number) -> number {
+export fn public_fn(borrow x: number): number {
     return private_helper(x);
 }
 "#,
@@ -145,7 +145,7 @@ fn test_import_resolves_atlas_extension() {
     let lib_path = temp_dir.path().join("lib.atlas");
     fs::write(
         &lib_path,
-        r#"export fn greet(borrow name: string) -> string { return "Hello " + name; }"#,
+        r#"export fn greet(borrow name: string): string { return "Hello " + name; }"#,
     )
     .unwrap();
 

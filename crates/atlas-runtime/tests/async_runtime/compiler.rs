@@ -33,7 +33,7 @@ fn compile_to_bytecode(source: &str) -> atlas_runtime::bytecode::Bytecode {
 fn test_async_fn_produces_is_async_true() {
     let bytecode = compile_to_bytecode(
         r#"
-        async fn foo() -> number {
+        async fn foo(): number {
             return 42;
         }
         "#,
@@ -66,7 +66,7 @@ fn test_async_fn_produces_is_async_true() {
 fn test_sync_fn_is_async_false() {
     let bytecode = compile_to_bytecode(
         r#"
-        fn bar() -> number {
+        fn bar(): number {
             return 1;
         }
         "#,
@@ -90,7 +90,7 @@ fn test_sync_fn_is_async_false() {
 fn test_async_fn_body_emits_wrap_future_before_return() {
     let bytecode = compile_to_bytecode(
         r#"
-        async fn compute() -> number {
+        async fn compute(): number {
             return 10;
         }
         "#,
@@ -114,10 +114,10 @@ fn test_async_fn_body_emits_wrap_future_before_return() {
 fn test_await_emits_await_opcode() {
     let bytecode = compile_to_bytecode(
         r#"
-        async fn fetch() -> number {
+        async fn fetch(): number {
             return 1;
         }
-        async fn main() -> number {
+        async fn main(): number {
             let x = await fetch();
             return x;
         }
@@ -137,10 +137,10 @@ fn test_await_emits_await_opcode() {
 fn test_async_call_dispatch() {
     let bytecode = compile_to_bytecode(
         r#"
-        async fn work() -> number {
+        async fn work(): number {
             return 7;
         }
-        async fn main() -> number {
+        async fn main(): number {
             return await work();
         }
         "#,

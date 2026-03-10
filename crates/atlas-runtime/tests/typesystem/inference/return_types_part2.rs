@@ -12,7 +12,7 @@ use super::helpers::*;
 fn test_function_with_if_return() {
     let diags = errors(
         r#"
-        fn my_abs(borrow x: number) -> number {
+        fn my_abs(borrow x: number): number {
             if (x < 0) {
                 return -x;
             }
@@ -28,8 +28,8 @@ fn test_function_with_if_return() {
 fn test_function_calling_function() {
     let diags = errors(
         r#"
-        fn square(borrow x: number) -> number { return x * x; }
-        fn sum_squares(borrow a: number, borrow b: number) -> number {
+        fn square(borrow x: number): number { return x * x; }
+        fn sum_squares(borrow a: number, borrow b: number): number {
             return square(a) + square(b);
         }
         let _r = sum_squares(3, 4);
@@ -57,8 +57,8 @@ fn test_multiple_errors_reported() {
 fn test_no_false_positives_complex() {
     let diags = errors(
         r#"
-        fn is_even(borrow n: number) -> bool { return n % 2 == 0; }
-        fn describe(borrow n: number) -> string {
+        fn is_even(borrow n: number): bool { return n % 2 == 0; }
+        fn describe(borrow n: number): string {
             if (is_even(n)) {
                 return "even";
             }
@@ -74,7 +74,7 @@ fn test_no_false_positives_complex() {
 fn test_while_loop_valid_types() {
     let diags = errors(
         r#"
-        fn countdown(borrow n: number) -> number {
+        fn countdown(borrow n: number): number {
             let mut count = n;
             while (count > 0) {
                 count = count - 1;
@@ -91,7 +91,7 @@ fn test_while_loop_valid_types() {
 fn test_for_in_valid_array() {
     let diags = errors(
         r#"
-        fn sum_arr() -> number {
+        fn sum_arr(): number {
             let arr = [1, 2, 3];
             let mut total = 0;
             for x in arr {
@@ -140,7 +140,7 @@ fn test_inequality_result_is_bool() {
 #[test]
 fn test_explicit_return_no_type_error() {
     // fn with explicit return type annotation should not emit AT3001
-    let diags = errors("fn double(borrow x: number) -> number { return x * 2; }");
+    let diags = errors("fn double(borrow x: number): number { return x * 2; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
     assert!(
         type_errors.is_empty(),
@@ -152,7 +152,7 @@ fn test_explicit_return_no_type_error() {
 #[test]
 fn test_explicit_return_bool_from_comparison() {
     // fn returning a comparison with explicit -> bool annotation
-    let diags = errors("fn is_zero(borrow x: number) -> bool { return x == 0; }");
+    let diags = errors("fn is_zero(borrow x: number): bool { return x == 0; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
     assert!(
         type_errors.is_empty(),
@@ -164,14 +164,14 @@ fn test_explicit_return_bool_from_comparison() {
 #[test]
 fn test_void_return_empty_body() {
     // fn with empty body and -> void, no type errors
-    let diags = errors("fn noop() -> void { }");
+    let diags = errors("fn noop(): void { }");
     let errs: Vec<_> = diags
         .iter()
         .filter(|d| d.code == "AT3001" || d.code == "AT3004")
         .collect();
     assert!(
         errs.is_empty(),
-        "Expected no type errors for noop() -> void, got: {:?}",
+        "Expected no type errors for noop(): void, got: {:?}",
         errs
     );
 }
@@ -179,7 +179,7 @@ fn test_void_return_empty_body() {
 #[test]
 fn test_explicit_return_number_from_literal() {
     // fn returning a number literal with explicit -> number annotation
-    let diags = errors("fn get_answer() -> number { return 42; }");
+    let diags = errors("fn get_answer(): number { return 42; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
     assert!(
         type_errors.is_empty(),
@@ -191,7 +191,7 @@ fn test_explicit_return_number_from_literal() {
 #[test]
 fn test_explicit_return_consistent_arithmetic() {
     // Explicit return type annotation with arithmetic
-    let diags = errors("fn half(borrow x: number) -> number { return x / 2; }");
+    let diags = errors("fn half(borrow x: number): number { return x / 2; }");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
     assert!(
         type_errors.is_empty(),
@@ -205,7 +205,7 @@ fn test_at3001_on_mismatched_return_type() {
     // fn with explicit return type but wrong return value → AT3001
     let diags = errors(
         r#"
-fn confused(borrow x: number) -> number {
+fn confused(borrow x: number): number {
     if x > 0 {
         return 1;
     } else {
@@ -228,7 +228,7 @@ fn test_inferred_return_callable_result() {
     // Function with inferred return can be called; result usable in expression
     let diags = errors(
         r#"
-fn square(borrow x: number) -> number { return x * x; }
+fn square(borrow x: number): number { return x * x; }
 let _y: number = square(4);
 "#,
     );
@@ -244,7 +244,7 @@ let _y: number = square(4);
 fn test_inferred_return_both_engines() {
     // Both interpreter and VM execute functions with inferred return type correctly
     let runtime = atlas_runtime::Atlas::new();
-    let result = runtime.eval("fn double(borrow x: number) -> number { return x * 2; } double(5);");
+    let result = runtime.eval("fn double(borrow x: number): number { return x * 2; } double(5);");
     assert_eq!(result.unwrap(), atlas_runtime::Value::Number(10.0));
 }
 

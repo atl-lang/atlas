@@ -6,7 +6,7 @@ use pretty_assertions::assert_eq;
 fn test_multiple_calls_same_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let _a = identity(42);
@@ -25,7 +25,7 @@ fn test_multiple_calls_same_function() {
 fn test_generic_with_no_params() {
     let diagnostics = typecheck_source(
         r#"
-        fn test<T>() -> void {}
+        fn test<T>(): void {}
     "#,
     );
     // This is valid - T just can't be inferred
@@ -36,7 +36,7 @@ fn test_generic_with_no_params() {
 fn test_generic_unused_type_param() {
     let diagnostics = typecheck_source(
         r#"
-        fn test<T>(borrow _x: number) -> number {
+        fn test<T>(borrow _x: number): number {
             return 42;
         }
     "#,
@@ -51,8 +51,8 @@ fn test_type_parameter_in_nested_function() {
     // NOTE: Nested functions binding complete (Phases 1-3). Phases 4-6 pending for full execution.
     let diagnostics = typecheck_source(
         r#"
-        fn outer<T>(borrow _x: T) -> void {
-            fn inner(borrow _y: number) -> void {}
+        fn outer<T>(borrow _x: T): void {
+            fn inner(borrow _y: number): void {}
             inner(42);
         }
     "#,
@@ -77,7 +77,7 @@ fn test_type_parameter_in_nested_function() {
 fn test_non_generic_still_works() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
         let _result = add(1, 2);
@@ -90,10 +90,10 @@ fn test_non_generic_still_works() {
 fn test_mixed_generic_and_non_generic() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             return x * 2;
         }
         let _a = identity(42);
@@ -111,7 +111,7 @@ fn test_mixed_generic_and_non_generic() {
 fn test_generic_with_if_statement() {
     let diagnostics = typecheck_source(
         r#"
-        fn choose<T>(borrow condition: bool, borrow a: T, borrow b: T) -> T {
+        fn choose<T>(borrow condition: bool, borrow a: T, borrow b: T): T {
             if condition {
                 return a;
             } else {
@@ -128,7 +128,7 @@ fn test_generic_with_if_statement() {
 fn test_generic_with_while_loop() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             let mut result = x;
             while false {
                 result = x;
@@ -144,7 +144,7 @@ fn test_generic_with_while_loop() {
 fn test_generic_with_array_indexing() {
     let diagnostics = typecheck_source(
         r#"
-        fn get_first<T>(borrow arr: []T) -> T {
+        fn get_first<T>(borrow arr: []T): T {
             return arr[0];
         }
         let numbers = [1, 2, 3];
@@ -162,7 +162,7 @@ fn test_generic_with_array_indexing() {
 fn test_generic_function_as_value() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
         let _f = identity;
@@ -175,10 +175,10 @@ fn test_generic_function_as_value() {
 fn test_pass_generic_function() {
     let diagnostics = typecheck_source(
         r#"
-        fn identity<T>(borrow x: T) -> T {
+        fn identity<T>(borrow x: T): T {
             return x;
         }
-        fn apply<T>(borrow _f: (T) -> T, _x: T) -> T {
+        fn apply<T>(borrow _f: (T): T, _x: T): T {
             return _x;
         }
         let _result = apply(identity, 42);
@@ -280,7 +280,7 @@ fn test_suggest_str_conversion() {
 fn test_return_type_mismatch_suggests_fix() {
     let diags = errors(
         r#"
-        fn foo() -> number {
+        fn foo(): number {
             return "hello";
         }
     "#,
@@ -294,7 +294,7 @@ fn test_return_type_mismatch_suggests_fix() {
 fn test_missing_return_suggests_adding_one() {
     let diags = errors(
         r#"
-        fn foo() -> number {
+        fn foo(): number {
         }
     "#,
     );
@@ -308,7 +308,7 @@ fn test_missing_return_suggests_adding_one() {
 fn test_return_void_from_number_function() {
     let diags = errors(
         r#"
-        fn foo() -> number {
+        fn foo(): number {
             return;
         }
     "#,
@@ -376,14 +376,14 @@ fn test_undefined_variable_error() {
 fn test_function_type_display_in_error() {
     let diags = errors(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
         let _x: string = add;
     "#,
     );
     assert!(!diags.is_empty());
     // Function should display as "(number, number) -> number" not just "function"
     assert!(
-        diags[0].message.contains("(number, number) -> number"),
+        diags[0].message.contains("(number, number): number"),
         "Expected function signature in error, got: {}",
         diags[0].message
     );
@@ -393,13 +393,13 @@ fn test_function_type_display_in_error() {
 fn test_function_type_display_void_return() {
     let diags = errors(
         r#"
-        fn greet(borrow _name: string) -> void { }
+        fn greet(borrow _name: string): void { }
         let _x: number = greet;
     "#,
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].message.contains("(string) -> void"),
+        diags[0].message.contains("(string): void"),
         "Expected function signature, got: {}",
         diags[0].message
     );
@@ -409,14 +409,14 @@ fn test_function_type_display_void_return() {
 fn test_function_type_display_no_params() {
     let diags = errors(
         r#"
-        fn foo() -> number { return 1; }
+        fn foo(): number { return 1; }
         let _x: string = foo;
     "#,
     );
     assert!(!diags.is_empty());
     assert!(
-        diags[0].message.contains("() -> number"),
-        "Expected () -> number in error, got: {}",
+        diags[0].message.contains("(): number"),
+        "Expected (): number in error, got: {}",
         diags[0].message
     );
 }

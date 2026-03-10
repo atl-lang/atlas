@@ -333,7 +333,7 @@ fn test_dce_removes_after_halt() {
 #[test]
 fn test_dce_removes_after_return_in_fn() {
     let source = r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
         add(2, 3);
@@ -373,7 +373,7 @@ fn test_dce_preserves_if_else() {
 
 #[test]
 fn test_dce_preserves_function_call() {
-    assert_same_result("fn sq(borrow x: number) -> number { return x * x; } let r = sq(5);");
+    assert_same_result("fn sq(borrow x: number): number { return x * x; } let r = sq(5);");
 }
 
 #[test]
@@ -492,7 +492,7 @@ fn test_full_pipeline_semantics_variable() {
 
 #[test]
 fn test_full_pipeline_semantics_function() {
-    assert_same_result("fn double(borrow x: number) -> number { return x * 2; } double(21);");
+    assert_same_result("fn double(borrow x: number): number { return x * 2; } double(21);");
 }
 
 #[test]
@@ -511,8 +511,8 @@ fn test_full_pipeline_semantics_while() {
 fn test_full_pipeline_semantics_nested_functions() {
     assert_same_result(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-        fn mul(borrow a: number, borrow b: number) -> number { return a * b; }
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
+        fn mul(borrow a: number, borrow b: number): number { return a * b; }
         let result = add(mul(2, 3), 4);
         "#,
     );
@@ -551,9 +551,8 @@ fn test_optimized_bytecode_valid_simple() {
 
 #[test]
 fn test_optimized_bytecode_valid_function() {
-    let bc = compile(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(1, 2);",
-    );
+    let bc =
+        compile("fn add(borrow a: number, borrow b: number): number { return a + b; } add(1, 2);");
     let (optimized, _) = run_all(bc);
     atlas_runtime::bytecode::validate(&optimized)
         .expect("Optimized bytecode should be valid (function)");
@@ -584,7 +583,7 @@ fn test_cf_preserves_validator() {
 
 #[test]
 fn test_dce_preserves_validator() {
-    let bc = compile("fn f(borrow x: number) -> number { return x + 1; } f(5);");
+    let bc = compile("fn f(borrow x: number): number { return x + 1; } f(5);");
     let (optimized, _) = run_dce(bc);
     atlas_runtime::bytecode::validate(&optimized).expect("DCE should produce valid bytecode");
 }
@@ -814,26 +813,26 @@ fn test_loop_with_sum() {
 
 #[test]
 fn test_simple_function() {
-    assert_semantics("fn identity(borrow x: number) -> number { return x; } identity(42);");
+    assert_semantics("fn identity(borrow x: number): number { return x; } identity(42);");
 }
 
 #[test]
 fn test_function_with_arithmetic() {
     assert_semantics(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(10, 5);",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; } add(10, 5);",
     );
 }
 
 #[test]
 fn test_function_with_constant_body() {
     // Function body contains foldable constants
-    assert_semantics("fn constant_val() -> number { return 2 + 3; } constant_val();");
+    assert_semantics("fn constant_val(): number { return 2 + 3; } constant_val();");
 }
 
 #[test]
 fn test_function_with_conditionals() {
     assert_semantics(
-        r#"fn max(borrow a: number, borrow b: number) -> number {
+        r#"fn max(borrow a: number, borrow b: number): number {
             if (a > b) { return a; } else { return b; }
         }
         max(10, 5);"#,
@@ -845,7 +844,7 @@ fn test_recursive_fibonacci() {
     // Recursive functions must work after optimization
     assert_semantics(
         r#"
-        fn fib(borrow n: number) -> number {
+        fn fib(borrow n: number): number {
             if (n <= 1) { return n; }
             return fib(n - 1) + fib(n - 2);
         }
@@ -858,8 +857,8 @@ fn test_recursive_fibonacci() {
 fn test_multiple_functions_opt() {
     assert_semantics(
         r#"
-        fn double(borrow x: number) -> number { return x * 2; }
-        fn triple(borrow x: number) -> number { return x * 3; }
+        fn double(borrow x: number): number { return x * 2; }
+        fn triple(borrow x: number): number { return x * 3; }
         double(5) + triple(3);
         "#,
     );
@@ -895,7 +894,7 @@ fn test_size_reduction_constant_arithmetic() {
 
 #[test]
 fn test_size_reduction_function_with_return() {
-    assert_optimized_smaller_or_equal("fn f(borrow x: number) -> number { return x * 2; } f(5);");
+    assert_optimized_smaller_or_equal("fn f(borrow x: number): number { return x * 2; } f(5);");
 }
 
 #[test]
@@ -914,9 +913,7 @@ fn test_validity_simple_program() {
 
 #[test]
 fn test_validity_function_program() {
-    assert_valid(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(1, 2);",
-    );
+    assert_valid("fn add(borrow a: number, borrow b: number): number { return a + b; } add(1, 2);");
 }
 
 #[test]
@@ -933,8 +930,8 @@ fn test_validity_if_else_program() {
 fn test_validity_nested_calls() {
     assert_valid(
         r#"
-        fn inner(borrow x: number) -> number { return x + 1; }
-        fn outer(borrow x: number) -> number { return inner(x) * 2; }
+        fn inner(borrow x: number): number { return x + 1; }
+        fn outer(borrow x: number): number { return inner(x) * 2; }
         outer(5);
         "#,
     );
@@ -973,7 +970,7 @@ fn test_stats_constants_folded_positive() {
 
 #[test]
 fn test_stats_dead_removed_for_fn_with_return() {
-    let bc = compile("fn f(borrow x: number) -> number { return x + 1; } f(5);");
+    let bc = compile("fn f(borrow x: number): number { return x + 1; } f(5);");
     let opt = Optimizer::with_default_passes();
     let (_, stats) = opt.optimize_with_stats(bc);
     assert!(stats.dead_instructions_removed > 0);

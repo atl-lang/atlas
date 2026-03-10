@@ -11,7 +11,7 @@ enum ServerState {
 }
 
 // Converts ServerState to its string representation
-fn server_state_to_string(borrow state: ServerState) -> string {
+fn server_state_to_string(borrow state: ServerState) : string {
     return match state {
         ServerState::Stopped => "stopped",
         ServerState::Starting => "starting",
@@ -33,14 +33,14 @@ struct SupervisorStatus {
 // Supervisor trait defines the interface for process management
 // NOTE: Atlas traits cannot hold state, so we use a struct-based approach
 trait Supervisor {
-    fn start(self) -> Result<void, string>;
-    fn stop(self) -> Result<void, string>;
-    fn restart(self) -> Result<void, string>;
-    fn state(self) -> ServerState;
-    fn pid(self) -> number;
-    fn uptime_ms(self) -> number;
-    fn last_error(self) -> Option<string>;
-    fn reset_restart_counter(self) -> void;
+    fn start(self) : Result<void, string>;
+    fn stop(self) : Result<void, string>;
+    fn restart(self) : Result<void, string>;
+    fn state(self) : ServerState;
+    fn pid(self) : number;
+    fn uptime_ms(self) : number;
+    fn last_error(self) : Option<string>;
+    fn reset_restart_counter(self) : void;
 }
 
 // ProcessSupervisor manages a child process lifecycle
@@ -67,7 +67,7 @@ fn new_supervisor(
     own env: HashMap<string, string>,
     own max_restarts: number,
     own restart_window_seconds: number,
-    own graceful_shutdown_ms: number) -> ProcessSupervisor {
+    own graceful_shutdown_ms: number) : ProcessSupervisor {
     return ProcessSupervisor {
         command: command,
         args: args,
@@ -85,7 +85,7 @@ fn new_supervisor(
 }
 
 impl Supervisor for ProcessSupervisor {
-    fn start(self) -> Result<void, string> {
+    fn start(self) : Result<void, string> {
         // Check if already running
         if self.current_state == ServerState::Running {
             return Err("supervisor already running");
@@ -111,7 +111,7 @@ impl Supervisor for ProcessSupervisor {
         };
     }
 
-    fn stop(self) -> Result<void, string> {
+    fn stop(self) : Result<void, string> {
         if self.current_state == ServerState::Stopped {
             return Ok(null);
         }
@@ -123,7 +123,7 @@ impl Supervisor for ProcessSupervisor {
         return Ok(null);
     }
 
-    fn restart(self) -> Result<void, string> {
+    fn restart(self) : Result<void, string> {
         self.current_state = ServerState::Restarting;
         self.restart_count = self.restart_count + 1;
 
@@ -143,15 +143,15 @@ impl Supervisor for ProcessSupervisor {
         return self.start();
     }
 
-    fn state(self) -> ServerState {
+    fn state(self) : ServerState {
         return self.current_state;
     }
 
-    fn pid(self) -> number {
+    fn pid(self) : number {
         return self.current_pid;
     }
 
-    fn uptime_ms(self) -> number {
+    fn uptime_ms(self) : number {
         if self.current_state != ServerState::Running {
             return 0;
         }
@@ -159,17 +159,17 @@ impl Supervisor for ProcessSupervisor {
         return now - self.start_time_ms;
     }
 
-    fn last_error(self) -> Option<string> {
+    fn last_error(self) : Option<string> {
         return self.error_message;
     }
 
-    fn reset_restart_counter(self) -> void {
+    fn reset_restart_counter(self) : void {
         self.restart_count = 0;
     }
 }
 
 // Creates a SupervisorStatus snapshot
-fn supervisor_status(own sup: ProcessSupervisor) -> SupervisorStatus {
+fn supervisor_status(own sup: ProcessSupervisor) : SupervisorStatus {
     return SupervisorStatus {
         state: sup.current_state,
         pid: sup.current_pid,

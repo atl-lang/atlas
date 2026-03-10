@@ -1,4 +1,4 @@
-fn always_one(own x: number, borrow y: number) -> number {
+fn always_one(own x: number, borrow y: number) : number {
     return x;
 }
 

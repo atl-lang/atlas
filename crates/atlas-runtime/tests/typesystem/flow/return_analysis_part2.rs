@@ -4,7 +4,7 @@ use super::super::*;
 fn test_if_else_with_early_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn complex(borrow x: number, borrow y: number) -> number {
+        fn complex(borrow x: number, borrow y: number): number {
             if (x < 0) {
                 return -1;
             }
@@ -26,7 +26,7 @@ fn test_if_else_with_early_return() {
 fn test_multiple_if_without_final_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn test(borrow x: number, borrow y: number) -> number {
+        fn test(borrow x: number, borrow y: number): number {
             if (x < 0) {
                 return -1;
             }
@@ -43,7 +43,7 @@ fn test_multiple_if_without_final_return() {
 fn test_nested_loops_with_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn test() -> number {
+        fn test(): number {
             let mut i: number = 0;
             while (i < 10) {
                 let mut j: number = 0;
@@ -65,7 +65,7 @@ fn test_nested_loops_with_return() {
 fn test_return_number_to_number() {
     let diagnostics = typecheck_source(
         r#"
-        fn getNumber() -> number {
+        fn getNumber(): number {
             return 42;
         }
     "#,
@@ -77,7 +77,7 @@ fn test_return_number_to_number() {
 fn test_return_string_to_string() {
     let diagnostics = typecheck_source(
         r#"
-        fn getString() -> string {
+        fn getString(): string {
             return "hello";
         }
     "#,
@@ -89,7 +89,7 @@ fn test_return_string_to_string() {
 fn test_return_bool_to_bool() {
     let diagnostics = typecheck_source(
         r#"
-        fn getBool() -> bool {
+        fn getBool(): bool {
             return true;
         }
     "#,
@@ -101,7 +101,7 @@ fn test_return_bool_to_bool() {
 fn test_return_array() {
     let diagnostics = typecheck_source(
         r#"
-        fn getArray() -> number {
+        fn getArray(): number {
             let arr = [1, 2, 3];
             return arr[0];
         }
@@ -117,7 +117,7 @@ fn test_function_returning_number_no_body_error() {
     // Even an empty function needs to return if return type is non-void
     let diagnostics = typecheck_source(
         r#"
-        fn getNumber() -> number {
+        fn getNumber(): number {
         }
     "#,
     );
@@ -128,7 +128,7 @@ fn test_function_returning_number_no_body_error() {
 fn test_function_with_only_declaration() {
     let diagnostics = typecheck_source(
         r#"
-        fn test() -> number {
+        fn test(): number {
             let x: number = 42;
         }
     "#,
@@ -140,7 +140,7 @@ fn test_function_with_only_declaration() {
 fn test_all_branches_return_same_value() {
     let diagnostics = typecheck_source(
         r#"
-        fn alwaysOne() -> number {
+        fn alwaysOne(): number {
             if (true) {
                 return 1;
             } else {
@@ -156,7 +156,7 @@ fn test_all_branches_return_same_value() {
 fn test_if_else_if_else_all_return() {
     let diagnostics = typecheck_source(
         r#"
-        fn classify(borrow x: number) -> number {
+        fn classify(borrow x: number): number {
             if (x < 0) {
                 return -1;
             } else {
@@ -177,7 +177,7 @@ fn test_simple_return_without_nesting() {
     // Direct return statement works
     let diagnostics = typecheck_source(
         r#"
-        fn test() -> number {
+        fn test(): number {
             return 42;
         }
     "#,
@@ -189,7 +189,7 @@ fn test_simple_return_without_nesting() {
 fn test_return_after_if_without_else() {
     let diagnostics = typecheck_source(
         r#"
-        fn myMax(borrow a: number, borrow b: number) -> number {
+        fn myMax(borrow a: number, borrow b: number): number {
             if (a > b) {
                 return a;
             }
@@ -206,15 +206,15 @@ fn test_return_after_if_without_else() {
 fn test_multiple_functions_all_valid() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
 
-        fn multiply(borrow a: number, borrow b: number) -> number {
+        fn multiply(borrow a: number, borrow b: number): number {
             return a * b;
         }
 
-        fn greet() -> string {
+        fn greet(): string {
             return "Hello";
         }
     "#,
@@ -226,15 +226,15 @@ fn test_multiple_functions_all_valid() {
 fn test_multiple_functions_one_invalid() {
     let diagnostics = typecheck_source(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number {
+        fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
 
-        fn broken() -> number {
+        fn broken(): number {
             let x: number = 42;
         }
 
-        fn greet() -> string {
+        fn greet(): string {
             return "Hello";
         }
     "#,
@@ -250,7 +250,7 @@ fn test_return_in_match_arm_typed_as_never_h184() {
     // Pattern: match result { Ok(v) => v, Err(e) => return Err(e) }
     let diagnostics = typecheck_source(
         r#"
-        fn parse_and_double(borrow s: string) -> Result<number, string> {
+        fn parse_and_double(borrow s: string): Result<number, string> {
             let n = match parseInt(s, 10) {
                 Ok(v) => v,
                 Err(e) => return Err(e),

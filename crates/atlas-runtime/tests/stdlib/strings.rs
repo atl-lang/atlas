@@ -416,8 +416,8 @@ fn test_h136_str_string() {
 fn test_h136_str_chain_result() {
     // arr.filter(fn).map(fn) result must be usable with str()
     let code = r#"
-        fn gt2(borrow x: number) -> bool { return x > 2; }
-        fn dbl(borrow x: number) -> number { return x * 2; }
+        fn gt2(borrow x: number): bool { return x > 2; }
+        fn dbl(borrow x: number): number { return x * 2; }
         let arr = [1, 2, 3, 4, 5];
         str(arr.filter(gt2).map(dbl))
     "#;

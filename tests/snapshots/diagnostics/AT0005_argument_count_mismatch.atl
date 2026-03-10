@@ -1,5 +1,5 @@
 // AT0005: Wrong number of arguments
-func add(a: number, b: number) -> number {
+func add(a: number, b: number) : number {
     return a + b;
 }
 

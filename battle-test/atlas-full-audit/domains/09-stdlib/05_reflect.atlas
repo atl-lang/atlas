@@ -14,7 +14,7 @@ print("typeof([]): " + typeof(arr));
 let hm = hashMapNew();
 print("typeof(hashmap): " + typeof(hm));
 
-fn sample_fn(own x: number) -> number { return x; }
+fn sample_fn(own x: number) : number { return x; }
 print("typeof(fn): " + typeof(sample_fn));
 
 // parseJSON returns Result<json, string> — must unwrap

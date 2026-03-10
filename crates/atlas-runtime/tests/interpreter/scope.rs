@@ -118,7 +118,7 @@ fn test_out_of_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
     r#"let x: number = 1; { let x: string = "level 1"; { let x: bool = true; } }"#
 )]
 #[case::param_shadowing(
-    r#"fn foo(borrow x: number) -> number { { let x: string = "shadow"; } return x; }"#
+    r#"fn foo(borrow x: number): number { { let x: string = "shadow"; } return x; }"#
 )]
 #[case::if_block_shadow(r#"let x: number = 1; if (true) { let x: string = "shadow"; }"#)]
 #[case::else_block_shadow(
@@ -129,7 +129,7 @@ fn test_out_of_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
     r#"let i: number = 999; for i in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] { let x = i; }"#
 )]
 #[case::shadow_restored(r#"let x: number = 1; { let x: string = "shadow"; } let y = x;"#)]
-#[case::nested_fn_shadow(r#"fn outer(borrow x: number) -> number { { let x: string = "shadow"; { let x: bool = true; } } return x; }"#)]
+#[case::nested_fn_shadow(r#"fn outer(borrow x: number): number { { let x: string = "shadow"; { let x: bool = true; } } return x; }"#)]
 #[case::if_else_separate(
     r#"let x: number = 1; if (true) { let y: number = 2; } else { let y: string = "different"; }"#
 )]
@@ -149,15 +149,15 @@ fn test_valid_shadowing(#[case] source: &str) {
 #[rstest]
 #[case::same_scope(r#"let x: number = 1; let x: string = "redeclare";"#, "AT2003")]
 #[case::in_block(
-    r#"fn test() -> void { let x: number = 1; let x: string = "redeclare"; }"#,
+    r#"fn test(): void { let x: number = 1; let x: string = "redeclare"; }"#,
     "AT2003"
 )]
 #[case::param_redecl(
-    r#"fn foo(borrow x: number, borrow x: string) -> number { return 0; }"#,
+    r#"fn foo(borrow x: number, borrow x: string): number { return 0; }"#,
     "AT2003"
 )]
 #[case::function_redecl(
-    r#"fn foo() -> number { return 1; } fn foo() -> string { return "redeclare"; }"#,
+    r#"fn foo(): number { return 1; } fn foo(): string { return "redeclare"; }"#,
     "AT2003"
 )]
 fn test_redeclaration_errors(#[case] source: &str, #[case] expected_code: &str) {
@@ -180,13 +180,13 @@ fn test_multiple_variable_redeclarations() {
 
 #[rstest]
 #[case::param_shadow_allowed(
-    r#"fn foo(borrow x: number) -> number { { let x: string = "shadow"; } return x; }"#
+    r#"fn foo(borrow x: number): number { { let x: string = "shadow"; } return x; }"#
 )]
 #[case::param_can_read(
-    r#"fn double(borrow x: number) -> number { let result = x * 2; return result; }"#
+    r#"fn double(borrow x: number): number { let result = x * 2; return result; }"#
 )]
 #[case::param_in_expr(
-    r#"fn calculate(borrow x: number, borrow y: number) -> number { return x + y * 2; }"#
+    r#"fn calculate(borrow x: number, borrow y: number): number { return x + y * 2; }"#
 )]
 fn test_valid_parameter_usage(#[case] source: &str) {
     let diagnostics = bind_source(source);
@@ -194,9 +194,9 @@ fn test_valid_parameter_usage(#[case] source: &str) {
 }
 
 #[rstest]
-#[case::immutable_assign(r#"fn foo(borrow x: number) -> number { x = 10; return x; }"#)]
+#[case::immutable_assign(r#"fn foo(borrow x: number): number { x = 10; return x; }"#)]
 #[case::multiple_params(
-    r#"fn add(borrow a: number, borrow b: number) -> number { a = a + 1; return a + b; }"#
+    r#"fn add(borrow a: number, borrow b: number): number { a = a + 1; return a + b; }"#
 )]
 fn test_parameter_immutability(#[case] source: &str) {
     // NOTE: Parameter immutability checking requires full type checking
@@ -212,22 +212,20 @@ fn test_parameter_immutability(#[case] source: &str) {
 
 #[rstest]
 #[case::access_params(
-    r#"fn foo(borrow x: number, borrow y: string) -> number { let z = x; return z; }"#
+    r#"fn foo(borrow x: number, borrow y: string): number { let z = x; return z; }"#
 )]
 #[case::call_other_fn(
-    r#"fn helper() -> number { return 42; } fn main() -> number { return helper(); }"#
+    r#"fn helper(): number { return 42; } fn main(): number { return helper(); }"#
 )]
-#[case::hoisting(
-    r#"fn main() -> number { return helper(); } fn helper() -> number { return 42; }"#
-)]
-#[case::use_prelude(r#"fn test() -> number { print("hello"); return 42; }"#)]
+#[case::hoisting(r#"fn main(): number { return helper(); } fn helper(): number { return 42; }"#)]
+#[case::use_prelude(r#"fn test(): number { print("hello"); return 42; }"#)]
 fn test_valid_function_scope(#[case] source: &str) {
     let diagnostics = bind_source(source);
     assert_no_errors(&diagnostics);
 }
 
 #[rstest]
-#[case::undefined_var(r#"fn foo() -> number { return undefined_var; }"#, "AT0002")]
+#[case::undefined_var(r#"fn foo(): number { return undefined_var; }"#, "AT0002")]
 #[case::forward_ref(
     r#"let x: number = a + b; let a: number = 1; let b: number = 2;"#,
     "AT0002"
@@ -244,8 +242,8 @@ fn test_scope_errors(#[case] source: &str, #[case] expected_code: &str) {
 // ============================================================================
 
 #[rstest]
-#[case::shadow_print(r#"fn test() -> void { let print: number = 42; }"#)]
-#[case::shadow_len(r#"fn test() -> void { let len: string = "shadowed"; }"#)]
+#[case::shadow_print(r#"fn test(): void { let print: number = 42; }"#)]
+#[case::shadow_len(r#"fn test(): void { let len: string = "shadowed"; }"#)]
 fn test_prelude_shadowing(#[case] source: &str) {
     // NOTE: Prelude shadowing detection (AT1012) may not be fully implemented yet
     // This test documents the expected behavior

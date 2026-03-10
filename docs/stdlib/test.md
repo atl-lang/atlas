@@ -7,7 +7,7 @@ Unit testing assertions and test utilities.
 ### assert
 
 ```atlas
-fn assert(condition: bool) -> Result<Null, string>
+fn assert(condition: bool) : Result<Null, string>
 ```
 
 Asserts that condition is true.
@@ -22,7 +22,7 @@ Asserts that condition is true.
 ### assertEqual
 
 ```atlas
-fn assertEqual(actual: any, expected: any) -> Result<Null, string>
+fn assertEqual(actual: any, expected: any) : Result<Null, string>
 ```
 
 Asserts two values are equal.
@@ -38,7 +38,7 @@ Asserts two values are equal.
 ### assertNotEqual
 
 ```atlas
-fn assertNotEqual(actual: any, expected: any) -> Result<Null, string>
+fn assertNotEqual(actual: any, expected: any) : Result<Null, string>
 ```
 
 Asserts two values are not equal.
@@ -56,7 +56,7 @@ Asserts two values are not equal.
 ### assertFalse
 
 ```atlas
-fn assertFalse(condition: bool) -> Result<Null, string>
+fn assertFalse(condition: bool) : Result<Null, string>
 ```
 
 Asserts condition is false.
@@ -73,7 +73,7 @@ Asserts condition is false.
 ### assertEmpty
 
 ```atlas
-fn assertEmpty(value: any) -> Result<Null, string>
+fn assertEmpty(value: any) : Result<Null, string>
 ```
 
 Asserts collection is empty.
@@ -88,7 +88,7 @@ Asserts collection is empty.
 ### assertLength
 
 ```atlas
-fn assertLength(value: any, length: number) -> Result<Null, string>
+fn assertLength(value: any, length: number) : Result<Null, string>
 ```
 
 Asserts collection has specific length.
@@ -104,7 +104,7 @@ Asserts collection has specific length.
 ### assertContains
 
 ```atlas
-fn assertContains(collection: any, item: any) -> Result<Null, string>
+fn assertContains(collection: any, item: any) : Result<Null, string>
 ```
 
 Asserts collection contains item.
@@ -122,7 +122,7 @@ Asserts collection contains item.
 ### assertSome
 
 ```atlas
-fn assertSome(opt: Option<T>) -> Result<T, string>
+fn assertSome(opt: Option<T>) : Result<T, string>
 ```
 
 Asserts Option is Some and returns value.
@@ -137,7 +137,7 @@ Asserts Option is Some and returns value.
 ### assertNone
 
 ```atlas
-fn assertNone(opt: Option<T>) -> Result<Null, string>
+fn assertNone(opt: Option<T>) : Result<Null, string>
 ```
 
 Asserts Option is None.
@@ -152,7 +152,7 @@ Asserts Option is None.
 ### assertOk
 
 ```atlas
-fn assertOk(res: Result<T, E>) -> Result<T, string>
+fn assertOk(res: Result<T, E>) : Result<T, string>
 ```
 
 Asserts Result is Ok and returns value.
@@ -167,7 +167,7 @@ Asserts Result is Ok and returns value.
 ### assertErr
 
 ```atlas
-fn assertErr(res: Result<T, E>) -> Result<E, string>
+fn assertErr(res: Result<T, E>) : Result<E, string>
 ```
 
 Asserts Result is Err and returns error.
@@ -184,7 +184,7 @@ Asserts Result is Err and returns error.
 ### assertThrows
 
 ```atlas
-fn assertThrows(fn_call: fn() -> any) -> Result<string, string>
+fn assertThrows(fn_call: fn() : any) : Result<string, string>
 ```
 
 Asserts function throws an exception.
@@ -199,7 +199,7 @@ Asserts function throws an exception.
 ### assertNoThrow
 
 ```atlas
-fn assertNoThrow(fn_call: fn() -> any) -> Result<Null, string>
+fn assertNoThrow(fn_call: fn() : any) : Result<Null, string>
 ```
 
 Asserts function does not throw.
@@ -256,7 +256,7 @@ test("addition", || {
 ### Basic Test
 
 ```atlas
-fn my_test() -> Result<Null, string> {
+fn my_test() : Result<Null, string> {
   assertEqual(add(2, 3), 5)?;
   assertEqual(add(-1, 1), 0)?;
   Ok(Null)
@@ -266,7 +266,7 @@ fn my_test() -> Result<Null, string> {
 ### Multiple Assertions
 
 ```atlas
-fn test_array_ops() -> Result<Null, string> {
+fn test_array_ops() : Result<Null, string> {
   let arr = [1, 2, 3];
   assertLength(arr, 3)?;
   assertContains(arr, 2)?;
@@ -278,7 +278,7 @@ fn test_array_ops() -> Result<Null, string> {
 ### Option Testing
 
 ```atlas
-fn test_option_handling() -> Result<Null, string> {
+fn test_option_handling() : Result<Null, string> {
   let opt = Some(42);
   assertSome(opt)?;
 
@@ -292,7 +292,7 @@ fn test_option_handling() -> Result<Null, string> {
 ### Result Testing
 
 ```atlas
-fn test_error_handling() -> Result<Null, string> {
+fn test_error_handling() : Result<Null, string> {
   let ok = Ok(10);
   let val = assertOk(ok)?;
   assertEqual(val, 10)?;

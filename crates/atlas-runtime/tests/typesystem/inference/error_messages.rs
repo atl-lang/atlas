@@ -12,7 +12,7 @@ use super::helpers::*;
 fn test_at3051_includes_type_param_name() {
     let diags = errors(
         r#"
-fn make<T>() -> T { return 42; }
+fn make<T>(): T { return 42; }
 make();
 "#,
     );
@@ -75,7 +75,7 @@ fn test_at3051_not_fired_when_type_param_inferrable() {
     // identity(42) can infer T=number → no AT3051
     let diags = errors(
         r#"
-fn identity<T>(borrow x: T) -> T { return x; }
+fn identity<T>(borrow x: T): T { return x; }
 identity(42);
 "#,
     );

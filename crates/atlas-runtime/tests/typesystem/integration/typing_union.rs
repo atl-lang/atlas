@@ -47,7 +47,7 @@ fn typing_integration_infers_types(input: &str, expected: &str) {
     case("let x: string = 1;"),
     case("let arr: []number = [1, \"b\"];"),
     case("let mut flag: bool = 2;"),
-    case("fn add(borrow a: number, borrow b: number) -> number { return \"x\"; };"),
+    case("fn add(borrow a: number, borrow b: number): number { return \"x\"; };"),
     case("match true { 1 => 2 };"),
     case("let mismatch: number = true;"),
     case("while (\"no\") { let a = 1; };"),
@@ -123,8 +123,8 @@ fn typing_integration_regressions_remain_valid(input: &str) {
 #[case("let _x: (number | string)[] = [\"a\", \"b\"]; ")]
 #[case("type Id = number | string; let _x: Id = 7;")]
 #[case("type Id = number | string; let _x: Id = \"v\";")]
-#[case("type Pair = (number, string) -> number | string; fn f(borrow x: number, borrow y: string) -> number { return x; } let _x: Pair = f;")]
-#[case("fn f(borrow x: bool) -> number | string { if (x) { return 1; } return \"a\"; }")]
+#[case("type Pair = (number, string): number | string; fn f(borrow x: number, borrow y: string): number { return x; } let _x: Pair = f;")]
+#[case("fn f(borrow x: bool): number | string { if (x) { return 1; } return \"a\"; }")]
 #[case("let _x: number | number = 1;")]
 fn test_union_construction(#[case] source: &str) {
     let diags = errors(source);
@@ -138,7 +138,7 @@ fn test_union_construction(#[case] source: &str) {
 #[rstest]
 #[case("let _x: number | string = true;")]
 #[case("let _x: number | string = null;")]
-#[case("fn f() -> number | string { return true; }")]
+#[case("fn f(): number | string { return true; }")]
 #[case("let _x: (number | string)[] = [1, \"bad\"]; ")]
 #[case("let _x: number | string = 1; let _y: number = _x;")]
 #[case("let _x: number | string = \"ok\"; let _y: string = _x; let _z: number = _x;")]

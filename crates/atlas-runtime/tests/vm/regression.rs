@@ -124,13 +124,13 @@ fn test_parity_array_mutation() {
 #[test]
 fn test_parity_function_call() {
     assert_parity(
-        "fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(3, 4);",
+        "fn add(borrow a: number, borrow b: number): number { return a + b; } add(3, 4);",
     );
 }
 
 #[test]
 fn test_parity_recursion() {
-    assert_parity("fn fact(borrow n: number) -> number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(5);");
+    assert_parity("fn fact(borrow n: number): number { if (n <= 1) { return 1; } return n * fact(n - 1); } fact(5);");
 }
 
 #[test]
@@ -151,7 +151,7 @@ fn test_parity_nested_if() {
 fn test_parity_else_if_chain() {
     // Test `else if` syntax (not nested `else { if }`)
     assert_parity(
-        r#"fn classify(borrow x: number) -> number {
+        r#"fn classify(borrow x: number): number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -163,7 +163,7 @@ fn test_parity_else_if_chain() {
         classify(15);"#,
     );
     assert_parity(
-        r#"fn classify(borrow x: number) -> number {
+        r#"fn classify(borrow x: number): number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -175,7 +175,7 @@ fn test_parity_else_if_chain() {
         classify(7);"#,
     );
     assert_parity(
-        r#"fn classify(borrow x: number) -> number {
+        r#"fn classify(borrow x: number): number {
             if (x > 10) {
                 return 2;
             } else if (x > 5) {
@@ -263,9 +263,9 @@ fn test_edge_while_false() {
 #[test]
 fn test_edge_nested_function_scope() {
     let source = r#"
-fn outer() -> number {
+fn outer(): number {
     let mut x = 10;
-    fn inner() -> number {
+    fn inner(): number {
         return 20;
     }
     return x + inner();
@@ -277,7 +277,7 @@ outer();
 
 #[test]
 fn test_edge_function_no_return() {
-    let source = "fn noop() -> void { let x = 1; } noop();";
+    let source = "fn noop(): void { let x = 1; } noop();";
     let result = vm_eval(source);
     // Should return null/none
     assert!(result.is_none() || result == Some(Value::Null));
@@ -376,7 +376,7 @@ fn test_v01_while_loop() {
 #[test]
 fn test_v01_function_definition() {
     assert_eq!(
-        vm_number("fn greet(borrow n: number) -> number { return n * 2; } greet(21);"),
+        vm_number("fn greet(borrow n: number): number { return n * 2; } greet(21);"),
         42.0
     );
 }
@@ -406,8 +406,8 @@ fn test_v01_comparison_operators() {
 #[test]
 fn test_v01_nested_functions() {
     let source = r#"
-fn outer(borrow x: number) -> number {
-    fn inner(borrow y: number) -> number {
+fn outer(borrow x: number): number {
+    fn inner(borrow y: number): number {
         return y + 1;
     }
     return inner(x) * 2;
@@ -435,7 +435,7 @@ fn test_perf_large_loop() {
 #[test]
 fn test_perf_recursive_fib() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn fib(borrow n: number) -> number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);");
+    let result = vm_number("fn fib(borrow n: number): number { if (n <= 1) { return n; } return fib(n - 1) + fib(n - 2); } fib(20);");
     let elapsed = start.elapsed();
     assert_eq!(result, 6765.0);
     assert!(
@@ -461,7 +461,7 @@ fn test_perf_nested_loops() {
 #[test]
 fn test_perf_function_calls() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn inc(borrow x: number) -> number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
+    let result = vm_number("fn inc(borrow x: number): number { return x + 1; } let mut r = 0; let mut i = 0; while (i < 10000) { r = inc(r); i = i + 1; } r;");
     let elapsed = start.elapsed();
     assert_eq!(result, 10000.0);
     assert!(
@@ -507,7 +507,7 @@ arr[0];
 #[test]
 fn test_perf_deep_recursion() {
     let start = std::time::Instant::now();
-    let result = vm_number("fn sum_to(borrow n: number) -> number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(500);");
+    let result = vm_number("fn sum_to(borrow n: number): number { if (n <= 0) { return 0; } return n + sum_to(n - 1); } sum_to(500);");
     let elapsed = start.elapsed();
     assert_eq!(result, 125250.0);
     assert!(
@@ -521,7 +521,7 @@ fn test_perf_deep_recursion() {
 fn test_perf_complex_computation() {
     let start = std::time::Instant::now();
     let source = r#"
-fn power(borrow b: number, borrow e: number) -> number {
+fn power(borrow b: number, borrow e: number): number {
     if (e == 0) { return 1; }
     return b * power(b, e - 1);
 }
@@ -599,7 +599,7 @@ fn test_regression_reassignment_in_loop() {
 #[test]
 fn test_regression_function_returning_bool() {
     assert!(vm_bool(
-        "fn is_positive(borrow x: number) -> bool { return x > 0; } is_positive(5);"
+        "fn is_positive(borrow x: number): bool { return x > 0; } is_positive(5);"
     ));
 }
 
@@ -607,7 +607,7 @@ fn test_regression_function_returning_bool() {
 fn test_regression_function_returning_string() {
     assert_eq!(
         vm_string(
-            r#"fn greet(borrow name: string) -> string { return "Hello, " + name; } greet("World");"#
+            r#"fn greet(borrow name: string): string { return "Hello, " + name; } greet("World");"#
         ),
         "Hello, World"
     );
@@ -617,7 +617,7 @@ fn test_regression_function_returning_string() {
 fn test_regression_array_in_function() {
     let result = vm_number(
         r#"
-fn sum_arr() -> number {
+fn sum_arr(): number {
     let arr = [1, 2, 3, 4, 5];
     let mut sum = 0;
     let mut i = 0;
@@ -637,9 +637,9 @@ sum_arr();
 fn test_regression_multiple_function_calls() {
     let result = vm_number(
         r#"
-fn a() -> number { return 1; }
-fn b() -> number { return 2; }
-fn c() -> number { return 3; }
+fn a(): number { return 1; }
+fn b(): number { return 2; }
+fn c(): number { return 3; }
 a() + b() + c();
 "#,
     );
@@ -983,7 +983,7 @@ fn test_compound_assignment_index_evaluates_once() {
     let result = vm_number(
         r#"
 let mut counter = 0;
-fn get_idx() -> number {
+fn get_idx(): number {
     counter = counter + 1;
     return 0;
 }
@@ -1005,7 +1005,7 @@ fn test_compound_assignment_index_evaluates_once_parity() {
     // Same test, but verify interpreter and VM behave identically
     let source = r#"
 let mut counter = 0;
-fn get_idx() -> number {
+fn get_idx(): number {
     counter = counter + 1;
     return 0;
 }
@@ -1028,7 +1028,7 @@ fn test_compound_assignment_target_evaluates_once() {
         r#"
 let mut counter = 0;
 let mut arr = [100];
-fn get_idx() -> number {
+fn get_idx(): number {
     counter = counter + 1;
     return 0;
 }

@@ -2,7 +2,7 @@
 // Tests: trait declaration, impl for struct, method dispatch on two different structs
 
 trait Printable {
-    fn to_string(self) -> string;
+    fn to_string(self) : string;
 }
 
 struct Dog {
@@ -16,13 +16,13 @@ struct Car {
 }
 
 impl Printable for Dog {
-    fn to_string(self) -> string {
+    fn to_string(self) : string {
         return "Dog(" + self.name + ", " + self.breed + ")";
     }
 }
 
 impl Printable for Car {
-    fn to_string(self) -> string {
+    fn to_string(self) : string {
         return "Car(" + self.make + ", " + str(self.year) + ")";
     }
 }

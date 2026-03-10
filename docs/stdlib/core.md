@@ -5,7 +5,7 @@ Core runtime functions available in Atlas.
 ## print
 
 ```atlas
-fn print(value: any) -> Null
+fn print(value: any) : Null
 ```
 
 Prints a value to stdout. Returns Null.
@@ -18,7 +18,7 @@ Prints a value to stdout. Returns Null.
 ## len
 
 ```atlas
-fn len(value: []T) -> number
+fn len(value: []T) : number
 ```
 
 Returns the length of an array, string, or collection.
@@ -31,7 +31,7 @@ Returns the length of an array, string, or collection.
 ## str
 
 ```atlas
-fn str(value: any) -> string
+fn str(value: any) : string
 ```
 
 Converts a value to its string representation.

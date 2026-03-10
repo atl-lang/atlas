@@ -1,2 +1,2 @@
-fn double(borrow x: number) -> number { return x * 2; }
+fn double(borrow x: number) : number { return x * 2; }
 print(double(5));

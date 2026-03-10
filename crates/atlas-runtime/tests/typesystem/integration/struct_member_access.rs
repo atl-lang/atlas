@@ -67,7 +67,7 @@ fn test_struct_field_access_in_closure() {
         r#"
         struct Item { id: number }
         let item = Item { id: 5 };
-        let get_id = fn () -> number {
+        let get_id = fn (): number {
             return item.id;
         };
         let value: number = get_id();
@@ -82,7 +82,7 @@ fn struct_array_fn_param_resolves_correctly() {
     let src = r#"
 struct Point { x: number, y: number }
 
-fn sum_x(borrow pts: []Point) -> number {
+fn sum_x(borrow pts: []Point): number {
     let mut total: number = 0;
     for p in pts {
         total = total + p.x;

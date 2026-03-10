@@ -1,9 +1,9 @@
 struct Point { x: number, y: number }
 trait Describe {
-    fn describe(self) -> string;
+    fn describe(self) : string;
 }
 impl Describe for Point {
-    fn describe(self) -> string {
+    fn describe(self) : string {
         return `Point(${self.x}, ${self.y})`;
     }
 }

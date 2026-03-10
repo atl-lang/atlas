@@ -4,29 +4,29 @@
 type Score = number;
 type Name = string;
 type Scores = number[];
-type Scorer = (string) -> number;
-type Predicate = (number) -> bool;
+type Scorer = (string) : number;
+type Predicate = (number) : bool;
 type NumberPair = number[];
 
-fn score_player(borrow name: string) -> Score {
+fn score_player(borrow name: string) : Score {
     return len(name) * 10;
 }
 
-fn apply_scorer(own scorer: Scorer, borrow name: Name) -> Score {
+fn apply_scorer(own scorer: Scorer, borrow name: Name) : Score {
     return scorer(name);
 }
 
-fn filter_scores(borrow scores: Scores, borrow pred: Predicate) -> Scores {
+fn filter_scores(borrow scores: Scores, borrow pred: Predicate) : Scores {
     return filter(scores, pred);
 }
 
-fn sum_scores(borrow scores: Scores) -> Score {
-    return reduce(scores, fn(own acc: number, own x: number) -> number {
+fn sum_scores(borrow scores: Scores) : Score {
+    return reduce(scores, fn(own acc: number, own x: number) : number {
         return acc + x;
     }, 0);
 }
 
-fn make_pair(borrow a: number, borrow b: number) -> NumberPair {
+fn make_pair(borrow a: number, borrow b: number) : NumberPair {
     return [a, b];
 }
 
@@ -37,7 +37,7 @@ let my_score: Score = score_player(player_name);
 print("score for 'Atlas': " + str(my_score));
 
 // Scorer alias
-let custom_scorer: Scorer = fn(borrow name: string) -> number {
+let custom_scorer: Scorer = fn(borrow name: string) : number {
     return len(name) * 5 + 100;
 };
 
@@ -50,7 +50,7 @@ print("custom_scorer('Bob'): " + str(s2));
 // Scores array alias
 let all_scores: Scores = [80, 95, 60, 72, 88, 45, 91];
 
-let passing: Predicate = fn(own x: number) -> bool { return x >= 70; };
+let passing: Predicate = fn(own x: number) : bool { return x >= 70; };
 let high_scores: Scores = filter_scores(all_scores, passing);
 
 print("total scores: " + str(len(all_scores)));

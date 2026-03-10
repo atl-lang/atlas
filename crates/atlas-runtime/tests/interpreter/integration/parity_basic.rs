@@ -47,10 +47,10 @@ fn test_parity_variables(#[case] code: &str) {
 
 // Function parity tests
 #[rstest]
-#[case("fn add(borrow a: number, borrow b: number) -> number { return a + b; } add(2, 3);")]
-#[case("fn identity(borrow x: number) -> number { return x; } identity(42);")]
-#[case("fn constant() -> number { return 99; } constant();")]
-#[case("fn inc(borrow x: number) -> number { return x + 1; } inc(inc(inc(0)));")]
+#[case("fn add(borrow a: number, borrow b: number): number { return a + b; } add(2, 3);")]
+#[case("fn identity(borrow x: number): number { return x; } identity(42);")]
+#[case("fn constant(): number { return 99; } constant();")]
+#[case("fn inc(borrow x: number): number { return x + 1; } inc(inc(inc(0)));")]
 fn test_parity_functions(#[case] code: &str) {
     assert_parity(code);
 }
@@ -160,10 +160,8 @@ fn test_parity_array_foreach(#[case] code: &str) {
 // Array: map/filter with closures — both engines error (acceptable parity until Block 4)
 // These are included so parity is verified even for unsupported operations.
 #[rstest]
-#[case("let a: []number = [1, 2, 3]; map(a, fn(borrow x: number) -> number { return x * 2; });")]
-#[case(
-    "let a: []number = [1, 2, 3, 4]; filter(a, fn(borrow x: number) -> bool { return x > 2; });"
-)]
+#[case("let a: []number = [1, 2, 3]; map(a, fn(borrow x: number): number { return x * 2; });")]
+#[case("let a: []number = [1, 2, 3, 4]; filter(a, fn(borrow x: number): bool { return x > 2; });")]
 fn test_parity_array_map_filter_both_error(#[case] code: &str) {
     assert_parity(code); // Both engines must agree (both succeed or both fail)
 }

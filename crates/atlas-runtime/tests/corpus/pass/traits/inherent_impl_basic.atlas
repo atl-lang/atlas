@@ -1,10 +1,10 @@
 struct Point { x: number, y: number }
 
 impl Point {
-    fn magnitude(borrow self: Point) -> number {
+    fn magnitude(borrow self: Point) : number {
         return self.x * self.x + self.y * self.y;
     }
-    fn to_string(borrow self: Point) -> string {
+    fn to_string(borrow self: Point) : string {
         return `(${self.x}, ${self.y})`;
     }
 }

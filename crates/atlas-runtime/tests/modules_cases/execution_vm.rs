@@ -25,7 +25,7 @@ fn test_vm_import_single_function() {
     create_module(
         temp_dir.path(),
         "math",
-        "export fn add(borrow a: number, borrow b: number) -> number { return a + b; }",
+        "export fn add(borrow a: number, borrow b: number): number { return a + b; }",
     );
 
     let main = create_module(
@@ -150,7 +150,7 @@ fn test_vm_export_function_and_variable() {
         "utils",
         r#"
 export let SCALE: number = 10;
-export fn scale(borrow x: number) -> number { return x * SCALE; }
+export fn scale(borrow x: number): number { return x * SCALE; }
 "#,
     );
 
@@ -223,8 +223,8 @@ fn test_vm_multiple_imports() {
         temp_dir.path(),
         "math",
         r#"
-export fn add(borrow a: number, borrow b: number) -> number { return a + b; }
-export fn sub(borrow a: number, borrow b: number) -> number { return a - b; }
+export fn add(borrow a: number, borrow b: number): number { return a + b; }
+export fn sub(borrow a: number, borrow b: number): number { return a - b; }
 "#,
     );
 

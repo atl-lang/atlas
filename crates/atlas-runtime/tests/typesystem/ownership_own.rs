@@ -12,8 +12,8 @@ use super::{assert_has_error, assert_no_errors, errors, has_error_code, typechec
 fn test_ownership_own_valid_single_use() {
     // Passing a variable to an `own` param once is fine
     let src = r#"
-fn consume(own data: string) -> string { return data; }
-fn main() -> void {
+fn consume(own data: string): string { return data; }
+fn main(): void {
     let x: string = "hello";
     let result: string = consume(x);
 }
@@ -25,8 +25,8 @@ fn main() -> void {
 fn test_ownership_own_valid_return_value() {
     // Returning the moved value is valid; no use-after-own in caller
     let src = r#"
-fn take(own val: string) -> string { return val; }
-fn main() -> void {
+fn take(own val: string): string { return val; }
+fn main(): void {
     let s: string = "world";
     let out: string = take(s);
     let result: string = out;
@@ -39,8 +39,8 @@ fn main() -> void {
 fn test_ownership_own_valid_multiple_different_vars() {
     // Moving two different variables is fine
     let src = r#"
-fn consume(own a: string) -> void {}
-fn main() -> void {
+fn consume(own a: string): void {}
+fn main(): void {
     let x: string = "a";
     let y: string = "b";
     consume(x);
@@ -58,8 +58,8 @@ fn main() -> void {
 fn test_ownership_own_use_after_own_fires() {
     // Classic use-after-own: variable used after being passed to own param
     let src = r#"
-fn consume(own data: string) -> void {}
-fn main() -> void {
+fn consume(own data: string): void {}
+fn main(): void {
     let x: string = "hello";
     consume(x);
     let again: string = x;
@@ -73,8 +73,8 @@ fn main() -> void {
 fn test_ownership_own_double_move_fires() {
     // Passing the same variable to own twice must fire AT3053 on the second use
     let src = r#"
-fn consume(own data: string) -> void {}
-fn main() -> void {
+fn consume(own data: string): void {}
+fn main(): void {
     let x: string = "hello";
     consume(x);
     consume(x);
@@ -92,9 +92,9 @@ fn main() -> void {
 fn test_ownership_own_use_in_expression_after_move_fires() {
     // Using moved var inside an expression (not just standalone) still triggers AT3053
     let src = r#"
-fn consume(own data: string) -> void {}
-fn concat(borrow a: string, borrow b: string) -> string { return a; }
-fn main() -> void {
+fn consume(own data: string): void {}
+fn concat(borrow a: string, borrow b: string): string { return a; }
+fn main(): void {
     let x: string = "hello";
     consume(x);
     let result: string = concat(x, "world");
@@ -108,10 +108,10 @@ fn main() -> void {
 fn test_ownership_own_move_in_nested_fn_isolated() {
     // A move inside a nested function should NOT affect the outer scope
     let src = r#"
-fn consume(own data: string) -> void {}
-fn main() -> void {
+fn consume(own data: string): void {}
+fn main(): void {
     let outer: string = "outer";
-    fn inner() -> void {
+    fn inner(): void {
         let x: string = "inner";
         consume(x);
     }
@@ -125,8 +125,8 @@ fn main() -> void {
 fn test_h177_rebind_after_own_clears_moved_flag() {
     // x = f(own x) — after the assignment, x is rebound and must be usable again
     let src = r#"
-fn take(own val: []number) -> []number { return val; }
-fn main() -> void {
+fn take(own val: []number): []number { return val; }
+fn main(): void {
     let mut nums: []number = [1, 2, 3];
     nums = take(nums);
     let n: number = nums[0];
@@ -138,8 +138,8 @@ fn main() -> void {
 #[test]
 fn test_ownership_own_error_message_contains_variable_name() {
     let src = r#"
-fn consume(own data: string) -> void {}
-fn main() -> void {
+fn consume(own data: string): void {}
+fn main(): void {
     let my_value: string = "hello";
     consume(my_value);
     let again: string = my_value;

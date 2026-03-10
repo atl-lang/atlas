@@ -5,7 +5,7 @@ use super::type_guards_part1::eval;
 #[rstest]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x) || is_number(x)) { let _y: number | string = x; return 1; }
         return 2;
     }
@@ -13,7 +13,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x) && is_type(x, "string")) { let _y: string = x; return 1; }
         return 2;
     }
@@ -21,7 +21,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (!is_string(x)) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -29,7 +29,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x) && !is_null(x)) { let _y: string = x; return 1; }
         return 2;
     }
@@ -37,7 +37,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_type(x, "string") || is_type(x, "number")) { let _y: number | string = x; return 1; }
         return 2;
     }
@@ -45,7 +45,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x) && is_number(x)) { return 1; }
         return 2;
     }
@@ -53,7 +53,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x)) { let _y: string = x; }
         if (is_number(x)) { let _y: number = x; }
         return 1;
@@ -62,7 +62,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_string(x)) { let _y: string = x; return 1; }
         if (is_number(x)) { let _y: number = x; return 2; }
         return 3;
@@ -71,7 +71,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         let mut result: number = 0;
         if (is_string(x)) { result = 1; }
         if (is_number(x)) { result = 2; }
@@ -81,7 +81,7 @@ use super::type_guards_part1::eval;
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         while (is_string(x)) { let _y: string = x; return 1; }
         return 2;
     }
@@ -101,7 +101,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn test(borrow x: WithName | WithId) -> number {
+    fn test(borrow x: WithName | WithId): number {
         if (has_field(x, "name")) { let _y: WithName = x; return 1; }
         else { let _y: WithId = x; return 2; }
     }
@@ -109,9 +109,9 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
 )]
 #[case(
     r#"
-    type WithLen = { len: () -> number };
+    type WithLen = { len: (): number };
     type WithId = { id: number };
-    fn test(borrow x: WithLen | WithId) -> number {
+    fn test(borrow x: WithLen | WithId): number {
         if (has_method(x, "len")) { let _y: WithLen = x; return 1; }
         else { let _y: WithId = x; return 2; }
     }
@@ -121,7 +121,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithTag = { tag: string, value: number };
     type WithNumTag = { tag: number, message: string };
-    fn test(borrow x: WithTag | WithNumTag) -> number {
+    fn test(borrow x: WithTag | WithNumTag): number {
         if (has_tag(x, "ok")) { let _y: WithTag = x; return 1; }
         else { let _y: WithNumTag = x; return 2; }
     }
@@ -131,7 +131,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type One = { name: string, id: number };
     type Two = { id: number };
-    fn test(borrow x: One | Two) -> number {
+    fn test(borrow x: One | Two): number {
         if (has_field(x, "name")) { let _y: One = x; return 1; }
         else { let _y: Two = x; return 2; }
     }
@@ -139,9 +139,9 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
 )]
 #[case(
     r#"
-    type One = { len: () -> number, id: number };
+    type One = { len: (): number, id: number };
     type Two = { id: number };
-    fn test(borrow x: One | Two) -> number {
+    fn test(borrow x: One | Two): number {
         if (has_method(x, "len")) { let _y: One = x; return 1; }
         else { let _y: Two = x; return 2; }
     }
@@ -151,7 +151,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type One = { tag: string, id: number };
     type Two = { tag: number, id: number };
-    fn test(borrow x: One | Two) -> number {
+    fn test(borrow x: One | Two): number {
         if (has_tag(x, "one")) { let _y: One = x; return 1; }
         else { let _y: Two = x; return 2; }
     }
@@ -161,7 +161,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn test(borrow x: WithName | WithId) -> number {
+    fn test(borrow x: WithName | WithId): number {
         if (has_field(x, "name") && has_field(x, "name")) { let _y: WithName = x; return 1; }
         else { let _y: WithId = x; return 2; }
     }
@@ -171,7 +171,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn test(borrow x: WithName | WithId) -> number {
+    fn test(borrow x: WithName | WithId): number {
         if (has_field(x, "name") || has_field(x, "id")) { let _y: WithName | WithId = x; return 1; }
         return 2;
     }
@@ -181,7 +181,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn test(borrow x: WithName | WithId) -> number {
+    fn test(borrow x: WithName | WithId): number {
         if (!has_field(x, "name")) { let _y: WithId = x; return 1; }
         else { let _y: WithName = x; return 2; }
     }
@@ -191,7 +191,7 @@ fn test_guard_composition_and_flow(#[case] source: &str) {
     r#"
     type WithName = { name: string };
     type WithId = { id: number };
-    fn test(borrow x: WithName | WithId) -> number {
+    fn test(borrow x: WithName | WithId): number {
         if (has_field(x, "name")) { let _y: { name: string } = x; return 1; }
         else { let _y: { id: number } = x; return 2; }
     }
@@ -209,7 +209,7 @@ fn test_structural_guards(#[case] source: &str) {
 #[rstest]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_type(x, "string")) { let _y: string = x; return 1; }
         else { let _y: number = x; return 2; }
     }
@@ -217,7 +217,7 @@ fn test_structural_guards(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_type(x, "number")) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -225,7 +225,7 @@ fn test_structural_guards(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: null | string) -> number {
+    fn test(borrow x: null | string): number {
         if (is_type(x, "null")) { let _y: null = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -233,7 +233,7 @@ fn test_structural_guards(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: []number | string) -> number {
+    fn test(borrow x: []number | string): number {
         if (is_type(x, "array")) { let _y: []number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -241,7 +241,7 @@ fn test_structural_guards(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (is_type(x, "number") || is_type(x, "string")) { let _y: number | string = x; return 1; }
         return 2;
     }
@@ -258,7 +258,7 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case(
     "bool | null guard",
     r#"
-    fn test(borrow x: bool | null) -> number {
+    fn test(borrow x: bool | null): number {
         if (is_type(x, "bool")) { let _y: bool = x; return 1; }
         else { let _y: null = x; return 2; }
     }
@@ -267,9 +267,9 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case(
     "function guard",
     r#"
-    fn f(borrow x: number) -> number { return x; }
-    fn test(borrow x: ((number) -> number) | string) -> number {
-        if (is_type(x, "function")) { let _y: (number) -> number = x; return 1; }
+    fn f(borrow x: number): number { return x; }
+    fn test(borrow x: ((number): number) | string): number {
+        if (is_type(x, "function")) { let _y: (number): number = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -277,7 +277,7 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case(
     "json type guard",
     r#"
-    fn test(borrow x: json | string) -> number {
+    fn test(borrow x: json | string): number {
         if (is_type(x, "json")) { let _y: json = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -286,7 +286,7 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case(
     "json object guard",
     r#"
-    fn test(borrow x: json | string) -> number {
+    fn test(borrow x: json | string): number {
         if (is_type(x, "object")) { let _y: json = x; return 1; }
         else { let _y: string = x; return 2; }
     }
@@ -295,7 +295,7 @@ fn test_is_type_guard(#[case] source: &str) {
 #[case(
     "negated guard",
     r#"
-    fn test(borrow x: number | string) -> number {
+    fn test(borrow x: number | string): number {
         if (!is_type(x, "string")) { let _y: number = x; return 1; }
         else { let _y: string = x; return 2; }
     }

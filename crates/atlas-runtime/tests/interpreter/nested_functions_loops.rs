@@ -4,10 +4,10 @@ use pretty_assertions::assert_eq;
 #[test]
 fn test_bind_nested_function_in_while_block() {
     let source = r#"
-        fn outer() -> number {
+        fn outer(): number {
             let mut i: number = 0;
             while i < 1 {
-                fn helper() -> number {
+                fn helper(): number {
                     return 42;
                 }
                 i += 1;
@@ -25,9 +25,9 @@ fn test_bind_nested_function_in_while_block() {
 #[test]
 fn test_bind_nested_function_in_for_block() {
     let source = r#"
-        fn outer() -> number {
+        fn outer(): number {
             for i in [0, 1, 2, 3, 4] {
-                fn helper(borrow x: number) -> number {
+                fn helper(borrow x: number): number {
                     return x;
                 }
                 let _unused = i;

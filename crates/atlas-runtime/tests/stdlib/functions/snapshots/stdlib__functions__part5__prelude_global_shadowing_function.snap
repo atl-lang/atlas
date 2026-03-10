@@ -10,6 +10,6 @@ expression: diagnostics
   line: 2
   column: 4
   length: 5
-  snippet: "fn print() -> void {}"
+  snippet: "fn print() : void {}"
   label: shadows prelude builtin
   help: Prelude builtins cannot be redefined at the top level. Use a different name or shadow in a nested scope.

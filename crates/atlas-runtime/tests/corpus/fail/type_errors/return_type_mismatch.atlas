@@ -1,3 +1,3 @@
-fn get_number() -> number {
+fn get_number() : number {
     return "not a number";
 }

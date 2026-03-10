@@ -15,7 +15,7 @@ An `async fn` is a function that may suspend and resume — it always returns
 says `T` or `Future<T>`.
 
 ```atlas
-async fn fetch(url: string) -> string {
+async fn fetch(url: string) : string {
     let response = await http.get(url);
     return response.body;
 }
@@ -37,7 +37,7 @@ print(result);
 ### async fn Declaration
 
 ```
-async fn name<T>(param: Type, ...) -> ReturnType { ... }
+async fn name<T>(param: Type, ...) : ReturnType { ... }
 ```
 
 - The `async` keyword precedes `fn`.
@@ -51,7 +51,7 @@ async fn name<T>(param: Type, ...) -> ReturnType { ... }
 
 Example:
 ```atlas
-async fn add_async(a: number, b: number) -> number {
+async fn add_async(a: number, b: number) : number {
     return a + b;
 }
 ```
@@ -71,7 +71,7 @@ await expr
 
 Example:
 ```atlas
-async fn run() -> number {
+async fn run() : number {
     let f: Future<number> = async_compute();
     let n = await f;           // n: number
     return n;
@@ -83,7 +83,7 @@ async fn run() -> number {
 When the future resolves to `Result<T, E>`, `?` may be chained immediately:
 
 ```atlas
-async fn load(path: string) -> Result<string, string> {
+async fn load(path: string) : Result<string, string> {
     let content = await readFile(path)?;   // unwrap Ok or early-return Err
     return Ok(content);
 }
@@ -116,7 +116,7 @@ let n: number = await f;                    // resolved
 ### Type Compatibility
 
 - `Future<T>` and `Future<U>` where `T ≠ U` are incompatible (AT4008).
-- An `async fn` cannot be passed where a sync `fn(A) -> B` parameter is
+- An `async fn` cannot be passed where a sync `fn(A) : B` parameter is
   expected, because the call-site type differs (AT4004).
 
 ---
@@ -128,14 +128,14 @@ These are stdlib functions that work with futures.
 ### spawn
 
 ```atlas
-fn spawn<T>(f: Future<T>) -> Future<T>
+fn spawn<T>(f: Future<T>) : Future<T>
 ```
 
 Spawns `f` as an independent Tokio task on the multi-threaded runtime.
 Returns a new `Future<T>` that resolves when the task completes.
 
 ```atlas
-async fn main_work() -> void {
+async fn main_work() : void {
     let task_a = spawn(compute_a());
     let task_b = spawn(compute_b());
     let a = await task_a;
@@ -151,7 +151,7 @@ no runtime raises AT4007.
 ### all
 
 ```atlas
-fn all<T>(futures: Future<T>[]) -> Future<[]T>
+fn all<T>(futures: Future<T>[]) : Future<[]T>
 ```
 
 Waits for **all** futures to resolve and returns their results in order.
@@ -164,7 +164,7 @@ let results = await all([fetch("a"), fetch("b"), fetch("c")]);
 ### race
 
 ```atlas
-fn race<T>(futures: Future<T>[]) -> Future<T>
+fn race<T>(futures: Future<T>[]) : Future<T>
 ```
 
 Returns the result of the **first** future to resolve.
@@ -226,7 +226,7 @@ error[AT4002]: `await` applied to a non-Future value
 error[AT4006]: `main` function cannot be declared `async`
   --> example.atlas:1:1
    |
- 1 | async fn main() -> void { ... }
+ 1 | async fn main() : void { ... }
    | ^^^^^ `async` on `main` is forbidden
    |
    = hint: Use top-level `await` instead — the Atlas runtime wraps
@@ -240,7 +240,7 @@ error[AT4006]: `main` function cannot be declared `async`
 ### Basic async/await
 
 ```atlas
-async fn double_async(n: number) -> number {
+async fn double_async(n: number) : number {
     return n * 2;
 }
 
@@ -251,7 +251,7 @@ print(result);  // 42
 ### Concurrent tasks
 
 ```atlas
-async fn fetch_data(id: number) -> string {
+async fn fetch_data(id: number) : string {
     await sleep(0.1);
     return "data_" + id;
 }
@@ -264,7 +264,7 @@ print(results);  // ["data_1", "data_2", "data_3"]
 ### Error propagation
 
 ```atlas
-async fn read_config(path: string) -> Result<string, string> {
+async fn read_config(path: string) : Result<string, string> {
     let contents = await readFile(path)?;
     return Ok(contents);
 }
@@ -276,12 +276,12 @@ print(cfg);
 ### race for timeout
 
 ```atlas
-async fn with_timeout(f: Future<string>, secs: number) -> Result<string, string> {
-    fn make_timeout(s: Future<void>) -> Future<Result<string, string>> {
-        return s.then(fn(_) -> Result<string, string> { return Err("timeout"); });
+async fn with_timeout(f: Future<string>, secs: number) : Result<string, string> {
+    fn make_timeout(s: Future<void>) : Future<Result<string, string>> {
+        return s.then(fn(_) : Result<string, string> { return Err("timeout"); });
     }
-    fn make_ok(s: Future<string>) -> Future<Result<string, string>> {
-        return s.then(fn(v: string) -> Result<string, string> { return Ok(v); });
+    fn make_ok(s: Future<string>) : Future<Result<string, string>> {
+        return s.then(fn(v: string) : Result<string, string> { return Ok(v); });
     }
     return await race([make_ok(f), make_timeout(sleep(secs))]);
 }

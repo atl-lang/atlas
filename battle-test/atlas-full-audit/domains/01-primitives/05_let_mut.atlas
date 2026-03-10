@@ -21,8 +21,8 @@ print("sum 0..9: " + str(accumulator));
 
 // Mutable string
 let mut message: string = "start";
-message = message + " -> middle";
-message = message + " -> end";
+message = message + " : middle";
+message = message + " : end";
 print("message: " + message);
 
 // Mutable array with rebind (CoW pattern)

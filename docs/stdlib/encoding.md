@@ -7,7 +7,7 @@ Encoding/decoding and cryptographic operations.
 ### base64Encode
 
 ```atlas
-fn base64Encode(data: string) -> string
+fn base64Encode(data: string) : string
 ```
 
 Encodes string to Base64.
@@ -20,7 +20,7 @@ Encodes string to Base64.
 ### base64Decode
 
 ```atlas
-fn base64Decode(encoded: string) -> Result<string, string>
+fn base64Decode(encoded: string) : Result<string, string>
 ```
 
 Decodes Base64 string.
@@ -35,7 +35,7 @@ Decodes Base64 string.
 ### base64UrlEncode
 
 ```atlas
-fn base64UrlEncode(data: string) -> string
+fn base64UrlEncode(data: string) : string
 ```
 
 Encodes string to URL-safe Base64 (RFC 4648).
@@ -48,7 +48,7 @@ Encodes string to URL-safe Base64 (RFC 4648).
 ### base64UrlDecode
 
 ```atlas
-fn base64UrlDecode(encoded: string) -> Result<string, string>
+fn base64UrlDecode(encoded: string) : Result<string, string>
 ```
 
 Decodes URL-safe Base64 string.
@@ -65,7 +65,7 @@ Decodes URL-safe Base64 string.
 ### hexEncode
 
 ```atlas
-fn hexEncode(data: string) -> string
+fn hexEncode(data: string) : string
 ```
 
 Encodes string to hexadecimal.
@@ -78,7 +78,7 @@ Encodes string to hexadecimal.
 ### hexDecode
 
 ```atlas
-fn hexDecode(hex: string) -> Result<string, string>
+fn hexDecode(hex: string) : Result<string, string>
 ```
 
 Decodes hexadecimal string.
@@ -95,7 +95,7 @@ Decodes hexadecimal string.
 ### urlEncode
 
 ```atlas
-fn urlEncode(str: string) -> string
+fn urlEncode(str: string) : string
 ```
 
 URL-encodes string (percent encoding).
@@ -108,7 +108,7 @@ URL-encodes string (percent encoding).
 ### urlDecode
 
 ```atlas
-fn urlDecode(encoded: string) -> Result<string, string>
+fn urlDecode(encoded: string) : Result<string, string>
 ```
 
 URL-decodes string.
@@ -125,7 +125,7 @@ URL-decodes string.
 ### sha256
 
 ```atlas
-fn sha256(data: string) -> string
+fn sha256(data: string) : string
 ```
 
 Computes SHA-256 hash.
@@ -138,7 +138,7 @@ Computes SHA-256 hash.
 ### sha512
 
 ```atlas
-fn sha512(data: string) -> string
+fn sha512(data: string) : string
 ```
 
 Computes SHA-512 hash.
@@ -151,7 +151,7 @@ Computes SHA-512 hash.
 ### blake3Hash
 
 ```atlas
-fn blake3Hash(data: string) -> string
+fn blake3Hash(data: string) : string
 ```
 
 Computes BLAKE3 hash.
@@ -166,7 +166,7 @@ Computes BLAKE3 hash.
 ### hmacSha256
 
 ```atlas
-fn hmacSha256(data: string, key: string) -> string
+fn hmacSha256(data: string, key: string) : string
 ```
 
 Computes HMAC-SHA256.
@@ -180,7 +180,7 @@ Computes HMAC-SHA256.
 ### hmacSha256Verify
 
 ```atlas
-fn hmacSha256Verify(data: string, key: string, signature: string) -> Result<bool, string>
+fn hmacSha256Verify(data: string, key: string, signature: string) : Result<bool, string>
 ```
 
 Verifies HMAC-SHA256 signature.
@@ -199,7 +199,7 @@ Verifies HMAC-SHA256 signature.
 ### aesGcmGenerateKey
 
 ```atlas
-fn aesGcmGenerateKey() -> Result<string, string>
+fn aesGcmGenerateKey() : Result<string, string>
 ```
 
 Generates random AES-GCM encryption key.
@@ -211,7 +211,7 @@ Generates random AES-GCM encryption key.
 ### aesGcmEncrypt
 
 ```atlas
-fn aesGcmEncrypt(plaintext: string, key: string) -> Result<string, string>
+fn aesGcmEncrypt(plaintext: string, key: string) : Result<string, string>
 ```
 
 Encrypts with AES-256-GCM.
@@ -229,7 +229,7 @@ Encrypts with AES-256-GCM.
 ### aesGcmDecrypt
 
 ```atlas
-fn aesGcmDecrypt(ciphertext: string, key: string) -> Result<string, string>
+fn aesGcmDecrypt(ciphertext: string, key: string) : Result<string, string>
 ```
 
 Decrypts AES-256-GCM encrypted data.

@@ -1,4 +1,4 @@
-fn fib(own n: number) -> number {
+fn fib(own n: number) : number {
     if n <= 1 {
         return n;
     }

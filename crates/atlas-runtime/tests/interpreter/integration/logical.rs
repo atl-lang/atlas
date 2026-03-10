@@ -48,7 +48,7 @@ fn test_variable_arithmetic() {
 fn test_block_scope() {
     // Test that inner block has its own scope where x can shadow outer x
     let code = r#"
-        fn test_scope() -> number {
+        fn test_scope(): number {
             let x: number = 1;
             if (true) {
                 let x: number = 2;
@@ -65,7 +65,7 @@ fn test_block_scope() {
 fn test_function_scope() {
     let code = r#"
         let mut x: number = 10;
-        fn foo(borrow x: number) -> number {
+        fn foo(borrow x: number): number {
             return x + 1;
         }
         foo(5)

@@ -24,8 +24,8 @@ fn test_text_line_count() {
 #[test]
 fn test_text_average_word_length() {
     let code = r#"
-        fn wordLength(borrow word: string) -> number { return len(word); }
-        fn sum(borrow a: number, borrow b: number) -> number { return a + b; }
+        fn wordLength(borrow word: string): number { return len(word); }
+        fn sum(borrow a: number, borrow b: number): number { return a + b; }
 
         let text: string = "the quick brown fox";
         let words: []string = split(text, " ");
@@ -40,7 +40,7 @@ fn test_text_average_word_length() {
 #[test]
 fn test_text_uppercase_words() {
     let code = r#"
-        fn toUpper(borrow s: string) -> string { return to_upper_case(s); }
+        fn toUpper(borrow s: string): string { return to_upper_case(s); }
 
         let text: string = "hello world";
         let words: []string = split(text, " ");
@@ -53,7 +53,7 @@ fn test_text_uppercase_words() {
 #[test]
 fn test_text_titlecase() {
     let code = r#"
-        fn titleCase(borrow word: string) -> string {
+        fn titleCase(borrow word: string): string {
             let first: string = unwrap(char_at(word, 0.0));
             let rest: string = substring(word, 1.0, len(word));
             let firstUpper: string = to_upper_case(first);
@@ -72,7 +72,7 @@ fn test_text_titlecase() {
 #[test]
 fn test_text_remove_punctuation() {
     let code = r#"
-        fn removePunct(borrow s: string) -> string {
+        fn removePunct(borrow s: string): string {
             let s1: string = replace(s, ".", "");
             let s2: string = replace(s1, ",", "");
             let s3: string = replace(s2, "!", "");
@@ -88,7 +88,7 @@ fn test_text_remove_punctuation() {
 #[test]
 fn test_text_find_longest_word() {
     let code = r#"
-        fn longerWord(borrow current: string, borrow word: string) -> string {
+        fn longerWord(borrow current: string, borrow word: string): string {
             if (len(word) > len(current)) {
                 return word;
             }
@@ -105,7 +105,7 @@ fn test_text_find_longest_word() {
 #[test]
 fn test_text_filter_short_words() {
     let code = r#"
-        fn isLong(borrow word: string) -> bool {
+        fn isLong(borrow word: string): bool {
             return len(word) >= 4.0;
         }
 
@@ -122,7 +122,7 @@ fn test_text_count_character() {
     let code = r#"
         let text: string = "hello world";
         let chars: []string = split(text, "");
-        fn isL(borrow c: string) -> bool { return c == "l"; }
+        fn isL(borrow c: string): bool { return c == "l"; }
         let ls: []string = filter(chars, isL);
         len(ls)
     "#;
@@ -143,7 +143,7 @@ fn test_text_reverse_words() {
 #[test]
 fn test_text_acronym() {
     let code = r#"
-        fn firstChar(borrow s: string) -> string {
+        fn firstChar(borrow s: string): string {
             return unwrap(char_at(s, 0.0));
         }
 
@@ -158,7 +158,7 @@ fn test_text_acronym() {
 #[test]
 fn test_text_trim_lines() {
     let code = r#"
-        fn trimLine(borrow line: string) -> string { return trim(line); }
+        fn trimLine(borrow line: string): string { return trim(line); }
 
         let text: string = "  line1  \n  line2  \n  line3  ";
         let lines: []string = split(text, "\n");
@@ -171,7 +171,7 @@ fn test_text_trim_lines() {
 #[test]
 fn test_text_starts_with_filter() {
     let code = r#"
-        fn starts_withA(borrow word: string) -> bool {
+        fn starts_withA(borrow word: string): bool {
             return starts_with(word, "a");
         }
 
@@ -185,7 +185,7 @@ fn test_text_starts_with_filter() {
 #[test]
 fn test_text_ends_with_filter() {
     let code = r#"
-        fn ends_withE(borrow word: string) -> bool {
+        fn ends_withE(borrow word: string): bool {
             return ends_with(word, "e");
         }
 
@@ -199,7 +199,7 @@ fn test_text_ends_with_filter() {
 #[test]
 fn test_text_pad_lines() {
     let code = r#"
-        fn pad(borrow line: string) -> string {
+        fn pad(borrow line: string): string {
             return pad_end(line, 10.0, ".");
         }
 

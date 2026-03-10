@@ -78,7 +78,7 @@ struct SecurityConfig {
 }
 
 // Creates a new Registry with safe defaults
-fn default_registry() -> Registry {
+fn default_registry() : Registry {
     return Registry {
         version: "1.0",
         defaults: Defaults {
@@ -95,7 +95,7 @@ fn default_registry() -> Registry {
 }
 
 // Creates a new ServerConfig with safe defaults
-fn default_server_config() -> ServerConfig {
+fn default_server_config() : ServerConfig {
     return ServerConfig {
         command: "",
         args: [],

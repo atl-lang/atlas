@@ -44,7 +44,7 @@ fn analyze(source: &str) -> (bool, Vec<String>) {
 #[test]
 fn test_for_in_binds_variable() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
                 print(item);
@@ -59,7 +59,7 @@ fn test_for_in_binds_variable() {
 #[test]
 fn test_for_in_type_checks_array() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
                 print(item);
@@ -79,7 +79,7 @@ fn test_for_in_type_checks_array() {
 fn test_for_in_with_array_literal_type_check() {
     // Note: Using array literal directly works better than variables due to type inference limitations
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             for item in [1, 2, 3] {
                 print(item);
             }
@@ -93,7 +93,7 @@ fn test_for_in_with_array_literal_type_check() {
 #[test]
 fn test_for_in_variable_scoped() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
                 print(item);
@@ -116,7 +116,7 @@ fn test_for_in_variable_scoped() {
 #[test]
 fn test_for_in_nested() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let matrix = [[1, 2], [3, 4]];
             for row in matrix {
                 for item in row {
@@ -133,7 +133,7 @@ fn test_for_in_nested() {
 #[test]
 fn test_for_in_with_break() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
                 if item > 2 {
@@ -150,7 +150,7 @@ fn test_for_in_with_break() {
 #[test]
 fn test_for_in_with_continue() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
                 if item == 2 {
@@ -168,11 +168,11 @@ fn test_for_in_with_continue() {
 #[test]
 fn test_for_in_with_function_call() {
     let source = r#"
-        fn getArray() -> array {
+        fn getArray(): array {
             return [1, 2, 3];
         }
 
-        fn test() -> void {
+        fn test(): void {
             for item in getArray() {
                 print(item);
             }
@@ -190,7 +190,7 @@ fn test_for_in_with_function_call() {
 #[test]
 fn test_for_in_empty_array() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let arr: []number = [];
             for item in arr {
                 print(item);
@@ -205,7 +205,7 @@ fn test_for_in_empty_array() {
 #[test]
 fn test_for_in_variable_shadowing() {
     let source = r#"
-        fn test() -> void {
+        fn test(): void {
             let item = "outer";
             let arr = [1, 2, 3];
             for item in arr {

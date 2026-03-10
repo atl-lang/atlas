@@ -2,7 +2,7 @@
 // Tests: trait object as function parameter (bounded polymorphism / dynamic dispatch)
 
 trait Describable {
-    fn describe(self) -> string;
+    fn describe(self) : string;
 }
 
 struct Book {
@@ -16,18 +16,18 @@ struct Movie {
 }
 
 impl Describable for Book {
-    fn describe(self) -> string {
+    fn describe(self) : string {
         return "Book: " + self.title + " (" + str(self.pages) + " pages)";
     }
 }
 
 impl Describable for Movie {
-    fn describe(self) -> string {
+    fn describe(self) : string {
         return "Movie: " + self.title + " (" + str(self.duration) + " min)";
     }
 }
 
-fn describe(own item: Describable) -> string {
+fn describe(own item: Describable) : string {
     return item.describe();
 }
 

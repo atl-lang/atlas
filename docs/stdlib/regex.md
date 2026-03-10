@@ -7,7 +7,7 @@ Regular expression pattern matching and manipulation.
 ### regexNew
 
 ```atlas
-fn regexNew(pattern: string) -> Result<Regex, string>
+fn regexNew(pattern: string) : Result<Regex, string>
 ```
 
 Creates regex pattern from string.
@@ -24,7 +24,7 @@ Creates regex pattern from string.
 ### regexNewWithFlags
 
 ```atlas
-fn regexNewWithFlags(pattern: string, flags: string) -> Result<Regex, string>
+fn regexNewWithFlags(pattern: string, flags: string) : Result<Regex, string>
 ```
 
 Creates regex with flags.
@@ -48,7 +48,7 @@ Creates regex with flags.
 ### regexIsMatch
 
 ```atlas
-fn regexIsMatch(regex: Regex, text: string) -> Result<bool, string>
+fn regexIsMatch(regex: Regex, text: string) : Result<bool, string>
 ```
 
 Tests if pattern matches any part of text.
@@ -64,7 +64,7 @@ Tests if pattern matches any part of text.
 ### regexTest
 
 ```atlas
-fn regexTest(regex: Regex, text: string) -> bool
+fn regexTest(regex: Regex, text: string) : bool
 ```
 
 Tests if pattern matches (simpler version of isMatch).
@@ -80,7 +80,7 @@ Tests if pattern matches (simpler version of isMatch).
 ### regexFind
 
 ```atlas
-fn regexFind(regex: Regex, text: string) -> Result<Option<string>, string>
+fn regexFind(regex: Regex, text: string) : Result<Option<string>, string>
 ```
 
 Finds first match in text.
@@ -96,7 +96,7 @@ Finds first match in text.
 ### regexFindAll
 
 ```atlas
-fn regexFindAll(regex: Regex, text: string) -> Result<[]string, string>
+fn regexFindAll(regex: Regex, text: string) : Result<[]string, string>
 ```
 
 Finds all non-overlapping matches.
@@ -112,7 +112,7 @@ Finds all non-overlapping matches.
 ### regexCaptures
 
 ```atlas
-fn regexCaptures(regex: Regex, text: string) -> Result<[]string?, string>
+fn regexCaptures(regex: Regex, text: string) : Result<[]string?, string>
 ```
 
 Gets capture groups from first match.
@@ -130,7 +130,7 @@ Gets capture groups from first match.
 ### regexCapturesNamed
 
 ```atlas
-fn regexCapturesNamed(regex: Regex, text: string) -> Result<Option<object>, string>
+fn regexCapturesNamed(regex: Regex, text: string) : Result<Option<object>, string>
 ```
 
 Gets named capture groups from first match.
@@ -146,7 +146,7 @@ Gets named capture groups from first match.
 ### regexMatchIndices
 
 ```atlas
-fn regexMatchIndices(regex: Regex, text: string) -> Result<[number, number][], string>
+fn regexMatchIndices(regex: Regex, text: string) : Result<[number, number][], string>
 ```
 
 Gets start/end indices of all matches.
@@ -164,7 +164,7 @@ Gets start/end indices of all matches.
 ### regexReplace
 
 ```atlas
-fn regexReplace(regex: Regex, text: string, replacement: string) -> Result<string, string>
+fn regexReplace(regex: Regex, text: string, replacement: string) : Result<string, string>
 ```
 
 Replaces first match with replacement string.
@@ -183,7 +183,7 @@ Replaces first match with replacement string.
 ### regexReplaceAll
 
 ```atlas
-fn regexReplaceAll(regex: Regex, text: string, replacement: string) -> Result<string, string>
+fn regexReplaceAll(regex: Regex, text: string, replacement: string) : Result<string, string>
 ```
 
 Replaces all matches with replacement string.
@@ -202,7 +202,7 @@ Replaces all matches with replacement string.
 ### regexReplaceWith
 
 ```atlas
-fn regexReplaceWith(regex: Regex, text: string, callback: fn(object) -> string) -> string
+fn regexReplaceWith(regex: Regex, text: string, callback: fn(object) : string) : string
 ```
 
 Replaces the first match using a callback.
@@ -229,7 +229,7 @@ let out = regexReplaceWith(re, \"foo bar\", fn(match) { return \"baz\"; });
 ### regexReplaceAllWith
 
 ```atlas
-fn regexReplaceAllWith(regex: Regex, text: string, callback: fn(object) -> string) -> string
+fn regexReplaceAllWith(regex: Regex, text: string, callback: fn(object): string): string
 ```
 
 Replaces all matches using a callback.
@@ -258,7 +258,7 @@ let out = regexReplaceAllWith(re, \"foo foo\", fn(match) { return \"bar\"; });
 ### regexSplit
 
 ```atlas
-fn regexSplit(regex: Regex, text: string) -> Result<[]string, string>
+fn regexSplit(regex: Regex, text: string): Result<[]string, string>
 ```
 
 Splits text by regex pattern.
@@ -274,7 +274,7 @@ Splits text by regex pattern.
 ### regexSplitN
 
 ```atlas
-fn regexSplitN(regex: Regex, text: string, n: number) -> Result<[]string, string>
+fn regexSplitN(regex: Regex, text: string, n: number): Result<[]string, string>
 ```
 
 Splits text by pattern, maximum n parts.
@@ -293,7 +293,7 @@ Splits text by pattern, maximum n parts.
 ### regexEscape
 
 ```atlas
-fn regexEscape(text: string) -> string
+fn regexEscape(text: string): string
 ```
 
 Escapes special regex characters in text.
@@ -328,4 +328,4 @@ print(regexReplaceAll(pattern, text, "X")); // Ok("abcXdefX")
 
 // Split by numbers
 print(regexSplit(pattern, text)); // Ok(["abc", "def", ""])
-```
+```"

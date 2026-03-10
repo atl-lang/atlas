@@ -1,11 +1,11 @@
-fn is_even_r(borrow n: number) -> bool {
+fn is_even_r(borrow n: number) : bool {
     if n == 0 {
         return true;
     }
     return is_odd_r(n - 1);
 }
 
-fn is_odd_r(borrow n: number) -> bool {
+fn is_odd_r(borrow n: number) : bool {
     if n == 0 {
         return false;
     }

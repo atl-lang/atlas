@@ -3,7 +3,7 @@ use super::*;
 #[test]
 fn test_own_param_consumes_binding_debug() {
     let src = r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         consume(arr);
         arr;
@@ -24,7 +24,7 @@ fn test_own_param_consumes_binding_debug() {
 #[test]
 fn test_borrow_param_does_not_consume_binding() {
     let src = r#"
-        fn read(borrow data: array<number>) -> void { }
+        fn read(borrow data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         read(arr);
         len(arr);
@@ -42,7 +42,7 @@ fn test_borrow_param_does_not_consume_binding() {
 #[test]
 fn test_unannotated_param_does_not_consume_binding() {
     let src = r#"
-        fn take(borrow data: array<number>) -> void { }
+        fn take(borrow data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         take(arr);
         len(arr);
@@ -60,7 +60,7 @@ fn test_unannotated_param_does_not_consume_binding() {
 #[test]
 fn test_own_param_with_literal_arg_no_consume() {
     let src = r#"
-        fn consume(own data: array<number>) -> void { }
+        fn consume(own data: array<number>): void { }
         consume([1, 2, 3]);
         42;
     "#;
@@ -77,8 +77,8 @@ fn test_own_param_with_literal_arg_no_consume() {
 #[test]
 fn test_own_param_with_expression_arg_no_consume() {
     let src = r#"
-        fn make_arr() -> array<number> { [10, 20]; }
-        fn consume(own data: array<number>) -> void { }
+        fn make_arr(): array<number> { [10, 20]; }
+        fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
         consume(make_arr());
         len(arr);
@@ -100,7 +100,7 @@ fn test_own_param_with_expression_arg_no_consume() {
 #[test]
 fn test_shared_param_rejects_plain_value_debug() {
     let src = r#"
-        fn register(share handler: []number) -> void { }
+        fn register(share handler: []number): void { }
         let arr: []number = [1, 2, 3];
         register(arr);
     "#;
@@ -123,7 +123,7 @@ fn test_shared_param_accepts_shared_value() {
 
     // Parse and register the function
     let src = r#"
-        fn register(share handler: []number) -> void { }
+        fn register(share handler: []number): void { }
         register(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src);
@@ -157,7 +157,7 @@ fn test_shared_value_to_own_param_advisory_not_error() {
     use atlas_runtime::value::{Shared, Value};
 
     let src = r#"
-        fn consume(own handler: []number) -> void { }
+        fn consume(own handler: []number): void { }
         consume(sv);
     "#;
     let mut lexer = atlas_runtime::lexer::Lexer::new(src);
@@ -192,7 +192,7 @@ fn test_shared_value_to_own_param_advisory_not_error() {
 fn test_parity_unannotated_function_no_regression() {
     assert_ownership_parity(
         r#"
-        fn add(borrow a: number, borrow b: number) -> number { a + b; }
+        fn add(borrow a: number, borrow b: number): number { a + b; }
         add(3, 4);
         "#,
     );

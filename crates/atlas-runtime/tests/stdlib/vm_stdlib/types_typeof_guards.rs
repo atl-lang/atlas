@@ -105,7 +105,7 @@ fn test_typeof_record() {
 #[test]
 fn test_typeof_function() {
     let code = r#"
-        fn add(borrow a: number, borrow b: number) -> number { a + b }
+        fn add(borrow a: number, borrow b: number): number { a + b }
         typeof(add)
     "#;
     assert_eval_string(code, "function");
@@ -126,7 +126,7 @@ fn test_type_of_record() {
 #[test]
 fn test_type_of_function() {
     let code = r#"
-        fn id(borrow x: number) -> number { x }
+        fn id(borrow x: number): number { x }
         type_of(id)
     "#;
     assert_eval_string(code, "function");

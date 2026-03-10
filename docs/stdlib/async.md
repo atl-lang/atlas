@@ -7,7 +7,7 @@ Futures, channels, timers, and task management.
 ### futureNew
 
 ```atlas
-fn futureNew(executor: fn() -> T) -> Future<T>
+fn futureNew(executor: fn() : T) : Future<T>
 ```
 
 Creates a new future that will be resolved by executor function.
@@ -20,7 +20,7 @@ Creates a new future that will be resolved by executor function.
 ### futureResolve
 
 ```atlas
-fn futureResolve(value: T) -> Future<T>
+fn futureResolve(value: T) : Future<T>
 ```
 
 Creates an immediately resolved future.
@@ -33,7 +33,7 @@ Creates an immediately resolved future.
 ### futureReject
 
 ```atlas
-fn futureReject(error: E) -> Future<T>
+fn futureReject(error: E) : Future<T>
 ```
 
 Creates an immediately rejected future.
@@ -48,7 +48,7 @@ Creates an immediately rejected future.
 ### futureThen
 
 ```atlas
-fn futureThen(future: Future<T>, callback: fn(T) -> U) -> Future<U>
+fn futureThen(future: Future<T>, callback: fn(T) : U) : Future<U>
 ```
 
 Chains computation on resolved value.
@@ -62,7 +62,7 @@ Chains computation on resolved value.
 ### futureCatch
 
 ```atlas
-fn futureCatch(future: Future<T>, handler: fn(E) -> T) -> Future<T>
+fn futureCatch(future: Future<T>, handler: fn(E) : T) : Future<T>
 ```
 
 Handles rejection with fallback value.
@@ -78,7 +78,7 @@ Handles rejection with fallback value.
 ### futureRace
 
 ```atlas
-fn futureRace(futures: Future<T>[]) -> Future<T>
+fn futureRace(futures: Future<T>[]) : Future<T>
 ```
 
 Returns value of first completing future.
@@ -91,7 +91,7 @@ Returns value of first completing future.
 ### futureAll
 
 ```atlas
-fn futureAll(futures: Future<T>[]) -> Future<[]T>
+fn futureAll(futures: Future<T>[]) : Future<[]T>
 ```
 
 Waits for all futures to complete.
@@ -108,7 +108,7 @@ Waits for all futures to complete.
 ### futureIsResolved
 
 ```atlas
-fn futureIsResolved(future: Future<T>) -> bool
+fn futureIsResolved(future: Future<T>) : bool
 ```
 
 Checks if future is resolved.
@@ -121,7 +121,7 @@ Checks if future is resolved.
 ### futureIsRejected
 
 ```atlas
-fn futureIsRejected(future: Future<T>) -> bool
+fn futureIsRejected(future: Future<T>) : bool
 ```
 
 Checks if future is rejected.
@@ -134,7 +134,7 @@ Checks if future is rejected.
 ### futureIsPending
 
 ```atlas
-fn futureIsPending(future: Future<T>) -> bool
+fn futureIsPending(future: Future<T>) : bool
 ```
 
 Checks if future is still pending.
@@ -149,7 +149,7 @@ Checks if future is still pending.
 ### await
 
 ```atlas
-fn await(future: Future<T>) -> Result<T, E>
+fn await(future: Future<T>) : Result<T, E>
 ```
 
 Waits for future to complete synchronously.
@@ -168,7 +168,7 @@ Waits for future to complete synchronously.
 ### channelUnbounded
 
 ```atlas
-fn channelUnbounded<T>() -> [Sender<T>, Receiver<T>]
+fn channelUnbounded<T>() : [Sender<T>, Receiver<T>]
 ```
 
 Creates unbounded MPMC channel.
@@ -178,7 +178,7 @@ Creates unbounded MPMC channel.
 ### channelBounded
 
 ```atlas
-fn channelBounded<T>(capacity: number) -> [Sender<T>, Receiver<T>]
+fn channelBounded<T>(capacity: number) : [Sender<T>, Receiver<T>]
 ```
 
 Creates bounded MPMC channel.
@@ -191,7 +191,7 @@ Creates bounded MPMC channel.
 ### channelSend
 
 ```atlas
-fn channelSend(sender: Sender<T>, value: T) -> Result<Null, string>
+fn channelSend(sender: Sender<T>, value: T) : Result<Null, string>
 ```
 
 Sends value through channel.
@@ -207,7 +207,7 @@ Sends value through channel.
 ### channelReceive
 
 ```atlas
-fn channelReceive(receiver: Receiver<T>) -> Result<Option<T>, string>
+fn channelReceive(receiver: Receiver<T>) : Result<Option<T>, string>
 ```
 
 Receives value from channel.
@@ -222,7 +222,7 @@ Receives value from channel.
 ### channelIsClosed
 
 ```atlas
-fn channelIsClosed(sender: Sender<T>) -> bool
+fn channelIsClosed(sender: Sender<T>) : bool
 ```
 
 Checks if channel is closed.
@@ -235,7 +235,7 @@ Checks if channel is closed.
 ### channelSelect
 
 ```atlas
-fn channelSelect(receivers: Receiver<T>[]) -> Result<T, string>
+fn channelSelect(receivers: Receiver<T>[]) : Result<T, string>
 ```
 
 Waits for value on any channel.
@@ -252,7 +252,7 @@ Waits for value on any channel.
 ### sleep
 
 ```atlas
-fn sleep(seconds: number) -> Future<Null>
+fn sleep(seconds: number) : Future<Null>
 ```
 
 Creates future that resolves after delay.
@@ -265,7 +265,7 @@ Creates future that resolves after delay.
 ### timer
 
 ```atlas
-fn timer(interval: number) -> Future<Null>
+fn timer(interval: number) : Future<Null>
 ```
 
 Creates repeating timer.
@@ -278,7 +278,7 @@ Creates repeating timer.
 ### timeout
 
 ```atlas
-fn timeout(future: Future<T>, seconds: number) -> Future<Result<T, string>>
+fn timeout(future: Future<T>, seconds: number) : Future<Result<T, string>>
 ```
 
 Adds timeout to future.
@@ -292,7 +292,7 @@ Adds timeout to future.
 ### interval
 
 ```atlas
-fn interval(seconds: number) -> Iterator<number>
+fn interval(seconds: number) : Iterator<number>
 ```
 
 Creates interval iterator.
@@ -307,7 +307,7 @@ Creates interval iterator.
 ### asyncMutex
 
 ```atlas
-fn asyncMutex<T>(initial: T) -> AsyncMutex<T>
+fn asyncMutex<T>(initial: T) : AsyncMutex<T>
 ```
 
 Creates async-safe mutual exclusion lock.
@@ -320,7 +320,7 @@ Creates async-safe mutual exclusion lock.
 ### asyncMutexGet
 
 ```atlas
-fn asyncMutexGet(mutex: AsyncMutex<T>) -> Future<T>
+fn asyncMutexGet(mutex: AsyncMutex<T>) : Future<T>
 ```
 
 Gets value from mutex (waits if locked).
@@ -333,7 +333,7 @@ Gets value from mutex (waits if locked).
 ### asyncMutexSet
 
 ```atlas
-fn asyncMutexSet(mutex: AsyncMutex<T>, value: T) -> Future<Null>
+fn asyncMutexSet(mutex: AsyncMutex<T>, value: T) : Future<Null>
 ```
 
 Sets value in mutex (waits if locked).
@@ -349,7 +349,7 @@ Sets value in mutex (waits if locked).
 ### taskId
 
 ```atlas
-fn taskId() -> number
+fn taskId() : number
 ```
 
 Gets ID of current task.
@@ -359,7 +359,7 @@ Gets ID of current task.
 ### taskName
 
 ```atlas
-fn taskName() -> string
+fn taskName() : string
 ```
 
 Gets name of current task.
@@ -369,7 +369,7 @@ Gets name of current task.
 ### taskStatus
 
 ```atlas
-fn taskStatus(id: number) -> string
+fn taskStatus(id: number) : string
 ```
 
 Gets status of task.
@@ -382,7 +382,7 @@ Gets status of task.
 ### taskJoin
 
 ```atlas
-fn taskJoin(id: number) -> Future<any>
+fn taskJoin(id: number) : Future<any>
 ```
 
 Waits for task to complete.
@@ -395,7 +395,7 @@ Waits for task to complete.
 ### taskCancel
 
 ```atlas
-fn taskCancel(id: number) -> Result<Null, string>
+fn taskCancel(id: number) : Result<Null, string>
 ```
 
 Cancels a task.
@@ -428,8 +428,8 @@ print(msg); // "hello"
 
 // Future chaining
 let mut future = futureResolve(5);
-future = futureThen(future, fn(x: number) -> number { return x * 2; });
-future = futureThen(future, fn(x: number) -> number { return x + 1; });
+future = futureThen(future, fn(x: number) : number { return x * 2; });
+future = futureThen(future, fn(x: number) : number { return x + 1; });
 print(await(future)?); // 11
 
 // Timeout

@@ -82,7 +82,7 @@ fn test_for_in_with_array_iteration_count() {
 #[test]
 fn test_for_in_with_early_return() {
     let source = r#"
-        fn find_first_even(borrow arr: array) -> number {
+        fn find_first_even(borrow arr: array): number {
             for item in arr {
                 if (item % 2 == 0) {
                     return item;
@@ -186,7 +186,7 @@ fn test_for_in_multiple_sequential() {
 #[test]
 fn test_for_in_with_function_calls() {
     let source = r#"
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             return x * 2;
         }
 
@@ -261,7 +261,7 @@ fn test_for_in_with_hashset() {
 #[test]
 fn test_for_in_with_result_early_return() {
     let source = r#"
-        fn process(borrow arr: array) -> number {
+        fn process(borrow arr: array): number {
             let mut sum: number = 0;
             for item in arr {
                 if (item < 0) {

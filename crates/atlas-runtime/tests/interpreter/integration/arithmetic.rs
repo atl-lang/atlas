@@ -72,7 +72,7 @@ fn test_numeric_negative_modulo() {
 #[test]
 fn test_numeric_error_in_function() {
     let code = r#"
-        fn compute(borrow a: number) -> number {
+        fn compute(borrow a: number): number {
             return a * a * a;
         }
         let big: number = 1e103;
@@ -84,10 +84,10 @@ fn test_numeric_error_in_function() {
 #[test]
 fn test_numeric_error_propagation() {
     let code = r#"
-        fn bad() -> number {
+        fn bad(): number {
             return 1 / 0;
         }
-        fn caller() -> number {
+        fn caller(): number {
             return bad() + 5;
         }
         caller()

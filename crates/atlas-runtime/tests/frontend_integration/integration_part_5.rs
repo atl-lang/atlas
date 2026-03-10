@@ -279,28 +279,28 @@ fn first_fn_decl(source: &str) -> atlas_runtime::ast::FunctionDecl {
 
 #[test]
 fn test_async_fn_sets_is_async_true() {
-    let f = first_fn_decl("async fn foo() -> void { return; }");
+    let f = first_fn_decl("async fn foo(): void { return; }");
     assert!(f.is_async);
     assert_eq!(f.name.name, "foo");
 }
 
 #[test]
 fn test_async_fn_with_params_and_return() {
-    let f = first_fn_decl("async fn fetch(borrow url: string) -> string { return url; }");
+    let f = first_fn_decl("async fn fetch(borrow url: string): string { return url; }");
     assert!(f.is_async);
     assert_eq!(f.params.len(), 1);
 }
 
 #[test]
 fn test_async_fn_with_generics() {
-    let f = first_fn_decl("async fn wrap<T>(borrow val: T) -> T { return val; }");
+    let f = first_fn_decl("async fn wrap<T>(borrow val: T): T { return val; }");
     assert!(f.is_async);
     assert_eq!(f.type_params.len(), 1);
 }
 
 #[test]
 fn test_non_async_fn_is_async_false() {
-    let f = first_fn_decl("fn add(borrow a: number) -> number { return a; }");
+    let f = first_fn_decl("fn add(borrow a: number): number { return a; }");
     assert!(!f.is_async);
 }
 
@@ -317,7 +317,7 @@ fn test_async_not_followed_by_fn_is_error() {
 
 #[test]
 fn test_async_async_fn_is_error() {
-    let (_, diags) = parse_program("async async fn foo() -> void { return; }");
+    let (_, diags) = parse_program("async async fn foo(): void { return; }");
     let errors: Vec<_> = diags
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Error)
@@ -386,7 +386,7 @@ fn test_await_no_expression_is_error() {
 #[test]
 fn test_async_fn_main_parses_ok() {
     // Typechecker emits AT4006, not the parser
-    let f = first_fn_decl("async fn main() -> void { return; }");
+    let f = first_fn_decl("async fn main(): void { return; }");
     assert!(f.is_async);
     assert_eq!(f.name.name, "main");
 }

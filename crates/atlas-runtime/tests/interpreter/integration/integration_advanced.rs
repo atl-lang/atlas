@@ -3,9 +3,9 @@ use super::*;
 #[test]
 fn test_integration_nested_function_calls() {
     let code = r#"
-        fn a(borrow x: number) -> number { return x + 1; }
-        fn b(borrow x: number) -> number { return a(x) + 1; }
-        fn c(borrow x: number) -> number { return b(x) + 1; }
+        fn a(borrow x: number): number { return x + 1; }
+        fn b(borrow x: number): number { return a(x) + 1; }
+        fn c(borrow x: number): number { return b(x) + 1; }
         c(0);
     "#;
     assert_eval_number(code, 3.0);
@@ -15,7 +15,7 @@ fn test_integration_nested_function_calls() {
 fn test_integration_scope_shadowing() {
     let code = r#"
         let x = 1;
-        fn test() -> number {
+        fn test(): number {
             let x = 2;
             return x;
         }
@@ -28,9 +28,9 @@ fn test_integration_scope_shadowing() {
 fn test_integration_multiple_function_levels() {
     // Test function calls across multiple levels
     let code = r#"
-        fn level1(borrow x: number) -> number {
-            fn level2(borrow y: number) -> number {
-                fn level3(borrow z: number) -> number {
+        fn level1(borrow x: number): number {
+            fn level2(borrow y: number): number {
+                fn level3(borrow z: number): number {
                     return z + 1;
                 }
                 return level3(y) + 1;
@@ -46,10 +46,10 @@ fn test_integration_multiple_function_levels() {
 fn test_integration_function_as_parameter() {
     // Test higher-order function pattern
     let code = r#"
-        fn apply(borrow f: (number) -> number, x: number) -> number {
+        fn apply(borrow f: (number): number, x: number): number {
             return f(x);
         }
-        fn double(borrow n: number) -> number {
+        fn double(borrow n: number): number {
             return n * 2;
         }
         apply(double, 5);
@@ -87,7 +87,7 @@ fn test_integration_array_index_out_of_bounds() {
 #[test]
 fn test_integration_function_wrong_arity() {
     let code = r#"
-        fn add(borrow a: number, borrow b: number) -> number { return a + b; }
+        fn add(borrow a: number, borrow b: number): number { return a + b; }
         add(1);
     "#;
     let result = Atlas::new().eval(code);
@@ -101,7 +101,7 @@ fn test_integration_function_wrong_arity() {
 #[test]
 fn test_integration_fibonacci_recursive() {
     let code = r#"
-        fn fib(borrow n: number) -> number {
+        fn fib(borrow n: number): number {
             if (n <= 1) { return n; }
             return fib(n - 1) + fib(n - 2);
         }
@@ -113,7 +113,7 @@ fn test_integration_fibonacci_recursive() {
 #[test]
 fn test_integration_factorial() {
     let code = r#"
-        fn factorial(borrow n: number) -> number {
+        fn factorial(borrow n: number): number {
             if (n <= 1) { return 1; }
             return n * factorial(n - 1);
         }
@@ -125,7 +125,7 @@ fn test_integration_factorial() {
 #[test]
 fn test_integration_sum_to_n() {
     let code = r#"
-        fn sum_to(borrow n: number) -> number {
+        fn sum_to(borrow n: number): number {
             let mut sum = 0;
             let mut i = 1;
             while (i <= n) {
@@ -142,7 +142,7 @@ fn test_integration_sum_to_n() {
 #[test]
 fn test_integration_is_prime() {
     let code = r#"
-        fn is_prime(borrow n: number) -> bool {
+        fn is_prime(borrow n: number): bool {
             if (n < 2) { return false; }
             let mut i = 2;
             while (i * i <= n) {
@@ -159,7 +159,7 @@ fn test_integration_is_prime() {
 #[test]
 fn test_integration_is_not_prime() {
     let code = r#"
-        fn is_prime(borrow n: number) -> bool {
+        fn is_prime(borrow n: number): bool {
             if (n < 2) { return false; }
             let mut i = 2;
             while (i * i <= n) {
@@ -279,7 +279,7 @@ fn test_perf_string_accumulation() {
 #[test]
 fn test_perf_function_calls_correctness() {
     let code = r#"
-        fn inc(borrow x: number) -> number { return x + 1; }
+        fn inc(borrow x: number): number { return x + 1; }
         let mut r = 0;
         let mut i = 0;
         while (i < 100) {

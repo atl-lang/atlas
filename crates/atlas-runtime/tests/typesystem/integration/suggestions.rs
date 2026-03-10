@@ -117,10 +117,10 @@ fn test_unknown_type_no_suggestion_when_no_match() {
 fn test_trait_suggestion_impl_typo() {
     let diags = typecheck_source(
         r#"
-        trait Greetable { fn greet(borrow self: Greetable) -> string; }
+        trait Greetable { fn greet(borrow self: Greetable): string; }
         struct Dog { name: string }
         impl Greetabel for Dog {
-            fn greet(borrow self: Dog) -> string { return "woof"; }
+            fn greet(borrow self: Dog): string { return "woof"; }
         }
         "#,
     );
@@ -224,7 +224,7 @@ fn test_trait_no_suggestion_when_no_close_match() {
         r#"
         struct Dog { name: string }
         impl TotallyMadeUpTraitXYZ for Dog {
-            fn greet(borrow self: Dog) -> string { return "woof"; }
+            fn greet(borrow self: Dog): string { return "woof"; }
         }
         "#,
     );

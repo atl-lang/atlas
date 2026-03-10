@@ -2,7 +2,7 @@
 // Tests: Option<T> with Some/None, match on Option, chaining Option through fns.
 // Fn returning Option<number> (None for invalid input).
 
-fn safe_sqrt(borrow x: number) -> Option<number> {
+fn safe_sqrt(borrow x: number) : Option<number> {
     if x < 0 {
         return None();
     }
@@ -14,28 +14,28 @@ fn safe_sqrt(borrow x: number) -> Option<number> {
     return Some(i - 1);
 }
 
-fn safe_divide(borrow a: number, borrow b: number) -> Option<number> {
+fn safe_divide(borrow a: number, borrow b: number) : Option<number> {
     if b == 0 {
         return None();
     }
     return Some(a / b);
 }
 
-fn option_to_string(borrow opt: Option<number>) -> string {
+fn option_to_string(borrow opt: Option<number>) : string {
     return match opt {
         Some(v) => "Some(" + str(v) + ")",
         None => "None",
     };
 }
 
-fn option_or(borrow opt: Option<number>, borrow default: number) -> number {
+fn option_or(borrow opt: Option<number>, borrow default: number) : number {
     return match opt {
         Some(v) => v,
         None => default,
     };
 }
 
-fn chain_divide(borrow a: number, borrow b: number, borrow c: number) -> Option<number> {
+fn chain_divide(borrow a: number, borrow b: number, borrow c: number) : Option<number> {
     let first: Option<number> = safe_divide(a, b);
     return match first {
         Some(v) => safe_divide(v, c),

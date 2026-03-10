@@ -23,12 +23,12 @@ item           := import_decl
 
 **Function Declarations**
 ```
-function_decl  := "fn" IDENT type_params? "(" params? ")" "->" type_ref block
+function_decl  := "fn" IDENT type_params? "(" params? ")" ":" type_ref block
 params         := param ("," param)* (",")?
 param          := ownership? IDENT ":" type_ref
 ownership      := "own" | "borrow" | "share"
 ```
-Return type is **required** on named functions. Use `-> void` for functions that return nothing.
+Return type is **required** on named functions. Use `: void` for functions that return nothing.
 Closures (`anon_fn`) may omit param types and return type (inferred from context).
 `ownership` is optional — bare parameters default to `borrow`. Only `own` and `share` need to be written explicitly. (D-040)
 
@@ -38,12 +38,12 @@ type_params    := "<" type_param ("," type_param)* ">"
 type_param     := IDENT ("extends" IDENT ("&" IDENT)*)?
 ```
 Generic bounds use TypeScript-style `extends` keyword. Multiple bounds separated by `&`. (H-227, D-039)
-Example: `fn foo<T extends Copy & Display>(borrow x: T) -> T`
+Example: `fn foo<T extends Copy & Display>(borrow x: T) : T`
 
 **Trait Declarations**
 ```
 trait_decl     := "trait" IDENT type_params? ("extends" IDENT ("," IDENT)*)? "{" trait_method_sig* "}"
-trait_method_sig := "fn" IDENT type_params? "(" params? ")" "->" type_ref (";" | block)
+trait_method_sig := "fn" IDENT type_params? "(" params? ")" ":" type_ref (";" | block)
 ```
 
 Traits declare method signatures. Methods may have default bodies (using `block` instead of `;`).
@@ -54,7 +54,7 @@ Implementations live in `impl` blocks.
 **Impl Blocks**
 ```
 impl_block     := "impl" IDENT type_args? ("for" IDENT)? "{" impl_method* "}"
-impl_method    := "fn" IDENT type_params? "(" params? ")" "->" type_ref block
+impl_method    := "fn" IDENT type_params? "(" params? ")" ":" type_ref block
 ```
 
 Two forms:
@@ -72,7 +72,7 @@ import_decl    := "import" "{" IDENT ("," IDENT)* "}" "from" STRING ";"
 
 export_decl    := "export" (function_decl | var_decl | type_alias_decl | struct_decl | enum_decl)
 
-extern_decl    := "extern" STRING "fn" IDENT ("as" STRING)? "(" extern_params? ")" ("->" type_ref)? ";"
+extern_decl    := "extern" STRING "fn" IDENT ("as" STRING)? "(" extern_params? ")" (":" type_ref)? ";"
 
 type_alias_decl := "type" type_params? IDENT "=" type_ref ";"
 ```
@@ -81,9 +81,9 @@ Examples:
 ```atlas
 import { split, join } from "./utils";
 import * as utils from "./helpers";
-export fn greet(name: string) -> string { return `Hello {name}`; }
+export fn greet(name: string) : string { return `Hello {name}`; }
 export type ID = number | string;
-extern "libname" fn compress(data: string) -> string;
+extern "libname" fn compress(data: string) : string;
 ```
 
 **Statements**
@@ -181,7 +181,7 @@ member_expr    := expr "." IDENT
 match_expr     := "match" expr "{" match_arm ( (","|";") match_arm )* (","|";")? "}"
 match_arm      := pattern ("if" expr)? "=>" expr
 
-anon_fn        := "fn" "(" anon_params? ")" ("->" type_ref)? block
+anon_fn        := "fn" "(" anon_params? ")" (":" type_ref)? block
 anon_params    := anon_param ("," anon_param)* (",")?
 anon_param     := ownership? IDENT (":" type_ref)?
 ```

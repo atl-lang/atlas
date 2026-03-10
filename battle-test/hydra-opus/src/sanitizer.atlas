@@ -8,7 +8,7 @@ enum ChunkType {
     Pollution    // Random text, logs, stack traces
 }
 
-fn chunk_type_to_string(borrow ct: ChunkType) -> string {
+fn chunk_type_to_string(borrow ct: ChunkType) : string {
     return match ct {
         ChunkType::Empty => "empty",
         ChunkType::JSONRPC => "jsonrpc",
@@ -20,10 +20,10 @@ fn chunk_type_to_string(borrow ct: ChunkType) -> string {
 // Ensures only valid JSON-RPC reaches the AI client
 trait Sanitizer {
     // Classify determines if a byte slice is valid JSON-RPC or garbage
-    fn classify(self, borrow chunk: string) -> ChunkType;
+    fn classify(self, borrow chunk: string) : ChunkType;
 
     // ValidateUTF8 ensures valid UTF-8, replacing invalid sequences
-    fn validate_utf8(self, borrow data: string) -> string;
+    fn validate_utf8(self, borrow data: string) : string;
 }
 
 // DefaultSanitizer implements the Sanitizer trait
@@ -32,14 +32,14 @@ struct DefaultSanitizer {
 }
 
 // Creates a new DefaultSanitizer
-fn new_sanitizer(own strict: bool) -> DefaultSanitizer {
+fn new_sanitizer(own strict: bool) : DefaultSanitizer {
     return DefaultSanitizer {
         strict_mode: strict
     };
 }
 
 impl Sanitizer for DefaultSanitizer {
-    fn classify(self, borrow chunk: string) -> ChunkType {
+    fn classify(self, borrow chunk: string) : ChunkType {
         let trimmed = trim(chunk);
 
         // Empty check
@@ -88,7 +88,7 @@ impl Sanitizer for DefaultSanitizer {
         return ChunkType::Pollution;
     }
 
-    fn validate_utf8(self, borrow data: string) -> string {
+    fn validate_utf8(self, borrow data: string) : string {
         // Atlas strings are always valid UTF-8 (Rust guarantees)
         // This is effectively a no-op in Atlas, but we keep for API compat
         return data;
@@ -96,7 +96,7 @@ impl Sanitizer for DefaultSanitizer {
 }
 
 // is_valid_jsonrpc - quick check without full parsing
-fn is_valid_jsonrpc(borrow chunk: string) -> bool {
+fn is_valid_jsonrpc(borrow chunk: string) : bool {
     let trimmed = trim(chunk);
     if len(trimmed) == 0 {
         return false;
@@ -112,7 +112,7 @@ fn is_valid_jsonrpc(borrow chunk: string) -> bool {
 }
 
 // classify_quick - lightweight classification (no JSON parsing)
-fn classify_quick(borrow chunk: string) -> ChunkType {
+fn classify_quick(borrow chunk: string) : ChunkType {
     let trimmed = trim(chunk);
 
     if len(trimmed) == 0 {

@@ -6,11 +6,11 @@
 
 struct Config { host: string, port: number, debug: bool, max_conn: number }
 
-fn default_config() -> Config {
+fn default_config() : Config {
     return Config { host: "localhost", port: 8080, debug: false, max_conn: 100 };
 }
 
-fn validate_config(borrow c: Config) -> Result<Config, string> {
+fn validate_config(borrow c: Config) : Result<Config, string> {
     if len(c.host) == 0 {
         return Err("host cannot be empty");
     }
@@ -23,7 +23,7 @@ fn validate_config(borrow c: Config) -> Result<Config, string> {
     return Ok(c);
 }
 
-fn config_to_string(borrow c: Config) -> string {
+fn config_to_string(borrow c: Config) : string {
     let mut dbg: string = "false";
     if c.debug { dbg = "true"; }
     return "host=" + c.host + " port=" + str(c.port) + " debug=" + dbg + " max_conn=" + str(c.max_conn);

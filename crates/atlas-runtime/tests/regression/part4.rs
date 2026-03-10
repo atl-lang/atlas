@@ -116,5 +116,5 @@ fn stability_edge_nested_array_access() {
 #[test]
 fn stability_edge_function_with_no_return_value() {
     // Void functions must not crash on call.
-    assert_no_error("fn greet() -> null { } greet();");
+    assert_no_error("fn greet(): null { } greet();");
 }

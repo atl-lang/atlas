@@ -5,7 +5,7 @@ use super::common::*;
 #[test]
 fn regression_fibonacci() {
     let code = r#"
-        fn fib(borrow n: number) -> number {
+        fn fib(borrow n: number): number {
             if (n <= 1) {
                 return n;
             }
@@ -34,10 +34,10 @@ fn regression_array_sum() {
 #[test]
 fn regression_nested_function_calls() {
     let code = r#"
-        fn double(borrow x: number) -> number {
+        fn double(borrow x: number): number {
             return x * 2;
         }
-        fn triple(borrow x: number) -> number {
+        fn triple(borrow x: number): number {
             return x * 3;
         }
         double(triple(5));
@@ -50,7 +50,7 @@ fn regression_nested_function_calls() {
 #[test]
 fn regression_mixed_operations() {
     let code = r#"
-        fn calculate(borrow a: number, borrow b: number) -> number {
+        fn calculate(borrow a: number, borrow b: number): number {
             let sum: number = a + b;
             let product: number = a * b;
             if (sum > product) {

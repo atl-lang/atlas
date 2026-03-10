@@ -5,8 +5,8 @@ This document reflects the actual parser in `crates/atlas-runtime/src/parser/mod
 **Trait Declarations**
 ```
 trait Name {
-    fn method(self) -> Type;
-    fn with_default(self) -> Type { default_body }
+    fn method(self) : Type;
+    fn with_default(self) : Type { default_body }
 }
 ```
 - Methods use `self` — the type is inferred from the impl block.
@@ -17,8 +17,8 @@ trait Name {
 Example (tested):
 ```atlas
 trait Greetable {
-    fn greet(self) -> string;
-    fn farewell(self) -> string {
+    fn greet(self) : string;
+    fn farewell(self) : string {
         return "Goodbye";
     }
 }
@@ -27,7 +27,7 @@ trait Greetable {
 **Inherent Impl Blocks** (B13, D-036)
 ```
 impl TypeName {
-    fn method(borrow self: TypeName) -> Type { body }
+    fn method(borrow self: TypeName) : Type { body }
 }
 ```
 - Methods belong directly to the type — no trait required.
@@ -40,7 +40,7 @@ Example (tested):
 struct Point { x: number, y: number }
 
 impl Point {
-    fn magnitude(borrow self: Point) -> number {
+    fn magnitude(borrow self: Point) : number {
         return self.x * self.x + self.y * self.y;
     }
 }
@@ -52,7 +52,7 @@ print(p.magnitude()); // 25
 **Trait Impl Blocks**
 ```
 impl TraitName for TypeName {
-    fn method(borrow self: TypeName) -> Type { body }
+    fn method(borrow self: TypeName) : Type { body }
 }
 ```
 - Must implement all required methods (those without default bodies).
@@ -64,7 +64,7 @@ Example (tested):
 struct Person { name: string }
 
 impl Greetable for Person {
-    fn greet(borrow self: Person) -> string {
+    fn greet(borrow self: Person) : string {
         return `Hello, I'm ${self.name}`;
     }
     // farewell uses the default implementation
@@ -77,14 +77,14 @@ print(p.farewell()); // "Goodbye"
 
 **Trait Objects (Bounded Polymorphism)**
 ```
-fn process(item: TraitName) -> Type { ... }
+fn process(item: TraitName) : Type { ... }
 ```
 - Trait names can be used as parameter types.
 - Any type that implements the trait can be passed.
 
 Example (tested):
 ```atlas
-fn introduce(g: Greetable) -> string {
+fn introduce(g: Greetable) : string {
     return g.greet();
 }
 
@@ -94,8 +94,8 @@ print(introduce(p)); // "Hello, I'm Ada"
 
 **Generic Trait Bounds**
 ```
-fn identity<T extends Copy>(value: T) -> T { ... }
-fn process<T extends Display & Copy>(value: T) -> string { ... }
+fn identity<T extends Copy>(value: T) : T { ... }
+fn process<T extends Display & Copy>(value: T) : string { ... }
 ```
 - Type parameters can require trait bounds using `extends` (TypeScript style).
 - Multiple bounds use `&`.
