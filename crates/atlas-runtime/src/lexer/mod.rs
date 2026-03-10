@@ -2,7 +2,9 @@
 //!
 //! The lexer converts Atlas source code into a stream of tokens with accurate span information.
 
-use crate::diagnostic::error_codes::UNTERMINATED_COMMENT;
+use crate::diagnostic::error_codes::{
+    INVALID_ESCAPE, INVALID_NUMBER, UNEXPECTED_TOKEN, UNTERMINATED_COMMENT, UNTERMINATED_STRING,
+};
 use crate::diagnostic::Diagnostic;
 use crate::span::{intern_file, register_source, FileId, Span};
 use crate::token::{Token, TokenKind};
@@ -464,48 +466,80 @@ impl Lexer {
         }
     }
 
-    /// Create an error token and record a diagnostic with a specific code
-    pub(super) fn error_token_with_code(&mut self, code: &str, message: &str) -> Token {
+    /// Push a diagnostic and return an error token for the current span.
+    /// All lexer error helpers use this so diagnostics go through the descriptor system.
+    fn push_descriptor_error(&mut self, diag: Diagnostic, lexeme: impl Into<String>) -> Token {
         let span = Span::new_in(
             self.start_pos,
             self.current.max(self.start_pos + 1),
             self.file,
         );
-
-        // Extract snippet from source for this line
-        let snippet = self.get_line_snippet(self.start_line);
-
-        // Record diagnostic
-        self.diagnostics.push(
-            Diagnostic::error_with_code(code, message, span)
-                .with_line(self.start_line as usize)
-                .with_snippet(snippet)
-                .with_label("lexer error"),
-        );
-
+        self.diagnostics.push(diag);
         Token {
             kind: TokenKind::Error,
-            lexeme: message.to_string(),
+            lexeme: lexeme.into(),
             span,
         }
     }
 
+    /// Build the current error span and source snippet for use in descriptor helpers.
+    fn current_error_span_and_snippet(&self) -> (Span, String) {
+        let span = Span::new_in(
+            self.start_pos,
+            self.current.max(self.start_pos + 1),
+            self.file,
+        );
+        let snippet = self.get_line_snippet(self.start_line);
+        (span, snippet)
+    }
+
     /// Create an error token for invalid/unexpected characters (AT1001)
     pub(super) fn error_token(&mut self, message: &str) -> Token {
-        self.error_token_with_code("AT1001", message)
+        let (span, snippet) = self.current_error_span_and_snippet();
+        let diag = UNEXPECTED_TOKEN
+            .emit(span)
+            .build()
+            .with_line(self.start_line as usize)
+            .with_snippet(snippet)
+            .with_label(message);
+        self.push_descriptor_error(diag, message)
     }
 
     /// Create an error token for unterminated strings (AT1002)
     pub(super) fn error_unterminated_string(&mut self) -> Token {
-        self.error_token_with_code("AT1002", "Unterminated string literal")
+        let (span, snippet) = self.current_error_span_and_snippet();
+        let diag = UNTERMINATED_STRING
+            .emit(span)
+            .build()
+            .with_line(self.start_line as usize)
+            .with_snippet(snippet)
+            .with_label("string starts here");
+        self.push_descriptor_error(diag, "unterminated string literal")
     }
 
     /// Create an error token for invalid escape sequences (AT1003)
     pub(super) fn error_invalid_escape(&mut self, escape_char: char) -> Token {
-        self.error_token_with_code(
-            "AT1003",
-            &format!("Invalid escape sequence '\\{}'", escape_char),
-        )
+        let (span, snippet) = self.current_error_span_and_snippet();
+        let label = format!("invalid escape `\\{escape_char}`");
+        let diag = INVALID_ESCAPE
+            .emit(span)
+            .build()
+            .with_line(self.start_line as usize)
+            .with_snippet(snippet)
+            .with_label(&label);
+        self.push_descriptor_error(diag, label)
+    }
+
+    /// Create an error token for invalid number literals (AT1005)
+    pub(super) fn error_invalid_number(&mut self, reason: &str) -> Token {
+        let (span, snippet) = self.current_error_span_and_snippet();
+        let diag = INVALID_NUMBER
+            .emit(span)
+            .build()
+            .with_line(self.start_line as usize)
+            .with_snippet(snippet)
+            .with_label(reason);
+        self.push_descriptor_error(diag, reason)
     }
 
     /// Get the source line for a given line number

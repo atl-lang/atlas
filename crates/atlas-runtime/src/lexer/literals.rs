@@ -285,7 +285,7 @@ impl Lexer {
 
             // Must have at least one digit in exponent
             if self.is_at_end() || !self.peek().is_ascii_digit() {
-                return self.error_token("Invalid number: exponent requires digits");
+                return self.error_invalid_number("exponent requires digits after `e`/`E`");
             }
 
             // Consume exponent digits
