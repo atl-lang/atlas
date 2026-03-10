@@ -94,9 +94,9 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Process Functions
 - **File:** `process.md`
-- **Functions:** spawn, shell, processStdout, processStderr, processStdin, processOutput, processWait, processKill, processIsRunning, getEnv, setEnv, unsetEnv, listEnv, getPid, getCwd
-- **Count:** 15 functions
-- **Purpose:** Process spawning, execution, and environment access
+- **Functions:** spawn, shell, processStdout, processStderr, processStdin, processOutput, processWait, processKill, processIsRunning, getEnv, setEnv, unsetEnv, listEnv, getPid, getCwd, getProcessArgs, processRun
+- **Count:** 17 functions
+- **Purpose:** Process spawning, execution, environment access, and CLI argument retrieval
 
 ### Network Functions
 - **File:** `net.md`
