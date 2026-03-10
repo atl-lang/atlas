@@ -2186,6 +2186,20 @@ impl<'a> TypeChecker<'a> {
                 return Type::union(return_types);
             }
 
+            // Empty union — degenerate state, emit diagnostic (D-010: Unknown is error state).
+            self.diagnostics.push(
+                error_codes::TYPE_ERROR
+                    .emit(member.span)
+                    .arg(
+                        "detail",
+                        format!("cannot call '{}' on empty union type", member.member.name),
+                    )
+                    .with_help(
+                        "ensure the expression has a concrete type before calling methods on it",
+                    )
+                    .build()
+                    .with_label("empty union type"),
+            );
             return Type::Unknown;
         }
 
