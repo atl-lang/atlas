@@ -620,9 +620,9 @@ impl Parser {
             // Optional mutability keyword: `mut`
             let mutable = self.match_token(TokenKind::Mut);
 
-            // Mandatory ownership annotation: own | borrow | share (D-034)
+            // Optional ownership annotation: own | borrow | share (D-040: borrow is implicit)
             // Exception: bare `self` in impl methods has no annotation.
-            let ownership = if self.match_token(TokenKind::Own) {
+            let ownership_from_source = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
@@ -631,6 +631,9 @@ impl Parser {
             } else {
                 None
             };
+            // Track whether the keyword was written in source before defaulting.
+            let ownership_explicit = ownership_from_source.is_some();
+            let ownership = ownership_from_source;
 
             // Extract name + span eagerly so we can release the borrow before calling self.check().
             let (param_name, param_name_span) = if ownership.is_some() {
@@ -691,6 +694,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                ownership_explicit,
                 mutable,
                 span: param_span_start.merge(param_span_end),
             });

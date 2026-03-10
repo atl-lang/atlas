@@ -360,6 +360,10 @@ pub struct TypeChecker<'a> {
     /// Maps param name -> ownership annotation. Used by call-site checks to detect
     /// whether an argument is a `borrow` parameter of the enclosing function.
     pub(super) current_fn_param_ownerships: HashMap<String, Option<OwnershipAnnotation>>,
+    /// Names of params in the current function where the ownership keyword was written
+    /// explicitly in source (`borrow x`, `own x`, `share x`). Bare params are absent
+    /// from this set — AT3054 only fires for explicit `borrow`, not implicit defaults (D-040).
+    pub(super) current_fn_explicit_borrow_params: HashSet<String>,
     /// Variables that have been moved via an `own` parameter call in the current function scope.
     /// Any subsequent use of a name in this set triggers AT3053 (use-after-own).
     pub(super) moved_vars: HashSet<String>,
@@ -457,6 +461,7 @@ impl<'a> TypeChecker<'a> {
             alias_resolution_stack: Vec::new(),
             fn_ownership_registry: stdlib_ownership::build_stdlib_ownership(),
             current_fn_param_ownerships: HashMap::new(),
+            current_fn_explicit_borrow_params: HashSet::new(),
             moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
@@ -1442,6 +1447,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_explicit_borrows = std::mem::take(&mut self.current_fn_explicit_borrow_params);
         let prev_moved_vars = std::mem::take(&mut self.moved_vars);
 
         self.current_function_return_type = Some(self.resolve_type_ref(&method.return_type));
@@ -1482,6 +1488,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.current_fn_explicit_borrow_params = prev_explicit_borrows;
         self.moved_vars = prev_moved_vars;
     }
 
@@ -1524,6 +1531,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_explicit_borrows = std::mem::take(&mut self.current_fn_explicit_borrow_params);
         let prev_moved_vars = std::mem::take(&mut self.moved_vars);
         let prev_type_params = std::mem::take(&mut self.active_type_params);
         let prev_in_async = self.in_async_context;
@@ -1686,6 +1694,14 @@ impl<'a> TypeChecker<'a> {
             .iter()
             .map(|p| (p.name.name.clone(), p.ownership.clone()))
             .collect();
+        // Track which params had an explicit ownership keyword in source.
+        // AT3054 (borrow escape) only fires for explicit `borrow`, not implicit defaults (D-040).
+        self.current_fn_explicit_borrow_params = func
+            .params
+            .iter()
+            .filter(|p| p.ownership_explicit && p.ownership == Some(OwnershipAnnotation::Borrow))
+            .map(|p| p.name.name.clone())
+            .collect();
 
         self.fn_ownership_registry.insert(
             func.name.name.clone(),
@@ -1738,6 +1754,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.current_fn_explicit_borrow_params = prev_explicit_borrows;
         self.moved_vars = prev_moved_vars;
         self.in_async_context = prev_in_async;
         self.current_fn_allow_unused = prev_allow_unused;
@@ -1873,14 +1890,17 @@ impl<'a> TypeChecker<'a> {
                 self.declared_symbols
                     .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));
 
-                // AT3054: borrow param cannot escape into a let binding
+                // AT3054: explicitly-annotated `borrow` param cannot escape into a let binding.
+                // Bare params (implicit borrow, D-040) are excluded — they are valid pass-throughs.
                 if let Expr::Identifier(id) = &var.init {
                     let ownership = self
                         .current_fn_param_ownerships
                         .get(&id.name)
                         .cloned()
                         .flatten();
-                    if ownership == Some(OwnershipAnnotation::Borrow) {
+                    let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
+                        && self.current_fn_explicit_borrow_params.contains(&id.name);
+                    if is_explicit_borrow {
                         self.diagnostics.push(
                             error_codes::BORROW_ESCAPE.emit(var.span).arg("detail", format!(
                                     "cannot store `borrow` parameter `{}` in a binding: \
@@ -2260,10 +2280,9 @@ impl<'a> TypeChecker<'a> {
                     return;
                 }
 
-                // AT3054: borrow param cannot escape via return.
-                // No exemption for primitives — explicit `borrow` annotation means
-                // the caller's contract is "I will not keep this value", and that
-                // applies regardless of whether the type is a primitive or not.
+                // AT3054: explicitly-annotated `borrow` param cannot escape via return.
+                // Bare params (implicit borrow, D-040) are valid pass-throughs — omit annotation
+                // is not the same as promising "I will not keep this value".
                 if let Some(Expr::Identifier(id)) = &ret.value {
                     {
                         let ownership = self
@@ -2271,7 +2290,9 @@ impl<'a> TypeChecker<'a> {
                             .get(&id.name)
                             .cloned()
                             .flatten();
-                        if ownership == Some(OwnershipAnnotation::Borrow) {
+                        let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
+                            && self.current_fn_explicit_borrow_params.contains(&id.name);
+                        if is_explicit_borrow {
                             self.diagnostics.push(
                                 error_codes::BORROW_ESCAPE.emit(ret.span).arg("detail", format!(
                                         "cannot return `borrow` parameter `{}`: \

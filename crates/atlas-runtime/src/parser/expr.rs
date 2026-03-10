@@ -1024,8 +1024,8 @@ impl Parser {
         loop {
             let param_span_start = self.peek().span;
 
-            // Mandatory ownership annotation: own | borrow | share (D-034)
-            let ownership = if self.match_token(TokenKind::Own) {
+            // Optional ownership annotation: own | borrow | share (D-040: borrow is implicit)
+            let ownership_from_source = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
@@ -1034,6 +1034,7 @@ impl Parser {
             } else {
                 None
             };
+            let ownership_explicit = ownership_from_source.is_some();
 
             let (param_name, param_name_span) = {
                 let tok = self.consume_identifier("a parameter name")?;
@@ -1041,10 +1042,10 @@ impl Parser {
             };
 
             // D-040: borrow is the implicit default for closure params too.
-            let ownership = if ownership.is_none() {
+            let ownership = if ownership_from_source.is_none() {
                 Some(OwnershipAnnotation::Borrow)
             } else {
-                ownership
+                ownership_from_source
             };
 
             // Type annotation is required: `param: Type`
@@ -1059,6 +1060,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                ownership_explicit,
                 mutable: false,
                 span: param_span_start.merge(param_span_end),
             });
