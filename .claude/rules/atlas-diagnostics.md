@@ -17,6 +17,43 @@ Auto-loaded when touching diagnostic, parser error, or typechecker files.
 
 ---
 
+## 🚨 MANDATORY — Read Before Touching Any Error Site
+
+### Every single error emit MUST have all three layers:
+
+```
+error[AT1000]: <specific what went wrong, with token names>
+  --> file.atl:line:col
+help: <exact fix — one actionable line telling them what to write>
+note: <why — the rule, the concept, what Atlas does instead>
+```
+
+**ALL THREE ARE REQUIRED. An error without help is broken. An error without a note is broken.**
+
+There is no such thing as a "simple" error that doesn't need help or a note.
+The user staring at an error may be:
+- An AI agent running a program for the first time
+- A human who hasn't read the docs
+- A developer migrating from another language
+
+They need to know: what to write, and why.
+
+### The `self.error()` helper is BANNED for anything meaningful.
+It produces zero help, zero notes. It exists only for internal "this should never happen"
+guards. Any parser error a user can trigger belongs in `self.emit_descriptor()` with full
+`.with_help()` and `.with_note()`.
+
+### Migration errors (old syntax detected) MUST recover.
+When Atlas detects an old/wrong syntax (e.g. `->` instead of `:`, `[]T` instead of `T[]`):
+1. Emit the diagnostic with full help + note
+2. **Consume the bad tokens AND parse what follows** so the rest of the file still parses
+3. Return `Ok(recovered_value)` — NOT `Err(())`
+
+If you return `Err(())` on a migration error, `synchronize()` skips the entire enclosing
+block, wiping out every downstream error. The user sees 1 error in a file with 15.
+
+---
+
 ## The 6 Non-Negotiable Standards (D-043)
 
 ### 1. Cascade Suppression — MANDATORY
@@ -160,15 +197,29 @@ is a BLOCKING regression. Fix the snapshot only if the new output is strictly be
 
 ## Quick Checklist (Before Committing Any Diagnostic Change)
 
+**Error content — ALL required, no exceptions:**
+- [ ] Error message: specific — names the bad token, the context, what was expected
+- [ ] `.with_help()` present — exact one-line fix, tells them what to write
+- [ ] `.with_note()` present — explains the rule or why Atlas does it differently
+- [ ] `self.error()` NOT used for any user-visible error site
+
+**Descriptor plumbing:**
 - [ ] New AT/AW code is a full `DiagnosticDescriptor` with `static_help` (no `None`)
 - [ ] No embedded `\n` in `static_help` or `static_note`
 - [ ] New code added to `DESCRIPTOR_REGISTRY` in `error_codes.rs`
 - [ ] Emit call uses `AT_CODE.emit(span).arg().build()` — no bare `Diagnostic::error_with_code()`
+
+**Parser quality:**
 - [ ] Parser error says "Expected X, found `Y` (Kind)"
+- [ ] Migration errors (wrong syntax) recover — consume + parse, return `Ok`, NOT `Err(())`
 - [ ] Cascade suppression not bypassed
 - [ ] Span points at the bad token, not after it
-- [ ] `atlas run bad.atlas` shows correct number of primary errors
+- [ ] `atlas run bad.atlas` shows correct number of primary errors (one per root bug)
 - [ ] Descriptor tests pass: `cargo nextest run -p atlas-runtime -E 'test(descriptor)'`
+
+**The bar:** Run `atlas run` on a file with the error. Read the output out loud.
+Would a developer who has never seen Atlas understand exactly what to change?
+If not — the error is not done.
 
 ---
 

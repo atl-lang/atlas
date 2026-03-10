@@ -366,12 +366,40 @@ impl Parser {
                 None
             };
             (Some(self.parse_type_ref()?), ownership)
+        } else if self.check(TokenKind::Arrow) {
+            // H-225: `->` is the old Rust-style return type syntax. Atlas uses TypeScript-style `:`.
+            // Emit a targeted diagnostic, then recover by consuming `->` and parsing the type
+            // so the function body is still parsed and all downstream errors are visible.
+            let arrow_span = self.peek().span;
+            self.advance(); // consume `->`
+            let return_type_result = self.parse_type_ref();
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(arrow_span)
+                    .arg("detail", "Atlas uses TypeScript-style return type syntax — write `: T`, not `-> T`")
+                    .with_help("replace `->` with `:` — e.g. `fn main(): void` not `fn main() -> void`")
+                    .with_note("Atlas does not use the `->` arrow for return types. The colon `:` is consistent with all other Atlas type annotations."),
+            );
+            // If we parsed a valid type after the arrow, recover and continue parsing the body.
+            // If the type parse also failed, bail — something more broken is going on.
+            match return_type_result {
+                Ok(rt) => (Some(rt), None),
+                Err(_) => return Err(()),
+            }
         } else {
             // Named functions require an explicit return type (H-084).
             // Closures (anonymous functions) may omit type annotations.
-            self.error(
-                "Return type annotation required on named functions. \
-                 Use `: void` for functions that return nothing.",
+            let span = self.peek().span;
+            let found = self.peek().kind.as_str().to_string();
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", format!(
+                        "return type annotation required — found `{}` where `:` was expected",
+                        found
+                    ))
+                    .with_help("add a return type after the parameter list: `fn foo(): string` or `fn foo(): void`")
+                    .with_note("all named Atlas functions require an explicit return type annotation (D-023)"),
             );
             return Err(());
         };
