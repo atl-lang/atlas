@@ -141,6 +141,7 @@ impl DiagnosticBuilder {
             line_number: 0,
             old_line: old_token.into(),
             new_line: new_token.into(),
+            note: None,
         });
         self
     }

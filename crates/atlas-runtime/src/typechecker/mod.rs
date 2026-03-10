@@ -2588,10 +2588,11 @@ impl<'a> TypeChecker<'a> {
                                 .with_label("field not found")
                                 .with_help(help);
                             if let Some(name) = similar {
-                                diag = diag.with_suggestion_rename(
+                                diag = diag.with_suggestion_rename_noted(
                                     format!("did you mean `{}`?", name),
                                     member_name,
                                     name,
+                                    format!("`{}` is a valid field on this struct", name),
                                 );
                             }
                             self.diagnostics.push(diag);

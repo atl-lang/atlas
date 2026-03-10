@@ -103,6 +103,9 @@ impl DiagnosticFormatter {
             self.write_help(w, &sug.description)?;
             writeln!(w, "  - {}", sug.old_line)?;
             writeln!(w, "  + {}", sug.new_line)?;
+            if let Some(note) = &sug.note {
+                self.write_note(w, note)?;
+            }
         }
 
         // Note lines (context/explanation + related locations)

@@ -1703,10 +1703,11 @@ impl<'a> TypeChecker<'a> {
                 .build()
                 .with_label("member not found");
             if let Some(name) = similar {
-                diag = diag.with_suggestion_rename(
+                diag = diag.with_suggestion_rename_noted(
                     format!("did you mean `{}`?", name),
                     member_name,
                     name,
+                    format!("`{}` exists on this namespace or record type", name),
                 );
             }
             self.diagnostics.push(diag);
@@ -2149,10 +2150,11 @@ impl<'a> TypeChecker<'a> {
                     .build()
                     .with_label("method not found");
                 if let Some(name) = similar {
-                    diag = diag.with_suggestion_rename(
+                    diag = diag.with_suggestion_rename_noted(
                         format!("did you mean `{}`?", name),
                         method_name,
                         &name,
+                        format!("`{}` is a method available on this type", name),
                     );
                 }
                 self.diagnostics.push(diag);

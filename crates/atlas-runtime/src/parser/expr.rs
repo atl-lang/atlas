@@ -835,6 +835,7 @@ impl Parser {
                             line_number: diag.line,
                             old_line: diag.snippet.clone(),
                             new_line,
+                            note: None,
                         });
                     }
                 }

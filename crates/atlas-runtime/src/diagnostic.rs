@@ -88,6 +88,9 @@ pub struct SuggestionDiff {
     pub old_line: String,
     /// Fixed source line (the correction)
     pub new_line: String,
+    /// Optional note explaining WHY the fix is correct (shown after the diff block).
+    /// Modeled after Rust's `note: ...` that follows suggestion diffs.
+    pub note: Option<String>,
 }
 
 /// A diagnostic message (error or warning)
@@ -275,6 +278,33 @@ impl Diagnostic {
                 line_number: self.line,
                 old_line: self.snippet.clone(),
                 new_line,
+                note: None,
+            });
+        } else {
+            // Fallback: plain help text when snippet doesn't contain the token
+            self.help.push(format!("{}: `{}`", description, new_token));
+        }
+        self
+    }
+
+    /// Like `with_suggestion_rename` but includes a `note` explaining WHY the fix is correct.
+    /// The note is rendered after the `-old / +new` diff block (Rust-style).
+    pub fn with_suggestion_rename_noted(
+        mut self,
+        description: impl Into<String>,
+        old_token: &str,
+        new_token: &str,
+        note: impl Into<String>,
+    ) -> Self {
+        let description = description.into();
+        if !self.snippet.is_empty() && self.snippet.contains(old_token) {
+            let new_line = self.snippet.replacen(old_token, new_token, 1);
+            self.suggestions.push(SuggestionDiff {
+                description,
+                line_number: self.line,
+                old_line: self.snippet.clone(),
+                new_line,
+                note: Some(note.into()),
             });
         } else {
             // Fallback: plain help text when snippet doesn't contain the token
