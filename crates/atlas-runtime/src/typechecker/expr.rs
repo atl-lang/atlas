@@ -423,6 +423,10 @@ impl<'a> TypeChecker<'a> {
                     Type::Unknown
                 }
             }
+            Expr::TupleLiteral { elements, .. } => {
+                let elem_types: Vec<Type> = elements.iter().map(|e| self.check_expr(e)).collect();
+                Type::Tuple(elem_types)
+            }
             Expr::Await { expr, span } => {
                 // AT4001: await outside async context
                 if !self.in_async_context {
@@ -1785,6 +1789,55 @@ impl<'a> TypeChecker<'a> {
         let method_name = &member.member.name;
         let target_norm = target_type.normalized();
 
+        // Tuple element access: t.0, t.1, ...
+        if member.args.is_none() {
+            if let Type::Tuple(ref elem_types) = target_norm {
+                if let Ok(idx) = method_name.parse::<usize>() {
+                    if let Some(elem_ty) = elem_types.get(idx) {
+                        return elem_ty.clone();
+                    } else {
+                        self.diagnostics.push(
+                            error_codes::TYPE_ERROR
+                                .emit(member.member.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "tuple index {} out of range: tuple has {} element{}",
+                                        idx,
+                                        elem_types.len(),
+                                        if elem_types.len() == 1 { "" } else { "s" }
+                                    ),
+                                )
+                                .with_help(format!(
+                                    "valid indices are 0..{}",
+                                    elem_types.len().saturating_sub(1)
+                                ))
+                                .build()
+                                .with_label("index out of range"),
+                        );
+                        return Type::Unknown;
+                    }
+                } else {
+                    // Non-numeric member on tuple
+                    self.diagnostics.push(
+                        error_codes::TYPE_ERROR
+                            .emit(member.member.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "tuple has no field '{}': use .0, .1, ... for element access",
+                                    method_name
+                                ),
+                            )
+                            .with_help("tuple elements are accessed by numeric index: t.0, t.1")
+                            .build()
+                            .with_label("invalid tuple field"),
+                    );
+                    return Type::Unknown;
+                }
+            }
+        }
+
         if member.args.is_none() {
             if let Type::Structural { members } = &target_norm {
                 if let Some(return_type) =
@@ -2784,6 +2837,13 @@ impl<'a> TypeChecker<'a> {
                     );
                     return bindings;
                 }
+                Pattern::Tuple { elements, span } => {
+                    for pat in elements {
+                        bindings.extend(self.check_pattern(pat, &Type::Unknown));
+                    }
+                    let _ = span;
+                    return bindings;
+                }
                 Pattern::Or(alternatives, _) => {
                     // Check each sub-pattern independently; bindings from first sub-pattern used
                     for alt in alternatives {
@@ -2858,6 +2918,20 @@ impl<'a> TypeChecker<'a> {
             Pattern::Array { elements, span } => {
                 // Check array pattern
                 bindings.extend(self.check_array_pattern(elements, &expected_norm, *span));
+            }
+
+            Pattern::Tuple { elements, span } => {
+                let elem_types: Vec<Type> = match &expected_norm {
+                    Type::Tuple(elems) => elems.clone(),
+                    _ => (0..elements.len()).map(|_| Type::Unknown).collect(),
+                };
+                for (pat, ty) in elements
+                    .iter()
+                    .zip(elem_types.iter().chain(std::iter::repeat(&Type::Unknown)))
+                {
+                    bindings.extend(self.check_pattern(pat, ty));
+                }
+                let _ = span;
             }
 
             Pattern::Or(alternatives, _) => {

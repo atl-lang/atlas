@@ -208,6 +208,7 @@ fn collect_free_vars_stmt(
                 scope.insert(var_decl.name.name.clone());
             }
         }
+        Stmt::LetDestructure(_) => { /* B15-P06 */ }
         Stmt::FunctionDecl(func) => {
             if let Some(scope) = scopes.back_mut() {
                 scope.insert(func.name.name.clone());
@@ -379,6 +380,11 @@ fn collect_free_vars_expr(
                 }
             }
         }
+        Expr::TupleLiteral { elements, .. } => {
+            for elem in elements {
+                collect_free_vars_expr(elem, scopes, free_vars);
+            }
+        }
         Expr::Await { expr, .. } => {
             collect_free_vars_expr(expr, scopes, free_vars);
         }
@@ -399,6 +405,11 @@ fn collect_pattern_bindings(
         atlas_runtime::ast::Pattern::Constructor { args, .. } => {
             for arg in args {
                 collect_pattern_bindings(arg, scopes);
+            }
+        }
+        atlas_runtime::ast::Pattern::Tuple { elements, .. } => {
+            for elem in elements {
+                collect_pattern_bindings(elem, scopes);
             }
         }
         atlas_runtime::ast::Pattern::Array { elements, .. } => {
@@ -514,6 +525,13 @@ fn format_type_for_signature(ty: &Type) -> Option<String> {
                 parts.push(format!("{}: {}", member.name, ty_text));
             }
             Some(format!("{{ {} }}", parts.join(", ")))
+        }
+        Type::Tuple(elements) => {
+            let mut parts = Vec::with_capacity(elements.len());
+            for elem in elements {
+                parts.push(format_type_for_signature(elem)?);
+            }
+            Some(format!("({})", parts.join(", ")))
         }
         Type::TraitObject { name } => Some(name.clone()),
     }

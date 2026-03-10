@@ -333,6 +333,7 @@ impl SymbolIndex {
                 );
                 self.index_expr(&var_decl.init, ctx, false);
             }
+            Stmt::LetDestructure(_) => { /* B15-P06 */ }
             Stmt::FunctionDecl(func) => {
                 self.add_definition(
                     &func.name.name,
@@ -510,6 +511,11 @@ impl SymbolIndex {
                     for arg in args {
                         self.index_expr(arg, ctx, false);
                     }
+                }
+            }
+            Expr::TupleLiteral { elements, .. } => {
+                for elem in elements {
+                    self.index_expr(elem, ctx, false);
                 }
             }
             Expr::Await { expr, .. } => {

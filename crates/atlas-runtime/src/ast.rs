@@ -461,6 +461,7 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Stmt {
     VarDecl(VarDecl),
+    LetDestructure(LetDestructure),
     FunctionDecl(FunctionDecl),
     Assign(Assign),
     CompoundAssign(CompoundAssign),
@@ -482,6 +483,15 @@ pub struct VarDecl {
     pub uses_deprecated_var: bool,
     pub name: Identifier,
     pub type_ref: Option<TypeRef>,
+    pub init: Expr,
+    pub span: Span,
+}
+
+/// Tuple destructuring declaration: `let (a, b) = expr;`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LetDestructure {
+    pub mutable: bool,
+    pub names: Vec<Identifier>,
     pub init: Expr,
     pub span: Span,
 }
@@ -602,6 +612,11 @@ pub enum Expr {
         span: Span,
     },
     Group(GroupExpr),
+    /// Tuple literal: `(1, 2)`, `(1,)` single-element, `()` unit — B15
+    TupleLiteral {
+        elements: Vec<Expr>,
+        span: Span,
+    },
     Match(MatchExpr),
     Try(TryExpr),
     /// Anonymous function expression.
@@ -825,6 +840,8 @@ pub enum Pattern {
     },
     /// Array pattern: [], [x], [x, y]
     Array { elements: Vec<Pattern>, span: Span },
+    /// Tuple pattern: (p1, p2, ...)
+    Tuple { elements: Vec<Pattern>, span: Span },
     /// OR pattern: pat1 | pat2 | pat3
     Or(Vec<Pattern>, Span),
     /// Enum variant pattern: State::Running, Color::Rgb(r, g, b)
@@ -895,6 +912,11 @@ pub enum TypeRef {
         inner: Box<TypeRef>,
         span: Span,
     },
+    /// Tuple type: `(T1, T2, ...)` — B15
+    Tuple {
+        elements: Vec<TypeRef>,
+        span: Span,
+    },
     /// Placeholder for a bare `self` parameter whose type is inferred from the
     /// enclosing `impl` block. Never appears in user-written type positions.
     SelfType(Span),
@@ -955,6 +977,7 @@ impl Expr {
             Expr::StructExpr(s) => s.span,
             Expr::Range { span, .. } => *span,
             Expr::Group(g) => g.span,
+            Expr::TupleLiteral { span, .. } => *span,
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
             Expr::AnonFn { span, .. } => *span,
@@ -979,6 +1002,7 @@ impl Stmt {
     pub fn span(&self) -> Span {
         match self {
             Stmt::VarDecl(v) => v.span,
+            Stmt::LetDestructure(d) => d.span,
             Stmt::FunctionDecl(f) => f.span,
             Stmt::Assign(a) => a.span,
             Stmt::CompoundAssign(c) => c.span,
@@ -1004,6 +1028,7 @@ impl TypeRef {
             TypeRef::Union { span, .. } => *span,
             TypeRef::Intersection { span, .. } => *span,
             TypeRef::Future { span, .. } => *span,
+            TypeRef::Tuple { span, .. } => *span,
             TypeRef::SelfType(span) => *span,
         }
     }
@@ -1018,6 +1043,7 @@ impl Pattern {
             Pattern::Variable(id) => id.span,
             Pattern::Constructor { span, .. } => *span,
             Pattern::Array { span, .. } => *span,
+            Pattern::Tuple { span, .. } => *span,
             Pattern::Or(_, span) => *span,
             Pattern::EnumVariant { span, .. } => *span,
         }

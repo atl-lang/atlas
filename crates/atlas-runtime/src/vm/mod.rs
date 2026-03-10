@@ -1233,6 +1233,38 @@ impl VM {
                     elements.reverse(); // Stack is LIFO, so reverse to get correct order
                     self.push(Value::Array(ValueArray::from_vec(elements)));
                 }
+                // ===== Tuples =====
+                Opcode::Tuple => {
+                    let size = self.read_u16()? as usize;
+                    let mut elements = Vec::with_capacity(size);
+                    for _ in 0..size {
+                        elements.push(self.pop());
+                    }
+                    elements.reverse(); // Stack is LIFO, so reverse to get correct order
+                    self.push(Value::Tuple(Arc::new(elements)));
+                }
+                Opcode::TupleGet => {
+                    let index = self.read_u16()? as usize;
+                    let tuple = self.pop();
+                    match tuple {
+                        Value::Tuple(elems) => {
+                            if index >= elems.len() {
+                                return Err(RuntimeError::OutOfBounds {
+                                    span: self
+                                        .current_span()
+                                        .unwrap_or_else(crate::span::Span::dummy),
+                                });
+                            }
+                            self.push(elems[index].clone());
+                        }
+                        _ => {
+                            return Err(RuntimeError::TypeError {
+                                msg: "TupleGet applied to non-tuple value".to_string(),
+                                span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                            });
+                        }
+                    }
+                }
                 Opcode::GetIndex => {
                     let index_val = self.pop();
                     let target = self.pop();
@@ -2027,6 +2059,8 @@ impl VM {
                     | Opcode::JumpIfFalse
                     | Opcode::Loop
                     | Opcode::Array
+                    | Opcode::Tuple
+                    | Opcode::TupleGet
                     | Opcode::HashMap => ip += 2,
                     Opcode::Struct => ip += 4,
                     Opcode::MakeClosure => ip += 4,

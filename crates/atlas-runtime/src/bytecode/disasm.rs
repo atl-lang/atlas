@@ -122,7 +122,9 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
         | Opcode::Array
-        | Opcode::HashMap => {
+        | Opcode::HashMap
+        | Opcode::Tuple
+        | Opcode::TupleGet => {
             let operand = read_u16(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
@@ -251,6 +253,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::Watcher(_) => "<Watcher>".to_string(),
         Value::Closure(c) => format!("<fn {}>", c.func.name),
         Value::SharedValue(_) => "<shared>".to_string(),
+        Value::Tuple(elems) => format!("<tuple({} elements)>", elems.len()),
         Value::EnumValue {
             enum_name,
             variant_name,

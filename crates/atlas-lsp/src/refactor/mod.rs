@@ -122,6 +122,12 @@ fn extract_names_from_stmt(stmt: &Stmt, names: &mut Vec<String>) {
             names.push(var_decl.name.name.clone());
             extract_names_from_expr(&var_decl.init, names);
         }
+        Stmt::LetDestructure(d) => {
+            for name in &d.names {
+                names.push(name.name.clone());
+            }
+            extract_names_from_expr(&d.init, names);
+        }
         Stmt::FunctionDecl(func) => {
             names.push(func.name.name.clone());
             for param in &func.params {
@@ -268,6 +274,11 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
                 for arg in args {
                     extract_names_from_expr(arg, names);
                 }
+            }
+        }
+        Expr::TupleLiteral { elements, .. } => {
+            for elem in elements {
+                extract_names_from_expr(elem, names);
             }
         }
         Expr::Await { expr, .. } => {

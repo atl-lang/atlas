@@ -1,0 +1,25 @@
+// B15: Tuple basics — literal, access, destructure
+
+// Literal creation
+let point = (3, 4);
+print(point.0);
+print(point.1);
+
+// String elements
+let pair = ("hello", "world");
+print(pair.0);
+print(pair.1);
+
+// Three elements
+let triple = (1, 2, 3);
+print(triple.0 + triple.1 + triple.2);
+
+// Let destructuring
+let (x, y) = (10, 20);
+print(x);
+print(y);
+print(x + y);
+
+// Unit tuple
+let u = ();
+print("ok");

@@ -530,6 +530,10 @@ fn format_type_ref_str(type_ref: &TypeRef) -> String {
             .map(format_type_ref_str)
             .collect::<Vec<_>>()
             .join(" & "),
+        TypeRef::Tuple { elements, .. } => {
+            let parts: Vec<String> = elements.iter().map(format_type_ref_str).collect();
+            format!("({})", parts.join(", "))
+        }
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref_str(inner)),
         TypeRef::SelfType(_) => "self".to_string(),
     }

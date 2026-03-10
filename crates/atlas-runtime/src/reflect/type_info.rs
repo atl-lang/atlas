@@ -326,6 +326,17 @@ impl TypeInfo {
                 alias_target: None,
             },
 
+            Type::Tuple(elems) => TypeInfo {
+                name: "tuple".to_string(),
+                kind: TypeKind::Generic,
+                fields: vec![],
+                parameters: vec![],
+                return_type: None,
+                element_type: None,
+                type_args: elems.iter().map(TypeInfo::from_type).collect(),
+                alias_target: None,
+            },
+
             Type::Alias { name, target, .. } => TypeInfo {
                 name: name.clone(),
                 kind: TypeKind::Alias,

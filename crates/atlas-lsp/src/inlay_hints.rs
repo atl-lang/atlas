@@ -645,6 +645,10 @@ fn format_type(ty: &Type) -> String {
                 .collect();
             format!("{{ {} }}", field_strs.join(", "))
         }
+        Type::Tuple(elements) => {
+            let formatted: Vec<String> = elements.iter().map(format_type).collect();
+            format!("({})", formatted.join(", "))
+        }
         Type::TraitObject { name } => name.clone(),
         Type::Unknown | Type::Extern(_) => "?".to_string(),
     }

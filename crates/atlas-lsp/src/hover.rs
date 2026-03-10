@@ -925,6 +925,10 @@ fn format_type_ref(type_ref: &TypeRef) -> String {
             let formatted: Vec<String> = members.iter().map(format_type_ref).collect();
             formatted.join(" & ")
         }
+        TypeRef::Tuple { elements, .. } => {
+            let formatted: Vec<String> = elements.iter().map(format_type_ref).collect();
+            format!("({})", formatted.join(", "))
+        }
         TypeRef::Future { inner, .. } => format!("Future<{}>", format_type_ref(inner)),
         TypeRef::SelfType(_) => "self".to_string(),
     }

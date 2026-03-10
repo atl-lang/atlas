@@ -111,6 +111,45 @@ impl Parser {
             false // let x = ... (immutable)
         };
 
+        // Tuple destructuring: `let (a, b) = expr;` or `let mut (a, b) = expr;`
+        if self.check(TokenKind::LeftParen) {
+            self.advance(); // consume '('
+            let mut names = Vec::new();
+            loop {
+                if self.check(TokenKind::RightParen) {
+                    break;
+                }
+                let tok = self.consume_identifier("a variable name in tuple pattern")?;
+                names.push(Identifier {
+                    name: tok.lexeme.clone(),
+                    span: tok.span,
+                });
+                if self.check(TokenKind::Comma) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+            self.consume(TokenKind::RightParen, "Expected ')' after tuple pattern")?;
+            self.consume(
+                TokenKind::Equal,
+                "Expected '=' in destructuring declaration",
+            )?;
+            let init = self.parse_expression()?;
+            let end_span = self
+                .consume(
+                    TokenKind::Semicolon,
+                    "Expected ';' after destructuring declaration",
+                )?
+                .span;
+            return Ok(Stmt::LetDestructure(LetDestructure {
+                mutable,
+                names,
+                init,
+                span: keyword_span.merge(end_span),
+            }));
+        }
+
         let name_token = self.consume_identifier("a variable name")?;
         let name = Identifier {
             name: name_token.lexeme.clone(),

@@ -854,6 +854,22 @@ impl Binder {
                     self.diagnostics.push(diag);
                 }
             }
+            Stmt::LetDestructure(d) => {
+                // Bind the initializer first
+                self.bind_expr(&d.init);
+                // Define each destructured name in scope
+                for name in &d.names {
+                    let symbol = Symbol {
+                        name: name.name.clone(),
+                        ty: Type::Unknown,
+                        mutable: d.mutable,
+                        span: name.span,
+                        kind: SymbolKind::Variable,
+                        exported: false,
+                    };
+                    let _ = self.symbol_table.define(symbol);
+                }
+            }
             Stmt::Assign(assign) => {
                 // Bind assignment target and value
                 self.bind_assign_target(&assign.target);
@@ -1145,6 +1161,11 @@ impl Binder {
                     }
                 }
             }
+            Expr::TupleLiteral { elements, .. } => {
+                for elem in elements {
+                    self.bind_expr(elem);
+                }
+            }
             Expr::Await { expr, .. } => {
                 self.bind_expr(expr);
             }
@@ -1174,6 +1195,12 @@ impl Binder {
             }
             Pattern::Array { elements, .. } => {
                 // Collect from all element patterns
+                for elem in elements {
+                    vars.extend(self.collect_pattern_variables(elem));
+                }
+            }
+            Pattern::Tuple { elements, .. } => {
+                // Collect from all tuple element patterns
                 for elem in elements {
                     vars.extend(self.collect_pattern_variables(elem));
                 }
@@ -1359,6 +1386,10 @@ impl Binder {
                 let resolved = members.iter().map(|m| self.resolve_type_ref(m)).collect();
                 Type::intersection(resolved)
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements.iter().map(|e| self.resolve_type_ref(e)).collect();
+                Type::Tuple(resolved)
+            }
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref(inner);
                 Type::Generic {
@@ -1503,6 +1534,13 @@ impl Binder {
 
                 // Fall back to normal resolution (includes built-in generic validation)
                 self.resolve_type_ref(type_ref)
+            }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_alias_params(e, substitutions))
+                    .collect();
+                Type::Tuple(resolved)
             }
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref_with_alias_params(inner, substitutions);

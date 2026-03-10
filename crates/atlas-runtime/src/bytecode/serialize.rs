@@ -51,6 +51,7 @@ mod tags {
     pub const REGEX: u8 = 0x0D;
     pub const DATETIME: u8 = 0x0E;
     pub const RANGE: u8 = 0x0F;
+    pub const TUPLE: u8 = 0x10;
 }
 
 /// Serialize a Value to bytes
@@ -234,6 +235,13 @@ pub(super) fn serialize_value(value: &Value, bytes: &mut Vec<u8>) {
         }
         Value::SharedValue(_) => {
             panic!("Cannot serialize SharedValue in bytecode constants");
+        }
+        Value::Tuple(elems) => {
+            bytes.push(tags::TUPLE);
+            bytes.extend_from_slice(&(elems.len() as u32).to_be_bytes());
+            for elem in elems.iter() {
+                serialize_value(elem, bytes);
+            }
         }
         Value::EnumValue { .. } => {
             panic!("Cannot serialize EnumValue in bytecode constants");
@@ -603,6 +611,21 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                 .map_err(|e| format!("Invalid datetime: {}", e))?
                 .with_timezone(&chrono::Utc);
             Ok((Value::DateTime(std::sync::Arc::new(dt)), 1 + consumed))
+        }
+
+        tags::TUPLE => {
+            if rest.len() < 4 {
+                return Err("Truncated tuple length".to_string());
+            }
+            let count = u32::from_be_bytes([rest[0], rest[1], rest[2], rest[3]]) as usize;
+            let mut cursor = 4;
+            let mut elems = Vec::with_capacity(count);
+            for _ in 0..count {
+                let (elem, consumed) = deserialize_value(&rest[cursor..])?;
+                cursor += consumed;
+                elems.push(elem);
+            }
+            Ok((Value::Tuple(std::sync::Arc::new(elems)), 1 + cursor))
         }
 
         _ => Err(format!("Unknown value type tag: {:#x}", tag)),

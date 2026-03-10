@@ -165,6 +165,7 @@ impl Compiler {
     pub(super) fn compile_stmt(&mut self, stmt: &Stmt) -> Result<(), Vec<Diagnostic>> {
         match stmt {
             Stmt::VarDecl(decl) => self.compile_var_decl(decl),
+            Stmt::LetDestructure(d) => self.compile_let_destructure(d),
             Stmt::FunctionDecl(func) => {
                 // Nested function declaration - compile it
                 self.compile_nested_function(func)
@@ -227,6 +228,39 @@ impl Compiler {
                 name: decl.name.name.clone(),
                 depth: self.scope_depth,
                 mutable: decl.mutable,
+                scoped_name: None,
+            });
+        }
+
+        Ok(())
+    }
+
+    /// Compile a tuple destructuring declaration: `let (a, b) = expr;`
+    fn compile_let_destructure(&mut self, d: &LetDestructure) -> Result<(), Vec<Diagnostic>> {
+        // Evaluate RHS — leaves tuple on stack
+        self.compile_expr(&d.init)?;
+
+        // Register the tuple as a hidden temp local so we can GetLocal it repeatedly.
+        // Stack: [tuple]  — tuple is at index `tuple_local_idx` from the frame base.
+        let tuple_local_idx = self.locals.len();
+        self.push_local(Local {
+            name: "__tuple_destructure_temp__".to_string(),
+            depth: self.scope_depth,
+            mutable: false,
+            scoped_name: None,
+        });
+
+        // For each binding: load tuple via GetLocal, extract element, register as local.
+        // Stack after all iterations: [tuple, elem0, elem1, ...]
+        for (idx, name) in d.names.iter().enumerate() {
+            self.bytecode.emit(Opcode::GetLocal, d.span);
+            self.bytecode.emit_u16(tuple_local_idx as u16);
+            self.bytecode.emit(Opcode::TupleGet, d.span);
+            self.bytecode.emit_u16(idx as u16);
+            self.push_local(Local {
+                name: name.name.clone(),
+                depth: self.scope_depth,
+                mutable: d.mutable,
                 scoped_name: None,
             });
         }

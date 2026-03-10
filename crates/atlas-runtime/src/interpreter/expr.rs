@@ -37,6 +37,16 @@ impl Interpreter {
                 span,
             } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
+            Expr::TupleLiteral { elements, .. } => {
+                let mut vals = Vec::with_capacity(elements.len());
+                for elem in elements {
+                    vals.push(self.eval_expr(elem)?);
+                    if self.control_flow != ControlFlow::None {
+                        return Ok(Value::Null);
+                    }
+                }
+                Ok(Value::Tuple(Arc::new(vals)))
+            }
             Expr::Await { expr, span } => {
                 let val = self.eval_expr(expr)?;
                 match val {
@@ -1155,6 +1165,26 @@ impl Interpreter {
 
             // Array patterns: [x, y, z]
             Pattern::Array { elements, .. } => self.try_match_array(elements, value),
+
+            // Tuple patterns: (x, y, z)
+            Pattern::Tuple { elements, .. } => {
+                if let Value::Tuple(elems) = value {
+                    if elements.len() != elems.len() {
+                        return None;
+                    }
+                    let mut all_bindings = Vec::new();
+                    for (pat, val) in elements.iter().zip(elems.iter()) {
+                        if let Some(bindings) = self.try_match_pattern(pat, val) {
+                            all_bindings.extend(bindings);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Some(all_bindings)
+                } else {
+                    None
+                }
+            }
 
             // OR patterns: try each sub-pattern, return first match
             Pattern::Or(alternatives, _) => {

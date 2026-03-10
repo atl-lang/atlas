@@ -992,6 +992,13 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_params_and_context(e, type_params, None))
+                    .collect();
+                Type::Tuple(resolved)
+            }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {
                 let inner_ty =
@@ -1778,17 +1785,15 @@ impl<'a> TypeChecker<'a> {
                 continue;
             }
 
-            // Emit warning based on symbol kind
-            let message = match kind {
-                SymbolKind::Variable => format!("Unused variable '{}'", name),
-                SymbolKind::Parameter => format!("Unused parameter '{}'", name),
-                _ => continue,
-            };
+            // Skip non-variable/parameter kinds
+            if !matches!(kind, SymbolKind::Variable | SymbolKind::Parameter) {
+                continue;
+            }
 
             self.diagnostics.push(
                 error_codes::UNUSED_VARIABLE
                     .emit(*span)
-                    .arg("detail", &message)
+                    .arg("name", name.as_str())
                     .build()
                     .with_label("declared here but never used")
                     .with_help(format!(
@@ -1987,6 +1992,8 @@ impl<'a> TypeChecker<'a> {
                                 ),
                             });
                         self.diagnostics.push(diag);
+                        // Suppress "unused variable" noise — the type error is the real issue
+                        self.used_symbols.insert(var.name.name.clone());
                     }
                     declared_type
                 } else {
@@ -2037,6 +2044,67 @@ impl<'a> TypeChecker<'a> {
                     };
                     // Ignore redefinition errors - the binder already validated this
                     let _ = self.symbol_table.define(symbol);
+                }
+            }
+            Stmt::LetDestructure(d) => {
+                let init_type = self.check_expr(&d.init);
+                let elem_types: Vec<Type> = match init_type.normalized() {
+                    Type::Tuple(elems) => elems.clone(),
+                    Type::Unknown => {
+                        // Propagate unknown — bind each name as Unknown
+                        (0..d.names.len()).map(|_| Type::Unknown).collect()
+                    }
+                    other => {
+                        self.diagnostics.push(
+                            crate::diagnostic::Diagnostic::error(
+                                format!(
+                                    "Cannot destructure: expected a tuple, got {}",
+                                    other.display_name()
+                                ),
+                                d.span,
+                            )
+                            .with_label("not a tuple")
+                            .with_help("wrap values in a tuple: `(a, b)`"),
+                        );
+                        (0..d.names.len()).map(|_| Type::Unknown).collect()
+                    }
+                };
+                if elem_types.len() != d.names.len() && !matches!(init_type, Type::Unknown) {
+                    self.diagnostics.push(
+                        crate::diagnostic::Diagnostic::error(
+                            format!(
+                                "Tuple destructure mismatch: pattern has {} names but tuple has {} elements",
+                                d.names.len(),
+                                elem_types.len()
+                            ),
+                            d.span,
+                        )
+                        .with_label("arity mismatch here"),
+                    );
+                }
+                for (name, ty) in d
+                    .names
+                    .iter()
+                    .zip(elem_types.iter().chain(std::iter::repeat(&Type::Unknown)))
+                {
+                    self.declared_symbols
+                        .insert(name.name.clone(), (name.span, SymbolKind::Variable));
+                    if self.symbol_table.is_defined_in_current_scope(&name.name) {
+                        if let Some(sym) = self.symbol_table.lookup_current_scope_mut(&name.name) {
+                            sym.ty = ty.clone();
+                            sym.mutable = d.mutable;
+                        }
+                    } else {
+                        let symbol = crate::symbol::Symbol {
+                            name: name.name.clone(),
+                            ty: ty.clone(),
+                            span: name.span,
+                            mutable: d.mutable,
+                            kind: crate::symbol::SymbolKind::Variable,
+                            exported: false,
+                        };
+                        let _ = self.symbol_table.define(symbol);
+                    }
                 }
             }
             Stmt::Assign(assign) => {
@@ -3131,6 +3199,13 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_context(e, None))
+                    .collect();
+                Type::Tuple(resolved)
+            }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref_with_context(inner, None);
@@ -3332,6 +3407,13 @@ impl<'a> TypeChecker<'a> {
                     name: name.clone(),
                     type_args: resolved_args,
                 }
+            }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_substitutions(e, substitutions))
+                    .collect();
+                Type::Tuple(resolved)
             }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {

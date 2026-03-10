@@ -15,6 +15,7 @@ impl Interpreter {
 
         match stmt {
             Stmt::VarDecl(var) => self.eval_var_decl(var),
+            Stmt::LetDestructure(d) => self.eval_let_destructure(d),
             Stmt::FunctionDecl(func) => {
                 // Nested function declaration
                 // Create scoped name to avoid collisions between nested functions
@@ -112,6 +113,43 @@ impl Interpreter {
             })?;
         // Store with mutability flag from the declaration
         scope.insert(var.name.name.clone(), (value, var.mutable));
+        Ok(Value::Null)
+    }
+
+    fn eval_let_destructure(&mut self, d: &LetDestructure) -> Result<Value, RuntimeError> {
+        let rhs = self.eval_expr(&d.init)?;
+        let elems = match &rhs {
+            Value::Tuple(arc) => arc.clone(),
+            other => {
+                return Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "Cannot destructure: expected a tuple, got {}",
+                        other.type_name()
+                    ),
+                    span: d.span,
+                })
+            }
+        };
+        if elems.len() != d.names.len() {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "Tuple destructure mismatch: pattern has {} names but tuple has {} elements",
+                    d.names.len(),
+                    elems.len()
+                ),
+                span: d.span,
+            });
+        }
+        let scope = self
+            .locals
+            .last_mut()
+            .ok_or_else(|| RuntimeError::InternalError {
+                msg: "Missing scope for destructuring declaration".to_string(),
+                span: d.span,
+            })?;
+        for (name, val) in d.names.iter().zip(elems.iter()) {
+            scope.insert(name.name.clone(), (val.clone(), d.mutable));
+        }
         Ok(Value::Null)
     }
 

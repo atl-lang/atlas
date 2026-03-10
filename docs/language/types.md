@@ -136,3 +136,72 @@ let map: HashMap<string, number> = hashMapNew();
 map = hashMapPut(map, "key", 42);  // Rebind pattern still works
 ```
 
+
+---
+
+## Tuples
+
+Tuples are immutable, fixed-length sequences of heterogeneous values. They are a lightweight grouping primitive.
+
+**Idiomatic guidance:** Named structs are preferred for public APIs, complex records, and anything with named fields. Use tuples for:
+- Iterator-adjacent pairs (index + value)
+- Small local throwaway groupings
+- Multi-return functions where names would be redundant
+
+### Syntax
+
+**Type annotation:**
+```atlas
+(number, string)          // 2-element tuple
+(number, number, number)  // 3-element tuple
+()                        // unit tuple (empty)
+```
+
+**Literal:**
+```atlas
+let point = (3, 4);
+let labeled = (1, "hello", true);
+let unit = ();
+let single = (42,);   // trailing comma = 1-tuple (not grouping)
+```
+
+**Element access** — zero-indexed via `.N`:
+```atlas
+let t = (10, "atlas");
+print(t.0);   // 10
+print(t.1);   // atlas
+```
+
+**Let destructuring:**
+```atlas
+let (x, y) = (1, 2);
+let mut (a, b) = (10, 20);
+a = 99;   // mutable binding
+```
+
+**Match patterns:**
+```atlas
+match pair {
+    (0, y) => print(y),
+    (x, 0) => print(x),
+    (x, y) => print(x + y)
+}
+```
+
+**Function return:**
+```atlas
+fn min_max(arr: []number) -> (number, number) {
+    // ...
+    return (min_val, max_val);
+}
+let (lo, hi) = min_max(data);
+```
+
+### Error cases
+
+```atlas
+let t = (1, 2);
+t.5;              // runtime error: out-of-bounds index
+let (a, b, c) = (1, 2);  // error: count mismatch (3 names, 2 elements)
+let (x, y) = 42;          // error: cannot destructure non-tuple
+```

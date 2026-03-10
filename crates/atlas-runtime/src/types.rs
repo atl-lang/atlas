@@ -75,6 +75,8 @@ pub enum Type {
     Intersection(Vec<Type>),
     /// Structural type { field: type, method: (params) -> return }
     Structural { members: Vec<StructuralMemberType> },
+    /// Tuple type: `(T1, T2, ...)` — B15
+    Tuple(Vec<Type>),
 }
 
 impl Type {
@@ -321,6 +323,14 @@ impl Type {
                 true
             }
 
+            // Tuple types: same arity and element-wise assignability
+            (Type::Tuple(a), Type::Tuple(b)) => {
+                a.len() == b.len()
+                    && a.iter()
+                        .zip(b.iter())
+                        .all(|(ta, tb)| ta.is_assignable_to(tb))
+            }
+
             // No other types are assignable
             _ => false,
         }
@@ -418,6 +428,14 @@ impl Type {
                     .join(", ");
                 format!("{{ {} }}", parts)
             }
+            Type::Tuple(elems) => {
+                let parts = elems
+                    .iter()
+                    .map(|t| t.display_name())
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("({})", parts)
+            }
         }
     }
 
@@ -463,6 +481,7 @@ impl Type {
                     })
                     .collect(),
             },
+            Type::Tuple(elems) => Type::Tuple(elems.iter().map(|t| t.normalized()).collect()),
             other => other.clone(),
         }
     }

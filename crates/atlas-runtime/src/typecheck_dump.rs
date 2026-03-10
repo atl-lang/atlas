@@ -195,6 +195,14 @@ fn type_to_string(ty: &Type) -> String {
             .map(type_to_string)
             .collect::<Vec<_>>()
             .join(" & "),
+        Type::Tuple(elems) => {
+            let parts = elems
+                .iter()
+                .map(type_to_string)
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("({})", parts)
+        }
         Type::Structural { members } => {
             let parts = members
                 .iter()

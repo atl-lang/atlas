@@ -269,6 +269,7 @@ impl FormatVisitor {
     fn visit_statement(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDecl(v) => self.visit_var_decl(v),
+            Stmt::LetDestructure(_) => { /* B15-P06 */ }
             Stmt::FunctionDecl(f) => self.visit_function_decl(f),
             Stmt::Assign(a) => self.visit_assign(a),
             Stmt::CompoundAssign(c) => self.visit_compound_assign(c),
@@ -630,6 +631,16 @@ impl FormatVisitor {
                 }
             }
             // B8: await expression — "await <expr>"
+            Expr::TupleLiteral { elements, .. } => {
+                self.write("(");
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.visit_expr(elem);
+                }
+                self.write(")");
+            }
             Expr::Await { expr, .. } => {
                 self.write("await ");
                 self.visit_expr(expr);
@@ -870,6 +881,9 @@ impl FormatVisitor {
                 }
                 self.write("]");
             }
+            Pattern::Tuple { .. } => {
+                // Tuple pattern formatting not yet implemented
+            }
             Pattern::Or(alternatives, _) => {
                 for (i, alt) in alternatives.iter().enumerate() {
                     if i > 0 {
@@ -957,6 +971,13 @@ impl FormatVisitor {
                     .collect::<Vec<_>>()
                     .join(", ");
                 format!("{{ {} }}", parts)
+            }
+            TypeRef::Tuple { elements, .. } => {
+                let parts: Vec<String> = elements
+                    .iter()
+                    .map(|e| self.type_ref_to_string(e))
+                    .collect();
+                format!("({})", parts.join(", "))
             }
             // B8: Future<T> — format as "Future<inner>"
             TypeRef::Future { inner, .. } => {

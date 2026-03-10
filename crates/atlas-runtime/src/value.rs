@@ -541,6 +541,9 @@ pub enum Value {
         /// Data for tuple variants (e.g., `Color::Rgb(r, g, b)`)
         data: Vec<Value>,
     },
+    /// First-class tuple value: `(v1, v2, ...)` — B15
+    /// Uses Arc<Vec<Value>> matching ValueArray CoW semantics.
+    Tuple(Arc<Vec<Value>>),
 }
 
 /// Function reference
@@ -622,6 +625,7 @@ impl Value {
             Value::Closure(_) => "function",
             Value::SharedValue(_) => "shared",
             Value::EnumValue { enum_name, .. } => enum_name.as_str(),
+            Value::Tuple(_) => "tuple",
         }
     }
 
@@ -694,6 +698,7 @@ impl PartialEq for Value {
             (Value::Function(a), Value::Function(b)) => a.name == b.name,
             (Value::Builtin(a), Value::Builtin(b)) => a == b,
             (Value::Closure(a), Value::Closure(b)) => a.func.name == b.func.name,
+            (Value::Tuple(a), Value::Tuple(b)) => a == b,
             // --- Reference types: identity equality ---
             (Value::NativeFunction(a), Value::NativeFunction(b)) => Arc::ptr_eq(a, b),
             (Value::SharedValue(a), Value::SharedValue(b)) => a == b,
@@ -791,6 +796,14 @@ impl fmt::Display for Value {
                     write!(f, "{}::{}({})", enum_name, variant_name, args.join(", "))
                 }
             }
+            Value::Tuple(elems) => {
+                let parts: Vec<String> = elems.iter().map(|v| v.to_string()).collect();
+                if parts.len() == 1 {
+                    write!(f, "({},)", parts[0])
+                } else {
+                    write!(f, "({})", parts.join(", "))
+                }
+            }
         }
     }
 }
@@ -845,6 +858,7 @@ impl fmt::Debug for Value {
                 "EnumValue({}::{}, data={:?})",
                 enum_name, variant_name, data
             ),
+            Value::Tuple(elems) => write!(f, "Tuple({:?})", elems),
         }
     }
 }
