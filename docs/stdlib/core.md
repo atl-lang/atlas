@@ -18,7 +18,7 @@ Prints a value to stdout. Returns Null.
 ## len
 
 ```atlas
-fn len(value: []T) : number
+fn len(value: T[]) : number
 ```
 
 Returns the length of an array, string, or collection.

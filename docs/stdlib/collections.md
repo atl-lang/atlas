@@ -141,7 +141,7 @@ Removes all entries. Returns empty map.
 ### hashMapKeys
 
 ```atlas
-fn hashMapKeys(map: HashMap<K, V>) : []K
+fn hashMapKeys(map: HashMap<K, V>) : K[]
 ```
 
 Gets all keys as array.
@@ -149,12 +149,12 @@ Gets all keys as array.
 **Parameters:**
 - `map` - HashMap
 
-**Returns:** `[]K` - Array of keys
+**Returns:** `K[]` - Array of keys
 
 ### hashMapValues
 
 ```atlas
-fn hashMapValues(map: HashMap<K, V>) : []V
+fn hashMapValues(map: HashMap<K, V>) : V[]
 ```
 
 Gets all values as array.
@@ -162,7 +162,7 @@ Gets all values as array.
 **Parameters:**
 - `map` - HashMap
 
-**Returns:** `[]V` - Array of values
+**Returns:** `V[]` - Array of values
 
 ### hashMapEntries
 
@@ -249,7 +249,7 @@ Creates a new empty HashSet.
 ### hashSetFromArray
 
 ```atlas
-fn hashSetFromArray(arr: []T) : HashSet<T>
+fn hashSetFromArray(arr: T[]) : HashSet<T>
 ```
 
 Creates HashSet from array.
@@ -427,7 +427,7 @@ Checks if set1 is superset of set2 (all elements of set2 in set1).
 ### hashSetToArray
 
 ```atlas
-fn hashSetToArray(set: HashSet<T>) : []T
+fn hashSetToArray(set: HashSet<T>) : T[]
 ```
 
 Converts set to array.
@@ -435,7 +435,7 @@ Converts set to array.
 **Parameters:**
 - `set` - HashSet
 
-**Returns:** `[]T` - Array of elements
+**Returns:** `T[]` - Array of elements
 
 ### hashSetForEach
 
@@ -459,7 +459,7 @@ hashSetForEach(set, fn(value) { print(value); });
 ### hashSetMap
 
 ```atlas
-fn hashSetMap(set: HashSet<T>, callback: fn(T) : U) : []U
+fn hashSetMap(set: HashSet<T>, callback: fn(T) : U) : U[]
 ```
 
 Maps set elements to an array of results.
@@ -468,7 +468,7 @@ Maps set elements to an array of results.
 - `set` - HashSet
 - `callback` - Function invoked for each element
 
-**Returns:** `[]U` - Array of mapped values
+**Returns:** `U[]` - Array of mapped values
 
 **Example:**
 ```atlas
@@ -588,7 +588,7 @@ Removes all elements.
 ### queueToArray
 
 ```atlas
-fn queueToArray(queue: Queue<T>) : []T
+fn queueToArray(queue: Queue<T>) : T[]
 ```
 
 Converts queue to array.
@@ -596,7 +596,7 @@ Converts queue to array.
 **Parameters:**
 - `queue` - Queue
 
-**Returns:** `[]T` - Array in FIFO order
+**Returns:** `T[]` - Array in FIFO order
 
 ## Stack Functions
 
@@ -692,7 +692,7 @@ Removes all elements.
 ### stackToArray
 
 ```atlas
-fn stackToArray(stack: Stack<T>) : []T
+fn stackToArray(stack: Stack<T>) : T[]
 ```
 
 Converts stack to array.
@@ -700,4 +700,4 @@ Converts stack to array.
 **Parameters:**
 - `stack` - Stack
 
-**Returns:** `[]T` - Array in LIFO order (top to bottom)
+**Returns:** `T[]` - Array in LIFO order (top to bottom)

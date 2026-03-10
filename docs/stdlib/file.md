@@ -84,7 +84,7 @@ Deletes a file.
 ### readDir
 
 ```atlas
-fn readDir(path: string) : Result<[]string, string>
+fn readDir(path: string) : Result<string[], string>
 ```
 
 Lists files and directories in a directory.
@@ -93,7 +93,7 @@ Lists files and directories in a directory.
 - `path` - Directory path
 
 **Returns:**
-- `Ok([]string)` - Array of entry names
+- `Ok(string[])` - Array of entry names
 - `Err(string)` if directory not found
 
 ### createDir
@@ -172,7 +172,7 @@ Joins path components into a single path.
 ### fsWalk
 
 ```atlas
-fn fsWalk(path: string) : Result<[]string, string>
+fn fsWalk(path: string) : Result<string[], string>
 ```
 
 Recursively lists all files and directories.
@@ -181,13 +181,13 @@ Recursively lists all files and directories.
 - `path` - Root directory
 
 **Returns:**
-- `Ok([]string)` - Sorted array of all paths
+- `Ok(string[])` - Sorted array of all paths
 - `Err(string)` on error
 
 ### fsReaddir
 
 ```atlas
-fn fsReaddir(path: string) : Result<[]string, string>
+fn fsReaddir(path: string) : Result<string[], string>
 ```
 
 Lists entries in directory (non-recursive).
@@ -196,7 +196,7 @@ Lists entries in directory (non-recursive).
 - `path` - Directory path
 
 **Returns:**
-- `Ok([]string)` - Array of entry names
+- `Ok(string[])` - Array of entry names
 - `Err(string)` on error
 
 ### fsMkdir

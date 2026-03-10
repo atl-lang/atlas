@@ -14,7 +14,7 @@ fn type_name(result: &ReplCore, input: &str) -> (Option<String>, Vec<atlas_runti
     case("1 + 2;", "number"),
     case("\"a\" + \"b\";", "string"),
     case("true && false;", "bool"),
-    case("[1,2,3];", "[]number"),
+    case("[1,2,3];", "number[]"),
     case("let arr = [1,2]; arr[0];", "number"),
     case("len(\"atlas\");", "number"),
     case("let s: string = \"x\"; s;", "string"),
@@ -23,7 +23,7 @@ fn type_name(result: &ReplCore, input: &str) -> (Option<String>, Vec<atlas_runti
     case("match 1 { 1 => 2, _ => 0 };", "number"),
     case("let add = 1 + len([1,2]); add;", "number"),
     case("let val = len([1,2,3]); val;", "number"),
-    case("let nested = [[1],[2]]; nested[0];", "[]number"),
+    case("let nested = [[1],[2]]; nested[0];", "number[]"),
     case("let nested = [[1],[2]]; nested[0][0];", "number"),
     case("let maybe = null; maybe;", "null"),
     case("let joined = \"a\" + \"b\"; joined;", "string"),
@@ -45,7 +45,7 @@ fn typing_integration_infers_types(input: &str, expected: &str) {
     case("if (1) { 1; }"),
     case("let check: bool = 1;"),
     case("let x: string = 1;"),
-    case("let arr: []number = [1, \"b\"];"),
+    case("let arr: number[] = [1, \"b\"];"),
     case("let mut flag: bool = 2;"),
     case("fn add(borrow a: number, borrow b: number): number { return \"x\"; };"),
     case("match true { 1 => 2 };"),
@@ -60,7 +60,7 @@ fn typing_integration_infers_types(input: &str, expected: &str) {
     case("if (true) { let x: number = \"bad\"; };"),
     case("let s: string = len([1,2]);"),
     case("let mut arr = [1,2]; arr[0] = \"x\";"),
-    case("let bools: []bool = [true, 1];")
+    case("let bools: bool[] = [true, 1];")
 )]
 fn typing_integration_reports_errors(input: &str) {
     let repl = ReplCore::new();
@@ -220,9 +220,9 @@ fn test_union_match_non_exhaustive(#[case] source: &str) {
 #[case("let x: number | string = 1; let _y = x + 1;")]
 #[case("let x: number | string = \"a\"; let _y = x + \"b\";")]
 #[case("let x: number | string = 1; if (x == 1) { let _y: number | string = x; }")]
-#[case("let x: []number | []number = [1, 2]; let _y = x[0];")]
-#[case("let x: []number | []number = [1, 2]; let _y: number = x[0];")]
-#[case("let x: []number | []number = [1, 2]; let _y: number = x[1];")]
+#[case("let x: number[] | number[] = [1, 2]; let _y = x[0];")]
+#[case("let x: number[] | number[] = [1, 2]; let _y: number = x[0];")]
+#[case("let x: number[] | number[] = [1, 2]; let _y: number = x[1];")]
 fn test_union_operations(#[case] source: &str) {
     let diags = errors(source);
     if source.contains("number | string") && source.contains("x +") {

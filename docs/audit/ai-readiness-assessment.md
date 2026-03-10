@@ -59,8 +59,8 @@ if (condition) { }    // parens allowed
 ```
 This is explicitly documented as intentional. The problem: it creates ambiguity with block expression syntax. An AI generating `if (x > 0) { ... }` is writing valid Atlas, but the AI reading the docs will correctly learn "no parens needed" and then see other examples with parens and be unsure which is canonical. The docs should call one preferred and one tolerated — they don't.
 
-### 1.6 `Array<T>` vs `[]T` — two equivalent type syntaxes
-Both forms are valid, both documented. There is no stated preference. `Array<string>` and `[]string` are interchangeable. Every AI generation prompt may produce either form, making AI-generated code inconsistent across a codebase.
+### 1.6 `Array<T>` vs `T[]` — two equivalent type syntaxes
+Both forms are valid, both documented. There is no stated preference. `Array<string>` and `string[]` are interchangeable. Every AI generation prompt may produce either form, making AI-generated code inconsistent across a codebase.
 
 ### 1.7 Implicit return vs explicit `return` — two ways to return values
 Both tail-expression (no semicolon) and `return expr;` are valid. The grammar documents both. This is correct behavior but it means AI will produce mixed styles, and the codebase will look inconsistent without a stated convention.
@@ -124,7 +124,7 @@ There is no `impl Person { fn greet(self) : string { ... } }` syntax without a t
 The stdlib is caught between the old global API (`arrayPush`, `hashMapGet`, `regexTest`) and the new method API (`arr.push()`, `map.get()`, `Regex.test()`). Both work. Neither is wrong. But every doc file still documents the old form as the primary API — `array.md`, `string.md`, `collections.md`, `math.md` all lead with old-style globals. Only `METHOD-CONVENTIONS.md` shows the new API. An AI reading any individual stdlib doc will use the old API and get AT9000 warnings.
 
 ### 3.2 `len()` vs `.len()` — inconsistent length access
-`core.md` documents `fn len(value: []T) : number` as a global. `METHOD-CONVENTIONS.md` shows `arr.len()` as a method. `str.len()` is the method form. No doc states which is preferred for which type. AI will use both interchangeably and be confused by inconsistency.
+`core.md` documents `fn len(value: T[]) : number` as a global. `METHOD-CONVENTIONS.md` shows `arr.len()` as a method. `str.len()` is the method form. No doc states which is preferred for which type. AI will use both interchangeably and be confused by inconsistency.
 
 ### 3.3 Type check functions: `isString` (camelCase) but `is_some`, `is_ok` (snake_case)
 From `docs/stdlib/types.md`:

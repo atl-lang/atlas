@@ -82,7 +82,7 @@ fn struct_array_fn_param_resolves_correctly() {
     let src = r#"
 struct Point { x: number, y: number }
 
-fn sum_x(borrow pts: []Point): number {
+fn sum_x(borrow pts: Point[]): number {
     let mut total: number = 0;
     for p in pts {
         total = total + p.x;
@@ -90,7 +90,7 @@ fn sum_x(borrow pts: []Point): number {
     return total;
 }
 
-let arr: []Point = [Point { x: 1, y: 2 }];
+let arr: Point[] = [Point { x: 1, y: 2 }];
 let result: number = sum_x(arr);
 "#;
     let diagnostics = typecheck_source(src);

@@ -96,7 +96,7 @@ Finds first match in text.
 ### regexFindAll
 
 ```atlas
-fn regexFindAll(regex: Regex, text: string) : Result<[]string, string>
+fn regexFindAll(regex: Regex, text: string) : Result<string[], string>
 ```
 
 Finds all non-overlapping matches.
@@ -106,13 +106,13 @@ Finds all non-overlapping matches.
 - `text` - Text to search
 
 **Returns:**
-- `Ok([]string)` - Array of all matches
+- `Ok(string[])` - Array of all matches
 - `Err(string)` on error
 
 ### regexCaptures
 
 ```atlas
-fn regexCaptures(regex: Regex, text: string) : Result<[]string?, string>
+fn regexCaptures(regex: Regex, text: string) : Result<string[]?, string>
 ```
 
 Gets capture groups from first match.
@@ -122,7 +122,7 @@ Gets capture groups from first match.
 - `text` - Text to search
 
 **Returns:**
-- `Ok([]string?)` - First match and capture groups, or None
+- `Ok(string[]?)` - First match and capture groups, or None
 - `Err(string)` on error
 
 **Note:** Array includes full match at index 0, then groups
@@ -258,7 +258,7 @@ let out = regexReplaceAllWith(re, \"foo foo\", fn(match) { return \"bar\"; });
 ### regexSplit
 
 ```atlas
-fn regexSplit(regex: Regex, text: string): Result<[]string, string>
+fn regexSplit(regex: Regex, text: string): Result<string[], string>
 ```
 
 Splits text by regex pattern.
@@ -268,13 +268,13 @@ Splits text by regex pattern.
 - `text` - Text to split
 
 **Returns:**
-- `Ok([]string)` - Array of parts
+- `Ok(string[])` - Array of parts
 - `Err(string)` on error
 
 ### regexSplitN
 
 ```atlas
-fn regexSplitN(regex: Regex, text: string, n: number): Result<[]string, string>
+fn regexSplitN(regex: Regex, text: string, n: number): Result<string[], string>
 ```
 
 Splits text by pattern, maximum n parts.
@@ -285,7 +285,7 @@ Splits text by pattern, maximum n parts.
 - `n` - Maximum number of parts (integer)
 
 **Returns:**
-- `Ok([]string)` - Array of at most n parts
+- `Ok(string[])` - Array of at most n parts
 - `Err(string)` on error
 
 ## Utility

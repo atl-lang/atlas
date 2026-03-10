@@ -9,7 +9,7 @@ Cross-platform path manipulation. All functions use OS-appropriate separators.
 | Function | Signature | Description |
 |----------|-----------|-------------|
 | `pathJoin(parts...)` | `(string...) : string` | Join path segments with OS separator |
-| `pathJoinArray(parts)` | `([]string) : string` | Join array of segments |
+| `pathJoinArray(parts)` | `(string[]) : string` | Join array of segments |
 | `pathParse(path)` | `(string) : record` | Parse into `{ dir, base, ext, name }` |
 | `pathNormalize(path)` | `(string) : string` | Resolve `.` and `..`, normalize separators |
 
