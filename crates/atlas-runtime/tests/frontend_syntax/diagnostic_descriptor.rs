@@ -290,3 +290,130 @@ fn descriptor_parser_e_codes_no_longer_conflict() {
     let kw = lookup("AT1022").expect("AT1022 should be registered");
     assert!(kw.title.contains("Reserved"));
 }
+
+// ── B17-P08: Unified render path regression tests ─────────────────────────────
+
+/// format_to_string and to_human_string must produce identical output (P08 AC).
+#[test]
+fn render_format_to_string_matches_to_human_string() {
+    use atlas_runtime::diagnostic::{formatter::DiagnosticFormatter, Diagnostic};
+    let fid = atlas_runtime::span::intern_file("<render-test>");
+    atlas_runtime::span::register_source(fid, "let x: str = 42;");
+    let span = Span {
+        start: 4,
+        end: 13,
+        file: fid,
+    };
+    let diag = Diagnostic::error_with_code("AT3001", "type error: int is not str", span)
+        .with_file("test.atl")
+        .with_line(1)
+        .with_snippet("let x: str = 42;")
+        .with_label("expected str");
+    let formatter = DiagnosticFormatter::plain();
+    assert_eq!(
+        formatter.format_to_string(&diag),
+        diag.to_human_string(),
+        "format_to_string and to_human_string must produce identical output (P08 unified render)"
+    );
+}
+
+/// Suggestions must appear in format_to_buffer output (P08 gap fix).
+#[test]
+fn render_suggestions_appear_in_formatter_output() {
+    use atlas_runtime::diagnostic::{formatter::DiagnosticFormatter, Diagnostic};
+    let span = test_span();
+    // Snippet must contain old_token for with_suggestion_rename to add a SuggestionDiff
+    let diag = Diagnostic::error_with_code("AT3001", "wrong name", span)
+        .with_snippet("let foo: int = 1;")
+        .with_suggestion_rename("rename this", "foo", "bar");
+    let formatter = DiagnosticFormatter::plain();
+    let buf = formatter.format_to_buffer(&diag);
+    let output = String::from_utf8(buf).unwrap();
+    assert!(
+        output.contains("rename this"),
+        "suggestion description must appear in formatter output — got: {output}"
+    );
+    assert!(
+        output.contains("foo"),
+        "old snippet must appear in suggestion diff — got: {output}"
+    );
+    assert!(
+        output.contains("bar"),
+        "new snippet must appear in suggestion diff — got: {output}"
+    );
+}
+
+/// Secondary diagnostics must render as `note[CODE] (secondary):` (P08 gap fix).
+#[test]
+fn render_secondary_diagnostic_header() {
+    use atlas_runtime::diagnostic::{formatter::DiagnosticFormatter, Diagnostic};
+    let span = test_span();
+    let diag = Diagnostic::error_with_code("AT3001", "first defined here", span).as_secondary();
+    let formatter = DiagnosticFormatter::plain();
+    let output = formatter.format_to_string(&diag);
+    assert!(
+        output.contains("note[AT3001] (secondary):"),
+        "secondary diagnostic must render as note[CODE] (secondary): — got: {output}"
+    );
+    assert!(
+        !output.contains("error["),
+        "secondary must NOT render as error"
+    );
+}
+
+/// Static help from descriptors must appear in format_to_string output.
+#[test]
+fn render_static_help_appears_in_formatter_output() {
+    use atlas_runtime::diagnostic::error_codes::UNDEFINED_SYMBOL;
+    let span = test_span();
+    let diag = UNDEFINED_SYMBOL.emit(span).arg("name", "foo").build();
+    let formatter = atlas_runtime::diagnostic::formatter::DiagnosticFormatter::plain();
+    let output = formatter.format_to_string(&diag);
+    assert!(
+        output.contains("help:"),
+        "static_help must appear as 'help:' in formatter output"
+    );
+}
+
+/// No embedded newlines in any static_help or static_note field.
+#[test]
+fn descriptor_no_embedded_newlines_in_help_or_note() {
+    use atlas_runtime::diagnostic::error_codes::DESCRIPTOR_REGISTRY;
+    for desc in DESCRIPTOR_REGISTRY {
+        if let Some(help) = desc.static_help {
+            assert!(
+                !help.contains('\n'),
+                "descriptor {} has embedded newline in static_help: {:?}",
+                desc.code,
+                help
+            );
+        }
+        if let Some(note) = desc.static_note {
+            assert!(
+                !note.contains('\n'),
+                "descriptor {} has embedded newline in static_note: {:?}",
+                desc.code,
+                note
+            );
+        }
+    }
+}
+
+/// Verifies that all registered descriptor codes follow the AT/AW pattern.
+#[test]
+fn descriptor_all_codes_follow_at_aw_pattern() {
+    use atlas_runtime::diagnostic::error_codes::DESCRIPTOR_REGISTRY;
+    for desc in DESCRIPTOR_REGISTRY {
+        assert!(
+            desc.code.starts_with("AT") || desc.code.starts_with("AW"),
+            "descriptor code '{}' does not follow AT/AW naming convention",
+            desc.code
+        );
+        let digits: &str = &desc.code[2..];
+        assert!(
+            digits.chars().all(|c| c.is_ascii_digit()) && digits.len() == 4,
+            "descriptor code '{}' must have exactly 4 digits after AT/AW",
+            desc.code
+        );
+    }
+}

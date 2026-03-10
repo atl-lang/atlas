@@ -308,7 +308,7 @@ pub const MISSING_OWNERSHIP_ANNOTATION: DiagnosticDescriptor = DiagnosticDescrip
     level: DiagnosticLevel::Error,
     title: "Missing ownership annotation",
     message_template: "parameter `{name}` is missing an ownership annotation",
-    static_help: Some("every function parameter requires exactly one of: `own`, `borrow`, or `share`\n  own x: T    — caller's binding is moved; callee owns the lifetime\n  borrow x: T — read-only; caller retains ownership after the call\n  share x: T  — both hold valid references simultaneously"),
+    static_help: Some("use `own`, `borrow`, or `share` before each parameter name — own=move, borrow=read-only, share=shared-ref"),
     static_note: None,
     domain: DiagnosticDomain::Parser,
 };
@@ -1300,7 +1300,7 @@ pub const DEPRECATED_STDLIB_GLOBAL: DiagnosticDescriptor = DiagnosticDescriptor 
     level: DiagnosticLevel::Warning,
     title: "Deprecated stdlib global name",
     message_template: "`{name}` is a deprecated stdlib global",
-    static_help: Some("use method syntax or namespace form instead — see docs/stdlib/METHOD-CONVENTIONS.md\n  example: `arrayPush(arr, x)` → `arr.push(x)` | `readFile(path)` → `File.read(path)`"),
+    static_help: Some("use method syntax instead — e.g. arr.push(x) or File.read(path); see docs/stdlib/METHOD-CONVENTIONS.md"),
     static_note: None,
     domain: DiagnosticDomain::Stdlib,
 };
