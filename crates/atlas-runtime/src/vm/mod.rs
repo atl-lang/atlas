@@ -1888,13 +1888,17 @@ impl VM {
                         }
                     };
 
-                    // Check if value matches
+                    // Check if value matches.
+                    // H-223: empty expected_enum means bare variant pattern — skip enum_name check.
                     let matches = match &value {
                         Value::EnumValue {
                             enum_name: val_enum,
                             variant_name: val_variant,
                             ..
-                        } => val_enum == expected_enum && val_variant == expected_variant,
+                        } => {
+                            let enum_ok = expected_enum.is_empty() || val_enum == expected_enum;
+                            enum_ok && val_variant == expected_variant
+                        }
                         _ => false,
                     };
 

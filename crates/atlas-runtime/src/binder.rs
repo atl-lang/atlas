@@ -1241,6 +1241,12 @@ impl Binder {
                     vars.extend(self.collect_pattern_variables(arg));
                 }
             }
+            Pattern::BareVariant { args, .. } => {
+                // Collect from nested patterns in bare variant args
+                for arg in args {
+                    vars.extend(self.collect_pattern_variables(arg));
+                }
+            }
         }
 
         vars

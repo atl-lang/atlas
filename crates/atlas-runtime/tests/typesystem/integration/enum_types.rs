@@ -89,3 +89,56 @@ let area: number = match s {
     );
     assert_no_errors(&diagnostics);
 }
+
+// H-223: bare variant patterns — no EnumName:: prefix required in match arms
+#[test]
+fn test_h223_bare_unit_variants_in_match() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Direction { North, South, East, West }
+fn go(d: Direction): string {
+    match d {
+        North => "north",
+        South => "south",
+        East  => "east",
+        West  => "west",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h223_bare_tuple_variants_in_match() {
+    let diagnostics = typecheck_source(
+        r#"
+enum CommandResult { Done(string), Fail(string), Pending }
+fn handle(r: CommandResult): string {
+    match r {
+        Done(msg)  => msg,
+        Fail(err)  => err,
+        Pending    => "pending",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h223_explicit_prefix_still_valid() {
+    // EnumName:: explicit form must still work after H-223
+    let diagnostics = typecheck_source(
+        r#"
+enum Status { Active, Inactive }
+fn check(s: Status): string {
+    match s {
+        Status::Active   => "active",
+        Status::Inactive => "inactive",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
