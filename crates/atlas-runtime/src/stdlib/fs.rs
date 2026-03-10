@@ -36,33 +36,33 @@ fn system_time_to_timestamp(time: SystemTime) -> f64 {
 /// Create a directory
 ///
 /// Creates a single directory. Fails if parent doesn't exist or directory already exists.
-pub fn mkdir(path: &str, span: Span) -> Result<Value, RuntimeError> {
-    let path = Path::new(path);
-
-    fs::create_dir(path).map_err(|e| RuntimeError::IoError {
-        message: format!("Failed to create directory '{}': {}", path.display(), e),
-        span,
-    })?;
-
-    Ok(Value::Null)
+/// Returns Result<null, string> — consistent with writeFile/appendFile.
+pub fn mkdir(path: &str, _span: Span) -> Result<Value, RuntimeError> {
+    let p = Path::new(path);
+    match fs::create_dir(p) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "fsMkdir: failed to create '{}': {}",
+            p.display(),
+            e
+        )))))),
+    }
 }
 
 /// Create a directory recursively (mkdir -p)
 ///
 /// Creates all parent directories as needed. Succeeds silently if directory already exists.
-pub fn mkdirp(path: &str, span: Span) -> Result<Value, RuntimeError> {
-    let path = Path::new(path);
-
-    fs::create_dir_all(path).map_err(|e| RuntimeError::IoError {
-        message: format!(
-            "Failed to create directory recursively '{}': {}",
-            path.display(),
+/// Returns Result<null, string> — consistent with writeFile/appendFile.
+pub fn mkdirp(path: &str, _span: Span) -> Result<Value, RuntimeError> {
+    let p = Path::new(path);
+    match fs::create_dir_all(p) {
+        Ok(()) => Ok(Value::Result(Ok(Box::new(Value::Null)))),
+        Err(e) => Ok(Value::Result(Err(Box::new(Value::string(format!(
+            "fsMkdirp: failed to create '{}': {}",
+            p.display(),
             e
-        ),
-        span,
-    })?;
-
-    Ok(Value::Null)
+        )))))),
+    }
 }
 
 /// Remove an empty directory
