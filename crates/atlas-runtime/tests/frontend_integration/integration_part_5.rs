@@ -228,6 +228,10 @@ fn test_diagnostic_builder_all_fields() {
             column: 5,
             length: 7,
             message: "defined here".to_string(),
+
+            snippet: String::new(),
+            label: String::new(),
+            is_occurrence: false,
         })
         .with_help("Check the return type");
 

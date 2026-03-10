@@ -3,6 +3,7 @@
 use atlas_runtime::diagnostic::formatter::{
     enrich_diagnostic, extract_snippet, DiagnosticFormatter,
 };
+use atlas_runtime::diagnostic::normalizer::group_by_message;
 use atlas_runtime::{Diagnostic, DiagnosticLevel};
 use std::path::Path;
 use termcolor::{ColorChoice, StandardStream, WriteColor};
@@ -86,9 +87,14 @@ fn emit_all(
     source: Option<&str>,
     fallback_file: Option<&str>,
 ) {
-    for diag in diagnostics {
-        let prepared = prepare_diagnostic(diag, source, fallback_file);
-        let _ = formatter.write_diagnostic(stream, &prepared);
+    // Prepare all diagnostics first (enrich with snippets), then group repeated errors.
+    let prepared: Vec<Diagnostic> = diagnostics
+        .iter()
+        .map(|d| prepare_diagnostic(d, source, fallback_file))
+        .collect();
+    let grouped = group_by_message(prepared);
+    for diag in &grouped {
+        let _ = formatter.write_diagnostic(stream, diag);
     }
     // TTY-only tip: show --json hint when there are errors, so AI agents can discover
     // structured output without needing the Atlas skill or setup documentation.

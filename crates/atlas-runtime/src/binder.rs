@@ -289,6 +289,10 @@ impl Binder {
                         .end
                         .saturating_sub(existing_symbol.span.start),
                     message: format!("'{}' first defined here", existing_symbol.name),
+
+                    snippet: String::new(),
+                    label: String::new(),
+                    is_occurrence: false,
                 });
             }
 
@@ -376,6 +380,10 @@ impl Binder {
                         .end
                         .saturating_sub(existing_symbol.span.start),
                     message: format!("'{}' first defined here", existing_symbol.name),
+
+                    snippet: String::new(),
+                    label: String::new(),
+                    is_occurrence: false,
                 });
             }
 
@@ -698,6 +706,10 @@ impl Binder {
                         .end
                         .saturating_sub(existing_alias.name.span.start),
                     message: format!("'{}' first defined here", existing_alias.name.name),
+
+                    snippet: String::new(),
+                    label: String::new(),
+                    is_occurrence: false,
                 });
             }
 
@@ -748,6 +760,10 @@ impl Binder {
                             .end
                             .saturating_sub(existing_symbol.span.start),
                         message: format!("'{}' first defined here", existing_symbol.name),
+
+                        snippet: String::new(),
+                        label: String::new(),
+                        is_occurrence: false,
                     });
                 }
 
@@ -848,6 +864,10 @@ impl Binder {
                                 .end
                                 .saturating_sub(existing_symbol.span.start),
                             message: format!("'{}' first defined here", existing_symbol.name),
+
+                            snippet: String::new(),
+                            label: String::new(),
+                            is_occurrence: false,
                         });
                     }
 
@@ -926,6 +946,10 @@ impl Binder {
                                 .end
                                 .saturating_sub(existing_symbol.span.start),
                             message: format!("'{}' first defined here", existing_symbol.name),
+
+                            snippet: String::new(),
+                            label: String::new(),
+                            is_occurrence: false,
                         });
                     }
 

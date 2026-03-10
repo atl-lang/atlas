@@ -4,7 +4,7 @@
 //! terminal colors. Respects NO_COLOR environment variable and auto-detects
 //! terminal capabilities.
 
-use crate::diagnostic::{Diagnostic, DiagnosticLevel};
+use crate::diagnostic::{Diagnostic, DiagnosticLevel, RelatedLocation};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 /// Color mode for diagnostic output
@@ -80,12 +80,33 @@ impl DiagnosticFormatter {
         // Header: error[AT0001]: message
         self.write_header(w, diag)?;
 
-        // Location: --> file:line:column
-        self.write_location(w, diag)?;
+        // Check whether related entries are grouped occurrences of this error.
+        let occurrences: Vec<_> = diag.related.iter().filter(|r| r.is_occurrence).collect();
+        let semantic_related: Vec<_> = diag.related.iter().filter(|r| !r.is_occurrence).collect();
 
-        // Snippet with carets
-        if !diag.snippet.is_empty() {
-            self.write_snippet(w, diag)?;
+        if occurrences.is_empty() {
+            // Single occurrence — standard single-location layout.
+            self.write_location(w, diag)?;
+            if !diag.snippet.is_empty() {
+                self.write_snippet(w, diag)?;
+            }
+        } else {
+            // Grouped occurrences — list ALL locations first, then all snippets.
+            // Primary location
+            writeln!(w, "{}:{}:{}", diag.file, diag.line, diag.column)?;
+            for occ in &occurrences {
+                writeln!(w, "{}:{}:{}", occ.file, occ.line, occ.column)?;
+            }
+            // Primary snippet
+            if !diag.snippet.is_empty() {
+                self.write_snippet(w, diag)?;
+            }
+            // Occurrence snippets
+            for occ in &occurrences {
+                if !occ.snippet.is_empty() {
+                    self.write_occurrence_snippet(w, diag.level, occ)?;
+                }
+            }
         }
 
         // Stack trace (shows execution path before fix guidance)
@@ -108,13 +129,13 @@ impl DiagnosticFormatter {
             }
         }
 
-        // Note lines (context/explanation + related locations)
+        // Note lines (context/explanation)
         for note in &diag.notes {
             self.write_note(w, note)?;
         }
 
-        // Related locations
-        for related in &diag.related {
+        // Semantic related locations (not occurrences — e.g. "variable first declared here")
+        for related in &semantic_related {
             self.write_note(
                 w,
                 &format!(
@@ -230,6 +251,53 @@ impl DiagnosticFormatter {
         Ok(())
     }
 
+    /// Render a grouped occurrence snippet (from a RelatedLocation with is_occurrence=true).
+    fn write_occurrence_snippet(
+        &self,
+        w: &mut impl WriteColor,
+        level: DiagnosticLevel,
+        occ: &RelatedLocation,
+    ) -> std::io::Result<()> {
+        let line_prefix = format!("{}: ", occ.line);
+        let col0 = occ.column.saturating_sub(1);
+        let level_color = match level {
+            DiagnosticLevel::Error => Color::Red,
+            DiagnosticLevel::Warning => Color::Yellow,
+            DiagnosticLevel::Hint => Color::Cyan,
+        };
+
+        if occ.length > 0 && w.supports_color() {
+            let chars: Vec<char> = occ.snippet.chars().collect();
+            let span_len = occ
+                .length
+                .min(occ.snippet.len().saturating_sub(col0).max(1));
+            let before: String = chars[..col0.min(chars.len())].iter().collect();
+            let span_end = (col0 + span_len).min(chars.len());
+            let span_chars: String = chars[col0.min(chars.len())..span_end].iter().collect();
+            let after: String = chars[span_end..].iter().collect();
+            write!(w, "{}{}", line_prefix, before)?;
+            w.set_color(ColorSpec::new().set_fg(Some(level_color)).set_bold(true))?;
+            write!(w, "{}", span_chars)?;
+            w.reset()?;
+            writeln!(w, "{}", after)?;
+        } else {
+            writeln!(w, "{}{}", line_prefix, occ.snippet)?;
+        }
+
+        if occ.length > 0 {
+            let padding = line_prefix.len() + compute_display_width(&occ.snippet, col0);
+            write!(w, "{}", " ".repeat(padding))?;
+            w.set_color(ColorSpec::new().set_fg(Some(level_color)).set_bold(true))?;
+            write!(w, "^")?;
+            if !occ.label.is_empty() {
+                write!(w, " {}", occ.label)?;
+            }
+            w.reset()?;
+            writeln!(w)?;
+        }
+        Ok(())
+    }
+
     fn write_stack_trace(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
         for frame in &diag.stack_trace {
             writeln!(
@@ -241,9 +309,10 @@ impl DiagnosticFormatter {
         Ok(())
     }
 
-    /// Format multiple diagnostics
+    /// Format multiple diagnostics, grouping repeated (same code+message) errors together.
     pub fn emit_all(&self, diagnostics: &[Diagnostic]) {
-        for diag in diagnostics {
+        let grouped = crate::diagnostic::normalizer::group_by_message(diagnostics.to_vec());
+        for diag in &grouped {
             self.emit(diag);
         }
     }

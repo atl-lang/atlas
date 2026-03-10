@@ -41,7 +41,12 @@ impl fmt::Display for DiagnosticLevel {
     }
 }
 
-/// Secondary location for related diagnostic information
+/// Secondary location for related diagnostic information.
+///
+/// Used in two modes:
+/// - Semantic related location (e.g., "variable first declared here") — `snippet` is empty.
+/// - Grouped occurrence (same error repeated at multiple sites) — `snippet` is non-empty,
+///   `is_occurrence` is true. Rendered inline with the primary in consolidated format.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RelatedLocation {
     /// File path
@@ -54,6 +59,37 @@ pub struct RelatedLocation {
     pub length: usize,
     /// Description of this location
     pub message: String,
+    /// Source snippet (non-empty for grouped occurrences)
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub snippet: String,
+    /// Caret label (e.g. "syntax error") for grouped occurrence snippets
+    #[serde(skip_serializing_if = "String::is_empty", default)]
+    pub label: String,
+    /// True when this is a grouped occurrence of the primary error, not a semantic location
+    #[serde(skip_serializing_if = "std::ops::Not::not", default)]
+    pub is_occurrence: bool,
+}
+
+impl RelatedLocation {
+    /// Construct a semantic related location (not a grouped occurrence).
+    pub fn semantic(
+        file: impl Into<String>,
+        line: usize,
+        column: usize,
+        length: usize,
+        message: impl Into<String>,
+    ) -> Self {
+        Self {
+            file: file.into(),
+            line,
+            column,
+            length,
+            message: message.into(),
+            snippet: String::new(),
+            label: String::new(),
+            is_occurrence: false,
+        }
+    }
 }
 
 /// Stack trace frame for runtime errors.

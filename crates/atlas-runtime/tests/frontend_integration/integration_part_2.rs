@@ -153,6 +153,10 @@ fn test_diagnostic_with_notes_and_related_locations() {
             column: 1,
             length: 3,
             message: "'bar' defined here".to_string(),
+
+            snippet: String::new(),
+            label: String::new(),
+            is_occurrence: false,
         })
         .with_help("Check spelling or import the correct module");
 

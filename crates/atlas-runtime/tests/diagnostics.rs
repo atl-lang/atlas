@@ -1125,6 +1125,10 @@ fn test_format_related_location() {
             column: 3,
             length: 4,
             message: "originally defined here".to_string(),
+
+            snippet: String::new(),
+            label: String::new(),
+            is_occurrence: false,
         });
 
     let buf = formatter.format_to_buffer(&diag);

@@ -1990,6 +1990,10 @@ impl<'a> TypeChecker<'a> {
                                     "expected {} due to this type annotation",
                                     declared_type.display_name()
                                 ),
+
+                                snippet: String::new(),
+                                label: String::new(),
+                                is_occurrence: false,
                             });
                         self.diagnostics.push(diag);
                         // Suppress "unused variable" noise — the type error is the real issue
@@ -2203,6 +2207,10 @@ impl<'a> TypeChecker<'a> {
                                         "'{}' declared here as immutable",
                                         symbol.name
                                     ),
+
+                                    snippet: String::new(),
+                                    label: String::new(),
+                                    is_occurrence: false,
                                 })
                                 .with_help(suggestions::suggest_mutability_fix(&id.name));
 
@@ -2431,6 +2439,10 @@ impl<'a> TypeChecker<'a> {
                             column: func_span.start + 1,
                             length: func_span.end.saturating_sub(func_span.start),
                             message: format!("function '{}' declared here", func_name),
+
+                            snippet: String::new(),
+                            label: String::new(),
+                            is_occurrence: false,
                         });
                     }
 
@@ -3257,6 +3269,10 @@ impl<'a> TypeChecker<'a> {
                 column: alias.name.span.start + 1,
                 length: alias.name.span.end.saturating_sub(alias.name.span.start),
                 message: format!("'{}' declared here", alias.name.name),
+
+                snippet: String::new(),
+                label: String::new(),
+                is_occurrence: false,
             });
             self.diagnostics.push(diag);
             return Type::Unknown;

@@ -146,6 +146,10 @@ fn test_diagnostic_json_with_related_locations() {
             column: 10,
             length: 3,
             message: "related".to_string(),
+
+            snippet: String::new(),
+            label: String::new(),
+            is_occurrence: false,
         },
     );
 
