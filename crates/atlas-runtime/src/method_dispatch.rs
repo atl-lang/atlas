@@ -512,22 +512,36 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "stackPeek" => Some("s.peek()"),
         "stackSize" => Some("s.size()"),
         "stackIsEmpty" => Some("s.isEmpty()"),
-        // String
-        "toUpperCase" | "toLowerCase" | "trim" | "trimStart" | "trimEnd" => Some("str.method()"),
+        // String — bare globals deprecated in favour of method style
+        "toUpperCase" => Some("s.toUpperCase()"),
+        "toLowerCase" => Some("s.toLowerCase()"),
+        "trim" => Some("s.trim()"),
+        "trimStart" => Some("s.trimStart()"),
+        "trimEnd" => Some("s.trimEnd()"),
+        "charAt" => Some("s.charAt(i)"),
+        "substring" => Some("s.substring(start, end)"),
+        "indexOf" => Some("s.indexOf(sub)"),
+        "lastIndexOf" => Some("s.lastIndexOf(sub)"),
+        "includes" => Some("s.includes(sub)"),
+        "startsWith" => Some("s.startsWith(prefix)"),
+        "endsWith" => Some("s.endsWith(suffix)"),
+        "repeat" => Some("s.repeat(n)"),
+        "replace" => Some("s.replace(from, to)"),
+        "replaceAll" => Some("s.replaceAll(from, to)"),
+        "padStart" => Some("s.padStart(len, ch)"),
+        "padEnd" => Some("s.padEnd(len, ch)"),
+        // String/Array — split and join
+        "split" => Some("s.split(sep)"),
+        "join" => Some("arr.join(sep)"),
         // JSON
         "parseJSON" => Some("Json.parse(s)"),
         "toJSON" => Some("Json.stringify(v)"),
         "isValidJSON" => Some("Json.isValid(s)"),
-        // Math
-        "sqrt" => Some("Math.sqrt(n)"),
-        "abs" => Some("Math.abs(n)"),
-        "floor" => Some("Math.floor(n)"),
-        "ceil" => Some("Math.ceil(n)"),
-        "round" => Some("Math.round(n)"),
-        "clamp" => Some("Math.clamp(n, min, max)"),
-        "sign" => Some("Math.sign(n)"),
-        "random" => Some("Math.random()"),
-        "pow" => Some("Math.pow(base, exp)"),
+        // Math globals are NOT deprecated — both Math.sqrt(x) and sqrt(x) are valid per D-032 Rule 3
+        // Process / shell execution
+        "shell" => Some("Process.shell(cmd)"),
+        "exec" => Some("Process.exec(cmd, args)"),
+        "spawnProcess" => Some("Process.spawn(cmd, args)"),
         // IO / File
         "readFile" => Some("File.read(path)"),
         "writeFile" => Some("File.write(path, content)"),
