@@ -1,17 +1,63 @@
 {
-  "committed_at": "2026-03-09T22:55:20Z",
-  "commit": "6dfe13a",
+  "committed_at": "2026-03-10T04:43:30Z",
+  "commit": "2d4a9de",
   "changed_files": [
+    "crates/atlas-formatter/src/visitor.rs",
+    "crates/atlas-lsp/src/call_hierarchy.rs",
+    "crates/atlas-lsp/src/completion.rs",
+    "crates/atlas-lsp/src/hover.rs",
+    "crates/atlas-lsp/src/index.rs",
+    "crates/atlas-lsp/src/inlay_hints.rs",
+    "crates/atlas-lsp/src/navigation.rs",
+    "crates/atlas-lsp/src/refactor/extract.rs",
+    "crates/atlas-lsp/src/refactor/mod.rs",
+    "crates/atlas-lsp/src/symbols.rs",
+    "crates/atlas-runtime/src/api/conversion.rs",
+    "crates/atlas-runtime/src/ast.rs",
+    "crates/atlas-runtime/src/binder.rs",
+    "crates/atlas-runtime/src/bytecode/disasm.rs",
+    "crates/atlas-runtime/src/bytecode/opcode.rs",
+    "crates/atlas-runtime/src/bytecode/serialize.rs",
+    "crates/atlas-runtime/src/bytecode/validator.rs",
+    "crates/atlas-runtime/src/compiler/expr.rs",
+    "crates/atlas-runtime/src/compiler/stmt.rs",
+    "crates/atlas-runtime/src/interpreter/expr.rs",
+    "crates/atlas-runtime/src/interpreter/mod.rs",
+    "crates/atlas-runtime/src/interpreter/stmt.rs",
+    "crates/atlas-runtime/src/parser/expr.rs",
+    "crates/atlas-runtime/src/parser/stmt.rs",
+    "crates/atlas-runtime/src/reflect/mod.rs",
+    "crates/atlas-runtime/src/reflect/type_info.rs",
+    "crates/atlas-runtime/src/stdlib/json.rs",
+    "crates/atlas-runtime/src/stdlib/types.rs",
+    "crates/atlas-runtime/src/typecheck_dump.rs",
     "crates/atlas-runtime/src/typechecker/expr.rs",
     "crates/atlas-runtime/src/typechecker/mod.rs",
-    "crates/atlas-runtime/src/typechecker/binder.rs"
+    "crates/atlas-runtime/src/types.rs",
+    "crates/atlas-runtime/src/value.rs",
+    "crates/atlas-runtime/src/vm/dispatch.rs",
+    "crates/atlas-runtime/src/vm/mod.rs",
+    "crates/atlas-runtime/tests/interpreter/member.rs",
+    "crates/atlas-runtime/tests/vm/member.rs"
   ],
   "domains": [
-    "typechecker"
+    "ast",
+    "compiler",
+    "interpreter",
+    "parser",
+    "stdlib",
+    "typechecker",
+    "value",
+    "vm"
   ],
   "relevant_docs": [
-    "docs/language/errors.md"
+    "crates/atlas-runtime/src/CLAUDE.md",
+    "docs/known-issues.md",
+    "docs/language/control-flow.md",
+    "docs/language/grammar.md",
+    "docs/language/types.md",
+    "docs/stdlib/index.md"
   ],
   "status": "done",
-  "patched_at": "2026-03-10T01:41:58Z"
+  "patched_at": "2026-03-10T04:58:48Z"
 }

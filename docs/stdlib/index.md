@@ -22,8 +22,8 @@ Complete reference for all built-in functions in Atlas. This documentation is ge
 
 ### Array Functions
 - **File:** `array.md`
-- **Functions:** arrayPush, arrayPop, arrayShift, arrayUnshift, arrayReverse, arraySort, concat, flatten, arrayIndexOf, arrayLastIndexOf, arrayIncludes, slice, map, filter, reduce, forEach, find, findIndex, flatMap, some, every, sort, sortBy
-- **Count:** 23 functions
+- **Functions:** arrayPush, arrayPop, arrayShift, arrayUnshift, arrayReverse, arraySort, concat, flatten, arrayIndexOf, arrayLastIndexOf, arrayIncludes, slice, map, filter, reduce, forEach, find, findIndex, flatMap, some, every, sort, sortBy, arrayEnumerate
+- **Count:** 24 functions
 - **Purpose:** Pure array operations (Copy-on-Write semantics)
 
 ### Math Functions

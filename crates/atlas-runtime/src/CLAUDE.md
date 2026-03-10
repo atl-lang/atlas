@@ -113,6 +113,9 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 
 ## Key Invariants (verified 2026-03-06)
 
+- `Value::Tuple(Arc<Vec<Value>>)` — immutable first-class tuple; Display trails comma for 1-tuples: `(x,)` (B15)
+- `LetDestructure` at `ast.rs` — `let (a, b) = expr;` destructuring statement (B15); `Pattern::Tuple` for match arms
+- `TypeRef::Tuple` — tuple type annotation `(T1, T2)` (B15)
 - `ValueArray` = `Arc<Vec<Value>>` — CoW via `Arc::make_mut`
 - `ValueHashMap` = `Arc<AtlasHashMap>` — CoW via `Arc::make_mut` (same pattern as `ValueArray`)
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
