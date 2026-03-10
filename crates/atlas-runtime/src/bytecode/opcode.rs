@@ -115,6 +115,10 @@ pub enum Opcode {
     Range = 0x7A,
     /// Create Struct [u16 name_idx, u16 field_count] from stack (key-value pairs interleaved)
     Struct = 0x7B,
+    /// Create tuple [u16 size] from stack — pops N values, pushes Value::Tuple (B15)
+    Tuple = 0x7C,
+    /// Get tuple element [u16 index] — pops tuple, pushes element at index (B15)
+    TupleGet = 0x7D,
 
     // ===== Stack manipulation (0x80-0x8F) =====
     /// Pop and discard top of stack
@@ -225,6 +229,8 @@ impl TryFrom<u8> for Opcode {
             0x79 => Ok(Opcode::SetField),
             0x7A => Ok(Opcode::Range),
             0x7B => Ok(Opcode::Struct),
+            0x7C => Ok(Opcode::Tuple),
+            0x7D => Ok(Opcode::TupleGet),
             0x80 => Ok(Opcode::Pop),
             0x81 => Ok(Opcode::Dup),
             0x82 => Ok(Opcode::Dup2),

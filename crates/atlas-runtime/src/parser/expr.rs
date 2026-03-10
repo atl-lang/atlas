@@ -695,11 +695,26 @@ impl Parser {
         let target_span = target.span();
         self.consume(TokenKind::Dot, "Expected '.'")?;
 
-        // Member name must be an identifier
-        let member_token = self.consume_identifier("a method or property name")?;
-        let member = Identifier {
-            name: member_token.lexeme.clone(),
-            span: member_token.span,
+        // Member name: identifier OR integer literal (for tuple element access: .0, .1, ...)
+        let member = if self.check(TokenKind::Number) {
+            let tok = self.advance();
+            // Only accept non-negative integer literals as tuple indices
+            let lexeme = tok.lexeme.clone();
+            let is_integer = lexeme.parse::<u64>().is_ok();
+            if !is_integer {
+                self.error("tuple element index must be a non-negative integer (e.g. .0, .1)");
+                return Err(());
+            }
+            Identifier {
+                name: lexeme,
+                span: tok.span,
+            }
+        } else {
+            let member_token = self.consume_identifier("a method or property name")?;
+            Identifier {
+                name: member_token.lexeme.clone(),
+                span: member_token.span,
+            }
         };
 
         // Check for method call (with parentheses)

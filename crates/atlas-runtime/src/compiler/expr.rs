@@ -42,10 +42,14 @@ impl Compiler {
                 span,
             } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
-            Expr::TupleLiteral { span, .. } => Err(vec![crate::diagnostic::Diagnostic::error(
-                "Tuple evaluation not yet implemented".to_string(),
-                *span,
-            )]),
+            Expr::TupleLiteral { elements, span } => {
+                for elem in elements {
+                    self.compile_expr(elem)?;
+                }
+                self.bytecode.emit(Opcode::Tuple, *span);
+                self.bytecode.emit_u16(elements.len() as u16);
+                Ok(())
+            }
             Expr::Await { expr, span } => {
                 self.compile_expr(expr)?;
                 self.bytecode.emit(Opcode::Await, *span);
@@ -388,6 +392,12 @@ impl Compiler {
     fn compile_member(&mut self, member: &MemberExpr) -> Result<(), Vec<Diagnostic>> {
         if member.args.is_none() {
             self.compile_expr(&member.target)?;
+            // Tuple element access: .0, .1, ... → TupleGet with numeric index
+            if let Ok(idx) = member.member.name.parse::<u16>() {
+                self.bytecode.emit(Opcode::TupleGet, member.span);
+                self.bytecode.emit_u16(idx);
+                return Ok(());
+            }
             let key_idx = self
                 .bytecode
                 .add_constant(Value::string(&member.member.name));

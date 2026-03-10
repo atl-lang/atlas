@@ -348,6 +348,8 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::Await => "Await",
         Opcode::WrapFuture => "WrapFuture",
         Opcode::SpawnTask => "SpawnTask",
+        Opcode::Tuple => "Tuple",
+        Opcode::TupleGet => "TupleGet",
     }
 }
 
@@ -516,9 +518,14 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         // Variable-arity — skip (MakeClosure pops n_upvalues, push 1; net depends on operand)
         // EnumVariant pops enum_name, variant_name, and args; pushes 1
         // AsyncCall/SpawnTask pop args + fn, push Future (arg_count varies)
+        // TupleGet: pop tuple, push element — net 0
+        Opcode::TupleGet => Some(0),
+
+        // Tuple: variable-arity (pops N, pushes 1) — skip static tracking
         Opcode::Call
         | Opcode::TraitDispatch
         | Opcode::Array
+        | Opcode::Tuple
         | Opcode::HashMap
         | Opcode::Struct
         | Opcode::MakeClosure

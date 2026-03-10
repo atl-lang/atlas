@@ -122,7 +122,9 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
         | Opcode::Array
-        | Opcode::HashMap => {
+        | Opcode::HashMap
+        | Opcode::Tuple
+        | Opcode::TupleGet => {
             let operand = read_u16(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
