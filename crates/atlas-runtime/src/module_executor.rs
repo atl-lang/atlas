@@ -4,12 +4,14 @@
 //! Ensures single evaluation per module with proper dependency order.
 
 use crate::ast::{ImportDecl, ImportSpecifier, Item};
+use crate::binder::Binder;
 use crate::diagnostic::error_codes::EXPORT_NOT_FOUND;
 use crate::diagnostic::Diagnostic;
 use crate::interpreter::Interpreter;
-use crate::module_loader::{LoadedModule, ModuleLoader};
+use crate::module_loader::{LoadedModule, ModuleLoader, ModuleRegistry};
 use crate::resolver::ModuleResolver;
 use crate::security::SecurityContext;
+use crate::typechecker::TypeChecker;
 use crate::value::Value;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -64,6 +66,8 @@ pub struct ModuleExecutor<'a> {
     resolver: ModuleResolver,
     /// Cache of executed modules
     cache: ModuleCache,
+    /// Registry of bound symbol tables for cross-module type checking (H-248)
+    type_registry: ModuleRegistry,
     /// Borrowed interpreter instance (ensures imports populate caller's interpreter)
     interpreter: &'a mut Interpreter,
     /// Security context for permission checks
@@ -86,6 +90,7 @@ impl<'a> ModuleExecutor<'a> {
             loader: ModuleLoader::new(root.clone()),
             resolver: ModuleResolver::new(root),
             cache: ModuleCache::new(),
+            type_registry: ModuleRegistry::new(),
             interpreter,
             security,
         }
@@ -121,12 +126,38 @@ impl<'a> ModuleExecutor<'a> {
     /// Execute a single module
     ///
     /// If the module is already cached, skip execution.
-    /// Otherwise, process imports, execute the module, and cache exports.
+    /// Otherwise, bind + typecheck (with cross-module type context), then execute.
+    ///
+    /// H-248: typechecking now runs here so `atlas run` and `atlas build` catch
+    /// struct field errors, type mismatches, and missing names at compile time —
+    /// not at runtime.
     fn execute_single_module(&mut self, module: &LoadedModule) -> ModuleResult<Value> {
         // Skip if already executed
         if self.cache.is_cached(&module.path) {
             return Ok(Value::Null);
         }
+
+        // --- Compile-time phase (H-248) ---
+        // Bind using the registry so cross-module struct/enum types are in scope.
+        let mut binder = Binder::new();
+        let (mut symbol_table, bind_diags) =
+            binder.bind_with_modules(&module.ast, &module.path, &self.type_registry);
+        let bind_has_errors = bind_diags.iter().any(|d| d.is_error());
+
+        // Run typechecker regardless of bind errors — collect all diagnostics together.
+        let mut type_checker = TypeChecker::new(&mut symbol_table);
+        let type_diags = type_checker.check(&module.ast);
+        let type_has_errors = type_diags.iter().any(|d| d.is_error());
+
+        if bind_has_errors || type_has_errors {
+            let mut all = bind_diags;
+            all.extend(type_diags);
+            return Err(all);
+        }
+
+        // Store this module's symbol table so downstream modules can see its exported types.
+        self.type_registry
+            .register(module.path.clone(), symbol_table);
 
         // Process imports - inject imported symbols into interpreter globals
         for import in &module.imports {
