@@ -2822,9 +2822,72 @@ impl<'a> TypeChecker<'a> {
                 );
             }
 
+            // H-230: user-defined enum — check that every declared variant is covered
+            Type::Generic { ref name, .. } => {
+                // Clone to avoid borrow conflict with self below
+                let variant_names: Option<Vec<String>> =
+                    self.enum_decls.get(name.as_str()).map(|decl| {
+                        decl.variants
+                            .iter()
+                            .map(|v| v.name().name.clone())
+                            .collect()
+                    });
+
+                if let Some(variant_names) = variant_names {
+                    let missing: Vec<String> = variant_names
+                        .iter()
+                        .filter(|vname| {
+                            !arms.iter().any(|arm| {
+                                arm.guard.is_none()
+                                    && Self::pattern_covers_enum_variant(&arm.pattern, vname)
+                            })
+                        })
+                        .cloned()
+                        .collect();
+
+                    if !missing.is_empty() {
+                        let missing_str = missing.join(", ");
+                        self.diagnostics.push(
+                            error_codes::NON_EXHAUSTIVE_MATCH
+                                .emit(match_span)
+                                .arg("missing", &missing_str)
+                                .with_help(format!(
+                                    "add arm{} for: {}",
+                                    if missing.len() == 1 { "" } else { "s" },
+                                    missing
+                                        .iter()
+                                        .map(|v| format!("{} => ...", v))
+                                        .collect::<Vec<_>>()
+                                        .join(", ")
+                                ))
+                                .build()
+                                .with_label("non-exhaustive match"),
+                        );
+                    }
+                }
+                // If enum_name is not in enum_decls, we can't check — skip silently
+            }
+
             _ => {
                 // For other types, warn but don't error (conservative approach)
             }
+        }
+    }
+
+    /// Check if a pattern covers a specific enum variant name (by variant name only, not enum name).
+    /// Handles EnumVariant (qualified), BareVariant (bare), Constructor (legacy/builtin), and OR.
+    fn pattern_covers_enum_variant(pattern: &crate::ast::Pattern, variant_name: &str) -> bool {
+        use crate::ast::Pattern;
+        match pattern {
+            Pattern::EnumVariant {
+                variant_name: vn, ..
+            } => vn.name == variant_name,
+            Pattern::BareVariant { name, .. } => name.name == variant_name,
+            Pattern::Constructor { name, .. } => name.name == variant_name,
+            Pattern::Or(alternatives, _) => alternatives
+                .iter()
+                .any(|alt| Self::pattern_covers_enum_variant(alt, variant_name)),
+            _ => false,
         }
     }
 

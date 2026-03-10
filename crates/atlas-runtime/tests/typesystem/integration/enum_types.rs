@@ -143,6 +143,103 @@ fn check(s: Status): string {
     assert_no_errors(&diagnostics);
 }
 
+// H-230: match exhaustiveness must be checked for user-defined enums
+#[test]
+fn test_h230_non_exhaustive_match_on_user_enum_rejected() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Direction { North, South, East, West }
+let d: Direction = Direction::North;
+let result: string = match d {
+    Direction::North => "north",
+    Direction::South => "south",
+};
+        "#,
+    );
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-230: match on Direction missing East, West — should produce non-exhaustive error, got none"
+    );
+}
+
+#[test]
+fn test_h230_exhaustive_match_on_user_enum_accepted() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Direction { North, South, East, West }
+fn go(d: Direction): string {
+    match d {
+        Direction::North => "north",
+        Direction::South => "south",
+        Direction::East  => "east",
+        Direction::West  => "west",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h230_wildcard_satisfies_exhaustiveness() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Direction { North, South, East, West }
+fn go(d: Direction): string {
+    match d {
+        Direction::North => "north",
+        _ => "other",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h230_bare_variant_patterns_exhaustive() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Color { Red, Green, Blue }
+fn name(c: Color): string {
+    match c {
+        Red   => "red",
+        Green => "green",
+        Blue  => "blue",
+    }
+}
+        "#,
+    );
+    assert_no_errors(&diagnostics);
+}
+
+#[test]
+fn test_h230_bare_variant_patterns_non_exhaustive() {
+    let diagnostics = typecheck_source(
+        r#"
+enum Color { Red, Green, Blue }
+fn name(c: Color): string {
+    match c {
+        Red   => "red",
+        Green => "green",
+    }
+}
+        "#,
+    );
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-230: match on Color missing Blue — should produce non-exhaustive error, got none"
+    );
+}
+
 // H-229: enum variant tuple args must be type-checked against declared field types
 #[test]
 fn test_h229_enum_variant_arg_type_mismatch_rejected() {
