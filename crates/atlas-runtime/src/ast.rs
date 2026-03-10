@@ -602,6 +602,11 @@ pub enum Expr {
         span: Span,
     },
     Group(GroupExpr),
+    /// Tuple literal: `(1, 2)`, `(1,)` single-element, `()` unit — B15
+    TupleLiteral {
+        elements: Vec<Expr>,
+        span: Span,
+    },
     Match(MatchExpr),
     Try(TryExpr),
     /// Anonymous function expression.
@@ -960,6 +965,7 @@ impl Expr {
             Expr::StructExpr(s) => s.span,
             Expr::Range { span, .. } => *span,
             Expr::Group(g) => g.span,
+            Expr::TupleLiteral { span, .. } => *span,
             Expr::Match(m) => m.span,
             Expr::Try(t) => t.span,
             Expr::AnonFn { span, .. } => *span,

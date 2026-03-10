@@ -1145,6 +1145,11 @@ impl Binder {
                     }
                 }
             }
+            Expr::TupleLiteral { elements, .. } => {
+                for elem in elements {
+                    self.bind_expr(elem);
+                }
+            }
             Expr::Await { expr, .. } => {
                 self.bind_expr(expr);
             }

@@ -512,6 +512,11 @@ impl SymbolIndex {
                     }
                 }
             }
+            Expr::TupleLiteral { elements, .. } => {
+                for elem in elements {
+                    self.index_expr(elem, ctx, false);
+                }
+            }
             Expr::Await { expr, .. } => {
                 self.index_expr(expr, ctx, false);
             }

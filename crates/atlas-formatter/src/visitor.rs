@@ -630,6 +630,16 @@ impl FormatVisitor {
                 }
             }
             // B8: await expression — "await <expr>"
+            Expr::TupleLiteral { elements, .. } => {
+                self.write("(");
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        self.write(", ");
+                    }
+                    self.visit_expr(elem);
+                }
+                self.write(")");
+            }
             Expr::Await { expr, .. } => {
                 self.write("await ");
                 self.visit_expr(expr);

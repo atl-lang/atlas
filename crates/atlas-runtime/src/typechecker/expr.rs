@@ -423,6 +423,13 @@ impl<'a> TypeChecker<'a> {
                     Type::Unknown
                 }
             }
+            Expr::TupleLiteral { elements, .. } => {
+                // Tuple evaluation not yet implemented (B15). Visit children for side-effects.
+                for elem in elements {
+                    self.check_expr(elem);
+                }
+                Type::Unknown
+            }
             Expr::Await { expr, span } => {
                 // AT4001: await outside async context
                 if !self.in_async_context {

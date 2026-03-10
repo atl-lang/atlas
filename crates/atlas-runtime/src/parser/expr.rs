@@ -355,11 +355,42 @@ impl Parser {
     /// Parse grouped expression
     fn parse_group(&mut self) -> Result<Expr, ()> {
         let start_span = self.consume(TokenKind::LeftParen, "Expected '('")?.span;
-        let expr = self.parse_expression()?;
-        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
 
+        // Unit tuple: ()
+        if self.check(TokenKind::RightParen) {
+            let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
+            return Ok(Expr::TupleLiteral {
+                elements: Vec::new(),
+                span: start_span.merge(end_span),
+            });
+        }
+
+        let first = self.parse_expression()?;
+
+        // Comma after first element → tuple literal
+        if self.match_token(TokenKind::Comma) {
+            let mut elements = vec![first];
+            // Trailing comma on single element: (expr,) → 1-tuple
+            // Multi-element: (e1, e2, ...) with optional trailing comma
+            while !self.check(TokenKind::RightParen) {
+                elements.push(self.parse_expression()?);
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+            }
+            let end_span = self
+                .consume(TokenKind::RightParen, "Expected ')' after tuple elements")?
+                .span;
+            return Ok(Expr::TupleLiteral {
+                elements,
+                span: start_span.merge(end_span),
+            });
+        }
+
+        // No comma → grouping expression
+        let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
         Ok(Expr::Group(GroupExpr {
-            expr: Box::new(expr),
+            expr: Box::new(first),
             span: start_span.merge(end_span),
         }))
     }
@@ -902,8 +933,9 @@ impl Parser {
         let start_token = self.consume(TokenKind::LeftParen, "Expected '(' at start of type")?;
         let start_span = start_token.span;
 
+        // Unit type () — either `() -> T` (function) or `()` (unit tuple)
         if self.check(TokenKind::RightParen) {
-            self.consume(TokenKind::RightParen, "Expected ')'")?;
+            let end_span = self.consume(TokenKind::RightParen, "Expected ')'")?.span;
             if self.match_token(TokenKind::Arrow) {
                 let return_type = self.parse_type_ref()?;
                 let full_span = start_span.merge(return_type.span());
@@ -913,18 +945,27 @@ impl Parser {
                     span: full_span,
                 });
             }
-            self.error("Unexpected empty type group");
-            return Err(());
+            // Unit tuple type
+            return Ok(TypeRef::Tuple {
+                elements: Vec::new(),
+                span: start_span.merge(end_span),
+            });
         }
 
         let mut params = Vec::new();
         params.push(self.parse_type_ref()?);
 
         while self.match_token(TokenKind::Comma) {
+            // Allow trailing comma: (T,) is a 1-tuple type
+            if self.check(TokenKind::RightParen) {
+                break;
+            }
             params.push(self.parse_type_ref()?);
         }
 
-        self.consume(TokenKind::RightParen, "Expected ')' after type list")?;
+        let end_span = self
+            .consume(TokenKind::RightParen, "Expected ')' after type list")?
+            .span;
 
         if self.match_token(TokenKind::Arrow) {
             let return_type = self.parse_type_ref()?;
@@ -936,12 +977,19 @@ impl Parser {
             });
         }
 
+        // No arrow → tuple type. Single element without trailing comma stays as grouping
+        // (already consumed trailing comma above, so params.len() == 1 here means
+        // the user wrote `(T)` with no comma — treat as grouped type, not a tuple).
         if params.len() == 1 {
             return Ok(params.remove(0));
         }
 
-        self.error("Expected '->' after function type parameters");
-        Err(())
+        // Multi-element or single with trailing comma → tuple type
+        let full_span = start_span.merge(end_span);
+        Ok(TypeRef::Tuple {
+            elements: params,
+            span: full_span,
+        })
     }
 
     /// Parse generic type: Type<T1, T2, ...>

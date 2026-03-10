@@ -270,6 +270,11 @@ fn extract_names_from_expr(expr: &Expr, names: &mut Vec<String>) {
                 }
             }
         }
+        Expr::TupleLiteral { elements, .. } => {
+            for elem in elements {
+                extract_names_from_expr(elem, names);
+            }
+        }
         Expr::Await { expr, .. } => {
             extract_names_from_expr(expr, names);
         }

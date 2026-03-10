@@ -373,6 +373,11 @@ fn find_references_in_expr(expr: &Expr, identifier: &str, references: &mut Vec<R
                 }
             }
         }
+        Expr::TupleLiteral { elements, .. } => {
+            for elem in elements {
+                find_references_in_expr(elem, identifier, references);
+            }
+        }
         Expr::Await { expr, .. } => {
             find_references_in_expr(expr, identifier, references);
         }

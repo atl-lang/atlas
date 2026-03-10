@@ -42,6 +42,10 @@ impl Compiler {
                 span,
             } => self.compile_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.compile_enum_variant(ev),
+            Expr::TupleLiteral { span, .. } => Err(vec![crate::diagnostic::Diagnostic::error(
+                "Tuple evaluation not yet implemented".to_string(),
+                *span,
+            )]),
             Expr::Await { expr, span } => {
                 self.compile_expr(expr)?;
                 self.bytecode.emit(Opcode::Await, *span);

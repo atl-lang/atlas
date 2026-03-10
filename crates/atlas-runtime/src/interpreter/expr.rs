@@ -37,6 +37,10 @@ impl Interpreter {
                 span,
             } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
+            Expr::TupleLiteral { span, .. } => Err(RuntimeError::InternalError {
+                msg: "Tuple evaluation not yet implemented".to_string(),
+                span: *span,
+            }),
             Expr::Await { expr, span } => {
                 let val = self.eval_expr(expr)?;
                 match val {

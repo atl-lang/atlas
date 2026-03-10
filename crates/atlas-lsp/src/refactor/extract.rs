@@ -379,6 +379,11 @@ fn collect_free_vars_expr(
                 }
             }
         }
+        Expr::TupleLiteral { elements, .. } => {
+            for elem in elements {
+                collect_free_vars_expr(elem, scopes, free_vars);
+            }
+        }
         Expr::Await { expr, .. } => {
             collect_free_vars_expr(expr, scopes, free_vars);
         }
