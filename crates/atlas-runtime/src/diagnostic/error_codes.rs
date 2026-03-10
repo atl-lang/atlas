@@ -1500,8 +1500,3 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &GENERIC_ERROR,
     &GENERIC_WARNING,
 ];
-
-// ── Legacy Compatibility Shim ──────────────────────────────────────────────────
-//
-// `ErrorCodeInfo` is retained until all call sites are migrated in P03–P07.
-// Do NOT add new uses of this struct — use DiagnosticDescriptor directly.
