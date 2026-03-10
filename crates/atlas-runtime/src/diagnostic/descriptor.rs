@@ -177,17 +177,22 @@ impl DiagnosticBuilder {
             DiagnosticLevel::Hint => Diagnostic::hint_with_code(self.desc.code, message, self.span),
         };
 
-        // Prepend static_help first, then extra_help
-        if let Some(sh) = self.desc.static_help {
-            diag = diag.with_help(sh);
+        // Help: use static_help as fallback only when no call-site help was provided.
+        // When specific help is present, the generic static_help is noise — suppress it.
+        if self.extra_help.is_empty() {
+            if let Some(sh) = self.desc.static_help {
+                diag = diag.with_help(sh);
+            }
         }
         for h in self.extra_help {
             diag = diag.with_help(h);
         }
 
-        // Prepend static_note first, then extra_notes
-        if let Some(sn) = self.desc.static_note {
-            diag = diag.with_note(sn);
+        // Note: same pattern — static_note is fallback only when no call-site note provided.
+        if self.extra_notes.is_empty() {
+            if let Some(sn) = self.desc.static_note {
+                diag = diag.with_note(sn);
+            }
         }
         for n in self.extra_notes {
             diag = diag.with_note(n);

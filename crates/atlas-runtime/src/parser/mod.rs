@@ -380,6 +380,9 @@ impl Parser {
                     .with_help("replace `->` with `:` — e.g. `fn main(): void` not `fn main() -> void`")
                     .with_note("Atlas does not use the `->` arrow for return types. The colon `:` is consistent with all other Atlas type annotations."),
             );
+            // Recovery: clear panic mode so the function body still parses and surfaces
+            // all downstream errors ([]Type, missing imports, etc.) in one pass.
+            self.in_panic_mode = false;
             // If we parsed a valid type after the arrow, recover and continue parsing the body.
             // If the type parse also failed, bail — something more broken is going on.
             match return_type_result {
