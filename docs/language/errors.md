@@ -12,7 +12,7 @@ Every Atlas diagnostic renders in this exact format. No Rust internal chrome, no
 error[AT1020]: return type annotation required on named functions, found `;`
 main.atlas:5:1
 5: fn greet(name: str) {
-   ^^^^^^^^^^^^^^^^^^^^^^^ syntax error
+   ^ syntax error
 help: add `-> void` if the function returns nothing: `fn name(params) -> void { ... }`
 note: named functions require explicit return types — closures may omit them
 ```
@@ -24,7 +24,7 @@ note: named functions require explicit return types — closures may omit them
 | 1 | `{level}[{code}]: {message}` | Level is `error`, `warning`, or `note`. Code is `ATxxxx`. Message names exactly what is wrong. |
 | 2 | `{file}:{line}:{col}` | Precise source location. |
 | 3 | `{line_number}: {source_snippet}` | The offending source line. |
-| 4 | `{indent}^^^^ {label}` | Carets point at the first bad token. Label names the error category. |
+| 4 | `{indent}^ {label}` | Single `^` anchors the label at the error column. On TTY, the error token is additionally highlighted with an ANSI background span. Label names the error category. |
 | 5+ | `help: {text}` | **Actionable fix** — what to write or change. May repeat for multiple distinct fixes. |
 | 5+ | `help: did you mean \`X\`?` + diff | **Code-diff suggestion** (H-195) — when Atlas knows exactly what token to replace, it renders a Rust-style `-old / +new` diff immediately after the `help:` line. |
 | last | `note: {text}` | **Context/explanation** — why the rule exists or what the rule is. Not a repetition of help. |
@@ -473,7 +473,7 @@ print(arr);    // ✗ AT3053 — arr was moved into consume()
 Options: pass `share arr` to keep the reference, or clone before moving.
 
 ### AT3054 — Borrow Escape
-A `borrow` reference escapes the scope of the borrowed value.
+A `borrow` reference escapes the scope of the borrowed value. Only fires when the parameter was explicitly annotated with `borrow` in source. Bare parameters (`fn f(x: T)`) default to `borrow` per D-040 but do not trigger AT3054 — returning a bare param is always valid.
 
 ### AT3055 — Share Violation
 Invalid use of `share` semantics.

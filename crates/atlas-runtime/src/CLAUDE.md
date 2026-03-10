@@ -117,7 +117,7 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 - `ValueHashMap` = `Arc<AtlasHashMap>` — CoW via `Arc::make_mut` (same pattern as `ValueArray`)
 - `Shared<T>` = `Arc<Mutex<T>>` — explicit reference semantics only
 - `FunctionRef` at `value.rs:548` — holds arity, bytecode_offset, local_count
-- `Param` at `ast.rs:405` — name, type_ref, ownership, mutable, span (mutable added H-089, ownership added Block 2)
+- `Param` at `ast.rs:405` — name, type_ref, ownership, ownership_explicit, mutable, span (mutable added H-089, ownership added Block 2; ownership_explicit added H-209 — true only when own/borrow/share written in source, false for bare params that default to borrow per D-040)
 - `FunctionDecl.return_type: Option<TypeRef>` — `None` means inferred (Block 5); `infer_return_type()` in `typechecker/inference.rs`
 - AT3050 (inconsistent returns), AT3051 (uninferrable type param), AT3052 (inferred type incompatible) — registered in `diagnostic/error_codes.rs`
 - Expression statements require semicolons — `f(x)` without `;` fails to parse
