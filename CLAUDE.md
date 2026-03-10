@@ -5,6 +5,18 @@
 - **No MVP.** Complete implementations only. Do it right once.
 - **100% AI developed.** This project is built entirely by AI.
 
+## Atlas Identity (D-045 — read before ANY syntax or grammar decision)
+**"Atlas is TypeScript's module system and type annotations wrapped around Rust's runtime model."**
+
+Surface syntax filter:
+1. TypeScript has an answer → use it
+2. TypeScript has no answer (systems-level) → design Atlas-native, never copy Rust/Go
+3. Runtime model (CoW, ownership, Result/Option, dual engine) → Rust-inspired, correct, keep it
+
+**Never** use Rust/Go syntax just because it exists there. Ask: *"what would TypeScript or Atlas do?"*
+Active syntax unification: H-223 (bare enum variants), H-224 (Type[] revert), H-225 (: return type).
+Decisions flagged for review under D-045: D-026 (supertrait syntax), D-039 (generic bounds).
+
 ## Systems-Level Context (READ THIS)
 Atlas is mid-conversion from "AI experiment" (v0.1-v0.2) to proper systems-level architecture (v0.3+).
 Currently paused for battle-testing and hardening.
