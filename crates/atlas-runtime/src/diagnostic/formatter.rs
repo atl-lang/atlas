@@ -54,9 +54,15 @@ impl DiagnosticFormatter {
         Self::new(ColorMode::Never)
     }
 
-    /// Format a diagnostic to a string (without colors)
+    /// Format a diagnostic to a string (without colors).
+    ///
+    /// This is the authoritative plain-text render path — `Diagnostic::to_human_string()`
+    /// delegates here so both paths share the same field ordering and structure.
     pub fn format_to_string(&self, diag: &Diagnostic) -> String {
-        diag.to_human_string()
+        let bytes = self.format_to_buffer(diag);
+        // format_to_buffer uses a no-color termcolor buffer — safe UTF-8 by construction
+        String::from_utf8(bytes)
+            .unwrap_or_else(|e| String::from_utf8_lossy(e.as_bytes()).into_owned())
     }
 
     /// Format a diagnostic with colors to stderr
@@ -92,6 +98,13 @@ impl DiagnosticFormatter {
             self.write_help(w, help)?;
         }
 
+        // Suggestion diffs — Rust-style `-old / +new` code blocks
+        for sug in &diag.suggestions {
+            self.write_help(w, &sug.description)?;
+            writeln!(w, "  - {}", sug.old_line)?;
+            writeln!(w, "  + {}", sug.new_line)?;
+        }
+
         // Note lines (context/explanation + related locations)
         for note in &diag.notes {
             self.write_note(w, note)?;
@@ -113,6 +126,15 @@ impl DiagnosticFormatter {
     }
 
     fn write_header(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
+        // Secondary diagnostics are subordinated visually (D-043)
+        if diag.is_secondary {
+            w.set_color(ColorSpec::new().set_bold(true))?;
+            write!(w, "note[{}] (secondary)", diag.code)?;
+            w.reset()?;
+            writeln!(w, ": {}", diag.message)?;
+            return Ok(());
+        }
+
         let (color, label) = match diag.level {
             DiagnosticLevel::Error => (Color::Red, "error"),
             DiagnosticLevel::Warning => (Color::Yellow, "warning"),

@@ -342,75 +342,14 @@ impl Diagnostic {
     /// help: expected `str`, found `int`
     /// note: declared as `str` on this line
     /// ```
+    /// Render to a plain-text string.
+    ///
+    /// Delegates to `DiagnosticFormatter::plain().format_to_string()` — the formatter is
+    /// the single authoritative render implementation. Both this method and the colored
+    /// terminal path (`DiagnosticFormatter::emit`) share the same field ordering via
+    /// `write_diagnostic`, preventing render drift.
     pub fn to_human_string(&self) -> String {
-        let mut output = String::new();
-
-        // Line 1: error[CODE]: message
-        // Secondary diagnostics are prefixed with `note:` to subordinate them visually (D-043).
-        if self.is_secondary {
-            output.push_str(&format!(
-                "note[{}] (secondary): {}\n",
-                self.code, self.message
-            ));
-        } else {
-            output.push_str(&format!(
-                "{}[{}]: {}\n",
-                self.level, self.code, self.message
-            ));
-        }
-
-        // Line 2: path:line:col
-        output.push_str(&format!("{}:{}:{}\n", self.file, self.line, self.column));
-
-        // Lines 3-4: source snippet with caret
-        if !self.snippet.is_empty() {
-            let line_prefix = format!("{}: ", self.line);
-            output.push_str(&format!("{}{}\n", line_prefix, self.snippet));
-
-            if self.length > 0 {
-                // Caret indented to match the source character position
-                let caret_indent = " ".repeat(line_prefix.len() + self.column.saturating_sub(1));
-                let carets = "^".repeat(self.length.max(1));
-                output.push_str(&format!("{}{}", caret_indent, carets));
-                if !self.label.is_empty() {
-                    output.push_str(&format!(" {}", self.label));
-                }
-                output.push('\n');
-            }
-        }
-
-        // Stack trace (before help/notes — shows execution path first)
-        for frame in &self.stack_trace {
-            output.push_str(&format!(
-                "  at {} ({}:{}:{})\n",
-                frame.function, frame.file, frame.line, frame.column
-            ));
-        }
-
-        // Help lines (actionable fixes — what to write/change)
-        for help in &self.help {
-            output.push_str(&format!("help: {}\n", help));
-        }
-
-        // Suggestion diffs — Rust-style `-old / +new` code blocks (H-195)
-        for sug in &self.suggestions {
-            output.push_str(&format!("help: {}\n", sug.description));
-            output.push_str(&format!("  {} - {}\n", sug.line_number, sug.old_line));
-            output.push_str(&format!("  {} + {}\n", sug.line_number, sug.new_line));
-        }
-
-        // Note lines (context/explanation + related locations)
-        for note in &self.notes {
-            output.push_str(&format!("note: {}\n", note));
-        }
-        for related in &self.related {
-            output.push_str(&format!(
-                "note: see {}:{}:{}: {}\n",
-                related.file, related.line, related.column, related.message
-            ));
-        }
-
-        output
+        formatter::DiagnosticFormatter::plain().format_to_string(self)
     }
 
     /// Format as JSON string
