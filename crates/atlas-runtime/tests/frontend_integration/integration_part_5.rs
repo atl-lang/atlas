@@ -26,7 +26,7 @@ fn test_end_to_end_error_pipeline() {
     assert!(output.contains("error[AT0001]"));
     assert!(output.contains("Type mismatch"));
     assert!(output.contains("test.atlas:1"));
-    assert!(output.contains("^^^^^^^"));
+    assert!(output.contains("^"));
     assert!(output.contains("help:"));
 
     // Step 4: Format the source code

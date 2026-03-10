@@ -162,30 +162,51 @@ impl DiagnosticFormatter {
     }
 
     fn write_snippet(&self, w: &mut impl WriteColor, diag: &Diagnostic) -> std::io::Result<()> {
-        // Line prefix: "83: " — no gutter bars
         let line_prefix = format!("{}: ", diag.line);
+        let col0 = diag.column.saturating_sub(1); // 0-based column
+        let span_len = diag
+            .length
+            .min(diag.snippet.len().saturating_sub(col0).max(1));
 
-        writeln!(w, "{}{}", line_prefix, diag.snippet)?;
+        let level_color = match diag.level {
+            DiagnosticLevel::Error => Color::Red,
+            DiagnosticLevel::Warning => Color::Yellow,
+            DiagnosticLevel::Hint => Color::Cyan,
+        };
 
-        // Caret line indented to match source character position
+        if diag.length > 0 && w.supports_color() {
+            // TTY: render snippet with ANSI background highlight on the error token span.
+            // Splits the snippet line into before/span/after, highlights only the span.
+            let chars: Vec<char> = diag.snippet.chars().collect();
+            let before: String = chars[..col0.min(chars.len())].iter().collect();
+            let span_end = (col0 + span_len).min(chars.len());
+            let span_chars: String = chars[col0.min(chars.len())..span_end].iter().collect();
+            let after: String = chars[span_end..].iter().collect();
+
+            write!(w, "{}{}", line_prefix, before)?;
+            w.set_color(
+                ColorSpec::new()
+                    .set_fg(Some(Color::Black))
+                    .set_bg(Some(level_color))
+                    .set_bold(true),
+            )?;
+            write!(w, "{}", span_chars)?;
+            w.reset()?;
+            writeln!(w, "{}", after)?;
+        } else {
+            // Non-TTY: plain snippet line
+            writeln!(w, "{}{}", line_prefix, diag.snippet)?;
+        }
+
+        // Indicator line: always a single `^` (not span-length carets) + label.
+        // For TTY the background highlight already marks the span; the `^` anchors the label.
+        // For non-TTY the `^` gives the exact column without multi-caret token cost.
         if diag.length > 0 {
-            let padding = line_prefix.len()
-                + compute_display_width(&diag.snippet, diag.column.saturating_sub(1));
+            let padding = line_prefix.len() + compute_display_width(&diag.snippet, col0);
             write!(w, "{}", " ".repeat(padding))?;
 
-            let col = diag.column.saturating_sub(1);
-            let caret_len = diag
-                .length
-                .min(diag.snippet.len().saturating_sub(col).max(1));
-
-            let color = match diag.level {
-                DiagnosticLevel::Error => Color::Red,
-                DiagnosticLevel::Warning => Color::Yellow,
-                DiagnosticLevel::Hint => Color::Cyan,
-            };
-            w.set_color(ColorSpec::new().set_fg(Some(color)).set_bold(true))?;
-            write!(w, "{}", "^".repeat(caret_len))?;
-
+            w.set_color(ColorSpec::new().set_fg(Some(level_color)).set_bold(true))?;
+            write!(w, "^")?;
             if !diag.label.is_empty() {
                 write!(w, " {}", diag.label)?;
             }

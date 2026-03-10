@@ -980,7 +980,7 @@ fn test_format_error_basic() {
     assert!(output.contains("error[AT0001]"));
     assert!(output.contains("Type mismatch"));
     assert!(output.contains("test.atlas:5:9"));
-    assert!(output.contains("^^^^^"));
+    assert!(output.contains("^"));
     assert!(output.contains("expected number, found string"));
 }
 
@@ -1059,7 +1059,7 @@ fn test_format_caret_alignment() {
     let output = String::from_utf8(buf).unwrap();
 
     // Should have 8 spaces before carets (column 9, 0-indexed = 8 spaces)
-    assert!(output.contains("^^^^^"));
+    assert!(output.contains("^"));
 }
 
 #[test]
