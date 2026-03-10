@@ -6,20 +6,24 @@ expression: diagnostics
 - diag_version: 1
   level: error
   code: AT1001
-  message: "Unexpected character '$'"
+  message: "unexpected token `{token}`"
   file: tests/errors/unexpected_char.atl
   line: 3
   column: 9
   length: 1
   snippet: let y = $100;
-  label: lexer error
+  label: "Unexpected character '$'"
+  help:
+    - "check for missing semicolons, brackets, or operators near this location"
 - diag_version: 1
   level: error
   code: AT1001
-  message: "Unexpected character '#'"
+  message: "unexpected token `{token}`"
   file: tests/errors/unexpected_char.atl
   line: 4
   column: 9
   length: 1
   snippet: "let z = #tag;"
-  label: lexer error
+  label: "Unexpected character '#'"
+  help:
+    - "check for missing semicolons, brackets, or operators near this location"

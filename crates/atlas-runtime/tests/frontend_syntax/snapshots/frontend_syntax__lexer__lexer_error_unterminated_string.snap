@@ -1,14 +1,17 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/lexer.rs
+assertion_line: 222
 expression: diagnostics
 ---
 - diag_version: 1
   level: error
   code: AT1002
-  message: Unterminated string literal
+  message: unterminated string literal
   file: tests/errors/unterminated_string.atl
   line: 2
   column: 15
   length: 24
   snippet: "let message = \"This string never ends"
-  label: lexer error
+  label: string starts here
+  help:
+    - "add the closing quote `\"` to complete the string"

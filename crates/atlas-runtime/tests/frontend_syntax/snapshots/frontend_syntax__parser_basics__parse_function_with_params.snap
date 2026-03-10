@@ -1,5 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+assertion_line: 168
 expression: program
 ---
 items:
@@ -27,6 +28,7 @@ items:
                 end: 23
                 file: "<input>"
           ownership: Borrow
+          ownership_explicit: true
           mutable: false
           span:
             start: 7
@@ -45,6 +47,7 @@ items:
                 end: 41
                 file: "<input>"
           ownership: Borrow
+          ownership_explicit: true
           mutable: false
           span:
             start: 25
