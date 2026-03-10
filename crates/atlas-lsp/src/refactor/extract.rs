@@ -407,6 +407,11 @@ fn collect_pattern_bindings(
                 collect_pattern_bindings(arg, scopes);
             }
         }
+        atlas_runtime::ast::Pattern::Tuple { elements, .. } => {
+            for elem in elements {
+                collect_pattern_bindings(elem, scopes);
+            }
+        }
         atlas_runtime::ast::Pattern::Array { elements, .. } => {
             for elem in elements {
                 collect_pattern_bindings(elem, scopes);

@@ -881,6 +881,9 @@ impl FormatVisitor {
                 }
                 self.write("]");
             }
+            Pattern::Tuple { .. } => {
+                // Tuple pattern formatting not yet implemented
+            }
             Pattern::Or(alternatives, _) => {
                 for (i, alt) in alternatives.iter().enumerate() {
                     if i > 0 {

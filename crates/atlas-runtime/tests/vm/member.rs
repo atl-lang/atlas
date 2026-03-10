@@ -241,3 +241,19 @@ fn test_vm_let_destructure_three_elements() {
     let s = result.unwrap();
     assert!(s.contains("6"), "Expected 6 in result, got {}", s);
 }
+
+#[test]
+fn test_vm_tuple_match_pattern() {
+    let src = r#"match (1, 42) { (1, y) => y, _ => 0 };"#;
+    let result = run_vm(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(result.unwrap().contains("42"), "Expected 42 in result");
+}
+
+#[test]
+fn test_vm_tuple_match_wildcard() {
+    let src = r#"match (99, 7) { (0, y) => y, (_, n) => n };"#;
+    let result = run_vm(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(result.unwrap().contains("7"), "Expected 7 in result");
+}

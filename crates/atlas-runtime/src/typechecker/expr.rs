@@ -2837,6 +2837,13 @@ impl<'a> TypeChecker<'a> {
                     );
                     return bindings;
                 }
+                Pattern::Tuple { elements, span } => {
+                    for pat in elements {
+                        bindings.extend(self.check_pattern(pat, &Type::Unknown));
+                    }
+                    let _ = span;
+                    return bindings;
+                }
                 Pattern::Or(alternatives, _) => {
                     // Check each sub-pattern independently; bindings from first sub-pattern used
                     for alt in alternatives {
@@ -2911,6 +2918,20 @@ impl<'a> TypeChecker<'a> {
             Pattern::Array { elements, span } => {
                 // Check array pattern
                 bindings.extend(self.check_array_pattern(elements, &expected_norm, *span));
+            }
+
+            Pattern::Tuple { elements, span } => {
+                let elem_types: Vec<Type> = match &expected_norm {
+                    Type::Tuple(elems) => elems.clone(),
+                    _ => (0..elements.len()).map(|_| Type::Unknown).collect(),
+                };
+                for (pat, ty) in elements
+                    .iter()
+                    .zip(elem_types.iter().chain(std::iter::repeat(&Type::Unknown)))
+                {
+                    bindings.extend(self.check_pattern(pat, ty));
+                }
+                let _ = span;
             }
 
             Pattern::Or(alternatives, _) => {

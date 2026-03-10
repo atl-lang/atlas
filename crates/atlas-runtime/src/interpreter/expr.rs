@@ -1166,6 +1166,26 @@ impl Interpreter {
             // Array patterns: [x, y, z]
             Pattern::Array { elements, .. } => self.try_match_array(elements, value),
 
+            // Tuple patterns: (x, y, z)
+            Pattern::Tuple { elements, .. } => {
+                if let Value::Tuple(elems) = value {
+                    if elements.len() != elems.len() {
+                        return None;
+                    }
+                    let mut all_bindings = Vec::new();
+                    for (pat, val) in elements.iter().zip(elems.iter()) {
+                        if let Some(bindings) = self.try_match_pattern(pat, val) {
+                            all_bindings.extend(bindings);
+                        } else {
+                            return None;
+                        }
+                    }
+                    Some(all_bindings)
+                } else {
+                    None
+                }
+            }
+
             // OR patterns: try each sub-pattern, return first match
             Pattern::Or(alternatives, _) => {
                 for alt in alternatives {

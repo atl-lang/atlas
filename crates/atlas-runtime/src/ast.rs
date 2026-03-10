@@ -840,6 +840,8 @@ pub enum Pattern {
     },
     /// Array pattern: [], [x], [x, y]
     Array { elements: Vec<Pattern>, span: Span },
+    /// Tuple pattern: (p1, p2, ...)
+    Tuple { elements: Vec<Pattern>, span: Span },
     /// OR pattern: pat1 | pat2 | pat3
     Or(Vec<Pattern>, Span),
     /// Enum variant pattern: State::Running, Color::Rgb(r, g, b)
@@ -1041,6 +1043,7 @@ impl Pattern {
             Pattern::Variable(id) => id.span,
             Pattern::Constructor { span, .. } => *span,
             Pattern::Array { span, .. } => *span,
+            Pattern::Tuple { span, .. } => *span,
             Pattern::Or(_, span) => *span,
             Pattern::EnumVariant { span, .. } => *span,
         }

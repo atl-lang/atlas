@@ -1422,6 +1422,27 @@ impl Parser {
                 Ok(Pattern::Wildcard(token.span))
             }
 
+            // Tuple pattern: (p1, p2, ...)
+            TokenKind::LeftParen => {
+                let start_span = self.peek().span;
+                self.advance(); // consume '('
+                let mut elements = Vec::new();
+                while !self.check(TokenKind::RightParen) && !self.is_at_end() {
+                    elements.push(self.parse_pattern()?);
+                    if self.check(TokenKind::Comma) {
+                        self.advance();
+                    } else {
+                        break;
+                    }
+                }
+                let end_tok =
+                    self.consume(TokenKind::RightParen, "Expected ')' after tuple pattern")?;
+                Ok(Pattern::Tuple {
+                    elements,
+                    span: start_span.merge(end_tok.span),
+                })
+            }
+
             // Array pattern: [...]
             TokenKind::LeftBracket => self.parse_array_pattern(),
 

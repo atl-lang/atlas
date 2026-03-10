@@ -1199,6 +1199,12 @@ impl Binder {
                     vars.extend(self.collect_pattern_variables(elem));
                 }
             }
+            Pattern::Tuple { elements, .. } => {
+                // Collect from all tuple element patterns
+                for elem in elements {
+                    vars.extend(self.collect_pattern_variables(elem));
+                }
+            }
             Pattern::Or(alternatives, _) => {
                 // Collect variables from first sub-pattern (all must bind same names)
                 if let Some(first) = alternatives.first() {

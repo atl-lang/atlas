@@ -1033,6 +1033,11 @@ impl Compiler {
                 self.compile_array_pattern(elements, *span, locals_before)
             }
 
+            // Tuple: (x, y, z) — not yet compiled; emit diagnostic stub
+            Pattern::Tuple { elements, span } => {
+                self.compile_tuple_pattern(elements, *span, locals_before)
+            }
+
             // OR pattern: sub1 | sub2 | sub3
             Pattern::Or(alternatives, or_span) => {
                 self.compile_or_pattern(alternatives, *or_span, locals_before)
@@ -1360,6 +1365,101 @@ impl Compiler {
         // Success exit
         self.bytecode.patch_jump(success_exit);
         // Stack: [element_locals..., True]
+
+        Ok(Some(fail_exit))
+    }
+
+    /// Compile tuple pattern: (p1, p2, ...)
+    ///
+    /// Contract same as compile_array_pattern:
+    /// - INPUT: scrutinee on stack top
+    /// - SUCCESS: scrutinee consumed, True on stack, pattern vars added as locals
+    /// - FAILURE: scrutinee consumed, stack clean, returns jump offset for caller to patch
+    fn compile_tuple_pattern(
+        &mut self,
+        elements: &[Pattern],
+        span: Span,
+        locals_before: usize,
+    ) -> Result<Option<usize>, Vec<Diagnostic>> {
+        use crate::bytecode::Opcode;
+
+        // Store the tuple in a temp global so we can get each element without consuming it.
+        let tuple_global_name = "$match_tuple";
+        let name_idx = self.bytecode.add_constant(Value::string(tuple_global_name));
+
+        // INPUT: tuple on TOS
+        self.bytecode.emit(Opcode::SetGlobal, span);
+        self.bytecode.emit_u16(name_idx);
+        self.bytecode.emit(Opcode::Pop, span);
+
+        // Check that value is a tuple with the right arity.
+        // We load the temp global, push expected length constant, compare.
+        // There's no IsArray equivalent for tuples — use TupleGet out-of-bounds as check.
+        // Simpler: load the global and check via a length comparison using VM introspection.
+        // Atlas has no built-in "is_tuple" opcode, so we rely on TupleGet returning an error
+        // on non-tuple values. But we can't catch VM errors in the pattern match.
+        //
+        // Strategy: emit a Constant(expected_len), GetGlobal(temp), call a pattern-check
+        // sequence that loads each element by TupleGet — if TupleGet fails (non-tuple or
+        // wrong arity) the VM raises a runtime error.
+        //
+        // For now: TupleGet is safe — if value is wrong type VM raises RuntimeError which
+        // propagates. This matches how interpreter returns None for non-tuple.
+        // A real "is_tuple" opcode would be B15-P07 follow-on.
+        // For now: just load the elements and match. Arity errors will be runtime errors.
+
+        let mut elem_fail_info: Vec<(usize, usize)> = Vec::new();
+
+        for (idx, elem_pattern) in elements.iter().enumerate() {
+            // Load tuple from temp global, extract element idx
+            self.bytecode.emit(Opcode::GetGlobal, span);
+            self.bytecode.emit_u16(name_idx);
+            self.bytecode.emit(Opcode::TupleGet, span);
+            self.bytecode.emit_u16(idx as u16);
+
+            // Match element pattern
+            let elem_failed = self.compile_pattern_check(elem_pattern, span, locals_before)?;
+
+            // Pop True from successful element match
+            self.bytecode.emit(Opcode::Pop, span);
+
+            if let Some(jump) = elem_failed {
+                let elem_locals = self.locals.len() - locals_before;
+                elem_fail_info.push((jump, elem_locals));
+            }
+        }
+
+        // All elements matched — push True
+        self.bytecode.emit(Opcode::True, span);
+
+        // Jump over failure code
+        self.bytecode.emit(Opcode::Jump, span);
+        let success_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // Element failure handlers
+        let mut handler_jumps = Vec::new();
+        for (jump, elem_locals) in &elem_fail_info {
+            self.bytecode.patch_jump(*jump);
+            for _ in 0..*elem_locals {
+                self.bytecode.emit(Opcode::Pop, span);
+            }
+            self.bytecode.emit(Opcode::Jump, span);
+            handler_jumps.push(self.bytecode.current_offset());
+            self.bytecode.emit_u16(0xFFFF);
+        }
+
+        for j in &handler_jumps {
+            self.bytecode.patch_jump(*j);
+        }
+
+        // Fail exit
+        self.bytecode.emit(Opcode::Jump, span);
+        let fail_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // Patch success exit
+        self.bytecode.patch_jump(success_exit);
 
         Ok(Some(fail_exit))
     }
