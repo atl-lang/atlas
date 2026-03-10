@@ -8,6 +8,71 @@ use crate::typechecker::TypeChecker;
 use crate::types::{StructuralMemberType, Type, TypeParamDef, ANY_TYPE_PARAM};
 use std::collections::{HashMap, HashSet};
 
+/// Resolve the expected parameter types for a static namespace method call.
+/// Returns `Some(params)` when we have a known signature, `None` when variadic or untracked.
+/// An empty `Some(vec![])` means zero-arg method.
+fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
+    let str = Type::String;
+    let num = Type::Number;
+    let json = Type::JsonValue;
+    let str_arr = Type::Array(Box::new(Type::String));
+    match (ns, method) {
+        // Json namespace
+        ("Json", "parse" | "isValid" | "prettify") => Some(vec![str]),
+        ("Json", "stringify") => Some(vec![json]),
+        // Math namespace
+        ("Math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
+        ("Math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
+        ("Math", "min" | "max" | "pow") => Some(vec![num.clone(), num.clone()]),
+        ("Math", "clamp") => Some(vec![num.clone(), num.clone(), num.clone()]),
+        ("Math", "random") => Some(vec![]),
+        // Env namespace
+        ("Env", "get" | "unset") => Some(vec![str.clone()]),
+        ("Env", "set") => Some(vec![str.clone(), str.clone()]),
+        // File namespace
+        ("File", "read" | "exists" | "createDir" | "removeDir" | "remove") => {
+            Some(vec![str.clone()])
+        }
+        ("File", "write" | "append") => Some(vec![str.clone(), str.clone()]),
+        // Process namespace
+        ("Process", "cwd" | "pid" | "args") => Some(vec![]),
+        ("Process", "env") => Some(vec![str.clone()]),
+        ("Process", "run") => Some(vec![str.clone(), str_arr]),
+        ("Process", "shellOut") => Some(vec![str.clone()]),
+        // Path namespace
+        (
+            "Path",
+            "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
+            | "canonical" | "exists" | "isAbsolute" | "isRelative",
+        ) => Some(vec![str.clone()]),
+        ("Path", "join") => Some(vec![str.clone(), str.clone()]),
+        ("Path", "homedir" | "cwd" | "tempdir" | "separator") => Some(vec![]),
+        // DateTime namespace
+        ("DateTime", "now" | "utc") => Some(vec![]),
+        ("DateTime", "fromTimestamp") => Some(vec![num.clone()]),
+        ("DateTime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => {
+            Some(vec![str.clone()])
+        }
+        // DateTime.fromComponents — variadic (year,month,day,hour,min,sec) → skip arity
+        ("DateTime", "fromComponents") => None,
+        // Regex namespace
+        ("Regex", "new") => Some(vec![str.clone()]),
+        // Crypto namespace
+        ("Crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
+        // Http namespace — get/delete take url only; post/put take url+body; request is variadic
+        ("Http", "get" | "delete" | "patch") => Some(vec![str.clone()]),
+        ("Http", "post" | "put") => Some(vec![str.clone(), json]),
+        ("Http", "request") => None,
+        // Net namespace — variadic / complex → skip
+        ("Net", "tcpConnect" | "tcpListen") => None,
+        // Io namespace
+        ("Io", "readLine") => Some(vec![]),
+        ("Io", "readLinePrompt") => Some(vec![str.clone()]),
+        // Unknown combination
+        _ => None,
+    }
+}
+
 /// Resolve the return type for a static namespace method call (Json.parse, Math.sqrt, etc.)
 fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
     match (ns, method) {
@@ -1844,6 +1909,77 @@ impl<'a> TypeChecker<'a> {
                             .with_label("untyped namespace method"),
                     );
                 }
+
+                // H-243: check arity and argument types for namespace method calls.
+                // Previously, namespace early-return silently ignored all arguments.
+                let ns_name = id.name.clone();
+                let method_name_str = member.member.name.clone();
+                if let Some(args) = &member.args {
+                    if let Some(param_types) =
+                        resolve_namespace_param_types(&ns_name, &method_name_str)
+                    {
+                        if args.len() != param_types.len() {
+                            self.diagnostics.push(
+                                error_codes::ARITY_MISMATCH
+                                    .emit(member.span)
+                                    .arg("name", format!("{}.{}", ns_name, method_name_str))
+                                    .arg("expected", format!("{}", param_types.len()))
+                                    .arg("found", format!("{}", args.len()))
+                                    .with_help(format!(
+                                        "{}.{}() requires exactly {} argument{}",
+                                        ns_name,
+                                        method_name_str,
+                                        param_types.len(),
+                                        if param_types.len() == 1 { "" } else { "s" }
+                                    ))
+                                    .build()
+                                    .with_label("argument count mismatch"),
+                            );
+                        }
+                        for (i, (arg, expected_ty)) in
+                            args.iter().zip(param_types.iter()).enumerate()
+                        {
+                            let arg_ty = self.check_expr(arg);
+                            if arg_ty.normalized() == Type::Unknown {
+                                // Upstream error already reported — skip cascade.
+                                continue;
+                            }
+                            if !self.is_assignable_with_traits(&arg_ty, expected_ty) {
+                                let help = suggestions::suggest_type_mismatch(expected_ty, &arg_ty)
+                                    .unwrap_or_else(|| {
+                                        format!(
+                                            "argument {} must be of type {}",
+                                            i + 1,
+                                            expected_ty.display_name()
+                                        )
+                                    });
+                                self.diagnostics.push(
+                                    error_codes::TYPE_ERROR
+                                        .emit(arg.span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "Argument {} type mismatch: expected {}, found {}",
+                                                i + 1,
+                                                expected_ty.display_name(),
+                                                arg_ty.display_name()
+                                            ),
+                                        )
+                                        .with_help(help)
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                    } else {
+                        // No param types registered — evaluate args for side effects only
+                        // (usage tracking, inner diagnostics).
+                        for arg in args {
+                            self.check_expr(arg);
+                        }
+                    }
+                }
+
                 return return_type;
             }
         }
