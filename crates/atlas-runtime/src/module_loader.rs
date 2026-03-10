@@ -100,18 +100,27 @@ impl ModuleLoader {
     /// Load a module and all its dependencies
     ///
     /// Returns modules in topological order (dependencies first).
+    /// Collects parse errors from ALL modules before returning — never short-circuits
+    /// on the first file with errors. This gives the user a full error workload in one
+    /// `atlas run` / `atlas check` pass instead of one error per rebuild cycle.
     ///
     /// # Arguments
     /// * `entry_point` - Absolute path to the entry module
     ///
     /// # Returns
-    /// List of modules in initialization order, or diagnostics if errors occurred
+    /// List of modules in initialization order, or ALL diagnostics across the import graph
     pub fn load_module(
         &mut self,
         entry_point: &Path,
     ) -> Result<Vec<LoadedModule>, Vec<Diagnostic>> {
-        // Load the entry module and all dependencies recursively
-        self.load_recursive(entry_point)?;
+        // Load the entry module and all dependencies, collecting all errors.
+        let mut all_errors: Vec<Diagnostic> = Vec::new();
+        self.load_recursive(entry_point, &mut all_errors);
+
+        // If any module had parse errors, report them all now.
+        if !all_errors.is_empty() {
+            return Err(all_errors);
+        }
 
         // Check for circular dependencies
         self.resolver
@@ -135,98 +144,121 @@ impl ModuleLoader {
         Ok(modules)
     }
 
-    /// Recursively load a module and its dependencies
-    fn load_recursive(&mut self, module_path: &Path) -> Result<(), Vec<Diagnostic>> {
+    /// Recursively load a module and its dependencies.
+    ///
+    /// Errors are accumulated into `all_errors` rather than returned immediately.
+    /// This ensures ALL files in the import graph are visited and ALL parse errors
+    /// are collected in a single pass — not just the first file that fails.
+    fn load_recursive(&mut self, module_path: &Path, all_errors: &mut Vec<Diagnostic>) {
         let abs_path = module_path.to_path_buf();
 
-        // Check cache - if already loaded, skip
+        // Check cache - if already loaded (successfully or with errors noted), skip
         if self.cache.contains_key(&abs_path) {
-            return Ok(());
+            return;
         }
 
-        // Check if currently being loaded (circular dependency)
+        // Check if currently being loaded (circular dependency) — fatal, stop this branch
         if self.loading.contains(&abs_path) {
-            return Err(vec![CIRCULAR_DEPENDENCY
-                .emit(Span::dummy())
-                .arg("cycle", abs_path.display().to_string())
-                .build()
-                .with_label(format!("module: {}", abs_path.display()))]);
+            all_errors.push(
+                CIRCULAR_DEPENDENCY
+                    .emit(Span::dummy())
+                    .arg("cycle", abs_path.display().to_string())
+                    .build()
+                    .with_label(format!("module: {}", abs_path.display())),
+            );
+            return;
         }
 
         // Mark as currently loading
         self.loading.insert(abs_path.clone());
 
-        // Load and parse the module file
-        let loaded = self.load_and_parse(&abs_path)?;
+        // Load and parse the module file — returns (partial_module, parse_errors).
+        // Even on parse errors we get the partial AST so we can follow its imports.
+        let (loaded, parse_errors) = self.load_and_parse_partial(&abs_path);
 
-        // Extract dependencies from imports (deduplicate)
+        // Accumulate any parse errors from this module
+        all_errors.extend(parse_errors);
+
+        // Extract dependencies from imports and recurse — even if this file had errors,
+        // its imports are valid identifiers we can still follow to find more errors.
         let mut deps = Vec::new();
         let mut seen_deps = HashSet::new();
 
         for import in &loaded.imports {
-            // Resolve import path relative to current module
-            let dep_path = self
+            let dep_path = match self
                 .resolver
                 .resolve_path(&import.source, &abs_path, import.span)
-                .map_err(|e| vec![e])?;
+            {
+                Ok(p) => p,
+                Err(e) => {
+                    all_errors.push(e);
+                    continue;
+                }
+            };
 
-            // Skip if already processed (multiple imports from same module)
             if !seen_deps.insert(dep_path.clone()) {
                 continue;
             }
 
             deps.push(dep_path.clone());
-
-            // Add to resolver's dependency graph
             self.resolver
                 .add_dependency(abs_path.clone(), dep_path.clone());
 
-            // Recursively load the dependency
-            self.load_recursive(&dep_path)?;
+            // Recurse — errors accumulate, never short-circuit
+            self.load_recursive(&dep_path, all_errors);
         }
 
-        // Store dependencies in our graph
         self.dependencies.insert(abs_path.clone(), deps);
-
-        // Cache the loaded module
         self.cache.insert(abs_path.clone(), loaded);
-
-        // Remove from loading set (done loading)
         self.loading.remove(&abs_path);
-
-        Ok(())
     }
 
-    /// Load and parse a single module file
-    fn load_and_parse(&self, path: &Path) -> Result<LoadedModule, Vec<Diagnostic>> {
-        // Read file contents
-        let source = fs::read_to_string(path).map_err(|e| {
-            vec![MODULE_NOT_FOUND
-                .emit(Span::dummy())
-                .arg("path", path.display().to_string())
-                .with_help(format!(
-                    "file read error: {e} — ensure the file exists and you have read permissions"
-                ))
-                .build()
-                .with_label(format!("path: {}", path.display()))]
-        })?;
+    /// Load and parse a single module file, always returning a partial module.
+    ///
+    /// Unlike the old `load_and_parse`, this never short-circuits on parse errors.
+    /// It returns `(module, errors)` — the module may have an incomplete AST when
+    /// errors are present, but it always has the import declarations extracted so
+    /// `load_recursive` can follow the import graph even for broken files.
+    fn load_and_parse_partial(&self, path: &Path) -> (LoadedModule, Vec<Diagnostic>) {
+        // Read file contents — a missing file is fatal for this module only
+        let source = match fs::read_to_string(path) {
+            Ok(s) => s,
+            Err(e) => {
+                let err = MODULE_NOT_FOUND
+                    .emit(Span::dummy())
+                    .arg("path", path.display().to_string())
+                    .with_help(format!(
+                        "file read error: {e} — ensure the file exists and you have read permissions"
+                    ))
+                    .build()
+                    .with_label(format!("path: {}", path.display()));
+                return (
+                    LoadedModule {
+                        path: path.to_path_buf(),
+                        ast: crate::ast::Program { items: vec![] },
+                        exports: vec![],
+                        imports: vec![],
+                    },
+                    vec![err],
+                );
+            }
+        };
 
-        // Lex
+        // Lex — lex errors are returned alongside an empty token stream
         let mut lexer = Lexer::new(&source).with_file(path.display().to_string());
         let (tokens, lex_diags) = lexer.tokenize();
-        if !lex_diags.is_empty() {
-            return Err(lex_diags);
-        }
+        let lex_errors: Vec<_> = lex_diags.into_iter().filter(|d| d.is_error()).collect();
 
-        // Parse
+        // Parse — always returns the partial AST and any parse errors
         let mut parser = Parser::new(tokens);
         let (ast, parse_diags) = parser.parse();
         let parse_errors: Vec<_> = parse_diags.into_iter().filter(|d| d.is_error()).collect();
-        if !parse_errors.is_empty() {
-            return Err(parse_errors);
-        }
 
-        // Extract exports and imports
+        // Collect all errors from this file
+        let mut errors = lex_errors;
+        errors.extend(parse_errors);
+
+        // Extract exports and imports from whatever the parser produced
         let mut exports = Vec::new();
         let mut imports = Vec::new();
 
@@ -249,12 +281,15 @@ impl ModuleLoader {
             }
         }
 
-        Ok(LoadedModule {
-            path: path.to_path_buf(),
-            ast,
-            exports,
-            imports,
-        })
+        (
+            LoadedModule {
+                path: path.to_path_buf(),
+                ast,
+                exports,
+                imports,
+            },
+            errors,
+        )
     }
 
     /// Perform topological sort to get initialization order
