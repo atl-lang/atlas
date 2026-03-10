@@ -333,6 +333,7 @@ impl SymbolIndex {
                 );
                 self.index_expr(&var_decl.init, ctx, false);
             }
+            Stmt::LetDestructure(_) => { /* B15-P06 */ }
             Stmt::FunctionDecl(func) => {
                 self.add_definition(
                     &func.name.name,

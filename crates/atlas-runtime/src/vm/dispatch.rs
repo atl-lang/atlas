@@ -69,6 +69,8 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x79] = Some(Opcode::SetField);
     table[0x7A] = Some(Opcode::Range);
     table[0x7B] = Some(Opcode::Struct);
+    table[0x7C] = Some(Opcode::Tuple);
+    table[0x7D] = Some(Opcode::TupleGet);
 
     // Stack manipulation (0x80-0x83)
     table[0x80] = Some(Opcode::Pop);

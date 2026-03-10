@@ -209,3 +209,35 @@ fn test_as_number_on_array() {
 }
 
 // ============================================================================
+
+// ============================================================================
+// B15-P06: Tuple destructuring in VM
+// ============================================================================
+
+#[test]
+fn test_vm_tuple_destructure_basic() {
+    // Use TupleGet opcode directly to verify VM destructure works
+    let src = r#"let t = (42, "hello"); let a = t.0; let b = t.1; a;"#;
+    let result = run_vm(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    assert!(result.unwrap().contains("42"));
+}
+
+#[test]
+fn test_vm_let_destructure_values() {
+    let src = r#"let (a, b) = (10, 20); a + b;"#;
+    let result = run_vm(src);
+    // Number display may be integer or float depending on debug format
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    let s = result.unwrap();
+    assert!(s.contains("30"), "Expected 30 in result, got {}", s);
+}
+
+#[test]
+fn test_vm_let_destructure_three_elements() {
+    let src = r#"let (x, y, z) = (1, 2, 3); x + y + z;"#;
+    let result = run_vm(src);
+    assert!(result.is_ok(), "Expected Ok, got {:?}", result);
+    let s = result.unwrap();
+    assert!(s.contains("6"), "Expected 6 in result, got {}", s);
+}

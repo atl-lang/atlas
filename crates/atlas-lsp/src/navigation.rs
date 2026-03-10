@@ -206,6 +206,7 @@ fn find_references_in_stmt(stmt: &Stmt, identifier: &str, references: &mut Vec<R
             }
             find_references_in_expr(&var_decl.init, identifier, references);
         }
+        Stmt::LetDestructure(_) => { /* B15-P06 */ }
         Stmt::FunctionDecl(func) => {
             if func.name.name == identifier {
                 references.push(Range::default());

@@ -461,6 +461,7 @@ pub struct Block {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Stmt {
     VarDecl(VarDecl),
+    LetDestructure(LetDestructure),
     FunctionDecl(FunctionDecl),
     Assign(Assign),
     CompoundAssign(CompoundAssign),
@@ -482,6 +483,15 @@ pub struct VarDecl {
     pub uses_deprecated_var: bool,
     pub name: Identifier,
     pub type_ref: Option<TypeRef>,
+    pub init: Expr,
+    pub span: Span,
+}
+
+/// Tuple destructuring declaration: `let (a, b) = expr;`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct LetDestructure {
+    pub mutable: bool,
+    pub names: Vec<Identifier>,
     pub init: Expr,
     pub span: Span,
 }
@@ -990,6 +1000,7 @@ impl Stmt {
     pub fn span(&self) -> Span {
         match self {
             Stmt::VarDecl(v) => v.span,
+            Stmt::LetDestructure(d) => d.span,
             Stmt::FunctionDecl(f) => f.span,
             Stmt::Assign(a) => a.span,
             Stmt::CompoundAssign(c) => c.span,

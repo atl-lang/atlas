@@ -208,6 +208,7 @@ fn collect_free_vars_stmt(
                 scope.insert(var_decl.name.name.clone());
             }
         }
+        Stmt::LetDestructure(_) => { /* B15-P06 */ }
         Stmt::FunctionDecl(func) => {
             if let Some(scope) = scopes.back_mut() {
                 scope.insert(func.name.name.clone());

@@ -269,6 +269,7 @@ impl FormatVisitor {
     fn visit_statement(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDecl(v) => self.visit_var_decl(v),
+            Stmt::LetDestructure(_) => { /* B15-P06 */ }
             Stmt::FunctionDecl(f) => self.visit_function_decl(f),
             Stmt::Assign(a) => self.visit_assign(a),
             Stmt::CompoundAssign(c) => self.visit_compound_assign(c),

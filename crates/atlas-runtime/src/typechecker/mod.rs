@@ -2046,6 +2046,67 @@ impl<'a> TypeChecker<'a> {
                     let _ = self.symbol_table.define(symbol);
                 }
             }
+            Stmt::LetDestructure(d) => {
+                let init_type = self.check_expr(&d.init);
+                let elem_types: Vec<Type> = match init_type.normalized() {
+                    Type::Tuple(elems) => elems.clone(),
+                    Type::Unknown => {
+                        // Propagate unknown — bind each name as Unknown
+                        (0..d.names.len()).map(|_| Type::Unknown).collect()
+                    }
+                    other => {
+                        self.diagnostics.push(
+                            crate::diagnostic::Diagnostic::error(
+                                format!(
+                                    "Cannot destructure: expected a tuple, got {}",
+                                    other.display_name()
+                                ),
+                                d.span,
+                            )
+                            .with_label("not a tuple")
+                            .with_help("wrap values in a tuple: `(a, b)`"),
+                        );
+                        (0..d.names.len()).map(|_| Type::Unknown).collect()
+                    }
+                };
+                if elem_types.len() != d.names.len() && !matches!(init_type, Type::Unknown) {
+                    self.diagnostics.push(
+                        crate::diagnostic::Diagnostic::error(
+                            format!(
+                                "Tuple destructure mismatch: pattern has {} names but tuple has {} elements",
+                                d.names.len(),
+                                elem_types.len()
+                            ),
+                            d.span,
+                        )
+                        .with_label("arity mismatch here"),
+                    );
+                }
+                for (name, ty) in d
+                    .names
+                    .iter()
+                    .zip(elem_types.iter().chain(std::iter::repeat(&Type::Unknown)))
+                {
+                    self.declared_symbols
+                        .insert(name.name.clone(), (name.span, SymbolKind::Variable));
+                    if self.symbol_table.is_defined_in_current_scope(&name.name) {
+                        if let Some(sym) = self.symbol_table.lookup_current_scope_mut(&name.name) {
+                            sym.ty = ty.clone();
+                            sym.mutable = d.mutable;
+                        }
+                    } else {
+                        let symbol = crate::symbol::Symbol {
+                            name: name.name.clone(),
+                            ty: ty.clone(),
+                            span: name.span,
+                            mutable: d.mutable,
+                            kind: crate::symbol::SymbolKind::Variable,
+                            exported: false,
+                        };
+                        let _ = self.symbol_table.define(symbol);
+                    }
+                }
+            }
             Stmt::Assign(assign) => {
                 let value_type = self.check_expr(&assign.value);
                 let target_type = self.check_assign_target(&assign.target);

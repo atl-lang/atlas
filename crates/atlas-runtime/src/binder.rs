@@ -854,6 +854,22 @@ impl Binder {
                     self.diagnostics.push(diag);
                 }
             }
+            Stmt::LetDestructure(d) => {
+                // Bind the initializer first
+                self.bind_expr(&d.init);
+                // Define each destructured name in scope
+                for name in &d.names {
+                    let symbol = Symbol {
+                        name: name.name.clone(),
+                        ty: Type::Unknown,
+                        mutable: d.mutable,
+                        span: name.span,
+                        kind: SymbolKind::Variable,
+                        exported: false,
+                    };
+                    let _ = self.symbol_table.define(symbol);
+                }
+            }
             Stmt::Assign(assign) => {
                 // Bind assignment target and value
                 self.bind_assign_target(&assign.target);
