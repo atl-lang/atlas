@@ -44,17 +44,19 @@ impl ModuleResolver {
 
     /// Build a `ModuleRegistry` containing only the given dependencies.
     ///
-    /// The registry is keyed by the import source string (e.g., "math")
-    /// converted to a `PathBuf`, matching how `Binder::bind_import()` looks
-    /// them up.
+    /// The registry is keyed by the module's actual source file path (absolute),
+    /// matching what `Binder::resolve_import_path()` computes for relative imports.
     pub fn build_registry_for(&self, dependencies: &[String]) -> ModuleRegistry {
         let mut registry = ModuleRegistry::new();
 
         for dep_name in dependencies {
-            if let Some(symbol_table) = self.module_symbols.get(dep_name) {
-                // The binder does `PathBuf::from(&import_decl.source)` to look up
-                // in the registry, so we register with the same key the import uses.
-                registry.register(PathBuf::from(dep_name), symbol_table.clone());
+            if let (Some(symbol_table), Some(path)) = (
+                self.module_symbols.get(dep_name),
+                self.module_paths.get(dep_name),
+            ) {
+                // Key by actual file path — the binder resolves `"./math"` from
+                // `src/main.atlas` to `src/math.atlas` (absolute), so that must match.
+                registry.register(path.clone(), symbol_table.clone());
             }
         }
 

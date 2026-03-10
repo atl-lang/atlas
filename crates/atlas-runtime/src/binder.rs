@@ -632,13 +632,13 @@ impl Binder {
             let base = module_path.parent().unwrap_or(Path::new("."));
             let mut resolved = base.join(source);
             if resolved.extension().is_none() {
-                resolved.set_extension("atl");
+                resolved.set_extension("atlas");
             }
             resolved
         } else if source.starts_with('/') {
             let mut stripped = PathBuf::from(source.trim_start_matches('/'));
             if stripped.extension().is_none() {
-                stripped.set_extension("atl");
+                stripped.set_extension("atlas");
             }
             let root = module_path.ancestors().last().unwrap_or(Path::new("/"));
             root.join(stripped)

@@ -513,13 +513,14 @@ impl Builder {
                 ));
             }
 
-            // Extract dependencies from imports
+            // Extract dependencies from imports, normalizing import paths to module names.
+            // e.g. `from "./math"` → `"math"`, `from "./utils/str"` → `"utils::str"`
             let dependencies = program
                 .items
                 .iter()
                 .filter_map(|item| {
                     if let atlas_runtime::ast::Item::Import(import_decl) = item {
-                        Some(import_decl.source.clone())
+                        Some(Self::import_source_to_module_name(&import_decl.source))
                     } else {
                         None
                     }
@@ -783,6 +784,16 @@ impl Builder {
     }
 
     /// Convert file path to module name
+    /// Convert an import source string to a module name.
+    /// Strips leading `./` or `../`, removes `.atlas` extension if present,
+    /// and converts `/` separators to `::`.
+    /// e.g. `"./math"` → `"math"`, `"./utils/str"` → `"utils::str"`
+    fn import_source_to_module_name(source: &str) -> String {
+        let s = source.trim_start_matches("./").trim_start_matches("../");
+        let s = s.strip_suffix(".atlas").unwrap_or(s);
+        s.replace('/', "::")
+    }
+
     fn path_to_module_name(&self, path: &Path) -> BuildResult<String> {
         let src_dir = self.root_dir.join("src");
         let relative = path.strip_prefix(&src_dir).map_err(|_| {
