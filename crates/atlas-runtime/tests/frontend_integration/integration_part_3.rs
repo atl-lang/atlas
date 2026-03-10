@@ -359,12 +359,12 @@ fn test_check_formatted_needs_formatting() {
 fn test_error_code_registry_lookup(#[case] code: &str, #[case] expected_desc: &str) {
     let info = error_codes::lookup(code).unwrap_or_else(|| panic!("Code {} not found", code));
     assert!(
-        info.description
+        info.title
             .to_lowercase()
             .contains(&expected_desc.to_lowercase()),
         "Code {} description '{}' doesn't match expected '{}'",
         code,
-        info.description,
+        info.title,
         expected_desc
     );
 }

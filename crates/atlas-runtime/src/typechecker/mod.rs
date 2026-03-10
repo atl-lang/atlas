@@ -360,6 +360,10 @@ pub struct TypeChecker<'a> {
     /// Maps param name -> ownership annotation. Used by call-site checks to detect
     /// whether an argument is a `borrow` parameter of the enclosing function.
     pub(super) current_fn_param_ownerships: HashMap<String, Option<OwnershipAnnotation>>,
+    /// Names of params in the current function where the ownership keyword was written
+    /// explicitly in source (`borrow x`, `own x`, `share x`). Bare params are absent
+    /// from this set — AT3054 only fires for explicit `borrow`, not implicit defaults (D-040).
+    pub(super) current_fn_explicit_borrow_params: HashSet<String>,
     /// Variables that have been moved via an `own` parameter call in the current function scope.
     /// Any subsequent use of a name in this set triggers AT3053 (use-after-own).
     pub(super) moved_vars: HashSet<String>,
@@ -457,6 +461,7 @@ impl<'a> TypeChecker<'a> {
             alias_resolution_stack: Vec::new(),
             fn_ownership_registry: stdlib_ownership::build_stdlib_ownership(),
             current_fn_param_ownerships: HashMap::new(),
+            current_fn_explicit_borrow_params: HashSet::new(),
             moved_vars: HashSet::new(),
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
@@ -520,16 +525,18 @@ impl<'a> TypeChecker<'a> {
 
                 if exported_names.contains(name) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT5008",
-                            format!("Duplicate export: '{}' is exported more than once", name),
-                            export_decl.span,
-                        )
-                        .with_label("duplicate export")
-                        .with_help(format!(
-                            "remove one of the export statements for '{}'",
-                            name
-                        )),
+                        error_codes::DUPLICATE_EXPORT
+                            .emit(export_decl.span)
+                            .arg(
+                                "detail",
+                                format!("Duplicate export: '{}' is exported more than once", name),
+                            )
+                            .build()
+                            .with_label("duplicate export")
+                            .with_help(format!(
+                                "remove one of the export statements for '{}'",
+                                name
+                            )),
                     );
                 } else {
                     exported_names.insert(name.clone());
@@ -678,16 +685,18 @@ impl<'a> TypeChecker<'a> {
         for field in &struct_decl.fields {
             if !seen.insert(field.name.name.clone()) {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Duplicate field '{}' in struct '{}'",
-                            field.name.name, struct_decl.name.name
-                        ),
-                        field.span,
-                    )
-                    .with_label("duplicate field name")
-                    .with_help("each struct field name must be unique"),
+                    error_codes::TYPE_ERROR
+                        .emit(field.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Duplicate field '{}' in struct '{}'",
+                                field.name.name, struct_decl.name.name
+                            ),
+                        )
+                        .build()
+                        .with_label("duplicate field name")
+                        .with_help("each struct field name must be unique"),
                 );
             }
             let _ = self.resolve_type_ref_with_context(&field.type_ref, None);
@@ -705,13 +714,15 @@ impl<'a> TypeChecker<'a> {
             .any(|entry| entry == name)
         {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    format!("Recursive struct type '{}' is not supported", name),
-                    span,
-                )
-                .with_label("recursive struct definition")
-                .with_help("remove the recursive field or refactor with indirection"),
+                error_codes::TYPE_ERROR
+                    .emit(span)
+                    .arg(
+                        "detail",
+                        format!("Recursive struct type '{}' is not supported", name),
+                    )
+                    .build()
+                    .with_label("recursive struct definition")
+                    .with_help("remove the recursive field or refactor with indirection"),
             );
             return Some(Type::Unknown);
         }
@@ -821,21 +832,23 @@ impl<'a> TypeChecker<'a> {
                 if let Some(alias) = self.type_aliases.get(name).cloned() {
                     if !alias.type_params.is_empty() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type alias '{}' expects {} type argument(s)",
-                                    name,
-                                    alias.type_params.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("missing type arguments")
-                            .with_help(format!(
-                                "provide {} type argument(s) for '{}'",
-                                alias.type_params.len(),
-                                name
-                            )),
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type alias '{}' expects {} type argument(s)",
+                                        name,
+                                        alias.type_params.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("missing type arguments")
+                                .with_help(format!(
+                                    "provide {} type argument(s) for '{}'",
+                                    alias.type_params.len(),
+                                    name
+                                )),
                         );
                         return Type::Unknown;
                     }
@@ -909,22 +922,24 @@ impl<'a> TypeChecker<'a> {
                 if let Some(alias) = self.type_aliases.get(name).cloned() {
                     if alias.type_params.len() != resolved_args.len() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type alias '{}' expects {} type argument(s), found {}",
-                                    name,
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type alias '{}' expects {} type argument(s), found {}",
+                                        name,
+                                        alias.type_params.len(),
+                                        resolved_args.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("incorrect number of type arguments")
+                                .with_help(format!(
+                                    "provide exactly {} type argument(s) for '{}'",
                                     alias.type_params.len(),
-                                    resolved_args.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("incorrect number of type arguments")
-                            .with_help(format!(
-                                "provide exactly {} type argument(s) for '{}'",
-                                alias.type_params.len(),
-                                name
-                            )),
+                                    name
+                                )),
                         );
                         return Type::Unknown;
                     }
@@ -936,17 +951,19 @@ impl<'a> TypeChecker<'a> {
                 if let Some(arity) = expected_arity {
                     if resolved_args.len() != arity {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Generic type '{}' expects {} type argument(s), found {}",
-                                    name,
-                                    arity,
-                                    resolved_args.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("incorrect number of type arguments"),
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Generic type '{}' expects {} type argument(s), found {}",
+                                        name,
+                                        arity,
+                                        resolved_args.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("incorrect number of type arguments"),
                         );
                         return Type::Unknown;
                     }
@@ -960,11 +977,7 @@ impl<'a> TypeChecker<'a> {
                     }
                 } else {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Unknown generic type '{}'", name),
-                            *span,
-                        )
+                        error_codes::TYPE_ERROR.emit(*span).arg("detail", format!("Unknown generic type '{}'", name)).build()
                         .with_label("unknown type")
                         .with_help(format!(
                             "check the spelling of `{name}` or import the type if it is defined elsewhere"
@@ -998,21 +1011,29 @@ impl<'a> TypeChecker<'a> {
 
         // Error if re-declaring a built-in trait
         if self.trait_registry.is_built_in(&trait_name) {
-            self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_REDEFINES_BUILTIN,
-                format!("Cannot redefine built-in trait '{}'", trait_name),
-                trait_decl.name.span,
-            ));
+            self.diagnostics.push(
+                error_codes::TRAIT_REDEFINES_BUILTIN
+                    .emit(trait_decl.name.span)
+                    .arg(
+                        "detail",
+                        format!("Cannot redefine built-in trait '{}'", trait_name),
+                    )
+                    .build(),
+            );
             return;
         }
 
         // Error if duplicate user trait declaration
         if self.trait_registry.trait_exists(&trait_name) {
-            self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_ALREADY_DEFINED,
-                format!("Trait '{}' is already defined", trait_name),
-                trait_decl.name.span,
-            ));
+            self.diagnostics.push(
+                error_codes::TRAIT_ALREADY_DEFINED
+                    .emit(trait_decl.name.span)
+                    .arg(
+                        "detail",
+                        format!("Trait '{}' is already defined", trait_name),
+                    )
+                    .build(),
+            );
             return;
         }
 
@@ -1069,14 +1090,18 @@ impl<'a> TypeChecker<'a> {
         let mut super_trait_names = Vec::new();
         for super_name in &trait_decl.super_traits {
             if !self.trait_registry.trait_exists(super_name) {
-                self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::TRAIT_NOT_FOUND,
-                    format!(
-                        "Supertrait '{}' is not defined (required by trait '{}')",
-                        super_name, trait_name
-                    ),
-                    trait_decl.name.span,
-                ));
+                self.diagnostics.push(
+                    error_codes::TRAIT_NOT_FOUND
+                        .emit(trait_decl.name.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Supertrait '{}' is not defined (required by trait '{}')",
+                                super_name, trait_name
+                            ),
+                        )
+                        .build(),
+                );
             } else {
                 super_trait_names.push(super_name.clone());
             }
@@ -1119,21 +1144,26 @@ impl<'a> TypeChecker<'a> {
                 Some(s) => format!("Trait '{}' is not defined — {}", trait_name, s),
                 None => format!("Trait '{}' is not defined", trait_name),
             };
-            self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::TRAIT_NOT_FOUND,
-                msg,
-                trait_id.span,
-            ));
+            self.diagnostics.push(
+                error_codes::TRAIT_NOT_FOUND
+                    .emit(trait_id.span)
+                    .arg("detail", msg)
+                    .build(),
+            );
             return;
         }
 
         // 2. Check for duplicate impl
         if self.impl_registry.has_impl(&type_name, &trait_name) {
-            self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::IMPL_ALREADY_EXISTS,
-                format!("'{}' already implements '{}'", type_name, trait_name),
-                impl_block.span,
-            ));
+            self.diagnostics.push(
+                error_codes::IMPL_ALREADY_EXISTS
+                    .emit(impl_block.span)
+                    .arg(
+                        "detail",
+                        format!("'{}' already implements '{}'", type_name, trait_name),
+                    )
+                    .build(),
+            );
             return;
         }
 
@@ -1209,14 +1239,18 @@ impl<'a> TypeChecker<'a> {
                             });
                         }
                     } else {
-                        self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_MISSING,
-                            format!(
-                                "Impl of '{}' for '{}' is missing required method '{}'",
-                                trait_name, type_name, required.name
-                            ),
-                            impl_block.span,
-                        ));
+                        self.diagnostics.push(
+                            error_codes::IMPL_METHOD_MISSING
+                                .emit(impl_block.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Impl of '{}' for '{}' is missing required method '{}'",
+                                        trait_name, type_name, required.name
+                                    ),
+                                )
+                                .build(),
+                        );
                         all_ok = false;
                     }
                 }
@@ -1232,27 +1266,35 @@ impl<'a> TypeChecker<'a> {
                         .collect();
 
                     if impl_param_types != required.param_types {
-                        self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH,
-                            format!(
+                        self.diagnostics.push(
+                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH
+                                .emit(impl_method.span)
+                                .arg(
+                                    "detail",
+                                    format!(
                                 "Method '{}' in impl of '{}' for '{}' has wrong parameter types",
                                 required.name, trait_name, type_name
                             ),
-                            impl_method.span,
-                        ));
+                                )
+                                .build(),
+                        );
                         all_ok = false;
                     }
 
                     let impl_return = self.resolve_type_ref(&impl_method.return_type);
                     if impl_return != required.return_type {
-                        self.diagnostics.push(Diagnostic::error_with_code(
-                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH,
-                            format!(
+                        self.diagnostics.push(
+                            error_codes::IMPL_METHOD_SIGNATURE_MISMATCH
+                                .emit(impl_method.span)
+                                .arg(
+                                    "detail",
+                                    format!(
                                 "Method '{}' in impl of '{}' for '{}' has wrong return type",
                                 required.name, trait_name, type_name
                             ),
-                            impl_method.span,
-                        ));
+                                )
+                                .build(),
+                        );
                         all_ok = false;
                     }
                 }
@@ -1296,11 +1338,15 @@ impl<'a> TypeChecker<'a> {
         let is_known_type = self.struct_decls.contains_key(&type_name)
             || type_to_impl_key(&impl_self_type).is_some();
         if !is_known_type {
-            self.diagnostics.push(Diagnostic::error_with_code(
-                error_codes::INHERENT_IMPL_UNKNOWN_TYPE,
-                format!("Type '{}' is not declared in this scope", type_name),
-                impl_block.type_name.span,
-            ));
+            self.diagnostics.push(
+                error_codes::INHERENT_IMPL_UNKNOWN_TYPE
+                    .emit(impl_block.type_name.span)
+                    .arg(
+                        "detail",
+                        format!("Type '{}' is not declared in this scope", type_name),
+                    )
+                    .build(),
+            );
             return;
         }
 
@@ -1310,14 +1356,18 @@ impl<'a> TypeChecker<'a> {
         for method in &impl_block.methods {
             // AT3057: duplicate method name in this inherent impl.
             if !seen_methods.insert(method.name.name.clone()) {
-                self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::INHERENT_METHOD_DUPLICATE,
-                    format!(
-                        "Duplicate method '{}' in inherent implementation of '{}'",
-                        method.name.name, type_name
-                    ),
-                    method.name.span,
-                ));
+                self.diagnostics.push(
+                    error_codes::INHERENT_METHOD_DUPLICATE
+                        .emit(method.name.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Duplicate method '{}' in inherent implementation of '{}'",
+                                method.name.name, type_name
+                            ),
+                        )
+                        .build(),
+                );
                 continue;
             }
 
@@ -1326,14 +1376,18 @@ impl<'a> TypeChecker<'a> {
                 .inherent_registry
                 .contains_key(&(type_name.clone(), method.name.name.clone()))
             {
-                self.diagnostics.push(Diagnostic::error_with_code(
-                    error_codes::INHERENT_METHOD_DUPLICATE,
-                    format!(
-                        "Method '{}' already defined for '{}' in a previous impl block",
-                        method.name.name, type_name
-                    ),
-                    method.name.span,
-                ));
+                self.diagnostics.push(
+                    error_codes::INHERENT_METHOD_DUPLICATE
+                        .emit(method.name.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Method '{}' already defined for '{}' in a previous impl block",
+                                method.name.name, type_name
+                            ),
+                        )
+                        .build(),
+                );
                 continue;
             }
 
@@ -1341,26 +1395,26 @@ impl<'a> TypeChecker<'a> {
             let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
             if let Some(pos) = self_param_pos {
                 if pos != 0 {
-                    self.diagnostics.push(Diagnostic::error_with_code(
-                        error_codes::INHERENT_SELF_NOT_FIRST,
-                        format!(
-                            "Self receiver in method '{}' must be the first parameter",
-                            method.name.name
-                        ),
-                        method.params[pos].span,
-                    ));
+                    self.diagnostics.push(
+                        error_codes::INHERENT_SELF_NOT_FIRST
+                            .emit(method.params[pos].span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Self receiver in method '{}' must be the first parameter",
+                                    method.name.name
+                                ),
+                            )
+                            .build(),
+                    );
                 }
 
                 // D-038: self must have an ownership annotation.
                 if method.params[0].name.name == "self" && method.params[0].ownership.is_none() {
-                    self.diagnostics.push(Diagnostic::error_with_code(
-                        error_codes::MISSING_OWNERSHIP_ANNOTATION,
-                        format!(
+                    self.diagnostics.push(error_codes::MISSING_OWNERSHIP_ANNOTATION.emit(method.params[0].span).arg("detail", format!(
                             "Self receiver in method '{}' requires an ownership annotation (borrow self, own self, or share self)",
                             method.name.name
-                        ),
-                        method.params[0].span,
-                    ));
+                        )).build());
                 }
             }
 
@@ -1369,14 +1423,10 @@ impl<'a> TypeChecker<'a> {
                 t == &type_name && entry.methods.contains_key(&method.name.name)
             });
             if shadows_trait {
-                self.diagnostics.push(Diagnostic::warning_with_code(
-                    error_codes::INHERENT_SHADOWS_TRAIT_METHOD,
-                    format!(
+                self.diagnostics.push(error_codes::INHERENT_SHADOWS_TRAIT_METHOD.emit(method.name.span).arg("detail", format!(
                         "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
                         method.name.name, type_name
-                    ),
-                    method.name.span,
-                ));
+                    )).build());
             }
 
             // Register into inherent_registry keyed by (type_name, method_name).
@@ -1397,6 +1447,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_explicit_borrows = std::mem::take(&mut self.current_fn_explicit_borrow_params);
         let prev_moved_vars = std::mem::take(&mut self.moved_vars);
 
         self.current_function_return_type = Some(self.resolve_type_ref(&method.return_type));
@@ -1437,6 +1488,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.current_fn_explicit_borrow_params = prev_explicit_borrows;
         self.moved_vars = prev_moved_vars;
     }
 
@@ -1444,11 +1496,7 @@ impl<'a> TypeChecker<'a> {
         // AT4006: async fn main() is forbidden
         if func.is_async && func.name.name == "main" {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    error_codes::ASYNC_MAIN_FORBIDDEN,
-                    "`main` function cannot be declared `async`".to_string(),
-                    func.name.span,
-                )
+                error_codes::ASYNC_MAIN_FORBIDDEN.emit(func.name.span).arg("detail", "`main` function cannot be declared `async`".to_string()).build()
                 .with_label("`async` on `main` is forbidden")
                 .with_help("use top-level `await` instead — the Atlas runtime wraps the script in block_on automatically"),
             );
@@ -1465,12 +1513,14 @@ impl<'a> TypeChecker<'a> {
         for attr in &func.attributes {
             if attr.name == "allow" && attr.arg != "unused" && !attr.arg.is_empty() {
                 self.diagnostics.push(
-                    Diagnostic::warning_with_code(
-                        "AT2009",
-                        format!("Unknown lint '{}' in @allow attribute", attr.arg),
-                        attr.span,
-                    )
-                    .with_help("Did you mean @allow(unused)?"),
+                    error_codes::DEPRECATED_TYPE_ALIAS
+                        .emit(attr.span)
+                        .arg(
+                            "detail",
+                            format!("Unknown lint '{}' in @allow attribute", attr.arg),
+                        )
+                        .build()
+                        .with_help("Did you mean @allow(unused)?"),
                 );
             }
         }
@@ -1481,6 +1531,7 @@ impl<'a> TypeChecker<'a> {
         let prev_declared_symbols = std::mem::take(&mut self.declared_symbols);
         let prev_used_symbols = std::mem::take(&mut self.used_symbols);
         let prev_param_ownerships = std::mem::take(&mut self.current_fn_param_ownerships);
+        let prev_explicit_borrows = std::mem::take(&mut self.current_fn_explicit_borrow_params);
         let prev_moved_vars = std::mem::take(&mut self.moved_vars);
         let prev_type_params = std::mem::take(&mut self.active_type_params);
         let prev_in_async = self.in_async_context;
@@ -1508,14 +1559,10 @@ impl<'a> TypeChecker<'a> {
                     }
                     InferredReturn::Inconsistent { .. } => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3050",
-                                format!(
+                            error_codes::CANNOT_INFER_RETURN_TYPE.emit(func.name.span).arg("detail", format!(
                                     "cannot infer return type for '{}' — add an explicit `-> T` annotation",
                                     func.name.name
-                                ),
-                                func.name.span,
-                            )
+                                )).build()
                             .with_label("inconsistent return types across branches")
                             .with_help(format!(
                                 "add an explicit return type annotation: `fn {}(...) -> T`",
@@ -1605,33 +1652,31 @@ impl<'a> TypeChecker<'a> {
                     OwnershipAnnotation::Own => {
                         if matches!(ty, Type::Number | Type::Bool | Type::String) {
                             self.diagnostics.push(
-                                Diagnostic::warning_with_code(
-                                    error_codes::OWN_ON_PRIMITIVE,
-                                    format!(
-                                        "`own` annotation on parameter `{}` has no effect: \
+                                error_codes::OWN_ON_PRIMITIVE
+                                    .emit(param.name.span)
+                                    .arg(
+                                        "detail",
+                                        format!(
+                                            "`own` annotation on parameter `{}` has no effect: \
                                          primitive types are always copied",
-                                        param.name.name
+                                            param.name.name
+                                        ),
+                                    )
+                                    .build()
+                                    .with_help(
+                                        "remove the `own` annotation from this primitive parameter",
                                     ),
-                                    param.name.span,
-                                )
-                                .with_help(
-                                    "remove the `own` annotation from this primitive parameter",
-                                ),
                             );
                         }
                     }
                     OwnershipAnnotation::Borrow => {
                         if matches!(&ty, Type::Generic { name, .. } if name == "share") {
                             self.diagnostics.push(
-                                Diagnostic::warning_with_code(
-                                    error_codes::BORROW_ON_SHARED,
-                                    format!(
+                                error_codes::BORROW_ON_SHARED.emit(param.name.span).arg("detail", format!(
                                         "`borrow` annotation on parameter `{}` is redundant: \
                                          `share<T>` already has reference semantics",
                                         param.name.name
-                                    ),
-                                    param.name.span,
-                                )
+                                    )).build()
                                 .with_help(
                                     "remove the `borrow` annotation from this `share<T>` parameter",
                                 ),
@@ -1648,6 +1693,14 @@ impl<'a> TypeChecker<'a> {
             .params
             .iter()
             .map(|p| (p.name.name.clone(), p.ownership.clone()))
+            .collect();
+        // Track which params had an explicit ownership keyword in source.
+        // AT3054 (borrow escape) only fires for explicit `borrow`, not implicit defaults (D-040).
+        self.current_fn_explicit_borrow_params = func
+            .params
+            .iter()
+            .filter(|p| p.ownership_explicit && p.ownership == Some(OwnershipAnnotation::Borrow))
+            .map(|p| p.name.name.clone())
             .collect();
 
         self.fn_ownership_registry.insert(
@@ -1677,16 +1730,15 @@ impl<'a> TypeChecker<'a> {
             && !self.block_always_returns(&func.body)
         {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3004",
-                    "Not all code paths return a value",
-                    func.span,
-                )
-                .with_label("function body")
-                .with_help(format!(
-                    "ensure all code paths return a value of type {}",
-                    return_type.display_name()
-                )),
+                error_codes::MISSING_RETURN
+                    .emit(func.span)
+                    .arg("detail", "Not all code paths return a value")
+                    .build()
+                    .with_label("function body")
+                    .with_help(format!(
+                        "ensure all code paths return a value of type {}",
+                        return_type.display_name()
+                    )),
             );
         }
 
@@ -1702,6 +1754,7 @@ impl<'a> TypeChecker<'a> {
         self.declared_symbols = prev_declared_symbols;
         self.used_symbols = prev_used_symbols;
         self.current_fn_param_ownerships = prev_param_ownerships;
+        self.current_fn_explicit_borrow_params = prev_explicit_borrows;
         self.moved_vars = prev_moved_vars;
         self.in_async_context = prev_in_async;
         self.current_fn_allow_unused = prev_allow_unused;
@@ -1733,7 +1786,10 @@ impl<'a> TypeChecker<'a> {
             };
 
             self.diagnostics.push(
-                Diagnostic::warning_with_code("AT2001", &message, *span)
+                error_codes::UNUSED_VARIABLE
+                    .emit(*span)
+                    .arg("detail", &message)
+                    .build()
                     .with_label("declared here but never used")
                     .with_help(format!(
                         "remove the {} or prefix with underscore: _{}",
@@ -1755,7 +1811,10 @@ impl<'a> TypeChecker<'a> {
             if found_return {
                 // Code after return is unreachable
                 self.diagnostics.push(
-                    Diagnostic::warning_with_code("AT2002", "Unreachable code", stmt.span())
+                    error_codes::UNREACHABLE_CODE
+                        .emit(stmt.span())
+                        .arg("detail", "Unreachable code")
+                        .build()
                         .with_label("this code will never execute")
                         .with_help("remove this code or restructure your control flow"),
                 );
@@ -1809,19 +1868,21 @@ impl<'a> TypeChecker<'a> {
                 // Emit deprecation warning for `var` keyword
                 if var.uses_deprecated_var {
                     self.diagnostics.push(
-                        Diagnostic::warning_with_code(
-                            "AT2014",
-                            format!(
-                                "The `var` keyword is deprecated; use `let mut {}` instead",
-                                var.name.name
-                            ),
-                            var.span,
-                        )
-                        .with_label("deprecated syntax")
-                        .with_help(format!(
-                            "Replace `var {}` with `let mut {}`",
-                            var.name.name, var.name.name
-                        )),
+                        error_codes::DEPRECATED_VAR_KEYWORD
+                            .emit(var.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "The `var` keyword is deprecated; use `let mut {}` instead",
+                                    var.name.name
+                                ),
+                            )
+                            .build()
+                            .with_label("deprecated syntax")
+                            .with_help(format!(
+                                "Replace `var {}` with `let mut {}`",
+                                var.name.name, var.name.name
+                            )),
                     );
                 }
 
@@ -1829,24 +1890,23 @@ impl<'a> TypeChecker<'a> {
                 self.declared_symbols
                     .insert(var.name.name.clone(), (var.name.span, SymbolKind::Variable));
 
-                // AT3054: borrow param cannot escape into a let binding
+                // AT3054: explicitly-annotated `borrow` param cannot escape into a let binding.
+                // Bare params (implicit borrow, D-040) are excluded — they are valid pass-throughs.
                 if let Expr::Identifier(id) = &var.init {
                     let ownership = self
                         .current_fn_param_ownerships
                         .get(&id.name)
                         .cloned()
                         .flatten();
-                    if ownership == Some(OwnershipAnnotation::Borrow) {
+                    let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
+                        && self.current_fn_explicit_borrow_params.contains(&id.name);
+                    if is_explicit_borrow {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                error_codes::BORROW_ESCAPE,
-                                format!(
+                            error_codes::BORROW_ESCAPE.emit(var.span).arg("detail", format!(
                                     "cannot store `borrow` parameter `{}` in a binding: \
                                      borrows cannot outlive their scope",
                                     id.name
-                                ),
-                                var.span,
-                            )
+                                )).build()
                             .with_label("borrow stored here")
                             .with_help(
                                 "copy the value or use a computation on the `borrow` parameter \
@@ -1903,19 +1963,20 @@ impl<'a> TypeChecker<'a> {
                                 )
                             })
                             .unwrap_or((1, annotation_span.start + 1));
-                        let diag = Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Type mismatch: expected {}, found {}",
-                                declared_type.display_name(),
-                                init_type.display_name()
-                            ),
-                            init_span,
-                        )
-                        .with_label(format!("found {} here", init_type.display_name()))
-                        .with_help(help)
-                        .with_related_location(
-                            crate::diagnostic::RelatedLocation {
+                        let diag = error_codes::TYPE_ERROR
+                            .emit(init_span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Type mismatch: expected {}, found {}",
+                                    declared_type.display_name(),
+                                    init_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label(format!("found {} here", init_type.display_name()))
+                            .with_help(help)
+                            .with_related_location(crate::diagnostic::RelatedLocation {
                                 file: annotation_span.file().to_string(),
                                 line: ann_line,
                                 column: ann_col,
@@ -1924,23 +1985,24 @@ impl<'a> TypeChecker<'a> {
                                     "expected {} due to this type annotation",
                                     declared_type.display_name()
                                 ),
-                            },
-                        );
+                            });
                         self.diagnostics.push(diag);
                     }
                     declared_type
                 } else {
                     if is_empty_array_literal {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                error_codes::INFERRED_TYPE_INCOMPATIBLE,
-                                "Cannot infer type of empty array literal".to_string(),
-                                var.span,
-                            )
-                            .with_label("type annotation required")
-                            .with_help(
-                                "add an explicit array type annotation: `let x: []number = []`",
-                            ),
+                            error_codes::INFERRED_TYPE_INCOMPATIBLE
+                                .emit(var.span)
+                                .arg(
+                                    "detail",
+                                    "Cannot infer type of empty array literal".to_string(),
+                                )
+                                .build()
+                                .with_label("type annotation required")
+                                .with_help(
+                                    "add an explicit array type annotation: `let x: []number = []`",
+                                ),
                         );
                     }
                     // No explicit type annotation - use inferred type
@@ -1994,21 +2056,23 @@ impl<'a> TypeChecker<'a> {
                             )
                         });
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Type mismatch in assignment: expected {}, found {}",
+                        error_codes::TYPE_ERROR
+                            .emit(assign.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Type mismatch in assignment: expected {}, found {}",
+                                    target_type.display_name(),
+                                    value_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label(format!(
+                                "expected {}, found {}",
                                 target_type.display_name(),
                                 value_type.display_name()
-                            ),
-                            assign.span,
-                        )
-                        .with_label(format!(
-                            "expected {}, found {}",
-                            target_type.display_name(),
-                            value_type.display_name()
-                        ))
-                        .with_help(help),
+                            ))
+                            .with_help(help),
                     );
                 }
 
@@ -2027,20 +2091,22 @@ impl<'a> TypeChecker<'a> {
                         .flatten();
                     if ownership == Some(OwnershipAnnotation::Share) {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                error_codes::SHARE_VIOLATION,
-                                format!(
-                                    "cannot assign to `share` parameter `{}`: \
+                            error_codes::SHARE_VIOLATION
+                                .emit(assign.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "cannot assign to `share` parameter `{}`: \
                                      share params are immutable from the callee's perspective",
-                                    id.name
-                                ),
-                                assign.span,
-                            )
-                            .with_label("assignment to share param")
-                            .with_help(
-                                "share params cannot be mutated — both caller and callee hold \
+                                        id.name
+                                    ),
+                                )
+                                .build()
+                                .with_label("assignment to share param")
+                                .with_help(
+                                    "share params cannot be mutated — both caller and callee hold \
                                  valid refs, but neither may mutate through the share",
-                            ),
+                                ),
                         );
                     }
                 }
@@ -2049,20 +2115,25 @@ impl<'a> TypeChecker<'a> {
                 if let AssignTarget::Name(id) = &assign.target {
                     if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                         if !symbol.mutable {
-                            let diag = Diagnostic::error_with_code(
-                                "AT3003",
-                                format!("Cannot assign to immutable variable '{}'", id.name),
-                                id.span,
-                            )
-                            .with_label("immutable variable")
-                            .with_related_location(crate::diagnostic::RelatedLocation {
-                                file: "<input>".to_string(),
-                                line: 1,
-                                column: symbol.span.start + 1,
-                                length: symbol.span.end.saturating_sub(symbol.span.start),
-                                message: format!("'{}' declared here as immutable", symbol.name),
-                            })
-                            .with_help(suggestions::suggest_mutability_fix(&id.name));
+                            let diag = error_codes::IMMUTABLE_ASSIGNMENT
+                                .emit(id.span)
+                                .arg(
+                                    "detail",
+                                    format!("Cannot assign to immutable variable '{}'", id.name),
+                                )
+                                .build()
+                                .with_label("immutable variable")
+                                .with_related_location(crate::diagnostic::RelatedLocation {
+                                    file: "<input>".to_string(),
+                                    line: 1,
+                                    column: symbol.span.start + 1,
+                                    length: symbol.span.end.saturating_sub(symbol.span.start),
+                                    message: format!(
+                                        "'{}' declared here as immutable",
+                                        symbol.name
+                                    ),
+                                })
+                                .with_help(suggestions::suggest_mutability_fix(&id.name));
 
                             self.diagnostics.push(diag);
                         }
@@ -2087,14 +2158,10 @@ impl<'a> TypeChecker<'a> {
                 // Compound assignment requires both sides to be numbers (allow Unknown/any for recovery)
                 if !matches!(target_norm, Type::Number | Type::Unknown) && !target_is_any {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
+                        error_codes::TYPE_ERROR.emit(compound.span).arg("detail", format!(
                                 "Compound assignment requires number type, found {}",
                                 target_type.display_name()
-                            ),
-                            compound.span,
-                        )
+                            )).build()
                         .with_label("type mismatch")
                         .with_help(
                             "compound assignment operators (+=, -=, etc.) only work with numbers",
@@ -2104,16 +2171,18 @@ impl<'a> TypeChecker<'a> {
 
                 if !matches!(value_norm, Type::Number | Type::Unknown) && !value_is_any {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Compound assignment requires number value, found {}",
-                                value_type.display_name()
-                            ),
-                            compound.span,
-                        )
-                        .with_label("type mismatch")
-                        .with_help("the value must be a number for compound assignment"),
+                        error_codes::TYPE_ERROR
+                            .emit(compound.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Compound assignment requires number value, found {}",
+                                    value_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label("type mismatch")
+                            .with_help("the value must be a number for compound assignment"),
                     );
                 }
 
@@ -2121,12 +2190,14 @@ impl<'a> TypeChecker<'a> {
                 if let AssignTarget::Name(id) = &compound.target {
                     if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                         if !symbol.mutable {
-                            let diag = Diagnostic::error_with_code(
-                                "AT3003",
-                                format!("Cannot modify immutable variable '{}'", id.name),
-                                id.span,
-                            )
-                            .with_label("immutable variable");
+                            let diag = error_codes::IMMUTABLE_ASSIGNMENT
+                                .emit(id.span)
+                                .arg(
+                                    "detail",
+                                    format!("Cannot modify immutable variable '{}'", id.name),
+                                )
+                                .build()
+                                .with_label("immutable variable");
                             self.diagnostics.push(diag);
                         }
                     }
@@ -2137,13 +2208,21 @@ impl<'a> TypeChecker<'a> {
                 let cond_norm = cond_type.normalized();
                 if cond_norm != Type::Bool {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Condition must be bool, found {}", cond_type.display_name()),
-                            if_stmt.cond.span(),
-                        )
-                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
-                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
+                        error_codes::TYPE_ERROR
+                            .emit(if_stmt.cond.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Condition must be bool, found {}",
+                                    cond_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label(format!(
+                                "expected bool, found {}",
+                                cond_type.display_name()
+                            ))
+                            .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
                 let (then_narrow, else_narrow) = self.narrow_condition(&if_stmt.cond);
@@ -2163,13 +2242,21 @@ impl<'a> TypeChecker<'a> {
                 let cond_norm = cond_type.normalized();
                 if cond_norm != Type::Bool {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Condition must be bool, found {}", cond_type.display_name()),
-                            while_stmt.cond.span(),
-                        )
-                        .with_label(format!("expected bool, found {}", cond_type.display_name()))
-                        .with_help(suggestions::suggest_condition_fix(&cond_type)),
+                        error_codes::TYPE_ERROR
+                            .emit(while_stmt.cond.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Condition must be bool, found {}",
+                                    cond_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label(format!(
+                                "expected bool, found {}",
+                                cond_type.display_name()
+                            ))
+                            .with_help(suggestions::suggest_condition_fix(&cond_type)),
                     );
                 }
                 let old_in_loop = self.in_loop;
@@ -2184,20 +2271,18 @@ impl<'a> TypeChecker<'a> {
             Stmt::Return(ret) => {
                 if self.current_function_return_type.is_none() {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3011",
-                            "Return statement outside function",
-                            ret.span,
-                        )
-                        .with_label("invalid return"),
+                        error_codes::NOT_INDEXABLE
+                            .emit(ret.span)
+                            .arg("detail", "Return statement outside function")
+                            .build()
+                            .with_label("invalid return"),
                     );
                     return;
                 }
 
-                // AT3054: borrow param cannot escape via return.
-                // No exemption for primitives — explicit `borrow` annotation means
-                // the caller's contract is "I will not keep this value", and that
-                // applies regardless of whether the type is a primitive or not.
+                // AT3054: explicitly-annotated `borrow` param cannot escape via return.
+                // Bare params (implicit borrow, D-040) are valid pass-throughs — omit annotation
+                // is not the same as promising "I will not keep this value".
                 if let Some(Expr::Identifier(id)) = &ret.value {
                     {
                         let ownership = self
@@ -2205,17 +2290,15 @@ impl<'a> TypeChecker<'a> {
                             .get(&id.name)
                             .cloned()
                             .flatten();
-                        if ownership == Some(OwnershipAnnotation::Borrow) {
+                        let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
+                            && self.current_fn_explicit_borrow_params.contains(&id.name);
+                        if is_explicit_borrow {
                             self.diagnostics.push(
-                                Diagnostic::error_with_code(
-                                    error_codes::BORROW_ESCAPE,
-                                    format!(
+                                error_codes::BORROW_ESCAPE.emit(ret.span).arg("detail", format!(
                                         "cannot return `borrow` parameter `{}`: \
                                          borrows cannot escape the function",
                                         id.name
-                                    ),
-                                    ret.span,
-                                )
+                                    )).build()
                                 .with_label("borrow escapes here")
                                 .with_help(
                                     "return a copy or owned value instead of a `borrow` parameter",
@@ -2251,21 +2334,23 @@ impl<'a> TypeChecker<'a> {
                     .unwrap_or(false)
                     && self.is_typed_hashmap(expected);
                 if !allows_hashmap_new && !self.is_assignable_with_traits(&return_type, expected) {
-                    let mut diag = Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Return type mismatch: expected {}, found {}",
+                    let mut diag = error_codes::TYPE_ERROR
+                        .emit(ret.span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Return type mismatch: expected {}, found {}",
+                                expected.display_name(),
+                                return_type.display_name()
+                            ),
+                        )
+                        .build()
+                        .with_label(format!(
+                            "expected {}, found {}",
                             expected.display_name(),
                             return_type.display_name()
-                        ),
-                        ret.span,
-                    )
-                    .with_label(format!(
-                        "expected {}, found {}",
-                        expected.display_name(),
-                        return_type.display_name()
-                    ))
-                    .with_help(suggestions::suggest_return_fix(expected, &return_type));
+                        ))
+                        .with_help(suggestions::suggest_return_fix(expected, &return_type));
 
                     // Add related location for function declaration
                     if let Some((func_name, func_span)) = &self.current_function_info {
@@ -2284,24 +2369,22 @@ impl<'a> TypeChecker<'a> {
             Stmt::Break(span) => {
                 if !self.in_loop {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3010",
-                            "Break statement outside loop",
-                            *span,
-                        )
-                        .with_label("invalid break"),
+                        error_codes::INVALID_INDEX_TYPE
+                            .emit(*span)
+                            .arg("detail", "Break statement outside loop")
+                            .build()
+                            .with_label("invalid break"),
                     );
                 }
             }
             Stmt::Continue(span) => {
                 if !self.in_loop {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3010",
-                            "Continue statement outside loop",
-                            *span,
-                        )
-                        .with_label("invalid continue"),
+                        error_codes::INVALID_INDEX_TYPE
+                            .emit(*span)
+                            .arg("detail", "Continue statement outside loop")
+                            .build()
+                            .with_label("invalid continue"),
                     );
                 }
             }
@@ -2330,19 +2413,21 @@ impl<'a> TypeChecker<'a> {
                     _ if iterable_is_any => {}
                     _ => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "for-in requires an array, found {}",
+                            error_codes::TYPE_ERROR
+                                .emit(for_in_stmt.iterable.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "for-in requires an array, found {}",
+                                        iterable_type.display_name()
+                                    ),
+                                )
+                                .build()
+                                .with_label(format!(
+                                    "expected array, found {}",
                                     iterable_type.display_name()
-                                ),
-                                for_in_stmt.iterable.span(),
-                            )
-                            .with_label(format!(
-                                "expected array, found {}",
-                                iterable_type.display_name()
-                            ))
-                            .with_help(suggestions::suggest_for_in_fix(&iterable_type)),
+                                ))
+                                .with_help(suggestions::suggest_for_in_fix(&iterable_type)),
                         );
                     }
                 }
@@ -2425,15 +2510,17 @@ impl<'a> TypeChecker<'a> {
                 let index_norm = index_type.normalized();
                 if index_norm != Type::Number {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!(
-                                "Array index must be number, found {}",
-                                index_type.display_name()
-                            ),
-                            index.span(),
-                        )
-                        .with_label("type mismatch"),
+                        error_codes::TYPE_ERROR
+                            .emit(index.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Array index must be number, found {}",
+                                    index_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label("type mismatch"),
                     );
                 }
 
@@ -2443,15 +2530,17 @@ impl<'a> TypeChecker<'a> {
                     Type::Unknown => Type::Unknown,
                     _ => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Cannot index into non-array type {}",
-                                    target_type.display_name()
-                                ),
-                                target.span(),
-                            )
-                            .with_label("not an array"),
+                            error_codes::TYPE_ERROR
+                                .emit(target.span())
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Cannot index into non-array type {}",
+                                        target_type.display_name()
+                                    ),
+                                )
+                                .build()
+                                .with_label("not an array"),
                         );
                         Type::Unknown
                     }
@@ -2485,22 +2574,25 @@ impl<'a> TypeChecker<'a> {
                                 member_name,
                                 available.join(", ")
                             );
-                            let mut diag = Diagnostic::error_with_code(
-                                "AT3010",
-                                format!(
-                                    "Type '{}' has no field named '{}'",
-                                    target_type.display_name(),
-                                    member_name
-                                ),
-                                member.span,
-                            )
-                            .with_label("field not found")
-                            .with_help(help);
+                            let mut diag = error_codes::INVALID_INDEX_TYPE
+                                .emit(member.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type '{}' has no field named '{}'",
+                                        target_type.display_name(),
+                                        member_name
+                                    ),
+                                )
+                                .build()
+                                .with_label("field not found")
+                                .with_help(help);
                             if let Some(name) = similar {
-                                diag = diag.with_suggestion_rename(
+                                diag = diag.with_suggestion_rename_noted(
                                     format!("did you mean `{}`?", name),
                                     member_name,
                                     name,
+                                    format!("`{}` is a valid field on this struct", name),
                                 );
                             }
                             self.diagnostics.push(diag);
@@ -2516,15 +2608,11 @@ impl<'a> TypeChecker<'a> {
                                         field_types.push(field_ty);
                                     } else {
                                         self.diagnostics.push(
-                                            Diagnostic::error_with_code(
-                                                "AT3010",
-                                                format!(
+                                            error_codes::INVALID_INDEX_TYPE.emit(member.span).arg("detail", format!(
                                                     "Type '{}' has no field named '{}'",
                                                     member_ty.display_name(),
                                                     member_name
-                                                ),
-                                                member.span,
-                                            )
+                                                )).build()
                                             .with_label("field not found")
                                             .with_help(format!(
                                                 "field '{}' not found on '{}'. Available fields: {}. Note: field must exist on all union members.",
@@ -2538,16 +2626,18 @@ impl<'a> TypeChecker<'a> {
                                 }
                                 other => {
                                     self.diagnostics.push(
-                                        Diagnostic::error_with_code(
-                                            "AT3001",
-                                            format!(
+                                        error_codes::TYPE_ERROR
+                                            .emit(member.span)
+                                            .arg(
+                                                "detail",
+                                                format!(
                                                 "Cannot assign field '{}' on non-record type {}",
                                                 member_name,
                                                 other.display_name()
                                             ),
-                                            member.span,
-                                        )
-                                        .with_label("invalid field assignment"),
+                                            )
+                                            .build()
+                                            .with_label("invalid field assignment"),
                                     );
                                     return Type::Unknown;
                                 }
@@ -2564,16 +2654,18 @@ impl<'a> TypeChecker<'a> {
                     Type::Unknown => Type::Unknown,
                     other => {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Cannot assign field '{}' on non-record type {}",
-                                    member_name,
-                                    other.display_name()
-                                ),
-                                member.span,
-                            )
-                            .with_label("invalid field assignment"),
+                            error_codes::TYPE_ERROR
+                                .emit(member.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Cannot assign field '{}' on non-record type {}",
+                                        member_name,
+                                        other.display_name()
+                                    ),
+                                )
+                                .build()
+                                .with_label("invalid field assignment"),
                         );
                         Type::Unknown
                     }
@@ -2816,21 +2908,23 @@ impl<'a> TypeChecker<'a> {
                         }
 
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type alias '{}' expects {} type argument(s)",
-                                    name,
-                                    alias.type_params.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("missing type arguments")
-                            .with_help(format!(
-                                "provide {} type argument(s) for '{}'",
-                                alias.type_params.len(),
-                                name
-                            )),
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type alias '{}' expects {} type argument(s)",
+                                        name,
+                                        alias.type_params.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("missing type arguments")
+                                .with_help(format!(
+                                    "provide {} type argument(s) for '{}'",
+                                    alias.type_params.len(),
+                                    name
+                                )),
                         );
                         return Type::Unknown;
                     }
@@ -2902,13 +2996,12 @@ impl<'a> TypeChecker<'a> {
                     };
 
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3060",
-                            format!("Unknown type '{}'", name),
-                            *span,
-                        )
-                        .with_label("unknown type")
-                        .with_help(help),
+                        error_codes::UNKNOWN_TYPE_NAME
+                            .emit(*span)
+                            .arg("detail", format!("Unknown type '{}'", name))
+                            .build()
+                            .with_label("unknown type")
+                            .with_help(help),
                     );
 
                     Type::Unknown
@@ -2969,22 +3062,24 @@ impl<'a> TypeChecker<'a> {
                 if let Some(alias) = self.type_aliases.get(name).cloned() {
                     if alias.type_params.len() != resolved_args.len() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type alias '{}' expects {} type argument(s), found {}",
-                                    name,
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type alias '{}' expects {} type argument(s), found {}",
+                                        name,
+                                        alias.type_params.len(),
+                                        resolved_args.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("incorrect number of type arguments")
+                                .with_help(format!(
+                                    "provide exactly {} type argument(s) for '{}'",
                                     alias.type_params.len(),
-                                    resolved_args.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("incorrect number of type arguments")
-                            .with_help(format!(
-                                "provide exactly {} type argument(s) for '{}'",
-                                alias.type_params.len(),
-                                name
-                            )),
+                                    name
+                                )),
                         );
                         return Type::Unknown;
                     }
@@ -3021,11 +3116,7 @@ impl<'a> TypeChecker<'a> {
                 } else {
                     // Unknown generic type
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Unknown generic type '{}'", name),
-                            *span,
-                        )
+                        error_codes::TYPE_ERROR.emit(*span).arg("detail", format!("Unknown generic type '{}'", name)).build()
                         .with_label("unknown type")
                         .with_help(format!(
                             "check the spelling of `{name}` or import the type if it is defined elsewhere"
@@ -3074,12 +3165,14 @@ impl<'a> TypeChecker<'a> {
         {
             let mut chain = self.alias_resolution_stack[index..].to_vec();
             chain.push(alias_name.clone());
-            let mut diag = Diagnostic::error_with_code(
-                "AT3001",
-                format!("Circular type alias detected: {}", chain.join(" -> ")),
-                span,
-            )
-            .with_label("circular type alias");
+            let mut diag = error_codes::TYPE_ERROR
+                .emit(span)
+                .arg(
+                    "detail",
+                    format!("Circular type alias detected: {}", chain.join(" -> ")),
+                )
+                .build()
+                .with_label("circular type alias");
             diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
                 file: "<input>".to_string(),
                 line: 1,
@@ -3184,17 +3277,19 @@ impl<'a> TypeChecker<'a> {
                 if let Some(alias) = self.type_aliases.get(name).cloned() {
                     if alias.type_params.len() != resolved_args.len() {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Type alias '{}' expects {} type argument(s), found {}",
-                                    name,
-                                    alias.type_params.len(),
-                                    resolved_args.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("incorrect number of type arguments"),
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Type alias '{}' expects {} type argument(s), found {}",
+                                        name,
+                                        alias.type_params.len(),
+                                        resolved_args.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("incorrect number of type arguments"),
                         );
                         return Type::Unknown;
                     }
@@ -3205,27 +3300,25 @@ impl<'a> TypeChecker<'a> {
                 if let Some(arity) = expected_arity {
                     if resolved_args.len() != arity {
                         self.diagnostics.push(
-                            Diagnostic::error_with_code(
-                                "AT3001",
-                                format!(
-                                    "Generic type '{}' expects {} type argument(s), found {}",
-                                    name,
-                                    arity,
-                                    resolved_args.len()
-                                ),
-                                *span,
-                            )
-                            .with_label("incorrect number of type arguments"),
+                            error_codes::TYPE_ERROR
+                                .emit(*span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Generic type '{}' expects {} type argument(s), found {}",
+                                        name,
+                                        arity,
+                                        resolved_args.len()
+                                    ),
+                                )
+                                .build()
+                                .with_label("incorrect number of type arguments"),
                         );
                         return Type::Unknown;
                     }
                 } else {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            "AT3001",
-                            format!("Unknown generic type '{}'", name),
-                            *span,
-                        )
+                        error_codes::TYPE_ERROR.emit(*span).arg("detail", format!("Unknown generic type '{}'", name)).build()
                         .with_label("unknown type")
                         .with_help(format!(
                             "check the spelling of `{name}` or import the type if it is defined elsewhere"
@@ -3272,16 +3365,18 @@ impl<'a> TypeChecker<'a> {
         let mut inferer = generics::TypeInferer::new();
         if inferer.unify(&target, expected).is_err() {
             self.diagnostics.push(
-                Diagnostic::error_with_code(
-                    "AT3001",
-                    format!(
-                        "Cannot infer type arguments for alias '{}' from {}",
-                        alias.name.name,
-                        expected.display_name()
-                    ),
-                    span,
-                )
-                .with_label("cannot infer type arguments"),
+                error_codes::TYPE_ERROR
+                    .emit(span)
+                    .arg(
+                        "detail",
+                        format!(
+                            "Cannot infer type arguments for alias '{}' from {}",
+                            alias.name.name,
+                            expected.display_name()
+                        ),
+                    )
+                    .build()
+                    .with_label("cannot infer type arguments"),
             );
             return None;
         }
@@ -3292,15 +3387,17 @@ impl<'a> TypeChecker<'a> {
                 resolved_args.push(arg.clone());
             } else {
                 self.diagnostics.push(
-                    Diagnostic::error_with_code(
-                        "AT3001",
-                        format!(
-                            "Cannot infer type argument '{}' for alias '{}'",
-                            param.name, alias.name.name
-                        ),
-                        span,
-                    )
-                    .with_label("cannot infer type argument"),
+                    error_codes::TYPE_ERROR
+                        .emit(span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "Cannot infer type argument '{}' for alias '{}'",
+                                param.name, alias.name.name
+                            ),
+                        )
+                        .build()
+                        .with_label("cannot infer type argument"),
                 );
                 return None;
             }
@@ -3338,12 +3435,14 @@ impl<'a> TypeChecker<'a> {
     fn maybe_warn_deprecated_alias(&mut self, alias: &TypeAliasDecl, span: Span) {
         let metadata = self.parse_alias_metadata(alias);
         if metadata.deprecated {
-            let mut diag = Diagnostic::warning_with_code(
-                "AT2009",
-                format!("Type alias '{}' is deprecated", alias.name.name),
-                span,
-            )
-            .with_label("deprecated type alias");
+            let mut diag = error_codes::DEPRECATED_TYPE_ALIAS
+                .emit(span)
+                .arg(
+                    "detail",
+                    format!("Type alias '{}' is deprecated", alias.name.name),
+                )
+                .build()
+                .with_label("deprecated type alias");
 
             if let Some(since) = metadata.since {
                 diag = diag.with_note(format!("deprecated since {}", since));
@@ -3400,25 +3499,27 @@ impl<'a> TypeChecker<'a> {
             for trait_name in &param.trait_bounds {
                 if !self.type_satisfies_trait_bound(&actual, trait_name) {
                     self.diagnostics.push(
-                        Diagnostic::error_with_code(
-                            error_codes::TRAIT_BOUND_NOT_SATISFIED,
-                            format!(
-                                "Type '{}' does not implement trait '{}' required by type \
+                        error_codes::TRAIT_BOUND_NOT_SATISFIED
+                            .emit(span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Type '{}' does not implement trait '{}' required by type \
                                  parameter '{}'",
+                                    actual.display_name(),
+                                    trait_name,
+                                    param.name
+                                ),
+                            )
+                            .build()
+                            .with_label("trait bound not satisfied")
+                            .with_help(format!(
+                                "implement '{}' for '{}' using `impl {} for {} {{ ... }}`",
+                                trait_name,
                                 actual.display_name(),
                                 trait_name,
-                                param.name
-                            ),
-                            span,
-                        )
-                        .with_label("trait bound not satisfied")
-                        .with_help(format!(
-                            "implement '{}' for '{}' using `impl {} for {} {{ ... }}`",
-                            trait_name,
-                            actual.display_name(),
-                            trait_name,
-                            actual.display_name()
-                        )),
+                                actual.display_name()
+                            )),
                     );
                     ok = false;
                 }

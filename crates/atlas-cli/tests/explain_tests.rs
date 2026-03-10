@@ -15,11 +15,8 @@ fn test_explain_known_code_found_in_registry() {
     );
     let info = info.unwrap();
     assert_eq!(info.code, "AT3056");
-    assert!(
-        !info.description.is_empty(),
-        "AT3056 should have a description"
-    );
-    assert!(info.help.is_some(), "AT3056 should have help text");
+    assert!(!info.title.is_empty(), "AT3056 should have a description");
+    assert!(info.static_help.is_some(), "AT3056 should have help text");
 }
 
 #[test]
@@ -40,17 +37,17 @@ fn test_explain_warning_code_found() {
     );
     let info = info.unwrap();
     assert!(
-        info.description.contains("shadow") || info.description.contains("inherent"),
+        info.title.contains("shadow") || info.title.contains("inherent"),
         "AW3059 description should mention inherent shadowing, got: {:?}",
-        info.description
+        info.title
     );
 }
 
 #[test]
 fn test_explain_all_codes_have_description() {
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
-            !entry.description.is_empty(),
+            !entry.title.is_empty(),
             "Error code {} has an empty description",
             entry.code
         );
@@ -58,12 +55,14 @@ fn test_explain_all_codes_have_description() {
 }
 
 #[test]
-fn test_explain_example_field_exists_on_all_codes() {
-    // All codes have the example field (even if None) — structural completeness
-    for entry in error_codes::ERROR_CODES {
-        // Field exists — no assertion needed beyond compile-time check.
-        // This test documents that example is wired into ErrorCodeInfo.
-        let _ = entry.example;
+fn test_explain_all_codes_have_static_help() {
+    // All codes in B17+ must have static_help (D-043 AC)
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
+        assert!(
+            entry.static_help.is_some(),
+            "Error code {} has no static_help",
+            entry.code
+        );
     }
 }
 

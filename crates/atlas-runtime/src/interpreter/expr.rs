@@ -908,14 +908,12 @@ impl Interpreter {
                                 OwnershipAnnotation::Share => unreachable!(),
                             };
                             self.runtime_warnings.push(
-                                crate::diagnostic::Diagnostic::warning_with_code(
-                                    crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE,
-                                    format!(
-                                        "passing `share<T>` value to `{}` parameter '{}' — consider using the `share` annotation",
-                                        ann_str, param.name.name
-                                    ),
-                                    param.name.span,
-                                ),
+                                crate::diagnostic::error_codes::SHARE_PASSED_TO_NON_SHARE
+                                    .emit(param.name.span)
+                                    .arg("inner", "T")
+                                    .arg("annotation", ann_str)
+                                    .arg("name", &param.name.name)
+                                    .build(),
                             );
                         }
                     }

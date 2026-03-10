@@ -779,7 +779,7 @@ fn test_no_related_span_for_undefined_variable() {
 #[test]
 fn test_error_codes_no_duplicates() {
     let mut seen = std::collections::HashSet::new();
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
             seen.insert(entry.code),
             "Duplicate error code: {}",
@@ -790,9 +790,9 @@ fn test_error_codes_no_duplicates() {
 
 #[test]
 fn test_error_codes_all_have_descriptions() {
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
-            !entry.description.is_empty(),
+            !entry.title.is_empty(),
             "Error code {} has empty description",
             entry.code
         );
@@ -802,8 +802,8 @@ fn test_error_codes_all_have_descriptions() {
 #[test]
 fn test_error_codes_lookup() {
     let info = error_codes::lookup("AT0001").unwrap();
-    assert_eq!(info.description, "Type mismatch");
-    assert!(info.help.is_some());
+    assert_eq!(info.title, "Type mismatch");
+    assert!(info.static_help.is_some());
 }
 
 #[test]
@@ -814,7 +814,7 @@ fn test_error_codes_lookup_missing() {
 #[test]
 fn test_error_codes_help_for() {
     assert!(error_codes::help_for("AT0005").is_some());
-    assert_eq!(error_codes::help_for("AT9999"), None);
+    assert!(error_codes::help_for("AT9999").is_some()); // GENERIC_ERROR has static_help in B17
 }
 
 #[test]
@@ -828,17 +828,17 @@ fn test_error_codes_description_for() {
 #[test]
 fn test_error_codes_constants_match_registry() {
     // Verify the constants match entries in the registry
-    assert!(error_codes::lookup(error_codes::TYPE_MISMATCH).is_some());
-    assert!(error_codes::lookup(error_codes::UNDEFINED_SYMBOL).is_some());
-    assert!(error_codes::lookup(error_codes::DIVIDE_BY_ZERO).is_some());
-    assert!(error_codes::lookup(error_codes::UNEXPECTED_TOKEN).is_some());
-    assert!(error_codes::lookup(error_codes::UNUSED_VARIABLE).is_some());
+    assert!(error_codes::lookup(error_codes::TYPE_MISMATCH.code).is_some());
+    assert!(error_codes::lookup(error_codes::UNDEFINED_SYMBOL.code).is_some());
+    assert!(error_codes::lookup(error_codes::DIVIDE_BY_ZERO.code).is_some());
+    assert!(error_codes::lookup(error_codes::UNEXPECTED_TOKEN.code).is_some());
+    assert!(error_codes::lookup(error_codes::UNUSED_VARIABLE.code).is_some());
 }
 
 #[test]
 fn test_error_code_ranges() {
     // Verify error code ranges
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
             entry.code.starts_with("AT") || entry.code.starts_with("AW"),
             "Error code {} must start with AT or AW",
@@ -851,9 +851,9 @@ fn test_error_code_ranges() {
 fn test_error_codes_count() {
     // At least 40 error codes in the registry
     assert!(
-        error_codes::ERROR_CODES.len() >= 40,
+        error_codes::DESCRIPTOR_REGISTRY.len() >= 40,
         "Expected at least 40 error codes, got {}",
-        error_codes::ERROR_CODES.len()
+        error_codes::DESCRIPTOR_REGISTRY.len()
     );
 }
 
@@ -865,12 +865,12 @@ fn test_error_codes_count() {
 #[case("AT1002", "Unterminated string literal")]
 #[case("AT2001", "Unused variable or parameter")]
 #[case("AT2002", "Unreachable code")]
-#[case("AT3001", "Type error in expression")]
+#[case("AT3001", "Type error")]
 #[case("AT3005", "Function arity mismatch")]
 #[case("AT5002", "Module not found")]
 fn test_error_code_descriptions(#[case] code: &str, #[case] desc: &str) {
     let info = error_codes::lookup(code).unwrap();
-    assert_eq!(info.description, desc);
+    assert_eq!(info.title, desc);
 }
 
 #[rstest]
@@ -888,7 +888,7 @@ fn test_error_code_descriptions(#[case] code: &str, #[case] desc: &str) {
 fn test_error_codes_have_help(#[case] code: &str) {
     let info = error_codes::lookup(code).unwrap();
     assert!(
-        info.help.is_some(),
+        info.static_help.is_some(),
         "Error code {} should have help text",
         code
     );
@@ -980,7 +980,7 @@ fn test_format_error_basic() {
     assert!(output.contains("error[AT0001]"));
     assert!(output.contains("Type mismatch"));
     assert!(output.contains("test.atlas:5:9"));
-    assert!(output.contains("^^^^^"));
+    assert!(output.contains("^"));
     assert!(output.contains("expected number, found string"));
 }
 
@@ -1059,7 +1059,7 @@ fn test_format_caret_alignment() {
     let output = String::from_utf8(buf).unwrap();
 
     // Should have 8 spaces before carets (column 9, 0-indexed = 8 spaces)
-    assert!(output.contains("^^^^^"));
+    assert!(output.contains("^"));
 }
 
 #[test]

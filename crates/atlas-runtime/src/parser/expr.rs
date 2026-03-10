@@ -1,8 +1,7 @@
 //! Expression parsing (Pratt parsing)
 
-use super::{E_BAD_NUMBER, E_GENERIC};
 use crate::ast::*;
-use crate::diagnostic::error_codes;
+use crate::diagnostic::error_codes::{GENERIC_WARNING, INVALID_NUMBER, SYNTAX_ERROR};
 use crate::diagnostic::Diagnostic;
 use crate::parser::{Parser, Precedence};
 use crate::span::Span;
@@ -111,13 +110,9 @@ impl Parser {
         let value: f64 = match lexeme.parse::<f64>() {
             Ok(value) if value.is_finite() => value,
             _ => {
-                self.error_at_with_code_help_note(
-                    E_BAD_NUMBER,
-                    &format!("invalid number literal `{}`", lexeme),
-                    span,
-                    "number literals must be finite values like `42`, `3.14`, or `1e10`",
+                self.emit_descriptor(INVALID_NUMBER.emit(span).arg("literal", &lexeme).with_note(
                     "use `math:nan()` or `math:inf()` to represent special numeric values",
-                );
+                ));
                 0.0
             }
         };
@@ -451,12 +446,12 @@ impl Parser {
 
         // `await` must be followed by an expression
         if self.is_at_end() || self.check(TokenKind::Semicolon) {
-            self.error_at_with_code_help_note(
-                E_GENERIC,
-                "expected expression after `await`",
-                await_span,
-                "write `await some_async_call()` — `await` requires an expression to suspend on",
-                "`await` can only be used inside `async fn` functions",
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(await_span)
+                    .arg("detail", "expected expression after `await`")
+                    .with_help("write `await some_async_call()` — `await` requires an expression to suspend on")
+                    .with_note("`await` can only be used inside `async fn` functions"),
             );
             return Err(());
         }
@@ -823,15 +818,15 @@ impl Parser {
                 self.advance();
                 // span covers `TypeName[]`
                 let full_span = named_span.merge(lbracket_span).merge(rbracket_span);
-                self.error_at_with_code_help_note(
-                    "AT1004",
-                    "array types use prefix syntax — write `[]` before the type name, not after",
-                    full_span,
-                    format!("use `{}` instead of `{}`", new_token, old_token),
-                    "Atlas uses prefix array syntax: `[]T` not postfix `T[]`",
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(full_span)
+                        .arg("detail", "array types use prefix syntax — write `[]` before the type name, not after")
+                        .with_help(format!("use `{}` instead of `{}`", new_token, old_token))
+                        .with_note("Atlas uses prefix array syntax: `[]T` not postfix `T[]`"),
                 );
                 // Push the SuggestionDiff onto the last diagnostic.
-                // Safety: error_at_with_code_help_note always pushes when not in_panic_mode.
+                // Safety: emit_descriptor always pushes when not in_panic_mode.
                 if let Some(diag) = self.diagnostics.last_mut() {
                     let new_line = diag.snippet.replacen(&old_token, &new_token, 1);
                     if diag.snippet.contains(&*old_token) {
@@ -840,6 +835,7 @@ impl Parser {
                             line_number: diag.line,
                             old_line: diag.snippet.clone(),
                             new_line,
+                            note: None,
                         });
                     }
                 }
@@ -1029,8 +1025,8 @@ impl Parser {
         loop {
             let param_span_start = self.peek().span;
 
-            // Mandatory ownership annotation: own | borrow | share (D-034)
-            let ownership = if self.match_token(TokenKind::Own) {
+            // Optional ownership annotation: own | borrow | share (D-040: borrow is implicit)
+            let ownership_from_source = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
@@ -1039,6 +1035,7 @@ impl Parser {
             } else {
                 None
             };
+            let ownership_explicit = ownership_from_source.is_some();
 
             let (param_name, param_name_span) = {
                 let tok = self.consume_identifier("a parameter name")?;
@@ -1046,10 +1043,10 @@ impl Parser {
             };
 
             // D-040: borrow is the implicit default for closure params too.
-            let ownership = if ownership.is_none() {
+            let ownership = if ownership_from_source.is_none() {
                 Some(OwnershipAnnotation::Borrow)
             } else {
-                ownership
+                ownership_from_source
             };
 
             // Type annotation is required: `param: Type`
@@ -1064,6 +1061,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                ownership_explicit,
                 mutable: false,
                 span: param_span_start.merge(param_span_end),
             });
@@ -1149,16 +1147,18 @@ impl Parser {
                 if let Expr::Identifier(id) = &expr {
                     if id.name == field_name.name {
                         self.diagnostics.push(
-                            Diagnostic::warning_with_code(
-                                error_codes::GENERIC_WARNING,
-                                format!(
-                                    "Redundant field value for '{}'; shorthand is available",
-                                    field_name.name
-                                ),
-                                field_name.span,
-                            )
-                            .with_label("shorthand available")
-                            .with_help(format!("use `{{ {} }}` instead", field_name.name)),
+                            GENERIC_WARNING
+                                .emit(field_name.span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "redundant field value for `{}`; shorthand is available",
+                                        field_name.name
+                                    ),
+                                )
+                                .with_help(format!("use `{{ {} }}` instead", field_name.name))
+                                .build()
+                                .with_label("shorthand available"),
                         );
                     }
                 }
@@ -1327,11 +1327,7 @@ impl Parser {
                 let value: f64 = match lexeme.parse::<f64>() {
                     Ok(value) if value.is_finite() => value,
                     _ => {
-                        self.error_at_with_code(
-                            E_BAD_NUMBER,
-                            &format!("Invalid number literal: '{}'", lexeme),
-                            span,
-                        );
+                        self.emit_descriptor(INVALID_NUMBER.emit(span).arg("literal", &lexeme));
                         0.0
                     }
                 };

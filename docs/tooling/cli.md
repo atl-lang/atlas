@@ -342,7 +342,7 @@ atlas publish --dry-run
 ```
 
 **atlas explain**
-- Looks up an Atlas error code and prints its description, help text, and example.
+- Looks up an Atlas error code and prints its title, message template, help text, and domain. Backed by the `DiagnosticDescriptor` registry (B17) — every AT/AW code has full metadata.
 
 Usage:
 ```
@@ -352,7 +352,7 @@ atlas explain --list
 
 Options:
 - `<code>` — error code to explain (e.g., `AT1003`, `AW3059`, or bare `1003`). Case-insensitive; `AT` prefix inferred if omitted.
-- `--list` — list all known error codes with descriptions.
+- `--list` — list all known error codes with titles and domains.
 
 Example:
 ```bash

@@ -4,7 +4,7 @@ use super::*;
 
 #[test]
 fn test_error_code_ranges() {
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         let code = entry.code;
         if code.starts_with("AT0") {
             // Runtime errors
@@ -26,9 +26,9 @@ fn test_error_code_ranges() {
 
 #[test]
 fn test_all_error_codes_have_descriptions() {
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
-            !entry.description.is_empty(),
+            !entry.title.is_empty(),
             "Code {} has no description",
             entry.code
         );
@@ -38,7 +38,7 @@ fn test_all_error_codes_have_descriptions() {
 #[test]
 fn test_no_duplicate_error_codes() {
     let mut seen = std::collections::HashSet::new();
-    for entry in error_codes::ERROR_CODES {
+    for entry in error_codes::DESCRIPTOR_REGISTRY {
         assert!(
             seen.insert(entry.code),
             "Duplicate error code: {}",

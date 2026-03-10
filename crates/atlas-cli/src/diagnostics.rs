@@ -90,6 +90,18 @@ fn emit_all(
         let prepared = prepare_diagnostic(diag, source, fallback_file);
         let _ = formatter.write_diagnostic(stream, &prepared);
     }
+    // TTY-only tip: show --json hint when there are errors, so AI agents can discover
+    // structured output without needing the Atlas skill or setup documentation.
+    // Modeled after cargo's RUST_BACKTRACE hint. Never shown in JSON mode (caller skips emit_all).
+    let has_errors = diagnostics
+        .iter()
+        .any(|d| d.level == DiagnosticLevel::Error);
+    if has_errors && stream.supports_color() {
+        let _ = writeln!(
+            stream,
+            "tip: run with --json for structured output (better for AI agents and tooling)"
+        );
+    }
 }
 
 fn prepare_diagnostic(

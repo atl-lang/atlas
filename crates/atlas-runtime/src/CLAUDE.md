@@ -20,7 +20,12 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `stdlib/` | 25 modules, 300+ functions |
 | `typechecker/mod.rs` | Function type resolution — `check_function` at line ~876 |
 | `typechecker/expr.rs` | Call-site type checking |
-| `diagnostic.rs` | Diagnostic registry — add new codes here |
+| `diagnostic.rs` | Diagnostic struct + Display formatting (`to_human_string()`, JSON output) |
+| `diagnostic/descriptor.rs` | DiagnosticDescriptor (const per-code metadata), DiagnosticDomain enum, DiagnosticBuilder API (B17-P01) |
+| `diagnostic/error_codes.rs` | Error code registry — add new AT/AW codes with description + help + example here |
+| `diagnostic/formatter.rs` | Diagnostic formatting utilities (line/col conversion, snippet extraction) |
+| `diagnostic/normalizer.rs` | Diagnostic normalization (consolidates cascades, deduplicates) |
+| `diagnostic/warnings.rs` | Warning emission (AW codes) and warning-as-error logic |
 | `binder.rs` | Name resolution pass |
 | `resolver/` | Module resolution |
 | `security/` | Permission model, sandbox |
@@ -75,7 +80,7 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 | VM behavior | `tests/vm/` → integration, member, complex_programs, regression, regression_loops, performance, functions, functions_loops, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, async_vm, error_handling, logical, opcodes |
 | Interpreter | `tests/interpreter/` → member, nested_functions, nested_functions_loops, scope, pattern_matching, assignment, integration |
 | System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
-| Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, parser_errors_part2, parser_control_flow, parser_anonymous_structs, parser_ranges, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, warnings_attributes, for_in_traits_part1, traits_part2 |
+| Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, parser_errors_part2, parser_control_flow, parser_anonymous_structs, parser_ranges, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, warnings_attributes, for_in_traits_part1, traits_part2, diagnostic_descriptor |
 | Frontend integration | `tests/frontend_integration/` → integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2} |
 
 **How to pick the right file:** match the feature domain (e.g., new string builtin → `tests/stdlib/strings.rs`).

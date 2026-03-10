@@ -7,17 +7,13 @@ mod expr;
 mod stmt;
 
 use crate::ast::*;
+use crate::diagnostic::descriptor::DiagnosticBuilder;
+use crate::diagnostic::error_codes::{
+    MISSING_CLOSING_DELIMITER, MISSING_SEMICOLON, RESERVED_KEYWORD_AS_IDENTIFIER, SYNTAX_ERROR,
+    UNEXPECTED_TOKEN,
+};
 use crate::diagnostic::Diagnostic;
-use crate::span::Span;
 use crate::token::{Token, TokenKind};
-
-// Parser error codes
-const E_GENERIC: &str = "AT1000"; // Generic/uncategorized parse error
-const E_BAD_NUMBER: &str = "AT1001"; // Invalid number literal
-const E_MISSING_SEMI: &str = "AT1020"; // Missing semicolon (AT1002 is unterminated string)
-const E_MISSING_BRACE: &str = "AT1003"; // Missing closing brace/bracket/paren
-const E_UNEXPECTED: &str = "AT1004"; // Unexpected token
-const E_RESERVED: &str = "AT1005"; // Reserved keyword used as identifier
 
 /// Parser state for building AST from tokens
 pub struct Parser {
@@ -146,12 +142,12 @@ impl Parser {
         } else if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.error_at_with_code_help_note(
-                    E_GENERIC,
-                    "expected `fn` after `async`",
-                    async_span,
-                    "write `async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`",
-                    "`async` is not a standalone keyword; it modifies a function declaration",
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(async_span)
+                        .arg("detail", "expected `fn` after `async`")
+                        .with_help("write `async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`")
+                        .with_note("`async` is not a standalone keyword; it modifies a function declaration"),
                 );
                 return Err(());
             }
@@ -358,12 +354,11 @@ impl Parser {
             } else if self.check(TokenKind::Share) {
                 let span = self.peek().span;
                 self.advance();
-                self.error_at_with_code_and_help(
-                    E_GENERIC,
-                    "`shared` is not valid as a return ownership annotation; \
-                     callers receive a `shared<T>` typed value instead",
-                    span,
-                    "remove the `shared` annotation — write `-> shared<T>` as the return type instead",
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg("detail", "`shared` is not valid as a return ownership annotation; callers receive a `shared<T>` typed value instead")
+                        .with_help("remove the `shared` annotation — write `-> shared<T>` as the return type instead"),
                 );
                 return Err(());
             } else {
@@ -496,12 +491,12 @@ impl Parser {
         let item = if self.check(TokenKind::Async) {
             let async_span = self.advance().span;
             if !self.check(TokenKind::Fn) {
-                self.error_at_with_code_help_note(
-                    E_GENERIC,
-                    "expected `fn` after `async`",
-                    async_span,
-                    "write `export async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`",
-                    "`async` is not a standalone keyword; it modifies a function declaration",
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(async_span)
+                        .arg("detail", "expected `fn` after `async`")
+                        .with_help("write `export async fn name() -> ReturnType { ... }` — `async` must immediately precede `fn`")
+                        .with_note("`async` is not a standalone keyword; it modifies a function declaration"),
                 );
                 return Err(());
             }
@@ -625,9 +620,9 @@ impl Parser {
             // Optional mutability keyword: `mut`
             let mutable = self.match_token(TokenKind::Mut);
 
-            // Mandatory ownership annotation: own | borrow | share (D-034)
+            // Optional ownership annotation: own | borrow | share (D-040: borrow is implicit)
             // Exception: bare `self` in impl methods has no annotation.
-            let ownership = if self.match_token(TokenKind::Own) {
+            let ownership_from_source = if self.match_token(TokenKind::Own) {
                 Some(OwnershipAnnotation::Own)
             } else if self.match_token(TokenKind::Borrow) {
                 Some(OwnershipAnnotation::Borrow)
@@ -636,6 +631,9 @@ impl Parser {
             } else {
                 None
             };
+            // Track whether the keyword was written in source before defaulting.
+            let ownership_explicit = ownership_from_source.is_some();
+            let ownership = ownership_from_source;
 
             // Extract name + span eagerly so we can release the borrow before calling self.check().
             let (param_name, param_name_span) = if ownership.is_some() {
@@ -696,6 +694,7 @@ impl Parser {
                 },
                 type_ref,
                 ownership,
+                ownership_explicit,
                 mutable,
                 span: param_span_start.merge(param_span_end),
             });
@@ -1084,42 +1083,27 @@ impl Parser {
         } else {
             let found = self.peek().kind;
             let span = self.peek().span;
-            let (code, help) = match kind {
-                TokenKind::Semicolon => (E_MISSING_SEMI, "Add `;` at the end of the statement."),
-                TokenKind::RightBrace => (
-                    E_MISSING_BRACE,
-                    "Add `}` to close the block or struct literal.",
-                ),
-                TokenKind::RightBracket => (
-                    E_MISSING_BRACE,
-                    "Add `]` to close the array literal or index expression.",
-                ),
-                TokenKind::RightParen => (
-                    E_MISSING_BRACE,
-                    "Add `)` to close the function call or grouped expression.",
-                ),
-                TokenKind::Colon => (
-                    E_UNEXPECTED,
-                    "Add `:` — type annotations use `name: Type` syntax.",
-                ),
-                TokenKind::Comma => (E_UNEXPECTED, "Add `,` to separate items in the list."),
-                TokenKind::Arrow => (
-                    E_UNEXPECTED,
-                    "Add `->` — function return types use `fn name() -> Type` syntax.",
-                ),
-                TokenKind::LeftParen => (E_UNEXPECTED, "Add `(` to open the parameter list."),
-                TokenKind::LeftBrace => (E_UNEXPECTED, "Add `{` to open the block body."),
-                TokenKind::Identifier => (
-                    E_UNEXPECTED,
-                    "Provide an identifier (a name) here — identifiers start with a letter or `_`.",
-                ),
-                _ => (
-                    E_UNEXPECTED,
-                    "Check for missing punctuation or a typo in the token.",
-                ),
-            };
             let full_message = format!("{}, found `{}`", message, found.as_str());
-            self.error_at_with_code_and_help(code, &full_message, span, help);
+            let builder = match kind {
+                TokenKind::Semicolon => MISSING_SEMICOLON.emit(span).with_help(full_message),
+                TokenKind::RightBrace => MISSING_CLOSING_DELIMITER
+                    .emit(span)
+                    .arg("delimiter", "}")
+                    .with_help(full_message),
+                TokenKind::RightBracket => MISSING_CLOSING_DELIMITER
+                    .emit(span)
+                    .arg("delimiter", "]")
+                    .with_help(full_message),
+                TokenKind::RightParen => MISSING_CLOSING_DELIMITER
+                    .emit(span)
+                    .arg("delimiter", ")")
+                    .with_help(full_message),
+                _ => UNEXPECTED_TOKEN
+                    .emit(span)
+                    .arg("token", found.as_str())
+                    .with_help(full_message),
+            };
+            self.emit_descriptor(builder);
             Err(())
         }
     }
@@ -1132,95 +1116,37 @@ impl Parser {
 
     /// Record an error at the current token position.
     /// Automatically appends `, found \`<token>\`` to the message (D-043).
-    pub(super) fn error(&mut self, message: &str) {
-        let found = self.peek().kind;
-        let full_message = format!("{}, found `{}`", message, found.as_str());
-        self.error_with_code(E_GENERIC, &full_message);
-    }
-
-    /// Record an error at the current token with an explicit code
-    pub(super) fn error_with_code(&mut self, code: &'static str, message: &str) {
-        let span = self.peek().span;
-        self.error_at_with_code(code, message, span);
-    }
-
-    /// Record an error at a specific span with an explicit code and NO help text.
-    /// Help text must be provided explicitly at the call site via `error_with_dynamic_help`
-    /// or via `consume()` (which provides token-specific help). Per D-043, help is never
-    /// auto-fetched from the registry — the registry is for `atlas explain` only.
     /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
-    pub(super) fn error_at_with_code(&mut self, code: &'static str, message: &str, span: Span) {
+    pub(super) fn error(&mut self, message: &str) {
+        if self.in_panic_mode {
+            return;
+        }
+        self.in_panic_mode = true;
+        let found = self.peek().kind;
+        let span = self.peek().span;
+        let full_message = format!("{}, found `{}`", message, found.as_str());
+        self.diagnostics.push(
+            SYNTAX_ERROR
+                .emit(span)
+                .arg("detail", full_message)
+                .build()
+                .with_label("syntax error"),
+        );
+    }
+
+    /// Emit a diagnostic from a fully-constructed `DiagnosticBuilder`.
+    ///
+    /// Applies the `in_panic_mode` guard and `"syntax error"` label, then pushes to
+    /// the diagnostics list. Call sites capture the span before any `advance()`, build
+    /// the descriptor builder with `.emit(span)`, and pass it here.
+    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
+    pub(super) fn emit_descriptor(&mut self, builder: DiagnosticBuilder) {
         if self.in_panic_mode {
             return;
         }
         self.in_panic_mode = true;
         self.diagnostics
-            .push(Diagnostic::error_with_code(code, message, span).with_label("syntax error"));
-    }
-
-    /// Record an error at a specific span with an explicit code and explicit help text.
-    /// Use this at sites where the correct help is known at the call location.
-    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
-    pub(super) fn error_at_with_code_and_help(
-        &mut self,
-        code: &'static str,
-        message: &str,
-        span: Span,
-        help: impl Into<String>,
-    ) {
-        if self.in_panic_mode {
-            return;
-        }
-        self.in_panic_mode = true;
-        self.diagnostics.push(
-            Diagnostic::error_with_code(code, message, span)
-                .with_label("syntax error")
-                .with_help(help),
-        );
-    }
-
-    /// Record an error at a specific span with an explicit code, help text, and an explanatory note.
-    /// Use this at sites where both a fix suggestion (help) and a rule/why explanation (note) are
-    /// available at the call location. Suppressed when `in_panic_mode` is set (cascade — D-043).
-    pub(super) fn error_at_with_code_help_note(
-        &mut self,
-        code: &'static str,
-        message: &str,
-        span: Span,
-        help: impl Into<String>,
-        note: impl Into<String>,
-    ) {
-        if self.in_panic_mode {
-            return;
-        }
-        self.in_panic_mode = true;
-        self.diagnostics.push(
-            Diagnostic::error_with_code(code, message, span)
-                .with_label("syntax error")
-                .with_help(help)
-                .with_note(note),
-        );
-    }
-
-    /// Record an error at the current token with an explicit code and custom help text.
-    /// Use this when the help text must be dynamically formatted (e.g. includes the identifier name).
-    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
-    pub(super) fn error_with_dynamic_help(
-        &mut self,
-        code: &'static str,
-        message: impl Into<String>,
-        help: impl Into<String>,
-    ) {
-        if self.in_panic_mode {
-            return;
-        }
-        self.in_panic_mode = true;
-        let span = self.peek().span;
-        self.diagnostics.push(
-            Diagnostic::error_with_code(code, message, span)
-                .with_label("syntax error")
-                .with_help(help),
-        );
+            .push(builder.build().with_label("syntax error"));
     }
 
     /// Check if a token kind is a reserved keyword
@@ -1305,35 +1231,30 @@ impl Parser {
             let keyword_name = current.lexeme.clone();
             let span = current.span;
             // Special message for import/match (reserved for future)
-            if current.kind == TokenKind::Import || current.kind == TokenKind::Match {
-                self.error_at_with_code_and_help(
-                    E_RESERVED,
-                    &format!(
-                        "Cannot use reserved keyword `{}` as {}; this keyword is reserved for future use",
-                        keyword_name, context
-                    ),
-                    span,
-                    format!("Rename the identifier to avoid clashing with the reserved keyword `{keyword_name}`."),
-                );
+            let extra_help = if current.kind == TokenKind::Import
+                || current.kind == TokenKind::Match
+            {
+                format!("cannot use `{keyword_name}` as {context} — this keyword is reserved for future use; rename the identifier")
             } else {
-                self.error_at_with_code_and_help(
-                    E_RESERVED,
-                    &format!("Cannot use reserved keyword `{}` as {}", keyword_name, context),
-                    span,
-                    format!("Rename the identifier — `{keyword_name}` is a built-in Atlas keyword and cannot be used as a name."),
-                );
-            }
+                format!("cannot use `{keyword_name}` as {context} — it is a built-in Atlas keyword; rename the identifier")
+            };
+            self.emit_descriptor(
+                RESERVED_KEYWORD_AS_IDENTIFIER
+                    .emit(span)
+                    .arg("keyword", &keyword_name)
+                    .with_help(extra_help),
+            );
             Err(())
         } else if current.kind == TokenKind::Identifier {
             Ok(self.advance())
         } else {
             // Not an identifier and not a keyword — give specific token-aware help
-            self.error_at_with_code_help_note(
-                E_UNEXPECTED,
-                &format!("expected {}, found `{}`", context, current.kind.as_str()),
-                current.span,
-                format!("replace `{}` with a valid identifier name", current.kind.as_str()),
-                "identifiers must start with a letter or `_` and contain only letters, digits, and `_`",
+            self.emit_descriptor(
+                UNEXPECTED_TOKEN
+                    .emit(current.span)
+                    .arg("token", current.kind.as_str())
+                    .with_help(format!("replace `{}` with a valid identifier name", current.kind.as_str()))
+                    .with_note("identifiers must start with a letter or `_` and contain only letters, digits, and `_`"),
             );
             Err(())
         }

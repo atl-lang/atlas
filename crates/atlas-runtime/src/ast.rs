@@ -432,8 +432,14 @@ pub struct Param {
     /// Type annotation. Always present. Use `TypeRef::SelfType` for bare `self`
     /// params whose concrete type is resolved later from the impl context.
     pub type_ref: TypeRef,
-    /// Ownership annotation (`own`, `borrow`, `share`), or `None` if unannotated
+    /// Ownership annotation (`own`, `borrow`, `share`), or `None` if unannotated.
+    /// For bare params the parser defaults this to `Some(Borrow)` per D-040,
+    /// but `ownership_explicit` distinguishes written-in-source from defaulted.
     pub ownership: Option<OwnershipAnnotation>,
+    /// `true` when the ownership keyword was present in source (`borrow x`, `own x`, `share x`).
+    /// `false` for bare params where borrow is the implicit default (D-040).
+    /// Use this to guard AT3054 — bare-param returns are always valid.
+    pub ownership_explicit: bool,
     /// `mut` keyword present — parameter can be reassigned inside the function body.
     pub mutable: bool,
     pub span: Span,
