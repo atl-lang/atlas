@@ -203,3 +203,85 @@ fn test_as_number_on_array() {
 }
 
 // ============================================================================
+
+// ============================================================================
+// B15: Tuple tests (interpreter parity)
+// ============================================================================
+
+#[test]
+fn test_interp_tuple_literal() {
+    let result = run_interpreter(r#"(1, "hello", true);"#);
+    let s = result.expect("tuple literal should work");
+    assert!(s.contains("Tuple"), "Expected Tuple, got {}", s);
+}
+
+#[test]
+fn test_interp_tuple_index_access() {
+    let result = run_interpreter(r#"let t = (42, "world"); t.0;"#);
+    assert!(result.unwrap().contains("42"));
+}
+
+#[test]
+fn test_interp_tuple_string_access() {
+    let result = run_interpreter(r#"let t = (1, "atlas"); t.1;"#);
+    assert!(result.unwrap().contains("atlas"));
+}
+
+#[test]
+fn test_interp_let_destructure() {
+    let result = run_interpreter(r#"let (a, b) = (10, 20); a + b;"#);
+    let s = result.expect("destructure should succeed");
+    assert!(s.contains("30"), "Expected 30 in {}", s);
+}
+
+#[test]
+fn test_interp_let_destructure_mut() {
+    let result = run_interpreter(r#"let mut (x, y) = (5, 6); x = 99; x + y;"#);
+    let s = result.expect("mutable destructure should succeed");
+    assert!(s.contains("105"), "Expected 105 in {}", s);
+}
+
+#[test]
+fn test_interp_let_destructure_three() {
+    let result = run_interpreter(r#"let (a, b, c) = (1, 2, 3); a + b + c;"#);
+    let s = result.expect("three-element destructure should succeed");
+    assert!(s.contains("6"), "Expected 6 in {}", s);
+}
+
+#[test]
+fn test_interp_tuple_match_literal() {
+    let result = run_interpreter(r#"match (1, 42) { (1, y) => y, _ => 0 };"#);
+    let s = result.expect("tuple match should succeed");
+    assert!(s.contains("42"), "Expected 42 in {}", s);
+}
+
+#[test]
+fn test_interp_tuple_match_wildcard() {
+    let result = run_interpreter(r#"match (99, 7) { (0, y) => y, (_, n) => n };"#);
+    let s = result.expect("tuple match wildcard should succeed");
+    assert!(s.contains("7"), "Expected 7 in {}", s);
+}
+
+#[test]
+fn test_interp_tuple_display_unit() {
+    let result = run_interpreter(r#"let u = (); u;"#);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_interp_tuple_oob_error() {
+    let result = run_interpreter(r#"let t = (1, 2); t.5;"#);
+    assert!(result.is_err(), "Out-of-bounds access should fail");
+}
+
+#[test]
+fn test_interp_destructure_count_mismatch() {
+    let result = run_interpreter(r#"let (a, b, c) = (1, 2);"#);
+    assert!(result.is_err(), "Count mismatch should fail");
+}
+
+#[test]
+fn test_interp_destructure_non_tuple_error() {
+    let result = run_interpreter(r#"let (a, b) = 42;"#);
+    assert!(result.is_err(), "Non-tuple destructure should fail");
+}

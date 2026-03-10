@@ -1,0 +1,38 @@
+// B15: Tuple match patterns
+
+fn classify(own pair: (number, number)) -> string {
+    match pair {
+        (0, 0) => {
+            return "origin";
+        },
+        (x, 0) => {
+            return "x-axis";
+        },
+        (0, y) => {
+            return "y-axis";
+        },
+        (x, y) => {
+            return "quadrant";
+        }
+    }
+}
+
+print(classify((0, 0)));
+print(classify((5, 0)));
+print(classify((0, 3)));
+print(classify((2, 4)));
+
+// Wildcard in tuple
+match (42, "hello") {
+    (_, s) => {
+        print(s);
+    }
+}
+
+// Nested destructuring via match + let
+let (a, b) = (100, 200);
+match (a, b) {
+    (x, y) => {
+        print(x + y);
+    }
+}
