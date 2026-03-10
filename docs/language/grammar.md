@@ -32,13 +32,22 @@ Return type is **required** on named functions. Use `-> void` for functions that
 Closures (`anon_fn`) may omit param types and return type (inferred from context).
 `ownership` is optional — bare parameters default to `borrow`. Only `own` and `share` need to be written explicitly. (D-040)
 
+**Type Parameters and Bounds**
+```
+type_params    := "<" type_param ("," type_param)* ">"
+type_param     := IDENT ("extends" IDENT ("&" IDENT)*)?
+```
+Generic bounds use TypeScript-style `extends` keyword. Multiple bounds separated by `&`. (H-227, D-039)
+Example: `fn foo<T extends Copy & Display>(borrow x: T) -> T`
+
 **Trait Declarations**
 ```
-trait_decl     := "trait" IDENT type_params? "{" trait_method_sig* "}"
+trait_decl     := "trait" IDENT type_params? ("extends" IDENT ("," IDENT)*)? "{" trait_method_sig* "}"
 trait_method_sig := "fn" IDENT type_params? "(" params? ")" "->" type_ref (";" | block)
 ```
 
 Traits declare method signatures. Methods may have default bodies (using `block` instead of `;`).
+Supertrait inheritance: `trait C extends A, B { ... }` — comma-separated, TypeScript style. (H-226, D-026)
 `self` parameter type is inferred from the impl block — write `self` not `self: Type`.
 Implementations live in `impl` blocks.
 
