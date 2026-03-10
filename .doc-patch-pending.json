@@ -1,0 +1,17 @@
+{
+  "committed_at": "2026-03-09T22:55:20Z",
+  "commit": "6dfe13a",
+  "changed_files": [
+    "crates/atlas-runtime/src/typechecker/expr.rs",
+    "crates/atlas-runtime/src/typechecker/mod.rs",
+    "crates/atlas-runtime/src/typechecker/binder.rs"
+  ],
+  "domains": [
+    "typechecker"
+  ],
+  "relevant_docs": [
+    "docs/language/errors.md"
+  ],
+  "status": "done",
+  "patched_at": "2026-03-10T01:41:58Z"
+}

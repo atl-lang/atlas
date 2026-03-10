@@ -243,6 +243,7 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::ChannelReceiver(_) => "record",
             Value::AsyncMutex(_) => "record",
             Value::Watcher(_) => "record",
+            Value::Tuple(_) => "tuple",
             Value::SharedValue(shared) => shared.with(|inner| value_type_name(inner)),
             Value::EnumValue { .. } => "record",
         }
@@ -521,6 +522,10 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
         Value::Watcher(_) => "[Watcher]".to_string(),
         Value::SharedValue(_) => "[Shared]".to_string(),
+        Value::Tuple(elems) => {
+            let parts: Vec<String> = elems.iter().map(|v| v.to_string()).collect();
+            format!("({})", parts.join(", "))
+        }
         Value::EnumValue {
             enum_name,
             variant_name,
@@ -621,6 +626,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::AsyncMutex(_)
         | Value::Watcher(_)
         | Value::Closure(_)
+        | Value::Tuple(_)
         | Value::SharedValue(_)
         | Value::EnumValue { .. } => true,
     };
@@ -774,6 +780,7 @@ fn type_name(value: &Value) -> &str {
         Value::AsyncMutex(_) => "AsyncMutex",
         Value::Watcher(_) => "Watcher",
         Value::Closure(_) => "closure",
+        Value::Tuple(_) => "tuple",
         Value::SharedValue(_) => "shared",
         Value::EnumValue { .. } => "enum",
     }
@@ -815,6 +822,10 @@ fn value_to_display_string(value: &Value) -> String {
         Value::ChannelReceiver(_) => "[ChannelReceiver]".to_string(),
         Value::AsyncMutex(_) => "[AsyncMutex]".to_string(),
         Value::Watcher(_) => "[Watcher]".to_string(),
+        Value::Tuple(elems) => {
+            let parts: Vec<String> = elems.iter().map(value_to_display_string).collect();
+            format!("({})", parts.join(", "))
+        }
         Value::SharedValue(_) => "[Shared]".to_string(),
         Value::EnumValue {
             enum_name,

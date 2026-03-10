@@ -713,6 +713,21 @@ fn value_to_json(
             msg: "Cannot serialize SharedValue to JSON".to_string(),
             span,
         }),
+        Value::Tuple(elems) => {
+            let ptr = std::sync::Arc::as_ptr(elems) as usize;
+            if !visited.insert(ptr) {
+                return Err(RuntimeError::TypeError {
+                    msg: "Circular reference detected in Tuple".to_string(),
+                    span,
+                });
+            }
+            let mut json_elems = Vec::with_capacity(elems.len());
+            for elem in elems.iter() {
+                json_elems.push(value_to_json(elem, visited, span)?);
+            }
+            visited.remove(&ptr);
+            Ok(format!("[{}]", json_elems.join(",")))
+        }
         Value::EnumValue {
             enum_name,
             variant_name,

@@ -119,6 +119,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::Watcher(_) => "Watcher",
         Value::Closure(_) => "closure",
         Value::SharedValue(_) => "shared",
+        Value::Tuple(_) => "tuple",
         Value::EnumValue { .. } => "enum",
     }
 }

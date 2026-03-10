@@ -895,6 +895,11 @@ pub enum TypeRef {
         inner: Box<TypeRef>,
         span: Span,
     },
+    /// Tuple type: `(T1, T2, ...)` — B15
+    Tuple {
+        elements: Vec<TypeRef>,
+        span: Span,
+    },
     /// Placeholder for a bare `self` parameter whose type is inferred from the
     /// enclosing `impl` block. Never appears in user-written type positions.
     SelfType(Span),
@@ -1004,6 +1009,7 @@ impl TypeRef {
             TypeRef::Union { span, .. } => *span,
             TypeRef::Intersection { span, .. } => *span,
             TypeRef::Future { span, .. } => *span,
+            TypeRef::Tuple { span, .. } => *span,
             TypeRef::SelfType(span) => *span,
         }
     }

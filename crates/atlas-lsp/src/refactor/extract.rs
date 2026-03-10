@@ -515,6 +515,13 @@ fn format_type_for_signature(ty: &Type) -> Option<String> {
             }
             Some(format!("{{ {} }}", parts.join(", ")))
         }
+        Type::Tuple(elements) => {
+            let mut parts = Vec::with_capacity(elements.len());
+            for elem in elements {
+                parts.push(format_type_for_signature(elem)?);
+            }
+            Some(format!("({})", parts.join(", ")))
+        }
         Type::TraitObject { name } => Some(name.clone()),
     }
 }

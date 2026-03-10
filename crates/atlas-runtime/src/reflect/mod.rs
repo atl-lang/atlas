@@ -298,6 +298,16 @@ pub fn get_value_type_info(value: &Value) -> TypeInfo {
             type_args: vec![],
             alias_target: None,
         },
+        Value::Tuple(elems) => TypeInfo {
+            name: "tuple".to_string(),
+            kind: TypeKind::Generic,
+            fields: vec![],
+            parameters: vec![],
+            return_type: None,
+            element_type: None,
+            type_args: elems.iter().map(get_value_type_info).collect(),
+            alias_target: None,
+        },
         Value::EnumValue {
             enum_name,
             variant_name,

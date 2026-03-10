@@ -992,6 +992,13 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_params_and_context(e, type_params, None))
+                    .collect();
+                Type::Tuple(resolved)
+            }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {
                 let inner_ty =
@@ -3131,6 +3138,13 @@ impl<'a> TypeChecker<'a> {
                     type_args: resolved_args,
                 }
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_context(e, None))
+                    .collect();
+                Type::Tuple(resolved)
+            }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref_with_context(inner, None);
@@ -3332,6 +3346,13 @@ impl<'a> TypeChecker<'a> {
                     name: name.clone(),
                     type_args: resolved_args,
                 }
+            }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_substitutions(e, substitutions))
+                    .collect();
+                Type::Tuple(resolved)
             }
             // B8 Phase 07 implements full Future<T> type resolution
             TypeRef::Future { inner, .. } => {

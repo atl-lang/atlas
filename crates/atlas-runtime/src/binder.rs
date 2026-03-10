@@ -1359,6 +1359,10 @@ impl Binder {
                 let resolved = members.iter().map(|m| self.resolve_type_ref(m)).collect();
                 Type::intersection(resolved)
             }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements.iter().map(|e| self.resolve_type_ref(e)).collect();
+                Type::Tuple(resolved)
+            }
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref(inner);
                 Type::Generic {
@@ -1503,6 +1507,13 @@ impl Binder {
 
                 // Fall back to normal resolution (includes built-in generic validation)
                 self.resolve_type_ref(type_ref)
+            }
+            TypeRef::Tuple { elements, .. } => {
+                let resolved = elements
+                    .iter()
+                    .map(|e| self.resolve_type_ref_with_alias_params(e, substitutions))
+                    .collect();
+                Type::Tuple(resolved)
             }
             TypeRef::Future { inner, .. } => {
                 let inner_ty = self.resolve_type_ref_with_alias_params(inner, substitutions);

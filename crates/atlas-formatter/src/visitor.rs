@@ -958,6 +958,13 @@ impl FormatVisitor {
                     .join(", ");
                 format!("{{ {} }}", parts)
             }
+            TypeRef::Tuple { elements, .. } => {
+                let parts: Vec<String> = elements
+                    .iter()
+                    .map(|e| self.type_ref_to_string(e))
+                    .collect();
+                format!("({})", parts.join(", "))
+            }
             // B8: Future<T> — format as "Future<inner>"
             TypeRef::Future { inner, .. } => {
                 format!("Future<{}>", self.type_ref_to_string(inner))

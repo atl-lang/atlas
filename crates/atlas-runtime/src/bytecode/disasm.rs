@@ -251,6 +251,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::Watcher(_) => "<Watcher>".to_string(),
         Value::Closure(c) => format!("<fn {}>", c.func.name),
         Value::SharedValue(_) => "<shared>".to_string(),
+        Value::Tuple(elems) => format!("<tuple({} elements)>", elems.len()),
         Value::EnumValue {
             enum_name,
             variant_name,
