@@ -94,6 +94,7 @@ statement      := var_decl
                | block_stmt
 
 var_decl       := "let" ("mut")? IDENT (":" type_ref)? "=" expr ";"
+               | "let" ("mut")? "(" IDENT ("," IDENT)* ")" "=" expr ";"   // tuple destructure
 assign_stmt    := assign_target "=" expr ";"
 compound_assign_stmt := assign_target ("+="|"-="|"*="|"/="|"%=") expr ";"
 assign_target  := IDENT
@@ -132,6 +133,7 @@ expr           := literal
                | enum_variant_expr
                | range_expr
                | group_expr
+               | tuple_literal
                | match_expr
                | try_expr
                | anon_fn
@@ -161,6 +163,11 @@ member_expr    := expr "." IDENT ("(" (expr ("," expr)*)? ")")?
 try_expr       := expr "?"
 
 group_expr     := "(" expr ")"
+tuple_literal  := "()"                              // unit
+               | "(" expr "," ")"                  // 1-tuple (trailing comma required)
+               | "(" expr "," expr ("," expr)* ")" // 2+ element tuple
+member_expr    := expr "." IDENT
+               | expr "." NUMBER                    // tuple index: t.0, t.1
 
 match_expr     := "match" expr "{" match_arm ( (","|";") match_arm )* (","|";")? "}"
 match_arm      := pattern ("if" expr)? "=>" expr
@@ -178,6 +185,7 @@ pattern        := literal
                | IDENT "(" pattern_list? ")"     // constructor pattern
                | EnumName "::" VariantName ("(" pattern_list? ")")?
                | "[" pattern_list? "]"
+               | "(" pattern_list? ")"     // tuple pattern: (p1, p2, ...)
                | pattern "|" pattern
 
 pattern_list   := pattern ("," pattern)*
@@ -194,7 +202,8 @@ type_primary   := named_type
                | array_type
                | function_type
                | structural_type
-               | "(" type_ref ("," type_ref)* ")"
+               | "(" type_ref ("," type_ref)* ")"   // tuple type: (T1, T2) or function type if followed by ->
+               | "()"                               // unit tuple type
 
 named_type     := IDENT | "null"
 array_type     := "[]" type_primary   // prefix, nestable: []T, [][]T
