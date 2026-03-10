@@ -58,31 +58,46 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
         ) => Type::String,
         ("Path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
-        // DateTime namespace
-        (
-            "DateTime",
-            "now" | "fromTimestamp" | "fromComponents" | "parseIso" | "parse" | "parseRfc3339"
-            | "parseRfc2822" | "utc",
-        ) => Type::Unknown,
-        // Regex namespace
+        // DateTime namespace — returns DateTime value (H-231)
+        ("DateTime", "now" | "fromTimestamp" | "fromComponents" | "utc") => Type::Generic {
+            name: "DateTime".to_string(),
+            type_args: vec![],
+        },
+        ("DateTime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![
+                Type::Generic {
+                    name: "DateTime".to_string(),
+                    type_args: vec![],
+                },
+                Type::String,
+            ],
+        },
+        // Regex namespace (H-231): Regex.new returns Result<Regex, string>
         ("Regex", "new") => Type::Generic {
             name: "Result".to_string(),
-            type_args: vec![Type::Unknown, Type::String],
+            type_args: vec![
+                Type::Generic {
+                    name: "Regex".to_string(),
+                    type_args: vec![],
+                },
+                Type::String,
+            ],
         },
-        ("Regex", "test" | "isMatch") => Type::Bool,
-        ("Regex", "find") => Type::Generic {
-            name: "Option".to_string(),
-            type_args: vec![Type::String],
-        },
-        ("Regex", "findAll") => Type::Array(Box::new(Type::String)),
-        ("Regex", "replace" | "replaceAll" | "escape") => Type::String,
-        ("Regex", "split") => Type::Array(Box::new(Type::String)),
+        // Note: test/isMatch/find/findAll/replace/replaceAll/split are instance methods on Regex
+        // values (dispatched via TypeTag::RegexValue), not namespace methods.
         // Crypto namespace
         ("Crypto", "sha256" | "sha512") => Type::String,
-        // Http namespace
+        // Http namespace — returns Result<HttpResponse, string> (H-231)
         ("Http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
             name: "Result".to_string(),
-            type_args: vec![Type::Unknown, Type::String],
+            type_args: vec![
+                Type::Generic {
+                    name: "HttpResponse".to_string(),
+                    type_args: vec![],
+                },
+                Type::String,
+            ],
         },
         // Net namespace
         ("Net", "tcpConnect" | "tcpListen") => Type::Generic {
@@ -1851,6 +1866,16 @@ impl<'a> TypeChecker<'a> {
             }
             Type::Generic { ref name, .. } if name == "Result" => {
                 Some(crate::method_dispatch::TypeTag::Result)
+            }
+            // H-231: instance method dispatch for DateTime, Regex, HttpResponse
+            Type::Generic { ref name, .. } if name == "DateTime" => {
+                Some(crate::method_dispatch::TypeTag::DateTime)
+            }
+            Type::Generic { ref name, .. } if name == "Regex" => {
+                Some(crate::method_dispatch::TypeTag::RegexValue)
+            }
+            Type::Generic { ref name, .. } if name == "HttpResponse" => {
+                Some(crate::method_dispatch::TypeTag::HttpResponse)
             }
             _ => None,
         };

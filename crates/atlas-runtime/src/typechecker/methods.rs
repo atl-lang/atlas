@@ -122,6 +122,10 @@ impl MethodTable {
                     type_args.get(1).unwrap_or(&Type::Unknown),
                 )
             }
+            // H-231: DateTime, Regex, HttpResponse instance methods
+            Type::Generic { ref name, .. } if name == "DateTime" => "DateTime",
+            Type::Generic { ref name, .. } if name == "Regex" => "Regex",
+            Type::Generic { ref name, .. } if name == "HttpResponse" => "HttpResponse",
             _ => return None,
         };
 
@@ -221,6 +225,108 @@ impl MethodTable {
             "padEnd",
             vec![Type::Number, Type::String],
             Type::String,
+        );
+
+        // H-231: DateTime instance methods
+        let datetime_ty = Type::Generic {
+            name: "DateTime".to_string(),
+            type_args: vec![],
+        };
+        self.register("DateTime", "year", vec![], Type::Number);
+        self.register("DateTime", "month", vec![], Type::Number);
+        self.register("DateTime", "day", vec![], Type::Number);
+        self.register("DateTime", "hour", vec![], Type::Number);
+        self.register("DateTime", "minute", vec![], Type::Number);
+        self.register("DateTime", "second", vec![], Type::Number);
+        self.register("DateTime", "weekday", vec![], Type::Number);
+        self.register("DateTime", "dayOfYear", vec![], Type::Number);
+        self.register("DateTime", "timestamp", vec![], Type::Number);
+        self.register("DateTime", "toIso", vec![], Type::String);
+        self.register("DateTime", "toRfc3339", vec![], Type::String);
+        self.register("DateTime", "toRfc2822", vec![], Type::String);
+        self.register("DateTime", "format", vec![Type::String], Type::String);
+        self.register(
+            "DateTime",
+            "addSeconds",
+            vec![Type::Number],
+            datetime_ty.clone(),
+        );
+        self.register(
+            "DateTime",
+            "addMinutes",
+            vec![Type::Number],
+            datetime_ty.clone(),
+        );
+        self.register(
+            "DateTime",
+            "addHours",
+            vec![Type::Number],
+            datetime_ty.clone(),
+        );
+        self.register(
+            "DateTime",
+            "addDays",
+            vec![Type::Number],
+            datetime_ty.clone(),
+        );
+        self.register("DateTime", "diff", vec![datetime_ty.clone()], Type::Number);
+        self.register("DateTime", "compare", vec![datetime_ty], Type::Number);
+
+        // H-231: HttpResponse instance methods
+        let headers_ty = Type::Generic {
+            name: "HashMap".to_string(),
+            type_args: vec![Type::String, Type::String],
+        };
+        self.register("HttpResponse", "status", vec![], Type::Number);
+        self.register("HttpResponse", "body", vec![], Type::String);
+        self.register("HttpResponse", "headers", vec![], headers_ty);
+        self.register(
+            "HttpResponse",
+            "header",
+            vec![Type::String],
+            Type::Generic {
+                name: "Option".to_string(),
+                type_args: vec![Type::String],
+            },
+        );
+        self.register("HttpResponse", "url", vec![], Type::String);
+        self.register("HttpResponse", "isSuccess", vec![], Type::Bool);
+
+        // H-231: Regex instance methods
+        self.register("Regex", "test", vec![Type::String], Type::Bool);
+        self.register("Regex", "isMatch", vec![Type::String], Type::Bool);
+        self.register(
+            "Regex",
+            "find",
+            vec![Type::String],
+            Type::Generic {
+                name: "Option".to_string(),
+                type_args: vec![Type::String],
+            },
+        );
+        self.register(
+            "Regex",
+            "findAll",
+            vec![Type::String],
+            Type::Array(Box::new(Type::String)),
+        );
+        self.register(
+            "Regex",
+            "replace",
+            vec![Type::String, Type::String],
+            Type::String,
+        );
+        self.register(
+            "Regex",
+            "replaceAll",
+            vec![Type::String, Type::String],
+            Type::String,
+        );
+        self.register(
+            "Regex",
+            "split",
+            vec![Type::String],
+            Type::Array(Box::new(Type::String)),
         );
     }
 

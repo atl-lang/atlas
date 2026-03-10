@@ -3036,6 +3036,15 @@ impl<'a> TypeChecker<'a> {
                         return Type::TraitObject { name: name.clone() };
                     }
 
+                    // H-231: built-in opaque types (DateTime, HttpResponse, Regex).
+                    // These are not user-defined structs but are valid first-class types.
+                    if matches!(name.as_str(), "DateTime" | "HttpResponse" | "Regex") {
+                        return Type::Generic {
+                            name: name.clone(),
+                            type_args: vec![],
+                        };
+                    }
+
                     // User-defined enum types: return a named Generic with no type args.
                     // This prevents the type from resolving to Unknown, which would cause
                     // check_match to bail early and return '?' for all match arms (H-110, H-111).

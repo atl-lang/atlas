@@ -225,5 +225,61 @@ fn test_regex_test_returns_bool() {
 }
 
 // ============================================================================
+// H-231: namespace methods return typed values (DateTime, HttpResponse, Regex)
+// ============================================================================
+
+#[test]
+fn test_h231_datetime_now_returns_datetime_type() {
+    check_no_type_errors(
+        r#"
+        let dt = DateTime.now();
+        let year: number = dt.year();
+        let iso: string = dt.toIso();
+        "#,
+    );
+}
+
+#[test]
+fn test_h231_datetime_instance_method_type_mismatch_caught() {
+    let diagnostics = typecheck_source(
+        r#"
+        let dt = DateTime.now();
+        let wrong: string = dt.year();
+        "#,
+    );
+    let errors: Vec<_> = diagnostics
+        .iter()
+        .filter(|d| d.level == atlas_runtime::diagnostic::DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-231: dt.year() returns number, assigning to string should error, got none"
+    );
+}
+
+#[test]
+fn test_h231_regex_new_returns_result_regex() {
+    check_no_type_errors(
+        r#"
+        let r = unwrap(Regex.new("[0-9]+"));
+        let ok: bool = r.test("hello 42");
+        "#,
+    );
+}
+
+#[test]
+fn test_h231_http_get_returns_result_httpresponse() {
+    check_no_type_errors(
+        r#"
+        fn handle(resp: HttpResponse): void {
+            let code: number = resp.status();
+            let body: string = resp.body();
+            let ok: bool = resp.isSuccess();
+        }
+        "#,
+    );
+}
+
+// ============================================================================
 // End B10-P11 tests
 // ============================================================================

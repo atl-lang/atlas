@@ -43,6 +43,10 @@ pub enum TypeTag {
     RegexNs,
     /// Static namespace: Io.readLine(), Io.readLinePrompt(), etc.
     IoNs,
+    /// Instance methods on DateTime values (year, month, day, format, etc.)
+    DateTime,
+    /// Instance methods on Regex values (test, find, findAll, replace, etc.)
+    RegexValue,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -71,6 +75,8 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
         TypeTag::RegexNs => resolve_regex_ns_method(method_name),
         TypeTag::IoNs => resolve_io_ns_method(method_name),
+        TypeTag::DateTime => resolve_datetime_instance_method(method_name),
+        TypeTag::RegexValue => resolve_regex_instance_method(method_name),
     }
 }
 
@@ -679,6 +685,49 @@ fn resolve_io_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "readLine" => "ioReadLine",
         "readLinePrompt" => "ioReadLinePrompt",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve DateTime instance method → stdlib function name.
+/// These take the DateTime value as the first argument (receiver).
+fn resolve_datetime_instance_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "year" => "dateTimeYear",
+        "month" => "dateTimeMonth",
+        "day" => "dateTimeDay",
+        "hour" => "dateTimeHour",
+        "minute" => "dateTimeMinute",
+        "second" => "dateTimeSecond",
+        "weekday" => "dateTimeWeekday",
+        "dayOfYear" => "dateTimeDayOfYear",
+        "addSeconds" => "dateTimeAddSeconds",
+        "addMinutes" => "dateTimeAddMinutes",
+        "addHours" => "dateTimeAddHours",
+        "addDays" => "dateTimeAddDays",
+        "diff" => "dateTimeDiff",
+        "compare" => "dateTimeCompare",
+        "toIso" => "dateTimeToIso",
+        "format" => "dateTimeFormat",
+        "toRfc3339" => "dateTimeToRfc3339",
+        "toRfc2822" => "dateTimeToRfc2822",
+        "timestamp" => "dateTimeTimestamp",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Regex instance method → stdlib function name.
+/// These take the Regex value as the first argument (receiver).
+fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "test" | "isMatch" => "regexTest",
+        "find" => "regexFind",
+        "findAll" => "regexFindAll",
+        "replace" => "regexReplace",
+        "replaceAll" => "regexReplaceAll",
+        "split" => "regexSplit",
         _ => return None,
     };
     Some(func_name.to_string())
