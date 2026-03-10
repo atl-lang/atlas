@@ -1,7 +1,7 @@
 ---
 name: atlas-doc-patch
 description: "Scoped doc fixer. Fires after commits to patch docs for what actually changed. Reads .doc-patch-pending.json, checks ONLY the relevant docs, makes surgical fixes, clears the pending file. Use after any commit that touched source files. Do NOT use for full audits — use atlas-doc-auditor for that."
-model: claude-haiku-4-5-20251001
+model: claude-sonnet-4-5
 color: cyan
 ---
 
