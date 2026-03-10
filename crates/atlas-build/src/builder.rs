@@ -906,13 +906,9 @@ fn format_diagnostics(diagnostics: &[Diagnostic]) -> String {
         .join("; ")
 }
 
-/// Serialize bytecode to bytes
-/// TODO: Implement proper bytecode serialization format
-/// For now, this is a placeholder - in future phases we'll add proper serialization
-fn serialize_bytecode(_bytecode: &Bytecode) -> BuildResult<Vec<u8>> {
-    // Placeholder: Return empty vec for now
-    // Phase-11b or later will implement proper bytecode serialization
-    Ok(Vec::new())
+/// Serialize bytecode to bytes using the Atlas bytecode format (magic + version + constants + instructions).
+fn serialize_bytecode(bytecode: &Bytecode) -> BuildResult<Vec<u8>> {
+    Ok(bytecode.to_bytes())
 }
 
 #[cfg(test)]
