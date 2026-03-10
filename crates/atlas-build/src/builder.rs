@@ -506,7 +506,7 @@ impl Builder {
             let mut parser = Parser::new(tokens);
             let (program, parse_diagnostics) = parser.parse();
 
-            if !parse_diagnostics.is_empty() {
+            if parse_diagnostics.iter().any(|d| d.is_error()) {
                 return Err(BuildError::compilation(
                     &module_name,
                     format_diagnostics(&parse_diagnostics),
@@ -601,7 +601,7 @@ impl Builder {
         let mut lexer = Lexer::new(&source);
         let (tokens, lex_diagnostics) = lexer.tokenize();
 
-        if !lex_diagnostics.is_empty() {
+        if lex_diagnostics.iter().any(|d| d.is_error()) {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&lex_diagnostics),
@@ -612,7 +612,7 @@ impl Builder {
         let mut parser = Parser::new(tokens);
         let (program, parse_diagnostics) = parser.parse();
 
-        if !parse_diagnostics.is_empty() {
+        if parse_diagnostics.iter().any(|d| d.is_error()) {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&parse_diagnostics),
@@ -624,7 +624,8 @@ impl Builder {
         let (mut symbol_table, bind_diagnostics) =
             binder.bind_with_modules(&program, source_path, registry);
 
-        if !bind_diagnostics.is_empty() {
+        let bind_errors: Vec<_> = bind_diagnostics.iter().filter(|d| d.is_error()).collect();
+        if !bind_errors.is_empty() {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&bind_diagnostics),
@@ -635,7 +636,8 @@ impl Builder {
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&program);
 
-        if !type_diagnostics.is_empty() {
+        let type_errors: Vec<_> = type_diagnostics.iter().filter(|d| d.is_error()).collect();
+        if !type_errors.is_empty() {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&type_diagnostics),
