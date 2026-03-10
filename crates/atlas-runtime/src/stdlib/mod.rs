@@ -95,6 +95,7 @@ fn stdlib_signature(func_name: &str) -> Option<&'static str> {
         "arrayIndexOf" => Some("arrayIndexOf(arr: []T, value: T) -> number"),
         "arrayReverse" => Some("arrayReverse(arr: []T) -> []T"),
         "arraySort" => Some("arraySort(arr: []T) -> []T"),
+        "arrayEnumerate" => Some("arrayEnumerate(arr: []T) -> [](number, T)"),
         "arrayFlat" => Some("arrayFlat(arr: [][]T) -> []T"),
         "arrayFlatMap" => Some("arrayFlatMap(arr: []T, fn: (T) -> []U) -> []U"),
         "arrayFill" => Some("arrayFill(arr: []T, value: T, start: number, end: number) -> []T"),
@@ -440,6 +441,13 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             }
             let arr = extract_array(&args[0], "arraySort", span)?;
             Ok(array::sort_natural(&arr))
+        });
+        m.insert("arrayEnumerate", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("arrayEnumerate", 1, args.len(), span));
+            }
+            let arr = extract_array(&args[0], "arrayEnumerate", span)?;
+            Ok(array::enumerate(&arr))
         });
         // Free-function variants (legacy names)
         m.insert("pop", |args, span, _, _| {
@@ -1945,6 +1953,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("arrayUnshift", "array_unshift"),
             ("arrayReverse", "array_reverse"),
             ("arraySort", "array_sort"),
+            ("arrayEnumerate", "array_enumerate"),
             ("arrayIndexOf", "array_index_of"),
             ("arrayLastIndexOf", "array_last_index_of"),
             ("arrayIncludes", "array_includes"),

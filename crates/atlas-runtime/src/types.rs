@@ -86,7 +86,7 @@ impl Type {
         }
     }
 
-    fn is_any_placeholder(ty: &Type) -> bool {
+    pub fn is_any_placeholder(ty: &Type) -> bool {
         matches!(ty, Type::TypeParameter { name } if name == ANY_TYPE_PARAM)
     }
 
