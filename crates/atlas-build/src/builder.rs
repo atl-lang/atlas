@@ -145,7 +145,12 @@ pub struct Builder {
 impl Builder {
     /// Create a new builder for the project at the given path
     pub fn new(project_path: impl AsRef<Path>) -> BuildResult<Self> {
-        let root_dir = project_path.as_ref().to_path_buf();
+        // Canonicalize to get an absolute path — this prevents relative-path mismatches
+        // when the binder resolves import paths and compares against registry keys.
+        let root_dir = project_path
+            .as_ref()
+            .canonicalize()
+            .unwrap_or_else(|_| project_path.as_ref().to_path_buf());
 
         // Load package manifest
         let manifest_path = root_dir.join("atlas.toml");

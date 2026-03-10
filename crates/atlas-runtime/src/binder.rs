@@ -24,6 +24,9 @@ pub struct Binder {
     type_param_scopes: Vec<HashMap<String, TypeParam>>,
     /// Stack of aliases being resolved (for circular detection)
     type_alias_stack: Vec<String>,
+    /// Struct declarations collected in pre-pass (name → StructDecl), so that
+    /// `resolve_type_ref` can resolve named struct types before Phase 2 processes them.
+    struct_decls: HashMap<String, StructDecl>,
 }
 
 impl Binder {
@@ -34,6 +37,7 @@ impl Binder {
             diagnostics: Vec::new(),
             type_param_scopes: Vec::new(),
             type_alias_stack: Vec::new(),
+            struct_decls: HashMap::new(),
         }
     }
 
@@ -44,12 +48,15 @@ impl Binder {
             diagnostics: Vec::new(),
             type_param_scopes: Vec::new(),
             type_alias_stack: Vec::new(),
+            struct_decls: HashMap::new(),
         }
     }
 
     /// Bind a program (two-pass: hoist functions, then bind everything)
     pub fn bind(&mut self, program: &Program) -> (SymbolTable, Vec<Diagnostic>) {
-        // Phase 0: Collect type aliases (so they can be used in signatures)
+        // Phase 0a: Collect struct declarations (so named struct types resolve in signatures)
+        self.collect_struct_decl_prepass(program);
+        // Phase 0b: Collect type aliases (so they can be used in signatures)
         self.collect_type_aliases(program);
 
         // Phase 1: Collect all top-level function declarations (hoisting)
@@ -131,7 +138,9 @@ impl Binder {
         module_path: &Path,
         registry: &ModuleRegistry,
     ) -> (SymbolTable, Vec<Diagnostic>) {
-        // Phase 0: Collect type aliases (so they can be used in signatures)
+        // Phase 0a: Collect struct declarations (so named struct types resolve in signatures)
+        self.collect_struct_decl_prepass(program);
+        // Phase 0b: Collect type aliases (so they can be used in signatures)
         self.collect_type_aliases(program);
 
         // Bind imports early to support aliases in signatures
@@ -630,11 +639,15 @@ impl Binder {
     fn resolve_import_path(source: &str, module_path: &Path) -> PathBuf {
         if source.starts_with("./") || source.starts_with("../") {
             let base = module_path.parent().unwrap_or(Path::new("."));
-            let mut resolved = base.join(source);
+            // Strip the leading "./" from relative imports before joining to avoid
+            // producing paths like "/src/./types" with a redundant component.
+            let rel = source.strip_prefix("./").unwrap_or(source);
+            let mut resolved = base.join(rel);
             if resolved.extension().is_none() {
                 resolved.set_extension("atlas");
             }
-            resolved
+            // Normalize the path by collecting components — removes redundant `.` segments.
+            resolved.components().collect()
         } else if source.starts_with('/') {
             let mut stripped = PathBuf::from(source.trim_start_matches('/'));
             if stripped.extension().is_none() {
@@ -645,6 +658,30 @@ impl Binder {
         } else {
             PathBuf::from(source)
         }
+    }
+
+    /// Pre-pass: collect all struct declarations from the program so that
+    /// `resolve_type_ref` can resolve named struct types in function signatures
+    /// before Phase 2 processes them. Handles both `struct Foo {}` and `export struct Foo {}`.
+    fn collect_struct_decl_prepass(&mut self, program: &Program) {
+        for item in &program.items {
+            match item {
+                Item::Struct(decl) => {
+                    self.struct_decls
+                        .insert(decl.name.name.clone(), decl.clone());
+                }
+                Item::Export(export_decl) => {
+                    if let ExportItem::Struct(decl) = &export_decl.item {
+                        self.struct_decls
+                            .insert(decl.name.name.clone(), decl.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+        // Also include any struct types that were imported from other modules
+        // (added to struct_exports during bind_import pre-pass).
+        // These will be populated after bind_import runs, so we refresh in resolve_type_ref.
     }
 
     fn collect_type_aliases(&mut self, program: &Program) {
@@ -992,7 +1029,7 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("detail", format!("unknown symbol '{}'", id.name)).build()
+                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("name", &id.name).arg("detail", format!("unknown symbol '{}'", id.name)).build()
                     .with_label("undefined variable")
                     .with_help(format!(
                         "declare `{}` with `let` before assigning to it: `let {} = value;`",
@@ -1039,7 +1076,7 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("detail", format!("unknown identifier `{}`", id.name)).build()
+                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("name", &id.name).arg("detail", format!("unknown identifier `{}`", id.name)).build()
                     .with_label("undefined identifier")
                     .with_help(format!(
                         "declare `{}` with `let` before using it: `let {} = value;`",
@@ -1301,6 +1338,25 @@ impl Binder {
                         }
                         // Defer generic alias arity checks to the type checker (allows inference)
                         return Type::Unknown;
+                    }
+
+                    // Check if it's a struct type — look in the pre-pass struct map first,
+                    // then fall back to struct_exports (populated by imported structs).
+                    let struct_decl = self
+                        .struct_decls
+                        .get(name)
+                        .cloned()
+                        .or_else(|| self.symbol_table.get_struct_exports().get(name).cloned());
+                    if let Some(decl) = struct_decl {
+                        let members = decl
+                            .fields
+                            .iter()
+                            .map(|f| StructuralMemberType {
+                                name: f.name.name.clone(),
+                                ty: self.resolve_type_ref(&f.type_ref),
+                            })
+                            .collect();
+                        return Type::Structural { members };
                     }
 
                     // Unknown type - will be caught by typechecker
