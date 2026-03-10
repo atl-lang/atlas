@@ -4,7 +4,7 @@ Every Atlas error has a named code (`ATxxxx`), a specific problem description, a
 
 ---
 
-## Canonical Error Format (B16 — updated 2026-03-09)
+## Canonical Error Format (B17 — updated 2026-03-09)
 
 Every Atlas diagnostic renders in this exact format. No Rust internal chrome, no `panicked at`, no anonymous spans.
 
@@ -523,6 +523,52 @@ These indicate bugs in the Atlas compiler. Please report them.
 | AT9998 | Unknown opcode (VM compiler bug) |
 
 Report at: https://github.com/anthropics/atlas/issues
+
+---
+
+## Contributor Guide: Adding a New Error Code (B17)
+
+All Atlas error codes are backed by a `DiagnosticDescriptor` constant in
+`crates/atlas-runtime/src/diagnostic/error_codes.rs`. Adding a new error requires three steps:
+
+### 1. Declare the descriptor constant
+
+```rust
+pub const MY_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT1099",
+    level: DiagnosticLevel::Error,
+    title: "Short title (shown in atlas explain)",
+    message_template: "description with `{name}` named holes",
+    static_help: Some("what the developer should do to fix this"),
+    static_note: None,           // optional context note
+    domain: DiagnosticDomain::Parser,  // or Typechecker, Runtime, etc.
+};
+```
+
+Rules:
+- `static_help` is **mandatory** — every code must have actionable guidance
+- No embedded `\n` in `static_help` or `static_note`
+- `message_template` uses `{name}` holes filled at call sites via `.arg("name", value)`
+
+### 2. Add to DESCRIPTOR_REGISTRY
+
+At the bottom of `error_codes.rs`, add `&MY_ERROR` to the `DESCRIPTOR_REGISTRY` slice.
+This makes it available via `atlas explain ATxxxx` and the coverage tests.
+
+### 3. Emit at the call site
+
+```rust
+use crate::diagnostic::error_codes::MY_ERROR;
+
+// Builder chain — returns Diagnostic
+let diag = MY_ERROR.emit(span)
+    .arg("name", the_name)           // fills {name} hole
+    .with_help("extra context here") // additive after static_help
+    .build();
+```
+
+The render path is unified — `DiagnosticFormatter::write_diagnostic()` is the single renderer.
+`Diagnostic::to_human_string()` delegates to it. Do not add render logic elsewhere.
 
 ---
 

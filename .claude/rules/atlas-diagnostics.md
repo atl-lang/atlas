@@ -12,9 +12,8 @@ paths:
 
 Auto-loaded when touching diagnostic, parser error, or typechecker files.
 
-**B14 implements these standards system-wide.**
+**B14 implemented these standards system-wide. B17 unified the descriptor and render layers.**
 **Any NEW error code or error site added NOW must meet these standards immediately — no exceptions.**
-**Existing pre-B14 error sites will be upgraded by B14. Do not regress them further.**
 
 ---
 
@@ -53,48 +52,63 @@ Use `self.peek()` to get the actual token at the error site.
 
 Use the `expected()` helper (added in B14-P02). If it doesn't exist yet, write the found clause manually.
 
-### 3. Context-Aware Help Text — NO STATIC LOOKUPS
-Help text MUST be passed explicitly at the error site — NOT auto-fetched from the registry.
-`error_at_with_code()` must NOT call `help_for(code)` unconditionally.
+### 3. Descriptor Emit Pattern — MANDATORY (B17, D-044)
+All error emit call sites MUST use the descriptor API. Bare `Diagnostic::error_with_code()` chains are BANNED.
 
 ```rust
-// BANNED — attaches wrong help in wrong context:
-let help = error_codes::help_for(code).unwrap_or("check syntax");
-self.diagnostics.push(Diagnostic::error_with_code(code, msg, span).with_help(help));
+// BANNED — bare chain, no descriptor:
+Diagnostic::error_with_code("AT1002", "Unterminated string", span)
+    .with_help("add a closing quote")
 
-// REQUIRED — explicit, context-specific help:
-self.diagnostics.push(
-    Diagnostic::error_with_code(code, msg, span)
-        .with_help("Add the missing closing brace for the function body")
-);
+// REQUIRED — descriptor emit:
+use crate::diagnostic::error_codes::UNTERMINATED_STRING;
+UNTERMINATED_STRING.emit(span)
+    .arg("key", value)          // fills {key} holes in message_template
+    .with_help("extra context") // additive: appended after static_help
+    .build()                    // -> Diagnostic
 ```
 
-AT1002 (unterminated string) help ONLY appears on string literal errors.
-AT1003 (invalid escape) help ONLY appears on escape sequence errors.
+`static_help` on the descriptor provides the canonical help. Call sites may ADD extra context
+via `.with_help()` / `.with_note()` — never duplicate what the descriptor already says.
+
+The render path is unified: `DiagnosticFormatter::write_diagnostic()` is the single implementation.
+`Diagnostic::to_human_string()` delegates to it. Do not add render logic anywhere else.
 
 ### 4. `is_secondary` field on Diagnostic — MANDATORY
 `Diagnostic` struct must have `is_secondary: bool` (default false).
 Errors emitted while `in_panic_mode` that are not suppressed must set `is_secondary = true`.
 Display must label or visually distinguish secondary errors.
 
-### 5. New AT Error Codes — Must Have Description + Help + Example
-Every new AT code added to `error_codes.rs` MUST have:
-- `description` — one sentence, what went wrong
-- `help` — one sentence, what to do about it
-- `example` — minimal Atlas reproduction (for `atlas explain ATxxxx`, B14-P05)
+### 5. New AT/AW Error Codes — Must Be a Full DiagnosticDescriptor (B17, D-044)
+Every new AT/AW code added to `error_codes.rs` MUST be a `DiagnosticDescriptor` constant with ALL fields:
 
 ```rust
-// BANNED — incomplete:
-ErrorCodeInfo { code: "AT1099", description: "Some error", help: None }
-
-// REQUIRED:
-ErrorCodeInfo {
+// BANNED — incomplete, missing static_help:
+pub const MY_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
     code: "AT1099",
-    description: "impl block defined for unknown type",
-    help: Some("Check that the type name is spelled correctly and declared with `struct`."),
-    example: Some("impl UnknownType { }  // AT1099: type not found"),
-}
+    title: "My error",
+    message_template: "something went wrong",
+    static_help: None,  // ← BANNED — must have help
+    ..
+};
+
+// REQUIRED — full descriptor:
+pub const MY_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT1099",
+    level: DiagnosticLevel::Error,
+    title: "Impl block for unknown type",
+    message_template: "no type named `{name}` found in scope",
+    static_help: Some("check that the type is declared with `struct` before the `impl` block"),
+    static_note: None,
+    domain: DiagnosticDomain::Typechecker,
+};
 ```
+
+Rules:
+- `static_help` is **mandatory** — every code must have actionable guidance
+- No embedded `\n` in `static_help` or `static_note` — use separate help lines at call sites
+- `message_template` uses named `{key}` holes — filled via `.arg("key", val)` at call sites
+- Add to `DESCRIPTOR_REGISTRY` at the bottom of `error_codes.rs`
 
 ### 6. Span Precision — Point at the Bad Token, Not After It
 Error spans must start at the FIRST bad token, not the character after it.
@@ -113,14 +127,16 @@ self.error_at_with_code(code, msg, bad_span);
 
 ---
 
-## Pre-B14 / Post-B14 Scope
+## Scope (Post-B17)
+
+B14 + B17 are complete. All 6 standards are now enforced system-wide.
 
 | Situation | What to do |
 |-----------|-----------|
-| Adding a NEW error code (e.g. B13-P06) | Follow all 6 standards above — NOW |
-| Modifying an EXISTING error site pre-B14 | Don't regress it further. Note the site in B14 scope. |
-| Working on B14 phases | Enforce all 6 standards across the whole system |
-| Post-B14 ANY error site | All 6 standards are MANDATORY. Violation = blocking. |
+| Adding a NEW error code | Full `DiagnosticDescriptor` constant — all fields mandatory |
+| Emitting a NEW error | Use `AT_CODE.emit(span).arg().build()` — bare chains are BANNED |
+| Modifying an EXISTING error site | Use descriptor API — migrate if still using bare chain |
+| Adding render logic | Add to `DiagnosticFormatter::write_diagnostic()` ONLY |
 
 ---
 
@@ -144,21 +160,27 @@ is a BLOCKING regression. Fix the snapshot only if the new output is strictly be
 
 ## Quick Checklist (Before Committing Any Diagnostic Change)
 
-- [ ] New AT code has description + help + example
+- [ ] New AT/AW code is a full `DiagnosticDescriptor` with `static_help` (no `None`)
+- [ ] No embedded `\n` in `static_help` or `static_note`
+- [ ] New code added to `DESCRIPTOR_REGISTRY` in `error_codes.rs`
+- [ ] Emit call uses `AT_CODE.emit(span).arg().build()` — no bare `Diagnostic::error_with_code()`
 - [ ] Parser error says "Expected X, found `Y` (Kind)"
-- [ ] Help text is context-specific, not registry auto-fetched
 - [ ] Cascade suppression not bypassed
 - [ ] Span points at the bad token, not after it
 - [ ] `atlas run bad.atlas` shows correct number of primary errors
-- [ ] Snapshot tests pass (post-B14)
+- [ ] Descriptor tests pass: `cargo nextest run -p atlas-runtime -E 'test(descriptor)'`
 
 ---
 
 ## References
 
 - **D-043** — Error Quality Contract (this rule, as a standing decision)
-- **B14** — Full system-wide implementation of these standards
-- `crates/atlas-runtime/src/diagnostic.rs` — Diagnostic struct
-- `crates/atlas-runtime/src/diagnostic/error_codes.rs` — AT code registry
+- **D-044** — DiagnosticDescriptor is the mandatory emit pattern (B17)
+- **B14** — System-wide quality enforcement
+- **B17** — Unified descriptor + render layer
+- `crates/atlas-runtime/src/diagnostic.rs` — `Diagnostic` struct; `to_human_string()` delegates to formatter
+- `crates/atlas-runtime/src/diagnostic/descriptor.rs` — `DiagnosticDescriptor`, `DiagnosticBuilder`, `.emit()` API
+- `crates/atlas-runtime/src/diagnostic/error_codes.rs` — all AT/AW descriptor constants + `DESCRIPTOR_REGISTRY`
+- `crates/atlas-runtime/src/diagnostic/formatter.rs` — single authoritative renderer (`write_diagnostic`)
 - `crates/atlas-runtime/src/parser/mod.rs:1062` — error() / error_with_code()
 - `crates/atlas-runtime/src/parser/mod.rs:1213` — synchronize()
