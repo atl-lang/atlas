@@ -1785,17 +1785,15 @@ impl<'a> TypeChecker<'a> {
                 continue;
             }
 
-            // Emit warning based on symbol kind
-            let message = match kind {
-                SymbolKind::Variable => format!("Unused variable '{}'", name),
-                SymbolKind::Parameter => format!("Unused parameter '{}'", name),
-                _ => continue,
-            };
+            // Skip non-variable/parameter kinds
+            if !matches!(kind, SymbolKind::Variable | SymbolKind::Parameter) {
+                continue;
+            }
 
             self.diagnostics.push(
                 error_codes::UNUSED_VARIABLE
                     .emit(*span)
-                    .arg("detail", &message)
+                    .arg("name", name.as_str())
                     .build()
                     .with_label("declared here but never used")
                     .with_help(format!(
@@ -1994,6 +1992,8 @@ impl<'a> TypeChecker<'a> {
                                 ),
                             });
                         self.diagnostics.push(diag);
+                        // Suppress "unused variable" noise — the type error is the real issue
+                        self.used_symbols.insert(var.name.name.clone());
                     }
                     declared_type
                 } else {
