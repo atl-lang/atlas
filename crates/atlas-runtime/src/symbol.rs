@@ -876,7 +876,7 @@ impl SymbolTable {
             "parseInt",
             Type::Function {
                 type_params: vec![],
-                params: vec![Type::String, Type::Number],
+                params: vec![Type::String], // radix (2nd arg) is optional
                 return_type: Box::new(Type::Generic {
                     name: "Result".to_string(),
                     type_args: vec![Type::Number, Type::String],
