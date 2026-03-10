@@ -576,9 +576,9 @@ impl Parser {
                 let type_param_name = type_param_tok.lexeme.clone();
                 let type_param_span = type_param_tok.span;
 
-                // `:` trait bounds (one or more, separated by `+`): `T: Copy + Display`
+                // `extends` trait bounds (one or more, separated by `&`): `T extends Copy & Display`
                 let mut trait_bounds = Vec::new();
-                if self.match_token(TokenKind::Colon) {
+                if self.match_token(TokenKind::Extends) {
                     loop {
                         let bound_start = self.peek().span;
                         let trait_name_tok = self.consume_identifier("a trait name")?;
@@ -587,7 +587,7 @@ impl Parser {
                             trait_name: trait_name_tok.lexeme.clone(),
                             span: bound_start.merge(bound_end),
                         });
-                        if !self.match_token(TokenKind::Plus) {
+                        if !self.match_token(TokenKind::Ampersand) {
                             break;
                         }
                     }
@@ -728,16 +728,13 @@ impl Parser {
 
         let type_params = self.parse_type_params()?;
 
-        // Parse optional supertrait bounds: `: A + B`
+        // Parse optional supertrait bounds: `extends A, B`
         let mut super_traits = Vec::new();
-        if self.check(TokenKind::Colon) {
-            self.advance(); // consume `:`
+        if self.match_token(TokenKind::Extends) {
             loop {
                 let tok = self.consume_identifier("a supertrait name")?;
                 super_traits.push(tok.lexeme.clone());
-                if self.check(TokenKind::Plus) {
-                    self.advance(); // consume `+`
-                } else {
+                if !self.match_token(TokenKind::Comma) {
                     break;
                 }
             }

@@ -98,7 +98,7 @@ impl Renderable for number {
     }
 }
 
-export fn renderAll<T: Renderable>(items: []T) -> string {
+export fn renderAll<T extends Renderable>(items: []T) -> string {
     let rendered = map(items, fn(item: T) -> string { return item.render(); });
     return join(rendered, "");
 }

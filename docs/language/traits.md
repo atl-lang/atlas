@@ -94,12 +94,12 @@ print(introduce(p)); // "Hello, I'm Ada"
 
 **Generic Trait Bounds**
 ```
-fn identity<T: Copy>(value: T) -> T { ... }
-fn process<T: Display + Copy>(value: T) -> string { ... }
+fn identity<T extends Copy>(value: T) -> T { ... }
+fn process<T extends Display & Copy>(value: T) -> string { ... }
 ```
-- Type parameters can require trait bounds using `:`.
-- Multiple bounds use `+`.
+- Type parameters can require trait bounds using `extends` (TypeScript style).
+- Multiple bounds use `&`.
 
 **Current limitations:**
-- Trait inheritance (`trait A: B`) — not yet implemented (H-076)
+- Trait inheritance (`trait A extends B`) — not yet implemented (H-076)
 - Generic traits (`trait Container<T>`) — not yet implemented (H-077)

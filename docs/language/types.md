@@ -66,11 +66,11 @@ type Serializable = Scalar | json;
 
 **Generics**
 - Type parameters: `<T, U>`
-- Optional bounds: `T: Trait` and `T: Trait1 + Trait2` (D-039)
+- Optional bounds: `T extends Trait` and `T extends Trait1 & Trait2` (H-227)
 
 Example (tested):
 ```atlas
-fn identity<T: Copy>(value: T) -> T {
+fn identity<T extends Copy>(value: T) -> T {
     return value;
 }
 ```

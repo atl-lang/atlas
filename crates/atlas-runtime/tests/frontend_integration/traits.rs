@@ -148,7 +148,7 @@ fn test_h076_multiple_supertraits_parse() {
         r#"
         trait A { fn a(borrow self: A) -> number; }
         trait B { fn b(borrow self: B) -> string; }
-        trait C: A + B { fn c(borrow self: C) -> bool; }
+        trait C extends A, B { fn c(borrow self: C) -> bool; }
         "#,
     );
 }

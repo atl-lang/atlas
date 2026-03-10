@@ -199,6 +199,7 @@ fn classify_token(
         | TokenKind::Share
         | TokenKind::Trait
         | TokenKind::Impl
+        | TokenKind::Extends
         | TokenKind::Struct
         | TokenKind::Enum
         | TokenKind::Record

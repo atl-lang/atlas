@@ -1,8 +1,8 @@
 use super::super::*;
 
-// D-039: Only `T: Trait` bounds are valid. `extends` keyword is removed.
-// Structural bounds (T extends { ... }), union bounds (T extends A | B),
-// and primitive type bounds (T extends number) are all removed.
+// H-227 / D-039 update: Generic bounds use TypeScript-style `T extends Trait` and `T extends Trait1 & Trait2`.
+// Old Rust-style `T: Trait` and `T: Trait1 + Trait2` are no longer valid.
+// Structural bounds (T extends { ... }), union bounds, and primitive bounds remain invalid.
 // Use named traits (Iterable, Serializable, Equatable, Comparable, Numeric) instead.
 // ============================================================================
 
@@ -25,29 +25,27 @@ fn assert_constraint_has_error(source: &str) {
 }
 
 // -----------------------------------------------------------------------------
-// Constraint syntax — valid (T: Trait only)
+// Constraint syntax — valid (T extends Trait)
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; }")]
-#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); }")]
-#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; }")]
-#[case("fn f<T: Comparable>(borrow x: T) -> bool { return true; }")]
-#[case("fn f<T: Iterable + Serializable>(borrow x: T) -> number { return 0; }")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; }")]
+#[case("fn f<T extends Serializable>(borrow x: T) -> string { return str(x); }")]
+#[case("fn f<T extends Equatable>(borrow x: T) -> bool { return true; }")]
+#[case("fn f<T extends Comparable>(borrow x: T) -> bool { return true; }")]
+#[case("fn f<T extends Iterable & Serializable>(borrow x: T) -> number { return 0; }")]
 fn test_constraint_syntax_valid(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
 
 // -----------------------------------------------------------------------------
-// extends keyword is a parse error (D-039)
+// Old Rust-style `: Trait` syntax is now a parse error (H-227)
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T extends number>(borrow x: T) -> T { return x; }")]
-#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; }")]
-#[case("fn f<T extends { as_string: () -> string }>(x: T) -> T { return x; }")]
-#[case("type Box<T extends number> = T;")]
-fn test_extends_syntax_is_parse_error(#[case] source: &str) {
+#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; }")]
+#[case("fn f<T: Serializable + Equatable>(borrow x: T) -> T { return x; }")]
+fn test_old_colon_syntax_is_parse_error(#[case] source: &str) {
     assert_constraint_has_error(source);
 }
 
@@ -56,9 +54,9 @@ fn test_extends_syntax_is_parse_error(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; } let y = f(false);")]
-#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f(1);")]
-#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f([1, 2]);")]
+#[case("fn f<T extends Equatable>(borrow x: T) -> bool { return true; } let y = f(false);")]
+#[case("fn f<T extends Serializable>(borrow x: T) -> string { return str(x); } let y = f(1);")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; } let y = f([1, 2]);")]
 fn test_constraint_checking_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
@@ -68,20 +66,24 @@ fn test_constraint_checking_success(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
-#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f([1, 2]);")]
-#[case("fn f<T: UnknownTrait>(borrow x: T) -> T { return x; }")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
+#[case("fn f<T extends Serializable>(borrow x: T) -> string { return str(x); } let y = f([1, 2]);")]
+#[case("fn f<T extends UnknownTrait>(borrow x: T) -> T { return x; }")]
 fn test_constraint_checking_failure(#[case] source: &str) {
     assert_constraint_has_error(source);
 }
 
 // -----------------------------------------------------------------------------
-// Multiple trait bounds (T: Trait1 + Trait2)
+// Multiple trait bounds (T extends Trait1 & Trait2)
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Serializable + Equatable>(borrow x: T) -> T { return x; } let y = f(\"a\");")]
-#[case("fn f<T: Iterable + Serializable>(borrow x: T) -> number { return 0; } let y = f([1]);")]
+#[case(
+    "fn f<T extends Serializable & Equatable>(borrow x: T) -> T { return x; } let y = f(\"a\");"
+)]
+#[case(
+    "fn f<T extends Iterable & Serializable>(borrow x: T) -> number { return 0; } let y = f([1]);"
+)]
 fn test_multiple_constraints_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
@@ -91,17 +93,17 @@ fn test_multiple_constraints_success(#[case] source: &str) {
 // -----------------------------------------------------------------------------
 
 #[rstest]
-#[case("fn f<T: Comparable>(borrow x: T) -> bool { return true; } let y = f(1);")]
-#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f([1]);")]
-#[case("fn f<T: Equatable>(borrow x: T) -> bool { return true; } let y = f(\"a\");")]
-#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f(true);")]
+#[case("fn f<T extends Comparable>(borrow x: T) -> bool { return true; } let y = f(1);")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; } let y = f([1]);")]
+#[case("fn f<T extends Equatable>(borrow x: T) -> bool { return true; } let y = f(\"a\");")]
+#[case("fn f<T extends Serializable>(borrow x: T) -> string { return str(x); } let y = f(true);")]
 fn test_practical_constraint_patterns_success(#[case] source: &str) {
     assert_constraint_no_errors(source);
 }
 
 #[rstest]
-#[case("fn f<T: Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
-#[case("fn f<T: Serializable>(borrow x: T) -> string { return str(x); } let y = f([1]);")]
+#[case("fn f<T extends Iterable>(borrow x: T) -> number { return 0; } let y = f(1);")]
+#[case("fn f<T extends Serializable>(borrow x: T) -> string { return str(x); } let y = f([1]);")]
 fn test_practical_constraint_patterns_failure(#[case] source: &str) {
     assert_constraint_has_error(source);
 }

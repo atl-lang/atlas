@@ -107,6 +107,8 @@ pub enum TokenKind {
     Trait,
     /// `impl` keyword
     Impl,
+    /// `extends` keyword (supertrait bounds and generic bounds — TypeScript style)
+    Extends,
 
     // Type declarations (v0.3+)
     /// `struct` keyword
@@ -254,6 +256,7 @@ impl TokenKind {
             "share" => Some(TokenKind::Share),
             "trait" => Some(TokenKind::Trait),
             "impl" => Some(TokenKind::Impl),
+            "extends" => Some(TokenKind::Extends),
             "struct" => Some(TokenKind::Struct),
             "enum" => Some(TokenKind::Enum),
             "record" => Some(TokenKind::Record),
@@ -297,6 +300,7 @@ impl TokenKind {
             TokenKind::Share => "share",
             TokenKind::Trait => "trait",
             TokenKind::Impl => "impl",
+            TokenKind::Extends => "extends",
             TokenKind::Struct => "struct",
             TokenKind::Enum => "enum",
             TokenKind::Record => "record",
