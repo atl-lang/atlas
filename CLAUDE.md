@@ -38,6 +38,22 @@ Currently paused for battle-testing and hardening.
 - **User is architect, not infallible.** Explain why something is wrong. User makes final call.
 - **Pushback on scope creep.** If user asks for tooling/infra/enhancements while P0 issues exist, say: "We have X P0 blockers. Should we fix those first, or is this more urgent?"
 
+## Systemic Fix Mandate (NON-NEGOTIABLE — enforced by pt fix)
+
+**Partial fixes are WORSE than no fix.** They create false confidence and hide real scope.
+
+**When you fix a bug, you fix the ENTIRE CLASS of bug, not just the instance that was reported.**
+
+Before writing any code on an issue:
+1. **Grep for the broken pattern** across ALL files, not just the file in the bug report
+2. **List every affected site** — you must know the full scope before touching code
+3. **Fix all of them** in the same commit
+4. **Document the audit** in `pt fix` arg 4: "grepped for X, found N sites in A+B+C, fixed all N"
+
+`pt fix` will REJECT the close if scope audit arg is missing or under 20 chars.
+
+**Never say "intentional design" without verifying it is actually intentional.** Check the code, check the spec, check `pt decisions`. If uncertain: reopen with full context, do NOT close.
+
 ## See Something, File Something (MANDATORY)
 If you notice Atlas is missing something that Go/Rust/TypeScript had in v1.0:
 1. **File an issue immediately:** `pt add "Missing: X" P1 "reason"`

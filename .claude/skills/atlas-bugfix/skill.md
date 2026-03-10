@@ -22,6 +22,39 @@ Decision tree:
 
 ---
 
+## SYSTEMIC SCOPE AUDIT (MANDATORY — run BEFORE writing any code)
+
+**This is Step 0. You cannot skip it. Partial fixes are worse than no fix.**
+
+When you claim an issue, the first thing you do is determine the FULL scope:
+
+```bash
+# 1. Identify the broken pattern
+#    Example: "Type::Unknown returned where a real type should be"
+
+# 2. Grep for ALL instances across the ENTIRE codebase
+rg "pattern_that_matches_broken_behavior" crates/
+rg "alternate_pattern" crates/
+
+# 3. Count and list every site — write them down
+
+# 4. Fix ALL of them — not just the one that triggered the report
+
+# 5. Document in pt fix arg 4:
+#    "grepped for X in crates/, found N sites in files A+B+C, fixed all N"
+#    OR: "single-site — verified no other callers: rg 'pattern' crates/ → 1 match"
+```
+
+**Scope expansion rules — if the bug exists in one place, CHECK THESE TOO:**
+- Bug in `eval_expr`? → also check `eval_stmt`, `eval_value`, and all equivalent dispatch paths
+- Namespace method returns wrong type? → audit ALL methods in that namespace block
+- Stdlib function has unregistered param types? → audit ALL stdlib functions in that registrar
+- Type X has wrong inference in context A? → verify context B, C, D also handle type X correctly
+
+**`pt fix` REQUIRES a 4th scope audit arg — it will be REJECTED without 20+ chars explaining scope.**
+
+---
+
 ## TDD Protocol (MANDATORY for bug fixes)
 
 ### Step 1: Write Failing Test (RED)
