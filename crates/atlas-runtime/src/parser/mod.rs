@@ -541,7 +541,19 @@ impl Parser {
             match stmt {
                 Stmt::VarDecl(var) => ExportItem::Variable(var),
                 _ => {
-                    self.error("Expected variable declaration after 'export'");
+                    let span = self.peek().span;
+                    self.emit_descriptor(
+                        SYNTAX_ERROR
+                            .emit(span)
+                            .arg(
+                                "detail",
+                                "expected a variable declaration after 'export let'",
+                            )
+                            .with_help("use `export let name: Type = value;` to export a variable")
+                            .with_note(
+                                "`export let` must be followed by a full variable declaration",
+                            ),
+                    );
                     return Err(());
                 }
             }
@@ -552,7 +564,14 @@ impl Parser {
         } else if self.check(TokenKind::Enum) {
             ExportItem::Enum(self.parse_enum()?)
         } else {
-            self.error("Expected 'fn', 'let', 'type', 'struct', or 'enum' after 'export'");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "unexpected token after `export`")
+                    .with_help("valid export targets: `export fn`, `export let`, `export type`, `export struct`, `export enum`")
+                    .with_note("`export` must be followed by a declaration keyword"),
+            );
             return Err(());
         };
 
@@ -678,9 +697,14 @@ impl Parser {
                             Some(OwnershipAnnotation::Share) => "share",
                             None => unreachable!(),
                         };
-                        self.error(&format!(
-                            "Expected parameter name after ownership annotation '{kw}'"
-                        ));
+                        let span = self.peek().span;
+                        self.emit_descriptor(
+                            SYNTAX_ERROR
+                                .emit(span)
+                                .arg("detail", format!("expected a parameter name after ownership annotation `{kw}`"))
+                                .with_help(format!("write `{kw} name: Type` — the parameter name must follow the ownership keyword"))
+                                .with_note("ownership annotations (`own`, `borrow`, `share`) must be immediately followed by a parameter name"),
+                        );
                         return Err(());
                     }
                 }
@@ -713,7 +737,14 @@ impl Parser {
                         (tr, param_name_span)
                     }
                     _ => {
-                        self.error("Expected ':' after parameter name");
+                        let span = self.peek().span;
+                        self.emit_descriptor(
+                            SYNTAX_ERROR
+                                .emit(span)
+                                .arg("detail", "expected `:` after parameter name")
+                                .with_help("write `name: Type` — every parameter requires a type annotation separated by `:`")
+                                .with_note("parameters without a type annotation are only valid for `self` in impl methods"),
+                        );
                         return Err(());
                     }
                 }
@@ -1057,7 +1088,9 @@ impl Parser {
     fn parse_extern_type(&mut self) -> Result<ExternTypeAnnotation, ()> {
         let type_token = self.consume_identifier("an extern type")?;
 
-        let extern_type = match type_token.lexeme.as_str() {
+        let span = type_token.span;
+        let lexeme = type_token.lexeme.clone();
+        let extern_type = match lexeme.as_str() {
             "CInt" => ExternTypeAnnotation::CInt,
             "CLong" => ExternTypeAnnotation::CLong,
             "CDouble" => ExternTypeAnnotation::CDouble,
@@ -1065,8 +1098,13 @@ impl Parser {
             "CVoid" => ExternTypeAnnotation::CVoid,
             "CBool" => ExternTypeAnnotation::CBool,
             other => {
-                let error_msg = format!("Unknown extern type '{}'. Valid types: CInt, CLong, CDouble, CCharPtr, CVoid, CBool", other);
-                self.error(&error_msg);
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg("detail", format!("unknown extern type `{other}`"))
+                        .with_help("valid extern types: `CInt`, `CLong`, `CDouble`, `CCharPtr`, `CVoid`, `CBool`")
+                        .with_note("extern type annotations must match a supported C FFI type exactly"),
+                );
                 return Err(());
             }
         };
@@ -1141,26 +1179,6 @@ impl Parser {
     pub(super) fn is_at_end(&mut self) -> bool {
         self.skip_trivia();
         self.is_at_end_raw()
-    }
-
-    /// Record an error at the current token position.
-    /// Automatically appends `, found \`<token>\`` to the message (D-043).
-    /// Suppressed when `in_panic_mode` is set (cascade suppression — D-043).
-    pub(super) fn error(&mut self, message: &str) {
-        if self.in_panic_mode {
-            return;
-        }
-        self.in_panic_mode = true;
-        let found = self.peek().kind;
-        let span = self.peek().span;
-        let full_message = format!("{}, found `{}`", message, found.as_str());
-        self.diagnostics.push(
-            SYNTAX_ERROR
-                .emit(span)
-                .arg("detail", full_message)
-                .build()
-                .with_label("syntax error"),
-        );
     }
 
     /// Emit a diagnostic from a fully-constructed `DiagnosticBuilder`.

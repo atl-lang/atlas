@@ -44,7 +44,14 @@ impl Parser {
             TokenKind::Fn => self.parse_anon_fn(),
             TokenKind::Range | TokenKind::RangeInclusive => self.parse_range_prefix(),
             _ => {
-                self.error("Expected expression");
+                let span = self.peek().span;
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg("detail", "expected an expression")
+                        .with_help("expressions include literals, identifiers, function calls, operators, `if`, `match`, and `fn`")
+                        .with_note("if you meant to write a statement, check for a missing semicolon on the previous line"),
+                );
                 Err(())
             }
         }
@@ -592,7 +599,14 @@ impl Parser {
         let target_span = target.span();
         self.consume(TokenKind::LeftBracket, "Expected '['")?;
         if self.check(TokenKind::RightBracket) {
-            self.error("Expected expression inside '[]'");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "expected an expression inside `[]`")
+                    .with_help("write an index expression: `array[0]` or `map[key]`")
+                    .with_note("empty brackets `[]` are not a valid index — provide an expression"),
+            );
             return Err(());
         }
         let index_expr = self.parse_expression()?;
@@ -619,7 +633,13 @@ impl Parser {
         };
 
         if inclusive && end_expr.is_none() {
-            self.error("Inclusive range requires an end expression");
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(token_span)
+                    .arg("detail", "inclusive range `..=` requires an end expression")
+                    .with_help("write `start..=end` — inclusive ranges must have both a start and an end value")
+                    .with_note("use `start..` for an open-ended range without an upper bound"),
+            );
             return Err(());
         }
 
@@ -651,7 +671,13 @@ impl Parser {
         };
 
         if inclusive && end_expr.is_none() {
-            self.error("Inclusive range requires an end expression");
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(token_span)
+                    .arg("detail", "inclusive range `..=` requires an end expression")
+                    .with_help("write `start..=end` — inclusive ranges must have both a start and an end value")
+                    .with_note("use `start..` for an open-ended range without an upper bound"),
+            );
             return Err(());
         }
 
@@ -702,7 +728,21 @@ impl Parser {
             let lexeme = tok.lexeme.clone();
             let is_integer = lexeme.parse::<u64>().is_ok();
             if !is_integer {
-                self.error("tuple element index must be a non-negative integer (e.g. .0, .1)");
+                let span = tok.span;
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg(
+                            "detail",
+                            "tuple element index must be a non-negative integer",
+                        )
+                        .with_help(
+                            "use `.0`, `.1`, `.2`, etc. to access tuple elements by position",
+                        )
+                        .with_note(
+                            "floating-point or negative literals are not valid tuple indices",
+                        ),
+                );
                 return Err(());
             }
             Identifier {
@@ -934,7 +974,14 @@ impl Parser {
             .span;
 
         if members.is_empty() {
-            self.error("Structural type must include at least one member");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "structural type must include at least one member")
+                    .with_help("write `{ field: Type, ... }` — structural types require at least one named field")
+                    .with_note("use a named struct declaration for types with no fields"),
+            );
             return Err(());
         }
 
@@ -1025,7 +1072,16 @@ impl Parser {
 
         // Ensure at least one type argument
         if type_args.is_empty() {
-            self.error("Generic type requires at least one type argument");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "generic type requires at least one type argument")
+                    .with_help(
+                        "write `Type<T>` — provide at least one type inside the angle brackets",
+                    )
+                    .with_note("use a non-generic type if no type parameters are needed"),
+            );
             return Err(());
         }
 
@@ -1188,7 +1244,14 @@ impl Parser {
         );
 
         if self.check(TokenKind::RightBrace) {
-            self.error("Anonymous struct literal requires at least one field");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "anonymous struct literal requires at least one field")
+                    .with_help("write `record { field: value, ... }` — provide at least one field inside the braces")
+                    .with_note("use `()` or a named struct for zero-field types"),
+            );
             self.consume(
                 TokenKind::RightBrace,
                 "Expected '}' after anonymous struct literal",
@@ -1286,7 +1349,14 @@ impl Parser {
                     break;
                 }
             } else {
-                self.error("Expected ',' or ';' after match arm");
+                let span = self.peek().span;
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg("detail", "expected `,` or `;` after match arm")
+                        .with_help("separate match arms with `,` or `;`: `pattern => expr,`")
+                        .with_note("a trailing separator before `}` is optional"),
+                );
                 return Err(());
             }
         }
@@ -1296,7 +1366,16 @@ impl Parser {
             .span;
 
         if arms.is_empty() {
-            self.error("Match expression must have at least one arm");
+            let span = self.peek().span;
+            self.emit_descriptor(
+                SYNTAX_ERROR
+                    .emit(span)
+                    .arg("detail", "match expression must have at least one arm")
+                    .with_help(
+                        "write `match x { pattern => expr, ... }` — at least one arm is required",
+                    )
+                    .with_note("a match with no arms cannot produce a value or handle any case"),
+            );
             return Err(());
         }
 
@@ -1519,7 +1598,14 @@ impl Parser {
             }
 
             _ => {
-                self.error("Expected pattern");
+                let span = self.peek().span;
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(span)
+                        .arg("detail", "expected a pattern")
+                        .with_help("valid patterns: literals, identifiers, `_`, tuple patterns `(a, b)`, struct patterns `Point { x, y }`, or enum variants")
+                        .with_note("patterns appear on the left side of `=>` in match arms"),
+                );
                 Err(())
             }
         }
