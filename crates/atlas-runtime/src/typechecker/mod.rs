@@ -2051,8 +2051,9 @@ impl<'a> TypeChecker<'a> {
                 let elem_types: Vec<Type> = match init_type.normalized() {
                     Type::Tuple(elems) => elems.clone(),
                     // Unknown or internal any-placeholder: cannot verify statically — bind as Unknown
-                    ref t if matches!(t, Type::Unknown)
-                        || crate::types::Type::is_any_placeholder(t) =>
+                    ref t
+                        if matches!(t, Type::Unknown)
+                            || crate::types::Type::is_any_placeholder(t) =>
                     {
                         (0..d.names.len()).map(|_| Type::Unknown).collect()
                     }
