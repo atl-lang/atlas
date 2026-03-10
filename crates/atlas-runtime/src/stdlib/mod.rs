@@ -379,6 +379,37 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             let result = string::pad_end(s, length, fill, span)?;
             Ok(Value::string(result))
         });
+        m.insert("fromCharCode", |args, span, _, _| {
+            if args.is_empty() {
+                return Err(stdlib_arity_error("fromCharCode", 1, args.len(), span));
+            }
+            let mut result = String::new();
+            for arg in args {
+                let code = extract_number(arg, "fromCharCode", span)? as u32;
+                let ch = char::from_u32(code).ok_or_else(|| RuntimeError::TypeError {
+                    msg: format!("fromCharCode: {} is not a valid Unicode code point", code),
+                    span,
+                })?;
+                result.push(ch);
+            }
+            Ok(Value::string(result))
+        });
+        m.insert("charCodeAt", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("charCodeAt", 2, args.len(), span));
+            }
+            let s = extract_string(&args[0], "charCodeAt", span)?;
+            let idx = extract_number(&args[1], "charCodeAt", span)? as usize;
+            let ch = s.chars().nth(idx).ok_or_else(|| RuntimeError::TypeError {
+                msg: format!(
+                    "charCodeAt: index {} out of bounds for string of length {}",
+                    idx,
+                    s.chars().count()
+                ),
+                span,
+            })?;
+            Ok(Value::Number(ch as u32 as f64))
+        });
         m.insert("startsWith", |args, span, _, _| {
             if args.len() != 2 {
                 return Err(stdlib_arity_error("startsWith", 2, args.len(), span));
@@ -1253,6 +1284,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         m.insert("exec", |a, s, sc, _| process::exec(a, s, sc));
         m.insert("shell", |a, s, sc, _| process::shell(a, s, sc));
+        m.insert("shellOut", |a, s, sc, _| process::shell_out(a, s, sc));
         m.insert("getEnv", |a, s, sc, _| process::get_env(a, s, sc));
         m.insert("setEnv", |a, s, sc, _| process::set_env(a, s, sc));
         m.insert("unsetEnv", |a, s, sc, _| process::unset_env(a, s, sc));

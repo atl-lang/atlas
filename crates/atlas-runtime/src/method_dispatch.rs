@@ -365,6 +365,7 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "spawn" => "spawnProcess",
         "exec" => "exec",
         "shell" => "shell",
+        "shellOut" => "shellOut",
         "env" => "getEnv",
         "envList" => "listEnv",
         "args" => "getProcessArgs",
@@ -548,6 +549,7 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         // Math globals are NOT deprecated — both Math.sqrt(x) and sqrt(x) are valid per D-032 Rule 3
         // Process / shell execution
         "shell" => Some("Process.shell(cmd)"),
+        "shellOut" => Some("Process.shellOut(cmd)"),
         "exec" => Some("Process.exec(cmd, args)"),
         "spawnProcess" => Some("Process.spawn(cmd, args)"),
         // IO / File

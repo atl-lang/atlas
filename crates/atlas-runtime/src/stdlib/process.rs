@@ -195,6 +195,72 @@ pub fn exec(args: &[Value], span: Span, security: &SecurityContext) -> Result<Va
     }
 }
 
+/// Execute a shell command and return stdout as a string
+///
+/// Simpler variant of `shell()` for cases where only stdout is needed.
+/// Atlas signature: `shellOut(command: string) -> Result<string, string>`
+/// Returns Ok(stdout) on exit code 0, Err(stderr) otherwise.
+pub fn shell_out(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("shellOut", 1, args.len(), span));
+    }
+
+    let command_str = match &args[0] {
+        Value::String(s) => s.as_ref().clone(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: format!("Expected string for command, got {}", args[0].type_name()),
+                span,
+            })
+        }
+    };
+
+    let (shell_cmd, shell_arg) = if cfg!(target_os = "windows") {
+        ("cmd", "/C")
+    } else {
+        ("sh", "-c")
+    };
+
+    security
+        .check_process(shell_cmd)
+        .map_err(|_| RuntimeError::ProcessPermissionDenied {
+            command: shell_cmd.to_string(),
+            span,
+        })?;
+
+    let output = std::process::Command::new(shell_cmd)
+        .arg(shell_arg)
+        .arg(&command_str)
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .stdin(std::process::Stdio::null())
+        .output()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to execute shell command: {}", e),
+            span,
+        })?;
+
+    if output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stdout).to_string();
+        Ok(Value::Result(Ok(Box::new(Value::string(stdout)))))
+    } else {
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let msg = if stderr.trim().is_empty() {
+            format!(
+                "Shell command failed with exit code {}",
+                output.status.code().unwrap_or(-1)
+            )
+        } else {
+            stderr.trim().to_string()
+        };
+        Ok(Value::Result(Err(Box::new(Value::string(msg)))))
+    }
+}
+
 /// Execute a shell command
 ///
 /// Atlas signature: `shell(command: string, options?: object) -> Result<object, string>`
