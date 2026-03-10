@@ -419,6 +419,34 @@ impl Interpreter {
 
     /// Evaluate a function call
     pub(super) fn eval_call(&mut self, call: &CallExpr) -> Result<Value, RuntimeError> {
+        // Bare user-defined enum variant constructor: `Unknown(raw)`, `Quit` without EnumName::.
+        // Check BEFORE evaluating callee to avoid "undefined variable" errors for variant names.
+        // Skip stdlib constructors (Ok, Err, Some, None) — they have their own Value types.
+        if let crate::ast::Expr::Identifier(id) = call.callee.as_ref() {
+            let is_stdlib_ctor = matches!(id.name.as_str(), "Ok" | "Err" | "Some" | "None");
+            if !is_stdlib_ctor {
+                if let Some((enum_name, arity)) = self.enum_variants.get(&id.name).cloned() {
+                    if arity > 0 {
+                        let mut data = Vec::new();
+                        for arg in &call.args {
+                            data.push(self.eval_expr(arg)?);
+                            if self.control_flow != ControlFlow::None {
+                                return Ok(match &self.control_flow {
+                                    ControlFlow::Return(v) => v.clone(),
+                                    _ => Value::Null,
+                                });
+                            }
+                        }
+                        return Ok(Value::EnumValue {
+                            enum_name,
+                            variant_name: id.name.clone(),
+                            data,
+                        });
+                    }
+                }
+            }
+        }
+
         // Evaluate callee as ANY expression (enables first-class functions)
         let callee_value = self.eval_expr(&call.callee)?;
 

@@ -2428,7 +2428,29 @@ impl<'a> TypeChecker<'a> {
                     .map(|value| self.is_hashmap_new_call(value))
                     .unwrap_or(false)
                     && self.is_typed_hashmap(expected);
-                if !allows_hashmap_new && !self.is_assignable_with_traits(&return_type, expected) {
+                // If the expected return type is a user-defined enum and the actual type is
+                // an enum-constructor result (Result<T>, Option<T>, or another Generic enum),
+                // accept it — at runtime all enum values are Value::Enum and the variant name
+                // is what matters, not the wrapper type. This prevents false positives when
+                // a user enum (e.g. CommandResult) shares variant names with stdlib types
+                // (e.g. Ok, Err, Some, None).
+                let expected_is_user_enum = matches!(
+                    expected_norm,
+                    Type::Generic { ref name, ref type_args }
+                        if type_args.is_empty() && self.enum_names.contains(name)
+                );
+                let actual_is_enum_like =
+                    matches!(
+                        return_type.normalized(),
+                        Type::Generic { .. } | Type::Unknown
+                    ) || self.enum_names.contains(match &return_type.normalized() {
+                        Type::Generic { name, .. } => name.as_str(),
+                        _ => "",
+                    });
+                let skip_type_check = allows_hashmap_new
+                    || (expected_is_user_enum && actual_is_enum_like)
+                    || self.is_assignable_with_traits(&return_type, expected);
+                if !skip_type_check {
                     let mut diag = error_codes::TYPE_ERROR
                         .emit(ret.span)
                         .arg(

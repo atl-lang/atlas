@@ -19,7 +19,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
     match (ns, method) {
         // Json namespace
         ("Json", "parse" | "isValid" | "prettify") => Some(vec![str]),
-        ("Json", "stringify") => Some(vec![json]),
+        ("Json", "stringify") => Some(vec![Type::any_placeholder()]),
         // Math namespace
         ("Math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
         ("Math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
@@ -232,8 +232,41 @@ impl<'a> TypeChecker<'a> {
                 if let Some(symbol) = self.symbol_table.lookup(&id.name) {
                     symbol.ty.clone()
                 } else {
-                    // Symbol not found - may be a builtin or undefined variable
-                    // Binder should have caught undefined variables, so this is likely a builtin
+                    // Check if it's a user-defined enum variant (bare constructor like `Quit`
+                    // or tuple variant like `Unknown` used as a function value).
+                    // Skip stdlib constructors which are handled separately.
+                    let is_stdlib_ctor = matches!(id.name.as_str(), "Ok" | "Err" | "Some" | "None");
+                    if !is_stdlib_ctor {
+                        // Clone data needed to avoid borrow conflict with resolve_type_ref.
+                        let found: Option<(String, crate::ast::EnumVariant)> =
+                            self.enum_decls.iter().find_map(|(enum_name, decl)| {
+                                decl.variants
+                                    .iter()
+                                    .find(|v| v.name().name == id.name)
+                                    .map(|v| (enum_name.clone(), v.clone()))
+                            });
+                        if let Some((enum_name, variant)) = found {
+                            let enum_type = Type::Generic {
+                                name: enum_name,
+                                type_args: vec![],
+                            };
+                            return match variant {
+                                crate::ast::EnumVariant::Unit { .. } => enum_type,
+                                crate::ast::EnumVariant::Tuple { fields, .. } => {
+                                    let params: Vec<Type> =
+                                        fields.iter().map(|f| self.resolve_type_ref(f)).collect();
+                                    Type::Function {
+                                        type_params: vec![],
+                                        params,
+                                        return_type: Box::new(enum_type),
+                                    }
+                                }
+                                crate::ast::EnumVariant::Struct { .. } => enum_type,
+                            };
+                        }
+                    }
+                    // Symbol not found - may be a builtin or undefined variable.
+                    // Binder should have caught undefined variables, so this is likely a builtin.
                     Type::Unknown
                 }
             }
@@ -283,12 +316,16 @@ impl<'a> TypeChecker<'a> {
                 for stmt in &block.statements {
                     self.check_statement(stmt);
                 }
-                // If the block ends with a return/break/continue, its type is Never
-                // (the bottom type — compatible with any other type in unification).
+                // If block has a tail expression (no semicolon), its type is that expr's type.
+                // If the last statement is a return/break/continue, its type is Never.
                 // An empty block or a block of pure statements (no tail expr) has type Void.
-                let block_type = match block.statements.last() {
-                    Some(Stmt::Return(_)) => Type::Never,
-                    _ => Type::Void,
+                let block_type = if let Some(tail) = &block.tail_expr {
+                    self.check_expr(tail)
+                } else {
+                    match block.statements.last() {
+                        Some(Stmt::Return(_)) => Type::Never,
+                        _ => Type::Void,
+                    }
                 };
                 self.exit_scope();
                 block_type
@@ -321,16 +358,18 @@ impl<'a> TypeChecker<'a> {
 
                     let mut seen_fields: HashSet<String> = HashSet::new();
                     for field in &struct_expr.fields {
-                        // AT3054: borrow param cannot escape into a struct field.
-                        // No exemption for primitives — explicit `borrow` annotation means
-                        // the value must not outlive the function scope.
+                        // AT3054: explicitly-annotated `borrow` param cannot escape into a struct
+                        // field. Bare params (implicit borrow, D-040) are excluded — they are
+                        // valid pass-throughs (same rule as the let-binding check above).
                         if let Expr::Identifier(id) = &field.value {
                             let ownership = self
                                 .current_fn_param_ownerships
                                 .get(&id.name)
                                 .cloned()
                                 .flatten();
-                            if ownership == Some(OwnershipAnnotation::Borrow) {
+                            let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
+                                && self.current_fn_explicit_borrow_params.contains(&id.name);
+                            if is_explicit_borrow {
                                 self.diagnostics.push(
                                     error_codes::BORROW_ESCAPE.emit(field.span)
                                         .arg("name", &id.name)
@@ -3425,6 +3464,79 @@ impl<'a> TypeChecker<'a> {
                                         .build()
                                         .with_label("unknown constructor"),
                                 );
+                            }
+                        }
+                    }
+                    _ if self.enum_names.contains(type_name.as_str()) => {
+                        // User-defined enum: look up the variant and bind its payload args.
+                        let enum_decl = self.enum_decls.get(type_name.as_str()).cloned();
+                        if let Some(decl) = enum_decl {
+                            let variant = decl
+                                .variants
+                                .iter()
+                                .find(|v| v.name().name == name.name)
+                                .cloned();
+                            match variant {
+                                Some(crate::ast::EnumVariant::Unit { .. }) => {
+                                    // Unit variant: no payload
+                                    if !args.is_empty() {
+                                        self.diagnostics.push(
+                                            error_codes::CONSTRUCTOR_ARITY
+                                                .emit(span)
+                                                .arg("type_name", &name.name)
+                                                .arg("expected", "0")
+                                                .arg("found", format!("{}", args.len()))
+                                                .with_help(format!(
+                                                    "{} is a unit variant and takes no arguments",
+                                                    name.name
+                                                ))
+                                                .build()
+                                                .with_label("wrong arity"),
+                                        );
+                                    }
+                                }
+                                Some(crate::ast::EnumVariant::Tuple { fields, .. }) => {
+                                    // Tuple variant: bind each field
+                                    if args.len() != fields.len() {
+                                        self.diagnostics.push(
+                                            error_codes::CONSTRUCTOR_ARITY
+                                                .emit(span)
+                                                .arg("type_name", &name.name)
+                                                .arg("expected", format!("{}", fields.len()))
+                                                .arg("found", format!("{}", args.len()))
+                                                .with_help(format!(
+                                                    "{} requires {} argument(s)",
+                                                    name.name,
+                                                    fields.len()
+                                                ))
+                                                .build()
+                                                .with_label("wrong arity"),
+                                        );
+                                    } else {
+                                        for (arg, field_type_ref) in args.iter().zip(fields.iter())
+                                        {
+                                            let field_ty = self.resolve_type_ref(field_type_ref);
+                                            bindings.extend(self.check_pattern(arg, &field_ty));
+                                        }
+                                    }
+                                }
+                                Some(crate::ast::EnumVariant::Struct { .. }) => {
+                                    // Struct variant: not yet supported in patterns
+                                    // Accept without binding for now to avoid false positives
+                                }
+                                None => {
+                                    self.diagnostics.push(
+                                        error_codes::UNKNOWN_CONSTRUCTOR
+                                            .emit(name.span)
+                                            .arg("name", &name.name)
+                                            .with_help(format!(
+                                                "{} is not a variant of {}",
+                                                name.name, type_name
+                                            ))
+                                            .build()
+                                            .with_label("unknown variant"),
+                                    );
+                                }
                             }
                         }
                     }

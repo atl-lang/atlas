@@ -1065,3 +1065,67 @@ fn test_compound_assignment_all_ops() {
     assert_eq!(vm_number("let mut a = [10]; a[0] /= 2; a[0];"), 5.0);
     assert_eq!(vm_number("let mut a = [10]; a[0] %= 3; a[0];"), 1.0);
 }
+
+// ============================================================================
+// Bare enum variant constructor parity (H-248 fallout — VM path)
+// ============================================================================
+
+#[test]
+fn test_bare_unit_variant_vm() {
+    // Unit variant used bare (without `EnumName::` prefix) — both engines must produce EnumValue.
+    let expected = Value::EnumValue {
+        enum_name: "Status".to_string(),
+        variant_name: "Active".to_string(),
+        data: vec![],
+    };
+    let source = "enum Status { Active, Inactive }\nfn get(): Status { return Active; }\nget();\n";
+    let interp = interp_eval(source);
+    assert_eq!(interp, expected, "Interpreter wrong");
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, expected, "VM wrong");
+}
+
+#[test]
+fn test_bare_tuple_variant_vm() {
+    // Tuple variant constructed bare — VM must emit EnumVariant opcode with args.
+    let expected = Value::EnumValue {
+        enum_name: "BResult".to_string(),
+        variant_name: "Good".to_string(),
+        data: vec![Value::Number(42.0)],
+    };
+    let source = "enum BResult { Good(number), Bad(string) }\nfn get(): BResult { return Good(42.0); }\nget();\n";
+    let interp = interp_eval(source);
+    assert_eq!(interp, expected, "Interpreter wrong");
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, expected, "VM wrong");
+}
+
+#[test]
+fn test_bare_variant_in_function_vm() {
+    // Bare variant returned from a function call with args — exercises compile_call enum path.
+    let expected = Value::EnumValue {
+        enum_name: "Cmd".to_string(),
+        variant_name: "Run".to_string(),
+        data: vec![Value::string("build".to_string())],
+    };
+    let source = "enum Cmd { Quit, Run(string) }\nfn make_cmd(borrow name: string): Cmd { return Run(name); }\nmake_cmd(\"build\");\n";
+    let interp = interp_eval(source);
+    assert_eq!(interp, expected, "Interpreter wrong");
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, expected, "VM wrong");
+}
+
+#[test]
+fn test_bare_unit_variant_stored_vm() {
+    // Unit variant stored in a variable and returned — exercises GetLocal after EnumVariant.
+    let expected = Value::EnumValue {
+        enum_name: "Color".to_string(),
+        variant_name: "Red".to_string(),
+        data: vec![],
+    };
+    let source = "enum Color { Red, Blue }\nfn get(): Color { let a = Red; return a; }\nget();\n";
+    let interp = interp_eval(source);
+    assert_eq!(interp, expected, "Interpreter wrong");
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, expected, "VM wrong");
+}

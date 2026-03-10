@@ -89,6 +89,11 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x96] = Some(Opcode::IsArray);
     table[0x97] = Some(Opcode::GetArrayLen);
 
+    // Enum operations (0x98-0x9A)
+    table[0x98] = Some(Opcode::EnumVariant);
+    table[0x99] = Some(Opcode::CheckEnumVariant);
+    table[0x9A] = Some(Opcode::ExtractEnumData);
+
     // Async (0xA0-0xA3)
     table[0xA0] = Some(Opcode::AsyncCall);
     table[0xA1] = Some(Opcode::Await);

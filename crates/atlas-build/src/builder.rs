@@ -145,7 +145,12 @@ pub struct Builder {
 impl Builder {
     /// Create a new builder for the project at the given path
     pub fn new(project_path: impl AsRef<Path>) -> BuildResult<Self> {
-        let root_dir = project_path.as_ref().to_path_buf();
+        // Canonicalize to get an absolute path — this prevents relative-path mismatches
+        // when the binder resolves import paths and compares against registry keys.
+        let root_dir = project_path
+            .as_ref()
+            .canonicalize()
+            .unwrap_or_else(|_| project_path.as_ref().to_path_buf());
 
         // Load package manifest
         let manifest_path = root_dir.join("atlas.toml");
@@ -472,7 +477,10 @@ impl Builder {
         {
             if entry.file_type().is_file() {
                 let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("atlas") {
+                if matches!(
+                    path.extension().and_then(|s| s.to_str()),
+                    Some("atl" | "atlas")
+                ) {
                     source_files.push(path.to_path_buf());
                 }
             }
@@ -506,20 +514,21 @@ impl Builder {
             let mut parser = Parser::new(tokens);
             let (program, parse_diagnostics) = parser.parse();
 
-            if !parse_diagnostics.is_empty() {
+            if parse_diagnostics.iter().any(|d| d.is_error()) {
                 return Err(BuildError::compilation(
                     &module_name,
                     format_diagnostics(&parse_diagnostics),
                 ));
             }
 
-            // Extract dependencies from imports
+            // Extract dependencies from imports, normalizing import paths to module names.
+            // e.g. `from "./math"` → `"math"`, `from "./utils/str"` → `"utils::str"`
             let dependencies = program
                 .items
                 .iter()
                 .filter_map(|item| {
                     if let atlas_runtime::ast::Item::Import(import_decl) = item {
-                        Some(import_decl.source.clone())
+                        Some(Self::import_source_to_module_name(&import_decl.source))
                     } else {
                         None
                     }
@@ -600,7 +609,7 @@ impl Builder {
         let mut lexer = Lexer::new(&source);
         let (tokens, lex_diagnostics) = lexer.tokenize();
 
-        if !lex_diagnostics.is_empty() {
+        if lex_diagnostics.iter().any(|d| d.is_error()) {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&lex_diagnostics),
@@ -611,7 +620,7 @@ impl Builder {
         let mut parser = Parser::new(tokens);
         let (program, parse_diagnostics) = parser.parse();
 
-        if !parse_diagnostics.is_empty() {
+        if parse_diagnostics.iter().any(|d| d.is_error()) {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&parse_diagnostics),
@@ -623,7 +632,8 @@ impl Builder {
         let (mut symbol_table, bind_diagnostics) =
             binder.bind_with_modules(&program, source_path, registry);
 
-        if !bind_diagnostics.is_empty() {
+        let bind_errors: Vec<_> = bind_diagnostics.iter().filter(|d| d.is_error()).collect();
+        if !bind_errors.is_empty() {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&bind_diagnostics),
@@ -634,7 +644,8 @@ impl Builder {
         let mut type_checker = TypeChecker::new(&mut symbol_table);
         let type_diagnostics = type_checker.check(&program);
 
-        if !type_diagnostics.is_empty() {
+        let type_errors: Vec<_> = type_diagnostics.iter().filter(|d| d.is_error()).collect();
+        if !type_errors.is_empty() {
             return Err(BuildError::compilation(
                 module_name,
                 format_diagnostics(&type_diagnostics),
@@ -698,9 +709,13 @@ impl Builder {
     fn create_build_targets(&self, source_files: &[PathBuf]) -> BuildResult<Vec<BuildTarget>> {
         let mut targets = Vec::new();
 
-        // Determine if this is a library or binary based on lib.atlas vs main.atlas
-        let has_lib = source_files.iter().any(|p| p.ends_with("lib.atlas"));
-        let has_main = source_files.iter().any(|p| p.ends_with("main.atlas"));
+        // Determine if this is a library or binary based on lib.atl(as) vs main.atl(as)
+        let has_lib = source_files
+            .iter()
+            .any(|p| p.ends_with("lib.atlas") || p.ends_with("lib.atl"));
+        let main_path = source_files
+            .iter()
+            .find(|p| p.ends_with("main.atlas") || p.ends_with("main.atl"));
 
         if has_lib {
             // Library target
@@ -709,17 +724,18 @@ impl Builder {
             targets.push(target);
         }
 
-        if has_main {
+        if let Some(main) = main_path {
             // Binary target
             let target = BuildTarget::new(self.manifest.package.name.as_str(), TargetKind::Binary)
-                .with_entry_point("src/main.atlas")
+                .with_entry_point(main.to_string_lossy().as_ref())
                 .with_sources(source_files.to_vec());
             targets.push(target);
         }
 
         if targets.is_empty() {
             return Err(BuildError::BuildFailed(
-                "No lib.atlas or main.atlas found in src/".to_string(),
+                "No lib or main entry point found in src/ (expected main.atl or main.atlas)"
+                    .to_string(),
             ));
         }
 
@@ -783,6 +799,19 @@ impl Builder {
     }
 
     /// Convert file path to module name
+    /// Convert an import source string to a module name.
+    /// Strips leading `./` or `../`, removes `.atlas` extension if present,
+    /// and converts `/` separators to `::`.
+    /// e.g. `"./math"` → `"math"`, `"./utils/str"` → `"utils::str"`
+    fn import_source_to_module_name(source: &str) -> String {
+        let s = source.trim_start_matches("./").trim_start_matches("../");
+        let s = s
+            .strip_suffix(".atlas")
+            .or_else(|| s.strip_suffix(".atl"))
+            .unwrap_or(s);
+        s.replace('/', "::")
+    }
+
     fn path_to_module_name(&self, path: &Path) -> BuildResult<String> {
         let src_dir = self.root_dir.join("src");
         let relative = path.strip_prefix(&src_dir).map_err(|_| {
@@ -877,13 +906,9 @@ fn format_diagnostics(diagnostics: &[Diagnostic]) -> String {
         .join("; ")
 }
 
-/// Serialize bytecode to bytes
-/// TODO: Implement proper bytecode serialization format
-/// For now, this is a placeholder - in future phases we'll add proper serialization
-fn serialize_bytecode(_bytecode: &Bytecode) -> BuildResult<Vec<u8>> {
-    // Placeholder: Return empty vec for now
-    // Phase-11b or later will implement proper bytecode serialization
-    Ok(Vec::new())
+/// Serialize bytecode to bytes using the Atlas bytecode format (magic + version + constants + instructions).
+fn serialize_bytecode(bytecode: &Bytecode) -> BuildResult<Vec<u8>> {
+    Ok(bytecode.to_bytes())
 }
 
 #[cfg(test)]
