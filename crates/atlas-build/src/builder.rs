@@ -472,7 +472,10 @@ impl Builder {
         {
             if entry.file_type().is_file() {
                 let path = entry.path();
-                if path.extension().and_then(|s| s.to_str()) == Some("atlas") {
+                if matches!(
+                    path.extension().and_then(|s| s.to_str()),
+                    Some("atl" | "atlas")
+                ) {
                     source_files.push(path.to_path_buf());
                 }
             }
@@ -701,9 +704,13 @@ impl Builder {
     fn create_build_targets(&self, source_files: &[PathBuf]) -> BuildResult<Vec<BuildTarget>> {
         let mut targets = Vec::new();
 
-        // Determine if this is a library or binary based on lib.atlas vs main.atlas
-        let has_lib = source_files.iter().any(|p| p.ends_with("lib.atlas"));
-        let has_main = source_files.iter().any(|p| p.ends_with("main.atlas"));
+        // Determine if this is a library or binary based on lib.atl(as) vs main.atl(as)
+        let has_lib = source_files
+            .iter()
+            .any(|p| p.ends_with("lib.atlas") || p.ends_with("lib.atl"));
+        let main_path = source_files
+            .iter()
+            .find(|p| p.ends_with("main.atlas") || p.ends_with("main.atl"));
 
         if has_lib {
             // Library target
@@ -712,17 +719,18 @@ impl Builder {
             targets.push(target);
         }
 
-        if has_main {
+        if let Some(main) = main_path {
             // Binary target
             let target = BuildTarget::new(self.manifest.package.name.as_str(), TargetKind::Binary)
-                .with_entry_point("src/main.atlas")
+                .with_entry_point(main.to_string_lossy().as_ref())
                 .with_sources(source_files.to_vec());
             targets.push(target);
         }
 
         if targets.is_empty() {
             return Err(BuildError::BuildFailed(
-                "No lib.atlas or main.atlas found in src/".to_string(),
+                "No lib or main entry point found in src/ (expected main.atl or main.atlas)"
+                    .to_string(),
             ));
         }
 
@@ -792,7 +800,10 @@ impl Builder {
     /// e.g. `"./math"` → `"math"`, `"./utils/str"` → `"utils::str"`
     fn import_source_to_module_name(source: &str) -> String {
         let s = source.trim_start_matches("./").trim_start_matches("../");
-        let s = s.strip_suffix(".atlas").unwrap_or(s);
+        let s = s
+            .strip_suffix(".atlas")
+            .or_else(|| s.strip_suffix(".atl"))
+            .unwrap_or(s);
         s.replace('/', "::")
     }
 

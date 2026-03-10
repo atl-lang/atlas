@@ -54,9 +54,12 @@ impl ModuleResolver {
                 self.module_symbols.get(dep_name),
                 self.module_paths.get(dep_name),
             ) {
-                // Key by actual file path — the binder resolves `"./math"` from
-                // `src/main.atlas` to `src/math.atlas` (absolute), so that must match.
+                // Register under the actual file path AND both extension variants so the
+                // binder finds it regardless of which extension (.atl / .atlas) it probes.
                 registry.register(path.clone(), symbol_table.clone());
+                let path_no_ext = path.with_extension("");
+                registry.register(path_no_ext.with_extension("atl"), symbol_table.clone());
+                registry.register(path_no_ext.with_extension("atlas"), symbol_table.clone());
             }
         }
 
