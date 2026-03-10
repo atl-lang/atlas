@@ -207,17 +207,20 @@ A number literal has invalid syntax.
 The file ended before a statement or expression was complete. In the REPL, this usually means you opened a block `{` without closing it — type the closing `}`.
 
 ### AT1007 — Missing Ownership Annotation
-Every function parameter requires an ownership annotation: `own`, `borrow`, or `share`.
+Non-Copy types (arrays, structs, HashMaps) used in a move-sensitive context require an explicit ownership annotation: `own`, `borrow`, or `share`. Bare parameters default to `borrow` (D-040) and do not trigger AT1007.
 
 ```atlas
-fn bad(x: number) -> number { ... }          // ✗ AT1007
+fn bad(own x: []number, y: []number) -> void {
+    store(y)   // ✗ AT1007: y is bare (implicit borrow) — cannot escape
+}
 
-fn good(share x: number) -> number { ... }   // ✓ share: both caller and fn hold refs
-fn good(borrow x: number) -> number { ... }  // ✓ borrow: read-only, caller retains
-fn good(own x: []number) -> number { ... }   // ✓ own: moves value into fn
+fn good(own x: []number) -> void { ... }     // ✓ own: moves value into fn
+fn good(borrow x: []number) -> void { ... }  // ✓ explicit borrow: read-only
+fn good(share x: []number) -> void { ... }   // ✓ share: co-held reference
+fn good(x: []number) -> void { ... }         // ✓ bare param: implicit borrow, no annotation needed
 ```
 
-Choose `share` for primitives and read-only collections, `borrow` for read-only access, `own` when the function should take exclusive ownership.
+Choose `own` when the function should take exclusive ownership, `borrow` for read-only access, `share` when both caller and callee hold a valid reference. Primitives (`number`, `string`, `bool`) are Copy — no annotation required.
 
 ### AT1008 — Foreign Syntax: echo
 `echo` is PHP/shell syntax. Use `print()` in Atlas.
