@@ -699,6 +699,18 @@ impl PartialEq for Value {
             (Value::Builtin(a), Value::Builtin(b)) => a == b,
             (Value::Closure(a), Value::Closure(b)) => a.func.name == b.func.name,
             (Value::Tuple(a), Value::Tuple(b)) => a == b,
+            (
+                Value::EnumValue {
+                    enum_name: en_a,
+                    variant_name: vn_a,
+                    data: d_a,
+                },
+                Value::EnumValue {
+                    enum_name: en_b,
+                    variant_name: vn_b,
+                    data: d_b,
+                },
+            ) => en_a == en_b && vn_a == vn_b && d_a == d_b,
             // --- Reference types: identity equality ---
             (Value::NativeFunction(a), Value::NativeFunction(b)) => Arc::ptr_eq(a, b),
             (Value::SharedValue(a), Value::SharedValue(b)) => a == b,

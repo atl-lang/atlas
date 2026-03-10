@@ -183,6 +183,36 @@ impl Compiler {
 
     /// Compile a function call expression
     fn compile_call(&mut self, call: &CallExpr) -> Result<(), Vec<Diagnostic>> {
+        // Bare user-defined enum variant constructor: `Unknown(raw)` without `EnumName::`.
+        // Short-circuit BEFORE callee lookup so variant names never hit GetGlobal.
+        // Skip stdlib constructors (Ok, Err, Some, None) — they have dedicated Value types.
+        if let Expr::Identifier(id) = call.callee.as_ref() {
+            let is_stdlib_ctor = matches!(id.name.as_str(), "Ok" | "Err" | "Some" | "None");
+            if !is_stdlib_ctor {
+                if let Some((enum_name, arity)) = self.enum_variants.get(&id.name).cloned() {
+                    if arity > 0 {
+                        // Push enum_name, variant_name, then args, then EnumVariant opcode.
+                        let enum_name_idx = self
+                            .bytecode
+                            .add_constant(crate::value::Value::string(enum_name));
+                        let variant_name_idx = self
+                            .bytecode
+                            .add_constant(crate::value::Value::string(id.name.clone()));
+                        self.bytecode.emit(Opcode::Constant, call.span);
+                        self.bytecode.emit_u16(enum_name_idx);
+                        self.bytecode.emit(Opcode::Constant, call.span);
+                        self.bytecode.emit_u16(variant_name_idx);
+                        for arg in &call.args {
+                            self.compile_expr(arg)?;
+                        }
+                        self.bytecode.emit(Opcode::EnumVariant, call.span);
+                        self.bytecode.emit_u8(call.args.len() as u8);
+                        return Ok(());
+                    }
+                }
+            }
+        }
+
         // Extract function name from callee, or compile a complex callee expression
         let func_name_owned: Option<String> = match call.callee.as_ref() {
             Expr::Identifier(ident) => Some(ident.name.clone()),
@@ -649,6 +679,30 @@ impl Compiler {
 
     /// Compile an identifier (variable access)
     fn compile_identifier(&mut self, ident: &Identifier) -> Result<(), Vec<Diagnostic>> {
+        // User-defined unit enum variants (e.g. `Quit` from `enum CommandResult { Quit, ... }`).
+        // Emit EnumVariant opcode directly — avoids GetGlobal lookup failure.
+        // Skip stdlib constructors (Ok, Err, Some, None).
+        let is_stdlib_ctor = matches!(ident.name.as_str(), "Ok" | "Err" | "Some" | "None");
+        if !is_stdlib_ctor {
+            if let Some((enum_name, arity)) = self.enum_variants.get(&ident.name).cloned() {
+                if arity == 0 {
+                    let enum_name_idx = self
+                        .bytecode
+                        .add_constant(crate::value::Value::string(enum_name));
+                    let variant_name_idx = self
+                        .bytecode
+                        .add_constant(crate::value::Value::string(ident.name.clone()));
+                    self.bytecode.emit(Opcode::Constant, ident.span);
+                    self.bytecode.emit_u16(enum_name_idx);
+                    self.bytecode.emit(Opcode::Constant, ident.span);
+                    self.bytecode.emit_u16(variant_name_idx);
+                    self.bytecode.emit(Opcode::EnumVariant, ident.span);
+                    self.bytecode.emit_u8(0);
+                    return Ok(());
+                }
+            }
+        }
+
         // Try to resolve as local first
         if let Some(local_idx) = self.resolve_local(&ident.name) {
             let local = &self.locals[local_idx];

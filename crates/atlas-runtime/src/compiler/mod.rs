@@ -95,6 +95,10 @@ pub struct Compiler {
     pub(super) async_fn_names: std::collections::HashSet<String>,
     /// True while compiling the body of an `async fn` (for WrapFuture insertion).
     pub(super) in_async_fn: bool,
+    /// User-defined enum variants: variant_name -> (enum_name, arity).
+    /// Populated when enum declarations are processed. Used to resolve bare variant
+    /// constructor calls like `Unknown(raw)` or `Quit` without `EnumName::` prefix.
+    pub(super) enum_variants: std::collections::HashMap<String, (String, usize)>,
 }
 
 impl Compiler {
@@ -115,6 +119,7 @@ impl Compiler {
             trait_default_methods: std::collections::HashMap::new(),
             async_fn_names: std::collections::HashSet::new(),
             in_async_fn: false,
+            enum_variants: std::collections::HashMap::new(),
         }
     }
 
@@ -142,12 +147,27 @@ impl Compiler {
             trait_default_methods: std::collections::HashMap::new(),
             async_fn_names: std::collections::HashSet::new(),
             in_async_fn: false,
+            enum_variants: std::collections::HashMap::new(),
         }
     }
 
     /// Set the optimizer to use (or None to disable optimization)
     pub fn set_optimizer(&mut self, optimizer: Option<Optimizer>) {
         self.optimizer = optimizer;
+    }
+
+    /// Register all variants of an enum declaration for bare constructor resolution.
+    pub(super) fn register_enum_variants(&mut self, decl: &crate::ast::EnumDecl) {
+        for variant in &decl.variants {
+            let variant_name = variant.name().name.clone();
+            let enum_name = decl.name.name.clone();
+            let arity = match variant {
+                crate::ast::EnumVariant::Unit { .. } => 0,
+                crate::ast::EnumVariant::Tuple { fields, .. } => fields.len(),
+                crate::ast::EnumVariant::Struct { fields, .. } => fields.len(),
+            };
+            self.enum_variants.insert(variant_name, (enum_name, arity));
+        }
     }
 
     /// Compile an AST to bytecode
@@ -226,8 +246,13 @@ impl Compiler {
                         self.compile_stmt(&crate::ast::Stmt::VarDecl(var.clone()))
                     }
                     crate::ast::ExportItem::TypeAlias(_) => Ok(()),
-                    crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
+                    crate::ast::ExportItem::Struct(_) => {
                         // Type declarations only — no bytecode generated
+                        Ok(())
+                    }
+                    crate::ast::ExportItem::Enum(decl) => {
+                        // Register exported enum variants for bare constructor calls.
+                        self.register_enum_variants(decl);
                         Ok(())
                     }
                 }
@@ -244,9 +269,13 @@ impl Compiler {
                 Ok(())
             }
             Item::Impl(impl_block) => self.compile_impl_block(impl_block),
-            Item::Struct(_) | Item::Enum(_) => {
-                // Struct/enum declarations are type-info only — no bytecode emitted.
-                // The type system tracks struct/enum definitions for type checking.
+            Item::Struct(_) => {
+                // Struct declarations are type-info only — no bytecode emitted.
+                Ok(())
+            }
+            Item::Enum(decl) => {
+                // Register variants so bare constructor calls work without EnumName:: prefix.
+                self.register_enum_variants(decl);
                 Ok(())
             }
         }
