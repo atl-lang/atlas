@@ -281,5 +281,95 @@ fn test_h231_http_get_returns_result_httpresponse() {
 }
 
 // ============================================================================
+// H-243: Namespace method arg type checking
+// Namespace calls (Json.parse, Math.abs, File.read, etc.) must have arity
+// and argument types checked — previously silently ignored all args.
+// ============================================================================
+
+#[test]
+fn test_h243_namespace_arg_type_mismatch_json_parse() {
+    let diags = typecheck_source("let x: number = 42; Json.parse(x);");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-243: Json.parse(number) should error — expected string, got number: {diags:?}"
+    );
+}
+
+#[test]
+fn test_h243_namespace_arg_type_ok_json_parse() {
+    check_no_type_errors(r#"Json.parse("{}");"#);
+}
+
+#[test]
+fn test_h243_namespace_arity_too_few_math_min() {
+    let diags = typecheck_source("Math.min(1.0);");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-243: Math.min needs 2 args — arity error expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_h243_namespace_arity_too_many_math_abs() {
+    let diags = typecheck_source("Math.abs(1.0, 2.0);");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-243: Math.abs needs 1 arg — arity error expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_h243_namespace_arg_type_mismatch_file_read() {
+    let diags = typecheck_source("File.read(42);");
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-243: File.read(number) should error — expected string: {diags:?}"
+    );
+}
+
+#[test]
+fn test_h243_namespace_zero_arg_arity() {
+    let diags = typecheck_source(r#"Process.args(1);"#);
+    let errors: Vec<_> = diags
+        .iter()
+        .filter(|d| d.level == DiagnosticLevel::Error)
+        .collect();
+    assert!(
+        !errors.is_empty(),
+        "H-243: Process.args() takes 0 args — arity error expected: {diags:?}"
+    );
+}
+
+#[test]
+fn test_h243_namespace_valid_calls_pass() {
+    check_no_type_errors(
+        r#"
+        Math.abs(-5.0);
+        Math.min(1.0, 2.0);
+        Math.max(3.0, 4.0);
+        Math.random();
+        Env.get("KEY");
+        Crypto.sha256("hello");
+    "#,
+    );
+}
+
+// ============================================================================
 // End B10-P11 tests
 // ============================================================================
