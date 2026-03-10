@@ -224,6 +224,37 @@ fn test_h224_postfix_array_syntax_parses_successfully() {
     );
 }
 
+/// Writing old prefix `[]Type` emits a clear error pointing to the correct postfix form.
+#[test]
+fn test_h224_prefix_array_syntax_emits_helpful_error() {
+    let source = "fn foo(x: []Person): number { return 0; }";
+    let diagnostics = parse_errors(source);
+    assert!(
+        !diagnostics.is_empty(),
+        "[]Person in type position should error"
+    );
+    let diag = &diagnostics[0];
+    // Error message names both old and new form
+    assert!(
+        diag.message.contains("Person[]") && diag.message.contains("[]Person"),
+        "error should show both forms, got: {:?}",
+        diag.message
+    );
+    // Help text shows the fix
+    let help = diag.help.join(" ");
+    assert!(
+        help.contains("Person[]"),
+        "help should suggest Person[], got: {:?}",
+        help
+    );
+    // Note explains the rule
+    assert!(
+        !diag.notes.is_empty() && diag.notes[0].contains("TypeScript"),
+        "note should explain TypeScript-style postfix rule, got: {:?}",
+        diag.notes
+    );
+}
+
 // ============================================================================
 // Operator Precedence Tests (from operator_precedence_tests.rs)
 // ============================================================================

@@ -808,6 +808,46 @@ impl Parser {
 
     /// Parse primary type (named, generic, grouped, or function), plus postfix array suffix.
     fn parse_type_primary(&mut self) -> Result<TypeRef, ()> {
+        // Detect old prefix array syntax `[]Type` and emit a clear migration error.
+        // The inner type name must follow `[]` immediately (no space between `]` and name).
+        if self.check(TokenKind::LeftBracket) {
+            let next2_is_rbracket = self
+                .peek_nth_nontrivia(1)
+                .map(|t| t.kind == TokenKind::RightBracket)
+                .unwrap_or(false);
+            let next3_is_ident = self
+                .peek_nth_nontrivia(2)
+                .map(|t| {
+                    matches!(t.kind, TokenKind::Identifier)
+                        || TokenKind::is_keyword(t.lexeme.as_str()).is_some()
+                })
+                .unwrap_or(false);
+            if next2_is_rbracket && next3_is_ident {
+                let lbracket_span = self.peek().span;
+                self.advance(); // consume `[`
+                self.advance(); // consume `]`
+                let name_token = self.peek().clone();
+                let name = &name_token.lexeme;
+                let full_span = lbracket_span.merge(name_token.span);
+                self.emit_descriptor(
+                    SYNTAX_ERROR
+                        .emit(full_span)
+                        .arg(
+                            "detail",
+                            format!(
+                                "array types use postfix syntax — write `{}[]`, not `[]{}`",
+                                name, name
+                            ),
+                        )
+                        .with_help(format!("change `[]{}` to `{}[]`", name, name))
+                        .with_note(
+                            "Atlas uses TypeScript-style postfix array syntax: `T[]` not `[]T`",
+                        ),
+                );
+                return Err(());
+            }
+        }
+
         let type_ref = if self.check(TokenKind::LeftParen) {
             self.parse_paren_type()?
         } else if self.check(TokenKind::LeftBrace) {
