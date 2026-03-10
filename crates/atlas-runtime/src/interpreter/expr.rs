@@ -37,10 +37,16 @@ impl Interpreter {
                 span,
             } => self.eval_range(start, end, *inclusive, *span),
             Expr::EnumVariant(ev) => self.eval_enum_variant(ev),
-            Expr::TupleLiteral { span, .. } => Err(RuntimeError::InternalError {
-                msg: "Tuple evaluation not yet implemented".to_string(),
-                span: *span,
-            }),
+            Expr::TupleLiteral { elements, .. } => {
+                let mut vals = Vec::with_capacity(elements.len());
+                for elem in elements {
+                    vals.push(self.eval_expr(elem)?);
+                    if self.control_flow != ControlFlow::None {
+                        return Ok(Value::Null);
+                    }
+                }
+                Ok(Value::Tuple(Arc::new(vals)))
+            }
             Expr::Await { expr, span } => {
                 let val = self.eval_expr(expr)?;
                 match val {

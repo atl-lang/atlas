@@ -877,6 +877,19 @@ impl Interpreter {
         span: crate::span::Span,
     ) -> Result<Value, RuntimeError> {
         match container {
+            Value::Tuple(elems) => match field.name.parse::<usize>() {
+                Ok(idx) => elems
+                    .get(idx)
+                    .cloned()
+                    .ok_or(RuntimeError::OutOfBounds { span }),
+                Err(_) => Err(RuntimeError::TypeError {
+                    msg: format!(
+                        "tuple has no field '{}': use .0, .1, ... for element access",
+                        field.name
+                    ),
+                    span,
+                }),
+            },
             Value::HashMap(map) => {
                 let key =
                     crate::stdlib::collections::hash::HashKey::String(Arc::new(field.name.clone()));
