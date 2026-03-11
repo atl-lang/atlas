@@ -1,16 +1,20 @@
 {
-  "committed_at": "2026-03-11T18:02:49Z",
-  "commit": "11466ed",
+  "committed_at": "2026-03-11T18:08:21Z",
+  "commit": "baa1646",
   "changed_files": [
-  "crates/atlas-runtime/src/typechecker/expr.rs",
-  "crates/atlas-runtime/src/typechecker/mod.rs"
+  "crates/atlas-runtime/src/method_dispatch.rs",
+  "crates/atlas-runtime/src/stdlib/mod.rs",
+  "crates/atlas-runtime/src/stdlib/process.rs",
+  "crates/atlas-runtime/src/typechecker/expr.rs"
 ],
   "domains": [
+  "stdlib",
   "typechecker"
 ],
   "relevant_docs": [
   "docs/known-issues.md",
-  "docs/language/types.md"
+  "docs/language/types.md",
+  "docs/stdlib/index.md"
 ],
   "status": "pending"
 }

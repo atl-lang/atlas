@@ -263,7 +263,7 @@ pub const INVALID_ESCAPE: DiagnosticDescriptor = DiagnosticDescriptor {
     level: DiagnosticLevel::Error,
     title: "Invalid escape sequence",
     message_template: "invalid escape sequence `{sequence}`",
-    static_help: Some("valid escape sequences: `\\n`, `\\t`, `\\r`, `\\\\`, `\\\"`, `\\0` — use `\\\\` for a literal backslash"),
+    static_help: Some("valid escape sequences: `\\n`, `\\t`, `\\r`, `\\\\`, `\\\"`, `\\0`, `\\xHH` (hex), `\\uHHHH` (unicode)"),
     static_note: None,
     domain: DiagnosticDomain::Parser,
 };

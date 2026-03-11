@@ -14,4 +14,4 @@ expression: diagnostics
   snippet: "let path = \"C:\\path\\to\\file\";"
   label: "invalid escape `\\p`"
   help:
-    - "valid escape sequences: `\\n`, `\\t`, `\\r`, `\\\\`, `\\\"`, `\\0` — use `\\\\` for a literal backslash"
+    - "valid escape sequences: `\\n`, `\\t`, `\\r`, `\\\\`, `\\\"`, `\\0`, `\\xHH` (hex), `\\uHHHH` (unicode)"
