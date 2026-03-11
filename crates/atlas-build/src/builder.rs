@@ -540,13 +540,19 @@ impl Builder {
             }
 
             // Extract dependencies from imports, normalizing import paths to module names.
-            // e.g. `from "./math"` → `"math"`, `from "./utils/str"` → `"utils::str"`
+            // Relative imports (./foo) are resolved relative to the importing file's directory.
+            // e.g. from `commands/phases.atl`, `from "./session"` → `"commands::session"`
+            let src_dir = self.root_dir.join("src");
             let dependencies = program
                 .items
                 .iter()
                 .filter_map(|item| {
                     if let atlas_runtime::ast::Item::Import(import_decl) = item {
-                        Some(Self::import_source_to_module_name(&import_decl.source))
+                        Some(Self::resolve_import_to_module_name(
+                            &import_decl.source,
+                            source_path,
+                            &src_dir,
+                        ))
                     } else {
                         None
                     }
@@ -836,18 +842,71 @@ impl Builder {
         Ok(artifacts)
     }
 
-    /// Convert file path to module name
-    /// Convert an import source string to a module name.
-    /// Strips leading `./` or `../`, removes `.atlas` extension if present,
-    /// and converts `/` separators to `::`.
-    /// e.g. `"./math"` → `"math"`, `"./utils/str"` → `"utils::str"`
-    fn import_source_to_module_name(source: &str) -> String {
-        let s = source.trim_start_matches("./").trim_start_matches("../");
-        let s = s
+    /// Resolve an import source to a module name, accounting for relative paths.
+    ///
+    /// For relative imports (`./foo` or `../bar`), the import is resolved relative
+    /// to the importing file's directory, then converted to a module name.
+    ///
+    /// # Examples
+    /// - From `src/commands/phases.atl`, `"./session"` → `"commands::session"`
+    /// - From `src/main.atl`, `"./utils/format"` → `"utils::format"`
+    /// - From `src/commands/phases.atl`, `"../types/common"` → `"types::common"`
+    fn resolve_import_to_module_name(
+        source: &str,
+        importing_file: &Path,
+        src_dir: &Path,
+    ) -> String {
+        // Get the directory containing the importing file
+        let importing_dir = importing_file.parent().unwrap_or(importing_file);
+
+        // Normalize the import source: strip extension if present
+        let source_normalized = source
             .strip_suffix(".atlas")
-            .or_else(|| s.strip_suffix(".atl"))
-            .unwrap_or(s);
-        s.replace('/', "::")
+            .or_else(|| source.strip_suffix(".atl"))
+            .unwrap_or(source);
+
+        // Resolve relative path
+        let resolved_path =
+            if source_normalized.starts_with("./") || source_normalized.starts_with("../") {
+                // Relative import: resolve relative to importing file's directory
+                let relative_part = source_normalized.trim_start_matches("./");
+                importing_dir.join(relative_part)
+            } else {
+                // Absolute import (from src root)
+                src_dir.join(source_normalized)
+            };
+
+        // Normalize the path (resolve .. components)
+        let normalized = Self::normalize_path(&resolved_path);
+
+        // Convert to module name: strip src_dir prefix, remove extension, replace separators
+        if let Ok(relative) = normalized.strip_prefix(src_dir) {
+            relative
+                .with_extension("")
+                .to_string_lossy()
+                .replace(std::path::MAIN_SEPARATOR, "::")
+        } else {
+            // Fallback: just use the filename without extension
+            normalized
+                .file_stem()
+                .map(|s| s.to_string_lossy().to_string())
+                .unwrap_or_else(|| source_normalized.replace('/', "::"))
+        }
+    }
+
+    /// Normalize a path by resolving `.` and `..` components.
+    fn normalize_path(path: &Path) -> PathBuf {
+        let mut components = Vec::new();
+        for component in path.components() {
+            match component {
+                std::path::Component::ParentDir => {
+                    components.pop();
+                }
+                std::path::Component::CurDir => {}
+                c => components.push(c),
+            }
+        }
+        components.iter().collect()
     }
 
     fn path_to_module_name(&self, path: &Path) -> BuildResult<String> {
