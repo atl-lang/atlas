@@ -302,16 +302,35 @@ impl DecodedInstruction {
 /// Returns the number of operand bytes for a given opcode
 pub(crate) fn operand_size(opcode: Opcode) -> usize {
     match opcode {
+        // 2-byte operands (u16 or i16)
         Opcode::Constant
         | Opcode::GetLocal
         | Opcode::SetLocal
         | Opcode::GetGlobal
         | Opcode::SetGlobal
+        | Opcode::GetUpvalue
+        | Opcode::SetUpvalue
         | Opcode::Array
+        | Opcode::HashMap
+        | Opcode::Tuple
+        | Opcode::TupleGet
         | Opcode::Jump
         | Opcode::JumpIfFalse
         | Opcode::Loop => 2,
-        Opcode::Call => 1,
+
+        // 1-byte operands (u8)
+        Opcode::Call | Opcode::EnumVariant | Opcode::Range => 1,
+
+        // 3-byte operands (u16 + u8)
+        Opcode::AsyncCall | Opcode::SpawnTask => 3,
+
+        // 4-byte operands (u16 + u16)
+        Opcode::MakeClosure | Opcode::Struct => 4,
+
+        // 5-byte operands (u16 + u16 + u8)
+        Opcode::TraitDispatch => 5,
+
+        // No operands
         _ => 0,
     }
 }
