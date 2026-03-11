@@ -22,7 +22,7 @@ pub fn io_read_line(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if !args.is_empty() {
-        return Err(stdlib_arity_error("ioReadLine", 0, args.len(), span));
+        return Err(stdlib_arity_error("io.readLine", 0, args.len(), span));
     }
     let mut line = String::new();
     std::io::stdin()
@@ -51,13 +51,13 @@ pub fn io_read_line_prompt(
     _security: &SecurityContext,
 ) -> Result<Value, RuntimeError> {
     if args.len() != 1 {
-        return Err(stdlib_arity_error("ioReadLinePrompt", 1, args.len(), span));
+        return Err(stdlib_arity_error("io.readLinePrompt", 1, args.len(), span));
     }
     let prompt = match &args[0] {
         Value::String(s) => s.as_ref().to_string(),
         _ => {
             return Err(stdlib_arg_error(
-                "ioReadLinePrompt",
+                "io.readLinePrompt",
                 "string",
                 &args[0],
                 span,
@@ -582,4 +582,90 @@ pub fn path_join(
     }
 
     Ok(Value::string(path.to_string_lossy().to_string()))
+}
+
+// ── B26: io namespace completion ──────────────────────────────────────────────
+
+/// Write a string to stdout without a trailing newline.
+///
+/// io.write(str) — maps to ioNsWrite in the stdlib registry.
+pub fn io_write(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("io.write", 1, args.len(), span));
+    }
+    let s = match &args[0] {
+        Value::String(s) => s.as_ref().to_string(),
+        _ => return Err(stdlib_arg_error("io.write", "string", &args[0], span)),
+    };
+    use std::io::Write;
+    print!("{}", s);
+    std::io::stdout().flush().ok();
+    Ok(Value::Null)
+}
+
+/// Write a string to stdout followed by a newline.
+///
+/// io.writeLine(str) — maps to ioNsWriteLine in the stdlib registry.
+pub fn io_write_line(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("io.writeLine", 1, args.len(), span));
+    }
+    let s = match &args[0] {
+        Value::String(s) => s.as_ref().to_string(),
+        _ => return Err(stdlib_arg_error("io.writeLine", "string", &args[0], span)),
+    };
+    println!("{}", s);
+    Ok(Value::Null)
+}
+
+/// Read all of stdin until EOF and return it as a string.
+///
+/// io.readAll() — maps to ioNsReadAll in the stdlib registry.
+pub fn io_read_all(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("io.readAll", 0, args.len(), span));
+    }
+    use std::io::Read;
+    let mut buf = String::new();
+    std::io::stdin()
+        .lock()
+        .read_to_string(&mut buf)
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to read all from stdin: {}", e),
+            span,
+        })?;
+    Ok(Value::string(buf))
+}
+
+/// Flush the stdout buffer.
+///
+/// io.flush() — maps to ioNsFlush in the stdlib registry.
+pub fn io_flush(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("io.flush", 0, args.len(), span));
+    }
+    use std::io::Write;
+    std::io::stdout()
+        .flush()
+        .map_err(|e| RuntimeError::IoError {
+            message: format!("Failed to flush stdout: {}", e),
+            span,
+        })?;
+    Ok(Value::Null)
 }

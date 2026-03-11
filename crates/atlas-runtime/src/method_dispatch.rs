@@ -843,8 +843,12 @@ fn resolve_console_ns_method(method_name: &str) -> Option<String> {
 /// Resolve Io.method() → stdlib function name.
 fn resolve_io_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "readLine" => "ioReadLine",
-        "readLinePrompt" => "ioReadLinePrompt",
+        "readLine" => "ioNsReadLine",
+        "readLinePrompt" => "ioNsReadLinePrompt",
+        "write" => "ioNsWrite",
+        "writeLine" => "ioNsWriteLine",
+        "readAll" => "ioNsReadAll",
+        "flush" => "ioNsFlush",
         _ => return None,
     };
     Some(func_name.to_string())
