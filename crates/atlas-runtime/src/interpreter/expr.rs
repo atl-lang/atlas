@@ -750,6 +750,7 @@ impl Interpreter {
                     | crate::method_dispatch::TypeTag::TarNs
                     | crate::method_dispatch::TypeTag::ZipNs
                     | crate::method_dispatch::TypeTag::TaskNs
+                    | crate::method_dispatch::TypeTag::SyncNs
             );
             let mut args = if is_ns {
                 Vec::new()

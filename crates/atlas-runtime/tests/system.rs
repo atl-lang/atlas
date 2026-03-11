@@ -83,3 +83,5 @@ mod system_path;
 mod system_process;
 #[path = "system/task_ns.rs"]
 mod system_task_ns;
+#[path = "system/sync.rs"]
+mod system_sync;
