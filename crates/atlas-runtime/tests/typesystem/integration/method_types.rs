@@ -187,7 +187,7 @@ fn test_math_random_returns_number() {
 fn test_file_exists_returns_bool() {
     check_no_type_errors(
         r#"
-        let exists = File.exists("/tmp/foo");
+        let exists = file.exists("/tmp/foo");
         if exists { true; }
     "#,
     );
@@ -197,7 +197,7 @@ fn test_file_exists_returns_bool() {
 fn test_path_join_returns_string() {
     check_no_type_errors(
         r#"
-        let p = Path.join("/tmp", "foo", "bar.txt");
+        let p = path.join("/tmp", "foo", "bar.txt");
         len(p);
     "#,
     );
@@ -207,7 +207,7 @@ fn test_path_join_returns_string() {
 fn test_path_is_absolute_returns_bool() {
     check_no_type_errors(
         r#"
-        let ok = Path.isAbsolute("/tmp/foo");
+        let ok = path.isAbsolute("/tmp/foo");
         if ok { true; }
     "#,
     );
@@ -217,8 +217,8 @@ fn test_path_is_absolute_returns_bool() {
 fn test_regex_test_returns_bool() {
     check_no_type_errors(
         r#"
-        let r = unwrap(Regex.new("[0-9]+"));
-        let ok = Regex.test(r, "hello 42");
+        let r = unwrap(regex.new("[0-9]+"));
+        let ok = regex.test(r, "hello 42");
         if ok { true; }
     "#,
     );
@@ -232,7 +232,7 @@ fn test_regex_test_returns_bool() {
 fn test_h231_datetime_now_returns_datetime_type() {
     check_no_type_errors(
         r#"
-        let dt = DateTime.now();
+        let dt = datetime.now();
         let year: number = dt.year();
         let iso: string = dt.toIso();
         "#,
@@ -243,7 +243,7 @@ fn test_h231_datetime_now_returns_datetime_type() {
 fn test_h231_datetime_instance_method_type_mismatch_caught() {
     let diagnostics = typecheck_source(
         r#"
-        let dt = DateTime.now();
+        let dt = datetime.now();
         let wrong: string = dt.year();
         "#,
     );
@@ -261,7 +261,7 @@ fn test_h231_datetime_instance_method_type_mismatch_caught() {
 fn test_h231_regex_new_returns_result_regex() {
     check_no_type_errors(
         r#"
-        let r = unwrap(Regex.new("[0-9]+"));
+        let r = unwrap(regex.new("[0-9]+"));
         let ok: bool = r.test("hello 42");
         "#,
     );
@@ -282,7 +282,7 @@ fn test_h231_http_get_returns_result_httpresponse() {
 
 // ============================================================================
 // H-243: Namespace method arg type checking
-// Namespace calls (Json.parse, Math.abs, File.read, etc.) must have arity
+// Namespace calls (Json.parse, Math.abs, file.read, etc.) must have arity
 // and argument types checked — previously silently ignored all args.
 // ============================================================================
 
@@ -332,27 +332,27 @@ fn test_h243_namespace_arity_too_many_math_abs() {
 
 #[test]
 fn test_h243_namespace_arg_type_mismatch_file_read() {
-    let diags = typecheck_source("File.read(42);");
+    let diags = typecheck_source("file.read(42);");
     let errors: Vec<_> = diags
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Error)
         .collect();
     assert!(
         !errors.is_empty(),
-        "H-243: File.read(number) should error — expected string: {diags:?}"
+        "H-243: file.read(number) should error — expected string: {diags:?}"
     );
 }
 
 #[test]
 fn test_h243_namespace_zero_arg_arity() {
-    let diags = typecheck_source(r#"Process.args(1);"#);
+    let diags = typecheck_source(r#"process.args(1);"#);
     let errors: Vec<_> = diags
         .iter()
         .filter(|d| d.level == DiagnosticLevel::Error)
         .collect();
     assert!(
         !errors.is_empty(),
-        "H-243: Process.args() takes 0 args — arity error expected: {diags:?}"
+        "H-243: process.args() takes 0 args — arity error expected: {diags:?}"
     );
 }
 
@@ -364,8 +364,8 @@ fn test_h243_namespace_valid_calls_pass() {
         Math.min(1.0, 2.0);
         Math.max(3.0, 4.0);
         Math.random();
-        Env.get("KEY");
-        Crypto.sha256("hello");
+        env.get("KEY");
+        crypto.sha256("hello");
     "#,
     );
 }
