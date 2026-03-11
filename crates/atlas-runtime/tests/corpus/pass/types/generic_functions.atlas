@@ -8,9 +8,9 @@ fn wrap_in_option<T>(borrow x: T) : Option<T> {
 
 let n: number = identity(42);
 let s: string = identity("hello");
-print(n);
-print(s);
+console.log(n);
+console.log(s);
 
 let opt: Option<number> = wrap_in_option(99);
-print(is_some(opt));
-print(unwrap(opt));
+console.log(is_some(opt));
+console.log(unwrap(opt));

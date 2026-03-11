@@ -2,6 +2,6 @@
 fn test() : void {
     let mut x: number = 1;
     x = 2;
-    print(x);
+    console.log(x);
 }
 test();

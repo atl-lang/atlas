@@ -5,4 +5,4 @@ fn get_value() : number {
     return never_reached;
 }
 
-print(get_value());
+console.log(get_value());

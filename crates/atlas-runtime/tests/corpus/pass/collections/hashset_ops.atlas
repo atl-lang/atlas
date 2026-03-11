@@ -4,6 +4,6 @@ hash_set_add(hs, "banana");
 hash_set_add(hs, "cherry");
 hash_set_add(hs, "apple");
 
-print(hash_set_size(hs));
-print(hash_set_has(hs, "banana"));
-print(hash_set_has(hs, "grape"));
+console.log(hash_set_size(hs));
+console.log(hash_set_has(hs, "banana"));
+console.log(hash_set_has(hs, "grape"));

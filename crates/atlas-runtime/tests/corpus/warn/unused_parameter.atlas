@@ -2,4 +2,4 @@ fn always_one(own x: number, borrow y: number) : number {
     return x;
 }
 
-print(always_one(1, 99));
+console.log(always_one(1, 99));

@@ -3,6 +3,6 @@
 fn test() : void {
     let arr: number[] = [1, 2, 3];
     arr[0] = 9;
-    print(arr[0]);
+    console.log(arr[0]);
 }
 test();

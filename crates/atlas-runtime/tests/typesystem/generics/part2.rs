@@ -57,14 +57,12 @@ fn test_type_parameter_in_nested_function() {
         }
     "#,
     );
-    // Phase 3 complete: Binder now supports nested functions
-    // However, compiler/interpreter/VM still report AT1013 (to be fixed in Phases 4-6)
-    // For now, accept either success or AT1013 from compiler/interpreter
-    let has_at1013 = diagnostics.iter().any(|d| d.code == "AT1013");
-    let no_errors = diagnostics.is_empty();
-    assert!(
-        has_at1013 || no_errors,
-        "Expected either AT1013 (compiler/VM not ready) or no errors (fully working). Got: {:?}",
+    // Phase 3 complete: Binder supports nested functions
+    // AT1013 (console.log foreign syntax) removed in B21 — console is now valid Atlas
+    assert_eq!(
+        diagnostics.len(),
+        0,
+        "Expected no errors for nested generic function. Got: {:?}",
         diagnostics
     );
 }

@@ -12,6 +12,6 @@ fn fib_pair(n: number) : (number, number) {
 let mut i = 0;
 while i < 8 {
     let (a, _b) = fib_pair(i);
-    print(a);
+    console.log(a);
     i = i + 1;
 }

@@ -164,10 +164,14 @@ fn ai_mistake_class_keyword() {
 }
 
 #[test]
-fn ai_mistake_console_log_javascript() {
-    // AI generates JS console.log
+fn ai_console_log_is_valid_atlas() {
+    // console.log is valid Atlas syntax (B21 — console namespace)
     let diags = get_diagnostics(r#"console.log("hello");"#);
-    assert_self_correcting(&diags, "AT1013", &["print", "console"]);
+    assert!(
+        diags.is_empty(),
+        "console.log should be valid Atlas syntax, got: {:?}",
+        diags
+    );
 }
 
 #[test]
@@ -231,7 +235,7 @@ fn ai_mistake_assign_to_range_slice_index() {
 #[test]
 fn ai_mistake_undefined_variable_with_suggestion() {
     // AI makes a typo — should suggest the correct name
-    let diags = get_diagnostics("let count: number = 5;\nprint(coutn);");
+    let diags = get_diagnostics("let count: number = 5;\nconsole.log(coutn);");
     assert!(
         !diags.is_empty(),
         "Expected undefined variable error for 'coutn'"
@@ -256,7 +260,7 @@ fn ai_mistake_undefined_variable_with_suggestion() {
 #[test]
 fn ai_mistake_undeclared_variable() {
     // AI uses variable without declaring it
-    let diags = get_diagnostics("print(result);");
+    let diags = get_diagnostics("console.log(result);");
     assert!(!diags.is_empty(), "Expected error for undeclared 'result'");
     let full = diags[0].message.to_lowercase();
     assert!(
@@ -593,7 +597,7 @@ fn ai_mistake_missing_semicolon() {
 #[test]
 fn ai_mistake_missing_closing_brace() {
     // AI forgets closing brace
-    let source = "fn foo(): void {\n  print(\"hi\");\n";
+    let source = "fn foo(): void {\n  console.log(\"hi\");\n";
     let diags = get_diagnostics(source);
     assert!(
         !diags.is_empty(),

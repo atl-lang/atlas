@@ -70,6 +70,8 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Io namespace
         ("io", "readLine") => Some(vec![]),
         ("io", "readLinePrompt") => Some(vec![str.clone()]),
+        // Console namespace — variadic, skip arity check
+        ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => None,
         // Unknown combination
         _ => None,
     }
@@ -192,6 +194,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // Io namespace
         ("io", "readLine" | "readLinePrompt") => Type::String,
+        // Console namespace — all methods return void (Null)
+        ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => Type::Null,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }

@@ -27,7 +27,7 @@ fn test_operators_in_context(#[case] source: &str) {
 #[case::chained_json_access(r#"let data: json = unwrap(parse_json("{\"user\":{\"name\":\"Bob\"}}")); let name: string = data["user"]["name"].as_string();"#)]
 #[case::method_in_expression(r#"let data: json = unwrap(parse_json("{\"count\":5}")); let x: number = data["count"].as_number() + 10;"#)]
 #[case::method_as_arg(
-    r#"let data: json = unwrap(parse_json("{\"msg\":\"hi\"}")); print(data["msg"].as_string());"#
+    r#"let data: json = unwrap(parse_json("{\"msg\":\"hi\"}")); console.log(data["msg"].as_string());"#
 )]
 fn test_valid_method_calls(#[case] source: &str) {
     let diagnostics = typecheck_source(source);
@@ -85,7 +85,7 @@ fn test_method_call_in_conditional() {
     let source = r#"
         let data: json = unwrap(parse_json("{\"enabled\":true}"));
         if (data["enabled"].as_bool()) {
-            print("Enabled");
+            console.log("Enabled");
         }
     "#;
     let diagnostics = typecheck_source(source);

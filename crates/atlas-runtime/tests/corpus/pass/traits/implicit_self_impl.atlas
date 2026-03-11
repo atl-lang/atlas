@@ -9,4 +9,4 @@ impl Describe for Point {
 }
 let p = Point { x: 3, y: 4 };
 let desc: string = p.describe();
-print(desc);
+console.log(desc);

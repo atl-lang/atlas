@@ -4,4 +4,4 @@ fn mixed(borrow a: number, borrow b: number) : number {
     return a + b;
 }
 
-print(mixed(3, 4));
+console.log(mixed(3, 4));

@@ -165,7 +165,7 @@ fn test_for_in_number_suggests_range() {
         r#"
         fn test(): void {
             for x in 42 {
-                print(x);
+                console.log(x);
             }
         }
     "#,
@@ -334,7 +334,7 @@ fn test_valid_for_in_array() {
         fn test(): void {
             let arr = [1, 2, 3];
             for x in arr {
-                print(x);
+                console.log(x);
             }
         }
     "#,

@@ -277,7 +277,7 @@ fn test_complex_program_typecheck_dump() {
             let x = 5;
             let y = 10;
             let z = add(x, y);
-            print(z);
+            console.log(z);
         }
     "#;
 

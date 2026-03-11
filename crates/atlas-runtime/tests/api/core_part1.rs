@@ -274,9 +274,11 @@ fn test_eval_type_error_undefined_variable() {
 // call() Function Tests
 
 #[test]
-fn test_call_builtin_print() {
+fn test_call_builtin_console_log() {
     let mut runtime = Runtime::new(ExecutionMode::Interpreter);
-    let result = runtime.call("print", vec![Value::Number(42.0)]).unwrap();
+    let result = runtime
+        .call("consoleLog", vec![Value::Number(42.0)])
+        .unwrap();
     assert!(matches!(result, Value::Null));
 }
 

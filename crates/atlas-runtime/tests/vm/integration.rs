@@ -812,23 +812,26 @@ fn test_cross_complex_expression_tree() {
 // Migrated from src/vm/mod.rs inline tests — stdlib and parity
 
 #[test]
-fn test_vm_stdlib_print_number() {
-    assert_eq!(vm_eval("print(42);"), Some(Value::Null));
+fn test_vm_stdlib_console_log_number() {
+    assert_eq!(vm_eval_checked("console.log(42);"), Some(Value::Null));
 }
 
 #[test]
-fn test_vm_stdlib_print_string() {
-    assert_eq!(vm_eval("print(\"hello\");"), Some(Value::Null));
+fn test_vm_stdlib_console_log_string() {
+    assert_eq!(
+        vm_eval_checked("console.log(\"hello\");"),
+        Some(Value::Null)
+    );
 }
 
 #[test]
-fn test_vm_stdlib_print_bool() {
-    assert_eq!(vm_eval("print(true);"), Some(Value::Null));
+fn test_vm_stdlib_console_log_bool() {
+    assert_eq!(vm_eval_checked("console.log(true);"), Some(Value::Null));
 }
 
 #[test]
-fn test_vm_stdlib_print_null() {
-    assert_eq!(vm_eval("print(null);"), Some(Value::Null));
+fn test_vm_stdlib_console_log_null() {
+    assert_eq!(vm_eval_checked("console.log(null);"), Some(Value::Null));
 }
 
 #[test]
@@ -914,10 +917,10 @@ fn test_vm_stdlib_in_array() {
 }
 
 #[test]
-fn test_vm_stdlib_matches_interpreter_print() {
-    assert_eq!(vm_eval("print(\"test\");"), Some(Value::Null));
+fn test_vm_stdlib_matches_interpreter_console_log() {
+    assert_eq!(vm_eval_checked("console.log(\"test\");"), Some(Value::Null));
     let runtime = Atlas::new();
-    assert!(runtime.eval("print(\"test\");").is_ok());
+    assert!(runtime.eval("console.log(\"test\");").is_ok());
 }
 
 #[test]

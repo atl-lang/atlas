@@ -2,10 +2,10 @@
 
 use crate::ast::*;
 use crate::diagnostic::error_codes::{
-    FOREIGN_SYNTAX_CLASS, FOREIGN_SYNTAX_CONSOLE_LOG, FOREIGN_SYNTAX_ECHO,
-    FOREIGN_SYNTAX_FUNCTION_KW, FOREIGN_SYNTAX_IMPORT_FROM, FOREIGN_SYNTAX_INCREMENT,
-    FOREIGN_SYNTAX_VAR, INVALID_ASSIGN_TARGET, INVALID_ASSIGN_TARGET_CALL,
-    INVALID_ASSIGN_TARGET_MEMBER, INVALID_ASSIGN_TARGET_RANGE,
+    FOREIGN_SYNTAX_CLASS, FOREIGN_SYNTAX_ECHO, FOREIGN_SYNTAX_FUNCTION_KW,
+    FOREIGN_SYNTAX_IMPORT_FROM, FOREIGN_SYNTAX_INCREMENT, FOREIGN_SYNTAX_VAR,
+    INVALID_ASSIGN_TARGET, INVALID_ASSIGN_TARGET_CALL, INVALID_ASSIGN_TARGET_MEMBER,
+    INVALID_ASSIGN_TARGET_RANGE,
 };
 use crate::diagnostic::Diagnostic;
 use crate::parser::Parser;
@@ -36,19 +36,7 @@ impl Parser {
                     self.emit_descriptor(FOREIGN_SYNTAX_CLASS.emit(token_span));
                     return Err(());
                 }
-                "console" => {
-                    // Detect `console.log(...)` specifically
-                    let next_is_dot =
-                        self.peek_nth_nontrivia(1).map(|t| t.kind) == Some(TokenKind::Dot);
-                    let next_is_log = self
-                        .peek_nth_nontrivia(2)
-                        .map(|t| t.lexeme.as_str() == "log")
-                        == Some(true);
-                    if next_is_dot && next_is_log {
-                        self.emit_descriptor(FOREIGN_SYNTAX_CONSOLE_LOG.emit(token_span));
-                        return Err(());
-                    }
-                }
+                // "console" is a valid Atlas namespace (B21) — no foreign syntax trap
                 _ => {}
             }
 

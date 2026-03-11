@@ -252,7 +252,7 @@ fn test_issue_h188_empty_block_match_arm_unifies_with_void() {
         fn handle(x: number): void {
             match x {
                 1 => {},
-                _ => print(\"other\"),
+                _ => console.log(\"other\"),
             }
         }
     ",

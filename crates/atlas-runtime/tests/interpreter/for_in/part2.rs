@@ -47,7 +47,7 @@ fn test_for_in_binds_variable() {
         fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -62,7 +62,7 @@ fn test_for_in_type_checks_array() {
         fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -81,7 +81,7 @@ fn test_for_in_with_array_literal_type_check() {
     let source = r#"
         fn test(): void {
             for item in [1, 2, 3] {
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -96,9 +96,9 @@ fn test_for_in_variable_scoped() {
         fn test(): void {
             let arr = [1, 2, 3];
             for item in arr {
-                print(item);
+                console.log(item);
             }
-            print(item);
+            console.log(item);
         }
     "#;
 
@@ -120,7 +120,7 @@ fn test_for_in_nested() {
             let matrix = [[1, 2], [3, 4]];
             for row in matrix {
                 for item in row {
-                    print(item);
+                    console.log(item);
                 }
             }
         }
@@ -156,7 +156,7 @@ fn test_for_in_with_continue() {
                 if item == 2 {
                     continue;
                 }
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -174,7 +174,7 @@ fn test_for_in_with_function_call() {
 
         fn test(): void {
             for item in getArray() {
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -193,7 +193,7 @@ fn test_for_in_empty_array() {
         fn test(): void {
             let arr: []number = [];
             for item in arr {
-                print(item);
+                console.log(item);
             }
         }
     "#;
@@ -209,9 +209,9 @@ fn test_for_in_variable_shadowing() {
             let item = "outer";
             let arr = [1, 2, 3];
             for item in arr {
-                print(item);
+                console.log(item);
             }
-            print(item);
+            console.log(item);
         }
     "#;
 

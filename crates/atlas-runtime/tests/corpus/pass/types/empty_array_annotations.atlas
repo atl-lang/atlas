@@ -4,8 +4,8 @@ let bools: bool[] = [];
 let jsons: json[] = [];
 let nested: number[][] = [];
 
-print(len(nums));
-print(len(strs));
-print(len(bools));
-print(len(jsons));
-print(len(nested));
+console.log(len(nums));
+console.log(len(strs));
+console.log(len(bools));
+console.log(len(jsons));
+console.log(len(nested));

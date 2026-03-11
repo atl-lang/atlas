@@ -6,6 +6,7 @@ pub mod async_io;
 pub mod async_primitives;
 pub mod collections;
 pub mod compression;
+pub mod console;
 pub mod datetime;
 pub mod fs;
 pub mod future;
@@ -54,8 +55,14 @@ type BuiltinFn =
 /// Returns `None` for functions without a registered signature.
 fn stdlib_signature(func_name: &str) -> Option<&'static str> {
     match func_name {
+        // Console namespace
+        "consoleLog" => Some("console.log(...args: any) -> void"),
+        "consolePrintln" => Some("console.println(...args: any) -> void"),
+        "consolePrint" => Some("console.print(...args: any) -> void"),
+        "consoleError" => Some("console.error(...args: any) -> void"),
+        "consoleWarn" => Some("console.warn(...args: any) -> void"),
+        "consoleDebug" => Some("console.debug(...args: any) -> void"),
         // Core builtins
-        "print" => Some("print(value: any) -> void"),
         "len" => Some("len(value: string | []any) -> number"),
         "str" => Some("str(value: any) -> string"),
         "num" => Some("num(value: string) -> number"),
@@ -205,12 +212,26 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // Core
         // ====================================================================
-        m.insert("print", |args, span, _, output| {
-            if args.len() != 1 {
-                return Err(stdlib_arity_error("print", 1, args.len(), span));
-            }
-            print(&args[0], span, output)?;
-            Ok(Value::Null)
+        // ====================================================================
+        // Console namespace (console.log, console.error, etc.)
+        // ====================================================================
+        m.insert("consoleLog", |args, span, _, output| {
+            console::console_log(args, span, output)
+        });
+        m.insert("consolePrintln", |args, span, _, output| {
+            console::console_println(args, span, output)
+        });
+        m.insert("consolePrint", |args, span, _, output| {
+            console::console_print(args, span, output)
+        });
+        m.insert("consoleError", |args, span, _, output| {
+            console::console_error(args, span, output)
+        });
+        m.insert("consoleWarn", |args, span, _, output| {
+            console::console_warn(args, span, output)
+        });
+        m.insert("consoleDebug", |args, span, _, output| {
+            console::console_debug(args, span, output)
         });
         m.insert("len", |args, span, _, _| {
             if args.len() != 1 {

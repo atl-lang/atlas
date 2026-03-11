@@ -3,9 +3,9 @@ hash_map_put(hm, "name", "Alice");
 hash_map_put(hm, "age", "30");
 hash_map_put(hm, "city", "Paris");
 
-print(hash_map_size(hm));
-print(hash_map_has(hm, "name"));
-print(hash_map_has(hm, "missing"));
+console.log(hash_map_size(hm));
+console.log(hash_map_has(hm, "name"));
+console.log(hash_map_has(hm, "missing"));
 
 let val: string = unwrap(hash_map_get(hm, "name"));
-print(val);
+console.log(val);

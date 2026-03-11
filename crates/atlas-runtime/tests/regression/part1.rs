@@ -297,9 +297,9 @@ fn regression_stdlib_len() {
 }
 
 #[test]
-fn regression_stdlib_print() {
-    // print() returns null
-    let code = r#"print("test");"#;
+fn regression_stdlib_console_log() {
+    // console.log() returns null
+    let code = r#"console.log("test");"#;
     assert_eval_null(code);
 }
 

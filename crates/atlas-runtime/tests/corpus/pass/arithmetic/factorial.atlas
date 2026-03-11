@@ -5,6 +5,6 @@ fn factorial(borrow n: number) : number {
     return n * factorial(n - 1);
 }
 
-print(factorial(1));
-print(factorial(5));
-print(factorial(10));
+console.log(factorial(1));
+console.log(factorial(5));
+console.log(factorial(10));

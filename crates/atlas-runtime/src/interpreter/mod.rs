@@ -170,7 +170,7 @@ impl Interpreter {
         // These are immutable globals that eval_member uses to dispatch namespace calls.
         for ns in [
             "Json", "Math", "env", "file", "process", "datetime", "path", "http", "net", "crypto",
-            "regex", "io",
+            "regex", "io", "console",
         ] {
             let sentinel = crate::value::Value::Builtin(std::sync::Arc::from(
                 format!("__ns__{}", ns).as_str(),
