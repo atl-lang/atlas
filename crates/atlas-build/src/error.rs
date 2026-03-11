@@ -69,6 +69,18 @@ pub enum BuildError {
 
     #[error("Script '{name}' not found at path: {}", path.display())]
     ScriptNotFound { name: String, path: PathBuf },
+
+    /// AT2020 — atlas-launcher binary not found on PATH or alongside the atlas CLI.
+    #[error(
+        "atlas-launcher binary not found. \
+         Reinstall Atlas to restore it: cargo install atlas-cli. \
+         The launcher must be in the same directory as the atlas binary or on your PATH."
+    )]
+    LauncherNotFound,
+
+    /// AT2021 — I/O error while writing the native binary.
+    #[error("Failed to emit native binary: {0}")]
+    BinaryEmitFailed(String),
 }
 
 impl BuildError {

@@ -151,6 +151,33 @@ impl VM {
         }
     }
 
+    /// Load a new module bytecode into the VM, resetting execution state while
+    /// preserving the global variable table. Use this to run dependency modules
+    /// in sequence on a single VM so their exported globals are visible to later modules.
+    ///
+    /// Call `run()` after this to execute the loaded module.
+    pub fn load_module(&mut self, bytecode: Bytecode) {
+        let local_count = bytecode.top_level_local_count;
+
+        self.bytecode = bytecode;
+        self.ip = 0;
+        self.stack.clear();
+        self.frames = vec![CallFrame {
+            function_name: "<main>".to_string(),
+            return_ip: 0,
+            stack_base: 0,
+            local_count,
+            upvalues: std::sync::Arc::new(Vec::new()),
+        }];
+
+        #[cfg(debug_assertions)]
+        {
+            self.value_origins.clear();
+            self.consumed_slots = vec![vec![false; local_count]];
+            self.consumed_globals.clear();
+        }
+    }
+
     /// Create a new VM with profiling enabled
     pub fn with_profiling(bytecode: Bytecode) -> Self {
         let mut vm = Self::new(bytecode);

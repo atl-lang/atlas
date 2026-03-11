@@ -743,8 +743,14 @@ impl Builder {
         }
 
         if let Some(main) = main_path {
-            // Binary target
-            let target = BuildTarget::new(self.manifest.package.name.as_str(), TargetKind::Binary)
+            // Use [[bin]] name from manifest if provided, otherwise fall back to package name
+            let bin_name = self
+                .manifest
+                .bin
+                .first()
+                .map(|b| b.name.as_str())
+                .unwrap_or(self.manifest.package.name.as_str());
+            let target = BuildTarget::new(bin_name, TargetKind::Binary)
                 .with_entry_point(main.to_string_lossy().as_ref())
                 .with_sources(source_files.to_vec());
             targets.push(target);
@@ -794,10 +800,24 @@ impl Builder {
             let output_dir = self.config.target_dir.join(target.kind.output_dir_name());
             fs::create_dir_all(&output_dir).map_err(|e| BuildError::io(&output_dir, e))?;
 
-            // Write artifact
             let output_path = output_dir.join(target.output_filename());
-            fs::write(&output_path, &combined_bytecode)
-                .map_err(|e| BuildError::io(&output_path, e))?;
+
+            // Binary targets: produce a self-contained native OS executable.
+            // All other targets: write raw bytecode (`.atl.bc`).
+            if target.kind == crate::targets::TargetKind::Binary {
+                let launcher = crate::binary_emit::find_launcher_binary()
+                    .ok_or(BuildError::LauncherNotFound)?;
+                // Collect each module's bytecode separately (dependency order preserved).
+                // The launcher runs them in order on a single VM so globals accumulate.
+                let module_bytecodes: Vec<Vec<u8>> = compiled_modules
+                    .iter()
+                    .map(|m| serialize_bytecode(&m.bytecode))
+                    .collect::<Result<_, _>>()?;
+                crate::binary_emit::emit_native_binary(&launcher, &module_bytecodes, &output_path)?;
+            } else {
+                fs::write(&output_path, &combined_bytecode)
+                    .map_err(|e| BuildError::io(&output_path, e))?;
+            }
 
             let metadata = ArtifactMetadata::new(
                 total_compile_time,

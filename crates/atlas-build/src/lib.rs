@@ -10,6 +10,7 @@
 //! - Build scripts with sandboxing (phase-11c)
 //! - Progress reporting and output formatting (phase-11c)
 
+pub mod binary_emit;
 pub mod build_order;
 pub mod builder;
 pub mod cache;

@@ -8,6 +8,7 @@ members = [
     "crates/atlas-build",
     "crates/atlas-jit",
     "crates/atlas-formatter",
+    "crates/atlas-launcher",
 ]
 resolver = "2"
 

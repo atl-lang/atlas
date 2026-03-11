@@ -1,0 +1,14 @@
+[package]
+name = "atlas-launcher"
+version.workspace = true
+edition.workspace = true
+license = "MIT OR Apache-2.0"
+description = "Atlas language native binary launcher — embedded runtime for self-contained executables"
+
+[[bin]]
+name = "atlas-launcher"
+path = "src/main.rs"
+
+[dependencies]
+atlas-runtime = { path = "../atlas-runtime" }
+
