@@ -1,0 +1,47 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_basics.rs
+assertion_line: 160
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: foo
+        span:
+          start: 3
+          end: 6
+          file: "<input>"
+      attributes: []
+      is_async: false
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 10
+            end: 16
+            file: "<input>"
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - Return:
+              value:
+                Literal:
+                  - Number: 42
+                  - start: 26
+                    end: 28
+                    file: "<input>"
+              span:
+                start: 19
+                end: 29
+                file: "<input>"
+        tail_expr: ~
+        span:
+          start: 17
+          end: 31
+          file: "<input>"
+      span:
+        start: 0
+        end: 31
+        file: "<input>"

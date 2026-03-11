@@ -1231,6 +1231,314 @@ pub fn http_check_permission(
 }
 
 // ============================================================================
+// B28: Options-Object Namespace API (http.get / http.post / etc.)
+// ============================================================================
+
+/// Extract options from an Atlas HashMap value into an HttpRequest.
+/// Options fields: headers (map), query (map), timeout (int ms), auth (str), userAgent (str)
+fn apply_options_to_request(
+    mut req: HttpRequest,
+    options: &Value,
+    span: Span,
+) -> Result<HttpRequest, RuntimeError> {
+    let map = match options {
+        Value::HashMap(m) => m,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: format!("http options must be a map, got {}", options.type_name()),
+                span,
+            })
+        }
+    };
+
+    // headers: map<str, str>
+    if let Some(headers_val) = map.get(&HashKey::String(Arc::new("headers".to_string()))) {
+        if let Value::HashMap(hmap) = headers_val {
+            for (k, v) in hmap.entries() {
+                if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
+                    req = req.with_header(ks.as_ref().clone(), vs.as_ref().clone());
+                }
+            }
+        }
+    }
+
+    // query: map<str, str>
+    if let Some(query_val) = map.get(&HashKey::String(Arc::new("query".to_string()))) {
+        if let Value::HashMap(qmap) = query_val {
+            for (k, v) in qmap.entries() {
+                if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
+                    req = req.with_query_param(ks.as_ref().clone(), vs.as_ref().clone());
+                }
+            }
+        }
+    }
+
+    // timeout: int (milliseconds)
+    if let Some(timeout_val) = map.get(&HashKey::String(Arc::new("timeout".to_string()))) {
+        if let Value::Number(ms) = timeout_val {
+            // convert ms to seconds, minimum 1s
+            let secs = ((*ms as u64) / 1000).max(1);
+            req = req.with_timeout(secs);
+        }
+    }
+
+    // auth: str — "user:pass" → Basic, anything else → Bearer
+    if let Some(auth_val) = map.get(&HashKey::String(Arc::new("auth".to_string()))) {
+        if let Value::String(auth_str) = auth_val {
+            let auth = auth_str.as_ref().clone();
+            let header_value = if auth.contains(':') {
+                // Basic auth: base64-encode "user:pass"
+                let encoded = base64::Engine::encode(
+                    &base64::engine::general_purpose::STANDARD,
+                    auth.as_bytes(),
+                );
+                format!("Basic {}", encoded)
+            } else {
+                format!("Bearer {}", auth)
+            };
+            req = req.with_header("Authorization".to_string(), header_value);
+        }
+    }
+
+    // userAgent: str
+    if let Some(ua_val) = map.get(&HashKey::String(Arc::new("userAgent".to_string()))) {
+        if let Value::String(ua_str) = ua_val {
+            req = req.with_header("User-Agent".to_string(), ua_str.as_ref().clone());
+        }
+    }
+
+    Ok(req)
+}
+
+/// http.get(url: str, options?: map) → Result<HttpResponse>
+pub fn http_ns_get(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 2 {
+        return Err(RuntimeError::TypeError {
+            msg: "http.get: expected 1-2 arguments (url, options?)".to_string(),
+            span,
+        });
+    }
+    let url = expect_string(&args[0], "url", span)?;
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(RuntimeError::TypeError {
+            msg: format!(
+                "http.get: URL must start with http:// or https://, got: {}",
+                url
+            ),
+            span,
+        });
+    }
+    let mut req = HttpRequest::new("GET".to_string(), url);
+    if args.len() == 2 {
+        req = apply_options_to_request(req, &args[1], span)?;
+    }
+    http_send(&[Value::HttpRequest(Arc::new(req))], span, security)
+}
+
+/// http.post(url: str, body?: str, options?: map) → Result<HttpResponse>
+pub fn http_ns_post(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 3 {
+        return Err(RuntimeError::TypeError {
+            msg: "http.post: expected 1-3 arguments (url, body?, options?)".to_string(),
+            span,
+        });
+    }
+    let url = expect_string(&args[0], "url", span)?;
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(RuntimeError::TypeError {
+            msg: format!(
+                "http.post: URL must start with http:// or https://, got: {}",
+                url
+            ),
+            span,
+        });
+    }
+    let mut req = HttpRequest::new("POST".to_string(), url);
+    // args[1] is body (str) or options (map) if only 2 args and it's a map
+    let options_idx = if args.len() >= 2 {
+        match &args[1] {
+            Value::HashMap(_) => {
+                // No body, options is second arg
+                req = apply_options_to_request(req, &args[1], span)?;
+                None
+            }
+            Value::String(s) => {
+                req = req.with_body(s.as_ref().clone());
+                if args.len() == 3 {
+                    Some(2usize)
+                } else {
+                    None
+                }
+            }
+            _ => {
+                let body = expect_string(&args[1], "body", span)?;
+                req = req.with_body(body);
+                if args.len() == 3 {
+                    Some(2)
+                } else {
+                    None
+                }
+            }
+        }
+    } else {
+        None
+    };
+    if let Some(idx) = options_idx {
+        req = apply_options_to_request(req, &args[idx], span)?;
+    }
+    http_send(&[Value::HttpRequest(Arc::new(req))], span, security)
+}
+
+/// http.put(url: str, body?: str, options?: map) → Result<HttpResponse>
+pub fn http_ns_put(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 3 {
+        return Err(RuntimeError::TypeError {
+            msg: "http.put: expected 1-3 arguments (url, body?, options?)".to_string(),
+            span,
+        });
+    }
+    let url = expect_string(&args[0], "url", span)?;
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(RuntimeError::TypeError {
+            msg: format!(
+                "http.put: URL must start with http:// or https://, got: {}",
+                url
+            ),
+            span,
+        });
+    }
+    let mut req = HttpRequest::new("PUT".to_string(), url);
+    let options_idx = if args.len() >= 2 {
+        match &args[1] {
+            Value::HashMap(_) => {
+                req = apply_options_to_request(req, &args[1], span)?;
+                None
+            }
+            Value::String(s) => {
+                req = req.with_body(s.as_ref().clone());
+                if args.len() == 3 {
+                    Some(2)
+                } else {
+                    None
+                }
+            }
+            _ => {
+                let body = expect_string(&args[1], "body", span)?;
+                req = req.with_body(body);
+                if args.len() == 3 {
+                    Some(2)
+                } else {
+                    None
+                }
+            }
+        }
+    } else {
+        None
+    };
+    if let Some(idx) = options_idx {
+        req = apply_options_to_request(req, &args[idx], span)?;
+    }
+    http_send(&[Value::HttpRequest(Arc::new(req))], span, security)
+}
+
+/// http.delete(url: str, options?: map) → Result<HttpResponse>
+pub fn http_ns_delete(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 2 {
+        return Err(RuntimeError::TypeError {
+            msg: "http.delete: expected 1-2 arguments (url, options?)".to_string(),
+            span,
+        });
+    }
+    let url = expect_string(&args[0], "url", span)?;
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(RuntimeError::TypeError {
+            msg: format!(
+                "http.delete: URL must start with http:// or https://, got: {}",
+                url
+            ),
+            span,
+        });
+    }
+    let mut req = HttpRequest::new("DELETE".to_string(), url);
+    if args.len() == 2 {
+        req = apply_options_to_request(req, &args[1], span)?;
+    }
+    http_send(&[Value::HttpRequest(Arc::new(req))], span, security)
+}
+
+/// http.patch(url: str, body?: str, options?: map) → Result<HttpResponse>
+pub fn http_ns_patch(
+    args: &[Value],
+    span: Span,
+    security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 3 {
+        return Err(RuntimeError::TypeError {
+            msg: "http.patch: expected 1-3 arguments (url, body?, options?)".to_string(),
+            span,
+        });
+    }
+    let url = expect_string(&args[0], "url", span)?;
+    if !url.starts_with("http://") && !url.starts_with("https://") {
+        return Err(RuntimeError::TypeError {
+            msg: format!(
+                "http.patch: URL must start with http:// or https://, got: {}",
+                url
+            ),
+            span,
+        });
+    }
+    let mut req = HttpRequest::new("PATCH".to_string(), url);
+    let options_idx = if args.len() >= 2 {
+        match &args[1] {
+            Value::HashMap(_) => {
+                req = apply_options_to_request(req, &args[1], span)?;
+                None
+            }
+            Value::String(s) => {
+                req = req.with_body(s.as_ref().clone());
+                if args.len() == 3 {
+                    Some(2)
+                } else {
+                    None
+                }
+            }
+            _ => {
+                let body = expect_string(&args[1], "body", span)?;
+                req = req.with_body(body);
+                if args.len() == 3 {
+                    Some(2)
+                } else {
+                    None
+                }
+            }
+        }
+    } else {
+        None
+    };
+    if let Some(idx) = options_idx {
+        req = apply_options_to_request(req, &args[idx], span)?;
+    }
+    http_send(&[Value::HttpRequest(Arc::new(req))], span, security)
+}
+
+// ============================================================================
 // Helper Functions
 // ============================================================================
 
