@@ -43,6 +43,8 @@ pub enum TypeTag {
     RegexNs,
     /// Static namespace: Io.readLine(), Io.readLinePrompt(), etc.
     IoNs,
+    /// Static namespace: console.log(), console.error(), console.warn(), etc.
+    ConsoleNs,
     /// Instance methods on DateTime values (year, month, day, format, etc.)
     DateTime,
     /// Instance methods on Regex values (test, find, findAll, replace, etc.)
@@ -77,6 +79,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
         TypeTag::RegexNs => resolve_regex_ns_method(method_name),
         TypeTag::IoNs => resolve_io_ns_method(method_name),
+        TypeTag::ConsoleNs => resolve_console_ns_method(method_name),
         TypeTag::DateTime => resolve_datetime_instance_method(method_name),
         TypeTag::RegexValue => resolve_regex_instance_method(method_name),
         TypeTag::ProcessOutput => resolve_process_output_method(method_name),
@@ -99,6 +102,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "crypto"
             | "regex"
             | "io"
+            | "console"
     )
 }
 
@@ -117,6 +121,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "crypto" => Some(TypeTag::CryptoNs),
         "regex" => Some(TypeTag::RegexNs),
         "io" => Some(TypeTag::IoNs),
+        "console" => Some(TypeTag::ConsoleNs),
         _ => None,
     }
 }
@@ -696,6 +701,20 @@ pub fn is_callback_intrinsic(func_name: &str) -> bool {
             | "hashSetMap"
             | "hashSetFilter"
     )
+}
+
+/// Resolve console.method() → stdlib function name.
+fn resolve_console_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "log" => "consoleLog",
+        "println" => "consolePrintln",
+        "print" => "consolePrint",
+        "error" => "consoleError",
+        "warn" => "consoleWarn",
+        "debug" => "consoleDebug",
+        _ => return None,
+    };
+    Some(func_name.to_string())
 }
 
 /// Resolve Io.method() → stdlib function name.

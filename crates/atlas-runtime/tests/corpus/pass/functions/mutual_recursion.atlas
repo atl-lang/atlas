@@ -12,7 +12,7 @@ fn is_odd_r(borrow n: number) : bool {
     return is_even_r(n - 1);
 }
 
-print(is_even_r(4));
-print(is_even_r(7));
-print(is_odd_r(3));
-print(is_odd_r(6));
+console.log(is_even_r(4));
+console.log(is_even_r(7));
+console.log(is_odd_r(3));
+console.log(is_odd_r(6));

@@ -4,10 +4,10 @@ while i <= 5 {
     sum = sum + i;
     i = i + 1;
 }
-print(sum);
+console.log(sum);
 
 let mut countdown: number = 5;
 while countdown > 0 {
-    print(countdown);
+    console.log(countdown);
     countdown = countdown - 1;
 }

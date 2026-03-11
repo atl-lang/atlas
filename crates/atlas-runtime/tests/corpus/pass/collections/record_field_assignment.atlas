@@ -8,7 +8,7 @@ cfg.port = 9000;
 cfg.host = "0.0.0.0";
 cfg.nested.port = 7000;
 
-print(unwrap(hash_map_get(cfg, "host")));
-print(unwrap(hash_map_get(cfg, "port")));
+console.log(unwrap(hash_map_get(cfg, "host")));
+console.log(unwrap(hash_map_get(cfg, "port")));
 let nested = unwrap(hash_map_get(cfg, "nested"));
-print(unwrap(hash_map_get(nested, "port")));
+console.log(unwrap(hash_map_get(nested, "port")));

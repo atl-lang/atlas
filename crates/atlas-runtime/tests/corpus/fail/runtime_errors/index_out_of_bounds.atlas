@@ -1,2 +1,2 @@
 let arr: number[] = [1, 2, 3];
-print(arr[10]);
+console.log(arr[10]);

@@ -3,8 +3,8 @@ queueEnqueue(q, "first");
 queueEnqueue(q, "second");
 queueEnqueue(q, "third");
 
-print(queueSize(q));
+console.log(queueSize(q));
 
 let item: string = unwrap(queueDequeue(q));
-print(item);
-print(queueSize(q));
+console.log(item);
+console.log(queueSize(q));

@@ -9,7 +9,7 @@ use super::*;
 fn test_parse_for_in_basic() {
     let source = r#"
         for item in array {
-            print(item);
+            console.log(item);
         }
     "#;
 
@@ -26,7 +26,7 @@ fn test_parse_for_in_basic() {
 fn test_parse_for_in_with_array_literal() {
     let source = r#"
         for x in [1, 2, 3] {
-            print(x);
+            console.log(x);
         }
     "#;
 
@@ -66,7 +66,7 @@ fn test_parse_for_in_nested() {
     let source = r#"
         for outer in outerArray {
             for inner in innerArray {
-                print(inner);
+                console.log(inner);
             }
         }
     "#;
@@ -84,7 +84,7 @@ fn test_parse_for_in_nested() {
 fn test_parse_for_in_with_function_call() {
     let source = r#"
         for item in getArray() {
-            print(item);
+            console.log(item);
         }
     "#;
 
@@ -104,7 +104,7 @@ fn test_parse_for_in_with_function_call() {
 fn test_parse_for_in_error_missing_in() {
     let source = r#"
         for item array {
-            print(item);
+            console.log(item);
         }
     "#;
 
@@ -121,7 +121,7 @@ fn test_parse_for_in_error_missing_in() {
 fn test_parse_for_in_error_missing_variable() {
     let source = r#"
         for in array {
-            print(x);
+            console.log(x);
         }
     "#;
 
@@ -141,7 +141,7 @@ fn test_parse_for_in_error_missing_variable() {
 fn test_traditional_for_errors() {
     let source = r#"
         for (let i = 0; i < 10; i = i + 1) {
-            print(i);
+            console.log(i);
         }
     "#;
 
@@ -161,7 +161,7 @@ fn test_traditional_for_errors() {
 fn test_parse_for_in_with_method_call() {
     let source = r#"
         for item in obj.getItems() {
-            print(item);
+            console.log(item);
         }
     "#;
 
@@ -182,9 +182,9 @@ fn test_parse_for_in_with_complex_body() {
     let source = r#"
         for item in items {
             if item > 5 {
-                print("Large: " + toString(item));
+                console.log("Large: " + toString(item));
             } else {
-                print("Small: " + toString(item));
+                console.log("Small: " + toString(item));
             }
         }
     "#;

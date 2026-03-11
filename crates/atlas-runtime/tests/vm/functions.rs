@@ -54,12 +54,11 @@ fn test_reassign_function_variable() {
 }
 
 #[test]
-fn test_store_builtin_print() {
+fn test_console_log_returns_null() {
     let source = r#"
-        let p = print;
-        p("test");
+        console.log("test");
     "#;
-    // print returns void
+    // console.log returns null
     assert_eval_null(source);
 }
 

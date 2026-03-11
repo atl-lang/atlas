@@ -218,7 +218,7 @@ fn test_parameter_immutability(#[case] source: &str) {
     r#"fn helper(): number { return 42; } fn main(): number { return helper(); }"#
 )]
 #[case::hoisting(r#"fn main(): number { return helper(); } fn helper(): number { return 42; }"#)]
-#[case::use_prelude(r#"fn test(): number { print("hello"); return 42; }"#)]
+#[case::use_prelude(r#"fn test(): number { console.log("hello"); return 42; }"#)]
 fn test_valid_function_scope(#[case] source: &str) {
     let diagnostics = bind_source(source);
     assert_no_errors(&diagnostics);

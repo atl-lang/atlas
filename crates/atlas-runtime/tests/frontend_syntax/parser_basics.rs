@@ -231,7 +231,7 @@ fn test_parse_member_in_expression() {
 
 #[test]
 fn test_parse_member_as_function_arg() {
-    let (program, diagnostics) = parse_source("print(data.as_string());");
+    let (program, diagnostics) = parse_source("console.log(data.as_string());");
     assert_eq!(diagnostics.len(), 0);
     insta::assert_yaml_snapshot!(program);
 }

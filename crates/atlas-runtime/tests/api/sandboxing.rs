@@ -26,7 +26,7 @@ fn test_runtime_captures_print_output() {
     let output: OutputWriter = Arc::new(Mutex::new(Box::new(VecWriter(buf.clone()))));
     let config = RuntimeConfig::new().with_output(output);
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
-    runtime.eval(r#"print("captured")"#).unwrap();
+    runtime.eval(r#"console.log("captured")"#).unwrap();
     let s = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
     assert_eq!(s, "captured\n");
 }

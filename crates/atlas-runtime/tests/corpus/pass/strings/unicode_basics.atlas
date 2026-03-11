@@ -1,6 +1,6 @@
 let emoji: string = "Hello 🌍";
 let japanese: string = "日本語";
-print(len(emoji));
-print(len(japanese));
-print(emoji);
-print(japanese);
+console.log(len(emoji));
+console.log(len(japanese));
+console.log(emoji);
+console.log(japanese);

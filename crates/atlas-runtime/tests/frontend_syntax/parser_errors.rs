@@ -74,7 +74,7 @@ fn test_parse_nested_function_in_if_block() {
         fn outer(): void {
             if true {
                 fn helper(): void {
-                    print("hello");
+                    console.log("hello");
                 }
                 helper();
             }
@@ -110,7 +110,7 @@ fn test_parse_nested_function_in_for_block() {
         fn outer(): void {
             for i in [0, 1, 2, 3, 4] {
                 fn log(borrow x: number): void {
-                    print(str(x));
+                    console.log(str(x));
                 }
                 log(i);
             }
@@ -312,7 +312,7 @@ fn test_function_declaration_errors(#[case] source: &str, #[case] expected: &str
 // NOTE: Nested function syntax is now allowed by the parser (Phase 1 complete).
 // Semantic validation (binder/typechecker) will be added in Phases 3-4.
 // The parser no longer rejects nested functions - it parses them as Stmt::FunctionDecl.
-// Tests for semantic errors (AT1013) will be added in later phases.
+// Tests for semantic errors will be added in later phases.
 
 // ============================================================================
 // If Statement Errors
@@ -368,7 +368,7 @@ fn main(): void {
     let mut people: Person[] = match load() {
         Ok(p) => p,
         Err(e) => {
-            print(e);
+            console.log(e);
             return;
         }
     };

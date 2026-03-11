@@ -10,7 +10,7 @@ fn is_even(borrow n: number) : bool {
     return n % 2 == 0;
 }
 
-print(add(3, 4));
-print(greet("World"));
-print(is_even(4));
-print(is_even(7));
+console.log(add(3, 4));
+console.log(greet("World"));
+console.log(is_even(4));
+console.log(is_even(7));

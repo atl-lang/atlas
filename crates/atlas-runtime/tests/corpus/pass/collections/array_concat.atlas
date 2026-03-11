@@ -1,26 +1,26 @@
 let nums: number[] = [1, 2];
 let more_nums: number[] = [3, 4];
 let combined_nums = nums + more_nums;
-print(len(combined_nums));
-print(combined_nums[0]);
-print(combined_nums[3]);
+console.log(len(combined_nums));
+console.log(combined_nums[0]);
+console.log(combined_nums[3]);
 
 let strings: string[] = ["a", "b"];
 let more_strings: string[] = ["c"];
 let combined_strings = strings + more_strings;
-print(len(combined_strings));
-print(combined_strings[2]);
+console.log(len(combined_strings));
+console.log(combined_strings[2]);
 
 let bools: bool[] = [true, false];
 let more_bools: bool[] = [false, true];
 let combined_bools = bools + more_bools;
-print(len(combined_bools));
-print(combined_bools[0]);
-print(combined_bools[3]);
+console.log(len(combined_bools));
+console.log(combined_bools[0]);
+console.log(combined_bools[3]);
 
 let nested: number[][] = [[1], [2, 3]];
 let nested_more: number[][] = [[4]];
 let combined_nested = nested + nested_more;
-print(len(combined_nested));
-print(combined_nested[1][1]);
-print(combined_nested[2][0]);
+console.log(len(combined_nested));
+console.log(combined_nested[1][1]);
+console.log(combined_nested[2][0]);

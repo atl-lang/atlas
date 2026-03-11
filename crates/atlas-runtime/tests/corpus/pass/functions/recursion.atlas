@@ -12,7 +12,7 @@ fn power(borrow base: number, borrow exp: number) : number {
     return base * power(base, exp - 1);
 }
 
-print(sum_to(5));
-print(sum_to(10));
-print(power(2, 8));
-print(power(3, 4));
+console.log(sum_to(5));
+console.log(sum_to(10));
+console.log(power(2, 8));
+console.log(power(3, 4));

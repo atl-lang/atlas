@@ -4,4 +4,4 @@ fn early_return(borrow x: number) : number {
     return dead;
 }
 
-print(early_return(5));
+console.log(early_return(5));

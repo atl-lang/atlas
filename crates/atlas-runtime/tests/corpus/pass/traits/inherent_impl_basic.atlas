@@ -10,5 +10,5 @@ impl Point {
 }
 
 let p = Point { x: 3, y: 4 };
-print(p.magnitude());
-print(p.to_string());
+console.log(p.magnitude());
+console.log(p.to_string());

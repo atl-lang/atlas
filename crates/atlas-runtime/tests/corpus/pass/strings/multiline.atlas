@@ -1,11 +1,11 @@
 let mut greeting: string = "Hello";
 let mut name: string = "Atlas";
 let mut message: string = greeting + ", " + name + "!";
-print(message);
+console.log(message);
 
 let mut count: number = 3;
 let mut i: number = 1;
 while i <= count {
-    print(str(i));
+    console.log(str(i));
     i = i + 1;
 }

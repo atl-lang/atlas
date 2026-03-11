@@ -2100,7 +2100,7 @@ fn test_compiler_source_map_lookup() {
 
 #[test]
 fn test_compiler_source_map_json_roundtrip() {
-    let source = "let x = 42;\nprint(x);";
+    let source = "let x = 42;\nconsole.log(x);";
     let bytecode = compile_source(source);
 
     let options = SourceMapOptions {
@@ -2140,7 +2140,7 @@ fn test_debugger_source_map_from_bytecode() {
 
 #[test]
 fn test_source_map_stack_trace_lookup() {
-    let source = "fn greet() {\n  print(\"hello\");\n}\ngreet();";
+    let source = "fn greet() {\n  console.log(\"hello\");\n}\ngreet();";
     let bytecode = compile_source(source);
 
     let options = SourceMapOptions::default();

@@ -100,7 +100,7 @@ fn multiline_matched_brackets_complete() {
 
 #[test]
 fn multiline_unclosed_paren_call() {
-    match is_input_complete("print(") {
+    match is_input_complete("console.log(") {
         InputCompleteness::Incomplete { reason } => {
             assert_eq!(reason, IncompleteReason::UnclosedParen);
         }
@@ -121,7 +121,7 @@ fn multiline_unclosed_paren_expr() {
 #[test]
 fn multiline_matched_parens_complete() {
     assert_eq!(
-        is_input_complete("print(1 + 2);"),
+        is_input_complete("console.log(1 + 2);"),
         InputCompleteness::Complete
     );
 }

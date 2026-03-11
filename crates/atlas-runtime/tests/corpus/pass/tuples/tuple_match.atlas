@@ -17,15 +17,15 @@ fn classify(own pair: (number, number)) : string {
     }
 }
 
-print(classify((0, 0)));
-print(classify((5, 0)));
-print(classify((0, 3)));
-print(classify((2, 4)));
+console.log(classify((0, 0)));
+console.log(classify((5, 0)));
+console.log(classify((0, 3)));
+console.log(classify((2, 4)));
 
 // Wildcard in tuple
 match (42, "hello") {
     (_, s) => {
-        print(s);
+        console.log(s);
     }
 }
 
@@ -33,6 +33,6 @@ match (42, "hello") {
 let (a, b) = (100, 200);
 match (a, b) {
     (x, y) => {
-        print(x + y);
+        console.log(x + y);
     }
 }

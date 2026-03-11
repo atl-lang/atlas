@@ -797,7 +797,7 @@ fn test_typecheck_nested_function_param_type_mismatch() {
     let source = r#"
         fn outer(): void {
             fn process(borrow x: number, borrow y: string): void {
-                print(str(x) + y);
+                console.log(str(x) + y);
             }
             process(42, 100);
         }
@@ -916,7 +916,7 @@ fn test_typecheck_nested_function_void_return() {
     let source = r#"
         fn outer(): void {
             fn helper(): void {
-                print("test");
+                console.log("test");
             }
             helper();
         }

@@ -1,5 +1,5 @@
 fn log_message(borrow msg: string) : void {
-    print("LOG: " + msg);
+    console.log("LOG: " + msg);
 }
 
 fn no_op() : void {
@@ -8,4 +8,4 @@ fn no_op() : void {
 log_message("hello");
 log_message("world");
 let result: null = no_op();
-print(result);
+console.log(result);

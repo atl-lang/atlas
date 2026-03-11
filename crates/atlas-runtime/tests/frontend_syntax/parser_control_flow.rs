@@ -147,10 +147,10 @@ fn test_issue_h187_match_stmt_no_semicolon() {
 fn main(): void {
     let x = 1;
     match x {
-        1 => print("one"),
-        _ => print("other"),
+        1 => console.log("one"),
+        _ => console.log("other"),
     }
-    print("after match");
+    console.log("after match");
 }
 "#;
     let (_, diagnostics) = parse_source(src);

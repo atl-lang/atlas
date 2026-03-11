@@ -8,9 +8,9 @@ fn milestone_stdlib_len_function() {
 }
 
 #[test]
-fn milestone_stdlib_print_function() {
-    // print should not crash; return value is null.
-    assert_no_error(r#"print("hello milestone");"#);
+fn milestone_stdlib_console_log_function() {
+    // console.log should not crash; return value is null.
+    assert_no_error(r#"console.log("hello milestone");"#);
 }
 
 #[test]

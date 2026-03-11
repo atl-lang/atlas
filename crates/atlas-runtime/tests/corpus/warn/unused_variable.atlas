@@ -3,4 +3,4 @@ fn compute() : number {
     return 100;
 }
 
-print(compute());
+console.log(compute());

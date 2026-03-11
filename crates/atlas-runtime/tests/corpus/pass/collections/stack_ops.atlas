@@ -3,11 +3,11 @@ stackPush(s, 10);
 stackPush(s, 20);
 stackPush(s, 30);
 
-print(stackSize(s));
+console.log(stackSize(s));
 
 let top: number = unwrap(stackPeek(s));
-print(top);
+console.log(top);
 
 let popped: number = unwrap(stackPop(s));
-print(popped);
-print(stackSize(s));
+console.log(popped);
+console.log(stackSize(s));
