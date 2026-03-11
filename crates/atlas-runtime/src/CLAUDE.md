@@ -17,7 +17,7 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `interpreter/` | Tree-walking eval (`mod.rs`, `expr.rs`, `stmt.rs`) |
 | `vm/mod.rs` | Bytecode execution engine — **ARCH-EXCEPTION on file** (execute loop is monolithic by design); intrinsics + inline tests are split candidates, scheduled post-Block-4 |
 | `bytecode/` | Opcode definitions, serialization |
-| `stdlib/` | 25 modules, 300+ functions |
+| `stdlib/` | 23 modules, 300+ functions (console.rs added B21) |
 | `typechecker/mod.rs` | Function type resolution — `check_function` at line ~876 |
 | `typechecker/expr.rs` | Call-site type checking |
 | `diagnostic.rs` | Diagnostic struct + Display formatting (`to_human_string()`, JSON output) |

@@ -496,6 +496,229 @@ pub fn sign(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
+/// atan2(y: number, x: number) -> number
+///
+/// Returns arctangent of y/x in radians, using the signs to determine quadrant.
+/// Range: (-π, π]
+/// atan2(±0, +0) = ±0, atan2(±0, -0) = ±π
+/// atan2(NaN, x) = NaN, atan2(y, NaN) = NaN
+pub fn atan2(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(RuntimeError::TypeError {
+            msg: "atan2() expects 2 arguments".to_string(),
+            span,
+        });
+    }
+
+    match (&args[0], &args[1]) {
+        (Value::Number(y), Value::Number(x)) => Ok(Value::Number(y.atan2(*x))),
+        _ => Err(RuntimeError::TypeError {
+            msg: "atan2() expects number arguments".to_string(),
+            span,
+        }),
+    }
+}
+
+/// trunc(x: number) -> number
+///
+/// Returns integer part of x by removing any fractional digits.
+/// trunc(1.9) = 1, trunc(-1.9) = -1
+/// trunc(±∞) = ±∞, trunc(NaN) = NaN
+pub fn trunc(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::TypeError {
+            msg: "trunc() expects 1 argument".to_string(),
+            span,
+        });
+    }
+
+    match &args[0] {
+        Value::Number(n) => Ok(Value::Number(n.trunc())),
+        _ => Err(RuntimeError::TypeError {
+            msg: "trunc() expects number argument".to_string(),
+            span,
+        }),
+    }
+}
+
+/// log2(x: number) -> Result<number, string>
+///
+/// Returns Result: Ok(log2(x)) for positive x, Err for non-positive x.
+pub fn log2(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::TypeError {
+            msg: "log2() expects 1 argument".to_string(),
+            span,
+        });
+    }
+
+    match &args[0] {
+        Value::Number(n) => {
+            if n.is_nan() || *n <= 0.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "log2() domain error: argument must be positive",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.log2())))))
+            }
+        }
+        _ => Err(RuntimeError::TypeError {
+            msg: "log2() expects number argument".to_string(),
+            span,
+        }),
+    }
+}
+
+/// log10(x: number) -> Result<number, string>
+///
+/// Returns Result: Ok(log10(x)) for positive x, Err for non-positive x.
+pub fn log10(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::TypeError {
+            msg: "log10() expects 1 argument".to_string(),
+            span,
+        });
+    }
+
+    match &args[0] {
+        Value::Number(n) => {
+            if n.is_nan() || *n <= 0.0 {
+                Ok(Value::Result(Err(Box::new(Value::string(
+                    "log10() domain error: argument must be positive",
+                )))))
+            } else {
+                Ok(Value::Result(Ok(Box::new(Value::Number(n.log10())))))
+            }
+        }
+        _ => Err(RuntimeError::TypeError {
+            msg: "log10() expects number argument".to_string(),
+            span,
+        }),
+    }
+}
+
+/// exp(x: number) -> number
+///
+/// Returns e raised to the power x.
+/// exp(±∞) = +∞/0, exp(NaN) = NaN
+pub fn exp(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::TypeError {
+            msg: "exp() expects 1 argument".to_string(),
+            span,
+        });
+    }
+
+    match &args[0] {
+        Value::Number(n) => Ok(Value::Number(n.exp())),
+        _ => Err(RuntimeError::TypeError {
+            msg: "exp() expects number argument".to_string(),
+            span,
+        }),
+    }
+}
+
+/// cbrt(x: number) -> number
+///
+/// Returns cube root of x.
+/// cbrt(-8) = -2, cbrt(±∞) = ±∞, cbrt(NaN) = NaN
+pub fn cbrt(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::TypeError {
+            msg: "cbrt() expects 1 argument".to_string(),
+            span,
+        });
+    }
+
+    match &args[0] {
+        Value::Number(n) => Ok(Value::Number(n.cbrt())),
+        _ => Err(RuntimeError::TypeError {
+            msg: "cbrt() expects number argument".to_string(),
+            span,
+        }),
+    }
+}
+
+/// hypot(x: number, y: number) -> number
+///
+/// Returns sqrt(x² + y²) without intermediate overflow/underflow.
+/// hypot(±∞, y) = +∞ (even if y is NaN)
+pub fn hypot(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(RuntimeError::TypeError {
+            msg: "hypot() expects 2 arguments".to_string(),
+            span,
+        });
+    }
+
+    match (&args[0], &args[1]) {
+        (Value::Number(x), Value::Number(y)) => Ok(Value::Number(x.hypot(*y))),
+        _ => Err(RuntimeError::TypeError {
+            msg: "hypot() expects number arguments".to_string(),
+            span,
+        }),
+    }
+}
+
+// ============================================================================
+// Math Constant Accessors (0-arg functions returning the constant)
+// ============================================================================
+
+/// Math.PI — ratio of circle's circumference to diameter (~3.14159)
+pub fn math_pi(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(RuntimeError::TypeError {
+            msg: "Math.PI expects no arguments".to_string(),
+            span,
+        });
+    }
+    Ok(Value::Number(std::f64::consts::PI))
+}
+
+/// Math.E — Euler's number, base of natural logarithm (~2.71828)
+pub fn math_e(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(RuntimeError::TypeError {
+            msg: "Math.E expects no arguments".to_string(),
+            span,
+        });
+    }
+    Ok(Value::Number(std::f64::consts::E))
+}
+
+/// Math.SQRT2 — square root of 2 (~1.41421)
+pub fn math_sqrt2(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(RuntimeError::TypeError {
+            msg: "Math.SQRT2 expects no arguments".to_string(),
+            span,
+        });
+    }
+    Ok(Value::Number(std::f64::consts::SQRT_2))
+}
+
+/// Math.LN2 — natural logarithm of 2 (~0.69315)
+pub fn math_ln2(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(RuntimeError::TypeError {
+            msg: "Math.LN2 expects no arguments".to_string(),
+            span,
+        });
+    }
+    Ok(Value::Number(std::f64::consts::LN_2))
+}
+
+/// Math.LN10 — natural logarithm of 10 (~2.30259)
+pub fn math_ln10(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(RuntimeError::TypeError {
+            msg: "Math.LN10 expects no arguments".to_string(),
+            span,
+        });
+    }
+    Ok(Value::Number(std::f64::consts::LN_10))
+}
+
 /// random() -> number
 ///
 /// Returns pseudo-random number in [0, 1) with uniform distribution.

@@ -23,9 +23,13 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Math namespace
         ("Math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
         ("Math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
+        ("Math", "asin" | "acos" | "atan" | "trunc" | "log2" | "log10" | "exp" | "cbrt") => {
+            Some(vec![num.clone()])
+        }
         ("Math", "min" | "max" | "pow") => Some(vec![num.clone(), num.clone()]),
+        ("Math", "atan2" | "hypot") => Some(vec![num.clone(), num.clone()]),
         ("Math", "clamp") => Some(vec![num.clone(), num.clone(), num.clone()]),
-        ("Math", "random") => Some(vec![]),
+        ("Math", "random" | "PI" | "E" | "SQRT2" | "LN2" | "LN10") => Some(vec![]),
         // Env namespace
         ("env", "get" | "unset") => Some(vec![str.clone()]),
         ("env", "set") => Some(vec![str.clone(), str.clone()]),
@@ -91,9 +95,11 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Math namespace
         (
             "Math",
-            "abs" | "floor" | "ceil" | "round" | "min" | "max" | "pow" | "sign" | "random",
+            "abs" | "floor" | "ceil" | "round" | "min" | "max" | "pow" | "sign" | "random" | "atan"
+            | "sin" | "cos" | "tan" | "trunc" | "exp" | "cbrt" | "hypot" | "atan2" | "PI" | "E"
+            | "SQRT2" | "LN2" | "LN10",
         ) => Type::Number,
-        ("Math", "sqrt" | "clamp" | "log" | "sin" | "cos" | "tan") => Type::Generic {
+        ("Math", "sqrt" | "clamp" | "log" | "asin" | "acos" | "log2" | "log10") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Number, Type::String],
         },

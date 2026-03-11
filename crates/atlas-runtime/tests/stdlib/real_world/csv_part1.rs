@@ -307,7 +307,7 @@ fn test_csv_max_value() {
         fn findMax(borrow current: number, borrow row: string): number {{
             let fields: []string = split(row, ",");
             let value: number = unwrap(parse_float(fields[1]));
-            return max(current, value);
+            return Math.max(current, value);
         }}
 
         let csv: string = read_file("{}");

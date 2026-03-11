@@ -198,6 +198,122 @@ fn test_math_random_range() {
     assert_parity(src);
 }
 
+// --- Math constants (B22) — accessed as 0-arg functions Math.PI() ---
+
+#[test]
+fn test_math_pi_constant() {
+    let src = r#"Math.PI() > 3.14 && Math.PI() < 3.15;"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_e_constant() {
+    let src = r#"Math.E() > 2.71 && Math.E() < 2.72;"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_sqrt2_constant() {
+    let src = r#"Math.SQRT2() > 1.41 && Math.SQRT2() < 1.42;"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_ln2_constant() {
+    let src = r#"Math.LN2() > 0.69 && Math.LN2() < 0.70;"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_ln10_constant() {
+    let src = r#"Math.LN10() > 2.30 && Math.LN10() < 2.31;"#;
+    assert_eval_bool(src, true);
+    assert_parity(src);
+}
+
+// --- Math new methods (B22) ---
+
+#[test]
+fn test_math_asin_zero() {
+    let src = r#"unwrap(Math.asin(0));"#;
+    assert_eval_number(src, 0.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_acos_one() {
+    let src = r#"unwrap(Math.acos(1));"#;
+    assert_eval_number(src, 0.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_atan_zero() {
+    let src = r#"Math.atan(0);"#;
+    assert_eval_number(src, 0.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_atan2_zero() {
+    let src = r#"Math.atan2(0, 1);"#;
+    assert_eval_number(src, 0.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_trunc_positive() {
+    let src = r#"Math.trunc(4.9);"#;
+    assert_eval_number(src, 4.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_trunc_negative() {
+    let src = r#"Math.trunc(-4.9);"#;
+    assert_eval_number(src, -4.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_log2_of_8() {
+    let src = r#"unwrap(Math.log2(8));"#;
+    assert_eval_number(src, 3.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_log10_of_100() {
+    let src = r#"unwrap(Math.log10(100));"#;
+    assert_eval_number(src, 2.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_exp_zero() {
+    let src = r#"Math.exp(0);"#;
+    assert_eval_number(src, 1.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_cbrt_eight() {
+    let src = r#"Math.cbrt(8);"#;
+    assert_eval_number(src, 2.0);
+    assert_parity(src);
+}
+
+#[test]
+fn test_math_hypot_3_4() {
+    let src = r#"Math.hypot(3, 4);"#;
+    assert_eval_number(src, 5.0);
+    assert_parity(src);
+}
+
 // --- env.get() ---
 // getEnv requires env permissions. Use allow_all security context via run_interpreter/run_vm.
 

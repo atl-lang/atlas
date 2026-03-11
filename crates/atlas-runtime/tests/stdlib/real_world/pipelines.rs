@@ -105,7 +105,7 @@ fn test_pipeline_conditional_transform() {
     let code = r#"
         fn transform(borrow x: number): number {
             if (x < 0.0) {
-                return abs(x);
+                return Math.abs(x);
             }
             return x;
         }
@@ -360,13 +360,13 @@ fn test_pipeline_min_max_aggregation() {
     let code = r#"
         fn findMin(borrow current: number, borrow x: number): number {
             if (current == 0.0) { return x; }
-            return min(current, x);
+            return Math.min(current, x);
         }
         fn findMax(borrow current: number, borrow x: number): number {
-            return max(current, x);
+            return Math.max(current, x);
         }
 
-        let numbers: []number = [5.0, 2.0, 8.0, 1.0, 9.0];
+        let numbers: number[] = [5.0, 2.0, 8.0, 1.0, 9.0];
         let minVal: number = reduce(numbers, findMin, 0.0);
         let maxVal: number = reduce(numbers, findMax, 0.0);
         maxVal - minVal
