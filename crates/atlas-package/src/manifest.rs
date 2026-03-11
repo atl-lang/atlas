@@ -4,10 +4,24 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+/// Entry point configuration
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct EntryConfig {
+    /// Main entry point file (relative to project root)
+    #[serde(default)]
+    pub main: Option<String>,
+
+    /// Library entry point file (relative to project root)
+    #[serde(default)]
+    pub lib: Option<String>,
+}
+
 /// Package manifest (atlas.toml)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct PackageManifest {
     pub package: PackageMetadata,
+    #[serde(default)]
+    pub entry: Option<EntryConfig>,
     #[serde(default)]
     pub dependencies: HashMap<String, Dependency>,
     #[serde(default, rename = "dev-dependencies")]

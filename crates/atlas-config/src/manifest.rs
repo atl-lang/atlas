@@ -8,11 +8,27 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::Path;
 
+/// Entry point configuration
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
+pub struct EntryConfig {
+    /// Main entry point file (relative to project root)
+    #[serde(default)]
+    pub main: Option<String>,
+
+    /// Library entry point file (relative to project root)
+    #[serde(default)]
+    pub lib: Option<String>,
+}
+
 /// Package manifest (subset of ProjectConfig focused on package metadata)
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Manifest {
     /// Package metadata
     pub package: PackageConfig,
+
+    /// Entry points (main.atl, lib.atl)
+    #[serde(default)]
+    pub entry: EntryConfig,
 
     /// Dependencies
     #[serde(default)]
