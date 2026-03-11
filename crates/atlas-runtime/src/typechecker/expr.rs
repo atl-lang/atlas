@@ -92,6 +92,21 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // Io namespace
         ("Io", "readLine" | "readLinePrompt") => Type::String,
+        // Gzip namespace
+        ("Gzip", "compress" | "decompress") => Type::Array(Box::new(Type::Number)),
+        ("Gzip", "decompressString") => Type::String,
+        ("Gzip", "isGzip") => Type::Bool,
+        ("Gzip", "compressionRatio") => Type::Number,
+        // Tar namespace
+        ("Tar", "create" | "createGz") => Type::Null,
+        ("Tar", "extract" | "extractGz" | "list") => Type::Array(Box::new(Type::Unknown)),
+        ("Tar", "contains") => Type::Bool,
+        // Zip namespace
+        ("Zip", "create" | "createWithComment" | "addFile") => Type::Null,
+        ("Zip", "extract" | "extractFiles" | "list") => Type::Array(Box::new(Type::Unknown)),
+        ("Zip", "contains" | "validate") => Type::Bool,
+        ("Zip", "compressionRatio") => Type::Number,
+        ("Zip", "comment") => Type::String,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }

@@ -514,6 +514,9 @@ impl Compiler {
                     | crate::method_dispatch::TypeTag::CryptoNs
                     | crate::method_dispatch::TypeTag::RegexNs
                     | crate::method_dispatch::TypeTag::IoNs
+                    | crate::method_dispatch::TypeTag::GzipNs
+                    | crate::method_dispatch::TypeTag::TarNs
+                    | crate::method_dispatch::TypeTag::ZipNs
             );
 
             if !is_ns {
