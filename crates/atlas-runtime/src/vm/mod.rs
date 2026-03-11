@@ -2783,8 +2783,12 @@ impl VM {
                 self.vm_intrinsic_regex_replace_all_with(args, span)
             }
             // Test intrinsics (callable assertions)
-            "assertThrows" | "assert_throws" => self.vm_intrinsic_assert_throws(args, span),
-            "assertNoThrow" | "assert_no_throw" => self.vm_intrinsic_assert_no_throw(args, span),
+            "testNsThrows" | "assertThrows" | "assert_throws" => {
+                self.vm_intrinsic_assert_throws(args, span)
+            }
+            "testNsNoThrow" | "assertNoThrow" | "assert_no_throw" => {
+                self.vm_intrinsic_assert_no_throw(args, span)
+            }
             _ => Err(RuntimeError::UnknownFunction {
                 name: name.to_string(),
                 span,

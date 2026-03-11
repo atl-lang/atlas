@@ -528,10 +528,10 @@ impl Interpreter {
                     "regexReplaceAllWith" | "regex_replace_all_with" => {
                         return self.intrinsic_regex_replace_all_with(&args, span)
                     }
-                    "assertThrows" | "assert_throws" => {
+                    "testNsThrows" | "assertThrows" | "assert_throws" => {
                         return self.intrinsic_assert_throws(&args, span)
                     }
-                    "assertNoThrow" | "assert_no_throw" => {
+                    "testNsNoThrow" | "assertNoThrow" | "assert_no_throw" => {
                         return self.intrinsic_assert_no_throw(&args, span)
                     }
                     _ => {}

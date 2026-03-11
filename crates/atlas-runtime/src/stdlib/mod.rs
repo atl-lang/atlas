@@ -68,7 +68,7 @@ fn stdlib_signature(func_name: &str) -> Option<&'static str> {
         "num" => Some("num(value: string) -> number"),
         "bool" => Some("bool(value: any) -> bool"),
         "type" => Some("type(value: any) -> string"),
-        "assert" => Some("assert(condition: bool, message: string) -> void"),
+        // bare assert removed (B34) — test.assert(condition, msg?)
         "assertEq" => Some("assertEq(actual: any, expected: any) -> void"),
         "panic" => Some("panic(message: string) -> void"),
         // String functions
@@ -1953,22 +1953,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             compression::zip::zip_comment_fn(&args[0], span)
         });
 
-        // ====================================================================
-        // Testing primitives — legacy bare globals (kept for backward compat)
-        // ====================================================================
-        m.insert("assert", |a, s, _, _| test::assert(a, s));
-        m.insert("assertFalse", |a, s, _, _| test::assert_false(a, s));
-        m.insert("assertEqual", |a, s, _, _| test::assert_equal(a, s));
-        m.insert("assertNotEqual", |a, s, _, _| test::assert_not_equal(a, s));
-        m.insert("assertOk", |a, s, _, _| test::assert_ok(a, s));
-        m.insert("assertErr", |a, s, _, _| test::assert_err(a, s));
-        m.insert("assertSome", |a, s, _, _| test::assert_some(a, s));
-        m.insert("assertNone", |a, s, _, _| test::assert_none(a, s));
-        m.insert("assertContains", |a, s, _, _| test::assert_contains(a, s));
-        m.insert("assertEmpty", |a, s, _, _| test::assert_empty(a, s));
-        m.insert("assertLength", |a, s, _, _| test::assert_length(a, s));
-        m.insert("assertThrows", |a, s, _, _| test::assert_throws(a, s));
-        m.insert("assertNoThrow", |a, s, _, _| test::assert_no_throw(a, s));
+        // NOTE: bare assert/assertEqual globals removed (B34) — use test.assert/test.equal etc.
         // ====================================================================
         // test namespace (test.assert, test.equal, etc.)
         // ====================================================================
@@ -2472,19 +2457,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("zipAddFile", "zip_add_file"),
             ("zipValidate", "zip_validate"),
             ("zipComment", "zip_comment"),
-            // Assertions
-            ("assertFalse", "assert_false"),
-            ("assertEqual", "assert_equal"),
-            ("assertNotEqual", "assert_not_equal"),
-            ("assertOk", "assert_ok"),
-            ("assertErr", "assert_err"),
-            ("assertSome", "assert_some"),
-            ("assertNone", "assert_none"),
-            ("assertContains", "assert_contains"),
-            ("assertEmpty", "assert_empty"),
-            ("assertLength", "assert_length"),
-            ("assertThrows", "assert_throws"),
-            ("assertNoThrow", "assert_no_throw"),
+            // Assertions — bare globals removed (B34), use test.* namespace
             // Crypto (bare globals — B27: blake3Hash/hmacSha256/hmacSha256Verify removed)
             ("aesGcmEncrypt", "aes_gcm_encrypt"),
             ("aesGcmDecrypt", "aes_gcm_decrypt"),
@@ -2597,9 +2570,8 @@ pub fn is_array_intrinsic(name: &str) -> bool {
             // Regex intrinsics (callback-based)
             | "regexReplaceWith" | "regex_replace_with"
             | "regexReplaceAllWith" | "regex_replace_all_with"
-            // Test intrinsics (callback-based)
-            | "assertThrows" | "assert_throws"
-            | "assertNoThrow" | "assert_no_throw"
+            // Test intrinsics (callback-based) — B34: bare globals removed, testNs keys remain
+            | "testNsThrows" | "testNsNoThrow"
     )
 }
 
