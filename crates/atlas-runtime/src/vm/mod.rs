@@ -155,12 +155,46 @@ impl VM {
     /// preserving the global variable table. Use this to run dependency modules
     /// in sequence on a single VM so their exported globals are visible to later modules.
     ///
+    /// The new module's bytecode is MERGED into the existing bytecode so that all
+    /// function `bytecode_offset` values remain valid across module boundaries.
+    /// This is required for cross-module function calls: a function defined in module A
+    /// has a `bytecode_offset` relative to module A's instruction stream; after merging,
+    /// that offset is adjusted to be correct in the combined instruction stream.
+    ///
     /// Call `run()` after this to execute the loaded module.
-    pub fn load_module(&mut self, bytecode: Bytecode) {
-        let local_count = bytecode.top_level_local_count;
+    pub fn load_module(&mut self, new_bc: Bytecode) {
+        let instr_base = self.bytecode.instructions.len();
+        let const_base = self.bytecode.constants.len();
+        let local_count = new_bc.top_level_local_count;
 
-        self.bytecode = bytecode;
-        self.ip = 0;
+        // 1. Merge constants: adjust FunctionRef bytecode_offsets by instr_base so they
+        //    remain valid in the combined instruction stream.
+        for constant in new_bc.constants {
+            let adjusted = match constant {
+                crate::value::Value::Function(mut f) => {
+                    f.bytecode_offset += instr_base;
+                    crate::value::Value::Function(f)
+                }
+                other => other,
+            };
+            self.bytecode.constants.push(adjusted);
+        }
+
+        // 2. Adjust the new module's instruction stream: all constant pool index operands
+        //    must be shifted by `const_base` to account for the pre-existing constants.
+        let adjusted_instrs = Self::adjust_constant_refs(&new_bc.instructions, const_base as u16);
+
+        // 3. Merge debug info: shift instruction offsets by instr_base.
+        for mut dbg in new_bc.debug_info {
+            dbg.instruction_offset += instr_base;
+            self.bytecode.debug_info.push(dbg);
+        }
+
+        // 4. Append adjusted instructions — the new module's code now lives at instr_base..end.
+        self.bytecode.instructions.extend(adjusted_instrs);
+
+        // 5. Reset execution state to start at the new module's entry point.
+        self.ip = instr_base;
         self.stack.clear();
         self.frames = vec![CallFrame {
             function_name: "<main>".to_string(),
@@ -174,8 +208,126 @@ impl VM {
         {
             self.value_origins.clear();
             self.consumed_slots = vec![vec![false; local_count]];
-            self.consumed_globals.clear();
+            // Preserve consumed_globals across modules — they accumulate.
         }
+    }
+
+    /// Rewrite all constant pool index operands in an instruction stream by adding `const_base`.
+    ///
+    /// Jump offsets (relative i16) and non-constant-index operands are passed through unchanged.
+    /// This is used by `load_module` to fix up a new module's instruction stream before
+    /// appending it to the existing combined bytecode.
+    fn adjust_constant_refs(instructions: &[u8], const_base: u16) -> Vec<u8> {
+        if const_base == 0 {
+            return instructions.to_vec();
+        }
+
+        fn read_u16(bytes: &[u8]) -> u16 {
+            ((bytes[0] as u16) << 8) | bytes[1] as u16
+        }
+        fn push_u16(result: &mut Vec<u8>, v: u16) {
+            result.push((v >> 8) as u8);
+            result.push((v & 0xFF) as u8);
+        }
+
+        let mut result = Vec::with_capacity(instructions.len());
+        let mut i = 0;
+
+        while i < instructions.len() {
+            let opcode = instructions[i];
+            result.push(opcode);
+            i += 1;
+
+            match opcode {
+                // ONE u16 constant-pool index → adjust
+                0x01 | // Constant
+                0x12 | // GetGlobal
+                0x13   // SetGlobal
+                => {
+                    let idx = read_u16(&instructions[i..]);
+                    push_u16(&mut result, idx + const_base);
+                    i += 2;
+                }
+
+                // MakeClosure: [u16 func_const_idx][u16 n_upvalues]
+                // Only func_const_idx is a pool reference; n_upvalues is a count.
+                0x14 => {
+                    let func_idx = read_u16(&instructions[i..]);
+                    let n_up = read_u16(&instructions[i + 2..]);
+                    push_u16(&mut result, func_idx + const_base);
+                    push_u16(&mut result, n_up);
+                    i += 4;
+                }
+
+                // TraitDispatch: [u16 trait_idx][u16 method_idx][u8 arg_count]
+                // Both u16s are pool references.
+                0x62 => {
+                    let trait_idx = read_u16(&instructions[i..]);
+                    let method_idx = read_u16(&instructions[i + 2..]);
+                    let argc = instructions[i + 4];
+                    push_u16(&mut result, trait_idx + const_base);
+                    push_u16(&mut result, method_idx + const_base);
+                    result.push(argc);
+                    i += 5;
+                }
+
+                // Struct: [u16 name_idx][u16 field_count]
+                // Only name_idx is a pool reference; field_count is a count.
+                0x7B => {
+                    let name_idx = read_u16(&instructions[i..]);
+                    let field_count = read_u16(&instructions[i + 2..]);
+                    push_u16(&mut result, name_idx + const_base);
+                    push_u16(&mut result, field_count);
+                    i += 4;
+                }
+
+                // AsyncCall, SpawnTask: [u16 fn_const_idx][u8 arg_count]
+                // fn_const_idx is a pool reference.
+                0xA0 | 0xA3 => {
+                    let fn_idx = read_u16(&instructions[i..]);
+                    let argc = instructions[i + 2];
+                    push_u16(&mut result, fn_idx + const_base);
+                    result.push(argc);
+                    i += 3;
+                }
+
+                // ONE u16 operand that is NOT a pool index → pass through unchanged
+                0x10 | // GetLocal (local index)
+                0x11 | // SetLocal (local index)
+                0x15 | // GetUpvalue (upvalue index)
+                0x16 | // SetUpvalue (upvalue index)
+                0x70 | // Array (element count)
+                0x73 | // HashMap (pair count)
+                0x7C | // Tuple (element count)
+                0x7D   // TupleGet (tuple index)
+                => {
+                    let v = read_u16(&instructions[i..]);
+                    push_u16(&mut result, v);
+                    i += 2;
+                }
+
+                // i16 relative jump offsets → pass through unchanged (they're relative to ip)
+                // 0x50=Jump, 0x51=JumpIfFalse, 0x52=Loop
+                0x50..=0x52 => {
+                    result.push(instructions[i]);
+                    result.push(instructions[i + 1]);
+                    i += 2;
+                }
+
+                // ONE u8 operand → pass through unchanged
+                0x60 | // Call (arg_count)
+                0x98   // EnumVariant (arg_count)
+                => {
+                    result.push(instructions[i]);
+                    i += 1;
+                }
+
+                // No operands (or unknown opcode) → nothing extra to copy
+                _ => {}
+            }
+        }
+
+        result
     }
 
     /// Create a new VM with profiling enabled
