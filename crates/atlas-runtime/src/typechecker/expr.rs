@@ -553,6 +553,7 @@ impl<'a> TypeChecker<'a> {
                         // AT3054: explicitly-annotated `borrow` param cannot escape into a struct
                         // field. Bare params (implicit borrow, D-040) are excluded — they are
                         // valid pass-throughs (same rule as the let-binding check above).
+                        // H-267: primitives (number, bool, string) are always copied, so escape is moot.
                         if let Expr::Identifier(id) = &field.value {
                             let ownership = self
                                 .current_fn_param_ownerships
@@ -561,7 +562,14 @@ impl<'a> TypeChecker<'a> {
                                 .flatten();
                             let is_explicit_borrow = ownership == Some(OwnershipAnnotation::Borrow)
                                 && self.current_fn_explicit_borrow_params.contains(&id.name);
-                            if is_explicit_borrow {
+                            // Primitives are always copied — no escape semantics apply (H-267)
+                            let param_type =
+                                self.symbol_table.lookup(&id.name).map(|s| s.ty.clone());
+                            let is_primitive = matches!(
+                                param_type,
+                                Some(Type::Number) | Some(Type::Bool) | Some(Type::String)
+                            );
+                            if is_explicit_borrow && !is_primitive {
                                 self.diagnostics.push(
                                     error_codes::BORROW_ESCAPE.emit(field.span)
                                         .arg("name", &id.name)
