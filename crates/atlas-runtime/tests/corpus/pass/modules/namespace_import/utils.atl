@@ -1,8 +1,8 @@
-export fn add(borrow a: number, borrow b: number) -> number {
+export fn add(borrow a: number, borrow b: number): number {
     return a + b;
 }
 
-export fn triple(borrow x: number) -> number {
+export fn triple(borrow x: number): number {
     return x * 3;
 }
 

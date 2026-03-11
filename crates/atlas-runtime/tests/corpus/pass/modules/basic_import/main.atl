@@ -2,4 +2,4 @@
 import { add } from "./math";
 
 let result: number = add(10, 20);
-print(result);
+console.log(result);

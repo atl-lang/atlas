@@ -1,9 +1,9 @@
 // utils.atlas - multiple exports
-export fn double(borrow x: number) -> number {
+export fn double(borrow x: number): number {
     return x * 2;
 }
 
-export fn triple(borrow x: number) -> number {
+export fn triple(borrow x: number): number {
     return x * 3;
 }
 

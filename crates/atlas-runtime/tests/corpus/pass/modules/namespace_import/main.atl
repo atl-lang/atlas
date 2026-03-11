@@ -1,5 +1,5 @@
 import * as utils from "./utils";
 
-print(str(utils.add(2, 3)));
-print(str(utils.PI));
-print(str(utils.triple(4)));
+console.log(str(utils.add(2, 3)));
+console.log(str(utils.PI));
+console.log(str(utils.triple(4)));
