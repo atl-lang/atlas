@@ -279,42 +279,42 @@ fn test_math_parity(#[case] code: &str, #[case] expected: &str) {
 
 #[rstest]
 #[case::parse_object(
-    "let j = parse_json(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].as_string()",
+    "let j = Json.parse(\"{\\\"key\\\": \\\"value\\\"}\"); j?[\"key\"].as_string()",
     "value"
 )]
-#[case::parse_array("let j = parse_json(\"[1, 2, 3]\"); j?[0].as_number()", "1")]
-#[case::parse_number("let j = parse_json(\"42\"); j?.as_number()", "42")]
-#[case::parse_string("let j = parse_json(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
-#[case::parse_bool("let j = parse_json(\"true\"); j?.as_bool()", "true")]
-#[case::parse_null("let j = parse_json(\"null\"); j?.is_null()", "true")]
-#[case::stringify_object("to_json(parse_json(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
-#[case::stringify_array("to_json(parse_json(\"[1,2,3]\")?)", "[1,2,3]")]
-#[case::as_string("parse_json(\"\\\"test\\\"\")?.as_string()", "test")]
-#[case::as_number("parse_json(\"123\")?.as_number()", "123")]
-#[case::as_bool("parse_json(\"true\")?.as_bool()", "true")]
-#[case::is_null_true("parse_json(\"null\")?.is_null()", "true")]
-#[case::is_null_false("parse_json(\"123\")?.is_null()", "false")]
+#[case::parse_array("let j = Json.parse(\"[1, 2, 3]\"); j?[0].as_number()", "1")]
+#[case::parse_number("let j = Json.parse(\"42\"); j?.as_number()", "42")]
+#[case::parse_string("let j = Json.parse(\"\\\"hello\\\"\"); j?.as_string()", "hello")]
+#[case::parse_bool("let j = Json.parse(\"true\"); j?.as_bool()", "true")]
+#[case::parse_null("let j = Json.parse(\"null\"); j?.is_null()", "true")]
+#[case::stringify_object("Json.stringify(Json.parse(\"{\\\"a\\\": 1}\")?)", "{\"a\":1}")]
+#[case::stringify_array("Json.stringify(Json.parse(\"[1,2,3]\")?)", "[1,2,3]")]
+#[case::as_string("Json.parse(\"\\\"test\\\"\")?.as_string()", "test")]
+#[case::as_number("Json.parse(\"123\")?.as_number()", "123")]
+#[case::as_bool("Json.parse(\"true\")?.as_bool()", "true")]
+#[case::is_null_true("Json.parse(\"null\")?.is_null()", "true")]
+#[case::is_null_false("Json.parse(\"123\")?.is_null()", "false")]
 // Note: JSON type checking methods not yet implemented
-// #[case::is_array_true("parse_json(\"[1,2]\")?.is_array()", "true")]
-// #[case::is_array_false("parse_json(\"123\")?.is_array()", "false")]
-// #[case::is_object_true("parse_json(\"{\\\"a\\\": 1}\")?.is_object()", "true")]
-// #[case::is_object_false("parse_json(\"123\")?.is_object()", "false")]
-// #[case::array_length("parse_json(\"[1,2,3]\")?.array_length()", "3")]
+// #[case::is_array_true("Json.parse(\"[1,2]\")?.is_array()", "true")]
+// #[case::is_array_false("Json.parse(\"123\")?.is_array()", "false")]
+// #[case::is_object_true("Json.parse(\"{\\\"a\\\": 1}\")?.is_object()", "true")]
+// #[case::is_object_false("Json.parse(\"123\")?.is_object()", "false")]
+// #[case::array_length("Json.parse(\"[1,2,3]\")?.array_length()", "3")]
 #[case::nested_access(
-    "let j = parse_json(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].as_number()",
+    "let j = Json.parse(\"{\\\"a\\\": {\\\"b\\\": 42}}\"); j?[\"a\"][\"b\"].as_number()",
     "42"
 )]
-#[case::json_array_index("let j = parse_json(\"[10, 20, 30]\"); j?[1].as_number()", "20")]
+#[case::json_array_index("let j = Json.parse(\"[10, 20, 30]\"); j?[1].as_number()", "20")]
 #[case::json_string_value(
-    "let j = parse_json(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].as_string()",
+    "let j = Json.parse(\"{\\\"name\\\": \\\"Alice\\\"}\"); j?[\"name\"].as_string()",
     "Alice"
 )]
 #[case::json_bool_value(
-    "let j = parse_json(\"{\\\"active\\\": false}\"); j?[\"active\"].as_bool()",
+    "let j = Json.parse(\"{\\\"active\\\": false}\"); j?[\"active\"].as_bool()",
     "false"
 )]
-#[case::isvalidjson_true("is_valid_json(\"{\\\"key\\\": \\\"value\\\"}\")", "true")]
-#[case::isvalidjson_false("is_valid_json(\"invalid json\")", "false")]
+#[case::isvalidjson_true("Json.isValid(\"{\\\"key\\\": \\\"value\\\"}\")", "true")]
+#[case::isvalidjson_false("Json.isValid(\"invalid json\")", "false")]
 fn test_json_parity(#[case] code: &str, #[case] expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code).unwrap();
@@ -594,7 +594,7 @@ fn test_type_checking_parity(#[case] code: &str, #[case] expected: &str) {
 #[case::empty_array_operations("len(reverse([]))", "0")]
 #[case::divide_by_zero("1 / 0 > 999999999999999", "true")] // inf
 #[case::negative_sqrt("sqrt(-1)", "NaN")] // NaN as string
-#[case::parse_invalid_json_safety("let j = parse_json(\"invalid\"); j.is_null()", "false")] // Returns error, not crash
+#[case::parse_invalid_json_safety("let j = Json.parse(\"invalid\"); j.is_null()", "false")] // Returns error, not crash
 fn test_edge_cases_parity(#[case] code: &str, #[case] _expected: &str) {
     let runtime_interp = Atlas::new();
     let interp_result = runtime_interp.eval(code);

@@ -498,6 +498,387 @@ pub fn json_is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
+// ============================================================================
+// Json Namespace String-Based Methods (B23)
+// ============================================================================
+// These functions operate on JSON strings (not JsonValue), matching the
+// Json.* namespace API: Json.minify(str), Json.keys(str), Json.getString(str, key), etc.
+
+/// Json.minify(json_str) → string
+///
+/// Takes a JSON string and returns a compact version with all whitespace removed.
+pub fn json_ns_minify(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("Json.minify", 1, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.minify() requires string argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    let minified = serde_json::to_string(&parsed).map_err(|e| RuntimeError::TypeError {
+        msg: format!("JSON serialization failed: {}", e),
+        span,
+    })?;
+
+    Ok(Value::string(minified))
+}
+
+/// Json.keys(json_str) → string[]
+///
+/// Returns the top-level keys of a JSON object as an array of strings.
+/// Returns error if the JSON is not an object.
+pub fn json_ns_keys(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("Json.keys", 1, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.keys() requires string argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed {
+        serde_json::Value::Object(obj) => {
+            let keys: Vec<Value> = obj.keys().map(|k| Value::string(k.clone())).collect();
+            Ok(Value::array(keys))
+        }
+        _ => Err(RuntimeError::TypeError {
+            msg: "Json.keys() requires a JSON object".to_string(),
+            span,
+        }),
+    }
+}
+
+/// Json.getString(json_str, key) → string
+///
+/// Parses a JSON object string and returns the value at `key` as a string.
+/// Returns error if the key is missing or the value is not a string.
+pub fn json_ns_get_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.getString", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getString() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getString() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed.get(key) {
+        Some(serde_json::Value::String(s)) => Ok(Value::string(s.clone())),
+        Some(other) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "Json.getString(): key '{}' is not a string (got {})",
+                key, other
+            ),
+            span,
+        }),
+        None => Err(RuntimeError::TypeError {
+            msg: format!("Json.getString(): key '{}' not found", key),
+            span,
+        }),
+    }
+}
+
+/// Json.getNumber(json_str, key) → number
+///
+/// Parses a JSON object string and returns the value at `key` as a number.
+/// Returns error if the key is missing or the value is not a number.
+pub fn json_ns_get_number(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.getNumber", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getNumber() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getNumber() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed.get(key) {
+        Some(serde_json::Value::Number(n)) => Ok(Value::Number(n.as_f64().unwrap_or(0.0))),
+        Some(other) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "Json.getNumber(): key '{}' is not a number (got {})",
+                key, other
+            ),
+            span,
+        }),
+        None => Err(RuntimeError::TypeError {
+            msg: format!("Json.getNumber(): key '{}' not found", key),
+            span,
+        }),
+    }
+}
+
+/// Json.getBool(json_str, key) → bool
+///
+/// Parses a JSON object string and returns the value at `key` as a bool.
+/// Returns error if the key is missing or the value is not a bool.
+pub fn json_ns_get_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.getBool", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getBool() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getBool() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed.get(key) {
+        Some(serde_json::Value::Bool(b)) => Ok(Value::Bool(*b)),
+        Some(other) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "Json.getBool(): key '{}' is not a bool (got {})",
+                key, other
+            ),
+            span,
+        }),
+        None => Err(RuntimeError::TypeError {
+            msg: format!("Json.getBool(): key '{}' not found", key),
+            span,
+        }),
+    }
+}
+
+/// Json.getArray(json_str, key) → string
+///
+/// Parses a JSON object string and returns the value at `key` serialized as a JSON array string.
+/// Returns error if the key is missing or the value is not an array.
+pub fn json_ns_get_array(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.getArray", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getArray() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getArray() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed.get(key) {
+        Some(arr @ serde_json::Value::Array(_)) => {
+            let serialized = serde_json::to_string(arr).map_err(|e| RuntimeError::TypeError {
+                msg: format!("JSON serialization failed: {}", e),
+                span,
+            })?;
+            Ok(Value::string(serialized))
+        }
+        Some(other) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "Json.getArray(): key '{}' is not an array (got {})",
+                key, other
+            ),
+            span,
+        }),
+        None => Err(RuntimeError::TypeError {
+            msg: format!("Json.getArray(): key '{}' not found", key),
+            span,
+        }),
+    }
+}
+
+/// Json.getObject(json_str, key) → string
+///
+/// Parses a JSON object string and returns the value at `key` serialized as a JSON object string.
+/// Returns error if the key is missing or the value is not an object.
+pub fn json_ns_get_object(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.getObject", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getObject() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.getObject() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    match parsed.get(key) {
+        Some(obj @ serde_json::Value::Object(_)) => {
+            let serialized = serde_json::to_string(obj).map_err(|e| RuntimeError::TypeError {
+                msg: format!("JSON serialization failed: {}", e),
+                span,
+            })?;
+            Ok(Value::string(serialized))
+        }
+        Some(other) => Err(RuntimeError::TypeError {
+            msg: format!(
+                "Json.getObject(): key '{}' is not an object (got {})",
+                key, other
+            ),
+            span,
+        }),
+        None => Err(RuntimeError::TypeError {
+            msg: format!("Json.getObject(): key '{}' not found", key),
+            span,
+        }),
+    }
+}
+
+/// Json.isNull(json_str, key) → bool
+///
+/// Parses a JSON object string and returns true if the value at `key` is null.
+/// Returns false if the key maps to a non-null value, or if the key is missing.
+pub fn json_ns_is_null(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("Json.isNull", 2, args.len(), span));
+    }
+
+    let json_str = match &args[0] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.isNull() requires string as first argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    let key = match &args[1] {
+        Value::String(s) => s.as_ref(),
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "Json.isNull() requires string key".to_string(),
+                span,
+            })
+        }
+    };
+
+    let parsed: serde_json::Value =
+        serde_json::from_str(json_str).map_err(|e| RuntimeError::TypeError {
+            msg: format!("Invalid JSON: {}", e),
+            span,
+        })?;
+
+    let is_null = matches!(parsed.get(key), Some(serde_json::Value::Null));
+    Ok(Value::Bool(is_null))
+}
+
 /// Helper: Get type name of JsonValue for error messages
 fn json_type_name(json: &JsonValue) -> &'static str {
     match json {

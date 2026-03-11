@@ -139,9 +139,7 @@ fn stdlib_signature(func_name: &str) -> Option<&'static str> {
         "mathSQRT2" => Some("Math.SQRT2 -> number"),
         "mathLN2" => Some("Math.LN2 -> number"),
         "mathLN10" => Some("Math.LN10 -> number"),
-        // JSON
-        "parseJSON" => Some("parseJSON(json: string) -> any"),
-        "toJSON" => Some("toJSON(value: any) -> string"),
+        // JSON — B23: bare globals removed. Use Json.* namespace.
         "formatJSON" => Some("formatJSON(value: any) -> string"),
         // Collections
         "hashMapNew" => Some("hashMapNew() -> HashMap<string, any>"),
@@ -644,11 +642,11 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // JSON functions
         // ====================================================================
-        m.insert("parseJSON", |a, s, _, _| json::parse_json(a, s));
-        m.insert("toJSON", |a, s, _, _| json::to_json(a, s));
-        m.insert("isValidJSON", |a, s, _, _| json::is_valid_json(a, s));
-        m.insert("prettifyJSON", |a, s, _, _| json::prettify_json(a, s));
-        m.insert("minifyJSON", |a, s, _, _| json::minify_json(a, s));
+        // B23: bare globals removed — all Json.* calls route through jsonNs* keys.
+        m.insert("jsonNsParse", |a, s, _, _| json::parse_json(a, s));
+        m.insert("jsonNsStringify", |a, s, _, _| json::to_json(a, s));
+        m.insert("jsonNsIsValid", |a, s, _, _| json::is_valid_json(a, s));
+        m.insert("jsonNsPrettify", |a, s, _, _| json::prettify_json(a, s));
         m.insert("jsonAsString", |a, s, _, _| json::json_as_string(a, s));
         m.insert("jsonAsNumber", |a, s, _, _| json::json_as_number(a, s));
         m.insert("jsonAsBool", |a, s, _, _| json::json_as_bool(a, s));
@@ -658,6 +656,21 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("jsonGetArray", |a, s, _, _| json::json_get_array(a, s));
         m.insert("jsonGetObject", |a, s, _, _| json::json_get_object(a, s));
         m.insert("jsonIsNull", |a, s, _, _| json::json_is_null(a, s));
+        // Json namespace string-based methods (B23) — used by Json.* dispatch
+        m.insert("jsonNsMinify", |a, s, _, _| json::json_ns_minify(a, s));
+        m.insert("jsonNsKeys", |a, s, _, _| json::json_ns_keys(a, s));
+        m.insert("jsonNsGetString", |a, s, _, _| {
+            json::json_ns_get_string(a, s)
+        });
+        m.insert("jsonNsGetNumber", |a, s, _, _| {
+            json::json_ns_get_number(a, s)
+        });
+        m.insert("jsonNsGetBool", |a, s, _, _| json::json_ns_get_bool(a, s));
+        m.insert("jsonNsGetArray", |a, s, _, _| json::json_ns_get_array(a, s));
+        m.insert("jsonNsGetObject", |a, s, _, _| {
+            json::json_ns_get_object(a, s)
+        });
+        m.insert("jsonNsIsNull", |a, s, _, _| json::json_ns_is_null(a, s));
 
         // ====================================================================
         // Type checking functions
@@ -2057,12 +2070,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("arrayLastIndexOf", "array_last_index_of"),
             ("arrayIncludes", "array_includes"),
             ("arrayIsEmpty", "array_is_empty"),
-            // JSON functions
-            ("parseJSON", "parse_json"),
-            ("toJSON", "to_json"),
-            ("isValidJSON", "is_valid_json"),
-            ("prettifyJSON", "prettify_json"),
-            ("minifyJSON", "minify_json"),
+            // JSON instance methods — still available as snake_case (JsonValue instance dispatch)
             ("jsonAsString", "json_as_string"),
             ("jsonAsNumber", "json_as_number"),
             ("jsonAsBool", "json_as_bool"),

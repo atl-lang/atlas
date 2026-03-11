@@ -799,7 +799,7 @@ fn test_cos_parity() {
 
 #[test]
 fn test_parse_json_just_null() {
-    let result = eval_ok(r#"parse_json("null");"#);
+    let result = eval_ok(r#"Json.parse("null");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -807,19 +807,19 @@ fn test_parse_json_just_null() {
 
 #[test]
 fn test_parse_json_empty_string_error() {
-    let result = eval_ok(r#"parse_json("");"#);
+    let result = eval_ok(r#"Json.parse("");"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_malformed_error() {
-    let result = eval_ok(r#"parse_json("{bad}");"#);
+    let result = eval_ok(r#"Json.parse("{bad}");"#);
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_parse_json_empty_array() {
-    let result = eval_ok(r#"parse_json("[]");"#);
+    let result = eval_ok(r#"Json.parse("[]");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -827,7 +827,7 @@ fn test_parse_json_empty_array() {
 
 #[test]
 fn test_parse_json_empty_object() {
-    let result = eval_ok(r#"parse_json("{}");"#);
+    let result = eval_ok(r#"Json.parse("{}");"#);
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -835,55 +835,55 @@ fn test_parse_json_empty_object() {
 
 #[test]
 fn test_parse_json_parity() {
-    let i = eval_ok(r#"parse_json("{\"x\":1}");"#);
-    let v = vm_eval_ok(r#"parse_json("{\"x\":1}");"#);
+    let i = eval_ok(r#"Json.parse("{\"x\":1}");"#);
+    let v = vm_eval_ok(r#"Json.parse("{\"x\":1}");"#);
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_to_json_null_value() {
-    assert_eq!(eval_ok("to_json(null);"), Value::string("null"));
+    assert_eq!(eval_ok("Json.stringify(null);"), Value::string("null"));
 }
 
 #[test]
 fn test_to_json_empty_array() {
-    assert_eq!(eval_ok("to_json([]);"), Value::string("[]"));
+    assert_eq!(eval_ok("Json.stringify([]);"), Value::string("[]"));
 }
 
 #[test]
 fn test_to_json_nested_array() {
     assert_eq!(
-        eval_ok("to_json([[1, 2], [3, 4]]);"),
+        eval_ok("Json.stringify([[1, 2], [3, 4]]);"),
         Value::string("[[1,2],[3,4]]")
     );
 }
 
 #[test]
 fn test_to_json_parity() {
-    let i = eval_ok("to_json(42);");
-    let v = vm_eval_ok("to_json(42);");
+    let i = eval_ok("Json.stringify(42);");
+    let v = vm_eval_ok("Json.stringify(42);");
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_is_valid_json_empty_false() {
-    assert_eq!(eval_ok(r#"is_valid_json("");"#), Value::Bool(false));
+    assert_eq!(eval_ok(r#"Json.isValid("");"#), Value::Bool(false));
 }
 
 #[test]
 fn test_is_valid_json_null_true() {
-    assert_eq!(eval_ok(r#"is_valid_json("null");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"Json.isValid("null");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_is_valid_json_array_true() {
-    assert_eq!(eval_ok(r#"is_valid_json("[1,2,3]");"#), Value::Bool(true));
+    assert_eq!(eval_ok(r#"Json.isValid("[1,2,3]");"#), Value::Bool(true));
 }
 
 #[test]
 fn test_json_as_string_correct_type() {
     // parse_json now returns Result(Ok(JsonValue)); unwrap then call as_string on a known JsonValue
-    let result = eval_ok(r#"parse_json("\"hello\"");"#);
+    let result = eval_ok(r#"Json.parse("\"hello\"");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -892,7 +892,7 @@ fn test_json_as_string_correct_type() {
 #[test]
 fn test_json_as_number_correct_type() {
     // parse_json now returns Result(Ok(JsonValue)); check the inner JsonValue holds number
-    let result = eval_ok(r#"parse_json("42");"#);
+    let result = eval_ok(r#"Json.parse("42");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -902,7 +902,7 @@ fn test_json_as_number_correct_type() {
 fn test_json_get_string_found() {
     assert_eq!(
         eval_ok(
-            r#"let j: json = unwrap(parse_json("{\"name\":\"Atlas\",\"age\":3}")); json_get_string(j, "name");"#
+            r#"let j: json = unwrap(Json.parse("{\"name\":\"Atlas\",\"age\":3}")); json_get_string(j, "name");"#
         ),
         Value::Option(Some(Box::new(Value::string("Atlas"))))
     );
@@ -912,7 +912,7 @@ fn test_json_get_string_found() {
 fn test_json_get_number_mismatch_none() {
     assert_eq!(
         eval_ok(
-            r#"let j: json = unwrap(parse_json("{\"name\":\"Atlas\",\"age\":3}")); json_get_number(j, "name");"#
+            r#"let j: json = unwrap(Json.parse("{\"name\":\"Atlas\",\"age\":3}")); json_get_number(j, "name");"#
         ),
         Value::Option(None)
     );
@@ -921,7 +921,7 @@ fn test_json_get_number_mismatch_none() {
 #[test]
 fn test_json_get_array_and_object() {
     let result = eval_ok(
-        r#"let j: json = unwrap(parse_json("{\"items\":[1,2],\"meta\":{\"ok\":true}}")); [json_get_array(j, "items"), json_get_object(j, "meta")];"#,
+        r#"let j: json = unwrap(Json.parse("{\"items\":[1,2],\"meta\":{\"ok\":true}}")); [json_get_array(j, "items"), json_get_object(j, "meta")];"#,
     );
     match result {
         Value::Array(arr) => {
@@ -958,18 +958,18 @@ fn test_json_get_array_and_object() {
 #[test]
 fn test_json_get_parity() {
     let i = eval_ok(
-        r#"let j: json = unwrap(parse_json("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
+        r#"let j: json = unwrap(Json.parse("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
     );
     let v = vm_eval_ok(
-        r#"let j: json = unwrap(parse_json("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
+        r#"let j: json = unwrap(Json.parse("{\"active\":true,\"missing\":null}")); json_get_bool(j, "active");"#,
     );
     assert_eq!(i, v);
 }
 
 #[test]
 fn test_json_is_null_on_null() {
-    // parse_json("null") → Result(Ok(JsonValue(null))); verify it's Ok
-    let result = eval_ok(r#"parse_json("null");"#);
+    // Json.parse("null") → Result(Ok(JsonValue(null))); verify it's Ok
+    let result = eval_ok(r#"Json.parse("null");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -977,8 +977,8 @@ fn test_json_is_null_on_null() {
 
 #[test]
 fn test_json_is_null_on_non_null() {
-    // parse_json("42") → Result(Ok(JsonValue(42))); also JsonValue, not null
-    let result = eval_ok(r#"parse_json("42");"#);
+    // Json.parse("42") → Result(Ok(JsonValue(42))); also JsonValue, not null
+    let result = eval_ok(r#"Json.parse("42");"#);
     assert!(
         matches!(&result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::JsonValue(_)))
     );
@@ -987,20 +987,20 @@ fn test_json_is_null_on_non_null() {
 #[test]
 fn test_json_as_string_wrong_type_error() {
     // Valid parse succeeds; wrong method call errors at runtime
-    let err = eval_err(r#"let j = parse_json("42"); j.as_string();"#);
+    let err = eval_err(r#"let j = Json.parse("42"); j.as_string();"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_json_as_number_wrong_type_error() {
-    let err = eval_err(r#"let j = parse_json("\"hello\""); j.as_number();"#);
+    let err = eval_err(r#"let j = Json.parse("\"hello\""); j.as_number();"#);
     assert!(is_runtime_error(&err));
 }
 
 #[test]
 fn test_json_extraction_parity() {
-    let i = eval_ok(r#"parse_json("{\"x\":10}");"#);
-    let v = vm_eval_ok(r#"parse_json("{\"x\":10}");"#);
+    let i = eval_ok(r#"Json.parse("{\"x\":10}");"#);
+    let v = vm_eval_ok(r#"Json.parse("{\"x\":10}");"#);
     assert_eq!(i, v);
 }
 

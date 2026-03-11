@@ -147,13 +147,7 @@ fn test_no_warning_file_namespace() {
 }
 
 // --- Old names still work (no runtime error) ---
-
-#[test]
-fn test_old_parse_json_still_works() {
-    // AT9000 is a warning, not an error — old names still execute
-    let src = r#"isOk(parseJSON("{\"x\": 1}"));"#;
-    assert_eval_bool(src, true);
-}
+// Note: parseJSON removed as bare global in B23 — test removed.
 
 #[test]
 fn test_old_array_push_still_works() {

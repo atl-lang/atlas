@@ -209,18 +209,18 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "isOk",
         "isSome",
         "isString",
-        "isValidJSON",
+        // isValidJSON removed B23
         "joinAll",
         "jsonAsBool",
         "jsonAsNumber",
         "jsonAsString",
-        "jsonIsNull",
+        // jsonIsNull removed B23 (was bare global; still exists as JsonValue instance method)
         "len",
         "log",
-        "minifyJSON",
+        // minifyJSON removed B23
         "Ok",
         "parseFloat",
-        "parseJSON",
+        // parseJSON removed B23
         "pathAbsolute",
         "pathBasename",
         "pathCanonical",
@@ -321,7 +321,7 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "tlsConnect",
         "tlsRead",
         "toBool",
-        "toJSON",
+        // toJSON removed B23
         "toLowerCase",
         "toNumber",
         "toString",
@@ -422,11 +422,7 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "indexOf",
         "isType",
         "join",
-        "jsonGetArray",
-        "jsonGetBool",
-        "jsonGetNumber",
-        "jsonGetObject",
-        "jsonGetString",
+        // jsonGetArray/Bool/Number/Object/String removed B23 (bare globals; kept as JsonValue instance methods)
         "lastIndexOf",
         "max",
         "min",
@@ -435,7 +431,7 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "pathRelative",
         "parseInt",
         "pow",
-        "prettifyJSON",
+        // prettifyJSON removed B23
         "queueEnqueue",
         "reflect_deep_equals",
         "reflect_same_type",

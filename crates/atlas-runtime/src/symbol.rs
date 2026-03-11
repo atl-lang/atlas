@@ -762,18 +762,9 @@ impl SymbolTable {
             })
             .ok();
 
-        // JSON functions
-        table.define_builtin(
-            "parseJSON",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::String],
-                return_type: Box::new(Type::Generic {
-                    name: "Result".to_string(),
-                    type_args: vec![Type::JsonValue, Type::String],
-                }),
-            },
-        );
+        // JSON functions — B23: bare globals removed, only jsonNs* keys registered.
+        // JsonValue instance methods remain accessible via method dispatch, but also
+        // registered here so the typechecker recognizes them in test/legacy code.
         table.define_builtin(
             "jsonIsNull",
             Type::Function {
@@ -1026,38 +1017,7 @@ impl SymbolTable {
                 return_type: Box::new(Type::Bool),
             },
         );
-        table.define_builtin(
-            "toJSON",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::any_placeholder()], // Accepts any serializable value
-                return_type: Box::new(Type::String),
-            },
-        );
-        table.define_builtin(
-            "isValidJSON",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::String],
-                return_type: Box::new(Type::Bool),
-            },
-        );
-        table.define_builtin(
-            "prettifyJSON",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::String, Type::Number], // JSON string, indent size
-                return_type: Box::new(Type::String),
-            },
-        );
-        table.define_builtin(
-            "minifyJSON",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::String],
-                return_type: Box::new(Type::String),
-            },
-        );
+        // B23: toJSON, isValidJSON, prettifyJSON, minifyJSON removed as bare globals.
 
         register_process_functions(&mut table);
 
@@ -1618,12 +1578,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         ("arrayIndexOf", "array_index_of"),
         ("arrayLastIndexOf", "array_last_index_of"),
         ("arrayIncludes", "array_includes"),
-        ("parseJSON", "parse_json"),
-        ("toJSON", "to_json"),
-        ("isValidJSON", "is_valid_json"),
-        ("prettifyJSON", "prettify_json"),
-        ("minifyJSON", "minify_json"),
-        ("jsonIsNull", "json_is_null"),
+        // B23: parseJSON/toJSON/isValidJSON/prettifyJSON/minifyJSON/jsonIsNull removed as bare globals.
         ("isString", "is_string"),
         ("isNumber", "is_number"),
         ("isBool", "is_bool"),

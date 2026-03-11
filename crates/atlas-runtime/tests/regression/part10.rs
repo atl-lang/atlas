@@ -147,15 +147,15 @@ fn object_literal_empty() {
 }
 
 // ============================================================================
-// HashMap JSON Serialization (to_json)
+// HashMap JSON Serialization (Json.stringify) — B23: to_json → Json.stringify
 // ============================================================================
 
 #[test]
 fn hashmap_tojson_basic() {
-    // Test that to_json works with object literals (which create HashMaps)
+    // Test that Json.stringify works with object literals (which create HashMaps)
     let code = r#"
         let obj = record { name: "test" };
-        let json = to_json(obj);
+        let json = Json.stringify(obj);
         len(json) > 0
     "#;
     assert_eval_bool(code, true);
@@ -165,7 +165,7 @@ fn hashmap_tojson_basic() {
 fn hashmap_tojson_multiple_fields() {
     let code = r#"
         let obj = record { a: 1, b: 2 };
-        let json = to_json(obj);
+        let json = Json.stringify(obj);
         // JSON should contain both keys - check length
         len(json) > 10
     "#;
@@ -177,7 +177,7 @@ fn hashmap_tojson_nested() {
     // Object literals with nested arrays should serialize
     let code = r#"
         let obj = record { items: [1, 2, 3] };
-        let json = to_json(obj);
+        let json = Json.stringify(obj);
         // Should contain "items" and array
         len(json) > 15
     "#;
@@ -186,10 +186,10 @@ fn hashmap_tojson_nested() {
 
 #[test]
 fn struct_expr_tojson() {
-    // Struct expressions should also serialize via to_json
+    // Struct expressions should also serialize via Json.stringify
     let code = r#"
         let user = User { name: "Alice", active: true };
-        let json = to_json(user);
+        let json = Json.stringify(user);
         // Should contain the data
         len(json) > 20
     "#;
