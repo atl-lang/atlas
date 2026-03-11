@@ -114,6 +114,7 @@ interpreter eval, VM execution, all stdlib functions that pattern-match on Value
 ## Key Invariants (verified 2026-03-06)
 
 - `Value::Tuple(Arc<Vec<Value>>)` — immutable first-class tuple; Display trails comma for 1-tuples: `(x,)` (B15)
+- `Value::ProcessOutput(Arc<ProcessOutput>)` — typed result of `Process.exec()` / `Process.shell()`; fields: `stdout: String`, `stderr: String`, `exit_code: i32`, `success: bool`; methods: `.stdout()`, `.stderr()`, `.exitCode()`, `.success()` (B18)
 - `LetDestructure` at `ast.rs` — `let (a, b) = expr;` destructuring statement (B15); `Pattern::Tuple` for match arms
 - `TypeRef::Tuple` — tuple type annotation `(T1, T2)` (B15)
 - `ValueArray` = `Arc<Vec<Value>>` — CoW via `Arc::make_mut`

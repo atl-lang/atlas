@@ -1295,6 +1295,18 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             process::get_process_args(a, s, sc)
         });
         m.insert("processRun", |a, s, sc, _| process::process_run(a, s, sc));
+        m.insert("processOutputStdout", |a, s, sc, _| {
+            process::process_output_stdout(a, s, sc)
+        });
+        m.insert("processOutputStderr", |a, s, sc, _| {
+            process::process_output_stderr(a, s, sc)
+        });
+        m.insert("processOutputExitCode", |a, s, sc, _| {
+            process::process_output_exit_code(a, s, sc)
+        });
+        m.insert("processOutputSuccess", |a, s, sc, _| {
+            process::process_output_success(a, s, sc)
+        });
         m.insert("spawnProcess", |a, s, sc, _| {
             process::spawn_process(a, s, sc)
         });

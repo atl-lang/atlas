@@ -678,6 +678,7 @@ impl Interpreter {
         let dynamic_tag = match &target_value {
             Value::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
+            Value::ProcessOutput(_) => Some(crate::method_dispatch::TypeTag::ProcessOutput),
             Value::String(_) => Some(crate::method_dispatch::TypeTag::String),
             Value::HashMap(_) => Some(crate::method_dispatch::TypeTag::HashMap),
             Value::HashSet(_) => Some(crate::method_dispatch::TypeTag::HashSet),

@@ -1,21 +1,34 @@
 {
-  "committed_at": "2026-03-10T19:40:31Z",
-  "commit": "e28bcc1",
+  "committed_at": "2026-03-11T01:55:10Z",
+  "commit": "fe6282a",
   "changed_files": [
+    "crates/atlas-runtime/src/api/conversion.rs",
+    "crates/atlas-runtime/src/bytecode/disasm.rs",
+    "crates/atlas-runtime/src/bytecode/serialize.rs",
+    "crates/atlas-runtime/src/interpreter/expr.rs",
     "crates/atlas-runtime/src/method_dispatch.rs",
+    "crates/atlas-runtime/src/reflect/mod.rs",
+    "crates/atlas-runtime/src/stdlib/json.rs",
     "crates/atlas-runtime/src/stdlib/mod.rs",
     "crates/atlas-runtime/src/stdlib/process.rs",
-    "crates/atlas-runtime/src/typechecker/expr.rs"
+    "crates/atlas-runtime/src/stdlib/types.rs",
+    "crates/atlas-runtime/src/typechecker/expr.rs",
+    "crates/atlas-runtime/src/typechecker/methods.rs",
+    "crates/atlas-runtime/src/value.rs",
+    "crates/atlas-runtime/tests/interpreter/integration/static_namespaces.rs"
   ],
   "domains": [
+    "interpreter",
     "stdlib",
-    "typechecker"
+    "typechecker",
+    "value"
   ],
   "relevant_docs": [
+    "crates/atlas-runtime/src/CLAUDE.md",
     "docs/known-issues.md",
     "docs/language/types.md",
     "docs/stdlib/index.md"
   ],
   "status": "done",
-  "patched_at": "2026-03-10T19:41:39Z"
+  "patched_at": "2026-03-11T01:57:13Z"
 }

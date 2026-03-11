@@ -238,6 +238,7 @@ fn type_of_impl(args: &[Value], span: Span, name: &str) -> Result<Value, Runtime
             Value::DateTime(_) => "record",
             Value::HttpRequest(_) => "record",
             Value::HttpResponse(_) => "record",
+            Value::ProcessOutput(_) => "record",
             Value::TaskHandle(_) => "record",
             Value::ChannelSender(_) => "record",
             Value::ChannelReceiver(_) => "record",
@@ -515,6 +516,7 @@ pub fn to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         Value::DateTime(dt) => dt.to_rfc3339(),
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
         Value::HttpResponse(res) => format!("<HttpResponse {}>", res.status()),
+        Value::ProcessOutput(out) => format!("<ProcessOutput exit={}>", out.exit_code),
         Value::Future(f) => f.to_string(),
         Value::TaskHandle(h) => format!("[TaskHandle #{}]", h.lock().unwrap().id()),
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),
@@ -619,6 +621,7 @@ pub fn to_bool(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
         | Value::DateTime(_)
         | Value::HttpRequest(_)
         | Value::HttpResponse(_)
+        | Value::ProcessOutput(_)
         | Value::Future(_)
         | Value::TaskHandle(_)
         | Value::ChannelSender(_)
@@ -773,6 +776,7 @@ fn type_name(value: &Value) -> &str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
+        Value::ProcessOutput(_) => "ProcessOutput",
         Value::Future(_) => "Future",
         Value::TaskHandle(_) => "TaskHandle",
         Value::ChannelSender(_) => "ChannelSender",
@@ -816,6 +820,7 @@ fn value_to_display_string(value: &Value) -> String {
         Value::DateTime(dt) => format!("[DateTime {}]", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("[HttpRequest {} {}]", req.method(), req.url()),
         Value::HttpResponse(res) => format!("[HttpResponse {}]", res.status()),
+        Value::ProcessOutput(out) => format!("[ProcessOutput exit={}]", out.exit_code),
         Value::Future(f) => format!("[{}]", f.as_ref()),
         Value::TaskHandle(h) => format!("[TaskHandle #{}]", h.lock().unwrap().id()),
         Value::ChannelSender(_) => "[ChannelSender]".to_string(),

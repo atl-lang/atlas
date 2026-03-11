@@ -29,6 +29,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Env namespace
         ("Env", "get" | "unset") => Some(vec![str.clone()]),
         ("Env", "set") => Some(vec![str.clone(), str.clone()]),
+        ("Env", "list") => Some(vec![]),
         // File namespace
         ("File", "read" | "exists" | "createDir" | "removeDir" | "remove") => {
             Some(vec![str.clone()])
@@ -36,9 +37,10 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("File", "write" | "append") => Some(vec![str.clone(), str.clone()]),
         // Process namespace
         ("Process", "cwd" | "pid" | "args") => Some(vec![]),
-        ("Process", "env") => Some(vec![str.clone()]),
         ("Process", "run") => Some(vec![str.clone(), str_arr]),
         ("Process", "shellOut") => Some(vec![str.clone()]),
+        ("Process", "exec") => Some(vec![str.clone()]),
+        ("Process", "shell") => Some(vec![str.clone()]),
         // Path namespace
         (
             "Path",
@@ -99,6 +101,7 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             type_args: vec![Type::String],
         },
         ("Env", "set" | "unset") => Type::Null,
+        ("Env", "list") => Type::JsonValue,
         // File namespace
         ("File", "read") => Type::Generic {
             name: "Result".to_string(),
@@ -112,14 +115,25 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Process namespace
         ("Process", "cwd") => Type::String,
         ("Process", "pid") => Type::Number,
-        ("Process", "env") => Type::Generic {
-            name: "Option".to_string(),
-            type_args: vec![Type::String],
-        },
         // H-213: Process.args() — CLI argv access
         ("Process", "args") => Type::Array(Box::new(Type::String)),
         // H-212: Process.run(program, args) — direct exec returns Result<string, string>
         ("Process", "run") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::String, Type::String],
+        },
+        // B18: Process.exec(cmd) / Process.shell(cmd) — returns Result<ProcessOutput, string>
+        ("Process", "exec" | "shell") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![
+                Type::Generic {
+                    name: "ProcessOutput".to_string(),
+                    type_args: vec![],
+                },
+                Type::String,
+            ],
+        },
+        ("Process", "shellOut") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
@@ -2226,6 +2240,9 @@ impl<'a> TypeChecker<'a> {
             }
             Type::Generic { ref name, .. } if name == "HttpResponse" => {
                 Some(crate::method_dispatch::TypeTag::HttpResponse)
+            }
+            Type::Generic { ref name, .. } if name == "ProcessOutput" => {
+                Some(crate::method_dispatch::TypeTag::ProcessOutput)
             }
             _ => None,
         };

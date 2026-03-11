@@ -516,6 +516,8 @@ pub enum Value {
     /// HTTP Response data
     #[cfg(feature = "http")]
     HttpResponse(Arc<crate::stdlib::http::HttpResponse>),
+    /// Process output — result of exec()/shell() calls
+    ProcessOutput(Arc<crate::stdlib::process::ProcessOutput>),
     /// Future value (async computation)
     Future(Arc<crate::async_runtime::AtlasFuture>),
     /// Task handle (spawned async task)
@@ -616,6 +618,7 @@ impl Value {
             Value::HttpRequest(_) => "HttpRequest",
             #[cfg(feature = "http")]
             Value::HttpResponse(_) => "HttpResponse",
+            Value::ProcessOutput(_) => "ProcessOutput",
             Value::Future(_) => "Future",
             Value::TaskHandle(_) => "TaskHandle",
             Value::ChannelSender(_) => "ChannelSender",
@@ -692,6 +695,7 @@ impl PartialEq for Value {
             (Value::HttpRequest(a), Value::HttpRequest(b)) => a.as_ref() == b.as_ref(),
             #[cfg(feature = "http")]
             (Value::HttpResponse(a), Value::HttpResponse(b)) => a.as_ref() == b.as_ref(),
+            (Value::ProcessOutput(a), Value::ProcessOutput(b)) => a == b,
             (Value::JsonValue(a), Value::JsonValue(b)) => a == b,
             (Value::Option(a), Value::Option(b)) => a == b,
             (Value::Result(a), Value::Result(b)) => a == b,
@@ -788,6 +792,9 @@ impl fmt::Display for Value {
             Value::HttpRequest(req) => write!(f, "<HttpRequest {} {}>", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "<HttpResponse {}>", res.status()),
+            Value::ProcessOutput(out) => {
+                write!(f, "<ProcessOutput exit={}>", out.exit_code)
+            }
             Value::Future(_) => write!(f, "<Future>"),
             Value::TaskHandle(handle) => write!(f, "<TaskHandle #{}>", handle.lock().unwrap().id()),
             Value::ChannelSender(_) => write!(f, "<ChannelSender>"),
@@ -853,6 +860,9 @@ impl fmt::Debug for Value {
             Value::HttpRequest(req) => write!(f, "HttpRequest({} {})", req.method(), req.url()),
             #[cfg(feature = "http")]
             Value::HttpResponse(res) => write!(f, "HttpResponse({})", res.status()),
+            Value::ProcessOutput(out) => {
+                write!(f, "ProcessOutput(exit={})", out.exit_code)
+            }
             Value::Future(_) => write!(f, "Future"),
             Value::TaskHandle(handle) => write!(f, "TaskHandle(#{})", handle.lock().unwrap().id()),
             Value::ChannelSender(_) => write!(f, "ChannelSender"),

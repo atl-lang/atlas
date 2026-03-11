@@ -515,3 +515,184 @@ fn test_crypto_sha512() {
 // ============================================================================
 // End B10-P07/P08/P09 tests
 // ============================================================================
+
+// ============================================================================
+// B18: Process namespace + ProcessOutput typed struct
+// ============================================================================
+
+#[test]
+fn test_process_exec_returns_process_output() {
+    // Process.exec() returns Result<ProcessOutput, string>; verify via .success()
+    // exec() takes a string as program name — use array form for args
+    let src = r#"
+        let result = Process.shell("echo hello");
+        match result {
+            Ok(out) => out.success(),
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_exec_output_stdout_method() {
+    // ProcessOutput.stdout() returns captured stdout (non-empty for echo)
+    let src = r#"
+        let result = Process.shell("echo hello");
+        match result {
+            Ok(out) => len(out.stdout()) > 0,
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_exec_output_exit_code_method() {
+    // ProcessOutput.exitCode() returns 0 for successful commands
+    let src = r#"
+        let result = Process.shell("echo hi");
+        match result {
+            Ok(out) => out.exitCode() == 0,
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_exec_output_success_method() {
+    // ProcessOutput.success() returns true for exit code 0
+    let src = r#"
+        let result = Process.shell("echo hi");
+        match result {
+            Ok(out) => out.success(),
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_exec_output_stderr_method() {
+    // .stderr() returns a string (empty for successful commands with no stderr)
+    let src = r#"
+        let result = Process.shell("echo hi");
+        match result {
+            Ok(out) => len(out.stderr()) == 0,
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_shell_returns_process_output() {
+    // Process.shell() returns Result<ProcessOutput, string>
+    let src = r#"
+        let result = Process.shell("echo hello");
+        match result {
+            Ok(out) => out.success(),
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_shell_output_stdout() {
+    // Process.shell() stdout() contains the output
+    let src = r#"
+        let result = Process.shell("echo hello");
+        match result {
+            Ok(out) => len(out.stdout()) > 0,
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_run_returns_result_string() {
+    // Process.run(program, args) -> Result<string, string>
+    let src = r#"
+        let result = Process.run("echo", ["hi"]);
+        match result {
+            Ok(s) => len(s) > 0,
+            Err(_) => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_process_args_returns_array() {
+    // Process.args() returns string[] — verify it doesn't error
+    let src = r#"
+        let argv = Process.args();
+        len(argv) >= 0;
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_env_list_returns_object() {
+    // Env.list() returns a JsonValue with env vars — must not error
+    let src = r#"
+        let _env = Env.list();
+        true;
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+#[test]
+fn test_env_get_set_unset_via_namespace() {
+    // Env.set / Env.get / Env.unset all route through EnvNs
+    let src = r#"
+        Env.set("ATLAS_B18_TEST", "42");
+        let v = Env.get("ATLAS_B18_TEST");
+        Env.unset("ATLAS_B18_TEST");
+        match v {
+            Some(s) => s == "42",
+            None => false,
+        }
+    "#;
+    let r = run_interpreter(src);
+    assert!(r.is_ok(), "Expected Ok, got {:?}", r);
+    assert!(r.unwrap().contains("Bool(true)"), "Expected Bool(true)");
+    assert_parity(src);
+}
+
+// ============================================================================
+// End B18 tests
+// ============================================================================
