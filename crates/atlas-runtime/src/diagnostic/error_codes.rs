@@ -654,6 +654,38 @@ pub const DISCARDED_COW_RESULT: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Typechecker,
 };
 
+/// Emitted by `atlas build` when the `atlas-launcher` binary cannot be found.
+/// The launcher is installed alongside the `atlas` CLI and is required to produce
+/// native OS executables. Missing launcher = `atlas build` cannot produce a binary.
+pub const LAUNCHER_NOT_FOUND: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT2020",
+    level: DiagnosticLevel::Error,
+    title: "Atlas launcher binary not found",
+    message_template: "atlas-launcher binary not found alongside the atlas CLI or on PATH",
+    static_help: Some(
+        "Reinstall Atlas to restore atlas-launcher: `cargo install atlas-cli`. \
+         The launcher must be in the same directory as the atlas binary or on your PATH.",
+    ),
+    static_note: Some(
+        "atlas-launcher is a small binary that is embedded into every Atlas native executable \
+         produced by `atlas build`",
+    ),
+    domain: DiagnosticDomain::Typechecker,
+};
+
+/// Emitted by `atlas build` when an I/O error occurs while writing the native binary.
+pub const BINARY_EMIT_FAILED: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT2021",
+    level: DiagnosticLevel::Error,
+    title: "Failed to emit native binary",
+    message_template: "failed to write native binary to `{path}`: {reason}",
+    static_help: Some(
+        "Check that the target directory is writable and that you have sufficient disk space.",
+    ),
+    static_note: None,
+    domain: DiagnosticDomain::Typechecker,
+};
+
 // ── AT3xxx: Semantic / Type Checking Errors ────────────────────────────────────
 
 pub const TYPE_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
