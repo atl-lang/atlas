@@ -88,6 +88,13 @@ pub fn normalize_diagnostics_for_testing(diags: &[Diagnostic]) -> Vec<Diagnostic
 ///
 /// Single-occurrence diagnostics pass through unchanged.
 /// Different messages (even same code) stay as separate diagnostics.
+///
+/// # D-050 — THIS BEHAVIOR IS CORRECT AND INTENTIONAL. DO NOT REVERT.
+///
+/// Diagnostics with the same error code AND same message across multiple files
+/// are grouped into a single display block. This is standard compiler behavior
+/// (Rust, Go do the same). It is NOT a bug. An AI agent in S-204 misread grouped
+/// multi-file output as a formatting problem and nearly broke this. It is correct.
 pub fn group_by_message(diagnostics: Vec<Diagnostic>) -> Vec<Diagnostic> {
     // Preserve order of first occurrence for each group key.
     let mut order: Vec<String> = Vec::new();

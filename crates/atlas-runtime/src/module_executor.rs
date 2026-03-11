@@ -101,6 +101,10 @@ impl<'a> ModuleExecutor<'a> {
     /// Loads and executes modules in topological order (dependencies first).
     /// Each module executes exactly once. Returns the entry module's result.
     ///
+    /// Compile-time errors (bind + typecheck) are collected across ALL modules
+    /// before failing — the `?` short-circuit is intentionally avoided here so
+    /// users see every error in every file, not just the first failing module.
+    ///
     /// # Arguments
     /// * `entry_path` - Absolute path to the entry module file
     ///
@@ -110,11 +114,54 @@ impl<'a> ModuleExecutor<'a> {
         // Load all modules in dependency order
         let modules = self.loader.load_module(entry_path)?;
 
-        // Execute each module in order
+        // =====================================================================
+        // D-050: TWO-PASS MODULE EXECUTION — DO NOT REVERT, DO NOT "FIX"
+        //
+        // Pass 1: typecheck ALL modules, collect ALL diagnostics across ALL files.
+        // Pass 2: execute (only reached if zero compile errors).
+        //
+        // The `?` short-circuit was intentionally removed. Stopping at the first
+        // failing module hides all errors in subsequent files — users can only
+        // fix one file at a time, which is unacceptable.
+        //
+        // Cross-file error GROUPING (group_by_message in diagnostic/normalizer.rs)
+        // is also correct and intentional — same error code across multiple files
+        // appears in one display block, matching Rust/Go compiler output.
+        //
+        // An AI agent in S-204 misread the grouped output as a bug. It is NOT.
+        // This is standard compiler behavior. D-050 is the standing decision.
+        // =====================================================================
+        // Pass 1: typecheck ALL modules, collect all diagnostics —
+        // do not short-circuit on the first error.
+        let mut all_compile_errors: Vec<crate::diagnostic::Diagnostic> = Vec::new();
+        for module in &modules {
+            if self.cache.is_cached(&module.path) {
+                continue;
+            }
+            let mut binder = Binder::new();
+            let (mut symbol_table, bind_diags) =
+                binder.bind_with_modules(&module.ast, &module.path, &self.type_registry);
+            let bind_has_errors = bind_diags.iter().any(|d| d.is_error());
+            let mut type_checker = TypeChecker::new(&mut symbol_table);
+            let type_diags = type_checker.check(&module.ast);
+            let type_has_errors = type_diags.iter().any(|d| d.is_error());
+            // Always register the symbol table — even for errored modules — so
+            // downstream modules in Pass 1 don't get spurious AT5005 import errors.
+            self.type_registry
+                .register(module.path.clone(), symbol_table);
+            if bind_has_errors || type_has_errors {
+                all_compile_errors.extend(bind_diags);
+                all_compile_errors.extend(type_diags);
+            }
+        }
+        if !all_compile_errors.is_empty() {
+            return Err(all_compile_errors);
+        }
+
+        // --- Pass 2: execute all modules (all clean) ---
         let mut last_value = Value::Null;
         for module in modules {
             let result = self.execute_single_module(&module)?;
-            // The entry module's result is what we return
             if module.path == entry_path {
                 last_value = result;
             }
