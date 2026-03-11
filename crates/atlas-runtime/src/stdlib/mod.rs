@@ -1371,24 +1371,29 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("processOutputSuccess", |a, s, sc, _| {
             process::process_output_success(a, s, sc)
         });
-        m.insert("spawnProcess", |a, s, sc, _| {
+        // B25: bare process globals removed — all process.* calls route through processNs* keys.
+        m.insert("processNsSpawn", |a, s, sc, _| {
             process::spawn_process(a, s, sc)
         });
-        m.insert("processStdin", |a, s, sc, _| {
-            process::process_stdin(a, s, sc)
+        m.insert("processNsWaitFor", |a, s, sc, _| {
+            process::process_wait(a, s, sc)
         });
-        m.insert("processStdout", |a, s, sc, _| {
-            process::process_stdout(a, s, sc)
+        m.insert("processNsKill", |a, s, sc, _| {
+            process::process_kill(a, s, sc)
         });
-        m.insert("processStderr", |a, s, sc, _| {
-            process::process_stderr(a, s, sc)
-        });
-        m.insert("processWait", |a, s, sc, _| process::process_wait(a, s, sc));
-        m.insert("processKill", |a, s, sc, _| process::process_kill(a, s, sc));
-        m.insert("processIsRunning", |a, s, sc, _| {
+        m.insert("processNsIsRunning", |a, s, sc, _| {
             process::process_is_running(a, s, sc)
         });
-        m.insert("processOutput", |a, s, sc, _| {
+        m.insert("processNsStdin", |a, s, sc, _| {
+            process::process_stdin(a, s, sc)
+        });
+        m.insert("processNsStdout", |a, s, sc, _| {
+            process::process_stdout(a, s, sc)
+        });
+        m.insert("processNsStderr", |a, s, sc, _| {
+            process::process_stderr(a, s, sc)
+        });
+        m.insert("processNsOutput", |a, s, sc, _| {
             process::process_output(a, s, sc)
         });
 
@@ -2288,14 +2293,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("listEnv", "list_env"),
             ("getCwd", "get_cwd"),
             ("getPid", "get_pid"),
-            ("spawnProcess", "spawn_process"),
-            ("processStdin", "process_stdin"),
-            ("processStdout", "process_stdout"),
-            ("processStderr", "process_stderr"),
-            ("processWait", "process_wait"),
-            ("processKill", "process_kill"),
-            ("processIsRunning", "process_is_running"),
-            ("processOutput", "process_output"),
+            ("processNsSpawn", "spawn_process"),
+            ("processNsStdin", "process_stdin"),
+            ("processNsStdout", "process_stdout"),
+            ("processNsStderr", "process_stderr"),
+            ("processNsWaitFor", "process_wait"),
+            ("processNsKill", "process_kill"),
+            ("processNsIsRunning", "process_is_running"),
+            ("processNsOutput", "process_output"),
             // Path
             ("pathJoinArray", "path_join_array"),
             ("pathParse", "path_parse"),

@@ -427,12 +427,18 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "cwd" => "getCwd",
         "pid" => "getPid",
-        "spawn" => "spawnProcess",
+        "spawn" => "processNsSpawn",
         "exec" => "exec",
         "shell" => "shell",
         "shellOut" => "shellOut",
         "args" => "getProcessArgs",
         "run" => "processRun",
+        "waitFor" => "processNsWaitFor",
+        "kill" => "processNsKill",
+        "isRunning" => "processNsIsRunning",
+        "stdin" => "processNsStdin",
+        "stdout" => "processNsStdout",
+        "stderr" => "processNsStderr",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -660,7 +666,7 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "shell" => Some("Process.shell(cmd)"),
         "shellOut" => Some("Process.shellOut(cmd)"),
         "exec" => Some("Process.exec(cmd, args)"),
-        "spawnProcess" => Some("Process.spawn(cmd, args)"),
+        "spawnProcess" => Some("process.spawn(cmd, args)"),
         // IO / File
         "readFile" => Some("file.read(path)"),
         "writeFile" => Some("file.write(path, content)"),

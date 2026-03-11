@@ -58,6 +58,10 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("process", "shellOut") => Some(vec![str.clone()]),
         ("process", "exec") => Some(vec![str.clone()]),
         ("process", "shell") => Some(vec![str.clone()]),
+        ("process", "spawn") => None, // array of strings arg
+        ("process", "waitFor" | "isRunning" | "stdout" | "stderr") => None, // handle arg
+        ("process", "kill") => None,  // handle + optional signal
+        ("process", "stdin") => None, // handle + data arg
         // Path namespace
         (
             "path",
@@ -174,6 +178,22 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("process", "shellOut") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
+        },
+        // B25: process handle methods
+        ("process", "spawn") => Type::Number, // returns handle (pid)
+        ("process", "waitFor") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Number, Type::String],
+        },
+        ("process", "kill") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Null, Type::String],
+        },
+        ("process", "isRunning") => Type::Bool,
+        ("process", "stdout" | "stderr") => Type::String,
+        ("process", "stdin") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![Type::Null, Type::String],
         },
         // Path namespace
         (
