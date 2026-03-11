@@ -17,7 +17,7 @@ repos:
 
   # Secret detection (CRITICAL)
   - repo: https://github.com/gitleaks/gitleaks
-    rev: v8.18.0
+    rev: v8.30.0
     hooks:
       - id: gitleaks
 

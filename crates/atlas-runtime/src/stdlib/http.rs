@@ -1252,59 +1252,49 @@ fn apply_options_to_request(
     };
 
     // headers: map<str, str>
-    if let Some(headers_val) = map.get(&HashKey::String(Arc::new("headers".to_string()))) {
-        if let Value::HashMap(hmap) = headers_val {
-            for (k, v) in hmap.entries() {
-                if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
-                    req = req.with_header(ks.as_ref().clone(), vs.as_ref().clone());
-                }
+    if let Some(Value::HashMap(hmap)) = map.get(&HashKey::String(Arc::new("headers".to_string()))) {
+        for (k, v) in hmap.entries() {
+            if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
+                req = req.with_header(ks.as_ref().clone(), vs.as_ref().clone());
             }
         }
     }
 
     // query: map<str, str>
-    if let Some(query_val) = map.get(&HashKey::String(Arc::new("query".to_string()))) {
-        if let Value::HashMap(qmap) = query_val {
-            for (k, v) in qmap.entries() {
-                if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
-                    req = req.with_query_param(ks.as_ref().clone(), vs.as_ref().clone());
-                }
+    if let Some(Value::HashMap(qmap)) = map.get(&HashKey::String(Arc::new("query".to_string()))) {
+        for (k, v) in qmap.entries() {
+            if let (HashKey::String(ks), Value::String(vs)) = (k, v) {
+                req = req.with_query_param(ks.as_ref().clone(), vs.as_ref().clone());
             }
         }
     }
 
     // timeout: int (milliseconds)
-    if let Some(timeout_val) = map.get(&HashKey::String(Arc::new("timeout".to_string()))) {
-        if let Value::Number(ms) = timeout_val {
-            // convert ms to seconds, minimum 1s
-            let secs = ((*ms as u64) / 1000).max(1);
-            req = req.with_timeout(secs);
-        }
+    if let Some(Value::Number(ms)) = map.get(&HashKey::String(Arc::new("timeout".to_string()))) {
+        // convert ms to seconds, minimum 1s
+        let secs = ((*ms as u64) / 1000).max(1);
+        req = req.with_timeout(secs);
     }
 
     // auth: str — "user:pass" → Basic, anything else → Bearer
-    if let Some(auth_val) = map.get(&HashKey::String(Arc::new("auth".to_string()))) {
-        if let Value::String(auth_str) = auth_val {
-            let auth = auth_str.as_ref().clone();
-            let header_value = if auth.contains(':') {
-                // Basic auth: base64-encode "user:pass"
-                let encoded = base64::Engine::encode(
-                    &base64::engine::general_purpose::STANDARD,
-                    auth.as_bytes(),
-                );
-                format!("Basic {}", encoded)
-            } else {
-                format!("Bearer {}", auth)
-            };
-            req = req.with_header("Authorization".to_string(), header_value);
-        }
+    if let Some(Value::String(auth_str)) = map.get(&HashKey::String(Arc::new("auth".to_string()))) {
+        let auth = auth_str.as_ref().clone();
+        let header_value = if auth.contains(':') {
+            // Basic auth: base64-encode "user:pass"
+            let encoded =
+                base64::Engine::encode(&base64::engine::general_purpose::STANDARD, auth.as_bytes());
+            format!("Basic {}", encoded)
+        } else {
+            format!("Bearer {}", auth)
+        };
+        req = req.with_header("Authorization".to_string(), header_value);
     }
 
     // userAgent: str
-    if let Some(ua_val) = map.get(&HashKey::String(Arc::new("userAgent".to_string()))) {
-        if let Value::String(ua_str) = ua_val {
-            req = req.with_header("User-Agent".to_string(), ua_str.as_ref().clone());
-        }
+    if let Some(Value::String(ua_str)) =
+        map.get(&HashKey::String(Arc::new("userAgent".to_string())))
+    {
+        req = req.with_header("User-Agent".to_string(), ua_str.as_ref().clone());
     }
 
     Ok(req)

@@ -1964,6 +1964,10 @@ impl<'a> TypeChecker<'a> {
                         && self.is_typed_hashmap(&declared_type);
                     if is_empty_array_literal && declared_is_array {
                         // Empty array literals must be typed by annotation.
+                    } else if matches!(init_type, Type::Unknown) {
+                        // init_type is Unknown because an upstream error (e.g. AT0002 undefined
+                        // identifier) already fired. Suppress the cascade type mismatch here —
+                        // the root cause error is the actionable one.
                     } else if !allows_hashmap_new
                         && !self.is_assignable_with_traits(&init_type, &declared_type)
                     {

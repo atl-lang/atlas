@@ -1088,13 +1088,19 @@ impl Binder {
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
                     let ns_hint = crate::method_dispatch::namespace_hint_for_bare_global(&id.name);
+                    let case_hint = crate::method_dispatch::wrong_case_namespace_hint(&id.name);
                     let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL
                         .emit(id.span)
                         .arg("name", &id.name)
                         .arg("detail", format!("unknown identifier `{}`", id.name))
                         .build()
                         .with_label("undefined identifier");
-                    if let Some(hint) = ns_hint {
+                    if let Some(ref correct) = case_hint {
+                        diag = diag.with_help(format!(
+                            "use `{}` instead — Atlas namespace names are lowercase (e.g. `{}.method()`)",
+                            correct, correct
+                        ));
+                    } else if let Some(hint) = ns_hint {
                         diag = diag.with_help(format!(
                             "use `{}` instead — bare globals have been removed",
                             hint

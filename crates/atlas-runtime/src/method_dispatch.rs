@@ -1113,6 +1113,19 @@ fn resolve_future_instance_method(method_name: &str) -> Option<String> {
     Some(func_name.to_string())
 }
 
+/// Returns the correct namespace name when the user typed a wrong-case variant.
+/// E.g. `File` → `"file"`, `Io` → `"io"`.
+/// Derives entirely from the live namespace registry — no hardcoded table.
+pub fn wrong_case_namespace_hint(name: &str) -> Option<String> {
+    let lower = name.to_lowercase();
+    // Only hint when the casing differs (avoids hinting on already-valid names)
+    if lower != name && is_static_namespace(&lower) {
+        Some(lower)
+    } else {
+        None
+    }
+}
+
 /// Resolve a test namespace method call to its stdlib function name.
 fn resolve_test_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
