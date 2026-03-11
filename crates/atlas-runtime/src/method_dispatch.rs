@@ -810,8 +810,72 @@ pub fn namespace_hint_for_bare_global(name: &str) -> Option<&'static str> {
         "assertErr" => Some("test.err(result)"),
         "assertContains" => Some("test.contains(collection, val)"),
         "assertEmpty" => Some("test.empty(collection)"),
+        // Prefixed bare globals that should use namespace syntax
+        "mathSqrt" | "mathAbs" | "mathFloor" | "mathCeil" | "mathRound" | "mathMin" | "mathMax"
+        | "mathPow" | "mathLog" | "mathSin" | "mathCos" | "mathTan" | "mathAsin" | "mathAcos"
+        | "mathAtan" | "mathAtan2" | "mathTrunc" | "mathLog2" | "mathLog10" | "mathExp"
+        | "mathCbrt" | "mathHypot" | "mathClamp" | "mathSign" | "mathRandom" | "mathPI"
+        | "mathE" | "mathSQRT2" | "mathLN2" | "mathLN10" => {
+            Some("Math.method() — use namespace syntax")
+        }
+        "consoleLog" | "consolePrintln" | "consolePrint" | "consoleError" | "consoleWarn"
+        | "consoleDebug" => Some("console.method() — use namespace syntax"),
+        "jsonNsParse" | "jsonNsStringify" | "jsonNsIsValid" | "jsonNsPrettify" | "jsonNsMinify"
+        | "jsonNsKeys" | "jsonAsString" | "jsonAsNumber" | "jsonAsBool" | "jsonGetString"
+        | "jsonGetNumber" | "jsonGetBool" | "jsonGetArray" | "jsonGetObject" | "jsonIsNull"
+        | "jsonNsGetString" | "jsonNsGetNumber" | "jsonNsGetBool" | "jsonNsGetArray"
+        | "jsonNsGetObject" | "jsonNsIsNull" => Some("Json.method() — use namespace syntax"),
+        // Additional prefixed bare globals (only names NOT matched earlier in this function)
+        "fsRead" | "fsWrite" | "fsAppend" | "fsExists" | "fsRemove" | "fsCopy" | "fsMove"
+        | "fsIsDir" | "fsIsFile" => Some("file.method() — use namespace syntax"),
+        "processRun" | "processExec" | "processShell" => {
+            Some("process.method() — use namespace syntax")
+        }
+        "envGet" | "envSet" | "envUnset" | "envAll" => Some("env.method() — use namespace syntax"),
+        "cryptoSha256" | "cryptoSha512" | "cryptoBlake3" | "cryptoHmac" | "cryptoRandomBytes"
+        | "cryptoAesEncrypt" | "cryptoAesDecrypt" => Some("crypto.method() — use namespace syntax"),
+        "encodingBase64Encode"
+        | "encodingBase64Decode"
+        | "encodingHexEncode"
+        | "encodingHexDecode"
+        | "encodingUrlEncode"
+        | "encodingUrlDecode" => Some("encoding.method() — use namespace syntax"),
+        "httpNsPatch" | "httpNsHead" | "httpNsOptions" => {
+            Some("http.method() — use namespace syntax")
+        }
+        "ioReadLinePrompt" | "ioPrintln" | "ioPrint" | "ioEprintln" | "ioEprint" | "ioFlush" => {
+            Some("io.method() — use namespace syntax")
+        }
+        "regexMatch" | "regexMatchAll" | "regexReplace" | "regexSplit" => {
+            Some("regex.method() — use namespace syntax")
+        }
+        "dateTimeFromTimestamp" | "dateTimeParse" | "dateTimeFormat" => {
+            Some("datetime.method() — use namespace syntax")
+        }
         _ => None,
     }
+}
+
+/// Core builtins that are allowed as bare global calls (no namespace required).
+/// These are fundamental operations that don't fit into any namespace.
+pub fn is_allowed_bare_global(name: &str) -> bool {
+    matches!(
+        name,
+        // Core type operations
+        "len" | "str" | "typeof" | "type_of"
+        // String methods that work on values (will become instance methods)
+        | "split" | "join" | "trim" | "trimStart" | "trimEnd"
+        | "indexOf" | "lastIndexOf" | "includes"
+        | "toUpperCase" | "toLowerCase"
+        | "substring" | "charAt" | "repeat"
+        | "replace" | "replaceAll"
+        | "padStart" | "padEnd"
+        | "fromCharCode" | "charCodeAt"
+        | "startsWith" | "endsWith"
+        // Array intrinsics (handled specially)
+        | "map" | "filter" | "reduce" | "forEach" | "find" | "findIndex"
+        | "some" | "every" | "flatMap" | "flat"
+    )
 }
 
 /// Returns true if a stdlib function name is a mutating array method (returns modified collection).

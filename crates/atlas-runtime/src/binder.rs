@@ -1103,12 +1103,32 @@ impl Binder {
                 }
             }
             Expr::Identifier(id) => {
-                // Check if identifier is defined (in symbol table, as builtin, intrinsic, or static namespace)
-                if self.symbol_table.lookup(&id.name).is_none()
-                    && !crate::stdlib::is_builtin(&id.name)
-                    && !crate::stdlib::is_array_intrinsic(&id.name)
-                    && !crate::method_dispatch::is_static_namespace(&id.name)
+                // First check: Block deprecated bare globals that should use namespace syntax
+                if let Some(hint) = crate::method_dispatch::namespace_hint_for_bare_global(&id.name)
                 {
+                    // This is a deprecated bare global — error with migration hint
+                    let diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL
+                        .emit(id.span)
+                        .arg("name", &id.name)
+                        .arg(
+                            "detail",
+                            format!("bare global `{}` has been removed", id.name),
+                        )
+                        .build()
+                        .with_label("deprecated bare global")
+                        .with_help(format!("use `{}` instead", hint))
+                        .with_note("bare globals were removed in favor of namespace syntax");
+                    self.diagnostics.push(diag);
+                    return;
+                }
+
+                // Check if identifier is defined (in symbol table, as allowed builtin, intrinsic, or static namespace)
+                let is_defined = self.symbol_table.lookup(&id.name).is_some()
+                    || (crate::stdlib::is_builtin(&id.name)
+                        && crate::method_dispatch::is_allowed_bare_global(&id.name))
+                    || crate::stdlib::is_array_intrinsic(&id.name)
+                    || crate::method_dispatch::is_static_namespace(&id.name);
+                if !is_defined {
                     let suggestion = crate::typechecker::suggestions::suggest_similar_name(
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
