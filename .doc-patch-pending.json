@@ -2,28 +2,29 @@
   "committed_at": "2026-03-11T06:12:09Z",
   "commit": "eb061d8",
   "changed_files": [
-  "crates/atlas-runtime/src/compiler/expr.rs",
-  "crates/atlas-runtime/src/interpreter/expr.rs",
-  "crates/atlas-runtime/src/interpreter/mod.rs",
-  "crates/atlas-runtime/src/method_dispatch.rs",
-  "crates/atlas-runtime/src/stdlib/future.rs",
-  "crates/atlas-runtime/src/stdlib/mod.rs",
-  "crates/atlas-runtime/src/typechecker/expr.rs",
-  "crates/atlas-runtime/src/typechecker/methods.rs",
-  "crates/atlas-runtime/tests/async_runtime.rs",
-  "crates/atlas-runtime/tests/system.rs",
-  "crates/atlas-runtime/tests/system/future_ns.rs"
-],
+    "crates/atlas-runtime/src/compiler/expr.rs",
+    "crates/atlas-runtime/src/interpreter/expr.rs",
+    "crates/atlas-runtime/src/interpreter/mod.rs",
+    "crates/atlas-runtime/src/method_dispatch.rs",
+    "crates/atlas-runtime/src/stdlib/future.rs",
+    "crates/atlas-runtime/src/stdlib/mod.rs",
+    "crates/atlas-runtime/src/typechecker/expr.rs",
+    "crates/atlas-runtime/src/typechecker/methods.rs",
+    "crates/atlas-runtime/tests/async_runtime.rs",
+    "crates/atlas-runtime/tests/system.rs",
+    "crates/atlas-runtime/tests/system/future_ns.rs"
+  ],
   "domains": [
-  "compiler",
-  "interpreter",
-  "stdlib",
-  "typechecker"
-],
+    "compiler",
+    "interpreter",
+    "stdlib",
+    "typechecker"
+  ],
   "relevant_docs": [
-  "docs/known-issues.md",
-  "docs/language/types.md",
-  "docs/stdlib/index.md"
-],
-  "status": "pending"
+    "docs/known-issues.md",
+    "docs/language/types.md",
+    "docs/stdlib/index.md"
+  ],
+  "status": "done",
+  "patched_at": "2026-03-11T06:27:03Z"
 }
