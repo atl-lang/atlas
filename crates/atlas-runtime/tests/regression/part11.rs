@@ -248,3 +248,27 @@ fn main(): string {
         "false",
     );
 }
+
+// ============================================================================
+// H-261: \x hex and \uXXXX unicode escape sequences in string literals
+// ============================================================================
+
+#[test]
+fn test_h261_hex_escape_in_string() {
+    assert_eval_string(r#"let s = "\x1b[31m"; s"#, "\x1b[31m");
+}
+
+#[test]
+fn test_h261_unicode_escape_in_string() {
+    assert_eval_string(r#"let s = "\u0041"; s"#, "A");
+}
+
+#[test]
+fn test_h261_hex_escape_in_template_string() {
+    assert_eval_string(r#"let s = `\x1b[31m`; s"#, "\x1b[31m");
+}
+
+#[test]
+fn test_h261_unicode_escape_four_digits() {
+    assert_eval_string(r#"let s = "\u2764"; s"#, "❤");
+}

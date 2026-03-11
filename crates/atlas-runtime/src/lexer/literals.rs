@@ -154,24 +154,66 @@ impl Lexer {
                 }
 
                 let escape_char = self.peek();
-                let escaped = match escape_char {
-                    'n' => '\n',
-                    'r' => '\r',
-                    't' => '\t',
-                    '\\' => '\\',
-                    '"' => '"',
+                match escape_char {
+                    'n' => {
+                        self.advance();
+                        value.push('\n');
+                    }
+                    'r' => {
+                        self.advance();
+                        value.push('\r');
+                    }
+                    't' => {
+                        self.advance();
+                        value.push('\t');
+                    }
+                    '\\' => {
+                        self.advance();
+                        value.push('\\');
+                    }
+                    '"' => {
+                        self.advance();
+                        value.push('"');
+                    }
+                    '0' => {
+                        self.advance();
+                        value.push('\0');
+                    }
+                    'x' => {
+                        self.advance(); // consume 'x'
+                        match self.scan_hex_digits(2) {
+                            Some(ch) => value.push(ch),
+                            None => {
+                                if !has_error {
+                                    error_token = Some(self.error_invalid_escape('x'));
+                                    has_error = true;
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    'u' => {
+                        self.advance(); // consume 'u'
+                        match self.scan_hex_digits(4) {
+                            Some(ch) => value.push(ch),
+                            None => {
+                                if !has_error {
+                                    error_token = Some(self.error_invalid_escape('u'));
+                                    has_error = true;
+                                }
+                            }
+                        }
+                        continue;
+                    }
                     _ => {
                         if !has_error {
                             error_token = Some(self.error_invalid_escape(escape_char));
                             has_error = true;
                         }
                         self.advance(); // consume invalid char
-                        continue;
                     }
-                };
-
-                self.advance(); // consume escaped character
-                value.push(escaped);
+                }
+                continue;
             } else {
                 value.push(self.advance());
             }
@@ -221,33 +263,100 @@ impl Lexer {
                 }
 
                 let escape_char = self.peek();
-                let escaped = match escape_char {
-                    'n' => '\n',
-                    'r' => '\r',
-                    't' => '\t',
-                    '\\' => '\\',
-                    '"' => '"',
-                    '`' => '`',
-                    '{' => '{',
-                    '}' => '}',
+                match escape_char {
+                    'n' => {
+                        self.advance();
+                        value.push('\n');
+                    }
+                    'r' => {
+                        self.advance();
+                        value.push('\r');
+                    }
+                    't' => {
+                        self.advance();
+                        value.push('\t');
+                    }
+                    '\\' => {
+                        self.advance();
+                        value.push('\\');
+                    }
+                    '"' => {
+                        self.advance();
+                        value.push('"');
+                    }
+                    '`' => {
+                        self.advance();
+                        value.push('`');
+                    }
+                    '{' => {
+                        self.advance();
+                        value.push('{');
+                    }
+                    '}' => {
+                        self.advance();
+                        value.push('}');
+                    }
+                    '0' => {
+                        self.advance();
+                        value.push('\0');
+                    }
+                    'x' => {
+                        self.advance(); // consume 'x'
+                        match self.scan_hex_digits(2) {
+                            Some(ch) => value.push(ch),
+                            None => {
+                                if !has_error {
+                                    error_token = Some(self.error_invalid_escape('x'));
+                                    has_error = true;
+                                }
+                            }
+                        }
+                        continue;
+                    }
+                    'u' => {
+                        self.advance(); // consume 'u'
+                        match self.scan_hex_digits(4) {
+                            Some(ch) => value.push(ch),
+                            None => {
+                                if !has_error {
+                                    error_token = Some(self.error_invalid_escape('u'));
+                                    has_error = true;
+                                }
+                            }
+                        }
+                        continue;
+                    }
                     _ => {
                         if !has_error {
                             error_token = Some(self.error_invalid_escape(escape_char));
                             has_error = true;
                         }
                         self.advance(); // consume invalid char
-                        continue;
                     }
-                };
-
-                self.advance(); // consume escaped character
-                value.push(escaped);
+                }
+                continue;
             } else {
                 value.push(self.advance());
             }
         }
 
         StringScan::Error(self.error_unterminated_string())
+    }
+
+    /// Scan exactly `count` hex digits and return the corresponding Unicode character.
+    /// Returns `None` if fewer than `count` hex digits follow or if the codepoint is invalid.
+    fn scan_hex_digits(&mut self, count: usize) -> Option<char> {
+        let mut codepoint: u32 = 0;
+        for _ in 0..count {
+            if self.is_at_end() {
+                return None;
+            }
+            let ch = self.peek();
+            let digit = ch.to_digit(16)?;
+            codepoint = codepoint * 16 + digit;
+            self.advance();
+        }
+        char::from_u32(codepoint)
     }
 
     /// Scan a number literal (integer, float, or scientific notation)
