@@ -1,9 +1,9 @@
-console.log(abs(-5));
-console.log(abs(3));
-console.log(floor(3.7));
-console.log(ceil(3.2));
-console.log(round(3.5));
-console.log(unwrap(sqrt(16)));
-console.log(pow(2, 10));
-console.log(min(3, 7));
-console.log(max(3, 7));
+console.log(Math.abs(-5));
+console.log(Math.abs(3));
+console.log(Math.floor(3.7));
+console.log(Math.ceil(3.2));
+console.log(Math.round(3.5));
+console.log(unwrap(Math.sqrt(16)));
+console.log(Math.pow(2, 10));
+console.log(Math.min(3, 7));
+console.log(Math.max(3, 7));

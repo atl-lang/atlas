@@ -389,7 +389,7 @@ fn test_csv_min_value() {
             if (current == 0.0) {{
                 return temp;
             }}
-            return min(current, temp);
+            return Math.min(current, temp);
         }}
 
         let csv: string = read_file("{}");

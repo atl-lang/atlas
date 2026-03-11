@@ -106,24 +106,39 @@ fn stdlib_signature(func_name: &str) -> Option<&'static str> {
         "arrayFlat" => Some("arrayFlat(arr: T[][]) -> T[]"),
         "arrayFlatMap" => Some("arrayFlatMap(arr: T[], fn: (T) -> U[]) -> U[]"),
         "arrayFill" => Some("arrayFill(arr: T[], value: T, start: number, end: number) -> T[]"),
-        // Math functions
-        "abs" => Some("abs(n: number) -> number"),
-        "ceil" => Some("ceil(n: number) -> number"),
-        "floor" => Some("floor(n: number) -> number"),
-        "round" => Some("round(n: number) -> number"),
-        "sqrt" => Some("sqrt(n: number) -> number"),
-        "pow" => Some("pow(base: number, exp: number) -> number"),
-        "min" => Some("min(a: number, b: number) -> number"),
-        "max" => Some("max(a: number, b: number) -> number"),
-        "random" => Some("random() -> number"),
-        "log" => Some("log(n: number) -> number"),
-        "log2" => Some("log2(n: number) -> number"),
-        "log10" => Some("log10(n: number) -> number"),
-        "sin" => Some("sin(n: number) -> number"),
-        "cos" => Some("cos(n: number) -> number"),
-        "tan" => Some("tan(n: number) -> number"),
-        "atan2" => Some("atan2(y: number, x: number) -> number"),
-        "clamp" => Some("clamp(n: number, min: number, max: number) -> number"),
+        // Math functions (B22: registered under "math*" keys, accessed via Math.* namespace)
+        "mathAbs" => Some("Math.abs(n: number) -> number"),
+        "mathCeil" => Some("Math.ceil(n: number) -> number"),
+        "mathFloor" => Some("Math.floor(n: number) -> number"),
+        "mathRound" => Some("Math.round(n: number) -> number"),
+        "mathSqrt" => Some("Math.sqrt(n: number) -> Result<number, string>"),
+        "mathPow" => Some("Math.pow(base: number, exp: number) -> number"),
+        "mathMin" => Some("Math.min(a: number, b: number) -> number"),
+        "mathMax" => Some("Math.max(a: number, b: number) -> number"),
+        "mathRandom" => Some("Math.random() -> number"),
+        "mathLog" => Some("Math.log(n: number) -> Result<number, string>"),
+        "mathLog2" => Some("Math.log2(n: number) -> Result<number, string>"),
+        "mathLog10" => Some("Math.log10(n: number) -> Result<number, string>"),
+        "mathSin" => Some("Math.sin(n: number) -> number"),
+        "mathCos" => Some("Math.cos(n: number) -> number"),
+        "mathTan" => Some("Math.tan(n: number) -> number"),
+        "mathAsin" => Some("Math.asin(n: number) -> Result<number, string>"),
+        "mathAcos" => Some("Math.acos(n: number) -> Result<number, string>"),
+        "mathAtan" => Some("Math.atan(n: number) -> number"),
+        "mathAtan2" => Some("Math.atan2(y: number, x: number) -> number"),
+        "mathTrunc" => Some("Math.trunc(n: number) -> number"),
+        "mathExp" => Some("Math.exp(n: number) -> number"),
+        "mathCbrt" => Some("Math.cbrt(n: number) -> number"),
+        "mathHypot" => Some("Math.hypot(x: number, y: number) -> number"),
+        "mathClamp" => {
+            Some("Math.clamp(n: number, min: number, max: number) -> Result<number, string>")
+        }
+        "mathSign" => Some("Math.sign(n: number) -> number"),
+        "mathPI" => Some("Math.PI -> number"),
+        "mathE" => Some("Math.E -> number"),
+        "mathSQRT2" => Some("Math.SQRT2 -> number"),
+        "mathLN2" => Some("Math.LN2 -> number"),
+        "mathLN10" => Some("Math.LN10 -> number"),
         // JSON
         "parseJSON" => Some("parseJSON(json: string) -> any"),
         "toJSON" => Some("toJSON(value: any) -> string"),
@@ -590,26 +605,41 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // Math functions
+        // Math namespace functions — registered under "math*" keys.
+        // B22: Bare globals removed. Math.* is the only call syntax.
+        // Dispatch: Math.abs → resolve_math_ns_method("abs") → "mathAbs" → call_builtin.
         // ====================================================================
-        m.insert("abs", |a, s, _, _| math::abs(a, s));
-        m.insert("floor", |a, s, _, _| math::floor(a, s));
-        m.insert("ceil", |a, s, _, _| math::ceil(a, s));
-        m.insert("round", |a, s, _, _| math::round(a, s));
-        m.insert("min", |a, s, _, _| math::min(a, s));
-        m.insert("max", |a, s, _, _| math::max(a, s));
-        m.insert("sqrt", |a, s, _, _| math::sqrt(a, s));
-        m.insert("pow", |a, s, _, _| math::pow(a, s));
-        m.insert("log", |a, s, _, _| math::log(a, s));
-        m.insert("sin", |a, s, _, _| math::sin(a, s));
-        m.insert("cos", |a, s, _, _| math::cos(a, s));
-        m.insert("tan", |a, s, _, _| math::tan(a, s));
-        m.insert("asin", |a, s, _, _| math::asin(a, s));
-        m.insert("acos", |a, s, _, _| math::acos(a, s));
-        m.insert("atan", |a, s, _, _| math::atan(a, s));
-        m.insert("clamp", |a, s, _, _| math::clamp(a, s));
-        m.insert("sign", |a, s, _, _| math::sign(a, s));
-        m.insert("random", |a, s, _, _| math::random(a, s));
+        m.insert("mathAbs", |a, s, _, _| math::abs(a, s));
+        m.insert("mathFloor", |a, s, _, _| math::floor(a, s));
+        m.insert("mathCeil", |a, s, _, _| math::ceil(a, s));
+        m.insert("mathRound", |a, s, _, _| math::round(a, s));
+        m.insert("mathMin", |a, s, _, _| math::min(a, s));
+        m.insert("mathMax", |a, s, _, _| math::max(a, s));
+        m.insert("mathSqrt", |a, s, _, _| math::sqrt(a, s));
+        m.insert("mathPow", |a, s, _, _| math::pow(a, s));
+        m.insert("mathLog", |a, s, _, _| math::log(a, s));
+        m.insert("mathSin", |a, s, _, _| math::sin(a, s));
+        m.insert("mathCos", |a, s, _, _| math::cos(a, s));
+        m.insert("mathTan", |a, s, _, _| math::tan(a, s));
+        m.insert("mathAsin", |a, s, _, _| math::asin(a, s));
+        m.insert("mathAcos", |a, s, _, _| math::acos(a, s));
+        m.insert("mathAtan", |a, s, _, _| math::atan(a, s));
+        m.insert("mathAtan2", |a, s, _, _| math::atan2(a, s));
+        m.insert("mathTrunc", |a, s, _, _| math::trunc(a, s));
+        m.insert("mathLog2", |a, s, _, _| math::log2(a, s));
+        m.insert("mathLog10", |a, s, _, _| math::log10(a, s));
+        m.insert("mathExp", |a, s, _, _| math::exp(a, s));
+        m.insert("mathCbrt", |a, s, _, _| math::cbrt(a, s));
+        m.insert("mathHypot", |a, s, _, _| math::hypot(a, s));
+        m.insert("mathClamp", |a, s, _, _| math::clamp(a, s));
+        m.insert("mathSign", |a, s, _, _| math::sign(a, s));
+        m.insert("mathRandom", |a, s, _, _| math::random(a, s));
+        // Math namespace constant accessors
+        m.insert("mathPI", |a, s, _, _| math::math_pi(a, s));
+        m.insert("mathE", |a, s, _, _| math::math_e(a, s));
+        m.insert("mathSQRT2", |a, s, _, _| math::math_sqrt2(a, s));
+        m.insert("mathLN2", |a, s, _, _| math::math_ln2(a, s));
+        m.insert("mathLN10", |a, s, _, _| math::math_ln10(a, s));
 
         // ====================================================================
         // JSON functions

@@ -29,10 +29,10 @@ fn test_text_average_word_length() {
 
         let text: string = "the quick brown fox";
         let words: []string = split(text, " ");
-        let lengths: []number = map(words, wordLength);
+        let lengths: number[] = map(words, wordLength);
         let total: number = reduce(lengths, sum, 0.0);
         let avg: number = total / len(words);
-        floor(avg)
+        Math.floor(avg)
     "#;
     assert_eval_number_with_io(code, 4.0); // (3+5+5+3)/4 = 4
 }

@@ -623,29 +623,29 @@ fn test_unshift_to_empty() {
 
 #[test]
 fn test_floor_negative() {
-    assert_eq!(eval_ok("floor(-1.1);"), Value::Number(-2.0));
+    assert_eq!(eval_ok("Math.floor(-1.1);"), Value::Number(-2.0));
 }
 
 #[test]
 fn test_ceil_negative() {
-    assert_eq!(eval_ok("ceil(-1.9);"), Value::Number(-1.0));
+    assert_eq!(eval_ok("Math.ceil(-1.9);"), Value::Number(-1.0));
 }
 
 #[test]
 fn test_round_negative_half_bankers() {
     // Banker's rounding: -2.5 → -2 (round to even)
-    assert_eq!(eval_ok("round(-2.5);"), Value::Number(-2.0));
+    assert_eq!(eval_ok("Math.round(-2.5);"), Value::Number(-2.0));
 }
 
 #[test]
 fn test_round_negative_round_down() {
-    assert_eq!(eval_ok("round(-1.7);"), Value::Number(-2.0));
+    assert_eq!(eval_ok("Math.round(-1.7);"), Value::Number(-2.0));
 }
 
 #[test]
 fn test_floor_parity() {
-    let i = eval_ok("floor(-3.7);");
-    let v = vm_eval_ok("floor(-3.7);");
+    let i = eval_ok("Math.floor(-3.7);");
+    let v = vm_eval_ok("Math.floor(-3.7);");
     assert_eq!(i, v);
 }
 
@@ -653,18 +653,18 @@ fn test_floor_parity() {
 
 #[test]
 fn test_min_equal_elements() {
-    assert_eq!(eval_ok("min(5, 5);"), Value::Number(5.0));
+    assert_eq!(eval_ok("Math.min(5, 5);"), Value::Number(5.0));
 }
 
 #[test]
 fn test_max_negative() {
-    assert_eq!(eval_ok("max(-3, -7);"), Value::Number(-3.0));
+    assert_eq!(eval_ok("Math.max(-3, -7);"), Value::Number(-3.0));
 }
 
 #[test]
 fn test_min_parity() {
-    let i = eval_ok("min(10, 20);");
-    let v = vm_eval_ok("min(10, 20);");
+    let i = eval_ok("Math.min(10, 20);");
+    let v = vm_eval_ok("Math.min(10, 20);");
     assert_eq!(i, v);
 }
 
@@ -673,22 +673,22 @@ fn test_min_parity() {
 #[test]
 fn test_sqrt_zero() {
     assert_eq!(
-        eval_ok("sqrt(0);"),
+        eval_ok("Math.sqrt(0);"),
         Value::Result(Ok(Box::new(Value::Number(0.0))))
     );
 }
 
 #[test]
-fn test_sqrt_negative_returns_nan() {
-    // sqrt(-1) is out of domain → Result(Err(...))
-    let result = eval_ok("sqrt(-1);");
+fn test_sqrt_negative_returns_err() {
+    // Math.sqrt(-1) is out of domain → Result(Err(...))
+    let result = eval_ok("Math.sqrt(-1);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_sqrt_parity() {
-    let i = eval_ok("sqrt(16);");
-    let v = vm_eval_ok("sqrt(16);");
+    let i = eval_ok("Math.sqrt(16);");
+    let v = vm_eval_ok("Math.sqrt(16);");
     assert_eq!(i, v);
 }
 
@@ -696,18 +696,18 @@ fn test_sqrt_parity() {
 
 #[test]
 fn test_pow_zero_exponent() {
-    assert_eq!(eval_ok("pow(42, 0);"), Value::Number(1.0));
+    assert_eq!(eval_ok("Math.pow(42, 0);"), Value::Number(1.0));
 }
 
 #[test]
 fn test_pow_negative_base() {
-    assert_eq!(eval_ok("pow(-2, 3);"), Value::Number(-8.0));
+    assert_eq!(eval_ok("Math.pow(-2, 3);"), Value::Number(-8.0));
 }
 
 #[test]
 fn test_pow_parity() {
-    let i = eval_ok("pow(2, 10);");
-    let v = vm_eval_ok("pow(2, 10);");
+    let i = eval_ok("Math.pow(2, 10);");
+    let v = vm_eval_ok("Math.pow(2, 10);");
     assert_eq!(i, v);
 }
 
@@ -715,23 +715,23 @@ fn test_pow_parity() {
 
 #[test]
 fn test_log_one() {
-    let result = eval_ok("log(1);");
+    let result = eval_ok("Math.log(1);");
     assert!(
         matches!(result, Value::Result(Ok(ref v)) if matches!(v.as_ref(), Value::Number(x) if x.abs() < 1e-10))
     );
 }
 
 #[test]
-fn test_log_zero_neg_infinity() {
-    // log(0) is out of domain → Result(Err(...))
-    let result = eval_ok("log(0);");
+fn test_log_zero_returns_err() {
+    // Math.log(0) is out of domain → Result(Err(...))
+    let result = eval_ok("Math.log(0);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
-fn test_log_negative_nan() {
-    // log(-1) is out of domain → Result(Err(...))
-    let result = eval_ok("log(-1);");
+fn test_log_negative_returns_err() {
+    // Math.log(-1) is out of domain → Result(Err(...))
+    let result = eval_ok("Math.log(-1);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
@@ -740,7 +740,7 @@ fn test_log_negative_nan() {
 #[test]
 fn test_clamp_below_min() {
     assert_eq!(
-        eval_ok("clamp(-5, 0, 10);"),
+        eval_ok("Math.clamp(-5, 0, 10);"),
         Value::Result(Ok(Box::new(Value::Number(0.0))))
     );
 }
@@ -748,15 +748,15 @@ fn test_clamp_below_min() {
 #[test]
 fn test_clamp_above_max() {
     assert_eq!(
-        eval_ok("clamp(15, 0, 10);"),
+        eval_ok("Math.clamp(15, 0, 10);"),
         Value::Result(Ok(Box::new(Value::Number(10.0))))
     );
 }
 
 #[test]
 fn test_clamp_parity() {
-    let i = eval_ok("clamp(7, 1, 10);");
-    let v = vm_eval_ok("clamp(7, 1, 10);");
+    let i = eval_ok("Math.clamp(7, 1, 10);");
+    let v = vm_eval_ok("Math.clamp(7, 1, 10);");
     assert_eq!(i, v);
 }
 
@@ -764,32 +764,32 @@ fn test_clamp_parity() {
 
 #[test]
 fn test_sign_positive() {
-    assert_eq!(eval_ok("sign(42);"), Value::Number(1.0));
+    assert_eq!(eval_ok("Math.sign(42);"), Value::Number(1.0));
 }
 
 #[test]
 fn test_sign_negative() {
-    assert_eq!(eval_ok("sign(-42);"), Value::Number(-1.0));
+    assert_eq!(eval_ok("Math.sign(-42);"), Value::Number(-1.0));
 }
 
 #[test]
 fn test_sign_zero() {
-    assert_eq!(eval_ok("sign(0);"), Value::Number(0.0));
+    assert_eq!(eval_ok("Math.sign(0);"), Value::Number(0.0));
 }
 
 // trig
 
 #[test]
-fn test_asin_out_of_domain_is_nan() {
-    // asin(2) is outside domain [-1, 1] → Result(Err(...))
-    let result = eval_ok("asin(2);");
+fn test_asin_out_of_domain_returns_err() {
+    // Math.asin(2) is outside domain [-1, 1] → Result(Err(...))
+    let result = eval_ok("Math.asin(2);");
     assert!(matches!(result, Value::Result(Err(_))));
 }
 
 #[test]
 fn test_cos_parity() {
-    let i = eval_ok("cos(0);");
-    let v = vm_eval_ok("cos(0);");
+    let i = eval_ok("Math.cos(0);");
+    let v = vm_eval_ok("Math.cos(0);");
     assert_eq!(i, v);
 }
 

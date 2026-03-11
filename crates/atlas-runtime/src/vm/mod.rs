@@ -975,22 +975,11 @@ impl VM {
                         // Builtin or intrinsic - return builtin value
                         Value::Builtin(std::sync::Arc::from(name.as_str()))
                     } else {
-                        // Check math constants
-                        match name.as_str() {
-                            "PI" => Value::Number(crate::stdlib::math::PI),
-                            "E" => Value::Number(crate::stdlib::math::E),
-                            "SQRT2" => Value::Number(crate::stdlib::math::SQRT2),
-                            "LN2" => Value::Number(crate::stdlib::math::LN2),
-                            "LN10" => Value::Number(crate::stdlib::math::LN10),
-                            _ => {
-                                return Err(RuntimeError::UndefinedVariable {
-                                    name: name.clone(),
-                                    span: self
-                                        .current_span()
-                                        .unwrap_or_else(crate::span::Span::dummy),
-                                });
-                            }
-                        }
+                        // B22: Math constants removed as bare identifiers. Use Math.PI, Math.E, etc.
+                        return Err(RuntimeError::UndefinedVariable {
+                            name: name.clone(),
+                            span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
+                        });
                     };
                     self.push(value);
                     // Record global origin for own-consume tracking (debug builds only).

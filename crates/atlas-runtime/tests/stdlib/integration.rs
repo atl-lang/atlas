@@ -209,9 +209,9 @@ fn test_filter_positive_then_sum() {
 #[test]
 fn test_abs_map_max() {
     let code = r#"
-        let nums: []number = [-10, 5, -20, 15];
-        let absNums: []number = [abs(-10), abs(5), abs(-20), abs(15)];
-        max(absNums[0], max(absNums[1], max(absNums[2], absNums[3])))
+        let nums: number[] = [-10, 5, -20, 15];
+        let absNums: number[] = [Math.abs(-10), Math.abs(5), Math.abs(-20), Math.abs(15)];
+        Math.max(absNums[0], Math.max(absNums[1], Math.max(absNums[2], absNums[3])))
     "#;
     assert_eval_number(code, 20.0);
 }
@@ -220,15 +220,15 @@ fn test_abs_map_max() {
 fn test_sqrt_map_floor() {
     let code = r#"
         fn sqrtFloor(borrow x: number): number {
-            return floor(unwrap(sqrt(x)));
+            return Math.floor(unwrap(Math.sqrt(x)));
         }
 
         fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
 
-        let nums: []number = [4, 9, 10, 16, 20];
-        let roots: []number = map(nums, sqrtFloor);
+        let nums: number[] = [4, 9, 10, 16, 20];
+        let roots: number[] = map(nums, sqrtFloor);
         reduce(roots, add, 0)
     "#;
     assert_eval_number(code, 16.0); // 2 + 3 + 3 + 4 + 4 = 16
@@ -238,15 +238,15 @@ fn test_sqrt_map_floor() {
 fn test_clamp_map_range() {
     let code = r#"
         fn clampTo10(borrow n: number): number {
-            return unwrap(clamp(n, 0, 10));
+            return unwrap(Math.clamp(n, 0, 10));
         }
 
         fn numToStr(borrow n: number): string {
             return toString(n);
         }
 
-        let nums: []number = [-5, 3, 15, 7, 20];
-        let clamped: []number = map(nums, clampTo10);
+        let nums: number[] = [-5, 3, 15, 7, 20];
+        let clamped: number[] = map(nums, clampTo10);
         join(map(clamped, numToStr), ",")
     "#;
     assert_eval_string(code, "0,3,10,7,10");
@@ -256,15 +256,15 @@ fn test_clamp_map_range() {
 fn test_pow_reduce_product() {
     let code = r#"
         fn square(borrow x: number): number {
-            return pow(x, 2);
+            return Math.pow(x, 2);
         }
 
         fn multiply(borrow a: number, borrow b: number): number {
             return a * b;
         }
 
-        let nums: []number = [2, 3];
-        let squared: []number = map(nums, square);
+        let nums: number[] = [2, 3];
+        let squared: number[] = map(nums, square);
         reduce(squared, multiply, 1)
     "#;
     assert_eval_number(code, 36.0); // 4 * 9
@@ -273,9 +273,9 @@ fn test_pow_reduce_product() {
 #[test]
 fn test_min_max_range() {
     let code = r#"
-        let nums: []number = [5, 2, 8, 1, 9, 3];
-        let minVal: number = min(min(min(min(min(nums[0], nums[1]), nums[2]), nums[3]), nums[4]), nums[5]);
-        let maxVal: number = max(max(max(max(max(nums[0], nums[1]), nums[2]), nums[3]), nums[4]), nums[5]);
+        let nums: number[] = [5, 2, 8, 1, 9, 3];
+        let minVal: number = Math.min(Math.min(Math.min(Math.min(Math.min(nums[0], nums[1]), nums[2]), nums[3]), nums[4]), nums[5]);
+        let maxVal: number = Math.max(Math.max(Math.max(Math.max(Math.max(nums[0], nums[1]), nums[2]), nums[3]), nums[4]), nums[5]);
         maxVal - minVal
     "#;
     assert_eval_number(code, 8.0); // 9 - 1
@@ -288,8 +288,8 @@ fn test_round_map_average() {
             return a + b;
         }
 
-        let nums: []number = [1.2, 2.7, 3.5, 4.1, 5.9];
-        let rounded: []number = [round(1.2), round(2.7), round(3.5), round(4.1), round(5.9)];
+        let nums: number[] = [1.2, 2.7, 3.5, 4.1, 5.9];
+        let rounded: number[] = [Math.round(1.2), Math.round(2.7), Math.round(3.5), Math.round(4.1), Math.round(5.9)];
         let sum: number = reduce(rounded, add, 0);
         sum / len(rounded)
     "#;
@@ -307,7 +307,7 @@ fn test_sign_filter_sort() {
             return toString(x);
         }
 
-        let signs: []number = [sign(-5), sign(3), sign(-2), sign(0), sign(8)];
+        let signs: number[] = [Math.sign(-5), Math.sign(3), Math.sign(-2), Math.sign(0), Math.sign(8)];
         let sorted: []number = sort(signs, compare);
         join(map(sorted, numToStr), ",")
     "#;
@@ -318,10 +318,10 @@ fn test_sign_filter_sort() {
 fn test_random_clamp_floor() {
     let code = r#"
         // Test that random works in a pipeline (result is clamped 0-10, then floored)
-        let r: number = random();
+        let r: number = Math.random();
         let scaled: number = r * 10;
-        let clamped: number = clamp(scaled, 0, 10)?;
-        let result: number = floor(clamped);
+        let clamped: number = Math.clamp(scaled, 0, 10)?;
+        let result: number = Math.floor(clamped);
         result >= 0 && result <= 10
     "#;
     assert_eval_bool(code, true);
@@ -1019,15 +1019,15 @@ fn test_product_reduce() {
 fn test_ceil_floor_pipeline() {
     let code = r#"
         fn ceilNum(borrow n: number): number {
-            return ceil(n);
+            return Math.ceil(n);
         }
         fn floorNum(borrow n: number): number {
-            return floor(n);
+            return Math.floor(n);
         }
 
-        let floats: []number = [1.2, 2.8, 3.5];
-        let ceiled: []number = map(floats, ceilNum);
-        let floored: []number = map(ceiled, floorNum);
+        let floats: number[] = [1.2, 2.8, 3.5];
+        let ceiled: number[] = map(floats, ceilNum);
+        let floored: number[] = map(ceiled, floorNum);
         floored[0] + floored[1] + floored[2]
     "#;
     assert_eval_number(code, 9.0); // 2 + 3 + 4
@@ -1037,14 +1037,14 @@ fn test_ceil_floor_pipeline() {
 fn test_abs_negative_sum() {
     let code = r#"
         fn absVal(borrow n: number): number {
-            return abs(n);
+            return Math.abs(n);
         }
         fn add(borrow a: number, borrow b: number): number {
             return a + b;
         }
 
-        let numbers: []number = [-5, -10, -3];
-        let positive: []number = map(numbers, absVal);
+        let numbers: number[] = [-5, -10, -3];
+        let positive: number[] = map(numbers, absVal);
         let sum: number = reduce(positive, add, 0);
         sum
     "#;
@@ -1058,12 +1058,12 @@ fn test_filter_even_then_square() {
             return (n % 2) == 0;
         }
         fn square(borrow n: number): number {
-            return pow(n, 2);
+            return Math.pow(n, 2);
         }
 
-        let numbers: []number = [1, 2, 3, 4, 5, 6];
-        let evens: []number = filter(numbers, isEven);
-        let squared: []number = map(evens, square);
+        let numbers: number[] = [1, 2, 3, 4, 5, 6];
+        let evens: number[] = filter(numbers, isEven);
+        let squared: number[] = map(evens, square);
         squared[0] + squared[1] + squared[2]
     "#;
     assert_eval_number(code, 56.0); // 4 + 16 + 36
@@ -1073,10 +1073,10 @@ fn test_filter_even_then_square() {
 fn test_min_of_array_manual() {
     let code = r#"
         fn minimum(borrow a: number, borrow b: number): number {
-            return min(a, b);
+            return Math.min(a, b);
         }
 
-        let numbers: []number = [5, 2, 9, 1, 7];
+        let numbers: number[] = [5, 2, 9, 1, 7];
         let minVal: number = reduce(numbers, minimum, 999);
         minVal
     "#;
@@ -1087,10 +1087,10 @@ fn test_min_of_array_manual() {
 fn test_max_of_array_manual() {
     let code = r#"
         fn maximum(borrow a: number, borrow b: number): number {
-            return max(a, b);
+            return Math.max(a, b);
         }
 
-        let numbers: []number = [5, 2, 9, 1, 7];
+        let numbers: number[] = [5, 2, 9, 1, 7];
         let maxVal: number = reduce(numbers, maximum, -999);
         maxVal
     "#;
@@ -1101,15 +1101,15 @@ fn test_max_of_array_manual() {
 fn test_sqrt_then_round() {
     let code = r#"
         fn sqrtNum(borrow n: number): number {
-            return unwrap(sqrt(n));
+            return unwrap(Math.sqrt(n));
         }
         fn roundNum(borrow n: number): number {
-            return round(n);
+            return Math.round(n);
         }
 
-        let numbers: []number = [4, 9, 16, 25];
-        let roots: []number = map(numbers, sqrtNum);
-        let rounded: []number = map(roots, roundNum);
+        let numbers: number[] = [4, 9, 16, 25];
+        let roots: number[] = map(numbers, sqrtNum);
+        let rounded: number[] = map(roots, roundNum);
         rounded[0] + rounded[1] + rounded[2] + rounded[3]
     "#;
     assert_eval_number(code, 14.0); // 2 + 3 + 4 + 5
@@ -1119,11 +1119,11 @@ fn test_sqrt_then_round() {
 fn test_sign_map_to_direction() {
     let code = r#"
         fn getSign(borrow n: number): number {
-            return sign(n);
+            return Math.sign(n);
         }
 
-        let numbers: []number = [-5, 0, 10, -3, 7];
-        let signs: []number = map(numbers, getSign);
+        let numbers: number[] = [-5, 0, 10, -3, 7];
+        let signs: number[] = map(numbers, getSign);
         signs[0] + signs[1] + signs[2] + signs[3] + signs[4]
     "#;
     assert_eval_number(code, 0.0); // -1 + 0 + 1 + -1 + 1
@@ -1133,11 +1133,11 @@ fn test_sign_map_to_direction() {
 fn test_clamp_array_values() {
     let code = r#"
         fn clampTo10(borrow n: number): number {
-            return unwrap(clamp(n, 0, 10));
+            return unwrap(Math.clamp(n, 0, 10));
         }
 
-        let numbers: []number = [-5, 5, 15, 20, 8];
-        let clamped: []number = map(numbers, clampTo10);
+        let numbers: number[] = [-5, 5, 15, 20, 8];
+        let clamped: number[] = map(numbers, clampTo10);
         clamped[0] + clamped[1] + clamped[2] + clamped[3] + clamped[4]
     "#;
     assert_eval_number(code, 33.0); // 0 + 5 + 10 + 10 + 8
@@ -1175,11 +1175,11 @@ fn test_sort_then_first_last() {
 fn test_pow_map_exponents() {
     let code = r#"
         fn cube(borrow n: number): number {
-            return pow(n, 3);
+            return Math.pow(n, 3);
         }
 
-        let numbers: []number = [1, 2, 3];
-        let cubed: []number = map(numbers, cube);
+        let numbers: number[] = [1, 2, 3];
+        let cubed: number[] = map(numbers, cube);
         cubed[0] + cubed[1] + cubed[2]
     "#;
     assert_eval_number(code, 36.0); // 1 + 8 + 27
@@ -1189,15 +1189,15 @@ fn test_pow_map_exponents() {
 fn test_log_then_floor() {
     let code = r#"
         fn logNum(borrow n: number): number {
-            return unwrap(log(n));
+            return unwrap(Math.log(n));
         }
         fn floorNum(borrow n: number): number {
-            return floor(n);
+            return Math.floor(n);
         }
 
-        let numbers: []number = [10, 100, 1000];
-        let logs: []number = map(numbers, logNum);
-        let floored: []number = map(logs, floorNum);
+        let numbers: number[] = [10, 100, 1000];
+        let logs: number[] = map(numbers, logNum);
+        let floored: number[] = map(logs, floorNum);
         floored[0] + floored[1] + floored[2]
     "#;
     assert_eval_number(code, 12.0); // 2 + 4 + 6 (natural log floored)

@@ -15,17 +15,17 @@ fn milestone_stdlib_console_log_function() {
 
 #[test]
 fn milestone_stdlib_math_abs() {
-    assert_eval_number("abs(-5.0);", 5.0);
+    assert_eval_number("Math.abs(-5.0);", 5.0);
 }
 
 #[test]
 fn milestone_stdlib_math_max() {
-    assert_eval_number("max(3.0, 7.0);", 7.0);
+    assert_eval_number("Math.max(3.0, 7.0);", 7.0);
 }
 
 #[test]
 fn milestone_stdlib_math_min() {
-    assert_eval_number("min(3.0, 7.0);", 3.0);
+    assert_eval_number("Math.min(3.0, 7.0);", 3.0);
 }
 
 #[test]

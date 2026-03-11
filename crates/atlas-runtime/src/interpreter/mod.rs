@@ -654,15 +654,7 @@ impl Interpreter {
             return Ok(Value::Builtin(Arc::from(name)));
         }
 
-        // Check math constants
-        match name {
-            "PI" => return Ok(Value::Number(crate::stdlib::math::PI)),
-            "E" => return Ok(Value::Number(crate::stdlib::math::E)),
-            "SQRT2" => return Ok(Value::Number(crate::stdlib::math::SQRT2)),
-            "LN2" => return Ok(Value::Number(crate::stdlib::math::LN2)),
-            "LN10" => return Ok(Value::Number(crate::stdlib::math::LN10)),
-            _ => {}
-        }
+        // B22: Math constants removed as bare identifiers. Use Math.PI, Math.E, etc.
 
         // User-defined unit enum variants (e.g. `Quit` from `enum CommandResult { Quit, ... }`)
         if let Some((enum_name, arity)) = self.enum_variants.get(name) {
