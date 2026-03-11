@@ -1,21 +1,23 @@
 {
-  "committed_at": "2026-03-11T04:35:30Z",
-  "commit": "b542d71",
+  "committed_at": "2026-03-11T05:06:31Z",
+  "commit": "a12fdbb",
   "changed_files": [
-    "crates/atlas-runtime/src/method_dispatch.rs",
-    "crates/atlas-runtime/src/stdlib/crypto.rs",
-    "crates/atlas-runtime/src/stdlib/mod.rs",
-    "crates/atlas-runtime/src/typechecker/expr.rs",
-    "crates/atlas-runtime/src/typechecker/stdlib_ownership.rs"
-  ],
+  "crates/atlas-runtime/src/method_dispatch.rs",
+  "crates/atlas-runtime/src/stdlib/http.rs",
+  "crates/atlas-runtime/src/stdlib/mod.rs",
+  "crates/atlas-runtime/src/typechecker/expr.rs",
+  "crates/atlas-runtime/src/typechecker/stdlib_ownership.rs",
+  "crates/atlas-runtime/tests/api/sandboxing.rs",
+  "crates/atlas-runtime/tests/http.rs"
+],
   "domains": [
-    "stdlib",
-    "typechecker"
-  ],
+  "stdlib",
+  "typechecker"
+],
   "relevant_docs": [
-    "docs/stdlib/index.md",
-    "docs/stdlib/encoding.md"
-  ],
-  "status": "done",
-  "patched_at": "2026-03-11T04:48:51Z"
+  "docs/known-issues.md",
+  "docs/language/types.md",
+  "docs/stdlib/index.md"
+],
+  "status": "pending"
 }

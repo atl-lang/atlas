@@ -295,20 +295,20 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Console namespace — all methods return void (Null)
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => Type::Null,
         // Gzip namespace
-        ("Gzip", "compress" | "decompress") => Type::Array(Box::new(Type::Number)),
-        ("Gzip", "decompressString") => Type::String,
-        ("Gzip", "isGzip") => Type::Bool,
-        ("Gzip", "compressionRatio") => Type::Number,
+        ("gzip", "compress" | "decompress") => Type::Array(Box::new(Type::Number)),
+        ("gzip", "decompressString") => Type::String,
+        ("gzip", "isGzip") => Type::Bool,
+        ("gzip", "compressionRatio") => Type::Number,
         // Tar namespace
-        ("Tar", "create" | "createGz") => Type::Null,
-        ("Tar", "extract" | "extractGz" | "list") => Type::Array(Box::new(Type::Unknown)),
-        ("Tar", "contains") => Type::Bool,
+        ("tar", "create" | "createGz") => Type::Null,
+        ("tar", "extract" | "extractGz" | "list") => Type::Array(Box::new(Type::Unknown)),
+        ("tar", "contains") => Type::Bool,
         // Zip namespace
-        ("Zip", "create" | "createWithComment" | "addFile") => Type::Null,
-        ("Zip", "extract" | "extractFiles" | "list") => Type::Array(Box::new(Type::Unknown)),
-        ("Zip", "contains" | "validate") => Type::Bool,
-        ("Zip", "compressionRatio") => Type::Number,
-        ("Zip", "comment") => Type::String,
+        ("zip", "create" | "createWithComment" | "addFile") => Type::Null,
+        ("zip", "extract" | "extractFiles" | "list") => Type::Array(Box::new(Type::Unknown)),
+        ("zip", "contains" | "validate") => Type::Bool,
+        ("zip", "compressionRatio") => Type::Number,
+        ("zip", "comment") => Type::String,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }

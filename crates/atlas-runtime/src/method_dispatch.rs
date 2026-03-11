@@ -126,9 +126,9 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "Crypto"
             | "Regex"
             | "Io"
-            | "Gzip"
-            | "Tar"
-            | "Zip"
+            | "gzip"
+            | "tar"
+            | "zip"
     )
 }
 
@@ -159,9 +159,9 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "Crypto" => Some(TypeTag::CryptoNs),
         "Regex" => Some(TypeTag::RegexNs),
         "Io" => Some(TypeTag::IoNs),
-        "Gzip" => Some(TypeTag::GzipNs),
-        "Tar" => Some(TypeTag::TarNs),
-        "Zip" => Some(TypeTag::ZipNs),
+        "gzip" => Some(TypeTag::GzipNs),
+        "tar" => Some(TypeTag::TarNs),
+        "zip" => Some(TypeTag::ZipNs),
         _ => None,
     }
 }
