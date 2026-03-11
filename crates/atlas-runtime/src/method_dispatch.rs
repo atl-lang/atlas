@@ -516,11 +516,39 @@ fn resolve_http_ns_method(method_name: &str) -> Option<String> {
 /// Resolve Net.method() → stdlib function name.
 fn resolve_net_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
+        // TCP
         "tcpConnect" => "tcpConnect",
         "tcpListen" => "tcpListen",
         "tcpWrite" => "tcpWrite",
         "tcpRead" => "tcpRead",
+        "tcpReadBytes" => "tcpReadBytes",
         "tcpClose" => "tcpClose",
+        "tcpSetTimeout" => "tcpSetTimeout",
+        "tcpSetNodelay" => "tcpSetNodelay",
+        "tcpLocalAddr" => "tcpLocalAddr",
+        "tcpRemoteAddr" => "tcpRemoteAddr",
+        "tcpAccept" => "tcpAccept",
+        "tcpListenerAddr" => "tcpListenerAddr",
+        "tcpListenerClose" => "tcpListenerClose",
+        // UDP
+        "udpBind" => "udpBind",
+        "udpSend" => "udpSend",
+        "udpReceive" => "udpReceive",
+        "udpClose" => "udpClose",
+        "udpLocalAddr" => "udpLocalAddr",
+        "udpSetTimeout" => "udpSetTimeout",
+        // TLS
+        "tlsConnect" => "tlsConnect",
+        "tlsRead" => "tlsRead",
+        "tlsWrite" => "tlsWrite",
+        "tlsClose" => "tlsClose",
+        // WebSocket
+        "wsConnect" => "wsConnect",
+        "wsSend" => "wsSend",
+        "wsSendBinary" => "wsSendBinary",
+        "wsReceive" => "wsReceive",
+        "wsClose" => "wsClose",
+        "wsPing" => "wsPing",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -779,6 +807,39 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "httpNsPut" => Some("http.put(url, body?, options?)"),
         "httpNsDelete" => Some("http.delete(url, options?)"),
         "httpNsPatch" => Some("http.patch(url, body?, options?)"),
+        // Net namespace — TCP (B29)
+        "tcpConnect" => Some("net.tcpConnect(addr)"),
+        "tcpListen" => Some("net.tcpListen(addr)"),
+        "tcpWrite" => Some("net.tcpWrite(conn, data)"),
+        "tcpRead" => Some("net.tcpRead(conn)"),
+        "tcpReadBytes" => Some("net.tcpReadBytes(conn, n)"),
+        "tcpClose" => Some("net.tcpClose(conn)"),
+        "tcpSetTimeout" => Some("net.tcpSetTimeout(conn, ms)"),
+        "tcpSetNodelay" => Some("net.tcpSetNodelay(conn, flag)"),
+        "tcpLocalAddr" => Some("net.tcpLocalAddr(conn)"),
+        "tcpRemoteAddr" => Some("net.tcpRemoteAddr(conn)"),
+        "tcpAccept" => Some("net.tcpAccept(listener)"),
+        "tcpListenerAddr" => Some("net.tcpListenerAddr(listener)"),
+        "tcpListenerClose" => Some("net.tcpListenerClose(listener)"),
+        // Net namespace — UDP (B29)
+        "udpBind" => Some("net.udpBind(addr)"),
+        "udpSend" => Some("net.udpSend(socket, addr, data)"),
+        "udpReceive" => Some("net.udpReceive(socket)"),
+        "udpClose" => Some("net.udpClose(socket)"),
+        "udpLocalAddr" => Some("net.udpLocalAddr(socket)"),
+        "udpSetTimeout" => Some("net.udpSetTimeout(socket, ms)"),
+        // Net namespace — TLS (B29)
+        "tlsConnect" => Some("net.tlsConnect(host, port)"),
+        "tlsWrite" => Some("net.tlsWrite(conn, data)"),
+        "tlsRead" => Some("net.tlsRead(conn)"),
+        "tlsClose" => Some("net.tlsClose(conn)"),
+        // Net namespace — WebSocket (B29)
+        "wsConnect" => Some("net.wsConnect(url)"),
+        "wsSend" => Some("net.wsSend(conn, data)"),
+        "wsSendBinary" => Some("net.wsSendBinary(conn, data)"),
+        "wsReceive" => Some("net.wsReceive(conn)"),
+        "wsClose" => Some("net.wsClose(conn)"),
+        "wsPing" => Some("net.wsPing(conn)"),
         _ => None,
     }
 }

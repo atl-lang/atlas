@@ -94,8 +94,16 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         // Http namespace — options-object API (B28). All accept optional map as last arg.
         // Use None (skip arity) so optional body/options args are not rejected.
         ("http", "get" | "post" | "put" | "delete" | "patch") => None,
-        // Net namespace — variadic / complex → skip
-        ("net", "tcpConnect" | "tcpListen") => None,
+        // Net namespace — variadic / complex → skip arity check
+        (
+            "net",
+            "tcpConnect" | "tcpListen" | "tcpWrite" | "tcpRead" | "tcpReadBytes" | "tcpClose"
+            | "tcpSetTimeout" | "tcpSetNodelay" | "tcpLocalAddr" | "tcpRemoteAddr" | "tcpAccept"
+            | "tcpListenerAddr" | "tcpListenerClose" | "udpBind" | "udpSend" | "udpReceive"
+            | "udpClose" | "udpLocalAddr" | "udpSetTimeout" | "tlsConnect" | "tlsRead" | "tlsWrite"
+            | "tlsClose" | "wsConnect" | "wsSend" | "wsSendBinary" | "wsReceive" | "wsClose"
+            | "wsPing",
+        ) => None,
         // Io namespace
         ("io", "readLine") => Some(vec![]),
         ("io", "readLinePrompt") => Some(vec![str.clone()]),
@@ -259,11 +267,28 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
-        // Net namespace
-        ("net", "tcpConnect" | "tcpListen") => Type::Generic {
-            name: "Result".to_string(),
-            type_args: vec![Type::Unknown, Type::String],
-        },
+        // Net namespace — connection/bind methods return Result<Unknown, String>
+        ("net", "tcpConnect" | "tcpListen" | "udpBind" | "tlsConnect" | "wsConnect") => {
+            Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Unknown, Type::String],
+            }
+        }
+        // Net namespace — read methods return String
+        ("net", "tcpRead" | "tcpReadBytes" | "tlsRead" | "wsReceive" | "udpReceive") => {
+            Type::String
+        }
+        // Net namespace — addr methods return String
+        ("net", "tcpLocalAddr" | "tcpRemoteAddr" | "tcpListenerAddr" | "udpLocalAddr") => {
+            Type::String
+        }
+        // Net namespace — void methods (write, close, set*)
+        (
+            "net",
+            "tcpWrite" | "tcpClose" | "tcpSetTimeout" | "tcpSetNodelay" | "tcpListenerClose"
+            | "tcpAccept" | "udpSend" | "udpClose" | "udpSetTimeout" | "tlsWrite" | "tlsClose"
+            | "wsSend" | "wsSendBinary" | "wsClose" | "wsPing",
+        ) => Type::Null,
         // Io namespace
         ("io", "readLine" | "readLinePrompt") => Type::String,
         // Console namespace — all methods return void (Null)

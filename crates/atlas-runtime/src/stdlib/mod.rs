@@ -1939,10 +1939,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // Networking TCP/UDP/TLS (feature = "http") — TLS needs rustls/aws-lc-sys
+        // Networking TCP/UDP/TLS/WS — canonical access via net.* namespace (B29).
+        // Functions registered under original camelCase keys so net.* dispatch
+        // can route to them. Bare global calls are blocked at typechecker via
+        // deprecated_global_replacement() which emits AT9000.
         // ====================================================================
         #[cfg(feature = "http")]
         {
+            // TCP
             m.insert("tcpConnect", |a, s, sec, _| net::tcp_connect(a, s, sec));
             m.insert("tcpWrite", |a, s, _, _| net::tcp_write(a, s));
             m.insert("tcpRead", |a, s, _, _| net::tcp_read(a, s));
@@ -1958,16 +1962,25 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             m.insert("tcpListenerClose", |a, s, _, _| {
                 net::tcp_listener_close(a, s)
             });
+            // UDP
             m.insert("udpBind", |a, s, sec, _| net::udp_bind(a, s, sec));
             m.insert("udpSend", |a, s, _, _| net::udp_send(a, s));
             m.insert("udpReceive", |a, s, _, _| net::udp_receive(a, s));
             m.insert("udpSetTimeout", |a, s, _, _| net::udp_set_timeout(a, s));
             m.insert("udpClose", |a, s, _, _| net::udp_close(a, s));
             m.insert("udpLocalAddr", |a, s, _, _| net::udp_local_addr(a, s));
+            // TLS
             m.insert("tlsConnect", |a, s, sec, _| net::tls_connect(a, s, sec));
             m.insert("tlsWrite", |a, s, _, _| net::tls_write(a, s));
             m.insert("tlsRead", |a, s, _, _| net::tls_read(a, s));
             m.insert("tlsClose", |a, s, _, _| net::tls_close(a, s));
+            // WebSocket
+            m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
+            m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
+            m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
+            m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
+            m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
+            m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
         }
 
         // ====================================================================
@@ -2000,18 +2013,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             sync::atomic_compare_exchange(a, s)
         });
 
-        // ====================================================================
-        // WebSocket (feature = "http") — needs tungstenite + TLS
-        // ====================================================================
-        #[cfg(feature = "http")]
-        {
-            m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
-            m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
-            m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
-            m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
-            m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
-            m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
-        }
+        // WebSocket bare globals relocated above into the net namespace block (B29)
 
         // ====================================================================
         // snake_case aliases (H-082: canonical names)
