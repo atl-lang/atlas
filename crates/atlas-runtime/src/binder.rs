@@ -27,6 +27,9 @@ pub struct Binder {
     /// Struct declarations collected in pre-pass (name → StructDecl), so that
     /// `resolve_type_ref` can resolve named struct types before Phase 2 processes them.
     struct_decls: HashMap<String, StructDecl>,
+    /// Enum names collected in pre-pass, so that `resolve_type_ref` can resolve
+    /// named enum types in function signatures before Phase 2 processes them.
+    enum_names: HashSet<String>,
 }
 
 impl Binder {
@@ -38,6 +41,7 @@ impl Binder {
             type_param_scopes: Vec::new(),
             type_alias_stack: Vec::new(),
             struct_decls: HashMap::new(),
+            enum_names: HashSet::new(),
         }
     }
 
@@ -49,6 +53,7 @@ impl Binder {
             type_param_scopes: Vec::new(),
             type_alias_stack: Vec::new(),
             struct_decls: HashMap::new(),
+            enum_names: HashSet::new(),
         }
     }
 
@@ -670,18 +675,24 @@ impl Binder {
                     self.struct_decls
                         .insert(decl.name.name.clone(), decl.clone());
                 }
-                Item::Export(export_decl) => {
-                    if let ExportItem::Struct(decl) = &export_decl.item {
+                Item::Enum(decl) => {
+                    self.enum_names.insert(decl.name.name.clone());
+                }
+                Item::Export(export_decl) => match &export_decl.item {
+                    ExportItem::Struct(decl) => {
                         self.struct_decls
                             .insert(decl.name.name.clone(), decl.clone());
                     }
-                }
+                    ExportItem::Enum(decl) => {
+                        self.enum_names.insert(decl.name.name.clone());
+                    }
+                    _ => {}
+                },
                 _ => {}
             }
         }
-        // Also include any struct types that were imported from other modules
-        // (added to struct_exports during bind_import pre-pass).
-        // These will be populated after bind_import runs, so we refresh in resolve_type_ref.
+        // Imported enum/struct types (from bind_import pre-pass) are added to
+        // struct_exports / enum_exports on the symbol table — resolve_type_ref checks those too.
     }
 
     fn collect_type_aliases(&mut self, program: &Program) {
@@ -1357,6 +1368,17 @@ impl Binder {
                             })
                             .collect();
                         return Type::Structural { members };
+                    }
+
+                    // Check if it's an enum type — pre-pass set or imported enum exports.
+                    let is_enum = self.enum_names.contains(name)
+                        || self.symbol_table.get_enum_exports().contains_key(name);
+                    if is_enum {
+                        // Enums use the same Generic representation the typechecker uses.
+                        return Type::Generic {
+                            name: name.clone(),
+                            type_args: vec![],
+                        };
                     }
 
                     // Unknown type - will be caught by typechecker
