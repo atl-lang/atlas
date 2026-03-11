@@ -401,7 +401,7 @@ impl Type {
             }
             Type::TypeParameter { name } => {
                 if name == ANY_TYPE_PARAM {
-                    "any".to_string()
+                    "_".to_string()
                 } else {
                     name.clone()
                 }
