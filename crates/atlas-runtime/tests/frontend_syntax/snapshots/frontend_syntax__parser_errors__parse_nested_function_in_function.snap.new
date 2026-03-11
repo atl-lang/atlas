@@ -1,0 +1,134 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+assertion_line: 68
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+          file: "<input>"
+      attributes: []
+      is_async: false
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 21
+            end: 27
+            file: "<input>"
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: helper
+                span:
+                  start: 45
+                  end: 51
+                  file: "<input>"
+              attributes: []
+              is_async: false
+              type_params: []
+              params:
+                - name:
+                    name: x
+                    span:
+                      start: 59
+                      end: 60
+                      file: "<input>"
+                  type_ref:
+                    Named:
+                      - number
+                      - start: 62
+                        end: 68
+                        file: "<input>"
+                  ownership: Borrow
+                  ownership_explicit: true
+                  mutable: false
+                  span:
+                    start: 52
+                    end: 68
+                    file: "<input>"
+              return_type:
+                Named:
+                  - number
+                  - start: 71
+                    end: 77
+                    file: "<input>"
+              return_ownership: ~
+              predicate: ~
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Binary:
+                          op: Mul
+                          left:
+                            Identifier:
+                              name: x
+                              span:
+                                start: 103
+                                end: 104
+                                file: "<input>"
+                          right:
+                            Literal:
+                              - Number: 2
+                              - start: 107
+                                end: 108
+                                file: "<input>"
+                          span:
+                            start: 103
+                            end: 108
+                            file: "<input>"
+                      span:
+                        start: 96
+                        end: 109
+                        file: "<input>"
+                tail_expr: ~
+                span:
+                  start: 78
+                  end: 123
+                  file: "<input>"
+              span:
+                start: 42
+                end: 123
+                file: "<input>"
+          - Return:
+              value:
+                Call:
+                  callee:
+                    Identifier:
+                      name: helper
+                      span:
+                        start: 143
+                        end: 149
+                        file: "<input>"
+                  args:
+                    - Literal:
+                        - Number: 21
+                        - start: 150
+                          end: 152
+                          file: "<input>"
+                  span:
+                    start: 143
+                    end: 153
+                    file: "<input>"
+              span:
+                start: 136
+                end: 154
+                file: "<input>"
+        tail_expr: ~
+        span:
+          start: 28
+          end: 164
+          file: "<input>"
+      span:
+        start: 9
+        end: 164
+        file: "<input>"

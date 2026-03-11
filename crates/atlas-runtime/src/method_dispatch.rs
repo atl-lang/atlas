@@ -503,12 +503,11 @@ fn resolve_path_ns_method(method_name: &str) -> Option<String> {
 /// Resolve Http.method() → stdlib function name.
 fn resolve_http_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "get" => "httpRequestGet",
-        "post" => "httpRequestPost",
-        "put" => "httpRequestPut",
-        "delete" => "httpRequestDelete",
-        "patch" => "httpRequestPatch",
-        "request" => "httpRequest",
+        "get" => "httpNsGet",
+        "post" => "httpNsPost",
+        "put" => "httpNsPut",
+        "delete" => "httpNsDelete",
+        "patch" => "httpNsPatch",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -774,11 +773,12 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "hexDecode" => Some("encoding.hexDecode(s)"),
         "urlEncode" => Some("encoding.urlEncode(s)"),
         "urlDecode" => Some("encoding.urlDecode(s)"),
-        // Http
-        "httpRequestGet" => Some("Http.get(url)"),
-        "httpRequestPost" => Some("Http.post(url, body)"),
-        "httpRequestPut" => Some("Http.put(url, body)"),
-        "httpRequestDelete" => Some("Http.delete(url)"),
+        // Http — options-object API (B28)
+        "httpNsGet" => Some("http.get(url, options?)"),
+        "httpNsPost" => Some("http.post(url, body?, options?)"),
+        "httpNsPut" => Some("http.put(url, body?, options?)"),
+        "httpNsDelete" => Some("http.delete(url, options?)"),
+        "httpNsPatch" => Some("http.patch(url, body?, options?)"),
         _ => None,
     }
 }

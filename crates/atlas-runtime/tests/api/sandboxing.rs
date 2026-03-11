@@ -440,7 +440,7 @@ fn test_allow_io_true_network_false_blocks_http() {
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
 
     // HTTP request should be blocked even though IO is allowed
-    let result = runtime.eval(r#"httpGet("https://example.com")"#);
+    let result = runtime.eval(r#"http.get("https://example.com")"#);
 
     // Should fail with security/permission error
     assert!(
@@ -465,7 +465,7 @@ fn test_allow_io_true_network_false_blocks_http_vm() {
     let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
 
     // HTTP request should be blocked even though IO is allowed
-    let result = runtime.eval(r#"httpGet("https://example.com")"#);
+    let result = runtime.eval(r#"http.get("https://example.com")"#);
 
     // Should fail with security/permission error
     assert!(
@@ -534,6 +534,6 @@ fn test_neither_permission_blocks_both() {
     assert!(fs_result.is_err(), "Filesystem should be blocked");
 
     // HTTP should also be blocked
-    let http_result = runtime.eval(r#"httpGet("https://example.com")"#);
+    let http_result = runtime.eval(r#"http.get("https://example.com")"#);
     assert!(http_result.is_err(), "HTTP should be blocked");
 }

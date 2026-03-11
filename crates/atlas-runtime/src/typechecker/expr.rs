@@ -14,7 +14,7 @@ use std::collections::{HashMap, HashSet};
 fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
     let str = Type::String;
     let num = Type::Number;
-    let json = Type::JsonValue;
+    let _json = Type::JsonValue;
     let str_arr = Type::Array(Box::new(Type::String));
     match (ns, method) {
         // Json namespace
@@ -91,10 +91,9 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
             "base64Encode" | "base64Decode" | "base64UrlEncode" | "base64UrlDecode" | "hexEncode"
             | "hexDecode" | "urlEncode" | "urlDecode",
         ) => Some(vec![str.clone()]),
-        // Http namespace — get/delete take url only; post/put take url+body; request is variadic
-        ("http", "get" | "delete" | "patch") => Some(vec![str.clone()]),
-        ("http", "post" | "put") => Some(vec![str.clone(), json]),
-        ("http", "request") => None,
+        // Http namespace — options-object API (B28). All accept optional map as last arg.
+        // Use None (skip arity) so optional body/options args are not rejected.
+        ("http", "get" | "post" | "put" | "delete" | "patch") => None,
         // Net namespace — variadic / complex → skip
         ("net", "tcpConnect" | "tcpListen") => None,
         // Io namespace
@@ -249,8 +248,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             "base64Encode" | "base64Decode" | "base64UrlEncode" | "base64UrlDecode" | "hexEncode"
             | "hexDecode" | "urlEncode" | "urlDecode",
         ) => Type::String,
-        // Http namespace — returns Result<HttpResponse, string> (H-231)
-        ("http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
+        // Http namespace — returns Result<HttpResponse, string> (B28 options-object API)
+        ("http", "get" | "post" | "put" | "delete" | "patch") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![
                 Type::Generic {

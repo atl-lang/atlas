@@ -1184,63 +1184,20 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         #[cfg(feature = "http")]
         {
-            m.insert("httpRequest", |a, s, _, _| http::http_request(a, s));
-            m.insert("httpRequestGet", |a, s, _, _| http::http_request_get(a, s));
-            m.insert("httpRequestPost", |a, s, _, _| {
-                http::http_request_post(a, s)
+            // B28: options-object namespace API — all bare http globals removed
+            m.insert("httpNsGet", |a, s, sec, _| http::http_ns_get(a, s, sec));
+            m.insert("httpNsPost", |a, s, sec, _| http::http_ns_post(a, s, sec));
+            m.insert("httpNsPut", |a, s, sec, _| http::http_ns_put(a, s, sec));
+            m.insert("httpNsDelete", |a, s, sec, _| {
+                http::http_ns_delete(a, s, sec)
             });
-            m.insert("httpRequestPut", |a, s, _, _| http::http_request_put(a, s));
-            m.insert("httpRequestDelete", |a, s, _, _| {
-                http::http_request_delete(a, s)
-            });
-            m.insert("httpRequestPatch", |a, s, _, _| {
-                http::http_request_patch(a, s)
-            });
-            m.insert("httpSetHeader", |a, s, _, _| http::http_set_header(a, s));
-            m.insert("httpSetBody", |a, s, _, _| http::http_set_body(a, s));
-            m.insert("httpSetTimeout", |a, s, _, _| http::http_set_timeout(a, s));
-            m.insert("httpSetQuery", |a, s, _, _| http::http_set_query(a, s));
-            m.insert("httpSetFollowRedirects", |a, s, _, _| {
-                http::http_set_follow_redirects(a, s)
-            });
-            m.insert("httpSetMaxRedirects", |a, s, _, _| {
-                http::http_set_max_redirects(a, s)
-            });
-            m.insert("httpSetUserAgent", |a, s, _, _| {
-                http::http_set_user_agent(a, s)
-            });
-            m.insert("httpSetAuth", |a, s, _, _| http::http_set_auth(a, s));
+            m.insert("httpNsPatch", |a, s, sec, _| http::http_ns_patch(a, s, sec));
+            // HttpResponse instance method helpers (used by method_dispatch)
             m.insert("httpStatus", |a, s, _, _| http::http_status(a, s));
             m.insert("httpBody", |a, s, _, _| http::http_body(a, s));
-            m.insert("httpHeader", |a, s, _, _| http::http_header(a, s));
             m.insert("httpHeaders", |a, s, _, _| http::http_headers(a, s));
             m.insert("httpUrl", |a, s, _, _| http::http_url(a, s));
             m.insert("httpIsSuccess", |a, s, _, _| http::http_is_success(a, s));
-            m.insert("httpStatusText", |a, s, _, _| http::http_status_text(a, s));
-            m.insert("httpContentType", |a, s, _, _| {
-                http::http_content_type(a, s)
-            });
-            m.insert("httpContentLength", |a, s, _, _| {
-                http::http_content_length(a, s)
-            });
-            m.insert("httpIsRedirect", |a, s, _, _| http::http_is_redirect(a, s));
-            m.insert("httpIsClientError", |a, s, _, _| {
-                http::http_is_client_error(a, s)
-            });
-            m.insert("httpIsServerError", |a, s, _, _| {
-                http::http_is_server_error(a, s)
-            });
-            m.insert("httpSend", |a, s, sec, _| http::http_send(a, s, sec));
-            m.insert("httpGet", |a, s, sec, _| http::http_get(a, s, sec));
-            m.insert("httpPost", |a, s, sec, _| http::http_post(a, s, sec));
-            m.insert("httpPut", |a, s, sec, _| http::http_put(a, s, sec));
-            m.insert("httpDelete", |a, s, sec, _| http::http_delete(a, s, sec));
-            m.insert("httpPatch", |a, s, sec, _| http::http_patch(a, s, sec));
-            m.insert("httpPostJson", |a, s, sec, _| {
-                http::http_post_json(a, s, sec)
-            });
-            m.insert("httpParseJson", |a, s, _, _| http::http_parse_json(a, s));
-            m.insert("httpGetJson", |a, s, sec, _| http::http_get_json(a, s, sec));
             m.insert("httpCheckPermission", |a, s, sec, _| {
                 http::http_check_permission(a, s, sec)
             });

@@ -1,0 +1,96 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+assertion_line: 186
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+          file: "<input>"
+      attributes: []
+      is_async: false
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - number
+          - start: 21
+            end: 27
+            file: "<input>"
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - FunctionDecl:
+              name:
+                name: get_value
+                span:
+                  start: 45
+                  end: 54
+                  file: "<input>"
+              attributes: []
+              is_async: false
+              type_params: []
+              params: []
+              return_type:
+                Named:
+                  - number
+                  - start: 58
+                    end: 64
+                    file: "<input>"
+              return_ownership: ~
+              predicate: ~
+              body:
+                statements:
+                  - Return:
+                      value:
+                        Literal:
+                          - Number: 42
+                          - start: 90
+                            end: 92
+                            file: "<input>"
+                      span:
+                        start: 83
+                        end: 93
+                        file: "<input>"
+                tail_expr: ~
+                span:
+                  start: 65
+                  end: 107
+                  file: "<input>"
+              span:
+                start: 42
+                end: 107
+                file: "<input>"
+          - Return:
+              value:
+                Call:
+                  callee:
+                    Identifier:
+                      name: get_value
+                      span:
+                        start: 127
+                        end: 136
+                        file: "<input>"
+                  args: []
+                  span:
+                    start: 127
+                    end: 138
+                    file: "<input>"
+              span:
+                start: 120
+                end: 139
+                file: "<input>"
+        tail_expr: ~
+        span:
+          start: 28
+          end: 149
+          file: "<input>"
+      span:
+        start: 9
+        end: 149
+        file: "<input>"

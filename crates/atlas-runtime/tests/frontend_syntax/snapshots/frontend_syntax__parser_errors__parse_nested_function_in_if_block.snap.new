@@ -1,0 +1,134 @@
+---
+source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
+assertion_line: 85
+expression: program
+---
+items:
+  - Function:
+      name:
+        name: outer
+        span:
+          start: 12
+          end: 17
+          file: "<input>"
+      attributes: []
+      is_async: false
+      type_params: []
+      params: []
+      return_type:
+        Named:
+          - void
+          - start: 21
+            end: 25
+            file: "<input>"
+      return_ownership: ~
+      predicate: ~
+      body:
+        statements:
+          - If:
+              cond:
+                Literal:
+                  - Bool: true
+                  - start: 43
+                    end: 47
+                    file: "<input>"
+              then_block:
+                statements:
+                  - FunctionDecl:
+                      name:
+                        name: helper
+                        span:
+                          start: 69
+                          end: 75
+                          file: "<input>"
+                      attributes: []
+                      is_async: false
+                      type_params: []
+                      params: []
+                      return_type:
+                        Named:
+                          - void
+                          - start: 79
+                            end: 83
+                            file: "<input>"
+                      return_ownership: ~
+                      predicate: ~
+                      body:
+                        statements:
+                          - Expr:
+                              expr:
+                                Member:
+                                  target:
+                                    Identifier:
+                                      name: console
+                                      span:
+                                        start: 106
+                                        end: 113
+                                        file: "<input>"
+                                  member:
+                                    name: log
+                                    span:
+                                      start: 114
+                                      end: 117
+                                      file: "<input>"
+                                  args:
+                                    - Literal:
+                                        - String: hello
+                                        - start: 118
+                                          end: 125
+                                          file: "<input>"
+                                  span:
+                                    start: 106
+                                    end: 126
+                                    file: "<input>"
+                              span:
+                                start: 106
+                                end: 127
+                                file: "<input>"
+                        tail_expr: ~
+                        span:
+                          start: 84
+                          end: 145
+                          file: "<input>"
+                      span:
+                        start: 66
+                        end: 145
+                        file: "<input>"
+                  - Expr:
+                      expr:
+                        Call:
+                          callee:
+                            Identifier:
+                              name: helper
+                              span:
+                                start: 162
+                                end: 168
+                                file: "<input>"
+                          args: []
+                          span:
+                            start: 162
+                            end: 170
+                            file: "<input>"
+                      span:
+                        start: 162
+                        end: 171
+                        file: "<input>"
+                tail_expr: ~
+                span:
+                  start: 48
+                  end: 185
+                  file: "<input>"
+              else_block: ~
+              span:
+                start: 40
+                end: 185
+                file: "<input>"
+        tail_expr: ~
+        span:
+          start: 26
+          end: 195
+          file: "<input>"
+      span:
+        start: 9
+        end: 195
+        file: "<input>"
