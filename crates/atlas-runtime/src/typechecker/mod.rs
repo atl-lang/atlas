@@ -2827,43 +2827,99 @@ impl<'a> TypeChecker<'a> {
         use crate::ast::Expr;
         use crate::method_dispatch;
 
-        // Only bare function calls can be CoW mutation builtins.
-        let Expr::Call(call) = expr else { return };
-        let Expr::Identifier(id) = call.callee.as_ref() else {
-            return;
-        };
-        let name = id.name.as_str();
+        match expr {
+            // Free-function style: arrayPush(arr, x) — uses canonical builtin names
+            Expr::Call(call) => {
+                let Expr::Identifier(id) = call.callee.as_ref() else {
+                    return;
+                };
+                let name = id.name.as_str();
+                let is_cow = method_dispatch::is_array_mutating_collection(name)
+                    || method_dispatch::is_array_mutating_pair(name)
+                    || method_dispatch::is_collection_mutating_simple(name)
+                    || method_dispatch::is_collection_mutating_pair(name);
+                if !is_cow {
+                    return;
+                }
+                let collection_name = call
+                    .args
+                    .first()
+                    .and_then(|e| {
+                        if let Expr::Identifier(id) = e {
+                            Some(id.name.as_str())
+                        } else {
+                            None
+                        }
+                    })
+                    .unwrap_or("collection");
+                self.diagnostics.push(
+                    error_codes::DISCARDED_COW_RESULT
+                        .emit(call.span)
+                        .arg("method", name)
+                        .arg("collection", collection_name)
+                        .build()
+                        .with_label("result discarded"),
+                );
+            }
 
-        let is_cow = method_dispatch::is_array_mutating_collection(name)
-            || method_dispatch::is_array_mutating_pair(name)
-            || method_dispatch::is_collection_mutating_simple(name)
-            || method_dispatch::is_collection_mutating_pair(name);
+            // Method-call style: arr.push(x) — method name differs from builtin name
+            Expr::Member(member) if member.args.is_some() => {
+                let method = member.member.name.as_str();
 
-        if !is_cow {
-            return;
-        }
+                // CoW method names on any collection type (method syntax)
+                let is_cow_method = matches!(
+                    method,
+                    // Array CoW methods
+                    "push" | "pop" | "shift" | "unshift" | "reverse" | "sort" | "concat"
+                    // HashMap CoW methods
+                    | "put" | "remove" | "delete" | "clear"
+                    // HashSet CoW methods
+                    | "add"
+                    // Queue CoW methods
+                    | "enqueue" | "dequeue"
+                );
+                if !is_cow_method {
+                    return;
+                }
 
-        // Try to get the collection variable name from arg[0] for a better message.
-        let collection_name = call
-            .args
-            .first()
-            .and_then(|e| {
-                if let Expr::Identifier(id) = e {
-                    Some(id.name.as_str())
+                // Only warn when receiver is provably a collection type —
+                // look up the identifier from the symbol table without re-evaluating.
+                let receiver_type = if let Expr::Identifier(id) = member.target.as_ref() {
+                    self.symbol_table
+                        .lookup(&id.name)
+                        .map(|sym| sym.ty.normalized())
                 } else {
                     None
+                };
+                let Some(recv_ty) = receiver_type else { return };
+                let is_collection = match &recv_ty {
+                    Type::Array(_) => true,
+                    Type::Generic { name, .. } => {
+                        matches!(name.as_str(), "HashMap" | "HashSet" | "Queue" | "Stack")
+                    }
+                    _ => false,
+                };
+                if !is_collection {
+                    return;
                 }
-            })
-            .unwrap_or("collection");
 
-        self.diagnostics.push(
-            error_codes::DISCARDED_COW_RESULT
-                .emit(call.span)
-                .arg("method", name)
-                .arg("collection", collection_name)
-                .build()
-                .with_label("result discarded"),
-        );
+                let collection_name = if let Expr::Identifier(id) = member.target.as_ref() {
+                    id.name.as_str()
+                } else {
+                    "collection"
+                };
+                self.diagnostics.push(
+                    error_codes::DISCARDED_COW_RESULT
+                        .emit(member.span)
+                        .arg("method", method)
+                        .arg("collection", collection_name)
+                        .build()
+                        .with_label("result discarded"),
+                );
+            }
+
+            _ => {}
+        }
     }
 
     /// Extract the element type T from Array<T> / T[]. Returns None for unrecognized types.
