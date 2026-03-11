@@ -5,6 +5,23 @@
 - **No MVP.** Complete implementations only. Do it right once.
 - **100% AI developed.** This project is built entirely by AI.
 
+## 🚨 Build Rule (NON-NEGOTIABLE — ONE binary, ONE command, always)
+
+**The ONLY valid build command:**
+```bash
+cargo build --release -p atlas-cli
+```
+
+**NEVER run:**
+- `cargo install` — creates a stale second copy in `~/.cargo/bin/`
+- `cargo build` (debug) — wrong profile, wrong output
+- `cargo build -p atlas-cli` (no `--release`) — wrong profile
+- Any copy/symlink/install step after build — not needed
+
+**Why:** `~/.cargo/bin/atlas` is a symlink → `target/release/atlas`. Building release is enough. `cargo install` overwrites the symlink with a real file, breaking the link and creating drift. This has happened repeatedly — it is now a hard rule.
+
+**After building:** the binary is immediately live at `atlas` in PATH. No install step.
+
 ## Atlas Identity (D-045 — read before ANY syntax or grammar decision)
 **"Atlas is TypeScript's module system and type annotations wrapped around Rust's runtime model."**
 
