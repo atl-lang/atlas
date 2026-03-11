@@ -17,8 +17,8 @@ fn main() {
         }
     };
 
-    let bytecode = match atlas_launcher::self_path::find_appended_bytecode(&exe_path) {
-        Ok(Some(bytes)) => bytes,
+    let modules = match atlas_launcher::self_path::find_appended_bytecode(&exe_path) {
+        Ok(Some(modules)) => modules,
         Ok(None) => {
             eprintln!(
                 "atlas: this binary has no embedded Atlas program. It may be corrupted.\n\
@@ -32,6 +32,6 @@ fn main() {
         }
     };
 
-    let exit_code = execute::run_bytecode(&bytecode);
+    let exit_code = execute::run_bytecodes(&modules);
     std::process::exit(exit_code);
 }

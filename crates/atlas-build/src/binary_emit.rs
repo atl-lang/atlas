@@ -1,14 +1,21 @@
 //! Native binary packaging — wraps Atlas bytecode in a self-contained OS executable.
 //!
-//! Binary format (appended after the launcher binary):
-//!   [launcher_binary_bytes]
-//!   [ATLAS_BC_MAGIC: 16 bytes]   ← unique sentinel
-//!   [bytecode_len: u64 LE]       ← 8 bytes
-//!   [bytecode_bytes: N bytes]
+//! Multi-module archive format (trailer at end of file, D-048):
+//!
+//!   [launcher_binary]
+//!   [module_count: u32 LE]
+//!   for each module in dependency order:
+//!     [bytecode_len: u32 LE]
+//!     [bytecode_bytes]
+//!   [ATLAS_BC_MAGIC: 16 bytes]  ← sentinel
+//!   [payload_len: u64 LE]       ← byte count from module_count to before ATLAS_BC_MAGIC
+//!
+//! Modules are stored in build/dependency order: dependencies first, entry point last.
+//! The launcher executes them in order on a single VM so globals accumulate correctly.
 //!
 //! CRITICAL: ATLAS_BC_MAGIC must be byte-for-byte identical to the constant in
 //! crates/atlas-launcher/src/self_path.rs. Any divergence means the launcher
-//! will never find its bytecode. (D-048)
+//! will never find its payload. (D-048)
 
 use crate::error::{BuildError, BuildResult};
 use std::io::Write;
@@ -62,32 +69,48 @@ pub fn find_launcher_binary() -> Option<PathBuf> {
     None
 }
 
-/// Package a native binary: copy the launcher, then append the magic sentinel,
-/// bytecode length (u64 LE), and bytecode bytes.
+/// Package a native binary: copy the launcher, append the multi-module archive, and
+/// write the ATLAS_BC_MAGIC trailer.
 ///
+/// `module_bytecodes` must be in dependency order: dependencies first, entry point last.
 /// Sets executable permissions on Unix (mode 0o755).
 pub fn emit_native_binary(
     launcher_path: &Path,
-    bytecode: &[u8],
+    module_bytecodes: &[Vec<u8>],
     output_path: &Path,
 ) -> BuildResult<()> {
     // Copy the launcher binary to the output path
     std::fs::copy(launcher_path, output_path).map_err(|e| BuildError::io(output_path, e))?;
 
-    // Open in append mode and write: sentinel + len + bytecode
+    // Build the payload in memory so we can compute its length for the trailer
+    let mut payload: Vec<u8> = Vec::new();
+
+    // module_count (u32 LE)
+    let module_count = module_bytecodes.len() as u32;
+    payload.extend_from_slice(&module_count.to_le_bytes());
+
+    // for each module: [bytecode_len u32 LE][bytecode_bytes]
+    for bc in module_bytecodes {
+        let bc_len = bc.len() as u32;
+        payload.extend_from_slice(&bc_len.to_le_bytes());
+        payload.extend_from_slice(bc);
+    }
+
+    let payload_len = payload.len() as u64;
+
+    // Append payload + ATLAS_BC_MAGIC + payload_len (trailer)
     let mut file = std::fs::OpenOptions::new()
         .append(true)
         .open(output_path)
         .map_err(|e| BuildError::io(output_path, e))?;
 
+    file.write_all(&payload)
+        .map_err(|e| BuildError::io(output_path, e))?;
+
     file.write_all(&ATLAS_BC_MAGIC)
         .map_err(|e| BuildError::io(output_path, e))?;
 
-    let len_bytes = (bytecode.len() as u64).to_le_bytes();
-    file.write_all(&len_bytes)
-        .map_err(|e| BuildError::io(output_path, e))?;
-
-    file.write_all(bytecode)
+    file.write_all(&payload_len.to_le_bytes())
         .map_err(|e| BuildError::io(output_path, e))?;
 
     drop(file);

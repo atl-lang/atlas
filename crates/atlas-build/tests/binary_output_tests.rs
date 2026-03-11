@@ -49,9 +49,11 @@ fn test_emit_native_binary_creates_executable() {
     std::fs::write(&launcher_path, fake_launcher).expect("write fake launcher");
 
     let bytecode = b"fake atlas bytecode payload for test";
+    let module_bytecodes = vec![bytecode.to_vec()];
     let output_path = temp_path("output");
 
-    emit_native_binary(&launcher_path, bytecode, &output_path).expect("emit_native_binary");
+    emit_native_binary(&launcher_path, &module_bytecodes, &output_path)
+        .expect("emit_native_binary");
 
     // File must exist
     assert!(output_path.exists(), "output binary must exist");
@@ -97,7 +99,9 @@ fn test_find_appended_bytecode_roundtrip_via_emit() {
     std::fs::write(&launcher_path, b"fake_launcher_bytes").expect("write launcher");
 
     let output_path = temp_path("roundtrip_binary");
-    emit_native_binary(&launcher_path, known_bytecode, &output_path).expect("emit_native_binary");
+    let module_bytecodes = vec![known_bytecode.to_vec()];
+    emit_native_binary(&launcher_path, &module_bytecodes, &output_path)
+        .expect("emit_native_binary");
 
     // Now use the launcher's find_appended_bytecode to extract it back
     let extracted =
@@ -107,8 +111,10 @@ fn test_find_appended_bytecode_roundtrip_via_emit() {
         extracted.is_some(),
         "bytecode should be found in emitted binary"
     );
+    let modules = extracted.expect("already checked");
+    assert_eq!(modules.len(), 1);
     assert_eq!(
-        extracted.expect("already checked"),
+        modules[0],
         known_bytecode.as_slice(),
         "extracted bytecode must match original"
     );
