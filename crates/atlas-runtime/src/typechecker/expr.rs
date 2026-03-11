@@ -2380,6 +2380,9 @@ impl<'a> TypeChecker<'a> {
             Type::JsonValue => Some(crate::method_dispatch::TypeTag::JsonValue),
             Type::Array(_) => Some(crate::method_dispatch::TypeTag::Array),
             Type::String => Some(crate::method_dispatch::TypeTag::String),
+            // H-260: primitive instance methods (D-021 TypeScript parity)
+            Type::Number => Some(crate::method_dispatch::TypeTag::Number),
+            Type::Bool => Some(crate::method_dispatch::TypeTag::Bool),
             Type::Generic { ref name, .. } if name == "HashMap" => {
                 Some(crate::method_dispatch::TypeTag::HashMap)
             }

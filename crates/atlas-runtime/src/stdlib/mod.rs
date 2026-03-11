@@ -699,6 +699,18 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("parseFloat", |a, s, _, _| types::parse_float(a, s));
 
         // ====================================================================
+        // number instance methods (H-260 — D-021 TypeScript parity)
+        // ====================================================================
+        m.insert("numberToString", |a, s, _, _| types::number_to_string(a, s));
+        m.insert("numberToFixed", |a, s, _, _| types::number_to_fixed(a, s));
+        m.insert("numberToInt", |a, s, _, _| types::number_to_int(a, s));
+
+        // ====================================================================
+        // bool instance methods (H-260 — D-021 TypeScript parity)
+        // ====================================================================
+        m.insert("boolToString", |a, s, _, _| types::bool_to_string(a, s));
+
+        // ====================================================================
         // Option<T> constructors and helpers
         // ====================================================================
         m.insert("Some", |args, span, _, _| {
@@ -2173,6 +2185,12 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("toBool", "to_bool"),
             ("parseInt", "parse_int"),
             ("parseFloat", "parse_float"),
+            // number instance methods (H-260)
+            ("numberToString", "number_to_string"),
+            ("numberToFixed", "number_to_fixed"),
+            ("numberToInt", "number_to_int"),
+            // bool instance methods (H-260)
+            ("boolToString", "bool_to_string"),
             // File I/O — B26: bare ioReadLine/ioReadLinePrompt removed, ioNs* keys only
             ("ioNsReadLine", "io_read_line"),
             ("ioNsReadLinePrompt", "io_read_line_prompt"),

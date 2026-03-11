@@ -846,3 +846,103 @@ fn value_to_display_string(value: &Value) -> String {
         }
     }
 }
+
+// ============================================================================
+// number instance methods (H-260 — D-021 TypeScript parity)
+// ============================================================================
+
+/// number.toString() — canonical string representation (same as str(n)).
+pub fn number_to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("toString", 1, args.len(), span));
+    }
+    match &args[0] {
+        Value::Number(n) => Ok(Value::string(fmt_number(*n))),
+        other => Err(RuntimeError::TypeError {
+            msg: format!("toString: expected number, got {}", other.type_name()),
+            span,
+        }),
+    }
+}
+
+/// number.toFixed(digits) — format with N decimal places.
+/// Mirrors TypeScript's Number.prototype.toFixed().
+pub fn number_to_fixed(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 2 {
+        return Err(stdlib_arity_error("toFixed", 2, args.len(), span));
+    }
+    let n = match &args[0] {
+        Value::Number(n) => *n,
+        other => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "toFixed: expected number receiver, got {}",
+                    other.type_name()
+                ),
+                span,
+            })
+        }
+    };
+    let digits = match &args[1] {
+        Value::Number(d) => *d as usize,
+        other => {
+            return Err(RuntimeError::TypeError {
+                msg: format!(
+                    "toFixed: digits must be a number, got {}",
+                    other.type_name()
+                ),
+                span,
+            })
+        }
+    };
+    Ok(Value::string(format!("{:.prec$}", n, prec = digits)))
+}
+
+/// number.toInt() — truncate toward zero (Math.trunc equivalent).
+pub fn number_to_int(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("toInt", 1, args.len(), span));
+    }
+    match &args[0] {
+        Value::Number(n) => Ok(Value::Number(n.trunc())),
+        other => Err(RuntimeError::TypeError {
+            msg: format!("toInt: expected number, got {}", other.type_name()),
+            span,
+        }),
+    }
+}
+
+// ============================================================================
+// bool instance methods (H-260 — D-021 TypeScript parity)
+// ============================================================================
+
+/// bool.toString() — "true" or "false".
+pub fn bool_to_string(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("toString", 1, args.len(), span));
+    }
+    match &args[0] {
+        Value::Bool(b) => Ok(Value::string(if *b { "true" } else { "false" })),
+        other => Err(RuntimeError::TypeError {
+            msg: format!("toString: expected bool, got {}", other.type_name()),
+            span,
+        }),
+    }
+}
+
+/// Shared number formatting used by number_to_string and str().
+fn fmt_number(n: f64) -> String {
+    if n.is_nan() {
+        "NaN".to_string()
+    } else if n.is_infinite() {
+        if n > 0.0 {
+            "Infinity".to_string()
+        } else {
+            "-Infinity".to_string()
+        }
+    } else if n.fract() == 0.0 && n.abs() < 1e15 {
+        format!("{:.0}", n)
+    } else {
+        n.to_string()
+    }
+}

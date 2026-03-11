@@ -81,6 +81,10 @@ pub enum TypeTag {
     FutureValue,
     /// Static namespace: test.assert(), test.equal(), test.throws(), etc.
     TestNs,
+    /// Instance methods on number values: toString(), toFixed(), toInt()
+    Number,
+    /// Instance methods on bool values: toString()
+    Bool,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -128,7 +132,27 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::FutureNs => resolve_future_ns_method(method_name),
         TypeTag::FutureValue => resolve_future_instance_method(method_name),
         TypeTag::TestNs => resolve_test_ns_method(method_name),
+        TypeTag::Number => resolve_number_method(method_name),
+        TypeTag::Bool => resolve_bool_method(method_name),
     }
+}
+
+fn resolve_number_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "toString" => "numberToString",
+        "toFixed" => "numberToFixed",
+        "toInt" => "numberToInt",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+fn resolve_bool_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "toString" => "boolToString",
+        _ => return None,
+    };
+    Some(func_name.to_string())
 }
 
 /// Check if an identifier name is a static namespace sentinel.

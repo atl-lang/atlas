@@ -145,6 +145,14 @@ impl MethodTable {
         self.register("json", "as_bool", vec![], Type::Bool);
         self.register("json", "is_null", vec![], Type::Bool);
 
+        // number instance methods (H-260 — D-021 TypeScript parity)
+        self.register("number", "toString", vec![], Type::String);
+        self.register("number", "toFixed", vec![Type::Number], Type::String);
+        self.register("number", "toInt", vec![], Type::Number);
+
+        // bool instance methods (H-260 — D-021 TypeScript parity)
+        self.register("bool", "toString", vec![], Type::String);
+
         // String methods
         // Core methods
         self.register("string", "len", vec![], Type::Number);

@@ -680,6 +680,9 @@ impl Interpreter {
             Value::HttpResponse(_) => Some(crate::method_dispatch::TypeTag::HttpResponse),
             Value::ProcessOutput(_) => Some(crate::method_dispatch::TypeTag::ProcessOutput),
             Value::String(_) => Some(crate::method_dispatch::TypeTag::String),
+            // H-260: primitive instance methods (D-021 TypeScript parity)
+            Value::Number(_) => Some(crate::method_dispatch::TypeTag::Number),
+            Value::Bool(_) => Some(crate::method_dispatch::TypeTag::Bool),
             Value::HashMap(_) => Some(crate::method_dispatch::TypeTag::HashMap),
             Value::HashSet(_) => Some(crate::method_dispatch::TypeTag::HashSet),
             Value::Queue(_) => Some(crate::method_dispatch::TypeTag::Queue),

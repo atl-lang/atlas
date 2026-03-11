@@ -179,3 +179,72 @@ fn test_h193_error_pipeline_collects_all_phase_errors() {
         codes
     );
 }
+
+// ============================================================================
+// H-260: number and bool instance methods — TypeScript parity (D-021)
+// ============================================================================
+
+#[test]
+fn test_h260_number_tostring() {
+    assert_eval_string(
+        r#"
+fn main(): string {
+    let n: number = 42.0;
+    return n.toString();
+}
+"#,
+        "42",
+    );
+}
+
+#[test]
+fn test_h260_number_tofixed() {
+    assert_eval_string(
+        r#"
+fn main(): string {
+    let n: number = 3.14159;
+    return n.toFixed(2);
+}
+"#,
+        "3.14",
+    );
+}
+
+#[test]
+fn test_h260_number_toint() {
+    assert_eval_number(
+        r#"
+fn main(): number {
+    let n: number = 7.9;
+    return n.toInt();
+}
+"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_h260_bool_tostring_true() {
+    assert_eval_string(
+        r#"
+fn main(): string {
+    let b: bool = true;
+    return b.toString();
+}
+"#,
+        "true",
+    );
+}
+
+#[test]
+fn test_h260_bool_tostring_false() {
+    assert_eval_string(
+        r#"
+fn main(): string {
+    let b: bool = false;
+    return b.toString();
+}
+"#,
+        "false",
+    );
+}
