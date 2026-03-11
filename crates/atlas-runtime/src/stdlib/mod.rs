@@ -1904,6 +1904,11 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             sync::atomic_compare_exchange(a, s)
         });
 
+        // sync namespace factory functions (dispatch via sync.atomic(), sync.rwLock(), etc.)
+        m.insert("syncNsAtomic", |a, s, _, _| sync::atomic_new(a, s));
+        m.insert("syncNsRwLock", |a, s, _, _| sync::rwlock_new(a, s));
+        m.insert("syncNsSemaphore", |a, s, _, _| sync::semaphore_new(a, s));
+
         // ====================================================================
         // WebSocket (feature = "http") — needs tungstenite + TLS
         // ====================================================================

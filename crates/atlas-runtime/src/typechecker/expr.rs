@@ -92,6 +92,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // Io namespace
         ("Io", "readLine" | "readLinePrompt") => Type::String,
+        // sync namespace — factory functions return opaque handle arrays (tag + id pair)
+        ("sync", "atomic" | "rwLock" | "semaphore") => Type::Array(Box::new(Type::Unknown)),
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }

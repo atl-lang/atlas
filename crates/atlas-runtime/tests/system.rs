@@ -75,3 +75,5 @@ mod system_filesystem;
 mod system_path;
 #[path = "system/process.rs"]
 mod system_process;
+#[path = "system/sync.rs"]
+mod system_sync;

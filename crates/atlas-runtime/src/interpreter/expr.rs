@@ -697,6 +697,8 @@ impl Interpreter {
                     | crate::method_dispatch::TypeTag::NetNs
                     | crate::method_dispatch::TypeTag::CryptoNs
                     | crate::method_dispatch::TypeTag::RegexNs
+                    | crate::method_dispatch::TypeTag::IoNs
+                    | crate::method_dispatch::TypeTag::SyncNs
             );
             let mut args = if is_ns {
                 Vec::new()

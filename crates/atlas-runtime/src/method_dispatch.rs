@@ -43,6 +43,14 @@ pub enum TypeTag {
     RegexNs,
     /// Static namespace: Io.readLine(), Io.readLinePrompt(), etc.
     IoNs,
+    /// Static namespace: sync.atomic(), sync.rwLock(), sync.semaphore(), etc.
+    SyncNs,
+    /// Instance methods on atomic handle (returned by sync.atomic())
+    AtomicValue,
+    /// Instance methods on rwlock handle (returned by sync.rwLock())
+    RwLockValue,
+    /// Instance methods on semaphore handle (returned by sync.semaphore())
+    SemaphoreValue,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -71,6 +79,10 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
         TypeTag::RegexNs => resolve_regex_ns_method(method_name),
         TypeTag::IoNs => resolve_io_ns_method(method_name),
+        TypeTag::SyncNs => resolve_sync_ns_method(method_name),
+        TypeTag::AtomicValue => resolve_atomic_method(method_name),
+        TypeTag::RwLockValue => resolve_rwlock_method(method_name),
+        TypeTag::SemaphoreValue => resolve_semaphore_method(method_name),
     }
 }
 
@@ -90,6 +102,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "Crypto"
             | "Regex"
             | "Io"
+            | "sync"
     )
 }
 
@@ -108,6 +121,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "Crypto" => Some(TypeTag::CryptoNs),
         "Regex" => Some(TypeTag::RegexNs),
         "Io" => Some(TypeTag::IoNs),
+        "sync" => Some(TypeTag::SyncNs),
         _ => None,
     }
 }
@@ -664,6 +678,55 @@ fn resolve_io_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "readLine" => "ioReadLine",
         "readLinePrompt" => "ioReadLinePrompt",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve sync.method() → stdlib function name (factory namespace).
+/// D-049: namespace identifier is lowercase "sync".
+fn resolve_sync_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "atomic" => "syncNsAtomic",
+        "rwLock" => "syncNsRwLock",
+        "semaphore" => "syncNsSemaphore",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve atomic instance method → stdlib function name.
+fn resolve_atomic_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "get" => "atomicLoad",
+        "set" => "atomicStore",
+        "add" => "atomicAdd",
+        "sub" => "atomicSub",
+        "compareSwap" => "atomicCompareExchange",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve rwlock instance method → stdlib function name.
+fn resolve_rwlock_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "read" => "rwLockRead",
+        "write" => "rwLockWrite",
+        "tryRead" => "rwLockTryRead",
+        "tryWrite" => "rwLockTryWrite",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve semaphore instance method → stdlib function name.
+fn resolve_semaphore_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "acquire" => "semaphoreAcquire",
+        "tryAcquire" => "semaphoreTryAcquire",
+        "release" => "semaphoreRelease",
+        "available" => "semaphoreAvailable",
         _ => return None,
     };
     Some(func_name.to_string())
