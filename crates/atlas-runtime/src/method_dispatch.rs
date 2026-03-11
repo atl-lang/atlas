@@ -149,16 +149,6 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "regex"
             | "io"
             | "console"
-            | "Env"
-            | "File"
-            | "Process"
-            | "DateTime"
-            | "Path"
-            | "Http"
-            | "Net"
-            | "Crypto"
-            | "Regex"
-            | "Io"
             | "gzip"
             | "tar"
             | "zip"
@@ -186,16 +176,6 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "regex" => Some(TypeTag::RegexNs),
         "io" => Some(TypeTag::IoNs),
         "console" => Some(TypeTag::ConsoleNs),
-        "Env" => Some(TypeTag::EnvNs),
-        "File" => Some(TypeTag::FileNs),
-        "Process" => Some(TypeTag::ProcessNs),
-        "DateTime" => Some(TypeTag::DateTimeNs),
-        "Path" => Some(TypeTag::PathNs),
-        "Http" => Some(TypeTag::HttpNs),
-        "Net" => Some(TypeTag::NetNs),
-        "Crypto" => Some(TypeTag::CryptoNs),
-        "Regex" => Some(TypeTag::RegexNs),
-        "Io" => Some(TypeTag::IoNs),
         "gzip" => Some(TypeTag::GzipNs),
         "tar" => Some(TypeTag::TarNs),
         "zip" => Some(TypeTag::ZipNs),

@@ -87,3 +87,6 @@ mod system_process;
 mod system_sync;
 #[path = "system/task_ns.rs"]
 mod system_task_ns;
+
+#[path = "system/namespace_sweep.rs"]
+mod system_namespace_sweep;

@@ -166,14 +166,12 @@ impl Interpreter {
         interpreter.register_builtin("padStart", 3);
         interpreter.register_builtin("padEnd", 3);
 
-        // Static namespace sentinels (Json, Math, Env)
-        // These are immutable globals that eval_member uses to dispatch namespace calls.
+        // Static namespace sentinels — all canonical namespace names (D-049: lowercase, except Json/Math).
+        // eval_member resolves `ns.method()` by looking up the sentinel then dispatching via TypeTag.
         for ns in [
             "Json", "Math", "env", "file", "process", "datetime", "path", "http", "net", "crypto",
-            "regex", "io", "console", "Env", "File", "Process", "DateTime", "Path", "Http", "Net",
-            "Crypto", "Regex", "Io", "gzip", "tar", "zip", "task", "Json", "Math", "Env", "File",
-            "Process", "DateTime", "Path", "Http", "Net", "Crypto", "Regex", "Io", "sync",
-            "future", "test",
+            "encoding", "regex", "io", "console", "gzip", "tar", "zip", "task", "sync", "future",
+            "test",
         ] {
             let sentinel = crate::value::Value::Builtin(std::sync::Arc::from(
                 format!("__ns__{}", ns).as_str(),
