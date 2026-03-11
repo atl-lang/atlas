@@ -1886,8 +1886,46 @@ impl<'a> TypeChecker<'a> {
                     false
                 }
             }
+            // H-278: Expression statements that call functions returning `never` terminate
+            Stmt::Expr(expr_stmt) => self.expr_returns_never(&expr_stmt.expr),
             _ => false,
         }
+    }
+
+    /// Check if an expression evaluates to the `never` type (e.g., process.exit()).
+    /// This is used to determine if a statement terminates control flow.
+    fn expr_returns_never(&self, expr: &Expr) -> bool {
+        match expr {
+            // Namespace method call: process.exit(1), etc.
+            Expr::Member(member) => {
+                if member.args.is_some() {
+                    // It's a method call — check if it returns never
+                    if let Expr::Identifier(ns) = member.target.as_ref() {
+                        return self.namespace_method_returns_never(&ns.name, &member.member.name);
+                    }
+                }
+                false
+            }
+            // Direct function call — check if callee is a function returning never
+            Expr::Call(call) => {
+                if let Expr::Identifier(id) = call.callee.as_ref() {
+                    if let Some(symbol) = self.symbol_table.lookup(&id.name) {
+                        return symbol.ty.normalized() == Type::Never
+                            || matches!(symbol.ty.normalized(), Type::Function { return_type, .. } if *return_type == Type::Never);
+                    }
+                }
+                false
+            }
+            // Parenthesized expression
+            Expr::Group(group) => self.expr_returns_never(&group.expr),
+            _ => false,
+        }
+    }
+
+    /// Check if a namespace method call returns `never` type.
+    fn namespace_method_returns_never(&self, ns: &str, method: &str) -> bool {
+        // Currently only process.exit returns never
+        matches!((ns, method), ("process", "exit"))
     }
 
     /// Check a statement

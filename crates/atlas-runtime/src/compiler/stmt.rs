@@ -486,6 +486,26 @@ impl Compiler {
         match stmt {
             Stmt::Return(_) => true,
             Stmt::If(if_stmt) => self.if_always_returns(if_stmt),
+            // H-278: Expression statements that call functions returning `never` terminate
+            Stmt::Expr(expr_stmt) => Self::expr_returns_never(&expr_stmt.expr),
+            _ => false,
+        }
+    }
+
+    /// Check if an expression syntactically returns `never` (e.g., process.exit()).
+    fn expr_returns_never(expr: &Expr) -> bool {
+        match expr {
+            // Namespace method call: process.exit(...)
+            Expr::Member(member) => {
+                if member.args.is_some() {
+                    if let Expr::Identifier(ns) = member.target.as_ref() {
+                        return ns.name == "process" && member.member.name == "exit";
+                    }
+                }
+                false
+            }
+            // Parenthesized expression
+            Expr::Group(group) => Self::expr_returns_never(&group.expr),
             _ => false,
         }
     }
