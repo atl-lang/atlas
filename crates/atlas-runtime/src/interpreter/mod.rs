@@ -173,7 +173,7 @@ impl Interpreter {
             "regex", "io", "console", "Env", "File", "Process", "DateTime", "Path", "Http", "Net",
             "Crypto", "Regex", "Io", "gzip", "tar", "zip", "task", "Json", "Math", "Env", "File",
             "Process", "DateTime", "Path", "Http", "Net", "Crypto", "Regex", "Io", "sync",
-            "future",
+            "future", "test",
         ] {
             let sentinel = crate::value::Value::Builtin(std::sync::Arc::from(
                 format!("__ns__{}", ns).as_str(),

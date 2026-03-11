@@ -79,6 +79,8 @@ pub enum TypeTag {
     FutureNs,
     /// Instance methods on Future values (.then(), .catch(), .finally(), etc.)
     FutureValue,
+    /// Static namespace: test.assert(), test.equal(), test.throws(), etc.
+    TestNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -125,6 +127,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::SemaphoreValue => resolve_semaphore_method(method_name),
         TypeTag::FutureNs => resolve_future_ns_method(method_name),
         TypeTag::FutureValue => resolve_future_instance_method(method_name),
+        TypeTag::TestNs => resolve_test_ns_method(method_name),
     }
 }
 
@@ -162,6 +165,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "task"
             | "sync"
             | "future"
+            | "test"
     )
 }
 
@@ -198,6 +202,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "task" => Some(TypeTag::TaskNs),
         "sync" => Some(TypeTag::SyncNs),
         "future" => Some(TypeTag::FutureNs),
+        "test" => Some(TypeTag::TestNs),
         _ => None,
     }
 }
@@ -1233,6 +1238,24 @@ fn resolve_future_instance_method(method_name: &str) -> Option<String> {
         "isResolved" => "futureNsIsResolved",
         "isPending" => "futureNsIsPending",
         "isRejected" => "futureNsIsRejected",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve a test namespace method call to its stdlib function name.
+fn resolve_test_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "assert" => "testNsAssert",
+        "equal" => "testNsEqual",
+        "notEqual" => "testNsNotEqual",
+        "throws" => "testNsThrows",
+        "noThrow" => "testNsNoThrow",
+        "ok" => "testNsOk",
+        "err" => "testNsErr",
+        "contains" => "testNsContains",
+        "empty" => "testNsEmpty",
+        "approx" => "testNsApprox",
         _ => return None,
     };
     Some(func_name.to_string())

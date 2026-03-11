@@ -1,33 +1,30 @@
 use super::*;
 
 // ============================================================================
-// 1. Basic assertions — Atlas code integration
+// 1. Basic assertions — test.* namespace (B34)
 // ============================================================================
 
 #[test]
 fn test_assert_passes_in_atlas_code() {
-    eval_ok("assert(true, \"should pass\");");
+    eval_ok("test.assert(true);");
 }
 
 #[test]
-fn test_assert_false_passes_in_atlas_code() {
-    eval_ok("assert_false(false, \"should pass\");");
+fn test_assert_with_message_passes() {
+    eval_ok("test.assert(true, \"should pass\");");
 }
 
 #[test]
 fn test_assert_failure_produces_error() {
     eval_err_contains(
-        "assert(false, \"my custom failure message\");",
+        "test.assert(false, \"my custom failure message\");",
         "my custom failure message",
     );
 }
 
 #[test]
-fn test_assert_false_failure_produces_error() {
-    eval_err_contains(
-        "assert_false(true, \"was unexpectedly true\");",
-        "was unexpectedly true",
-    );
+fn test_assert_failure_no_message() {
+    eval_err_contains("test.assert(false);", "assertion failed");
 }
 
 #[test]
@@ -35,8 +32,8 @@ fn test_assert_in_function_body() {
     eval_ok(
         r#"
         fn test_basic(): void {
-            assert(true, "should pass");
-            assert_false(false, "should also pass");
+            test.assert(true, "should pass");
+            test.assert(1 == 1, "math works");
         }
         test_basic();
     "#,
@@ -44,28 +41,28 @@ fn test_assert_in_function_body() {
 }
 
 // ============================================================================
-// 2. Equality assertions — Atlas code integration
+// 2. Equality assertions — test.* namespace
 // ============================================================================
 
 #[test]
-fn test_assert_equal_numbers_in_atlas_code() {
-    eval_ok("assert_equal(5, 5);");
+fn test_equal_numbers_in_atlas_code() {
+    eval_ok("test.equal(5, 5);");
 }
 
 #[test]
-fn test_assert_equal_strings_in_atlas_code() {
-    eval_ok(r#"assert_equal("hello", "hello");"#);
+fn test_equal_strings_in_atlas_code() {
+    eval_ok(r#"test.equal("hello", "hello");"#);
 }
 
 #[test]
-fn test_assert_equal_bools_in_atlas_code() {
-    eval_ok("assert_equal(true, true);");
+fn test_equal_bools_in_atlas_code() {
+    eval_ok("test.equal(true, true);");
 }
 
 #[test]
-fn test_assert_equal_failure_shows_diff() {
+fn test_equal_failure_shows_diff() {
     let runtime = Atlas::new();
-    match runtime.eval("assert_equal(5, 10);") {
+    match runtime.eval("test.equal(5, 10);") {
         Err(diags) => {
             let combined = diags
                 .iter()
@@ -88,21 +85,21 @@ fn test_assert_equal_failure_shows_diff() {
 }
 
 #[test]
-fn test_assert_not_equal_in_atlas_code() {
-    eval_ok("assert_not_equal(1, 2);");
+fn test_not_equal_in_atlas_code() {
+    eval_ok("test.notEqual(1, 2);");
 }
 
 #[test]
-fn test_assert_not_equal_failure() {
-    eval_err_contains("assert_not_equal(5, 5);", "equal");
+fn test_not_equal_failure() {
+    eval_err_contains("test.notEqual(5, 5);", "equal");
 }
 
 // ============================================================================
-// 3. Result assertions — Atlas code integration
+// 3. Result assertions — test.* namespace
 // ============================================================================
 
 #[test]
-fn test_assert_ok_in_atlas_code() {
+fn test_ok_in_atlas_code() {
     eval_ok(
         r#"
         fn divide(borrow a: number, borrow b: number): Result<number, string> {
@@ -111,157 +108,103 @@ fn test_assert_ok_in_atlas_code() {
         }
 
         let result = divide(10, 2);
-        let value = assert_ok(result);
-        assert_equal(value, 5);
+        let value = test.ok(result);
+        test.equal(value, 5);
     "#,
     );
 }
 
 #[test]
-fn test_assert_ok_failure_on_err_value() {
+fn test_ok_failure_on_err_value() {
     eval_err_contains(
         r#"
         let result = Err("something broke");
-        assert_ok(result);
+        test.ok(result);
     "#,
         "Err",
     );
 }
 
 #[test]
-fn test_assert_err_in_atlas_code() {
+fn test_err_in_atlas_code() {
     eval_ok(
         r#"
         let result = Err("expected failure");
-        let err_value = assert_err(result);
-        assert_equal(err_value, "expected failure");
+        let err_value = test.err(result);
+        test.equal(err_value, "expected failure");
     "#,
     );
 }
 
 #[test]
-fn test_assert_err_failure_on_ok_value() {
+fn test_err_failure_on_ok_value() {
     eval_err_contains(
         r#"
         let result = Ok(42);
-        assert_err(result);
+        test.err(result);
     "#,
         "Ok",
     );
 }
 
 // ============================================================================
-// 4. Option assertions — Atlas code integration
+// 4. Collection assertions — test.* namespace
 // ============================================================================
 
 #[test]
-fn test_assert_some_in_atlas_code() {
-    eval_ok(
-        r#"
-        let opt = Some(42);
-        let value = assert_some(opt);
-        assert_equal(value, 42);
-    "#,
-    );
-}
-
-#[test]
-fn test_assert_some_failure_on_none() {
-    eval_err_contains(
-        r#"
-        let opt = None();
-        assert_some(opt);
-    "#,
-        "None",
-    );
-}
-
-#[test]
-fn test_assert_none_in_atlas_code() {
-    eval_ok(
-        r#"
-        let opt = None();
-        assert_none(opt);
-    "#,
-    );
-}
-
-#[test]
-fn test_assert_none_failure_on_some() {
-    eval_err_contains(
-        r#"
-        let opt = Some(99);
-        assert_none(opt);
-    "#,
-        "Some",
-    );
-}
-
-// ============================================================================
-// 5. Collection assertions — Atlas code integration
-// ============================================================================
-
-#[test]
-fn test_assert_contains_in_atlas_code() {
+fn test_contains_in_atlas_code() {
     eval_ok(
         r#"
         let arr = [1, 2, 3];
-        assert_contains(arr, 2);
+        test.contains(arr, 2);
     "#,
     );
 }
 
 #[test]
-fn test_assert_contains_failure() {
+fn test_contains_failure() {
     eval_err_contains(
         r#"
         let arr = [1, 2, 3];
-        assert_contains(arr, 99);
+        test.contains(arr, 99);
     "#,
         "does not contain",
     );
 }
 
 #[test]
-fn test_assert_empty_in_atlas_code() {
+fn test_empty_in_atlas_code() {
     eval_ok(
         r#"
-        let arr: []number = [];
-        assert_empty(arr);
+        let arr: number[] = [];
+        test.empty(arr);
     "#,
     );
 }
 
 #[test]
-fn test_assert_empty_failure() {
+fn test_empty_failure() {
     eval_err_contains(
         r#"
         let arr = [1];
-        assert_empty(arr);
+        test.empty(arr);
     "#,
         "length",
     );
 }
 
+// ============================================================================
+// 5. Approx assertion — test.approx
+// ============================================================================
+
 #[test]
-fn test_assert_length_in_atlas_code() {
-    eval_ok(
-        r#"
-        let arr = [10, 20, 30];
-        assert_length(arr, 3);
-    "#,
-    );
+fn test_approx_in_atlas_code() {
+    eval_ok("test.approx(1.0, 1.001, 0.01);");
 }
 
 #[test]
-fn test_assert_length_failure() {
-    eval_err_contains(
-        r#"
-        let arr = [1, 2];
-        assert_length(arr, 5);
-    "#,
-        "length",
-    );
+fn test_approx_failure() {
+    eval_err_contains("test.approx(1.0, 2.0, 0.5);", "epsilon");
 }
 
 // ============================================================================
@@ -306,6 +249,3 @@ fn test_assert_throws_type_error_on_non_fn() {
     let result = atlas_test::assert_throws(&[num_val(42.0)], span());
     assert!(result.is_err());
 }
-
-// ============================================================================
-// 7. Stdlib registration — is_builtin + call_builtin

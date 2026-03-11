@@ -572,6 +572,7 @@ impl Compiler {
                     | crate::method_dispatch::TypeTag::TaskNs
                     | crate::method_dispatch::TypeTag::SyncNs
                     | crate::method_dispatch::TypeTag::FutureNs
+                    | crate::method_dispatch::TypeTag::TestNs
             );
 
             if !is_ns {

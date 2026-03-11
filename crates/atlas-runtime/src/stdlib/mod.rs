@@ -1954,7 +1954,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // Testing primitives (assertions)
+        // Testing primitives — legacy bare globals (kept for backward compat)
         // ====================================================================
         m.insert("assert", |a, s, _, _| test::assert(a, s));
         m.insert("assertFalse", |a, s, _, _| test::assert_false(a, s));
@@ -1969,6 +1969,19 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("assertLength", |a, s, _, _| test::assert_length(a, s));
         m.insert("assertThrows", |a, s, _, _| test::assert_throws(a, s));
         m.insert("assertNoThrow", |a, s, _, _| test::assert_no_throw(a, s));
+        // ====================================================================
+        // test namespace (test.assert, test.equal, etc.)
+        // ====================================================================
+        m.insert("testNsAssert", |a, s, _, _| test::test_ns_assert(a, s));
+        m.insert("testNsEqual", |a, s, _, _| test::test_ns_equal(a, s));
+        m.insert("testNsNotEqual", |a, s, _, _| test::test_ns_not_equal(a, s));
+        m.insert("testNsThrows", |a, s, _, _| test::test_ns_throws(a, s));
+        m.insert("testNsNoThrow", |a, s, _, _| test::test_ns_no_throw(a, s));
+        m.insert("testNsOk", |a, s, _, _| test::test_ns_ok(a, s));
+        m.insert("testNsErr", |a, s, _, _| test::test_ns_err(a, s));
+        m.insert("testNsContains", |a, s, _, _| test::test_ns_contains(a, s));
+        m.insert("testNsEmpty", |a, s, _, _| test::test_ns_empty(a, s));
+        m.insert("testNsApprox", |a, s, _, _| test::test_ns_approx(a, s));
 
         // ====================================================================
         // Crypto

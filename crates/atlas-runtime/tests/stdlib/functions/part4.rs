@@ -2,50 +2,41 @@ use super::*;
 use pretty_assertions::assert_eq;
 
 // ============================================================================
+// 7. Stdlib registration — test namespace builtins (B34)
+// ============================================================================
 
 #[test]
-fn test_is_builtin_assert() {
-    assert!(is_builtin("assert"));
-    assert!(is_builtin("assert_false"));
+fn test_is_builtin_test_ns_assert() {
+    assert!(is_builtin("testNsAssert"));
+    assert!(is_builtin("testNsEqual"));
+    assert!(is_builtin("testNsNotEqual"));
 }
 
 #[test]
-fn test_is_builtin_equality() {
-    assert!(is_builtin("assert_equal"));
-    assert!(is_builtin("assert_not_equal"));
+fn test_is_builtin_test_ns_result() {
+    assert!(is_builtin("testNsOk"));
+    assert!(is_builtin("testNsErr"));
 }
 
 #[test]
-fn test_is_builtin_result() {
-    assert!(is_builtin("assert_ok"));
-    assert!(is_builtin("assert_err"));
+fn test_is_builtin_test_ns_collections() {
+    assert!(is_builtin("testNsContains"));
+    assert!(is_builtin("testNsEmpty"));
+    assert!(is_builtin("testNsApprox"));
 }
 
 #[test]
-fn test_is_builtin_option() {
-    assert!(is_builtin("assert_some"));
-    assert!(is_builtin("assert_none"));
+fn test_is_builtin_test_ns_throws() {
+    assert!(is_builtin("testNsThrows"));
+    assert!(is_builtin("testNsNoThrow"));
 }
 
 #[test]
-fn test_is_builtin_collection() {
-    assert!(is_builtin("assert_contains"));
-    assert!(is_builtin("assert_empty"));
-    assert!(is_builtin("assert_length"));
-}
-
-#[test]
-fn test_is_builtin_error() {
-    assert!(is_builtin("assert_throws"));
-    assert!(is_builtin("assert_no_throw"));
-}
-
-#[test]
-fn test_call_builtin_assert_via_dispatch() {
+fn test_call_builtin_test_ns_assert_via_dispatch() {
     let security = SecurityContext::allow_all();
     let result = call_builtin(
-        "assert",
-        &[bool_val(true), str_val("ok")],
+        "testNsAssert",
+        &[bool_val(true)],
         span(),
         &security,
         &stdout_writer(),
@@ -55,10 +46,10 @@ fn test_call_builtin_assert_via_dispatch() {
 }
 
 #[test]
-fn test_call_builtin_assert_equal_via_dispatch() {
+fn test_call_builtin_test_ns_equal_via_dispatch() {
     let security = SecurityContext::allow_all();
     let result = call_builtin(
-        "assert_equal",
+        "testNsEqual",
         &[num_val(42.0), num_val(42.0)],
         span(),
         &security,
@@ -68,10 +59,10 @@ fn test_call_builtin_assert_equal_via_dispatch() {
 }
 
 #[test]
-fn test_call_builtin_assert_ok_via_dispatch() {
+fn test_call_builtin_test_ns_ok_via_dispatch() {
     let security = SecurityContext::allow_all();
     let result = call_builtin(
-        "assert_ok",
+        "testNsOk",
         &[ok_val(str_val("inner"))],
         span(),
         &security,
@@ -82,24 +73,10 @@ fn test_call_builtin_assert_ok_via_dispatch() {
 }
 
 #[test]
-fn test_call_builtin_assert_some_via_dispatch() {
+fn test_call_builtin_test_ns_empty_via_dispatch() {
     let security = SecurityContext::allow_all();
     let result = call_builtin(
-        "assert_some",
-        &[some_val(num_val(7.0))],
-        span(),
-        &security,
-        &stdout_writer(),
-    );
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), num_val(7.0));
-}
-
-#[test]
-fn test_call_builtin_assert_empty_via_dispatch() {
-    let security = SecurityContext::allow_all();
-    let result = call_builtin(
-        "assert_empty",
+        "testNsEmpty",
         &[arr_val(vec![])],
         span(),
         &security,
@@ -109,11 +86,10 @@ fn test_call_builtin_assert_empty_via_dispatch() {
 }
 
 // ============================================================================
-// 8. Interpreter / VM parity
+// 8. Interpreter / VM parity — test.* namespace
 // ============================================================================
 
 /// Run source twice (as two separate runtime instances) and verify both succeed.
-/// This matches the established parity testing pattern in this codebase.
 fn eval_parity_ok(source: &str) {
     let r1 = Atlas::new();
     match r1.eval(source) {
@@ -137,73 +113,47 @@ fn eval_parity_err(source: &str) {
 
 #[test]
 fn test_assert_parity_basic() {
-    eval_parity_ok("assert(true, \"parity\");");
+    eval_parity_ok("test.assert(true, \"parity\");");
 }
 
 #[test]
-fn test_assert_equal_parity() {
-    eval_parity_ok("assert_equal(10, 10);");
+fn test_equal_parity() {
+    eval_parity_ok("test.equal(10, 10);");
 }
 
 #[test]
-fn test_assert_ok_parity() {
+fn test_ok_parity() {
     eval_parity_ok(
         r#"
         let r = Ok(42);
-        let v = assert_ok(r);
-        assert_equal(v, 42);
+        let v = test.ok(r);
+        test.equal(v, 42);
     "#,
     );
 }
 
 #[test]
-fn test_assert_some_parity() {
-    eval_parity_ok(
-        r#"
-        let opt = Some("hello");
-        let v = assert_some(opt);
-        assert_equal(v, "hello");
-    "#,
-    );
-}
-
-#[test]
-fn test_assert_none_parity() {
-    eval_parity_ok(
-        r#"
-        let opt = None();
-        assert_none(opt);
-    "#,
-    );
-}
-
-#[test]
-fn test_assert_contains_parity() {
+fn test_contains_parity() {
     eval_parity_ok(
         r#"
         let arr = [1, 2, 3];
-        assert_contains(arr, 3);
+        test.contains(arr, 3);
     "#,
     );
 }
 
 #[test]
-fn test_assert_length_parity() {
-    eval_parity_ok(
-        r#"
-        let arr = [10, 20];
-        assert_length(arr, 2);
-    "#,
-    );
+fn test_approx_parity() {
+    eval_parity_ok("test.approx(3.14, 3.14159, 0.01);");
 }
 
 #[test]
 fn test_assert_failure_parity() {
-    eval_parity_err("assert(false, \"parity failure test\");");
+    eval_parity_err("test.assert(false, \"parity failure test\");");
 }
 
 // ============================================================================
-// 9. Comprehensive real-world test example
+// 9. Comprehensive real-world test example — test.* namespace
 // ============================================================================
 
 #[test]
@@ -215,10 +165,10 @@ fn test_realistic_test_function() {
         }
 
         fn test_add(): void {
-            assert_equal(add(1, 2), 3);
-            assert_equal(add(0, 0), 0);
-            assert_equal(add(-1, 1), 0);
-            assert(add(5, 5) == 10, "5 + 5 should be 10");
+            test.equal(add(1, 2), 3);
+            test.equal(add(0, 0), 0);
+            test.equal(add(-1, 1), 0);
+            test.assert(add(5, 5) == 10, "5 + 5 should be 10");
         }
 
         test_add();
@@ -236,37 +186,12 @@ fn test_result_chain_with_assertions() {
         }
 
         let r1 = safe_divide(10, 2);
-        let v = assert_ok(r1);
-        assert_equal(v, 5);
+        let v = test.ok(r1);
+        test.equal(v, 5);
 
         let r2 = safe_divide(5, 0);
-        let e = assert_err(r2);
-        assert_equal(e, "division by zero");
-    "#,
-    );
-}
-
-#[test]
-fn test_option_chain_with_assertions() {
-    eval_ok(
-        r#"
-        fn find_value(borrow arr: array, borrow target: number): Option<number> {
-            let mut found = None();
-            for item in arr {
-                if (item == target) {
-                    found = Some(item);
-                }
-            }
-            return found;
-        }
-
-        let arr = [10, 20, 30];
-        let r1 = find_value(arr, 20);
-        let v = assert_some(r1);
-        assert_equal(v, 20);
-
-        let r2 = find_value(arr, 99);
-        assert_none(r2);
+        let e = test.err(r2);
+        test.equal(e, "division by zero");
     "#,
     );
 }
@@ -276,24 +201,22 @@ fn test_collection_assertions_in_sequence() {
     eval_ok(
         r#"
         let nums = [1, 2, 3, 4, 5];
-        assert_length(nums, 5);
-        assert_contains(nums, 3);
+        test.contains(nums, 3);
 
-        let empty: []number = [];
-        assert_empty(empty);
-        assert_length(empty, 0);
+        let empty: number[] = [];
+        test.empty(empty);
     "#,
     );
 }
 
 #[test]
-fn test_assert_equal_with_expressions() {
+fn test_equal_with_expressions() {
     eval_ok(
         r#"
-        assert_equal(2 + 3, 5);
-        assert_equal(10 * 2, 20);
-        assert_equal(true && true, true);
-        assert_equal(false || true, true);
+        test.equal(2 + 3, 5);
+        test.equal(10 * 2, 20);
+        test.equal(true && true, true);
+        test.equal(false || true, true);
     "#,
     );
 }

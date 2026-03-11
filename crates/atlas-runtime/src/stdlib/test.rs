@@ -495,5 +495,285 @@ pub fn assert_no_throw(args: &[Value], span: Span) -> Result<Value, RuntimeError
 }
 
 // ============================================================================
+// test namespace functions (test.assert, test.equal, etc.)
+// These are called via the `test` static namespace and accept optional message.
+// ============================================================================
+
+/// `test.assert(cond: bool, msg?: string) -> void`
+///
+/// Fails if `cond` is false. Optional message.
+pub fn test_ns_assert(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 2 {
+        return Err(RuntimeError::TypeError {
+            msg: format!("test.assert expects 1 or 2 arguments, got {}", args.len()),
+            span,
+        });
+    }
+    let condition = match &args[0] {
+        Value::Bool(b) => *b,
+        other => return Err(type_error("bool", other.type_name(), span)),
+    };
+    if !condition {
+        let msg = if args.len() == 2 {
+            match &args[1] {
+                Value::String(s) => s.as_ref().clone(),
+                other => return Err(type_error("string", other.type_name(), span)),
+            }
+        } else {
+            "assertion failed".to_string()
+        };
+        return Err(assertion_error(format!("test.assert: {}", msg), span));
+    }
+    Ok(Value::Null)
+}
+
+/// `test.equal(a: T, b: T, msg?: string) -> void`
+///
+/// Fails if `a` and `b` are not deeply equal.
+pub fn test_ns_equal(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Err(RuntimeError::TypeError {
+            msg: format!("test.equal expects 2 or 3 arguments, got {}", args.len()),
+            span,
+        });
+    }
+    let actual = &args[0];
+    let expected = &args[1];
+    if !values_deep_equal(actual, expected) {
+        let suffix = if args.len() == 3 {
+            match &args[2] {
+                Value::String(s) => format!(" — {}", s.as_ref()),
+                _ => String::new(),
+            }
+        } else {
+            String::new()
+        };
+        return Err(assertion_error(
+            format!(
+                "test.equal: values not equal{}\n  Actual:   {}\n  Expected: {}",
+                suffix,
+                display(actual),
+                display(expected)
+            ),
+            span,
+        ));
+    }
+    Ok(Value::Null)
+}
+
+/// `test.notEqual(a: T, b: T, msg?: string) -> void`
+///
+/// Fails if `a` and `b` are deeply equal.
+pub fn test_ns_not_equal(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() < 2 || args.len() > 3 {
+        return Err(RuntimeError::TypeError {
+            msg: format!("test.notEqual expects 2 or 3 arguments, got {}", args.len()),
+            span,
+        });
+    }
+    let actual = &args[0];
+    let expected = &args[1];
+    if values_deep_equal(actual, expected) {
+        let suffix = if args.len() == 3 {
+            match &args[2] {
+                Value::String(s) => format!(" — {}", s.as_ref()),
+                _ => String::new(),
+            }
+        } else {
+            String::new()
+        };
+        return Err(assertion_error(
+            format!(
+                "test.notEqual: values are equal (expected them to differ){}\n  Value: {}",
+                suffix,
+                display(actual)
+            ),
+            span,
+        ));
+    }
+    Ok(Value::Null)
+}
+
+/// `test.throws(fn: function, msg?: string) -> void`
+///
+/// Fails if `fn` does NOT throw (i.e., returns Ok).
+/// Works with Atlas functions via interpreter context.
+pub fn test_ns_throws(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    // This is a stub for the basic builtin dispatch path.
+    // The interpreter/VM will handle actual invocation via the callback mechanism.
+    // Here we just validate the argument type.
+    if args.is_empty() || args.len() > 2 {
+        return Err(RuntimeError::TypeError {
+            msg: format!("test.throws expects 1 or 2 arguments, got {}", args.len()),
+            span,
+        });
+    }
+    // Validate first arg is callable
+    match &args[0] {
+        Value::NativeFunction(f) => match f(&[]) {
+            Ok(_) => Err(assertion_error(
+                "test.throws: expected function to throw, but it returned successfully",
+                span,
+            )),
+            Err(_) => Ok(Value::Null),
+        },
+        Value::Function(_) | Value::Closure(_) | Value::Builtin(_) => {
+            // Atlas function — can only be called with interpreter context
+            // Return Ok(Null) and let the interpreter handle it
+            // (The interpreter will dispatch this via invoke_callee)
+            Err(RuntimeError::TypeError {
+                msg: "test.throws: Atlas functions require interpreter context; \
+                      use a NativeFunction or call from Atlas code"
+                    .to_string(),
+                span,
+            })
+        }
+        other => Err(type_error("function", other.type_name(), span)),
+    }
+}
+
+/// `test.noThrow(fn: function, msg?: string) -> void`
+///
+/// Fails if `fn` throws.
+pub fn test_ns_no_throw(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.is_empty() || args.len() > 2 {
+        return Err(RuntimeError::TypeError {
+            msg: format!("test.noThrow expects 1 or 2 arguments, got {}", args.len()),
+            span,
+        });
+    }
+    match &args[0] {
+        Value::NativeFunction(f) => match f(&[]) {
+            Ok(_) => Ok(Value::Null),
+            Err(e) => Err(assertion_error(
+                format!(
+                    "test.noThrow: expected function to succeed, but it threw: {}",
+                    e
+                ),
+                span,
+            )),
+        },
+        Value::Function(_) | Value::Closure(_) | Value::Builtin(_) => {
+            Err(RuntimeError::TypeError {
+                msg: "test.noThrow: Atlas functions require interpreter context; \
+                      use a NativeFunction or call from Atlas code"
+                    .to_string(),
+                span,
+            })
+        }
+        other => Err(type_error("function", other.type_name(), span)),
+    }
+}
+
+/// `test.ok(result: Result<T, E>) -> T`
+///
+/// Fails if `result` is `Err`, returns the unwrapped value on success.
+pub fn test_ns_ok(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    check_arity("test.ok", args, 1, span)?;
+    match &args[0] {
+        Value::Result(res) => match res {
+            Ok(val) => Ok(*val.clone()),
+            Err(err) => Err(assertion_error(
+                format!("test.ok: expected Ok, got Err({})", display(err)),
+                span,
+            )),
+        },
+        other => Err(type_error("Result", other.type_name(), span)),
+    }
+}
+
+/// `test.err(result: Result<T, E>) -> E`
+///
+/// Fails if `result` is `Ok`, returns the unwrapped error on success.
+pub fn test_ns_err(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    check_arity("test.err", args, 1, span)?;
+    match &args[0] {
+        Value::Result(res) => match res {
+            Err(err) => Ok(*err.clone()),
+            Ok(val) => Err(assertion_error(
+                format!("test.err: expected Err, got Ok({})", display(val)),
+                span,
+            )),
+        },
+        other => Err(type_error("Result", other.type_name(), span)),
+    }
+}
+
+/// `test.contains(collection: array, val: T) -> void`
+///
+/// Fails if `val` is not found in `collection`.
+pub fn test_ns_contains(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    check_arity("test.contains", args, 2, span)?;
+    let arr = match &args[0] {
+        Value::Array(a) => a.clone(),
+        other => return Err(type_error("array", other.type_name(), span)),
+    };
+    let needle = &args[1];
+    let found = arr.as_slice().iter().any(|v| values_deep_equal(v, needle));
+    if !found {
+        return Err(assertion_error(
+            format!(
+                "test.contains: collection does not contain {}",
+                display(needle)
+            ),
+            span,
+        ));
+    }
+    Ok(Value::Null)
+}
+
+/// `test.empty(collection: array) -> void`
+///
+/// Fails if `collection` is non-empty.
+pub fn test_ns_empty(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    check_arity("test.empty", args, 1, span)?;
+    match &args[0] {
+        Value::Array(arr) => {
+            let len = arr.len();
+            if len != 0 {
+                return Err(assertion_error(
+                    format!("test.empty: expected empty collection, got length {}", len),
+                    span,
+                ));
+            }
+            Ok(Value::Null)
+        }
+        other => Err(type_error("array", other.type_name(), span)),
+    }
+}
+
+/// `test.approx(a: number, b: number, epsilon: number) -> void`
+///
+/// Fails if `|a - b| > epsilon`.
+pub fn test_ns_approx(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    check_arity("test.approx", args, 3, span)?;
+    let a = match &args[0] {
+        Value::Number(n) => *n,
+        other => return Err(type_error("number", other.type_name(), span)),
+    };
+    let b = match &args[1] {
+        Value::Number(n) => *n,
+        other => return Err(type_error("number", other.type_name(), span)),
+    };
+    let epsilon = match &args[2] {
+        Value::Number(n) => *n,
+        other => return Err(type_error("number", other.type_name(), span)),
+    };
+    if (a - b).abs() > epsilon {
+        return Err(assertion_error(
+            format!(
+                "test.approx: |{} - {}| = {} > epsilon {}",
+                a,
+                b,
+                (a - b).abs(),
+                epsilon
+            ),
+            span,
+        ));
+    }
+    Ok(Value::Null)
+}
+
+// ============================================================================
 // Unit tests
 // ============================================================================

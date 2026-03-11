@@ -120,6 +120,14 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("task", "join" | "cancel" | "status" | "id") => None, // TaskHandle arg
         ("task", "joinAll") => None, // []TaskHandle arg
         ("task", "timeout") => None, // Future + ms args
+        // test namespace — optional msg arg, skip strict arity for those with msg?
+        ("test", "assert") => None,             // 1 or 2 args
+        ("test", "equal" | "notEqual") => None, // 2 or 3 args
+        ("test", "throws" | "noThrow") => None, // function arg
+        ("test", "ok" | "err") => Some(vec![Type::any_placeholder()]),
+        ("test", "contains") => None, // array + value
+        ("test", "empty") => Some(vec![Type::Array(Box::new(Type::any_placeholder()))]),
+        ("test", "approx") => Some(vec![num.clone(), num.clone(), num.clone()]),
         // Unknown combination
         _ => None,
     }
@@ -356,6 +364,12 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         // sync namespace — factory functions return opaque handle arrays (tag + id pair)
         ("sync", "atomic" | "rwLock" | "semaphore") => Type::Array(Box::new(Type::Unknown)),
+        // test namespace — all assertion methods return void (Null)
+        (
+            "test",
+            "assert" | "equal" | "notEqual" | "throws" | "noThrow" | "ok" | "err" | "contains"
+            | "empty" | "approx",
+        ) => Type::Null,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }
