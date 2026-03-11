@@ -1,34 +1,21 @@
 {
-  "committed_at": "2026-03-11T02:43:14Z",
-  "commit": "d3f6b88",
+  "committed_at": "2026-03-11T04:35:30Z",
+  "commit": "b542d71",
   "changed_files": [
-    "crates/atlas-runtime/src/api/conversion.rs",
-    "crates/atlas-runtime/src/bytecode/disasm.rs",
-    "crates/atlas-runtime/src/bytecode/serialize.rs",
-    "crates/atlas-runtime/src/interpreter/expr.rs",
     "crates/atlas-runtime/src/method_dispatch.rs",
-    "crates/atlas-runtime/src/reflect/mod.rs",
-    "crates/atlas-runtime/src/stdlib/json.rs",
+    "crates/atlas-runtime/src/stdlib/crypto.rs",
     "crates/atlas-runtime/src/stdlib/mod.rs",
-    "crates/atlas-runtime/src/stdlib/process.rs",
-    "crates/atlas-runtime/src/stdlib/types.rs",
     "crates/atlas-runtime/src/typechecker/expr.rs",
-    "crates/atlas-runtime/src/typechecker/methods.rs",
-    "crates/atlas-runtime/src/value.rs",
-    "crates/atlas-runtime/tests/interpreter/integration/static_namespaces.rs"
+    "crates/atlas-runtime/src/typechecker/stdlib_ownership.rs"
   ],
   "domains": [
-    "interpreter",
     "stdlib",
-    "typechecker",
-    "value"
+    "typechecker"
   ],
   "relevant_docs": [
-    "crates/atlas-runtime/src/CLAUDE.md",
-    "docs/known-issues.md",
-    "docs/language/types.md",
-    "docs/stdlib/index.md"
+    "docs/stdlib/index.md",
+    "docs/stdlib/encoding.md"
   ],
   "status": "done",
-  "patched_at": "2026-03-11T03:06:30Z"
+  "patched_at": "2026-03-11T04:48:51Z"
 }
