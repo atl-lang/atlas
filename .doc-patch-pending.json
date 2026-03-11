@@ -1,18 +1,1 @@
-{
-  "committed_at": "2026-03-11T19:29:49Z",
-  "commit": "edbc900",
-  "changed_files": [
-  "crates/atlas-runtime/src/binder.rs",
-  "crates/atlas-runtime/src/method_dispatch.rs",
-  "crates/atlas-runtime/src/symbol.rs",
-  "crates/atlas-runtime/src/typechecker/methods.rs"
-],
-  "domains": [
-  "typechecker"
-],
-  "relevant_docs": [
-  "docs/known-issues.md",
-  "docs/language/types.md"
-],
-  "status": "pending"
-}
+{"status": "cleared", "reason": "H-276 restored existing behavior, no doc changes needed"}
