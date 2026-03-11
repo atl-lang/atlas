@@ -1,6 +1,7 @@
 //! Atlas runtime API for embedding
 
 use crate::binder::Binder;
+use crate::compiler::Compiler;
 use crate::diagnostic::{Diagnostic, StackTraceFrame};
 use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
@@ -10,6 +11,7 @@ use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::typechecker::TypeChecker;
 use crate::value::{RuntimeError, Value};
+use crate::vm::VM;
 use std::cell::RefCell;
 
 /// Result type for runtime operations
@@ -48,6 +50,7 @@ fn emit_warnings_via_formatter(warnings: &[Diagnostic], source: &str, file: &str
 /// Atlas runtime instance
 ///
 /// Provides a high-level API for embedding Atlas in host applications.
+/// Uses Compiler + VM for execution (D-052: single execution path).
 ///
 /// # Examples
 ///
@@ -58,7 +61,10 @@ fn emit_warnings_via_formatter(warnings: &[Diagnostic], source: &str, file: &str
 /// let result = runtime.eval("1 + 2");
 /// ```
 pub struct Atlas {
-    /// Interpreter for executing code (using interior mutability)
+    /// VM for executing bytecode (using interior mutability)
+    /// None until first eval() call initializes it
+    vm: RefCell<Option<VM>>,
+    /// Interpreter kept for ModuleExecutor (will be removed in P04)
     interpreter: RefCell<Interpreter>,
     /// Security context for permission checks
     security: SecurityContext,
@@ -76,6 +82,7 @@ impl Atlas {
     /// ```
     pub fn new() -> Self {
         Self {
+            vm: RefCell::new(None),
             interpreter: RefCell::new(Interpreter::new()),
             security: SecurityContext::new(),
         }
@@ -93,6 +100,7 @@ impl Atlas {
     /// ```
     pub fn new_with_security(security: SecurityContext) -> Self {
         Self {
+            vm: RefCell::new(None),
             interpreter: RefCell::new(Interpreter::new()),
             security,
         }
@@ -180,28 +188,43 @@ impl Atlas {
             .chain(type_diagnostics.into_iter().filter(|d| d.is_warning()))
             .collect();
 
-        // Interpret the AST
-        let mut interpreter = self.interpreter.borrow_mut();
+        // Compile AST to bytecode (D-052: single execution path via Compiler+VM)
+        let mut compiler = Compiler::new();
+        let bytecode = compiler.compile(&ast)?;
 
-        match interpreter.eval(&ast, &self.security) {
+        // Execute on VM
+        let mut vm_ref = self.vm.borrow_mut();
+
+        let result = if vm_ref.is_none() {
+            // First eval: create VM with this bytecode
+            let mut vm = VM::new(bytecode);
+            let run_result = vm.run(&self.security);
+            *vm_ref = Some(vm);
+            run_result
+        } else {
+            // Subsequent eval: load new module into existing VM (preserves globals)
+            let vm = vm_ref.as_mut().expect("VM should exist");
+            vm.load_module(bytecode);
+            vm.run(&self.security)
+        };
+
+        match result {
             Ok(value) => {
-                // Collect runtime warnings (e.g. ownership mismatches) from the interpreter.
+                // Collect runtime warnings from VM
                 let mut all_warnings = typecheck_warnings;
-                all_warnings.extend(interpreter.take_runtime_warnings());
+                if let Some(vm) = vm_ref.as_mut() {
+                    all_warnings.extend(vm.take_runtime_warnings());
+                }
                 emit_warnings_via_formatter(&all_warnings, source_with_semi.as_str(), file);
-                Ok(value)
+                Ok(value.unwrap_or(Value::Null))
             }
             Err(runtime_error) => {
-                let stack_trace = interpreter.stack_trace_frames(
-                    runtime_error.span(),
-                    Some((file, source_with_semi.as_str())),
-                );
-                let function_name = stack_trace.first().map(|frame| frame.function.clone());
-                interpreter.reset_call_stack();
+                // VM doesn't have stack_trace_frames like interpreter, so we create
+                // a minimal diagnostic. Stack trace support will be added in a future phase.
                 Err(vec![runtime_error_to_diagnostic(
                     runtime_error,
-                    stack_trace,
-                    function_name,
+                    vec![],
+                    None,
                 )])
             }
         }
