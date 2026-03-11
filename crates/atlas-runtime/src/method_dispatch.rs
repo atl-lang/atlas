@@ -166,9 +166,8 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "unwrap" | "unwrap_or" | "expect"
         | "is_ok" | "is_err" | "is_some" | "is_none"
         | "isOk" | "isErr" | "isSome" | "isNone"
-        // Core utilities
+        // Core utilities (print is console.log, not a bare global)
         | "len" | "typeof" | "type_of"
-        | "print" | "println"
         // Type constructors
         | "HashMap" | "HashSet" | "Queue" | "Stack"
     )

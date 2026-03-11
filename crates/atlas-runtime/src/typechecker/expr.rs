@@ -1903,13 +1903,6 @@ impl<'a> TypeChecker<'a> {
                     }
                     return Type::String;
                 }
-                // H-276: print/println return void
-                "print" | "println" => {
-                    for arg in &call.args {
-                        let _ = self.check_expr(arg);
-                    }
-                    return Type::Void;
-                }
                 // H-164: unwrap() returns the inner type T from Option<T> or Result<T, E>
                 "unwrap" | "expect" => {
                     if call.args.len() == 1 {
