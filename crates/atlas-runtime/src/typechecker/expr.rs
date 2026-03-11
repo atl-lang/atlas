@@ -54,6 +54,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("file", "watchNext") => None, // handle arg (Value)
         // Process namespace
         ("process", "cwd" | "pid" | "args") => Some(vec![]),
+        ("process", "exit") => Some(vec![num.clone()]), // H-266
         ("process", "run") => Some(vec![str.clone(), str_arr]),
         ("process", "shellOut") => Some(vec![str.clone()]),
         ("process", "exec") => Some(vec![str.clone()]),
@@ -192,6 +193,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Process namespace
         ("process", "cwd") => Type::String,
         ("process", "pid") => Type::Number,
+        // H-266: process.exit(code) — terminates process, returns never
+        ("process", "exit") => Type::Never,
         // H-213: process.args() — CLI argv access
         ("process", "args") => Type::Array(Box::new(Type::String)),
         // H-212: process.run(program, args) — direct exec returns Result<string, string>

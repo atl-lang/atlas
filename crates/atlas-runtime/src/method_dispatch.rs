@@ -512,6 +512,7 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "cwd" => "getCwd",
         "pid" => "getPid",
+        "exit" => "processExit",
         "spawn" => "processNsSpawn",
         "exec" => "exec",
         "shell" => "shell",

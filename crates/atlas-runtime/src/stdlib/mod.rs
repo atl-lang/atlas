@@ -1413,6 +1413,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("listEnv", |a, s, sc, _| process::list_env(a, s, sc));
         m.insert("getCwd", |a, s, sc, _| process::get_cwd(a, s, sc));
         m.insert("getPid", |a, s, sc, _| process::get_pid(a, s, sc));
+        m.insert("processExit", |a, s, sc, _| process::process_exit(a, s, sc));
         m.insert("getProcessArgs", |a, s, sc, _| {
             process::get_process_args(a, s, sc)
         });

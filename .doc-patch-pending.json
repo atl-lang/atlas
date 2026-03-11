@@ -1,17 +1,16 @@
 {
-  "committed_at": "2026-03-11T15:48:23Z",
-  "commit": "a09bdbd",
+  "committed_at": "2026-03-11T18:02:49Z",
+  "commit": "11466ed",
   "changed_files": [
-    "crates/atlas-runtime/src/lexer/literals.rs",
-    "crates/atlas-runtime/tests/regression/part11.rs"
-  ],
+  "crates/atlas-runtime/src/typechecker/expr.rs",
+  "crates/atlas-runtime/src/typechecker/mod.rs"
+],
   "domains": [
-    "parser"
-  ],
+  "typechecker"
+],
   "relevant_docs": [
-    "docs/language/control-flow.md",
-    "docs/language/grammar.md"
-  ],
-  "status": "done",
-  "patched_at": "2026-03-11T15:57:30Z"
+  "docs/known-issues.md",
+  "docs/language/types.md"
+],
+  "status": "pending"
 }

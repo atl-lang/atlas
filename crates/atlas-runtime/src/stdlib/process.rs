@@ -652,6 +652,34 @@ pub fn get_pid(
     Ok(Value::Number(std::process::id() as f64))
 }
 
+/// Exit the process with a status code (H-266)
+///
+/// Atlas signature: `process.exit(code: number): never`
+///
+/// This function terminates the process immediately with the given exit code.
+/// A code of 0 indicates success; non-zero indicates failure.
+pub fn process_exit(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error("process.exit", 1, args.len(), span));
+    }
+
+    let code = match &args[0] {
+        Value::Number(n) => *n as i32,
+        _ => {
+            return Err(RuntimeError::TypeError {
+                msg: "process.exit() requires a number argument".to_string(),
+                span,
+            })
+        }
+    };
+
+    std::process::exit(code);
+}
+
 /// Get command-line arguments passed to the Atlas program (H-213)
 ///
 /// Atlas signature: `getProcessArgs() -> string[]`
