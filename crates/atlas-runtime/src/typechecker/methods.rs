@@ -410,7 +410,13 @@ impl MethodTable {
             "len" | "length" => (vec![], Type::Number),
             "isEmpty" => (vec![], Type::Bool),
             "includes" => (vec![elem_norm.clone()], Type::Bool),
-            "indexOf" | "lastIndexOf" => (vec![elem_norm.clone()], Type::Number),
+            "indexOf" | "lastIndexOf" => (
+                vec![elem_norm.clone()],
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Number],
+                },
+            ),
             "find" => (
                 vec![Type::Unknown],
                 Type::Generic {
@@ -418,7 +424,13 @@ impl MethodTable {
                     type_args: vec![elem_norm.clone()],
                 },
             ),
-            "findIndex" => (vec![Type::Unknown], Type::Number),
+            "findIndex" => (
+                vec![Type::Unknown],
+                Type::Generic {
+                    name: "Option".to_string(),
+                    type_args: vec![Type::Number],
+                },
+            ),
             "some" | "every" => (vec![Type::Unknown], Type::Bool),
             "forEach" => (vec![Type::Unknown], Type::Null),
             "map" => (vec![Type::Unknown], Type::Array(Box::new(Type::Unknown))),
