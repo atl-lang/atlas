@@ -482,26 +482,37 @@ fn test_allow_io_true_network_false_blocks_http_vm() {
 
 #[test]
 fn test_allow_io_false_network_true_blocks_filesystem() {
-    // allow_network=true should NOT grant filesystem access when allow_io=false
+    // allow_network=true should NOT grant filesystem access when allow_io=false.
+    // Write a real temp file so canonicalize() succeeds, then verify file.read()
+    // returns an Atlas Err (permission denied), not an Ok.
+    use std::io::Write;
+    let mut tmp = tempfile::NamedTempFile::new().expect("temp file");
+    writeln!(tmp, "secret").unwrap();
+    let path = tmp.path().to_string_lossy().to_string();
+
     let config = RuntimeConfig::new()
         .with_io_allowed(false)
         .with_network_allowed(true);
-
     let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
 
-    // Filesystem access should be blocked
-    let result = runtime.eval(r#"read_file("/etc/passwd")"#);
+    // file.read() returns Result<string, string> — blocked → Atlas Err("permission denied ...")
+    let result = runtime
+        .eval(&format!(
+            r#"
+let r = file.read("{path}");
+match r {{
+    Ok(_) => "allowed",
+    Err(e) => e,
+}}
+"#
+        ))
+        .expect("eval should succeed");
 
-    // Should fail with security/permission error
+    let msg = format!("{}", result);
     assert!(
-        result.is_err(),
-        "Filesystem access should be blocked when allow_io=false"
-    );
-    let err_msg = format!("{:?}", result.unwrap_err());
-    assert!(
-        err_msg.contains("ermission") || err_msg.contains("denied") || err_msg.contains("ecurity"),
-        "Expected permission/security error, got: {}",
-        err_msg
+        msg.contains("permission") || msg.contains("denied"),
+        "Expected permission denied, got: {}",
+        msg
     );
 }
 
