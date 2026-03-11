@@ -82,6 +82,15 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("regex", "new") => Some(vec![str.clone()]),
         // Crypto namespace
         ("crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
+        ("crypto", "blake3") => Some(vec![str.clone()]),
+        ("crypto", "hmac") => Some(vec![str.clone(), str.clone(), str.clone()]),
+        ("crypto", "hmacVerify") => Some(vec![str.clone(), str.clone(), str.clone(), str.clone()]),
+        // Encoding namespace — all methods take one string, return one string
+        (
+            "encoding",
+            "base64Encode" | "base64Decode" | "base64UrlEncode" | "base64UrlDecode" | "hexEncode"
+            | "hexDecode" | "urlEncode" | "urlDecode",
+        ) => Some(vec![str.clone()]),
         // Http namespace — get/delete take url only; post/put take url+body; request is variadic
         ("http", "get" | "delete" | "patch") => Some(vec![str.clone()]),
         ("http", "post" | "put") => Some(vec![str.clone(), json]),
@@ -231,7 +240,15 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Note: test/isMatch/find/findAll/replace/replaceAll/split are instance methods on Regex
         // values (dispatched via TypeTag::RegexValue), not namespace methods.
         // Crypto namespace
-        ("crypto", "sha256" | "sha512") => Type::String,
+        ("crypto", "sha256" | "sha512" | "blake3") => Type::String,
+        ("crypto", "hmac") => Type::String,
+        ("crypto", "hmacVerify") => Type::Bool,
+        // Encoding namespace — all methods return string
+        (
+            "encoding",
+            "base64Encode" | "base64Decode" | "base64UrlEncode" | "base64UrlDecode" | "hexEncode"
+            | "hexDecode" | "urlEncode" | "urlDecode",
+        ) => Type::String,
         // Http namespace — returns Result<HttpResponse, string> (H-231)
         ("http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
             name: "Result".to_string(),

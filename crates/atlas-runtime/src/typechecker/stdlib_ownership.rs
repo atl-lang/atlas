@@ -71,11 +71,11 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "atomicLoad",
         "atomicNew",
         "await",
-        "base64Decode",
-        "base64Encode",
-        "base64UrlDecode",
-        "base64UrlEncode",
-        "blake3Hash",
+        "cryptoNsBlake3",
+        "encodingNsBase64Decode",
+        "encodingNsBase64Encode",
+        "encodingNsBase64UrlDecode",
+        "encodingNsBase64UrlEncode",
         "ceil",
         "channelBounded",
         "channelIsClosed",
@@ -161,8 +161,8 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "hashSetIsEmpty",
         "hashSetSize",
         "hashSetToArray",
-        "hexDecode",
-        "hexEncode",
+        "encodingNsHexDecode",
+        "encodingNsHexEncode",
         "httpBody",
         "httpContentLength",
         "httpContentType",
@@ -337,8 +337,8 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "udpReceive",
         "unsetEnv",
         "unwrap",
-        "urlDecode",
-        "urlEncode",
+        "encodingNsUrlDecode",
+        "encodingNsUrlEncode",
         "value_to_string",
         "wsClose",
         "wsConnect",
@@ -407,7 +407,6 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "hashSetUnion",
         "hasMethod",
         "hasTag",
-        "hmacSha256",
         "httpCheckPermission",
         "httpGetJson",
         "httpHeader",
@@ -479,7 +478,7 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
         "atomicCompareExchange",
         "clamp",
         "hashMapPut",
-        "hmacSha256Verify",
+        "cryptoNsHmac",
         "httpSetHeader",
         "padEnd",
         "padStart",
@@ -509,6 +508,8 @@ pub fn build_stdlib_ownership() -> HashMap<String, FnOwnershipEntry> {
     m.insert("zipCreateWithComment".to_string(), b(2));
     // arraySort(arr, compareFn?) — 1 required
     m.insert("arraySort".to_string(), b(1));
+    // crypto.hmacVerify(key, data, sig, algo) — 4 required
+    m.insert("cryptoNsHmacVerify".to_string(), b(4));
 
     m
 }

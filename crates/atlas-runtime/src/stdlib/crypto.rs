@@ -228,6 +228,112 @@ pub fn aes_gcm_generate_key(args: &[Value], span: Span) -> Result<Value, Runtime
     Ok(Value::string(hex::encode(key)))
 }
 
+// ── Namespace Methods (cryptoNs* keys) ───────────────────────────────
+
+/// cryptoNsBlake3(data: string) -> string (hex)
+/// Used via: crypto.blake3(data)
+pub fn crypto_ns_blake3(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    blake3_hash(args, span)
+}
+
+/// cryptoNsHmac(key: string, data: string, algo: string) -> string (hex)
+/// algo: "sha256" | "sha512"
+/// Used via: crypto.hmac(key, data, algo)
+pub fn crypto_ns_hmac(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 3 {
+        return Err(super::stdlib_arity_error(
+            "crypto.hmac",
+            3,
+            args.len(),
+            span,
+        ));
+    }
+    let key = extract_string_or_bytes(&args[0], "crypto.hmac", span)?;
+    let data = extract_string_or_bytes(&args[1], "crypto.hmac", span)?;
+    let algo = extract_str(&args[2], "crypto.hmac", span)?;
+    match algo {
+        "sha256" => {
+            let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&key).map_err(|e| {
+                RuntimeError::InvalidStdlibArgument {
+                    msg: format!("crypto.hmac(): invalid key: {}", e),
+                    span,
+                }
+            })?;
+            mac.update(&data);
+            Ok(Value::string(hex::encode(mac.finalize().into_bytes())))
+        }
+        "sha512" => {
+            let mut mac = <Hmac<Sha512> as Mac>::new_from_slice(&key).map_err(|e| {
+                RuntimeError::InvalidStdlibArgument {
+                    msg: format!("crypto.hmac(): invalid key: {}", e),
+                    span,
+                }
+            })?;
+            mac.update(&data);
+            Ok(Value::string(hex::encode(mac.finalize().into_bytes())))
+        }
+        other => Err(RuntimeError::InvalidStdlibArgument {
+            msg: format!(
+                "crypto.hmac(): unknown algorithm {:?}, expected \"sha256\" or \"sha512\"",
+                other
+            ),
+            span,
+        }),
+    }
+}
+
+/// cryptoNsHmacVerify(key: string, data: string, sig: string, algo: string) -> bool
+/// Used via: crypto.hmacVerify(key, data, sig, algo)
+pub fn crypto_ns_hmac_verify(args: &[Value], span: Span) -> Result<Value, RuntimeError> {
+    if args.len() != 4 {
+        return Err(super::stdlib_arity_error(
+            "crypto.hmacVerify",
+            4,
+            args.len(),
+            span,
+        ));
+    }
+    let key = extract_string_or_bytes(&args[0], "crypto.hmacVerify", span)?;
+    let data = extract_string_or_bytes(&args[1], "crypto.hmacVerify", span)?;
+    let sig_hex = extract_str(&args[2], "crypto.hmacVerify", span)?;
+    let algo = extract_str(&args[3], "crypto.hmacVerify", span)?;
+
+    let sig_bytes = hex::decode(sig_hex).map_err(|e| RuntimeError::InvalidStdlibArgument {
+        msg: format!("crypto.hmacVerify(): invalid hex signature: {}", e),
+        span,
+    })?;
+
+    match algo {
+        "sha256" => {
+            let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(&key).map_err(|e| {
+                RuntimeError::InvalidStdlibArgument {
+                    msg: format!("crypto.hmacVerify(): invalid key: {}", e),
+                    span,
+                }
+            })?;
+            mac.update(&data);
+            Ok(Value::Bool(mac.verify_slice(&sig_bytes).is_ok()))
+        }
+        "sha512" => {
+            let mut mac = <Hmac<Sha512> as Mac>::new_from_slice(&key).map_err(|e| {
+                RuntimeError::InvalidStdlibArgument {
+                    msg: format!("crypto.hmacVerify(): invalid key: {}", e),
+                    span,
+                }
+            })?;
+            mac.update(&data);
+            Ok(Value::Bool(mac.verify_slice(&sig_bytes).is_ok()))
+        }
+        other => Err(RuntimeError::InvalidStdlibArgument {
+            msg: format!(
+                "crypto.hmacVerify(): unknown algorithm {:?}, expected \"sha256\" or \"sha512\"",
+                other
+            ),
+            span,
+        }),
+    }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────
 
 fn extract_str<'a>(value: &'a Value, func_name: &str, span: Span) -> Result<&'a str, RuntimeError> {
