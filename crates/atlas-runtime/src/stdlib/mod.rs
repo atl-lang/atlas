@@ -1294,6 +1294,30 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // Async primitives - timeout
         m.insert("timeout", |a, s, _, _| async_primitives::timeout_fn(a, s));
 
+        // ====================================================================
+        // task namespace dispatch keys (B31)
+        // task.spawn → taskNsSpawn, task.join → taskNsJoin, etc.
+        // ====================================================================
+        m.insert("taskNsSpawn", |a, s, _, _| async_primitives::spawn(a, s));
+        m.insert("taskNsJoin", |a, s, _, _| async_primitives::task_join(a, s));
+        m.insert("taskNsJoinAll", |a, s, _, _| {
+            async_primitives::join_all(a, s)
+        });
+        m.insert("taskNsStatus", |a, s, _, _| {
+            async_primitives::task_status(a, s)
+        });
+        m.insert("taskNsCancel", |a, s, _, _| {
+            async_primitives::task_cancel(a, s)
+        });
+        m.insert("taskNsId", |a, s, _, _| async_primitives::task_id(a, s));
+        m.insert("taskNsSleep", |a, s, _, _| async_primitives::sleep_fn(a, s));
+        m.insert("taskNsTimeout", |a, s, _, _| {
+            async_primitives::timeout_fn(a, s)
+        });
+        m.insert("taskNsInterval", |a, s, _, _| {
+            async_primitives::interval_fn(a, s)
+        });
+
         // Async primitives - mutex
         m.insert("asyncMutex", |a, s, _, _| {
             async_primitives::async_mutex_new(a, s)
@@ -1302,6 +1326,37 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             async_primitives::async_mutex_get(a, s)
         });
         m.insert("asyncMutexSet", |a, s, _, _| {
+            async_primitives::async_mutex_set(a, s)
+        });
+
+        // ====================================================================
+        // Channel instance method dispatch keys (B31)
+        // sender.send(v) → channelNsSend, receiver.receive() → channelNsReceive
+        // ====================================================================
+        m.insert("channelNsSend", |a, s, _, _| {
+            async_primitives::channel_send(a, s)
+        });
+        m.insert("channelNsReceive", |a, s, _, _| {
+            async_primitives::channel_receive(a, s)
+        });
+        m.insert("channelNsClose", |a, s, _, _| {
+            async_primitives::channel_is_closed(a, s)
+        });
+
+        // ====================================================================
+        // AsyncMutex instance method dispatch keys (B31)
+        // mutex.lock() → asyncMutexNsLock, mutex.get() → asyncMutexNsGet, etc.
+        // ====================================================================
+        m.insert("asyncMutexNsLock", |a, s, _, _| {
+            async_primitives::async_mutex_get(a, s)
+        });
+        m.insert("asyncMutexNsTryLock", |a, s, _, _| {
+            async_primitives::async_mutex_get(a, s)
+        });
+        m.insert("asyncMutexNsGet", |a, s, _, _| {
+            async_primitives::async_mutex_get(a, s)
+        });
+        m.insert("asyncMutexNsSet", |a, s, _, _| {
             async_primitives::async_mutex_set(a, s)
         });
 

@@ -569,6 +569,7 @@ impl Compiler {
                     | crate::method_dispatch::TypeTag::GzipNs
                     | crate::method_dispatch::TypeTag::TarNs
                     | crate::method_dispatch::TypeTag::ZipNs
+                    | crate::method_dispatch::TypeTag::TaskNs
             );
 
             if !is_ns {

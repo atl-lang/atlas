@@ -59,6 +59,14 @@ pub enum TypeTag {
     TarNs,
     /// Static namespace: Zip.create(), Zip.extract(), Zip.list(), etc.
     ZipNs,
+    /// Static namespace: task.spawn(), task.join(), task.sleep(), etc.
+    TaskNs,
+    /// Instance methods on ChannelSender values (.send(), .close())
+    ChannelSender,
+    /// Instance methods on ChannelReceiver values (.receive(), .close())
+    ChannelReceiver,
+    /// Instance methods on AsyncMutex values (.lock(), .get(), .set())
+    AsyncMutexValue,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -95,6 +103,10 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::GzipNs => resolve_gzip_ns_method(method_name),
         TypeTag::TarNs => resolve_tar_ns_method(method_name),
         TypeTag::ZipNs => resolve_zip_ns_method(method_name),
+        TypeTag::TaskNs => resolve_task_ns_method(method_name),
+        TypeTag::ChannelSender => resolve_channel_sender_method(method_name),
+        TypeTag::ChannelReceiver => resolve_channel_receiver_method(method_name),
+        TypeTag::AsyncMutexValue => resolve_async_mutex_method(method_name),
     }
 }
 
@@ -129,6 +141,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "gzip"
             | "tar"
             | "zip"
+            | "task"
     )
 }
 
@@ -162,6 +175,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "gzip" => Some(TypeTag::GzipNs),
         "tar" => Some(TypeTag::TarNs),
         "zip" => Some(TypeTag::ZipNs),
+        "task" => Some(TypeTag::TaskNs),
         _ => None,
     }
 }
@@ -1051,6 +1065,53 @@ fn resolve_tar_ns_method(method_name: &str) -> Option<String> {
         "extractGz" => "tarExtractGz",
         "list" => "tarList",
         "contains" => "tarContains",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve task.method() → stdlib function name (B31).
+fn resolve_task_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "spawn" => "taskNsSpawn",
+        "join" => "taskNsJoin",
+        "joinAll" => "taskNsJoinAll",
+        "status" => "taskNsStatus",
+        "cancel" => "taskNsCancel",
+        "id" => "taskNsId",
+        "sleep" => "taskNsSleep",
+        "timeout" => "taskNsTimeout",
+        "interval" => "taskNsInterval",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve ChannelSender instance method → stdlib function name (B31).
+fn resolve_channel_sender_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "send" => "channelNsSend",
+        "close" | "isClosed" => "channelNsClose",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve ChannelReceiver instance method → stdlib function name (B31).
+fn resolve_channel_receiver_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "receive" => "channelNsReceive",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve AsyncMutex instance method → stdlib function name (B31).
+fn resolve_async_mutex_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "lock" | "tryLock" => "asyncMutexNsLock",
+        "get" => "asyncMutexNsGet",
+        "set" => "asyncMutexNsSet",
         _ => return None,
     };
     Some(func_name.to_string())

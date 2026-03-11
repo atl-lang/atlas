@@ -109,6 +109,12 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("io", "readLinePrompt") => Some(vec![str.clone()]),
         // Console namespace — variadic, skip arity check
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => None,
+        // task namespace (B31)
+        ("task", "sleep" | "interval") => Some(vec![num.clone()]),
+        ("task", "spawn") => None, // Future arg — variadic
+        ("task", "join" | "cancel" | "status" | "id") => None, // TaskHandle arg
+        ("task", "joinAll") => None, // []TaskHandle arg
+        ("task", "timeout") => None, // Future + ms args
         // Unknown combination
         _ => None,
     }
@@ -309,6 +315,32 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("zip", "contains" | "validate") => Type::Bool,
         ("zip", "compressionRatio") => Type::Number,
         ("zip", "comment") => Type::String,
+        // task namespace (B31)
+        ("task", "sleep" | "interval" | "cancel") => Type::Null,
+        ("task", "status") => Type::String,
+        ("task", "id") => Type::Number,
+        ("task", "spawn") => Type::Generic {
+            name: "TaskHandle".to_string(),
+            type_args: vec![],
+        },
+        ("task", "join") => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![],
+        },
+        ("task", "joinAll") => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![],
+        },
+        ("task", "timeout") => Type::Generic {
+            name: "Result".to_string(),
+            type_args: vec![
+                Type::Generic {
+                    name: "Future".to_string(),
+                    type_args: vec![],
+                },
+                Type::String,
+            ],
+        },
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }
@@ -2365,8 +2397,10 @@ impl<'a> TypeChecker<'a> {
         };
         member.type_tag.set(type_tag);
 
-        // Skip error recovery cases
-        if target_type.normalized() == Type::Unknown {
+        // Skip error recovery cases — Unknown and any_placeholder() are both "give up" states
+        if target_type.normalized() == Type::Unknown
+            || target_type.normalized() == Type::any_placeholder()
+        {
             return Type::Unknown;
         }
 

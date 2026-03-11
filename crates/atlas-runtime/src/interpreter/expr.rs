@@ -686,6 +686,9 @@ impl Interpreter {
             Value::Stack(_) => Some(crate::method_dispatch::TypeTag::Stack),
             Value::Option(_) => Some(crate::method_dispatch::TypeTag::Option),
             Value::Result(_) => Some(crate::method_dispatch::TypeTag::Result),
+            Value::ChannelSender(_) => Some(crate::method_dispatch::TypeTag::ChannelSender),
+            Value::ChannelReceiver(_) => Some(crate::method_dispatch::TypeTag::ChannelReceiver),
+            Value::AsyncMutex(_) => Some(crate::method_dispatch::TypeTag::AsyncMutexValue),
             // Static namespace sentinels: Value::Builtin("__ns__Json") etc.
             Value::Builtin(name) if name.starts_with("__ns__") => {
                 crate::method_dispatch::namespace_type_tag(&name["__ns__".len()..])
@@ -746,6 +749,7 @@ impl Interpreter {
                     | crate::method_dispatch::TypeTag::GzipNs
                     | crate::method_dispatch::TypeTag::TarNs
                     | crate::method_dispatch::TypeTag::ZipNs
+                    | crate::method_dispatch::TypeTag::TaskNs
             );
             let mut args = if is_ns {
                 Vec::new()
