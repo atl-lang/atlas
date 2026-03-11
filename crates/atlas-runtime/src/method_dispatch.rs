@@ -53,6 +53,12 @@ pub enum TypeTag {
     RegexValue,
     /// Instance methods on ProcessOutput values (stdout, stderr, exitCode, success)
     ProcessOutput,
+    /// Static namespace: Gzip.compress(), Gzip.decompress(), etc.
+    GzipNs,
+    /// Static namespace: Tar.create(), Tar.extract(), Tar.list(), etc.
+    TarNs,
+    /// Static namespace: Zip.create(), Zip.extract(), Zip.list(), etc.
+    ZipNs,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -86,6 +92,9 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::DateTime => resolve_datetime_instance_method(method_name),
         TypeTag::RegexValue => resolve_regex_instance_method(method_name),
         TypeTag::ProcessOutput => resolve_process_output_method(method_name),
+        TypeTag::GzipNs => resolve_gzip_ns_method(method_name),
+        TypeTag::TarNs => resolve_tar_ns_method(method_name),
+        TypeTag::ZipNs => resolve_zip_ns_method(method_name),
     }
 }
 
@@ -107,6 +116,19 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "regex"
             | "io"
             | "console"
+            | "Env"
+            | "File"
+            | "Process"
+            | "DateTime"
+            | "Path"
+            | "Http"
+            | "Net"
+            | "Crypto"
+            | "Regex"
+            | "Io"
+            | "Gzip"
+            | "Tar"
+            | "Zip"
     )
 }
 
@@ -127,6 +149,19 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "regex" => Some(TypeTag::RegexNs),
         "io" => Some(TypeTag::IoNs),
         "console" => Some(TypeTag::ConsoleNs),
+        "Env" => Some(TypeTag::EnvNs),
+        "File" => Some(TypeTag::FileNs),
+        "Process" => Some(TypeTag::ProcessNs),
+        "DateTime" => Some(TypeTag::DateTimeNs),
+        "Path" => Some(TypeTag::PathNs),
+        "Http" => Some(TypeTag::HttpNs),
+        "Net" => Some(TypeTag::NetNs),
+        "Crypto" => Some(TypeTag::CryptoNs),
+        "Regex" => Some(TypeTag::RegexNs),
+        "Io" => Some(TypeTag::IoNs),
+        "Gzip" => Some(TypeTag::GzipNs),
+        "Tar" => Some(TypeTag::TarNs),
+        "Zip" => Some(TypeTag::ZipNs),
         _ => None,
     }
 }
@@ -989,6 +1024,51 @@ fn resolve_regex_instance_method(method_name: &str) -> Option<String> {
         "replace" => "regexReplace",
         "replaceAll" => "regexReplaceAll",
         "split" => "regexSplit",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Gzip.method() → stdlib function name.
+fn resolve_gzip_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "compress" => "gzipCompress",
+        "decompress" => "gzipDecompress",
+        "decompressString" => "gzipDecompressString",
+        "isGzip" => "gzipIsGzip",
+        "compressionRatio" => "gzipCompressionRatio",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Tar.method() → stdlib function name.
+fn resolve_tar_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "create" => "tarCreate",
+        "createGz" => "tarCreateGz",
+        "extract" => "tarExtract",
+        "extractGz" => "tarExtractGz",
+        "list" => "tarList",
+        "contains" => "tarContains",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Zip.method() → stdlib function name.
+fn resolve_zip_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "create" => "zipCreate",
+        "createWithComment" => "zipCreateWithComment",
+        "extract" => "zipExtract",
+        "extractFiles" => "zipExtractFiles",
+        "list" => "zipList",
+        "contains" => "zipContains",
+        "addFile" => "zipAddFile",
+        "validate" => "zipValidate",
+        "compressionRatio" => "zipCompressionRatio",
+        "comment" => "zipComment",
         _ => return None,
     };
     Some(func_name.to_string())
