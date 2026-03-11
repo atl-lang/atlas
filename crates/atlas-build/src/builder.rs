@@ -794,10 +794,22 @@ impl Builder {
             let output_dir = self.config.target_dir.join(target.kind.output_dir_name());
             fs::create_dir_all(&output_dir).map_err(|e| BuildError::io(&output_dir, e))?;
 
-            // Write artifact
             let output_path = output_dir.join(target.output_filename());
-            fs::write(&output_path, &combined_bytecode)
-                .map_err(|e| BuildError::io(&output_path, e))?;
+
+            // Binary targets: produce a self-contained native OS executable.
+            // All other targets: write raw bytecode (`.atl.bc`).
+            if target.kind == crate::targets::TargetKind::Binary {
+                let launcher = crate::binary_emit::find_launcher_binary()
+                    .ok_or(BuildError::LauncherNotFound)?;
+                crate::binary_emit::emit_native_binary(
+                    &launcher,
+                    &combined_bytecode,
+                    &output_path,
+                )?;
+            } else {
+                fs::write(&output_path, &combined_bytecode)
+                    .map_err(|e| BuildError::io(&output_path, e))?;
+            }
 
             let metadata = ArtifactMetadata::new(
                 total_compile_time,

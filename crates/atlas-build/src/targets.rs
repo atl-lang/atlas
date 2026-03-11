@@ -30,14 +30,20 @@ impl TargetKind {
         }
     }
 
-    /// Get the file extension for this target kind
+    /// Get the file extension for this target kind.
+    ///
+    /// Binary targets produce a native OS executable with no extension on Unix
+    /// and `.exe` on Windows. All other targets produce `.atl.bc` bytecode files.
     pub fn file_extension(&self) -> &'static str {
         match self {
-            Self::Library => "atl.bc",
-            Self::Binary => "atl.bc",
-            Self::Bytecode => "atl.bc",
-            Self::Test => "atl.bc",
-            Self::Benchmark => "atl.bc",
+            Self::Binary => {
+                if cfg!(windows) {
+                    "exe"
+                } else {
+                    ""
+                }
+            }
+            Self::Library | Self::Bytecode | Self::Test | Self::Benchmark => "atl.bc",
         }
     }
 
@@ -104,9 +110,18 @@ impl BuildTarget {
         self
     }
 
-    /// Get the output file name for this target
+    /// Get the output file name for this target.
+    ///
+    /// Binary targets on Unix have no extension (e.g. `watcher`).
+    /// Binary targets on Windows get `.exe` (e.g. `watcher.exe`).
+    /// All other targets get `.atl.bc` (e.g. `mylib.atl.bc`).
     pub fn output_filename(&self) -> String {
-        format!("{}.{}", self.name, self.kind.file_extension())
+        let ext = self.kind.file_extension();
+        if ext.is_empty() {
+            self.name.clone()
+        } else {
+            format!("{}.{}", self.name, ext)
+        }
     }
 
     /// Validate the target configuration
@@ -268,7 +283,11 @@ mod tests {
         assert_eq!(target.output_filename(), "mylib.atl.bc");
 
         let target = BuildTarget::new("mybin", TargetKind::Binary);
-        assert_eq!(target.output_filename(), "mybin.atl.bc");
+        // Binary targets: no extension on Unix, .exe on Windows
+        #[cfg(unix)]
+        assert_eq!(target.output_filename(), "mybin");
+        #[cfg(windows)]
+        assert_eq!(target.output_filename(), "mybin.exe");
     }
 
     #[test]
@@ -334,7 +353,11 @@ mod tests {
     #[test]
     fn test_output_extensions() {
         assert_eq!(TargetKind::Library.file_extension(), "atl.bc");
-        assert_eq!(TargetKind::Binary.file_extension(), "atl.bc");
+        // Binary: empty on Unix, "exe" on Windows
+        #[cfg(unix)]
+        assert_eq!(TargetKind::Binary.file_extension(), "");
+        #[cfg(windows)]
+        assert_eq!(TargetKind::Binary.file_extension(), "exe");
         assert_eq!(TargetKind::Bytecode.file_extension(), "atl.bc");
     }
 
