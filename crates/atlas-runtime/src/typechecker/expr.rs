@@ -18,8 +18,12 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
     let str_arr = Type::Array(Box::new(Type::String));
     match (ns, method) {
         // Json namespace
-        ("Json", "parse" | "isValid" | "prettify") => Some(vec![str]),
+        ("Json", "parse" | "isValid" | "minify" | "keys") => Some(vec![str]),
+        ("Json", "prettify") => Some(vec![str.clone(), num.clone()]),
         ("Json", "stringify") => Some(vec![Type::any_placeholder()]),
+        ("Json", "getString" | "getNumber" | "getBool" | "getArray" | "getObject" | "isNull") => {
+            Some(vec![str.clone(), str])
+        }
         // Math namespace
         ("Math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
         ("Math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
@@ -92,6 +96,12 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("Json", "stringify") => Type::String,
         ("Json", "isValid") => Type::Bool,
         ("Json", "prettify") => Type::String,
+        // B23: new Json namespace methods
+        ("Json", "minify") => Type::String,
+        ("Json", "keys") => Type::Array(Box::new(Type::String)),
+        ("Json", "getString" | "getArray" | "getObject") => Type::String,
+        ("Json", "getNumber") => Type::Number,
+        ("Json", "getBool" | "isNull") => Type::Bool,
         // Math namespace
         (
             "Math",

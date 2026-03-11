@@ -1,8 +1,8 @@
-let data: json = unwrap(parse_json("{\"name\":\"Alice\",\"age\":30}"));
+let data: json = unwrap(Json.parse("{\"name\":\"Alice\",\"age\":30}"));
 let name: string = data["name"].as_string();
 let age: number = data["age"].as_number();
 console.log(name);
 console.log(age);
 
-let json_str: string = to_json(42);
+let json_str: string = Json.stringify(42);
 console.log(json_str);

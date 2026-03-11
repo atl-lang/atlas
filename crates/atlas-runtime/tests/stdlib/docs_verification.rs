@@ -347,7 +347,7 @@ fn docs_parse_json_object() {
     assert_eval_bool(
         r#"
         let json_str = "[1, 2, 3]";
-        let arr: json = parse_json(json_str)?;
+        let arr: json = Json.parse(json_str)?;
         json_as_number(arr[0]) == 1
         "#,
         true,
@@ -356,27 +356,27 @@ fn docs_parse_json_object() {
 
 #[test]
 fn docs_to_json() {
-    assert_eval_bool(r#"is_string(to_json([1, 2, 3]))"#, true);
+    assert_eval_bool(r#"is_string(Json.stringify([1, 2, 3]))"#, true);
 }
 
 #[test]
 fn docs_is_valid_json_true() {
-    assert_eval_bool(r#"is_valid_json("{\"key\": \"value\"}")"#, true);
+    assert_eval_bool(r#"Json.isValid("{\"key\": \"value\"}")"#, true);
 }
 
 #[test]
 fn docs_is_valid_json_false() {
-    assert_eval_bool(r#"is_valid_json("not json")"#, false);
+    assert_eval_bool(r#"Json.isValid("not json")"#, false);
 }
 
 #[test]
 fn docs_json_as_number() {
-    assert_eval_number(r#"json_as_number(parse_json("42")?)"#, 42.0);
+    assert_eval_number(r#"json_as_number(Json.parse("42")?)"#, 42.0);
 }
 
 #[test]
 fn docs_json_is_null() {
-    assert_eval_bool(r#"json_is_null(parse_json("null")?)"#, true);
+    assert_eval_bool(r#"json_is_null(Json.parse("null")?)"#, true);
 }
 
 // --- Result / Option functions ---

@@ -77,7 +77,7 @@ fn test_typeof_array_empty() {
 
 #[test]
 fn test_typeof_json() {
-    let code = r#"typeof(unwrap(parse_json("null")))"#;
+    let code = r#"typeof(unwrap(Json.parse("null")))"#;
     assert_eval_string(code, "null");
 }
 
@@ -297,7 +297,7 @@ fn test_to_string_array() {
 
 #[test]
 fn test_to_string_json() {
-    let code = r#"toString(unwrap(parse_json("null")))"#;
+    let code = r#"toString(unwrap(Json.parse("null")))"#;
     assert_eval_string(code, "[JSON]");
 }
 

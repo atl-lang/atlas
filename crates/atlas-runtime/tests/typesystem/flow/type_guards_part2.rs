@@ -331,56 +331,56 @@ fn test_runtime_basic_guards(#[case] expr: &str, #[case] expected: Value) {
 #[rstest]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"tag\":\"ok\", \"value\": 1}"));
+    let obj = unwrap(Json.parse("{\"tag\":\"ok\", \"value\": 1}"));
     has_tag(obj, "ok")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"tag\":\"bad\", \"value\": 1}"));
+    let obj = unwrap(Json.parse("{\"tag\":\"bad\", \"value\": 1}"));
     has_tag(obj, "ok")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     has_field(obj, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     has_field(obj, "missing")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     has_method(obj, "name")
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     has_method(obj, "missing")
     "#,
     Value::Bool(false)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     is_object(obj)
     "#,
     Value::Bool(true)
 )]
 #[case(
     r#"
-    let obj = unwrap(parse_json("{\"name\":\"atlas\"}"));
+    let obj = unwrap(Json.parse("{\"name\":\"atlas\"}"));
     is_type(obj, "object")
     "#,
     Value::Bool(true)

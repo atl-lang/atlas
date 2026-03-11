@@ -5,7 +5,7 @@ use super::super::*;
 fn test_json_parse_simple_object() {
     let code = r#"
         let jsonStr: string = "{\"name\": \"Alice\", \"age\": 30}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let name: string = data["name"].as_string();
         name
     "#;
@@ -16,7 +16,7 @@ fn test_json_parse_simple_object() {
 fn test_json_parse_nested_object() {
     let code = r#"
         let jsonStr: string = "{\"user\": {\"name\": \"Bob\", \"email\": \"bob@test.com\"}}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let user: json = data["user"];
         let email: string = user["email"].as_string();
         email
@@ -28,7 +28,7 @@ fn test_json_parse_nested_object() {
 fn test_json_parse_array() {
     let code = r#"
         let jsonStr: string = "[1, 2, 3, 4, 5]";
-        let arr: json = unwrap(parse_json(jsonStr));
+        let arr: json = unwrap(Json.parse(jsonStr));
         let first: number = arr[0].as_number();
         first
     "#;
@@ -39,7 +39,7 @@ fn test_json_parse_array() {
 fn test_json_nested_array_access() {
     let code = r#"
         let jsonStr: string = "{\"numbers\": [10, 20, 30]}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let numbers: json = data["numbers"];
         let second: number = numbers[1].as_number();
         second
@@ -51,7 +51,7 @@ fn test_json_nested_array_access() {
 fn test_json_api_extract_users() {
     let code = r#"
         let jsonStr: string = "{\"users\": [{\"name\": \"Alice\"}, {\"name\": \"Bob\"}]}";
-        let response: json = unwrap(parse_json(jsonStr));
+        let response: json = unwrap(Json.parse(jsonStr));
         let users: json = response["users"];
         let firstUser: json = users[0];
         let name: string = firstUser["name"].as_string();
@@ -64,7 +64,7 @@ fn test_json_api_extract_users() {
 fn test_json_extract_multiple_fields() {
     let code = r#"
         let jsonStr: string = "{\"id\": 123, \"name\": \"Product\", \"price\": 29.99}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let id: number = data["id"].as_number();
         let name: string = data["name"].as_string();
         let price: number = data["price"].as_number();
@@ -77,7 +77,7 @@ fn test_json_extract_multiple_fields() {
 fn test_json_deep_nesting() {
     let code = r#"
         let jsonStr: string = "{\"data\": {\"user\": {\"profile\": {\"name\": \"Charlie\"}}}}";
-        let response: json = unwrap(parse_json(jsonStr));
+        let response: json = unwrap(Json.parse(jsonStr));
         let data: json = response["data"];
         let user: json = data["user"];
         let profile: json = user["profile"];
@@ -91,7 +91,7 @@ fn test_json_deep_nesting() {
 fn test_json_array_of_objects() {
     let code = r#"
         let jsonStr: string = "[{\"id\": 1}, {\"id\": 2}, {\"id\": 3}]";
-        let arr: json = unwrap(parse_json(jsonStr));
+        let arr: json = unwrap(Json.parse(jsonStr));
         let item2: json = arr[1];
         let id: number = item2["id"].as_number();
         id
@@ -103,7 +103,7 @@ fn test_json_array_of_objects() {
 fn test_json_boolean_extraction() {
     let code = r#"
         let jsonStr: string = "{\"active\": true, \"verified\": false}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let active: bool = data["active"].as_bool();
         active
     "#;
@@ -114,7 +114,7 @@ fn test_json_boolean_extraction() {
 fn test_json_null_check() {
     let code = r#"
         let jsonStr: string = "{\"value\": null}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let value: json = data["value"];
         json_is_null(value)
     "#;
@@ -125,7 +125,7 @@ fn test_json_null_check() {
 fn test_json_missing_key_returns_null() {
     let code = r#"
         let jsonStr: string = "{\"name\": \"Test\"}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let missing: json = data["nonexistent"];
         json_is_null(missing)
     "#;
@@ -138,7 +138,7 @@ fn test_json_build_from_parts() {
         let name: string = "Alice";
         let age: number = 30.0;
         let jsonStr: string = "{\"name\":\"" + name + "\",\"age\":" + str(age) + "}";
-        let parsed: json = unwrap(parse_json(jsonStr));
+        let parsed: json = unwrap(Json.parse(jsonStr));
         let extractedAge: number = parsed["age"].as_number();
         extractedAge
     "#;
@@ -149,7 +149,7 @@ fn test_json_build_from_parts() {
 fn test_json_array_length_via_iteration() {
     let code = r#"
         let jsonStr: string = "[1, 2, 3, 4, 5]";
-        let arr: json = unwrap(parse_json(jsonStr));
+        let arr: json = unwrap(Json.parse(jsonStr));
         // Access elements to count
         let v0: number = arr[0].as_number();
         let v1: number = arr[1].as_number();
@@ -165,7 +165,7 @@ fn test_json_array_length_via_iteration() {
 fn test_json_mixed_types_in_object() {
     let code = r#"
         let jsonStr: string = "{\"str\": \"hello\", \"num\": 42, \"bool\": true}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let s: string = data["str"].as_string();
         let n: number = data["num"].as_number();
         let b: bool = data["bool"].as_bool();
@@ -178,7 +178,7 @@ fn test_json_mixed_types_in_object() {
 fn test_json_empty_object() {
     let code = r#"
         let jsonStr: string = "{}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let missing: json = data["anything"];
         json_is_null(missing)
     "#;
@@ -189,7 +189,7 @@ fn test_json_empty_object() {
 fn test_json_empty_array() {
     let code = r#"
         let jsonStr: string = "[]";
-        let arr: json = unwrap(parse_json(jsonStr));
+        let arr: json = unwrap(Json.parse(jsonStr));
         let missing: json = arr[0];
         json_is_null(missing)
     "#;
@@ -200,8 +200,8 @@ fn test_json_empty_array() {
 fn test_json_prettify_output() {
     let code = r#"
         let jsonStr: string = "{\"name\":\"Alice\",\"age\":30}";
-        let data: json = unwrap(parse_json(jsonStr));
-        let pretty: string = prettify_json(jsonStr, 2.0);
+        let data: json = unwrap(Json.parse(jsonStr));
+        let pretty: string = Json.prettify(jsonStr, 2.0);
         includes(pretty, "  ")
     "#;
     assert_eval_bool_with_io(code, true);
@@ -212,8 +212,8 @@ fn test_json_validate_before_parse() {
     let code = r#"
         let validJson: string = "{\"test\": true}";
         let invalidJson: string = "{invalid}";
-        let valid: bool = is_valid_json(validJson);
-        let invalid: bool = is_valid_json(invalidJson);
+        let valid: bool = Json.isValid(validJson);
+        let invalid: bool = Json.isValid(invalidJson);
         valid && !invalid
     "#;
     assert_eval_bool_with_io(code, true);
@@ -223,8 +223,8 @@ fn test_json_validate_before_parse() {
 fn test_json_to_json_round_trip() {
     let code = r#"
         let original: string = "{\"key\":\"value\"}";
-        let parsed: json = unwrap(parse_json(original));
-        let serialized: string = to_json(parsed);
+        let parsed: json = unwrap(Json.parse(original));
+        let serialized: string = Json.stringify(parsed);
         includes(serialized, "key") && includes(serialized, "value")
     "#;
     assert_eval_bool_with_io(code, true);
@@ -234,7 +234,7 @@ fn test_json_to_json_round_trip() {
 fn test_json_numeric_precision() {
     let code = r#"
         let jsonStr: string = "{\"value\": 123.456}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let value: number = data["value"].as_number();
         value
     "#;
@@ -245,7 +245,7 @@ fn test_json_numeric_precision() {
 fn test_json_github_api_style() {
     let code = r#"
         let response: string = "{\"data\": {\"repository\": {\"name\": \"atlas\", \"stars\": 100}}}";
-        let json: json = unwrap(parse_json(response));
+        let json: json = unwrap(Json.parse(response));
         let data: json = json["data"];
         let repo: json = data["repository"];
         let name: string = repo["name"].as_string();
@@ -259,7 +259,7 @@ fn test_json_github_api_style() {
 fn test_json_array_filter_pattern() {
     let code = r#"
         let jsonStr: string = "[{\"active\":true},{\"active\":false},{\"active\":true}]";
-        let arr: json = unwrap(parse_json(jsonStr));
+        let arr: json = unwrap(Json.parse(jsonStr));
         let item0: json = arr[0];
         let item1: json = arr[1];
         let item2: json = arr[2];
@@ -280,7 +280,7 @@ fn test_json_array_filter_pattern() {
 fn test_json_string_escaping() {
     let code = r#"
         let jsonStr: string = "{\"message\": \"Hello\\nWorld\"}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let msg: string = data["message"].as_string();
         includes(msg, "Hello")
     "#;
@@ -291,7 +291,7 @@ fn test_json_string_escaping() {
 fn test_json_number_as_string() {
     let code = r#"
         let jsonStr: string = "{\"id\": \"12345\"}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let id: string = data["id"].as_string();
         id
     "#;
@@ -302,7 +302,7 @@ fn test_json_number_as_string() {
 fn test_json_nested_arrays() {
     let code = r#"
         let jsonStr: string = "{\"matrix\": [[1,2],[3,4]]}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let matrix: json = data["matrix"];
         let row0: json = matrix[0];
         let val: number = row0[1].as_number();
@@ -315,7 +315,7 @@ fn test_json_nested_arrays() {
 fn test_json_api_pagination_meta() {
     let code = r#"
         let response: string = "{\"data\": [], \"meta\": {\"page\": 1, \"total\": 100}}";
-        let json: json = unwrap(parse_json(response));
+        let json: json = unwrap(Json.parse(response));
         let meta: json = json["meta"];
         let page: number = meta["page"].as_number();
         let total: number = meta["total"].as_number();
@@ -328,7 +328,7 @@ fn test_json_api_pagination_meta() {
 fn test_json_error_response() {
     let code = r#"
         let response: string = "{\"error\": {\"code\": 404, \"message\": \"Not Found\"}}";
-        let json: json = unwrap(parse_json(response));
+        let json: json = unwrap(Json.parse(response));
         let error: json = json["error"];
         let code: number = error["code"].as_number();
         let message: string = error["message"].as_string();
@@ -341,13 +341,13 @@ fn test_json_error_response() {
 fn test_json_transform_data() {
     let code = r#"
         let input: string = "{\"firstName\": \"John\", \"lastName\": \"Doe\"}";
-        let data: json = unwrap(parse_json(input));
+        let data: json = unwrap(Json.parse(input));
         let first: string = data["firstName"].as_string();
         let last: string = data["lastName"].as_string();
         // Build new structure
         let fullName: string = first + " " + last;
         let output: string = "{\"name\":\"" + fullName + "\"}";
-        let result: json = unwrap(parse_json(output));
+        let result: json = unwrap(Json.parse(output));
         let name: string = result["name"].as_string();
         name
     "#;
@@ -358,7 +358,7 @@ fn test_json_transform_data() {
 fn test_json_conditional_field_access() {
     let code = r#"
         let jsonStr: string = "{\"premium\": true, \"features\": {\"advanced\": true}}";
-        let data: json = unwrap(parse_json(jsonStr));
+        let data: json = unwrap(Json.parse(jsonStr));
         let premium: bool = data["premium"].as_bool();
         let mut result: bool = false;
         if (premium) {
@@ -375,7 +375,7 @@ fn test_json_conditional_field_access() {
 fn test_json_minify_compact() {
     let code = r#"
         let jsonStr: string = "{  \"name\" :  \"test\"  }";
-        let minified: string = minify_json(jsonStr);
+        let minified: string = Json.minify(jsonStr);
         !includes(minified, "  ")
     "#;
     assert_eval_bool_with_io(code, true);

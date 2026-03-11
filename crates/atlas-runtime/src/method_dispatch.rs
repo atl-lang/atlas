@@ -305,12 +305,21 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
 }
 
 /// Resolve Json.method() → stdlib function name.
+/// B23: All Json.* methods route through jsonNs* internal keys. No bare globals.
 fn resolve_json_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
-        "parse" => "parseJSON",
-        "stringify" => "toJSON",
-        "isValid" => "isValidJSON",
-        "prettify" => "prettifyJSON",
+        "parse" => "jsonNsParse",
+        "stringify" => "jsonNsStringify",
+        "isValid" => "jsonNsIsValid",
+        "prettify" => "jsonNsPrettify",
+        "minify" => "jsonNsMinify",
+        "keys" => "jsonNsKeys",
+        "getString" => "jsonNsGetString",
+        "getNumber" => "jsonNsGetNumber",
+        "getBool" => "jsonNsGetBool",
+        "getArray" => "jsonNsGetArray",
+        "getObject" => "jsonNsGetObject",
+        "isNull" => "jsonNsIsNull",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -577,10 +586,19 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         // String/Array — split and join
         "split" => Some("s.split(sep)"),
         "join" => Some("arr.join(sep)"),
-        // JSON
+        // JSON — B23: all bare json globals deprecated
         "parseJSON" => Some("Json.parse(s)"),
         "toJSON" => Some("Json.stringify(v)"),
         "isValidJSON" => Some("Json.isValid(s)"),
+        "prettifyJSON" => Some("Json.prettify(s, indent)"),
+        "minifyJSON" => Some("Json.minify(s)"),
+        "jsonGetString" => Some("Json.getString(s, key)"),
+        "jsonGetNumber" => Some("Json.getNumber(s, key)"),
+        "jsonGetBool" => Some("Json.getBool(s, key)"),
+        "jsonGetArray" => Some("Json.getArray(s, key)"),
+        "jsonGetObject" => Some("Json.getObject(s, key)"),
+        "jsonIsNull" => Some("Json.isNull(s, key)"),
+        "jsonKeys" => Some("Json.keys(s)"),
         // Math globals — B22: bare math globals removed. Use Math.* namespace.
         "sqrt" => Some("Math.sqrt(x)"),
         "abs" => Some("Math.abs(x)"),

@@ -237,7 +237,7 @@ fn test_log_parse_json_lines() {
         let logs: string = read_file("{}");
         let lines: []string = split(logs, "\n");
         let line1: string = lines[0];
-        let json: json = parse_json(line1)?;
+        let json: json = Json.parse(line1)?;
         let level: string = json["level"].as_string();
         level
     "#,
