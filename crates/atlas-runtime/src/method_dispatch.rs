@@ -367,6 +367,7 @@ fn resolve_option_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "unwrap" => "unwrap",
         "unwrapOr" => "unwrapOr",
+        "expect" => "expect", // H-268
         "isSome" => "isSome",
         "isNone" => "isNone",
         "map" => "optionMap",
@@ -380,6 +381,7 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "unwrap" => "unwrap",
         "unwrapOr" => "unwrapOr",
+        "expect" => "expect", // H-268
         "isOk" => "isOk",
         "isErr" => "isErr",
         "map" => "resultMap",

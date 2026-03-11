@@ -570,6 +570,7 @@ impl MethodTable {
         let (arg_types, return_type) = match method_name {
             "unwrap" => (vec![], t.clone()),
             "unwrapOr" => (vec![t.clone()], t.clone()),
+            "expect" => (vec![Type::String], t.clone()), // H-268
             "isSome" | "isNone" => (vec![], Type::Bool),
             "map" => (
                 vec![Type::Unknown], // closure: T -> U (we can't express U here)
@@ -599,6 +600,7 @@ impl MethodTable {
         let (arg_types, return_type) = match method_name {
             "unwrap" => (vec![], t.clone()),
             "unwrapOr" => (vec![t.clone()], t.clone()),
+            "expect" => (vec![Type::String], t.clone()), // H-268
             "isOk" | "isErr" => (vec![], Type::Bool),
             "map" => (
                 vec![Type::Unknown], // closure: T -> U
