@@ -878,14 +878,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("ioReadLinePrompt", |a, s, sc, _| {
             io::io_read_line_prompt(a, s, sc)
         });
-        m.insert("readFile", |a, s, sc, _| io::read_file(a, s, sc));
-        m.insert("writeFile", |a, s, sc, _| io::write_file(a, s, sc));
-        m.insert("appendFile", |a, s, sc, _| io::append_file(a, s, sc));
-        m.insert("fileExists", |a, s, sc, _| io::file_exists(a, s, sc));
-        m.insert("readDir", |a, s, sc, _| io::read_dir(a, s, sc));
-        m.insert("createDir", |a, s, sc, _| io::create_dir(a, s, sc));
-        m.insert("removeFile", |a, s, sc, _| io::remove_file(a, s, sc));
-        m.insert("removeDir", |a, s, sc, _| io::remove_dir(a, s, sc));
+        // B24: bare globals removed — all file.* calls route through fileNs* keys.
+        m.insert("fileNsRead", |a, s, sc, _| io::read_file(a, s, sc));
+        m.insert("fileNsWrite", |a, s, sc, _| io::write_file(a, s, sc));
+        m.insert("fileNsAppend", |a, s, sc, _| io::append_file(a, s, sc));
+        m.insert("fileNsExists", |a, s, sc, _| io::file_exists(a, s, sc));
+        m.insert("fileNsRemove", |a, s, sc, _| io::remove_file(a, s, sc));
+        m.insert("fileNsCreateDir", |a, s, sc, _| io::create_dir(a, s, sc));
+        m.insert("fileNsRemoveDir", |a, s, sc, _| io::remove_dir(a, s, sc));
         m.insert("fileInfo", |a, s, sc, _| io::file_info(a, s, sc));
         m.insert("pathJoin", |a, s, sc, _| io::path_join(a, s, sc));
 
@@ -1562,191 +1562,182 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         });
 
         // ====================================================================
-        // File system operations - directory operations
+        // File system operations — B24: all registered under fileNs* keys.
+        // Bare fs* globals removed; file.* dispatch routes here.
         // ====================================================================
-        m.insert("fsMkdir", |args, span, _, _| {
+        m.insert("fileNsMkdir", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsMkdir", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsMkdir", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsMkdir", span)?;
+            let path = extract_string(&args[0], "fileNsMkdir", span)?;
             fs::mkdir(path, span)
         });
-        m.insert("fsMkdirp", |args, span, _, _| {
+        m.insert("fileNsMkdirp", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsMkdirp", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsMkdirp", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsMkdirp", span)?;
+            let path = extract_string(&args[0], "fileNsMkdirp", span)?;
             fs::mkdirp(path, span)
         });
-        m.insert("fsRmdir", |args, span, _, _| {
+        m.insert("fileNsRmdir", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsRmdir", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsRmdir", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsRmdir", span)?;
+            let path = extract_string(&args[0], "fileNsRmdir", span)?;
             fs::rmdir(path, span)
         });
-        m.insert("fsRmdirRecursive", |args, span, _, _| {
+        m.insert("fileNsRmdirRecursive", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsRmdirRecursive", 1, args.len(), span));
+                return Err(stdlib_arity_error(
+                    "fileNsRmdirRecursive",
+                    1,
+                    args.len(),
+                    span,
+                ));
             }
-            let path = extract_string(&args[0], "fsRmdirRecursive", span)?;
+            let path = extract_string(&args[0], "fileNsRmdirRecursive", span)?;
             fs::rmdir_recursive(path, span)
         });
-        m.insert("fsReaddir", |args, span, _, _| {
+        m.insert("fileNsReadDir", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsReaddir", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsReadDir", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsReaddir", span)?;
+            let path = extract_string(&args[0], "fileNsReadDir", span)?;
             fs::readdir(path, span)
         });
-        m.insert("fsWalk", |args, span, _, _| {
+        m.insert("fileNsWalk", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsWalk", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsWalk", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsWalk", span)?;
+            let path = extract_string(&args[0], "fileNsWalk", span)?;
             fs::walk(path, span)
         });
-        m.insert("fsFilterEntries", |args, span, _, _| {
+        m.insert("fileNsFilterEntries", |args, span, _, _| {
             if args.len() != 2 {
-                return Err(stdlib_arity_error("fsFilterEntries", 2, args.len(), span));
+                return Err(stdlib_arity_error(
+                    "fileNsFilterEntries",
+                    2,
+                    args.len(),
+                    span,
+                ));
             }
-            let entries = extract_array(&args[0], "fsFilterEntries", span)?;
-            let pattern = extract_string(&args[1], "fsFilterEntries", span)?;
+            let entries = extract_array(&args[0], "fileNsFilterEntries", span)?;
+            let pattern = extract_string(&args[1], "fileNsFilterEntries", span)?;
             fs::filter_entries(&entries, pattern, span)
         });
-        m.insert("fsSortEntries", |args, span, _, _| {
+        m.insert("fileNsSortEntries", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsSortEntries", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsSortEntries", 1, args.len(), span));
             }
-            let entries = extract_array(&args[0], "fsSortEntries", span)?;
+            let entries = extract_array(&args[0], "fileNsSortEntries", span)?;
             fs::sort_entries(&entries, span)
         });
 
         // File system operations - metadata
-        m.insert("fsSize", |args, span, _, _| {
+        m.insert("fileNsSize", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsSize", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsSize", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsSize", span)?;
+            let path = extract_string(&args[0], "fileNsSize", span)?;
             fs::size(path, span)
         });
-        m.insert("fsMtime", |args, span, _, _| {
+        m.insert("fileNsMtime", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsMtime", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsMtime", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsMtime", span)?;
+            let path = extract_string(&args[0], "fileNsMtime", span)?;
             fs::mtime(path, span)
         });
-        m.insert("fsCtime", |args, span, _, _| {
+        m.insert("fileNsCtime", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsCtime", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsCtime", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsCtime", span)?;
+            let path = extract_string(&args[0], "fileNsCtime", span)?;
             fs::ctime(path, span)
         });
-        m.insert("fsAtime", |args, span, _, _| {
+        m.insert("fileNsAtime", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsAtime", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsAtime", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsAtime", span)?;
+            let path = extract_string(&args[0], "fileNsAtime", span)?;
             fs::atime(path, span)
         });
-        m.insert("fsPermissions", |args, span, _, _| {
+        m.insert("fileNsPermissions", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsPermissions", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsPermissions", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsPermissions", span)?;
+            let path = extract_string(&args[0], "fileNsPermissions", span)?;
             fs::permissions(path, span)
         });
-        m.insert("fsIsDir", |args, span, _, _| {
+        m.insert("fileNsIsDir", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsIsDir", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsIsDir", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsIsDir", span)?;
+            let path = extract_string(&args[0], "fileNsIsDir", span)?;
             fs::is_dir(path, span)
         });
-        m.insert("fsIsFile", |args, span, _, _| {
+        m.insert("fileNsIsFile", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsIsFile", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsIsFile", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsIsFile", span)?;
+            let path = extract_string(&args[0], "fileNsIsFile", span)?;
             fs::is_file(path, span)
         });
-        m.insert("fsIsSymlink", |args, span, _, _| {
+        m.insert("fileNsIsSymlink", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsIsSymlink", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsIsSymlink", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsIsSymlink", span)?;
+            let path = extract_string(&args[0], "fileNsIsSymlink", span)?;
             fs::is_symlink(path, span)
         });
-        m.insert("fsInode", |args, span, _, _| {
+        m.insert("fileNsInode", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsInode", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsInode", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsInode", span)?;
+            let path = extract_string(&args[0], "fileNsInode", span)?;
             fs::inode(path, span)
         });
 
         // File system operations - temporary files
-        m.insert("fsTmpfile", |args, span, _, _| {
+        m.insert("fileNsTempFile", |args, span, _, _| {
             if !args.is_empty() {
-                return Err(stdlib_arity_error("fsTmpfile", 0, args.len(), span));
+                return Err(stdlib_arity_error("fileNsTempFile", 0, args.len(), span));
             }
             fs::tmpfile(span)
         });
-        m.insert("fsTmpdir", |args, span, _, _| {
+        m.insert("fileNsTempDir", |args, span, _, _| {
             if !args.is_empty() {
-                return Err(stdlib_arity_error("fsTmpdir", 0, args.len(), span));
+                return Err(stdlib_arity_error("fileNsTempDir", 0, args.len(), span));
             }
             fs::tmpdir(span)
         });
-        m.insert("fsTmpfileNamed", |args, span, _, _| {
-            if args.len() != 1 {
-                return Err(stdlib_arity_error("fsTmpfileNamed", 1, args.len(), span));
-            }
-            let prefix = extract_string(&args[0], "fsTmpfileNamed", span)?;
-            fs::tmpfile_named(prefix, span)
-        });
-        m.insert("fsGetTempDir", |args, span, _, _| {
-            if !args.is_empty() {
-                return Err(stdlib_arity_error("fsGetTempDir", 0, args.len(), span));
-            }
-            fs::get_temp_dir(span)
-        });
 
         // File system operations - symlinks
-        m.insert("fsSymlink", |args, span, _, _| {
+        m.insert("fileNsSymlink", |args, span, _, _| {
             if args.len() != 2 {
-                return Err(stdlib_arity_error("fsSymlink", 2, args.len(), span));
+                return Err(stdlib_arity_error("fileNsSymlink", 2, args.len(), span));
             }
-            let target = extract_string(&args[0], "fsSymlink", span)?;
-            let link = extract_string(&args[1], "fsSymlink", span)?;
+            let target = extract_string(&args[0], "fileNsSymlink", span)?;
+            let link = extract_string(&args[1], "fileNsSymlink", span)?;
             fs::symlink(target, link, span)
         });
-        m.insert("fsReadlink", |args, span, _, _| {
+        m.insert("fileNsReadLink", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsReadlink", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsReadLink", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsReadlink", span)?;
+            let path = extract_string(&args[0], "fileNsReadLink", span)?;
             fs::readlink(path, span)
         });
-        m.insert("fsResolveSymlink", |args, span, _, _| {
+        m.insert("fileNsWatch", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsResolveSymlink", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsWatch", 1, args.len(), span));
             }
-            let path = extract_string(&args[0], "fsResolveSymlink", span)?;
-            fs::resolve_symlink(path, span)
-        });
-        m.insert("fsWatch", |args, span, _, _| {
-            if args.len() != 1 {
-                return Err(stdlib_arity_error("fsWatch", 1, args.len(), span));
-            }
-            let path = extract_string(&args[0], "fsWatch", span)?;
+            let path = extract_string(&args[0], "fileNsWatch", span)?;
             fs::watch(path, span)
         });
-        m.insert("fsWatchNext", |args, span, _, _| {
+        m.insert("fileNsWatchNext", |args, span, _, _| {
             if args.len() != 1 {
-                return Err(stdlib_arity_error("fsWatchNext", 1, args.len(), span));
+                return Err(stdlib_arity_error("fileNsWatchNext", 1, args.len(), span));
             }
             fs::watch_next(&args[0], span)
         });
@@ -2100,14 +2091,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             // File I/O
             ("ioReadLine", "io_read_line"),
             ("ioReadLinePrompt", "io_read_line_prompt"),
-            ("readFile", "read_file"),
-            ("writeFile", "write_file"),
-            ("appendFile", "append_file"),
-            ("fileExists", "file_exists"),
-            ("readDir", "read_dir"),
-            ("createDir", "create_dir"),
-            ("removeFile", "remove_file"),
-            ("removeDir", "remove_dir"),
+            // B24: bare globals removed — fileNs* keys only
+            ("fileNsRead", "file_ns_read"),
+            ("fileNsWrite", "file_ns_write"),
+            ("fileNsAppend", "file_ns_append"),
+            ("fileNsExists", "file_ns_exists"),
+            ("fileNsRemove", "file_ns_remove"),
+            ("fileNsCreateDir", "file_ns_create_dir"),
+            ("fileNsRemoveDir", "file_ns_remove_dir"),
             ("fileInfo", "file_info"),
             ("pathJoin", "path_join"),
             // HashMap
@@ -2330,33 +2321,30 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("pathToPlatform", "path_to_platform"),
             ("pathToPosix", "path_to_posix"),
             ("pathToWindows", "path_to_windows"),
-            // Filesystem
-            ("fsMkdir", "fs_mkdir"),
-            ("fsMkdirp", "fs_mkdirp"),
-            ("fsRmdir", "fs_rmdir"),
-            ("fsRmdirRecursive", "fs_rmdir_recursive"),
-            ("fsReaddir", "fs_readdir"),
-            ("fsWalk", "fs_walk"),
-            ("fsFilterEntries", "fs_filter_entries"),
-            ("fsSortEntries", "fs_sort_entries"),
-            ("fsSize", "fs_size"),
-            ("fsMtime", "fs_mtime"),
-            ("fsCtime", "fs_ctime"),
-            ("fsAtime", "fs_atime"),
-            ("fsPermissions", "fs_permissions"),
-            ("fsIsDir", "fs_is_dir"),
-            ("fsIsFile", "fs_is_file"),
-            ("fsIsSymlink", "fs_is_symlink"),
-            ("fsInode", "fs_inode"),
-            ("fsTmpfile", "fs_tmpfile"),
-            ("fsTmpdir", "fs_tmpdir"),
-            ("fsTmpfileNamed", "fs_tmpfile_named"),
-            ("fsGetTempDir", "fs_get_temp_dir"),
-            ("fsSymlink", "fs_symlink"),
-            ("fsReadlink", "fs_readlink"),
-            ("fsResolveSymlink", "fs_resolve_symlink"),
-            ("fsWatch", "fs_watch"),
-            ("fsWatchNext", "fs_watch_next"),
+            // Filesystem — B24: all under fileNs* keys
+            ("fileNsMkdir", "file_ns_mkdir"),
+            ("fileNsMkdirp", "file_ns_mkdirp"),
+            ("fileNsRmdir", "file_ns_rmdir"),
+            ("fileNsRmdirRecursive", "file_ns_rmdir_recursive"),
+            ("fileNsReadDir", "file_ns_read_dir"),
+            ("fileNsWalk", "file_ns_walk"),
+            ("fileNsFilterEntries", "file_ns_filter_entries"),
+            ("fileNsSortEntries", "file_ns_sort_entries"),
+            ("fileNsSize", "file_ns_size"),
+            ("fileNsMtime", "file_ns_mtime"),
+            ("fileNsCtime", "file_ns_ctime"),
+            ("fileNsAtime", "file_ns_atime"),
+            ("fileNsPermissions", "file_ns_permissions"),
+            ("fileNsIsDir", "file_ns_is_dir"),
+            ("fileNsIsFile", "file_ns_is_file"),
+            ("fileNsIsSymlink", "file_ns_is_symlink"),
+            ("fileNsInode", "file_ns_inode"),
+            ("fileNsTempFile", "file_ns_temp_file"),
+            ("fileNsTempDir", "file_ns_temp_dir"),
+            ("fileNsSymlink", "file_ns_symlink"),
+            ("fileNsReadLink", "file_ns_read_link"),
+            ("fileNsWatch", "file_ns_watch"),
+            ("fileNsWatchNext", "file_ns_watch_next"),
             // Compression
             ("gzipCompress", "gzip_compress"),
             ("gzipDecompress", "gzip_decompress"),

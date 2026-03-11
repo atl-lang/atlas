@@ -38,11 +38,20 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("env", "get" | "unset") => Some(vec![str.clone()]),
         ("env", "set") => Some(vec![str.clone(), str.clone()]),
         ("env", "list") => Some(vec![]),
-        // File namespace
-        ("file", "read" | "exists" | "createDir" | "removeDir" | "remove") => {
-            Some(vec![str.clone()])
-        }
+        // File namespace — B24: full method set
+        (
+            "file",
+            "read" | "exists" | "remove" | "createDir" | "removeDir" | "mkdir" | "mkdirp" | "rmdir"
+            | "rmdirRecursive" | "readDir" | "walk" | "size" | "mtime" | "ctime" | "atime"
+            | "permissions" | "inode" | "isDir" | "isFile" | "isSymlink" | "readLink",
+        ) => Some(vec![str.clone()]),
         ("file", "write" | "append") => Some(vec![str.clone(), str.clone()]),
+        ("file", "symlink") => Some(vec![str.clone(), str.clone()]),
+        ("file", "sortEntries") => None, // variadic array arg
+        ("file", "filterEntries") => Some(vec![str.clone(), str.clone()]), // entries array + pattern
+        ("file", "tempFile" | "tempDir") => Some(vec![]),
+        ("file", "watch") => Some(vec![str.clone()]),
+        ("file", "watchNext") => None, // handle arg (Value)
         // Process namespace
         ("process", "cwd" | "pid" | "args") => Some(vec![]),
         ("process", "run") => Some(vec![str.clone(), str_arr]),
@@ -120,16 +129,27 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         },
         ("env", "set" | "unset") => Type::Null,
         ("env", "list") => Type::JsonValue,
-        // File namespace
+        // File namespace — B24: full return type coverage
         ("file", "read") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
-        ("file", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Generic {
+        (
+            "file",
+            "write" | "append" | "remove" | "createDir" | "removeDir" | "mkdir" | "mkdirp"
+            | "rmdir" | "rmdirRecursive" | "symlink",
+        ) => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Null, Type::String],
         },
-        ("file", "exists") => Type::Bool,
+        ("file", "exists" | "isDir" | "isFile" | "isSymlink") => Type::Bool,
+        ("file", "readDir" | "walk" | "sortEntries") => Type::Array(Box::new(Type::String)),
+        ("file", "filterEntries") => Type::Array(Box::new(Type::String)),
+        ("file", "size" | "inode") => Type::Number,
+        ("file", "mtime" | "ctime" | "atime" | "permissions" | "readLink") => Type::String,
+        ("file", "tempFile" | "tempDir") => Type::String,
+        ("file", "watch") => Type::JsonValue, // watcher handle
+        ("file", "watchNext") => Type::String,
         // Process namespace
         ("process", "cwd") => Type::String,
         ("process", "pid") => Type::Number,
