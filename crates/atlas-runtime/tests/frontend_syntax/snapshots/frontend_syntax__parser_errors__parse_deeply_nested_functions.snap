@@ -1,6 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
-assertion_line: 135
+assertion_line: 157
 expression: program
 ---
 items:
@@ -18,8 +18,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 24
-            end: 30
+          - start: 22
+            end: 28
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -29,8 +29,8 @@ items:
               name:
                 name: level2
                 span:
-                  start: 48
-                  end: 54
+                  start: 46
+                  end: 52
                   file: "<input>"
               attributes: []
               is_async: false
@@ -39,8 +39,8 @@ items:
               return_type:
                 Named:
                   - number
-                  - start: 60
-                    end: 66
+                  - start: 56
+                    end: 62
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -50,8 +50,8 @@ items:
                       name:
                         name: level3
                         span:
-                          start: 88
-                          end: 94
+                          start: 84
+                          end: 90
                           file: "<input>"
                       attributes: []
                       is_async: false
@@ -60,8 +60,8 @@ items:
                       return_type:
                         Named:
                           - number
-                          - start: 100
-                            end: 106
+                          - start: 94
+                            end: 100
                             file: "<input>"
                       return_ownership: ~
                       predicate: ~
@@ -71,21 +71,21 @@ items:
                               value:
                                 Literal:
                                   - Number: 42
-                                  - start: 136
-                                    end: 138
+                                  - start: 130
+                                    end: 132
                                     file: "<input>"
                               span:
-                                start: 129
-                                end: 139
+                                start: 123
+                                end: 133
                                 file: "<input>"
                         tail_expr: ~
                         span:
-                          start: 107
-                          end: 157
+                          start: 101
+                          end: 151
                           file: "<input>"
                       span:
-                        start: 85
-                        end: 157
+                        start: 81
+                        end: 151
                         file: "<input>"
                   - Return:
                       value:
@@ -94,26 +94,26 @@ items:
                             Identifier:
                               name: level3
                               span:
-                                start: 181
-                                end: 187
+                                start: 175
+                                end: 181
                                 file: "<input>"
                           args: []
                           span:
-                            start: 181
-                            end: 189
+                            start: 175
+                            end: 183
                             file: "<input>"
                       span:
-                        start: 174
-                        end: 190
+                        start: 168
+                        end: 184
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 67
-                  end: 204
+                  start: 63
+                  end: 198
                   file: "<input>"
               span:
-                start: 45
-                end: 204
+                start: 43
+                end: 198
                 file: "<input>"
           - Return:
               value:
@@ -122,24 +122,24 @@ items:
                     Identifier:
                       name: level2
                       span:
-                        start: 224
-                        end: 230
+                        start: 218
+                        end: 224
                         file: "<input>"
                   args: []
                   span:
-                    start: 224
-                    end: 232
+                    start: 218
+                    end: 226
                     file: "<input>"
               span:
-                start: 217
-                end: 233
+                start: 211
+                end: 227
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 31
-          end: 243
+          start: 29
+          end: 237
           file: "<input>"
       span:
         start: 9
-        end: 243
+        end: 237
         file: "<input>"

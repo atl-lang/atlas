@@ -18,8 +18,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 23
-            end: 29
+          - start: 21
+            end: 27
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -29,8 +29,8 @@ items:
               name:
                 name: add
                 span:
-                  start: 47
-                  end: 50
+                  start: 45
+                  end: 48
                   file: "<input>"
               attributes: []
               is_async: false
@@ -39,46 +39,46 @@ items:
                 - name:
                     name: a
                     span:
-                      start: 58
-                      end: 59
+                      start: 56
+                      end: 57
                       file: "<input>"
                   type_ref:
                     Named:
                       - number
-                      - start: 61
-                        end: 67
+                      - start: 59
+                        end: 65
                         file: "<input>"
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
                   span:
-                    start: 51
-                    end: 67
+                    start: 49
+                    end: 65
                     file: "<input>"
                 - name:
                     name: b
                     span:
-                      start: 76
-                      end: 77
+                      start: 74
+                      end: 75
                       file: "<input>"
                   type_ref:
                     Named:
                       - number
-                      - start: 79
-                        end: 85
+                      - start: 77
+                        end: 83
                         file: "<input>"
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
                   span:
-                    start: 69
-                    end: 85
+                    start: 67
+                    end: 83
                     file: "<input>"
               return_type:
                 Named:
                   - number
-                  - start: 90
-                    end: 96
+                  - start: 86
+                    end: 92
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -92,39 +92,39 @@ items:
                             Identifier:
                               name: a
                               span:
-                                start: 122
-                                end: 123
+                                start: 118
+                                end: 119
                                 file: "<input>"
                           right:
                             Identifier:
                               name: b
                               span:
-                                start: 126
-                                end: 127
+                                start: 122
+                                end: 123
                                 file: "<input>"
                           span:
-                            start: 122
-                            end: 127
+                            start: 118
+                            end: 123
                             file: "<input>"
                       span:
-                        start: 115
-                        end: 128
+                        start: 111
+                        end: 124
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 97
-                  end: 142
+                  start: 93
+                  end: 138
                   file: "<input>"
               span:
-                start: 44
-                end: 142
+                start: 42
+                end: 138
                 file: "<input>"
           - FunctionDecl:
               name:
                 name: multiply
                 span:
-                  start: 158
-                  end: 166
+                  start: 154
+                  end: 162
                   file: "<input>"
               attributes: []
               is_async: false
@@ -133,46 +133,46 @@ items:
                 - name:
                     name: a
                     span:
-                      start: 174
-                      end: 175
+                      start: 170
+                      end: 171
                       file: "<input>"
                   type_ref:
                     Named:
                       - number
-                      - start: 177
-                        end: 183
+                      - start: 173
+                        end: 179
                         file: "<input>"
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
                   span:
-                    start: 167
-                    end: 183
+                    start: 163
+                    end: 179
                     file: "<input>"
                 - name:
                     name: b
                     span:
-                      start: 192
-                      end: 193
+                      start: 188
+                      end: 189
                       file: "<input>"
                   type_ref:
                     Named:
                       - number
-                      - start: 195
-                        end: 201
+                      - start: 191
+                        end: 197
                         file: "<input>"
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
                   span:
-                    start: 185
-                    end: 201
+                    start: 181
+                    end: 197
                     file: "<input>"
               return_type:
                 Named:
                   - number
-                  - start: 206
-                    end: 212
+                  - start: 200
+                    end: 206
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -186,32 +186,32 @@ items:
                             Identifier:
                               name: a
                               span:
-                                start: 238
-                                end: 239
+                                start: 232
+                                end: 233
                                 file: "<input>"
                           right:
                             Identifier:
                               name: b
                               span:
-                                start: 242
-                                end: 243
+                                start: 236
+                                end: 237
                                 file: "<input>"
                           span:
-                            start: 238
-                            end: 243
+                            start: 232
+                            end: 237
                             file: "<input>"
                       span:
-                        start: 231
-                        end: 244
+                        start: 225
+                        end: 238
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 213
-                  end: 258
+                  start: 207
+                  end: 252
                   file: "<input>"
               span:
-                start: 155
-                end: 258
+                start: 151
+                end: 252
                 file: "<input>"
           - Return:
               value:
@@ -220,52 +220,52 @@ items:
                     Identifier:
                       name: add
                       span:
-                        start: 278
-                        end: 281
+                        start: 272
+                        end: 275
                         file: "<input>"
                   args:
                     - Literal:
                         - Number: 2
-                        - start: 282
-                          end: 283
+                        - start: 276
+                          end: 277
                           file: "<input>"
                     - Call:
                         callee:
                           Identifier:
                             name: multiply
                             span:
-                              start: 285
-                              end: 293
+                              start: 279
+                              end: 287
                               file: "<input>"
                         args:
                           - Literal:
                               - Number: 3
-                              - start: 294
-                                end: 295
+                              - start: 288
+                                end: 289
                                 file: "<input>"
                           - Literal:
                               - Number: 4
-                              - start: 297
-                                end: 298
+                              - start: 291
+                                end: 292
                                 file: "<input>"
                         span:
-                          start: 285
-                          end: 299
+                          start: 279
+                          end: 293
                           file: "<input>"
                   span:
-                    start: 278
-                    end: 300
+                    start: 272
+                    end: 294
                     file: "<input>"
               span:
-                start: 271
-                end: 301
+                start: 265
+                end: 295
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 30
-          end: 311
+          start: 28
+          end: 305
           file: "<input>"
       span:
         start: 9
-        end: 311
+        end: 305
         file: "<input>"

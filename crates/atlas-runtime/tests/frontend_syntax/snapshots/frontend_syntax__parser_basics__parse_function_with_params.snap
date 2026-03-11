@@ -56,8 +56,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 46
-            end: 52
+          - start: 44
+            end: 50
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -71,30 +71,30 @@ items:
                     Identifier:
                       name: x
                       span:
-                        start: 62
-                        end: 63
+                        start: 60
+                        end: 61
                         file: "<input>"
                   right:
                     Identifier:
                       name: y
                       span:
-                        start: 66
-                        end: 67
+                        start: 64
+                        end: 65
                         file: "<input>"
                   span:
-                    start: 62
-                    end: 67
+                    start: 60
+                    end: 65
                     file: "<input>"
               span:
-                start: 55
-                end: 68
+                start: 53
+                end: 66
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 53
-          end: 70
+          start: 51
+          end: 68
           file: "<input>"
       span:
         start: 0
-        end: 70
+        end: 68
         file: "<input>"

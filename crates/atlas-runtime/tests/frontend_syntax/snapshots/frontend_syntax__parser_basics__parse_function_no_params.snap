@@ -18,8 +18,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 12
-            end: 18
+          - start: 10
+            end: 16
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -29,19 +29,19 @@ items:
               value:
                 Literal:
                   - Number: 42
-                  - start: 28
-                    end: 30
+                  - start: 26
+                    end: 28
                     file: "<input>"
               span:
-                start: 21
-                end: 31
+                start: 19
+                end: 29
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 19
-          end: 33
+          start: 17
+          end: 31
           file: "<input>"
       span:
         start: 0
-        end: 33
+        end: 31
         file: "<input>"

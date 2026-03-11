@@ -24,8 +24,8 @@ items:
       return_type:
         Named:
           - void
-          - start: 26
-            end: 30
+          - start: 24
+            end: 28
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -35,8 +35,8 @@ items:
               name:
                 name: inner
                 span:
-                  start: 48
-                  end: 53
+                  start: 46
+                  end: 51
                   file: "<input>"
               attributes: []
               is_async: false
@@ -44,34 +44,34 @@ items:
                 - name: E
                   trait_bounds: []
                   span:
-                    start: 54
-                    end: 55
+                    start: 52
+                    end: 53
                     file: "<input>"
               params:
                 - name:
                     name: x
                     span:
-                      start: 64
-                      end: 65
+                      start: 62
+                      end: 63
                       file: "<input>"
                   type_ref:
                     Named:
                       - E
-                      - start: 67
-                        end: 68
+                      - start: 65
+                        end: 66
                         file: "<input>"
                   ownership: Borrow
                   ownership_explicit: true
                   mutable: false
                   span:
-                    start: 57
-                    end: 68
+                    start: 55
+                    end: 66
                     file: "<input>"
               return_type:
                 Named:
                   - E
-                  - start: 73
-                    end: 74
+                  - start: 69
+                    end: 70
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -82,28 +82,28 @@ items:
                         Identifier:
                           name: x
                           span:
-                            start: 100
-                            end: 101
+                            start: 96
+                            end: 97
                             file: "<input>"
                       span:
-                        start: 93
-                        end: 102
+                        start: 89
+                        end: 98
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 75
-                  end: 116
+                  start: 71
+                  end: 112
                   file: "<input>"
               span:
-                start: 45
-                end: 116
+                start: 43
+                end: 112
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 31
-          end: 126
+          start: 29
+          end: 122
           file: "<input>"
       span:
         start: 9
-        end: 126
+        end: 122
         file: "<input>"

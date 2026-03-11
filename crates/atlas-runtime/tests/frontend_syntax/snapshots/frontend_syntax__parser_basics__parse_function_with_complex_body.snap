@@ -37,8 +37,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 35
-            end: 41
+          - start: 33
+            end: 39
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -52,18 +52,18 @@ items:
                     Identifier:
                       name: n
                       span:
-                        start: 51
-                        end: 52
+                        start: 49
+                        end: 50
                         file: "<input>"
                   right:
                     Literal:
                       - Number: 1
-                      - start: 56
-                        end: 57
+                      - start: 54
+                        end: 55
                         file: "<input>"
                   span:
-                    start: 51
-                    end: 57
+                    start: 49
+                    end: 55
                     file: "<input>"
               then_block:
                 statements:
@@ -71,17 +71,17 @@ items:
                       value:
                         Literal:
                           - Number: 1
-                          - start: 75
-                            end: 76
+                          - start: 73
+                            end: 74
                             file: "<input>"
                       span:
-                        start: 68
-                        end: 77
+                        start: 66
+                        end: 75
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 58
-                  end: 83
+                  start: 56
+                  end: 81
                   file: "<input>"
               else_block:
                 statements:
@@ -93,8 +93,8 @@ items:
                             Identifier:
                               name: n
                               span:
-                                start: 106
-                                end: 107
+                                start: 104
+                                end: 105
                                 file: "<input>"
                           right:
                             Call:
@@ -102,8 +102,8 @@ items:
                                 Identifier:
                                   name: factorial
                                   span:
-                                    start: 110
-                                    end: 119
+                                    start: 108
+                                    end: 117
                                     file: "<input>"
                               args:
                                 - Binary:
@@ -112,46 +112,46 @@ items:
                                       Identifier:
                                         name: n
                                         span:
-                                          start: 120
-                                          end: 121
+                                          start: 118
+                                          end: 119
                                           file: "<input>"
                                     right:
                                       Literal:
                                         - Number: 1
-                                        - start: 124
-                                          end: 125
+                                        - start: 122
+                                          end: 123
                                           file: "<input>"
                                     span:
-                                      start: 120
-                                      end: 125
+                                      start: 118
+                                      end: 123
                                       file: "<input>"
                               span:
-                                start: 110
-                                end: 126
+                                start: 108
+                                end: 124
                                 file: "<input>"
                           span:
-                            start: 106
-                            end: 126
+                            start: 104
+                            end: 124
                             file: "<input>"
                       span:
-                        start: 99
-                        end: 127
+                        start: 97
+                        end: 125
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 89
-                  end: 133
+                  start: 87
+                  end: 131
                   file: "<input>"
               span:
-                start: 48
-                end: 133
+                start: 46
+                end: 131
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 42
-          end: 135
+          start: 40
+          end: 133
           file: "<input>"
       span:
         start: 1
-        end: 135
+        end: 133
         file: "<input>"

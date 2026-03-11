@@ -1,6 +1,6 @@
 ---
 source: crates/atlas-runtime/tests/frontend_syntax/parser_errors.rs
-assertion_line: 164
+assertion_line: 186
 expression: program
 ---
 items:
@@ -18,8 +18,8 @@ items:
       return_type:
         Named:
           - number
-          - start: 23
-            end: 29
+          - start: 21
+            end: 27
             file: "<input>"
       return_ownership: ~
       predicate: ~
@@ -29,8 +29,8 @@ items:
               name:
                 name: get_value
                 span:
-                  start: 47
-                  end: 56
+                  start: 45
+                  end: 54
                   file: "<input>"
               attributes: []
               is_async: false
@@ -39,8 +39,8 @@ items:
               return_type:
                 Named:
                   - number
-                  - start: 62
-                    end: 68
+                  - start: 58
+                    end: 64
                     file: "<input>"
               return_ownership: ~
               predicate: ~
@@ -50,21 +50,21 @@ items:
                       value:
                         Literal:
                           - Number: 42
-                          - start: 94
-                            end: 96
+                          - start: 90
+                            end: 92
                             file: "<input>"
                       span:
-                        start: 87
-                        end: 97
+                        start: 83
+                        end: 93
                         file: "<input>"
                 tail_expr: ~
                 span:
-                  start: 69
-                  end: 111
+                  start: 65
+                  end: 107
                   file: "<input>"
               span:
-                start: 44
-                end: 111
+                start: 42
+                end: 107
                 file: "<input>"
           - Return:
               value:
@@ -73,24 +73,24 @@ items:
                     Identifier:
                       name: get_value
                       span:
-                        start: 131
-                        end: 140
+                        start: 127
+                        end: 136
                         file: "<input>"
                   args: []
                   span:
-                    start: 131
-                    end: 142
+                    start: 127
+                    end: 138
                     file: "<input>"
               span:
-                start: 124
-                end: 143
+                start: 120
+                end: 139
                 file: "<input>"
         tail_expr: ~
         span:
-          start: 30
-          end: 153
+          start: 28
+          end: 149
           file: "<input>"
       span:
         start: 9
-        end: 153
+        end: 149
         file: "<input>"
