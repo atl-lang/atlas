@@ -356,8 +356,8 @@ fn test_process_env() -> void {
     let result = exec(["/bin/echo", "ok"]);
     unwrap(result);
 
-    let handle = spawnProcess(["/bin/echo", "ok"]);
-    processWait(handle);
+    let handle = process.spawn(["/bin/echo", "ok"]);
+    process.waitFor(handle);
     unsetEnv("ATLAS_TEST_VAR");
 }
 "#,

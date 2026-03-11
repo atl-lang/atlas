@@ -1484,8 +1484,9 @@ impl Default for SymbolTable {
 }
 
 fn register_process_functions(table: &mut SymbolTable) {
+    // B25: bare process globals removed — registered under processNs* keys only.
     table.define_builtin(
-        "spawnProcess",
+        "processNsSpawn",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Array(Box::new(Type::String))],
@@ -1493,7 +1494,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processStdin",
+        "processNsStdin",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1501,7 +1502,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processStdout",
+        "processNsStdout",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1509,7 +1510,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processStderr",
+        "processNsStderr",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1517,7 +1518,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processWait",
+        "processNsWaitFor",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1528,7 +1529,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processKill",
+        "processNsKill",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number, Type::Number],
@@ -1539,7 +1540,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processIsRunning",
+        "processNsIsRunning",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1547,7 +1548,7 @@ fn register_process_functions(table: &mut SymbolTable) {
         },
     );
     table.define_builtin(
-        "processOutput",
+        "processNsOutput",
         Type::Function {
             type_params: vec![],
             params: vec![Type::Number],
@@ -1595,14 +1596,14 @@ fn register_process_functions(table: &mut SymbolTable) {
         ("toBool", "to_bool"),
         ("parseInt", "parse_int"),
         ("parseFloat", "parse_float"),
-        ("spawnProcess", "spawn_process"),
-        ("processStdin", "process_stdin"),
-        ("processStdout", "process_stdout"),
-        ("processStderr", "process_stderr"),
-        ("processWait", "process_wait"),
-        ("processKill", "process_kill"),
-        ("processIsRunning", "process_is_running"),
-        ("processOutput", "process_output"),
+        ("processNsSpawn", "process_ns_spawn"),
+        ("processNsStdin", "process_ns_stdin"),
+        ("processNsStdout", "process_ns_stdout"),
+        ("processNsStderr", "process_ns_stderr"),
+        ("processNsWaitFor", "process_ns_wait_for"),
+        ("processNsKill", "process_ns_kill"),
+        ("processNsIsRunning", "process_ns_is_running"),
+        ("processNsOutput", "process_ns_output"),
     ];
     for &(camel, snake) in aliases {
         if let Some(symbol) = table.functions.get(camel).cloned() {
