@@ -57,7 +57,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("process", "exit") => Some(vec![num.clone()]), // H-266
         ("process", "run") => Some(vec![str.clone(), str_arr]),
         ("process", "shellOut") => Some(vec![str.clone()]),
-        ("process", "exec") => Some(vec![str.clone()]),
+        ("process", "exec") => None, // accepts string or string[] - runtime validates
         ("process", "shell") => Some(vec![str.clone()]),
         ("process", "spawn") => None, // array of strings arg
         ("process", "waitFor" | "isRunning" | "stdout" | "stderr") => None, // handle arg
@@ -228,10 +228,12 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             type_args: vec![Type::Null, Type::String],
         },
         ("process", "isRunning") => Type::Bool,
-        ("process", "stdout" | "stderr") => Type::String,
-        ("process", "stdin") => Type::Generic {
+        // All three return IO handles [string, number]
+        ("process", "stdin" | "stdout" | "stderr") => Type::Tuple(vec![Type::String, Type::Number]),
+        // H-276: process.output returns the full output of a spawned process
+        ("process", "output") => Type::Generic {
             name: "Result".to_string(),
-            type_args: vec![Type::Null, Type::String],
+            type_args: vec![Type::String, Type::String],
         },
         // Path namespace
         (
@@ -1878,8 +1880,38 @@ impl<'a> TypeChecker<'a> {
                 "hashMapHas" | "hash_map_has" | "hashSetHas" | "hash_set_has" => {
                     return Type::Bool;
                 }
+                // H-276: Result/Option predicates return bool
+                "isOk" | "is_ok" | "isErr" | "is_err" | "isSome" | "is_some" | "isNone"
+                | "is_none" => {
+                    // Consume the argument for side effects but return bool
+                    for arg in &call.args {
+                        let _ = self.check_expr(arg);
+                    }
+                    return Type::Bool;
+                }
+                // H-276: len() returns number
+                "len" => {
+                    for arg in &call.args {
+                        let _ = self.check_expr(arg);
+                    }
+                    return Type::Number;
+                }
+                // H-276: typeof() returns string
+                "typeof" | "type_of" => {
+                    for arg in &call.args {
+                        let _ = self.check_expr(arg);
+                    }
+                    return Type::String;
+                }
+                // H-276: print/println return void
+                "print" | "println" => {
+                    for arg in &call.args {
+                        let _ = self.check_expr(arg);
+                    }
+                    return Type::Void;
+                }
                 // H-164: unwrap() returns the inner type T from Option<T> or Result<T, E>
-                "unwrap" => {
+                "unwrap" | "expect" => {
                     if call.args.len() == 1 {
                         let arg_type = self.check_expr(&call.args[0]);
                         let inner = match arg_type.normalized() {

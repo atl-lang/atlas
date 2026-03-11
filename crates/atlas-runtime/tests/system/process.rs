@@ -8,9 +8,9 @@ use pretty_assertions::assert_eq;
 fn test_exec_simple_command() {
     // Test executing a simple command (echo on Unix, similar on Windows)
     let code = if cfg!(target_os = "windows") {
-        r#"exec(["cmd", "/C", "echo", "hello"])"#
+        r#"process.exec(["cmd", "/C", "echo", "hello"])"#
     } else {
-        r#"exec(["echo", "hello"])"#
+        r#"process.exec(["echo", "hello"])"#
     };
 
     let result = eval_ok(code);
@@ -20,7 +20,7 @@ fn test_exec_simple_command() {
 
 #[test]
 fn test_shell_command() {
-    let code = r#"shell("echo hello")"#;
+    let code = r#"process.shell("echo hello")"#;
 
     let result = eval_ok(code);
     // Should return Result<object, string>
@@ -34,8 +34,8 @@ fn test_shell_command() {
 #[test]
 fn test_set_get_env() {
     let code = r#"
-        set_env("TEST_VAR_ATLAS", "test_value");
-        get_env("TEST_VAR_ATLAS")
+        env.set("TEST_VAR_ATLAS", "test_value");
+        env.get("TEST_VAR_ATLAS")
     "#;
     let result = eval_ok(code);
     match result {
@@ -52,7 +52,7 @@ fn test_set_get_env() {
 
 #[test]
 fn test_get_env_nonexistent() {
-    let code = r#"get_env("NONEXISTENT_VAR_ATLAS_12345")"#;
+    let code = r#"env.get("NONEXISTENT_VAR_ATLAS_12345")"#;
     let result = eval_ok(code);
     assert!(matches!(result, Value::Option(None)));
 }
@@ -60,9 +60,9 @@ fn test_get_env_nonexistent() {
 #[test]
 fn test_unset_env() {
     let code = r#"
-        set_env("TEST_VAR_UNSET", "value");
-        unset_env("TEST_VAR_UNSET");
-        get_env("TEST_VAR_UNSET")
+        env.set("TEST_VAR_UNSET", "value");
+        env.unset("TEST_VAR_UNSET");
+        env.get("TEST_VAR_UNSET")
     "#;
     let result = eval_ok(code);
     assert!(matches!(result, Value::Option(None)));
@@ -70,7 +70,7 @@ fn test_unset_env() {
 
 #[test]
 fn test_list_env() {
-    let code = r#"list_env()"#;
+    let code = r#"env.list()"#;
     let result = eval_ok(code);
     // Should return an object (JsonValue)
     assert!(matches!(result, Value::JsonValue(_)));
@@ -82,7 +82,7 @@ fn test_list_env() {
 
 #[test]
 fn test_get_cwd() {
-    let code = r#"get_cwd()"#;
+    let code = r#"process.cwd()"#;
     let result = eval_ok(code);
     // Should return a string
     assert!(matches!(result, Value::String(_)));
@@ -94,7 +94,7 @@ fn test_get_cwd() {
 
 #[test]
 fn test_get_pid() {
-    let code = r#"get_pid()"#;
+    let code = r#"process.pid()"#;
     let result = eval_ok(code);
     // Should return a number
     match result {
@@ -111,23 +111,23 @@ fn test_get_pid() {
 fn test_spawn_process_output() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawn_process(["cmd", "/C", "echo", "hello"]);
-        let mut status = process_wait(handle);
-        while (is_err(status)) {
-            status = process_wait(handle);
+        let handle = process.spawn(["cmd", "/C", "echo", "hello"]);
+        let mut status = process.waitFor(handle);
+        while (isErr(status)) {
+            status = process.waitFor(handle);
         }
-        let output = unwrap(process_output(handle));
-        trim(output)
+        let output = unwrap(process.output(handle));
+        output.trim()
     "#
     } else {
         r#"
-        let handle = spawn_process(["sh", "-c", "echo hello"]);
-        let mut status = process_wait(handle);
-        while (is_err(status)) {
-            status = process_wait(handle);
+        let handle = process.spawn(["sh", "-c", "echo hello"]);
+        let mut status = process.waitFor(handle);
+        while (isErr(status)) {
+            status = process.waitFor(handle);
         }
-        let output = unwrap(process_output(handle));
-        trim(output)
+        let output = unwrap(process.output(handle));
+        output.trim()
     "#
     };
 
@@ -142,26 +142,26 @@ fn test_spawn_process_output() {
 fn test_spawn_process_kill() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawn_process(["cmd", "/C", "timeout", "/T", "5", "/NOBREAK"]);
-        let was_running = process_is_running(handle);
-        unwrap(process_kill(handle, 9));
-        let mut status = process_wait(handle);
-        while (is_err(status)) {
-            status = process_wait(handle);
+        let handle = process.spawn(["cmd", "/C", "timeout", "/T", "5", "/NOBREAK"]);
+        let was_running = process.isRunning(handle);
+        unwrap(process.kill(handle, 9));
+        let mut status = process.waitFor(handle);
+        while (isErr(status)) {
+            status = process.waitFor(handle);
         }
-        let still_running = process_is_running(handle);
+        let still_running = process.isRunning(handle);
         [was_running, still_running]
     "#
     } else {
         r#"
-        let handle = spawn_process(["sh", "-c", "sleep 5"]);
-        let was_running = process_is_running(handle);
-        unwrap(process_kill(handle, 9));
-        let mut status = process_wait(handle);
-        while (is_err(status)) {
-            status = process_wait(handle);
+        let handle = process.spawn(["sh", "-c", "sleep 5"]);
+        let was_running = process.isRunning(handle);
+        unwrap(process.kill(handle, 9));
+        let mut status = process.waitFor(handle);
+        while (isErr(status)) {
+            status = process.waitFor(handle);
         }
-        let still_running = process_is_running(handle);
+        let still_running = process.isRunning(handle);
         [was_running, still_running]
     "#
     };
@@ -182,20 +182,20 @@ fn test_spawn_process_kill() {
 fn test_process_stdio_handles() {
     let code = if cfg!(target_os = "windows") {
         r#"
-        let handle = spawn_process(["cmd", "/C", "echo", "hello"]);
-        let stdin = process_stdin(handle);
-        let stdout = process_stdout(handle);
-        let stderr = process_stderr(handle);
-        let stdout_again = process_stdout(handle);
+        let handle = process.spawn(["cmd", "/C", "echo", "hello"]);
+        let stdin = process.stdin(handle);
+        let stdout = process.stdout(handle);
+        let stderr = process.stderr(handle);
+        let stdout_again = process.stdout(handle);
         [stdin, stdout, stderr, stdout_again]
     "#
     } else {
         r#"
-        let handle = spawn_process(["sh", "-c", "echo hello"]);
-        let stdin = process_stdin(handle);
-        let stdout = process_stdout(handle);
-        let stderr = process_stderr(handle);
-        let stdout_again = process_stdout(handle);
+        let handle = process.spawn(["sh", "-c", "echo hello"]);
+        let stdin = process.stdin(handle);
+        let stdout = process.stdout(handle);
+        let stderr = process.stderr(handle);
+        let stdout_again = process.stdout(handle);
         [stdin, stdout, stderr, stdout_again]
     "#
     };
@@ -229,7 +229,7 @@ fn test_process_stdio_handles() {
 
 #[test]
 fn test_exec_requires_permission() {
-    let code = r#"exec("ls")"#;
+    let code = r#"process.exec("ls")"#;
     // Default context denies all
     let security = SecurityContext::new();
     let runtime = Atlas::new_with_security(security);
@@ -240,7 +240,7 @@ fn test_exec_requires_permission() {
 
 #[test]
 fn test_env_requires_permission() {
-    let code = r#"get_env("PATH")"#;
+    let code = r#"env.get("PATH")"#;
     // Default context denies all
     let security = SecurityContext::new();
     let runtime = Atlas::new_with_security(security);

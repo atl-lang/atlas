@@ -155,6 +155,25 @@ fn resolve_bool_method(method_name: &str) -> Option<String> {
     Some(func_name.to_string())
 }
 
+/// Check if a name is a fundamental stdlib function that remains as a bare global.
+/// These are NOT migrated to namespace syntax because they are core language constructs.
+pub fn is_allowed_bare_global(name: &str) -> bool {
+    matches!(
+        name,
+        // Result/Option constructors
+        "Ok" | "Err" | "Some" | "None"
+        // Result/Option helpers (both snake_case and camelCase)
+        | "unwrap" | "unwrap_or" | "expect"
+        | "is_ok" | "is_err" | "is_some" | "is_none"
+        | "isOk" | "isErr" | "isSome" | "isNone"
+        // Core utilities
+        | "len" | "typeof" | "type_of"
+        | "print" | "println"
+        // Type constructors
+        | "HashMap" | "HashSet" | "Queue" | "Stack"
+    )
+}
+
 /// Check if an identifier name is a static namespace sentinel.
 pub fn is_static_namespace(name: &str) -> bool {
     matches!(
@@ -530,6 +549,7 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "stdin" => "processNsStdin",
         "stdout" => "processNsStdout",
         "stderr" => "processNsStderr",
+        "output" => "processNsOutput",
         _ => return None,
     };
     Some(func_name.to_string())

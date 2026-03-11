@@ -1122,11 +1122,12 @@ impl Binder {
                     return;
                 }
 
-                // Check if identifier is defined (in symbol table, array intrinsic, or static namespace)
-                // No bare globals allowed — all stdlib functions use namespace or instance method syntax.
+                // Check if identifier is defined (in symbol table, array intrinsic, static namespace,
+                // or fundamental bare global like Ok/Err/Some/None/unwrap/len)
                 let is_defined = self.symbol_table.lookup(&id.name).is_some()
                     || crate::stdlib::is_array_intrinsic(&id.name)
-                    || crate::method_dispatch::is_static_namespace(&id.name);
+                    || crate::method_dispatch::is_static_namespace(&id.name)
+                    || crate::method_dispatch::is_allowed_bare_global(&id.name);
                 if !is_defined {
                     let suggestion = crate::typechecker::suggestions::suggest_similar_name(
                         &id.name,
