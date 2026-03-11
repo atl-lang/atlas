@@ -238,6 +238,25 @@ impl MethodTable {
             vec![Type::Number, Type::String],
             Type::String,
         );
+        // Type conversion (bare globals purged - use instance methods)
+        self.register(
+            "string",
+            "toNumber",
+            vec![],
+            Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Number, Type::String],
+            },
+        );
+        self.register(
+            "string",
+            "toInt",
+            vec![],
+            Type::Generic {
+                name: "Result".to_string(),
+                type_args: vec![Type::Number, Type::String],
+            },
+        );
 
         // H-231: DateTime instance methods
         let datetime_ty = Type::Generic {

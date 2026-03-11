@@ -251,6 +251,9 @@ fn resolve_string_method(method_name: &str) -> Option<String> {
         // Padding methods
         "padStart" => "padStart",
         "padEnd" => "padEnd",
+        // Type conversion (bare globals purged)
+        "toNumber" => "parseFloat",
+        "toInt" => "parseInt",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -793,6 +796,38 @@ pub fn namespace_hint_for_bare_global(name: &str) -> Option<&'static str> {
         "regexTest" | "regexIsMatch" => Some("regex.isMatch(r, s)"),
         // datetime
         "dateTimeNow" => Some("datetime.now()"),
+        // Type conversion (bare globals purged - use instance methods)
+        "parseInt" => Some("\"42\".toInt()"),
+        "parseFloat" => Some("\"3.14\".toNumber()"),
+        "toNumber" => Some("s.toNumber() or n.toString()"),
+        "toString" => Some("value.toString()"),
+        "toBool" => Some("value.toBool()"),
+        "str" => Some("value.toString()"),
+        // String bare globals (use instance methods)
+        "split" => Some("s.split(delimiter)"),
+        "trim" => Some("s.trim()"),
+        "trimStart" => Some("s.trimStart()"),
+        "trimEnd" => Some("s.trimEnd()"),
+        "indexOf" => Some("s.indexOf(substr)"),
+        "lastIndexOf" => Some("s.lastIndexOf(substr)"),
+        "includes" => Some("s.includes(substr)"),
+        "toUpperCase" => Some("s.toUpperCase()"),
+        "toLowerCase" => Some("s.toLowerCase()"),
+        "substring" => Some("s.substring(start, end)"),
+        "charAt" => Some("s.charAt(index)"),
+        "repeat" => Some("s.repeat(n)"),
+        "replace" => Some("s.replace(old, new)"),
+        "replaceAll" => Some("s.replaceAll(old, new)"),
+        "padStart" => Some("s.padStart(len, char)"),
+        "padEnd" => Some("s.padEnd(len, char)"),
+        "startsWith" => Some("s.startsWith(prefix)"),
+        "endsWith" => Some("s.endsWith(suffix)"),
+        "join" => Some("arr.join(delimiter)"),
+        "len" => Some("value.length or value.len()"),
+        // Type checking (use typeof)
+        "isString" | "isNumber" | "isBool" | "isArray" | "isFunction" | "isObject" | "isNull" => {
+            Some("typeof(value) == \"type\"")
+        }
         // Array bare globals
         "arrayPush" => Some("arr.push(x)"),
         "arrayPop" => Some("arr.pop()"),
@@ -857,28 +892,6 @@ pub fn namespace_hint_for_bare_global(name: &str) -> Option<&'static str> {
         }
         _ => None,
     }
-}
-
-/// Core builtins that are allowed as bare global calls (no namespace required).
-/// These are fundamental operations that don't fit into any namespace.
-pub fn is_allowed_bare_global(name: &str) -> bool {
-    matches!(
-        name,
-        // Core type operations
-        "len" | "str" | "typeof" | "type_of"
-        // String methods that work on values (will become instance methods)
-        | "split" | "join" | "trim" | "trimStart" | "trimEnd"
-        | "indexOf" | "lastIndexOf" | "includes"
-        | "toUpperCase" | "toLowerCase"
-        | "substring" | "charAt" | "repeat"
-        | "replace" | "replaceAll"
-        | "padStart" | "padEnd"
-        | "fromCharCode" | "charCodeAt"
-        | "startsWith" | "endsWith"
-        // Array intrinsics (handled specially)
-        | "map" | "filter" | "reduce" | "forEach" | "find" | "findIndex"
-        | "some" | "every" | "flatMap" | "flat"
-    )
 }
 
 /// Returns true if a stdlib function name is a mutating array method (returns modified collection).
