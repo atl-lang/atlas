@@ -662,6 +662,134 @@ fn resolve_regex_ns_method(method_name: &str) -> Option<String> {
     Some(func_name.to_string())
 }
 
+/// Returns the namespace-qualified replacement for a formerly-bare stdlib global name.
+/// Used to enrich AT1001 "undefined identifier" errors with a "use X instead" hint.
+/// Bare globals are dead — they fail at compile time. This table powers the hint only.
+pub fn namespace_hint_for_bare_global(name: &str) -> Option<&'static str> {
+    match name {
+        // console
+        "print" | "println" => Some("console.log()"),
+        "eprint" | "eprintln" => Some("console.error()"),
+        // Math
+        "sqrt" => Some("Math.sqrt(x)"),
+        "abs" => Some("Math.abs(x)"),
+        "floor" => Some("Math.floor(x)"),
+        "ceil" => Some("Math.ceil(x)"),
+        "round" => Some("Math.round(x)"),
+        "min" => Some("Math.min(a, b)"),
+        "max" => Some("Math.max(a, b)"),
+        "pow" => Some("Math.pow(base, exp)"),
+        "log" => Some("Math.log(x)"),
+        "sin" => Some("Math.sin(x)"),
+        "cos" => Some("Math.cos(x)"),
+        "tan" => Some("Math.tan(x)"),
+        "asin" => Some("Math.asin(x)"),
+        "acos" => Some("Math.acos(x)"),
+        "atan" => Some("Math.atan(x)"),
+        "atan2" => Some("Math.atan2(y, x)"),
+        "trunc" => Some("Math.trunc(x)"),
+        "log2" => Some("Math.log2(x)"),
+        "log10" => Some("Math.log10(x)"),
+        "exp" => Some("Math.exp(x)"),
+        "cbrt" => Some("Math.cbrt(x)"),
+        "hypot" => Some("Math.hypot(x, y)"),
+        "clamp" => Some("Math.clamp(v, min, max)"),
+        "sign" => Some("Math.sign(x)"),
+        "random" => Some("Math.random()"),
+        // Json
+        "parseJSON" => Some("Json.parse(s)"),
+        "toJSON" => Some("Json.stringify(v)"),
+        "isValidJSON" => Some("Json.isValid(s)"),
+        "prettifyJSON" => Some("Json.prettify(s, indent)"),
+        "minifyJSON" => Some("Json.minify(s)"),
+        // file
+        "readFile" => Some("file.read(path)"),
+        "writeFile" => Some("file.write(path, content)"),
+        "appendFile" => Some("file.append(path, content)"),
+        "fileExists" => Some("file.exists(path)"),
+        "removeFile" => Some("file.remove(path)"),
+        "createDir" => Some("file.createDir(path)"),
+        "removeDir" => Some("file.removeDir(path)"),
+        "fsMkdir" => Some("file.mkdir(path)"),
+        "fsMkdirp" => Some("file.mkdirp(path)"),
+        "fsRmdir" => Some("file.rmdir(path)"),
+        "fsRmdirRecursive" => Some("file.rmdirRecursive(path)"),
+        "fsReaddir" => Some("file.readDir(path)"),
+        "fsWalk" => Some("file.walk(path)"),
+        "fsSize" => Some("file.size(path)"),
+        // process
+        "shell" => Some("process.shell(cmd)"),
+        "shellOut" => Some("process.shell(cmd)"),
+        "exec" => Some("process.exec(cmd, args)"),
+        "spawnProcess" => Some("process.spawn(cmd, args)"),
+        "getCwd" => Some("process.cwd()"),
+        "getPid" => Some("process.pid()"),
+        // env
+        "getEnv" => Some("env.get(key)"),
+        "setEnv" => Some("env.set(key, val)"),
+        "unsetEnv" => Some("env.unset(key)"),
+        // path
+        "pathJoin" => Some("path.join(...)"),
+        "pathDirname" => Some("path.dirname(path)"),
+        "pathBasename" => Some("path.basename(path)"),
+        "pathExtension" => Some("path.extension(path)"),
+        "pathExists" => Some("path.exists(path)"),
+        "pathIsAbsolute" => Some("path.isAbsolute(path)"),
+        "pathNormalize" => Some("path.normalize(path)"),
+        "pathAbsolute" => Some("path.absolute(path)"),
+        // encoding
+        "base64Encode" => Some("encoding.base64Encode(s)"),
+        "base64Decode" => Some("encoding.base64Decode(s)"),
+        "hexEncode" => Some("encoding.hexEncode(s)"),
+        "hexDecode" => Some("encoding.hexDecode(s)"),
+        "urlEncode" => Some("encoding.urlEncode(s)"),
+        "urlDecode" => Some("encoding.urlDecode(s)"),
+        // crypto
+        "sha256" => Some("crypto.sha256(s)"),
+        "sha512" => Some("crypto.sha512(s)"),
+        "blake3Hash" => Some("crypto.blake3(data)"),
+        "hmacSha256" => Some("crypto.hmac(key, data, \"sha256\")"),
+        // http
+        "httpGet" | "httpNsGet" => Some("http.get(url, options?)"),
+        "httpPost" | "httpNsPost" => Some("http.post(url, body?, options?)"),
+        "httpPut" | "httpNsPut" => Some("http.put(url, body?, options?)"),
+        "httpDelete" | "httpNsDelete" => Some("http.delete(url, options?)"),
+        // net
+        "tcpConnect" => Some("net.tcpConnect(addr)"),
+        "udpBind" => Some("net.udpBind(addr)"),
+        "wsConnect" => Some("net.wsConnect(url)"),
+        "tlsConnect" => Some("net.tlsConnect(host, port)"),
+        // io
+        "ioReadLine" | "readLine" => Some("io.readLine()"),
+        // regex
+        "regexNew" => Some("regex.new(pattern)"),
+        "regexTest" | "regexIsMatch" => Some("regex.isMatch(r, s)"),
+        // datetime
+        "dateTimeNow" => Some("datetime.now()"),
+        // Array bare globals
+        "arrayPush" => Some("arr.push(x)"),
+        "arrayPop" => Some("arr.pop()"),
+        "arrayShift" => Some("arr.shift()"),
+        "arrayReverse" => Some("arr.reverse()"),
+        "arraySort" => Some("arr.sort()"),
+        // HashMap bare globals
+        "hashMapGet" => Some("m.get(key)"),
+        "hashMapPut" => Some("m.set(key, val)"),
+        "hashMapRemove" => Some("m.remove(key)"),
+        "hashMapHas" => Some("m.has(key)"),
+        // test
+        "assert" => Some("test.assert(cond, msg?)"),
+        "assertEqual" => Some("test.equal(a, b, msg?)"),
+        "assertNotEqual" => Some("test.notEqual(a, b, msg?)"),
+        "assertThrows" => Some("test.throws(fn, msg?)"),
+        "assertOk" => Some("test.ok(result)"),
+        "assertErr" => Some("test.err(result)"),
+        "assertContains" => Some("test.contains(collection, val)"),
+        "assertEmpty" => Some("test.empty(collection)"),
+        _ => None,
+    }
+}
+
 /// Returns true if a stdlib function name is a mutating array method (returns modified collection).
 pub fn is_array_mutating_collection(func_name: &str) -> bool {
     matches!(func_name, "arrayPush" | "arrayUnshift" | "arrayReverse")

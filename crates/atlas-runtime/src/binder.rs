@@ -1087,17 +1087,31 @@ impl Binder {
                         &id.name,
                         self.symbol_table.all_names_for_suggestion().into_iter(),
                     );
-                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL.emit(id.span).arg("name", &id.name).arg("detail", format!("unknown identifier `{}`", id.name)).build()
-                    .with_label("undefined identifier")
-                    .with_help(format!(
-                        "declare `{}` with `let` before using it: `let {} = value;`",
-                        id.name, id.name
-                    ))
-                    .with_help(format!(
-                        "if `{}` is defined in another file, import it: `import {{ {} }} from \"./module\"`",
-                        id.name, id.name
-                    ))
-                    .with_note("identifiers must be declared in the current scope before use");
+                    let ns_hint = crate::method_dispatch::namespace_hint_for_bare_global(&id.name);
+                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL
+                        .emit(id.span)
+                        .arg("name", &id.name)
+                        .arg("detail", format!("unknown identifier `{}`", id.name))
+                        .build()
+                        .with_label("undefined identifier");
+                    if let Some(hint) = ns_hint {
+                        diag = diag.with_help(format!(
+                            "use `{}` instead — bare globals have been removed",
+                            hint
+                        ));
+                    } else {
+                        diag = diag
+                            .with_help(format!(
+                                "declare `{}` with `let` before using it: `let {} = value;`",
+                                id.name, id.name
+                            ))
+                            .with_help(format!(
+                                "if `{}` is defined in another file, import it: `import {{ {} }} from \"./module\"`",
+                                id.name, id.name
+                            ));
+                    }
+                    diag = diag
+                        .with_note("identifiers must be declared in the current scope before use");
                     if let Some(ref sugg) = suggestion {
                         diag = diag.with_note(format!("did you mean `{}`?", sugg));
                     }
