@@ -519,6 +519,7 @@ impl Binder {
                 self.diagnostics.push(
                     error_codes::IMPORT_RESOLUTION_FAILED
                         .emit(import_decl.span)
+                        .arg("path", &import_decl.source)
                         .arg(
                             "detail",
                             format!("Cannot find module '{}'", import_decl.source),
@@ -642,27 +643,43 @@ impl Binder {
     }
 
     fn resolve_import_path(source: &str, module_path: &Path) -> PathBuf {
-        if source.starts_with("./") || source.starts_with("../") {
+        let base_path = if source.starts_with("./") || source.starts_with("../") {
             let base = module_path.parent().unwrap_or(Path::new("."));
             // Strip the leading "./" from relative imports before joining to avoid
             // producing paths like "/src/./types" with a redundant component.
             let rel = source.strip_prefix("./").unwrap_or(source);
-            let mut resolved = base.join(rel);
-            if resolved.extension().is_none() {
-                resolved.set_extension("atlas");
-            }
-            // Normalize the path by collecting components — removes redundant `.` segments.
-            resolved.components().collect()
+            base.join(rel)
         } else if source.starts_with('/') {
-            let mut stripped = PathBuf::from(source.trim_start_matches('/'));
-            if stripped.extension().is_none() {
-                stripped.set_extension("atlas");
-            }
+            let stripped = PathBuf::from(source.trim_start_matches('/'));
             let root = module_path.ancestors().last().unwrap_or(Path::new("/"));
             root.join(stripped)
         } else {
             PathBuf::from(source)
+        };
+
+        // If source already has an extension, use it directly
+        if Path::new(source)
+            .extension()
+            .and_then(|e| e.to_str())
+            .is_some()
+        {
+            // Canonicalize to resolve `..` components, matching the registry
+            return base_path.canonicalize().unwrap_or(base_path);
         }
+
+        // No extension provided — try both .atlas and .atl, canonicalizing whichever exists
+        let atlas_path = base_path.with_extension("atlas");
+        if let Ok(canonical) = atlas_path.canonicalize() {
+            return canonical;
+        }
+
+        let atl_path = base_path.with_extension("atl");
+        if let Ok(canonical) = atl_path.canonicalize() {
+            return canonical;
+        }
+
+        // Neither exists — return .atlas path (will fail lookup with clear error)
+        atlas_path
     }
 
     /// Pre-pass: collect all struct declarations from the program so that
