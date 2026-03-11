@@ -39,6 +39,8 @@ pub enum TypeTag {
     NetNs,
     /// Static namespace: Crypto.sha256(), Crypto.sha512(), etc.
     CryptoNs,
+    /// Static namespace: Encoding.base64Encode(), Encoding.hexEncode(), etc.
+    EncodingNs,
     /// Static namespace: Regex.test(), Regex.match(), Regex.replace(), etc.
     RegexNs,
     /// Static namespace: Io.readLine(), Io.readLinePrompt(), etc.
@@ -77,6 +79,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::HttpNs => resolve_http_ns_method(method_name),
         TypeTag::NetNs => resolve_net_ns_method(method_name),
         TypeTag::CryptoNs => resolve_crypto_ns_method(method_name),
+        TypeTag::EncodingNs => resolve_encoding_ns_method(method_name),
         TypeTag::RegexNs => resolve_regex_ns_method(method_name),
         TypeTag::IoNs => resolve_io_ns_method(method_name),
         TypeTag::ConsoleNs => resolve_console_ns_method(method_name),
@@ -100,6 +103,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "http"
             | "net"
             | "crypto"
+            | "encoding"
             | "regex"
             | "io"
             | "console"
@@ -119,6 +123,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "http" => Some(TypeTag::HttpNs),
         "net" => Some(TypeTag::NetNs),
         "crypto" => Some(TypeTag::CryptoNs),
+        "encoding" => Some(TypeTag::EncodingNs),
         "regex" => Some(TypeTag::RegexNs),
         "io" => Some(TypeTag::IoNs),
         "console" => Some(TypeTag::ConsoleNs),
@@ -530,6 +535,25 @@ fn resolve_crypto_ns_method(method_name: &str) -> Option<String> {
         "aesEncrypt" => "aesGcmEncrypt",
         "aesDecrypt" => "aesGcmDecrypt",
         "generateKey" => "aesGcmGenerateKey",
+        "hmac" => "cryptoNsHmac",
+        "hmacVerify" => "cryptoNsHmacVerify",
+        "blake3" => "cryptoNsBlake3",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Encoding.method() → stdlib function name.
+fn resolve_encoding_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "base64Encode" => "encodingNsBase64Encode",
+        "base64Decode" => "encodingNsBase64Decode",
+        "base64UrlEncode" => "encodingNsBase64UrlEncode",
+        "base64UrlDecode" => "encodingNsBase64UrlDecode",
+        "hexEncode" => "encodingNsHexEncode",
+        "hexDecode" => "encodingNsHexDecode",
+        "urlEncode" => "encodingNsUrlEncode",
+        "urlDecode" => "encodingNsUrlDecode",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -734,10 +758,22 @@ pub fn deprecated_global_replacement(name: &str) -> Option<&'static str> {
         "regexSplit" => Some("Regex.split(r, s)"),
         "regexEscape" => Some("Regex.escape(s)"),
         // Crypto
-        "sha256" => Some("Crypto.sha256(s)"),
-        "sha512" => Some("Crypto.sha512(s)"),
-        "aesGcmEncrypt" => Some("Crypto.aesEncrypt(key, data)"),
-        "aesGcmDecrypt" => Some("Crypto.aesDecrypt(key, data)"),
+        "sha256" => Some("crypto.sha256(s)"),
+        "sha512" => Some("crypto.sha512(s)"),
+        "aesGcmEncrypt" => Some("crypto.aesEncrypt(key, data)"),
+        "aesGcmDecrypt" => Some("crypto.aesDecrypt(key, data)"),
+        // B27: bare encoding/crypto globals removed
+        "blake3Hash" => Some("crypto.blake3(data)"),
+        "hmacSha256" => Some("crypto.hmac(key, data, \"sha256\")"),
+        "hmacSha256Verify" => Some("crypto.hmacVerify(key, data, sig, \"sha256\")"),
+        "base64Encode" => Some("encoding.base64Encode(s)"),
+        "base64Decode" => Some("encoding.base64Decode(s)"),
+        "base64UrlEncode" => Some("encoding.base64UrlEncode(s)"),
+        "base64UrlDecode" => Some("encoding.base64UrlDecode(s)"),
+        "hexEncode" => Some("encoding.hexEncode(s)"),
+        "hexDecode" => Some("encoding.hexDecode(s)"),
+        "urlEncode" => Some("encoding.urlEncode(s)"),
+        "urlDecode" => Some("encoding.urlDecode(s)"),
         // Http
         "httpRequestGet" => Some("Http.get(url)"),
         "httpRequestPost" => Some("Http.post(url, body)"),

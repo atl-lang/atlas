@@ -1932,36 +1932,54 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // Crypto
         // ====================================================================
+        // B27: blake3Hash/hmacSha256/hmacSha256Verify bare globals removed — use crypto.* namespace
         m.insert("sha256", |a, s, _, _| crypto::sha256(a, s));
         m.insert("sha512", |a, s, _, _| crypto::sha512(a, s));
-        m.insert("blake3Hash", |a, s, _, _| crypto::blake3_hash(a, s));
-        m.insert("hmacSha256", |a, s, _, _| crypto::hmac_sha256(a, s));
-        m.insert("hmacSha256Verify", |a, s, _, _| {
-            crypto::hmac_sha256_verify(a, s)
-        });
         m.insert("aesGcmEncrypt", |a, s, _, _| crypto::aes_gcm_encrypt(a, s));
         m.insert("aesGcmDecrypt", |a, s, _, _| crypto::aes_gcm_decrypt(a, s));
         m.insert("aesGcmGenerateKey", |a, s, _, _| {
             crypto::aes_gcm_generate_key(a, s)
         });
+        // Namespace keys: crypto.blake3(), crypto.hmac(), crypto.hmacVerify()
+        m.insert("cryptoNsBlake3", |a, s, _, _| {
+            crypto::crypto_ns_blake3(a, s)
+        });
+        m.insert("cryptoNsHmac", |a, s, _, _| crypto::crypto_ns_hmac(a, s));
+        m.insert("cryptoNsHmacVerify", |a, s, _, _| {
+            crypto::crypto_ns_hmac_verify(a, s)
+        });
 
         // ====================================================================
         // Encoding
         // ====================================================================
-        m.insert("base64Encode", |a, s, _, _| encoding::base64_encode(a, s));
-        m.insert("base64Decode", |a, s, _, _| encoding::base64_decode(a, s));
-        m.insert("base64UrlEncode", |a, s, _, _| {
+        // B27: base64*/hex*/url* bare globals removed — use encoding.* namespace
+        // Namespace keys: encoding.base64Encode(), encoding.hexEncode(), etc.
+        m.insert("encodingNsBase64Encode", |a, s, _, _| {
+            encoding::base64_encode(a, s)
+        });
+        m.insert("encodingNsBase64Decode", |a, s, _, _| {
+            encoding::base64_decode(a, s)
+        });
+        m.insert("encodingNsBase64UrlEncode", |a, s, _, _| {
             encoding::base64_url_encode(a, s)
         });
-        m.insert("base64UrlDecode", |a, s, _, _| {
+        m.insert("encodingNsBase64UrlDecode", |a, s, _, _| {
             encoding::base64_url_decode(a, s)
         });
-        m.insert("hexEncode", |a, s, _, _| encoding::hex_encode(a, s));
-        m.insert("hexDecode", |a, s, _, _| encoding::hex_decode(a, s));
+        m.insert("encodingNsHexEncode", |a, s, _, _| {
+            encoding::hex_encode(a, s)
+        });
+        m.insert("encodingNsHexDecode", |a, s, _, _| {
+            encoding::hex_decode(a, s)
+        });
         #[cfg(feature = "http")]
-        m.insert("urlEncode", |a, s, _, _| encoding::url_encode(a, s));
+        m.insert("encodingNsUrlEncode", |a, s, _, _| {
+            encoding::url_encode(a, s)
+        });
         #[cfg(feature = "http")]
-        m.insert("urlDecode", |a, s, _, _| encoding::url_decode(a, s));
+        m.insert("encodingNsUrlDecode", |a, s, _, _| {
+            encoding::url_decode(a, s)
+        });
 
         // ====================================================================
         // Networking TCP/UDP/TLS (feature = "http") — TLS needs rustls/aws-lc-sys
@@ -2394,22 +2412,23 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("assertLength", "assert_length"),
             ("assertThrows", "assert_throws"),
             ("assertNoThrow", "assert_no_throw"),
-            // Crypto
-            ("blake3Hash", "blake3_hash"),
-            ("hmacSha256", "hmac_sha256"),
-            ("hmacSha256Verify", "hmac_sha256_verify"),
+            // Crypto (bare globals — B27: blake3Hash/hmacSha256/hmacSha256Verify removed)
             ("aesGcmEncrypt", "aes_gcm_encrypt"),
             ("aesGcmDecrypt", "aes_gcm_decrypt"),
             ("aesGcmGenerateKey", "aes_gcm_generate_key"),
-            // Encoding
-            ("base64Encode", "base64_encode"),
-            ("base64Decode", "base64_decode"),
-            ("base64UrlEncode", "base64_url_encode"),
-            ("base64UrlDecode", "base64_url_decode"),
-            ("hexEncode", "hex_encode"),
-            ("hexDecode", "hex_decode"),
-            ("urlEncode", "url_encode"),
-            ("urlDecode", "url_decode"),
+            // Crypto namespace keys (B27)
+            ("cryptoNsBlake3", "crypto_ns_blake3"),
+            ("cryptoNsHmac", "crypto_ns_hmac"),
+            ("cryptoNsHmacVerify", "crypto_ns_hmac_verify"),
+            // Encoding namespace keys (B27 — bare globals removed)
+            ("encodingNsBase64Encode", "base64_encode"),
+            ("encodingNsBase64Decode", "base64_decode"),
+            ("encodingNsBase64UrlEncode", "base64_url_encode"),
+            ("encodingNsBase64UrlDecode", "base64_url_decode"),
+            ("encodingNsHexEncode", "hex_encode"),
+            ("encodingNsHexDecode", "hex_decode"),
+            ("encodingNsUrlEncode", "url_encode"),
+            ("encodingNsUrlDecode", "url_decode"),
             // Networking
             ("tcpConnect", "tcp_connect"),
             ("tcpWrite", "tcp_write"),
