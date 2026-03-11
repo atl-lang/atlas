@@ -461,45 +461,76 @@ impl Builder {
     fn discover_source_files(&self) -> BuildResult<Vec<PathBuf>> {
         let src_dir = self.root_dir.join("src");
 
-        if !src_dir.exists() {
-            return Err(BuildError::BuildFailed(format!(
-                "Source directory not found: {}",
-                src_dir.display()
-            )));
-        }
-
         // Collect all .atl and .atlas files, then dedup: if both exist for the same
         // stem, prefer .atl (D-047) and drop the .atlas sibling.
         let mut seen_stems: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
         let mut atl_files: Vec<PathBuf> = Vec::new();
         let mut atlas_files: Vec<PathBuf> = Vec::new();
 
-        for entry in WalkDir::new(&src_dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(|e| e.ok())
-        {
-            if entry.file_type().is_file() {
-                let path = entry.path();
-                match path.extension().and_then(|s| s.to_str()) {
-                    Some("atl") => atl_files.push(path.to_path_buf()),
-                    Some("atlas") => atlas_files.push(path.to_path_buf()),
-                    _ => {}
+        // First, add entry points from manifest (they may be outside src/)
+        if let Some(ref main) = self.manifest.entry.as_ref().and_then(|e| e.main.as_ref()) {
+            let main_path = self.root_dir.join(main);
+            if main_path.exists() {
+                let ext = main_path.extension().and_then(|s| s.to_str());
+                match ext {
+                    Some("atl") => atl_files.push(main_path),
+                    Some("atlas") => atlas_files.push(main_path),
+                    _ => atl_files.push(main_path), // Assume .atl if no extension
                 }
             }
+        }
+        if let Some(ref lib) = self.manifest.entry.as_ref().and_then(|e| e.lib.as_ref()) {
+            let lib_path = self.root_dir.join(lib);
+            if lib_path.exists() {
+                let ext = lib_path.extension().and_then(|s| s.to_str());
+                match ext {
+                    Some("atl") => atl_files.push(lib_path),
+                    Some("atlas") => atlas_files.push(lib_path),
+                    _ => atl_files.push(lib_path),
+                }
+            }
+        }
+
+        // Then scan src/ directory if it exists
+        if src_dir.exists() {
+            for entry in WalkDir::new(&src_dir)
+                .follow_links(false)
+                .into_iter()
+                .filter_map(|e| e.ok())
+            {
+                if entry.file_type().is_file() {
+                    let path = entry.path();
+                    match path.extension().and_then(|s| s.to_str()) {
+                        Some("atl") => atl_files.push(path.to_path_buf()),
+                        Some("atlas") => atlas_files.push(path.to_path_buf()),
+                        _ => {}
+                    }
+                }
+            }
+        }
+
+        // If no source directory and no entry points, error
+        if atl_files.is_empty() && atlas_files.is_empty() {
+            return Err(BuildError::BuildFailed(
+                "No source files found. Create src/ directory or specify [entry] in atlas.toml"
+                    .to_string(),
+            ));
         }
 
         // Register stems from preferred .atl files first
         let mut source_files: Vec<PathBuf> = Vec::new();
         for path in atl_files {
             let stem = path.with_extension("");
-            seen_stems.insert(stem);
-            source_files.push(path);
+            if !seen_stems.contains(&stem) {
+                seen_stems.insert(stem);
+                source_files.push(path);
+            }
         }
         // Add .atlas files only when no .atl sibling exists
         for path in atlas_files {
             let stem = path.with_extension("");
             if !seen_stems.contains(&stem) {
+                seen_stems.insert(stem);
                 source_files.push(path);
             }
         }
@@ -733,13 +764,46 @@ impl Builder {
     fn create_build_targets(&self, source_files: &[PathBuf]) -> BuildResult<Vec<BuildTarget>> {
         let mut targets = Vec::new();
 
-        // Determine if this is a library or binary based on lib.atl(as) vs main.atl(as)
-        let has_lib = source_files
-            .iter()
-            .any(|p| p.ends_with("lib.atlas") || p.ends_with("lib.atl"));
-        let main_path = source_files
-            .iter()
-            .find(|p| p.ends_with("main.atlas") || p.ends_with("main.atl"));
+        // Check for library entry point:
+        // 1. First check [entry] lib in manifest
+        // 2. Fall back to lib.atl/lib.atlas in source files
+        let lib_entry = self
+            .manifest
+            .entry
+            .as_ref()
+            .and_then(|e| e.lib.as_ref())
+            .map(|p| self.root_dir.join(p));
+        let has_lib = lib_entry.as_ref().map(|p| p.exists()).unwrap_or(false)
+            || source_files
+                .iter()
+                .any(|p| p.ends_with("lib.atlas") || p.ends_with("lib.atl"));
+
+        // Check for main entry point:
+        // 1. First check [entry] main in manifest
+        // 2. Fall back to main.atl/main.atlas in source files
+        let main_entry = self
+            .manifest
+            .entry
+            .as_ref()
+            .and_then(|e| e.main.as_ref())
+            .map(|p| self.root_dir.join(p));
+        let main_path: Option<PathBuf> = if let Some(ref entry) = main_entry {
+            if entry.exists() {
+                Some(entry.clone())
+            } else {
+                // Entry specified but doesn't exist - error
+                return Err(BuildError::BuildFailed(format!(
+                    "Entry point '{}' specified in atlas.toml does not exist",
+                    entry.display()
+                )));
+            }
+        } else {
+            // Fall back to finding main in source files
+            source_files
+                .iter()
+                .find(|p| p.ends_with("main.atlas") || p.ends_with("main.atl"))
+                .cloned()
+        };
 
         if has_lib {
             // Library target
@@ -748,7 +812,7 @@ impl Builder {
             targets.push(target);
         }
 
-        if let Some(main) = main_path {
+        if let Some(ref main) = main_path {
             // Use [[bin]] name from manifest if provided, otherwise fall back to package name
             let bin_name = self
                 .manifest
@@ -764,7 +828,7 @@ impl Builder {
 
         if targets.is_empty() {
             return Err(BuildError::BuildFailed(
-                "No lib or main entry point found in src/ (expected main.atl or main.atlas)"
+                "No entry point found. Add [entry] main = 'main.atl' to atlas.toml or place main.atl in src/"
                     .to_string(),
             ));
         }
@@ -911,16 +975,30 @@ impl Builder {
 
     fn path_to_module_name(&self, path: &Path) -> BuildResult<String> {
         let src_dir = self.root_dir.join("src");
-        let relative = path.strip_prefix(&src_dir).map_err(|_| {
-            BuildError::BuildFailed(format!("Path {} is not under src/", path.display()))
-        })?;
 
-        let module_name = relative
-            .with_extension("")
-            .to_string_lossy()
-            .replace(std::path::MAIN_SEPARATOR, "::");
+        // Try to get path relative to src/ first
+        if let Ok(relative) = path.strip_prefix(&src_dir) {
+            let module_name = relative
+                .with_extension("")
+                .to_string_lossy()
+                .replace(std::path::MAIN_SEPARATOR, "::");
+            return Ok(module_name);
+        }
 
-        Ok(module_name)
+        // For files at project root (e.g., main.atl from [entry]), use filename as module name
+        if let Ok(relative) = path.strip_prefix(&self.root_dir) {
+            let module_name = relative
+                .with_extension("")
+                .to_string_lossy()
+                .replace(std::path::MAIN_SEPARATOR, "::");
+            return Ok(module_name);
+        }
+
+        // Fallback: just use the file stem
+        Ok(path
+            .file_stem()
+            .map(|s| s.to_string_lossy().to_string())
+            .unwrap_or_else(|| "main".to_string()))
     }
 
     /// Build with specific profile
