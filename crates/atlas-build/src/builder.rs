@@ -468,7 +468,11 @@ impl Builder {
             )));
         }
 
-        let mut source_files = Vec::new();
+        // Collect all .atl and .atlas files, then dedup: if both exist for the same
+        // stem, prefer .atl (D-047) and drop the .atlas sibling.
+        let mut seen_stems: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
+        let mut atl_files: Vec<PathBuf> = Vec::new();
+        let mut atlas_files: Vec<PathBuf> = Vec::new();
 
         for entry in WalkDir::new(&src_dir)
             .follow_links(false)
@@ -477,12 +481,26 @@ impl Builder {
         {
             if entry.file_type().is_file() {
                 let path = entry.path();
-                if matches!(
-                    path.extension().and_then(|s| s.to_str()),
-                    Some("atl" | "atlas")
-                ) {
-                    source_files.push(path.to_path_buf());
+                match path.extension().and_then(|s| s.to_str()) {
+                    Some("atl") => atl_files.push(path.to_path_buf()),
+                    Some("atlas") => atlas_files.push(path.to_path_buf()),
+                    _ => {}
                 }
+            }
+        }
+
+        // Register stems from preferred .atl files first
+        let mut source_files: Vec<PathBuf> = Vec::new();
+        for path in atl_files {
+            let stem = path.with_extension("");
+            seen_stems.insert(stem);
+            source_files.push(path);
+        }
+        // Add .atlas files only when no .atl sibling exists
+        for path in atlas_files {
+            let stem = path.with_extension("");
+            if !seen_stems.contains(&stem) {
+                source_files.push(path);
             }
         }
 
