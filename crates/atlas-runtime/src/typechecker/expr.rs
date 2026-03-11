@@ -1400,17 +1400,6 @@ impl<'a> TypeChecker<'a> {
         };
 
         if let Some(ref name) = callee_name {
-            // AT9000: Deprecation warning for old global stdlib names
-            if let Some(replacement) = crate::method_dispatch::deprecated_global_replacement(name) {
-                self.diagnostics.push(
-                    error_codes::DEPRECATED_STDLIB_GLOBAL
-                        .emit(call.span)
-                        .arg("name", name.as_str())
-                        .with_help(format!("use {} instead of {}()", replacement, name))
-                        .build()
-                        .with_label("deprecated global"),
-                );
-            }
             match name.as_str() {
                 "Some" => {
                     if call.args.len() != 1 {

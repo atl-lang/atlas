@@ -1342,18 +1342,8 @@ pub const DUPLICATE_EXPORT: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Parser,
 };
 
-// ── AT9xxx: Internal / Deprecation ─────────────────────────────────────────────
-
-/// Warning: deprecated stdlib global name was called.
-pub const DEPRECATED_STDLIB_GLOBAL: DiagnosticDescriptor = DiagnosticDescriptor {
-    code: "AT9000",
-    level: DiagnosticLevel::Warning,
-    title: "Deprecated stdlib global name",
-    message_template: "`{name}` is a deprecated stdlib global",
-    static_help: Some("use method syntax instead — e.g. arr.push(x) or File.read(path); see docs/stdlib/METHOD-CONVENTIONS.md"),
-    static_note: None,
-    domain: DiagnosticDomain::Stdlib,
-};
+// ── AT9xxx: Internal ───────────────────────────────────────────────────────────
+// AT9000 (DEPRECATED_STDLIB_GLOBAL) removed — bare globals deleted, no backward compat (B35).
 
 pub const INTERNAL_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
     code: "AT9995",
@@ -1544,7 +1534,6 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &MODULE_NOT_EXPORTED,
     &NAMESPACE_IMPORT_UNSUPPORTED,
     &DUPLICATE_EXPORT,
-    &DEPRECATED_STDLIB_GLOBAL,
     &INTERNAL_ERROR,
     &STACK_UNDERFLOW,
     &UNKNOWN_OPCODE,

@@ -2022,9 +2022,8 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
 
         // ====================================================================
         // Networking TCP/UDP/TLS/WS — canonical access via net.* namespace (B29).
-        // Functions registered under original camelCase keys so net.* dispatch
-        // can route to them. Bare global calls are blocked at typechecker via
-        // deprecated_global_replacement() which emits AT9000.
+        // Functions registered under camelCase keys for net.* dispatch routing.
+        // Bare global calls are blocked at typechecker (AT1001 — undefined variable).
         // ====================================================================
         #[cfg(feature = "http")]
         {
