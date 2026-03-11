@@ -731,30 +731,11 @@ impl Interpreter {
             })?;
 
             // 3. Build argument list.
-            // For static namespaces (Json/Math/Env), target is a sentinel — not a receiver.
-            // For instance methods, target is arg[0].
-            let is_ns = matches!(
-                type_tag,
-                crate::method_dispatch::TypeTag::JsonNs
-                    | crate::method_dispatch::TypeTag::MathNs
-                    | crate::method_dispatch::TypeTag::EnvNs
-                    | crate::method_dispatch::TypeTag::FileNs
-                    | crate::method_dispatch::TypeTag::ProcessNs
-                    | crate::method_dispatch::TypeTag::DateTimeNs
-                    | crate::method_dispatch::TypeTag::PathNs
-                    | crate::method_dispatch::TypeTag::HttpNs
-                    | crate::method_dispatch::TypeTag::NetNs
-                    | crate::method_dispatch::TypeTag::CryptoNs
-                    | crate::method_dispatch::TypeTag::RegexNs
-                    | crate::method_dispatch::TypeTag::IoNs
-                    | crate::method_dispatch::TypeTag::GzipNs
-                    | crate::method_dispatch::TypeTag::TarNs
-                    | crate::method_dispatch::TypeTag::ZipNs
-                    | crate::method_dispatch::TypeTag::TaskNs
-                    | crate::method_dispatch::TypeTag::SyncNs
-                    | crate::method_dispatch::TypeTag::FutureNs
-                    | crate::method_dispatch::TypeTag::TestNs
-            );
+            // For static namespaces (Json/Math/console/io/etc.), target is a sentinel
+            // (Value::Builtin("__ns__X")) — not a receiver. For instance methods, target is arg[0].
+            // Use the __ns__ prefix as the canonical check rather than an allowlist,
+            // so newly added namespaces don't silently regress.
+            let is_ns = matches!(&target_value, Value::Builtin(name) if name.starts_with("__ns__"));
             let mut args = if is_ns {
                 Vec::new()
             } else {
