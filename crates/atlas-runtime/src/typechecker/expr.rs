@@ -53,7 +53,7 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("file", "watch") => Some(vec![str.clone()]),
         ("file", "watchNext") => None, // handle arg (Value)
         // Process namespace
-        ("process", "cwd" | "pid" | "args") => Some(vec![]),
+        ("process", "cwd" | "pid" | "args" | "platform" | "arch") => Some(vec![]),
         ("process", "exit") => Some(vec![num.clone()]), // H-266
         ("process", "run") => Some(vec![str.clone(), str_arr]),
         ("process", "shellOut") => Some(vec![str.clone()]),
@@ -63,10 +63,10 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("process", "waitFor" | "isRunning" | "stdout" | "stderr") => None, // handle arg
         ("process", "kill") => None,  // handle + optional signal
         ("process", "stdin") => None, // handle + data arg
-        // Path namespace
+        // Path namespace (extname is Node.js alias for extension)
         (
             "path",
-            "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
+            "dirname" | "basename" | "extension" | "extname" | "normalize" | "absolute" | "parent"
             | "canonical" | "exists" | "isAbsolute" | "isRelative",
         ) => Some(vec![str.clone()]),
         ("path", "join") => Some(vec![str.clone(), str.clone()]),
@@ -193,6 +193,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Process namespace
         ("process", "cwd") => Type::String,
         ("process", "pid") => Type::Number,
+        // H-275: process.platform() / process.arch() — OS and CPU info
+        ("process", "platform" | "arch") => Type::String,
         // H-266: process.exit(code) — terminates process, returns never
         ("process", "exit") => Type::Never,
         // H-213: process.args() — CLI argv access
@@ -235,11 +237,11 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
-        // Path namespace
+        // Path namespace (extname is Node.js alias for extension)
         (
             "path",
-            "join" | "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
-            | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
+            "join" | "dirname" | "basename" | "extension" | "extname" | "normalize" | "absolute"
+            | "parent" | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
         ) => Type::String,
         ("path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
         // DateTime namespace — returns DateTime value (H-231)

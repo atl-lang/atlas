@@ -535,6 +535,8 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
     let func_name = match method_name {
         "cwd" => "getCwd",
         "pid" => "getPid",
+        "platform" => "getPlatform",
+        "arch" => "getArch",
         "exit" => "processExit",
         "spawn" => "processNsSpawn",
         "exec" => "exec",
@@ -588,7 +590,7 @@ fn resolve_path_ns_method(method_name: &str) -> Option<String> {
         "join" => "pathJoin",
         "dirname" => "pathDirname",
         "basename" => "pathBasename",
-        "extension" => "pathExtension",
+        "extension" | "extname" => "pathExtension", // extname is Node.js alias
         "exists" => "pathExists",
         "isAbsolute" => "pathIsAbsolute",
         "isRelative" => "pathIsRelative",

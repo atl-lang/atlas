@@ -652,6 +652,40 @@ pub fn get_pid(
     Ok(Value::Number(std::process::id() as f64))
 }
 
+/// Get the operating system platform (H-275)
+///
+/// Atlas signature: `process.platform(): string`
+///
+/// Returns: "darwin" (macOS), "linux", "windows", or other OS identifier
+pub fn get_platform(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("process.platform", 0, args.len(), span));
+    }
+
+    Ok(Value::String(std::env::consts::OS.to_string().into()))
+}
+
+/// Get the CPU architecture (H-275)
+///
+/// Atlas signature: `process.arch(): string`
+///
+/// Returns: "x86_64", "aarch64", "arm", etc.
+pub fn get_arch(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if !args.is_empty() {
+        return Err(stdlib_arity_error("process.arch", 0, args.len(), span));
+    }
+
+    Ok(Value::String(std::env::consts::ARCH.to_string().into()))
+}
+
 /// Exit the process with a status code (H-266)
 ///
 /// Atlas signature: `process.exit(code: number): never`
