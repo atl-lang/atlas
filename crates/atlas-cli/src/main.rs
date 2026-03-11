@@ -621,10 +621,10 @@ fn main() -> Result<()> {
                 commands::run::run(&file, use_json)?;
             }
         }
-        Commands::Check { file, json } => {
-            // Command-line flag overrides environment variable
-            let use_json = json || cli_config.default_json;
-            commands::check::run(&file, use_json)?;
+        Commands::Check { file, .. } => {
+            eprintln!("error: `atlas check` is deprecated — it only analyzes a single file in isolation and misses cross-module errors.");
+            eprintln!("       Use `atlas run {}` instead.", file);
+            std::process::exit(1);
         }
         Commands::Build {
             profile,
@@ -946,15 +946,11 @@ mod tests {
 
     #[test]
     fn test_cli_smoke() {
-        // Verify CLI can be instantiated
-        // This test ensures the binary compiles and basic structure works
         let _cli = Cli::parse_from(["atlas", "repl"]);
-        // If we get here without panicking, the CLI structure is valid
     }
 
     #[test]
     fn test_cli_repl_tui_flag() {
-        // Verify TUI flag is parsed correctly
         let cli = Cli::parse_from(["atlas", "repl", "--tui"]);
         match cli.command {
             Commands::Repl { tui, .. } => assert!(tui),
@@ -964,7 +960,6 @@ mod tests {
 
     #[test]
     fn test_cli_repl_no_history_flag() {
-        // Verify no-history flag is parsed correctly
         let cli = Cli::parse_from(["atlas", "repl", "--no-history"]);
         match cli.command {
             Commands::Repl { no_history, .. } => assert!(no_history),
@@ -972,17 +967,6 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_cli_json_flag() {
-        // Verify JSON flag is parsed correctly
-        let cli = Cli::parse_from(["atlas", "check", "file.atl", "--json"]);
-        match cli.command {
-            Commands::Check { json, .. } => assert!(json),
-            _ => panic!("Expected Check command"),
-        }
-    }
-
-    // Command alias tests
     #[test]
     fn test_alias_r_for_run() {
         let cli = Cli::parse_from(["atlas", "r", "main.atl"]);
@@ -1005,12 +989,6 @@ mod tests {
     fn test_alias_b_for_build() {
         let cli = Cli::parse_from(["atlas", "b"]);
         matches!(cli.command, Commands::Build { .. });
-    }
-
-    #[test]
-    fn test_alias_c_for_check() {
-        let cli = Cli::parse_from(["atlas", "c", "main.atl"]);
-        matches!(cli.command, Commands::Check { .. });
     }
 
     #[test]
