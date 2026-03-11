@@ -2106,24 +2106,11 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             sync::atomic_compare_exchange(a, s)
         });
 
-        // WebSocket bare globals relocated above into the net namespace block (B29)
         // sync namespace factory functions (dispatch via sync.atomic(), sync.rwLock(), etc.)
         m.insert("syncNsAtomic", |a, s, _, _| sync::atomic_new(a, s));
         m.insert("syncNsRwLock", |a, s, _, _| sync::rwlock_new(a, s));
         m.insert("syncNsSemaphore", |a, s, _, _| sync::semaphore_new(a, s));
-
-        // ====================================================================
-        // WebSocket (feature = "http") — needs tungstenite + TLS
-        // ====================================================================
-        #[cfg(feature = "http")]
-        {
-            m.insert("wsConnect", |a, s, sec, _| websocket::ws_connect(a, s, sec));
-            m.insert("wsSend", |a, s, _, _| websocket::ws_send(a, s));
-            m.insert("wsSendBinary", |a, s, _, _| websocket::ws_send_binary(a, s));
-            m.insert("wsReceive", |a, s, _, _| websocket::ws_receive(a, s));
-            m.insert("wsPing", |a, s, _, _| websocket::ws_ping(a, s));
-            m.insert("wsClose", |a, s, _, _| websocket::ws_close(a, s));
-        }
+        // NOTE: WebSocket entries (wsConnect, wsSend, etc.) are in the net namespace block above (B29)
 
         // ====================================================================
         // snake_case aliases (H-082: canonical names)
