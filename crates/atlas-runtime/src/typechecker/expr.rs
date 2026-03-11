@@ -27,49 +27,49 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("Math", "clamp") => Some(vec![num.clone(), num.clone(), num.clone()]),
         ("Math", "random") => Some(vec![]),
         // Env namespace
-        ("Env", "get" | "unset") => Some(vec![str.clone()]),
-        ("Env", "set") => Some(vec![str.clone(), str.clone()]),
-        ("Env", "list") => Some(vec![]),
+        ("env", "get" | "unset") => Some(vec![str.clone()]),
+        ("env", "set") => Some(vec![str.clone(), str.clone()]),
+        ("env", "list") => Some(vec![]),
         // File namespace
-        ("File", "read" | "exists" | "createDir" | "removeDir" | "remove") => {
+        ("file", "read" | "exists" | "createDir" | "removeDir" | "remove") => {
             Some(vec![str.clone()])
         }
-        ("File", "write" | "append") => Some(vec![str.clone(), str.clone()]),
+        ("file", "write" | "append") => Some(vec![str.clone(), str.clone()]),
         // Process namespace
-        ("Process", "cwd" | "pid" | "args") => Some(vec![]),
-        ("Process", "run") => Some(vec![str.clone(), str_arr]),
-        ("Process", "shellOut") => Some(vec![str.clone()]),
-        ("Process", "exec") => Some(vec![str.clone()]),
-        ("Process", "shell") => Some(vec![str.clone()]),
+        ("process", "cwd" | "pid" | "args") => Some(vec![]),
+        ("process", "run") => Some(vec![str.clone(), str_arr]),
+        ("process", "shellOut") => Some(vec![str.clone()]),
+        ("process", "exec") => Some(vec![str.clone()]),
+        ("process", "shell") => Some(vec![str.clone()]),
         // Path namespace
         (
-            "Path",
+            "path",
             "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
             | "canonical" | "exists" | "isAbsolute" | "isRelative",
         ) => Some(vec![str.clone()]),
-        ("Path", "join") => Some(vec![str.clone(), str.clone()]),
-        ("Path", "homedir" | "cwd" | "tempdir" | "separator") => Some(vec![]),
+        ("path", "join") => Some(vec![str.clone(), str.clone()]),
+        ("path", "homedir" | "cwd" | "tempdir" | "separator") => Some(vec![]),
         // DateTime namespace
-        ("DateTime", "now" | "utc") => Some(vec![]),
-        ("DateTime", "fromTimestamp") => Some(vec![num.clone()]),
-        ("DateTime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => {
+        ("datetime", "now" | "utc") => Some(vec![]),
+        ("datetime", "fromTimestamp") => Some(vec![num.clone()]),
+        ("datetime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => {
             Some(vec![str.clone()])
         }
-        // DateTime.fromComponents — variadic (year,month,day,hour,min,sec) → skip arity
-        ("DateTime", "fromComponents") => None,
+        // datetime.fromComponents — variadic (year,month,day,hour,min,sec) → skip arity
+        ("datetime", "fromComponents") => None,
         // Regex namespace
-        ("Regex", "new") => Some(vec![str.clone()]),
+        ("regex", "new") => Some(vec![str.clone()]),
         // Crypto namespace
-        ("Crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
+        ("crypto", "sha256" | "sha512") => Some(vec![str.clone()]),
         // Http namespace — get/delete take url only; post/put take url+body; request is variadic
-        ("Http", "get" | "delete" | "patch") => Some(vec![str.clone()]),
-        ("Http", "post" | "put") => Some(vec![str.clone(), json]),
-        ("Http", "request") => None,
+        ("http", "get" | "delete" | "patch") => Some(vec![str.clone()]),
+        ("http", "post" | "put") => Some(vec![str.clone(), json]),
+        ("http", "request") => None,
         // Net namespace — variadic / complex → skip
-        ("Net", "tcpConnect" | "tcpListen") => None,
+        ("net", "tcpConnect" | "tcpListen") => None,
         // Io namespace
-        ("Io", "readLine") => Some(vec![]),
-        ("Io", "readLinePrompt") => Some(vec![str.clone()]),
+        ("io", "readLine") => Some(vec![]),
+        ("io", "readLinePrompt") => Some(vec![str.clone()]),
         // Unknown combination
         _ => None,
     }
@@ -96,34 +96,34 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             type_args: vec![Type::Number, Type::String],
         },
         // Env namespace
-        ("Env", "get") => Type::Generic {
+        ("env", "get") => Type::Generic {
             name: "Option".to_string(),
             type_args: vec![Type::String],
         },
-        ("Env", "set" | "unset") => Type::Null,
-        ("Env", "list") => Type::JsonValue,
+        ("env", "set" | "unset") => Type::Null,
+        ("env", "list") => Type::JsonValue,
         // File namespace
-        ("File", "read") => Type::Generic {
+        ("file", "read") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
-        ("File", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Generic {
+        ("file", "write" | "append" | "createDir" | "removeDir" | "remove") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Null, Type::String],
         },
-        ("File", "exists") => Type::Bool,
+        ("file", "exists") => Type::Bool,
         // Process namespace
-        ("Process", "cwd") => Type::String,
-        ("Process", "pid") => Type::Number,
-        // H-213: Process.args() — CLI argv access
-        ("Process", "args") => Type::Array(Box::new(Type::String)),
-        // H-212: Process.run(program, args) — direct exec returns Result<string, string>
-        ("Process", "run") => Type::Generic {
+        ("process", "cwd") => Type::String,
+        ("process", "pid") => Type::Number,
+        // H-213: process.args() — CLI argv access
+        ("process", "args") => Type::Array(Box::new(Type::String)),
+        // H-212: process.run(program, args) — direct exec returns Result<string, string>
+        ("process", "run") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
-        // B18: Process.exec(cmd) / Process.shell(cmd) — returns Result<ProcessOutput, string>
-        ("Process", "exec" | "shell") => Type::Generic {
+        // B18: process.exec(cmd) / process.shell(cmd) — returns Result<ProcessOutput, string>
+        ("process", "exec" | "shell") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![
                 Type::Generic {
@@ -133,23 +133,23 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
-        ("Process", "shellOut") => Type::Generic {
+        ("process", "shellOut") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::String, Type::String],
         },
         // Path namespace
         (
-            "Path",
+            "path",
             "join" | "dirname" | "basename" | "extension" | "normalize" | "absolute" | "parent"
             | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
         ) => Type::String,
-        ("Path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
+        ("path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
         // DateTime namespace — returns DateTime value (H-231)
-        ("DateTime", "now" | "fromTimestamp" | "fromComponents" | "utc") => Type::Generic {
+        ("datetime", "now" | "fromTimestamp" | "fromComponents" | "utc") => Type::Generic {
             name: "DateTime".to_string(),
             type_args: vec![],
         },
-        ("DateTime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => Type::Generic {
+        ("datetime", "parseIso" | "parse" | "parseRfc3339" | "parseRfc2822") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![
                 Type::Generic {
@@ -159,8 +159,8 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
                 Type::String,
             ],
         },
-        // Regex namespace (H-231): Regex.new returns Result<Regex, string>
-        ("Regex", "new") => Type::Generic {
+        // Regex namespace (H-231): regex.new returns Result<Regex, string>
+        ("regex", "new") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![
                 Type::Generic {
@@ -173,9 +173,9 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         // Note: test/isMatch/find/findAll/replace/replaceAll/split are instance methods on Regex
         // values (dispatched via TypeTag::RegexValue), not namespace methods.
         // Crypto namespace
-        ("Crypto", "sha256" | "sha512") => Type::String,
+        ("crypto", "sha256" | "sha512") => Type::String,
         // Http namespace — returns Result<HttpResponse, string> (H-231)
-        ("Http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
+        ("http", "get" | "post" | "put" | "delete" | "patch" | "request") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![
                 Type::Generic {
@@ -186,12 +186,12 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             ],
         },
         // Net namespace
-        ("Net", "tcpConnect" | "tcpListen") => Type::Generic {
+        ("net", "tcpConnect" | "tcpListen") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Unknown, Type::String],
         },
         // Io namespace
-        ("Io", "readLine" | "readLinePrompt") => Type::String,
+        ("io", "readLine" | "readLinePrompt") => Type::String,
         // Default: unknown for unrecognized combinations
         _ => Type::Unknown,
     }

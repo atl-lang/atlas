@@ -198,14 +198,14 @@ fn test_math_random_range() {
     assert_parity(src);
 }
 
-// --- Env.get() ---
+// --- env.get() ---
 // getEnv requires env permissions. Use allow_all security context via run_interpreter/run_vm.
 
 #[test]
 fn test_env_get_known_var() {
     // PATH is always set — verify get() returns a non-null value
     // Use run_interpreter/run_vm (allow_all security context) instead of assert_eval_bool
-    let src = r#"let v = Env.get("PATH"); v != null;"#;
+    let src = r#"let v = env.get("PATH"); v != null;"#;
     let result = run_interpreter(src);
     assert!(result.is_ok(), "Expected Ok, got {:?}", result);
     assert!(
@@ -220,15 +220,15 @@ fn test_env_get_known_var() {
 // Both interpreter and VM parity tested throughout.
 // ============================================================================
 
-// --- File.read() / File.write() / File.exists() / File.remove() ---
+// --- file.read() / file.write() / file.exists() / file.remove() ---
 // File operations require fs permissions — use run_interpreter (allow_all context).
 
 #[test]
 fn test_file_write_and_read() {
     // Write then read — verify round-trip. File ops return Result<T,string> — debug contains content.
     let src = r#"
-        File.write("/tmp/atlas_test_p08.txt", "hello atlas");
-        let content = File.read("/tmp/atlas_test_p08.txt");
+        file.write("/tmp/atlas_test_p08.txt", "hello atlas");
+        let content = file.read("/tmp/atlas_test_p08.txt");
         content;
     "#;
     let result = run_interpreter(src);
@@ -244,8 +244,8 @@ fn test_file_write_and_read() {
 fn test_file_exists_true() {
     // Write then check exists
     let src = r#"
-        File.write("/tmp/atlas_test_exists.txt", "x");
-        File.exists("/tmp/atlas_test_exists.txt");
+        file.write("/tmp/atlas_test_exists.txt", "x");
+        file.exists("/tmp/atlas_test_exists.txt");
     "#;
     let result = run_interpreter(src);
     assert!(result.is_ok(), "Expected Ok, got {:?}", result);
@@ -258,7 +258,7 @@ fn test_file_exists_true() {
 
 #[test]
 fn test_file_exists_false() {
-    let src = r#"File.exists("/tmp/atlas_nonexistent_zxqp.txt");"#;
+    let src = r#"file.exists("/tmp/atlas_nonexistent_zxqp.txt");"#;
     let result = run_interpreter(src);
     assert!(result.is_ok(), "Expected Ok, got {:?}", result);
     assert!(
@@ -271,9 +271,9 @@ fn test_file_exists_false() {
 #[test]
 fn test_file_append() {
     let src = r#"
-        File.write("/tmp/atlas_append_p08.txt", "hello");
-        File.append("/tmp/atlas_append_p08.txt", " world");
-        let content = File.read("/tmp/atlas_append_p08.txt");
+        file.write("/tmp/atlas_append_p08.txt", "hello");
+        file.append("/tmp/atlas_append_p08.txt", " world");
+        let content = file.read("/tmp/atlas_append_p08.txt");
         content;
     "#;
     let result = run_interpreter(src);
@@ -285,13 +285,13 @@ fn test_file_append() {
     assert_parity(src);
 }
 
-// --- Process.cwd() / Process.pid() ---
+// --- process.cwd() / process.pid() ---
 
 #[test]
 fn test_process_cwd() {
     // cwd() returns a string directly (not Result)
     let src = r#"
-        let cwd = Process.cwd();
+        let cwd = process.cwd();
         cwd != "";
     "#;
     let result = run_interpreter(src);
@@ -307,7 +307,7 @@ fn test_process_cwd() {
 fn test_process_pid() {
     // pid() returns a number > 0
     let src = r#"
-        let pid = Process.pid();
+        let pid = process.pid();
         pid > 0;
     "#;
     let result = run_interpreter(src);
@@ -319,13 +319,13 @@ fn test_process_pid() {
     assert_parity(src);
 }
 
-// --- DateTime.now() ---
+// --- datetime.now() ---
 
 #[test]
 fn test_datetime_now_is_datetime() {
-    // DateTime.now() returns a DateTime value
+    // datetime.now() returns a DateTime value
     let src = r#"
-        let dt = DateTime.now();
+        let dt = datetime.now();
         dt != null;
     "#;
     assert_eval_bool(src, true);
@@ -334,62 +334,62 @@ fn test_datetime_now_is_datetime() {
 
 #[test]
 fn test_datetime_from_timestamp() {
-    // DateTime.fromTimestamp(0) = Unix epoch
+    // datetime.fromTimestamp(0) = Unix epoch
     let src = r#"
-        let dt = DateTime.fromTimestamp(0);
+        let dt = datetime.fromTimestamp(0);
         dt != null;
     "#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
-// --- Path.join() / Path.dirname() / Path.basename() / Path.exists() ---
+// --- path.join() / path.dirname() / path.basename() / path.exists() ---
 
 #[test]
 fn test_path_join() {
-    let src = r#"Path.join("/tmp", "atlas", "test.txt");"#;
+    let src = r#"path.join("/tmp", "atlas", "test.txt");"#;
     assert_eval_string(src, "/tmp/atlas/test.txt");
     assert_parity(src);
 }
 
 #[test]
 fn test_path_dirname() {
-    let src = r#"Path.dirname("/tmp/atlas/test.txt");"#;
+    let src = r#"path.dirname("/tmp/atlas/test.txt");"#;
     assert_eval_string(src, "/tmp/atlas");
     assert_parity(src);
 }
 
 #[test]
 fn test_path_basename() {
-    let src = r#"Path.basename("/tmp/atlas/test.txt");"#;
+    let src = r#"path.basename("/tmp/atlas/test.txt");"#;
     assert_eval_string(src, "test.txt");
     assert_parity(src);
 }
 
 #[test]
 fn test_path_extension() {
-    let src = r#"Path.extension("/tmp/atlas/test.txt");"#;
+    let src = r#"path.extension("/tmp/atlas/test.txt");"#;
     assert_eval_string(src, "txt");
     assert_parity(src);
 }
 
 #[test]
 fn test_path_is_absolute_true() {
-    let src = r#"Path.isAbsolute("/tmp/foo");"#;
+    let src = r#"path.isAbsolute("/tmp/foo");"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_path_is_absolute_false() {
-    let src = r#"Path.isAbsolute("relative/path");"#;
+    let src = r#"path.isAbsolute("relative/path");"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
 
 #[test]
 fn test_path_exists_false() {
-    let src = r#"Path.exists("/tmp/atlas_nonexistent_path_zxqp_99");"#;
+    let src = r#"path.exists("/tmp/atlas_nonexistent_path_zxqp_99");"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
@@ -399,27 +399,27 @@ fn test_path_exists_false() {
 // Both interpreter and VM parity tested throughout.
 // ============================================================================
 
-// --- Regex.new() / Regex.test() / Regex.isMatch() / Regex.find() / Regex.replace() ---
+// --- regex.new() / regex.test() / regex.isMatch() / regex.find() / regex.replace() ---
 
 #[test]
 fn test_regex_new() {
-    // Regex.new(pattern) returns Result<Regex>
-    let src = r#"let r = Regex.new("[0-9]+"); isOk(r);"#;
+    // regex.new(pattern) returns Result<Regex>
+    let src = r#"let r = regex.new("[0-9]+"); isOk(r);"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_test_true() {
-    // unwrap() the Result<Regex> before passing to Regex.test
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.test(r, "hello 42 world");"#;
+    // unwrap() the Result<Regex> before passing to regex.test
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); regex.test(r, "hello 42 world");"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_test_false() {
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.test(r, "no digits here");"#;
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); regex.test(r, "no digits here");"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
@@ -427,14 +427,14 @@ fn test_regex_test_false() {
 #[test]
 fn test_regex_is_match() {
     // isMatch maps to regexIsMatch (compiled Regex + string)
-    let src = r#"let r = unwrap(Regex.new("^hello")); Regex.isMatch(r, "hello world");"#;
+    let src = r#"let r = unwrap(regex.new("^hello")); regex.isMatch(r, "hello world");"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_is_match_false() {
-    let src = r#"let r = unwrap(Regex.new("^world")); Regex.isMatch(r, "hello world");"#;
+    let src = r#"let r = unwrap(regex.new("^world")); regex.isMatch(r, "hello world");"#;
     assert_eval_bool(src, false);
     assert_parity(src);
 }
@@ -442,28 +442,28 @@ fn test_regex_is_match_false() {
 #[test]
 fn test_regex_find() {
     // find() returns Option<string>
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); isSome(Regex.find(r, "foo 42 bar"));"#;
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); isSome(regex.find(r, "foo 42 bar"));"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_find_none() {
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); isNone(Regex.find(r, "no digits"));"#;
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); isNone(regex.find(r, "no digits"));"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_replace() {
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.replace(r, "foo 42 bar", "NUM");"#;
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); regex.replace(r, "foo 42 bar", "NUM");"#;
     assert_eval_string(src, "foo NUM bar");
     assert_parity(src);
 }
 
 #[test]
 fn test_regex_replace_all() {
-    let src = r#"let r = unwrap(Regex.new("[0-9]+")); Regex.replaceAll(r, "1 and 2 and 3", "N");"#;
+    let src = r#"let r = unwrap(regex.new("[0-9]+")); regex.replaceAll(r, "1 and 2 and 3", "N");"#;
     assert_eval_string(src, "N and N and N");
     assert_parity(src);
 }
@@ -471,18 +471,18 @@ fn test_regex_replace_all() {
 #[test]
 fn test_regex_escape() {
     // escape() makes special regex chars literal
-    let src = r#"let escaped = Regex.escape("hello.world"); escaped != "";"#;
+    let src = r#"let escaped = regex.escape("hello.world"); escaped != "";"#;
     assert_eval_bool(src, true);
     assert_parity(src);
 }
 
-// --- Crypto.sha256() / Crypto.sha512() ---
+// --- crypto.sha256() / crypto.sha512() ---
 
 #[test]
 fn test_crypto_sha256() {
     // sha256("hello") returns a hex string of length 64
     let src = r#"
-        let h = Crypto.sha256("hello");
+        let h = crypto.sha256("hello");
         len(h) == 64;
     "#;
     assert_eval_bool(src, true);
@@ -493,8 +493,8 @@ fn test_crypto_sha256() {
 fn test_crypto_sha256_deterministic() {
     // Same input = same hash
     let src = r#"
-        let h1 = Crypto.sha256("atlas");
-        let h2 = Crypto.sha256("atlas");
+        let h1 = crypto.sha256("atlas");
+        let h2 = crypto.sha256("atlas");
         h1 == h2;
     "#;
     assert_eval_bool(src, true);
@@ -505,7 +505,7 @@ fn test_crypto_sha256_deterministic() {
 fn test_crypto_sha512() {
     // sha512 returns 128-char hex string
     let src = r#"
-        let h = Crypto.sha512("hello");
+        let h = crypto.sha512("hello");
         len(h) == 128;
     "#;
     assert_eval_bool(src, true);
@@ -522,10 +522,10 @@ fn test_crypto_sha512() {
 
 #[test]
 fn test_process_exec_returns_process_output() {
-    // Process.exec() returns Result<ProcessOutput, string>; verify via .success()
+    // process.exec() returns Result<ProcessOutput, string>; verify via .success()
     // exec() takes a string as program name — use array form for args
     let src = r#"
-        let result = Process.shell("echo hello");
+        let result = process.shell("echo hello");
         match result {
             Ok(out) => out.success(),
             Err(_) => false,
@@ -541,7 +541,7 @@ fn test_process_exec_returns_process_output() {
 fn test_process_exec_output_stdout_method() {
     // ProcessOutput.stdout() returns captured stdout (non-empty for echo)
     let src = r#"
-        let result = Process.shell("echo hello");
+        let result = process.shell("echo hello");
         match result {
             Ok(out) => len(out.stdout()) > 0,
             Err(_) => false,
@@ -557,7 +557,7 @@ fn test_process_exec_output_stdout_method() {
 fn test_process_exec_output_exit_code_method() {
     // ProcessOutput.exitCode() returns 0 for successful commands
     let src = r#"
-        let result = Process.shell("echo hi");
+        let result = process.shell("echo hi");
         match result {
             Ok(out) => out.exitCode() == 0,
             Err(_) => false,
@@ -573,7 +573,7 @@ fn test_process_exec_output_exit_code_method() {
 fn test_process_exec_output_success_method() {
     // ProcessOutput.success() returns true for exit code 0
     let src = r#"
-        let result = Process.shell("echo hi");
+        let result = process.shell("echo hi");
         match result {
             Ok(out) => out.success(),
             Err(_) => false,
@@ -589,7 +589,7 @@ fn test_process_exec_output_success_method() {
 fn test_process_exec_output_stderr_method() {
     // .stderr() returns a string (empty for successful commands with no stderr)
     let src = r#"
-        let result = Process.shell("echo hi");
+        let result = process.shell("echo hi");
         match result {
             Ok(out) => len(out.stderr()) == 0,
             Err(_) => false,
@@ -603,9 +603,9 @@ fn test_process_exec_output_stderr_method() {
 
 #[test]
 fn test_process_shell_returns_process_output() {
-    // Process.shell() returns Result<ProcessOutput, string>
+    // process.shell() returns Result<ProcessOutput, string>
     let src = r#"
-        let result = Process.shell("echo hello");
+        let result = process.shell("echo hello");
         match result {
             Ok(out) => out.success(),
             Err(_) => false,
@@ -619,9 +619,9 @@ fn test_process_shell_returns_process_output() {
 
 #[test]
 fn test_process_shell_output_stdout() {
-    // Process.shell() stdout() contains the output
+    // process.shell() stdout() contains the output
     let src = r#"
-        let result = Process.shell("echo hello");
+        let result = process.shell("echo hello");
         match result {
             Ok(out) => len(out.stdout()) > 0,
             Err(_) => false,
@@ -635,9 +635,9 @@ fn test_process_shell_output_stdout() {
 
 #[test]
 fn test_process_run_returns_result_string() {
-    // Process.run(program, args) -> Result<string, string>
+    // process.run(program, args) -> Result<string, string>
     let src = r#"
-        let result = Process.run("echo", ["hi"]);
+        let result = process.run("echo", ["hi"]);
         match result {
             Ok(s) => len(s) > 0,
             Err(_) => false,
@@ -651,9 +651,9 @@ fn test_process_run_returns_result_string() {
 
 #[test]
 fn test_process_args_returns_array() {
-    // Process.args() returns string[] — verify it doesn't error
+    // process.args() returns string[] — verify it doesn't error
     let src = r#"
-        let argv = Process.args();
+        let argv = process.args();
         len(argv) >= 0;
     "#;
     let r = run_interpreter(src);
@@ -664,9 +664,9 @@ fn test_process_args_returns_array() {
 
 #[test]
 fn test_env_list_returns_object() {
-    // Env.list() returns a JsonValue with env vars — must not error
+    // env.list() returns a JsonValue with env vars — must not error
     let src = r#"
-        let _env = Env.list();
+        let _env = env.list();
         true;
     "#;
     let r = run_interpreter(src);
@@ -677,11 +677,11 @@ fn test_env_list_returns_object() {
 
 #[test]
 fn test_env_get_set_unset_via_namespace() {
-    // Env.set / Env.get / Env.unset all route through EnvNs
+    // env.set / env.get / env.unset all route through EnvNs
     let src = r#"
-        Env.set("ATLAS_B18_TEST", "42");
-        let v = Env.get("ATLAS_B18_TEST");
-        Env.unset("ATLAS_B18_TEST");
+        env.set("ATLAS_B18_TEST", "42");
+        let v = env.get("ATLAS_B18_TEST");
+        env.unset("ATLAS_B18_TEST");
         match v {
             Some(s) => s == "42",
             None => false,

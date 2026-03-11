@@ -143,7 +143,7 @@ fn test_no_warning_math_namespace() {
 
 #[test]
 fn test_no_warning_file_namespace() {
-    assert!(no_at9000(r#"File.exists("/tmp/foo");"#));
+    assert!(no_at9000(r#"file.exists("/tmp/foo");"#));
 }
 
 // --- Old names still work (no runtime error) ---

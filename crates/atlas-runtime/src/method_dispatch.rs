@@ -89,16 +89,16 @@ pub fn is_static_namespace(name: &str) -> bool {
         name,
         "Json"
             | "Math"
-            | "Env"
-            | "File"
-            | "Process"
-            | "DateTime"
-            | "Path"
-            | "Http"
-            | "Net"
-            | "Crypto"
-            | "Regex"
-            | "Io"
+            | "env"
+            | "file"
+            | "process"
+            | "datetime"
+            | "path"
+            | "http"
+            | "net"
+            | "crypto"
+            | "regex"
+            | "io"
     )
 }
 
@@ -107,16 +107,16 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
     match name {
         "Json" => Some(TypeTag::JsonNs),
         "Math" => Some(TypeTag::MathNs),
-        "Env" => Some(TypeTag::EnvNs),
-        "File" => Some(TypeTag::FileNs),
-        "Process" => Some(TypeTag::ProcessNs),
-        "DateTime" => Some(TypeTag::DateTimeNs),
-        "Path" => Some(TypeTag::PathNs),
-        "Http" => Some(TypeTag::HttpNs),
-        "Net" => Some(TypeTag::NetNs),
-        "Crypto" => Some(TypeTag::CryptoNs),
-        "Regex" => Some(TypeTag::RegexNs),
-        "Io" => Some(TypeTag::IoNs),
+        "env" => Some(TypeTag::EnvNs),
+        "file" => Some(TypeTag::FileNs),
+        "process" => Some(TypeTag::ProcessNs),
+        "datetime" => Some(TypeTag::DateTimeNs),
+        "path" => Some(TypeTag::PathNs),
+        "http" => Some(TypeTag::HttpNs),
+        "net" => Some(TypeTag::NetNs),
+        "crypto" => Some(TypeTag::CryptoNs),
+        "regex" => Some(TypeTag::RegexNs),
+        "io" => Some(TypeTag::IoNs),
         _ => None,
     }
 }
