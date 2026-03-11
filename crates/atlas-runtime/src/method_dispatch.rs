@@ -47,6 +47,8 @@ pub enum TypeTag {
     DateTime,
     /// Instance methods on Regex values (test, find, findAll, replace, etc.)
     RegexValue,
+    /// Instance methods on ProcessOutput values (stdout, stderr, exitCode, success)
+    ProcessOutput,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -77,6 +79,7 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::IoNs => resolve_io_ns_method(method_name),
         TypeTag::DateTime => resolve_datetime_instance_method(method_name),
         TypeTag::RegexValue => resolve_regex_instance_method(method_name),
+        TypeTag::ProcessOutput => resolve_process_output_method(method_name),
     }
 }
 
@@ -337,6 +340,7 @@ fn resolve_env_ns_method(method_name: &str) -> Option<String> {
         "get" => "getEnv",
         "set" => "setEnv",
         "unset" => "unsetEnv",
+        "list" => "listEnv",
         _ => return None,
     };
     Some(func_name.to_string())
@@ -366,10 +370,20 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "exec" => "exec",
         "shell" => "shell",
         "shellOut" => "shellOut",
-        "env" => "getEnv",
-        "envList" => "listEnv",
         "args" => "getProcessArgs",
         "run" => "processRun",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve ProcessOutput.method() → stdlib function name.
+fn resolve_process_output_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "stdout" => "processOutputStdout",
+        "stderr" => "processOutputStderr",
+        "exitCode" => "processOutputExitCode",
+        "success" => "processOutputSuccess",
         _ => return None,
     };
     Some(func_name.to_string())

@@ -126,6 +126,8 @@ impl MethodTable {
             Type::Generic { ref name, .. } if name == "DateTime" => "DateTime",
             Type::Generic { ref name, .. } if name == "Regex" => "Regex",
             Type::Generic { ref name, .. } if name == "HttpResponse" => "HttpResponse",
+            // B18: ProcessOutput instance methods
+            Type::Generic { ref name, .. } if name == "ProcessOutput" => "ProcessOutput",
             _ => return None,
         };
 
@@ -291,6 +293,12 @@ impl MethodTable {
         );
         self.register("HttpResponse", "url", vec![], Type::String);
         self.register("HttpResponse", "isSuccess", vec![], Type::Bool);
+
+        // B18: ProcessOutput instance methods
+        self.register("ProcessOutput", "stdout", vec![], Type::String);
+        self.register("ProcessOutput", "stderr", vec![], Type::String);
+        self.register("ProcessOutput", "exitCode", vec![], Type::Number);
+        self.register("ProcessOutput", "success", vec![], Type::Bool);
 
         // H-231: Regex instance methods
         self.register("Regex", "test", vec![Type::String], Type::Bool);

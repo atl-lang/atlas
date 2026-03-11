@@ -111,6 +111,7 @@ fn type_name(value: &Value) -> &'static str {
         Value::DateTime(_) => "datetime",
         Value::HttpRequest(_) => "HttpRequest",
         Value::HttpResponse(_) => "HttpResponse",
+        Value::ProcessOutput(_) => "ProcessOutput",
         Value::Future(_) => "Future",
         Value::TaskHandle(_) => "TaskHandle",
         Value::ChannelSender(_) => "ChannelSender",

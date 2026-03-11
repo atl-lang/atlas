@@ -38,6 +38,147 @@ use std::process::{Child, ChildStderr, ChildStdin, ChildStdout, Command, Output,
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
 
+// ============================================================================
+// ProcessOutput — typed result of exec() / shell()
+// ============================================================================
+
+/// Typed output from a completed process.
+///
+/// Returned by `Process.exec()` and `Process.shell()`.
+/// Methods: `.stdout()`, `.stderr()`, `.exitCode()`, `.success()`
+#[derive(Debug, Clone, PartialEq)]
+pub struct ProcessOutput {
+    pub stdout: String,
+    pub stderr: String,
+    pub exit_code: i32,
+    pub success: bool,
+}
+
+impl ProcessOutput {
+    pub fn new(stdout: String, stderr: String, exit_code: i32, success: bool) -> Self {
+        Self {
+            stdout,
+            stderr,
+            exit_code,
+            success,
+        }
+    }
+
+    fn from_std_output(output: &Output) -> Self {
+        let exit_code = output.status.code().unwrap_or(-1);
+        Self {
+            stdout: String::from_utf8_lossy(&output.stdout).to_string(),
+            stderr: String::from_utf8_lossy(&output.stderr).to_string(),
+            exit_code,
+            success: output.status.success(),
+        }
+    }
+}
+
+/// Process.exec() / Process.shell() output: .stdout() -> string
+pub fn process_output_stdout(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error(
+            "processOutputStdout",
+            1,
+            args.len(),
+            span,
+        ));
+    }
+    match &args[0] {
+        Value::ProcessOutput(out) => Ok(Value::string(out.stdout.clone())),
+        _ => Err(RuntimeError::TypeError {
+            msg: format!(
+                "processOutputStdout: expected ProcessOutput, got {}",
+                args[0].type_name()
+            ),
+            span,
+        }),
+    }
+}
+
+/// Process.exec() / Process.shell() output: .stderr() -> string
+pub fn process_output_stderr(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error(
+            "processOutputStderr",
+            1,
+            args.len(),
+            span,
+        ));
+    }
+    match &args[0] {
+        Value::ProcessOutput(out) => Ok(Value::string(out.stderr.clone())),
+        _ => Err(RuntimeError::TypeError {
+            msg: format!(
+                "processOutputStderr: expected ProcessOutput, got {}",
+                args[0].type_name()
+            ),
+            span,
+        }),
+    }
+}
+
+/// Process.exec() / Process.shell() output: .exitCode() -> number
+pub fn process_output_exit_code(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error(
+            "processOutputExitCode",
+            1,
+            args.len(),
+            span,
+        ));
+    }
+    match &args[0] {
+        Value::ProcessOutput(out) => Ok(Value::Number(out.exit_code as f64)),
+        _ => Err(RuntimeError::TypeError {
+            msg: format!(
+                "processOutputExitCode: expected ProcessOutput, got {}",
+                args[0].type_name()
+            ),
+            span,
+        }),
+    }
+}
+
+/// Process.exec() / Process.shell() output: .success() -> bool
+pub fn process_output_success(
+    args: &[Value],
+    span: Span,
+    _security: &SecurityContext,
+) -> Result<Value, RuntimeError> {
+    if args.len() != 1 {
+        return Err(stdlib_arity_error(
+            "processOutputSuccess",
+            1,
+            args.len(),
+            span,
+        ));
+    }
+    match &args[0] {
+        Value::ProcessOutput(out) => Ok(Value::Bool(out.success)),
+        _ => Err(RuntimeError::TypeError {
+            msg: format!(
+                "processOutputSuccess: expected ProcessOutput, got {}",
+                args[0].type_name()
+            ),
+            span,
+        }),
+    }
+}
+
 static PROCESS_REGISTRY: OnceLock<Arc<Mutex<HashMap<u32, Child>>>> = OnceLock::new();
 static PROCESS_IO_REGISTRY: OnceLock<Mutex<HashMap<u32, ProcessIoHandles>>> = OnceLock::new();
 static PROCESS_STDIN_HANDLES: OnceLock<Mutex<HashMap<u64, Arc<Mutex<ChildStdin>>>>> =
@@ -158,41 +299,11 @@ pub fn exec(args: &[Value], span: Span, security: &SecurityContext) -> Result<Va
         span,
     })?;
 
-    // Build result object
-    let result = HashMap::from([
-        (
-            "exitCode".to_string(),
-            crate::json_value::JsonValue::Number(output.status.code().unwrap_or(-1) as f64),
-        ),
-        (
-            "stdout".to_string(),
-            crate::json_value::JsonValue::String(
-                String::from_utf8_lossy(&output.stdout).to_string(),
-            ),
-        ),
-        (
-            "stderr".to_string(),
-            crate::json_value::JsonValue::String(
-                String::from_utf8_lossy(&output.stderr).to_string(),
-            ),
-        ),
-        (
-            "success".to_string(),
-            crate::json_value::JsonValue::Bool(output.status.success()),
-        ),
-    ]);
-
-    // Return Result<object, string>
-    if output.status.success() {
-        Ok(Value::Result(Ok(Box::new(Value::JsonValue(Arc::new(
-            crate::json_value::JsonValue::Object(result),
-        ))))))
-    } else {
-        Ok(Value::Result(Err(Box::new(Value::string(format!(
-            "Command failed with exit code {}",
-            output.status.code().unwrap_or(-1)
-        ))))))
-    }
+    // Return typed ProcessOutput
+    let process_out = ProcessOutput::from_std_output(&output);
+    Ok(Value::Result(Ok(Box::new(Value::ProcessOutput(Arc::new(
+        process_out,
+    ))))))
 }
 
 /// Execute a shell command and return stdout as a string
@@ -338,40 +449,11 @@ pub fn shell(
         span,
     })?;
 
-    // Build result
-    let result = HashMap::from([
-        (
-            "exitCode".to_string(),
-            crate::json_value::JsonValue::Number(output.status.code().unwrap_or(-1) as f64),
-        ),
-        (
-            "stdout".to_string(),
-            crate::json_value::JsonValue::String(
-                String::from_utf8_lossy(&output.stdout).to_string(),
-            ),
-        ),
-        (
-            "stderr".to_string(),
-            crate::json_value::JsonValue::String(
-                String::from_utf8_lossy(&output.stderr).to_string(),
-            ),
-        ),
-        (
-            "success".to_string(),
-            crate::json_value::JsonValue::Bool(output.status.success()),
-        ),
-    ]);
-
-    if output.status.success() {
-        Ok(Value::Result(Ok(Box::new(Value::JsonValue(Arc::new(
-            crate::json_value::JsonValue::Object(result),
-        ))))))
-    } else {
-        Ok(Value::Result(Err(Box::new(Value::string(format!(
-            "Shell command failed with exit code {}",
-            output.status.code().unwrap_or(-1)
-        ))))))
-    }
+    // Return typed ProcessOutput
+    let process_out = ProcessOutput::from_std_output(&output);
+    Ok(Value::Result(Ok(Box::new(Value::ProcessOutput(Arc::new(
+        process_out,
+    ))))))
 }
 
 // ============================================================================

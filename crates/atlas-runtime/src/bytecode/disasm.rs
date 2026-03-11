@@ -245,6 +245,7 @@ fn format_value(value: &crate::value::Value) -> String {
         Value::DateTime(dt) => format!("<datetime {}>", dt.to_rfc3339()),
         Value::HttpRequest(req) => format!("<HttpRequest {} {}>", req.method(), req.url()),
         Value::HttpResponse(res) => format!("<HttpResponse {}>", res.status()),
+        Value::ProcessOutput(out) => format!("<ProcessOutput exit={}>", out.exit_code),
         Value::Future(f) => format!("<{}>", f.as_ref()),
         Value::TaskHandle(h) => format!("<TaskHandle #{}>", h.lock().unwrap().id()),
         Value::ChannelSender(_) => "<ChannelSender>".to_string(),
