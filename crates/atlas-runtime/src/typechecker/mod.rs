@@ -696,6 +696,14 @@ impl<'a> TypeChecker<'a> {
         }
     }
 
+    /// Validate a struct declaration: check for duplicate fields and eagerly resolve
+    /// field type references so any undefined-type errors are reported at the struct
+    /// declaration site rather than deferred until the struct is used.
+    ///
+    /// The eager `resolve_type_ref_with_context` call at the end of the loop is
+    /// **intentional** — it provides earlier, more precise error locations than the
+    /// lazy resolution in `resolve_struct_type`. Post-H-174, `dedup_diagnostics`
+    /// prevents any duplicate AT codes from appearing to the user. (H-175)
     fn validate_struct_decl(&mut self, struct_decl: &StructDecl) {
         let mut seen = HashSet::new();
         for field in &struct_decl.fields {
@@ -2511,6 +2519,10 @@ impl<'a> TypeChecker<'a> {
             }
             Stmt::Expr(expr_stmt) => {
                 let expr_type = self.check_expr(&expr_stmt.expr);
+                // H-216: Warn when a CoW mutation method result is discarded.
+                // All CoW methods return a NEW collection; the original is unchanged.
+                // Calling them as a statement silently discards the result.
+                self.check_cow_discard(&expr_stmt.expr);
                 self.last_expr_type = Some(expr_type);
             }
             Stmt::FunctionDecl(func) => {
@@ -2804,6 +2816,102 @@ impl<'a> TypeChecker<'a> {
             "HashMap" => Some(2),
             "HashSet" => Some(1),
             _ => None, // Unknown generic type
+        }
+    }
+
+    /// H-216: Emit AT2015 if `expr` is a discarded CoW mutation call.
+    ///
+    /// Uses `method_dispatch::is_*_mutating_*` as the canonical list so the typechecker
+    /// and runtime stay in sync automatically. Called only from `Stmt::Expr` handler.
+    fn check_cow_discard(&mut self, expr: &crate::ast::Expr) {
+        use crate::ast::Expr;
+        use crate::method_dispatch;
+
+        // Only bare function calls can be CoW mutation builtins.
+        let Expr::Call(call) = expr else { return };
+        let Expr::Identifier(id) = call.callee.as_ref() else {
+            return;
+        };
+        let name = id.name.as_str();
+
+        let is_cow = method_dispatch::is_array_mutating_collection(name)
+            || method_dispatch::is_array_mutating_pair(name)
+            || method_dispatch::is_collection_mutating_simple(name)
+            || method_dispatch::is_collection_mutating_pair(name);
+
+        if !is_cow {
+            return;
+        }
+
+        // Try to get the collection variable name from arg[0] for a better message.
+        let collection_name = call
+            .args
+            .first()
+            .and_then(|e| {
+                if let Expr::Identifier(id) = e {
+                    Some(id.name.as_str())
+                } else {
+                    None
+                }
+            })
+            .unwrap_or("collection");
+
+        self.diagnostics.push(
+            error_codes::DISCARDED_COW_RESULT
+                .emit(call.span)
+                .arg("method", name)
+                .arg("collection", collection_name)
+                .build()
+                .with_label("result discarded"),
+        );
+    }
+
+    /// Extract the element type T from Array<T> / T[]. Returns None for unrecognized types.
+    pub(super) fn array_elem_type(&self, ty: &Type) -> Option<Type> {
+        match ty.normalized() {
+            Type::Array(inner) => Some(*inner),
+            Type::Generic { name, type_args } if name == "Array" && type_args.len() == 1 => {
+                Some(type_args[0].clone())
+            }
+            _ => None,
+        }
+    }
+
+    pub(super) fn is_untyped_collection_elem(elem: &Type) -> bool {
+        matches!(elem.normalized(), Type::Unknown)
+            || matches!(
+                elem.normalized(),
+                Type::TypeParameter { name } if name == ANY_TYPE_PARAM
+            )
+    }
+
+    /// Extract element type E from HashSet<E>. Returns None for unrecognized types.
+    pub(super) fn hashset_elem_type(&self, ty: &Type) -> Option<Type> {
+        match ty.normalized() {
+            Type::Generic { name, type_args } if name == "HashSet" && type_args.len() == 1 => {
+                Some(type_args[0].clone())
+            }
+            _ => None,
+        }
+    }
+
+    /// Extract element type E from Queue<E>. Returns None for unrecognized types.
+    pub(super) fn queue_elem_type(&self, ty: &Type) -> Option<Type> {
+        match ty.normalized() {
+            Type::Generic { name, type_args } if name == "Queue" && type_args.len() == 1 => {
+                Some(type_args[0].clone())
+            }
+            _ => None,
+        }
+    }
+
+    /// Extract element type E from Stack<E>. Returns None for unrecognized types.
+    pub(super) fn stack_elem_type(&self, ty: &Type) -> Option<Type> {
+        match ty.normalized() {
+            Type::Generic { name, type_args } if name == "Stack" && type_args.len() == 1 => {
+                Some(type_args[0].clone())
+            }
+            _ => None,
         }
     }
 

@@ -636,6 +636,24 @@ pub const DEPRECATED_VAR_KEYWORD: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Parser,
 };
 
+/// Warning: CoW mutation result discarded — collection unchanged.
+/// Emitted when arrayPush/hashMapPut/etc. is called as a statement and the returned
+/// new collection is not assigned back. Atlas collections are Copy-on-Write; mutation
+/// methods do not modify the original — they return a new collection that must be
+/// rebound: `arr = arr.push(x)`.
+pub const DISCARDED_COW_RESULT: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT2015",
+    level: DiagnosticLevel::Warning,
+    title: "CoW mutation result discarded",
+    message_template:
+        "result of `{method}` is discarded — `{collection}` is unchanged after this call",
+    static_help: Some(
+        "Atlas collections are Copy-on-Write. Rebind the result: `collection = collection.method(args)`",
+    ),
+    static_note: Some("CoW methods return a new collection; the original is never mutated in-place"),
+    domain: DiagnosticDomain::Typechecker,
+};
+
 // ── AT3xxx: Semantic / Type Checking Errors ────────────────────────────────────
 
 pub const TYPE_ERROR: DiagnosticDescriptor = DiagnosticDescriptor {
@@ -1435,6 +1453,7 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &BORROW_TO_OWN,
     &MOVE_TYPE_REQUIRES_OWNERSHIP_ANNOTATION,
     &DEPRECATED_VAR_KEYWORD,
+    &DISCARDED_COW_RESULT,
     &TYPE_ERROR,
     &BINARY_OP_TYPE_ERROR,
     &IMMUTABLE_ASSIGNMENT,

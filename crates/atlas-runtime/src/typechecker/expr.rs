@@ -1514,6 +1514,174 @@ impl<'a> TypeChecker<'a> {
                         type_args: vec![expected_value],
                     };
                 }
+                // H-236: Array element-type checking for mutation/concat calls
+                "arrayPush" | "array_push" | "arrayUnshift" | "array_unshift" => {
+                    if call.args.len() == 2 {
+                        let arr_type = self.check_expr(&call.args[0]);
+                        let elem_type = self.check_expr(&call.args[1]);
+                        if let Some(expected_elem) = self.array_elem_type(&arr_type) {
+                            if !Self::is_untyped_collection_elem(&expected_elem)
+                                && !self.is_assignable_with_traits(&elem_type, &expected_elem)
+                            {
+                                let method = name.as_str();
+                                self.diagnostics.push(
+                                    error_codes::TYPE_ERROR
+                                        .emit(call.args[1].span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "{method} element type mismatch: expected {}, found {}",
+                                                expected_elem.display_name(),
+                                                elem_type.display_name()
+                                            ),
+                                        )
+                                        .with_help(format!(
+                                            "array element type is {} — cannot push {}",
+                                            expected_elem.display_name(),
+                                            elem_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                        return arr_type;
+                    }
+                }
+                "arrayConcat" => {
+                    if call.args.len() == 2 {
+                        let arr_type = self.check_expr(&call.args[0]);
+                        let other_type = self.check_expr(&call.args[1]);
+                        if let Some(expected_elem) = self.array_elem_type(&arr_type) {
+                            if !Self::is_untyped_collection_elem(&expected_elem) {
+                                if let Some(other_elem) = self.array_elem_type(&other_type) {
+                                    if !self.is_assignable_with_traits(&other_elem, &expected_elem)
+                                    {
+                                        self.diagnostics.push(
+                                            error_codes::TYPE_ERROR
+                                                .emit(call.args[1].span())
+                                                .arg(
+                                                    "detail",
+                                                    format!(
+                                                        "arrayConcat element type mismatch: expected {}[], found {}[]",
+                                                        expected_elem.display_name(),
+                                                        other_elem.display_name()
+                                                    ),
+                                                )
+                                                .with_help(format!(
+                                                    "both arrays must have element type {} to concat",
+                                                    expected_elem.display_name()
+                                                ))
+                                                .build()
+                                                .with_label("type mismatch"),
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                        return arr_type;
+                    }
+                }
+                // H-236: HashSet element-type checking
+                "hashSetAdd" | "hash_set_add" | "hashSetRemove" | "hash_set_remove" => {
+                    if call.args.len() == 2 {
+                        let set_type = self.check_expr(&call.args[0]);
+                        let elem_type = self.check_expr(&call.args[1]);
+                        if let Some(expected_elem) = self.hashset_elem_type(&set_type) {
+                            if !Self::is_untyped_collection_elem(&expected_elem)
+                                && !self.is_assignable_with_traits(&elem_type, &expected_elem)
+                            {
+                                let method = name.as_str();
+                                self.diagnostics.push(
+                                    error_codes::TYPE_ERROR
+                                        .emit(call.args[1].span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "{method} element type mismatch: expected {}, found {}",
+                                                expected_elem.display_name(),
+                                                elem_type.display_name()
+                                            ),
+                                        )
+                                        .with_help(format!(
+                                            "set element type is {} — cannot add/remove {}",
+                                            expected_elem.display_name(),
+                                            elem_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                        return set_type;
+                    }
+                }
+                // H-236: Queue element-type checking
+                "queueEnqueue" | "queue_enqueue" => {
+                    if call.args.len() == 2 {
+                        let queue_type = self.check_expr(&call.args[0]);
+                        let elem_type = self.check_expr(&call.args[1]);
+                        if let Some(expected_elem) = self.queue_elem_type(&queue_type) {
+                            if !Self::is_untyped_collection_elem(&expected_elem)
+                                && !self.is_assignable_with_traits(&elem_type, &expected_elem)
+                            {
+                                self.diagnostics.push(
+                                    error_codes::TYPE_ERROR
+                                        .emit(call.args[1].span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "queueEnqueue element type mismatch: expected {}, found {}",
+                                                expected_elem.display_name(),
+                                                elem_type.display_name()
+                                            ),
+                                        )
+                                        .with_help(format!(
+                                            "queue element type is {} — cannot enqueue {}",
+                                            expected_elem.display_name(),
+                                            elem_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                        return queue_type;
+                    }
+                }
+                // H-236: Stack element-type checking
+                "stackPush" | "stack_push" => {
+                    if call.args.len() == 2 {
+                        let stack_type = self.check_expr(&call.args[0]);
+                        let elem_type = self.check_expr(&call.args[1]);
+                        if let Some(expected_elem) = self.stack_elem_type(&stack_type) {
+                            if !Self::is_untyped_collection_elem(&expected_elem)
+                                && !self.is_assignable_with_traits(&elem_type, &expected_elem)
+                            {
+                                self.diagnostics.push(
+                                    error_codes::TYPE_ERROR
+                                        .emit(call.args[1].span())
+                                        .arg(
+                                            "detail",
+                                            format!(
+                                                "stackPush element type mismatch: expected {}, found {}",
+                                                expected_elem.display_name(),
+                                                elem_type.display_name()
+                                            ),
+                                        )
+                                        .with_help(format!(
+                                            "stack element type is {} — cannot push {}",
+                                            expected_elem.display_name(),
+                                            elem_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                        return stack_type;
+                    }
+                }
                 // H-112: hashMapHas / hashSetHas return bool
                 "hashMapHas" | "hash_map_has" | "hashSetHas" | "hash_set_has" => {
                     return Type::Bool;
