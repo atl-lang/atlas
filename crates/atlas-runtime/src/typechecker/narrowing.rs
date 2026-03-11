@@ -62,11 +62,18 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn extract_literal_guard(&self, left: &Expr, right: &Expr) -> Option<(String, Type)> {
-        if let (Expr::Identifier(id), Expr::Literal(lit, _)) = (left, right) {
-            return Some((id.name.clone(), literal_type(lit)));
+        // Only null literals provide type-level narrowing.
+        // String/number/boolean literals don't narrow types because they represent
+        // infinite value sets, not discriminated unions. For example:
+        // - `s == "foo"` does NOT mean s isn't a string if false
+        // - `x == 42` does NOT mean x isn't a number if false
+        // - `b == true` does NOT mean b isn't a boolean if false
+        // Only null is a unit type where equality implies type identity.
+        if let (Expr::Identifier(id), Expr::Literal(Literal::Null, _)) = (left, right) {
+            return Some((id.name.clone(), Type::Null));
         }
-        if let (Expr::Literal(lit, _), Expr::Identifier(id)) = (left, right) {
-            return Some((id.name.clone(), literal_type(lit)));
+        if let (Expr::Literal(Literal::Null, _), Expr::Identifier(id)) = (left, right) {
+            return Some((id.name.clone(), Type::Null));
         }
         None
     }
@@ -200,15 +207,6 @@ impl<'a> TypeChecker<'a> {
         }
 
         (true_map, false_map)
-    }
-}
-
-fn literal_type(lit: &Literal) -> Type {
-    match lit {
-        Literal::Number(_) => Type::Number,
-        Literal::String(_) => Type::String,
-        Literal::Bool(_) => Type::Bool,
-        Literal::Null => Type::Null,
     }
 }
 
