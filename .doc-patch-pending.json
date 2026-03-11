@@ -1,30 +1,17 @@
 {
-  "committed_at": "2026-03-11T06:12:09Z",
-  "commit": "eb061d8",
+  "committed_at": "2026-03-11T15:48:23Z",
+  "commit": "a09bdbd",
   "changed_files": [
-    "crates/atlas-runtime/src/compiler/expr.rs",
-    "crates/atlas-runtime/src/interpreter/expr.rs",
-    "crates/atlas-runtime/src/interpreter/mod.rs",
-    "crates/atlas-runtime/src/method_dispatch.rs",
-    "crates/atlas-runtime/src/stdlib/future.rs",
-    "crates/atlas-runtime/src/stdlib/mod.rs",
-    "crates/atlas-runtime/src/typechecker/expr.rs",
-    "crates/atlas-runtime/src/typechecker/methods.rs",
-    "crates/atlas-runtime/tests/async_runtime.rs",
-    "crates/atlas-runtime/tests/system.rs",
-    "crates/atlas-runtime/tests/system/future_ns.rs"
+    "crates/atlas-runtime/src/lexer/literals.rs",
+    "crates/atlas-runtime/tests/regression/part11.rs"
   ],
   "domains": [
-    "compiler",
-    "interpreter",
-    "stdlib",
-    "typechecker"
+    "parser"
   ],
   "relevant_docs": [
-    "docs/known-issues.md",
-    "docs/language/types.md",
-    "docs/stdlib/index.md"
+    "docs/language/control-flow.md",
+    "docs/language/grammar.md"
   ],
   "status": "done",
-  "patched_at": "2026-03-11T06:27:03Z"
+  "patched_at": "2026-03-11T15:57:30Z"
 }
