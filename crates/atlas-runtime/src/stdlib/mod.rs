@@ -874,10 +874,15 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         // ====================================================================
         // File I/O functions
         // ====================================================================
-        m.insert("ioReadLine", |a, s, sc, _| io::io_read_line(a, s, sc));
-        m.insert("ioReadLinePrompt", |a, s, sc, _| {
+        // B26: bare ioReadLine/ioReadLinePrompt removed — all io.* calls route through ioNs* keys.
+        m.insert("ioNsReadLine", |a, s, sc, _| io::io_read_line(a, s, sc));
+        m.insert("ioNsReadLinePrompt", |a, s, sc, _| {
             io::io_read_line_prompt(a, s, sc)
         });
+        m.insert("ioNsWrite", |a, s, sc, _| io::io_write(a, s, sc));
+        m.insert("ioNsWriteLine", |a, s, sc, _| io::io_write_line(a, s, sc));
+        m.insert("ioNsReadAll", |a, s, sc, _| io::io_read_all(a, s, sc));
+        m.insert("ioNsFlush", |a, s, sc, _| io::io_flush(a, s, sc));
         // B24: bare globals removed — all file.* calls route through fileNs* keys.
         m.insert("fileNsRead", |a, s, sc, _| io::read_file(a, s, sc));
         m.insert("fileNsWrite", |a, s, sc, _| io::write_file(a, s, sc));
@@ -2093,9 +2098,13 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("toBool", "to_bool"),
             ("parseInt", "parse_int"),
             ("parseFloat", "parse_float"),
-            // File I/O
-            ("ioReadLine", "io_read_line"),
-            ("ioReadLinePrompt", "io_read_line_prompt"),
+            // File I/O — B26: bare ioReadLine/ioReadLinePrompt removed, ioNs* keys only
+            ("ioNsReadLine", "io_read_line"),
+            ("ioNsReadLinePrompt", "io_read_line_prompt"),
+            ("ioNsWrite", "io_write"),
+            ("ioNsWriteLine", "io_write_line"),
+            ("ioNsReadAll", "io_read_all"),
+            ("ioNsFlush", "io_flush"),
             // B24: bare globals removed — fileNs* keys only
             ("fileNsRead", "file_ns_read"),
             ("fileNsWrite", "file_ns_write"),
