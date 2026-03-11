@@ -1,16 +1,22 @@
 {
-  "committed_at": "2026-03-11T05:06:31Z",
-  "commit": "a12fdbb",
+  "committed_at": "2026-03-11T06:12:09Z",
+  "commit": "eb061d8",
   "changed_files": [
+  "crates/atlas-runtime/src/compiler/expr.rs",
+  "crates/atlas-runtime/src/interpreter/expr.rs",
+  "crates/atlas-runtime/src/interpreter/mod.rs",
   "crates/atlas-runtime/src/method_dispatch.rs",
-  "crates/atlas-runtime/src/stdlib/http.rs",
+  "crates/atlas-runtime/src/stdlib/future.rs",
   "crates/atlas-runtime/src/stdlib/mod.rs",
   "crates/atlas-runtime/src/typechecker/expr.rs",
-  "crates/atlas-runtime/src/typechecker/stdlib_ownership.rs",
-  "crates/atlas-runtime/tests/api/sandboxing.rs",
-  "crates/atlas-runtime/tests/http.rs"
+  "crates/atlas-runtime/src/typechecker/methods.rs",
+  "crates/atlas-runtime/tests/async_runtime.rs",
+  "crates/atlas-runtime/tests/system.rs",
+  "crates/atlas-runtime/tests/system/future_ns.rs"
 ],
   "domains": [
+  "compiler",
+  "interpreter",
   "stdlib",
   "typechecker"
 ],
