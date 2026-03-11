@@ -1,7 +1,7 @@
 //! Build command - compile Atlas projects with profiles, scripts, and caching
 
 use anyhow::{Context, Result};
-use atlas_build::{BuildScript, Builder, OutputMode, Profile, ScriptPhase};
+use atlas_build::{BuildScript, Builder, OutputMode, Profile, ScriptPhase, TargetKind};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
@@ -91,6 +91,9 @@ pub fn run(args: BuildArgs) -> Result<()> {
                 "compiled_modules": summary.compiled_modules,
                 "parallel_groups": summary.parallel_groups,
                 "artifacts": context.artifacts.len(),
+            "binary": context.artifacts.iter()
+                .find(|a| a.target.kind == TargetKind::Binary)
+                .map(|a| a.output_path.to_string_lossy().to_string()),
             })
         );
     } else if !args.quiet {
@@ -103,8 +106,15 @@ pub fn run(args: BuildArgs) -> Result<()> {
         println!("{}", "=".repeat(60));
         println!("  Profile: {}", profile.name());
         println!("  Modules: {} compiled", context.stats.compiled_modules);
-        println!("  Parallel groups: {}", context.stats.parallel_groups);
-        println!("  Artifacts: {}", context.artifacts.len());
+        for artifact in &context.artifacts {
+            if artifact.target.kind == TargetKind::Binary {
+                println!(
+                    "  Binary:  {}  [executable]",
+                    artifact.output_path.display()
+                );
+                println!("  Run:     ./{}", artifact.output_path.display());
+            }
+        }
         println!("{}", "=".repeat(60));
     }
 
