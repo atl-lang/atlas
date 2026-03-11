@@ -65,14 +65,9 @@ impl SymbolTable {
         };
 
         // Add prelude builtins
-        table.define_builtin(
-            "print",
-            Type::Function {
-                type_params: vec![],
-                params: vec![Type::any_placeholder()], // Accepts any type
-                return_type: Box::new(Type::Void),
-            },
-        );
+        // NOTE: `print` is intentionally NOT here — it is a deprecated bare global.
+        // Use console.log() instead. Leaving print in the prelude silences the AT0002
+        // binder error at compile time, letting it slip through to runtime. Removed.
         table.define_builtin(
             "len",
             Type::Function {

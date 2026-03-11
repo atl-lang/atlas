@@ -511,8 +511,17 @@ impl Binder {
         // we assume the source path is already resolved by the loader
         let source_path = Self::resolve_import_path(&import_decl.source, module_path);
 
-        // Look up source module's symbol table
-        let source_symbols = match registry.get(&source_path) {
+        // Look up source module's symbol table — try both .atlas and .atl extensions
+        // since the registry key is the real path (which may use either extension).
+        let alt_path = if source_path.extension().and_then(|e| e.to_str()) == Some("atlas") {
+            source_path.with_extension("atl")
+        } else {
+            source_path.with_extension("atlas")
+        };
+        let source_symbols = match registry
+            .get(&source_path)
+            .or_else(|| registry.get(&alt_path))
+        {
             Some(symbol_table) => symbol_table,
             None => {
                 // Source module not in registry - error
