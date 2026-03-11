@@ -171,9 +171,9 @@ impl Interpreter {
         for ns in [
             "Json", "Math", "env", "file", "process", "datetime", "path", "http", "net", "crypto",
             "regex", "io", "console", "Env", "File", "Process", "DateTime", "Path", "Http", "Net",
-            "Crypto", "Regex", "Io", "gzip", "tar", "zip", "task",
-            "Json", "Math", "Env", "File", "Process", "DateTime", "Path", "Http", "Net", "Crypto",
-            "Regex", "Io", "sync",
+            "Crypto", "Regex", "Io", "gzip", "tar", "zip", "task", "Json", "Math", "Env", "File",
+            "Process", "DateTime", "Path", "Http", "Net", "Crypto", "Regex", "Io", "sync",
+            "future",
         ] {
             let sentinel = crate::value::Value::Builtin(std::sync::Arc::from(
                 format!("__ns__{}", ns).as_str(),

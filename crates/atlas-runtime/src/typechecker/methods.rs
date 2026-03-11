@@ -128,6 +128,8 @@ impl MethodTable {
             Type::Generic { ref name, .. } if name == "HttpResponse" => "HttpResponse",
             // B18: ProcessOutput instance methods
             Type::Generic { ref name, .. } if name == "ProcessOutput" => "ProcessOutput",
+            // B33: Future instance methods
+            Type::Generic { ref name, .. } if name == "Future" => "Future",
             _ => return None,
         };
 
@@ -299,6 +301,34 @@ impl MethodTable {
         self.register("ProcessOutput", "stderr", vec![], Type::String);
         self.register("ProcessOutput", "exitCode", vec![], Type::Number);
         self.register("ProcessOutput", "success", vec![], Type::Bool);
+
+        // B33: Future instance methods
+        let future_type = Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![],
+        };
+        self.register("Future", "isResolved", vec![], Type::Bool);
+        self.register("Future", "isPending", vec![], Type::Bool);
+        self.register("Future", "isRejected", vec![], Type::Bool);
+        self.register(
+            "Future",
+            "then",
+            vec![Type::any_placeholder()],
+            future_type.clone(),
+        );
+        self.register(
+            "Future",
+            "catch",
+            vec![Type::any_placeholder()],
+            future_type.clone(),
+        );
+        self.register(
+            "Future",
+            "finally",
+            vec![Type::any_placeholder()],
+            future_type.clone(),
+        );
+        self.register("Future", "await", vec![], Type::Unknown);
 
         // H-231: Regex instance methods
         self.register("Regex", "test", vec![Type::String], Type::Bool);

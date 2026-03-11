@@ -686,6 +686,7 @@ impl Interpreter {
             Value::Stack(_) => Some(crate::method_dispatch::TypeTag::Stack),
             Value::Option(_) => Some(crate::method_dispatch::TypeTag::Option),
             Value::Result(_) => Some(crate::method_dispatch::TypeTag::Result),
+            Value::Future(_) => Some(crate::method_dispatch::TypeTag::FutureValue),
             Value::ChannelSender(_) => Some(crate::method_dispatch::TypeTag::ChannelSender),
             Value::ChannelReceiver(_) => Some(crate::method_dispatch::TypeTag::ChannelReceiver),
             Value::AsyncMutex(_) => Some(crate::method_dispatch::TypeTag::AsyncMutexValue),
@@ -751,6 +752,7 @@ impl Interpreter {
                     | crate::method_dispatch::TypeTag::ZipNs
                     | crate::method_dispatch::TypeTag::TaskNs
                     | crate::method_dispatch::TypeTag::SyncNs
+                    | crate::method_dispatch::TypeTag::FutureNs
             );
             let mut args = if is_ns {
                 Vec::new()

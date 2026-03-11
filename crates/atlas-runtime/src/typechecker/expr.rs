@@ -109,6 +109,11 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
         ("io", "readLinePrompt") => Some(vec![str.clone()]),
         // Console namespace — variadic, skip arity check
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => None,
+        // future namespace (B33)
+        ("future", "resolve" | "reject") => Some(vec![Type::any_placeholder()]),
+        ("future", "all" | "race" | "allSettled" | "any") => None, // array arg — skip arity check
+        ("future", "never") => Some(vec![]),
+        ("future", "delay") => Some(vec![num.clone()]),
         // task namespace (B31)
         ("task", "sleep" | "interval") => Some(vec![num.clone()]),
         ("task", "spawn") => None, // Future arg — variadic
@@ -315,6 +320,14 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ("zip", "contains" | "validate") => Type::Bool,
         ("zip", "compressionRatio") => Type::Number,
         ("zip", "comment") => Type::String,
+        // future namespace (B33)
+        (
+            "future",
+            "resolve" | "reject" | "all" | "race" | "allSettled" | "any" | "never" | "delay",
+        ) => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![],
+        },
         // task namespace (B31)
         ("task", "sleep" | "interval" | "cancel") => Type::Null,
         ("task", "status") => Type::String,
@@ -2394,6 +2407,9 @@ impl<'a> TypeChecker<'a> {
             }
             Type::Generic { ref name, .. } if name == "ProcessOutput" => {
                 Some(crate::method_dispatch::TypeTag::ProcessOutput)
+            }
+            Type::Generic { ref name, .. } if name == "Future" => {
+                Some(crate::method_dispatch::TypeTag::FutureValue)
             }
             _ => None,
         };

@@ -75,6 +75,10 @@ pub enum TypeTag {
     RwLockValue,
     /// Instance methods on semaphore handle (returned by sync.semaphore())
     SemaphoreValue,
+    /// Static namespace: future.resolve(), future.all(), future.race(), etc.
+    FutureNs,
+    /// Instance methods on Future values (.then(), .catch(), .finally(), etc.)
+    FutureValue,
 }
 
 /// Resolve a method call to its stdlib function name.
@@ -119,6 +123,8 @@ pub fn resolve_method(type_tag: TypeTag, method_name: &str) -> Option<String> {
         TypeTag::AtomicValue => resolve_atomic_method(method_name),
         TypeTag::RwLockValue => resolve_rwlock_method(method_name),
         TypeTag::SemaphoreValue => resolve_semaphore_method(method_name),
+        TypeTag::FutureNs => resolve_future_ns_method(method_name),
+        TypeTag::FutureValue => resolve_future_instance_method(method_name),
     }
 }
 
@@ -155,6 +161,7 @@ pub fn is_static_namespace(name: &str) -> bool {
             | "zip"
             | "task"
             | "sync"
+            | "future"
     )
 }
 
@@ -190,6 +197,7 @@ pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
         "zip" => Some(TypeTag::ZipNs),
         "task" => Some(TypeTag::TaskNs),
         "sync" => Some(TypeTag::SyncNs),
+        "future" => Some(TypeTag::FutureNs),
         _ => None,
     }
 }
@@ -1193,6 +1201,38 @@ fn resolve_semaphore_method(method_name: &str) -> Option<String> {
         "tryAcquire" => "semaphoreTryAcquire",
         "release" => "semaphoreRelease",
         "available" => "semaphoreAvailable",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve future.method() → stdlib function name (factory namespace).
+/// D-049: namespace identifier is lowercase "future".
+fn resolve_future_ns_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "resolve" => "futureNsResolve",
+        "reject" => "futureNsReject",
+        "all" => "futureNsAll",
+        "race" => "futureNsRace",
+        "allSettled" => "futureNsAllSettled",
+        "any" => "futureNsAny",
+        "never" => "futureNsNever",
+        "delay" => "futureNsDelay",
+        _ => return None,
+    };
+    Some(func_name.to_string())
+}
+
+/// Resolve Future instance method → stdlib function name (B33).
+fn resolve_future_instance_method(method_name: &str) -> Option<String> {
+    let func_name = match method_name {
+        "then" => "futureNsThen",
+        "catch" => "futureNsCatch",
+        "finally" => "futureNsFinally",
+        "await" => "futureNsAwait",
+        "isResolved" => "futureNsIsResolved",
+        "isPending" => "futureNsIsPending",
+        "isRejected" => "futureNsIsRejected",
         _ => return None,
     };
     Some(func_name.to_string())

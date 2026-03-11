@@ -1224,6 +1224,35 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
         m.insert("futureRace", |a, s, _, _| future::future_race_fn(a, s));
 
         // ====================================================================
+        // B33: future namespace dispatch (future.resolve, future.all, etc.)
+        // ====================================================================
+        // Factory namespace methods (future.X)
+        m.insert("futureNsResolve", |a, s, _, _| future::future_resolve(a, s));
+        m.insert("futureNsReject", |a, s, _, _| future::future_reject(a, s));
+        m.insert("futureNsAll", |a, s, _, _| future::future_all_fn(a, s));
+        m.insert("futureNsRace", |a, s, _, _| future::future_race_fn(a, s));
+        m.insert("futureNsAllSettled", |a, s, _, _| {
+            future::future_all_settled(a, s)
+        });
+        m.insert("futureNsAny", |a, s, _, _| future::future_any(a, s));
+        m.insert("futureNsNever", |a, s, _, _| future::future_never(a, s));
+        m.insert("futureNsDelay", |a, s, _, _| future::future_delay(a, s));
+        // Instance methods (someFuture.X)
+        m.insert("futureNsThen", |a, s, _, _| future::future_then(a, s));
+        m.insert("futureNsCatch", |a, s, _, _| future::future_catch(a, s));
+        m.insert("futureNsFinally", |a, s, _, _| future::future_finally(a, s));
+        m.insert("futureNsAwait", |a, s, _, _| future::future_ns_await(a, s));
+        m.insert("futureNsIsResolved", |a, s, _, _| {
+            future::future_is_resolved(a, s)
+        });
+        m.insert("futureNsIsPending", |a, s, _, _| {
+            future::future_is_pending(a, s)
+        });
+        m.insert("futureNsIsRejected", |a, s, _, _| {
+            future::future_is_rejected(a, s)
+        });
+
+        // ====================================================================
         // Async I/O functions (feature = "http") — HTTP async ops need reqwest
         // ====================================================================
         #[cfg(feature = "http")]

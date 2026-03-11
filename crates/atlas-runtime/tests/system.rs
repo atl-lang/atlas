@@ -77,11 +77,13 @@ fn atlas_array_to_bytes(value: &Value) -> Vec<u8> {
 mod system_compression;
 #[path = "system/filesystem/mod.rs"]
 mod system_filesystem;
+#[path = "system/future_ns.rs"]
+mod system_future_ns;
 #[path = "system/path.rs"]
 mod system_path;
 #[path = "system/process.rs"]
 mod system_process;
-#[path = "system/task_ns.rs"]
-mod system_task_ns;
 #[path = "system/sync.rs"]
 mod system_sync;
+#[path = "system/task_ns.rs"]
+mod system_task_ns;

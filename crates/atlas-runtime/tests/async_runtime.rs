@@ -379,8 +379,8 @@ fn test_future_all_requires_array_of_futures() {
 fn test_future_pattern_conditional_resolution() {
     let code = r#"
         let shouldSucceed = true;
-        let future = futureResolve("success");
-        futureIsResolved(future)
+        let fut = futureResolve("success");
+        futureIsResolved(fut)
     "#;
     assert_eq!(eval_ok(code), Value::Bool(true));
 }
@@ -412,8 +412,8 @@ fn test_future_pattern_timeout_simulation() {
     let code = r#"
         // Simulate timeout by racing with immediate rejection
         let operation = futureNew();  // Never completes
-        let timeout = futureReject("timeout");
-        let result = futureRace([operation, timeout]);
+        let timeoutFut = futureReject("timeout");
+        let result = futureRace([operation, timeoutFut]);
         futureIsRejected(result)
     "#;
     assert_eq!(eval_ok(code), Value::Bool(true));
