@@ -874,6 +874,11 @@ impl Binder {
             self.bind_statement(stmt);
         }
 
+        // Phase 3: Bind tail expression (implicit return) if present
+        if let Some(tail) = &block.tail_expr {
+            self.bind_expr(tail);
+        }
+
         self.symbol_table.exit_scope();
     }
 
@@ -1288,6 +1293,10 @@ impl Binder {
                 self.symbol_table.enter_scope();
                 for stmt in &block.statements {
                     self.bind_statement(stmt);
+                }
+                // Bind tail expression if present
+                if let Some(tail) = &block.tail_expr {
+                    self.bind_expr(tail);
                 }
                 self.symbol_table.exit_scope();
             }
