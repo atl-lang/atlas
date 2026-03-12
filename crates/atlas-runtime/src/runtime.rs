@@ -293,32 +293,64 @@ impl Atlas {
         // Build module registry for cross-module import resolution
         let mut module_registry = crate::module_loader::ModuleRegistry::new();
 
-        for (i, module) in modules.iter().enumerate() {
-            let is_last = i == modules.len() - 1;
+        // ═══════════════════════════════════════════════════════════════════════
+        // PASS 1: Typecheck ALL modules — collect ALL errors (D-050).
+        // DO NOT early-return on first error. Users must see every error across
+        // every file in one pass so they can fix their entire program at once.
+        // ═══════════════════════════════════════════════════════════════════════
+        let mut all_errors: Vec<Diagnostic> = Vec::new();
+        let mut expanded_modules: Vec<crate::ast::Program> = Vec::new();
 
+        for module in &modules {
             // Expand namespace imports (import * as foo)
             let expanded =
-                self.expand_namespace_imports(module, &exports_by_path, &mut resolver)?;
+                match self.expand_namespace_imports(module, &exports_by_path, &mut resolver) {
+                    Ok(e) => e,
+                    Err(mut errs) => {
+                        all_errors.append(&mut errs);
+                        // Use empty AST as placeholder so indices align
+                        expanded_modules.push(crate::ast::Program { items: vec![] });
+                        continue;
+                    }
+                };
 
             // Bind symbols with cross-module import support
             let mut binder = Binder::new();
             let (mut symbol_table, bind_diags) =
                 binder.bind_with_modules(&expanded, &module.path, &module_registry);
-            let bind_errors: Vec<_> = bind_diags.into_iter().filter(|d| d.is_error()).collect();
-            if !bind_errors.is_empty() {
-                return Err(bind_errors);
-            }
+            let bind_errors: Vec<_> = bind_diags
+                .iter()
+                .filter(|d| d.is_error())
+                .cloned()
+                .collect();
+            all_errors.extend(bind_errors);
 
-            // Type-check (required for method dispatch type_tag annotation)
+            // Type-check even if bind had errors — collect ALL diagnostics
             let mut type_checker = TypeChecker::new(&mut symbol_table);
             let type_diags = type_checker.check(&expanded);
-            let type_errors: Vec<_> = type_diags.into_iter().filter(|d| d.is_error()).collect();
-            if !type_errors.is_empty() {
-                return Err(type_errors);
-            }
+            let type_errors: Vec<_> = type_diags
+                .iter()
+                .filter(|d| d.is_error())
+                .cloned()
+                .collect();
+            all_errors.extend(type_errors);
 
             // Register this module's symbol table for subsequent imports
+            // (even if it had errors — partial symbols help downstream modules)
             module_registry.register(module.path.clone(), symbol_table);
+            expanded_modules.push(expanded);
+        }
+
+        // If ANY module had errors, return ALL errors now (before compilation)
+        if !all_errors.is_empty() {
+            return Err(all_errors);
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PASS 2: Compile + Execute — only runs if Pass 1 found no errors.
+        // ═══════════════════════════════════════════════════════════════════════
+        for (i, (module, expanded)) in modules.iter().zip(expanded_modules.iter()).enumerate() {
+            let is_last = i == modules.len() - 1;
 
             // Compile this module
             let mut compiler = Compiler::new();
@@ -326,7 +358,7 @@ impl Atlas {
             // Must happen before compile() so the compiler knows about variants
             // from imported enums (e.g., CommandResult::Ok -> Ok).
             compiler.register_imported_enums(&module.imports, &module.path, &module_registry);
-            let mut module_bytecode = compiler.compile(&expanded)?;
+            let mut module_bytecode = compiler.compile(expanded)?;
 
             // Strip trailing Halt from non-final modules
             if !is_last
