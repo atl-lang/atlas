@@ -11,7 +11,7 @@
 // Every test calls `assert_parity(source, expected)` which runs the program
 // through both engines and asserts that both return the expected value.
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
 
@@ -22,12 +22,12 @@ use atlas_runtime::value::Value;
 /// Run `source` through both engines and assert both produce `expected`.
 fn assert_parity(source: &str, expected: Value) {
     let interp = {
-        let mut rt = Runtime::new(ExecutionMode::Interpreter);
+        let mut rt = Runtime::new();
         rt.eval(source)
             .unwrap_or_else(|e| panic!("interpreter error: {e}\nsource:\n{source}"))
     };
     let vm = {
-        let mut rt = Runtime::new(ExecutionMode::VM);
+        let mut rt = Runtime::new();
         rt.eval(source)
             .unwrap_or_else(|e| panic!("vm error: {e}\nsource:\n{source}"))
     };
@@ -45,13 +45,12 @@ fn assert_parity(source: &str, expected: Value) {
 /// produce `expected`.
 fn assert_parity_fs(source: &str, expected: Value) {
     let interp = {
-        let mut rt =
-            Runtime::new_with_security(ExecutionMode::Interpreter, SecurityContext::allow_all());
+        let mut rt = Runtime::new_with_security(SecurityContext::allow_all());
         rt.eval(source)
             .unwrap_or_else(|e| panic!("interpreter error: {e}\nsource:\n{source}"))
     };
     let vm = {
-        let mut rt = Runtime::new_with_security(ExecutionMode::VM, SecurityContext::allow_all());
+        let mut rt = Runtime::new_with_security(SecurityContext::allow_all());
         rt.eval(source)
             .unwrap_or_else(|e| panic!("vm error: {e}\nsource:\n{source}"))
     };
@@ -69,13 +68,13 @@ fn assert_parity_fs(source: &str, expected: Value) {
 /// message contains `expected_fragment`.
 fn assert_parity_err(source: &str, expected_fragment: &str) {
     let interp_err = {
-        let mut rt = Runtime::new(ExecutionMode::Interpreter);
+        let mut rt = Runtime::new();
         rt.eval(source)
             .err()
             .unwrap_or_else(|| panic!("interpreter did not error\nsource:\n{source}"))
     };
     let vm_err = {
-        let mut rt = Runtime::new(ExecutionMode::VM);
+        let mut rt = Runtime::new();
         rt.eval(source)
             .err()
             .unwrap_or_else(|| panic!("vm did not error\nsource:\n{source}"))
@@ -343,12 +342,12 @@ fn parity_stdlib_13_future_race_single() {
 fn parity_stdlib_14_spawn_and_typeof() {
     // spawn returns a task handle (record-like); both engines must agree on typeof.
     let interp = {
-        let mut rt = Runtime::new(ExecutionMode::Interpreter);
+        let mut rt = Runtime::new();
         rt.eval("typeof(spawn(futureResolve(99), null));")
             .expect("interpreter failed")
     };
     let vm = {
-        let mut rt = Runtime::new(ExecutionMode::VM);
+        let mut rt = Runtime::new();
         rt.eval("typeof(spawn(futureResolve(99), null));")
             .expect("vm failed")
     };
@@ -403,11 +402,11 @@ fn parity_stdlib_17_sequential_sleeps() {
 #[test]
 fn parity_stdlib_18_all_empty() {
     let interp = {
-        let mut rt = Runtime::new(ExecutionMode::Interpreter);
+        let mut rt = Runtime::new();
         rt.eval("await futureAll([]);").expect("interpreter failed")
     };
     let vm = {
-        let mut rt = Runtime::new(ExecutionMode::VM);
+        let mut rt = Runtime::new();
         rt.eval("await futureAll([]);").expect("vm failed")
     };
     assert_eq!(
@@ -513,11 +512,11 @@ fn parity_error_25_race_multiple_agree() {
         await futureRace([futureResolve(1), futureResolve(2)]);
     "#;
     let interp = {
-        let mut rt = Runtime::new(ExecutionMode::Interpreter);
+        let mut rt = Runtime::new();
         rt.eval(source).expect("interpreter failed")
     };
     let vm = {
-        let mut rt = Runtime::new(ExecutionMode::VM);
+        let mut rt = Runtime::new();
         rt.eval(source).expect("vm failed")
     };
     assert_eq!(

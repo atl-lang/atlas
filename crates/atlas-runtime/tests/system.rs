@@ -2,7 +2,7 @@
 //! Add tests to the submodule files: tests/system/{path,filesystem,process,compression}.rs
 //! This file only declares submodules and shared helpers.
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::span::Span;
 use atlas_runtime::stdlib;
@@ -47,7 +47,7 @@ fn eval_ok(code: &str) -> Value {
 }
 
 fn eval_ok_vm(code: &str) -> Value {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     runtime.eval(code).unwrap()
 }
 

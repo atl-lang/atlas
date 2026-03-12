@@ -2,7 +2,7 @@
 
 use crate::testing::discovery::{TestFunction, TestSuite};
 use crate::testing::TEST_FILE_SUFFIX;
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::SecurityContext;
 use rayon::prelude::*;
 use std::fs;
@@ -139,8 +139,8 @@ impl TestRunner {
             SecurityContext::new()
         };
 
-        // Create isolated runtime for this test (using VM mode for state persistence)
-        let mut runtime = Runtime::new_with_security(ExecutionMode::Interpreter, security);
+        // Create isolated runtime for this test (D-052: unified VM execution)
+        let mut runtime = Runtime::new_with_security(security);
 
         // Execute the file to define functions
         if let Err(e) = runtime.eval(&source) {

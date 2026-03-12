@@ -5,7 +5,6 @@ mod common;
 use atlas_runtime::binder::Binder;
 use atlas_runtime::bytecode::{Bytecode, Opcode};
 use atlas_runtime::compiler::Compiler;
-use atlas_runtime::interpreter::Interpreter;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::optimizer::{
     ConstantFoldingPass, DeadCodeEliminationPass, OptimizationPass, OptimizationStats, Optimizer,
@@ -46,21 +45,6 @@ fn run(bc: Bytecode) -> Option<Value> {
     let security = SecurityContext::allow_all();
     let mut vm = VM::new(bc);
     vm.run(&security).unwrap_or(None)
-}
-
-fn run_interpreter(source: &str) -> Result<Value, String> {
-    let mut lexer = Lexer::new(source.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (program, _) = parser.parse();
-    let mut binder = atlas_runtime::binder::Binder::new();
-    let (mut table, _) = binder.bind(&program);
-    let mut typechecker = TypeChecker::new(&mut table);
-    let _ = typechecker.check(&program);
-    let mut interpreter = Interpreter::new();
-    interpreter
-        .eval(&program, &SecurityContext::allow_all())
-        .map_err(|e| format!("{:?}", e))
 }
 
 fn run_vm(source: &str) -> Result<Value, String> {

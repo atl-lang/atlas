@@ -4,7 +4,7 @@
 //!
 //! Run with: cargo run --example 06_sandboxing -p atlas-runtime
 
-use atlas_runtime::api::{ExecutionMode, Runtime, RuntimeConfig};
+use atlas_runtime::api::{Runtime, RuntimeConfig};
 use std::time::Duration;
 
 fn main() {
@@ -12,7 +12,7 @@ fn main() {
 
     // Create a sandboxed runtime with restrictive defaults
     println!("1. Sandboxed runtime (default restrictions):");
-    let mut sandboxed = Runtime::sandboxed(ExecutionMode::VM);
+    let mut sandboxed = Runtime::sandboxed();
 
     // Basic operations still work
     let result = sandboxed.eval("1 + 2 * 3").expect("Failed");
@@ -33,7 +33,7 @@ fn main() {
         .with_io_allowed(false)
         .with_network_allowed(false);
 
-    let mut custom_sandboxed = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut custom_sandboxed = Runtime::from_config(config);
 
     let result = custom_sandboxed
         .eval("fn factorial(n: number) -> number { if (n <= 1) { return 1; } else { return n * factorial(n - 1); } } factorial(10)")
@@ -42,7 +42,7 @@ fn main() {
 
     // Permissive runtime for comparison
     println!("\n3. Permissive runtime (default config):");
-    let mut permissive = Runtime::new(ExecutionMode::VM);
+    let mut permissive = Runtime::new();
 
     let result = permissive.eval("10 * 5").expect("Failed");
     println!("   10 * 5 = {}", result);

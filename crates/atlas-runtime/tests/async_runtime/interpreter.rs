@@ -8,16 +8,16 @@
 // - error cases (AT4002, rejected futures)
 // - parity baseline programs (recorded for Phase 12 comparison)
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::value::Value;
 
 fn interp(code: &str) -> Value {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     rt.eval(code).expect("interpreter eval failed")
 }
 
 fn interp_err(code: &str) -> String {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     rt.eval(code)
         .err()
         .map(|e| format!("{}", e))
@@ -31,7 +31,7 @@ fn interp_err(code: &str) -> String {
 /// 1. Calling an async fn (without await) returns Value::Future.
 #[test]
 fn test_async_fn_call_returns_future() {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     // We need to call the async fn and capture the result before awaiting.
     // The interpreter exposes eval() which runs the full program.
     // We verify indirectly via typeOf.
@@ -416,7 +416,7 @@ fn test_async_fn_body_error_propagates() {
 /// 24. AT4001 (typechecker): await outside async context is rejected at compile time.
 #[test]
 fn test_await_outside_async_context_rejected() {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     let result = rt.eval(
         r#"
         fn not_async(): number {

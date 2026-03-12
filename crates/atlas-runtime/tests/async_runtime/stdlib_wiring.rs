@@ -6,28 +6,27 @@
 //
 // Note: tests using `async { }` block syntax are deferred (not yet parsed).
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
 
 fn interp(code: &str) -> Value {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     rt.eval(code).expect("interpreter eval failed")
 }
 
 fn interp_fs(code: &str) -> Value {
-    let mut rt =
-        Runtime::new_with_security(ExecutionMode::Interpreter, SecurityContext::allow_all());
+    let mut rt = Runtime::new_with_security(SecurityContext::allow_all());
     rt.eval(code).expect("interpreter (fs) eval failed")
 }
 
 fn vm(code: &str) -> Value {
-    let mut rt = Runtime::new(ExecutionMode::VM);
+    let mut rt = Runtime::new();
     rt.eval(code).expect("vm eval failed")
 }
 
 fn vm_fs(code: &str) -> Value {
-    let mut rt = Runtime::new_with_security(ExecutionMode::VM, SecurityContext::allow_all());
+    let mut rt = Runtime::new_with_security(SecurityContext::allow_all());
     rt.eval(code).expect("vm (fs) eval failed")
 }
 

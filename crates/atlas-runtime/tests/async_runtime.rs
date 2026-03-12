@@ -39,7 +39,7 @@ mod value_future;
 
 /// Helper to evaluate code with the interpreter
 fn eval(code: &str) -> Result<Value, Box<dyn std::error::Error>> {
-    let mut runtime = Runtime::new(api::ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     Ok(runtime.eval(code)?)
 }
 
@@ -50,7 +50,7 @@ fn eval_ok(code: &str) -> Value {
 
 /// Helper to evaluate code with VM
 fn eval_vm(code: &str) -> Result<Value, Box<dyn std::error::Error>> {
-    let mut runtime = Runtime::new(api::ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     Ok(runtime.eval(code)?)
 }
 

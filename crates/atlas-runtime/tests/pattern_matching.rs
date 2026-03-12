@@ -1,13 +1,11 @@
 //! pattern_matching.rs — Comprehensive integration tests for match / Option / Result
 //!
-//! Tests runtime correctness across both interpreter and VM engines.
-//! All tests verify parity: identical output from interpreter and bytecode VM.
+//! Tests runtime correctness via VM (D-052: single execution path).
 
 mod common;
 
 use atlas_runtime::binder::Binder;
 use atlas_runtime::compiler::Compiler;
-use atlas_runtime::interpreter::Interpreter;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::security::SecurityContext;
@@ -19,24 +17,6 @@ use pretty_assertions::assert_eq;
 // ============================================================================
 // Helpers
 // ============================================================================
-
-fn interp_eval(source: &str) -> Value {
-    let mut lexer = Lexer::new(source.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (program, _) = parser.parse();
-
-    // Run binder and typechecker for consistency with VM
-    let mut binder = Binder::new();
-    let (mut symbol_table, _) = binder.bind(&program);
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let _ = typechecker.check(&program);
-
-    let mut interpreter = Interpreter::new();
-    interpreter
-        .eval(&program, &SecurityContext::allow_all())
-        .expect("Interpreter failed")
-}
 
 fn vm_eval(source: &str) -> Option<Value> {
     let mut lexer = Lexer::new(source.to_string());
@@ -56,40 +36,22 @@ fn vm_eval(source: &str) -> Option<Value> {
     vm.run(&SecurityContext::allow_all()).expect("VM failed")
 }
 
-/// Assert both engines produce identical results.
+/// Assert VM produces expected result (legacy parity helper, now VM-only).
 fn assert_parity(source: &str) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp, vm,
-        "Parity mismatch:\n{}\nInterp: {:?}\nVM:     {:?}",
-        source, interp, vm
-    );
+    // Just verify VM doesn't crash - detailed assertions are in specific tests
+    let _ = vm;
 }
 
-/// Assert both engines produce a specific number.
+/// Assert VM produces a specific number.
 fn assert_parity_number(source: &str, expected: f64) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::Number(expected),
-        "Interpreter wrong: {:?}",
-        interp
-    );
     assert_eq!(vm, Value::Number(expected), "VM wrong: {:?}", vm);
 }
 
-/// Assert both engines produce a specific string.
+/// Assert VM produces a specific string.
 fn assert_parity_string(source: &str, expected: &str) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::string(expected.to_string()),
-        "Interpreter wrong: {:?}",
-        interp
-    );
     assert_eq!(
         vm,
         Value::string(expected.to_string()),
@@ -98,16 +60,9 @@ fn assert_parity_string(source: &str, expected: &str) {
     );
 }
 
-/// Assert both engines produce a specific bool.
+/// Assert VM produces a specific bool.
 fn assert_parity_bool(source: &str, expected: bool) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::Bool(expected),
-        "Interpreter wrong: {:?}",
-        interp
-    );
     assert_eq!(vm, Value::Bool(expected), "VM wrong: {:?}", vm);
 }
 
@@ -1104,18 +1059,15 @@ fn test_match_nested_option_result() {
 fn debug_direct_some_match() {
     // No function wrapper
     let src = r#"fn run(borrow opt: Option<number>): number { return match opt { Some(x) => x, None => 0 }; } run(Some(42));"#;
-    let interp = interp_eval(src);
-    println!("Interp result: {:?}", interp);
-    // Test VM separately, catch panics
-    let result = std::panic::catch_unwind(|| vm_eval(src));
+    let result = vm_eval(src);
     println!("VM result: {:?}", result);
 }
 
 #[test]
 fn debug_none_value() {
     let src = r#"fn run(borrow opt: Option<number>): number { return match opt { Some(x) => x, None => 0 }; } run(None);"#;
-    let interp = interp_eval(src);
-    println!("Interp result: {:?}", interp);
+    let result = vm_eval(src);
+    println!("VM result: {:?}", result);
 }
 
 // ============================================================================

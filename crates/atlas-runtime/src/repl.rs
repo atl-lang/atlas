@@ -2,8 +2,9 @@
 
 use crate::ast::{Item, Stmt};
 use crate::binder::Binder;
+use crate::bytecode::Bytecode;
+use crate::compiler::Compiler;
 use crate::diagnostic::Diagnostic;
-use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::security::SecurityContext;
@@ -11,6 +12,8 @@ use crate::symbol::{SymbolKind, SymbolTable};
 use crate::typechecker::TypeChecker;
 use crate::types::Type;
 use crate::value::Value;
+use crate::vm::VM;
+use std::collections::HashMap;
 use std::io::Write;
 use std::sync::{Arc, Mutex};
 
@@ -20,7 +23,7 @@ struct CaptureWriter {
 
 impl Write for CaptureWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        let mut locked = self.buffer.lock().unwrap();
+        let mut locked = self.buffer.lock().expect("output buffer lock poisoned");
         locked.extend_from_slice(buf);
         Ok(buf.len())
     }
@@ -79,9 +82,13 @@ pub struct ReplResult {
 /// Maintains persistent state across multiple eval calls:
 /// - Variable and function declarations persist
 /// - Errors do not reset state
+///
+/// Uses Compiler+VM for execution (D-052: single execution path).
 pub struct ReplCore {
-    /// Interpreter state (variables, functions)
-    interpreter: Interpreter,
+    /// Accumulated bytecode (persists across eval calls)
+    accumulated_bytecode: Bytecode,
+    /// Cached globals for variable lookup
+    globals: HashMap<String, Value>,
     /// Symbol table (type information)
     symbol_table: SymbolTable,
     /// Security context for permission checks
@@ -97,7 +104,8 @@ impl ReplCore {
     /// Create a new REPL core with specific security context
     pub fn new_with_security(security: SecurityContext) -> Self {
         Self {
-            interpreter: Interpreter::new(),
+            accumulated_bytecode: Bytecode::new(),
+            globals: HashMap::new(),
             symbol_table: SymbolTable::new(),
             security,
         }
@@ -167,11 +175,11 @@ impl ReplCore {
             if symbol.kind != SymbolKind::Variable {
                 continue;
             }
-            if let Some(value) = self.interpreter.get_binding(&symbol.name) {
+            if let Some(value) = self.globals.get(&symbol.name) {
                 vars.push(ReplBinding {
                     name: symbol.name.clone(),
                     ty: symbol.ty.clone(),
-                    value,
+                    value: value.clone(),
                     mutable: symbol.mutable,
                 });
             }
@@ -280,20 +288,58 @@ impl ReplCore {
             };
         }
 
-        // Phase 5: Evaluate
+        // Phase 5: Compile to bytecode
+        let mut compiler = Compiler::new();
+        let new_bytecode = match compiler.compile(&ast) {
+            Ok(bc) => bc,
+            Err(compile_diags) => {
+                diagnostics.extend(compile_diags);
+                return ReplResult {
+                    value: None,
+                    diagnostics,
+                    stdout: String::new(),
+                    expr_type,
+                    bindings,
+                };
+            }
+        };
+
+        // Track where new code starts
+        let new_code_start = self.accumulated_bytecode.instructions.len();
+
+        // Append to accumulated bytecode
+        self.accumulated_bytecode.append(new_bytecode);
+
+        // Phase 6: Execute via VM
         let (output_writer, output_buffer) = capture_output_writer();
-        let previous_writer = self.interpreter.output_writer();
-        self.interpreter.set_output_writer(output_writer);
-        let eval_result = self.interpreter.eval(&ast, &self.security);
-        self.interpreter.set_output_writer(previous_writer);
+        let accumulated = self.accumulated_bytecode.clone();
+        let mut vm = VM::new(accumulated);
+        vm.set_output_writer(output_writer);
+
+        // Copy cached globals to VM
+        for (name, value) in &self.globals {
+            vm.set_global(name.clone(), value.clone());
+        }
+
+        // Set IP to start of new code
+        vm.set_ip(new_code_start);
+
+        let eval_result = vm.run(&self.security);
+
+        // Capture stdout
         let stdout = {
-            let locked = output_buffer.lock().unwrap();
+            let locked = output_buffer.lock().expect("output buffer lock poisoned");
             String::from_utf8_lossy(&locked).to_string()
         };
 
+        // Copy globals back from VM
+        for (name, value) in vm.get_globals() {
+            self.globals.insert(name.clone(), value.clone());
+        }
+
         match eval_result {
-            Ok(value) => ReplResult {
-                value: Some(value),
+            Ok(opt_value) => ReplResult {
+                value: opt_value,
                 diagnostics,
                 stdout,
                 expr_type,
@@ -318,11 +364,11 @@ impl ReplCore {
         let mut results = Vec::new();
         for name in declared_vars {
             if let Some(symbol) = self.symbol_table.lookup(name) {
-                if let Some(value) = self.interpreter.get_binding(name) {
+                if let Some(value) = self.globals.get(name) {
                     results.push(ReplBinding {
                         name: name.clone(),
                         ty: symbol.ty.clone(),
-                        value,
+                        value: value.clone(),
                         mutable: symbol.mutable,
                     });
                 }
@@ -335,7 +381,8 @@ impl ReplCore {
     ///
     /// Clears all variables, functions, and type information
     pub fn reset(&mut self) {
-        self.interpreter = Interpreter::new();
+        self.accumulated_bytecode = Bytecode::new();
+        self.globals = HashMap::new();
         self.symbol_table = SymbolTable::new();
     }
 }

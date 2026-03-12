@@ -25,7 +25,7 @@ fn test_runtime_captures_print_output() {
     let buf: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(Vec::new()));
     let output: OutputWriter = Arc::new(Mutex::new(Box::new(VecWriter(buf.clone()))));
     let config = RuntimeConfig::new().with_output(output);
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
     runtime.eval(r#"console.log("captured")"#).unwrap();
     let s = String::from_utf8(buf.lock().unwrap().clone()).unwrap();
     assert_eq!(s, "captured\n");
@@ -65,7 +65,7 @@ fn test_custom_config_fluent_api() {
 
 #[test]
 fn test_runtime_with_sandboxed_config() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     // Basic expressions should still work
     let result = runtime.eval("1 + 2").unwrap();
@@ -78,7 +78,7 @@ fn test_runtime_with_custom_config() {
         .with_io_allowed(false)
         .with_network_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Basic expressions should work
     let result = runtime.eval("let x: number = 42; x").unwrap();
@@ -87,14 +87,14 @@ fn test_runtime_with_custom_config() {
 
 #[test]
 fn test_sandboxed_runtime_basic_arithmetic() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval("10 * 5 + 3").unwrap();
     assert_eq!(result.to_string(), "53");
 }
 
 #[test]
 fn test_sandboxed_runtime_function_definitions() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     runtime
         .eval("fn add(borrow a: number, borrow b: number): number { return a + b; }")
         .unwrap();
@@ -105,21 +105,21 @@ fn test_sandboxed_runtime_function_definitions() {
 
 #[test]
 fn test_sandboxed_runtime_string_operations() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval(r#""Hello, " + "World!""#).unwrap();
     assert_eq!(result.to_string(), "Hello, World!");
 }
 
 #[test]
 fn test_sandboxed_runtime_array_operations() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval("len([1, 2, 3])").unwrap();
     assert_eq!(result.to_string(), "3");
 }
 
 #[test]
 fn test_sandboxed_runtime_conditionals() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     runtime
         .eval(
             r#"
@@ -140,7 +140,7 @@ fn test_sandboxed_runtime_conditionals() {
 
 #[test]
 fn test_sandboxed_runtime_native_functions() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     runtime.register_function("double", 1, |args| {
         if let atlas_runtime::value::Value::Number(n) = &args[0] {
@@ -170,8 +170,8 @@ fn test_config_clone() {
 
 #[test]
 fn test_multiple_sandboxed_runtimes_independent() {
-    let mut runtime1 = Runtime::sandboxed(ExecutionMode::Interpreter);
-    let mut runtime2 = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime1 = Runtime::sandboxed();
+    let mut runtime2 = Runtime::sandboxed();
 
     let result1 = runtime1.eval("let x: number = 10; x").unwrap();
     let result2 = runtime2.eval("let x: number = 20; x").unwrap();
@@ -218,7 +218,7 @@ fn test_config_disable_only_network() {
 
 #[test]
 fn test_sandboxed_runtime_error_handling() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     // Type errors should still be caught
     let result = runtime.eval(r#"let x: number = "not a number";"#);
@@ -227,7 +227,7 @@ fn test_sandboxed_runtime_error_handling() {
 
 #[test]
 fn test_sandboxed_runtime_persistent_state() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
 
     // Define a function in one eval()
     runtime
@@ -251,7 +251,7 @@ fn test_timeout_enforcement_interpreter() {
         .with_max_execution_time(Duration::from_millis(100))
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Run an infinite loop - should timeout
     let result = runtime.eval(
@@ -281,7 +281,7 @@ fn test_timeout_enforcement_vm() {
         .with_max_execution_time(Duration::from_millis(100))
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Run an infinite loop - should timeout
     let result = runtime.eval(
@@ -311,7 +311,7 @@ fn test_timeout_respects_limit() {
         .with_max_execution_time(Duration::from_millis(500))
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Run a fast operation - should complete before timeout
     let result = runtime.eval("1 + 2 + 3");
@@ -329,7 +329,7 @@ fn test_memory_limit_enforcement_interpreter_array() {
         .with_max_memory_bytes(1024)
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Try to create a large array - should fail with memory limit
     // Each element is ~64 bytes, so 40 elements = ~2560 bytes + overhead > 1024
@@ -361,7 +361,7 @@ fn test_memory_limit_enforcement_vm_array() {
         .with_max_memory_bytes(1024)
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Try to create a large array - should fail with memory limit
     // Each element is ~64 bytes, so 40 elements = ~2560 bytes + overhead > 1024
@@ -391,7 +391,7 @@ fn test_no_memory_limit_without_config() {
     // Create config without memory limit
     let config = RuntimeConfig::new().with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Create a reasonably sized array - should complete normally
     let result = runtime.eval(
@@ -412,7 +412,7 @@ fn test_memory_limit_allows_small_allocations() {
         .with_max_memory_bytes(10_000_000)
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Create small arrays and strings - should work fine
     let result = runtime.eval(
@@ -437,7 +437,7 @@ fn test_allow_io_true_network_false_blocks_http() {
         .with_io_allowed(true)
         .with_network_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // HTTP request should be blocked even though IO is allowed
     let result = runtime.eval(r#"http.get("https://example.com")"#);
@@ -462,7 +462,7 @@ fn test_allow_io_true_network_false_blocks_http_vm() {
         .with_io_allowed(true)
         .with_network_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // HTTP request should be blocked even though IO is allowed
     let result = runtime.eval(r#"http.get("https://example.com")"#);
@@ -493,7 +493,7 @@ fn test_allow_io_false_network_true_blocks_filesystem() {
     let config = RuntimeConfig::new()
         .with_io_allowed(false)
         .with_network_allowed(true);
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // file.read() returns Result<string, string> — blocked → Atlas Err("permission denied ...")
     let result = runtime
@@ -523,7 +523,7 @@ fn test_both_permissions_independent() {
         .with_io_allowed(true)
         .with_network_allowed(true);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Both should work (we're just checking it doesn't error on setup)
     // Actual network calls might fail for other reasons (no network), but not permission
@@ -538,7 +538,7 @@ fn test_neither_permission_blocks_both() {
         .with_io_allowed(false)
         .with_network_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Filesystem should be blocked
     let fs_result = runtime.eval(r#"read_file("/etc/passwd")"#);

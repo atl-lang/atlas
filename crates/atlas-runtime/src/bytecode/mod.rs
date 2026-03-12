@@ -33,7 +33,7 @@ use crate::value::Value;
 /// - Version 1: Initial bytecode format (Phase 10)
 /// - Version 2: Added CRC32 checksum, extended value serialization (H-002)
 /// - Version 3: Added source file paths to debug spans (H-044)
-pub const BYTECODE_VERSION: u16 = 3;
+pub const BYTECODE_VERSION: u16 = 4; // H-288: added top_level_local_count serialization
 
 /// Debug information for bytecode
 ///
@@ -162,6 +162,9 @@ impl Bytecode {
             serialize_value(value, &mut bytes);
         }
 
+        // Top-level local count (H-288 fix: must serialize for for..in loops to work)
+        bytes.extend_from_slice(&(self.top_level_local_count as u32).to_be_bytes());
+
         // Instructions section
         bytes.extend_from_slice(&(self.instructions.len() as u32).to_be_bytes());
         bytes.extend_from_slice(&self.instructions);
@@ -243,6 +246,18 @@ impl Bytecode {
             offset += consumed;
         }
 
+        // Read top-level local count (H-288 fix)
+        if offset + 4 > data_len {
+            return Err("Invalid bytecode: top_level_local_count truncated".to_string());
+        }
+        let top_level_local_count = u32::from_be_bytes([
+            bytes[offset],
+            bytes[offset + 1],
+            bytes[offset + 2],
+            bytes[offset + 3],
+        ]) as usize;
+        offset += 4;
+
         // Read instructions
         if offset + 4 > data_len {
             return Err("Invalid bytecode: instructions section truncated".to_string());
@@ -308,7 +323,7 @@ impl Bytecode {
             instructions,
             constants,
             debug_info,
-            top_level_local_count: 0,
+            top_level_local_count,
         })
     }
 

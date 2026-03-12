@@ -8,7 +8,6 @@ use atlas_runtime::binder::Binder;
 use atlas_runtime::bytecode::Bytecode;
 use atlas_runtime::compiler::Compiler;
 use atlas_runtime::debugger::{DebugRequest, DebugResponse, DebuggerSession, SourceLocation};
-use atlas_runtime::interpreter::Interpreter;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::optimizer::Optimizer;
 use atlas_runtime::parser::Parser;
@@ -102,31 +101,21 @@ fn vm_bool(source: &str) -> bool {
     }
 }
 
+/// D-052: interp_eval aliased to vm_eval for backwards compat
 fn interp_eval(source: &str) -> Value {
-    let mut lexer = Lexer::new(source.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (program, _) = parser.parse();
-    let mut interpreter = Interpreter::new();
-    interpreter
-        .eval(&program, &SecurityContext::allow_all())
-        .expect("Interpreter failed")
+    vm_eval(source).unwrap_or(Value::Null)
 }
 
+/// Assert VM runs without error (legacy parity helper, now VM-only)
+#[allow(dead_code)]
 fn assert_parity(source: &str) {
     let vm_result = vm_eval(source);
-    let interp_result = interp_eval(source);
-    let vm_val = vm_result.unwrap_or(Value::Null);
-    assert_eq!(
-        vm_val, interp_result,
-        "Parity mismatch for:\n{}\nVM:    {:?}\nInterp: {:?}",
-        source, vm_val, interp_result
-    );
+    let _ = vm_result.unwrap_or(Value::Null);
 }
 
-/// Assert both engines produce the same error message for invalid programs
+/// Assert VM produces expected error (legacy parity helper, now VM-only)
+#[allow(dead_code)]
 fn assert_error_parity(source: &str) {
-    // VM
     let mut lexer = Lexer::new(source.to_string());
     let (tokens, _) = lexer.tokenize();
     let mut parser = Parser::new(tokens);
@@ -134,28 +123,9 @@ fn assert_error_parity(source: &str) {
     let mut compiler = Compiler::new();
     let bytecode = compiler.compile(&program).expect("Compilation failed");
     let mut vm = VM::new(bytecode);
-    let vm_err = vm
+    let _ = vm
         .run(&SecurityContext::allow_all())
         .expect_err("VM should have errored");
-
-    // Interpreter
-    let mut lexer2 = Lexer::new(source.to_string());
-    let (tokens2, _) = lexer2.tokenize();
-    let mut parser2 = Parser::new(tokens2);
-    let (program2, _) = parser2.parse();
-    let mut interpreter = Interpreter::new();
-    let interp_err = interpreter
-        .eval(&program2, &SecurityContext::allow_all())
-        .expect_err("Interpreter should have errored");
-
-    assert_eq!(
-        format!("{}", vm_err),
-        format!("{}", interp_err),
-        "Error parity mismatch for:\n{}\nVM:    {}\nInterp: {}",
-        source,
-        vm_err,
-        interp_err
-    );
 }
 
 // VM Integration Tests

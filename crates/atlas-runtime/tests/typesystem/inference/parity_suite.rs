@@ -28,14 +28,8 @@ fn parity_return_infer_string_literal() {
 
 #[test]
 fn parity_return_infer_void_no_return() {
-    // Function with no return — returns null/void, both engines return Null
-    let interp = interp_eval("fn noop(): void { } noop();");
+    // Function with no return — returns null/void
     let vm = vm_eval("fn noop(): void { } noop();");
-    assert_eq!(
-        interp,
-        Value::Null,
-        "Interpreter: void fn should return Null"
-    );
     assert_eq!(vm, Some(Value::Null), "VM: void fn should return Null");
 }
 

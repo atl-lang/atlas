@@ -9,10 +9,8 @@ Criterion-based benchmark suite covering all critical performance paths.
 | `lexer.rs` | Tokenization throughput (MB/s) at multiple input sizes |
 | `parser.rs` | Parse speed across expression depth, function count, type annotations |
 | `typechecker.rs` | Full frontend pipeline (lex + parse + bind + typecheck) |
-| `interpreter.rs` | Tree-walking interpreter on canonical programs |
 | `vm_performance_benches.rs` | VM execution across arithmetic, functions, loops, arrays, scaling |
 | `stdlib_benchmarks.rs` | Stdlib function performance (string, array, math, JSON, file I/O) |
-| `parity.rs` | Interpreter vs VM head-to-head on identical programs |
 
 ## Running Benchmarks
 
@@ -22,7 +20,7 @@ cargo bench -p atlas-runtime
 
 # Single benchmark file
 cargo bench -p atlas-runtime --bench lexer
-cargo bench -p atlas-runtime --bench parity
+cargo bench -p atlas-runtime --bench vm_performance_benches
 
 # Filter by benchmark name
 cargo bench -p atlas-runtime -- "fibonacci"

@@ -2,7 +2,7 @@
 //!
 //! This module provides a comprehensive API for embedding Atlas in Rust applications.
 //! It includes:
-//! - Runtime execution with mode selection (Interpreter or VM)
+//! - Runtime execution via Compiler+VM (D-052)
 //! - Value conversion between Rust and Atlas types
 //! - Native function registration
 //! - Function calling and global variable management
@@ -11,18 +11,18 @@
 //! # Examples
 //!
 //! ```rust,no_run
-//! use atlas_runtime::api::{Runtime, ExecutionMode};
+//! use atlas_runtime::api::Runtime;
 //! use atlas_runtime::value::Value;
 //!
-//! // Create a runtime with interpreter mode
-//! let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+//! // Create a runtime
+//! let mut runtime = Runtime::new();
 //!
 //! // Evaluate code
-//! let result = runtime.eval("1 + 2").unwrap();
+//! let result = runtime.eval("1 + 2").expect("eval failed");
 //!
 //! // Call Atlas functions from Rust
-//! runtime.eval("fn add(x: number, y: number) -> number { x + y }").unwrap();
-//! let result = runtime.call("add", vec![Value::Number(1.0), Value::Number(2.0)]).unwrap();
+//! runtime.eval("fn add(x: number, y: number): number { return x + y; }").expect("eval failed");
+//! let result = runtime.call("add", vec![Value::Number(1.0), Value::Number(2.0)]).expect("call failed");
 //! ```
 
 pub mod config;
@@ -34,4 +34,4 @@ pub mod runtime;
 pub use config::{ExecutionLimits, RuntimeConfig};
 pub use conversion::{ConversionError, FromAtlas, ToAtlas};
 pub use native::{BuildError, NativeFunctionBuilder};
-pub use runtime::{EvalError, ExecutionMode, Runtime};
+pub use runtime::{EvalError, Runtime};

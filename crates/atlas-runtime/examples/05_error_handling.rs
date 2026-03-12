@@ -4,10 +4,10 @@
 //!
 //! Run with: cargo run --example 05_error_handling -p atlas-runtime
 
-use atlas_runtime::api::{EvalError, ExecutionMode, Runtime};
+use atlas_runtime::api::{EvalError, Runtime};
 
 fn main() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
 
     println!("Demonstrating error handling:\n");
 

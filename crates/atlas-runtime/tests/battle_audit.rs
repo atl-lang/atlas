@@ -8,7 +8,7 @@
 //
 // Test naming: battle_audit::<domain>::<stem>
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
 use std::fs;
@@ -22,11 +22,11 @@ fn atlas_root() -> PathBuf {
     // crates/atlas-runtime/tests/ → project root
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent() // crates/atlas-runtime
-        .unwrap()
+        .expect("parent of CARGO_MANIFEST_DIR")
         .parent() // crates
-        .unwrap()
+        .expect("parent of crates")
         .parent() // project root
-        .unwrap()
+        .expect("project root")
         .to_path_buf()
 }
 
@@ -34,8 +34,9 @@ fn domains_dir() -> PathBuf {
     atlas_root().join("battle-test/atlas-full-audit/domains")
 }
 
-fn run_engine(source: &str, mode: ExecutionMode) -> Result<Value, String> {
-    let mut rt = Runtime::new_with_security(mode, SecurityContext::allow_all());
+fn run_engine(source: &str) -> Result<Value, String> {
+    // D-052: unified VM execution path
+    let mut rt = Runtime::new_with_security(SecurityContext::allow_all());
     rt.eval(source).map_err(|e| e.to_string())
 }
 
@@ -43,25 +44,12 @@ fn assert_battle(atlas_file: &Path) {
     let source = fs::read_to_string(atlas_file)
         .unwrap_or_else(|e| panic!("Cannot read {:?}: {e}", atlas_file));
 
-    let interp = run_engine(&source, ExecutionMode::Interpreter).unwrap_or_else(|e| {
-        panic!(
-            "Interpreter error in {:?}:\n{e}\n--- source ---\n{source}",
-            atlas_file
-        )
-    });
-
-    let vm = run_engine(&source, ExecutionMode::VM).unwrap_or_else(|e| {
+    let result = run_engine(&source).unwrap_or_else(|e| {
         panic!(
             "VM error in {:?}:\n{e}\n--- source ---\n{source}",
             atlas_file
         )
     });
-
-    assert_eq!(
-        interp, vm,
-        "Parity divergence in {:?}\n  interpreter: {:?}\n  vm: {:?}",
-        atlas_file, interp, vm
-    );
 
     // Check expected output file if present
     let expected_file = atlas_file.with_extension("expected");
@@ -69,7 +57,7 @@ fn assert_battle(atlas_file: &Path) {
         let expected_str = fs::read_to_string(&expected_file)
             .unwrap_or_else(|e| panic!("Cannot read {:?}: {e}", expected_file));
         let expected_str = expected_str.trim();
-        let actual_str = interp.to_string();
+        let actual_str = result.to_string();
         assert_eq!(
             actual_str, expected_str,
             "Output mismatch in {:?}\n  expected: {expected_str:?}\n  got: {actual_str:?}",

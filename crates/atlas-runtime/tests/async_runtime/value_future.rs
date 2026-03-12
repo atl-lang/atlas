@@ -6,12 +6,12 @@ use atlas_runtime::value::Value;
 use std::sync::Arc;
 
 fn eval_ok(code: &str) -> Value {
-    let mut runtime = Runtime::new(atlas_runtime::api::ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.eval(code).unwrap()
 }
 
 fn eval_vm_ok(code: &str) -> Value {
-    let mut runtime = Runtime::new(atlas_runtime::api::ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     runtime.eval(code).unwrap()
 }
 

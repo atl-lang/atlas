@@ -17,11 +17,8 @@ fn parity_nested_function_basic() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -36,11 +33,9 @@ fn parity_nested_function_multiple_params() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -55,11 +50,8 @@ fn parity_nested_function_string() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::string("Hello, World"));
+    assert_eq!(vm_result, Value::string("Hello, World"));
 }
 
 // ============================================================================
@@ -78,11 +70,9 @@ fn parity_nested_function_params() {
         outer(21);
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -105,11 +95,8 @@ fn parity_nested_function_shadows_global() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -130,11 +117,9 @@ fn parity_nested_function_shadows_outer_nested() {
         level1();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -159,11 +144,8 @@ fn parity_deeply_nested_functions() {
         level1();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -185,11 +167,8 @@ fn parity_nested_function_calling_nested() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -208,11 +187,9 @@ fn parity_nested_function_calling_outer() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -235,11 +212,8 @@ fn parity_nested_function_void() {
         result;
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -259,11 +233,8 @@ fn parity_nested_function_array_param() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -278,11 +249,9 @@ fn parity_nested_function_array_return() {
         outer()[0];
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -305,11 +274,8 @@ fn parity_nested_function_conditional() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -331,11 +297,8 @@ fn parity_nested_function_in_if_block() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 // ============================================================================
@@ -354,11 +317,9 @@ fn parity_nested_function_no_params() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -373,11 +334,8 @@ fn parity_multiple_nested_same_level() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -394,11 +352,9 @@ fn parity_nested_with_local_variables() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -413,11 +369,8 @@ fn parity_nested_returning_bool() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Bool(true));
+    assert_eq!(vm_result, Value::Bool(true));
 }
 
 #[test]
@@ -432,11 +385,9 @@ fn parity_nested_with_arithmetic() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }
 
 #[test]
@@ -451,11 +402,8 @@ fn parity_nested_with_string_concat() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
-
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::string("HelloWorld"));
+    assert_eq!(vm_result, Value::string("HelloWorld"));
 }
 
 #[test]
@@ -476,9 +424,7 @@ fn parity_nested_calling_multiple_siblings() {
         outer();
     "#;
 
-    let interp_result = run_interpreter(source).unwrap();
     let vm_result = run_vm(source).unwrap();
 
-    assert_eq!(interp_result, vm_result);
-    assert_eq!(interp_result, Value::Number(42.0));
+    assert_eq!(vm_result, Value::Number(42.0));
 }

@@ -1,5 +1,5 @@
 //! THIN ROUTER — DO NOT ADD TESTS HERE.
-//! Add tests to the submodule files: tests/debugger/{breakpoints,session,inspector,protocol_part1,protocol_part2,interpreter}.rs
+//! Add tests to the submodule files: tests/debugger/{breakpoints,session,inspector,protocol_part1,protocol_part2}.rs
 //! This file only declares submodules and shared helpers.
 
 use atlas_runtime::bytecode::{Bytecode, DebugSpan};
@@ -54,8 +54,6 @@ fn new_session(source: &str) -> DebuggerSession {
 mod breakpoints;
 #[path = "debugger/inspector.rs"]
 mod inspector;
-#[path = "debugger/interpreter.rs"]
-mod interpreter;
 #[path = "debugger/protocol_part1.rs"]
 mod protocol_part1;
 #[path = "debugger/protocol_part2.rs"]

@@ -3,8 +3,8 @@
 //! Provides scoped variable collection, formatted output, watch expressions,
 //! and hover evaluation for the debugger.
 
+use crate::compiler::Compiler;
 use crate::debugger::protocol::Variable;
-use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::security::SecurityContext;
@@ -174,18 +174,31 @@ impl Inspector {
             snippet.push(';');
         }
 
+        // D-052: unified Compiler + VM execution path
         let tokens = Lexer::new(&snippet).tokenize().0;
         let (ast, errors) = Parser::new(tokens).parse();
         if !errors.is_empty() {
             return EvalResult::Error(format!("parse error: {:?}", errors[0]));
         }
 
-        let mut interp = Interpreter::new();
+        let mut compiler = Compiler::new();
+        let bytecode = match compiler.compile(&ast) {
+            Ok(bc) => bc,
+            Err(diags) => {
+                return EvalResult::Error(format!("compile error: {:?}", diags[0]));
+            }
+        };
+
         let security = SecurityContext::allow_all();
-        match interp.eval(&ast, &security) {
-            Ok(value) => EvalResult::Success {
+        let mut vm = VM::new(bytecode);
+        match vm.run(&security) {
+            Ok(Some(value)) => EvalResult::Success {
                 value: format_value_with_depth(&value, self.max_format_depth),
                 type_name: value.type_name().to_string(),
+            },
+            Ok(None) => EvalResult::Success {
+                value: "null".to_string(),
+                type_name: "null".to_string(),
             },
             Err(e) => EvalResult::Error(format!("{:?}", e)),
         }

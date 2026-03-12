@@ -4,11 +4,11 @@
 //!
 //! Run with: cargo run --example 01_hello_world -p atlas-runtime
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 
 fn main() {
-    // Create a runtime with interpreter mode
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    // Create a runtime
+    let mut runtime = Runtime::new();
 
     // Evaluate a simple expression
     let result = runtime.eval("1 + 2").expect("Failed to evaluate");

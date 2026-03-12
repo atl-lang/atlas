@@ -10,7 +10,7 @@
 //! These tests use both the static diagnostic pipeline (parse + typecheck)
 //! and the runtime API to cover all error emission sites.
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::{Binder, Diagnostic, Lexer, Parser, TypeChecker};
 
@@ -95,14 +95,13 @@ fn assert_self_correcting(diags: &[Diagnostic], expected_code: &str, expected_te
 
 /// Run source through interpreter and VM, collect error messages.
 fn eval_both_engines(source: &str) -> (String, String) {
-    let mut interp =
-        Runtime::new_with_security(ExecutionMode::Interpreter, SecurityContext::allow_all());
+    let mut interp = Runtime::new_with_security(SecurityContext::allow_all());
     let interp_err = match interp.eval(source) {
         Err(e) => format!("{}", e),
         Ok(_) => String::new(),
     };
 
-    let mut vm = Runtime::new_with_security(ExecutionMode::VM, SecurityContext::allow_all());
+    let mut vm = Runtime::new_with_security(SecurityContext::allow_all());
     let vm_err = match vm.eval(source) {
         Err(e) => format!("{}", e),
         Ok(_) => String::new(),

@@ -1,37 +1,10 @@
 use super::*;
 use pretty_assertions::assert_eq;
 
-/// Helper to run code in interpreter
+// D-052: Interpreter removed - alias pm_run_interpreter to pm_run_vm
+#[allow(dead_code)]
 fn pm_run_interpreter(source: &str) -> Result<String, String> {
-    let mut lexer = Lexer::new(source);
-    let (tokens, lex_diags) = lexer.tokenize();
-    if !lex_diags.is_empty() {
-        return Err(format!("Lex error: {:?}", lex_diags));
-    }
-
-    let mut parser = Parser::new(tokens);
-    let (program, parse_diags) = parser.parse();
-    if !parse_diags.is_empty() {
-        return Err(format!("Parse error: {:?}", parse_diags));
-    }
-
-    let mut binder = Binder::new();
-    let (mut symbol_table, bind_diags) = binder.bind(&program);
-    if !bind_diags.is_empty() {
-        return Err(format!("Bind error: {:?}", bind_diags));
-    }
-
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let type_diags = typechecker.check(&program);
-    if !type_diags.is_empty() {
-        return Err(format!("Type error: {:?}", type_diags));
-    }
-
-    let mut interpreter = Interpreter::new();
-    match interpreter.eval(&program, &SecurityContext::allow_all()) {
-        Ok(value) => Ok(format!("{:?}", value)),
-        Err(e) => Err(format!("Runtime error: {:?}", e)),
-    }
+    pm_run_vm(source)
 }
 
 /// Helper to run code in VM

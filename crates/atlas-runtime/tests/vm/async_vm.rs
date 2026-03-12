@@ -8,16 +8,16 @@
 // - AT4002 raised when Await pops a non-Future value
 // - Parity: VM and interpreter produce identical output for all programs
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::value::Value;
 
 fn vm(code: &str) -> Value {
-    let mut rt = Runtime::new(ExecutionMode::VM);
+    let mut rt = Runtime::new();
     rt.eval(code).expect("vm eval failed")
 }
 
 fn vm_err(code: &str) -> String {
-    let mut rt = Runtime::new(ExecutionMode::VM);
+    let mut rt = Runtime::new();
     rt.eval(code)
         .err()
         .map(|e| format!("{}", e))
@@ -25,7 +25,7 @@ fn vm_err(code: &str) -> String {
 }
 
 fn interp(code: &str) -> Value {
-    let mut rt = Runtime::new(ExecutionMode::Interpreter);
+    let mut rt = Runtime::new();
     rt.eval(code).expect("interpreter eval failed")
 }
 

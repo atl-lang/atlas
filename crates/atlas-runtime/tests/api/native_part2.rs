@@ -1,10 +1,9 @@
 use super::*;
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_override_builtin_name(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_override_builtin_name() {
+    let mut runtime = Runtime::new();
 
     // Register a native with the same name as a builtin
     runtime.register_function("len", 1, |args| {
@@ -19,10 +18,9 @@ fn test_native_override_builtin_name(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_zero_arity(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_with_zero_arity() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("getFortyTwo", 0, |_args| Ok(Value::Number(42.0)));
 
@@ -31,10 +29,9 @@ fn test_native_with_zero_arity(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_three_args(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_with_three_args() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("sum3", 3, |args| {
         let a = match &args[0] {
@@ -72,10 +69,9 @@ fn test_native_with_three_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_variadic_with_zero_args(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_variadic_with_zero_args() {
+    let mut runtime = Runtime::new();
 
     runtime.register_variadic("count", |args| Ok(Value::Number(args.len() as f64)));
 
@@ -84,10 +80,9 @@ fn test_variadic_with_zero_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_variadic_with_many_args(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_variadic_with_many_args() {
+    let mut runtime = Runtime::new();
 
     runtime.register_variadic("count", |args| Ok(Value::Number(args.len() as f64)));
 
@@ -98,10 +93,9 @@ fn test_variadic_with_many_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_in_expression(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_in_expression() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("double", 1, |args| {
         let n = match &args[0] {
@@ -121,10 +115,9 @@ fn test_native_in_expression(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_nested_calls(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_nested_calls() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("inc", 1, |args| {
         let n = match &args[0] {
@@ -144,10 +137,9 @@ fn test_native_nested_calls(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_option_return(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_with_option_return() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("makeSome", 1, |args| {
         Ok(Value::Option(Some(Box::new(args[0].clone()))))
@@ -161,10 +153,9 @@ fn test_native_with_option_return(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_result_return(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_with_result_return() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("makeOk", 1, |args| {
         Ok(Value::Result(Ok(Box::new(args[0].clone()))))
@@ -178,10 +169,9 @@ fn test_native_with_result_return(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_persists_across_evaluations(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_persists_across_evaluations() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("add", 2, |args| {
         let a = match &args[0] {
@@ -214,10 +204,9 @@ fn test_native_persists_across_evaluations(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_complex_logic(#[case] mode: ExecutionMode) {
-    let mut runtime = Runtime::new(mode);
+
+fn test_native_with_complex_logic() {
+    let mut runtime = Runtime::new();
 
     runtime.register_function("fibonacci", 1, |args| {
         let n = match &args[0] {
