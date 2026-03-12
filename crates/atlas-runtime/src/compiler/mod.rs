@@ -398,10 +398,13 @@ impl Compiler {
         if let Some(tail) = &func.body.tail_expr {
             // Compile function body statements
             self.compile_block(&func.body)?;
+            // Compile tail expression (its value becomes the return value)
+            self.compile_expr(tail)?;
             if func.is_async {
                 self.bytecode.emit(Opcode::WrapFuture, func.span);
             }
-            self.compile_expr(tail)?;
+            // H-301: Emit Return after tail expression — was missing, causing infinite loops
+            self.bytecode.emit(Opcode::Return, func.span);
         } else if let Some((last, rest)) = func.body.statements.split_last() {
             for stmt in rest {
                 self.compile_stmt(stmt)?;
