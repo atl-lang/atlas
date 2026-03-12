@@ -33,7 +33,7 @@ fn typecheck_with_checker(
 #[test]
 fn test_typechecker_stores_own_annotation() {
     use atlas_runtime::ast::OwnershipAnnotation;
-    let src = "fn process(own data: []number): void { }";
+    let src = "fn process(own data: number[]): void { }";
     let (diags, checker) = typecheck_with_checker(src);
     let errors: Vec<_> = diags
         .iter()
@@ -65,7 +65,7 @@ fn test_typechecker_warns_own_on_primitive() {
 
 #[test]
 fn test_typechecker_accepts_own_on_array() {
-    let src = "fn process(own _data: []number): void { }";
+    let src = "fn process(own _data: number[]): void { }";
     let diags = typecheck_source(src);
     let warnings: Vec<_> = diags
         .iter()
@@ -79,7 +79,7 @@ fn test_typechecker_accepts_own_on_array() {
 
 #[test]
 fn test_typechecker_accepts_borrow_annotation() {
-    let src = "fn read(borrow _data: []number): number { return 0; }";
+    let src = "fn read(borrow _data: number[]): number { return 0; }";
     let diags = typecheck_source(src);
     let errors: Vec<_> = diags
         .iter()
@@ -113,8 +113,8 @@ fn test_typechecker_stores_return_ownership() {
 fn test_typechecker_borrow_to_own_warning() {
     // Passing a `borrow`-annotated caller param to an `own` param should warn AT2012
     let src = r#"
-fn consumer(own _data: []number): void { }
-fn caller(borrow data: []number): void { consumer(data); }
+fn consumer(own _data: number[]): void { }
+fn caller(borrow data: number[]): void { consumer(data); }
 "#;
     let diags = typecheck_source(src);
     let warnings: Vec<_> = diags
@@ -131,9 +131,9 @@ fn caller(borrow data: []number): void { consumer(data); }
 fn test_typechecker_own_param_accepts_owned_value() {
     // Passing a plain (non-borrow) variable to an `own` param is OK
     let src = r#"
-fn consume(own _data: []number): void { }
+fn consume(own _data: number[]): void { }
 fn caller(): void {
-    let arr: []number = [1, 2, 3];
+    let arr: number[] = [1, 2, 3];
     consume(arr);
 }
 "#;
@@ -149,9 +149,9 @@ fn caller(): void {
 fn test_typechecker_borrow_param_accepts_any_value() {
     // Any value can be passed to a `borrow` param — no diagnostic
     let src = r#"
-fn reader(borrow _data: []number): void { }
+fn reader(borrow _data: number[]): void { }
 fn caller(): void {
-    let arr: []number = [1, 2, 3];
+    let arr: number[] = [1, 2, 3];
     reader(arr);
 }
 "#;
@@ -167,8 +167,8 @@ fn caller(): void {
 fn test_typechecker_borrow_param_accepts_borrow_arg() {
     // Passing a `borrow` param to a `borrow` param is fine
     let src = r#"
-fn reader(borrow _data: []number): void { }
-fn caller(borrow data: []number): void { reader(data); }
+fn reader(borrow _data: number[]): void { }
+fn caller(borrow data: number[]): void { reader(data); }
 "#;
     let diags = typecheck_source(src);
     let errors: Vec<_> = diags
@@ -182,9 +182,9 @@ fn caller(borrow data: []number): void { reader(data); }
 fn test_typechecker_non_shared_to_shared_error() {
     // Passing a plain (non-shared) value to a `shared` param should emit AT3028
     let src = r#"
-fn register(share _handler: []number): void { }
+fn register(share _handler: number[]): void { }
 fn caller(): void {
-    let arr: []number = [1, 2, 3];
+    let arr: number[] = [1, 2, 3];
     register(arr);
 }
 "#;

@@ -6,7 +6,7 @@ fn test_stdlib_method_not_shadowed_by_trait() {
         "
         trait Pushable { fn push(borrow self: Pushable, borrow x: number): void; }
         impl Pushable for number { fn push(borrow self: number, borrow x: number): void { } }
-        let arr: []number = [1, 2, 3];
+        let arr: number[] = [1, 2, 3];
         arr = arr.push(4);
     ",
     );
@@ -93,8 +93,8 @@ fn test_bool_passed_without_annotation_no_error() {
 fn test_array_passed_without_annotation_no_error() {
     let diags = typecheck_source(
         "
-        fn first(borrow arr: []number): number { return arr[0]; }
-        let a: []number = [1, 2, 3];
+        fn first(borrow arr: number[]): number { return arr[0]; }
+        let a: number[] = [1, 2, 3];
         let n: number = first(a);
     ",
     );
@@ -154,7 +154,7 @@ fn test_impl_copy_for_type_registers_in_trait_registry() {
 fn test_copy_bound_satisfied_by_number() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(borrow x: T): T { return x; }
+        fn safe_copy<T extends Copy>(borrow x: T): T { return x; }
         let n: number = safe_copy(42);
     ",
     );
@@ -169,7 +169,7 @@ fn test_copy_bound_satisfied_by_number() {
 fn test_copy_bound_satisfied_by_string() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(borrow x: T): T { return x; }
+        fn safe_copy<T extends Copy>(borrow x: T): T { return x; }
         let s: string = safe_copy(\"hello\");
     ",
     );
@@ -184,7 +184,7 @@ fn test_copy_bound_satisfied_by_string() {
 fn test_copy_bound_satisfied_by_bool() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(borrow x: T): T { return x; }
+        fn safe_copy<T extends Copy>(borrow x: T): T { return x; }
         let b: bool = safe_copy(true);
     ",
     );
@@ -199,8 +199,8 @@ fn test_copy_bound_satisfied_by_bool() {
 fn test_copy_bound_rejects_hashmap() {
     let diags = typecheck_source(
         "
-        fn safe_copy<T: Copy>(borrow x: T): T { return x; }
-        let m: HashMap = hash_map_new();
+        fn safe_copy<T extends Copy>(borrow x: T): T { return x; }
+        let m: HashMap = HashMap.new();
         let v = safe_copy(m);
     ",
     );
@@ -236,7 +236,7 @@ fn test_user_trait_bound_satisfied() {
         impl Printable for number {
             fn print_self(borrow self: number): void { }
         }
-        fn log_it<T: Printable>(borrow x: T): void { }
+        fn log_it<T extends Printable>(borrow x: T): void { }
         log_it(42);
     ",
     );
@@ -255,7 +255,7 @@ fn test_user_trait_bound_not_satisfied_is_error() {
         impl Printable for number {
             fn print_self(borrow self: number): void { }
         }
-        fn log_it<T: Printable>(borrow x: T): void { }
+        fn log_it<T extends Printable>(borrow x: T): void { }
         log_it(\"hello\");
     ",
     );
@@ -272,7 +272,7 @@ fn test_multiple_bounds_all_satisfied() {
         "
         trait Printable { fn print_self(borrow self: Printable): void; }
         impl Printable for number { fn print_self(borrow self: number): void { } }
-        fn process<T: Copy + Printable>(borrow x: T): void { }
+        fn process<T extends Copy & Printable>(borrow x: T): void { }
         process(42);
     ",
     );
@@ -288,7 +288,7 @@ fn test_multiple_bounds_one_missing_is_error() {
     let diags = typecheck_source(
         "
         trait Printable { fn print_self(borrow self: Printable): void; }
-        fn process<T: Copy + Printable>(borrow x: T): void { }
+        fn process<T extends Copy & Printable>(borrow x: T): void { }
         process(42);
     ",
     );

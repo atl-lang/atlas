@@ -14,7 +14,7 @@ fn test_trait_with_generic_method_no_diagnostics() {
     let diags = typecheck_source(
         "
         trait Printer {
-            fn print<T: Display>(borrow value: T): void;
+            fn print<T extends Display>(borrow value: T): void;
         }
     ",
     );

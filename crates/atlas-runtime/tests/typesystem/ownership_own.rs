@@ -125,9 +125,9 @@ fn main(): void {
 fn test_h177_rebind_after_own_clears_moved_flag() {
     // x = f(own x) — after the assignment, x is rebound and must be usable again
     let src = r#"
-fn take(own val: []number): []number { return val; }
+fn take(own val: number[]): number[] { return val; }
 fn main(): void {
-    let mut nums: []number = [1, 2, 3];
+    let mut nums: number[] = [1, 2, 3];
     nums = take(nums);
     let n: number = nums[0];
 }

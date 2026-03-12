@@ -1971,16 +1971,14 @@ impl<'a> TypeChecker<'a> {
                     );
                     if is_explicit_borrow && !is_primitive {
                         self.diagnostics.push(
-                            error_codes::BORROW_ESCAPE.emit(var.span).arg("detail", format!(
-                                    "cannot store `borrow` parameter `{}` in a binding: \
-                                     borrows cannot outlive their scope",
-                                    id.name
-                                )).build()
-                            .with_label("borrow stored here")
-                            .with_help(
-                                "copy the value or use a computation on the `borrow` parameter \
-                                 instead of storing it directly",
-                            ),
+                            error_codes::BORROW_ESCAPE.emit(var.span)
+                                .arg("name", &id.name)
+                                .build()
+                                .with_label("borrow stored here")
+                                .with_help(
+                                    "copy the value or use a computation on the `borrow` parameter \
+                                     instead of storing it directly",
+                                ),
                         );
                     }
                 }
@@ -2236,14 +2234,8 @@ impl<'a> TypeChecker<'a> {
                         self.diagnostics.push(
                             error_codes::SHARE_VIOLATION
                                 .emit(assign.span)
-                                .arg(
-                                    "detail",
-                                    format!(
-                                        "cannot assign to `share` parameter `{}`: \
-                                     share params are immutable from the callee's perspective",
-                                        id.name
-                                    ),
-                                )
+                                .arg("action", "assign to")
+                                .arg("name", &id.name)
                                 .build()
                                 .with_label("assignment to share param")
                                 .with_help(
@@ -2448,15 +2440,13 @@ impl<'a> TypeChecker<'a> {
                         );
                         if is_explicit_borrow && !is_primitive {
                             self.diagnostics.push(
-                                error_codes::BORROW_ESCAPE.emit(ret.span).arg("detail", format!(
-                                        "cannot return `borrow` parameter `{}`: \
-                                         borrows cannot escape the function",
-                                        id.name
-                                    )).build()
-                                .with_label("borrow escapes here")
-                                .with_help(
-                                    "return a copy or owned value instead of a `borrow` parameter",
-                                ),
+                                error_codes::BORROW_ESCAPE.emit(ret.span)
+                                    .arg("name", &id.name)
+                                    .build()
+                                    .with_label("borrow escapes here")
+                                    .with_help(
+                                        "return a copy or owned value instead of a `borrow` parameter",
+                                    ),
                             );
                         }
                     }

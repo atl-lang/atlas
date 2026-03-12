@@ -66,13 +66,15 @@ fn main(): void {
 
 #[test]
 fn test_ownership_borrow_return_escape_fires() {
+    // D-051: primitives (string, number, bool) are skipped for borrow escape.
+    // Use an array (non-primitive) to test AT3054.
     let src = r#"
-fn leak(borrow s: string): string {
-    return s;
+fn leak(borrow arr: number[]): number[] {
+    return arr;
 }
 fn main(): void {
-    let x: string = "hello";
-    let result: string = leak(x);
+    let x: number[] = [1, 2, 3];
+    let result: number[] = leak(x);
 }
 "#;
     let diags = errors(src);
@@ -81,13 +83,14 @@ fn main(): void {
 
 #[test]
 fn test_ownership_borrow_return_escape_message_has_param_name() {
+    // D-051: primitives skipped. Use array.
     let src = r#"
-fn leak(borrow my_param: string): string {
+fn leak(borrow my_param: number[]): number[] {
     return my_param;
 }
 fn main(): void {
-    let x: string = "hello";
-    let result: string = leak(x);
+    let x: number[] = [1, 2, 3];
+    let result: number[] = leak(x);
 }
 "#;
     let diags = errors(src);
@@ -106,12 +109,13 @@ fn main(): void {
 
 #[test]
 fn test_ownership_borrow_let_binding_escape_fires() {
+    // D-051: primitives skipped. Use array.
     let src = r#"
-fn process(borrow s: string): void {
-    let stored: string = s;
+fn process(borrow arr: number[]): void {
+    let stored: number[] = arr;
 }
 fn main(): void {
-    let x: string = "hello";
+    let x: number[] = [1, 2, 3];
     process(x);
 }
 "#;
@@ -125,16 +129,17 @@ fn main(): void {
 
 #[test]
 fn test_ownership_borrow_struct_field_escape_fires() {
+    // D-051: primitives skipped. Use array in struct field.
     let src = r#"
 struct Wrapper {
-    value: string,
+    values: number[],
 }
-fn wrap(borrow s: string): Wrapper {
-    let w: Wrapper = Wrapper { value: s };
+fn wrap(borrow arr: number[]): Wrapper {
+    let w: Wrapper = Wrapper { values: arr };
     return w;
 }
 fn main(): void {
-    let x: string = "hello";
+    let x: number[] = [1, 2, 3];
     let result: Wrapper = wrap(x);
 }
 "#;
