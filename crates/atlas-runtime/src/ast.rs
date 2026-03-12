@@ -80,6 +80,8 @@ pub enum Item {
     Export(ExportDecl),
     Extern(ExternDecl),
     TypeAlias(TypeAliasDecl),
+    /// Compile-time constant: `const PI = 3.14;`
+    Const(ConstDecl),
     /// Trait declaration: `trait Foo { fn method(...) -> T; }`
     Trait(TraitDecl),
     /// Impl block: `impl TraitName for TypeName { ... }`
@@ -130,6 +132,8 @@ pub enum ExportItem {
     Variable(VarDecl),
     /// Export type alias: `export type Foo = bar`
     TypeAlias(TypeAliasDecl),
+    /// Export const: `export const PI = 3.14`
+    Const(ConstDecl),
     /// Export struct: `export struct Person { name: string }`
     Struct(StructDecl),
     /// Export enum: `export enum Status { Active, Inactive }`
@@ -162,6 +166,20 @@ pub struct TypeAliasDecl {
     pub type_ref: TypeRef,
     /// Optional doc comment text (without leading ///)
     pub doc_comment: Option<String>,
+    pub span: Span,
+}
+
+/// Compile-time constant declaration
+///
+/// Syntax: `const NAME: Type = expr;` or `const NAME = expr;`
+/// The initializer must be compile-time evaluable (literals, const math, other consts).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ConstDecl {
+    pub name: Identifier,
+    /// Optional type annotation
+    pub type_ref: Option<TypeRef>,
+    /// Initializer expression (must be compile-time evaluable)
+    pub init: Expr,
     pub span: Span,
 }
 

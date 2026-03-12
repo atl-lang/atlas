@@ -176,6 +176,8 @@ impl Parser {
             ))
         } else if self.check(TokenKind::Type) {
             Ok(Item::TypeAlias(self.parse_type_alias(doc_comment)?))
+        } else if self.check(TokenKind::Const) {
+            Ok(Item::Const(self.parse_const_decl()?))
         } else if self.check(TokenKind::Trait) {
             Ok(Item::Trait(self.parse_trait(visibility)?))
         } else if self.check(TokenKind::Impl) {
@@ -611,6 +613,8 @@ impl Parser {
             }
         } else if self.check(TokenKind::Type) {
             ExportItem::TypeAlias(self.parse_type_alias(None)?)
+        } else if self.check(TokenKind::Const) {
+            ExportItem::Const(self.parse_const_decl()?)
         } else if self.check(TokenKind::Struct) {
             ExportItem::Struct(self.parse_struct(crate::ast::Visibility::Public)?)
         } else if self.check(TokenKind::Enum) {
@@ -621,7 +625,7 @@ impl Parser {
                 SYNTAX_ERROR
                     .emit(span)
                     .arg("detail", "unexpected token after `export`")
-                    .with_help("valid export targets: `export fn`, `export let`, `export type`, `export struct`, `export enum`")
+                    .with_help("valid export targets: `export fn`, `export let`, `export const`, `export type`, `export struct`, `export enum`")
                     .with_note("`export` must be followed by a declaration keyword"),
             );
             return Err(());
@@ -661,6 +665,38 @@ impl Parser {
             type_ref,
             doc_comment,
             span: type_span.merge(end_span),
+        })
+    }
+
+    /// Parse a const declaration: `const NAME: Type = expr;` or `const NAME = expr;`
+    fn parse_const_decl(&mut self) -> Result<ConstDecl, ()> {
+        let const_span = self.consume(TokenKind::Const, "Expected 'const'")?.span;
+
+        let name_token = self.consume_identifier("a constant name")?;
+        let name = Identifier {
+            name: name_token.lexeme.clone(),
+            span: name_token.span,
+        };
+
+        // Optional type annotation
+        let type_ref = if self.match_token(TokenKind::Colon) {
+            Some(self.parse_type_ref()?)
+        } else {
+            None
+        };
+
+        self.consume(TokenKind::Equal, "Expected '=' in const declaration")?;
+        let init = self.parse_expression()?;
+
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after const declaration")?
+            .span;
+
+        Ok(ConstDecl {
+            name,
+            type_ref,
+            init,
+            span: const_span.merge(end_span),
         })
     }
 
@@ -1261,6 +1297,7 @@ impl Parser {
                 | TokenKind::Mut
                 | TokenKind::Fn
                 | TokenKind::Type
+                | TokenKind::Const
                 | TokenKind::If
                 | TokenKind::Else
                 | TokenKind::While
@@ -1398,6 +1435,7 @@ impl Parser {
                 match self.peek().kind {
                     TokenKind::Fn
                     | TokenKind::Type
+                    | TokenKind::Const
                     | TokenKind::Let
                     | TokenKind::If
                     | TokenKind::While

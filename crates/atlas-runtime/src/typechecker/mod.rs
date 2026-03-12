@@ -523,6 +523,7 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::Function(func) => &func.name.name,
                     crate::ast::ExportItem::Variable(var) => &var.name.name,
                     crate::ast::ExportItem::TypeAlias(alias) => &alias.name.name,
+                    crate::ast::ExportItem::Const(decl) => &decl.name.name,
                     crate::ast::ExportItem::Struct(s) => &s.name.name,
                     crate::ast::ExportItem::Enum(e) => &e.name.name,
                 };
@@ -579,6 +580,9 @@ impl<'a> TypeChecker<'a> {
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are validated in a pre-pass
                     }
+                    crate::ast::ExportItem::Const(decl) => {
+                        self.check_const_decl(decl);
+                    }
                     crate::ast::ExportItem::Struct(s) => self.validate_struct_decl(s),
                     crate::ast::ExportItem::Enum(_) => {
                         // Enum declarations are validated in collect_enum_names pre-pass
@@ -591,6 +595,9 @@ impl<'a> TypeChecker<'a> {
             }
             Item::TypeAlias(_) => {
                 // Type aliases are validated in a pre-pass
+            }
+            Item::Const(decl) => {
+                self.check_const_decl(decl);
             }
             Item::Trait(trait_decl) => self.check_trait_decl(trait_decl),
             Item::Impl(impl_block) => self.check_impl_block(impl_block),
@@ -605,6 +612,56 @@ impl<'a> TypeChecker<'a> {
                 // so that parameters / let bindings typed as this enum don't resolve to Unknown.
                 self.enum_names.insert(enum_decl.name.name.clone());
             }
+        }
+    }
+
+    /// Check a const declaration: verify the initializer is compile-time evaluable.
+    fn check_const_decl(&mut self, decl: &crate::ast::ConstDecl) {
+        // Check that the initializer is compile-time evaluable
+        if !self.is_const_expr(&decl.init) {
+            self.diagnostics.push(
+                error_codes::CONST_NOT_COMPILE_TIME
+                    .emit(decl.init.span())
+                    .arg("name", &decl.name.name)
+                    .build()
+                    .with_label("not a compile-time constant")
+                    .with_help("const initializers must be literals, const references, or simple math on consts"),
+            );
+        }
+        // Type check the initializer expression and update symbol table
+        let init_type = self.check_expr(&decl.init);
+        // Update the const's type in the symbol table (was Unknown during binding)
+        if let Some(symbol) = self.symbol_table.lookup_mut(&decl.name.name) {
+            symbol.ty = init_type;
+        }
+    }
+
+    /// Check if an expression is compile-time evaluable (for const).
+    /// Allowed: literals, references to other consts, simple arithmetic on consts.
+    fn is_const_expr(&self, expr: &crate::ast::Expr) -> bool {
+        use crate::ast::Expr;
+        match expr {
+            // Literals are always compile-time
+            Expr::Literal(_, _) => true,
+            // Identifiers are const if they refer to another const
+            Expr::Identifier(id) => self.symbol_table.get_const(&id.name).is_some(),
+            // Unary ops on const exprs are const
+            Expr::Unary(unary) => self.is_const_expr(&unary.expr),
+            // Binary ops on const exprs are const (arithmetic only)
+            Expr::Binary(binary) => {
+                use crate::ast::BinaryOp;
+                let is_arithmetic = matches!(
+                    binary.op,
+                    BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mul | BinaryOp::Div | BinaryOp::Mod
+                );
+                is_arithmetic
+                    && self.is_const_expr(&binary.left)
+                    && self.is_const_expr(&binary.right)
+            }
+            // Grouping inherits constness
+            Expr::Group(group) => self.is_const_expr(&group.expr),
+            // Everything else is not compile-time
+            _ => false,
         }
     }
 

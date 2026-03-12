@@ -397,6 +397,18 @@ fn extract_indexed_symbols(uri: &Url, text: &str, program: &Program) -> Vec<Inde
                         container_name: None,
                     });
                 }
+                ExportItem::Const(decl) => {
+                    let range = span_to_range(text, decl.span);
+                    symbols.push(IndexedSymbol {
+                        name: decl.name.name.clone(),
+                        kind: SymbolKind::CONSTANT,
+                        location: Location {
+                            uri: uri.clone(),
+                            range,
+                        },
+                        container_name: None,
+                    });
+                }
             },
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl symbol extraction handled in Block 3
@@ -418,6 +430,18 @@ fn extract_indexed_symbols(uri: &Url, text: &str, program: &Program) -> Vec<Inde
                 symbols.push(IndexedSymbol {
                     name: enum_decl.name.name.clone(),
                     kind: SymbolKind::ENUM,
+                    location: Location {
+                        uri: uri.clone(),
+                        range,
+                    },
+                    container_name: None,
+                });
+            }
+            Item::Const(decl) => {
+                let range = span_to_range(text, decl.span);
+                symbols.push(IndexedSymbol {
+                    name: decl.name.name.clone(),
+                    kind: SymbolKind::CONSTANT,
                     location: Location {
                         uri: uri.clone(),
                         range,
@@ -735,6 +759,22 @@ pub fn extract_document_symbols(text: &str, program: &Program) -> Vec<DocumentSy
                         name: e.name.name.clone(),
                         detail: Some("export enum".to_string()),
                         kind: SymbolKind::ENUM,
+                        range,
+                        selection_range,
+                        children: None,
+                        tags: None,
+                        deprecated: None,
+                    });
+                }
+                ExportItem::Const(decl) => {
+                    let range = span_to_range(text, decl.span);
+                    let selection_range = span_to_range(text, decl.name.span);
+
+                    #[allow(deprecated)]
+                    symbols.push(DocumentSymbol {
+                        name: decl.name.name.clone(),
+                        detail: Some("export const".to_string()),
+                        kind: SymbolKind::CONSTANT,
                         range,
                         selection_range,
                         children: None,

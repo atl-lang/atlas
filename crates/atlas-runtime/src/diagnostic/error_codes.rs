@@ -1409,6 +1409,18 @@ pub const GENERIC_WARNING: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Runtime,
 };
 
+// ── Const Errors ───────────────────────────────────────────────────────────────
+
+pub const CONST_NOT_COMPILE_TIME: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT3060",
+    level: DiagnosticLevel::Error,
+    title: "const value must be compile-time evaluable",
+    message_template: "const `{name}` initializer is not a compile-time constant",
+    static_help: Some("use literals, const references, or simple arithmetic on consts"),
+    static_note: Some("const values are inlined at compile time and must be known statically"),
+    domain: DiagnosticDomain::Typechecker,
+};
+
 // ── Descriptor Registry ────────────────────────────────────────────────────────
 
 /// Lookup a descriptor by error code.  O(n) scan — only used by `atlas explain`
@@ -1553,4 +1565,5 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &UNKNOWN_OPCODE,
     &GENERIC_ERROR,
     &GENERIC_WARNING,
+    &CONST_NOT_COMPILE_TIME,
 ];

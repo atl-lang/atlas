@@ -160,6 +160,10 @@ impl FormatVisitor {
                 self.emit_leading_comments(alias.span.start);
                 self.visit_type_alias(alias);
             }
+            Item::Const(decl) => {
+                self.emit_leading_comments(decl.span.start);
+                self.visit_const_decl(decl);
+            }
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl formatting handled in Block 3
             }
@@ -334,6 +338,23 @@ impl FormatVisitor {
         self.visit_type_ref(&alias.type_ref);
         self.write(";");
         self.emit_trailing_comment(alias.span.end);
+        self.writeln();
+    }
+
+    fn visit_const_decl(&mut self, decl: &atlas_runtime::ast::ConstDecl) {
+        self.write_indent();
+        self.write("const ");
+        self.write(&decl.name.name);
+
+        if let Some(ref type_ref) = decl.type_ref {
+            self.write(": ");
+            self.visit_type_ref(type_ref);
+        }
+
+        self.write(" = ");
+        self.visit_expr(&decl.init);
+        self.write(";");
+        self.emit_trailing_comment(decl.span.end);
         self.writeln();
     }
 
@@ -1087,6 +1108,9 @@ impl FormatVisitor {
             }
             ExportItem::TypeAlias(alias) => {
                 self.visit_type_alias(alias);
+            }
+            ExportItem::Const(decl) => {
+                self.visit_const_decl(decl);
             }
             ExportItem::Struct(s) => {
                 self.visit_struct_decl(s);

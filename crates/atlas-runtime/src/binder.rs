@@ -68,6 +68,8 @@ impl Binder {
         self.collect_struct_decl_prepass(program);
         // Phase 0b: Collect type aliases (so they can be used in signatures)
         self.collect_type_aliases(program);
+        // Phase 0c: Collect const declarations (so they can be used in expressions)
+        self.collect_consts(program);
 
         // Phase 1: Collect all top-level function declarations (hoisting)
         for item in &program.items {
@@ -101,12 +103,16 @@ impl Binder {
                             ExportItem::Function(func) => &func.name.name,
                             ExportItem::Variable(var) => &var.name.name,
                             ExportItem::TypeAlias(alias) => &alias.name.name,
+                            ExportItem::Const(decl) => &decl.name.name,
                             ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
                         };
 
                         let mut exported = self.symbol_table.mark_exported(name);
                         if !exported {
                             exported = self.symbol_table.mark_type_alias_exported(name);
+                        }
+                        if !exported {
+                            exported = self.symbol_table.mark_const_exported(name);
                         }
 
                         if !exported {
@@ -152,6 +158,8 @@ impl Binder {
         self.collect_struct_decl_prepass(program);
         // Phase 0b: Collect type aliases (so they can be used in signatures)
         self.collect_type_aliases(program);
+        // Phase 0c: Collect const declarations (so they can be used in expressions)
+        self.collect_consts(program);
 
         // Bind imports early to support aliases in signatures
         for item in &program.items {
@@ -192,12 +200,16 @@ impl Binder {
                             ExportItem::Function(func) => &func.name.name,
                             ExportItem::Variable(var) => &var.name.name,
                             ExportItem::TypeAlias(alias) => &alias.name.name,
+                            ExportItem::Const(decl) => &decl.name.name,
                             ExportItem::Struct(_) | ExportItem::Enum(_) => unreachable!(),
                         };
 
                         let mut exported = self.symbol_table.mark_exported(name);
                         if !exported {
                             exported = self.symbol_table.mark_type_alias_exported(name);
+                        }
+                        if !exported {
+                            exported = self.symbol_table.mark_const_exported(name);
                         }
 
                         if !exported {
@@ -432,6 +444,9 @@ impl Binder {
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are handled during collection
                     }
+                    crate::ast::ExportItem::Const(_) => {
+                        // Consts are handled during collection
+                    }
                     crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
                         // Struct/enum type declarations are type-system only
                     }
@@ -443,6 +458,9 @@ impl Binder {
             }
             Item::TypeAlias(_) => {
                 // Type aliases are handled during collection
+            }
+            Item::Const(_) => {
+                // Consts are handled during collection
             }
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl binding handled in Block 3 (trait system)
@@ -478,6 +496,9 @@ impl Binder {
                     crate::ast::ExportItem::TypeAlias(_) => {
                         // Type aliases are handled during collection
                     }
+                    crate::ast::ExportItem::Const(_) => {
+                        // Consts are handled during collection
+                    }
                     crate::ast::ExportItem::Struct(_) | crate::ast::ExportItem::Enum(_) => {
                         // Struct/enum type declarations are type-system only
                     }
@@ -489,6 +510,9 @@ impl Binder {
             }
             Item::TypeAlias(_) => {
                 // Type aliases are handled during collection
+            }
+            Item::Const(_) => {
+                // Consts are handled during collection
             }
             Item::Trait(_) | Item::Impl(_) => {
                 // Trait/impl binding handled in Block 3 (trait system)
@@ -623,6 +647,7 @@ impl Binder {
                                         SymbolKind::Variable => "variable",
                                         SymbolKind::Parameter => "parameter",
                                         SymbolKind::Builtin => "builtin",
+                                        SymbolKind::Const => "constant",
                                     };
                                     self.diagnostics.push(
                                         error_codes::PRIVATE_ACCESS_VIOLATION
@@ -835,6 +860,56 @@ impl Binder {
                         .saturating_sub(existing_alias.name.span.start),
                     message: format!("'{}' first defined here", existing_alias.name.name),
 
+                    snippet: String::new(),
+                    label: String::new(),
+                    is_occurrence: false,
+                });
+            }
+
+            self.diagnostics.push(diag);
+        }
+    }
+
+    fn collect_consts(&mut self, program: &Program) {
+        for item in &program.items {
+            match item {
+                Item::Const(decl) => {
+                    self.define_const(decl);
+                }
+                Item::Export(export_decl) => {
+                    if let ExportItem::Const(decl) = &export_decl.item {
+                        self.define_const(decl);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    fn define_const(&mut self, decl: &ConstDecl) {
+        if let Err(err) = self.symbol_table.define_const(decl.clone()) {
+            let (msg, existing) = *err;
+            let mut diag = error_codes::DUPLICATE_DECLARATION
+                .emit(decl.name.span)
+                .arg("detail", &msg)
+                .build()
+                .with_label("duplicate constant")
+                .with_help(format!(
+                    "rename or remove one of the '{}' constants",
+                    decl.name.name
+                ));
+
+            if let Some(existing_const) = existing {
+                diag = diag.with_related_location(crate::diagnostic::RelatedLocation {
+                    file: "<input>".to_string(),
+                    line: 1,
+                    column: existing_const.name.span.start + 1,
+                    length: existing_const
+                        .name
+                        .span
+                        .end
+                        .saturating_sub(existing_const.name.span.start),
+                    message: format!("'{}' first defined here", existing_const.name.name),
                     snippet: String::new(),
                     label: String::new(),
                     is_occurrence: false,

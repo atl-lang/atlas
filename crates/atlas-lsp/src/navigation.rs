@@ -175,7 +175,7 @@ fn find_references_in_item(item: &Item, identifier: &str, references: &mut Vec<R
                 references.push(Range::default());
             }
         }
-        Item::Import(_) | Item::Export(_) | Item::Extern(_) => {}
+        Item::Import(_) | Item::Export(_) | Item::Extern(_) | Item::Const(_) => {}
         Item::Trait(_) | Item::Impl(_) => {}
         Item::Struct(struct_decl) => {
             if struct_decl.name.name == identifier {

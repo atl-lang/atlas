@@ -90,7 +90,7 @@ pub fn extract_all_names(program: &Program) -> Vec<String> {
             Item::TypeAlias(alias) => {
                 names.push(alias.name.name.clone());
             }
-            Item::Import(_) | Item::Export(_) | Item::Extern(_) => {
+            Item::Import(_) | Item::Export(_) | Item::Extern(_) | Item::Const(_) => {
                 // Skip for now
             }
             Item::Trait(_) | Item::Impl(_) => {

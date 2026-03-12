@@ -117,3 +117,6 @@ mod anonfn_part_2;
 
 #[path = "frontend_integration/drop_trait.rs"]
 mod drop_trait;
+
+#[path = "frontend_integration/const_decl.rs"]
+mod const_decl;

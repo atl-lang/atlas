@@ -124,6 +124,9 @@ fn extract_item_folds(text: &str, item: &Item, ranges: &mut Vec<FoldingRange>) {
                 });
             }
         }
+        Item::Const(_) => {
+            // Const declarations are single-line, no folding needed
+        }
     }
 }
 

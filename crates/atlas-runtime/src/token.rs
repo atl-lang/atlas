@@ -130,6 +130,10 @@ pub enum TokenKind {
     /// `static` keyword — static method modifier
     Static,
 
+    // Const (v0.3+ B39)
+    /// `const` keyword — compile-time constant declaration
+    Const,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -276,6 +280,7 @@ impl TokenKind {
             "private" => Some(TokenKind::Private),
             "internal" => Some(TokenKind::Internal),
             "static" => Some(TokenKind::Static),
+            "const" => Some(TokenKind::Const),
             _ => None,
         }
     }
@@ -324,6 +329,7 @@ impl TokenKind {
             TokenKind::Private => "private",
             TokenKind::Internal => "internal",
             TokenKind::Static => "static",
+            TokenKind::Const => "const",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",

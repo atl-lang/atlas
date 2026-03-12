@@ -102,6 +102,10 @@ pub struct Compiler {
     /// Populated when enum declarations are processed. Used to resolve bare variant
     /// constructor calls like `Unknown(raw)` or `Quit` without `EnumName::` prefix.
     pub(super) enum_variants: std::collections::HashMap<String, (String, usize)>,
+    /// Compile-time constant values: const_name -> Value.
+    /// Populated from const declarations before compilation. Used to inline const
+    /// values at usage sites.
+    pub(super) const_values: std::collections::HashMap<String, crate::value::Value>,
 }
 
 impl Compiler {
@@ -123,6 +127,7 @@ impl Compiler {
             async_fn_names: std::collections::HashSet::new(),
             in_async_fn: false,
             enum_variants: std::collections::HashMap::new(),
+            const_values: std::collections::HashMap::new(),
         }
     }
 
@@ -151,6 +156,7 @@ impl Compiler {
             async_fn_names: std::collections::HashSet::new(),
             in_async_fn: false,
             enum_variants: std::collections::HashMap::new(),
+            const_values: std::collections::HashMap::new(),
         }
     }
 
@@ -214,6 +220,91 @@ impl Compiler {
         }
     }
 
+    /// Register const values from the program for inlining.
+    /// Called before compile() to evaluate const expressions at compile time.
+    pub fn register_consts(&mut self, program: &Program) {
+        for item in &program.items {
+            match item {
+                Item::Const(decl) => {
+                    if let Some(value) = self.eval_const_expr(&decl.init) {
+                        self.const_values.insert(decl.name.name.clone(), value);
+                    }
+                }
+                Item::Export(export_decl) => {
+                    if let crate::ast::ExportItem::Const(decl) = &export_decl.item {
+                        if let Some(value) = self.eval_const_expr(&decl.init) {
+                            self.const_values.insert(decl.name.name.clone(), value);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Evaluate a const expression at compile time.
+    /// Returns None if the expression cannot be evaluated at compile time.
+    fn eval_const_expr(&self, expr: &Expr) -> Option<crate::value::Value> {
+        use crate::ast::{BinaryOp, Literal, UnaryOp};
+        use crate::value::Value;
+
+        match expr {
+            Expr::Literal(lit, _) => match lit {
+                Literal::Number(n) => Some(Value::Number(*n)),
+                Literal::String(s) => Some(Value::string(s)),
+                Literal::Bool(b) => Some(Value::Bool(*b)),
+                Literal::Null => Some(Value::Null),
+            },
+            Expr::Identifier(id) => {
+                // Reference to another const
+                self.const_values.get(&id.name).cloned()
+            }
+            Expr::Unary(unary) => {
+                let val = self.eval_const_expr(&unary.expr)?;
+                match unary.op {
+                    UnaryOp::Negate => {
+                        if let Value::Number(n) = val {
+                            Some(Value::Number(-n))
+                        } else {
+                            None
+                        }
+                    }
+                    UnaryOp::Not => {
+                        if let Value::Bool(b) = val {
+                            Some(Value::Bool(!b))
+                        } else {
+                            None
+                        }
+                    }
+                }
+            }
+            Expr::Binary(binary) => {
+                let left = self.eval_const_expr(&binary.left)?;
+                let right = self.eval_const_expr(&binary.right)?;
+
+                match (left, right) {
+                    (Value::Number(l), Value::Number(r)) => match binary.op {
+                        BinaryOp::Add => Some(Value::Number(l + r)),
+                        BinaryOp::Sub => Some(Value::Number(l - r)),
+                        BinaryOp::Mul => Some(Value::Number(l * r)),
+                        BinaryOp::Div => {
+                            if r != 0.0 {
+                                Some(Value::Number(l / r))
+                            } else {
+                                None
+                            }
+                        }
+                        BinaryOp::Mod => Some(Value::Number(l % r)),
+                        _ => None,
+                    },
+                    _ => None,
+                }
+            }
+            Expr::Group(group) => self.eval_const_expr(&group.expr),
+            _ => None,
+        }
+    }
+
     /// Compile an AST to bytecode
     pub fn compile(&mut self, program: &Program) -> Result<Bytecode, Vec<Diagnostic>> {
         // Check if program defines a zero-arg fn main()
@@ -236,6 +327,9 @@ impl Compiler {
                 }
             }
         }
+
+        // Collect const values for inlining
+        self.register_consts(program);
 
         // Compile all top-level items
         for item in &program.items {
@@ -290,6 +384,10 @@ impl Compiler {
                         self.compile_stmt(&crate::ast::Stmt::VarDecl(var.clone()))
                     }
                     crate::ast::ExportItem::TypeAlias(_) => Ok(()),
+                    crate::ast::ExportItem::Const(_) => {
+                        // Const values are inlined at usage sites — no bytecode emitted here
+                        Ok(())
+                    }
                     crate::ast::ExportItem::Struct(_) => {
                         // Type declarations only — no bytecode generated
                         Ok(())
@@ -307,6 +405,10 @@ impl Compiler {
                 Ok(())
             }
             Item::TypeAlias(_) => Ok(()),
+            Item::Const(_) => {
+                // Const values are inlined at usage sites — no bytecode emitted here
+                Ok(())
+            }
             Item::Trait(_) => {
                 // Trait declarations are type-info only — no bytecode emitted.
                 // The typechecker's TraitRegistry holds all needed runtime-check info.

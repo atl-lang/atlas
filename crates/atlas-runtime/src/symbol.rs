@@ -1,6 +1,6 @@
 //! Symbol table and name binding
 
-use crate::ast::{EnumDecl, StructDecl, TypeAliasDecl, Visibility};
+use crate::ast::{ConstDecl, EnumDecl, StructDecl, TypeAliasDecl, Visibility};
 use crate::span::Span;
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
@@ -35,6 +35,8 @@ pub enum SymbolKind {
     Parameter,
     /// Builtin function
     Builtin,
+    /// Compile-time constant
+    Const,
 }
 
 /// Symbol table for name resolution
@@ -52,6 +54,10 @@ pub struct SymbolTable {
     struct_exports: HashMap<String, StructDecl>,
     /// Exported enum declarations (name -> EnumDecl)
     enum_exports: HashMap<String, EnumDecl>,
+    /// Compile-time constant declarations (name -> ConstDecl)
+    const_decls: HashMap<String, ConstDecl>,
+    /// Exported const names
+    const_exports: HashSet<String>,
 }
 
 impl SymbolTable {
@@ -64,6 +70,8 @@ impl SymbolTable {
             type_alias_exports: HashSet::new(),
             struct_exports: HashMap::new(),
             enum_exports: HashMap::new(),
+            const_decls: HashMap::new(),
+            const_exports: HashSet::new(),
         }
     }
     /// Define a type alias in the current module
@@ -95,6 +103,55 @@ impl SymbolTable {
     pub fn mark_type_alias_exported(&mut self, name: &str) -> bool {
         if self.type_aliases.contains_key(name) {
             self.type_alias_exports.insert(name.to_string());
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Define a compile-time constant in the current module
+    pub fn define_const(
+        &mut self,
+        decl: ConstDecl,
+    ) -> Result<(), Box<(String, Option<ConstDecl>)>> {
+        if let Some(existing) = self.const_decls.get(&decl.name.name) {
+            return Err(Box::new((
+                format!("Constant '{}' already defined", decl.name.name),
+                Some(existing.clone()),
+            )));
+        }
+        // Also register as a Symbol so lookup() finds it
+        let symbol = Symbol {
+            name: decl.name.name.clone(),
+            ty: Type::Unknown, // Will be resolved during typechecking
+            mutable: false,
+            kind: SymbolKind::Const,
+            span: decl.name.span,
+            exported: false,
+            visibility: Visibility::Private,
+        };
+        // Add to global scope (scopes[0])
+        if let Some(global) = self.scopes.first_mut() {
+            global.insert(decl.name.name.clone(), symbol);
+        }
+        self.const_decls.insert(decl.name.name.clone(), decl);
+        Ok(())
+    }
+
+    /// Look up a const declaration by name
+    pub fn get_const(&self, name: &str) -> Option<&ConstDecl> {
+        self.const_decls.get(name)
+    }
+
+    /// Get all const declarations
+    pub fn const_decls(&self) -> &HashMap<String, ConstDecl> {
+        &self.const_decls
+    }
+
+    /// Mark a const as exported
+    pub fn mark_const_exported(&mut self, name: &str) -> bool {
+        if self.const_decls.contains_key(name) {
+            self.const_exports.insert(name.to_string());
             true
         } else {
             false

@@ -208,7 +208,8 @@ fn classify_token(
         | TokenKind::Pub
         | TokenKind::Private
         | TokenKind::Internal
-        | TokenKind::Static => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Static
+        | TokenKind::Const => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),
@@ -301,6 +302,9 @@ fn classify_token(
                             token_type_idx::FUNCTION,
                             token_modifier_bits::DEFAULT_LIBRARY,
                         ),
+                        atlas_runtime::symbol::SymbolKind::Const => {
+                            (token_type_idx::VARIABLE, token_modifier_bits::READONLY)
+                        }
                     };
                     return Some(SemanticTokenInfo {
                         start: token.span.start,

@@ -43,6 +43,7 @@ pub enum SymbolKind {
     Type,
     Struct,
     Enum,
+    Constant,
 }
 
 /// Workspace-wide symbol index
@@ -281,6 +282,16 @@ impl SymbolIndex {
                         ctx,
                     );
                 }
+                ExportItem::Const(decl) => {
+                    self.add_definition(
+                        &decl.name.name,
+                        &decl.name.span,
+                        SymbolKind::Constant,
+                        None,
+                        ctx,
+                    );
+                    self.index_expr(&decl.init, ctx, false);
+                }
                 ExportItem::Struct(s) => {
                     self.add_definition(&s.name.name, &s.name.span, SymbolKind::Struct, None, ctx);
                 }
@@ -311,6 +322,16 @@ impl SymbolIndex {
                     None,
                     ctx,
                 );
+            }
+            Item::Const(decl) => {
+                self.add_definition(
+                    &decl.name.name,
+                    &decl.name.span,
+                    SymbolKind::Constant,
+                    None,
+                    ctx,
+                );
+                self.index_expr(&decl.init, ctx, false);
             }
         }
     }

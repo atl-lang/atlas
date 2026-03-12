@@ -131,6 +131,7 @@ fn symbol_kind_to_string(kind: &SymbolKind) -> String {
         SymbolKind::Parameter => "parameter".to_string(),
         SymbolKind::Function => "function".to_string(),
         SymbolKind::Builtin => "builtin".to_string(),
+        SymbolKind::Const => "constant".to_string(),
     }
 }
 

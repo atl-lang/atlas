@@ -461,6 +461,13 @@ fn find_symbol_hover(symbols: &SymbolTable, identifier: &str) -> Option<String> 
         SymbolKind::Builtin => {
             hover.push_str(&format!("(builtin) {}", symbol.name));
         }
+        SymbolKind::Const => {
+            hover.push_str(&format!(
+                "const {}: {}",
+                symbol.name,
+                symbol.ty.display_name()
+            ));
+        }
     }
 
     hover.push_str("\n```");

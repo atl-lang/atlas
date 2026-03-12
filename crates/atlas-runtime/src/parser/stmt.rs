@@ -497,6 +497,7 @@ impl Parser {
         // Skip tokens that definitely start statements, not expressions
         match self.peek().kind {
             TokenKind::Let
+            | TokenKind::Const
             | TokenKind::If
             | TokenKind::While
             | TokenKind::For

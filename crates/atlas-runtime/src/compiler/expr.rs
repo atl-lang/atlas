@@ -714,6 +714,14 @@ impl Compiler {
 
     /// Compile an identifier (variable access)
     fn compile_identifier(&mut self, ident: &Identifier) -> Result<(), Vec<Diagnostic>> {
+        // Check for compile-time constant first — inline the value directly
+        if let Some(const_val) = self.const_values.get(&ident.name).cloned() {
+            let idx = self.bytecode.add_constant(const_val);
+            self.bytecode.emit(Opcode::Constant, ident.span);
+            self.bytecode.emit_u16(idx);
+            return Ok(());
+        }
+
         // User-defined unit enum variants (e.g. `Quit` from `enum CommandResult { Quit, ... }`).
         // Emit EnumVariant opcode directly — avoids GetGlobal lookup failure.
         // Skip stdlib constructors (Ok, Err, Some, None).
