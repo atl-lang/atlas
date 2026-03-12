@@ -14,8 +14,8 @@ use std::path::{Path, PathBuf};
 
 /// Read one line from stdin (strips trailing newline).
 ///
-/// Blocks until the user presses Enter. Returns the line as a string.
-/// EOF returns an empty string.
+/// Blocks until the user presses Enter. Returns `Some(line)` on success,
+/// `None` on EOF. This prevents infinite loops when stdin is exhausted.
 pub fn io_read_line(
     args: &[Value],
     span: Span,
@@ -25,13 +25,20 @@ pub fn io_read_line(
         return Err(stdlib_arity_error("io.readLine", 0, args.len(), span));
     }
     let mut line = String::new();
-    std::io::stdin()
-        .lock()
-        .read_line(&mut line)
-        .map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to read from stdin: {}", e),
-            span,
-        })?;
+    let bytes_read =
+        std::io::stdin()
+            .lock()
+            .read_line(&mut line)
+            .map_err(|e| RuntimeError::IoError {
+                message: format!("Failed to read from stdin: {}", e),
+                span,
+            })?;
+
+    // EOF: read_line returns Ok(0) when stdin is exhausted
+    if bytes_read == 0 {
+        return Ok(Value::Option(None));
+    }
+
     // Strip trailing \n or \r\n
     if line.ends_with('\n') {
         line.pop();
@@ -39,12 +46,13 @@ pub fn io_read_line(
             line.pop();
         }
     }
-    Ok(Value::string(line))
+    Ok(Value::Option(Some(Box::new(Value::string(line)))))
 }
 
 /// Print a prompt then read one line from stdin (strips trailing newline).
 ///
 /// Flushes stdout before reading so the prompt appears immediately.
+/// Returns `Some(line)` on success, `None` on EOF.
 pub fn io_read_line_prompt(
     args: &[Value],
     span: Span,
@@ -73,20 +81,27 @@ pub fn io_read_line_prompt(
             span,
         })?;
     let mut line = String::new();
-    std::io::stdin()
-        .lock()
-        .read_line(&mut line)
-        .map_err(|e| RuntimeError::IoError {
-            message: format!("Failed to read from stdin: {}", e),
-            span,
-        })?;
+    let bytes_read =
+        std::io::stdin()
+            .lock()
+            .read_line(&mut line)
+            .map_err(|e| RuntimeError::IoError {
+                message: format!("Failed to read from stdin: {}", e),
+                span,
+            })?;
+
+    // EOF: read_line returns Ok(0) when stdin is exhausted
+    if bytes_read == 0 {
+        return Ok(Value::Option(None));
+    }
+
     if line.ends_with('\n') {
         line.pop();
         if line.ends_with('\r') {
             line.pop();
         }
     }
-    Ok(Value::string(line))
+    Ok(Value::Option(Some(Box::new(Value::string(line)))))
 }
 
 /// Read entire file as UTF-8 string

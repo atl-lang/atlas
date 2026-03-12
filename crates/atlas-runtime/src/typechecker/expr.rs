@@ -315,9 +315,15 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             | "tcpAccept" | "udpSend" | "udpClose" | "udpSetTimeout" | "tlsWrite" | "tlsClose"
             | "wsSend" | "wsSendBinary" | "wsClose" | "wsPing",
         ) => Type::Null,
-        // Io namespace
-        ("io", "readLine" | "readLinePrompt") => Type::String,
-        ("Io", "readLine" | "readLinePrompt") => Type::String,
+        // Io namespace — returns Option<string> (None on EOF)
+        ("io", "readLine" | "readLinePrompt") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
+        ("Io", "readLine" | "readLinePrompt") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
         // Console namespace — all methods return void (Null)
         ("console", "log" | "println" | "print" | "error" | "warn" | "debug") => Type::Null,
         // Gzip namespace
