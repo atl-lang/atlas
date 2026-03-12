@@ -1129,3 +1129,72 @@ fn test_bare_unit_variant_stored_vm() {
     let vm = vm_eval(source).unwrap_or(Value::Null);
     assert_eq!(vm, expected, "VM wrong");
 }
+
+// ============================================================================
+// H-301: Match expression in fn main() must not cause infinite loop
+// ============================================================================
+
+#[test]
+fn test_h301_match_in_fn_main_no_infinite_loop() {
+    // H-301: When fn main() ends with a match expression (tail_expr), the compiler
+    // was not emitting Return after the match. This caused execution to fall through
+    // to the auto-call code that re-invokes main(), causing an infinite loop.
+    let source = r#"
+        fn main(): string {
+            let x: number = 1;
+            match x {
+                1 => "one",
+                2 => "two",
+                _ => "other"
+            }
+        }
+    "#;
+    // This should complete without infinite loop. If the bug exists, vm_eval would
+    // hang forever or stack overflow. The test passing proves the fix works.
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, Value::string("one"), "Match should return 'one'");
+}
+
+#[test]
+fn test_h301_match_as_return_value() {
+    // Variant: match is the direct return value (tail expression)
+    let source = r#"
+        fn get_label(x: number): string {
+            match x {
+                1 => "one",
+                2 => "two",
+                _ => "other"
+            }
+        }
+        fn main(): string {
+            get_label(2)
+        }
+    "#;
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(vm, Value::string("two"), "Match should return 'two'");
+}
+
+#[test]
+fn test_h301_nested_match_in_main() {
+    // Nested match should also work correctly
+    let source = r#"
+        fn main(): string {
+            let x: number = 1;
+            let y: number = 2;
+            match x {
+                1 => match y {
+                    1 => "x=1, y=1",
+                    2 => "x=1, y=2",
+                    _ => "x=1, y=other"
+                },
+                _ => "x=other"
+            }
+        }
+    "#;
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    assert_eq!(
+        vm,
+        Value::string("x=1, y=2"),
+        "Nested match should return 'x=1, y=2'"
+    );
+}
