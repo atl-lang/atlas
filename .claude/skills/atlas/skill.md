@@ -23,21 +23,14 @@ description: Atlas compiler — core AI workflow. Architecture, brainstorming, i
 ## On Skill Activation (EVERY SESSION — DO THIS FIRST)
 
 ```bash
-pt go   # returns sitrep, handoff, P0s, stale issues (model detected automatically)
-pt in-progress              # Check what's already claimed — avoid duplicate work
+pt go              # Session start — sitrep, handoff, P0s, CI status
+pt in-progress     # Check what's already claimed — avoid duplicate work
 ```
 
-**If sitrep shows `📄 ~/.project-tracker/handoffs/atlas-handoff.md` → READ IT NOW. Not optional.**
-```bash
-# Read the handoff file — it has in-flight work, next action, critical context
-# that cannot fit in the 300-char DB summary. It is written by every agent at close.
-```
-
-This gives you: session ID, mode, handoff, P0 blockers, git state, block progress, active plans.
+This gives you: session ID, mode, handoff from last session, P0 blockers, git state, block progress.
 
 **If `Work: BLOCKED`** → Fix P0 issues first. No new features.
 **If stale issues shown** → Check if fixed, then `fix` or `abandon`.
-**Active plans:** `pt plans` — shows open PL-XXX plans (brainstorm outcomes).
 **Quick orientation mid-session:** `pt context` (no session overhead).
 
 **After orienting — invoke the right skill BEFORE doing anything else:**
@@ -143,28 +136,33 @@ pt complete-block B<N> "what shipped, bugs filed"  # Final phase only (after pt 
 
 ## Issue Lifecycle — CLOSE IMMEDIATELY, NOT AT END
 
-**Rule:** Fix → verify → close issue → commit → THEN move to the next issue. Never batch closures at session end.
+**Rule:** Fix → verify → close issue → commit → THEN move to the next issue.
 
 ```bash
 pt claim H-001                                       # Before starting
 # ... implement, verify ...
-pt fix H-001 "Root cause (specific: what was wrong)" "Fix (specific: what changed)"
+pt fix H-001 "cause" "fix" "scope-audit"            # Auto-notes session summary
 git commit -m "fix(...): description"
 # NOW move to next issue
 ```
 
-**Session close** — required at end of every session, even if interrupted:
-
+**Phase completion:**
 ```bash
-pt done S-XXX success \
-  "Fixed H-001 (root cause → fix). Implemented Phase-04 (async parser wiring)." \
-  "claim H-002 — fix Y in crates/atlas-runtime/src/eval.rs, grep for fn eval_expr"
+pt phase-done B<N>-P<XX> "outcome"                  # Auto-notes session summary
 ```
 
-- **Arg 3 (summary):** backward-looking — what was done. One clause per issue/phase, root cause + fix. No bullet dumps.
-- **Arg 4 (next):** forward-looking — what the next agent does first. Issue ID + action + file/function. Specific enough to act on cold.
+**Session close** — required at end of every session:
 
-The next agent sees this as `── Next Action (from last session) ──` in `pt go`. No file to write, no extra steps.
+```bash
+pt done S-XXX success "summary" "next action"
+```
+
+- **Arg 3 (summary):** what was done (issue IDs + root causes)
+- **Arg 4 (next):** what next agent does first (specific enough to act cold)
+- **Auto-cleanup:** Merged branches deleted, unmerged branches block close
+- **P0 warning:** Shows if P0 issues still open
+
+Next agent sees handoff in `pt go` → `── Next Action ──`.
 
 ## Work Selection
 P0 blockers > P1 bugs > P2 features > cleanup
