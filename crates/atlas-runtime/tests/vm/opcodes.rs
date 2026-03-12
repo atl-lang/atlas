@@ -157,10 +157,12 @@ fn test_vm_call_frame_creation() {
     let func_ref = FunctionRef {
         name: "test_func".to_string(),
         arity: 0,
+        required_arity: 0,
         bytecode_offset: function_offset,
         local_count: 1,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     };
@@ -191,10 +193,12 @@ fn test_vm_call_with_arguments() {
     let func_ref = FunctionRef {
         name: "add".to_string(),
         arity: 2,
+        required_arity: 2,
         bytecode_offset: function_offset,
         local_count: 1,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     };
@@ -232,10 +236,12 @@ fn test_vm_call_wrong_arity() {
     let func_ref = FunctionRef {
         name: "test".to_string(),
         arity: 2,
+        required_arity: 2,
         bytecode_offset: 10,
         local_count: 2,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     };

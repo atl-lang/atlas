@@ -31,10 +31,12 @@ fn function_call_bytecode() -> Bytecode {
     let func_ref = FunctionRef {
         name: "answer".to_string(),
         arity: 0,
+        required_arity: 0,
         bytecode_offset: fn_body_offset,
         local_count: 1,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     };

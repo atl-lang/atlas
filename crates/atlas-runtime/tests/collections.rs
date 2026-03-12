@@ -1913,10 +1913,12 @@ fn test_type_names() {
         Value::Function(FunctionRef {
             name: "test".to_string(),
             arity: 0,
+            required_arity: 0,
             bytecode_offset: 0,
             local_count: 0,
             param_ownership: vec![],
             param_names: vec![],
+            defaults: vec![],
             return_ownership: None,
             is_async: false,
         })
@@ -1979,10 +1981,12 @@ fn test_to_string_function() {
     let func = Value::Function(FunctionRef {
         name: "test".to_string(),
         arity: 2,
+        required_arity: 2,
         bytecode_offset: 0,
         local_count: 0,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     });
@@ -2063,30 +2067,36 @@ fn test_function_equality() {
     let func1 = Value::Function(FunctionRef {
         name: "test".to_string(),
         arity: 0,
+        required_arity: 0,
         bytecode_offset: 0,
         local_count: 0,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     });
     let func2 = Value::Function(FunctionRef {
         name: "test".to_string(),
         arity: 1,
+        required_arity: 1,
         bytecode_offset: 100,
         local_count: 0,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     });
     let func3 = Value::Function(FunctionRef {
         name: "other".to_string(),
         arity: 0,
+        required_arity: 0,
         bytecode_offset: 0,
         local_count: 0,
         param_ownership: vec![],
         param_names: vec![],
+        defaults: vec![],
         return_ownership: None,
         is_async: false,
     });
