@@ -2737,6 +2737,129 @@ impl<'a> TypeChecker<'a> {
             }
         }
 
+        // H-312: Type parameter with trait bounds — look up method from bound traits.
+        // e.g., `fn foo<T extends Printable>(x: T) { x.to_str() }` should resolve `to_str` from Printable.
+        if let Type::TypeParameter { ref name } = target_norm {
+            // Clone trait bounds upfront to avoid holding immutable borrow during check_expr calls
+            let type_param_bounds: Option<Vec<String>> = self
+                .active_type_params
+                .iter()
+                .find(|p| &p.name == name)
+                .map(|p| {
+                    p.trait_bounds
+                        .iter()
+                        .map(|b| b.trait_name.clone())
+                        .collect()
+                });
+
+            if let Some(bounds) = type_param_bounds {
+                for trait_name in &bounds {
+                    // Clone method entry to release borrow on trait_registry
+                    let method_entry =
+                        self.trait_registry
+                            .get_methods(trait_name)
+                            .and_then(|methods| {
+                                methods.iter().find(|m| m.name == *method_name).cloned()
+                            });
+
+                    if let Some(method_entry) = method_entry {
+                        // Found the method in a bound trait — validate args and return
+                        let param_types = method_entry.param_types.clone();
+                        let return_type = method_entry.return_type.clone();
+                        let expected_args = param_types.len();
+                        let provided_args =
+                            member.args.as_ref().map(|args| args.len()).unwrap_or(0);
+
+                        if provided_args != expected_args {
+                            self.diagnostics.push(
+                                error_codes::ARITY_MISMATCH
+                                    .emit(member.span)
+                                    .arg("name", method_name.as_str())
+                                    .arg("expected", format!("{}", expected_args))
+                                    .arg("found", format!("{}", provided_args))
+                                    .with_help(format!(
+                                        "method '{}' requires exactly {} argument{}",
+                                        method_name,
+                                        expected_args,
+                                        if expected_args == 1 { "" } else { "s" }
+                                    ))
+                                    .build()
+                                    .with_label("argument count mismatch"),
+                            );
+                        }
+
+                        if let Some(args) = &member.args {
+                            for (i, arg) in args.iter().enumerate() {
+                                let arg_type = self.check_expr(arg);
+                                if let Some(expected_type) = param_types.get(i) {
+                                    if expected_type.normalized()
+                                        == crate::typechecker::Type::Unknown
+                                    {
+                                        continue;
+                                    }
+                                    if !self.is_assignable_with_traits(&arg_type, expected_type) {
+                                        self.diagnostics.push(
+                                            error_codes::TYPE_ERROR
+                                                .emit(arg.span())
+                                                .arg(
+                                                    "detail",
+                                                    format!(
+                                                        "Argument {} has wrong type: expected {}, found {}",
+                                                        i + 1,
+                                                        expected_type.display_name(),
+                                                        arg_type.display_name()
+                                                    ),
+                                                )
+                                                .with_help(format!(
+                                                    "argument {} must be of type {}",
+                                                    i + 1,
+                                                    expected_type.display_name()
+                                                ))
+                                                .build()
+                                                .with_label("type mismatch"),
+                                        );
+                                        return Type::Unknown;
+                                    }
+                                }
+                            }
+                        }
+
+                        // Set trait_dispatch with empty type_name to signal dynamic dispatch.
+                        // Type parameters require runtime resolution because the concrete
+                        // type is not known at compile time (just like TraitObject).
+                        *member.trait_dispatch.borrow_mut() =
+                            Some((String::new(), trait_name.clone()));
+                        return return_type;
+                    }
+                }
+
+                // Type param has bounds but method not found in any bound trait
+                if member.args.is_some() && !bounds.is_empty() {
+                    self.diagnostics.push(
+                        error_codes::INVALID_INDEX_TYPE
+                            .emit(member.member.span)
+                            .arg("index_type", method_name.as_str())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "type parameter '{}' with bounds [{}] has no method '{}'",
+                                    name,
+                                    bounds.join(", "),
+                                    method_name
+                                ),
+                            )
+                            .with_help(format!(
+                                "add a trait bound that defines '{}', or use a different method",
+                                method_name
+                            ))
+                            .build()
+                            .with_label("method not found on bounded type parameter"),
+                    );
+                    return Type::Unknown;
+                }
+            }
+        }
+
         let method_sig = self.method_table.lookup(&target_type, method_name);
 
         if let Some(method_sig) = method_sig {
