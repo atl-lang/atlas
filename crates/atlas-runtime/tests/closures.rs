@@ -1,14 +1,9 @@
 //! closures.rs — Closure semantic behavior tests
 //!
-//! Documents the ACTUAL behavior of function scoping in Atlas v0.2.
+//! Documents the ACTUAL behavior of function scoping in Atlas.
+//! Uses VM execution (D-052: unified execution path).
 //!
-//! # Closure Implementation
-//!
-//! Both engines support upvalue capture (as of the closure parity fix):
-//! - The **interpreter** uses dynamic scoping (walks the live scope stack at call time)
-//! - The **VM** uses upvalue capture at closure creation time (by value)
-//!
-//! ## What Works (both engines, parity):
+//! ## What Works:
 //! - Top-level `let` and `var` are accessible from any named function
 //! - Top-level `var` can be mutated from any named function
 //! - Functions passed as arguments (not closures, just fn references)
@@ -17,17 +12,13 @@
 //! - Inner functions reading outer function locals (upvalue capture)
 //! - Inner functions reading outer function parameters (upvalue capture)
 //!
-//! ## Semantic Note (capture-by-value in VM):
+//! ## Semantic Note (capture-by-value):
 //! The VM captures outer locals BY VALUE at closure creation time.
-//! The interpreter uses live dynamic scoping (captures by reference).
-//! For `let` variables (immutable), both are identical.
-//! For `var` mutations after closure creation, behavior may diverge.
 
 mod common;
 
 use atlas_runtime::binder::Binder;
 use atlas_runtime::compiler::Compiler;
-use atlas_runtime::interpreter::Interpreter;
 use atlas_runtime::lexer::Lexer;
 use atlas_runtime::parser::Parser;
 use atlas_runtime::security::SecurityContext;
@@ -37,25 +28,8 @@ use atlas_runtime::vm::VM;
 use pretty_assertions::assert_eq;
 
 // ============================================================================
-// Test helpers (same pattern as pattern_matching.rs)
+// Test helpers (VM-only since D-052)
 // ============================================================================
-
-fn interp_eval(source: &str) -> Value {
-    let mut lexer = Lexer::new(source.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = Parser::new(tokens);
-    let (program, _) = parser.parse();
-
-    let mut binder = Binder::new();
-    let (mut symbol_table, _) = binder.bind(&program);
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let _ = typechecker.check(&program);
-
-    let mut interpreter = Interpreter::new();
-    interpreter
-        .eval(&program, &SecurityContext::allow_all())
-        .expect("Interpreter failed")
-}
 
 fn vm_eval(source: &str) -> Option<Value> {
     let mut lexer = Lexer::new(source.to_string());
@@ -74,17 +48,9 @@ fn vm_eval(source: &str) -> Option<Value> {
     vm.run(&SecurityContext::allow_all()).expect("VM failed")
 }
 
-/// Assert both engines produce the same numeric result.
+/// Assert VM produces the expected numeric result.
 fn assert_parity_number(source: &str, expected: f64) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::Number(expected),
-        "Interpreter wrong for: {}\n  got: {:?}",
-        source,
-        interp
-    );
     assert_eq!(
         vm,
         Value::Number(expected),
@@ -94,29 +60,15 @@ fn assert_parity_number(source: &str, expected: f64) {
     );
 }
 
-/// Assert both engines produce the same bool result.
+/// Assert VM produces the expected bool result.
 fn assert_parity_bool(source: &str, expected: bool) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::Bool(expected),
-        "Interpreter wrong: {:?}",
-        interp
-    );
     assert_eq!(vm, Value::Bool(expected), "VM wrong: {:?}", vm);
 }
 
-/// Assert both engines produce the same string result.
+/// Assert VM produces the expected string result.
 fn assert_parity_string(source: &str, expected: &str) {
-    let interp = interp_eval(source);
     let vm = vm_eval(source).unwrap_or(Value::Null);
-    assert_eq!(
-        interp,
-        Value::string(expected.to_string()),
-        "Interpreter wrong: {:?}",
-        interp
-    );
     assert_eq!(
         vm,
         Value::string(expected.to_string()),

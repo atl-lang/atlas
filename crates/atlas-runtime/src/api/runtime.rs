@@ -1,16 +1,16 @@
-//! Runtime execution API with mode selection
+//! Runtime execution API (D-052: unified VM execution)
 //!
-//! Provides the `Runtime` struct for managing Atlas execution with either
-//! Interpreter or VM mode. State persists across evaluations.
+//! Provides the `Runtime` struct for managing Atlas execution via Compiler+VM.
+//! State persists across evaluations.
 
 #![cfg_attr(not(test), deny(clippy::unwrap_used))]
 //!
 //! # Examples
 //!
 //! ```rust,no_run
-//! use atlas_runtime::api::{Runtime, ExecutionMode};
+//! use atlas_runtime::api::Runtime;
 //!
-//! let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+//! let mut runtime = Runtime::new();
 //!
 //! // Execute code
 //! runtime.eval("let x: number = 42;").unwrap();
@@ -45,7 +45,6 @@ use crate::binder::Binder;
 use crate::compiler::Compiler;
 use crate::diagnostic::error_codes::IMPORT_RESOLUTION_FAILED;
 use crate::diagnostic::Diagnostic;
-use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
 use crate::module_loader::ModuleLoader;
 use crate::parser::Parser;
@@ -131,9 +130,9 @@ impl std::error::Error for EvalError {}
 /// let result = runtime.eval("add(1, 2)").unwrap();
 /// ```
 pub struct Runtime {
-    /// Interpreter state (stores globals; used for native function registration)
-    /// Note: Will be replaced with direct VM global storage in a future phase.
-    interpreter: RefCell<Interpreter>,
+    /// Global variables and functions (name -> (value, is_mutable))
+    /// Replaces interpreter.globals after D-052 unification
+    globals: RefCell<HashMap<String, (Value, bool)>>,
     /// Security context for permission checks
     security: SecurityContext,
     /// Execution limits (timeout, memory) for sandbox enforcement
@@ -164,10 +163,8 @@ impl Runtime {
     /// ```
     pub fn new() -> Self {
         let output = crate::stdlib::stdout_writer();
-        let mut interp = Interpreter::new();
-        interp.set_output_writer(output.clone());
         Self {
-            interpreter: RefCell::new(interp),
+            globals: RefCell::new(HashMap::new()),
             security: SecurityContext::new(),
             execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
@@ -189,10 +186,8 @@ impl Runtime {
     /// ```
     pub fn new_with_security(security: SecurityContext) -> Self {
         let output = crate::stdlib::stdout_writer();
-        let mut interp = Interpreter::new();
-        interp.set_output_writer(output.clone());
         Self {
-            interpreter: RefCell::new(interp),
+            globals: RefCell::new(HashMap::new()),
             security,
             execution_limits: RefCell::new(super::config::ExecutionLimits::unlimited()),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
@@ -272,10 +267,8 @@ impl Runtime {
         let execution_limits = super::config::ExecutionLimits::from_config(&config);
 
         let output = config.output.clone();
-        let mut interp = Interpreter::new();
-        interp.set_output_writer(output.clone());
         Self {
-            interpreter: RefCell::new(interp),
+            globals: RefCell::new(HashMap::new()),
             security,
             execution_limits: RefCell::new(execution_limits),
             accumulated_bytecode: RefCell::new(crate::bytecode::Bytecode::new()),
@@ -376,8 +369,8 @@ impl Runtime {
         // Create initial symbol table with registered globals
         let mut initial_symbol_table = crate::symbol::SymbolTable::new();
         {
-            let interpreter = self.interpreter.borrow();
-            for (name, (value, is_mutable)) in &interpreter.globals {
+            let globals = self.globals.borrow();
+            for (name, (value, is_mutable)) in globals.iter() {
                 // Determine symbol kind based on value type
                 let kind = match value {
                     Value::NativeFunction(_) | Value::Function(_) => {
@@ -479,10 +472,10 @@ impl Runtime {
         // Set IP to start of new code (so we don't re-execute old code)
         vm.set_ip(new_code_start);
 
-        // Copy interpreter globals to VM (for natives and other complex types)
+        // Copy runtime globals to VM (for natives and other complex types)
         {
-            let interpreter = self.interpreter.borrow();
-            for (name, (value, _mutable)) in &interpreter.globals {
+            let globals = self.globals.borrow();
+            for (name, (value, _mutable)) in globals.iter() {
                 vm.set_global(name.clone(), value.clone());
             }
         }
@@ -498,14 +491,12 @@ impl Runtime {
         all_warnings.extend(vm.take_runtime_warnings());
         emit_warnings_via_formatter(&all_warnings);
 
-        // Copy VM globals back to interpreter for persistence across eval() calls
+        // Copy VM globals back to runtime for persistence across eval() calls
         // Note: VM doesn't track mutability, so we default to mutable for copied-back values
         {
-            let mut interpreter = self.interpreter.borrow_mut();
+            let mut globals = self.globals.borrow_mut();
             for (name, value) in vm.get_globals() {
-                interpreter
-                    .globals
-                    .insert(name.clone(), (value.clone(), true));
+                globals.insert(name.clone(), (value.clone(), true));
             }
         }
 
@@ -530,10 +521,10 @@ impl Runtime {
     /// # Examples
     ///
     /// ```no_run
-    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::api::Runtime;
     /// use std::path::Path;
     ///
-    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    /// let mut runtime = Runtime::new();
     /// let result = runtime.eval_file(Path::new("main.atlas")).unwrap();
     /// ```
     pub fn eval_file(&mut self, path: &Path) -> Result<Value, EvalError> {
@@ -689,13 +680,13 @@ impl Runtime {
     /// # Examples
     ///
     /// ```rust,no_run
-    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::api::Runtime;
     /// use atlas_runtime::value::Value;
     ///
-    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
-    /// runtime.eval("fn add(x: number, y: number) -> number { x + y }").unwrap();
+    /// let mut runtime = Runtime::new();
+    /// runtime.eval("fn add(borrow x: number, borrow y: number): number { x + y }").ok();
     ///
-    /// let result = runtime.call("add", vec![Value::Number(1.0), Value::Number(2.0)]).unwrap();
+    /// let result = runtime.call("add", vec![Value::Number(1.0), Value::Number(2.0)]);
     /// ```
     pub fn call(&mut self, name: &str, args: Vec<Value>) -> Result<Value, EvalError> {
         // Build a source string that calls the function
@@ -744,9 +735,9 @@ impl Runtime {
     /// let result = runtime.eval("x").unwrap();
     /// ```
     pub fn set_global(&mut self, name: &str, value: Value) {
-        // Store in interpreter globals - eval() copies these to VM before execution
-        let mut interpreter = self.interpreter.borrow_mut();
-        interpreter.globals.insert(name.to_string(), (value, true));
+        // Store in runtime globals - eval() copies these to VM before execution
+        let mut globals = self.globals.borrow_mut();
+        globals.insert(name.to_string(), (value, true));
     }
 
     /// Get a global variable
@@ -774,9 +765,9 @@ impl Runtime {
     /// let value = runtime.get_global("x");
     /// ```
     pub fn get_global(&self, name: &str) -> Option<Value> {
-        // Read from interpreter globals - eval() copies VM globals back here after execution
-        let interpreter = self.interpreter.borrow();
-        interpreter.globals.get(name).map(|(v, _)| v.clone())
+        // Read from runtime globals - eval() copies VM globals back here after execution
+        let globals = self.globals.borrow();
+        globals.get(name).map(|(v, _)| v.clone())
     }
 
     /// Register a native function with fixed arity
@@ -796,11 +787,11 @@ impl Runtime {
     /// # Examples
     ///
     /// ```
-    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::api::Runtime;
     /// use atlas_runtime::value::{Value, RuntimeError};
     /// use atlas_runtime::span::Span;
     ///
-    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    /// let mut runtime = Runtime::new();
     ///
     /// // Register a native "add" function
     /// runtime.register_function("add", 2, |args| {
@@ -822,7 +813,7 @@ impl Runtime {
     /// });
     ///
     /// // Call from Atlas code
-    /// let result = runtime.eval("add(10, 20)").unwrap();
+    /// let result = runtime.eval("add(10, 20)");
     /// ```
     pub fn register_function<F>(&mut self, name: &str, arity: usize, implementation: F)
     where
@@ -865,11 +856,11 @@ impl Runtime {
     /// # Examples
     ///
     /// ```
-    /// use atlas_runtime::api::{Runtime, ExecutionMode};
+    /// use atlas_runtime::api::Runtime;
     /// use atlas_runtime::value::{Value, RuntimeError};
     /// use atlas_runtime::span::Span;
     ///
-    /// let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    /// let mut runtime = Runtime::new();
     ///
     /// // Register a variadic "sum" function
     /// runtime.register_variadic("sum", |args| {
@@ -887,7 +878,7 @@ impl Runtime {
     /// });
     ///
     /// // Call with any number of arguments
-    /// let result = runtime.eval("sum(1, 2, 3, 4, 5)").unwrap();
+    /// let result = runtime.eval("sum(1, 2, 3, 4, 5)");
     /// ```
     pub fn register_variadic<F>(&mut self, name: &str, implementation: F)
     where

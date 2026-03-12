@@ -20,12 +20,10 @@ pub mod debugger;
 pub mod diagnostic;
 #[cfg(feature = "ffi")]
 pub mod ffi;
-pub mod interpreter;
 pub mod jit_trait;
 pub mod json_value;
 pub mod lexer;
 pub mod method_dispatch;
-pub mod module_executor;
 pub mod module_loader;
 pub mod optimizer;
 pub mod parser;
@@ -59,10 +57,8 @@ pub use diagnostic::{
     error_codes, formatter, normalizer, sort_diagnostics, warnings, Diagnostic, DiagnosticLevel,
     RelatedLocation, SuggestionDiff, DIAG_VERSION,
 };
-pub use interpreter::Interpreter;
 pub use json_value::JsonValue;
 pub use lexer::Lexer;
-pub use module_executor::ModuleExecutor;
 pub use module_loader::{LoadedModule, ModuleLoader};
 pub use parser::Parser;
 pub use repl::{

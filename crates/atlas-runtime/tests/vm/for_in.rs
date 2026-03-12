@@ -667,14 +667,10 @@ fn test_vm_own_literal_arg_no_consume() {
     assert_eq!(result.unwrap(), "Some(Number(42))");
 }
 
-/// VM and interpreter produce the same error for the same own-violation source.
+/// VM correctly reports error for use of moved value.
 #[test]
 #[cfg(debug_assertions)]
-fn test_vm_own_borrow_identical_to_interpreter() {
-    use atlas_runtime::binder::Binder;
-    use atlas_runtime::interpreter::Interpreter;
-    use atlas_runtime::typechecker::TypeChecker;
-
+fn test_vm_own_borrow_reports_moved_error() {
     let src = r#"
         fn consume(own data: array<number>): void { }
         let arr: array<number> = [1, 2, 3];
@@ -682,28 +678,9 @@ fn test_vm_own_borrow_identical_to_interpreter() {
         arr;
     "#;
 
-    // Interpreter result
-    let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = atlas_runtime::parser::Parser::new(tokens);
-    let (program, _) = parser.parse();
-    let mut binder = Binder::new();
-    let (mut symbol_table, _) = binder.bind(&program);
-    let mut typechecker = TypeChecker::new(&mut symbol_table);
-    let _ = typechecker.check(&program);
-    let mut interp = Interpreter::new();
-    let interp_result = interp.eval(&program, &SecurityContext::allow_all());
-
-    // VM result
+    // VM must fail with "use of moved value"
     let vm_result = vm_run_source(src);
-
-    // Both must fail with "use of moved value"
-    assert!(interp_result.is_err(), "Interpreter should error");
     assert!(vm_result.is_err(), "VM should error");
-    assert!(
-        format!("{:?}", interp_result.unwrap_err()).contains("use of moved value"),
-        "Interpreter error should mention 'use of moved value'"
-    );
     assert!(
         vm_result.unwrap_err().contains("use of moved value"),
         "VM error should mention 'use of moved value'"
@@ -768,43 +745,19 @@ fn test_vm_shared_param_accepts_shared_value() {
     );
 }
 
-/// VM and interpreter produce the same shared-ownership error for identical source.
+/// VM correctly reports ownership violation for shared param.
 #[test]
 #[cfg(debug_assertions)]
-fn test_vm_shared_identical_to_interpreter() {
-    use atlas_runtime::interpreter::Interpreter;
-
+fn test_vm_shared_ownership_violation() {
     let src = r#"
         fn register(shared handler: []number): void { }
         let arr: []number = [1, 2, 3];
         register(arr);
     "#;
 
-    // Interpreter result
-    let mut lexer = atlas_runtime::lexer::Lexer::new(src.to_string());
-    let (tokens, _) = lexer.tokenize();
-    let mut parser = atlas_runtime::parser::Parser::new(tokens);
-    let (program, _) = parser.parse();
-    let mut binder = atlas_runtime::binder::Binder::new();
-    let (mut symbol_table, _) = binder.bind(&program);
-    let mut typechecker = atlas_runtime::typechecker::TypeChecker::new(&mut symbol_table);
-    let _ = typechecker.check(&program);
-    let mut interp = Interpreter::new();
-    let interp_result = interp.eval(&program, &SecurityContext::allow_all());
-
-    // VM result
+    // VM must fail with "ownership violation"
     let vm_result = vm_run_source(src);
-
-    // Both must fail with "ownership violation"
-    assert!(
-        interp_result.is_err(),
-        "Interpreter should error on shared violation"
-    );
     assert!(vm_result.is_err(), "VM should error on shared violation");
-    assert!(
-        format!("{:?}", interp_result.unwrap_err()).contains("ownership violation"),
-        "Interpreter error should mention 'ownership violation'"
-    );
     assert!(
         vm_result.unwrap_err().contains("ownership violation"),
         "VM error should mention 'ownership violation'"
