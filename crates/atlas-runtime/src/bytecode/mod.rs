@@ -457,6 +457,10 @@ impl Bytecode {
             debug_span.instruction_offset += instruction_offset;
             self.debug_info.push(debug_span);
         }
+
+        // Accumulate top_level_local_count: each module's top-level locals need stack space
+        // (H-290: B36 regression fix — append() was leaving this at 0)
+        self.top_level_local_count += other.top_level_local_count;
     }
 }
 

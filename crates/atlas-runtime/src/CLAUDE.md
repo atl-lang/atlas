@@ -14,8 +14,7 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `typechecker/` | Type resolution, inference, generics, call-site checks |
 | `typechecker/inference.rs` | `infer_return_type(body) -> InferredReturn` — return type inference for optional annotations |
 | `compiler/` | AST → bytecode (`mod.rs`, `expr.rs`, `stmt.rs`) |
-| `interpreter/` | Tree-walking eval (`mod.rs`, `expr.rs`, `stmt.rs`) |
-| `vm/mod.rs` | Bytecode execution engine — **ARCH-EXCEPTION on file** (execute loop is monolithic by design); intrinsics + inline tests are split candidates, scheduled post-Block-4 |
+| `vm/mod.rs` | Bytecode execution engine (D-052: unified execution path) — **ARCH-EXCEPTION on file** (execute loop is monolithic by design) |
 | `bytecode/` | Opcode definitions, serialization |
 | `stdlib/` | 23 modules, 513 dispatch entries (B20-B35: namespace conversion complete — all bare globals migrated to namespace.method() syntax; D-049 canonical names enforced) |
 | `typechecker/mod.rs` | Function type resolution — `check_function` at line ~876 |
@@ -43,7 +42,6 @@ The core compiler + runtime. 95% of all Atlas work happens here.
 | `runtime.rs` | Runtime manager struct + lifecycle |
 | `repl.rs` | Read-eval-print loop implementation |
 | `method_dispatch.rs` | Method call dispatch mechanism |
-| `module_executor.rs` | Module execution coordination |
 | `module_loader.rs` | Module discovery and loading |
 | `jit_trait.rs` | Trait interface for JIT integration |
 | `json_value.rs` | JSON value wrapper |
@@ -78,7 +76,6 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 | Stdlib | `tests/stdlib/` → strings, json, io, types, collections, parity, integration, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants |
 | Type system | `tests/typesystem/` → inference, constraints, flow, generics, bindings, integration |
 | VM behavior | `tests/vm/` → integration, member, complex_programs, regression, regression_loops, performance, functions, functions_loops, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, async_vm, error_handling, logical, opcodes |
-| Interpreter | `tests/interpreter/` → member, nested_functions, nested_functions_loops, scope, pattern_matching, assignment, integration |
 | System/stdlib-fs | `tests/system/` → path, filesystem, process, compression |
 | Frontend syntax | `tests/frontend_syntax/` → lexer, parser_basics, parser_errors, parser_errors_part2, parser_control_flow, parser_anonymous_structs, parser_ranges, operator_precedence_keywords, generics, modules_warnings_part1, warnings_part2, warnings_attributes, for_in_traits_part1, traits_part2, diagnostic_descriptor |
 | Frontend integration | `tests/frontend_integration/` → integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2} |
@@ -97,19 +94,18 @@ The `.rs` root files for these domains are **thin routers** (66–201 lines). Op
 
 ## Critical Rules
 
-**Parity is sacred.** Every behavior change must produce identical output in both
-interpreter (`interpreter/mod.rs`) and VM (`vm/mod.rs`). If you touch one, you touch both.
-Parity break = BLOCKING. Never ship a phase with parity divergence.
+**D-052: Unified execution path.** Since B36, Atlas uses Compiler+VM only (interpreter removed).
+All execution goes through: `compiler/` → bytecode → `vm/mod.rs`.
 
 **CoW write-back pattern.** Collection mutation builtins return an updated collection,
-and the interpreter (`apply_cow_writeback()`) and VM (`emit_cow_writeback_if_needed()`)
-write it back to the caller's variable. **All collections are CoW** — HashMap, Array,
-HashSet, Queue, Stack. Both `let` and `var` bindings can be mutated this way — it's
-content mutation, not rebinding. See `.claude/memory/patterns/runtime.md`.
+and the VM (`emit_cow_writeback_if_needed()`) writes it back to the caller's variable.
+**All collections are CoW** — HashMap, Array, HashSet, Queue, Stack. Both `let` and
+`var` bindings can be mutated this way — it's content mutation, not rebinding.
+See `.claude/memory/patterns/runtime.md`.
 
 **value.rs blast radius.** Adding a new `Value` variant requires updating:
 `type_name()`, `Display`, `PartialEq`, equality semantics, bytecode serialization,
-interpreter eval, VM execution, all stdlib functions that pattern-match on Value.
+VM execution, all stdlib functions that pattern-match on Value.
 
 ## Key Invariants (verified 2026-03-06)
 
