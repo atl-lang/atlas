@@ -544,7 +544,7 @@ fn resolve_process_ns_method(method_name: &str) -> Option<String> {
         "exec" => "exec",
         "shell" => "shell",
         "shellOut" => "shellOut",
-        "args" => "getProcessArgs",
+        "args" | "getProcessArgs" => "getProcessArgs",
         "run" => "processRun",
         "waitFor" => "processNsWaitFor",
         "kill" => "processNsKill",

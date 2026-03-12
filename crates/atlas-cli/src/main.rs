@@ -42,13 +42,15 @@ enum Commands {
     /// Run an Atlas source file
     ///
     /// Compiles and executes the specified Atlas file. Supports watch mode
-    /// for automatic recompilation on file changes.
+    /// for automatic recompilation on file changes. Arguments after the file
+    /// are passed to the Atlas program via process.getProcessArgs().
     ///
     /// EXAMPLES:
     ///     atlas run main.atl              Run a program
+    ///     atlas run main.atl foo bar      Run with arguments
     ///     atlas run main.atl --watch      Watch for changes
     ///     atlas run main.atl --json       Output diagnostics as JSON
-    #[command(visible_alias = "r")]
+    #[command(visible_alias = "r", trailing_var_arg = true)]
     Run {
         /// Path to the Atlas source file
         file: String,
@@ -64,6 +66,9 @@ enum Commands {
         /// Verbose output with timing information
         #[arg(long, short = 'v')]
         verbose: bool,
+        /// Arguments to pass to the Atlas program
+        #[arg(trailing_var_arg = true, allow_hyphen_values = true)]
+        program_args: Vec<String>,
     },
 
     /// Type-check an Atlas source file without running
@@ -603,9 +608,15 @@ fn main() -> Result<()> {
             watch,
             no_clear,
             verbose,
+            program_args,
         } => {
             // Command-line flag overrides environment variable
             let use_json = json || cli_config.default_json;
+
+            // Set program args as env var for runtime's getProcessArgs()
+            // Format: newline-separated (handles args with spaces)
+            // Always set (even if empty) so runtime knows to use env var, not fallback
+            std::env::set_var("ATLAS_PROGRAM_ARGS", program_args.join("\n"));
 
             if watch {
                 // Watch mode

@@ -717,6 +717,10 @@ pub fn process_exit(
 /// Get command-line arguments passed to the Atlas program (H-213)
 ///
 /// Atlas signature: `getProcessArgs() -> string[]`
+///
+/// When running via `atlas run file.atl arg1 arg2`, args are passed via
+/// ATLAS_PROGRAM_ARGS env var (newline-separated). For compiled binaries,
+/// falls back to std::env::args() skipping the binary name.
 pub fn get_process_args(
     args: &[Value],
     span: Span,
@@ -726,9 +730,18 @@ pub fn get_process_args(
         return Err(stdlib_arity_error("getProcessArgs", 0, args.len(), span));
     }
 
-    // Skip the first two args: the atlas binary and the source file path.
-    // User programs see only the arguments after the file name.
-    let argv: Vec<Value> = std::env::args().skip(2).map(Value::string).collect();
+    // Check for args passed via `atlas run` (set by atlas-cli)
+    if let Ok(args_str) = std::env::var("ATLAS_PROGRAM_ARGS") {
+        let argv: Vec<Value> = args_str
+            .split('\n')
+            .filter(|s| !s.is_empty())
+            .map(|s| Value::string(s.to_string()))
+            .collect();
+        return Ok(Value::Array(ValueArray::from_vec(argv)));
+    }
+
+    // For compiled binaries: skip just the binary name
+    let argv: Vec<Value> = std::env::args().skip(1).map(Value::string).collect();
     Ok(Value::Array(ValueArray::from_vec(argv)))
 }
 
