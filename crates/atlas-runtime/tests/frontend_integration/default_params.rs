@@ -293,3 +293,37 @@ multiply(3);
     let result = runtime.eval(code).expect("should succeed");
     assert_eq!(result, Value::Number(30.0));
 }
+
+// ===== Cross-feature integration tests =====
+
+#[test]
+fn default_with_struct_param() {
+    let runtime = Atlas::new();
+    let code = r#"
+struct Point {
+    x: number,
+    y: number
+}
+fn distance_from_origin(p: Point, scale: number = 1): number {
+    return (p.x * p.x + p.y * p.y) * scale;
+}
+let pt = Point { x: 3, y: 4 };
+distance_from_origin(pt);
+"#;
+    let result = runtime.eval(code).expect("should succeed");
+    assert_eq!(result, Value::Number(25.0)); // 3^2 + 4^2 = 25
+}
+
+#[test]
+fn default_with_const() {
+    let runtime = Atlas::new();
+    let code = r#"
+const MULTIPLIER = 10;
+fn scale(value: number, factor: number = MULTIPLIER): number {
+    return value * factor;
+}
+scale(5);
+"#;
+    let result = runtime.eval(code).expect("should succeed");
+    assert_eq!(result, Value::Number(50.0));
+}
