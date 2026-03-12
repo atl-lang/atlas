@@ -323,17 +323,23 @@ impl ModuleLoader {
         }
 
         // Queue of nodes with no incoming edges
+        // Sort for deterministic ordering (HashMap iteration order is random)
         let mut queue: VecDeque<PathBuf> = VecDeque::new();
-        for (node, &degree) in &in_degree {
-            if degree == 0 {
-                queue.push_back(node.clone());
-            }
-        }
+        let mut zero_degree: Vec<_> = in_degree
+            .iter()
+            .filter(|(_, &degree)| degree == 0)
+            .map(|(node, _)| node.clone())
+            .collect();
+        zero_degree.sort();
+        queue.extend(zero_degree);
 
         // Process nodes in topological order
         let mut sorted = Vec::new();
         while let Some(node) = queue.pop_front() {
             sorted.push(node.clone());
+
+            // Collect all nodes whose in-degree reaches 0 after processing this node
+            let mut newly_zero: Vec<PathBuf> = Vec::new();
 
             // For each dependent of this node (in reachable set)
             for from in &reachable {
@@ -345,13 +351,17 @@ impl ModuleLoader {
                             .expect("in_degree should contain all reachable nodes");
                         *degree -= 1;
 
-                        // If no more dependencies, add to queue
+                        // If no more dependencies, collect for later sorting
                         if *degree == 0 {
-                            queue.push_back(from.clone());
+                            newly_zero.push(from.clone());
                         }
                     }
                 }
             }
+
+            // Sort and add to queue for deterministic ordering
+            newly_zero.sort();
+            queue.extend(newly_zero);
         }
 
         // Check if all reachable nodes were processed (no cycles)
