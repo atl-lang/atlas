@@ -174,11 +174,12 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
 }
 
 /// Check if an identifier name is a static namespace sentinel.
+/// Case-insensitive matching for AI-friendliness (both `Math.sqrt` and `math.sqrt` work).
 pub fn is_static_namespace(name: &str) -> bool {
     matches!(
-        name,
-        "Json"
-            | "Math"
+        name.to_lowercase().as_str(),
+        "json"
+            | "math"
             | "env"
             | "file"
             | "process"
@@ -202,10 +203,11 @@ pub fn is_static_namespace(name: &str) -> bool {
 }
 
 /// Map a static namespace identifier to its TypeTag.
+/// Case-insensitive matching for AI-friendliness.
 pub fn namespace_type_tag(name: &str) -> Option<TypeTag> {
-    match name {
-        "Json" => Some(TypeTag::JsonNs),
-        "Math" => Some(TypeTag::MathNs),
+    match name.to_lowercase().as_str() {
+        "json" => Some(TypeTag::JsonNs),
+        "math" => Some(TypeTag::MathNs),
         "env" => Some(TypeTag::EnvNs),
         "file" => Some(TypeTag::FileNs),
         "process" => Some(TypeTag::ProcessNs),

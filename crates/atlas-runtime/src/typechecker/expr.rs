@@ -16,24 +16,26 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
     let num = Type::Number;
     let _json = Type::JsonValue;
     let str_arr = Type::Array(Box::new(Type::String));
-    match (ns, method) {
+    // Normalize namespace to lowercase for case-insensitive matching (AI-friendly)
+    let ns_lower = ns.to_lowercase();
+    match (ns_lower.as_str(), method) {
         // Json namespace
-        ("Json", "parse" | "isValid" | "minify" | "keys") => Some(vec![str]),
-        ("Json", "prettify") => Some(vec![str.clone(), num.clone()]),
-        ("Json", "stringify") => Some(vec![Type::any_placeholder()]),
-        ("Json", "getString" | "getNumber" | "getBool" | "getArray" | "getObject" | "isNull") => {
+        ("json", "parse" | "isValid" | "minify" | "keys") => Some(vec![str]),
+        ("json", "prettify") => Some(vec![str.clone(), num.clone()]),
+        ("json", "stringify") => Some(vec![Type::any_placeholder()]),
+        ("json", "getString" | "getNumber" | "getBool" | "getArray" | "getObject" | "isNull") => {
             Some(vec![str.clone(), str])
         }
         // Math namespace
-        ("Math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
-        ("Math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
-        ("Math", "asin" | "acos" | "atan" | "trunc" | "log2" | "log10" | "exp" | "cbrt") => {
+        ("math", "abs" | "floor" | "ceil" | "round" | "sign") => Some(vec![num.clone()]),
+        ("math", "sqrt" | "log" | "sin" | "cos" | "tan") => Some(vec![num.clone()]),
+        ("math", "asin" | "acos" | "atan" | "trunc" | "log2" | "log10" | "exp" | "cbrt") => {
             Some(vec![num.clone()])
         }
-        ("Math", "min" | "max" | "pow") => Some(vec![num.clone(), num.clone()]),
-        ("Math", "atan2" | "hypot") => Some(vec![num.clone(), num.clone()]),
-        ("Math", "clamp") => Some(vec![num.clone(), num.clone(), num.clone()]),
-        ("Math", "random" | "PI" | "E" | "SQRT2" | "LN2" | "LN10") => Some(vec![]),
+        ("math", "min" | "max" | "pow") => Some(vec![num.clone(), num.clone()]),
+        ("math", "atan2" | "hypot") => Some(vec![num.clone(), num.clone()]),
+        ("math", "clamp") => Some(vec![num.clone(), num.clone(), num.clone()]),
+        ("math", "random" | "PI" | "E" | "SQRT2" | "LN2" | "LN10") => Some(vec![]),
         // Env namespace
         ("env", "get" | "unset") => Some(vec![str.clone()]),
         ("env", "set") => Some(vec![str.clone(), str.clone()]),
@@ -136,29 +138,31 @@ fn resolve_namespace_param_types(ns: &str, method: &str) -> Option<Vec<Type>> {
 
 /// Resolve the return type for a static namespace method call (Json.parse, Math.sqrt, etc.)
 fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
-    match (ns, method) {
+    // Normalize namespace to lowercase for case-insensitive matching (AI-friendly)
+    let ns_lower = ns.to_lowercase();
+    match (ns_lower.as_str(), method) {
         // Json namespace
-        ("Json", "parse") => Type::Generic {
+        ("json", "parse") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::JsonValue, Type::String],
         },
-        ("Json", "stringify") => Type::String,
-        ("Json", "isValid") => Type::Bool,
-        ("Json", "prettify") => Type::String,
+        ("json", "stringify") => Type::String,
+        ("json", "isValid") => Type::Bool,
+        ("json", "prettify") => Type::String,
         // B23: new Json namespace methods
-        ("Json", "minify") => Type::String,
-        ("Json", "keys") => Type::Array(Box::new(Type::String)),
-        ("Json", "getString" | "getArray" | "getObject") => Type::String,
-        ("Json", "getNumber") => Type::Number,
-        ("Json", "getBool" | "isNull") => Type::Bool,
+        ("json", "minify") => Type::String,
+        ("json", "keys") => Type::Array(Box::new(Type::String)),
+        ("json", "getString" | "getArray" | "getObject") => Type::String,
+        ("json", "getNumber") => Type::Number,
+        ("json", "getBool" | "isNull") => Type::Bool,
         // Math namespace
         (
-            "Math",
+            "math",
             "abs" | "floor" | "ceil" | "round" | "min" | "max" | "pow" | "sign" | "random" | "atan"
             | "sin" | "cos" | "tan" | "trunc" | "exp" | "cbrt" | "hypot" | "atan2" | "PI" | "E"
             | "SQRT2" | "LN2" | "LN10",
         ) => Type::Number,
-        ("Math", "sqrt" | "clamp" | "log" | "asin" | "acos" | "log2" | "log10") => Type::Generic {
+        ("math", "sqrt" | "clamp" | "log" | "asin" | "acos" | "log2" | "log10") => Type::Generic {
             name: "Result".to_string(),
             type_args: vec![Type::Number, Type::String],
         },
@@ -317,10 +321,6 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         ) => Type::Null,
         // Io namespace — returns Option<string> (None on EOF)
         ("io", "readLine" | "readLinePrompt") => Type::Generic {
-            name: "Option".to_string(),
-            type_args: vec![Type::String],
-        },
-        ("Io", "readLine" | "readLinePrompt") => Type::Generic {
             name: "Option".to_string(),
             type_args: vec![Type::String],
         },
