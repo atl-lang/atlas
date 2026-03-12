@@ -719,8 +719,9 @@ pub fn process_exit(
 /// Atlas signature: `getProcessArgs() -> string[]`
 ///
 /// When running via `atlas run file.atl arg1 arg2`, args are passed via
-/// ATLAS_PROGRAM_ARGS env var (newline-separated). For compiled binaries,
-/// falls back to std::env::args() skipping the binary name.
+/// ATLAS_PROGRAM_ARGS env var (newline-separated). _ATLAS_RUN marker env var
+/// distinguishes "atlas run with no args" from "not atlas run".
+/// For compiled binaries, falls back to std::env::args() skipping binary name.
 pub fn get_process_args(
     args: &[Value],
     span: Span,
@@ -730,14 +731,21 @@ pub fn get_process_args(
         return Err(stdlib_arity_error("getProcessArgs", 0, args.len(), span));
     }
 
-    // Check for args passed via `atlas run` (set by atlas-cli)
-    if let Ok(args_str) = std::env::var("ATLAS_PROGRAM_ARGS") {
-        let argv: Vec<Value> = args_str
-            .split('\n')
-            .filter(|s| !s.is_empty())
-            .map(|s| Value::string(s.to_string()))
-            .collect();
-        return Ok(Value::Array(ValueArray::from_vec(argv)));
+    // Check if running via `atlas run` (marker set by atlas-cli)
+    if std::env::var("_ATLAS_RUN").is_ok() {
+        // Use ATLAS_PROGRAM_ARGS if set, otherwise empty
+        if let Ok(args_str) = std::env::var("ATLAS_PROGRAM_ARGS") {
+            if !args_str.is_empty() {
+                let argv: Vec<Value> = args_str
+                    .split('\n')
+                    .filter(|s| !s.is_empty())
+                    .map(|s| Value::string(s.to_string()))
+                    .collect();
+                return Ok(Value::Array(ValueArray::from_vec(argv)));
+            }
+        }
+        // atlas run with no args
+        return Ok(Value::Array(ValueArray::from_vec(vec![])));
     }
 
     // For compiled binaries: skip just the binary name

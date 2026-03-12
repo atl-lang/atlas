@@ -613,10 +613,12 @@ fn main() -> Result<()> {
             // Command-line flag overrides environment variable
             let use_json = json || cli_config.default_json;
 
-            // Set program args as env var for runtime's getProcessArgs()
-            // Format: newline-separated (handles args with spaces)
-            // Always set (even if empty) so runtime knows to use env var, not fallback
-            std::env::set_var("ATLAS_PROGRAM_ARGS", program_args.join("\n"));
+            // Set program args as env vars for runtime's getProcessArgs()
+            // _ATLAS_RUN marker distinguishes "atlas run with no args" from compiled binary
+            std::env::set_var("_ATLAS_RUN", "1");
+            if !program_args.is_empty() {
+                std::env::set_var("ATLAS_PROGRAM_ARGS", program_args.join("\n"));
+            }
 
             if watch {
                 // Watch mode
