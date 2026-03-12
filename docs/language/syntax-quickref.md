@@ -62,6 +62,32 @@ fn greet(borrow name: string): void {
 
 // Anonymous functions (closures)
 let double = fn(borrow x: number): number { return x * 2; };
+
+// Default parameters (B39)
+fn greet(name: string = "World"): void {
+    console.log("Hello, " + name + "!");
+}
+greet();        // uses default: "World"
+greet("Atlas"); // override: "Atlas"
+
+// Mixed required and default params
+fn scale(value: number, factor: number = 2): number {
+    return value * factor;
+}
+scale(10);     // 20 (uses default)
+scale(10, 5);  // 50 (override)
+```
+
+## Constants (B39)
+
+```atlas
+// Compile-time constants - value inlined at usage
+const PI = 3.14159;
+const MAX_SIZE = 1024;
+const PREFIX = "atlas_";
+
+// Can use in expressions
+let circumference = 2 * PI * radius;
 ```
 
 ## Generics (B38)
