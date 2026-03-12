@@ -17,19 +17,17 @@ typechecker. Every incomplete feature becomes a landmine for the next agent.
 
 ---
 
-## The 5 Mandatory Layers
+## The 4 Mandatory Layers (D-052: Unified Execution)
 
-Every Atlas feature must be complete across ALL applicable layers before a phase
-is considered done. "Applicable" is defined per feature type below.
+Since B36, Atlas uses Compiler+VM only (interpreter removed). Every feature must be
+complete across ALL applicable layers before a phase is considered done.
 
 ```
 Layer 1: Parser          crates/atlas-runtime/src/parser/mod.rs
 Layer 2: Typechecker     crates/atlas-runtime/src/typechecker/expr.rs
                          crates/atlas-runtime/src/typechecker/mod.rs
-Layer 3: Interpreter     crates/atlas-runtime/src/interpreter/mod.rs
-                         crates/atlas-runtime/src/interpreter/expr.rs
-Layer 4: Compiler        crates/atlas-runtime/src/compiler/expr.rs
-Layer 5: VM              crates/atlas-runtime/src/vm/mod.rs
+Layer 3: Compiler        crates/atlas-runtime/src/compiler/expr.rs
+Layer 4: VM              crates/atlas-runtime/src/vm/mod.rs
 ```
 
 Supporting layers (also mandatory when applicable):
@@ -58,7 +56,6 @@ Before closing the issue, ALL of these must be true:
   - `namespace_type_tag()` updated
   - `resolve_<ns>_ns_method()` updated
   - `resolve_method()` match arm added
-- [ ] **Interpreter sentinel** — if new namespace: added to interpreter globals in `interpreter/mod.rs`
 - [ ] **Compiler is_ns** — if new namespace: added to `is_ns` match in `compiler/expr.rs`
 - [ ] **TYPECHECKER** — return type registered in `typechecker/expr.rs` → `resolve_namespace_return_type()`
   - MUST be a concrete type — `Type::Unknown` is a BLOCKER, not acceptable
@@ -78,14 +75,13 @@ Before closing the issue, ALL of these must be true:
 - [ ] **Typechecker** — AST node handled in `typechecker/mod.rs` and/or `typechecker/expr.rs`
   - Every new Expr/Stmt variant = new match arm in typechecker
   - Missing match arm = compile error in Rust (use this as your gate)
-- [ ] **Interpreter** — AST node evaluated in `interpreter/expr.rs` or `interpreter/stmt.rs`
 - [ ] **Compiler** — AST node compiled in `compiler/expr.rs` or `compiler/stmt.rs`
 - [ ] **VM** — if new opcode required, handled in `vm/mod.rs`
 - [ ] **Error codes** — AT codes for parse/type errors in `diagnostic/error_codes.rs`
 - [ ] **Language docs** — documented in `docs/language/`
 - [ ] **Tests** — parser test + typechecker test + parity test
 
-**GATE: If any of parser/typechecker/interpreter/compiler is missing, the feature is INCOMPLETE.**
+**GATE: If any of parser/typechecker/compiler/VM is missing, the feature is INCOMPLETE.**
 
 ### Adding a New Namespace (e.g. Io, Db, Crypto)
 
@@ -95,7 +91,6 @@ All items from "Adding a Stdlib Function" PLUS:
 - [ ] `namespace_type_tag()` — new TypeTag returned
 - [ ] `TypeTag` enum — new variant added
 - [ ] `resolve_method()` — new arm for the TypeTag
-- [ ] `interpreter/mod.rs` — name added to namespace sentinels list
 - [ ] `compiler/expr.rs` — TypeTag added to `is_ns` match
 - [ ] **All methods in the namespace** — each one has a typechecker return type
 
@@ -129,7 +124,7 @@ look at the Rust implementation and infer it. File a P1 issue if it's complex.
 
 > If `export struct` is in the grammar doc, it must be in the parser.
 > If it's in the parser, it must be in the typechecker.
-> If it's in the typechecker, it must be in the interpreter and compiler.
+> If it's in the typechecker, it must be in the compiler and VM.
 
 **Grammar docs are not aspirational.** If a grammar rule exists in `docs/language/grammar.md`
 but is not implemented in the parser, that is a P1 bug — file it immediately.
@@ -168,8 +163,8 @@ A stdlib function or namespace is DONE when an Atlas user can:
 
 1. Write `Namespace.method(args)` in an Atlas file
 2. `atlas check` passes with correct types (no Unknown, no spurious errors)
-3. `atlas run` executes correctly in both interpreter and VM
-4. A parity test verifies identical output in both engines
+3. `atlas run` executes correctly via Compiler+VM
+4. A test verifies correct behavior
 5. The function is documented in `docs/stdlib/`
 
 If ANY of these 5 fail, the feature is not done. Do not close the issue.
@@ -181,6 +176,5 @@ If ANY of these 5 fail, the feature is not done. Do not close the issue.
 - You're adding a function to `stdlib/mod.rs` but not touching `typechecker/expr.rs` → STOP
 - You see `Type::Unknown` as a return type in `resolve_namespace_return_type()` → STOP, fix it
 - A grammar rule exists in docs but `atlas check` gives a parse error → STOP, file H-XXX
-- You're adding a new namespace but only updating method_dispatch, not the interpreter sentinel → STOP
-- The interpreter handles a new feature but the compiler/VM doesn't → STOP (parity break)
-- You implement something in 4 places. Count to 9. What are you missing? → AUDIT before commit
+- You're adding a new namespace but only updating method_dispatch, not the compiler → STOP
+- You implement something in 3 places. Count to 7. What are you missing? → AUDIT before commit

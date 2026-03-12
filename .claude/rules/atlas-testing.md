@@ -26,7 +26,7 @@ du -sh <target-file>
 - **10–12KB:** Acceptable — monitor for future split if it grows
 - **Target: ~10KB per file**
 
-**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `interpreter`, `system`, `bytecode`, `frontend_syntax`, `frontend_integration` are split into domain submodules. Each monolith `.rs` is a thin router. Add tests to the appropriate submodule file, NOT to the router root.
+**Subdirectory structure:** `stdlib`, `typesystem`, `vm`, `system`, `bytecode`, `frontend_syntax`, `frontend_integration` are split into domain submodules. Each monolith `.rs` is a thin router. Add tests to the appropriate submodule file, NOT to the router root.
 
 | Domain | File |
 |--------|------|
@@ -34,7 +34,6 @@ du -sh <target-file>
 | Diagnostics, error spans | `tests/diagnostics.rs` |
 | Full frontend pipeline | `tests/frontend_integration/` (integration_part_{1-5}, ast_part_{1-2}, bytecode_validator, ownership, traits, anonfn_part_{1-2}) — router: `tests/frontend_integration.rs` |
 | Type inference, generics | `tests/typesystem/` (inference, constraints, flow, generics, bindings, integration) |
-| Interpreter execution | `tests/interpreter/` (member, nested_functions, scope, pattern_matching, assignment, for_in, integration) |
 | VM execution | `tests/vm/` (integration, member, complex_programs, regression, performance, functions, nested, for_in, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants, opcodes) |
 | Stdlib functions | `tests/stdlib/` (integration, real_world, strings, json, io, types, functions, collections, parity, vm_stdlib, docs_verification, array_intrinsics, array_pure, math_basic, math_trig, math_utils_constants) |
 | Collections (HashMap, Set, Queue) | `tests/collections.rs` |
@@ -55,18 +54,17 @@ New language behavior → write `.atlas` files in `crates/atlas-runtime/tests/co
 - `fail/bar.atlas` + `fail/bar.stderr` — must produce specific error
 - Generate expected: `UPDATE_CORPUS=1 cargo nextest run -p atlas-runtime --test corpus`
 
-Corpus tests auto-verify parity (runs both interpreter and VM). Prefer corpus over Rust tests.
+Corpus tests verify VM execution behavior. Prefer corpus over Rust tests.
 
-## Parity Pattern (mandatory for interpreter/VM work)
+## Test Pattern
 
 ```rust
 #[test]
-fn test_feature_parity() {
-    assert_parity(r#"len("hello")"#, "5");
+fn test_feature() {
+    let result = run_vm(r#"len("hello")"#);
+    assert_eq!(result, Ok("5".to_string()));
 }
 ```
-
-Never write separate `test_feature_interpreter` + `test_feature_vm` functions.
 
 ## `#[ignore]` Rules
 
