@@ -1132,7 +1132,20 @@ impl Binder {
                 }
             }
             Expr::Identifier(id) => {
-                // First check: Block deprecated bare globals that should use namespace syntax
+                // H-305: Check symbol table FIRST to allow user variables to shadow deprecated
+                // bare global names. A user declaring `let log = ...` should be valid.
+                let is_defined = self.symbol_table.lookup(&id.name).is_some()
+                    || crate::stdlib::is_array_intrinsic(&id.name)
+                    || crate::method_dispatch::is_static_namespace(&id.name)
+                    || crate::method_dispatch::is_allowed_bare_global(&id.name)
+                    || self.enum_variants.contains_key(&id.name);
+
+                if is_defined {
+                    // Identifier is valid — nothing to do
+                    return;
+                }
+
+                // Not defined — check if it's a deprecated bare global for better error message
                 if let Some(hint) = crate::method_dispatch::namespace_hint_for_bare_global(&id.name)
                 {
                     // This is a deprecated bare global — error with migration hint
@@ -1151,54 +1164,40 @@ impl Binder {
                     return;
                 }
 
-                // Check if identifier is defined (in symbol table, array intrinsic, static namespace,
-                // fundamental bare global like Ok/Err/Some/None, or user-defined enum variant H-295)
-                let is_defined = self.symbol_table.lookup(&id.name).is_some()
-                    || crate::stdlib::is_array_intrinsic(&id.name)
-                    || crate::method_dispatch::is_static_namespace(&id.name)
-                    || crate::method_dispatch::is_allowed_bare_global(&id.name)
-                    || self.enum_variants.contains_key(&id.name);
-                if !is_defined {
-                    let suggestion = crate::typechecker::suggestions::suggest_similar_name(
-                        &id.name,
-                        self.symbol_table.all_names_for_suggestion().into_iter(),
-                    );
-                    let ns_hint = crate::method_dispatch::namespace_hint_for_bare_global(&id.name);
-                    let case_hint = crate::method_dispatch::wrong_case_namespace_hint(&id.name);
-                    let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL
-                        .emit(id.span)
-                        .arg("name", &id.name)
-                        .arg("detail", format!("unknown identifier `{}`", id.name))
-                        .build()
-                        .with_label("undefined identifier");
-                    if let Some(ref correct) = case_hint {
-                        diag = diag.with_help(format!(
-                            "use `{}` instead — Atlas namespace names are lowercase (e.g. `{}.method()`)",
-                            correct, correct
-                        ));
-                    } else if let Some(hint) = ns_hint {
-                        diag = diag.with_help(format!(
-                            "use `{}` instead — bare globals have been removed",
-                            hint
-                        ));
-                    } else {
-                        diag = diag
-                            .with_help(format!(
-                                "declare `{}` with `let` before using it: `let {} = value;`",
-                                id.name, id.name
-                            ))
-                            .with_help(format!(
-                                "if `{}` is defined in another file, import it: `import {{ {} }} from \"./module\"`",
-                                id.name, id.name
-                            ));
-                    }
+                // Generic undefined identifier error
+                let suggestion = crate::typechecker::suggestions::suggest_similar_name(
+                    &id.name,
+                    self.symbol_table.all_names_for_suggestion().into_iter(),
+                );
+                let case_hint = crate::method_dispatch::wrong_case_namespace_hint(&id.name);
+                let mut diag = crate::diagnostic::error_codes::UNDEFINED_SYMBOL
+                    .emit(id.span)
+                    .arg("name", &id.name)
+                    .arg("detail", format!("unknown identifier `{}`", id.name))
+                    .build()
+                    .with_label("undefined identifier");
+                if let Some(ref correct) = case_hint {
+                    diag = diag.with_help(format!(
+                        "use `{}` instead — Atlas namespace names are lowercase (e.g. `{}.method()`)",
+                        correct, correct
+                    ));
+                } else {
                     diag = diag
-                        .with_note("identifiers must be declared in the current scope before use");
-                    if let Some(ref sugg) = suggestion {
-                        diag = diag.with_note(format!("did you mean `{}`?", sugg));
-                    }
-                    self.diagnostics.push(diag);
+                        .with_help(format!(
+                            "declare `{}` with `let` before using it: `let {} = value;`",
+                            id.name, id.name
+                        ))
+                        .with_help(format!(
+                            "if `{}` is defined in another file, import it: `import {{ {} }} from \"./module\"`",
+                            id.name, id.name
+                        ));
                 }
+                diag =
+                    diag.with_note("identifiers must be declared in the current scope before use");
+                if let Some(ref sugg) = suggestion {
+                    diag = diag.with_note(format!("did you mean `{}`?", sugg));
+                }
+                self.diagnostics.push(diag);
             }
             Expr::Binary(binary) => {
                 self.bind_expr(&binary.left);

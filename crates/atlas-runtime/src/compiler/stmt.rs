@@ -381,6 +381,11 @@ impl Compiler {
     }
 
     /// Compile an if statement
+    ///
+    /// H-304: Locals declared inside if-blocks must be popped before exiting the block,
+    /// and compile-time tracking must be restored. Otherwise, when a branch is NOT taken
+    /// at runtime, the stack indices become misaligned with compile-time expectations,
+    /// causing stack corruption for subsequent code.
     fn compile_if(&mut self, if_stmt: &IfStmt) -> Result<(), Vec<Diagnostic>> {
         // Compile condition
         self.compile_expr(&if_stmt.cond)?;
@@ -390,8 +395,18 @@ impl Compiler {
         let then_jump = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF); // Placeholder
 
+        // H-304: Track locals before then-block
+        let locals_before_then = self.locals.len();
+
         // Compile then branch (H-303: use statement context for if body)
         self.compile_block_as_statement(&if_stmt.then_block)?;
+
+        // H-304: Pop any locals declared in then-block before exiting
+        let then_locals_to_pop = self.locals.len() - locals_before_then;
+        for _ in 0..then_locals_to_pop {
+            self.bytecode.emit(Opcode::Pop, if_stmt.span);
+        }
+        self.locals.truncate(locals_before_then);
 
         if let Some(else_block) = &if_stmt.else_block {
             // Jump over else branch
@@ -402,8 +417,18 @@ impl Compiler {
             // Patch the then jump to go here
             self.bytecode.patch_jump(then_jump);
 
+            // H-304: Track locals before else-block
+            let locals_before_else = self.locals.len();
+
             // Compile else branch (H-303: use statement context for else body)
             self.compile_block_as_statement(else_block)?;
+
+            // H-304: Pop any locals declared in else-block before exiting
+            let else_locals_to_pop = self.locals.len() - locals_before_else;
+            for _ in 0..else_locals_to_pop {
+                self.bytecode.emit(Opcode::Pop, if_stmt.span);
+            }
+            self.locals.truncate(locals_before_else);
 
             // Patch the else jump
             self.bytecode.patch_jump(else_jump);
@@ -682,7 +707,18 @@ impl Compiler {
         self.bytecode.emit(Opcode::Pop, span); // clean up temporary
 
         // ── Compile loop body (H-303: use statement context to compile tail_expr) ──
+        // H-304: Track locals before body to clean up body-declared locals before looping
+        let locals_before_body = self.locals.len();
         self.compile_block_as_statement(&for_in_stmt.body)?;
+
+        // H-304: Pop any locals declared inside the for-in body BEFORE looping back.
+        // Same pattern as H-302 fix for while loops. Without this, body locals
+        // accumulate on each iteration causing stack corruption.
+        let body_locals_to_pop = self.locals.len() - locals_before_body;
+        for _ in 0..body_locals_to_pop {
+            self.bytecode.emit(Opcode::Pop, span);
+        }
+        self.locals.truncate(locals_before_body);
 
         // ── Loop back to increment ────────────────────────────────────────────
         let offset = increment_start as i32 - (self.bytecode.current_offset() as i32 + 3);
