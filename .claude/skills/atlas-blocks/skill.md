@@ -60,15 +60,17 @@ Lead directs — does not execute. See `gates/session-protection.md`.
    > That file is the canonical definition of what every phase must contain.
    > A phase with only a title is INCOMPLETE — it WILL be misexecuted by a cold-start agent.
 
-   **Populate ALL 7 structured fields for EVERY phase — no exceptions:**
+   **Populate ALL 7 structured fields for EVERY phase — no exceptions.**
+   Use batch syntax (one call instead of seven):
    ```bash
-   pt phase-update B<N>-P01 deps "none OR prior phase IDs (e.g. B13-P01)"
-   pt phase-update B<N>-P01 files "file1.rs (~N lines), file2.rs (~N lines additions)"
-   pt phase-update B<N>-P01 do "what to implement — specific, actionable, no ambiguity"
-   pt phase-update B<N>-P01 dont "what NOT to do — guard rails: banned commands, out-of-scope, parity traps"
-   pt phase-update B<N>-P01 verify "exact cargo check / nextest command to confirm the phase compiled"
-   pt phase-update B<N>-P01 ac "specific deliverables that must be TRUE when phase is done"
-   pt phase-update B<N>-P01 refs "D-XXX decisions, docs/language/foo.md, related phases"
+   pt phase-update B<N>-P01 \
+     deps="none OR prior phase IDs (e.g. B13-P01)" \
+     files="file1.rs (~N lines), file2.rs (~N lines additions)" \
+     do="what to implement — specific, actionable, no ambiguity" \
+     dont="what NOT to do — guard rails: banned commands, out-of-scope, parity traps" \
+     verify="exact cargo check / nextest command to confirm the phase compiled" \
+     ac="specific deliverables that must be TRUE when phase is done" \
+     refs="D-XXX decisions, docs/language/foo.md, related phases"
    ```
    Repeat for every phase in the block. This is what separates a real scaffold from a title dump.
    The 7 fields give future cold-start agents: scope guard, file list, implementation intent,
