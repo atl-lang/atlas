@@ -663,7 +663,9 @@ impl Binder {
         }
     }
 
-    fn resolve_import_path(source: &str, module_path: &Path) -> PathBuf {
+    /// Resolve an import path relative to the importing module.
+    /// Public for use by the compiler (H-296: register imported enum variants).
+    pub fn resolve_import_path(source: &str, module_path: &Path) -> PathBuf {
         let base_path = if source.starts_with("./") || source.starts_with("../") {
             let base = module_path.parent().unwrap_or(Path::new("."));
             // Strip the leading "./" from relative imports before joining to avoid

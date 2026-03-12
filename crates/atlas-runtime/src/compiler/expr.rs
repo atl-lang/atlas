@@ -1675,15 +1675,31 @@ impl Compiler {
             self.bytecode.emit_u16(0xFFFF);
 
             // --- Failure paths ---
+            //
+            // H-297: Different failure points have different stack states:
+            // - variant_fail: stack is [copy] (CheckEnumVariant failed, need to pop)
+            // - len_fail: stack is [] (data extracted, length comparison done)
+            // - inner_fails: stack is [] (sub-pattern matching done)
+            //
+            // We need separate handlers for variant_fail vs the others.
 
-            // Patch all inner pattern failures and length failure to same cleanup
-            self.bytecode.patch_jump(variant_fail);
+            // len_fail and inner_fails can share the same handler (stack is [])
             self.bytecode.patch_jump(len_fail);
             for fail_jump in inner_fails {
                 self.bytecode.patch_jump(fail_jump);
             }
+            // Jump to common fail exit
+            self.bytecode.emit(Opcode::Jump, span);
+            let len_inner_fail_exit = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
 
-            // Emit fail exit jump
+            // variant_fail handler: stack is [copy], need to pop it first
+            self.bytecode.patch_jump(variant_fail);
+            self.bytecode.emit(Opcode::Pop, span);
+            // Fall through to common fail exit (will be patched below)
+
+            // Common fail exit point
+            self.bytecode.patch_jump(len_inner_fail_exit);
             self.bytecode.emit(Opcode::Jump, span);
             let fail_exit = self.bytecode.current_offset();
             self.bytecode.emit_u16(0xFFFF);
