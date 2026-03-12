@@ -1,1 +1,16 @@
-{"status": "cleared", "reason": "H-276 restored existing behavior, no doc changes needed"}
+{
+  "committed_at": "2026-03-12T03:20:41Z",
+  "commit": "9cf4ead",
+  "changed_files": [
+  "crates/atlas-runtime/src/binder.rs",
+  "crates/atlas-runtime/src/compiler/mod.rs",
+  "crates/atlas-runtime/src/runtime.rs"
+],
+  "domains": [
+  "compiler"
+],
+  "relevant_docs": [
+  "docs/known-issues.md"
+],
+  "status": "pending"
+}
