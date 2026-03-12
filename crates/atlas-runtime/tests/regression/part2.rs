@@ -176,5 +176,23 @@ fn regression_h304_for_in_body_locals_cleanup() {
     assert_eval_string(code, "ok");
 }
 
+#[test]
+fn regression_h305_log_variable_name_allowed() {
+    // User-defined variables should shadow deprecated bare globals like `log`
+    let code = r#"
+        fn get_log(): string {
+            return "logdata";
+        }
+
+        fn test(): string {
+            let log: string = get_log();
+            return log;
+        }
+
+        test();
+    "#;
+    assert_eval_string(code, "logdata");
+}
+
 // ============================================================================
 // STABILITY VERIFICATION TESTS (Phase 04)
