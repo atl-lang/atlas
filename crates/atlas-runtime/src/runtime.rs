@@ -322,6 +322,10 @@ impl Atlas {
 
             // Compile this module
             let mut compiler = Compiler::new();
+            // H-296: Register imported enum variants for bare constructor calls.
+            // Must happen before compile() so the compiler knows about variants
+            // from imported enums (e.g., CommandResult::Ok -> Ok).
+            compiler.register_imported_enums(&module.imports, &module.path, &module_registry);
             let mut module_bytecode = compiler.compile(&expanded)?;
 
             // Strip trailing Halt from non-final modules

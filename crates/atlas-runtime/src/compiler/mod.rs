@@ -157,7 +157,7 @@ impl Compiler {
     }
 
     /// Register all variants of an enum declaration for bare constructor resolution.
-    pub(super) fn register_enum_variants(&mut self, decl: &crate::ast::EnumDecl) {
+    pub fn register_enum_variants(&mut self, decl: &crate::ast::EnumDecl) {
         for variant in &decl.variants {
             let variant_name = variant.name().name.clone();
             let enum_name = decl.name.name.clone();
@@ -167,6 +167,47 @@ impl Compiler {
                 crate::ast::EnumVariant::Struct { fields, .. } => fields.len(),
             };
             self.enum_variants.insert(variant_name, (enum_name, arity));
+        }
+    }
+
+    /// Register enum variants from imported enums (H-296).
+    ///
+    /// Called before compile() to populate enum_variants with variants from
+    /// enums imported from other modules. Without this, bare constructor calls
+    /// like `Unknown(raw)` would fail at runtime even though the binder accepts them.
+    pub fn register_imported_enums(
+        &mut self,
+        imports: &[crate::ast::ImportDecl],
+        module_path: &std::path::Path,
+        registry: &crate::module_loader::ModuleRegistry,
+    ) {
+        use crate::ast::ImportSpecifier;
+        use crate::binder::Binder;
+
+        for import_decl in imports {
+            // Resolve source module path (same logic as binder)
+            let source_path = Binder::resolve_import_path(&import_decl.source, module_path);
+
+            // Try both .atlas and .atl extensions
+            let source_sym = registry
+                .get(&source_path)
+                .or_else(|| registry.get(&source_path.with_extension("atlas")))
+                .or_else(|| registry.get(&source_path.with_extension("atl")));
+
+            let Some(source_symbols) = source_sym else {
+                continue;
+            };
+
+            let enum_exports = source_symbols.get_enum_exports();
+
+            for specifier in &import_decl.specifiers {
+                if let ImportSpecifier::Named { name, .. } = specifier {
+                    // Check if this import is an enum
+                    if let Some(enum_decl) = enum_exports.get(&name.name) {
+                        self.register_enum_variants(enum_decl);
+                    }
+                }
+            }
         }
     }
 
