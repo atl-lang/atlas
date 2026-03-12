@@ -1,60 +1,58 @@
 # Atlas Documentation
 
-**Source of Truth:** The codebase. These docs are generated from codebase analysis.
+**Source of Truth:** The codebase. Docs may lag behind.
+
+## Quick Links
+
+| Doc | What it covers |
+|-----|----------------|
+| [cli.md](cli.md) | All CLI commands and flags |
+| [testing.md](testing.md) | Test framework guide |
+| [language/syntax-quickref.md](language/syntax-quickref.md) | Syntax one-pager |
+| [stdlib/index.md](stdlib/index.md) | Stdlib namespace reference |
 
 ## Documentation Principles
 
 1. **Code is truth** - If docs disagree with code, docs are wrong
-2. **Tested examples** - All code examples verified against actual compiler
-3. **AI-friendly** - Small files, one concept each, max ~300 lines
-4. **No aspirations** - Only document what works TODAY
+2. **User-facing only** - No internal architecture docs (they go stale too fast)
+3. **Locked decisions only** - Only document what's decided via `pt decisions`
+4. **AI-friendly** - Small files, one concept each
 
 ## Structure
 
 ```
 docs/
-├── language/           # Language syntax and semantics
-│   ├── grammar.md      # Actual syntax (from parser)
-│   ├── types.md        # Type system
-│   ├── structs-enums.md # Structs and enums
-│   ├── functions.md     # Functions and closures
-│   └── control-flow.md  # If, while, for, match
-│
-├── stdlib/             # Standard library (actual functions)
-│   ├── index.md        # Overview and categories
-│   ├── core.md         # print, len, str, typeof
-│   ├── array.md        # Array operations
-│   ├── collections.md  # HashMap, HashSet, Queue, Stack operations
-│   ├── string.md       # String operations
-│   ├── math.md         # Math functions
-│   ├── datetime.md     # DateTime operations
-│   ├── file.md         # File I/O
-│   ├── http.md         # HTTP client
-│   ├── json.md         # JSON parsing
-│   ├── regex.md        # Regular expressions
-│   ├── async.md        # Async/await
-│   └── process.md      # Process spawning
-│
-├── tooling/            # CLI and tools
-│   └── cli.md          # atlas check, atlas run
-│
+├── cli.md                # CLI command reference
+├── testing.md            # Test framework guide
+├── language/
+│   └── syntax-quickref.md  # Syntax one-pager
+└── stdlib/
+    ├── index.md          # Namespace overview
+    └── test.md           # test.* assertions
 ```
 
-## How These Docs Were Generated
+## What We Document vs Don't
 
-1. Agents audited the actual codebase
-2. Extracted real function signatures from `crates/atlas-runtime/src/stdlib/`
-3. Tested examples against `atlas check` and `atlas run`
-4. Documented only what actually works
+| Document | Don't Document |
+|----------|----------------|
+| CLI commands (stable) | Compiler internals (churning) |
+| Stdlib namespaces (B35 locked) | Type system internals |
+| Basic syntax (locked) | Ownership model details |
+| Test framework (stable) | Architecture decisions |
+| Error codes (stable) | Implementation patterns |
 
-## Archived Documentation
+## Decisions
 
-Old docs (potentially inaccurate) are in `/docs-archive/` for historical reference only.
+All language decisions are tracked via `pt decisions all`. These are the source of truth for why something works a certain way. Key locked decisions:
 
-## Contributing
+- D-021: TypeScript method model (namespace.method)
+- D-041: Array type syntax (prefix `[]T`)
+- D-042: Tuple syntax
+- D-046: Function return type uses colon
+- D-047: `.atl` file extension
+- D-049: Namespace casing convention
+- D-052: Single execution path (VM only)
 
-To update these docs:
-1. Verify against codebase first
-2. Test all code examples
-3. Keep files under 300 lines
-4. One concept per file
+## Archived
+
+Old docs in `/docs-archive/` - historical reference only.
