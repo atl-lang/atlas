@@ -16,7 +16,7 @@ use super::*;
 /// reasons (e.g. arity errors, missing stdin) — that's fine. Only AT1001
 /// means the namespace sentinel was missing.
 fn assert_not_at1001(code: &str) {
-    use atlas_runtime::api::{EvalError, ExecutionMode, Runtime};
+    use atlas_runtime::api::{EvalError, Runtime};
     let mut runtime = Runtime::new();
     match runtime.eval(code) {
         Ok(_) => {}

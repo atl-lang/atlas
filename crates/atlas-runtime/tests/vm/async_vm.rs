@@ -8,7 +8,7 @@
 // - AT4002 raised when Await pops a non-Future value
 // - Parity: VM and interpreter produce identical output for all programs
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::value::Value;
 
 fn vm(code: &str) -> Value {

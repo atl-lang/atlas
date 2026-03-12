@@ -10,26 +10,20 @@ use super::*;
 // Runtime Creation Tests
 
 #[test]
-fn test_runtime_creation_interpreter() {
-    let runtime = Runtime::new();
-    assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
-}
-
-#[test]
-fn test_runtime_creation_vm() {
-    let runtime = Runtime::new();
-    assert_eq!(runtime.mode(), ExecutionMode::VM);
+fn test_runtime_creation() {
+    let _runtime = Runtime::new();
+    // D-052: Runtime always uses VM, no mode check needed
 }
 
 #[test]
 fn test_runtime_with_custom_security() {
     use atlas_runtime::SecurityContext;
     let security = SecurityContext::allow_all();
-    let runtime = Runtime::new_with_security(security);
-    assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
+    let _runtime = Runtime::new_with_security(security);
+    // D-052: Runtime always uses VM
 }
 
-// Basic eval() Tests - Interpreter Mode
+// Basic eval() Tests
 
 #[test]
 fn test_eval_number_literal_interpreter() {

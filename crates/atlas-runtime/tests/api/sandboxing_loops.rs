@@ -23,7 +23,7 @@ fn test_no_timeout_without_limit() {
     // Create config without timeout
     let config = RuntimeConfig::new().with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Run a finite loop - should complete normally
     let result = runtime.eval(
@@ -51,7 +51,7 @@ fn test_memory_limit_enforcement_interpreter_string_concat() {
         .with_max_memory_bytes(500)
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Try to create a large string through concatenation - should fail
     let result = runtime.eval(
@@ -83,7 +83,7 @@ fn test_memory_limit_enforcement_vm_string_concat() {
         .with_max_memory_bytes(500)
         .with_io_allowed(false);
 
-    let mut runtime = Runtime::with_config(ExecutionMode::VM, config);
+    let mut runtime = Runtime::from_config(config);
 
     // Try to create a large string through concatenation - should fail
     let result = runtime.eval(

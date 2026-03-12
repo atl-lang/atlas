@@ -11,7 +11,7 @@
 // Every test calls `assert_parity(source, expected)` which runs the program
 // through both engines and asserts that both return the expected value.
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
 

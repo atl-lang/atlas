@@ -22,7 +22,7 @@
 //! Every `pass/` file runs in both the Interpreter and the VM. If the outputs differ,
 //! the parity assertion fails — keeping both engines in sync automatically.
 
-use atlas_runtime::api::{ExecutionMode, Runtime, RuntimeConfig};
+use atlas_runtime::api::{Runtime, RuntimeConfig};
 use atlas_runtime::binder::Binder;
 use atlas_runtime::diagnostic::DiagnosticLevel;
 use atlas_runtime::lexer::Lexer;
@@ -64,17 +64,18 @@ fn capture_output() -> (Arc<Mutex<Vec<u8>>>, OutputWriter) {
     (buf, writer)
 }
 
-/// Run an Atlas source file through one execution engine and return printed output.
+/// Run an Atlas source file through the VM and return printed output.
 ///
 /// On eval error, returns an empty string (the error is not the output).
 /// Pass tests that fail at eval time will show an empty string vs expected content.
-fn run_pass(source: &str, mode: ExecutionMode) -> Result<String, String> {
+/// D-052: Runtime always uses VM (interpreter removed).
+fn run_pass(source: &str) -> Result<String, String> {
     let (buf, writer) = capture_output();
     let config = RuntimeConfig::new()
         .with_output(writer)
         .with_io_allowed(false)
         .with_network_allowed(false);
-    let mut runtime = Runtime::with_config(mode, config);
+    let mut runtime = Runtime::from_config(config);
     match runtime.eval(source) {
         Ok(_) => Ok(String::from_utf8(buf.lock().unwrap().clone()).unwrap()),
         Err(e) => Err(format!("{}", e)),
@@ -85,29 +86,31 @@ fn run_pass(source: &str, mode: ExecutionMode) -> Result<String, String> {
 ///
 /// Returns the formatted error. If eval succeeds (test is broken), returns
 /// a sentinel that will cause the assertion to fail.
+/// D-052: Runtime always uses VM (interpreter removed).
 fn run_fail(source: &str) -> String {
     let (_buf, writer) = capture_output();
     let config = RuntimeConfig::new()
         .with_output(writer)
         .with_io_allowed(false)
         .with_network_allowed(false);
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
     match runtime.eval(source) {
         Ok(_) => "(no error — expected failure did not occur)".to_string(),
         Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
     }
 }
 
-/// Run an Atlas file (with import support) through one execution engine.
+/// Run an Atlas file (with import support) through the VM.
 ///
 /// Uses eval_file() which handles multi-file imports properly.
-fn run_pass_file(path: &std::path::Path, mode: ExecutionMode) -> Result<String, String> {
+/// D-052: Runtime always uses VM (interpreter removed).
+fn run_pass_file(path: &std::path::Path) -> Result<String, String> {
     let (buf, writer) = capture_output();
     let config = RuntimeConfig::new()
         .with_output(writer)
         .with_io_allowed(true)
         .with_network_allowed(false);
-    let mut runtime = Runtime::with_config(mode, config);
+    let mut runtime = Runtime::from_config(config);
     match runtime.eval_file(path) {
         Ok(_) => Ok(String::from_utf8(buf.lock().unwrap().clone()).unwrap()),
         Err(e) => Err(format!("{}", e)),
@@ -115,13 +118,14 @@ fn run_pass_file(path: &std::path::Path, mode: ExecutionMode) -> Result<String, 
 }
 
 /// Run an Atlas file and capture the error message (for fail/modules/ tests).
+/// D-052: Runtime always uses VM (interpreter removed).
 fn run_fail_file(path: &std::path::Path) -> String {
     let (_buf, writer) = capture_output();
     let config = RuntimeConfig::new()
         .with_output(writer)
         .with_io_allowed(true)
         .with_network_allowed(false);
-    let mut runtime = Runtime::with_config(ExecutionMode::Interpreter, config);
+    let mut runtime = Runtime::from_config(config);
     match runtime.eval_file(path) {
         Ok(_) => "(no error — expected failure did not occur)".to_string(),
         Err(e) => format!("{}", e).trim_end_matches('\n').to_string(),
@@ -220,40 +224,19 @@ fn assert_snapshot(snapshot_path: &PathBuf, actual: &str) {
 }
 
 // ============================================================================
-// Pass tests — interpreter and VM, one named test per file via rstest #[files]
+// Pass tests — VM execution, one named test per file via rstest #[files]
+// D-052: Interpreter removed, VM is the only execution engine.
 // ============================================================================
 
-/// Run a pass/ corpus file in the Interpreter engine and compare against .stdout snapshot.
-#[rstest]
-fn pass_interpreter(#[files("tests/corpus/pass/**/*.atlas")] path: PathBuf) {
-    let source = std::fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
-
-    let output = run_pass(&source, ExecutionMode::Interpreter).unwrap_or_else(|e| {
-        panic!(
-            "Pass test failed in interpreter: {}\nFile: {}",
-            e,
-            path.display()
-        )
-    });
-
-    let snapshot = path.with_extension("stdout");
-    assert_snapshot(&snapshot, &output);
-}
-
 /// Run a pass/ corpus file in the VM engine and compare against .stdout snapshot.
-///
-/// Both engines must produce identical output (parity enforced via shared snapshot).
 #[rstest]
 fn pass_vm(#[files("tests/corpus/pass/**/*.atlas")] path: PathBuf) {
     let source = std::fs::read_to_string(&path)
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path.display(), e));
 
-    let output = run_pass(&source, ExecutionMode::VM)
+    let output = run_pass(&source)
         .unwrap_or_else(|e| panic!("Pass test failed in VM: {}\nFile: {}", e, path.display()));
 
-    // The VM compares against the same .stdout snapshot as the interpreter.
-    // If they disagree, the snapshot written by pass_interpreter will not match.
     let snapshot = path.with_extension("stdout");
     assert_snapshot(&snapshot, &output);
 }
@@ -305,32 +288,18 @@ fn warn_corpus(#[files("tests/corpus/warn/**/*.atlas")] path: PathBuf) {
 }
 
 // ============================================================================
-// Module tests — file-based with import support, parity between engines
+// Module tests — file-based with import support
+// D-052: Interpreter removed, VM is the only execution engine.
 // ============================================================================
 
-/// Run a pass/modules/ corpus file in the Interpreter engine.
+/// Run a pass/modules/ corpus file in the VM engine.
 ///
 /// Module tests use eval_file() which properly handles imports.
 /// Only files named main.atl are entry points (other .atl files are dependencies).
 /// Note: Module corpus uses .atl extension (not .atlas) for import resolution.
 #[rstest]
-fn modules_pass_interpreter(#[files("tests/corpus/pass/modules/**/main.atl")] path: PathBuf) {
-    let output = run_pass_file(&path, ExecutionMode::Interpreter).unwrap_or_else(|e| {
-        panic!(
-            "Module test failed in interpreter: {}\nFile: {}",
-            e,
-            path.display()
-        )
-    });
-
-    let snapshot = path.with_extension("stdout");
-    assert_snapshot(&snapshot, &output);
-}
-
-/// Run a pass/modules/ corpus file in the VM engine.
-#[rstest]
 fn modules_pass_vm(#[files("tests/corpus/pass/modules/**/main.atl")] path: PathBuf) {
-    let output = run_pass_file(&path, ExecutionMode::VM)
+    let output = run_pass_file(&path)
         .unwrap_or_else(|e| panic!("Module test failed in VM: {}\nFile: {}", e, path.display()));
 
     let snapshot = path.with_extension("stdout");

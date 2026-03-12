@@ -8,7 +8,7 @@
 // - error cases (AT4002, rejected futures)
 // - parity baseline programs (recorded for Phase 12 comparison)
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::value::Value;
 
 fn interp(code: &str) -> Value {

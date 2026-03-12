@@ -58,24 +58,6 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::Path;
 
-/// Execution mode for the runtime (DEPRECATED: always uses VM since D-052)
-///
-/// This enum is kept for API compatibility. The `Runtime` struct always uses
-/// the VM execution path regardless of which mode is specified.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-#[deprecated(
-    since = "0.3.0",
-    note = "Runtime always uses VM. Mode parameter is ignored."
-)]
-#[allow(deprecated)]
-pub enum ExecutionMode {
-    /// Interpreter mode (DEPRECATED: maps to VM)
-    Interpreter,
-    /// VM mode (default)
-    #[default]
-    VM,
-}
-
 /// Unified error type for runtime evaluation
 #[derive(Debug)]
 pub enum EvalError {
@@ -196,31 +178,6 @@ impl Runtime {
         }
     }
 
-    /// Create a new runtime with mode (DEPRECATED: mode parameter is ignored)
-    ///
-    /// This constructor is kept for backwards compatibility.
-    /// The mode parameter is ignored - Runtime always uses VM.
-    ///
-    /// Use `Runtime::new()` for new code.
-    #[deprecated(since = "0.3.0", note = "Use Runtime::new() instead. Mode is ignored.")]
-    #[allow(deprecated)]
-    pub fn new_with_mode(_mode: ExecutionMode) -> Self {
-        Self::new()
-    }
-
-    /// Create a new runtime with security (DEPRECATED: mode parameter is ignored)
-    ///
-    /// This constructor is kept for backwards compatibility.
-    /// The mode parameter is ignored - Runtime always uses VM.
-    #[deprecated(
-        since = "0.3.0",
-        note = "Use Runtime::new_with_security() instead. Mode is ignored."
-    )]
-    #[allow(deprecated)]
-    pub fn with_mode_and_security(_mode: ExecutionMode, security: SecurityContext) -> Self {
-        Self::new_with_security(security)
-    }
-
     /// Create a new runtime with configuration
     ///
     /// Converts RuntimeConfig into appropriate SecurityContext settings.
@@ -277,16 +234,6 @@ impl Runtime {
         }
     }
 
-    /// Create a new runtime with configuration (DEPRECATED: mode is ignored)
-    #[deprecated(
-        since = "0.3.0",
-        note = "Use Runtime::from_config() instead. Mode is ignored."
-    )]
-    #[allow(deprecated)]
-    pub fn with_config(_mode: ExecutionMode, config: super::config::RuntimeConfig) -> Self {
-        Self::from_config(config)
-    }
-
     /// Create a sandboxed runtime with restrictive defaults
     ///
     /// Disables IO and network operations.
@@ -301,16 +248,6 @@ impl Runtime {
     /// ```
     pub fn sandboxed() -> Self {
         Self::from_config(super::config::RuntimeConfig::sandboxed())
-    }
-
-    /// Get the current execution mode (DEPRECATED: always returns VM)
-    #[deprecated(
-        since = "0.3.0",
-        note = "Runtime always uses VM. This method always returns ExecutionMode::VM."
-    )]
-    #[allow(deprecated)]
-    pub fn mode(&self) -> ExecutionMode {
-        ExecutionMode::VM
     }
 
     /// Evaluate Atlas source code

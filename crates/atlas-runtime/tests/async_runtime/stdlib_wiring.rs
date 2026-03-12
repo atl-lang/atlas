@@ -6,7 +6,7 @@
 //
 // Note: tests using `async { }` block syntax are deferred (not yet parsed).
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::value::Value;
 

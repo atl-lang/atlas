@@ -10,7 +10,7 @@
 //! These tests use both the static diagnostic pipeline (parse + typecheck)
 //! and the runtime API to cover all error emission sites.
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::security::SecurityContext;
 use atlas_runtime::{Binder, Diagnostic, Lexer, Parser, TypeChecker};
 

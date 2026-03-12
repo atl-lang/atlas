@@ -12,9 +12,8 @@ use super::*;
 // ============================================================================
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_register_fixed_arity_native(#[case] mode: ExecutionMode) {
+
+fn test_register_fixed_arity_native() {
     let mut runtime = Runtime::new();
 
     // Register a simple add function
@@ -46,9 +45,8 @@ fn test_register_fixed_arity_native(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_register_variadic_native(#[case] mode: ExecutionMode) {
+
+fn test_register_variadic_native() {
     let mut runtime = Runtime::new();
 
     // Register a variadic sum function
@@ -80,9 +78,8 @@ fn test_register_variadic_native(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_arity_validation_too_few(#[case] mode: ExecutionMode) {
+
+fn test_native_arity_validation_too_few() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("add", 2, |args| {
@@ -113,9 +110,8 @@ fn test_native_arity_validation_too_few(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_arity_validation_too_many(#[case] mode: ExecutionMode) {
+
+fn test_native_arity_validation_too_many() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("add", 2, |args| {
@@ -146,9 +142,8 @@ fn test_native_arity_validation_too_many(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_returning_error(#[case] mode: ExecutionMode) {
+
+fn test_native_returning_error() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("alwaysFails", 0, |_args| {
@@ -163,9 +158,8 @@ fn test_native_returning_error(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_string_args(#[case] mode: ExecutionMode) {
+
+fn test_native_with_string_args() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("greet", 1, |args| match &args[0] {
@@ -184,9 +178,8 @@ fn test_native_with_string_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_bool_args(#[case] mode: ExecutionMode) {
+
+fn test_native_with_bool_args() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("negate", 1, |args| match &args[0] {
@@ -205,9 +198,8 @@ fn test_native_with_bool_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_array_args(#[case] mode: ExecutionMode) {
+
+fn test_native_with_array_args() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("arrayLength", 1, |args| match &args[0] {
@@ -223,9 +215,8 @@ fn test_native_with_array_args(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_returning_null(#[case] mode: ExecutionMode) {
+
+fn test_native_returning_null() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("returnNull", 0, |_args| Ok(Value::Null));
@@ -235,9 +226,8 @@ fn test_native_returning_null(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_returning_array(#[case] mode: ExecutionMode) {
+
+fn test_native_returning_array() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("makeRange", 1, |args| {
@@ -267,9 +257,8 @@ fn test_native_returning_array(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_called_from_atlas_function(#[case] mode: ExecutionMode) {
+
+fn test_native_called_from_atlas_function() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("multiply", 2, |args| {
@@ -302,9 +291,8 @@ fn test_native_called_from_atlas_function(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_native_with_closure_capture(#[case] mode: ExecutionMode) {
+
+fn test_native_with_closure_capture() {
     let mut runtime = Runtime::new();
 
     let multiplier = 10.0;
@@ -326,9 +314,8 @@ fn test_native_with_closure_capture(#[case] mode: ExecutionMode) {
 }
 
 #[rstest]
-#[case::interpreter(ExecutionMode::Interpreter)]
-#[case::vm(ExecutionMode::VM)]
-fn test_multiple_native_functions(#[case] mode: ExecutionMode) {
+
+fn test_multiple_native_functions() {
     let mut runtime = Runtime::new();
 
     runtime.register_function("add", 2, |args| {

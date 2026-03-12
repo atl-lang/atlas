@@ -34,5 +34,4 @@ pub mod runtime;
 pub use config::{ExecutionLimits, RuntimeConfig};
 pub use conversion::{ConversionError, FromAtlas, ToAtlas};
 pub use native::{BuildError, NativeFunctionBuilder};
-#[allow(deprecated)]
-pub use runtime::{EvalError, ExecutionMode, Runtime};
+pub use runtime::{EvalError, Runtime};
