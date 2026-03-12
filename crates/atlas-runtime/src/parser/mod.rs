@@ -713,15 +713,9 @@ impl Parser {
                 (tok.lexeme.clone(), tok.span)
             };
 
-            // D-040: borrow is the implicit default — no annotation required.
-            // Bare `self` in impl methods has no annotation and no colon.
-            let is_bare_self =
-                ownership.is_none() && param_name == "self" && !self.check(TokenKind::Colon);
-            let ownership = if ownership.is_none() && !is_bare_self {
-                Some(OwnershipAnnotation::Borrow)
-            } else {
-                ownership
-            };
+            // D-040 + D-038 (updated): borrow is the implicit default for ALL params,
+            // including bare `self` in impl methods. No annotation required.
+            let ownership = ownership.or(Some(OwnershipAnnotation::Borrow));
 
             let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
                 let type_ref = self.parse_type_ref()?;

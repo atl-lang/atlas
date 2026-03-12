@@ -1440,13 +1440,8 @@ impl<'a> TypeChecker<'a> {
                     );
                 }
 
-                // D-038: self must have an ownership annotation.
-                if method.params[0].name.name == "self" && method.params[0].ownership.is_none() {
-                    self.diagnostics.push(error_codes::MISSING_OWNERSHIP_ANNOTATION.emit(method.params[0].span).arg("detail", format!(
-                            "Self receiver in method '{}' requires an ownership annotation (borrow self, own self, or share self)",
-                            method.name.name
-                        )).build());
-                }
+                // D-038 (updated): bare `self` defaults to borrow, consistent with D-040.
+                // No error for bare self — it's implicitly borrowed.
             }
 
             // AW3059: warn if an inherent method shadows a trait method of the same name.
