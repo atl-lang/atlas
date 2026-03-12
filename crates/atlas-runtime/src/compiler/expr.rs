@@ -1029,6 +1029,7 @@ impl Compiler {
                     depth: self.scope_depth,
                     mutable: false,
                     scoped_name: None,
+                    drop_type: None, // match bindings: copy semantics
                 });
                 let local_idx = (self.locals.len() - 1 - self.current_function_base) as u16;
 
@@ -1883,6 +1884,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: true,
                 scoped_name: None,
+                drop_type: None, // params: caller owns lifetime
             });
         }
 
@@ -1994,6 +1996,9 @@ impl Compiler {
         } else {
             self.bytecode.emit(Opcode::Null, block.span);
         }
+
+        // B37-P02: Emit drop calls for locals going out of scope (LIFO order)
+        self.emit_drops_for_scope(local_base, self.locals.len(), block.span);
 
         // Pop locals created in this scope AFTER evaluating tail expression,
         // while preserving the resulting value on the stack.

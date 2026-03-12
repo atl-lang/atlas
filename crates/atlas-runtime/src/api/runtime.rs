@@ -592,6 +592,7 @@ impl Runtime {
                     type_ref: None,
                     init: Expr::ObjectLiteral(obj),
                     span: *span,
+                    needs_drop: std::cell::RefCell::new(None),
                 };
                 items.push(Item::Statement(Stmt::VarDecl(var)));
             }

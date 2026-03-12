@@ -46,6 +46,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: true,
                 scoped_name: None,
+                drop_type: None, // params: caller owns lifetime
             });
         }
 
@@ -155,6 +156,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: false,
                 scoped_name: Some(scoped_name.clone()),
+                drop_type: None, // functions don't implement Drop
             });
         }
 
@@ -191,6 +193,9 @@ impl Compiler {
                 if self.in_async_fn {
                     self.bytecode.emit(Opcode::WrapFuture, ret.span);
                 }
+                // B37-P02: Emit drop calls for all locals going out of scope
+                // Note: return value is on stack, drops happen after it's computed
+                self.emit_drops_for_scope(self.current_function_base, self.locals.len(), ret.span);
                 self.bytecode.emit(Opcode::Return, ret.span);
                 Ok(())
             }
@@ -224,11 +229,14 @@ impl Compiler {
         } else {
             // Local variable - add to locals list
             // Value stays on stack (locals are stack-allocated)
+            // Read drop annotation from typechecker (if type implements Drop trait)
+            let drop_type = decl.needs_drop.borrow().clone();
             self.push_local(Local {
                 name: decl.name.name.clone(),
                 depth: self.scope_depth,
                 mutable: decl.mutable,
                 scoped_name: None,
+                drop_type,
             });
         }
 
@@ -248,6 +256,7 @@ impl Compiler {
             depth: self.scope_depth,
             mutable: false,
             scoped_name: None,
+            drop_type: None, // temp local, tuple itself doesn't need drop
         });
 
         // For each binding: load tuple via GetLocal, extract element, register as local.
@@ -262,6 +271,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: d.mutable,
                 scoped_name: None,
+                drop_type: None, // destructure: type tracking deferred
             });
         }
 
@@ -621,6 +631,7 @@ impl Compiler {
             depth: self.scope_depth + 1,
             mutable: false,
             scoped_name: None,
+            drop_type: None, // for-in hidden local
         });
 
         // __for_len = GetArrayLen(__for_arr)
@@ -633,6 +644,7 @@ impl Compiler {
             depth: self.scope_depth + 1,
             mutable: false,
             scoped_name: None,
+            drop_type: None, // for-in hidden local
         });
 
         // __for_idx = 0
@@ -645,6 +657,7 @@ impl Compiler {
             depth: self.scope_depth + 1,
             mutable: true,
             scoped_name: None,
+            drop_type: None, // for-in hidden local
         });
 
         // x = null  (placeholder; set on each iteration)
@@ -655,6 +668,7 @@ impl Compiler {
             depth: self.scope_depth + 1,
             mutable: true,
             scoped_name: None,
+            drop_type: None, // loop var: element copies
         });
         // Stack is now: [..., arr, len, 0, null]
 

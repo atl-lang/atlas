@@ -114,3 +114,6 @@ mod anonfn_part_1;
 
 #[path = "frontend_integration/anonfn_part_2.rs"]
 mod anonfn_part_2;
+
+#[path = "frontend_integration/drop_trait.rs"]
+mod drop_trait;

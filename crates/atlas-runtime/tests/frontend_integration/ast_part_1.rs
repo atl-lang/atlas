@@ -89,6 +89,7 @@ fn test_complete_program_construction() {
                     span: Span::new(81, 90),
                 }),
                 span: Span::new(60, 91),
+                needs_drop: std::cell::RefCell::new(None),
             })),
         ],
     };
@@ -128,6 +129,7 @@ fn test_all_statement_types() {
             type_ref: None,
             init: Expr::Literal(Literal::Number(42.0), Span::new(4, 6)),
             span: Span::new(0, 7),
+            needs_drop: std::cell::RefCell::new(None),
         }),
         // Assignment
         Stmt::Assign(Assign {

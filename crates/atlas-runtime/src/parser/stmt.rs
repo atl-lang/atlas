@@ -166,6 +166,7 @@ impl Parser {
             type_ref,
             init,
             span: keyword_span.merge(end_span),
+            needs_drop: std::cell::RefCell::new(None),
         }))
     }
 

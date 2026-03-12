@@ -26,6 +26,9 @@ pub(super) struct Local {
     /// Scoped name for nested functions (None for regular variables)
     /// Used to access nested functions globally from siblings
     pub(super) scoped_name: Option<String>,
+    /// If Some(type_name), this local's type implements Drop.
+    /// Compiler emits drop call at scope exit in LIFO order.
+    pub(super) drop_type: Option<String>,
 }
 
 /// Loop context for break/continue
@@ -386,6 +389,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: true, // Parameters are always mutable
                 scoped_name: None,
+                drop_type: None, // params: caller owns lifetime
             });
         }
 
@@ -403,6 +407,8 @@ impl Compiler {
             if func.is_async {
                 self.bytecode.emit(Opcode::WrapFuture, func.span);
             }
+            // B37-P02: Emit drops for function-scoped locals before return
+            self.emit_drops_for_scope(old_locals_len, self.locals.len(), func.span);
             // H-301: Emit Return after tail expression — was missing, causing infinite loops
             self.bytecode.emit(Opcode::Return, func.span);
         } else if let Some((last, rest)) = func.body.statements.split_last() {
@@ -415,6 +421,8 @@ impl Compiler {
                 if func.is_async {
                     self.bytecode.emit(Opcode::WrapFuture, func.span);
                 }
+                // B37-P02: Emit drops for function-scoped locals before return
+                self.emit_drops_for_scope(old_locals_len, self.locals.len(), func.span);
                 self.bytecode.emit(Opcode::Null, func.span);
                 self.bytecode.emit(Opcode::Return, func.span);
             } else {
@@ -422,6 +430,8 @@ impl Compiler {
                 if func.is_async {
                     self.bytecode.emit(Opcode::WrapFuture, func.span);
                 }
+                // B37-P02: Emit drops for function-scoped locals before return
+                self.emit_drops_for_scope(old_locals_len, self.locals.len(), func.span);
                 self.bytecode.emit(Opcode::Return, func.span);
             }
         } else {
@@ -430,6 +440,7 @@ impl Compiler {
             if func.is_async {
                 self.bytecode.emit(Opcode::WrapFuture, func.span);
             }
+            // B37-P02: No locals to drop in empty function body
             self.bytecode.emit(Opcode::Return, func.span);
         }
 
@@ -563,6 +574,7 @@ impl Compiler {
                 depth: self.scope_depth,
                 mutable: true,
                 scoped_name: None,
+                drop_type: None, // params: caller owns lifetime
             });
         }
 
@@ -581,6 +593,8 @@ impl Compiler {
         } else {
             self.bytecode.emit(Opcode::Null, span);
         }
+        // B37-P02: Emit drops for method-scoped locals before return
+        self.emit_drops_for_scope(old_locals_len, self.locals.len(), span);
         self.bytecode.emit(Opcode::Return, span);
 
         self.scope_depth = old_scope;
@@ -608,6 +622,39 @@ impl Compiler {
         self.locals.push(local);
         if self.locals.len() > self.locals_watermark {
             self.locals_watermark = self.locals.len();
+        }
+    }
+
+    /// B37-P02: Emit drop calls for locals going out of scope.
+    /// Iterates from `end` down to `start` (exclusive) in LIFO order.
+    /// For each local with drop_type, emits: GetLocal(idx), Call(__impl__Type__Drop__drop)
+    pub(super) fn emit_drops_for_scope(
+        &mut self,
+        start: usize,
+        end: usize,
+        span: crate::span::Span,
+    ) {
+        // LIFO order: drop most recently declared first
+        for abs_idx in (start..end).rev() {
+            if let Some(local) = self.locals.get(abs_idx) {
+                if let Some(type_name) = &local.drop_type {
+                    // Load the local onto stack
+                    let rel_idx = (abs_idx - self.current_function_base) as u16;
+                    self.bytecode.emit(Opcode::GetLocal, span);
+                    self.bytecode.emit_u16(rel_idx);
+
+                    // Call mangled drop function: __impl__TypeName__Drop__drop
+                    let mangled = format!("__impl__{type_name}__Drop__drop");
+                    let name_idx = self
+                        .bytecode
+                        .add_constant(crate::value::Value::string(&mangled));
+                    self.bytecode.emit(Opcode::GetGlobal, span);
+                    self.bytecode.emit_u16(name_idx);
+                    self.bytecode.emit(Opcode::Call, span);
+                    self.bytecode.emit_u8(1); // 1 arg (self)
+                    self.bytecode.emit(Opcode::Pop, span); // drop returns void
+                }
+            }
         }
     }
 

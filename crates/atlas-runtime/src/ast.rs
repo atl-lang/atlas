@@ -506,6 +506,10 @@ pub struct VarDecl {
     pub type_ref: Option<TypeRef>,
     pub init: Expr,
     pub span: Span,
+    /// Drop annotation: if Some(type_name), compiler emits drop call at scope exit.
+    /// Set by typechecker when variable's type implements Drop trait.
+    #[serde(skip)]
+    pub needs_drop: std::cell::RefCell<Option<String>>,
 }
 
 /// Tuple destructuring declaration: `let (a, b) = expr;`

@@ -2089,6 +2089,13 @@ impl<'a> TypeChecker<'a> {
                     init_type
                 };
 
+                // B37-P02: Check if the variable's type implements Drop trait.
+                // If so, annotate for compiler to emit drop call at scope exit.
+                let drop_type_name = self.get_drop_type_name(&final_type);
+                if drop_type_name.is_some() {
+                    var.needs_drop.replace(drop_type_name);
+                }
+
                 // Update the symbol's type in the symbol table.
                 // IMPORTANT: Only update the symbol if it exists in the CURRENT scope.
                 // If lookup finds it in an outer scope (e.g. a global `let x` shadowed
@@ -3093,6 +3100,34 @@ impl<'a> TypeChecker<'a> {
     /// In Block 3: a type is Move if it is not Copy.
     pub fn is_move_type(&self, ty: &Type) -> bool {
         !self.is_copy_type(ty)
+    }
+
+    /// B37-P02: Returns Some(type_name) if the type implements Drop trait.
+    /// Used to annotate variable declarations for compiler drop emission.
+    fn get_drop_type_name(&self, ty: &Type) -> Option<String> {
+        match ty.normalized() {
+            // Built-in types don't implement Drop
+            Type::Number | Type::String | Type::Bool | Type::Null | Type::Void => None,
+            Type::Array(_) | Type::JsonValue | Type::Range | Type::Tuple(_) => None,
+            Type::Function { .. } => None,
+            // Generic types (user structs): check registry
+            Type::Generic { name, .. } => {
+                if self.trait_registry.implements(name.as_str(), "Drop") {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            }
+            // Type alias: check underlying type
+            Type::Alias { name, .. } => {
+                if self.trait_registry.implements(name.as_str(), "Drop") {
+                    Some(name.clone())
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
     }
 
     /// Try to resolve a method call through the trait/impl system.

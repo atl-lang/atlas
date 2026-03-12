@@ -213,6 +213,7 @@ fn test_ast_serialization() {
             type_ref: Some(TypeRef::Named("number".to_string(), Span::new(7, 13))),
             init: Expr::Literal(Literal::Number(42.0), Span::new(16, 18)),
             span: Span::new(0, 19),
+            needs_drop: std::cell::RefCell::new(None),
         }))],
     };
 
