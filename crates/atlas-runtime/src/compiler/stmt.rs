@@ -513,6 +513,7 @@ impl Compiler {
     /// Compile a while loop
     fn compile_while(&mut self, while_stmt: &WhileStmt) -> Result<(), Vec<Diagnostic>> {
         let loop_start = self.bytecode.current_offset();
+        let locals_before = self.locals.len();
 
         // Start a new loop context
         self.loops.push(LoopContext {
@@ -530,6 +531,16 @@ impl Compiler {
 
         // Compile body
         self.compile_block(&while_stmt.body)?;
+
+        // H-302: Pop any locals declared inside the while body BEFORE looping back.
+        // Without this, each iteration pushes new values to the stack but GetLocal
+        // still reads from the original slot, causing stale reads.
+        let locals_to_pop = self.locals.len() - locals_before;
+        for _ in 0..locals_to_pop {
+            self.bytecode.emit(Opcode::Pop, while_stmt.span);
+        }
+        // Remove locals from compile-time tracking so next iteration re-declares them
+        self.locals.truncate(locals_before);
 
         // Loop back to condition
         // Offset needs to account for the Loop instruction (1 byte) + offset operand (2 bytes) = 3 bytes

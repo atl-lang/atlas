@@ -1198,3 +1198,93 @@ fn test_h301_nested_match_in_main() {
         "Nested match should return 'x=1, y=2'"
     );
 }
+
+// ============================================================================
+// H-302: Variables declared inside while loop must re-evaluate each iteration
+// ============================================================================
+
+#[test]
+fn test_h302_while_loop_let_reevaluates() {
+    // H-302: Variables declared with `let` inside a while loop were only
+    // initialized once. The initializer expression was evaluated on first
+    // iteration but subsequent iterations read stale values.
+    // Root cause: while body didn't pop locals before looping back, so
+    // new values pushed to stack but GetLocal still read original slot.
+    let source = r#"
+        fn main(): number {
+            let mut i: number = 0;
+            let mut sum: number = 0;
+            while i < 3 {
+                let x: number = i * 10;
+                sum = sum + x;
+                i = i + 1;
+            }
+            sum
+        }
+    "#;
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    // Should be 0 + 10 + 20 = 30
+    // Before fix: was 0 + 0 + 0 = 0 (always used first iteration's value)
+    assert_eq!(
+        vm,
+        Value::Number(30.0),
+        "while loop let should re-evaluate each iteration"
+    );
+}
+
+#[test]
+fn test_h302_while_loop_multiple_lets() {
+    // Multiple let declarations in while body
+    let source = r#"
+        fn main(): number {
+            let mut i: number = 0;
+            let mut sum: number = 0;
+            while i < 2 {
+                let a: number = i;
+                let b: number = i + 1;
+                sum = sum + a + b;
+                i = i + 1;
+            }
+            sum
+        }
+    "#;
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    // i=0: a=0, b=1, sum=1
+    // i=1: a=1, b=2, sum=1+3=4
+    assert_eq!(
+        vm,
+        Value::Number(4.0),
+        "multiple lets should all re-evaluate"
+    );
+}
+
+#[test]
+fn test_h302_nested_while_loops() {
+    // Nested while loops with let in inner loop
+    let source = r#"
+        fn main(): number {
+            let mut i: number = 0;
+            let mut sum: number = 0;
+            while i < 2 {
+                let mut j: number = 0;
+                while j < 2 {
+                    let val: number = i * 10 + j;
+                    sum = sum + val;
+                    j = j + 1;
+                }
+                i = i + 1;
+            }
+            sum
+        }
+    "#;
+    let vm = vm_eval(source).unwrap_or(Value::Null);
+    // i=0,j=0: val=0, sum=0
+    // i=0,j=1: val=1, sum=1
+    // i=1,j=0: val=10, sum=11
+    // i=1,j=1: val=11, sum=22
+    assert_eq!(
+        vm,
+        Value::Number(22.0),
+        "nested while loops should work correctly"
+    );
+}
