@@ -1,1 +1,38 @@
-{}
+{
+  "committed_at": "2026-03-12T22:52:32Z",
+  "commit": "60c4081",
+  "changed_files": [
+  "crates/atlas-runtime/src/ast.rs",
+  "crates/atlas-runtime/src/binder.rs",
+  "crates/atlas-runtime/src/bytecode/serialize.rs",
+  "crates/atlas-runtime/src/compiler/expr.rs",
+  "crates/atlas-runtime/src/compiler/mod.rs",
+  "crates/atlas-runtime/src/compiler/stmt.rs",
+  "crates/atlas-runtime/src/diagnostic/error_codes.rs",
+  "crates/atlas-runtime/src/parser/expr.rs",
+  "crates/atlas-runtime/src/parser/mod.rs",
+  "crates/atlas-runtime/src/typechecker/expr.rs",
+  "crates/atlas-runtime/src/typechecker/mod.rs",
+  "crates/atlas-runtime/src/value.rs",
+  "crates/atlas-runtime/src/vm/mod.rs",
+  "crates/atlas-runtime/tests/frontend_integration.rs",
+  "crates/atlas-runtime/tests/frontend_integration/ast_part_1.rs",
+  "crates/atlas-runtime/tests/frontend_integration/default_params.rs"
+],
+  "domains": [
+  "ast",
+  "compiler",
+  "parser",
+  "typechecker",
+  "value",
+  "vm"
+],
+  "relevant_docs": [
+  "crates/atlas-runtime/src/CLAUDE.md",
+  "docs/known-issues.md",
+  "docs/language/control-flow.md",
+  "docs/language/grammar.md",
+  "docs/language/types.md"
+],
+  "status": "pending"
+}

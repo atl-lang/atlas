@@ -5,7 +5,6 @@ use crate::testing::TEST_FILE_SUFFIX;
 use atlas_runtime::api::Runtime;
 use atlas_runtime::SecurityContext;
 use rayon::prelude::*;
-use std::fs;
 use std::path::Path;
 use std::time::{Duration, Instant};
 
@@ -119,20 +118,6 @@ impl TestRunner {
     fn run_single_test(&self, test: &TestFunction) -> TestRun {
         let start = Instant::now();
 
-        // Load the test file
-        let source = match fs::read_to_string(&test.file) {
-            Ok(s) => s,
-            Err(e) => {
-                return TestRun {
-                    test: test.clone(),
-                    result: TestResult::Fail {
-                        error: format!("Failed to read test file: {}", e),
-                        duration: start.elapsed(),
-                    },
-                };
-            }
-        };
-
         let security = if is_test_file(&test.file) {
             SecurityContext::test_mode()
         } else {
@@ -142,8 +127,10 @@ impl TestRunner {
         // Create isolated runtime for this test (D-052: unified VM execution)
         let mut runtime = Runtime::new_with_security(security);
 
-        // Execute the file to define functions
-        if let Err(e) = runtime.eval(&source) {
+        // Load the test file with import resolution (H-330 fix)
+        // This uses load_file() which properly resolves imports relative to the file path,
+        // then persists defined functions for subsequent eval() calls.
+        if let Err(e) = runtime.load_file(&test.file) {
             return TestRun {
                 test: test.clone(),
                 result: TestResult::Fail {
@@ -203,8 +190,8 @@ mod tests {
     fn test_runner_pass() {
         let file = create_test_file(
             r#"
-fn test_simple() -> void {
-    assert(true, "should pass");
+fn test_simple() : void {
+    test.assert(true, "should pass");
 }
 "#,
         );
@@ -225,8 +212,8 @@ fn test_simple() -> void {
     fn test_runner_fail() {
         let file = create_test_file(
             r#"
-fn test_failing() -> void {
-    assert(false, "should fail");
+fn test_failing() : void {
+    test.assert(false, "should fail");
 }
 "#,
         );
@@ -256,7 +243,12 @@ fn test_failing() -> void {
 
         assert!(result.result.is_fail());
         if let TestResult::Fail { error, .. } = result.result {
-            assert!(error.contains("Failed to read"));
+            // Error can be "Failed to load" (from runner) or module not found message
+            assert!(
+                error.contains("Failed to load") || error.contains("not found"),
+                "expected 'Failed to load' or 'not found' in error: {}",
+                error
+            );
         }
     }
 
@@ -264,8 +256,8 @@ fn test_failing() -> void {
     fn test_runner_sequential() {
         let file = create_test_file(
             r#"
-fn test_one() -> void { assert(true, "ok"); }
-fn test_two() -> void { assert(true, "ok"); }
+fn test_one() : void { test.assert(true, "ok"); }
+fn test_two() : void { test.assert(true, "ok"); }
 "#,
         );
 
@@ -296,9 +288,9 @@ fn test_two() -> void { assert(true, "ok"); }
     fn test_runner_parallel() {
         let file = create_test_file(
             r#"
-fn test_a() -> void { assert(true, "ok"); }
-fn test_b() -> void { assert(true, "ok"); }
-fn test_c() -> void { assert(true, "ok"); }
+fn test_a() : void { test.assert(true, "ok"); }
+fn test_b() : void { test.assert(true, "ok"); }
+fn test_c() : void { test.assert(true, "ok"); }
 "#,
         );
 
@@ -348,17 +340,17 @@ fn test_c() -> void { assert(true, "ok"); }
     fn test_runner_test_mode_allows_process_and_env() {
         let file = create_test_file_with_suffix(
             r#"
-fn test_process_env() -> void {
-    setEnv("ATLAS_TEST_VAR", "ok");
-    let value = unwrap(getEnv("ATLAS_TEST_VAR"));
-    assertEqual(value, "ok");
+fn test_process_env(): void {
+    env.set("ATLAS_TEST_VAR", "ok");
+    let value = unwrap(env.get("ATLAS_TEST_VAR"));
+    test.equal(value, "ok");
 
-    let result = exec(["/bin/echo", "ok"]);
+    let result = process.exec(["/bin/echo", "ok"]);
     unwrap(result);
 
     let handle = process.spawn(["/bin/echo", "ok"]);
     process.waitFor(handle);
-    unsetEnv("ATLAS_TEST_VAR");
+    env.unset("ATLAS_TEST_VAR");
 }
 "#,
             ".test.atl",

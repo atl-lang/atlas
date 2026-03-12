@@ -534,6 +534,175 @@ impl Runtime {
         }
     }
 
+    /// Load an Atlas file into the runtime for subsequent `eval()` calls
+    ///
+    /// This method loads a file with full import resolution (like `eval_file`),
+    /// but persists the defined functions and globals so they can be called
+    /// via subsequent `eval()` calls. This is useful for test frameworks that
+    /// need to load a test file and then call specific test functions.
+    ///
+    /// # Arguments
+    ///
+    /// * `path` - Path to the Atlas file to load
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(())` - File loaded successfully, functions available for `eval()`
+    /// * `Err(EvalError)` - Parse, type, or runtime error
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use atlas_runtime::api::Runtime;
+    /// use std::path::Path;
+    ///
+    /// let mut runtime = Runtime::new();
+    /// // Load file with imports resolved
+    /// runtime.load_file(Path::new("tests/math.test.atl")).unwrap();
+    /// // Call a function defined in the file
+    /// runtime.eval("test_add()").unwrap();
+    /// ```
+    pub fn load_file(&mut self, path: &Path) -> Result<(), EvalError> {
+        // Determine project root from file path
+        let project_root = path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+
+        // Step 1: Load all modules in dependency order
+        let mut loader = ModuleLoader::new(project_root.clone());
+        let modules = loader.load_module(path).map_err(EvalError::ParseError)?;
+
+        let exports_by_path: HashMap<std::path::PathBuf, Vec<String>> = modules
+            .iter()
+            .map(|module| (module.path.clone(), module.exports.clone()))
+            .collect();
+        let mut resolver = ModuleResolver::new(project_root.clone());
+
+        // Build module registry for cross-module import resolution
+        let mut module_registry = crate::module_loader::ModuleRegistry::new();
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PASS 1: Bind and typecheck ALL modules — collect ALL errors.
+        // This ensures type_tags are set for namespace calls like test.assert().
+        // ═══════════════════════════════════════════════════════════════════════
+        let mut all_errors: Vec<Diagnostic> = Vec::new();
+        let mut expanded_modules: Vec<Program> = Vec::new();
+
+        for module in &modules {
+            // Expand namespace imports (import * as foo)
+            let expanded =
+                match self.expand_namespace_imports(module, &exports_by_path, &mut resolver) {
+                    Ok(e) => e,
+                    Err(diag) => {
+                        all_errors.push(*diag);
+                        expanded_modules.push(Program { items: vec![] });
+                        continue;
+                    }
+                };
+
+            // Bind symbols with cross-module import support
+            let mut binder = Binder::new();
+            let (mut symbol_table, bind_diags) =
+                binder.bind_with_modules(&expanded, &module.path, &module_registry);
+            let bind_errors: Vec<_> = bind_diags
+                .iter()
+                .filter(|d| d.is_error())
+                .cloned()
+                .collect();
+            all_errors.extend(bind_errors);
+
+            // Type-check even if bind had errors — collect ALL diagnostics
+            let mut type_checker = TypeChecker::new(&mut symbol_table);
+            let type_diags = type_checker.check(&expanded);
+            let type_errors: Vec<_> = type_diags
+                .iter()
+                .filter(|d| d.is_error())
+                .cloned()
+                .collect();
+            all_errors.extend(type_errors);
+
+            // Register this module's symbol table for subsequent imports
+            module_registry.register(module.path.clone(), symbol_table);
+            expanded_modules.push(expanded);
+        }
+
+        // If ANY module had errors, return ALL errors now (before compilation)
+        if !all_errors.is_empty() {
+            return Err(EvalError::ParseError(all_errors));
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // PASS 2: Compile ALL modules to bytecode in dependency order.
+        // ═══════════════════════════════════════════════════════════════════════
+        let mut combined_bytecode = crate::bytecode::Bytecode::new();
+
+        for (i, expanded) in expanded_modules.iter().enumerate() {
+            let is_last = i == modules.len() - 1;
+
+            // Compile this module
+            let mut compiler = Compiler::new();
+            let mut module_bytecode = compiler.compile(expanded).map_err(EvalError::ParseError)?;
+
+            // Strip trailing Halt from non-final modules
+            if !is_last
+                && !module_bytecode.instructions.is_empty()
+                && module_bytecode.instructions.last() == Some(&0xFF)
+            {
+                module_bytecode.instructions.pop();
+                if let Some(last_debug) = module_bytecode.debug_info.last() {
+                    if last_debug.instruction_offset == module_bytecode.instructions.len() {
+                        module_bytecode.debug_info.pop();
+                    }
+                }
+            }
+
+            combined_bytecode.append(module_bytecode);
+        }
+
+        // Strip trailing Halt from final module too (we need to continue execution)
+        if !combined_bytecode.instructions.is_empty()
+            && combined_bytecode.instructions.last() == Some(&0xFF)
+        {
+            combined_bytecode.instructions.pop();
+        }
+
+        // Step 3: Get start offset and append to accumulated bytecode
+        let new_code_start = self.accumulated_bytecode.borrow().instructions.len();
+        self.accumulated_bytecode
+            .borrow_mut()
+            .append(combined_bytecode);
+
+        // Step 4: Create VM with accumulated bytecode, set IP to new code
+        let accumulated = self.accumulated_bytecode.borrow().clone();
+        let mut vm = VM::new(accumulated);
+        vm.set_output_writer(self.output.clone());
+        vm.set_ip(new_code_start);
+
+        // Copy runtime globals to VM (for natives and other complex types)
+        {
+            let globals = self.globals.borrow();
+            for (name, (value, _mutable)) in globals.iter() {
+                vm.set_global(name.clone(), value.clone());
+            }
+        }
+
+        // Step 5: Execute the loaded code
+        if let Err(e) = vm.run(&self.security) {
+            return Err(EvalError::RuntimeError(e));
+        }
+
+        // Step 6: Copy VM globals back to runtime for subsequent eval() calls
+        {
+            let mut globals = self.globals.borrow_mut();
+            for (name, value) in vm.get_globals() {
+                globals.insert(name.clone(), (value.clone(), true));
+            }
+        }
+
+        Ok(())
+    }
+
     fn expand_namespace_imports(
         &self,
         module: &crate::module_loader::LoadedModule,
