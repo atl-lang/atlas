@@ -13,12 +13,13 @@ cargo build --release -p atlas-cli
 ```
 
 **NEVER run:**
-- `cargo install` — creates a stale second copy in `~/.cargo/bin/`
+- `cargo install` — creates stale copies, symlinks, or overwrites
 - `cargo build` (debug) — wrong profile, wrong output
 - `cargo build -p atlas-cli` (no `--release`) — wrong profile
 - Any copy/symlink/install step after build — not needed
 
-**Why:** `~/.cargo/bin/atlas` is a symlink → `target/release/atlas`. Building release is enough. `cargo install` overwrites the symlink with a real file, breaking the link and creating drift. This has happened repeatedly — it is now a hard rule.
+**PATH setup:** User's PATH includes `$HOME/dev/projects/atlas/target/release` directly.
+No symlinks. No `~/.cargo/bin/atlas`. Build drops binary in `target/release/atlas` → immediately live.
 
 **After building:** the binary is immediately live at `atlas` in PATH. No install step.
 
