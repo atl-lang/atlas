@@ -1326,8 +1326,10 @@ pub const MODULE_NOT_EXPORTED: DiagnosticDescriptor = DiagnosticDescriptor {
     code: "AT5006",
     level: DiagnosticLevel::Error,
     title: "Module does not export this symbol",
-    message_template: "`{name}` is defined in `{module}` but not exported",
-    static_help: Some("add `export` to the symbol declaration in the source module"),
+    message_template: "module `{module}` does not export `{name}`",
+    static_help: Some(
+        "check the module's public exports — the symbol may not exist or may be private",
+    ),
     static_note: None,
     domain: DiagnosticDomain::Parser,
 };
