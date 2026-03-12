@@ -8,6 +8,18 @@ let mut y = 20;          // mutable
 var z = 30;              // mutable (alias for let mut)
 ```
 
+## Constants (B39-P04)
+
+```atlas
+const PI = 3.14159;              // compile-time constant
+const TAU: number = PI * 2;      // with type annotation
+const NAME = "Atlas";            // string constant
+export const VERSION = 3;        // exported constant
+```
+
+Constants are inlined at compile time. Initializers must be compile-time evaluable:
+literals, references to other consts, or arithmetic on consts.
+
 ## Types
 
 ```atlas
