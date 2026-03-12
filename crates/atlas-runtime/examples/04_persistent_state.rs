@@ -4,10 +4,10 @@
 //!
 //! Run with: cargo run --example 04_persistent_state -p atlas-runtime
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 
 fn main() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
 
     println!("Demonstrating persistent state across eval() calls:\n");
 

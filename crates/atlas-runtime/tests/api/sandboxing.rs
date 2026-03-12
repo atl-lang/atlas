@@ -65,7 +65,7 @@ fn test_custom_config_fluent_api() {
 
 #[test]
 fn test_runtime_with_sandboxed_config() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     // Basic expressions should still work
     let result = runtime.eval("1 + 2").unwrap();
@@ -87,14 +87,14 @@ fn test_runtime_with_custom_config() {
 
 #[test]
 fn test_sandboxed_runtime_basic_arithmetic() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval("10 * 5 + 3").unwrap();
     assert_eq!(result.to_string(), "53");
 }
 
 #[test]
 fn test_sandboxed_runtime_function_definitions() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     runtime
         .eval("fn add(borrow a: number, borrow b: number): number { return a + b; }")
         .unwrap();
@@ -105,21 +105,21 @@ fn test_sandboxed_runtime_function_definitions() {
 
 #[test]
 fn test_sandboxed_runtime_string_operations() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval(r#""Hello, " + "World!""#).unwrap();
     assert_eq!(result.to_string(), "Hello, World!");
 }
 
 #[test]
 fn test_sandboxed_runtime_array_operations() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime.eval("len([1, 2, 3])").unwrap();
     assert_eq!(result.to_string(), "3");
 }
 
 #[test]
 fn test_sandboxed_runtime_conditionals() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
     runtime
         .eval(
             r#"
@@ -140,7 +140,7 @@ fn test_sandboxed_runtime_conditionals() {
 
 #[test]
 fn test_sandboxed_runtime_native_functions() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     runtime.register_function("double", 1, |args| {
         if let atlas_runtime::value::Value::Number(n) = &args[0] {
@@ -170,8 +170,8 @@ fn test_config_clone() {
 
 #[test]
 fn test_multiple_sandboxed_runtimes_independent() {
-    let mut runtime1 = Runtime::sandboxed(ExecutionMode::Interpreter);
-    let mut runtime2 = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime1 = Runtime::sandboxed();
+    let mut runtime2 = Runtime::sandboxed();
 
     let result1 = runtime1.eval("let x: number = 10; x").unwrap();
     let result2 = runtime2.eval("let x: number = 20; x").unwrap();
@@ -218,7 +218,7 @@ fn test_config_disable_only_network() {
 
 #[test]
 fn test_sandboxed_runtime_error_handling() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
 
     // Type errors should still be caught
     let result = runtime.eval(r#"let x: number = "not a number";"#);
@@ -227,7 +227,7 @@ fn test_sandboxed_runtime_error_handling() {
 
 #[test]
 fn test_sandboxed_runtime_persistent_state() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::VM);
+    let mut runtime = Runtime::sandboxed();
 
     // Define a function in one eval()
     runtime

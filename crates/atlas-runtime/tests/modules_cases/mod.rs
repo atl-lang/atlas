@@ -107,13 +107,11 @@ pub(crate) fn assert_parity(entry_path: &Path) {
     use atlas_runtime::api::{ExecutionMode, Runtime};
 
     // Execute with interpreter
-    let mut interpreter_runtime =
-        Runtime::new_with_security(ExecutionMode::Interpreter, SecurityContext::allow_all());
+    let mut interpreter_runtime = Runtime::new_with_security(SecurityContext::allow_all());
     let interpreter_result = interpreter_runtime.eval_file(entry_path);
 
     // Execute with VM
-    let mut vm_runtime =
-        Runtime::new_with_security(ExecutionMode::VM, SecurityContext::allow_all());
+    let mut vm_runtime = Runtime::new_with_security(SecurityContext::allow_all());
     let vm_result = vm_runtime.eval_file(entry_path);
 
     // Both should succeed or both should fail

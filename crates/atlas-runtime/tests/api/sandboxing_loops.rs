@@ -2,7 +2,7 @@ use super::*;
 
 #[test]
 fn test_sandboxed_runtime_loops() {
-    let mut runtime = Runtime::sandboxed(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::sandboxed();
     let result = runtime
         .eval(
             r#"

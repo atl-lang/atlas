@@ -47,7 +47,7 @@ fn eval_ok(code: &str) -> Value {
 }
 
 fn eval_ok_vm(code: &str) -> Value {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     runtime.eval(code).unwrap()
 }
 

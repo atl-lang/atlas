@@ -4,11 +4,11 @@
 //!
 //! Run with: cargo run --example 03_value_conversion -p atlas-runtime
 
-use atlas_runtime::api::{ExecutionMode, FromAtlas, Runtime, ToAtlas};
+use atlas_runtime::api::{FromAtlas, Runtime, ToAtlas};
 use atlas_runtime::value::Value;
 
 fn main() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
 
     // Convert Rust values to Atlas
     let number: Value = 42.0.to_atlas();

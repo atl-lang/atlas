@@ -11,13 +11,13 @@ use super::*;
 
 #[test]
 fn test_runtime_creation_interpreter() {
-    let runtime = Runtime::new(ExecutionMode::Interpreter);
+    let runtime = Runtime::new();
     assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
 }
 
 #[test]
 fn test_runtime_creation_vm() {
-    let runtime = Runtime::new(ExecutionMode::VM);
+    let runtime = Runtime::new();
     assert_eq!(runtime.mode(), ExecutionMode::VM);
 }
 
@@ -25,7 +25,7 @@ fn test_runtime_creation_vm() {
 fn test_runtime_with_custom_security() {
     use atlas_runtime::SecurityContext;
     let security = SecurityContext::allow_all();
-    let runtime = Runtime::new_with_security(ExecutionMode::Interpreter, security);
+    let runtime = Runtime::new_with_security(security);
     assert_eq!(runtime.mode(), ExecutionMode::Interpreter);
 }
 
@@ -33,70 +33,70 @@ fn test_runtime_with_custom_security() {
 
 #[test]
 fn test_eval_number_literal_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("42").unwrap();
     assert!(matches!(result, Value::Number(n) if n == 42.0));
 }
 
 #[test]
 fn test_eval_string_literal_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("\"hello\"").unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "hello"));
 }
 
 #[test]
 fn test_eval_bool_true_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
 
 #[test]
 fn test_eval_bool_false_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("false").unwrap();
     assert!(matches!(result, Value::Bool(false)));
 }
 
 #[test]
 fn test_eval_null_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("null").unwrap();
     assert!(matches!(result, Value::Null));
 }
 
 #[test]
 fn test_eval_arithmetic_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("1 + 2").unwrap();
     assert!(matches!(result, Value::Number(n) if n == 3.0));
 }
 
 #[test]
 fn test_eval_string_concat_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("\"hello\" + \" \" + \"world\"").unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "hello world"));
 }
 
 #[test]
 fn test_eval_comparison_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("5 > 3").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
 
 #[test]
 fn test_eval_logical_and_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true && false").unwrap();
     assert!(matches!(result, Value::Bool(false)));
 }
 
 #[test]
 fn test_eval_logical_or_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true || false").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
@@ -105,70 +105,70 @@ fn test_eval_logical_or_interpreter() {
 
 #[test]
 fn test_eval_number_literal_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("42").unwrap();
     assert!(matches!(result, Value::Number(n) if n == 42.0));
 }
 
 #[test]
 fn test_eval_string_literal_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("\"hello\"").unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "hello"));
 }
 
 #[test]
 fn test_eval_bool_true_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
 
 #[test]
 fn test_eval_bool_false_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("false").unwrap();
     assert!(matches!(result, Value::Bool(false)));
 }
 
 #[test]
 fn test_eval_null_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("null").unwrap();
     assert!(matches!(result, Value::Null));
 }
 
 #[test]
 fn test_eval_arithmetic_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("1 + 2").unwrap();
     assert!(matches!(result, Value::Number(n) if n == 3.0));
 }
 
 #[test]
 fn test_eval_string_concat_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("\"hello\" + \" \" + \"world\"").unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "hello world"));
 }
 
 #[test]
 fn test_eval_comparison_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("5 > 3").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
 
 #[test]
 fn test_eval_logical_and_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true && false").unwrap();
     assert!(matches!(result, Value::Bool(false)));
 }
 
 #[test]
 fn test_eval_logical_or_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("true || false").unwrap();
     assert!(matches!(result, Value::Bool(true)));
 }
@@ -180,7 +180,7 @@ fn test_eval_logical_or_vm() {
 
 #[test]
 fn test_single_eval_with_multiple_statements() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     // Variables defined and used in the same eval() work fine
     let result = runtime
         .eval("let mut x: number = 1; let mut y: number = 2; x + y")
@@ -190,7 +190,7 @@ fn test_single_eval_with_multiple_statements() {
 
 #[test]
 fn test_function_definition_and_call_single_eval() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     // Define and call function in the same eval()
     let result = runtime
         .eval("fn add(borrow x: number, borrow y: number): number { return x + y; } add(10, 20)")
@@ -200,7 +200,7 @@ fn test_function_definition_and_call_single_eval() {
 
 #[test]
 fn test_function_multiple_calls_single_eval() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime
         .eval("fn square(borrow x: number): number { return x * x; } square(3) + square(4)")
         .unwrap();
@@ -211,7 +211,7 @@ fn test_function_multiple_calls_single_eval() {
 
 #[test]
 fn test_global_variable_persistence_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     runtime.eval("let mut x: number = 42;").unwrap();
     // Note: VM doesn't persist state yet in this phase
     // This test documents current limitation
@@ -219,7 +219,7 @@ fn test_global_variable_persistence_vm() {
 
 #[test]
 fn test_function_definition_persistence_vm() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
     runtime
         .eval("fn add(borrow x: number, borrow y: number): number { return x + y; }")
         .unwrap();
@@ -230,42 +230,42 @@ fn test_function_definition_persistence_vm() {
 
 #[test]
 fn test_eval_parse_error_missing_semicolon() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("let x: number =");
     assert!(matches!(result, Err(EvalError::ParseError(_))));
 }
 
 #[test]
 fn test_eval_parse_error_invalid_syntax() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("@#$%");
     assert!(matches!(result, Err(EvalError::ParseError(_))));
 }
 
 #[test]
 fn test_eval_type_error_wrong_type() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("let x: number = \"hello\";");
     assert!(matches!(result, Err(EvalError::TypeError(_))));
 }
 
 #[test]
 fn test_eval_type_error_arithmetic_on_string() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("\"hello\" - \"world\"");
     assert!(matches!(result, Err(EvalError::TypeError(_))));
 }
 
 #[test]
 fn test_eval_runtime_error_divide_by_zero() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("1 / 0");
     assert!(matches!(result, Err(EvalError::RuntimeError(_))));
 }
 
 #[test]
 fn test_eval_type_error_undefined_variable() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval("nonexistent");
     // Undefined variables are caught at binding/typecheck phase
     assert!(result.is_err());
@@ -275,7 +275,7 @@ fn test_eval_type_error_undefined_variable() {
 
 #[test]
 fn test_call_builtin_console_log() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime
         .call("consoleLog", vec![Value::Number(42.0)])
         .unwrap();
@@ -284,14 +284,14 @@ fn test_call_builtin_console_log() {
 
 #[test]
 fn test_call_builtin_str() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.call("str", vec![Value::Number(42.0)]).unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "42"));
 }
 
 #[test]
 fn test_call_builds_on_eval() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     // call() uses eval() internally, so functions must be defined inline
     let result = runtime.call("str", vec![Value::Number(42.0)]).unwrap();
     assert!(matches!(result, Value::String(s) if s.as_ref() == "42"));
@@ -301,7 +301,7 @@ fn test_call_builds_on_eval() {
 
 #[test]
 fn test_set_global_number_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("x", Value::Number(42.0));
     let value = runtime.get_global("x").unwrap();
     assert!(matches!(value, Value::Number(n) if n == 42.0));
@@ -309,7 +309,7 @@ fn test_set_global_number_interpreter() {
 
 #[test]
 fn test_set_global_string_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("message", Value::String(Arc::new("hello".to_string())));
     let value = runtime.get_global("message").unwrap();
     assert!(matches!(value, Value::String(s) if s.as_ref() == "hello"));
@@ -317,7 +317,7 @@ fn test_set_global_string_interpreter() {
 
 #[test]
 fn test_set_global_bool_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("flag", Value::Bool(true));
     let value = runtime.get_global("flag").unwrap();
     assert!(matches!(value, Value::Bool(true)));
@@ -325,7 +325,7 @@ fn test_set_global_bool_interpreter() {
 
 #[test]
 fn test_set_global_null_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("nothing", Value::Null);
     let value = runtime.get_global("nothing").unwrap();
     assert!(matches!(value, Value::Null));

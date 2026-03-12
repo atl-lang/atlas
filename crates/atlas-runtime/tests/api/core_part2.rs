@@ -2,14 +2,14 @@ use super::*;
 
 #[test]
 fn test_get_global_nonexistent_interpreter() {
-    let runtime = Runtime::new(ExecutionMode::Interpreter);
+    let runtime = Runtime::new();
     let value = runtime.get_global("nonexistent");
     assert!(value.is_none());
 }
 
 #[test]
 fn test_set_global_and_get_global_roundtrip() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("x", Value::Number(100.0));
     let value = runtime.get_global("x").unwrap();
     assert!(matches!(value, Value::Number(n) if n == 100.0));
@@ -18,7 +18,7 @@ fn test_set_global_and_get_global_roundtrip() {
 
 #[test]
 fn test_set_global_overwrite_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     runtime.set_global("x", Value::Number(10.0));
     runtime.set_global("x", Value::Number(20.0));
     let value = runtime.get_global("x").unwrap();
@@ -29,7 +29,7 @@ fn test_set_global_overwrite_interpreter() {
 
 #[test]
 fn test_get_global_vm_returns_none() {
-    let runtime = Runtime::new(ExecutionMode::VM);
+    let runtime = Runtime::new();
     // VM mode doesn't support direct global access yet
     let value = runtime.get_global("x");
     assert!(value.is_none());
@@ -39,8 +39,8 @@ fn test_get_global_vm_returns_none() {
 
 #[test]
 fn test_parity_arithmetic_expression() {
-    let mut interp = Runtime::new(ExecutionMode::Interpreter);
-    let mut vm = Runtime::new(ExecutionMode::VM);
+    let mut interp = Runtime::new();
+    let mut vm = Runtime::new();
 
     let expr = "((10 + 5) * 2) - 3";
     let interp_result = interp.eval(expr).unwrap();
@@ -52,8 +52,8 @@ fn test_parity_arithmetic_expression() {
 
 #[test]
 fn test_parity_string_operations() {
-    let mut interp = Runtime::new(ExecutionMode::Interpreter);
-    let mut vm = Runtime::new(ExecutionMode::VM);
+    let mut interp = Runtime::new();
+    let mut vm = Runtime::new();
 
     let expr = "\"hello\" + \" \" + \"world\"";
     let interp_result = interp.eval(expr).unwrap();
@@ -65,8 +65,8 @@ fn test_parity_string_operations() {
 
 #[test]
 fn test_parity_boolean_logic() {
-    let mut interp = Runtime::new(ExecutionMode::Interpreter);
-    let mut vm = Runtime::new(ExecutionMode::VM);
+    let mut interp = Runtime::new();
+    let mut vm = Runtime::new();
 
     let expr = "(true && false) || (false || true)";
     let interp_result = interp.eval(expr).unwrap();
@@ -80,7 +80,7 @@ fn test_parity_boolean_logic() {
 
 #[test]
 fn test_complex_program_with_control_flow_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let program = r#"
         fn factorial(borrow n: number): number {
             if (n <= 1) {
@@ -97,7 +97,7 @@ fn test_complex_program_with_control_flow_interpreter() {
 
 #[test]
 fn test_complex_program_with_loops_interpreter() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let program = r#"
         let mut sum: number = 0;
         for i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] {
@@ -111,7 +111,7 @@ fn test_complex_program_with_loops_interpreter() {
 
 #[test]
 fn test_multiple_function_definitions_single_eval() {
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     // Define all functions in a single eval()
     let result = runtime
         .eval(

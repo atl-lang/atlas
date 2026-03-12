@@ -4,12 +4,12 @@
 //!
 //! Run with: cargo run --example 02_custom_functions -p atlas-runtime
 
-use atlas_runtime::api::{ExecutionMode, Runtime};
+use atlas_runtime::api::Runtime;
 use atlas_runtime::span::Span;
 use atlas_runtime::value::{RuntimeError, Value};
 
 fn main() {
-    let mut runtime = Runtime::new(ExecutionMode::VM);
+    let mut runtime = Runtime::new();
 
     // Register a simple native function
     runtime.register_function("double", 1, |args| match &args[0] {

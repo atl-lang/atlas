@@ -359,11 +359,11 @@ fn test_h289_p02_eval_source_simulation() {
 /// This is the existing VM mode implementation that should work.
 #[test]
 fn test_h289_api_runtime_vm_mode() {
-    use atlas_runtime::api::{ExecutionMode, Runtime};
+    use atlas_runtime::api::Runtime;
 
-    // Create runtime in VM mode
+    // Create runtime (always uses VM)
     let security = atlas_runtime::SecurityContext::allow_all();
-    let mut runtime = Runtime::new_with_security(ExecutionMode::VM, security);
+    let mut runtime = Runtime::new_with_security(security);
 
     // First eval: define a function
     let result = runtime.eval(

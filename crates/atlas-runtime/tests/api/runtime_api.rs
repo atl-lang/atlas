@@ -177,7 +177,7 @@ fn test_eval_file_simple_module() {
     let main_path = temp_dir.path().join("main.atl");
     fs::write(&main_path, "let x: number = 42;\nx;").unwrap();
 
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval_file(&main_path);
 
     match result {
@@ -212,7 +212,7 @@ add(10, 20);
     .unwrap();
 
     let main_path = temp_dir.path().join("main.atl");
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval_file(&main_path);
 
     match result {
@@ -245,7 +245,7 @@ PI * 2;
     .unwrap();
 
     let main_path = temp_dir.path().join("main.atl");
-    let mut runtime = Runtime::new(ExecutionMode::Interpreter);
+    let mut runtime = Runtime::new();
     let result = runtime.eval_file(&main_path);
 
     match result {
