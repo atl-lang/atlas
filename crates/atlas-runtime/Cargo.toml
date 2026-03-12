@@ -85,10 +85,6 @@ name = "typechecker"
 harness = false
 
 [[bench]]
-name = "interpreter"
-harness = false
-
-[[bench]]
 name = "vm_performance_benches"
 harness = false
 
@@ -97,21 +93,9 @@ name = "stdlib_benchmarks"
 harness = false
 
 [[bench]]
-name = "parity"
-harness = false
-
-[[bench]]
 name = "v02_vm_optimization_benches"
 harness = false
 
 [[bench]]
-name = "v02_interpreter_benches"
-harness = false
-
-[[bench]]
 name = "v02_stdlib_benches"
-harness = false
-
-[[bench]]
-name = "v02_comprehensive_benches"
 harness = false
