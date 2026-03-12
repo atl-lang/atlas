@@ -209,3 +209,6 @@ mod warnings_attributes;
 
 #[path = "frontend_syntax/diagnostic_descriptor.rs"]
 mod diagnostic_descriptor;
+
+#[path = "frontend_syntax/visibility.rs"]
+mod visibility;

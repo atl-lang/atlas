@@ -283,6 +283,7 @@ impl Binder {
             kind: SymbolKind::Function,
             span: func.name.span,
             exported: false,
+            visibility: func.visibility,
         };
 
         if let Err(err) = self.symbol_table.define_function(symbol) {
@@ -373,6 +374,7 @@ impl Binder {
             kind: SymbolKind::Function,
             span: func.name.span,
             exported: false,
+            visibility: func.visibility,
         };
 
         // Use define_scoped_function to add to current scope (not global functions)
@@ -570,6 +572,7 @@ impl Binder {
                                 kind: exported_symbol.kind.clone(),
                                 span: *span,
                                 exported: false, // Imports are not automatically re-exported
+                                visibility: exported_symbol.visibility,
                             };
 
                             if let Err(err) = self.symbol_table.define(imported_symbol) {
@@ -643,6 +646,7 @@ impl Binder {
                         kind: SymbolKind::Variable,
                         span: *span,
                         exported: false,
+                        visibility: Visibility::Private,
                     };
 
                     if let Err(err) = self.symbol_table.define(imported_symbol) {
@@ -833,6 +837,7 @@ impl Binder {
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
+                visibility: Visibility::Private,
             };
 
             if let Err(err) = self.symbol_table.define(symbol) {
@@ -942,6 +947,7 @@ impl Binder {
                     kind: SymbolKind::Variable,
                     span: var.name.span,
                     exported: false,
+                    visibility: Visibility::Private,
                 };
 
                 if let Err(err) = self.symbol_table.define(symbol) {
@@ -989,6 +995,7 @@ impl Binder {
                         span: name.span,
                         kind: SymbolKind::Variable,
                         exported: false,
+                        visibility: Visibility::Private,
                     };
                     let _ = self.symbol_table.define(symbol);
                 }
@@ -1029,6 +1036,7 @@ impl Binder {
                     kind: SymbolKind::Variable,
                     span: for_in_stmt.variable.span,
                     exported: false,
+                    visibility: Visibility::Private,
                 };
 
                 if let Err(err) = self.symbol_table.define(symbol) {
@@ -1263,6 +1271,7 @@ impl Binder {
                             kind: SymbolKind::Variable,
                             span: *var_span,
                             exported: false,
+                            visibility: Visibility::Private,
                         };
                         let _ = self.symbol_table.define(symbol);
                     }
@@ -1306,6 +1315,7 @@ impl Binder {
                         kind: SymbolKind::Parameter,
                         span: param.name.span,
                         exported: false,
+                        visibility: Visibility::Private,
                     };
                     let _ = self.symbol_table.define(symbol);
                 }

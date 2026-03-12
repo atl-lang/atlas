@@ -3210,6 +3210,7 @@ impl<'a> TypeChecker<'a> {
                     kind: crate::symbol::SymbolKind::Variable,
                     span: *var_span,
                     exported: false,
+                    visibility: crate::ast::Visibility::Private,
                 };
                 // Ignore if binding fails (duplicate names in pattern - will be caught separately)
                 let _ = self.symbol_table.define(symbol);
@@ -4179,6 +4180,7 @@ impl<'a> TypeChecker<'a> {
                 kind: crate::symbol::SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
+                visibility: crate::ast::Visibility::Private,
             };
             let _ = self.symbol_table.define(symbol);
         }

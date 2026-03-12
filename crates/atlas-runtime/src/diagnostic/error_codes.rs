@@ -1102,6 +1102,18 @@ pub const INHERENT_SELF_NOT_FIRST: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Typechecker,
 };
 
+/// Fired when attempting to access a private item from outside its defining file.
+/// B37-P04: Visibility enforcement.
+pub const PRIVATE_ACCESS_VIOLATION: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT3059",
+    level: DiagnosticLevel::Error,
+    title: "Access to private item",
+    message_template: "cannot access private {kind} `{name}` from outside its defining module",
+    static_help: Some("mark the item `pub` to make it accessible from other modules, or access it only within the same file"),
+    static_note: Some("private items (the default visibility) can only be used within the file where they are defined"),
+    domain: DiagnosticDomain::Typechecker,
+};
+
 pub const UNKNOWN_TYPE_NAME: DiagnosticDescriptor = DiagnosticDescriptor {
     code: "AT3060",
     level: DiagnosticLevel::Error,

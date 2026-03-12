@@ -826,6 +826,7 @@ impl<'a> TypeChecker<'a> {
             kind: SymbolKind::Function,
             span: func.name.span,
             exported: false,
+            visibility: func.visibility,
         };
 
         // Define in current scope (ignore redeclaration errors - binder already checked)
@@ -1495,6 +1496,7 @@ impl<'a> TypeChecker<'a> {
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
+                visibility: crate::ast::Visibility::Private,
             };
             let _ = self.symbol_table.define(symbol);
             self.declared_symbols.insert(
@@ -1657,6 +1659,7 @@ impl<'a> TypeChecker<'a> {
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
                 exported: false,
+                visibility: crate::ast::Visibility::Private,
             };
             // Define parameter in symbol table for type checking
             let _ = self.symbol_table.define(symbol);
@@ -2111,6 +2114,7 @@ impl<'a> TypeChecker<'a> {
                         mutable: var.mutable,
                         kind: crate::symbol::SymbolKind::Variable,
                         exported: false,
+                        visibility: crate::ast::Visibility::Private,
                     };
                     // Ignore redefinition errors - the binder already validated this
                     let _ = self.symbol_table.define(symbol);
@@ -2175,6 +2179,7 @@ impl<'a> TypeChecker<'a> {
                             mutable: d.mutable,
                             kind: crate::symbol::SymbolKind::Variable,
                             exported: false,
+                            visibility: crate::ast::Visibility::Private,
                         };
                         let _ = self.symbol_table.define(symbol);
                     }
@@ -2625,6 +2630,7 @@ impl<'a> TypeChecker<'a> {
                         mutable: false,
                         kind: crate::symbol::SymbolKind::Variable,
                         exported: false,
+                        visibility: crate::ast::Visibility::Private,
                     };
                     let _ = self.symbol_table.define(symbol);
                 }
@@ -2650,6 +2656,7 @@ impl<'a> TypeChecker<'a> {
                 kind: symbol.kind.clone(),
                 span: symbol.span,
                 exported: symbol.exported,
+                visibility: symbol.visibility,
             };
             let _ = self.symbol_table.define(shadow);
         }

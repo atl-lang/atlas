@@ -1,6 +1,6 @@
 //! Symbol table and name binding
 
-use crate::ast::{EnumDecl, StructDecl, TypeAliasDecl};
+use crate::ast::{EnumDecl, StructDecl, TypeAliasDecl, Visibility};
 use crate::span::Span;
 use crate::types::Type;
 use std::collections::{HashMap, HashSet};
@@ -20,6 +20,8 @@ pub struct Symbol {
     pub span: Span,
     /// Whether this symbol is exported (for module system)
     pub exported: bool,
+    /// Visibility modifier (pub/private/internal) — B37-P04
+    pub visibility: Visibility,
 }
 
 /// Symbol classification

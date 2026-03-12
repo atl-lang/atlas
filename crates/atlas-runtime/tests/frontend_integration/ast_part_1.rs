@@ -16,6 +16,7 @@ fn test_complete_program_construction() {
                     name: "add".to_string(),
                     span: Span::new(5, 8),
                 },
+                visibility: Visibility::Private,
                 attributes: vec![],
                 is_async: false,
                 type_params: vec![],

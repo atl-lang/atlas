@@ -340,6 +340,7 @@ impl Runtime {
                     kind: kind.clone(),
                     span: crate::span::Span::dummy(),
                     exported: false,
+                    visibility: crate::ast::Visibility::Private,
                 };
 
                 // Add to initial symbol table
