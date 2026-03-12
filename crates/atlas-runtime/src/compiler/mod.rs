@@ -436,13 +436,32 @@ impl Compiler {
             self.async_fn_names.insert(func.name.name.clone());
         }
 
+        // Calculate required_arity and defaults (B39-P05)
+        let arity = func.params.len();
+        let required_arity = func
+            .params
+            .iter()
+            .take_while(|p| p.default_value.is_none())
+            .count();
+        let defaults: Vec<Option<crate::value::Value>> = func
+            .params
+            .iter()
+            .map(|p| {
+                p.default_value
+                    .as_ref()
+                    .and_then(|expr| self.eval_const_expr(expr))
+            })
+            .collect();
+
         let placeholder_ref = crate::value::FunctionRef {
             name: func.name.name.clone(),
-            arity: func.params.len(),
+            arity,
+            required_arity,
             bytecode_offset: 0, // Placeholder - will be updated after Jump
             local_count: 0,     // Will be updated after compiling body
             param_ownership: vec![],
             param_names: vec![],
+            defaults: defaults.clone(),
             return_ownership: None,
             is_async: func.is_async,
         };
@@ -568,11 +587,13 @@ impl Compiler {
         // Update the FunctionRef in constants with accurate local_count and ownership metadata
         let updated_ref = crate::value::FunctionRef {
             name: func.name.name.clone(),
-            arity: func.params.len(),
+            arity,
+            required_arity,
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: func.params.iter().map(|p| p.name.name.clone()).collect(),
+            defaults: defaults.clone(),
             return_ownership: func.return_ownership.clone(),
             is_async: func.is_async,
         };
@@ -644,13 +665,32 @@ impl Compiler {
         mangled_name: &str,
         span: crate::span::Span,
     ) -> Result<(), Vec<Diagnostic>> {
+        // Calculate required_arity and defaults (B39-P05)
+        let method_arity = method.params.len();
+        let method_required_arity = method
+            .params
+            .iter()
+            .take_while(|p| p.default_value.is_none())
+            .count();
+        let method_defaults: Vec<Option<crate::value::Value>> = method
+            .params
+            .iter()
+            .map(|p| {
+                p.default_value
+                    .as_ref()
+                    .and_then(|expr| self.eval_const_expr(expr))
+            })
+            .collect();
+
         let placeholder_ref = crate::value::FunctionRef {
             name: mangled_name.to_string(),
-            arity: method.params.len(),
+            arity: method_arity,
+            required_arity: method_required_arity,
             bytecode_offset: 0,
             local_count: 0,
             param_ownership: vec![],
             param_names: method.params.iter().map(|p| p.name.name.clone()).collect(),
+            defaults: method_defaults.clone(),
             return_ownership: None,
             is_async: false,
         };
@@ -713,11 +753,13 @@ impl Compiler {
 
         let updated_ref = crate::value::FunctionRef {
             name: mangled_name.to_string(),
-            arity: method.params.len(),
+            arity: method_arity,
+            required_arity: method_required_arity,
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: method.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: method.params.iter().map(|p| p.name.name.clone()).collect(),
+            defaults: method_defaults,
             return_ownership: None,
             is_async: false,
         };

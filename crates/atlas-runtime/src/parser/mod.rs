@@ -805,7 +805,7 @@ impl Parser {
             // including bare `self` in impl methods. No annotation required.
             let ownership = ownership.or(Some(OwnershipAnnotation::Borrow));
 
-            let (type_ref, param_span_end) = if self.match_token(TokenKind::Colon) {
+            let (type_ref, type_span_end) = if self.match_token(TokenKind::Colon) {
                 let type_ref = self.parse_type_ref()?;
                 let end = type_ref.span();
                 (type_ref, end)
@@ -832,6 +832,15 @@ impl Parser {
                 }
             };
 
+            // Parse optional default value (B39-P05): `= expr`
+            let (default_value, param_span_end) = if self.match_token(TokenKind::Equal) {
+                let expr = self.parse_expression()?;
+                let end = expr.span();
+                (Some(Box::new(expr)), end)
+            } else {
+                (None, type_span_end)
+            };
+
             params.push(Param {
                 name: Identifier {
                     name: param_name,
@@ -841,6 +850,7 @@ impl Parser {
                 ownership,
                 ownership_explicit,
                 mutable,
+                default_value,
                 span: param_span_start.merge(param_span_end),
             });
 

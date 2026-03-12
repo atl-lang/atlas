@@ -393,6 +393,9 @@ pub struct TypeChecker<'a> {
     enum_decls: HashMap<String, EnumDecl>,
     /// True when the current function/method has `@allow(unused)` — suppresses AT2001 warnings.
     current_fn_allow_unused: bool,
+    /// Required arity for functions (function_name -> required_arity). (B39-P05)
+    /// Used by call-site checking to support default parameters.
+    pub fn_required_arity: HashMap<String, usize>,
 }
 
 /// Convert a `Type` to a string key used for impl registry lookups.
@@ -477,6 +480,7 @@ impl<'a> TypeChecker<'a> {
             enum_names: HashSet::new(),
             enum_decls: HashMap::new(),
             current_fn_allow_unused: false,
+            fn_required_arity: HashMap::new(),
         }
     }
 
@@ -1635,6 +1639,15 @@ impl<'a> TypeChecker<'a> {
     }
 
     fn check_function(&mut self, func: &FunctionDecl) {
+        // Track required arity for call-site checking (B39-P05)
+        let required_arity = func
+            .params
+            .iter()
+            .take_while(|p| p.default_value.is_none())
+            .count();
+        self.fn_required_arity
+            .insert(func.name.name.clone(), required_arity);
+
         // AT4006: async fn main() is forbidden
         if func.is_async && func.name.name == "main" {
             self.diagnostics.push(
@@ -1768,7 +1781,7 @@ impl<'a> TypeChecker<'a> {
             let ty = self.resolve_type_ref_with_params(&param.type_ref, &all_type_params);
             let symbol = crate::symbol::Symbol {
                 name: param.name.name.clone(),
-                ty,
+                ty: ty.clone(),
                 mutable: param.mutable,
                 kind: SymbolKind::Parameter,
                 span: param.name.span,
@@ -1783,6 +1796,41 @@ impl<'a> TypeChecker<'a> {
                 param.name.name.clone(),
                 (param.name.span, SymbolKind::Parameter),
             );
+
+            // Type-check default value if present (B39-P05)
+            if let Some(ref default_expr) = param.default_value {
+                let default_type = self.check_expr(default_expr);
+                // Check if types are compatible (exact match or Unknown)
+                let compatible = default_type.normalized() == ty.normalized()
+                    || default_type == Type::Unknown
+                    || ty == Type::Unknown;
+                if !compatible {
+                    self.diagnostics.push(
+                        error_codes::TYPE_ERROR
+                            .emit(default_expr.span())
+                            .arg(
+                                "detail",
+                                format!(
+                                    "default value type mismatch: expected `{}`, found `{}`",
+                                    ty.display_name(),
+                                    default_type.display_name()
+                                ),
+                            )
+                            .build()
+                            .with_label(format!(
+                                "expected `{}`, found `{}`",
+                                ty.display_name(),
+                                default_type.display_name()
+                            ))
+                            .with_help(format!(
+                                "parameter `{}` expects `{}` but default is `{}`",
+                                param.name.name,
+                                ty.display_name(),
+                                default_type.display_name()
+                            )),
+                    );
+                }
+            }
         }
 
         // Validate ownership annotations and populate the ownership registry.

@@ -1173,7 +1173,16 @@ impl Parser {
             // Type annotation is required: `param: Type`
             self.consume(TokenKind::Colon, "Expected ':' after parameter name")?;
             let type_ref = self.parse_type_ref()?;
-            let param_span_end = type_ref.span();
+            let type_span_end = type_ref.span();
+
+            // Parse optional default value (B39-P05): `= expr`
+            let (default_value, param_span_end) = if self.match_token(TokenKind::Equal) {
+                let expr = self.parse_expression()?;
+                let end = expr.span();
+                (Some(Box::new(expr)), end)
+            } else {
+                (None, type_span_end)
+            };
 
             params.push(Param {
                 name: Identifier {
@@ -1184,6 +1193,7 @@ impl Parser {
                 ownership,
                 ownership_explicit,
                 mutable: false,
+                default_value,
                 span: param_span_start.merge(param_span_end),
             });
 

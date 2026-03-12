@@ -1421,6 +1421,27 @@ pub const CONST_NOT_COMPILE_TIME: DiagnosticDescriptor = DiagnosticDescriptor {
     domain: DiagnosticDomain::Typechecker,
 };
 
+pub const REQUIRED_PARAM_AFTER_DEFAULT: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT3062",
+    level: DiagnosticLevel::Error,
+    title: "required parameter after default parameter",
+    message_template: "required parameter `{name}` follows a parameter with a default value",
+    static_help: Some("move required parameters before any parameters with default values"),
+    static_note: Some("parameters with defaults must come last in the parameter list"),
+    domain: DiagnosticDomain::Typechecker,
+};
+
+pub const DEFAULT_ON_OWNERSHIP_PARAM: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT3063",
+    level: DiagnosticLevel::Error,
+    title: "default value on ownership parameter",
+    message_template:
+        "parameter `{name}` with `{ownership}` annotation cannot have a default value",
+    static_help: Some("remove the default value or the ownership annotation"),
+    static_note: Some("ownership parameters (own/share) require explicit arguments at call sites"),
+    domain: DiagnosticDomain::Typechecker,
+};
+
 // ── Descriptor Registry ────────────────────────────────────────────────────────
 
 /// Lookup a descriptor by error code.  O(n) scan — only used by `atlas explain`
@@ -1566,4 +1587,6 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &GENERIC_ERROR,
     &GENERIC_WARNING,
     &CONST_NOT_COMPILE_TIME,
+    &REQUIRED_PARAM_AFTER_DEFAULT,
+    &DEFAULT_ON_OWNERSHIP_PARAM,
 ];

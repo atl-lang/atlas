@@ -483,6 +483,9 @@ pub struct Param {
     pub ownership_explicit: bool,
     /// `mut` keyword present — parameter can be reassigned inside the function body.
     pub mutable: bool,
+    /// Default value for optional parameters (B39-P05).
+    /// If present, this parameter can be omitted at call sites.
+    pub default_value: Option<Box<Expr>>,
     pub span: Span,
 }
 

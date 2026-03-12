@@ -506,13 +506,16 @@ impl VM {
                     .insert(extern_decl.name.clone(), extern_fn);
 
                 // Register as a callable global
+                let arity = extern_decl.params.len();
                 let func_value = Value::Function(FunctionRef {
                     name: extern_decl.name.clone(),
-                    arity: extern_decl.params.len(),
-                    bytecode_offset: 0, // Not used for extern functions
-                    local_count: 0,     // Not used for extern functions
+                    arity,
+                    required_arity: arity, // Extern functions have no defaults
+                    bytecode_offset: 0,    // Not used for extern functions
+                    local_count: 0,        // Not used for extern functions
                     param_ownership: vec![],
                     param_names: vec![],
+                    defaults: vec![None; arity],
                     return_ownership: None,
                     is_async: false,
                 });
@@ -2474,15 +2477,30 @@ impl VM {
                         upvalues: std::sync::Arc::new(Vec::new()),
                     };
 
-                    // Verify argument count matches
-                    if arg_count != func.arity {
+                    // Verify argument count matches (B39-P05: support default params)
+                    if arg_count < func.required_arity || arg_count > func.arity {
+                        let expected = if func.required_arity == func.arity {
+                            format!("{}", func.arity)
+                        } else {
+                            format!("{}-{}", func.required_arity, func.arity)
+                        };
                         return Err(RuntimeError::TypeError {
                             msg: format!(
                                 "Function {} expects {} arguments, got {}",
-                                func.name, func.arity, arg_count
+                                func.name, expected, arg_count
                             ),
                             span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
                         });
+                    }
+
+                    // Fill in default values for missing arguments (B39-P05)
+                    for i in arg_count..func.arity {
+                        if let Some(Some(default_val)) = func.defaults.get(i) {
+                            self.stack.push(default_val.clone());
+                        } else {
+                            // Should not happen if binder validation is correct
+                            self.stack.push(Value::Null);
+                        }
                     }
 
                     // Debug mode: for each `own` parameter, mark the caller's
@@ -2491,7 +2509,8 @@ impl VM {
                     #[cfg(debug_assertions)]
                     {
                         let caller_frame_idx = self.frames.len() - 1;
-                        let args_base = self.stack.len() - arg_count;
+                        // Use func.arity (not arg_count) because defaults have been pushed
+                        let args_base = self.stack.len() - func.arity;
                         for (i, ownership) in func.param_ownership.iter().enumerate() {
                             if *ownership == Some(crate::ast::OwnershipAnnotation::Own) {
                                 if let Some(Some(origin)) =
@@ -2519,7 +2538,8 @@ impl VM {
                     // Debug mode: enforce `share` parameter ownership contracts.
                     #[cfg(debug_assertions)]
                     {
-                        let args_base = self.stack.len() - arg_count;
+                        // Use func.arity (not arg_count) because defaults have been pushed
+                        let args_base = self.stack.len() - func.arity;
                         for (i, ownership) in func.param_ownership.iter().enumerate() {
                             let arg = &self.stack[args_base + i];
                             match ownership {
@@ -2595,14 +2615,29 @@ impl VM {
                     });
                 }
 
-                if arg_count != func.arity {
+                // Verify argument count matches (B39-P05: support default params)
+                if arg_count < func.required_arity || arg_count > func.arity {
+                    let expected = if func.required_arity == func.arity {
+                        format!("{}", func.arity)
+                    } else {
+                        format!("{}-{}", func.required_arity, func.arity)
+                    };
                     return Err(RuntimeError::TypeError {
                         msg: format!(
                             "Function {} expects {} arguments, got {}",
-                            func.name, func.arity, arg_count
+                            func.name, expected, arg_count
                         ),
                         span: self.current_span().unwrap_or_else(crate::span::Span::dummy),
                     });
+                }
+
+                // Fill in default values for missing arguments (B39-P05)
+                for i in arg_count..func.arity {
+                    if let Some(Some(default_val)) = func.defaults.get(i) {
+                        self.stack.push(default_val.clone());
+                    } else {
+                        self.stack.push(Value::Null);
+                    }
                 }
 
                 // Debug mode: mark own-parameter locals/globals consumed in caller.
@@ -4141,12 +4176,17 @@ impl VM {
                 let stack_base = self.stack.len();
                 let arg_count = args.len();
 
-                // Verify arity before pushing
-                if func_ref.arity != arg_count {
+                // Verify arity before pushing (B39-P05: support default params)
+                if arg_count < func_ref.required_arity || arg_count > func_ref.arity {
+                    let expected = if func_ref.required_arity == func_ref.arity {
+                        format!("{}", func_ref.arity)
+                    } else {
+                        format!("{}-{}", func_ref.required_arity, func_ref.arity)
+                    };
                     return Err(RuntimeError::TypeError {
                         msg: format!(
                             "Function {} expects {} arguments, got {}",
-                            func_ref.name, func_ref.arity, arg_count
+                            func_ref.name, expected, arg_count
                         ),
                         span,
                     });
@@ -4155,6 +4195,15 @@ impl VM {
                 // Push arguments onto stack (they become the function's locals)
                 for arg in args {
                     self.push(arg);
+                }
+
+                // Fill in default values for missing arguments (B39-P05)
+                for i in arg_count..func_ref.arity {
+                    if let Some(Some(default_val)) = func_ref.defaults.get(i) {
+                        self.push(default_val.clone());
+                    } else {
+                        self.push(Value::Null);
+                    }
                 }
 
                 // Create call frame
@@ -4196,11 +4245,17 @@ impl VM {
                 let stack_base = self.stack.len();
                 let arg_count = args.len();
 
-                if func.arity != arg_count {
+                // Verify arity (B39-P05: support default params)
+                if arg_count < func.required_arity || arg_count > func.arity {
+                    let expected = if func.required_arity == func.arity {
+                        format!("{}", func.arity)
+                    } else {
+                        format!("{}-{}", func.required_arity, func.arity)
+                    };
                     return Err(RuntimeError::TypeError {
                         msg: format!(
                             "Function {} expects {} arguments, got {}",
-                            func.name, func.arity, arg_count
+                            func.name, expected, arg_count
                         ),
                         span,
                     });
@@ -4208,6 +4263,15 @@ impl VM {
 
                 for arg in args {
                     self.push(arg);
+                }
+
+                // Fill in default values for missing arguments (B39-P05)
+                for i in arg_count..func.arity {
+                    if let Some(Some(default_val)) = func.defaults.get(i) {
+                        self.push(default_val.clone());
+                    } else {
+                        self.push(Value::Null);
+                    }
                 }
 
                 let frame = CallFrame {

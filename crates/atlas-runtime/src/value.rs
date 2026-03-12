@@ -553,8 +553,11 @@ pub enum Value {
 pub struct FunctionRef {
     /// Function name
     pub name: String,
-    /// Number of parameters
+    /// Number of parameters (total, including those with defaults)
     pub arity: usize,
+    /// Minimum number of arguments required (params without defaults)
+    /// Call with arg_count >= required_arity is valid (B39-P05)
+    pub required_arity: usize,
     /// Bytecode offset (for VM) or builtin ID
     pub bytecode_offset: usize,
     /// Total number of local variables (parameters + locals)
@@ -567,6 +570,10 @@ pub struct FunctionRef {
     /// Parameter names in parameter order, parallel to `param_ownership`.
     /// Populated by the compiler for error messages; empty for builtins/stdlib.
     pub param_names: Vec<String>,
+    /// Default values for optional parameters (B39-P05).
+    /// `None` = required parameter, `Some(value)` = has default.
+    /// Length equals arity; indexed by parameter position.
+    pub defaults: Vec<Option<Value>>,
     /// Ownership annotation on the return type, if any.
     pub return_ownership: Option<crate::ast::OwnershipAnnotation>,
     /// Whether this function was declared with `async fn`.

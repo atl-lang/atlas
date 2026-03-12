@@ -120,3 +120,6 @@ mod drop_trait;
 
 #[path = "frontend_integration/const_decl.rs"]
 mod const_decl;
+
+#[path = "frontend_integration/default_params.rs"]
+mod default_params;

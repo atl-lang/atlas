@@ -92,14 +92,33 @@ impl Compiler {
         // --- Phase 4: Definition site (after jump target) ---
         let n_upvalues = upvalues.len();
 
+        // Calculate required_arity and defaults (B39-P05)
+        let nested_arity = func.params.len();
+        let nested_required_arity = func
+            .params
+            .iter()
+            .take_while(|p| p.default_value.is_none())
+            .count();
+        let nested_defaults: Vec<Option<crate::value::Value>> = func
+            .params
+            .iter()
+            .map(|p| {
+                p.default_value
+                    .as_ref()
+                    .and_then(|expr| self.eval_const_expr(expr))
+            })
+            .collect();
+
         // Add the final FunctionRef to the constant pool
         let func_ref = crate::value::FunctionRef {
             name: scoped_name.clone(),
-            arity: func.params.len(),
+            arity: nested_arity,
+            required_arity: nested_required_arity,
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: func.params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: func.params.iter().map(|p| p.name.name.clone()).collect(),
+            defaults: nested_defaults,
             return_ownership: func.return_ownership.clone(),
             is_async: func.is_async,
         };

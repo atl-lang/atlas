@@ -928,6 +928,49 @@ impl Binder {
         // Note: Type parameter scope was already handled in hoist_function
         // when we resolved the function signature types
 
+        // Validate default parameters (B39-P05):
+        // 1. Required params must come before default params
+        // 2. Ownership params (own/share) cannot have defaults
+        let mut seen_default = false;
+        for param in &func.params {
+            if let Some(ref default) = param.default_value {
+                seen_default = true;
+                // Check ownership restriction: own/share cannot have defaults
+                if let Some(ref ownership) = param.ownership {
+                    let has_restricted_ownership = matches!(
+                        ownership,
+                        OwnershipAnnotation::Own | OwnershipAnnotation::Share
+                    );
+                    // Only error if explicitly annotated (not implicit borrow)
+                    if has_restricted_ownership && param.ownership_explicit {
+                        let ownership_str = match ownership {
+                            OwnershipAnnotation::Own => "own",
+                            OwnershipAnnotation::Share => "share",
+                            OwnershipAnnotation::Borrow => "borrow",
+                        };
+                        self.diagnostics.push(
+                            error_codes::DEFAULT_ON_OWNERSHIP_PARAM
+                                .emit(default.span())
+                                .arg("name", &param.name.name)
+                                .arg("ownership", ownership_str)
+                                .build()
+                                .with_label("default value not allowed here"),
+                        );
+                    }
+                }
+            } else if seen_default {
+                // Required param after a default param
+                self.diagnostics.push(
+                    error_codes::REQUIRED_PARAM_AFTER_DEFAULT
+                        .emit(param.name.span)
+                        .arg("name", &param.name.name)
+                        .build()
+                        .with_label("required parameter")
+                        .with_help("move this parameter before parameters with default values"),
+                );
+            }
+        }
+
         // Bind parameters
         for param in &func.params {
             let ty = self.resolve_type_ref(&param.type_ref);

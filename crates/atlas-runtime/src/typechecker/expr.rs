@@ -967,19 +967,43 @@ impl<'a> TypeChecker<'a> {
         return_type: &Type,
         pre_evaluated: &[Type],
     ) -> Type {
-        // Check argument count
-        if call.args.len() != params.len() {
+        // Extract callee name for default param lookup (B39-P05)
+        let callee_name = if let Expr::Identifier(id) = call.callee.as_ref() {
+            Some(id.name.clone())
+        } else {
+            None
+        };
+
+        // Look up required arity for functions with defaults
+        let required_arity = callee_name
+            .as_ref()
+            .and_then(|name| self.fn_required_arity.get(name).copied())
+            .unwrap_or(params.len());
+
+        // Check argument count (B39-P05: support default params)
+        let arg_count = call.args.len();
+        if arg_count < required_arity || arg_count > params.len() {
+            let expected = if required_arity == params.len() {
+                format!("{}", params.len())
+            } else {
+                format!("{}-{}", required_arity, params.len())
+            };
             self.diagnostics.push(
                 error_codes::ARITY_MISMATCH
                     .emit(call.span)
                     .arg("name", callee_type.display_name())
-                    .arg("expected", format!("{}", params.len()))
-                    .arg("found", format!("{}", call.args.len()))
-                    .with_help(suggestions::suggest_arity_fix(
-                        params.len(),
-                        call.args.len(),
-                        callee_type,
-                    ))
+                    .arg("expected", expected.clone())
+                    .arg("found", format!("{}", arg_count))
+                    .with_help(if required_arity < params.len() {
+                        format!(
+                            "function accepts {} to {} arguments; you provided {}",
+                            required_arity,
+                            params.len(),
+                            arg_count
+                        )
+                    } else {
+                        suggestions::suggest_arity_fix(params.len(), arg_count, callee_type)
+                    })
                     .build()
                     .with_label("argument count mismatch"),
             );

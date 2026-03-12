@@ -1971,13 +1971,30 @@ impl Compiler {
         // --- Definition site ---
         let n_upvalues = upvalues.len();
 
+        // Calculate required_arity and defaults (B39-P05)
+        let anon_arity = params.len();
+        let anon_required_arity = params
+            .iter()
+            .take_while(|p| p.default_value.is_none())
+            .count();
+        let anon_defaults: Vec<Option<crate::value::Value>> = params
+            .iter()
+            .map(|p| {
+                p.default_value
+                    .as_ref()
+                    .and_then(|expr| self.eval_const_expr(expr))
+            })
+            .collect();
+
         let func_ref = crate::value::FunctionRef {
             name: anon_name,
-            arity: params.len(),
+            arity: anon_arity,
+            required_arity: anon_required_arity,
             bytecode_offset: function_offset,
             local_count: total_local_count,
             param_ownership: params.iter().map(|p| p.ownership.clone()).collect(),
             param_names: params.iter().map(|p| p.name.name.clone()).collect(),
+            defaults: anon_defaults,
             return_ownership: None,
             is_async: false,
         };

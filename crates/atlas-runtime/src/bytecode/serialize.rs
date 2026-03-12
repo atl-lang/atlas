@@ -475,10 +475,12 @@ pub(super) fn deserialize_value(bytes: &[u8]) -> Result<(Value, usize), String> 
                 Value::Function(crate::value::FunctionRef {
                     name,
                     arity,
+                    required_arity: arity, // All params required for deserialized functions
                     bytecode_offset: offset,
                     local_count,
                     param_ownership,
                     param_names,
+                    defaults: vec![None; arity], // No defaults for deserialized functions
                     return_ownership,
                     is_async: false,
                 }),
