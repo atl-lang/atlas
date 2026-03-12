@@ -2416,6 +2416,85 @@ impl<'a> TypeChecker<'a> {
 
                 return return_type;
             }
+
+            // Check for static method calls: Type.staticMethod()
+            // The identifier must be a known struct type with a static method of the given name.
+            if self.struct_decls.contains_key(&id.name) {
+                let type_name = id.name.clone();
+                let method_name = member.member.name.clone();
+
+                if let Some(static_method) = self
+                    .static_methods_registry
+                    .get(&(type_name.clone(), method_name.clone()))
+                    .cloned()
+                {
+                    // Mark this as a static dispatch
+                    *member.static_dispatch.borrow_mut() = Some(type_name.clone());
+
+                    // Resolve return type
+                    let return_type = self.resolve_type_ref(&static_method.return_type);
+
+                    // Check argument count and types
+                    if let Some(args) = &member.args {
+                        let expected_count = static_method.params.len();
+                        if args.len() != expected_count {
+                            self.diagnostics.push(
+                                error_codes::ARITY_MISMATCH
+                                    .emit(member.span)
+                                    .arg("name", format!("{}.{}", type_name, method_name))
+                                    .arg("expected", format!("{}", expected_count))
+                                    .arg("found", format!("{}", args.len()))
+                                    .with_help(format!(
+                                        "static method '{}.{}' requires {} argument{}",
+                                        type_name,
+                                        method_name,
+                                        expected_count,
+                                        if expected_count == 1 { "" } else { "s" }
+                                    ))
+                                    .build()
+                                    .with_label("argument count mismatch"),
+                            );
+                        }
+
+                        // Type-check each argument
+                        for (i, arg) in args.iter().enumerate() {
+                            let arg_type = self.check_expr(arg);
+                            if let Some(param) = static_method.params.get(i) {
+                                let expected_type = self.resolve_type_ref(&param.type_ref);
+                                if !self.is_assignable_with_traits(&arg_type, &expected_type) {
+                                    self.diagnostics.push(
+                                        error_codes::TYPE_MISMATCH
+                                            .emit(arg.span())
+                                            .arg("expected", expected_type.display_name())
+                                            .arg("found", arg_type.display_name())
+                                            .with_help(format!(
+                                                "argument {} has wrong type: expected {}, found {}",
+                                                i + 1,
+                                                expected_type.display_name(),
+                                                arg_type.display_name()
+                                            ))
+                                            .build()
+                                            .with_label("type mismatch"),
+                                    );
+                                }
+                            }
+                        }
+                    } else if !static_method.params.is_empty() {
+                        // No arguments provided but method expects some
+                        self.diagnostics.push(
+                            error_codes::ARITY_MISMATCH
+                                .emit(member.span)
+                                .arg("name", format!("{}.{}", type_name, method_name))
+                                .arg("expected", format!("{}", static_method.params.len()))
+                                .arg("found", "0")
+                                .build()
+                                .with_label("missing arguments"),
+                        );
+                    }
+
+                    return return_type;
+                }
+            }
         }
 
         // Type-check the target expression

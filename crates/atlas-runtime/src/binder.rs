@@ -1172,7 +1172,9 @@ impl Binder {
                     || crate::stdlib::is_array_intrinsic(&id.name)
                     || crate::method_dispatch::is_static_namespace(&id.name)
                     || crate::method_dispatch::is_allowed_bare_global(&id.name)
-                    || self.enum_variants.contains_key(&id.name);
+                    || self.enum_variants.contains_key(&id.name)
+                    // B39-P02: struct type names are valid for static method calls (Type.method())
+                    || self.struct_decls.contains_key(&id.name);
 
                 if is_defined {
                     // Identifier is valid — nothing to do

@@ -492,7 +492,15 @@ impl Compiler {
     ) -> Result<(), Vec<Diagnostic>> {
         let mut provided = std::collections::HashSet::new();
         for method in &impl_block.methods {
-            let mangled_name = impl_block.mangle_method_name(&method.name.name);
+            // Static methods use __static__ prefix, instance methods use __impl__
+            let mangled_name = if method.is_static {
+                format!(
+                    "__static__{}__{}",
+                    impl_block.type_name.name, method.name.name
+                )
+            } else {
+                impl_block.mangle_method_name(&method.name.name)
+            };
             self.compile_impl_method(method, &mangled_name, impl_block.span)?;
             provided.insert(method.name.name.clone());
         }
@@ -518,6 +526,7 @@ impl Compiler {
                         return_type: method_sig.return_type.clone(),
                         body,
                         span: method_sig.span,
+                        is_static: false, // Default trait methods are instance methods
                     };
                     self.compile_impl_method(&default_method, &mangled_name, impl_block.span)?;
                 }

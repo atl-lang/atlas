@@ -374,6 +374,9 @@ pub struct TypeChecker<'a> {
     /// Registry of inherent impl methods keyed by (type_name, method_name).
     /// Inherent methods take precedence over trait methods at call sites (D-037).
     pub inherent_registry: HashMap<(String, String), ImplMethod>,
+    /// Registry of static impl methods keyed by (type_name, method_name).
+    /// Static methods are called on the type itself: `Type.method()`, not on instances.
+    pub static_methods_registry: HashMap<(String, String), ImplMethod>,
     /// Active type parameters in scope (including outer function params).
     active_type_params: Vec<crate::ast::TypeParam>,
     /// Struct declarations available in this module scope.
@@ -466,6 +469,7 @@ impl<'a> TypeChecker<'a> {
             trait_registry: TraitRegistry::new(),
             impl_registry: ImplRegistry::default(),
             inherent_registry: HashMap::new(),
+            static_methods_registry: HashMap::new(),
             active_type_params: Vec::new(),
             struct_decls: HashMap::new(),
             struct_type_cache: HashMap::new(),
@@ -1268,6 +1272,7 @@ impl<'a> TypeChecker<'a> {
                                 return_type: default_sig.return_type.clone(),
                                 body,
                                 span: default_sig.span,
+                                is_static: false, // Default trait methods are instance methods
                             });
                         }
                     } else {
@@ -1403,67 +1408,119 @@ impl<'a> TypeChecker<'a> {
                 continue;
             }
 
-            // Also check if already registered from a previous inherent impl block.
-            if self
-                .inherent_registry
-                .contains_key(&(type_name.clone(), method.name.name.clone()))
-            {
-                self.diagnostics.push(
-                    error_codes::INHERENT_METHOD_DUPLICATE
-                        .emit(method.name.span)
-                        .arg(
-                            "detail",
-                            format!(
-                                "Method '{}' already defined for '{}' in a previous impl block",
-                                method.name.name, type_name
-                            ),
-                        )
-                        .build(),
-                );
-                continue;
-            }
-
-            // AT3058: self receiver must be first parameter.
-            let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
-            if let Some(pos) = self_param_pos {
-                if pos != 0 {
+            // Handle static methods separately from instance methods
+            if method.is_static {
+                // Check for duplicate static method
+                if self
+                    .static_methods_registry
+                    .contains_key(&(type_name.clone(), method.name.name.clone()))
+                {
                     self.diagnostics.push(
-                        error_codes::INHERENT_SELF_NOT_FIRST
-                            .emit(method.params[pos].span)
+                        error_codes::INHERENT_METHOD_DUPLICATE
+                            .emit(method.name.span)
                             .arg(
                                 "detail",
                                 format!(
-                                    "Self receiver in method '{}' must be the first parameter",
+                                    "Static method '{}' already defined for '{}'",
+                                    method.name.name, type_name
+                                ),
+                            )
+                            .build(),
+                    );
+                    continue;
+                }
+
+                // Static methods should NOT have a self parameter
+                let has_self = method.params.iter().any(|p| p.name.name == "self");
+                if has_self {
+                    self.diagnostics.push(
+                        error_codes::TYPE_ERROR
+                            .emit(method.name.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Static method '{}' cannot have a 'self' parameter",
                                     method.name.name
                                 ),
                             )
                             .build(),
                     );
+                    continue;
                 }
 
-                // D-038 (updated): bare `self` defaults to borrow, consistent with D-040.
-                // No error for bare self — it's implicitly borrowed.
+                // Register into static_methods_registry
+                self.static_methods_registry.insert(
+                    (type_name.clone(), method.name.name.clone()),
+                    method.clone(),
+                );
+
+                // Typecheck the method body (no self type for static methods)
+                self.check_impl_method_body(method, None);
+            } else {
+                // Instance method handling (existing logic)
+
+                // Also check if already registered from a previous inherent impl block.
+                if self
+                    .inherent_registry
+                    .contains_key(&(type_name.clone(), method.name.name.clone()))
+                {
+                    self.diagnostics.push(
+                        error_codes::INHERENT_METHOD_DUPLICATE
+                            .emit(method.name.span)
+                            .arg(
+                                "detail",
+                                format!(
+                                    "Method '{}' already defined for '{}' in a previous impl block",
+                                    method.name.name, type_name
+                                ),
+                            )
+                            .build(),
+                    );
+                    continue;
+                }
+
+                // AT3058: self receiver must be first parameter.
+                let self_param_pos = method.params.iter().position(|p| p.name.name == "self");
+                if let Some(pos) = self_param_pos {
+                    if pos != 0 {
+                        self.diagnostics.push(
+                            error_codes::INHERENT_SELF_NOT_FIRST
+                                .emit(method.params[pos].span)
+                                .arg(
+                                    "detail",
+                                    format!(
+                                        "Self receiver in method '{}' must be the first parameter",
+                                        method.name.name
+                                    ),
+                                )
+                                .build(),
+                        );
+                    }
+
+                    // D-038 (updated): bare `self` defaults to borrow, consistent with D-040.
+                    // No error for bare self — it's implicitly borrowed.
+                }
+
+                // AW3059: warn if an inherent method shadows a trait method of the same name.
+                let shadows_trait = self.impl_registry.entries.iter().any(|((t, _), entry)| {
+                    t == &type_name && entry.methods.contains_key(&method.name.name)
+                });
+                if shadows_trait {
+                    self.diagnostics.push(error_codes::INHERENT_SHADOWS_TRAIT_METHOD.emit(method.name.span).arg("detail", format!(
+                            "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
+                            method.name.name, type_name
+                        )).build());
+                }
+
+                // Register into inherent_registry keyed by (type_name, method_name).
+                self.inherent_registry.insert(
+                    (type_name.clone(), method.name.name.clone()),
+                    method.clone(),
+                );
+
+                // Typecheck the method body.
+                self.check_impl_method_body(method, Some(&impl_self_type));
             }
-
-            // AW3059: warn if an inherent method shadows a trait method of the same name.
-            let shadows_trait = self.impl_registry.entries.iter().any(|((t, _), entry)| {
-                t == &type_name && entry.methods.contains_key(&method.name.name)
-            });
-            if shadows_trait {
-                self.diagnostics.push(error_codes::INHERENT_SHADOWS_TRAIT_METHOD.emit(method.name.span).arg("detail", format!(
-                        "Inherent method '{}' shadows a trait method of the same name on '{}' (D-037: inherent wins)",
-                        method.name.name, type_name
-                    )).build());
-            }
-
-            // Register into inherent_registry keyed by (type_name, method_name).
-            self.inherent_registry.insert(
-                (type_name.clone(), method.name.name.clone()),
-                method.clone(),
-            );
-
-            // Typecheck the method body.
-            self.check_impl_method_body(method, Some(&impl_self_type));
         }
     }
 

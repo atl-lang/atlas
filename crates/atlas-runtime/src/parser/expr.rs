@@ -785,6 +785,7 @@ impl Parser {
             args,
             type_tag: std::cell::Cell::new(None),
             trait_dispatch: std::cell::RefCell::new(None),
+            static_dispatch: std::cell::RefCell::new(None),
             span: target_span.merge(end_span),
         }))
     }

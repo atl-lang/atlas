@@ -207,7 +207,8 @@ fn classify_token(
         | TokenKind::Await
         | TokenKind::Pub
         | TokenKind::Private
-        | TokenKind::Internal => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Internal
+        | TokenKind::Static => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),

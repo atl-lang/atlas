@@ -437,6 +437,33 @@ impl Compiler {
             return Ok(());
         }
 
+        // Check for static method dispatch (Type.staticMethod() calls).
+        // The typechecker annotates `static_dispatch` when a static method is resolved.
+        if let Some(type_name) = member.static_dispatch.borrow().clone() {
+            // Static methods: __static__TypeName__MethodName (no self parameter)
+            let mangled_name = format!("__static__{}__{}", type_name, member.member.name);
+
+            // Push the mangled function by name from globals
+            let name_idx = self
+                .bytecode
+                .add_constant(crate::value::Value::string(&mangled_name));
+            self.bytecode.emit(Opcode::GetGlobal, member.span);
+            self.bytecode.emit_u16(name_idx);
+
+            // Compile method arguments (no self for static methods)
+            if let Some(args) = &member.args {
+                for arg in args {
+                    self.compile_expr(arg)?;
+                }
+            }
+
+            let arg_count = member.args.as_ref().map(|a| a.len()).unwrap_or(0);
+            self.bytecode.emit(Opcode::Call, member.span);
+            self.bytecode.emit_u8(arg_count as u8);
+
+            return Ok(());
+        }
+
         // Check for trait dispatch (user-defined impl methods) first.
         // The typechecker annotates `trait_dispatch` when a trait method is resolved.
         if let Some((type_name, trait_name)) = member.trait_dispatch.borrow().clone() {

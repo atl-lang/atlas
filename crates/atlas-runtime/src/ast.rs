@@ -268,6 +268,8 @@ pub struct ImplMethod {
     pub return_type: TypeRef,
     pub body: Block,
     pub span: Span,
+    /// True if declared with `static fn` — no self parameter, called as Type.method()
+    pub is_static: bool,
 }
 
 /// An impl block.
@@ -725,12 +727,16 @@ pub struct MemberExpr {
     /// Set by the typechecker, used by the compiler and interpreter for static dispatch.
     #[serde(skip)]
     pub trait_dispatch: std::cell::RefCell<Option<(String, String)>>,
+    /// Static method dispatch: type_name when this is a `Type.staticMethod()` call.
+    /// Set by the typechecker, used by the compiler. Static methods have no self parameter.
+    #[serde(skip)]
+    pub static_dispatch: std::cell::RefCell<Option<String>>,
     pub span: Span,
 }
 
 impl PartialEq for MemberExpr {
     fn eq(&self, other: &Self) -> bool {
-        // type_tag and trait_dispatch are ephemeral annotations — exclude from equality
+        // type_tag, trait_dispatch, static_dispatch are ephemeral annotations — exclude from equality
         self.target == other.target
             && self.member == other.member
             && self.args == other.args

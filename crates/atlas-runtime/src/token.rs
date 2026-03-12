@@ -126,6 +126,10 @@ pub enum TokenKind {
     /// `internal` keyword — module-internal visibility
     Internal,
 
+    // Static modifier (v0.3+ B39)
+    /// `static` keyword — static method modifier
+    Static,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -271,6 +275,7 @@ impl TokenKind {
             "pub" => Some(TokenKind::Pub),
             "private" => Some(TokenKind::Private),
             "internal" => Some(TokenKind::Internal),
+            "static" => Some(TokenKind::Static),
             _ => None,
         }
     }
@@ -318,6 +323,7 @@ impl TokenKind {
             TokenKind::Pub => "pub",
             TokenKind::Private => "private",
             TokenKind::Internal => "internal",
+            TokenKind::Static => "static",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",

@@ -1004,8 +1004,12 @@ impl Parser {
     /// Parse a method implementation inside an impl block.
     ///
     /// Syntax: `fn method_name<T>(param: Type) -> ReturnType { body }`
+    /// Static:  `static fn method_name<T>(param: Type) -> ReturnType { body }`
     /// Impl methods REQUIRE a body (unlike trait method signatures).
     fn parse_impl_method(&mut self, self_type: &TypeRef) -> Result<ImplMethod, ()> {
+        // Check for optional `static` modifier
+        let is_static = self.match_token(TokenKind::Static);
+
         let start_span = self
             .consume(TokenKind::Fn, "Expected 'fn' in impl body")?
             .span;
@@ -1019,9 +1023,14 @@ impl Parser {
         let type_params = self.parse_type_params()?;
 
         self.consume(TokenKind::LeftParen, "Expected '(' after method name")?;
-        let params = self.parse_params(ParamParseMode::ImplicitSelf {
-            self_type: Some(self_type.clone()),
-        })?;
+        // Static methods don't have implicit self
+        let params = if is_static {
+            self.parse_params(ParamParseMode::TypedOnly)?
+        } else {
+            self.parse_params(ParamParseMode::ImplicitSelf {
+                self_type: Some(self_type.clone()),
+            })?
+        };
         self.consume(
             TokenKind::RightParen,
             "Expected ')' after method parameters",
@@ -1040,6 +1049,7 @@ impl Parser {
             return_type,
             body,
             span: start_span.merge(end_span),
+            is_static,
         })
     }
 
