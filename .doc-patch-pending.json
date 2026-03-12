@@ -1,17 +1,1 @@
-{
-  "committed_at": "2026-03-12T03:28:18Z",
-  "commit": "6f46888",
-  "changed_files": [
-  "crates/atlas-runtime/src/binder.rs",
-  "crates/atlas-runtime/src/compiler/expr.rs",
-  "crates/atlas-runtime/src/compiler/mod.rs",
-  "crates/atlas-runtime/src/runtime.rs"
-],
-  "domains": [
-  "compiler"
-],
-  "relevant_docs": [
-  "docs/known-issues.md"
-],
-  "status": "pending"
-}
+{}
