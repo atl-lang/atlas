@@ -128,10 +128,26 @@ impl Parser {
         attrs
     }
 
+    /// Parse an optional visibility modifier: `pub`, `private`, or `internal`.
+    /// Returns `Visibility::Private` (the default) if no modifier is present.
+    fn parse_visibility(&mut self) -> crate::ast::Visibility {
+        if self.match_token(TokenKind::Pub) {
+            crate::ast::Visibility::Public
+        } else if self.match_token(TokenKind::Private) {
+            crate::ast::Visibility::Private
+        } else if self.match_token(TokenKind::Internal) {
+            crate::ast::Visibility::Internal
+        } else {
+            crate::ast::Visibility::Private // default
+        }
+    }
+
     /// Parse a top-level item (function, statement, import, export, or extern)
     fn parse_item(&mut self, doc_comment: Option<String>) -> Result<Item, ()> {
         // Collect any leading attributes (@allow(unused) etc.) and store for the next declaration
         self.pending_attributes = self.parse_attributes();
+        // Parse optional visibility modifier (pub/private/internal)
+        let visibility = self.parse_visibility();
 
         if self.check(TokenKind::Import) {
             Ok(Item::Import(self.parse_import()?))
@@ -151,26 +167,33 @@ impl Parser {
                 );
                 return Err(());
             }
-            Ok(Item::Function(self.parse_function_with_async(true)?))
+            Ok(Item::Function(
+                self.parse_function_with_async(true, visibility)?,
+            ))
         } else if self.check(TokenKind::Fn) {
-            Ok(Item::Function(self.parse_function()?))
+            Ok(Item::Function(
+                self.parse_function_with_visibility(visibility)?,
+            ))
         } else if self.check(TokenKind::Type) {
             Ok(Item::TypeAlias(self.parse_type_alias(doc_comment)?))
         } else if self.check(TokenKind::Trait) {
-            Ok(Item::Trait(self.parse_trait()?))
+            Ok(Item::Trait(self.parse_trait(visibility)?))
         } else if self.check(TokenKind::Impl) {
             Ok(Item::Impl(self.parse_impl_block()?))
         } else if self.check(TokenKind::Struct) {
-            Ok(Item::Struct(self.parse_struct()?))
+            Ok(Item::Struct(self.parse_struct(visibility)?))
         } else if self.check(TokenKind::Enum) {
-            Ok(Item::Enum(self.parse_enum()?))
+            Ok(Item::Enum(self.parse_enum(visibility)?))
         } else {
             Ok(Item::Statement(self.parse_statement()?))
         }
     }
 
-    /// Parse a struct declaration: `struct Name<T> { field: Type, ... }`
-    fn parse_struct(&mut self) -> Result<crate::ast::StructDecl, ()> {
+    /// Parse a struct declaration: `[visibility] struct Name<T> { field: Type, ... }`
+    fn parse_struct(
+        &mut self,
+        visibility: crate::ast::Visibility,
+    ) -> Result<crate::ast::StructDecl, ()> {
         let struct_start = self.consume(TokenKind::Struct, "Expected 'struct'")?.span;
 
         let name_token = self.consume_identifier("a struct name")?;
@@ -215,6 +238,7 @@ impl Parser {
         let attributes = std::mem::take(&mut self.pending_attributes);
 
         Ok(crate::ast::StructDecl {
+            visibility,
             name,
             attributes,
             type_params,
@@ -224,7 +248,10 @@ impl Parser {
     }
 
     /// Parse an enum declaration: `enum Name<T> { Variant, Variant(Type), ... }`
-    fn parse_enum(&mut self) -> Result<crate::ast::EnumDecl, ()> {
+    fn parse_enum(
+        &mut self,
+        visibility: crate::ast::Visibility,
+    ) -> Result<crate::ast::EnumDecl, ()> {
         let enum_start = self.consume(TokenKind::Enum, "Expected 'enum'")?.span;
 
         let name_token = self.consume_identifier("an enum name")?;
@@ -316,6 +343,7 @@ impl Parser {
 
         Ok(crate::ast::EnumDecl {
             name,
+            visibility,
             type_params,
             variants,
             span: enum_start.merge(end_span.span),
@@ -324,10 +352,29 @@ impl Parser {
 
     /// Parse a function declaration
     fn parse_function(&mut self) -> Result<FunctionDecl, ()> {
-        self.parse_function_with_async(false)
+        self.parse_function_impl(false, crate::ast::Visibility::Private)
     }
 
-    fn parse_function_with_async(&mut self, is_async: bool) -> Result<FunctionDecl, ()> {
+    fn parse_function_with_visibility(
+        &mut self,
+        visibility: crate::ast::Visibility,
+    ) -> Result<FunctionDecl, ()> {
+        self.parse_function_impl(false, visibility)
+    }
+
+    fn parse_function_with_async(
+        &mut self,
+        is_async: bool,
+        visibility: crate::ast::Visibility,
+    ) -> Result<FunctionDecl, ()> {
+        self.parse_function_impl(is_async, visibility)
+    }
+
+    fn parse_function_impl(
+        &mut self,
+        is_async: bool,
+        visibility: crate::ast::Visibility,
+    ) -> Result<FunctionDecl, ()> {
         let fn_span = self.consume(TokenKind::Fn, "Expected 'fn'")?.span;
 
         let name_token = self.consume_identifier("a function name")?;
@@ -436,6 +483,7 @@ impl Parser {
         let attributes = std::mem::take(&mut self.pending_attributes);
         Ok(FunctionDecl {
             name,
+            visibility,
             attributes,
             is_async,
             type_params,
@@ -532,9 +580,13 @@ impl Parser {
                 );
                 return Err(());
             }
-            ExportItem::Function(self.parse_function_with_async(true)?)
+            ExportItem::Function(
+                self.parse_function_with_async(true, crate::ast::Visibility::Public)?,
+            )
         } else if self.check(TokenKind::Fn) {
-            ExportItem::Function(self.parse_function()?)
+            ExportItem::Function(
+                self.parse_function_with_visibility(crate::ast::Visibility::Public)?,
+            )
         } else if self.check(TokenKind::Let) {
             // Parse variable declaration
             let stmt = self.parse_statement()?;
@@ -560,9 +612,9 @@ impl Parser {
         } else if self.check(TokenKind::Type) {
             ExportItem::TypeAlias(self.parse_type_alias(None)?)
         } else if self.check(TokenKind::Struct) {
-            ExportItem::Struct(self.parse_struct()?)
+            ExportItem::Struct(self.parse_struct(crate::ast::Visibility::Public)?)
         } else if self.check(TokenKind::Enum) {
-            ExportItem::Enum(self.parse_enum()?)
+            ExportItem::Enum(self.parse_enum(crate::ast::Visibility::Public)?)
         } else {
             let span = self.peek().span;
             self.emit_descriptor(
@@ -774,7 +826,7 @@ impl Parser {
     /// Parse a trait declaration.
     ///
     /// Syntax: `trait Name<T> { fn method(params) -> ReturnType; }`
-    fn parse_trait(&mut self) -> Result<TraitDecl, ()> {
+    fn parse_trait(&mut self, visibility: crate::ast::Visibility) -> Result<TraitDecl, ()> {
         let start_span = self.consume(TokenKind::Trait, "Expected 'trait'")?.span;
 
         let name_tok = self.consume_identifier("a trait name")?;
@@ -811,6 +863,7 @@ impl Parser {
         let attributes = std::mem::take(&mut self.pending_attributes);
         Ok(TraitDecl {
             name,
+            visibility,
             attributes,
             type_params,
             super_traits,

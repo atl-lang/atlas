@@ -118,6 +118,14 @@ pub enum TokenKind {
     /// `record` keyword
     Record,
 
+    // Visibility modifiers (v0.3+ B37)
+    /// `pub` keyword — public visibility
+    Pub,
+    /// `private` keyword — file-private visibility
+    Private,
+    /// `internal` keyword — module-internal visibility
+    Internal,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -260,6 +268,9 @@ impl TokenKind {
             "struct" => Some(TokenKind::Struct),
             "enum" => Some(TokenKind::Enum),
             "record" => Some(TokenKind::Record),
+            "pub" => Some(TokenKind::Pub),
+            "private" => Some(TokenKind::Private),
+            "internal" => Some(TokenKind::Internal),
             _ => None,
         }
     }
@@ -304,6 +315,9 @@ impl TokenKind {
             TokenKind::Struct => "struct",
             TokenKind::Enum => "enum",
             TokenKind::Record => "record",
+            TokenKind::Pub => "pub",
+            TokenKind::Private => "private",
+            TokenKind::Internal => "internal",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",

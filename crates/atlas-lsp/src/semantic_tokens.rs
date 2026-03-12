@@ -204,7 +204,10 @@ fn classify_token(
         | TokenKind::Enum
         | TokenKind::Record
         | TokenKind::Async
-        | TokenKind::Await => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Await
+        | TokenKind::Pub
+        | TokenKind::Private
+        | TokenKind::Internal => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),

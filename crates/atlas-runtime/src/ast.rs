@@ -180,6 +180,8 @@ pub enum ExternTypeAnnotation {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct FunctionDecl {
     pub name: Identifier,
+    /// Visibility modifier (`pub`, `private`, `internal`). Default is `Private`.
+    pub visibility: Visibility,
     /// Attributes on this declaration (e.g., `@allow(unused)`)
     pub attributes: Vec<Attribute>,
     /// Whether this function is declared with the `async` keyword
@@ -238,6 +240,8 @@ pub struct TraitMethodSig {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct TraitDecl {
     pub name: Identifier,
+    /// Visibility modifier (`pub`, `private`, `internal`). Default is `Private`.
+    pub visibility: Visibility,
     /// Attributes on this declaration (e.g., `@allow(unused)`)
     pub attributes: Vec<Attribute>,
     /// Type parameters for generic traits (e.g., `trait Functor<T>`)
@@ -326,6 +330,8 @@ pub struct StructField {
 /// Syntax: `struct User { name: string, age: number }`
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct StructDecl {
+    /// Visibility modifier (`pub`, `private`, `internal`). Default is `Private`.
+    pub visibility: Visibility,
     /// Attributes on this declaration (e.g., `@allow(unused)`)
     pub attributes: Vec<Attribute>,
     pub name: Identifier,
@@ -389,6 +395,8 @@ impl EnumVariant {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct EnumDecl {
     pub name: Identifier,
+    /// Visibility modifier (`pub`, `private`, `internal`). Default is `Private`.
+    pub visibility: Visibility,
     /// Type parameters for generic enums (e.g., `enum Option<T>`)
     pub type_params: Vec<TypeParam>,
     pub variants: Vec<EnumVariant>,
@@ -423,6 +431,19 @@ pub enum OwnershipAnnotation {
     Borrow,
     /// `share param: T` — shared reference; both caller and callee hold valid refs, neither mutates
     Share,
+}
+
+/// Visibility modifier for declarations (B37: Systems-Level Completion)
+/// Determines which scopes can access the declared item.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum Visibility {
+    /// `pub` — accessible from any module
+    Public,
+    /// `private` (default) — accessible only within the same file
+    #[default]
+    Private,
+    /// `internal` — accessible within the same module (all files in the module)
+    Internal,
 }
 
 /// Function parameter
