@@ -139,11 +139,38 @@ impl MethodTable {
 
     /// Populate built-in methods for stdlib types
     fn populate_builtin_methods(&mut self) {
-        // JSON extraction methods
-        self.register("json", "as_string", vec![], Type::String);
-        self.register("json", "as_number", vec![], Type::Number);
-        self.register("json", "as_bool", vec![], Type::Bool);
-        self.register("json", "is_null", vec![], Type::Bool);
+        // JSON extraction methods (convert whole value)
+        self.register("json", "asString", vec![], Type::String);
+        self.register("json", "asNumber", vec![], Type::Number);
+        self.register("json", "asBool", vec![], Type::Bool);
+        self.register("json", "isNull", vec![], Type::Bool);
+
+        // JSON field accessor methods (get typed field by key)
+        let option_string = Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        };
+        let option_number = Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::Number],
+        };
+        let option_bool = Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::Bool],
+        };
+        let option_json_array = Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::Array(Box::new(Type::JsonValue))],
+        };
+        let option_json = Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::JsonValue],
+        };
+        self.register("json", "getString", vec![Type::String], option_string);
+        self.register("json", "getNumber", vec![Type::String], option_number);
+        self.register("json", "getBool", vec![Type::String], option_bool);
+        self.register("json", "getArray", vec![Type::String], option_json_array);
+        self.register("json", "getObject", vec![Type::String], option_json);
 
         // number instance methods (H-260 — D-021 TypeScript parity)
         self.register("number", "toString", vec![], Type::String);
