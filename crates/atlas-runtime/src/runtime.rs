@@ -288,7 +288,10 @@ impl Atlas {
             .iter()
             .map(|module| (module.path.clone(), module.exports.clone()))
             .collect();
-        let mut resolver = ModuleResolver::new(project_root);
+        let mut resolver = ModuleResolver::new(project_root.clone());
+
+        // Build module registry for cross-module import resolution
+        let mut module_registry = crate::module_loader::ModuleRegistry::new();
 
         for (i, module) in modules.iter().enumerate() {
             let is_last = i == modules.len() - 1;
@@ -297,20 +300,25 @@ impl Atlas {
             let expanded =
                 self.expand_namespace_imports(module, &exports_by_path, &mut resolver)?;
 
-            // Bind symbols and type-check (required for method dispatch type_tag annotation)
+            // Bind symbols with cross-module import support
             let mut binder = Binder::new();
-            let (mut symbol_table, bind_diags) = binder.bind(&expanded);
+            let (mut symbol_table, bind_diags) =
+                binder.bind_with_modules(&expanded, &module.path, &module_registry);
             let bind_errors: Vec<_> = bind_diags.into_iter().filter(|d| d.is_error()).collect();
             if !bind_errors.is_empty() {
                 return Err(bind_errors);
             }
 
+            // Type-check (required for method dispatch type_tag annotation)
             let mut type_checker = TypeChecker::new(&mut symbol_table);
             let type_diags = type_checker.check(&expanded);
             let type_errors: Vec<_> = type_diags.into_iter().filter(|d| d.is_error()).collect();
             if !type_errors.is_empty() {
                 return Err(type_errors);
             }
+
+            // Register this module's symbol table for subsequent imports
+            module_registry.register(module.path.clone(), symbol_table);
 
             // Compile this module
             let mut compiler = Compiler::new();
