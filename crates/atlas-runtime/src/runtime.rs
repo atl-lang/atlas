@@ -3,16 +3,17 @@
 use crate::binder::Binder;
 use crate::compiler::Compiler;
 use crate::diagnostic::{Diagnostic, StackTraceFrame};
-use crate::interpreter::Interpreter;
 use crate::lexer::Lexer;
-use crate::module_executor::ModuleExecutor;
+use crate::module_loader::ModuleLoader;
 use crate::parser::Parser;
+use crate::resolver::ModuleResolver;
 use crate::security::SecurityContext;
 use crate::span::Span;
 use crate::typechecker::TypeChecker;
 use crate::value::{RuntimeError, Value};
 use crate::vm::VM;
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 /// Result type for runtime operations
 pub type RuntimeResult<T> = Result<T, Vec<Diagnostic>>;
@@ -64,8 +65,6 @@ pub struct Atlas {
     /// VM for executing bytecode (using interior mutability)
     /// None until first eval() call initializes it
     vm: RefCell<Option<VM>>,
-    /// Interpreter kept for ModuleExecutor (will be removed in P04)
-    interpreter: RefCell<Interpreter>,
     /// Security context for permission checks
     security: SecurityContext,
 }
@@ -83,7 +82,6 @@ impl Atlas {
     pub fn new() -> Self {
         Self {
             vm: RefCell::new(None),
-            interpreter: RefCell::new(Interpreter::new()),
             security: SecurityContext::new(),
         }
     }
@@ -101,7 +99,6 @@ impl Atlas {
     pub fn new_with_security(security: SecurityContext) -> Self {
         Self {
             vm: RefCell::new(None),
-            interpreter: RefCell::new(Interpreter::new()),
             security,
         }
     }
@@ -275,31 +272,129 @@ impl Atlas {
                 )]
             })?;
 
-        // Quick check: does the file contain imports?
-        // If so, use module executor. If not, use simple eval.
-        let source = std::fs::read_to_string(&abs_path).map_err(|e| {
-            vec![
-                Diagnostic::error(format!("Failed to read file: {}", e), Span::dummy())
-                    .with_file(abs_path.display().to_string()),
-            ]
-        })?;
+        // D-052: unified VM execution path for all files
+        let project_root = abs_path
+            .parent()
+            .map(|p| p.to_path_buf())
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
 
-        // Check if source contains "import {" or "import *"
-        if source.contains("import {") || source.contains("import *") {
-            // Use module executor for multi-file programs
-            let root = abs_path
-                .parent()
-                .unwrap_or_else(|| Path::new("."))
-                .to_path_buf();
+        // Load all modules in dependency order
+        let mut loader = ModuleLoader::new(project_root.clone());
+        let modules = loader.load_module(&abs_path)?;
 
-            let mut interpreter = self.interpreter.borrow_mut();
-            let mut executor = ModuleExecutor::new(&mut interpreter, &self.security, root);
-            executor.execute_module(&abs_path)
-        } else {
-            // Simple single-file program - use regular eval
-            let file_display = abs_path.display().to_string();
-            self.eval_source(&source, &file_display)
+        // Compile all modules to bytecode in dependency order
+        let mut combined_bytecode = crate::bytecode::Bytecode::new();
+        let exports_by_path: HashMap<std::path::PathBuf, Vec<String>> = modules
+            .iter()
+            .map(|module| (module.path.clone(), module.exports.clone()))
+            .collect();
+        let mut resolver = ModuleResolver::new(project_root);
+
+        for (i, module) in modules.iter().enumerate() {
+            let is_last = i == modules.len() - 1;
+
+            // Expand namespace imports (import * as foo)
+            let expanded =
+                self.expand_namespace_imports(module, &exports_by_path, &mut resolver)?;
+
+            // Compile this module
+            let mut compiler = Compiler::new();
+            let mut module_bytecode = compiler.compile(&expanded)?;
+
+            // Strip trailing Halt from non-final modules
+            if !is_last
+                && !module_bytecode.instructions.is_empty()
+                && module_bytecode.instructions.last() == Some(&0xFF)
+            {
+                module_bytecode.instructions.pop();
+                if let Some(last_debug) = module_bytecode.debug_info.last() {
+                    if last_debug.instruction_offset == module_bytecode.instructions.len() {
+                        module_bytecode.debug_info.pop();
+                    }
+                }
+            }
+
+            combined_bytecode.append(module_bytecode);
         }
+
+        // Create VM and run combined bytecode
+        let mut vm = VM::new(combined_bytecode);
+        match vm.run(&self.security) {
+            Ok(Some(value)) => Ok(value),
+            Ok(None) => Ok(Value::Null),
+            Err(e) => Err(vec![runtime_error_to_diagnostic(e, Vec::new(), None)]),
+        }
+    }
+
+    /// Expand namespace imports (import * as foo) into object literals
+    fn expand_namespace_imports(
+        &self,
+        module: &crate::module_loader::LoadedModule,
+        exports_by_path: &HashMap<std::path::PathBuf, Vec<String>>,
+        resolver: &mut ModuleResolver,
+    ) -> RuntimeResult<crate::ast::Program> {
+        use crate::ast::{
+            Expr, Identifier, ImportSpecifier, Item, ObjectEntry, ObjectLiteral, Program, Stmt,
+            VarDecl,
+        };
+        use crate::diagnostic::error_codes::IMPORT_RESOLUTION_FAILED;
+
+        let mut items = Vec::new();
+
+        for item in &module.ast.items {
+            items.push(item.clone());
+
+            let Item::Import(import_decl) = item else {
+                continue;
+            };
+
+            for specifier in &import_decl.specifiers {
+                let ImportSpecifier::Namespace { alias, span } = specifier else {
+                    continue;
+                };
+
+                let import_path = resolver
+                    .resolve_path(&import_decl.source, &module.path, import_decl.span)
+                    .map_err(|e| vec![e])?;
+                let exports = exports_by_path.get(&import_path).ok_or_else(|| {
+                    vec![IMPORT_RESOLUTION_FAILED
+                        .emit(import_decl.span)
+                        .arg("path", &import_decl.source)
+                        .arg("detail", "module not found")
+                        .build()
+                        .with_label("namespace import")]
+                })?;
+
+                let mut entries = Vec::with_capacity(exports.len());
+                for name in exports {
+                    let ident = Identifier {
+                        name: name.clone(),
+                        span: *span,
+                    };
+                    entries.push(ObjectEntry {
+                        key: ident.clone(),
+                        value: Expr::Identifier(ident),
+                        span: *span,
+                    });
+                }
+
+                let obj = ObjectLiteral {
+                    entries,
+                    span: *span,
+                };
+                let var = VarDecl {
+                    mutable: false,
+                    uses_deprecated_var: false,
+                    name: alias.clone(),
+                    type_ref: None,
+                    init: Expr::ObjectLiteral(obj),
+                    span: *span,
+                };
+                items.push(Item::Statement(Stmt::VarDecl(var)));
+            }
+        }
+
+        Ok(Program { items })
     }
 }
 
