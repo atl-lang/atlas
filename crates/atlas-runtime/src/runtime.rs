@@ -297,6 +297,21 @@ impl Atlas {
             let expanded =
                 self.expand_namespace_imports(module, &exports_by_path, &mut resolver)?;
 
+            // Bind symbols and type-check (required for method dispatch type_tag annotation)
+            let mut binder = Binder::new();
+            let (mut symbol_table, bind_diags) = binder.bind(&expanded);
+            let bind_errors: Vec<_> = bind_diags.into_iter().filter(|d| d.is_error()).collect();
+            if !bind_errors.is_empty() {
+                return Err(bind_errors);
+            }
+
+            let mut type_checker = TypeChecker::new(&mut symbol_table);
+            let type_diags = type_checker.check(&expanded);
+            let type_errors: Vec<_> = type_diags.into_iter().filter(|d| d.is_error()).collect();
+            if !type_errors.is_empty() {
+                return Err(type_errors);
+            }
+
             // Compile this module
             let mut compiler = Compiler::new();
             let mut module_bytecode = compiler.compile(&expanded)?;
