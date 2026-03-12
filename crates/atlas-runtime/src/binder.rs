@@ -30,6 +30,9 @@ pub struct Binder {
     /// Enum names collected in pre-pass, so that `resolve_type_ref` can resolve
     /// named enum types in function signatures before Phase 2 processes them.
     enum_names: HashSet<String>,
+    /// Enum variant names collected in pre-pass (variant_name → enum_name), so that
+    /// bare enum variants can be used without EnumName:: qualification (H-295).
+    enum_variants: HashMap<String, String>,
 }
 
 impl Binder {
@@ -42,6 +45,7 @@ impl Binder {
             type_alias_stack: Vec::new(),
             struct_decls: HashMap::new(),
             enum_names: HashSet::new(),
+            enum_variants: HashMap::new(),
         }
     }
 
@@ -54,6 +58,7 @@ impl Binder {
             type_alias_stack: Vec::new(),
             struct_decls: HashMap::new(),
             enum_names: HashSet::new(),
+            enum_variants: HashMap::new(),
         }
     }
 
@@ -597,6 +602,13 @@ impl Binder {
                             } else if let Some(enum_decl) = enum_exports.get(&name.name) {
                                 // Exported enum type — inject into this module's symbol table
                                 self.symbol_table.add_enum_export(enum_decl.clone());
+                                // H-295: Collect variant names for bare variant constructor support
+                                for variant in &enum_decl.variants {
+                                    self.enum_variants.insert(
+                                        variant.name().name.clone(),
+                                        enum_decl.name.name.clone(),
+                                    );
+                                }
                             } else {
                                 // Exported symbol not found
                                 self.diagnostics.push(
@@ -703,6 +715,11 @@ impl Binder {
                 }
                 Item::Enum(decl) => {
                     self.enum_names.insert(decl.name.name.clone());
+                    // H-295: Collect variant names for bare variant constructor support
+                    for variant in &decl.variants {
+                        self.enum_variants
+                            .insert(variant.name().name.clone(), decl.name.name.clone());
+                    }
                 }
                 Item::Export(export_decl) => match &export_decl.item {
                     ExportItem::Struct(decl) => {
@@ -711,6 +728,11 @@ impl Binder {
                     }
                     ExportItem::Enum(decl) => {
                         self.enum_names.insert(decl.name.name.clone());
+                        // H-295: Collect variant names for bare variant constructor support
+                        for variant in &decl.variants {
+                            self.enum_variants
+                                .insert(variant.name().name.clone(), decl.name.name.clone());
+                        }
                     }
                     _ => {}
                 },
@@ -1128,11 +1150,12 @@ impl Binder {
                 }
 
                 // Check if identifier is defined (in symbol table, array intrinsic, static namespace,
-                // or fundamental bare global like Ok/Err/Some/None/unwrap/len)
+                // fundamental bare global like Ok/Err/Some/None, or user-defined enum variant H-295)
                 let is_defined = self.symbol_table.lookup(&id.name).is_some()
                     || crate::stdlib::is_array_intrinsic(&id.name)
                     || crate::method_dispatch::is_static_namespace(&id.name)
-                    || crate::method_dispatch::is_allowed_bare_global(&id.name);
+                    || crate::method_dispatch::is_allowed_bare_global(&id.name)
+                    || self.enum_variants.contains_key(&id.name);
                 if !is_defined {
                     let suggestion = crate::typechecker::suggestions::suggest_similar_name(
                         &id.name,
