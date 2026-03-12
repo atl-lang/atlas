@@ -390,8 +390,8 @@ impl Compiler {
         let then_jump = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF); // Placeholder
 
-        // Compile then branch
-        self.compile_block(&if_stmt.then_block)?;
+        // Compile then branch (H-303: use statement context for if body)
+        self.compile_block_as_statement(&if_stmt.then_block)?;
 
         if let Some(else_block) = &if_stmt.else_block {
             // Jump over else branch
@@ -402,8 +402,8 @@ impl Compiler {
             // Patch the then jump to go here
             self.bytecode.patch_jump(then_jump);
 
-            // Compile else branch
-            self.compile_block(else_block)?;
+            // Compile else branch (H-303: use statement context for else body)
+            self.compile_block_as_statement(else_block)?;
 
             // Patch the else jump
             self.bytecode.patch_jump(else_jump);
@@ -529,8 +529,8 @@ impl Compiler {
         let exit_jump = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF); // Placeholder
 
-        // Compile body
-        self.compile_block(&while_stmt.body)?;
+        // Compile body (H-303: use statement context to compile tail_expr)
+        self.compile_block_as_statement(&while_stmt.body)?;
 
         // H-302: Pop any locals declared inside the while body BEFORE looping back.
         // Without this, each iteration pushes new values to the stack but GetLocal
@@ -681,8 +681,8 @@ impl Compiler {
         self.bytecode.emit_u16(var_rel);
         self.bytecode.emit(Opcode::Pop, span); // clean up temporary
 
-        // ── Compile loop body ─────────────────────────────────────────────────
-        self.compile_block(&for_in_stmt.body)?;
+        // ── Compile loop body (H-303: use statement context to compile tail_expr) ──
+        self.compile_block_as_statement(&for_in_stmt.body)?;
 
         // ── Loop back to increment ────────────────────────────────────────────
         let offset = increment_start as i32 - (self.bytecode.current_offset() as i32 + 3);
@@ -1068,9 +1068,33 @@ impl Compiler {
     }
 
     /// Compile a block (statements only, tail expression handled by caller)
+    /// Compile a block (statements only, tail expression handled by caller)
+    ///
+    /// NOTE: This does NOT compile `block.tail_expr`. Callers that need it must
+    /// handle it explicitly. For statement contexts (while, for-in, if/else bodies),
+    /// use `compile_block_as_statement` instead which compiles tail_expr and discards it.
     pub(super) fn compile_block(&mut self, block: &Block) -> Result<(), Vec<Diagnostic>> {
         for stmt in &block.statements {
             self.compile_stmt(stmt)?;
+        }
+        Ok(())
+    }
+
+    /// Compile a block in statement context (tail expression executed for side effects only)
+    ///
+    /// H-303: Unlike `compile_block`, this also compiles `tail_expr` if present and
+    /// discards its result. Use this for while/for-in/if-else bodies where the block's
+    /// value is not used but side effects must execute.
+    pub(super) fn compile_block_as_statement(
+        &mut self,
+        block: &Block,
+    ) -> Result<(), Vec<Diagnostic>> {
+        for stmt in &block.statements {
+            self.compile_stmt(stmt)?;
+        }
+        if let Some(tail) = &block.tail_expr {
+            self.compile_expr(tail)?;
+            self.bytecode.emit(Opcode::Pop, block.span);
         }
         Ok(())
     }
