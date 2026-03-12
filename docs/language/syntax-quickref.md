@@ -18,9 +18,9 @@ let b: bool = true;
 let v: void;
 let nu: null = null;
 
-// Arrays (D-041: prefix syntax)
-let arr: []number = [1, 2, 3];
-let nested: [][]string = [["a"], ["b"]];
+// Arrays (TypeScript-style postfix)
+let arr: number[] = [1, 2, 3];
+let nested: string[][] = [["a"], ["b"]];
 
 // Tuples (D-042)
 let pair: (number, string) = (1, "one");
@@ -144,17 +144,20 @@ impl Printable for Point {
 
 ```atlas
 impl Point {
-    fn new(borrow x: number, borrow y: number): Point {
-        return Point { x: x, y: y };
+    fn distance(borrow self): number {
+        let sq = self.x * self.x + self.y * self.y;
+        return math.sqrt(sq).unwrap();
     }
 
-    fn distance(borrow self): number {
-        return Math.sqrt(self.x * self.x + self.y * self.y);
+    fn scale(borrow self, borrow factor: number): Point {
+        return Point { x: self.x * factor, y: self.y * factor };
     }
 }
 
-let p = Point.new(3, 4);
-console.log(p.distance());  // 5
+let p = Point { x: 3, y: 4 };
+console.log(p.distance().toString());  // 5
+let p2 = p.scale(2);
+console.log(p2.x.toString());  // 6
 ```
 
 ## Option/Result
