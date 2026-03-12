@@ -303,6 +303,30 @@ impl SymbolTable {
         }
     }
 
+    /// Get all top-level symbols from this symbol table (including private ones)
+    ///
+    /// Used for cross-file visibility checking (H-313). When a symbol is not
+    /// exported, we check if it exists as private to give a better error message.
+    pub fn get_all_top_level_symbols(&self) -> HashMap<String, Symbol> {
+        let mut symbols = HashMap::new();
+
+        // Check top-level scope
+        if let Some(top_scope) = self.scopes.first() {
+            for (name, symbol) in top_scope {
+                symbols.insert(name.clone(), symbol.clone());
+            }
+        }
+
+        // Check top-level functions
+        for (name, symbol) in &self.functions {
+            if symbol.kind != SymbolKind::Builtin {
+                symbols.insert(name.clone(), symbol.clone());
+            }
+        }
+
+        symbols
+    }
+
     /// Get all exported symbols from this symbol table
     ///
     /// Returns symbols marked as exported (for module system)

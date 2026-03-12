@@ -555,6 +555,8 @@ impl Binder {
         let type_alias_exports = source_symbols.get_type_alias_exports();
         let struct_exports = source_symbols.get_struct_exports().clone();
         let enum_exports = source_symbols.get_enum_exports().clone();
+        // H-313: Get all symbols for visibility checking (emit better error for private access)
+        let all_symbols = source_symbols.get_all_top_level_symbols();
 
         // Process each import specifier
         for specifier in &import_decl.specifiers {
@@ -613,17 +615,41 @@ impl Binder {
                                     );
                                 }
                             } else {
-                                // Exported symbol not found
-                                self.diagnostics.push(
-                                    error_codes::MODULE_NOT_EXPORTED.emit(*span).arg("detail", format!(
-                                            "Module '{}' does not export '{}'",
-                                            import_decl.source, name.name
-                                        )).build()
-                                    .with_label("imported name")
-                                    .with_help(
-                                        "check the module's exports or import a different symbol",
-                                    ),
-                                );
+                                // H-313: Check if symbol exists but is private (not exported)
+                                if let Some(private_symbol) = all_symbols.get(&name.name) {
+                                    // Symbol exists but is private — emit AT3059
+                                    let kind = match private_symbol.kind {
+                                        SymbolKind::Function => "function",
+                                        SymbolKind::Variable => "variable",
+                                        SymbolKind::Parameter => "parameter",
+                                        SymbolKind::Builtin => "builtin",
+                                    };
+                                    self.diagnostics.push(
+                                        error_codes::PRIVATE_ACCESS_VIOLATION
+                                            .emit(*span)
+                                            .arg("kind", kind)
+                                            .arg("name", &name.name)
+                                            .build()
+                                            .with_label("cannot import private symbol")
+                                            .with_help(format!(
+                                                "add `pub` or `export` to '{}' in {} to make it importable",
+                                                name.name, import_decl.source
+                                            )),
+                                    );
+                                } else {
+                                    // Symbol doesn't exist at all
+                                    self.diagnostics.push(
+                                        error_codes::MODULE_NOT_EXPORTED
+                                            .emit(*span)
+                                            .arg("name", &name.name)
+                                            .arg("module", &import_decl.source)
+                                            .build()
+                                            .with_label("imported name")
+                                            .with_help(
+                                                "check the module's exports or import a different symbol",
+                                            ),
+                                    );
+                                }
                             }
                         }
                     }

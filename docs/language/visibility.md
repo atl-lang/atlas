@@ -94,17 +94,57 @@ internal fn another_helper(): void {
 | AT3059 | Access to private member                 |
 | AT3060 | Access to internal member from outside   |
 
+## Cross-File Imports
+
+To import a symbol from another file, it must be exported. Use `export` to make
+functions, structs, and other declarations importable:
+
+```atlas
+// math.atl
+export fn add(x: number, y: number): number {
+    return helper(x, y);
+}
+
+fn helper(x: number, y: number): number {
+    return x + y;
+}
+
+// main.atl
+import { add } from "./math";
+console.log(add(1, 2).toString());  // 3
+// import { helper } from "./math";  // Error AT3059: private function
+```
+
+### Import Errors
+
+| Code   | When                                          |
+|--------|-----------------------------------------------|
+| AT3059 | Importing a private (non-exported) symbol     |
+| AT5006 | Importing a symbol that doesn't exist         |
+
+### Example: Private Access Violation
+
+```atlas
+// lib.atl
+fn private_fn(): number { return 42; }
+
+// main.atl
+import { private_fn } from "./lib";  // Error AT3059
+```
+
+Error message: `cannot access private function 'private_fn' from outside its defining module`
+
 ## Examples
 
 ### Module Export Pattern
 
 ```atlas
 // math.atl
-pub fn add(borrow x: number, borrow y: number): number {
+export fn add(x: number, y: number): number {
     return helper(x, y);
 }
 
-fn helper(borrow x: number, borrow y: number): number {
+fn helper(x: number, y: number): number {
     return x + y;
 }
 

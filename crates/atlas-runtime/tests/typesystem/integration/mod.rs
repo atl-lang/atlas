@@ -17,3 +17,4 @@ mod typing_union;
 
 mod method_types;
 mod suggestions;
+mod visibility_crossfile; // B38-P04: cross-file visibility enforcement

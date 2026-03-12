@@ -52,6 +52,26 @@ fn greet(borrow name: string): void {
 let double = fn(borrow x: number): number { return x * 2; };
 ```
 
+## Generics (B38)
+
+```atlas
+// Generic function
+fn identity<T>(x: T): T {
+    return x;
+}
+
+// Trait bounds (D-039)
+fn print_it<T extends Printable>(item: T): string {
+    return item.to_str();
+}
+
+// Multiple bounds
+fn copy<T extends Reader & Writer>(x: T): void {
+    let data = x.read();
+    x.write(data);
+}
+```
+
 ## Ownership (D-040)
 
 ```atlas
