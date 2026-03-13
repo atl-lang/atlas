@@ -183,6 +183,26 @@ impl Compiler {
 
     /// Compile a function call expression
     fn compile_call(&mut self, call: &CallExpr) -> Result<(), Vec<Diagnostic>> {
+        // H-325: Constructor syntax — Foo(args) sugar for Foo.new(args).
+        // If the callee name is a known struct type with a static `new` method,
+        // emit GetGlobal("__static__Foo__new") then args then Call.
+        if let Expr::Identifier(id) = call.callee.as_ref() {
+            if self.constructor_types.contains(&id.name) {
+                let mangled = format!("__static__{}__new", id.name);
+                let name_idx = self
+                    .bytecode
+                    .add_constant(crate::value::Value::string(mangled));
+                self.bytecode.emit(Opcode::GetGlobal, call.span);
+                self.bytecode.emit_u16(name_idx);
+                for arg in &call.args {
+                    self.compile_expr(arg)?;
+                }
+                self.bytecode.emit(Opcode::Call, call.span);
+                self.bytecode.emit_u8(call.args.len() as u8);
+                return Ok(());
+            }
+        }
+
         // Bare user-defined enum variant constructor: `Unknown(raw)` without `EnumName::`.
         // Short-circuit BEFORE callee lookup so variant names never hit GetGlobal.
         // Skip stdlib constructors (Ok, Err, Some, None) — they have dedicated Value types.
