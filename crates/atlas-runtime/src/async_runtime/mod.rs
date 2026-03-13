@@ -13,6 +13,7 @@
 pub mod channel;
 pub mod future;
 pub mod primitives;
+pub mod scheduler;
 pub mod task;
 pub mod worker;
 

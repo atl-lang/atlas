@@ -1,147 +1,168 @@
 //! Worker thread infrastructure for Atlas VM concurrency.
 //!
-//! # Design (D-057)
+//! # Design (D-057, B44-P06)
 //!
 //! Each worker thread owns:
-//! - An isolated [`VMContext`] (cloned from main at startup, then reset)
-//! - A Tokio [`LocalSet`] for running `!Send` futures cooperatively
-//! - A task queue (MPSC channel) for receiving tasks to execute
+//! - An isolated [`VM`] (bytecode + globals + execution context)
+//! - A Tokio `current_thread` runtime + [`LocalSet`] for cooperative scheduling
+//! - A `crossbeam_deque::Worker` local task deque (FIFO, `!Send`)
+//! - A wakeup channel receiver (`mpsc::Receiver<()>`)
 //!
-//! Workers are created once at runtime init via [`WorkerPool`] and live for the
-//! duration of the process.  Task dispatching (P04) and work-stealing (P06) are
-//! wired in later phases; this phase only establishes the pool and event loops.
+//! Global task injection and work-stealing are handled by [`Scheduler`].
 //!
-//! ## Architecture
+//! ## Event loop
 //!
 //! ```text
-//!   Main Thread
-//!       │
-//!       ▼
-//!  WorkerPool::new(N)
-//!       │
-//!       ├── Worker 0: thread → LocalSet → spin (await tasks)
-//!       ├── Worker 1: thread → LocalSet → spin (await tasks)
-//!       └── Worker N-1: thread → LocalSet → spin (await tasks)
+//! loop {
+//!     find_task() → Found  → spawn_local + yield
+//!                 → Retry  → yield_now (contention, try again)
+//!                 → Empty  → sleep ≤ 500µs (woken by Scheduler::push)
+//! }
 //! ```
 //!
-//! Each worker spins on a Tokio LocalSet, blocking its OS thread. Tasks will be
-//! sent over the per-worker MPSC channel (wired in P04).
+//! The 500µs timeout means idle workers opportunistically steal across all
+//! workers even without an explicit wakeup signal, bounding worst-case latency.
 
+use std::cell::RefCell;
 use std::pin::Pin;
 use std::rc::Rc;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::OnceLock;
 use std::thread;
 
-use tokio::sync::mpsc;
 use tokio::task::LocalSet;
 
 use crate::vm::VM;
 
-/// The default worker channel capacity (backpressure buffer per worker).
-const TASK_QUEUE_CAPACITY: usize = 256;
+pub use super::scheduler::Scheduler;
+use super::scheduler::WorkerFindResult;
 
-/// A boxed async task that a worker can execute on its `LocalSet`.
+// ── WorkerTask ───────────────────────────────────────────────────────────────
+
+/// A boxed async task that a worker executes on its `LocalSet`.
 ///
-/// Tasks are `Send + 'static` so they can travel over the MPSC channel from
-/// any thread to the worker; however, once received, they execute as
-/// `!Send` futures inside the worker's `LocalSet` — the `FnOnce` wrapper
-/// is `Send`, its *output* (`Pin<Box<dyn Future>>`) is `!Send`.
+/// The closure is `Send + 'static` so it can travel from any submitter thread
+/// through the global `Injector` and into a worker's local deque.  Once the
+/// worker picks it up, it calls the closure with `Rc<WorkerContext>` (thread-
+/// local) and the returned `!Send` future runs inside the `LocalSet`.
 pub type WorkerTask = Box<
     dyn FnOnce(Rc<WorkerContext>) -> Pin<Box<dyn std::future::Future<Output = ()> + 'static>>
         + Send
         + 'static,
 >;
 
-/// Shared resources handed to every task running inside a worker.
+// ── WorkerContext ─────────────────────────────────────────────────────────────
+
+/// Per-worker execution context passed to every task.
 ///
-/// Each worker owns a full isolated [`VM`] (bytecode + globals + context),
-/// wrapped in a `RefCell` for interior mutability.  Tasks running on the
-/// worker's `LocalSet` execute cooperatively — only one task is active at a
-/// time — so `RefCell` is sufficient and no locking is needed.
-///
-/// `WorkerContext` is NOT `Send` (due to `RefCell`), which is correct: it
-/// lives entirely on the worker thread and must never cross thread boundaries.
+/// `RefCell<VM>` provides interior mutability without locking: the `LocalSet`
+/// schedules tasks cooperatively so only one task body runs at a time.
+/// `WorkerContext` must NOT be `Send` — it lives entirely on one thread.
 pub struct WorkerContext {
-    /// Fully isolated VM instance for this worker thread.
-    ///
-    /// `RefCell` enables interior mutability for cooperative-single-threaded
-    /// task execution without locking overhead.
-    pub vm: std::cell::RefCell<VM>,
-    /// Worker index (0-based) for diagnostics and routing.
+    /// Fully isolated VM instance for this worker.
+    pub vm: RefCell<VM>,
+    /// Worker index (0-based).
     pub worker_id: usize,
 }
 
-/// A running worker thread with its own `LocalSet` and task queue.
+// ── Worker ────────────────────────────────────────────────────────────────────
+
+/// A running worker thread.
 pub struct Worker {
-    /// Worker index (0-based) for diagnostics / routing.
+    /// Worker index (0-based).
     pub id: usize,
-    /// Sender half of the per-worker task queue.
-    pub sender: mpsc::Sender<WorkerTask>,
-    /// Join handle for the OS thread backing this worker.
+    /// Join handle for the OS thread.
     _thread: thread::JoinHandle<()>,
 }
 
 impl Worker {
-    /// Spawn a new worker thread.
+    /// Spawn a worker thread.
     ///
-    /// `worker_vm` is a pre-constructed isolated VM for this worker (see
-    /// [`VM::new_for_worker`]).  The worker enters a `LocalSet` event loop and
-    /// waits for tasks, executing each one on its isolated VM.
-    fn spawn(id: usize, worker_vm: VM) -> Self {
-        let (sender, mut receiver) = mpsc::channel::<WorkerTask>(TASK_QUEUE_CAPACITY);
-
+    /// `local_deque` — the crossbeam `Worker` deque created by `Scheduler::new`;
+    /// it is `!Send` so it is constructed before spawning and moved in.
+    ///
+    /// `wake_rx` — the per-worker wakeup receiver from `Scheduler::new`.
+    ///
+    /// `scheduler` — the shared `Scheduler` used for stealing.
+    fn spawn(
+        id: usize,
+        worker_vm: VM,
+        local_deque: crossbeam_deque::Worker<WorkerTask>,
+        mut wake_rx: tokio::sync::mpsc::Receiver<()>,
+        scheduler: Scheduler,
+    ) -> Self {
         let thread_handle = thread::Builder::new()
             .name(format!("atlas-worker-{id}"))
             .spawn(move || {
-                // Rc (not Arc) — WorkerContext stays on this thread forever.
-                // Rc<RefCell<VM>> gives interior mutability without locking.
+                // WorkerContext lives on this thread for its entire lifetime.
                 let worker_ctx = Rc::new(WorkerContext {
-                    vm: std::cell::RefCell::new(worker_vm),
+                    vm: RefCell::new(worker_vm),
                     worker_id: id,
                 });
 
-                // Build a single-threaded Tokio runtime for this worker.
                 let rt = tokio::runtime::Builder::new_current_thread()
                     .enable_all()
                     .build()
                     .expect("atlas-worker: failed to build tokio runtime");
 
-                let local = LocalSet::new();
+                let local_set = LocalSet::new();
 
-                // Event loop: drain the task queue inside the LocalSet.
-                rt.block_on(local.run_until(async move {
-                    while let Some(task) = receiver.recv().await {
-                        let ctx = Rc::clone(&worker_ctx);
-                        tokio::task::spawn_local(task(ctx));
+                rt.block_on(local_set.run_until(async move {
+                    loop {
+                        match scheduler.find_task(id, &local_deque) {
+                            WorkerFindResult::Found(task) => {
+                                let ctx = Rc::clone(&worker_ctx);
+                                tokio::task::spawn_local(task(ctx));
+                                // Yield so the spawned task can run before we
+                                // search for another one.
+                                tokio::task::yield_now().await;
+                            }
+                            WorkerFindResult::Retry => {
+                                // Steal contention — yield and try again.
+                                tokio::task::yield_now().await;
+                            }
+                            WorkerFindResult::Empty => {
+                                // No work found.  Sleep up to 500µs — woken
+                                // early by Scheduler::push or timed out for
+                                // opportunistic steal on the next iteration.
+                                // Channel closed (Ok(None)) → pool shutting down.
+                                if let Ok(None) = tokio::time::timeout(
+                                    std::time::Duration::from_micros(500),
+                                    wake_rx.recv(),
+                                )
+                                .await
+                                {
+                                    break;
+                                }
+                            }
+                        }
                     }
-                    // Channel closed → pool is shutting down; exit cleanly.
                 }));
             })
             .expect("atlas-worker: failed to spawn OS thread");
 
         Worker {
             id,
-            sender,
             _thread: thread_handle,
         }
     }
 }
 
-/// Pool of worker threads that execute Atlas tasks concurrently.
+// ── WorkerPool ────────────────────────────────────────────────────────────────
+
+/// Pool of worker threads with a shared work-stealing [`Scheduler`].
 ///
-/// Created once at runtime init; accessed thereafter via [`worker_pool()`].
+/// Created once at runtime init via [`init_worker_pool`].
 pub struct WorkerPool {
     workers: Vec<Worker>,
-    /// Round-robin counter for task distribution.
-    next: AtomicUsize,
+    /// Shared scheduler used by callers to inject tasks and by workers to steal.
+    scheduler: Scheduler,
 }
 
 impl WorkerPool {
-    /// Create a pool with `n` workers, each with an isolated VM cloned from `base_vm`.
+    /// Create a pool with `n` workers (0 = hardware concurrency).
     ///
-    /// Pass `n = 0` to use the hardware concurrency level
-    /// (`std::thread::available_parallelism`).
+    /// Each worker receives an isolated VM cloned from `base_vm` via
+    /// [`VM::new_for_worker`].
     pub fn new(n: usize, base_vm: &VM) -> Self {
         let count = if n == 0 {
             thread::available_parallelism()
@@ -151,14 +172,23 @@ impl WorkerPool {
             n
         };
 
-        let workers = (0..count)
-            .map(|id| Worker::spawn(id, base_vm.new_for_worker()))
+        let (scheduler, per_worker) = Scheduler::new(count);
+
+        let workers = per_worker
+            .into_iter()
+            .enumerate()
+            .map(|(id, (local_deque, wake_rx))| {
+                Worker::spawn(
+                    id,
+                    base_vm.new_for_worker(),
+                    local_deque,
+                    wake_rx,
+                    scheduler.clone(),
+                )
+            })
             .collect();
 
-        WorkerPool {
-            workers,
-            next: AtomicUsize::new(0),
-        }
+        WorkerPool { workers, scheduler }
     }
 
     /// Number of workers in the pool.
@@ -166,49 +196,37 @@ impl WorkerPool {
         self.workers.len()
     }
 
-    /// Returns `true` if the pool has no workers (should never happen in practice).
+    /// `true` if the pool has no workers.
     pub fn is_empty(&self) -> bool {
         self.workers.is_empty()
     }
 
-    /// Submit a task to the next worker (round-robin).
+    /// Inject a task into the pool.
     ///
-    /// Returns `Err(task)` if all workers' channels are full (backpressure).
-    /// The caller may retry or fall back as appropriate.
+    /// The task enters the global injector queue and a worker is woken via
+    /// the scheduler's round-robin wakeup dispatch.  Work-stealing ensures
+    /// the task reaches an idle worker even under skewed load.
+    ///
+    /// Returns `Err(task)` if the pool has no workers (should not happen).
     pub fn submit(&self, task: WorkerTask) -> Result<(), WorkerTask> {
-        let idx = self.next.fetch_add(1, Ordering::Relaxed) % self.workers.len();
-        self.workers[idx]
-            .sender
-            .try_send(task)
-            .map_err(|e| e.into_inner())
-    }
-
-    /// Send a task to a specific worker by index.
-    ///
-    /// Returns `Err` if the worker channel is closed (pool is shutting down).
-    pub fn send_to(&self, worker_id: usize, task: WorkerTask) -> Result<(), WorkerTask> {
-        let worker = &self.workers[worker_id % self.workers.len()];
-        worker.sender.try_send(task).map_err(|e| e.into_inner())
-    }
-
-    /// Sender for worker `id` — used by P04/P06 task routing.
-    pub fn sender(&self, worker_id: usize) -> &mpsc::Sender<WorkerTask> {
-        &self.workers[worker_id % self.workers.len()].sender
+        if self.workers.is_empty() {
+            return Err(task);
+        }
+        self.scheduler.push(task);
+        Ok(())
     }
 }
+
+// ── Singleton ─────────────────────────────────────────────────────────────────
 
 /// Global worker pool singleton.
 static WORKER_POOL: OnceLock<WorkerPool> = OnceLock::new();
 
-/// Initialize the global worker pool.
+/// Initialise the global worker pool.
 ///
-/// Must be called exactly once, typically right after the first `VM::run()`
-/// so workers inherit the correct bytecode and globals snapshot.
-/// `n = 0` → use hardware concurrency.
-///
-/// Each worker receives an isolated `VM` cloned from `base_vm` via
-/// [`VM::new_for_worker`] — same bytecode and globals, independent execution
-/// context.
+/// Must be called exactly once, typically after the first `VM::run()` so
+/// workers inherit the bytecode and globals snapshot.
+/// `n = 0` → hardware concurrency.
 ///
 /// # Panics
 /// Panics if called more than once.
@@ -221,7 +239,7 @@ pub fn init_worker_pool(n: usize, base_vm: &VM) {
 
 /// Access the global worker pool.
 ///
-/// Returns `None` if [`init_worker_pool`] has not been called yet.
+/// Returns `None` before [`init_worker_pool`] is called.
 pub fn worker_pool() -> Option<&'static WorkerPool> {
     WORKER_POOL.get()
 }
