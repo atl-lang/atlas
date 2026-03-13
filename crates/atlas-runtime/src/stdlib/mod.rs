@@ -1505,7 +1505,14 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
                 return Err(stdlib_arity_error("pathParent", 1, args.len(), span));
             }
             let path_str = extract_string(&args[0], "pathParent", span)?;
-            Ok(Value::string(path::path_parent(path_str, span)?))
+            path::path_parent(path_str, span)
+        });
+        m.insert("pathResolve", |args, span, _, _| {
+            if args.len() != 1 {
+                return Err(stdlib_arity_error("pathResolve", 1, args.len(), span));
+            }
+            let path_str = extract_string(&args[0], "pathResolve", span)?;
+            Ok(Value::string(path::path_resolve(path_str, span)?))
         });
         m.insert("pathBasename", |args, span, _, _| {
             if args.len() != 1 {
@@ -2402,6 +2409,7 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             ("pathParse", "path_parse"),
             ("pathNormalize", "path_normalize"),
             ("pathAbsolute", "path_absolute"),
+            ("pathResolve", "path_resolve"),
             ("pathRelative", "path_relative"),
             ("pathParent", "path_parent"),
             ("pathBasename", "path_basename"),

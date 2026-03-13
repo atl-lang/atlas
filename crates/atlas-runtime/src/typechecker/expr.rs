@@ -247,8 +247,12 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
         (
             "path",
             "join" | "dirname" | "basename" | "extension" | "extname" | "normalize" | "absolute"
-            | "parent" | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
+            | "resolve" | "canonical" | "homedir" | "cwd" | "tempdir" | "separator",
         ) => Type::String,
+        ("path", "parent") => Type::Generic {
+            name: "Option".to_string(),
+            type_args: vec![Type::String],
+        },
         ("path", "exists" | "isAbsolute" | "isRelative") => Type::Bool,
         // DateTime namespace — returns DateTime value (H-231)
         ("datetime", "now" | "fromTimestamp" | "fromComponents" | "utc") => Type::Generic {

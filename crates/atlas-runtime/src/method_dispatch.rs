@@ -600,6 +600,7 @@ fn resolve_path_ns_method(method_name: &str) -> Option<String> {
         "isRelative" => "pathIsRelative",
         "normalize" => "pathNormalize",
         "absolute" => "pathAbsolute",
+        "resolve" => "pathResolve",
         "parent" => "pathParent",
         "canonical" => "pathCanonical",
         "homedir" => "pathHomedir",

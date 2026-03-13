@@ -223,13 +223,35 @@ pub fn path_relative(from: &str, to: &str, span: Span) -> Result<String, Runtime
 
 /// Get parent directory
 ///
-/// Returns the parent directory path, or empty string if no parent
-pub fn path_parent(path_str: &str, _span: Span) -> Result<String, RuntimeError> {
+/// Returns Option<string> - Some(parent) or None for root/empty paths
+pub fn path_parent(path_str: &str, _span: Span) -> Result<Value, RuntimeError> {
     let path = Path::new(path_str);
-    Ok(path
-        .parent()
-        .map(|p| p.to_string_lossy().to_string())
-        .unwrap_or_default())
+    match path.parent() {
+        Some(p) if !p.as_os_str().is_empty() => Ok(Value::Option(Some(Box::new(Value::string(
+            p.to_string_lossy().to_string(),
+        ))))),
+        _ => Ok(Value::Option(None)),
+    }
+}
+
+/// Resolve path to absolute
+///
+/// Resolves relative paths against cwd, returns canonical absolute path
+pub fn path_resolve(path_str: &str, span: Span) -> Result<String, RuntimeError> {
+    let path = Path::new(path_str);
+
+    if path.is_absolute() {
+        return Ok(path.to_string_lossy().to_string());
+    }
+
+    // Get current working directory and join
+    let cwd = std::env::current_dir().map_err(|e| RuntimeError::TypeError {
+        msg: format!("Failed to get current directory: {}", e),
+        span,
+    })?;
+
+    let absolute = cwd.join(path);
+    Ok(absolute.to_string_lossy().to_string())
 }
 
 /// Get base filename (with extension)
