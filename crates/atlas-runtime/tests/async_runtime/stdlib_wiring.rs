@@ -37,7 +37,7 @@ fn vm_fs(code: &str) -> Value {
 /// 1. await sleep(0) resolves immediately to null.
 #[test]
 fn test_stdlib_sleep_zero_resolves() {
-    let result = interp("await sleep(0);");
+    let result = interp("await task.sleep(0);");
     assert_eq!(result, Value::Null);
 }
 
@@ -46,7 +46,7 @@ fn test_stdlib_sleep_zero_resolves() {
 fn test_stdlib_sleep_duration_completes() {
     let result = interp(
         r#"
-        await sleep(5);
+        await task.sleep(5);
         99;
         "#,
     );
@@ -56,14 +56,14 @@ fn test_stdlib_sleep_duration_completes() {
 /// 3. sleep() without await returns Future (typechecks as Future<null>).
 #[test]
 fn test_stdlib_sleep_returns_future_type() {
-    let result = interp("typeof(sleep(0));");
+    let result = interp("typeof(task.sleep(0));");
     assert_eq!(result, Value::string("Future"));
 }
 
 /// 4. futureResolve(v) + await produces the inner value.
 #[test]
 fn test_stdlib_future_resolve_await() {
-    let result = interp("await futureResolve(77);");
+    let result = interp("await future.resolve(77);");
     assert_eq!(result, Value::Number(77.0));
 }
 
@@ -74,7 +74,7 @@ fn test_stdlib_future_resolve_await() {
 /// 5. futureAll([resolved, resolved]) — returns array of results.
 #[test]
 fn test_stdlib_future_all_two() {
-    let result = interp("await futureAll([futureResolve(1), futureResolve(2)]);");
+    let result = interp("await future.all([future.resolve(1), future.resolve(2)]);");
     assert!(
         matches!(result, Value::Array(_)),
         "expected Array, got {:?}",
@@ -88,7 +88,7 @@ fn test_stdlib_future_all_two() {
 /// 6. futureAll([]) — resolves with empty array.
 #[test]
 fn test_stdlib_future_all_empty() {
-    let result = interp("await futureAll([]);");
+    let result = interp("await future.all([]);");
     assert!(
         matches!(result, Value::Array(_)),
         "expected Array, got {:?}",
@@ -105,9 +105,9 @@ fn test_stdlib_future_race_resolved_wins() {
     // Both are already-resolved futures; race returns the first resolved one.
     let result = interp(
         r#"
-        let f1 = futureResolve(10);
-        let f2 = futureResolve(20);
-        await futureRace([f1, f2]);
+        let f1 = future.resolve(10);
+        let f2 = future.resolve(20);
+        await future.race([f1, f2]);
         "#,
     );
     // Winner is the first resolved (f1), value 10.
@@ -117,7 +117,7 @@ fn test_stdlib_future_race_resolved_wins() {
 /// 8. futureAll returns Future type before await.
 #[test]
 fn test_stdlib_future_all_returns_future() {
-    let result = interp("typeof(futureAll([futureResolve(1)]));");
+    let result = interp("typeof(future.all([future.resolve(1)]));");
     assert_eq!(result, Value::string("Future"));
 }
 
@@ -130,21 +130,21 @@ fn test_stdlib_future_all_returns_future() {
 fn test_stdlib_spawn_returns_task_handle() {
     // typeof() maps TaskHandle to "record" (opaque runtime type).
     // The important thing is spawn() doesn't block and returns immediately.
-    let result = interp("typeof(spawn(futureResolve(42), null));");
+    let result = interp("typeof(task.spawn(future.resolve(42), null));");
     assert_eq!(result, Value::string("record"));
 }
 
 /// 10. futureResolve wraps a string — await returns the string.
 #[test]
 fn test_stdlib_future_resolve_string() {
-    let result = interp(r#"await futureResolve("hello");"#);
+    let result = interp(r#"await future.resolve("hello");"#);
     assert_eq!(result, Value::string("hello"));
 }
 
 /// 11. futureResolve wraps bool — await returns the bool.
 #[test]
 fn test_stdlib_future_resolve_bool() {
-    let result = interp("await futureResolve(true);");
+    let result = interp("await future.resolve(true);");
     assert_eq!(result, Value::Bool(true));
 }
 
@@ -201,30 +201,30 @@ fn test_stdlib_write_file_async_resolves() {
 // Cross-engine parity (4 tests)
 // ============================================================================
 
-/// P1. sleep(0) — identical output in interpreter and VM.
+/// P1. task.sleep(0) — identical output in interpreter and VM.
 #[test]
 fn test_parity_sleep_zero() {
-    let code = "await sleep(0); 1;";
+    let code = "await task.sleep(0); 1;";
     assert_eq!(interp(code), vm(code));
 }
 
-/// P2. futureAll — identical result array in both engines.
+/// P2. future.all — identical result array in both engines.
 #[test]
 fn test_parity_future_all() {
-    let code = "await futureAll([futureResolve(1), futureResolve(2)]);";
+    let code = "await future.all([future.resolve(1), future.resolve(2)]);";
     let i = interp(code);
     let v = vm(code);
     assert_eq!(i, v, "parity mismatch: interp={:?} vm={:?}", i, v);
 }
 
-/// P3. futureRace — identical winner in both engines.
+/// P3. future.race — identical winner in both engines.
 #[test]
 fn test_parity_future_race() {
-    let code = "await futureRace([futureResolve(42), futureResolve(99)]);";
+    let code = "await future.race([future.resolve(42), future.resolve(99)]);";
     assert_eq!(interp(code), vm(code));
 }
 
-/// P4. readFileAsync round-trip — identical contents in both engines.
+/// P4. file.readAsync round-trip — identical contents in both engines.
 #[test]
 fn test_parity_read_file_async() {
     use std::io::Write;
@@ -232,6 +232,6 @@ fn test_parity_read_file_async() {
     let mut f = std::fs::File::create(path).unwrap();
     f.write_all(b"parity").unwrap();
 
-    let code = format!(r#"await readFileAsync("{}");"#, path);
+    let code = format!(r#"await file.readAsync("{}");"#, path);
     assert_eq!(interp_fs(&code), vm_fs(&code));
 }

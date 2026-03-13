@@ -396,7 +396,11 @@ fn resolve_namespace_return_type(ns: &str, method: &str) -> Type {
             type_args: vec![],
         },
         // task namespace (B31)
-        ("task", "sleep" | "interval" | "cancel") => Type::Null,
+        ("task", "sleep" | "interval") => Type::Generic {
+            name: "Future".to_string(),
+            type_args: vec![Type::Null],
+        },
+        ("task", "cancel") => Type::Null,
         ("task", "status") => Type::String,
         ("task", "id") => Type::Number,
         ("task", "spawn") => Type::Generic {

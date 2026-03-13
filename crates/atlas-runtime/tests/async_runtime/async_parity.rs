@@ -311,7 +311,7 @@ fn parity_async_10_multiple_awaits() {
 /// 11. `await sleep(0)` resolves to null.
 #[test]
 fn parity_stdlib_11_sleep_zero() {
-    assert_parity("await sleep(0);", Value::Null);
+    assert_parity("await task.sleep(0);", Value::Null);
 }
 
 /// 12. `await futureAll([...])` with deterministic futures — check first element.
@@ -319,7 +319,7 @@ fn parity_stdlib_11_sleep_zero() {
 fn parity_stdlib_12_future_all_deterministic() {
     assert_parity(
         r#"
-        let results = await futureAll([futureResolve(1), futureResolve(2), futureResolve(3)]);
+        let results = await future.all([future.resolve(1), future.resolve(2), future.resolve(3)]);
         results[0];
         "#,
         Value::Number(1.0),
@@ -331,7 +331,7 @@ fn parity_stdlib_12_future_all_deterministic() {
 fn parity_stdlib_13_future_race_single() {
     assert_parity(
         r#"
-        await futureRace([futureResolve(42)]);
+        await future.race([future.resolve(42)]);
         "#,
         Value::Number(42.0),
     );
@@ -343,12 +343,12 @@ fn parity_stdlib_14_spawn_and_typeof() {
     // spawn returns a task handle (record-like); both engines must agree on typeof.
     let interp = {
         let mut rt = Runtime::new();
-        rt.eval("typeof(spawn(futureResolve(99), null));")
+        rt.eval("typeof(task.spawn(future.resolve(99), null));")
             .expect("interpreter failed")
     };
     let vm = {
         let mut rt = Runtime::new();
-        rt.eval("typeof(spawn(futureResolve(99), null));")
+        rt.eval("typeof(task.spawn(future.resolve(99), null));")
             .expect("vm failed")
     };
     assert_eq!(interp, vm, "spawn typeof parity divergence");
@@ -364,8 +364,8 @@ fn parity_stdlib_15_read_write_roundtrip() {
     assert_parity_fs(
         &format!(
             r#"
-            await writeFileAsync("{path}", "parity");
-            await readFileAsync("{path}");
+            await file.writeAsync("{path}", "parity");
+            await file.readAsync("{path}");
             "#
         ),
         Value::String(std::sync::Arc::new("parity".to_string())),
@@ -378,7 +378,7 @@ fn parity_stdlib_15_read_write_roundtrip() {
 fn parity_stdlib_16_sleep_then_value() {
     assert_parity(
         r#"
-        await sleep(1);
+        await task.sleep(1);
         42;
         "#,
         Value::Number(42.0),
@@ -390,8 +390,8 @@ fn parity_stdlib_16_sleep_then_value() {
 fn parity_stdlib_17_sequential_sleeps() {
     assert_parity(
         r#"
-        await sleep(0);
-        await sleep(0);
+        await task.sleep(0);
+        await task.sleep(0);
         "done";
         "#,
         Value::String(std::sync::Arc::new("done".to_string())),
@@ -403,15 +403,16 @@ fn parity_stdlib_17_sequential_sleeps() {
 fn parity_stdlib_18_all_empty() {
     let interp = {
         let mut rt = Runtime::new();
-        rt.eval("await futureAll([]);").expect("interpreter failed")
+        rt.eval("await future.all([]);")
+            .expect("interpreter failed")
     };
     let vm = {
         let mut rt = Runtime::new();
-        rt.eval("await futureAll([]);").expect("vm failed")
+        rt.eval("await future.all([]);").expect("vm failed")
     };
     assert_eq!(
         interp, vm,
-        "parity divergence for futureAll([]) between engines"
+        "parity divergence for future.all([]) between engines"
     );
 }
 
@@ -429,7 +430,7 @@ fn parity_error_19_at4002_number() {
         }
         await bad();
         "#,
-        "non-Future",
+        "Future<T>",
     );
 }
 
@@ -443,7 +444,7 @@ fn parity_error_20_at4002_string() {
         }
         await bad();
         "#,
-        "non-Future",
+        "Future<T>",
     );
 }
 
@@ -473,7 +474,7 @@ fn parity_error_22_nested_error_propagation() {
         }
         await outer();
         "#,
-        "non-Future",
+        "Future<T>",
     );
 }
 
@@ -487,7 +488,7 @@ fn parity_error_23_at4002_bool() {
         }
         await bad();
         "#,
-        "non-Future",
+        "Future<T>",
     );
 }
 
@@ -501,7 +502,7 @@ fn parity_error_24_at4002_null() {
         }
         await bad();
         "#,
-        "non-Future",
+        "Future<T>",
     );
 }
 
@@ -509,7 +510,7 @@ fn parity_error_24_at4002_null() {
 #[test]
 fn parity_error_25_race_multiple_agree() {
     let source = r#"
-        await futureRace([futureResolve(1), futureResolve(2)]);
+        await future.race([future.resolve(1), future.resolve(2)]);
     "#;
     let interp = {
         let mut rt = Runtime::new();
