@@ -94,6 +94,10 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0x99] = Some(Opcode::CheckEnumVariant);
     table[0x9A] = Some(Opcode::ExtractEnumData);
 
+    // Struct pattern matching (0x9B-0x9C)
+    table[0x9B] = Some(Opcode::IsStruct);
+    table[0x9C] = Some(Opcode::CheckStructType);
+
     // Async (0xA0-0xA3)
     table[0xA0] = Some(Opcode::AsyncCall);
     table[0xA1] = Some(Opcode::Await);

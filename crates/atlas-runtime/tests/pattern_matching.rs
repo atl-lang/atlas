@@ -1560,3 +1560,61 @@ fn test_or_all_arms_same_type() {
         99.0,
     );
 }
+
+#[test]
+fn test_h380_struct_pattern_named_fields() {
+    assert_parity_number(
+        r#"struct Point { x: number, y: number }
+        let p = Point { x: 1, y: 2 };
+        let result = match p {
+            Point { x, y } => x + y,
+            _ => 0,
+        };
+        result"#,
+        3.0,
+    );
+}
+
+#[test]
+fn test_h380_struct_pattern_type_discrimination() {
+    assert_parity_number(
+        r#"struct Circle { radius: number }
+        struct Square { side: number }
+        let s = Square { side: 5 };
+        let result = match s {
+            Circle { radius } => radius,
+            Square { side } => side * 2,
+            _ => 0,
+        };
+        result"#,
+        10.0,
+    );
+}
+
+#[test]
+fn test_h380_struct_pattern_with_sub_patterns() {
+    assert_parity_number(
+        r#"struct Point { x: number, y: number }
+        let p = Point { x: 3, y: 4 };
+        let result = match p {
+            Point { x: px, y: py } => px + py,
+            _ => 0,
+        };
+        result"#,
+        7.0,
+    );
+}
+
+#[test]
+fn test_h380_struct_pattern_wildcard_fallthrough() {
+    assert_parity_number(
+        r#"struct Foo { value: number }
+        let r = record { value: 99 };
+        let result = match r {
+            Foo { value } => value,
+            _ => -1,
+        };
+        result"#,
+        -1.0,
+    );
+}

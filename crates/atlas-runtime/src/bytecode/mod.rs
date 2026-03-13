@@ -400,6 +400,7 @@ impl Bytecode {
                     x if x == Opcode::Constant as u8
                         || x == Opcode::GetGlobal as u8
                         || x == Opcode::SetGlobal as u8
+                        || x == Opcode::CheckStructType as u8
                 );
 
                 if uses_constant && i + 1 < other.instructions.len() {
@@ -429,7 +430,8 @@ impl Bytecode {
                             || x == Opcode::JumpIfFalse as u8
                             || x == Opcode::GetLocal as u8
                             || x == Opcode::SetLocal as u8
-                            || x == Opcode::Array as u8 =>
+                            || x == Opcode::Array as u8
+                            || x == Opcode::CheckStructType as u8 =>
                         {
                             2 // u16 operand
                         }

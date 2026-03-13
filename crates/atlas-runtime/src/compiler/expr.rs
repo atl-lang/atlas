@@ -1311,6 +1311,13 @@ impl Compiler {
                 };
                 self.compile_enum_variant_pattern(&sentinel, name, args, *span, locals_before)
             }
+
+            // Struct pattern: Point { x, y } or Point { x: px, y: py }
+            Pattern::Struct {
+                type_name,
+                fields,
+                span,
+            } => self.compile_struct_pattern(type_name.as_ref(), fields, *span, locals_before),
         }
     }
 
@@ -1709,6 +1716,151 @@ impl Compiler {
         }
 
         // Fail exit
+        self.bytecode.emit(Opcode::Jump, span);
+        let fail_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // Patch success exit
+        self.bytecode.patch_jump(success_exit);
+
+        Ok(Some(fail_exit))
+    }
+
+    /// Compile struct/record pattern: `Point { x, y }` or `Point { x: px, y: py }`
+    ///
+    /// Stack protocol (same as compile_pattern_check):
+    /// - INPUT: [copy] on stack
+    /// - SUCCESS: copy consumed, [field_locals...] [True] on stack
+    /// - FAILURE: copy consumed, stack clean, jumps to returned offset
+    ///
+    /// Strategy:
+    ///   1. Store scrutinee in `$match_struct` temp global.
+    ///   2. Check `IsStruct`; if named, also `CheckStructType`.
+    ///   3. For each field: GetField from global, compile sub-pattern, Pop True.
+    ///   4. All failure paths (type mismatch, field failures) clean up committed
+    ///      field locals and converge at `fail_exit`.
+    fn compile_struct_pattern(
+        &mut self,
+        type_name: Option<&crate::ast::Identifier>,
+        fields: &[crate::ast::StructFieldPattern],
+        span: Span,
+        locals_before: usize,
+    ) -> Result<Option<usize>, Vec<Diagnostic>> {
+        use crate::ast::Pattern;
+        use crate::bytecode::Opcode;
+
+        let struct_global = "$match_struct";
+        let global_name_idx = self.bytecode.add_constant(Value::string(struct_global));
+
+        // Stack: [copy]  — move struct to temp global so we can GetField multiple times.
+        self.bytecode.emit(Opcode::SetGlobal, span);
+        self.bytecode.emit_u16(global_name_idx);
+        self.bytecode.emit(Opcode::Pop, span);
+        // Stack: []
+
+        // ── IsStruct check ───────────────────────────────────────────────────────
+        self.bytecode.emit(Opcode::GetGlobal, span);
+        self.bytecode.emit_u16(global_name_idx);
+        self.bytecode.emit(Opcode::IsStruct, span);
+        // Stack: [bool]
+        self.bytecode.emit(Opcode::JumpIfFalse, span);
+        let not_struct_fail = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+        // Stack: []  (bool consumed by JumpIfFalse on the failure path)
+
+        // ── Optional type-name check ─────────────────────────────────────────────
+        let type_name_fail: Option<usize> = if let Some(tname) = type_name {
+            self.bytecode.emit(Opcode::GetGlobal, span);
+            self.bytecode.emit_u16(global_name_idx);
+            let tname_idx = self
+                .bytecode
+                .add_constant(Value::string(tname.name.clone()));
+            self.bytecode.emit(Opcode::CheckStructType, span);
+            self.bytecode.emit_u16(tname_idx);
+            // Stack: [bool]
+            self.bytecode.emit(Opcode::JumpIfFalse, span);
+            let j = self.bytecode.current_offset();
+            self.bytecode.emit_u16(0xFFFF);
+            // Stack: []
+            Some(j)
+        } else {
+            None
+        };
+
+        // ── Field patterns ────────────────────────────────────────────────────────
+        // field_fail_info: (fail_jump_offset, locals_committed_count_at_that_point)
+        let mut field_fail_info: Vec<(usize, usize)> = Vec::new();
+
+        for field in fields {
+            // Load struct, push field value
+            self.bytecode.emit(Opcode::GetGlobal, span);
+            self.bytecode.emit_u16(global_name_idx);
+            let field_key_idx = self
+                .bytecode
+                .add_constant(Value::string(field.name.name.clone()));
+            self.bytecode.emit(Opcode::Constant, span);
+            self.bytecode.emit_u16(field_key_idx);
+            self.bytecode.emit(Opcode::GetField, span);
+            // Stack: [field_value]
+
+            let sub_pattern = field
+                .pattern
+                .clone()
+                .unwrap_or_else(|| Pattern::Variable(field.name.clone()));
+
+            let field_failed = self.compile_pattern_check(&sub_pattern, span, locals_before)?;
+
+            // Pop the True that a successful sub-pattern pushes
+            self.bytecode.emit(Opcode::Pop, span);
+
+            if let Some(jump) = field_failed {
+                // Capture how many field locals have been committed so far
+                // (for cleanup on the failure path).
+                let committed = self.locals.len() - locals_before;
+                field_fail_info.push((jump, committed));
+            }
+        }
+
+        // ── Success ───────────────────────────────────────────────────────────────
+        self.bytecode.emit(Opcode::True, span);
+
+        self.bytecode.emit(Opcode::Jump, span);
+        let success_exit = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF);
+
+        // ── Failure handlers ──────────────────────────────────────────────────────
+        // All failure paths converge at `fail_convergence`, which immediately
+        // emits the `fail_exit: Jump → ???` that compile_match patches.
+
+        // Field failures: pop committed locals, then jump to convergence.
+        let mut to_convergence: Vec<usize> = Vec::new();
+        for (jump, committed) in &field_fail_info {
+            self.bytecode.patch_jump(*jump);
+            for _ in 0..*committed {
+                self.bytecode.emit(Opcode::Pop, span);
+            }
+            self.bytecode.emit(Opcode::Jump, span);
+            to_convergence.push(self.bytecode.current_offset());
+            self.bytecode.emit_u16(0xFFFF);
+        }
+
+        // Type-name failure (0 locals committed yet)
+        if let Some(jump) = type_name_fail {
+            self.bytecode.patch_jump(jump);
+            self.bytecode.emit(Opcode::Jump, span);
+            to_convergence.push(self.bytecode.current_offset());
+            self.bytecode.emit_u16(0xFFFF);
+        }
+
+        // IsStruct failure (0 locals committed yet)
+        self.bytecode.patch_jump(not_struct_fail);
+        // (falls through into convergence — no extra Jump needed here since
+        // the fail_exit Jump is emitted immediately below)
+
+        // All handler jumps land here — emit the external fail exit.
+        for j in &to_convergence {
+            self.bytecode.patch_jump(*j);
+        }
         self.bytecode.emit(Opcode::Jump, span);
         let fail_exit = self.bytecode.current_offset();
         self.bytecode.emit_u16(0xFFFF);

@@ -4112,6 +4112,20 @@ impl<'a> TypeChecker<'a> {
                     }
                     return bindings;
                 }
+                Pattern::Struct { fields, .. } => {
+                    // Struct pattern inside union: bind each field as Unknown for now.
+                    for field in fields {
+                        match &field.pattern {
+                            Some(sub) => bindings.extend(self.check_pattern(sub, &Type::Unknown)),
+                            None => bindings.push((
+                                field.name.name.clone(),
+                                Type::Unknown,
+                                field.name.span,
+                            )),
+                        }
+                    }
+                    return bindings;
+                }
             }
         }
 
@@ -4211,6 +4225,20 @@ impl<'a> TypeChecker<'a> {
                         .map(|tr| self.resolve_type_ref(tr))
                         .unwrap_or(Type::Unknown);
                     bindings.extend(self.check_pattern(arg, &field_ty));
+                }
+            }
+
+            Pattern::Struct { fields, .. } => {
+                // Bind each field. For shorthand `{ x }`, bind x with Unknown type;
+                // for explicit `{ x: p }`, recurse into sub-pattern with Unknown type.
+                // Full struct type resolution is left to a future typechecker pass.
+                for field in fields {
+                    match &field.pattern {
+                        Some(sub) => bindings.extend(self.check_pattern(sub, &Type::Unknown)),
+                        None => {
+                            bindings.push((field.name.name.clone(), Type::Unknown, field.name.span))
+                        }
+                    }
                 }
             }
         }

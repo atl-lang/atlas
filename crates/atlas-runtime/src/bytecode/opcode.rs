@@ -158,6 +158,11 @@ pub enum Opcode {
     /// Extract data array from EnumValue
     /// Stack: [EnumValue] → Array
     ExtractEnumData = 0x9A,
+    /// Pop value, push true if it is a named struct (Map registered in struct_type_names)
+    IsStruct = 0x9B,
+    /// [u16 name_const_idx] Pop value, push true if it is a struct whose registered
+    /// type name equals the string constant at name_const_idx.
+    CheckStructType = 0x9C,
 
     // ===== Async (0xA0-0xAF) =====
     /// Call async function [u16 fn_const_idx, u8 arg_count]
@@ -254,6 +259,8 @@ impl TryFrom<u8> for Opcode {
             0x98 => Ok(Opcode::EnumVariant),
             0x99 => Ok(Opcode::CheckEnumVariant),
             0x9A => Ok(Opcode::ExtractEnumData),
+            0x9B => Ok(Opcode::IsStruct),
+            0x9C => Ok(Opcode::CheckStructType),
             0xA0 => Ok(Opcode::AsyncCall),
             0xA1 => Ok(Opcode::Await),
             0xA2 => Ok(Opcode::WrapFuture),

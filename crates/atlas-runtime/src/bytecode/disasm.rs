@@ -107,6 +107,7 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::GetArrayLen
         | Opcode::CheckEnumVariant
         | Opcode::ExtractEnumData
+        | Opcode::IsStruct
         | Opcode::Await
         | Opcode::WrapFuture
         | Opcode::DeferExec
@@ -126,7 +127,8 @@ fn disassemble_instruction(bytecode: &Bytecode, offset: &mut usize) -> String {
         | Opcode::HashMap
         | Opcode::Tuple
         | Opcode::TupleGet
-        | Opcode::DeferPush => {
+        | Opcode::DeferPush
+        | Opcode::CheckStructType => {
             let operand = read_u16(bytecode, offset);
             format!("{:04}  {:?} {}", start_offset, opcode, operand)
         }
