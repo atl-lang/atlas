@@ -1442,6 +1442,18 @@ pub const DEFAULT_ON_OWNERSHIP_PARAM: DiagnosticDescriptor = DiagnosticDescripto
     domain: DiagnosticDomain::Typechecker,
 };
 
+pub const NO_NEW_CONSTRUCTOR: DiagnosticDescriptor = DiagnosticDescriptor {
+    code: "AT3064",
+    level: DiagnosticLevel::Error,
+    title: "No `new` constructor",
+    message_template: "type `{type_name}` has no static `new` method",
+    static_help: Some(
+        "add a static `fn new(...): TypeName` method inside an inherent impl block to enable constructor syntax",
+    ),
+    static_note: None,
+    domain: DiagnosticDomain::Typechecker,
+};
+
 // ── Descriptor Registry ────────────────────────────────────────────────────────
 
 /// Lookup a descriptor by error code.  O(n) scan — only used by `atlas explain`
@@ -1589,4 +1601,5 @@ pub static DESCRIPTOR_REGISTRY: &[&DiagnosticDescriptor] = &[
     &CONST_NOT_COMPILE_TIME,
     &REQUIRED_PARAM_AFTER_DEFAULT,
     &DEFAULT_ON_OWNERSHIP_PARAM,
+    &NO_NEW_CONSTRUCTOR,
 ];

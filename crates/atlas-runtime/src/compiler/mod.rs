@@ -106,6 +106,9 @@ pub struct Compiler {
     /// Populated from const declarations before compilation. Used to inline const
     /// values at usage sites.
     pub(super) const_values: std::collections::HashMap<String, crate::value::Value>,
+    /// Struct types with a static `new` method: type_name -> true.
+    /// Enables `Foo(args)` constructor sugar in compile_call.
+    pub(super) constructor_types: std::collections::HashSet<String>,
 }
 
 impl Compiler {
@@ -128,6 +131,7 @@ impl Compiler {
             in_async_fn: false,
             enum_variants: std::collections::HashMap::new(),
             const_values: std::collections::HashMap::new(),
+            constructor_types: std::collections::HashSet::new(),
         }
     }
 
@@ -157,6 +161,7 @@ impl Compiler {
             in_async_fn: false,
             enum_variants: std::collections::HashMap::new(),
             const_values: std::collections::HashMap::new(),
+            constructor_types: std::collections::HashSet::new(),
         }
     }
 
@@ -620,6 +625,11 @@ impl Compiler {
         for method in &impl_block.methods {
             // Static methods use __static__ prefix, instance methods use __impl__
             let mangled_name = if method.is_static {
+                // Track struct types that have a static `new` for constructor sugar (H-325)
+                if method.name.name == "new" {
+                    self.constructor_types
+                        .insert(impl_block.type_name.name.clone());
+                }
                 format!(
                     "__static__{}__{}",
                     impl_block.type_name.name, method.name.name

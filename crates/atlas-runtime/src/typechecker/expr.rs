@@ -1531,6 +1531,76 @@ impl<'a> TypeChecker<'a> {
 
     /// Check a function call
     fn check_call(&mut self, call: &CallExpr) -> Type {
+        // H-325: Constructor syntax — Foo(args) as sugar for Foo.new(args).
+        // Must check BEFORE check_expr on callee to avoid "undefined variable" false errors
+        // when the callee is a struct type name (not a variable).
+        if let Expr::Identifier(id) = call.callee.as_ref() {
+            if self.struct_decls.contains_key(id.name.as_str()) {
+                if let Some(static_new) = self
+                    .static_methods_registry
+                    .get(&(id.name.clone(), "new".to_string()))
+                    .cloned()
+                {
+                    let return_type = self.resolve_type_ref(&static_new.return_type);
+                    let expected_count = static_new.params.len();
+                    if call.args.len() != expected_count {
+                        self.diagnostics.push(
+                            error_codes::ARITY_MISMATCH
+                                .emit(call.span)
+                                .arg("name", format!("{}.new", id.name))
+                                .arg("expected", format!("{}", expected_count))
+                                .arg("found", format!("{}", call.args.len()))
+                                .with_help(format!(
+                                    "constructor `{}::new` requires {} argument{}",
+                                    id.name,
+                                    expected_count,
+                                    if expected_count == 1 { "" } else { "s" }
+                                ))
+                                .build()
+                                .with_label("argument count mismatch"),
+                        );
+                        return Type::Unknown;
+                    }
+                    for (i, arg) in call.args.iter().enumerate() {
+                        let arg_type = self.check_expr(arg);
+                        if let Some(param) = static_new.params.get(i) {
+                            let expected_type = self.resolve_type_ref(&param.type_ref);
+                            if !self.is_assignable_with_traits(&arg_type, &expected_type) {
+                                self.diagnostics.push(
+                                    error_codes::TYPE_MISMATCH
+                                        .emit(arg.span())
+                                        .arg("expected", expected_type.display_name())
+                                        .arg("found", arg_type.display_name())
+                                        .with_help(format!(
+                                            "argument {} to `{}::new` has wrong type: expected {}, found {}",
+                                            i + 1, id.name,
+                                            expected_type.display_name(),
+                                            arg_type.display_name()
+                                        ))
+                                        .build()
+                                        .with_label("type mismatch"),
+                                );
+                            }
+                        }
+                    }
+                    return return_type;
+                } else {
+                    self.diagnostics.push(
+                        error_codes::NO_NEW_CONSTRUCTOR
+                            .emit(call.span)
+                            .arg("type_name", id.name.clone())
+                            .with_help(format!(
+                                "add a static `fn new(...): {}` method inside an inherent `impl {}` block",
+                                id.name, id.name
+                            ))
+                            .build()
+                            .with_label("no constructor"),
+                    );
+                    return Type::Unknown;
+                }
+            }
+        }
+
         let callee_type = self.check_expr(&call.callee);
         let callee_norm = callee_type.normalized();
 
