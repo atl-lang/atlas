@@ -166,14 +166,14 @@ fn test_stdlib_read_file_async_returns_future() {
     let path = "/tmp/atlas_phase11_typeof.txt";
     let mut f = std::fs::File::create(path).unwrap();
     f.write_all(b"x").unwrap();
-    let result = interp_fs(&format!(r#"typeof(readFileAsync("{}"));"#, path));
+    let result = interp_fs(&format!(r#"typeof(file.readAsync("{}"));"#, path));
     assert_eq!(result, Value::string("Future"));
 }
 
 /// 14. writeFileAsync() returns a Future (type check).
 #[test]
 fn test_stdlib_write_file_async_returns_future() {
-    let result = interp_fs(r#"typeof(writeFileAsync("/tmp/atlas_test_p11.txt", "data"));"#);
+    let result = interp_fs(r#"typeof(file.writeAsync("/tmp/atlas_test_p11.txt", "data"));"#);
     assert_eq!(result, Value::string("Future"));
 }
 
@@ -185,7 +185,7 @@ fn test_stdlib_read_file_async_resolves() {
     let mut f = std::fs::File::create(path).unwrap();
     f.write_all(b"phase11").unwrap();
 
-    let result = interp_fs(&format!(r#"await readFileAsync("{}");"#, path));
+    let result = interp_fs(&format!(r#"await file.readAsync("{}");"#, path));
     assert_eq!(result, Value::string("phase11"));
 }
 
@@ -193,7 +193,7 @@ fn test_stdlib_read_file_async_resolves() {
 #[test]
 fn test_stdlib_write_file_async_resolves() {
     let path = "/tmp/atlas_phase11_write.txt";
-    let result = interp_fs(&format!(r#"await writeFileAsync("{}", "ok");"#, path));
+    let result = interp_fs(&format!(r#"await file.writeAsync("{}", "ok");"#, path));
     assert_eq!(result, Value::Null);
 }
 

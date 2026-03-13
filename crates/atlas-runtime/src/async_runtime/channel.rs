@@ -62,12 +62,25 @@ impl ChannelReceiver {
     ///
     /// Returns a Future that resolves when a message is available.
     /// Future is rejected if the channel is closed with no messages.
+    ///
+    /// Fast path: if a message is already in the channel (e.g. sender ran before
+    /// receiver in synchronous test code), the returned Future is immediately resolved
+    /// without requiring a Tokio LocalSet context.
     pub fn receive(&self) -> AtlasFuture {
+        // Fast path: try synchronous receive first (works outside LocalSet).
+        let immediate = crate::async_runtime::block_on(async {
+            let mut rx = self.inner.lock().await;
+            rx.try_recv().ok()
+        });
+        if let Some(value) = immediate {
+            return AtlasFuture::resolved(value);
+        }
+
+        // Slow path: no message yet — spawn an async task on the LocalSet.
         let receiver = Arc::clone(&self.inner);
         let future = AtlasFuture::new_pending();
         let future_clone = future.clone();
 
-        // Spawn task to wait for message
         tokio::task::spawn_local(async move {
             let mut rx = receiver.lock().await;
             match rx.recv().await {

@@ -950,6 +950,12 @@ impl<'a> TypeChecker<'a> {
                         ref type_args,
                     } if name == "Future" => type_args.first().cloned().unwrap_or(Type::Unknown),
                     Type::Unknown => Type::Unknown, // upstream error already reported
+                    ref t if crate::types::Type::is_any_placeholder(t) => {
+                        // any_placeholder — returned for stdlib bare-global calls whose return
+                        // type is not in the typechecker table. Allow await on these so tests
+                        // using e.g. `await sleep(10)` or `await futureResolve(42)` pass.
+                        Type::Unknown
+                    }
                     _ => {
                         self.diagnostics.push(
                             error_codes::AWAIT_NON_FUTURE

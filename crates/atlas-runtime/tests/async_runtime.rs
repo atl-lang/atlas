@@ -1543,7 +1543,6 @@ fn test_await_rejected_future() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_spawn_simple_task() {
     let code = r#"
         let future = futureResolve(42);
@@ -1556,7 +1555,6 @@ fn test_spawn_simple_task() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_task_returns_value() {
     let code = r#"
         let future = futureResolve(100);
@@ -1569,12 +1567,11 @@ fn test_task_returns_value() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_multiple_concurrent_tasks() {
     let code = r#"
-        let h1 = spawn(async { 1 }, "task1");
-        let h2 = spawn(async { 2 }, "task2");
-        let h3 = spawn(async { 3 }, "task3");
+        let h1 = spawn(futureResolve(1), "task1");
+        let h2 = spawn(futureResolve(2), "task2");
+        let h3 = spawn(futureResolve(3), "task3");
 
         // Get task names
         taskName(h1)
@@ -1587,7 +1584,7 @@ fn test_multiple_concurrent_tasks() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_task_with_sleep() {
     let code = r#"
         let handle = spawn(async {
@@ -1605,10 +1602,9 @@ fn test_task_with_sleep() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_named_tasks() {
     let code = r#"
-        let handle = spawn(async { 1 }, "named_task_123");
+        let handle = spawn(futureResolve(1), "named_task_123");
         taskName(handle)
     "#;
     let result = eval_ok(code);
@@ -1619,11 +1615,10 @@ fn test_named_tasks() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_task_id_uniqueness() {
     let code = r#"
-        let h1 = spawn(async { 1 }, null);
-        let h2 = spawn(async { 2 }, null);
+        let h1 = spawn(futureResolve(1), null);
+        let h2 = spawn(futureResolve(2), null);
         let id1 = taskId(h1);
         let id2 = taskId(h2);
         id1 != id2
@@ -1633,7 +1628,7 @@ fn test_task_id_uniqueness() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_spawn_with_string_result() {
     let code = r#"
         let handle = spawn(async { "hello" }, null);
@@ -1651,7 +1646,7 @@ fn test_spawn_with_string_result() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_spawn_with_bool_result() {
     let code = r#"
         let handle = spawn(async { true }, null);
@@ -1666,7 +1661,7 @@ fn test_spawn_with_bool_result() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_spawn_with_array_result() {
     let code = r#"
         let handle = spawn(async { [1, 2, 3] }, null);
@@ -1681,7 +1676,7 @@ fn test_spawn_with_array_result() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_spawn_multiple_and_join_all() {
     let code = r#"
         let h1 = spawn(async { 10 }, null);
@@ -1700,7 +1695,6 @@ fn test_spawn_multiple_and_join_all() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_create_bounded_channel() {
     let code = r#"
         let channel = channelBounded(10);
@@ -1712,7 +1706,6 @@ fn test_create_bounded_channel() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_create_unbounded_channel() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1723,7 +1716,6 @@ fn test_create_unbounded_channel() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_send_and_receive_message() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1738,7 +1730,6 @@ fn test_send_and_receive_message() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_multiple_messages_in_order() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1760,7 +1751,6 @@ fn test_multiple_messages_in_order() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_bounded_channel_capacity() {
     let code = r#"
         let channel = channelBounded(2);
@@ -1778,7 +1768,6 @@ fn test_bounded_channel_capacity() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_with_string_messages() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1796,7 +1785,6 @@ fn test_channel_with_string_messages() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_with_bool_messages() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1811,7 +1799,6 @@ fn test_channel_with_bool_messages() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_with_array_messages() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1827,7 +1814,6 @@ fn test_channel_with_array_messages() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_with_null_messages() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1842,7 +1828,6 @@ fn test_channel_with_null_messages() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_channel_send_receive_types() {
     let code = r#"
         let channel = channelUnbounded();
@@ -1899,7 +1884,7 @@ fn test_sleep_short_duration() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_sleep_in_task() {
     let code = r#"
         let handle = spawn(async {
@@ -1929,7 +1914,7 @@ fn test_sleep_sequence() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_sleep_with_value_return() {
     let code = r#"
         fn sleepAndReturn(borrow value: number): Future<number> {
@@ -1946,7 +1931,6 @@ fn test_sleep_with_value_return() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
 fn test_timer_basic() {
     let code = r#"
         await timer(10);
@@ -1957,7 +1941,7 @@ fn test_timer_basic() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_interval_basic() {
     let code = r#"
         let handle = interval(10, async { 42 });
@@ -1974,7 +1958,7 @@ fn test_interval_basic() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_completes_before_limit() {
     let code = r#"
         let result = await timeout(async { 42 }, 100);
@@ -1988,7 +1972,7 @@ fn test_timeout_completes_before_limit() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_immediate_completion() {
     let code = r#"
         let result = await timeout(async { 42 }, 50);
@@ -2002,7 +1986,7 @@ fn test_timeout_immediate_completion() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_with_task() {
     let code = r#"
         let handle = spawn(async {
@@ -2023,7 +2007,7 @@ fn test_timeout_with_task() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_preserves_value() {
     let code = r#"
         let result = await timeout(async { "test_value" }, 50);
@@ -2040,7 +2024,7 @@ fn test_timeout_preserves_value() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_with_sleep() {
     let code = r#"
         let result = await timeout(async {
@@ -2057,7 +2041,7 @@ fn test_timeout_with_sleep() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_returns_result() {
     let code = r#"
         let result = await timeout(async { 100 }, 50);
@@ -2076,7 +2060,7 @@ fn test_timeout_returns_result() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_create_async_mutex() {
     let code = r#"
         let mutex = asyncMutex(42);
@@ -2088,7 +2072,7 @@ fn test_create_async_mutex() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_async_mutex_lock_and_get() {
     let code = r#"
         let mutex = asyncMutex(42);
@@ -2100,7 +2084,7 @@ fn test_async_mutex_lock_and_get() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_async_mutex_update() {
     let code = r#"
         let mutex = asyncMutex(0);
@@ -2113,7 +2097,7 @@ fn test_async_mutex_update() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_async_mutex_with_string() {
     let code = r#"
         let mutex = asyncMutex("hello");
@@ -2128,7 +2112,7 @@ fn test_async_mutex_with_string() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_async_mutex_sequential_locks() {
     let code = r#"
         let mutex = asyncMutex(0);
@@ -2145,7 +2129,7 @@ fn test_async_mutex_sequential_locks() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_async_mutex_in_task() {
     let code = r#"
         let mutex = asyncMutex(0);
@@ -2169,7 +2153,7 @@ fn test_async_mutex_in_task() {
 // ============================================================================
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_task_with_channel_communication() {
     let code = r#"
         let channel = channelUnbounded();
@@ -2200,7 +2184,7 @@ fn test_task_with_channel_communication() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_timeout_with_channel() {
     let code = r#"
         let channel = channelUnbounded();
@@ -2225,7 +2209,7 @@ fn test_timeout_with_channel() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_mutex_shared_between_tasks() {
     let code = r#"
         let mutex = asyncMutex(0);
@@ -2254,7 +2238,7 @@ fn test_mutex_shared_between_tasks() {
 }
 
 #[test]
-#[ignore = "requires tokio LocalSet context — re-enable when async runtime phase completes"]
+#[ignore = "requires async VM: async-block syntax and blocking task join not yet implemented"]
 fn test_retry_with_timeout_pattern() {
     let code = r#"
         fn operation(): Future<number> {

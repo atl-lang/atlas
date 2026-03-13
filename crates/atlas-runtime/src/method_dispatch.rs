@@ -176,9 +176,28 @@ pub fn is_allowed_bare_global(name: &str) -> bool {
         | "is_ok" | "is_err" | "is_some" | "is_none"
         | "isOk" | "isErr" | "isSome" | "isNone"
         // Core utilities (print is console.log, not a bare global)
-        | "len" | "typeof" | "type_of"
+        | "len" | "typeof" | "type_of" | "toString"
         // Type constructors
         | "Map" | "Set" | "Queue" | "Stack"
+        // Future bare globals (namespace equivalent: future.resolve(), future.all(), etc.)
+        | "futureResolve" | "futureReject" | "futureNew"
+        | "futureIsResolved" | "futureIsRejected" | "futureIsPending"
+        | "futureAll" | "futureRace" | "futureAllSettled" | "futureAny"
+        | "futureThen" | "futureCatch" | "futureFinally"
+        | "futureNever" | "futureDelay"
+        // Async / task bare globals (namespace equivalent: task.sleep(), task.spawn(), etc.)
+        | "sleep" | "timer" | "interval" | "timeout" | "cancelTimer"
+        | "spawn" | "spawnBlocking"
+        | "taskJoin" | "taskStatus" | "taskId" | "taskName" | "taskCancel" | "taskJoinAll"
+        // Channel bare globals (no namespace equivalent; bare forms are canonical)
+        | "channelUnbounded" | "channelBounded"
+        | "channelSend" | "channelReceive" | "channelClose" | "channelIsClosed"
+        | "channelSelect"
+        // AsyncMutex bare globals
+        | "asyncMutex" | "asyncMutexGet" | "asyncMutexSet" | "asyncMutexLock"
+        // File async bare globals — kept for backwards compat in test code only
+        // Canonical form: file.readAsync(), file.writeAsync(), file.appendAsync()
+        | "appendFileAsync"
     )
 }
 
