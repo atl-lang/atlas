@@ -190,6 +190,32 @@ pub fn result_err(res: &Value, span: Span) -> Result<Value, RuntimeError> {
     }
 }
 
+/// Result.context(msg) — wraps an Err with additional context (H-329).
+///
+/// Ok(v).context("msg") → Ok(v)  (passes through)
+/// Err(e).context("msg") → Err("msg: e")
+pub fn result_context(res: &Value, ctx: &Value, span: Span) -> Result<Value, RuntimeError> {
+    let ctx_str = match ctx {
+        Value::String(s) => s.as_ref().to_string(),
+        other => other.to_string(),
+    };
+    match res {
+        Value::Result(Ok(_)) => Ok(res.clone()),
+        Value::Result(Err(err)) => {
+            let original = match err.as_ref() {
+                Value::String(s) => s.as_ref().to_string(),
+                other => other.to_string(),
+            };
+            let wrapped = format!("{}: {}", ctx_str, original);
+            Ok(Value::Result(Err(Box::new(Value::string(wrapped)))))
+        }
+        _ => Err(RuntimeError::TypeError {
+            msg: "context() requires Result value".to_string(),
+            span,
+        }),
+    }
+}
+
 // ============================================================================
 // Type Checking Functions
 // ============================================================================

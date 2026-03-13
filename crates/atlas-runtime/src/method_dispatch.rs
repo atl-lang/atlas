@@ -429,6 +429,8 @@ fn resolve_result_method(method_name: &str) -> Option<String> {
         "mapErr" => "result_map_err",
         "andThen" => "result_and_then",
         "orElse" => "result_or_else",
+        // Error context wrapping (H-329)
+        "context" => "result_context",
         _ => return None,
     };
     Some(func_name.to_string())

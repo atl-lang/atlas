@@ -885,6 +885,12 @@ fn builtin_registry() -> &'static HashMap<&'static str, BuiltinFn> {
             }
             types::result_err(&args[0], span)
         });
+        m.insert("result_context", |args, span, _, _| {
+            if args.len() != 2 {
+                return Err(stdlib_arity_error("result_context", 2, args.len(), span));
+            }
+            types::result_context(&args[0], &args[1], span)
+        });
 
         // ====================================================================
         // File I/O functions

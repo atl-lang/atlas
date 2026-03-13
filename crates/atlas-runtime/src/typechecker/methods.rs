@@ -717,6 +717,14 @@ impl MethodTable {
                     type_args: vec![t.clone(), Type::Unknown],
                 },
             ),
+            // H-329: context(msg) wraps Err with additional string context
+            "context" => (
+                vec![Type::String],
+                Type::Generic {
+                    name: "Result".to_string(),
+                    type_args: vec![t.clone(), Type::String],
+                },
+            ),
             _ => return None,
         };
         Some(MethodSignature {
