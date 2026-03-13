@@ -253,6 +253,9 @@ fn find_references_in_stmt(stmt: &Stmt, identifier: &str, references: &mut Vec<R
             find_references_in_expr(&assign.value, identifier, references);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
+        Stmt::Defer(defer) => {
+            find_references_in_block(&defer.body, identifier, references);
+        }
     }
 }
 

@@ -516,6 +516,8 @@ pub enum Stmt {
     Break(Span),
     Continue(Span),
     Expr(ExprStmt),
+    /// Deferred execution: runs on scope exit in LIFO order
+    Defer(DeferStmt),
 }
 
 /// Variable declaration
@@ -629,6 +631,15 @@ pub struct ReturnStmt {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ExprStmt {
     pub expr: Expr,
+    pub span: Span,
+}
+
+/// Defer statement — executes block on scope exit (LIFO order)
+///
+/// Syntax: `defer { cleanup(); }` or `defer cleanup();`
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct DeferStmt {
+    pub body: Block,
     pub span: Span,
 }
 
@@ -1078,6 +1089,7 @@ impl Stmt {
             Stmt::Return(r) => r.span,
             Stmt::Break(s) | Stmt::Continue(s) => *s,
             Stmt::Expr(e) => e.span,
+            Stmt::Defer(d) => d.span,
         }
     }
 }

@@ -209,7 +209,8 @@ fn classify_token(
         | TokenKind::Private
         | TokenKind::Internal
         | TokenKind::Static
-        | TokenKind::Const => (token_type_idx::KEYWORD, 0),
+        | TokenKind::Const
+        | TokenKind::Defer => (token_type_idx::KEYWORD, 0),
 
         // Boolean literals (also keywords semantically)
         TokenKind::True | TokenKind::False | TokenKind::Null => (token_type_idx::KEYWORD, 0),

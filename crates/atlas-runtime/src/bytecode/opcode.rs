@@ -175,6 +175,13 @@ pub enum Opcode {
     /// Pushes Value::Future handle; caller awaits later
     SpawnTask = 0xA3,
 
+    // ===== Defer (0xB0-0xBF) =====
+    /// Push defer block onto defer stack [u16 jump_offset]
+    /// The jump_offset points past the defer body; we record current IP as body start
+    DeferPush = 0xB0,
+    /// Execute all deferred blocks for current scope (LIFO order)
+    DeferExec = 0xB1,
+
     // ===== Special (0xF0-0xFF) =====
     /// End of bytecode
     Halt = 0xFF,
@@ -251,6 +258,8 @@ impl TryFrom<u8> for Opcode {
             0xA1 => Ok(Opcode::Await),
             0xA2 => Ok(Opcode::WrapFuture),
             0xA3 => Ok(Opcode::SpawnTask),
+            0xB0 => Ok(Opcode::DeferPush),
+            0xB1 => Ok(Opcode::DeferExec),
             0xFF => Ok(Opcode::Halt),
             _ => Err(()),
         }

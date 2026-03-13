@@ -224,6 +224,7 @@ impl Compiler {
             Stmt::Break(span) => self.compile_break(*span),
             Stmt::Continue(span) => self.compile_continue(*span),
             Stmt::CompoundAssign(compound) => self.compile_compound_assign(compound),
+            Stmt::Defer(defer) => self.compile_defer(defer),
         }
     }
 
@@ -1134,6 +1135,46 @@ impl Compiler {
             // Error: continue outside loop (should be caught by typechecker)
             Ok(())
         }
+    }
+
+    /// Compile a defer statement
+    ///
+    /// Defer pushes a block onto the defer stack. When the scope exits (via return
+    /// or normal flow), DeferExec pops and executes all deferred blocks in LIFO order.
+    ///
+    /// Layout:
+    ///   [DeferPush] [body_len:u16]      <- records body location on defer stack
+    ///   [Jump] [jump_offset:i16]        <- skip body during normal execution
+    ///   [body bytecode...]
+    ///   [after body:]                   <- normal execution continues here
+    fn compile_defer(&mut self, defer: &DeferStmt) -> Result<(), Vec<Diagnostic>> {
+        // Emit DeferPush - VM will record body_start = IP after this instruction
+        // The operand is the body length (filled in later)
+        self.bytecode.emit(Opcode::DeferPush, defer.span);
+        let body_len_hole = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder for body length
+
+        // Emit Jump to skip past the body during normal execution
+        self.bytecode.emit(Opcode::Jump, defer.span);
+        let jump_hole = self.bytecode.current_offset();
+        self.bytecode.emit_u16(0xFFFF); // Placeholder
+
+        // Body starts here
+        let body_start = self.bytecode.current_offset();
+
+        // Compile the defer body (no Return at end - VM handles execution)
+        self.compile_block_as_statement(&defer.body)?;
+
+        // Patch body length (DeferPush operand) - does NOT include Return
+        let body_len = (self.bytecode.current_offset() - body_start) as u16;
+        let body_len_bytes = body_len.to_be_bytes();
+        self.bytecode.instructions[body_len_hole] = body_len_bytes[0];
+        self.bytecode.instructions[body_len_hole + 1] = body_len_bytes[1];
+
+        // Patch jump to skip body
+        self.bytecode.patch_jump(jump_hole);
+
+        Ok(())
     }
 
     /// Compile a block (statements only, tail expression handled by caller)

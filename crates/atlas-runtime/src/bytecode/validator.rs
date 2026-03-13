@@ -350,6 +350,8 @@ fn opcode_name(opcode: Opcode) -> &'static str {
         Opcode::SpawnTask => "SpawnTask",
         Opcode::Tuple => "Tuple",
         Opcode::TupleGet => "TupleGet",
+        Opcode::DeferPush => "DeferPush",
+        Opcode::DeferExec => "DeferExec",
     }
 }
 
@@ -514,6 +516,9 @@ fn stack_delta(instr: &DecodedInstruction) -> Option<i32> {
         // Await: pop Future, push resolved value (net 0)
         // WrapFuture: pop value, push Future (net 0)
         Opcode::Await | Opcode::WrapFuture => Some(0),
+
+        // Defer: DeferPush records body location (net 0), DeferExec runs defers (net 0)
+        Opcode::DeferPush | Opcode::DeferExec => Some(0),
 
         // Variable-arity — skip (MakeClosure pops n_upvalues, push 1; net depends on operand)
         // EnumVariant pops enum_name, variant_name, and args; pushes 1

@@ -100,6 +100,10 @@ static OPCODE_TABLE: [Option<Opcode>; 256] = {
     table[0xA2] = Some(Opcode::WrapFuture);
     table[0xA3] = Some(Opcode::SpawnTask);
 
+    // Defer (0xB0-0xB1)
+    table[0xB0] = Some(Opcode::DeferPush);
+    table[0xB1] = Some(Opcode::DeferExec);
+
     // Special
     table[0xFF] = Some(Opcode::Halt);
 
@@ -129,7 +133,8 @@ pub fn operand_size(opcode: Opcode) -> usize {
         | Opcode::SetGlobal
         | Opcode::GetUpvalue
         | Opcode::SetUpvalue
-        | Opcode::Array => 2,
+        | Opcode::Array
+        | Opcode::DeferPush => 2,
         // MakeClosure: two u16 operands (func_const_idx, n_upvalues) = 4 bytes
         Opcode::MakeClosure => 4,
         // i16 operand

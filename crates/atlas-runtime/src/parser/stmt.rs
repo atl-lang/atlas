@@ -60,6 +60,7 @@ impl Parser {
             TokenKind::Return => self.parse_return_stmt(),
             TokenKind::Break => self.parse_break_stmt(),
             TokenKind::Continue => self.parse_continue_stmt(),
+            TokenKind::Defer => self.parse_defer_stmt(),
             TokenKind::LeftBrace => {
                 // Standalone block statement - wrap as Expr::Block
                 let block = self.parse_block()?;
@@ -454,6 +455,39 @@ impl Parser {
             .consume(TokenKind::Semicolon, "Expected ';' after continue")?
             .span;
         Ok(Stmt::Continue(continue_span.merge(end_span)))
+    }
+
+    /// Parse defer statement: `defer { block }` or `defer expr;`
+    ///
+    /// Deferred blocks execute in LIFO order when the enclosing scope exits.
+    pub(super) fn parse_defer_stmt(&mut self) -> Result<Stmt, ()> {
+        let defer_span = self.consume(TokenKind::Defer, "Expected 'defer'")?.span;
+
+        // defer { block } — no semicolon required after block
+        if self.check(TokenKind::LeftBrace) {
+            let body = self.parse_block()?;
+            let span = defer_span.merge(body.span);
+            return Ok(Stmt::Defer(DeferStmt { body, span }));
+        }
+
+        // defer expr; — wrap single expression in a block
+        let expr = self.parse_expression()?;
+        let end_span = self
+            .consume(TokenKind::Semicolon, "Expected ';' after defer expression")?
+            .span;
+        let expr_span = expr.span();
+        let body = Block {
+            statements: vec![Stmt::Expr(ExprStmt {
+                expr,
+                span: expr_span,
+            })],
+            tail_expr: None,
+            span: expr_span,
+        };
+        Ok(Stmt::Defer(DeferStmt {
+            body,
+            span: defer_span.merge(end_span),
+        }))
     }
 
     /// Parse a block with support for implicit returns (Rust-style tail expressions)

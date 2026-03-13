@@ -2810,6 +2810,11 @@ impl<'a> TypeChecker<'a> {
                 self.check_block(&for_in_stmt.body);
                 self.in_loop = old_in_loop;
             }
+            Stmt::Defer(defer) => {
+                // Type check the deferred block
+                // Note: defer blocks cannot contain return/break/continue
+                self.check_block(&defer.body);
+            }
         }
     }
 

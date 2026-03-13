@@ -294,6 +294,12 @@ impl FormatVisitor {
                 self.writeln();
             }
             Stmt::Expr(e) => self.visit_expr_stmt(e),
+            Stmt::Defer(d) => {
+                self.write_indent();
+                self.write("defer ");
+                self.visit_block(&d.body);
+                self.writeln();
+            }
         }
     }
 

@@ -134,6 +134,10 @@ pub enum TokenKind {
     /// `const` keyword — compile-time constant declaration
     Const,
 
+    // Advanced features (v0.3+ B41)
+    /// `defer` keyword — deferred execution (LIFO on function exit)
+    Defer,
+
     // Operators
     /// `+` (addition)
     Plus,
@@ -281,6 +285,7 @@ impl TokenKind {
             "internal" => Some(TokenKind::Internal),
             "static" => Some(TokenKind::Static),
             "const" => Some(TokenKind::Const),
+            "defer" => Some(TokenKind::Defer),
             _ => None,
         }
     }
@@ -330,6 +335,7 @@ impl TokenKind {
             TokenKind::Internal => "internal",
             TokenKind::Static => "static",
             TokenKind::Const => "const",
+            TokenKind::Defer => "defer",
             TokenKind::Plus => "+",
             TokenKind::Minus => "-",
             TokenKind::Star => "*",

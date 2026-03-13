@@ -424,6 +424,9 @@ impl SymbolIndex {
                 self.index_expr(&assign.value, ctx, false);
             }
             Stmt::Break(_) | Stmt::Continue(_) => {}
+            Stmt::Defer(defer) => {
+                self.index_block(&defer.body, ctx);
+            }
         }
     }
 

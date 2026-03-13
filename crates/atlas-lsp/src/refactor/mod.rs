@@ -168,6 +168,9 @@ fn extract_names_from_stmt(stmt: &Stmt, names: &mut Vec<String>) {
             extract_names_from_expr(&assign.value, names);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
+        Stmt::Defer(defer) => {
+            extract_names_from_block(&defer.body, names);
+        }
     }
 }
 

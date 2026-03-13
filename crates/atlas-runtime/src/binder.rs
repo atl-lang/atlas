@@ -1234,6 +1234,10 @@ impl Binder {
                 // We only need to bind the function body here
                 self.bind_function(func);
             }
+            Stmt::Defer(defer) => {
+                // Bind the deferred block - it executes in the same scope
+                self.bind_block(&defer.body);
+            }
         }
     }
 

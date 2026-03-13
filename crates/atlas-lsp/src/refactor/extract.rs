@@ -266,6 +266,11 @@ fn collect_free_vars_stmt(
             collect_free_vars_expr(&assign.value, scopes, free_vars);
         }
         Stmt::Break(_) | Stmt::Continue(_) => {}
+        Stmt::Defer(defer) => {
+            scopes.push_back(std::collections::HashSet::new());
+            collect_free_vars_block(&defer.body, scopes, free_vars);
+            scopes.pop_back();
+        }
     }
 }
 
