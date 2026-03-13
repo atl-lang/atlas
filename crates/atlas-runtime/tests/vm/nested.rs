@@ -297,10 +297,10 @@ fn test_vm_nested_function_void() {
 fn test_vm_nested_function_array_param() {
     let source = r#"
         fn outer(): number {
-            fn sum(borrow arr: []number): number {
+            fn sum(borrow arr: number[]): number {
                 return arr[0] + arr[1];
             }
-            let nums: []number = [10, 32];
+            let nums: number[] = [10, 32];
             return sum(nums);
         }
         outer();
@@ -313,8 +313,8 @@ fn test_vm_nested_function_array_param() {
 #[test]
 fn test_vm_nested_function_array_return() {
     let source = r#"
-        fn outer(): []number {
-            fn makeArray(): []number {
+        fn outer(): number[] {
+            fn makeArray(): number[] {
                 return [42, 100];
             }
             return makeArray();

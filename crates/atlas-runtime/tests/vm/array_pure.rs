@@ -12,11 +12,13 @@ use atlas_runtime::value::Value;
 
 #[test]
 fn test_pop_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         pop(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -29,11 +31,13 @@ fn test_pop_normal() {
 
 #[test]
 fn test_pop_single_element() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [42];
         pop(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -45,23 +49,27 @@ fn test_pop_single_element() {
 
 #[test]
 fn test_pop_empty_error() {
-    let _err = execute_vm_err(r#"
-        let arr: []number = [];
+    let _err = execute_vm_err(
+        r#"
+        let arr: number[] = [];
         pop(arr);
-    "#);
+    "#,
+    );
 }
 
 // ============================================================================
-// shift() tests  
+// shift() tests
 // ============================================================================
 
 #[test]
 fn test_shift_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         shift(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -73,11 +81,13 @@ fn test_shift_normal() {
 
 #[test]
 fn test_shift_single_element() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [99];
         shift(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -89,10 +99,12 @@ fn test_shift_single_element() {
 
 #[test]
 fn test_shift_empty_error() {
-    let _err = execute_vm_err(r#"
-        let arr: []number = [];
+    let _err = execute_vm_err(
+        r#"
+        let arr: number[] = [];
         shift(arr);
-    "#);
+    "#,
+    );
 }
 
 // ============================================================================
@@ -101,11 +113,13 @@ fn test_shift_empty_error() {
 
 #[test]
 fn test_unshift_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [2, 3];
         unshift(arr, 1);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -118,12 +132,14 @@ fn test_unshift_normal() {
 
 #[test]
 fn test_unshift_multiple() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [3, 4];
         let arr2 = unshift(arr, 2);
         unshift(arr2, 1);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -140,11 +156,13 @@ fn test_unshift_multiple() {
 
 #[test]
 fn test_reverse_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4, 5];
         reverse(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -157,11 +175,13 @@ fn test_reverse_normal() {
 
 #[test]
 fn test_reverse_empty() {
-    let result = execute_vm_ok(r#"
-        let arr: []number = [];
+    let result = execute_vm_ok(
+        r#"
+        let arr: number[] = [];
         reverse(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -172,11 +192,13 @@ fn test_reverse_empty() {
 
 #[test]
 fn test_reverse_single() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [42];
         reverse(arr);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -189,11 +211,13 @@ fn test_reverse_single() {
 
 #[test]
 fn test_reverse_preserves_original() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let original = [1, 2, 3];
         let reversed = reverse(original);
         array_index_of(original, 1);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(0.0));
 }
 
@@ -203,12 +227,14 @@ fn test_reverse_preserves_original() {
 
 #[test]
 fn test_concat_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr1 = [1, 2];
         let arr2 = [3, 4];
         concat(arr1, arr2);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -221,12 +247,14 @@ fn test_concat_normal() {
 
 #[test]
 fn test_concat_empty_arrays() {
-    let result = execute_vm_ok(r#"
-        let arr1: []number = [];
-        let arr2: []number = [];
+    let result = execute_vm_ok(
+        r#"
+        let arr1: number[] = [];
+        let arr2: number[] = [];
         concat(arr1, arr2);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -237,12 +265,14 @@ fn test_concat_empty_arrays() {
 
 #[test]
 fn test_concat_with_empty() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr1 = [1, 2, 3];
-        let arr2: []number = [];
+        let arr2: number[] = [];
         concat(arr1, arr2);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 3);
@@ -253,14 +283,16 @@ fn test_concat_with_empty() {
 
 #[test]
 fn test_concat_multiple_chains() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let a = [1];
         let b = [2, 3];
         let c = [4, 5, 6];
         let ab = concat(a, b);
         concat(ab, c);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -277,21 +309,25 @@ fn test_concat_multiple_chains() {
 
 #[test]
 fn test_flatten_normal() {
-    let result = execute_vm_ok(r#"
-        let nested: [][]number = [[1], [2, 3], [4]];
-        let flat: []number = flatten(nested);
+    let result = execute_vm_ok(
+        r#"
+        let nested: number[][] = [[1], [2, 3], [4]];
+        let flat: number[] = flatten(nested);
         len(flat);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(4.0));
 }
 
 #[test]
 fn test_flatten_empty() {
-    let result = execute_vm_ok(r#"
-        let nested: [][]number = [];
+    let result = execute_vm_ok(
+        r#"
+        let nested: number[][] = [];
         flatten(nested);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -302,11 +338,13 @@ fn test_flatten_empty() {
 
 #[test]
 fn test_flatten_with_empty_inner() {
-    let result = execute_vm_ok(r#"
-        let nested: [][]number = [[], [1], [], [2, 3]];
+    let result = execute_vm_ok(
+        r#"
+        let nested: number[][] = [[], [1], [], [2, 3]];
         flatten(nested);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -319,11 +357,13 @@ fn test_flatten_with_empty_inner() {
 
 #[test]
 fn test_flatten_single_nested() {
-    let result = execute_vm_ok(r#"
-        let nested: [][]number = [[1, 2, 3]];
+    let result = execute_vm_ok(
+        r#"
+        let nested: number[][] = [[1, 2, 3]];
         flatten(nested);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 3);
@@ -338,46 +378,56 @@ fn test_flatten_single_nested() {
 
 #[test]
 fn test_array_index_of_found() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [10, 20, 30];
         array_index_of(arr, 20);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(1.0));
 }
 
 #[test]
 fn test_array_index_of_not_found() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [10, 20];
         array_index_of(arr, 99);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(-1.0));
 }
 
 #[test]
 fn test_array_index_of_duplicates() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 2, 4];
         array_index_of(arr, 2);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(1.0)); // First occurrence
 }
 
 #[test]
 fn test_array_last_index_of_duplicates() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 2, 4];
         array_last_index_of(arr, 2);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(3.0)); // Last occurrence
 }
 
 #[test]
 fn test_array_last_index_of_not_found() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         array_last_index_of(arr, 99);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(-1.0));
 }
 
@@ -387,25 +437,30 @@ fn test_array_last_index_of_not_found() {
 
 #[test]
 fn test_array_includes_true() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         array_includes(arr, 2);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_array_includes_false() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         array_includes(arr, 99);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false));
 }
 
 #[test]
 fn test_array_includes_boundary() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         let first = array_includes(arr, 1);
         let last = array_includes(arr, 3);
@@ -418,7 +473,8 @@ fn test_array_includes_boundary() {
         } else {
             return false;
         }
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
@@ -428,11 +484,13 @@ fn test_array_includes_boundary() {
 
 #[test]
 fn test_slice_normal() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [0, 1, 2, 3, 4];
         slice(arr, 1, 4);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -446,11 +504,13 @@ fn test_slice_normal() {
 
 #[test]
 fn test_slice_entire_array() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         slice(arr, 0, 4);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 4);
@@ -461,11 +521,13 @@ fn test_slice_entire_array() {
 
 #[test]
 fn test_slice_single_element() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         slice(arr, 2, 3);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -478,11 +540,13 @@ fn test_slice_single_element() {
 
 #[test]
 fn test_slice_empty_range() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         slice(arr, 2, 2);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -497,10 +561,12 @@ fn test_slice_empty_range() {
 
 #[test]
 fn test_slice_syntax_range() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         arr[1..3];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {
@@ -515,10 +581,12 @@ fn test_slice_syntax_range() {
 
 #[test]
 fn test_slice_syntax_from() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         arr[1..];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {
@@ -533,10 +601,12 @@ fn test_slice_syntax_from() {
 
 #[test]
 fn test_slice_syntax_to() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         arr[..3];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {
@@ -551,10 +621,12 @@ fn test_slice_syntax_to() {
 
 #[test]
 fn test_slice_syntax_full() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3];
         arr[..];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {
@@ -569,10 +641,12 @@ fn test_slice_syntax_full() {
 
 #[test]
 fn test_slice_syntax_inclusive() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         arr[1..=3];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {
@@ -587,11 +661,13 @@ fn test_slice_syntax_inclusive() {
 
 #[test]
 fn test_slice_syntax_range_value() {
-    let result = execute_vm_ok(r#"
+    let result = execute_vm_ok(
+        r#"
         let arr = [1, 2, 3, 4];
         let r = 1..3;
         arr[r];
-    "#);
+    "#,
+    );
 
     match result {
         Value::Array(arr) => {

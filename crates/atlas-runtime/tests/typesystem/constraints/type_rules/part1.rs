@@ -156,7 +156,7 @@ fn test_logical_type_errors(#[case] source: &str) {
 #[case::numbers("let x = [1, 2, 3];")]
 #[case::strings(r#"let x = ["a", "b", "c"];"#)]
 #[case::bools("let x = [true, false, true];")]
-#[case::empty("let x: []number = [];")]
+#[case::empty("let x: number[] = [];")]
 #[case::nested("let x = [[1, 2], [3, 4]];")]
 #[case::with_expressions("let x = [1 + 2, 3 * 4, 5 - 6];")]
 #[case::type_inference("let x = [1, 2, 3];")]

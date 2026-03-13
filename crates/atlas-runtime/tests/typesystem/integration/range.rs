@@ -16,7 +16,7 @@ fn test_range_expression_type_error() {
 fn test_range_index_array_ok() {
     let diagnostics = typecheck(
         r#"
-        let arr: []number = [1, 2, 3, 4];
+        let arr: number[] = [1, 2, 3, 4];
         let r = 1..=2;
         let part = arr[r];
         part[0] + part[1];

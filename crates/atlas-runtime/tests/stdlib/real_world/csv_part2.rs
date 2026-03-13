@@ -12,17 +12,17 @@ fn test_csv_multi_column_filter() {
     let code = format!(
         r#"
         fn isHighValueInStock(borrow row: string): bool {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let price: number = unwrap(parse_float(fields[1]));
             let stock: number = unwrap(parse_float(fields[2]));
             return price >= 1.0 && stock >= 100.0;
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let filtered: []string = filter(dataLines, isHighValueInStock);
+        let filtered: string[] = filter(dataLines, isHighValueInStock);
         len(filtered)
     "#,
         path_for_atlas(&csv_path)
@@ -43,7 +43,7 @@ fn test_csv_column_sum_with_condition() {
     let code = format!(
         r#"
         fn sumNorth(borrow total: number, borrow row: string): number {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let region: string = fields[0];
             let amount: number = unwrap(parse_float(fields[1]));
             if (region == "North") {{
@@ -53,8 +53,8 @@ fn test_csv_column_sum_with_condition() {
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
         reduce(dataLines, sumNorth, 0.0)
     "#,
@@ -76,15 +76,15 @@ fn test_csv_row_count_by_group() {
     let code = format!(
         r#"
         fn isError(borrow row: string): bool {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             return fields[0] == "ERROR";
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let errors: []string = filter(dataLines, isError);
+        let errors: string[] = filter(dataLines, isError);
         len(errors)
     "#,
         path_for_atlas(&csv_path)
@@ -101,15 +101,15 @@ fn test_csv_transform_and_join() {
     let code = format!(
         r#"
         fn fullName(borrow row: string): string {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             return fields[0] + " " + fields[1];
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let names: []string = map(dataLines, fullName);
+        let names: string[] = map(dataLines, fullName);
         join(names, "; ")
     "#,
         path_for_atlas(&csv_path)
@@ -126,14 +126,14 @@ fn test_csv_percentage_calculation() {
     let code = format!(
         r#"
         fn calcPercentage(borrow row: string): number {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let sold: number = unwrap(parse_float(fields[1]));
             let total: number = unwrap(parse_float(fields[2]));
             return (sold / total) * 100.0;
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
+        let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
         calcPercentage(row1)
@@ -152,14 +152,14 @@ fn test_csv_trim_whitespace() {
     let code = format!(
         r#"
         fn cleanRow(borrow row: string): string {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let name: string = trim(fields[0]);
             let value: string = trim(fields[1]);
             return name + "," + value;
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
+        let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
         cleanRow(row1)
@@ -182,16 +182,16 @@ fn test_csv_case_insensitive_filter() {
     let code = format!(
         r#"
         fn isFruit(borrow row: string): bool {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let kind: string = to_lower_case(fields[1]);
             return kind == "fruit";
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let fruits: []string = filter(dataLines, isFruit);
+        let fruits: string[] = filter(dataLines, isFruit);
         len(fruits)
     "#,
         path_for_atlas(&csv_path)
@@ -216,10 +216,10 @@ fn test_csv_contains_filter() {
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let errors: []string = filter(dataLines, hasError);
+        let errors: string[] = filter(dataLines, hasError);
         len(errors)
     "#,
         path_for_atlas(&csv_path)
@@ -236,20 +236,20 @@ fn test_csv_numeric_sort_data() {
     let code = format!(
         r#"
         fn compareById(borrow a: string, borrow b: string): number {{
-            let fieldsA: []string = split(a, ",");
-            let fieldsB: []string = split(b, ",");
+            let fieldsA: string[] = split(a, ",");
+            let fieldsB: string[] = split(b, ",");
             let idA: number = unwrap(parse_float(fieldsA[0]));
             let idB: number = unwrap(parse_float(fieldsB[0]));
             return idA - idB;
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let sorted: []string = sort(dataLines, compareById);
+        let sorted: string[] = sort(dataLines, compareById);
         let first: string = sorted[0];
-        let fields: []string = split(first, ",");
+        let fields: string[] = split(first, ",");
         fields[0]
     "#,
         path_for_atlas(&csv_path)
@@ -271,7 +271,7 @@ fn test_csv_append_row() {
         write_file("{}", updated);
 
         let result: string = read_file("{}");
-        let lines: []string = split(result, "\n");
+        let lines: string[] = split(result, "\n");
         len(lines) - 1.0
     "#,
         path_for_atlas(&csv_path),
@@ -290,15 +290,15 @@ fn test_csv_validate_column_count() {
     let code = format!(
         r#"
         fn hasThreeColumns(borrow row: string): bool {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             return len(fields) == 3.0;
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let valid: []string = filter(dataLines, hasThreeColumns);
+        let valid: string[] = filter(dataLines, hasThreeColumns);
         len(valid) == len(dataLines)
     "#,
         path_for_atlas(&csv_path)
@@ -319,15 +319,15 @@ fn test_csv_extract_unique_values() {
     let code = format!(
         r#"
         fn getCategory(borrow row: string): string {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             return fields[1];
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
-        let categories: []string = map(dataLines, getCategory);
+        let categories: string[] = map(dataLines, getCategory);
         // Count unique by checking first occurrence
         let hasFruit: bool = array_includes(categories, "fruit");
         let hasVeggie: bool = array_includes(categories, "veggie");
@@ -349,7 +349,7 @@ fn test_csv_conditional_transformation() {
     let code = format!(
         r#"
         fn addGrade(borrow row: string): string {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let score: number = unwrap(parse_float(fields[1]));
             let mut grade: string = "F";
             if (score >= 90.0) {{
@@ -365,7 +365,7 @@ fn test_csv_conditional_transformation() {
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
+        let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
 
         addGrade(row1)
@@ -384,7 +384,7 @@ fn test_csv_min_value() {
     let code = format!(
         r#"
         fn findMin(borrow current: number, borrow row: string): number {{
-            let fields: []string = split(row, ",");
+            let fields: string[] = split(row, ",");
             let temp: number = unwrap(parse_float(fields[1]));
             if (current == 0.0) {{
                 return temp;
@@ -393,8 +393,8 @@ fn test_csv_min_value() {
         }}
 
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
-        let dataLines: []string = slice(lines, 1, len(lines) - 1.0);
+        let lines: string[] = split(csv, "\n");
+        let dataLines: string[] = slice(lines, 1, len(lines) - 1.0);
 
         reduce(dataLines, findMin, 0.0)
     "#,
@@ -412,9 +412,9 @@ fn test_csv_concatenate_fields() {
     let code = format!(
         r#"
         let csv: string = read_file("{}");
-        let lines: []string = split(csv, "\n");
+        let lines: string[] = split(csv, "\n");
         let row1: string = lines[1];
-        let fields: []string = split(row1, ",");
+        let fields: string[] = split(row1, ",");
         fields[0] + ", " + fields[1] + ", " + fields[2]
     "#,
         path_for_atlas(&csv_path)

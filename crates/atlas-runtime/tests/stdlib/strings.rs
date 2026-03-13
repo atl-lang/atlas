@@ -14,7 +14,7 @@ use super::*;
 #[test]
 fn test_split_basic() {
     let code = r#"
-        let result: []string = split("a,b,c", ",");
+        let result: string[] = split("a,b,c", ",");
         len(result)
     "#;
     assert_eval_number(code, 3.0);
@@ -23,7 +23,7 @@ fn test_split_basic() {
 #[test]
 fn test_split_empty_separator() {
     let code = r#"
-        let result: []string = split("abc", "");
+        let result: string[] = split("abc", "");
         len(result)
     "#;
     assert_eval_number(code, 3.0);
@@ -32,7 +32,7 @@ fn test_split_empty_separator() {
 #[test]
 fn test_split_no_match() {
     let code = r#"
-        let result: []string = split("hello", ",");
+        let result: string[] = split("hello", ",");
         len(result)
     "#;
     assert_eval_number(code, 1.0);
@@ -41,7 +41,7 @@ fn test_split_no_match() {
 #[test]
 fn test_split_unicode() {
     let code = r#"
-        let result: []string = split("🎉,🔥,✨", ",");
+        let result: string[] = split("🎉,🔥,✨", ",");
         len(result)
     "#;
     assert_eval_number(code, 3.0);

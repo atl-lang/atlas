@@ -623,7 +623,7 @@ fn test_result_ok_err_type_any() {
 #[test]
 fn test_array_empty_pattern() {
     assert_parity_string(
-        r#"fn run(borrow arr: []number): string {
+        r#"fn run(borrow arr: number[]): string {
             return match arr {
                 [] => "empty",
                 _ => "not empty"
@@ -637,7 +637,7 @@ fn test_array_empty_pattern() {
 #[test]
 fn test_array_single_element_pattern() {
     assert_parity_number(
-        r#"fn run(borrow arr: []number): number {
+        r#"fn run(borrow arr: number[]): number {
             return match arr {
                 [] => 0,
                 [x] => x,
@@ -652,7 +652,7 @@ fn test_array_single_element_pattern() {
 #[test]
 fn test_array_two_element_pattern() {
     assert_parity_number(
-        r#"fn run(borrow arr: []number): number {
+        r#"fn run(borrow arr: number[]): number {
             return match arr {
                 [a, b] => a + b,
                 _ => 0
@@ -666,7 +666,7 @@ fn test_array_two_element_pattern() {
 #[test]
 fn test_array_length_mismatch_tries_next_arm() {
     assert_parity_string(
-        r#"fn run(borrow arr: []number): string {
+        r#"fn run(borrow arr: number[]): string {
             return match arr {
                 [x] => "one",
                 [x, y] => "two",
@@ -681,7 +681,7 @@ fn test_array_length_mismatch_tries_next_arm() {
 #[test]
 fn test_array_wildcard_element() {
     assert_parity_number(
-        r#"fn run(borrow arr: []number): number {
+        r#"fn run(borrow arr: number[]): number {
             return match arr {
                 [_, x] => x,
                 _ => 0
@@ -696,7 +696,7 @@ fn test_array_wildcard_element() {
 fn test_array_empty_vs_nonempty() {
     // Empty array matches [], non-empty doesn't
     assert_parity_bool(
-        r#"fn run(borrow arr: []number): bool {
+        r#"fn run(borrow arr: number[]): bool {
             return match arr {
                 [] => true,
                 _ => false
@@ -953,7 +953,7 @@ fn test_parity_match_as_expression_in_computation() {
 #[test]
 fn test_parity_array_pattern() {
     assert_parity(
-        r#"fn run(borrow arr: []number): number {
+        r#"fn run(borrow arr: number[]): number {
             return match arr {
                 [] => 0,
                 [x] => x,

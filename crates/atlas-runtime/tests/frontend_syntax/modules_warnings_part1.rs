@@ -119,7 +119,7 @@ fn test_used_parameter_in_callback_no_warning() {
         fn double(borrow x: number): number {
             return x * 2;
         }
-        let result: []number = map([1,2,3], double);
+        let result: number[] = map([1,2,3], double);
     "#;
     let diags = get_all_diagnostics(source);
 
@@ -138,7 +138,7 @@ fn test_used_parameters_in_sort_callback_no_warning() {
         fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
-        let sorted: []number = sort([3,1,2], compare);
+        let sorted: number[] = sort([3,1,2], compare);
     "#;
     let diags = get_all_diagnostics(source);
 

@@ -233,8 +233,8 @@ fn test_structural_guards(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: []number | string): number {
-        if (is_type(x, "array")) { let _y: []number = x; return 1; }
+    fn test(borrow x: number[] | string): number {
+        if (is_type(x, "array")) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#

@@ -80,7 +80,7 @@ fn stability_determinism_conditionals() {
 
 #[test]
 fn stability_determinism_array_operations() {
-    let code = "let arr: []number = [3, 1, 4, 1, 5]; arr[2];";
+    let code = "let arr: number[] = [3, 1, 4, 1, 5]; arr[2];";
     let runtime1 = Atlas::new();
     let runtime2 = Atlas::new();
     let r1 = runtime1.eval(code);

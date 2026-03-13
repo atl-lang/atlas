@@ -150,7 +150,7 @@ fn test_nested_expressions() {
 
 #[test]
 fn test_array_type_ref() {
-    // Test array type: [][]number
+    // Test array type: number[][]
     let arr_type = TypeRef::Array(
         Box::new(TypeRef::Array(
             Box::new(TypeRef::Named("number".to_string(), Span::new(0, 6))),

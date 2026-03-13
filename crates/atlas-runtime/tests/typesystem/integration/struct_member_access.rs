@@ -76,7 +76,7 @@ fn test_struct_field_access_in_closure() {
     assert!(!has_error(&diagnostics), "Errors: {:?}", diagnostics);
 }
 
-// H-117: struct []T as fn parameter — binder stores ?[], typechecker must update to struct type
+// H-117: struct T[] as fn parameter — binder stores ?[], typechecker must update to struct type
 #[test]
 fn struct_array_fn_param_resolves_correctly() {
     let src = r#"

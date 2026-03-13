@@ -15,7 +15,7 @@ use pretty_assertions::assert_eq;
 #[case("let _x: number & number = 1;")]
 #[case("let _x: string & string = \"ok\";")]
 #[case("let _x: bool & bool = true;")]
-#[case("let _x: []number & []number = [1, 2];")]
+#[case("let _x: number[] & number[] = [1, 2];")]
 #[case("type Same = number & number; let _x: Same = 1;")]
 #[case("fn f(borrow x: number): number { return x; } let _x: ((number): number) & ((number): number) = f;")]
 #[case("let _x: (number | string) & number = 1;")]
@@ -90,9 +90,9 @@ fn test_intersection_distribution_errors(#[case] source: &str) {
 // ============================================================================
 
 #[rstest]
-#[case("let _x: []number & []number = [1, 2]; let _y: number = _x[0];")]
-#[case("let _x: []number & []number = [1, 2]; let _y: number = _x[1];")]
-#[case("let _x: []number & []number = [1, 2]; let _y: number = _x[0] + _x[1];")]
+#[case("let _x: number[] & number[] = [1, 2]; let _y: number = _x[0];")]
+#[case("let _x: number[] & number[] = [1, 2]; let _y: number = _x[1];")]
+#[case("let _x: number[] & number[] = [1, 2]; let _y: number = _x[0] + _x[1];")]
 fn test_intersection_operations(#[case] source: &str) {
     let diags = errors(source);
     assert!(diags.is_empty(), "Expected no errors, got: {:?}", diags);

@@ -288,12 +288,12 @@ fn test_local_infer_bool_literal() {
 
 #[test]
 fn test_local_infer_array_literal() {
-    // [1,2,3] infers []number
-    let diags = errors("let arr = [1, 2, 3]; let _b: []number = arr;");
+    // [1,2,3] infers number[]
+    let diags = errors("let arr = [1, 2, 3]; let _b: number[] = arr;");
     let type_errors: Vec<_> = diags.iter().filter(|d| d.code == "AT3001").collect();
     assert!(
         type_errors.is_empty(),
-        "Expected no AT3001 for inferred []number, got: {:?}",
+        "Expected no AT3001 for inferred number[], got: {:?}",
         type_errors
     );
 }

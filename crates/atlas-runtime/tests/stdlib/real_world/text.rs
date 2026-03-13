@@ -5,7 +5,7 @@ use super::super::*;
 fn test_text_word_count() {
     let code = r#"
         let text: string = "hello world this is a test";
-        let words: []string = split(text, " ");
+        let words: string[] = split(text, " ");
         len(words)
     "#;
     assert_eval_number_with_io(code, 6.0);
@@ -15,7 +15,7 @@ fn test_text_word_count() {
 fn test_text_line_count() {
     let code = r#"
         let text: string = "line1\nline2\nline3";
-        let lines: []string = split(text, "\n");
+        let lines: string[] = split(text, "\n");
         len(lines)
     "#;
     assert_eval_number_with_io(code, 3.0);
@@ -28,7 +28,7 @@ fn test_text_average_word_length() {
         fn sum(borrow a: number, borrow b: number): number { return a + b; }
 
         let text: string = "the quick brown fox";
-        let words: []string = split(text, " ");
+        let words: string[] = split(text, " ");
         let lengths: number[] = map(words, wordLength);
         let total: number = reduce(lengths, sum, 0.0);
         let avg: number = total / len(words);
@@ -43,8 +43,8 @@ fn test_text_uppercase_words() {
         fn toUpper(borrow s: string): string { return to_upper_case(s); }
 
         let text: string = "hello world";
-        let words: []string = split(text, " ");
-        let uppered: []string = map(words, toUpper);
+        let words: string[] = split(text, " ");
+        let uppered: string[] = map(words, toUpper);
         join(uppered, " ")
     "#;
     assert_eval_string_with_io(code, "HELLO WORLD");
@@ -62,8 +62,8 @@ fn test_text_titlecase() {
         }
 
         let text: string = "hello WORLD";
-        let words: []string = split(text, " ");
-        let titled: []string = map(words, titleCase);
+        let words: string[] = split(text, " ");
+        let titled: string[] = map(words, titleCase);
         join(titled, " ")
     "#;
     assert_eval_string_with_io(code, "Hello World");
@@ -96,7 +96,7 @@ fn test_text_find_longest_word() {
         }
 
         let text: string = "the quick brown fox jumps";
-        let words: []string = split(text, " ");
+        let words: string[] = split(text, " ");
         reduce(words, longerWord, "")
     "#;
     assert_eval_string_with_io(code, "quick"); // or "brown" or "jumps" (all 5 chars, first wins)
@@ -110,8 +110,8 @@ fn test_text_filter_short_words() {
         }
 
         let text: string = "the quick brown fox";
-        let words: []string = split(text, " ");
-        let long: []string = filter(words, isLong);
+        let words: string[] = split(text, " ");
+        let long: string[] = filter(words, isLong);
         len(long)
     "#;
     assert_eval_number_with_io(code, 2.0); // "quick"=5, "brown"=5 are >=4
@@ -121,9 +121,9 @@ fn test_text_filter_short_words() {
 fn test_text_count_character() {
     let code = r#"
         let text: string = "hello world";
-        let chars: []string = split(text, "");
+        let chars: string[] = split(text, "");
         fn isL(borrow c: string): bool { return c == "l"; }
-        let ls: []string = filter(chars, isL);
+        let ls: string[] = filter(chars, isL);
         len(ls)
     "#;
     assert_eval_number_with_io(code, 3.0);
@@ -133,8 +133,8 @@ fn test_text_count_character() {
 fn test_text_reverse_words() {
     let code = r#"
         let text: string = "hello world";
-        let words: []string = split(text, " ");
-        let reversed: []string = reverse(words);
+        let words: string[] = split(text, " ");
+        let reversed: string[] = reverse(words);
         join(reversed, " ")
     "#;
     assert_eval_string_with_io(code, "world hello");
@@ -148,8 +148,8 @@ fn test_text_acronym() {
         }
 
         let text: string = "Portable Network Graphics";
-        let words: []string = split(text, " ");
-        let initials: []string = map(words, firstChar);
+        let words: string[] = split(text, " ");
+        let initials: string[] = map(words, firstChar);
         join(initials, "")
     "#;
     assert_eval_string_with_io(code, "PNG");
@@ -161,8 +161,8 @@ fn test_text_trim_lines() {
         fn trimLine(borrow line: string): string { return trim(line); }
 
         let text: string = "  line1  \n  line2  \n  line3  ";
-        let lines: []string = split(text, "\n");
-        let trimmed: []string = map(lines, trimLine);
+        let lines: string[] = split(text, "\n");
+        let trimmed: string[] = map(lines, trimLine);
         join(trimmed, "|")
     "#;
     assert_eval_string_with_io(code, "line1|line2|line3");
@@ -175,8 +175,8 @@ fn test_text_starts_with_filter() {
             return starts_with(word, "a");
         }
 
-        let words: []string = ["apple", "banana", "apricot", "cherry"];
-        let aWords: []string = filter(words, starts_withA);
+        let words: string[] = ["apple", "banana", "apricot", "cherry"];
+        let aWords: string[] = filter(words, starts_withA);
         len(aWords)
     "#;
     assert_eval_number_with_io(code, 2.0);
@@ -189,8 +189,8 @@ fn test_text_ends_with_filter() {
             return ends_with(word, "e");
         }
 
-        let words: []string = ["apple", "banana", "grape", "cherry"];
-        let eWords: []string = filter(words, ends_withE);
+        let words: string[] = ["apple", "banana", "grape", "cherry"];
+        let eWords: string[] = filter(words, ends_withE);
         len(eWords)
     "#;
     assert_eval_number_with_io(code, 2.0); // apple, grape
@@ -203,8 +203,8 @@ fn test_text_pad_lines() {
             return pad_end(line, 10.0, ".");
         }
 
-        let lines: []string = ["short", "medium", "long"];
-        let padded: []string = map(lines, pad);
+        let lines: string[] = ["short", "medium", "long"];
+        let padded: string[] = map(lines, pad);
         padded[0]
     "#;
     assert_eval_string_with_io(code, "short.....");
@@ -225,7 +225,7 @@ fn test_text_replace_multiple() {
 fn test_text_split_multichar() {
     let code = r#"
         let text: string = "one::two::three";
-        let parts: []string = split(text, "::");
+        let parts: string[] = split(text, "::");
         len(parts)
     "#;
     assert_eval_number_with_io(code, 3.0);
@@ -235,7 +235,7 @@ fn test_text_split_multichar() {
 fn test_text_extract_numbers() {
     let code = r#"
         let text: string = "Price: 100 Quantity: 50";
-        let words: []string = split(text, " ");
+        let words: string[] = split(text, " ");
         let num1: number = unwrap(parse_float(words[1]));
         let num2: number = unwrap(parse_float(words[3]));
         num1 + num2

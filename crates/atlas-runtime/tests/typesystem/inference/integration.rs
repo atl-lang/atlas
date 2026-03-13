@@ -152,7 +152,7 @@ fn test_integration_result_type_usage() {
 fn test_integration_for_in_with_inferred_element_type() {
     let diags = typecheck_source(
         r#"
-        fn sum_array(borrow nums: []number): number {
+        fn sum_array(borrow nums: number[]): number {
             let mut total = 0;
             for n in nums {
                 total = total + n;
@@ -247,12 +247,12 @@ fn test_integration_deeply_nested_generics() {
 
 #[test]
 fn test_h162_empty_array_in_struct_field_typed() {
-    // args: [] where field is []string — should not produce AT3001
+    // args: [] where field is string[] — should not produce AT3001
     let diags = typecheck_source(
         r#"
         struct ServerConfig {
             command: string,
-            args: []string,
+            args: string[],
             port: number,
         }
         let cfg = ServerConfig {
@@ -275,9 +275,9 @@ fn test_h162_empty_array_in_nested_struct_field() {
     let diags = typecheck_source(
         r#"
         struct WatchConfig {
-            paths: []string,
-            extensions: []string,
-            ignore: []string,
+            paths: string[],
+            extensions: string[],
+            ignore: string[],
             enabled: bool,
         }
         let w = WatchConfig {

@@ -336,7 +336,7 @@ sum;
 fn test_callback_closure_mutates_global_array() {
     assert_parity_number(
         r#"
-let mut tests: []number = [];
+let mut tests: number[] = [];
 
 fn describe(borrow block: (): void): void {
     block();
@@ -380,7 +380,7 @@ hash_map_size(m);
 fn test_nested_closures_mutate_global_array() {
     assert_parity_number(
         r#"
-let mut values: []number = [];
+let mut values: number[] = [];
 
 fn outer(borrow block: (): void): void {
     block();
@@ -406,7 +406,7 @@ len(values);
 fn test_closure_param_mutates_global_collection() {
     assert_parity_number(
         r#"
-let mut items: []number = [];
+let mut items: number[] = [];
 
 fn apply(borrow block: (): void): void {
     block();

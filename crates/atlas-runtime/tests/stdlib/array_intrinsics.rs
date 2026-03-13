@@ -1,6 +1,6 @@
 //! Interpreter tests for array intrinsics (callback-based)
 //!
-//! Tests: map, filter, reduce, for_each, find, find_index,  
+//! Tests: map, filter, reduce, for_each, find, find_index,
 //!        flat_map, some, every, sort, sort_by
 
 use crate::stdlib::{eval_err, eval_ok};
@@ -12,14 +12,16 @@ use atlas_runtime::value::Value;
 
 #[test]
 fn test_map_double() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn double(borrow x: number): number {
             return x * 2;
         }
         let arr = [1, 2, 3];
         map(arr, double);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -33,14 +35,16 @@ fn test_map_double() {
 
 #[test]
 fn test_map_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn double(borrow x: number): number {
             return x * 2;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         map(arr, double);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -51,14 +55,16 @@ fn test_map_empty_array() {
 
 #[test]
 fn test_map_single_element() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn triple(borrow x: number): number {
             return x * 3;
         }
         let arr = [5];
         map(arr, triple);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -71,14 +77,16 @@ fn test_map_single_element() {
 
 #[test]
 fn test_map_large_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn triple(borrow x: number): number {
             return x * 3;
         }
         let arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         let result = map(arr, triple);
         len(result);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(10.0));
 }
 
@@ -88,14 +96,16 @@ fn test_map_large_array() {
 
 #[test]
 fn test_filter_evens() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isEven(borrow x: number): bool {
             return x % 2 == 0;
         }
         let arr = [1, 2, 3, 4, 5, 6];
         filter(arr, isEven);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -108,14 +118,16 @@ fn test_filter_evens() {
 
 #[test]
 fn test_filter_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         filter(arr, isPositive);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -126,14 +138,16 @@ fn test_filter_empty_array() {
 
 #[test]
 fn test_filter_all_match() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
         let arr = [1, 2, 3, 4, 5];
         filter(arr, isPositive);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 5);
@@ -144,14 +158,16 @@ fn test_filter_all_match() {
 
 #[test]
 fn test_filter_none_match() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isNegative(borrow x: number): bool {
             return x < 0;
         }
         let arr = [1, 2, 3];
         filter(arr, isNegative);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -162,7 +178,8 @@ fn test_filter_none_match() {
 
 #[test]
 fn test_filter_chain() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
@@ -172,8 +189,9 @@ fn test_filter_chain() {
         let arr = [-2, -1, 0, 1, 2, 3, 4];
         let positive = filter(arr, isPositive);
         filter(positive, isEven);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -186,14 +204,16 @@ fn test_filter_chain() {
 
 #[test]
 fn test_filter_with_find() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isLarge(borrow x: number): bool {
             return x > 5;
         }
         let arr = [1, 10, 3, 8, 2];
         let filtered = filter(arr, isLarge);
         find(filtered, isLarge);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(10.0));
 }
 
@@ -203,55 +223,64 @@ fn test_filter_with_find() {
 
 #[test]
 fn test_reduce_sum() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn add(borrow acc: number, borrow x: number): number {
             return acc + x;
         }
         let arr = [1, 2, 3, 4, 5];
         reduce(arr, add, 0);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(15.0));
 }
 
 #[test]
 fn test_reduce_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn add(borrow acc: number, borrow x: number): number {
             return acc + x;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         reduce(arr, add, 10);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(10.0)); // Returns initial value
 }
 
 #[test]
 fn test_reduce_single_element() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn add(borrow acc: number, borrow x: number): number {
             return acc + x;
         }
         let arr = [5];
         reduce(arr, add, 10);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(15.0));
 }
 
 #[test]
 fn test_reduce_product() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn multiply(borrow acc: number, borrow x: number): number {
             return acc * x;
         }
         let arr = [2, 3, 4];
         reduce(arr, multiply, 1);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(24.0));
 }
 
 #[test]
 fn test_reduce_max() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn max(borrow acc: number, borrow x: number): number {
             if (x > acc) {
                 return x;
@@ -261,13 +290,15 @@ fn test_reduce_max() {
         }
         let arr = [3, 7, 2, 9, 1];
         reduce(arr, max, 0);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(9.0));
 }
 
 #[test]
 fn test_map_then_reduce() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn double(borrow x: number): number {
             return x * 2;
         }
@@ -277,7 +308,8 @@ fn test_map_then_reduce() {
         let arr = [1, 2, 3];
         let doubled = map(arr, double);
         reduce(doubled, add, 0);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(12.0));
 }
 
@@ -287,55 +319,64 @@ fn test_map_then_reduce() {
 
 #[test]
 fn test_find_first_match() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isLarge(borrow x: number): bool {
             return x > 10;
         }
         let arr = [1, 5, 15, 20];
         find(arr, isLarge);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(15.0));
 }
 
 #[test]
 fn test_find_no_match() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isLarge(borrow x: number): bool {
             return x > 100;
         }
         let arr = [1, 5, 15];
         find(arr, isLarge);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Null);
 }
 
 #[test]
 fn test_find_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isEven(borrow x: number): bool {
             return x % 2 == 0;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         find(arr, isEven);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Null);
 }
 
 #[test]
 fn test_find_first_of_many() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isEven(borrow x: number): bool {
             return x % 2 == 0;
         }
         let arr = [1, 2, 3, 4, 5, 6];
         find(arr, isEven);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(2.0)); // First even number
 }
 
 #[test]
 fn test_find_with_complex_predicate() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isDivisibleBy3And5(borrow x: number): bool {
             if (x % 3 == 0) {
                 if (x % 5 == 0) {
@@ -349,43 +390,50 @@ fn test_find_with_complex_predicate() {
         }
         let arr = [1, 5, 10, 15, 20, 30];
         find(arr, isDivisibleBy3And5);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(15.0));
 }
 
 #[test]
 fn test_find_index() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isLarge(borrow x: number): bool {
             return x > 10;
         }
         let arr = [1, 5, 15, 20];
         find_index(arr, isLarge);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(2.0));
 }
 
 #[test]
 fn test_find_index_empty() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn alwaysTrue(borrow x: number): bool {
             return x == x;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         find_index(arr, alwaysTrue);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(-1.0));
 }
 
 #[test]
 fn test_find_index_not_found() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isNegative(borrow x: number): bool {
             return x < 0;
         }
         let arr = [1, 2, 3];
         find_index(arr, isNegative);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Number(-1.0));
 }
 
@@ -395,14 +443,16 @@ fn test_find_index_not_found() {
 
 #[test]
 fn test_flat_map() {
-    let result = eval_ok(r#"
-        fn duplicate(borrow x: number): []number {
+    let result = eval_ok(
+        r#"
+        fn duplicate(borrow x: number): number[] {
             return [x, x];
         }
         let arr = [1, 2, 3];
         flat_map(arr, duplicate);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -416,14 +466,16 @@ fn test_flat_map() {
 
 #[test]
 fn test_flat_map_empty() {
-    let result = eval_ok(r#"
-        fn duplicate(borrow x: number): []number {
+    let result = eval_ok(
+        r#"
+        fn duplicate(borrow x: number): number[] {
             return [x, x];
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         flat_map(arr, duplicate);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -434,21 +486,23 @@ fn test_flat_map_empty() {
 
 #[test]
 fn test_flat_map_empty_results() {
-    let result = eval_ok(r#"
-        fn makeEmpty(borrow x: number): []number {
+    let result = eval_ok(
+        r#"
+        fn makeEmpty(borrow x: number): number[] {
             let check = x + 1;
             if (check > 0) {
-                let empty: []number = [];
+                let empty: number[] = [];
                 return empty;
             } else {
-                let empty: []number = [];
+                let empty: number[] = [];
                 return empty;
             }
         }
         let arr = [1, 2, 3];
         flat_map(arr, makeEmpty);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -463,133 +517,155 @@ fn test_flat_map_empty_results() {
 
 #[test]
 fn test_some_true() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isEven(borrow x: number): bool {
             return x % 2 == 0;
         }
         let arr = [1, 3, 4, 5];
         some(arr, isEven);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_some_false() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isEven(borrow x: number): bool {
             return x % 2 == 0;
         }
         let arr = [1, 3, 5];
         some(arr, isEven);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false));
 }
 
 #[test]
 fn test_some_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn alwaysTrue(borrow x: number): bool {
             return x == x;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         some(arr, alwaysTrue);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false));
 }
 
 #[test]
 fn test_some_first_element() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isOne(borrow x: number): bool {
             return x == 1;
         }
         let arr = [1, 2, 3];
         some(arr, isOne);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_some_short_circuit() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isHundred(borrow x: number): bool {
             return x == 100;
         }
         let arr = [1, 2, 100, 4];
         some(arr, isHundred);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true)); // Should stop at 100
 }
 
 #[test]
 fn test_every_true() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
         let arr = [1, 2, 3];
         every(arr, isPositive);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_every_false() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
         let arr = [1, -1, 3];
         every(arr, isPositive);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false));
 }
 
 #[test]
 fn test_every_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn alwaysTrue(borrow x: number): bool {
             return x == x;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         every(arr, alwaysTrue);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true)); // Vacuously true
 }
 
 #[test]
 fn test_every_single_element_true() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isPositive(borrow x: number): bool {
             return x > 0;
         }
         let arr = [5];
         every(arr, isPositive);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(true));
 }
 
 #[test]
 fn test_every_single_element_false() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isNegative(borrow x: number): bool {
             return x < 0;
         }
         let arr = [5];
         every(arr, isNegative);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false));
 }
 
 #[test]
 fn test_every_short_circuit() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn isSmall(borrow x: number): bool {
             return x < 10;
         }
         let arr = [1, 2, 100, 4];
         every(arr, isSmall);
-    "#);
+    "#,
+    );
     assert_eq!(result, Value::Bool(false)); // Should stop at 100
 }
 
@@ -599,14 +675,16 @@ fn test_every_short_circuit() {
 
 #[test]
 fn test_sort_ascending() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
         let arr = [3, 1, 4, 1, 5];
         sort(arr, compare);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -619,14 +697,16 @@ fn test_sort_ascending() {
 
 #[test]
 fn test_sort_descending() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn compareDesc(borrow a: number, borrow b: number): number {
             return b - a;
         }
         let arr = [1, 5, 3, 2, 4];
         sort(arr, compareDesc);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -639,14 +719,16 @@ fn test_sort_descending() {
 
 #[test]
 fn test_sort_empty_array() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         sort(arr, compare);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -657,14 +739,16 @@ fn test_sort_empty_array() {
 
 #[test]
 fn test_sort_single_element() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
         let arr = [42];
         sort(arr, compare);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -677,15 +761,17 @@ fn test_sort_single_element() {
 
 #[test]
 fn test_sort_stability() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn alwaysZero(borrow a: number, borrow b: number): number {
             let sum = a + b;
             return 0 - sum + sum;
         }
         let arr = [3, 1, 4, 1, 5];
         sort(arr, alwaysZero);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -700,14 +786,16 @@ fn test_sort_stability() {
 
 #[test]
 fn test_sort_with_equal_elements() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn compare(borrow a: number, borrow b: number): number {
             return a - b;
         }
         let arr = [3, 1, 2, 1, 3];
         sort(arr, compare);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -721,7 +809,8 @@ fn test_sort_with_equal_elements() {
 
 #[test]
 fn test_sort_by_numeric_key() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn getAbs(borrow x: number): number {
             if (x < 0) {
                 return 0 - x;
@@ -731,8 +820,9 @@ fn test_sort_by_numeric_key() {
         }
         let arr = [3, -5, 2, -1];
         sort_by(arr, getAbs);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();
@@ -746,14 +836,16 @@ fn test_sort_by_numeric_key() {
 
 #[test]
 fn test_sort_by_empty() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn identity(borrow x: number): number {
             return x;
         }
-        let arr: []number = [];
+        let arr: number[] = [];
         sort_by(arr, identity);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             assert_eq!(arr.lock().unwrap().len(), 0);
@@ -764,14 +856,16 @@ fn test_sort_by_empty() {
 
 #[test]
 fn test_sort_by_single() {
-    let result = eval_ok(r#"
+    let result = eval_ok(
+        r#"
         fn identity(borrow x: number): number {
             return x;
         }
         let arr = [99];
         sort_by(arr, identity);
-    "#);
-    
+    "#,
+    );
+
     match result {
         Value::Array(arr) => {
             let borrowed = arr.lock().unwrap();

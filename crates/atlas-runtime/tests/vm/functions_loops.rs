@@ -82,8 +82,8 @@ fn test_function_in_loop() {
 #[test]
 fn test_map_pattern_with_function() {
     let source = r#"
-        fn applyToArray(borrow arr: []number, borrow f: (number): number): []number {
-            let mut result: []number = [];
+        fn applyToArray(borrow arr: number[], borrow f: (number): number): number[] {
+            let mut result: number[] = [];
             for item in arr {
                 result = result + [f(item)];
             }
@@ -100,8 +100,8 @@ fn test_map_pattern_with_function() {
 #[test]
 fn test_filter_pattern_with_function() {
     let source = r#"
-        fn filterArray(borrow arr: []number, borrow predicate: (number): bool): []number {
-            let mut result: []number = [];
+        fn filterArray(borrow arr: number[], borrow predicate: (number): bool): number[] {
+            let mut result: number[] = [];
             for item in arr {
                 if (predicate(item)) {
                     result = result + [item];
@@ -121,7 +121,7 @@ fn test_filter_pattern_with_function() {
 fn test_reduce_pattern_with_function() {
     let source = r#"
         fn reduceArray(
-            borrow arr: []number,
+            borrow arr: number[],
             borrow reducer: (number, number): number,
             initial: number
         ): number {
@@ -142,7 +142,7 @@ fn test_reduce_pattern_with_function() {
 fn test_complex_function_passing() {
     let source = r#"
         fn transform(
-            borrow arr: []number,
+            borrow arr: number[],
             borrow f1: (number): number,
             f2: (number): number
         ): number {

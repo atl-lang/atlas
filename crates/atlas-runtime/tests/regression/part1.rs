@@ -235,7 +235,7 @@ fn regression_while_with_continue() {
 #[test]
 fn regression_array_literal() {
     let code = r#"
-        let arr: []number = [1, 2, 3];
+        let arr: number[] = [1, 2, 3];
         len(arr);
     "#;
     assert_eval_number(code, 3.0);
@@ -244,7 +244,7 @@ fn regression_array_literal() {
 #[test]
 fn regression_array_indexing() {
     let code = r#"
-        let arr: []number = [10, 20, 30];
+        let arr: number[] = [10, 20, 30];
         arr[1];
     "#;
     assert_eval_number(code, 20.0);
@@ -253,7 +253,7 @@ fn regression_array_indexing() {
 #[test]
 fn regression_array_mutation() {
     let code = r#"
-        let mut arr: []number = [1, 2, 3];
+        let mut arr: number[] = [1, 2, 3];
         arr[0] = 99;
         arr[0];
     "#;
@@ -263,7 +263,7 @@ fn regression_array_mutation() {
 #[test]
 fn regression_nested_arrays() {
     let code = r#"
-        let matrix: [][]number = [[1, 2], [3, 4]];
+        let matrix: number[][] = [[1, 2], [3, 4]];
         matrix[1][0];
     "#;
     assert_eval_number(code, 3.0);
@@ -327,7 +327,7 @@ fn regression_type_errors(#[case] code: &str, #[case] expected_code: &str) {
 
 #[rstest]
 #[case("1 / 0;", "AT0005")] // Divide by zero
-#[case("let arr: []number = [1, 2]; arr[10];", "AT0006")] // Out of bounds
+#[case("let arr: number[] = [1, 2]; arr[10];", "AT0006")] // Out of bounds
 fn regression_runtime_errors(#[case] code: &str, #[case] expected_code: &str) {
     assert_error_code(code, expected_code);
 }

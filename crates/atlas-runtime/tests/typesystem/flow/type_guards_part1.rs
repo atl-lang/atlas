@@ -94,9 +94,9 @@ pub(super) fn eval(code: &str) -> Value {
 )]
 #[case(
     r#"
-    fn isArr(borrow x: []number | string): bool is x: []number { return is_array(x); }
-    fn test(borrow x: []number | string): number {
-        if (isArr(x)) { let _y: []number = x; return 1; }
+    fn isArr(borrow x: number[] | string): bool is x: number[] { return is_array(x); }
+    fn test(borrow x: number[] | string): number {
+        if (isArr(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -214,8 +214,8 @@ fn test_predicate_syntax_errors(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn test(borrow x: []number | string): number {
-        if (is_array(x)) { let _y: []number = x; return 1; }
+    fn test(borrow x: number[] | string): number {
+        if (is_array(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
@@ -321,9 +321,9 @@ fn test_builtin_guard_narrowing(#[case] source: &str) {
 )]
 #[case(
     r#"
-    fn isArr(borrow x: []number | string): bool is x: []number { return is_array(x); }
-    fn test(borrow x: []number | string): number {
-        if (isArr(x)) { let _y: []number = x; return 1; }
+    fn isArr(borrow x: number[] | string): bool is x: number[] { return is_array(x); }
+    fn test(borrow x: number[] | string): number {
+        if (isArr(x)) { let _y: number[] = x; return 1; }
         else { let _y: string = x; return 2; }
     }
     "#
